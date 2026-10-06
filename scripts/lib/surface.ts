@@ -256,6 +256,18 @@ export const SURFACE: Command[] = [
     mcp: false,
   },
   {
+    name: "matrix",
+    editsContract: true,
+    script: ["matrix.js"],
+    help: {
+      group: "core",
+      icon: "🧮",
+      summary: "Generate the matrix from spec.md, tags and tests; --check, --migrate.",
+    },
+    json: { key: "matrix", gate: true },
+    mcp: false,
+  },
+  {
     name: "validate",
     script: ["validate_specs.js"],
     help: {

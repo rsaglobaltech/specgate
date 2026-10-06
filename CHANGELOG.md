@@ -8,6 +8,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`specgate matrix` — a traceability matrix nobody edits.** The matrix can be
+  generated instead of maintained: requirements and titles from `spec.md`,
+  scenarios from `@REQ-NNN @SCN-NNN` tags, tests from files that mention the
+  requirement, status from `status=` in the section's `csda:trace` comment —
+  which also holds any link derivation cannot see. `--migrate` switches an
+  existing project over and refuses, changing nothing, unless the generated
+  matrix is identical row for row. Once generated, `check` refreshes it and
+  `validate` fails with `matrix_stale` when it no longer matches its sources.
+  Opt-in: a project that does not migrate is untouched. First part of phase 3
+  of the team-simplification plan.
+
 ## [0.10.0] — 2026-10-06
 
 **Five verbs.** A team said the tool was hard to absorb; this release is the

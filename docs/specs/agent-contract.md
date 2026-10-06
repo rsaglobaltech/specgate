@@ -63,6 +63,7 @@ not run reports an `error` about itself.
 | `specgate status --json` | `status` | no |
 | `specgate alm pull --json` | `pulled` | no |
 | `specgate check [dir] --json` | `check` | yes |
+| `specgate matrix --json` | `matrix` | yes |
 | `specgate validate <dir> --json` | `validation` | yes |
 | `specgate plan --json` | `plan` | no |
 | `specgate report --json` | `report` | no |

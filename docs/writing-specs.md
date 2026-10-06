@@ -177,3 +177,43 @@ Tagging `@REQ-014` alone therefore fails, and says so:
 ✖ features/vets/listing.feature carries traceability tags but not @SCN-014,
   which REQ-014 declares. The matrix points at a scenario that is not there.
 ```
+
+## A matrix nobody edits
+
+`docs/specs/traceability.md` can be **generated** instead of maintained. Every
+column is already said somewhere else, so `specgate matrix` computes it:
+
+| Column | Comes from |
+| --- | --- |
+| Requirement, Use Case | the `## REQ-NNN — title` section in `spec.md` |
+| Scenario ID, Feature file | scenarios tagged `@REQ-NNN @SCN-NNN` (`specgate new` writes them) |
+| Test artifact | test files that mention `REQ-NNN` — a comment or a test name is enough |
+| Status | `status=` in the section's `<!-- csda:trace … -->` comment |
+
+Anything derivation cannot see — a code path, a test that does not name its
+requirement, the DDD columns — goes in that same comment, with the grammar
+capability specs already use:
+
+```markdown
+## REQ-003 — Orders can be cancelled
+
+<!-- csda:trace status=Implemented artifact=lib/orders.js -->
+```
+
+**Switching an existing project:**
+
+```bash
+specgate matrix --migrate   # writes status and explicit links into spec.md
+```
+
+It writes only what derivation would get wrong, then derives the matrix and
+compares it with yours row for row. Any difference and **nothing is changed**:
+it names the requirements it cannot express yet — usually several rows for one
+requirement whose scenarios are not tagged — and how to fix them.
+
+**After it:** the matrix carries a `specgate:derived` marker and is never edited
+by hand. `specgate check` regenerates it before the gate; plain `validate` —
+what CI runs — fails with `matrix_stale` if a commit forgot to, and
+`specgate matrix` fixes that. A project that has not migrated is untouched by
+all of this.
+

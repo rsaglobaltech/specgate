@@ -10,6 +10,7 @@ import {
   NO_TEST_COMMAND_WARNING,
 } from "../../../../packages/core/src/domain/DoneVerification";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 
 const COLOR_ENABLED =
   process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
@@ -103,6 +104,16 @@ export class CheckCommand extends BaseCommand {
           fix: "specgate check [dir]",
         }),
       ]);
+    }
+
+    // A generated matrix is a cache of spec.md, the tags and the tests: bring
+    // it up to date before the gate reads it, so nobody runs `matrix` by hand.
+    // `validate` on its own — what CI runs — still fails when it is stale.
+    const refreshed = refreshDerivedMatrix(projectDir);
+    if (refreshed && !json) {
+      process.stdout.write(
+        `${c.dim}↻ docs/specs/traceability.md regenerated from its sources${c.reset}\n`
+      );
     }
 
     const harness = readHarnessConfig(projectDir) || ({} as any);

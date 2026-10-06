@@ -40,6 +40,8 @@ const SUITE_LIES = new Set<string>([
 import { csdaTagsIn } from "../../../../packages/core/src/domain/GherkinTags";
 import { parseTraceabilityRows } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { analyseRequirementText } from "../../../../packages/core/src/domain/RequirementSyntax";
+import { isDerivedMatrix } from "../../../../packages/core/src/domain/DerivedMatrix";
+import { derivedMatrixFor } from "../spec/MatrixCommand";
 import {
   declaredPaths,
   artifactFile,
@@ -936,6 +938,27 @@ export class ValidateSpecsCommand extends BaseCommand {
 
     const tracePath = path.join(targetDir, "docs/specs/traceability.md");
     const traceContent = fs.readFileSync(tracePath, "utf8");
+
+    // A generated matrix that no longer matches spec.md, the tags and the tests
+    // is a stale cache every check below would trust. Not behind a flag: a
+    // project only gets here by opting into generation (`matrix --migrate`).
+    if (
+      isDerivedMatrix(traceContent) &&
+      derivedMatrixFor(targetDir, traceContent) !== traceContent
+    ) {
+      const stale = error(
+        "matrix_stale",
+        "docs/specs/traceability.md no longer matches spec.md, the feature tags and the tests.",
+        {
+          file: "docs/specs/traceability.md",
+          fix: "Run `specgate matrix` and commit the result — `specgate check` does it for you.",
+        }
+      );
+      if (this.io.json) this.io.fail({ validation: null }, [stale]);
+      this.logError(stale.message);
+      this.logFix([stale.fix as string]);
+      process.exit(1);
+    }
 
     // Every judgement about the matrix's contents comes from the use case; this
     // command's job from here is to render what it found and pick the exit code.
