@@ -68,6 +68,7 @@ test("runs init in dry-run mode with example config", () => {
     os.tmpdir(),
     "--dry-run",
     "--no-git",
+    "--keep-matrix",
     "--force",
   ]);
 
@@ -124,7 +125,7 @@ test("expands domain pack in dry-run mode", () => {
 test("a generated project passes every gate it ships with", () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-fresh-gates-"));
   try {
-    const init = runCli(["init", "--yes", "--out", tempRoot, "--no-git"]);
+    const init = runCli(["init", "--yes", "--out", tempRoot, "--no-git", "--keep-matrix"]);
     assert.equal(init.status, 0, init.stdout + init.stderr);
 
     const projectDir = path.join(tempRoot, "my-spec-driven-app");
@@ -157,7 +158,7 @@ test("a generated project passes every gate it ships with", () => {
 test("req --help prints usage instead of nothing", () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-req-help-"));
   try {
-    const init = runCli(["init", "--yes", "--out", tempRoot, "--no-git"]);
+    const init = runCli(["init", "--yes", "--out", tempRoot, "--no-git", "--keep-matrix"]);
     assert.equal(init.status, 0, init.stdout + init.stderr);
     const projectDir = path.join(tempRoot, "my-spec-driven-app");
 
@@ -177,7 +178,7 @@ test("req --help prints usage instead of nothing", () => {
 test("req done marks the requirement Implemented, not a silent no-op", () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-req-done-"));
   try {
-    const init = runCli(["init", "--yes", "--out", tempRoot, "--no-git"]);
+    const init = runCli(["init", "--yes", "--out", tempRoot, "--no-git", "--keep-matrix"]);
     assert.equal(init.status, 0, init.stdout + init.stderr);
     const projectDir = path.join(tempRoot, "my-spec-driven-app");
 
@@ -224,6 +225,7 @@ test("can init and validate a generated project end-to-end", () => {
     tempRoot,
     "--force",
     "--no-git",
+    "--keep-matrix",
   ]);
 
   assert.equal(initResult.status, 0);
@@ -268,6 +270,7 @@ test("can init, expand, and validate a generated project end-to-end", () => {
     tempRoot,
     "--force",
     "--no-git",
+    "--keep-matrix",
   ]);
 
   assert.equal(initResult.status, 0);
@@ -585,7 +588,16 @@ test("plan --format json returns a stable, parseable structure", () => {
     ].join("\n") + "\n",
     "utf8"
   );
-  runCli(["init", "--config", configPath, "--out", tempRoot, "--force", "--no-git"]);
+  runCli([
+    "init",
+    "--config",
+    configPath,
+    "--out",
+    tempRoot,
+    "--force",
+    "--no-git",
+    "--keep-matrix",
+  ]);
   const planResult = runCli(["plan", "--project-dir", projectDir, "--format", "json"]);
   assert.equal(planResult.status, 0, planResult.stderr);
   const parsed = JSON.parse(planResult.stdout);
@@ -1424,7 +1436,16 @@ test("an unknown architecture profile is refused with the supported list", () =>
     [...RUNTIME_BASE_CONFIG, 'ARCHITECTURE="hexagonal-ish"'].join("\n") + "\n",
     "utf8"
   );
-  const result = runCli(["init", "--config", configPath, "--out", tempRoot, "--no-git", "--force"]);
+  const result = runCli([
+    "init",
+    "--config",
+    configPath,
+    "--out",
+    tempRoot,
+    "--no-git",
+    "--keep-matrix",
+    "--force",
+  ]);
   assert.notEqual(result.status, 0);
   assert.match(
     result.stdout + result.stderr,
@@ -1589,6 +1610,7 @@ test("init accepts a YAML config and produces a valid project", () => {
     tempRoot,
     "--force",
     "--no-git",
+    "--keep-matrix",
   ]);
   assert.equal(initResult.status, 0, initResult.stderr);
   assert.ok(fs.existsSync(projectDir), "project directory should exist");
@@ -1607,7 +1629,15 @@ test("init rejects a YAML config that is a sequence, not a mapping", () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-init-yaml-bad-"));
   const configPath = path.join(tempRoot, "bad.yml");
   fs.writeFileSync(configPath, "- one\n- two\n", "utf8");
-  const result = runCli(["init", "--config", configPath, "--out", tempRoot, "--no-git"]);
+  const result = runCli([
+    "init",
+    "--config",
+    configPath,
+    "--out",
+    tempRoot,
+    "--no-git",
+    "--keep-matrix",
+  ]);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /flat mapping/);
   fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -1716,7 +1746,16 @@ function initRuntimeProject(extraLines) {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-runtime-"));
   const configPath = path.join(tempRoot, "project.config");
   fs.writeFileSync(configPath, [...RUNTIME_BASE_CONFIG, ...extraLines].join("\n") + "\n", "utf8");
-  const result = runCli(["init", "--config", configPath, "--out", tempRoot, "--force", "--no-git"]);
+  const result = runCli([
+    "init",
+    "--config",
+    configPath,
+    "--out",
+    tempRoot,
+    "--force",
+    "--no-git",
+    "--keep-matrix",
+  ]);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   return { tempRoot, projectDir: path.join(tempRoot, "runtime-probe") };
 }
@@ -1778,7 +1817,16 @@ test("DEVCONTAINER_SUPPORT=true without DOCKER_SUPPORT is rejected", () => {
     [...RUNTIME_BASE_CONFIG, 'DOCKER_SUPPORT="false"', 'DEVCONTAINER_SUPPORT="true"'].join("\n"),
     "utf8"
   );
-  const result = runCli(["init", "--config", configPath, "--out", tempRoot, "--force", "--no-git"]);
+  const result = runCli([
+    "init",
+    "--config",
+    configPath,
+    "--out",
+    tempRoot,
+    "--force",
+    "--no-git",
+    "--keep-matrix",
+  ]);
   assert.equal(result.status, 2);
   assert.match(result.stdout + result.stderr, /DEVCONTAINER_SUPPORT requires DOCKER_SUPPORT=true/);
   fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -1792,7 +1840,16 @@ test("an unsupported DATABASE_ENGINE is rejected with the supported list", () =>
     [...RUNTIME_BASE_CONFIG, 'DATABASE_ENGINE="mysql"'].join("\n"),
     "utf8"
   );
-  const result = runCli(["init", "--config", configPath, "--out", tempRoot, "--force", "--no-git"]);
+  const result = runCli([
+    "init",
+    "--config",
+    configPath,
+    "--out",
+    tempRoot,
+    "--force",
+    "--no-git",
+    "--keep-matrix",
+  ]);
   assert.equal(result.status, 2);
   assert.match(result.stdout + result.stderr, /is not supported.*postgres/s);
   fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -1858,7 +1915,16 @@ test("an unsupported DATASTORE is rejected with the allowed list", () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-datastore-"));
   const configPath = path.join(tempRoot, "project.config");
   fs.writeFileSync(configPath, [...RUNTIME_BASE_CONFIG, 'DATASTORE="mongo"'].join("\n"), "utf8");
-  const result = runCli(["init", "--config", configPath, "--out", tempRoot, "--force", "--no-git"]);
+  const result = runCli([
+    "init",
+    "--config",
+    configPath,
+    "--out",
+    tempRoot,
+    "--force",
+    "--no-git",
+    "--keep-matrix",
+  ]);
   assert.equal(result.status, 2);
   assert.match(
     result.stdout + result.stderr,

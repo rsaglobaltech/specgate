@@ -188,7 +188,7 @@ asks you to edit the ten-column matrix by hand.
 ```bash
 specgate status                      # what is left, and the next command to run
 specgate new "Operators can export a monthly report"
-specgate req link REQ-007 --test src/ReportTest.java   # new already linked its scenario
+# write src/ReportTest.java and mention REQ-007 in it — that is the link
 specgate done REQ-007 --strict --test-cmd "npm test"   # validates AND runs the suite;
                                                       # refuses to write if either fails
 ```

@@ -36,7 +36,7 @@ function cli(...args) {
 /** A scaffolded project, which is the only kind that validates clean to start with. */
 function scaffold() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "strict-scenarios-"));
-  const init = cli("init", "--yes", "--out", parent, "--no-git");
+  const init = cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix");
   assert.equal(init.status, 0, init.stdout + init.stderr);
   return { parent, projectDir: path.join(parent, fs.readdirSync(parent)[0]) };
 }

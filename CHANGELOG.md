@@ -8,6 +8,21 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **New projects start with a generated matrix.** `init` and `adopt` write the
+  matrix and immediately switch it to generated, so nobody maintains it:
+  a test that names its requirement is the link. `--keep-matrix` keeps it
+  hand-maintained. `req` leaves the short help, which is now the five verbs —
+  `init`, `status`, `new`, `check`, `done` — and `new` and `status` stop
+  recommending `req link` on a generated project.
+
+### Fixed
+
+- **`done --check` and the harness gate refresh a generated matrix first.**
+  A test written since the last regeneration made the matrix stale, so the
+  gate refused the very test that made the requirement deliverable.
+
 ### Added
 
 - **`specgate matrix` — a traceability matrix nobody edits.** The matrix can be
@@ -26,8 +41,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   be undone by the next regeneration. `new`, `req rm` and `change archive`
   regenerate the matrix; `status`, `plan` and `check` read it fresh;
   requirements archived into capability specs are derived too. `fix` reports
-  there is nothing to repair, `expand` leaves a generated matrix alone, and
-  the MCP add-row tool refuses with a pointer to `specgate new`.
+  there is nothing to repair, and the MCP add-row tool refuses with a pointer
+  to `specgate new`. `expand` writes the pack's own matrix, which makes the
+  project hand-kept again — it says so, and `matrix --migrate` switches back.
 
 ## [0.10.0] — 2026-10-06
 

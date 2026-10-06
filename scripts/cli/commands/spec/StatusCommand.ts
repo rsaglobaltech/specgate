@@ -7,6 +7,7 @@ import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
 import { refreshDerivedMatrix } from "./MatrixCommand";
+import { isDerivedProject } from "../../../lib/derived-writes";
 
 const COLOR_ENABLED =
   process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
@@ -70,7 +71,7 @@ export function summarise(projectDir: string, traceContent: string) {
   for (const it of items) counts[it.category] = (counts[it.category] || 0) + 1;
   const pending = items.length - counts.DONE;
   const orphans = detectOrphans(projectDir, items);
-  return { items, counts, pending, orphans };
+  return { items, counts, pending, orphans, derived: isDerivedProject(projectDir) };
 }
 
 /** How many queue lines `status` prints before pointing at `plan` for the rest. */
@@ -103,7 +104,7 @@ export function needsOf(item: any): string {
  * the first one meant. The team found the tool hard to absorb, and a dashboard
  * that sends you elsewhere is part of why.
  */
-export function nextCommandPlain({ items, counts, orphans }: any): string {
+export function nextCommandPlain({ items, counts, orphans, derived }: any): string {
   const first = (cats: string[]) => (items || []).find((it: any) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
   const ready = first(["NEEDS_STATUS_UPDATE"]);
@@ -111,19 +112,23 @@ export function nextCommandPlain({ items, counts, orphans }: any): string {
   const todo = first(TODO_CATEGORIES);
   if (todo) {
     if (todo.category === "NEEDS_FEATURE") return `specgate plan`;
+    // On a generated matrix a test that names its requirement is the link.
+    if (derived) return "specgate check";
     return `specgate req link ${todo.requirement} --test <path>`;
   }
   if (counts.total === 0) return 'specgate new "<what it does>"';
   return "specgate check";
 }
 
-function nextReason({ items, counts, orphans }: any): string {
+function nextReason({ items, counts, orphans, derived }: any): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   if ((items || []).some((it: any) => it.category === "NEEDS_STATUS_UPDATE"))
     return "its test exists; close it through the gate";
   const todo = (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category));
   if (todo && todo.category === "NEEDS_FEATURE")
     return `${todo.requirement}'s feature file is missing — plan shows which`;
+  if (todo && derived)
+    return `write ${todo.requirement}'s test — naming ${todo.requirement} in it is the link`;
   if (todo) return `write the test first, then record where it is`;
   if (counts.total === 0) return "no requirements yet";
   return "everything is implemented; run the gate";

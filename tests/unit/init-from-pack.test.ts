@@ -100,7 +100,7 @@ const FIXTURE_PACKS = path.resolve(ROOT_DIR, "tests/fixtures/domain-packs");
 
 function scaffold(...extra) {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-sample-"));
-  const r = cli("init", "--yes", "--out", parent, "--no-git", ...extra);
+  const r = cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", ...extra);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   return { parent, dir: path.join(parent, fs.readdirSync(parent)[0]) };
 }

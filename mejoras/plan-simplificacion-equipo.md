@@ -185,10 +185,15 @@ la CI ejecutan.
 - [x] **3B** — en modo derivado `done`/`req link`/`req add` escriben en `spec.md`;
       `new`/`req rm`/`change archive` regeneran; `status`/`plan`/`check` leen fresco; capability
       specs derivadas; `fix`/`expand`/MCP no pisan la matriz — **hecho 2026-10-06**, rama
-      `feat/derived-writers`. **Límite conocido:** los requisitos de un pack necesitan su
-      sección `## REQ-NNN` en `spec.md` para tener fila.
-- [ ] **3C** — modo derivado por defecto en `init`/`adopt`; `req link` y el merge driver fuera
-      de la ruta común.
+      `feat/derived-writers`. **Límite conocido:** un pack escribe `spec.md` y la matriz con
+      sus propias plantillas, así que `expand` devuelve el proyecto a matriz manual y lo avisa
+      (decidido en 3C tras romper los escenarios BDD de `expand`).
+- [x] **3C** — matriz generada por defecto en `init`/`adopt` (`--keep-matrix` para salir);
+      `req` fuera de la ayuda corta, que queda en **cinco verbos**; `new`/`status` dejan de
+      recomendar `req link` — **hecho 2026-10-06**, rama `feat/derived-by-default`. Encontrado
+      al probar el flujo: `done --check` y el harness validaban antes de regenerar, y rechazaban
+      el test que acababa de escribirse. El merge driver se queda: en un proyecto derivado, un
+      conflicto en la matriz se resuelve con `specgate matrix`.
 
 **Objetivo:** eliminar la causa de H22, del merge driver y de `req link`.
 

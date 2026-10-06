@@ -501,9 +501,14 @@ export function renderTraceability(
     fs.existsSync(traceTarget) &&
     fs.readFileSync(traceTarget, "utf8").includes("<!-- specgate:derived")
   ) {
-    // The pack's features carry @REQ/@SCN tags, so a generated matrix picks
-    // them up on its own; overwriting it would drop the project's own rows.
-    return;
+    // A pack writes spec.md from its own template, its requirements not in
+    // `## REQ-NNN` sections, so a generated matrix would derive nothing from
+    // it. The pack's matrix takes over and the project is hand-kept again —
+    // said out loud rather than discovered as an empty matrix.
+    process.stderr.write(
+      "⚠️  This pack writes its own traceability matrix: the project's matrix is hand-kept again.\n" +
+        "   `specgate matrix --migrate` switches it back once its requirements have `## REQ-NNN` sections.\n"
+    );
   }
   writeFile(traceTarget, markdown, dryRun);
 }

@@ -66,7 +66,14 @@ test("adopt on a Maven project detects the stack and passes validate", () => {
       "utf8"
     );
 
-    const r = cli(["adopt", "--project-dir", dir, "--var", "DOMAIN=health information exchange"]);
+    const r = cli([
+      "adopt",
+      "--project-dir",
+      dir,
+      "--keep-matrix",
+      "--var",
+      "DOMAIN=health information exchange",
+    ]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /Stack detection: pom\.xml/);
     assert.match(r.stdout, /Java 21, Spring Boot, HAPI FHIR, Maven/);
@@ -115,7 +122,7 @@ test("adopt on a Node project reads package.json facts", () => {
       "utf8"
     );
 
-    const r = cli(["adopt", "--project-dir", dir]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /Stack detection: package\.json/);
     assert.match(r.stdout, /Node\.js, TypeScript, express/);
@@ -136,7 +143,7 @@ test("adopt refuses a project that already has spec.md", () => {
     const dir = path.join(tmp, "already");
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n", "utf8");
-    const r = cli(["adopt", "--project-dir", dir]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix"]);
     assert.equal(r.status, 2);
     assert.match(r.stderr, /already exists/);
     assert.match(r.stderr, /specgate status/);
@@ -146,7 +153,7 @@ test("adopt refuses a project that already has spec.md", () => {
 test("adopt --dry-run writes nothing", () => {
   withTmp((tmp) => {
     const dir = makeMavenProject(tmp);
-    const r = cli(["adopt", "--project-dir", dir, "--dry-run"]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix", "--dry-run"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /\[dry-run\] write spec\.md/);
     assert.ok(!fs.existsSync(path.join(dir, "spec.md")));
@@ -158,7 +165,7 @@ test("adopt never overwrites an existing artifact", () => {
   withTmp((tmp) => {
     const dir = makeMavenProject(tmp);
     fs.writeFileSync(path.join(dir, "AI_RULES.md"), "# My custom rules\n", "utf8");
-    const r = cli(["adopt", "--project-dir", dir]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /skip \(exists\): AI_RULES\.md/);
     assert.equal(fs.readFileSync(path.join(dir, "AI_RULES.md"), "utf8"), "# My custom rules\n");
@@ -169,7 +176,7 @@ test("adopt with no build manifest warns but still validates", () => {
   withTmp((tmp) => {
     const dir = path.join(tmp, "bare");
     fs.mkdirSync(dir, { recursive: true });
-    const r = cli(["adopt", "--project-dir", dir]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /Could not detect the stack/);
     const v = cli(["validate", dir]);
@@ -183,7 +190,7 @@ test("a fresh adoption passes validate, but says it certifies nothing (H15)", ()
   // sat on the untouched skeleton for months while CI reported a clean gate.
   withTmp((tmp) => {
     const dir = makeMavenProject(tmp);
-    assert.equal(cli(["adopt", "--project-dir", dir]).status, 0);
+    assert.equal(cli(["adopt", "--project-dir", dir, "--keep-matrix"]).status, 0);
 
     const v = cli(["validate", dir]);
     assert.equal(v.status, 0, "an un-retro-filled adoption still passes");
@@ -199,7 +206,7 @@ test("a fresh adoption passes validate, but says it certifies nothing (H15)", ()
 test("the warning goes away as soon as one real scenario exists (H15)", () => {
   withTmp((tmp) => {
     const dir = makeMavenProject(tmp);
-    cli(["adopt", "--project-dir", dir]);
+    cli(["adopt", "--project-dir", dir, "--keep-matrix"]);
     fs.mkdirSync(path.join(dir, "features", "patient"), { recursive: true });
     fs.writeFileSync(
       path.join(dir, "features", "patient", "lookup.feature"),
@@ -235,7 +242,7 @@ test("adopt seeds one proposed requirement per capability the layout implies", (
     }
     fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({ name: "shop" }), "utf8");
 
-    const r = cli(["adopt", "--project-dir", dir]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /Requirements seeded: 3 proposal/);
 
@@ -265,7 +272,7 @@ test("adopt --no-capabilities writes the skeleton and nothing more", () => {
     fs.writeFileSync(path.join(dir, "domain", "billing", "b.ts"), "//", "utf8");
     fs.writeFileSync(path.join(dir, "package.json"), "{}", "utf8");
 
-    const r = cli(["adopt", "--project-dir", dir, "--no-capabilities"]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix", "--no-capabilities"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.doesNotMatch(r.stdout, /Requirements seeded/);
     const spec = fs.readFileSync(path.join(dir, "spec.md"), "utf8");
@@ -286,7 +293,7 @@ test("adopt --monorepo adopts every declared module and writes the config", () =
     }
     fs.writeFileSync(path.join(dir, "settings.gradle"), "include 'orders','billing'", "utf8");
 
-    const r = cli(["adopt", "--project-dir", dir, "--monorepo"]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix", "--monorepo"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
 
     const cfg = fs.readFileSync(path.join(dir, "specops.config.yaml"), "utf8");
@@ -307,7 +314,7 @@ test("adopt --monorepo adopts every declared module and writes the config", () =
 test("adopt --monorepo refuses a repository that declares no modules", () => {
   withTmp((tmp) => {
     const dir = makeMavenProject(tmp);
-    const r = cli(["adopt", "--project-dir", dir, "--monorepo"]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix", "--monorepo"]);
     assert.equal(r.status, 2);
     assert.match(r.stderr, /found 0 declared module/);
     assert.match(r.stderr, /specgate adopt/);
@@ -326,7 +333,7 @@ test("adopt --monorepo leaves an already adopted module alone", () => {
     fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({ workspaces: ["*"] }), "utf8");
     fs.writeFileSync(path.join(dir, "a", "spec.md"), "# Mine — do not touch\n", "utf8");
 
-    const r = cli(["adopt", "--project-dir", dir, "--monorepo"]);
+    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix", "--monorepo"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /skip \(already adopted\): a/);
     assert.equal(

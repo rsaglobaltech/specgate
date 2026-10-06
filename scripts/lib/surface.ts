@@ -359,12 +359,8 @@ export const SURFACE: Command[] = [
       icon: "📝",
       summary: "Add, link, remove and close requirements without hand-editing the matrix.",
     },
-    coreHelp: {
-      group: "daily",
-      order: 4,
-      icon: "📝",
-      summary: "Add, link and close requirements without editing the matrix.",
-    },
+    // Out of the daily help since the matrix is generated (phase 3C): a test
+    // that names its requirement is the link, and `new`/`done` cover the rest.
   },
   {
     name: "fix",

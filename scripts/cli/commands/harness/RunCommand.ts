@@ -21,6 +21,7 @@
  * harness never merges a branch — a human reviews and merges.
  */
 
+import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -357,6 +358,9 @@ function runGate(worktreeDir, testCmd, timeoutMs, req: any = {}, settings: any =
   // `--delivering`: the requirement is still Draft while its gate runs, and a
   // Draft row owes no files. Without it the gate would skip the one
   // requirement this attempt exists to deliver.
+  // The agent's tests are new evidence for a generated matrix: refresh it so
+  // the gate judges the attempt, not the matrix as it was before it.
+  refreshDerivedMatrix(worktreeDir);
   const validateArgs = [VALIDATE_SCRIPT, worktreeDir, "--strict"];
   if (req.requirement) validateArgs.push("--delivering", req.requirement);
   const validate = spawnSync(process.execPath, validateArgs, {

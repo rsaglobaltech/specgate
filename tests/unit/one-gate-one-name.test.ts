@@ -30,7 +30,7 @@ function cli(...args) {
 test("--strict means every strict check, so a rotted link cannot pass it", () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-gate-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git").status, 0);
+    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix").status, 0);
     const dir = path.join(parent, "my-spec-driven-app");
 
     fs.appendFileSync(
@@ -71,7 +71,7 @@ test("nothing tells a user to run a weaker gate than --strict", () => {
 test("a freshly generated project passes --strict", () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-gate-fresh-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git").status, 0);
+    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix").status, 0);
     const r = cli("validate", path.join(parent, "my-spec-driven-app"), "--strict");
     assert.equal(r.status, 0, r.stdout + r.stderr);
   } finally {
@@ -113,7 +113,7 @@ test("a brownfield link to a pre-existing test does not force a source edit", ()
       cwd: dir,
     });
 
-    assert.equal(cli("adopt", "--project-dir", dir).status, 0);
+    assert.equal(cli("adopt", "--project-dir", dir, "--keep-matrix").status, 0);
     const added = cli("req", "add", "Owner telephone must be ten digits", "--project-dir", dir);
     const reqId = /Added (REQ-\d+)/.exec(added.stdout)[1];
     assert.equal(
@@ -149,7 +149,10 @@ test("once a project uses the convention, the check holds every row to it", () =
   // Calibration, not abdication: the skipped scenario is still caught.
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-conv-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--no-sample-req").status, 0);
+    assert.equal(
+      cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status,
+      0
+    );
     const dir = path.join(parent, "my-spec-driven-app");
     fs.mkdirSync(path.join(dir, "features/billing"), { recursive: true });
     fs.mkdirSync(path.join(dir, "tests"), { recursive: true });
@@ -183,7 +186,10 @@ test("adopting the naming convention on one test does not turn other rows red", 
   // which teaches people not to do the correct thing.
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-cliff-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--no-sample-req").status, 0);
+    assert.equal(
+      cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status,
+      0
+    );
     const dir = path.join(parent, "my-spec-driven-app");
     fs.mkdirSync(path.join(dir, "features/core"), { recursive: true });
     fs.mkdirSync(path.join(dir, "tests"), { recursive: true });
@@ -220,7 +226,10 @@ test("a scenario skipped in a file whose others are named is still caught", () =
   // The calibration is per feature file, so #168's case survives it.
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-skip-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--no-sample-req").status, 0);
+    assert.equal(
+      cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status,
+      0
+    );
     const dir = path.join(parent, "my-spec-driven-app");
     fs.mkdirSync(path.join(dir, "features/billing"), { recursive: true });
     fs.mkdirSync(path.join(dir, "tests"), { recursive: true });
@@ -267,7 +276,7 @@ test("the merge driver git registers is portable, not a path on one machine", ()
       cwd: dir,
     });
 
-    assert.equal(cli("adopt", "--project-dir", dir).status, 0);
+    assert.equal(cli("adopt", "--project-dir", dir, "--keep-matrix").status, 0);
     const init = cli("harness", "init", "--project-dir", dir);
     assert.equal(init.status, 0, init.stdout + init.stderr);
 
@@ -293,7 +302,7 @@ test("the merge driver git registers is portable, not a path on one machine", ()
 test("ci init announces the command it actually generates", () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-ciann-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git").status, 0);
+    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix").status, 0);
     const dir = path.join(parent, "my-spec-driven-app");
     const r = cli("ci", "init", "--provider", "github", "--project-dir", dir);
     assert.equal(r.status, 0, r.stdout + r.stderr);

@@ -14,6 +14,7 @@ import {
 
 import { findCliRoot } from "../../../lib/project-root";
 import { AdoptProjectCommand, detectStack } from "./AdoptCommand";
+import { migrateToDerived } from "../spec/MatrixCommand";
 
 const ROOT_DIR = findCliRoot(__dirname);
 const TEMPLATES_DIR = path.join(ROOT_DIR, "templates");
@@ -142,6 +143,7 @@ function usage() {
       "or with --new, it scaffolds a new project.\n\n" +
       "Options:\n" +
       "  --new             Scaffold a new project even where code already exists\n" +
+      "  --keep-matrix     Keep traceability.md hand-maintained instead of generated\n" +
       "  --multi-stack <a,b,c>\n" +
       "                    Scaffold one sibling project per stack under a single root,\n" +
       "                    sharing one spec.md and one features/ tree. Each stack keeps\n" +
@@ -174,6 +176,7 @@ export function parseArgs(argv: string[]) {
     noGit: false,
     noSampleReq: false,
     newProject: false,
+    keepMatrix: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -197,6 +200,8 @@ export function parseArgs(argv: string[]) {
       opts.noSampleReq = true;
     } else if (a === "--new") {
       opts.newProject = true;
+    } else if (a === "--keep-matrix") {
+      opts.keepMatrix = true;
     } else if (a === "--help" || a === "-h") {
       usage();
       process.exit(0);
@@ -1002,6 +1007,7 @@ export class InitProjectCommand extends BaseCommand {
         "--project-dir",
         process.cwd(),
         ...(opts.dryRun ? ["--dry-run"] : []),
+        ...(opts.keepMatrix ? ["--keep-matrix"] : []),
       ]).execute();
       return;
     }
@@ -1086,6 +1092,7 @@ export class InitProjectCommand extends BaseCommand {
       }
     } else {
       generateProject(projectDir, cfg, opts, wizardAnswers);
+      if (!opts.dryRun && !opts.keepMatrix) migrateToDerived(projectDir);
     }
 
     logInfo("📋 Summary");
