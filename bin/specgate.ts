@@ -152,9 +152,9 @@ function usageCore() {
       `    ${c.green}specgate --help --all${c.reset}${c.dim}                    show every command${c.reset}\n` +
       `    ${c.green}specgate config set profile full${c.reset}${c.dim}         make that the default${c.reset}\n` +
       section("EXAMPLES") +
-      example(`npx @rsaglobaltech/specgate@latest adopt`, "Existing codebase") +
-      example(`npx @rsaglobaltech/specgate@latest init`, "New project (wizard)") +
+      example(`npx @rsaglobaltech/specgate@latest init`, "Existing repo or empty directory") +
       example(`specgate status`, "Start of day") +
+      example(`specgate check`, "Before a pull request") +
       "\n"
   );
 }

@@ -132,7 +132,10 @@ existentes (regla de ADR-0026: la minor avisa y la siguiente exige).
       entregar; `done --strict` pasa a ser la puerta completa.
 - [x] `status` absorbe `plan` — **hecho 2026-10-06**, rama `feat/status-absorbs-plan`. `Next` nombra el requisito; `plan` sale de la ayuda diaria.
 - [x] `init` absorbe `adopt` y `onboard` — **hecho 2026-10-06**, rama `feat/init-adopts`. Solo el camino sin banderas cambia; los scripts con `--yes`/`--config`/`--out` siguen igual.
-- [ ] `--help` de cinco verbos; el resto, alias con aviso
+- [x] `--help` de cinco verbos — **hecho 2026-10-06**, rama `feat/daily-help-five`: `init` +
+      `status`, `new`, `req`, `check`, `done`. `req` sigue hasta la fase 3 (cuando `req link`
+      desaparezca). **Sin avisos de deprecación**: los comandos viejos no se retiran, solo
+      salen de la ayuda corta; avisar en cada uso a quien los tiene en scripts sería ruido.
 - [x] `/csda:*` → `/specgate:*` con migración en `update` — **hecho 2026-10-06**, rama
       `feat/specgate-agent-names`. Encontrado de paso: `update` adoptaba el `README.md` del
       proyecto como el del plugin (la siguiente ejecución lo habría corrompido), y el plugin

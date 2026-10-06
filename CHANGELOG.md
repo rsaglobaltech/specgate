@@ -27,6 +27,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Changed
 
+- **The short help is the daily loop.** `specgate --help` lists `init`, then
+  `status`, `new`, `req`, `check` and `done` — nothing else. `change`, `plan`,
+  `validate`, `adopt` and `onboard` keep working and are in `--help --all`. A
+  test fails if a line is added, so growing it is a decision.
 - **One name in the agent too: `/specgate:*`.** The generated slash commands
   were `/csda:*`, the tool's old name, so a team typed `specgate` in the
   terminal and `/csda:apply` in their agent. Every generated file moves:

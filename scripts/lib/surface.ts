@@ -383,12 +383,9 @@ export const SURFACE: Command[] = [
       summary:
         "Propose, review and archive a change (new · list · show · status · validate · archive).",
     },
-    coreHelp: {
-      group: "daily",
-      order: 5,
-      icon: "🔄",
-      summary: "Propose, review and archive a change to specs that already shipped.",
-    },
+    // Out of the daily help: changing a requirement that already shipped is
+    // not a daily act. The short help is the five-verb loop (phase 1 of
+    // mejoras/plan-simplificacion-equipo.md); `--help --all` lists this.
   },
 
   {
