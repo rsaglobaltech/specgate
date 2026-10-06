@@ -171,3 +171,63 @@ test("doctor says what it checked, not that scenarios run", () => {
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+
+// ── Round 3, orbit-inventory ─────────────────────────────────────────────────
+
+test("a requirement with no feature file gets an instruction, not a dash", () => {
+  // `req add` writes `-` in the Feature file column by design, and the prompt
+  // rendered it as a filename: "The feature file `-` does not exist yet.
+  // Create it." Every requirement made the documented way hit that, and an
+  // evaluator stopped rather than pay an agent to find out what a file called
+  // `-` was meant to be.
+  const { parent, dir } = repo({
+    "package.json": '{"name":"x","version":"1.0.0","scripts":{"test":"echo ok"}}',
+  });
+  try {
+    assert.equal(cli("adopt", "--project-dir", dir).status, 0);
+    const added = cli("req", "add", "res.redirect issues a 302", "--project-dir", dir);
+    const reqId = /Added (REQ-\d+)/.exec(added.stdout)[1];
+
+    const prompt = cli("harness", "prompt", reqId, "--project-dir", dir);
+    assert.equal(prompt.status, 0, prompt.stdout + prompt.stderr);
+
+    assert.doesNotMatch(prompt.stdout, /feature file `-`/, "the dash is not a filename");
+    assert.match(prompt.stdout, /declares no feature file/);
+    assert.match(prompt.stdout, /features\/<area>/, "say where to put it");
+    assert.match(prompt.stdout, new RegExp(`@${reqId}`), "and how to tag it");
+    assert.match(prompt.stdout, /req link/, "and how to record it");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("the tag convention the validator enforces is the one the docs teach", () => {
+  // Tagging `@REQ-004` alone fails, because the matrix matches `@SCN-NNN`.
+  // That is defensible and was untaught: the only tag prose in the docs
+  // mentioned @REQ-NNN, and an evaluator lost a run to it.
+  const guide = fs.readFileSync(path.join(ROOT_DIR, "docs/writing-specs.md"), "utf8");
+  assert.match(guide, /@REQ-\d+ @SCN-\d+/, "show both tags together");
+  assert.match(guide, /`@SCN-NNN` is the one the gate matches/i);
+  assert.match(guide, /no tags at all is left alone/i, "and that tagging is optional");
+});
+
+test("the docs index describes the deployment page it actually links to", () => {
+  const { NAV } = require("../../scripts/docs/nav");
+  const blurbs: string[] = [];
+  const walk = (node: any) => {
+    if (!node) return;
+    if (Array.isArray(node)) return node.forEach(walk);
+    if (node.blurb && node.href && String(node.href).includes("deployment")) {
+      blurbs.push(node.blurb);
+    }
+    for (const v of Object.values(node)) if (typeof v === "object") walk(v);
+  };
+  walk(NAV);
+  for (const blurb of blurbs) {
+    assert.doesNotMatch(
+      blurb,
+      /generated project expects to be deployed/i,
+      "deployment.md is about publishing specgate itself, not the user's project"
+    );
+  }
+});

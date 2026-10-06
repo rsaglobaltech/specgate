@@ -134,7 +134,7 @@ export const NAV: readonly NavSection[] = [
       {
         slug: "deployment",
         label: "Deployment",
-        blurb: "Where the generated project expects to be deployed from.",
+        blurb: "How specgate's own docs site, npm package and container image are published.",
       },
       {
         slug: "supply-chain",

@@ -105,9 +105,16 @@ export class AgentPrompt {
       parts.push(AgentPrompt.section("Suggested approach", opts.hint));
     }
 
-    const featureRel = String(field("featureFile", "feature_file") || "")
+    // `req add` writes `-` in the Feature file column by design, and this used
+    // to render it as a filename: "The feature file `-` does not exist yet.
+    // Create it." Every requirement made the documented way hit that, and an
+    // evaluator stopped rather than pay an agent to find out what a file named
+    // `-` was supposed to be.
+    const rawFeature = String(field("featureFile", "feature_file") || "")
       .replace(/^`|`$/g, "")
       .trim();
+    const featureRel = rawFeature === "-" ? "" : rawFeature;
+    const featureUndeclared = rawFeature === "" || rawFeature === "-";
 
     if (featureRel) {
       if (opts.featureContent) {
@@ -126,6 +133,20 @@ export class AgentPrompt {
           )
         );
       }
+    } else if (featureUndeclared) {
+      parts.push(
+        AgentPrompt.section(
+          "Gherkin scenario",
+          `This requirement declares no feature file — the matrix cell is empty.\n\n` +
+            `Write the scenario first, as \`features/<area>/<behaviour>.feature\`, tagged ` +
+            `\`@${req.requirement}\` and \`@${
+              field("scenarioId", "scenario_id") || "SCN-NNN"
+            }\` above its \`Scenario:\` line. Then record it:\n\n` +
+            `    specgate req link ${req.requirement} --feature <path>\n\n` +
+            `Creating a file that does not exist is not editing the contract — the ` +
+            `rule below is about changing scenarios that are already there.`
+        )
+      );
     }
 
     if (opts.aiRulesContent) {

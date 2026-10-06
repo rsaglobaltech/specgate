@@ -146,3 +146,34 @@ leave the project in a worse state than the one you were fixing.
 If you need a different id: `req rm` the old one and `req add` the new, which
 makes the change visible in the diff rather than spread across files nobody
 looked at.
+
+## Tagging a scenario
+
+A matrix row names a `Scenario ID`. Tags are how the feature file names it back,
+and they are what survives somebody rewording the scenario title:
+
+```gherkin
+@REQ-014 @SCN-014
+Scenario: A vet with no speciality is listed under "general practice"
+  Given a vet with no speciality
+  When the directory is listed
+  Then the vet appears under "general practice"
+```
+
+**Both tags, and `@SCN-NNN` is the one the gate matches.** `@REQ-NNN` says which
+requirement the scenario belongs to and is what a Cucumber `--tags "@REQ-014"`
+filter selects; `@SCN-NNN` is what `validate` compares against the row's
+`Scenario ID` column.
+
+**A file with no tags at all is left alone.** Tagging is optional, and adding it
+to one scenario does not force it on the rest of the project. But once a feature
+file carries any of these tags, every row pointing into that file must find its
+`@SCN-NNN` there — a half-tagged file is how a matrix ends up pointing at a
+scenario nobody renamed but everybody moved.
+
+Tagging `@REQ-014` alone therefore fails, and says so:
+
+```
+✖ features/vets/listing.feature carries traceability tags but not @SCN-014,
+  which REQ-014 declares. The matrix points at a scenario that is not there.
+```
