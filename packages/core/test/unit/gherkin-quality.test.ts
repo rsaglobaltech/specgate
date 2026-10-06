@@ -141,3 +141,33 @@ test("a good source analyses clean, in Spanish as in English", () => {
   ].join("\n");
   assert.deepEqual(analyseGherkinSource(es, "features/facturacion.feature"), []);
 });
+
+test("an unfilled <placeholder> in a plain Scenario is an error", () => {
+  // Three steps, a real title, no vague word — it passed every gate with its
+  // requirement Implemented. A template nobody filled in describes nothing.
+  const template = {
+    ...GOOD,
+    steps: [
+      { keyword: "given", text: "<the state before the action>" },
+      { keyword: "when", text: "<the action under test>" },
+      { keyword: "then", text: "<the observable outcome>" },
+    ],
+  };
+  const found = analyseScenario(template, "t");
+  assert.deepEqual(codesOf(found), Array(3).fill(QUALITY_CODES.PLACEHOLDER_STEP));
+  assert.equal(byCode(found, QUALITY_CODES.PLACEHOLDER_STEP).severity, "error");
+});
+
+test("in an Outline, <x> is a parameter, not a placeholder", () => {
+  const outline = {
+    ...GOOD,
+    outline: true,
+    hasExamples: true,
+    steps: [
+      { keyword: "given", text: "an order of <amount>" },
+      { keyword: "when", text: "the total is computed" },
+      { keyword: "then", text: "the total is <total>" },
+    ],
+  };
+  assert.deepEqual(analyseScenario(outline, "t"), []);
+});

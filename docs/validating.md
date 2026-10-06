@@ -187,6 +187,12 @@ Planning ahead is not documentary drift, so the check applies to rows that are
 `Implemented`, `Verified` or `Released`. A delivered row whose file has gone is
 drift, and fails.
 
+The same line applies to `--strict-scenarios`: the scenario rules are owed on
+delivery — including `scenario_placeholder_step`, an unfilled `<placeholder>` in
+a plain Scenario, which is what `specgate new` writes for you to fill in. The
+three rules that make a suite report a pass it never ran — no steps, a keyword
+in the wrong case, an Outline with no Examples — apply to every row.
+
 `specgate done REQ-NNN --check` and `harness run` hold the requirement they are
 closing to that rule before its status flips — otherwise they would skip the
 one requirement they are about to mark `Implemented`.

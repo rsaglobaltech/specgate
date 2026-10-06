@@ -44,8 +44,16 @@ specgate req link REQ-007 --feature features/billing/pay.feature \
                       --code src/main/Pay.java
 ```
 
-Adding a brand-new requirement? `specgate req add "<what it does>"` appends a
-well-formed row and assigns the next `REQ-NNN` for you.
+Adding a brand-new requirement? One command writes it in all three places:
+
+```bash
+specgate new "Totals are rounded half-up"
+```
+
+It assigns the next `REQ-NNN`, drafts its section in `spec.md`, writes a tagged
+scenario of `<placeholders>` under `features/`, and links the row. Rewrite the
+placeholders before you close it: while the requirement is `Draft` the gate
+leaves them alone, and `specgate done --strict` refuses any that are left.
 
 ## 4. Close the loop
 

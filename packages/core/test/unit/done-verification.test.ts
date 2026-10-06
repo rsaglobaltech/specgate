@@ -25,13 +25,15 @@ test("--check validates", () => {
 test("--strict asks for the gate the project can actually give", () => {
   // Following the documentation must not leave you with a weaker gate than the
   // tool supports — that was a cold evaluator's packaging complaint.
+  // The whole gate: the old subset left out --strict-scenarios, so a scenario
+  // of unfilled <placeholder> steps closed as Implemented.
   const plan = planDoneVerification("/p", { check: true, strict: true });
-  assert.deepEqual(plan.steps[0].argv, [
-    "/p",
-    "--strict-tdd",
-    "--strict-links",
-    "--strict-coverage",
-  ]);
+  assert.deepEqual(plan.steps[0].argv, ["/p", "--strict"]);
+});
+
+test("the requirement being closed is checked as delivered", () => {
+  const plan = planDoneVerification("/p", { check: true, strict: true, reqId: "REQ-007" });
+  assert.deepEqual(plan.steps[0].argv, ["/p", "--strict", "--delivering", "REQ-007"]);
 });
 
 test("a configured test command runs, and it runs after validate", () => {

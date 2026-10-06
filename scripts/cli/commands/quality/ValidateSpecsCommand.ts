@@ -26,7 +26,17 @@ import { ValidateProjectUseCase } from "../../../../packages/core/src/applicatio
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { RICH_HEADER } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { findCliRoot } from "../../../lib/project-root";
-import { analyseGherkinSource } from "../../../../packages/core/src/domain/GherkinQuality";
+import {
+  analyseGherkinSource,
+  QUALITY_CODES,
+} from "../../../../packages/core/src/domain/GherkinQuality";
+
+/** Scenario findings that make a suite report a pass it did not run. */
+const SUITE_LIES = new Set<string>([
+  QUALITY_CODES.NO_STEPS,
+  QUALITY_CODES.KEYWORD_CASE,
+  QUALITY_CODES.OUTLINE_WITHOUT_EXAMPLES,
+]);
 import { csdaTagsIn } from "../../../../packages/core/src/domain/GherkinTags";
 import { parseTraceabilityRows } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { analyseRequirementText } from "../../../../packages/core/src/domain/RequirementSyntax";
@@ -287,11 +297,15 @@ export class ValidateSpecsCommand extends BaseCommand {
    * this tool uses everywhere else. Under the flag, warnings fail too — asking
    * for strict and getting lenient is the H14 mistake in a different costume.
    */
-  private checkScenarioQuality(targetDir: string, featureFiles: string[]) {
+  private checkScenarioQuality(targetDir: string, featureFiles: string[], delivering = "") {
+    const owed = this.featureFilesOwed(targetDir, delivering);
     const findings = [];
     for (const file of featureFiles.slice().sort()) {
       const rel = path.relative(targetDir, file).split(path.sep).join("/");
-      findings.push(...analyseGherkinSource(fs.readFileSync(file, "utf8"), rel));
+      const found = analyseGherkinSource(fs.readFileSync(file, "utf8"), rel);
+      // A scenario Cucumber reports as passing without running anything lies
+      // whatever the row's status (H14). The rest is owed on delivery.
+      findings.push(...(owed(rel) ? found : found.filter((d) => SUITE_LIES.has(d.code))));
     }
     if (findings.length === 0) return;
 
@@ -310,6 +324,39 @@ export class ValidateSpecsCommand extends BaseCommand {
       "so the gate approves the requirement without having checked it.",
     ]);
     process.exit(1);
+  }
+
+  /**
+   * Which feature files the scenario rules apply to: the same line as
+   * `--strict-links` — a Draft row owes nothing yet, a delivered one owes
+   * everything. `specgate new` writes a scenario of `<placeholder>` steps for a
+   * person to fill in; failing the build the moment it exists would teach
+   * people to skip the gate, and passing it once delivered would be a green
+   * that means nothing. A file no row claims is always checked.
+   */
+  private featureFilesOwed(targetDir: string, delivering: string): (rel: string) => boolean {
+    const tracePath = path.join(targetDir, "docs/specs/traceability.md");
+    if (!fs.existsSync(tracePath)) return () => true;
+    let rows: any[] = [];
+    try {
+      rows = parseTraceabilityRows(fs.readFileSync(tracePath, "utf8")).rows || [];
+    } catch {
+      return () => true;
+    }
+    const claimed = new Set<string>();
+    const owed = new Set<string>();
+    for (const row of rows) {
+      const delivered =
+        DELIVERED_STATUS.has(String(row.status || "").trim()) ||
+        (delivering !== "" && row.requirement === delivering);
+      for (const declared of declaredPaths(row.featureFile)) {
+        const rel = artifactFile(declared);
+        if (!rel) continue;
+        claimed.add(rel);
+        if (delivered) owed.add(rel);
+      }
+    }
+    return (rel) => owed.has(rel) || !claimed.has(rel);
   }
 
   /**
@@ -858,7 +905,7 @@ export class ValidateSpecsCommand extends BaseCommand {
     const featureCount = featureFiles.length;
 
     if (strictScenarios) {
-      this.checkScenarioQuality(targetDir, featureFiles);
+      this.checkScenarioQuality(targetDir, featureFiles, delivering);
     }
 
     if (strictRequirements) {

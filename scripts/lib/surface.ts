@@ -249,7 +249,7 @@ export const SURFACE: Command[] = [
     },
     coreHelp: {
       group: "daily",
-      order: 5,
+      order: 6,
       icon: "✅",
       summary: "The gate: specs, links, coverage — and your tests.",
     },
@@ -317,9 +317,28 @@ export const SURFACE: Command[] = [
       icon: "✔",
       summary: "Mark a requirement as Implemented in traceability.md.",
     },
-    coreHelp: { group: "daily", order: 6, icon: "✔", summary: "Mark a requirement Implemented." },
+    coreHelp: { group: "daily", order: 7, icon: "✔", summary: "Mark a requirement Implemented." },
     json: { key: "requirement", gate: false, args: "<REQ>" },
     mcp: "mark_requirement_done",
+  },
+  {
+    name: "new",
+    editsContract: true,
+    script: ["new.js"],
+    help: {
+      group: "core",
+      icon: "✨",
+      summary: "One requirement in one step: spec.md section, tagged scenario, matrix row.",
+    },
+    coreHelp: {
+      group: "daily",
+      order: 3,
+      icon: "✨",
+      summary: "Add a requirement: its prose, its scenario and its row.",
+    },
+    json: { key: "requirement", gate: false, args: "<title>" },
+    // Not yet an MCP tool, like `check`: phase 2 fronts both from the agent.
+    mcp: false,
   },
   {
     name: "req",
@@ -338,7 +357,7 @@ export const SURFACE: Command[] = [
     },
     coreHelp: {
       group: "daily",
-      order: 3,
+      order: 4,
       icon: "📝",
       summary: "Add, link and close requirements without editing the matrix.",
     },
@@ -374,7 +393,7 @@ export const SURFACE: Command[] = [
     },
     coreHelp: {
       group: "daily",
-      order: 4,
+      order: 5,
       icon: "🔄",
       summary: "Propose, review and archive a change to specs that already shipped.",
     },

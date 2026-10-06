@@ -29,8 +29,9 @@
  *
  * ## Severity is not a matter of taste
  *
- * Two rules are errors and can never be demoted to style: `scenario_has_no_steps`
- * and `keyword_case_invalid`. Cucumber reports an empty scenario as
+ * Three rules are errors and can never be demoted to style: `scenario_has_no_steps`,
+ * `keyword_case_invalid` and `scenario_placeholder_step` — a template nobody
+ * filled in describes no behaviour. Cucumber reports an empty scenario as
  * `1 scenario (1 passed) · 0 steps · exit 0` — a test that proves nothing and
  * says it passed. 27 shipped scenarios were in that state while `--strict`
  * called them fine (H14). The rest are warnings: a two-step scenario is weak,
@@ -77,7 +78,19 @@ export const QUALITY_CODES = Object.freeze({
   OUTLINE_WITHOUT_EXAMPLES: "scenario_outline_without_examples",
   VAGUE_STEP: "vague_step",
   KEYWORD_CASE: "keyword_case_invalid",
+  PLACEHOLDER_STEP: "scenario_placeholder_step",
 });
+
+/**
+ * An unfilled `<placeholder>` in a plain Scenario.
+ *
+ * In an Outline, `<x>` is a parameter the Examples table fills. In a plain
+ * Scenario nothing fills it: `Given <the starting state>` is a template a
+ * person was meant to rewrite. Measured 2026-10-06: a scenario made of three
+ * such steps passed `validate --strict` and `done --strict` with its
+ * requirement Implemented — three steps, a real title, no vague word.
+ */
+const PLACEHOLDER_RE = /<[^<>]+>/;
 
 /**
  * A title that names nothing: `Test`, `Scenario 1`, or fewer than three words.
@@ -91,7 +104,7 @@ export function isGenericTitle(title: string): boolean {
 }
 
 /**
- * The eight rules, applied to one scenario.
+ * The nine rules, applied to one scenario.
  *
  * `target` is what the caller wants the reader to look at — a pack scenario id,
  * a file path, whatever locates it. The domain does not invent it because the
@@ -172,6 +185,16 @@ export function analyseScenario(
   }
 
   for (const step of scenario.steps) {
+    if (!scenario.outline && PLACEHOLDER_RE.test(step.text)) {
+      found.push(
+        error(
+          QUALITY_CODES.PLACEHOLDER_STEP,
+          `unfilled placeholder in "${step.keyword} ${step.text}" — nothing fills it outside an Outline.`,
+          at({ fix: "Replace the <placeholder> with the concrete state, action or outcome." })
+        )
+      );
+      continue;
+    }
     if (VAGUE_STEP_RE.test(step.text)) {
       found.push(
         warning(
