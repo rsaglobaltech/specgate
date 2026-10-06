@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-10-06
+
 ### Added
 
 - **`prompt_precedents` shows the agent an accepted requirement from the same
