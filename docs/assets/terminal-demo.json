@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.10.0",
+    "version": "0.11.0",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
@@ -142,7 +142,7 @@
       "surface": "specops add",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1060,
+      "holdMs": 1330,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -165,6 +165,21 @@
           "t": "ℹ️ [INFO] Domain pack expansion completed.",
           "c": "info",
           "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "⚠️  This pack writes its own traceability matrix: the project's matrix is hand-kept again.",
+          "c": "warn",
+          "s": "err"
+        },
+        {
+          "t": "   `specgate matrix --migrate` switches it back once its requirements have `## REQ-NNN` sections.",
+          "c": "out",
+          "s": "err"
         }
       ]
     },
@@ -236,7 +251,7 @@
           "s": "out"
         },
         {
-          "t": "      · code:    `API /health`, smoke test",
+          "t": "      · code:    `API /health, smoke test`",
           "c": "out",
           "s": "out"
         }
@@ -358,7 +373,7 @@
       "omitted": 0,
       "lines": [
         {
-          "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 96 +++++++++++++++++++++++++",
+          "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 98 +++++++++++++++++++++++++",
           "c": "out",
           "s": "out"
         },
@@ -378,7 +393,7 @@
           "s": "out"
         },
         {
-          "t": " 4 files changed, 116 insertions(+), 1 deletion(-)",
+          "t": " 4 files changed, 118 insertions(+), 1 deletion(-)",
           "c": "out",
           "s": "out"
         }

@@ -2,7 +2,7 @@
   "name": "specgate",
   "displayName": "Spec-Driven Development",
   "description": "Specs as executable contracts: the daily loop as commands, the spec tree over MCP, and the gate as a hook that runs before the session can end.",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "license": "MIT",
   "keywords": [
     "spec-driven-development",
