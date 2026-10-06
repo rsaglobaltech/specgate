@@ -83,7 +83,7 @@ function nextCommand({ counts, orphans }: any): string {
     return `specgate done <REQ>  ${c.dim}— ${counts.NEEDS_STATUS_UPDATE} requirement(s) ready to close${c.reset}`;
   if (counts.total === 0)
     return `specgate req add "<title>"  ${c.dim}— no requirements yet${c.reset}`;
-  return `specgate validate --strict-tdd  ${c.dim}— everything implemented; gate it${c.reset}`;
+  return `specgate validate --strict  ${c.dim}— everything implemented; gate it${c.reset}`;
 }
 
 export function nextCommandPlain({ counts, orphans }: any): string {
@@ -93,7 +93,7 @@ export function nextCommandPlain({ counts, orphans }: any): string {
     return "specgate plan";
   if (counts.NEEDS_STATUS_UPDATE > 0) return "specgate done <REQ>";
   if (counts.total === 0) return 'specgate req add "<title>"';
-  return "specgate validate --strict-tdd";
+  return "specgate validate --strict";
 }
 
 function emitText(projectDir: string, summary: any, lock: any): void {

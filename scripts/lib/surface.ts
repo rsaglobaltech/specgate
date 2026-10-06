@@ -246,7 +246,7 @@ export const SURFACE: Command[] = [
       group: "core",
       icon: "✅",
       summary:
-        "Check structure, traceability, Gherkin (+ --strict-tdd / --strict-scenarios / --strict-requirements / --strict-links / --against-lock gates).",
+        "Check structure, traceability, Gherkin. --strict is the gate: TDD, links, scenarios, requirements and coverage.",
     },
     coreHelp: {
       group: "daily",

@@ -189,7 +189,7 @@ export class FixCommand extends BaseCommand {
     io.emit({ ...base, applied: true }, () =>
       process.stdout.write(
         `${c.green}✔${c.reset}  Applied ${actions.length} fix(es) to docs/specs/traceability.md\n` +
-          `   ${c.dim}Next: replace the TODO cells, then \`specgate validate --strict-tdd\`.${c.reset}\n`
+          `   ${c.dim}Next: replace the TODO cells, then \`specgate validate --strict\`.${c.reset}\n`
       )
     );
     process.exit(0);

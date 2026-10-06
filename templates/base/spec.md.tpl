@@ -57,7 +57,7 @@ reading logs.
 > The starter requirement, wired end to end: this prose, the row in
 > `docs/specs/traceability.md`, and `features/core/health.feature`. Rewrite it
 > for your own first requirement, or remove all three together —
-> `specgate validate --strict-tdd` reports any of them going missing on its own.
+> `specgate validate --strict` reports any of them going missing on its own.
 
 ## 9. Non-functional requirements
 | ID | Requirement | Quality attribute | Status |

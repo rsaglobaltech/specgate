@@ -949,7 +949,7 @@ function cmdArchive(opts) {
         `    ${c.dim}specs:${c.reset}        ${t.added} added · ${t.modified} modified · ${t.removed} removed\n` +
         `    ${c.dim}traceability:${c.reset} ${t.traceability.added} row(s) added · ${t.traceability.updated} updated · ${t.traceability.removed} removed\n` +
         `    ${c.dim}features:${c.reset}     ${plan.writes.filter((w) => w.kind === "feature").length} materialised\n\n` +
-        `  ${c.dim}Now run${c.reset} ${c.cyan}specgate validate . --strict-tdd${c.reset} ${c.dim}— it will fail until the tests exist.${c.reset}\n\n`
+        `  ${c.dim}Now run${c.reset} ${c.cyan}specgate validate . --strict${c.reset} ${c.dim}— it will fail until the tests exist.${c.reset}\n\n`
     );
     if (plan.warnings.length > 0) printDiagnostics(plan.warnings, process.stdout);
   });

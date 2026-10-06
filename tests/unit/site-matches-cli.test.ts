@@ -78,6 +78,36 @@ test("asking a command what it does is never a usage error", () => {
   }
 });
 
+test("req <subcommand> --help is the subcommand's help, not the parent's", () => {
+  // `req --help` says "Run specgate req <subcommand> --help for a subcommand's
+  // own flags", and every subcommand answered with that same sentence again.
+  const cases: Array<[string, string[]]> = [
+    ["add", ["specgate req add", "--status"]],
+    ["link", ["specgate req link", "--feature", "--test", "--code"]],
+    ["rm", ["specgate req rm", "--dry-run", "--force"]],
+    ["done", ["specgate done", "--status"]],
+  ];
+  for (const [sub, expected] of cases) {
+    const r = cli("req", sub, "--help");
+    assert.equal(r.status, 0, `req ${sub} --help should exit 0`);
+    for (const s of expected) {
+      assert.ok(r.stdout.includes(s), `req ${sub} --help should mention ${s}`);
+    }
+    assert.ok(
+      !r.stdout.includes("for a subcommand's own flags"),
+      `req ${sub} --help printed the parent usage`
+    );
+  }
+});
+
+test("the one gate is the one the CLI recommends", () => {
+  // `--strict` is the gate (ADR-0026, #174). The top-level help still sold
+  // `--strict-tdd`, which passes an Implemented row whose test file is gone.
+  const all = cli("--help", "--all").stdout;
+  assert.ok(!all.includes("--strict-tdd"), "`--help --all` should not recommend --strict-tdd");
+  assert.ok(all.includes("--strict"), "`--help --all` should name --strict");
+});
+
 test("validate --help names every strict flag it accepts", () => {
   // `--strict-links` existed, worked, and appeared in no help text — so the
   // gate that would have caught half of what an evaluator broke was invisible.

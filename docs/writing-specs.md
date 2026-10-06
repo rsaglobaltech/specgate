@@ -90,10 +90,10 @@ specgate plan --format json
 specgate done REQ-007                          # → Status="Implemented"
 specgate done REQ-007 --status Verified         # → Status="Verified"
 specgate done REQ-007 --check                   # runs `validate` first; aborts on red
-specgate done REQ-007 --strict                  # like --check but uses `validate --strict-tdd`
+specgate done REQ-007 --strict                  # like --check but uses the gate, `validate --strict`
 ```
 
-`done` edits exactly one cell in `docs/specs/traceability.md`. Combined with `validate --strict-tdd` in CI, the matrix is the live source of truth instead of a rear-view mirror.
+`done` edits exactly one cell in `docs/specs/traceability.md`. Combined with `validate --strict` in CI, the matrix is the live source of truth instead of a rear-view mirror.
 
 ### AI agent recipe (Claude Desktop / Cursor / Aider with MCP)
 

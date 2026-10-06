@@ -23,7 +23,7 @@ prompt deterministically.
 3. Paste the prompt below verbatim, then say "go".
 4. When the agent says it is done, run:
    ```bash
-   specgate validate . --strict-tdd
+   specgate validate . --strict
    <your test command>      # e.g. mvn -B test
    specgate plan
    ```
@@ -63,7 +63,7 @@ You **must not** rewrite, refine, or "improve" any of those files.
 - Respect the architectural constraints in `AI_RULES.md` (Hexagonal / Clean / DDD as declared).
 - Use `csda` to introspect — never to rewrite specs:
   - `specgate plan`                — which REQs are pending and what is missing.
-  - `specgate validate . --strict-tdd` — the gate you must satisfy.
+  - `specgate validate . --strict` — the gate you must satisfy.
   - `specgate pack lint --pack-root <cached pack dir> --pack <id> --graph` — visualise the domain.
 
 ## Phase 1 — Goal
@@ -86,7 +86,7 @@ Make the project executable end-to-end:
    you.
 
 ## Acceptance (Phase 1 is "done" when…)
-- `specgate validate . --strict-tdd` passes.
+- `specgate validate . --strict` passes.
 - `<your test command>` passes — with at least one scenario executed for
   real (not skipped, not Pending).
 - `specgate plan` lists the still-pending REQs cleanly.

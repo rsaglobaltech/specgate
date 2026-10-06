@@ -156,6 +156,38 @@ function usage(): void {
   );
 }
 
+const FIELD_FLAGS =
+  `    --feature <path>   feature file          --test <path>   test artifact\n` +
+  `    --code <path>      implementation        --scenario <id> scenario id\n` +
+  `    --uc <text>        use case              --cmd <text>    command/query\n` +
+  `    --agg <name>       aggregate             --evt <name>    event\n` +
+  `    --status <status>  Draft · Approved · Implemented · Verified · Released · Deprecated\n`;
+
+/**
+ * `usage()` promised "a subcommand's own flags" and then printed itself again
+ * for every subcommand, so `req link --help` never named a single field flag.
+ * Found 2026-10-06 walking the daily loop on a fresh repo.
+ */
+const SUB_USAGE: Record<string, string> = {
+  add:
+    `\n  📝 ${c.bold}specgate req add${c.reset} "<title>" [field flags]\n\n` +
+    `  Reserves the next REQ-NNN, adds its row to docs/specs/traceability.md\n` +
+    `  and a draft \`## REQ-NNN\` section to spec.md. Status defaults to Draft.\n\n` +
+    `  FIELD FLAGS (optional)\n${FIELD_FLAGS}\n`,
+  link:
+    `\n  📝 ${c.bold}specgate req link${c.reset} REQ-NNN <field flag>...\n\n` +
+    `  Sets fields on every row of REQ-NNN. At least one flag is required.\n\n` +
+    `  FIELD FLAGS\n${FIELD_FLAGS}\n` +
+    `  EXAMPLE\n    specgate req link REQ-007 --feature features/orders.feature --test test/orders.test.js\n\n`,
+  rm:
+    `\n  📝 ${c.bold}specgate req rm${c.reset} REQ-NNN [--dry-run] [--force]\n\n` +
+    `  Removes the requirement's rows and its spec.md section.\n\n` +
+    `    --dry-run   show what would be removed, write nothing\n` +
+    `    --force     required once the requirement has left Draft —\n` +
+    `                \`specgate done REQ-NNN --status Deprecated\` is usually what you want\n\n`,
+};
+SUB_USAGE.remove = SUB_USAGE.rm;
+
 function cmdList(tracePath: string, io?: any) {
   const rows = parseTraceability(readMatrix(tracePath));
   const reqs = rows.filter((r) => /^REQ-\d+/.test(r.requirement || ""));
@@ -229,7 +261,12 @@ export class ReqCommand extends BaseCommand {
     // required", which is the tool refusing to explain itself to someone
     // trying to learn it — while two help texts tell you to use --help.
     if (stripped.includes("--help") || stripped.includes("-h")) {
-      usage();
+      if (sub === "done") {
+        new DoneCommand(["--help"]).execute();
+        return;
+      }
+      if (sub && SUB_USAGE[sub]) process.stdout.write(SUB_USAGE[sub]);
+      else usage();
       process.exit(0);
     }
 

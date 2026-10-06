@@ -144,7 +144,7 @@ is the whole reason the Docker image and the Maven and Gradle plugins exist.
 
 ```bash
 docker run --rm -v "$PWD:/workspace" \
-  ghcr.io/rsaglobaltech/specgate:0.8.0 validate . --strict-tdd
+  ghcr.io/rsaglobaltech/specgate:0.8.0 validate . --strict
 ```
 
 Pin the version. `latest` is a convenience for a laptop, not for a pipeline —
@@ -158,7 +158,7 @@ spec-gate:
   image: ghcr.io/rsaglobaltech/specgate:0.8.0
   stage: test
   script:
-    - specgate validate . --strict-tdd
+    - specgate validate . --strict
 ```
 
 In Jenkins:
@@ -166,7 +166,7 @@ In Jenkins:
 ```groovy
 stage('Spec gate') {
     agent { docker { image 'ghcr.io/rsaglobaltech/specgate:0.8.0' } }
-    steps { sh 'specgate validate . --strict-tdd' }
+    steps { sh 'specgate validate . --strict' }
 }
 ```
 
@@ -206,8 +206,8 @@ Plain shell (works without husky/lefthook):
 # .git/hooks/pre-commit  (chmod +x)
 #!/usr/bin/env bash
 set -e
-echo "→ specgate validate --strict-tdd --strict-links"
-npx --yes @rsaglobaltech/specgate@0.8.1 validate . --strict-tdd --strict-links
+echo "→ specgate validate --strict"
+npx --yes @rsaglobaltech/specgate@0.8.1 validate . --strict
 echo "→ specgate specops diff (must be clean)"
 DIFF=$(npx --yes @rsaglobaltech/specgate@0.8.1 specops diff --format json 2>/dev/null || true)
 if echo "$DIFF" | grep -q '"added":\[\([^]].\)\]\|"modified":\[\([^]].\)\]'; then
@@ -221,7 +221,7 @@ Or with **husky** (`package.json`):
 ```bash
 npm install --save-dev husky
 npx husky init
-echo 'npx --yes @rsaglobaltech/specgate@0.8.1 validate . --strict-tdd --strict-links' > .husky/pre-commit
+echo 'npx --yes @rsaglobaltech/specgate@0.8.1 validate . --strict' > .husky/pre-commit
 ```
 
 Mirror the same call in CI (see §4) so the gate survives `--no-verify`.
