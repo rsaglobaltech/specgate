@@ -69,6 +69,7 @@
     "lint:fix": "eslint --fix \"bin/**/*.{ts,js}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"packages/**/*.ts\" \"features/**/*.ts\"",
     "format": "prettier --write \"bin/**/*.{ts,js}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"packages/**/*.ts\" \"features/**/*.ts\"",
     "format:check": "prettier --check \"bin/**/*.{ts,js}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"packages/**/*.ts\" \"features/**/*.ts\"",
+    "e2e": "node e2e/run.mjs",
     "verify": "npm run typecheck && npm run lint && npm test && npm run pack:dry-run && npm run selfcheck",
     "selfcheck": "node bin/specgate.js validate .",
     "docs:agent-contract": "node dist/scripts/gen_agent_contract.js",

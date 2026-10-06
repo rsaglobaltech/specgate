@@ -190,6 +190,7 @@ computes it:
 | Requirement, Use Case | the `## REQ-NNN — title` section in `spec.md` |
 | Scenario ID, Feature file | scenarios tagged `@REQ-NNN @SCN-NNN` (`specgate new` writes them) |
 | Test artifact | test files that mention `REQ-NNN` — a comment or a test name is enough |
+| Technical artifact | other source files that mention `REQ-NNN` |
 | Status | `status=` in the section's `<!-- csda:trace … -->` comment |
 
 Anything derivation cannot see — a code path, a test that does not name its

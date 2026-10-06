@@ -1,0 +1,40 @@
+name: E2E
+
+# The package as a user installs it, on throwaway repositories (e2e/run.mjs).
+#
+# The CI suites run the source tree; this runs `npm pack`, installs the
+# tarball into an empty directory and drives the installed binary through the
+# journeys a team takes: adopt, new, done, check, a stale matrix, a hand-kept
+# matrix migrated, the harness, and an upgrade from the last published
+# version. `publish-npm.yml` calls it and publishes only if it passes.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  e2e:
+    name: E2E (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Git identity for the harness journey
+        run: |
+          git config --global user.email "e2e@example.com"
+          git config --global user.name "E2E"
+      - name: Pack, install and run the journeys
+        run: node e2e/run.mjs

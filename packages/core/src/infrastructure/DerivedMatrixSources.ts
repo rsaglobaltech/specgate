@@ -95,11 +95,15 @@ export function readDerivationSources(projectDir: string): DerivationSources {
     .map((r) => read(projectDir, `features/${r}`))
     .filter((f): f is SourceFile => f !== null);
 
-  const testPaths: string[] = [];
-  walk(projectDir, "", isTestFile, testPaths);
-  const tests = testPaths
-    .map((r) => read(projectDir, r))
-    .filter((f): f is SourceFile => f !== null);
+  // One walk for both: every source file, split by the test convention.
+  const sourcePaths: string[] = [];
+  walk(projectDir, "", (r) => CODE_EXT.test(r) && !r.endsWith(".feature"), sourcePaths);
+  const tests: SourceFile[] = [];
+  const code: SourceFile[] = [];
+  for (const rel of sourcePaths) {
+    const f = read(projectDir, rel);
+    if (f) (isTestFile(rel) ? tests : code).push(f);
+  }
 
   const capDir = path.join(projectDir, "docs", "specs", "capabilities");
   const capabilities: SourceFile[] = [];
@@ -113,5 +117,5 @@ export function readDerivationSources(projectDir: string): DerivationSources {
     /* no capability specs: a spec.md-only project */
   }
 
-  return { spec, features, tests, capabilities };
+  return { spec, features, tests, capabilities, code };
 }

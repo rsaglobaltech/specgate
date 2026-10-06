@@ -26,8 +26,14 @@ on:
       - 'v*'
 
 jobs:
+  # The installed package, end to end, on all three platforms: a tag that
+  # breaks a user's first `init` must not reach the registry.
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+
   publish:
     name: Publish package
+    needs: e2e
     runs-on: ubuntu-latest
     permissions:
       contents: read

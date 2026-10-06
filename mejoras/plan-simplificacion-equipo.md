@@ -247,6 +247,15 @@ Respuesta directa a la crítica «waterfall» que reciben todas las herramientas
 
 ---
 
+### E2E del paquete instalado — **hecho 2026-10-06**
+
+`e2e/run.mjs` empaqueta, instala el tarball en un directorio vacío y recorre
+12 recorridos reales contra el binario instalado. Workflow `E2E` en cada PR,
+en Linux, macOS y Windows; `publish-npm.yml` solo publica si pasa. Lo que
+encontró antes de publicar: el harness y `plan` seguían recomendando
+`req link` en proyectos con matriz generada, y el código no se enlazaba por
+mención como los tests — ahora sí, y `req link` sale del flujo diario.
+
 ## 4. La medida
 
 Piloto con **personas del equipo** (cierra por fin el espíritu de `GATE-G3`),

@@ -69,6 +69,12 @@ export interface ReadinessInput {
   readonly blockedBy?: readonly string[];
   readonly technicalDeclared?: boolean;
   readonly testDeclared?: boolean;
+  /**
+   * The matrix is generated: a test or a source file that names the
+   * requirement *is* the link, wherever it lands, so an undeclared path is
+   * not a gap.
+   */
+  readonly derived?: boolean;
 }
 
 export interface Readiness {
@@ -155,7 +161,7 @@ export function requirementReadiness(input: ReadinessInput): Readiness {
   // These are not the noise trap A2 had to avoid. `TBD` in the test column is
   // not a false positive; it is an accurate statement about an incomplete row,
   // and TDD says that column is what should be filled in first.
-  if (!input.testDeclared) {
+  if (!input.testDeclared && !input.derived) {
     blockers.push(
       warning(
         READINESS_CODES.NO_TEST_ARTIFACT,
@@ -165,7 +171,7 @@ export function requirementReadiness(input: ReadinessInput): Readiness {
       )
     );
   }
-  if (!input.technicalDeclared) {
+  if (!input.technicalDeclared && !input.derived) {
     blockers.push(
       warning(
         READINESS_CODES.NO_TECHNICAL_ARTIFACT,
