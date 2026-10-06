@@ -210,7 +210,7 @@ function pluginReadme(): string {
     "  `/csda:apply`, `/csda:archive`, `/csda:onboard`.",
     "- **The spec tree over MCP** — read specs, list requirements and run",
     "  `validate` as tools rather than by scraping terminal output.",
-    "- **The gate as a `Stop` hook** — `specgate validate --strict-tdd` runs when the",
+    "- **The gate as a `Stop` hook** — `specgate validate --strict` runs when the",
     "  session is about to end, and refuses the stop while it is red.",
     "",
     "## The hook, and why it does not trap you",

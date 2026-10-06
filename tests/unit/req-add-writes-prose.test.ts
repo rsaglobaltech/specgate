@@ -61,6 +61,20 @@ test("req add writes the requirement's prose, not just a row", () => {
   }
 });
 
+test("the adopted spec.md describes what req add does today", () => {
+  // The header written by `adopt` kept saying `req add` "does not write a
+  // section here" after it started writing one — the first thing a joiner
+  // reads, contradicted by the first command they run.
+  const { parent, dir } = adopted();
+  try {
+    const spec = fs.readFileSync(path.join(dir, "spec.md"), "utf8");
+    assert.doesNotMatch(spec, /does not write a section here/);
+    assert.match(spec, /draft `## REQ-NNN` section/);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
 test("the harness prompt now carries the requirement it asks for", () => {
   const { parent, dir } = adopted();
   try {

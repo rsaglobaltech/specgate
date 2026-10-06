@@ -44,7 +44,7 @@ expected interactions (Pact files) and providers verify them in CI before any re
 1. Write a failing Pact test describing the expected HTTP interaction.
 2. Run the Pact test — it generates `contracts/pacts/{{CONSUMER_SERVICE}}-{{PROVIDER_SERVICE}}.json`.
 3. Commit the Pact file alongside the consumer feature.
-4. Open a PR — CI runs `validate --strict-tdd` to confirm the Pact file is registered.
+4. Open a PR — CI runs `validate --strict` to confirm the Pact file is registered.
 
 ### Provider side
 
@@ -83,7 +83,7 @@ Before merging any change to a `contracts/` schema file:
 | Pact interactions per endpoint | ≥ 1 happy path + ≥ 1 error path |
 | Provider verification pass rate | 100% on main |
 | Schema lint errors | 0 on main |
-| Strict-TDD gate (`validate --strict-tdd`) | Must pass on every PR |
+| The gate (`validate --strict`)            | Must pass on every PR |
 
 ## References
 

@@ -233,7 +233,7 @@ npx @rsaglobaltech/specgate@latest specops sync \
   --pack-version v0.2.0
 
 # 3. Re-validate
-npx @rsaglobaltech/specgate@latest validate ./smart-parking --strict-tdd
+npx @rsaglobaltech/specgate@latest validate ./smart-parking --strict
 
 # 4. Commit the updated .specops.lock and the regenerated spec files
 git add .specops.lock docs/specs features

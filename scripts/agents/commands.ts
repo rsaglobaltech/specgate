@@ -56,7 +56,7 @@ export const STEPS = [
     run: ["specgate change instructions apply --json", "specgate plan --json"],
     guidance: [
       "One requirement at a time. `specgate plan` is the queue.",
-      "Write the test first. Set the row's status to `In Dev` only once it exists, or `validate --strict-tdd` fails with `[TDD-1]`.",
+      "Write the test first. Set the row's status to `In Dev` only once it exists, or `validate --strict` fails with `[TDD-1]`.",
       "Never edit `docs/specs/traceability.md` by hand — `specgate req link` and `specgate done` write it.",
     ],
   },

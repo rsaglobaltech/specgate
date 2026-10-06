@@ -254,7 +254,7 @@ It additionally fails when:
 - a `REQ-NNN` is mentioned in `spec.md` but has no row in
   `traceability.md` — `[TDD-3]`.
 
-Wire `validate --strict-tdd` into CI and a git pre-commit hook. It is the
+Wire `validate --strict` into CI and a git pre-commit hook. It is the
 gate that keeps specs and code honest.
 
 ---
@@ -413,7 +413,7 @@ and `req link` fills the columns you name and leaves the rest alone.
 
 ```bash
 specgate status                      # where the project stands, and what is next
-specgate validate . --strict-tdd     # confirms REQ-101 is wired in correctly
+specgate validate . --strict     # confirms REQ-101 is wired in correctly
 specgate plan                        # REQ-101 now appears as pending
 # …write ReservationServiceTest, then ReservationService.java…
 specgate req link REQ-101 --test ReservationServiceTest --code ReservationService.java
@@ -502,7 +502,7 @@ untouched instead of writing markers), `--pack <id>` (sync just one pack).
 ### 8.3 After a sync
 
 ```bash
-specgate validate . --strict-tdd
+specgate validate . --strict
 specgate plan                        # new REQs from the pack now show as pending
 git add .specops.lock .specops/ docs/ features/
 git commit -m "chore: sync parking pack to v0.2.0"
@@ -788,7 +788,7 @@ The moment it lands, the requirement is real work again:
 
 ```bash
 specgate plan                        # the modified REQ is pending once more
-specgate validate . --strict-tdd     # fails with [TDD-1] once you move it to In Dev
+specgate validate . --strict     # fails with [TDD-1] once you move it to In Dev
 ```
 
 > **It composes with packs.** When the pack itself changes, `specgate specops diff
@@ -826,7 +826,7 @@ The complete prompt, ready to paste, lives at
 # 1. Open opencode/Claude/Cursor inside smart-parking/
 # 2. Paste docs/bootstrap-prompt.md verbatim, then "go".
 # 3. When the agent is done, prove it:
-specgate validate . --strict-tdd
+specgate validate . --strict
 mvn -B test          # or your stack's test command
 specgate plan            # remaining REQs show as pending
 git commit -am "phase 1: bootstrap"
@@ -1056,7 +1056,7 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 | Command                                                               | Run from      | What it does                                                             |
 | --------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------ |
 | `specgate init --config <f.yaml> --out <dir>`                             | 📍 parent dir | Scaffold a new spec-driven project                                       |
-| `specgate validate <dir> [--strict-tdd]`                                  | 📍 project    | Check structure, traceability, Gherkin; `--strict-tdd` adds the TDD gate |
+| `specgate validate <dir> [--strict]`                                      | 📍 project    | Check structure, traceability, Gherkin; `--strict` is the gate           |
 | `specgate plan [--format json]`                                           | 📍 project    | List requirements still needing work                                     |
 | `specgate done REQ-NNN [--check\|--strict]`                               | 📍 project    | Mark a requirement done in the matrix                                    |
 | `specgate status`                                                         | 📍 project    | Daily dashboard: totals, orphans, pack versions, next command            |

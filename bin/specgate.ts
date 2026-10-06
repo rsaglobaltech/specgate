@@ -86,8 +86,8 @@ const EXAMPLES =
     "Generate a new project from a config file"
   ) +
   example(
-    `npx @rsaglobaltech/specgate@latest validate ./projects/my-app --strict-tdd`,
-    "Validate with the TDD gate"
+    `npx @rsaglobaltech/specgate@latest validate ./projects/my-app --strict`,
+    "Validate with the gate"
   ) +
   example(
     `npx @rsaglobaltech/specgate@latest expand --pack-root ./domain-packs \\\n        --pack parking-management/backend --project-dir ./projects/my-app \\\n        --var PROJECT_NAME="My App" --var PROJECT_SLUG=my-app --var DOMAIN="parking ops"`,

@@ -74,10 +74,10 @@ export const STAGES = {
     rules: [
       "Work one requirement at a time. `specgate plan` is the queue.",
       "The scenario in the delta is the acceptance criterion — implement to it, not around it.",
-      "Set the row's Test artifact and move its status to `In Dev` only once the test exists; `validate --strict-tdd` fails with `[TDD-1]` otherwise.",
+      "Set the row's Test artifact and move its status to `In Dev` only once the test exists; `validate --strict` fails with `[TDD-1]` otherwise.",
       "Do not edit `docs/specs/traceability.md` by hand — `specgate req link` and `specgate done` write it.",
     ],
-    nextCommand: "specgate validate . --strict-tdd",
+    nextCommand: "specgate validate . --strict",
   },
   archive: {
     summary: "Merge the change into the spec tree and file it away.",

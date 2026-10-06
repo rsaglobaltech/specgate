@@ -66,6 +66,17 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **Every place that recommends a gate now recommends the gate.** `--strict`
+  became the one gate in #174, but `specgate --help --all`, its example,
+  `status`, `fix`, `change`, the instructions written for agents, the MCP tool
+  description, the README, seven documentation pages and two templates still
+  sold `--strict-tdd` — which passes a requirement whose test file is gone.
+  The individual `--strict-*` flags keep working.
+- **`req add|link|rm|done --help` answer with the subcommand's own help.** They
+  printed the parent usage, whose last line tells you to run exactly that.
+- **The `spec.md` written by `adopt` describes `req add` as it is.** It still
+  said `req add` "does not write a section here" after it started writing one.
+
 - **`git worktree add` raced itself under `--concurrency`.** Each requirement
   runs in its own process and every one creates a worktree in the same
   repository; git writes `.git/worktrees/<name>/` incrementally, so a sibling

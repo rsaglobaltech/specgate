@@ -41,7 +41,7 @@ npx @rsaglobaltech/specgate@latest init      # interactive wizard
 Requires **Node.js ≥ 22** — or none at all with the Docker image:
 
 ```bash
-docker run --rm -v "$PWD:/workspace" ghcr.io/rsaglobaltech/specgate validate . --strict-tdd
+docker run --rm -v "$PWD:/workspace" ghcr.io/rsaglobaltech/specgate validate . --strict
 ```
 
 → [Getting started](docs/getting-started.md) · [Quickstart for joiners](docs/quickstart.md)
@@ -53,7 +53,7 @@ Each level is useful on its own and never requires the ones above it.
 | Level | You get | Commands | Cost |
 | --- | --- | --- | --- |
 | **L1** | Traceable specs in your repo | `onboard`, `adopt` | ~1 hour |
-| **L2** | A PR gate enforcing spec and test coverage | `validate --strict-tdd` | ~1 hour |
+| **L2** | A PR gate enforcing spec and test coverage | `validate --strict` | ~1 hour |
 | **L3** | Versioned, reusable domain requirements | `specops add / sync / diff` | ~1 day |
 | **L4** | Agent-driven delivery, one requirement at a time | `agents init`, `harness run` | ~1 week |
 
@@ -66,8 +66,8 @@ closes them.
 → [Quickstart](docs/quickstart.md) · [Command reference](docs/commands.md)
 
 **Specs that are checked.** `specgate validate` fails the build when a requirement
-has no scenario, no test, or no row in the traceability matrix. `--strict-tdd`
-fails it when a requirement moves past Draft without a test.
+has no scenario, no test, or no row in the traceability matrix. `--strict` — the
+gate — also fails one past Draft without a test, or linked to a missing file.
 → [Writing specs](docs/writing-specs.md) · [Validating](docs/validating.md)
 
 **Changes you review as intent.** Modify a spec that already shipped through a

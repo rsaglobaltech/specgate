@@ -292,7 +292,7 @@ TOOLS["csda_alm_pull"] = new GenericCliTool(
 );
 TOOLS["validate_project"] = new GenericCliTool(
   "validate_project",
-  "Check structure, traceability, Gherkin (+ --strict-tdd / --strict-scenarios / --strict-requirements / --strict-links / --against-lock gates).",
+  "Check structure, traceability, Gherkin. --strict is the gate: TDD, links, scenarios, requirements and coverage.",
   "validate",
   {
     type: "object",

@@ -28,7 +28,7 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 | `specgate req rm <REQ>` | Remove a requirement's matrix row(s) and its prose in `spec.md`. `--dry-run` previews; `--force` is required past `Draft`, because removing a delivered requirement deletes the record that it shipped. Reports any feature file left unreferenced, and says what it did **not** touch. |
 | `specgate done <REQ>` | Mark a requirement Implemented. `--check` validates first and refuses to write on failure; `--strict` adds `--strict-tdd --strict-links --strict-coverage`. `--test-cmd "<cmd>"` (or `test_cmd:` in `harness.config.yaml`) also runs the project's tests and requires them to pass. Without one, `done` says it checked the specification and not the code. |
 | `specgate fix` | Apply the repairs `validate` suggests. `--dry-run` previews. |
-| `specgate validate [--strict-tdd] [--strict-scenarios] [--strict-requirements] [--strict-links] [--against-lock]` | The gate. Structure, traceability and Gherkin always; four opt-in gates on top. |
+| `specgate validate [--strict] [--against-lock]` | The gate. Structure, traceability and Gherkin always; `--strict` adds TDD, links, scenarios, requirements and coverage — what CI should run. The individual `--strict-*` flags still work. |
 | `specgate validate . --strict-coverage` | Fails when a scenario in a declared feature file is named by no test artifact. A name match, so it is opt-in — it does not run your suite. |
 
 ## Changing a spec that already shipped
