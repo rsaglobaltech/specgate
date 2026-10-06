@@ -6,6 +6,7 @@ import { readLock } from "../../../specops/lock";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
+import { refreshDerivedMatrix } from "./MatrixCommand";
 
 const COLOR_ENABLED =
   process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
@@ -233,6 +234,8 @@ export class StatusCommand extends BaseCommand {
       process.exit(2);
     }
 
+    // A generated matrix is a cache: read it fresh.
+    refreshDerivedMatrix(projectDir);
     const traceContent = fs.readFileSync(tracePath, "utf8");
     const summary = summarise(projectDir, traceContent);
     let lock = null;

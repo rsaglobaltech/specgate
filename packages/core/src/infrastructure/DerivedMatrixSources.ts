@@ -101,5 +101,17 @@ export function readDerivationSources(projectDir: string): DerivationSources {
     .map((r) => read(projectDir, r))
     .filter((f): f is SourceFile => f !== null);
 
-  return { spec, features, tests };
+  const capDir = path.join(projectDir, "docs", "specs", "capabilities");
+  const capabilities: SourceFile[] = [];
+  try {
+    for (const e of fs.readdirSync(capDir, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      const f = read(projectDir, `docs/specs/capabilities/${e.name}/spec.md`);
+      if (f) capabilities.push(f);
+    }
+  } catch {
+    /* no capability specs: a spec.md-only project */
+  }
+
+  return { spec, features, tests, capabilities };
 }

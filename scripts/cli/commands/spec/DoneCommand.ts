@@ -12,6 +12,7 @@ import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/
 import { spawnSync } from "node:child_process";
 import * as path from "node:path";
 import { findCliRoot } from "../../../lib/project-root";
+import { isDerivedProject, writeRequirementFields } from "../../../lib/derived-writes";
 
 const COLOR_ENABLED =
   process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
@@ -179,9 +180,26 @@ export class DoneCommand extends BaseCommand {
       ]);
     }
 
-    const repo = new DiskTraceabilityRepository();
-    const useCase = new UpdateRequirementStatusUseCase(repo);
-    const result = useCase.execute(projectDir, opts.reqId!, opts.status);
+    // A generated matrix gets its status from spec.md: writing the row would
+    // be undone by the next regeneration.
+    const derivedRows = isDerivedProject(projectDir)
+      ? writeRequirementFields(projectDir, opts.reqId!, { status: opts.status })
+      : undefined;
+    const result =
+      derivedRows === undefined
+        ? new UpdateRequirementStatusUseCase(new DiskTraceabilityRepository()).execute(
+            projectDir,
+            opts.reqId!,
+            opts.status
+          )
+        : derivedRows === null
+          ? {
+              ok: false,
+              code: "requirement_not_in_matrix",
+              error: `${opts.reqId} has no section in spec.md.`,
+              updated: 0,
+            }
+          : { ok: true, updated: derivedRows };
 
     if (!result.ok) {
       if (result.code === "traceability_not_found") {

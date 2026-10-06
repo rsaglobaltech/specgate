@@ -217,3 +217,10 @@ what CI runs — fails with `matrix_stale` if a commit forgot to, and
 `specgate matrix` fixes that. A project that has not migrated is untouched by
 all of this.
 
+The everyday commands write the sources for you: `specgate done` sets `status=`
+in the requirement's comment, `req link` and `req add --feature …` record their
+links there, `new`, `req rm` and `change archive` regenerate the matrix, and
+`status`, `plan` and `check` read it fresh. `fix` has nothing to repair in a
+generated matrix. **One limit, for now:** a domain pack's requirements need
+their `## REQ-NNN` section in `spec.md` to become rows.
+

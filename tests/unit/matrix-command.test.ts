@@ -140,3 +140,68 @@ test("a hand-kept matrix is never touched by matrix, check or validate", () => {
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+
+// ── 3B: on a generated matrix, commands write the sources ────────────────────
+
+function derived() {
+  const p = project();
+  assert.equal(cli("matrix", "--migrate", "--project-dir", p.dir).status, 0);
+  return p;
+}
+const row = (dir, id) =>
+  fs
+    .readFileSync(MATRIX(dir), "utf8")
+    .split("\n")
+    .find((l) => l.startsWith(`| ${id} |`)) || "";
+
+test("done writes the status into spec.md, where regeneration reads it", () => {
+  const { parent, dir } = derived();
+  try {
+    assert.equal(cli("done", "REQ-002", "--status", "Verified", "--project-dir", dir).status, 0);
+    assert.match(fs.readFileSync(path.join(dir, "spec.md"), "utf8"), /csda:trace status=Verified/);
+    assert.match(row(dir, "REQ-002"), /\| Verified \|$/);
+    assert.equal(cli("matrix", "--check", "--project-dir", dir).status, 0, "nothing left stale");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("req link and req add keep their fields across a regeneration", () => {
+  const { parent, dir } = derived();
+  try {
+    cli("req", "link", "REQ-002", "--code", "lib/orders.js", "--project-dir", dir);
+    cli(
+      "req",
+      "add",
+      "Refunds are logged",
+      "--feature",
+      "features/refunds.feature",
+      "--project-dir",
+      dir
+    );
+    cli("matrix", "--project-dir", dir);
+
+    assert.match(row(dir, "REQ-002"), /`lib\/orders\.js`/);
+    const added = row(dir, "REQ-004");
+    assert.match(added, /`features\/refunds\.feature`/);
+    assert.match(added, /\| SCN-004 \|/, "the scenario id it reserved is kept");
+
+    cli("new", "Coupons expire", "--project-dir", dir);
+    assert.match(row(dir, "REQ-005"), /\| SCN-005 \|/, "and not reserved twice");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("fix has nothing to edit in a generated matrix", () => {
+  const { parent, dir } = derived();
+  try {
+    const before = fs.readFileSync(MATRIX(dir), "utf8");
+    const r = cli("fix", "--project-dir", dir);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /matrix is generated/);
+    assert.equal(fs.readFileSync(MATRIX(dir), "utf8"), before);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});

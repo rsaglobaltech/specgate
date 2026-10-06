@@ -182,8 +182,11 @@ la CI ejecutan.
       y vuelta), `matrix_stale` en `validate`, `check` regenera — **hecho 2026-10-06**, rama
       `feat/derived-matrix`. Decisión: el fichero **sigue en disco como salida generada**,
       porque ~20 lectores lo abren directamente (mapa medido); cambia el dueño, no el formato.
-- [ ] **3B** — `new`, `done`, `req link`, `req rm` escriben en las fuentes en modo derivado;
-      `status`/`plan` regeneran.
+- [x] **3B** — en modo derivado `done`/`req link`/`req add` escriben en `spec.md`;
+      `new`/`req rm`/`change archive` regeneran; `status`/`plan`/`check` leen fresco; capability
+      specs derivadas; `fix`/`expand`/MCP no pisan la matriz — **hecho 2026-10-06**, rama
+      `feat/derived-writers`. **Límite conocido:** los requisitos de un pack necesitan su
+      sección `## REQ-NNN` en `spec.md` para tener fila.
 - [ ] **3C** — modo derivado por defecto en `init`/`adopt`; `req link` y el merge driver fuera
       de la ruta común.
 

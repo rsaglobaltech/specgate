@@ -4,6 +4,7 @@ import { resolveProjectDir } from "../../../lib/project-root";
 import { error } from "../../../lib/diagnostics";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
+import { refreshDerivedMatrix } from "./MatrixCommand";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { AddRequirementUseCase } from "../../../../packages/core/src/application/AddRequirementUseCase";
 import { appendRequirementSection } from "../../../../packages/core/src/domain/SpecSections";
@@ -134,6 +135,7 @@ export class NewCommand extends BaseCommand {
         wroteSection = true;
       }
     }
+    refreshDerivedMatrix(projectDir);
 
     io.emit(
       {

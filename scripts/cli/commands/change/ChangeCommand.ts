@@ -25,6 +25,7 @@ import { agentIo } from "../../../lib/agent";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { ARTIFACTS, artifactState } from "../../../change/artifacts";
 import { parseDelta } from "../../../../packages/core/src/domain/SpecParser";
+import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { ArchiveChangeUseCase } from "../../../../packages/core/src/application/ArchiveChangeUseCase";
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import {
@@ -941,6 +942,9 @@ function cmdArchive(opts) {
       }),
     ]);
   }
+  // A generated matrix is rebuilt from the capability specs just written, so
+  // the rows archive wrote and the rows derivation produces cannot disagree.
+  refreshDerivedMatrix(projectDir);
 
   emit(opts, { archive: summary }, () => {
     const t = plan.totals;

@@ -8,6 +8,8 @@ import { DiskTraceabilityRepository } from "../../../../packages/core/src/infras
 import { AddRequirementUseCase } from "../../../../packages/core/src/application/AddRequirementUseCase";
 import { LinkRequirementUseCase } from "../../../../packages/core/src/application/LinkRequirementUseCase";
 import { DoneCommand } from "./DoneCommand";
+import { isDerivedProject, writeRequirementFields } from "../../../lib/derived-writes";
+import { refreshDerivedMatrix } from "./MatrixCommand";
 import { TraceabilityMatrix } from "../../../../packages/core/src/domain/TraceabilityMatrix";
 import { appendRequirementSection } from "../../../../packages/core/src/domain/SpecSections";
 import {
@@ -315,6 +317,17 @@ export class ReqCommand extends BaseCommand {
           wroteSection = true;
         }
       }
+      if (isDerivedProject(resolvedDir) && result.reqId) {
+        // The row is regenerated from spec.md, so whatever the flags set has
+        // to be written there or it disappears. The title is the heading.
+        const explicit: Record<string, string> = { ...fields };
+        delete explicit.useCase;
+        if (status) explicit.status = status;
+        // The scenario id it reserved: without it the next `new` reserves the
+        // same SCN number again, since nothing else records this one.
+        if (result.scenarioId && !explicit.scenarioId) explicit.scenarioId = result.scenarioId;
+        writeRequirementFields(resolvedDir, result.reqId, explicit);
+      }
 
       process.stdout.write(
         `${c.green}✔${c.reset}  Added ${c.bold}${result.reqId}${c.reset} ${c.dim}(${result.scenarioId}, status ${status || "Draft"})${c.reset}\n` +
@@ -371,6 +384,7 @@ export class ReqCommand extends BaseCommand {
         if (nextSpec !== specContent && fs.existsSync(specPath)) {
           fs.writeFileSync(specPath, nextSpec, "utf8");
         }
+        refreshDerivedMatrix(resolvedDir);
       }
 
       const prefix = dryRun ? `${c.dim}[dry-run]${c.reset} ` : "";
@@ -422,9 +436,19 @@ export class ReqCommand extends BaseCommand {
         process.exit(2);
       }
 
-      const repo = new DiskTraceabilityRepository();
-      const useCase = new LinkRequirementUseCase(repo, COL);
-      const result = useCase.execute(resolvedDir, reqId, fields);
+      // Derived project: the link goes into the requirement's csda:trace in
+      // spec.md, or the next regeneration would drop it.
+      const derivedRows = isDerivedProject(resolvedDir)
+        ? writeRequirementFields(resolvedDir, reqId, fields)
+        : undefined;
+      const result =
+        derivedRows === undefined
+          ? new LinkRequirementUseCase(new DiskTraceabilityRepository(), COL).execute(
+              resolvedDir,
+              reqId,
+              fields
+            )
+          : { ok: derivedRows !== null };
 
       if (!result.ok) {
         process.stderr.write(

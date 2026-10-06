@@ -157,3 +157,29 @@ test("a value with a single quote is stored in double quotes, and read back", ()
   const spec = setTraceFields(SPEC, "REQ-002", { test: value })!;
   assert.equal(requirementsIn(spec)[0].trace.test, value);
 });
+
+test("requirements archived into capability specs are rows too", () => {
+  const capability = {
+    path: "docs/specs/capabilities/billing/spec.md",
+    source: [
+      "# Billing",
+      "",
+      "## Requirements",
+      "",
+      "### Requirement: REQ-100 — Invoices carry VAT",
+      "",
+      "<!-- csda:trace scn=SCN-100 feature=features/billing.feature status=Implemented -->",
+      "",
+      "The system SHALL add VAT to every invoice.",
+      "",
+      "#### Scenario: SCN-100 VAT is added",
+      "- WHEN an invoice is issued",
+      "- THEN it carries VAT",
+    ].join("\n"),
+  };
+  const rows = deriveRows(sources({ capabilities: [capability] }));
+  const r = rows.find((x) => x.requirement === "REQ-100");
+  assert.ok(r, JSON.stringify(rows.map((x) => x.requirement)));
+  assert.equal(r.status, "Implemented");
+  assert.equal(r.scenarioId, "SCN-100");
+});

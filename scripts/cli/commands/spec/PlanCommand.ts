@@ -1,3 +1,4 @@
+import { refreshDerivedMatrix } from "./MatrixCommand";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -341,6 +342,9 @@ export class PlanCommand extends BaseCommand {
     if (monorepo !== null) {
       process.exit(monorepo.failures === 0 ? 0 : 1);
     }
+
+    // A generated matrix is a cache: read it fresh.
+    refreshDerivedMatrix(projectDir);
 
     const repo = new DiskTraceabilityRepository();
     const useCase = new GeneratePlanUseCase(
