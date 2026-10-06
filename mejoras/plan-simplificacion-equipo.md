@@ -177,6 +177,16 @@ la CI ejecutan.
 
 ### Fase 3 — La matriz se genera, no se mantiene (2–3 semanas)
 
+**Avance:**
+- [x] **3A** — derivación, `specgate matrix` (`--check`, `--migrate` con verificación de ida
+      y vuelta), `matrix_stale` en `validate`, `check` regenera — **hecho 2026-10-06**, rama
+      `feat/derived-matrix`. Decisión: el fichero **sigue en disco como salida generada**,
+      porque ~20 lectores lo abren directamente (mapa medido); cambia el dueño, no el formato.
+- [ ] **3B** — `new`, `done`, `req link`, `req rm` escriben en las fuentes en modo derivado;
+      `status`/`plan` regeneran.
+- [ ] **3C** — modo derivado por defecto en `init`/`adopt`; `req link` y el merge driver fuera
+      de la ruta común.
+
 **Objetivo:** eliminar la causa de H22, del merge driver y de `req link`.
 
 - [ ] Fuente de verdad: el requisito en `spec.md` (o en specs de capacidad) y
