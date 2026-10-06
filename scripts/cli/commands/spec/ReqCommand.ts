@@ -143,7 +143,7 @@ function usage(): void {
 ` +
       `  ${c.dim}specgate req add${c.reset} "<title>"             add one, Draft
 ` +
-      `  ${c.dim}specgate req link${c.reset} REQ-007 --test <path>  set a field (--feature/--test/--code/--uc/--cmd/--status)
+      `  ${c.dim}specgate req link${c.reset} REQ-007 --test <path>  set a field (--feature/--test/--code/--uc/--cmd)
 ` +
       `  ${c.dim}specgate req done${c.reset} REQ-007               mark Implemented (same as specgate done REQ-007)
 ` +
@@ -160,8 +160,8 @@ const FIELD_FLAGS =
   `    --feature <path>   feature file          --test <path>   test artifact\n` +
   `    --code <path>      implementation        --scenario <id> scenario id\n` +
   `    --uc <text>        use case              --cmd <text>    command/query\n` +
-  `    --agg <name>       aggregate             --evt <name>    event\n` +
-  `    --status <status>  Draft · Approved · Implemented · Verified · Released · Deprecated\n`;
+  `    --agg <name>       aggregate             --evt <name>    event\n`;
+const STATUS_FLAG = `    --status <status>  Draft · Approved · Implemented · Verified · Released · Deprecated\n`;
 
 /**
  * `usage()` promised "a subcommand's own flags" and then printed itself again
@@ -173,11 +173,13 @@ const SUB_USAGE: Record<string, string> = {
     `\n  📝 ${c.bold}specgate req add${c.reset} "<title>" [field flags]\n\n` +
     `  Reserves the next REQ-NNN, adds its row to docs/specs/traceability.md\n` +
     `  and a draft \`## REQ-NNN\` section to spec.md. Status defaults to Draft.\n\n` +
-    `  FIELD FLAGS (optional)\n${FIELD_FLAGS}\n`,
+    `  FIELD FLAGS (optional)\n${FIELD_FLAGS}${STATUS_FLAG}\n`,
   link:
     `\n  📝 ${c.bold}specgate req link${c.reset} REQ-NNN <field flag>...\n\n` +
     `  Sets fields on every row of REQ-NNN. At least one flag is required.\n\n` +
     `  FIELD FLAGS\n${FIELD_FLAGS}\n` +
+    `  The status changes through \`specgate done REQ-NNN [--status <status>] [--check]\`,\n` +
+    `  which can verify the requirement before it claims anything.\n\n` +
     `  EXAMPLE\n    specgate req link REQ-007 --feature features/orders.feature --test test/orders.test.js\n\n`,
   rm:
     `\n  📝 ${c.bold}specgate req rm${c.reset} REQ-NNN [--dry-run] [--force]\n\n` +
@@ -395,7 +397,17 @@ export class ReqCommand extends BaseCommand {
     }
 
     if (sub === "link") {
-      const { fields, rest } = collectFieldFlags(stripped.slice(1));
+      const { fields, status, rest } = collectFieldFlags(stripped.slice(1));
+      // `--status` was parsed and dropped: `req link REQ-002 --status
+      // Implemented` printed a tick and left the row Draft. One way to change
+      // a status — `done`, which can check first — instead of two that differ.
+      if (status !== null) {
+        process.stderr.write(
+          `${c.red}✖${c.reset}  req link does not change the status.\n` +
+            `   ${c.dim}Use: specgate done ${rest.find((a) => /^REQ-\d+$/.test(a)) || "REQ-NNN"} --status ${status} --check${c.reset}\n`
+        );
+        process.exit(2);
+      }
       const reqId = rest.find((a) => /^REQ-\d+$/.test(a));
       if (!reqId) {
         process.stderr.write(

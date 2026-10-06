@@ -54,11 +54,15 @@ specgate done REQ-007 --strict --test-cmd "npm test"   # validates, runs the sui
                                                       # then flips the status
 ```
 
-## 5. Validate before you push
+## 5. Check before you push
 
 ```bash
-specgate validate . --strict
+specgate check --test-cmd "npm test"
 ```
+
+`check` is the gate: `validate --strict`, then your tests. Put `test_cmd:` in
+`harness.config.yaml` and it is just `specgate check`. Without a test command
+it still passes — and says it checked the specification, not the code.
 
 Every failure tells you the exact fix. Mechanical problems (an orphan
 `.feature`, a requirement in `spec.md` with no row) can be auto-repaired:
@@ -71,7 +75,7 @@ specgate fix                 # apply, then re-run validate
 ## Daily loop, in one line
 
 ```
-specgate plan  →  work (test first)  →  specgate req link  →  specgate done  →  specgate validate . --strict
+specgate plan  →  work (test first)  →  specgate req link  →  specgate done  →  specgate check
 ```
 
 That's the whole day-to-day. Reach for the [how-to guide](how-to.md) for

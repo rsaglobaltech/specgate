@@ -122,6 +122,16 @@ existentes (regla de ADR-0026: la minor avisa y la siguiente exige).
 
 ### Fase 1 — Un nombre y un núcleo de cinco verbos (1 semana)
 
+**Avance:**
+- [x] `specgate check` — **hecho 2026-10-06**, rama `feat/check-command`. Sustituye a
+      `validate` en la ayuda diaria. De paso: `req link --status` se ignoraba en
+      silencio; ahora se rechaza y remite a `done`.
+- [ ] `specgate new`
+- [ ] `status` absorbe `plan`
+- [ ] `init` absorbe `adopt` y `onboard`
+- [ ] `--help` de cinco verbos; el resto, alias con aviso
+- [ ] `/csda:*` → `/specgate:*` con migración en `update`
+
 **Objetivo:** que `specgate --help` quepa en una pantalla y no haya nada más que
 aprender para el 80 % del equipo.
 
