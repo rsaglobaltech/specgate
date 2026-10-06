@@ -13,6 +13,7 @@ import {
 } from "../../../../packages/core/src/domain/MultiStack";
 
 import { findCliRoot } from "../../../lib/project-root";
+import { AdoptProjectCommand, detectStack } from "./AdoptCommand";
 
 const ROOT_DIR = findCliRoot(__dirname);
 const TEMPLATES_DIR = path.join(ROOT_DIR, "templates");
@@ -134,8 +135,13 @@ function usage() {
   process.stdout.write(
     "Usage:\n" +
       "  specgate init [--config <path>] [--out <directory>] [--yes] [--force] [--dry-run]\n" +
-      "                 [--no-git] [--no-sample-req] [--multi-stack <a,b,c>]\n\n" +
+      "                 [--no-git] [--no-sample-req] [--multi-stack <a,b,c>] [--new]\n\n" +
+      "In a repository that already has code (a pom.xml, build.gradle, package.json,\n" +
+      "go.mod, pyproject.toml, Cargo.toml or .csproj), plain `specgate init` adopts\n" +
+      "it in place — the same as `specgate adopt`, touching no code. Anywhere else,\n" +
+      "or with --new, it scaffolds a new project.\n\n" +
       "Options:\n" +
+      "  --new             Scaffold a new project even where code already exists\n" +
       "  --multi-stack <a,b,c>\n" +
       "                    Scaffold one sibling project per stack under a single root,\n" +
       "                    sharing one spec.md and one features/ tree. Each stack keeps\n" +
@@ -167,6 +173,7 @@ export function parseArgs(argv: string[]) {
     dryRun: false,
     noGit: false,
     noSampleReq: false,
+    newProject: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -188,6 +195,8 @@ export function parseArgs(argv: string[]) {
       opts.noGit = true;
     } else if (a === "--no-sample-req") {
       opts.noSampleReq = true;
+    } else if (a === "--new") {
+      opts.newProject = true;
     } else if (a === "--help" || a === "-h") {
       usage();
       process.exit(0);
@@ -957,12 +966,45 @@ function renderMultiStackReadme(
   );
 }
 
+/** True when plain `init` should adopt the current repository instead of scaffolding. */
+export function adoptsInstead(opts: ReturnType<typeof parseArgs>, cwd: string): boolean {
+  if (opts.newProject || opts.config || opts.out || opts.yes || opts.multiStack) return false;
+  return detectStack(cwd).detected !== "none";
+}
+
 export class InitProjectCommand extends BaseCommand {
   public async execute(): Promise<void> {
     let rawArgs = this.args;
     if (rawArgs[0] === "init") rawArgs = rawArgs.slice(1);
 
     const opts = parseArgs(rawArgs);
+
+    // Plain `init` in a repository that already has code adopts it. The team
+    // found the tool hard to absorb, and choosing between `init`, `adopt` and
+    // `onboard` before doing anything was part of it — while scaffolding a
+    // second project inside an existing one is never what anybody wanted.
+    // Any flag that describes a scaffold keeps the old behaviour, so no script
+    // that calls `init` today changes what it does.
+    if (adoptsInstead(opts, process.cwd())) {
+      if (fs.existsSync(path.join(process.cwd(), "spec.md"))) {
+        // Running `init` twice is not a mistake worth an error.
+        logInfo("This repository is already spec-driven — nothing to do.");
+        logInfo("Next: specgate status   # what is left, and the command to run");
+        return;
+      }
+      const found = detectStack(process.cwd()).detected;
+      logInfo(
+        `Existing code found (${found}) — adopting this repository in place. ` +
+          "Nothing in your code is touched."
+      );
+      logInfo("To scaffold a separate new project instead: specgate init --new");
+      new AdoptProjectCommand([
+        "--project-dir",
+        process.cwd(),
+        ...(opts.dryRun ? ["--dry-run"] : []),
+      ]).execute();
+      return;
+    }
 
     // Checked before the wizard and before any directory exists: an unusable
     // stack list is a usage error, and a usage error must not leave a

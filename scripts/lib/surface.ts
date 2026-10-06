@@ -138,9 +138,13 @@ export const SURFACE: Command[] = [
     help: {
       group: "core",
       icon: "⚡",
-      summary: "Scaffold a new project; --from-pack <repo>@<tag> also installs a pack.",
+      summary: "Adopt this repo if it has code, else scaffold one; --new forces a scaffold.",
     },
-    coreHelp: { group: "start", icon: "⚡", summary: "Scaffold a new spec-driven project." },
+    coreHelp: {
+      group: "start",
+      icon: "⚡",
+      summary: "Start here: adopts a repo that has code, scaffolds one that does not.",
+    },
   },
   {
     name: "adopt",
@@ -151,11 +155,7 @@ export const SURFACE: Command[] = [
       icon: "🏗",
       summary: "Install SDD on an EXISTING repository (brownfield, non-invasive).",
     },
-    coreHelp: {
-      group: "start",
-      icon: "🏗",
-      summary: "Install SDD on an EXISTING repository, without touching code.",
-    },
+    // `init` does this in a repo that has code (phase 1); kept for scripts.
   },
   {
     name: "onboard",
@@ -165,11 +165,7 @@ export const SURFACE: Command[] = [
       icon: "🧭",
       summary: "Read an existing repo and propose the capabilities its code implies.",
     },
-    coreHelp: {
-      group: "start",
-      icon: "🧭",
-      summary: "Read an existing repo and propose the capabilities its code implies.",
-    },
+    // `adopt` seeds the same proposals; kept for a read-only preview.
   },
   {
     name: "doctor",

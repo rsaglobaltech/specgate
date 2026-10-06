@@ -23,19 +23,11 @@
 > **The npm package is scoped; the binary is not.** `spec-gate` already claims the
 > unscoped name ([ADR-0024](docs/specs/adr/0024-the-tool-is-renamed-the-format-is-not.md)). You type `specgate`; `csda` still works too.
 
-**Existing codebase** — the common enterprise case:
-
 ```bash
-cd your-repo
-npx @rsaglobaltech/specgate@latest onboard   # reads the repo, proposes its capabilities
-npx @rsaglobaltech/specgate@latest adopt     # writes the spec skeleton, touches no code
-npx @rsaglobaltech/specgate@latest validate .
-```
-
-**New project:**
-
-```bash
-npx @rsaglobaltech/specgate@latest init      # interactive wizard
+cd your-repo                                  # or an empty directory
+npx @rsaglobaltech/specgate@latest init      # adopts code that is there, touching none of it;
+                                              # scaffolds a new project where there is none
+npx @rsaglobaltech/specgate@latest check     # the gate
 ```
 
 Requires **Node.js ≥ 22** — or none at all with the Docker image:
@@ -52,8 +44,8 @@ Each level is useful on its own and never requires the ones above it.
 
 | Level | You get | Commands | Cost |
 | --- | --- | --- | --- |
-| **L1** | Traceable specs in your repo | `onboard`, `adopt` | ~1 hour |
-| **L2** | A PR gate enforcing spec and test coverage | `validate --strict` | ~1 hour |
+| **L1** | Traceable specs in your repo | `init`, `new` | ~1 hour |
+| **L2** | A PR gate enforcing spec and test coverage | `check`, `ci init` | ~1 hour |
 | **L3** | Versioned, reusable domain requirements | `specops add / sync / diff` | ~1 day |
 | **L4** | Agent-driven delivery, one requirement at a time | `agents init`, `harness run` | ~1 week |
 

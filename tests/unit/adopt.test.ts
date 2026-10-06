@@ -139,7 +139,7 @@ test("adopt refuses a project that already has spec.md", () => {
     const r = cli(["adopt", "--project-dir", dir]);
     assert.equal(r.status, 2);
     assert.match(r.stderr, /already exists/);
-    assert.match(r.stderr, /validate/);
+    assert.match(r.stderr, /specgate status/);
   });
 });
 

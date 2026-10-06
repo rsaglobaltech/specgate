@@ -27,6 +27,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Changed
 
+- **`specgate init` is the one way in.** In a repository that already has code
+  it adopts it in place — the same as `adopt`, touching no code — instead of
+  scaffolding a second project inside the first; running it again says the
+  repository is already spec-driven and exits 0. `--new` forces a scaffold, and
+  `--yes`, `--config`, `--out` and `--multi-stack` keep scaffolding, so no
+  script that calls `init` changes behaviour. `adopt` and `onboard` leave the
+  short help and keep working. `adopt`'s next steps now teach `check`, `new`,
+  `status` and `ci init`.
 - **`status` lists the queue itself.** One line per requirement — its title and
   what it still needs — split into *Ready to close* and *To do*, capped at 12
   per group. `Next` names a requirement (`specgate done REQ-003 --strict`)

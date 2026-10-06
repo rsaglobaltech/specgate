@@ -131,7 +131,7 @@ existentes (regla de ADR-0026: la minor avisa y la siguiente exige).
       requisito `Implemented`. Ahora es `scenario_placeholder_step`, exigido al
       entregar; `done --strict` pasa a ser la puerta completa.
 - [x] `status` absorbe `plan` — **hecho 2026-10-06**, rama `feat/status-absorbs-plan`. `Next` nombra el requisito; `plan` sale de la ayuda diaria.
-- [ ] `init` absorbe `adopt` y `onboard`
+- [x] `init` absorbe `adopt` y `onboard` — **hecho 2026-10-06**, rama `feat/init-adopts`. Solo el camino sin banderas cambia; los scripts con `--yes`/`--config`/`--out` siguen igual.
 - [ ] `--help` de cinco verbos; el resto, alias con aviso
 - [ ] `/csda:*` → `/specgate:*` con migración en `update`
 
