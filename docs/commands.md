@@ -12,7 +12,7 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 
 | Command | What it does |
 | --- | --- |
-| `specgate init` | Scaffold a new project. Interactive wizard when no `--config`. |
+| `specgate init` | **Start here.** In a repository that already has code, adopts it in place — the same as `adopt`, touching no code. Anywhere else, scaffolds a new project (interactive wizard when no `--config`). `--new` forces a scaffold; `--yes`, `--config`, `--out` and `--multi-stack` always scaffold. Running it twice is not an error. |
 | `specgate init --from-pack <repo>@<tag> --pack <id>` | Scaffold **and** install a pinned domain pack in one step. An unpinned reference is refused. |
 | `specgate init --multi-stack <a,b,c>` | Scaffold one sibling project per stack under a single root, sharing one `spec.md` and one `features/` tree. Each stack keeps its own `AI_RULES.md` and traceability matrix — the files that implement and prove a requirement differ per stack. Registers them in `specops.config.yaml`. |
 | `specgate adopt` | Install SDD on an existing repository. Never overwrites a file, never touches source. |

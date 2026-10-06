@@ -458,7 +458,8 @@ export class AdoptProjectCommand extends BaseCommand {
     if (fs.existsSync(path.join(dir, "spec.md"))) {
       fail(
         `${path.join(dir, "spec.md")} already exists — this repository looks spec-driven already.\n` +
-          "Run `specgate validate .` to check it, or remove spec.md to re-adopt.",
+          "Run `specgate status` to see what is left, `specgate check` to gate it,\n" +
+          "or remove spec.md to re-adopt.",
         2
       );
     }
@@ -478,15 +479,14 @@ export class AdoptProjectCommand extends BaseCommand {
     logInfo("  behaviour is covered. It starts meaning something when the requirements below");
     logInfo("  are real and their scenarios are linked to tests.");
     logInfo("✅ Adoption completed. Next steps:");
-    logInfo("  1. specgate validate .          # should pass right now");
+    logInfo("  1. specgate check               # the gate — should pass right now");
     if (capabilities.length > 0) {
       logInfo("  2. Argue with the seeded proposals in spec.md — each one names its evidence");
-      logInfo("  3. specgate plan                # see what each REQ still needs");
     } else {
-      logInfo("  2. Retro-fill real requirements in spec.md (one REQ per behaviour you rely on)");
-      logInfo("  3. specgate plan                # see what each REQ still needs");
+      logInfo('  2. specgate new "<behaviour>"   # one requirement you already rely on');
     }
-    logInfo("  4. Add `validate . --strict` to CI to lock the gate in");
+    logInfo("  3. specgate status              # what each requirement still needs");
+    logInfo("  4. specgate ci init             # put the gate in CI");
     process.exit(0);
   }
 }

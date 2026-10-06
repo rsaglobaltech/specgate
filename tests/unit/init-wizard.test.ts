@@ -174,12 +174,49 @@ test("init --yes scaffolds a valid project with zero other flags", () => {
   });
 });
 
+function cliIn(cwd, ...args) {
+  return spawnSync(process.execPath, [CLI_PATH, ...args], { cwd, encoding: "utf8" });
+}
+
 test("init without config outside a terminal fails with a remedy", () => {
-  const r = cli("init", "--no-git");
-  assert.equal(r.status, 2);
-  assert.match(r.stderr, /--config is required when not running in a terminal/);
-  assert.match(r.stdout, /interactive wizard/);
-  assert.match(r.stdout, /--yes/);
+  // In an empty directory: this repository has a package.json, and plain
+  // `init` adopts a directory that already has code.
+  withTmp((tmp) => {
+    const r = cliIn(tmp, "init", "--no-git");
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /--config is required when not running in a terminal/);
+    assert.match(r.stdout, /interactive wizard/);
+    assert.match(r.stdout, /--yes/);
+  });
+});
+
+test("plain init in a repository with code adopts it in place", () => {
+  // Phase 1 of mejoras/plan-simplificacion-equipo.md: one entry command.
+  withTmp((tmp) => {
+    fs.writeFileSync(path.join(tmp, "package.json"), '{"name":"shop"}');
+    const r = cliIn(tmp, "init");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /Existing code found \(package\.json\)/);
+    assert.ok(fs.existsSync(path.join(tmp, "spec.md")), "adopted in place");
+    assert.ok(fs.existsSync(path.join(tmp, "docs/specs/traceability.md")));
+
+    const again = cliIn(tmp, "init");
+    assert.equal(again.status, 0, "running init twice is not an error");
+    assert.match(again.stdout, /already spec-driven/);
+  });
+});
+
+test("init --new and every scaffold flag keep scaffolding where code exists", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(path.join(tmp, "package.json"), '{"name":"shop"}');
+    const r = cliIn(tmp, "init", "--new", "--yes", "--no-git", "--dry-run");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.doesNotMatch(r.stdout, /adopting this repository/);
+    assert.ok(!fs.existsSync(path.join(tmp, "spec.md")), "nothing adopted");
+
+    const y = cliIn(tmp, "init", "--yes", "--no-git", "--dry-run");
+    assert.doesNotMatch(y.stdout, /adopting this repository/, "--yes keeps its meaning");
+  });
 });
 
 test("init --config without --out defaults to the current directory", () => {
