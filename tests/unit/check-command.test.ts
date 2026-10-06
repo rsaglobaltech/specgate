@@ -86,10 +86,10 @@ test("check runs the test command and fails when it fails", () => {
 test("check reads test_cmd from harness.config.yaml", () => {
   const { parent, dir } = adopted();
   try {
-    fs.writeFileSync(
-      path.join(dir, "harness.config.yaml"),
-      'test_cmd: "node -e \\"process.exit(4)\\""\n'
-    );
+    // A script, not `node -e "…"` inside YAML: nested quotes survive sh and
+    // die in cmd.exe, and the test then measures quoting, not `check`.
+    fs.writeFileSync(path.join(dir, "fail.js"), "process.exit(4);\n");
+    fs.writeFileSync(path.join(dir, "harness.config.yaml"), 'test_cmd: "node fail.js"\n');
     const r = cli("check", dir, "--json");
     assert.equal(r.status, 1, r.stdout + r.stderr);
     assert.equal(json(r).status[0].code, "check_tests_failed");
