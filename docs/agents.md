@@ -18,12 +18,18 @@ specgate agents init --tool claude,cursor     # or pick
 specgate agents init --dry-run                # list destinations, write nothing
 ```
 
-This writes the six slash commands (`/csda:explore`, `/csda:propose`,
-`/csda:verify`, `/csda:apply`, `/csda:archive`, `/csda:onboard`) and the
+This writes the six slash commands (`/specgate:explore`, `/specgate:propose`,
+`/specgate:verify`, `/specgate:apply`, `/specgate:archive`, `/specgate:onboard`) and the
 instruction file each tool reads — `.cursor/rules/specgate.mdc`,
 `.github/copilot-instructions.md`, `CONVENTIONS.md`, `AGENTS.md` and so on.
 
 Existing files are never overwritten without `--force`.
+
+**Upgrading from 0.9 or earlier?** Those versions wrote the commands as
+`/csda:*` (`.claude/commands/csda/`, `.cursor/rules/csda.mdc`, …). Run
+`specgate update`: it moves each file to its `specgate` name and merges the new
+text in, keeping your edits. If both names exist it touches neither and tells
+you which to keep.
 
 ---
 

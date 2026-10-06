@@ -27,6 +27,21 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Changed
 
+- **One name in the agent too: `/specgate:*`.** The generated slash commands
+  were `/csda:*`, the tool's old name, so a team typed `specgate` in the
+  terminal and `/csda:apply` in their agent. Every generated file moves:
+  `.claude/commands/specgate/`, `.cursor/rules/specgate.mdc`,
+  `.windsurf/rules/specgate.md`, `.clinerules/specgate.md`,
+  `.agents/rules/specgate.md`, and the Claude plugin is named `specgate`.
+  **Upgrading:** `specgate update` moves each `csda` file — and its baseline —
+  to the new path before merging, so edits survive. Files from `agents init`
+  before this release have no baseline; `update` reconstructs one from the
+  old name, and where that guess is wrong the merge reports a conflict rather
+  than choosing. When both names exist it touches neither (`rename_conflict`).
+  The `csda:` annotations in spec files keep their name (ADR-0024).
+- **The committed Claude plugin is regenerated.** `packages/claude-plugin` had
+  not been rebuilt since 0.6.0: its gate hook still ran
+  `npx csda validate --strict-tdd`.
 - **`specgate init` is the one way in.** In a repository that already has code
   it adopts it in place — the same as `adopt`, touching no code — instead of
   scaffolding a second project inside the first; running it again says the
@@ -61,6 +76,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **`update` no longer takes the project's `README.md` for the Claude
+  plugin's.** Same path, different file: it adopted the project README as the
+  opt-in plugin's and wrote it a baseline, so the next run would have merged
+  the plugin's README into it. Opt-in tools now count only where installed.
 - **`--strict-links` no longer fails a requirement that has not been delivered.**
   A `Draft` or `In Dev` row names where the work is going to land; with
   `--strict` as the CI gate, every team that declared paths before writing them

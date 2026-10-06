@@ -2,7 +2,7 @@
 description: Install spec-driven development on a repository that lacks it.
 ---
 
-# /csda:onboard
+# /specgate:onboard
 
 Install spec-driven development on a repository that lacks it.
 

@@ -2,7 +2,7 @@
 description: Check the change before anyone reviews it.
 ---
 
-# /csda:verify
+# /specgate:verify
 
 Check the change before anyone reviews it.
 

@@ -43,7 +43,7 @@ test("the same prompt is never blocked twice", () => {
 });
 
 test("a project the gate cannot run in is left alone", () => {
-  // No spec.md, or no csda on PATH. Breaking a session over that would be
+  // No spec.md, or no specgate on PATH. Breaking a session over that would be
   // worse than saying nothing.
   const d = decide(
     { cwd: "/p", prompt_id: "a" },
@@ -99,7 +99,7 @@ test("the manifest sits where the plugin reference says, and names itself", () =
   const manifest = JSON.parse(
     fs.readFileSync(path.join(PLUGIN, ".claude-plugin", "plugin.json"), "utf8")
   );
-  assert.equal(manifest.name, "csda");
+  assert.equal(manifest.name, "specgate");
   assert.match(manifest.version, /^\d+\.\d+\.\d+/);
 });
 
@@ -115,7 +115,7 @@ test("every component directory is at the plugin root, not inside .claude-plugin
 test("the plugin ships one command per step of the loop", () => {
   const { STEPS } = require("../../scripts/agents/commands");
   const shipped = fs
-    .readdirSync(path.join(PLUGIN, "commands", "csda"))
+    .readdirSync(path.join(PLUGIN, "commands", "specgate"))
     .map((f) => f.replace(/\.md$/, ""))
     .sort();
   assert.deepEqual(

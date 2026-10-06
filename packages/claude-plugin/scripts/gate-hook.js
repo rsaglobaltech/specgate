@@ -100,7 +100,7 @@ function renderFindings(diagnostics) {
     }
     if (diagnostics.length > 10)
         lines.push(`  … and ${diagnostics.length - 10} more.`);
-    lines.push("", "Run `specgate validate . --strict-tdd` to see all of it.");
+    lines.push("", "Run `specgate validate . --strict` to see all of it.");
     return lines.join("\n");
 }
 /**
@@ -130,13 +130,13 @@ function decide(input, runValidate, blockedAlready) {
 function runValidate(cwd) {
     if (!fs.existsSync(path.join(cwd, "spec.md")))
         throw new Error("not a spec-driven project");
-    const r = (0, node_child_process_1.spawnSync)("npx", ["--no-install", "csda", "validate", cwd, "--strict-tdd", "--json"], {
+    const r = (0, node_child_process_1.spawnSync)("npx", ["--no-install", "specgate", "validate", cwd, "--strict", "--json"], {
         encoding: "utf8",
         timeout: 120_000,
         maxBuffer: 16 * 1024 * 1024,
     });
     if (r.error || typeof r.status !== "number")
-        throw new Error("could not run csda");
+        throw new Error("could not run specgate");
     let parsed;
     try {
         parsed = JSON.parse(r.stdout);

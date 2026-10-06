@@ -2,7 +2,7 @@
 description: Open a change and write its proposal and delta.
 ---
 
-# /csda:propose
+# /specgate:propose
 
 Open a change and write its proposal and delta.
 
