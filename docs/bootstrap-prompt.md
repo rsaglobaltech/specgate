@@ -27,7 +27,7 @@ prompt deterministically.
    <your test command>      # e.g. mvn -B test
    specgate plan
    ```
-   `validate --strict-tdd` and the project test command must pass. `plan`
+   `validate --strict` and the project test command must pass. `plan`
    should show the remaining REQs as pending. **This is Phase 1's
    acceptance test — do not move on until both are green.**
 5. Commit: `git commit -am "phase 1: bootstrap"`.
@@ -115,7 +115,7 @@ drop those sections. With `csda` the mode is decided **before** the agent
 is invoked — by the time you paste this prompt, the project is always in
 Generated-project mode. The prompt above also names the `csda` commands
 explicitly so the agent can self-introspect, and ties the acceptance
-criteria to `validate --strict-tdd` + the project test command so "done"
+criteria to `validate --strict` + the project test command so "done"
 is a hard-edged definition, not a feel.
 
 ---

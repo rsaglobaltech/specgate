@@ -80,7 +80,7 @@ export function renderFindings(diagnostics: GateDiagnostic[]): string {
     if (d.fix) lines.push(`    fix: ${d.fix}`);
   }
   if (diagnostics.length > 10) lines.push(`  … and ${diagnostics.length - 10} more.`);
-  lines.push("", "Run `specgate validate . --strict-tdd` to see all of it.");
+  lines.push("", "Run `specgate validate . --strict` to see all of it.");
   return lines.join("\n");
 }
 
@@ -118,7 +118,7 @@ function runValidate(cwd: string): { ok: boolean; diagnostics: GateDiagnostic[] 
 
   const r = spawnSync(
     "npx",
-    ["--no-install", "specgate", "validate", cwd, "--strict-tdd", "--json"],
+    ["--no-install", "specgate", "validate", cwd, "--strict", "--json"],
     {
       encoding: "utf8",
       timeout: 120_000,

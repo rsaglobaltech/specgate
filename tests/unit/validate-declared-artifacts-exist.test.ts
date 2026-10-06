@@ -45,7 +45,20 @@ function tracePath(projectDir) {
   return path.join(projectDir, "docs/specs/traceability.md");
 }
 
-function pointAtNothing(projectDir) {
+/**
+ * Mark REQ-000 delivered. A missing file is drift only on a row that claims the
+ * work exists; a Draft row names where the work is going to land.
+ */
+function deliver(projectDir) {
+  const file = tracePath(projectDir);
+  fs.writeFileSync(
+    file,
+    fs.readFileSync(file, "utf8").replace("| TBD | Draft |", "| TBD | Implemented |"),
+    "utf8"
+  );
+}
+
+function pointAtNothing(projectDir, { delivered = true } = {}) {
   const file = tracePath(projectDir);
   fs.writeFileSync(
     file,
@@ -54,6 +67,7 @@ function pointAtNothing(projectDir) {
       .replace("`API /health`, smoke test", "`src/health/HealthCheck.ts`"),
     "utf8"
   );
+  if (delivered) deliver(projectDir);
 }
 
 test("a scaffolded project declares no real paths and passes --strict-links", () => {
@@ -108,9 +122,41 @@ test("--strict-links catches a feature file column pointing nowhere too", () => 
         .replace("`features/core/health.feature`", "`features/core/moved.feature`"),
       "utf8"
     );
+    deliver(projectDir);
     const r = cli("validate", projectDir, "--strict-links");
     assert.notEqual(r.status, 0, `expected a failure:\n${r.stdout}${r.stderr}`);
     assert.match(r.stdout + r.stderr, /features\/core\/moved\.feature/);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("a Draft row may name a file that does not exist yet", () => {
+  // Measured 2026-10-06: with `--strict` as the CI gate, a team that declares
+  // where a requirement will land before writing it had a red build, and the
+  // harness failed one requirement's worktree over a sibling's planned paths.
+  const { parent, projectDir } = scaffold();
+  try {
+    pointAtNothing(projectDir, { delivered: false });
+    const r = cli("validate", projectDir, "--strict-links");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("--delivering holds a Draft requirement to what a delivered one owes", () => {
+  // `done --check` and the harness gate run before the status flips. Without
+  // this they would skip the one requirement they are about to mark Implemented.
+  const { parent, projectDir } = scaffold();
+  try {
+    pointAtNothing(projectDir, { delivered: false });
+    const r = cli("validate", projectDir, "--strict-links", "--delivering", "REQ-000");
+    assert.notEqual(r.status, 0, `expected a failure:\n${r.stdout}${r.stderr}`);
+    assert.match(r.stdout + r.stderr, /src\/health\/HealthCheck\.ts/);
+
+    const other = cli("validate", projectDir, "--strict-links", "--delivering", "REQ-999");
+    assert.equal(other.status, 0, "another requirement's delivery owes nothing for REQ-000");
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

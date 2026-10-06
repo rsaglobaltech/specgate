@@ -36,7 +36,7 @@ Tools exposed by the server:
 | `list_requirements` | Returns every `REQ-NNN` with title, file, and line. |
 | `update_traceability` | Idempotently appends a row to `traceability.md`. |
 | `lint_pack` | Runs `pack lint` and returns structured errors. |
-| `validate_project` | Runs `validate` (or `validate --strict-tdd`) and parses the output. |
+| `validate_project` | Runs `validate` (or `validate --strict`) and parses the output. |
 | `plan` | Returns the same JSON as `specgate plan --format json`. |
 | `mark_requirement_done` | Mirrors `specgate done <REQ>` (supports `--check`/`--strict`). |
 
@@ -70,10 +70,10 @@ The spec gate is failing, so this work is not finished:
     fix: Write the test first, then set its path in the row's
          'Test artifact' column.
 
-Run `specgate validate . --strict-tdd` to see all of it.
+Run `specgate validate . --strict` to see all of it.
 ```
 
-The session does not end while that is true. `validate --strict-tdd` stops
+The session does not end while that is true. `validate --strict` stops
 being something that reviews an agent's work after it has gone and becomes
 something it cannot walk past.
 

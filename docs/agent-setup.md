@@ -254,7 +254,7 @@ a warning is recorded on the run:
 
 That wording is the design. An adversary can always assert a behaviour nobody
 specified, so letting it fail the run would block work that is correct — and
-would make it a second judge. `validate --strict-tdd` plus your test command
+would make it a second judge. `validate --strict` plus your test command
 stay the only one, for the same reason the reviewer is advisory.
 
 The probe runs **once per requirement**, only on a green gate, and its writes

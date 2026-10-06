@@ -819,7 +819,7 @@ The complete prompt, ready to paste, lives at
 - it is your **Lead Architect**;
 - the current directory is the only scope;
 - `spec.md`, `AI_RULES.md`, `features/**/*.feature` are **read-only**;
-- to make `specgate validate . --strict-tdd` + the project test command pass
+- to make `specgate validate . --strict` + the project test command pass
   with the first bounded context end-to-end — then **stop**.
 
 ```bash
@@ -853,7 +853,7 @@ fresh `harness/REQ-NNN` branch, it:
 1. builds a self-contained prompt (the Gherkin scenario + `AI_RULES.md` +
    the exact artifact paths + any previous failure),
 2. shells out to **your** AI agent,
-3. gates the result with `validate --strict-tdd` + your test command,
+3. gates the result with `validate --strict` + your test command,
 4. on green → runs `done` and commits; on red → retries, feeding the
    failure back into the next prompt,
 5. prints a pass/fail/attempts report.

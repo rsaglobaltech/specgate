@@ -34,7 +34,7 @@ harness_version: 1
 #
 # An explicit `agent:` wins over a profile.
 
-# An *additional* gate, on top of the `validate --strict-tdd` the harness always
+# An *additional* gate, on top of the `validate --strict` the harness always
 # runs. Left commented out when no build file gave it away — an unset key is
 # safe, whereas a placeholder that exits 0 would be a gate that always passes.
 #
@@ -45,8 +45,8 @@ harness_version: 1
 #   {scenario}      SCN-007
 #   {feature_file}  features/billing/refund.feature
 #
-# Worth using. The gate runs before `specgate done`, so the requirement is still
-# Draft and `validate --strict-tdd` does not yet demand its test — without one
+# Worth using. `validate` checks that the requirement's declared files exist;
+# only a test command checks that they do what the scenario says — without one
 # of these, a requirement can be marked Implemented with its scenario never run:
 #
 #   test_cmd: "npm run verify && npm run test:e2e -- {feature_file}"

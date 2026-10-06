@@ -8,6 +8,26 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **The harness and the agent `Stop` hook run the same gate as CI.** Both ran
+  `validate --strict-tdd` while `ci init` generated `--strict`, so the harness
+  could mark a requirement Implemented on a `src/…` file that did not exist and
+  leave the next CI run red. They now run `validate --strict`.
+
+### Fixed
+
+- **`--strict-links` no longer fails a requirement that has not been delivered.**
+  A `Draft` or `In Dev` row names where the work is going to land; with
+  `--strict` as the CI gate, every team that declared paths before writing them
+  had a red build, and in the harness one pending requirement's paths failed
+  its sibling's worktree. Only `Implemented`, `Verified` and `Released` rows owe
+  their files now.
+- **`done --check` and `harness run` check the requirement they are closing.**
+  They validate before the status flips, so the requirement was still `Draft`
+  and the rule above would have skipped it. They now hold it to what a
+  delivered row owes.
+
 ## [0.9.0] — 2026-10-06
 
 ### Added

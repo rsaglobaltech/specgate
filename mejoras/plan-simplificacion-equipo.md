@@ -92,7 +92,7 @@ existentes (regla de ADR-0026: la minor avisa y la siguiente exige).
 
 ### Fase 0 — Higiene y release (1–2 días)
 
-- [ ] Mergear #179, resolver dependabot, borrar las 14 ramas cerradas.
+- [x] Mergear #179, resolver dependabot, borrar las 14 ramas cerradas — **hecho 2026-10-06** (#179, #147, #183–#185, #191; #145 descartado: TS 7; dependabot apunta a `develop` desde #187).
 - [x] Corregir las contradicciones de arriba, con un test que ate cada texto
       de ayuda o plantilla al comportamiento — **hecho 2026-10-06**, rama
       `fix/fase-0-higiene`:
@@ -104,14 +104,20 @@ existentes (regla de ADR-0026: la minor avisa y la siguiente exige).
   - **El rename `/csda:*` → `/specgate:*` pasa a la fase 1**: renombrar
     ficheros generados exige que `specgate update` migre las instalaciones
     existentes sin perder ediciones, y eso no es higiene.
-- [ ] **Hallazgo nuevo — el harness y el hook del agente usan una puerta más
-      débil que la CI.** `harness run` y el `Stop` hook ejecutan
+- [x] **Hallazgo nuevo — el harness y el hook del agente usan una puerta más
+      débil que la CI.** — **hecho 2026-10-06**, rama `fix/harness-strict-gate`.
+      Al cambiarlo apareció un defecto mayor: `--strict-links` exigía los
+      ficheros de **toda** fila, también las `Draft`, así que con `--strict`
+      como puerta de CI cualquier equipo que declara rutas antes de escribirlas
+      tenía el build en rojo. Ahora solo las filas entregadas deben sus
+      ficheros, y `done --check` y el harness usan `--delivering REQ` para
+      comprobar el requisito que cierran antes de que cambie su estado. `harness run` y el `Stop` hook ejecutan
       `validate --strict-tdd`; la CI generada ejecuta `--strict`. El harness
       puede declarar verde un requisito cuyo `src/…` declarado no existe. Probado:
       pasarlos a `--strict` rompe 5 tests del harness cuyos fixtures declaran
       ficheros que el agente falso nunca crea — que es exactamente el caso.
       Cambio de comportamiento: PR propio, con los fixtures corregidos.
-- [ ] Release **0.9.0** `develop → main`. Sin esto, todo el feedback del equipo
+- [x] Release **0.9.0** `develop → main` — **hecho 2026-10-06**, publicada en npm, GitHub Packages y Docker. Sin esto, todo el feedback del equipo
       es sobre una versión con H22–H24 ya arreglados en el código.
 
 ### Fase 1 — Un nombre y un núcleo de cinco verbos (1 semana)

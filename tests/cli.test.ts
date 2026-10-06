@@ -655,6 +655,32 @@ test("specops remove exits non-zero when pack-id is not in lockfile", () => {
  * @param extraReqs additional independent requirements, e.g. ["REQ-002"].
  *                  They declare no dependencies, so they may run in parallel.
  */
+/**
+ * JS that creates the test and production artifacts the prompt declares.
+ *
+ * The harness gate is `validate --strict`, the same gate CI runs, so an
+ * attempt that leaves a declared file missing fails `declared_artifact_missing`.
+ * These agents used to write only `agent-ran.txt` and passed because the
+ * harness ran the weaker `--strict-tdd` — green on a requirement whose
+ * `src/health.js` did not exist.
+ */
+const WRITE_DECLARED_ARTIFACTS = [
+  "const fs = require('node:fs'); const p = require('node:path');",
+  "const prompt = fs.readFileSync(process.argv[2], 'utf8');",
+  "for (const re of [/^- Test artifact \\(write this first — TDD\\): (.+)$/m, /^- Production artifact: (.+)$/m]) {",
+  "  const m = re.exec(prompt); if (!m) continue;",
+  "  const rel = m[1].replace(/`/g, '').trim(); if (rel.startsWith('(')) continue;",
+  "  fs.mkdirSync(p.dirname(rel), { recursive: true }); fs.writeFileSync(rel, '// written by the fixture agent\\n');",
+  "}",
+].join("\n");
+
+/** An agent script that implements what the prompt declares, then runs `extraJs`. */
+function implementingAgent(tempRoot, extraJs = "fs.writeFileSync('agent-ran.txt', 'ok');") {
+  const file = path.join(tempRoot, `implementing-agent-${Math.random().toString(36).slice(2)}.js`);
+  fs.writeFileSync(file, `${WRITE_DECLARED_ARTIFACTS}\n${extraJs}\n`, "utf8");
+  return `node "${file}" {prompt_file}`;
+}
+
 function makeHarnessProject(tempRoot, extraReqs: string[] = []) {
   const projectDir = path.join(tempRoot, "project");
   fs.mkdirSync(path.join(projectDir, "features"), { recursive: true });
@@ -670,7 +696,7 @@ function makeHarnessProject(tempRoot, extraReqs: string[] = []) {
   fs.writeFileSync(path.join(projectDir, "docs", "specs", "adr", "README.md"), "# ADRs\n", "utf8");
   fs.writeFileSync(
     path.join(projectDir, "features", "health.feature"),
-    "Feature: Health\n  Scenario: ok\n    Given the service is up\n    Then /health returns 200\n",
+    "Feature: Health\n  Scenario: The health endpoint reports the service as up\n    Given the service is up\n    When a client requests /health\n    Then /health returns 200\n",
     "utf8"
   );
   fs.writeFileSync(
@@ -702,7 +728,7 @@ function makeHarnessProject(tempRoot, extraReqs: string[] = []) {
     );
     fs.writeFileSync(
       path.join(projectDir, "features", `f${n}.feature`),
-      `Feature: F${n}\n  Scenario: ok\n    Given the service is up\n    Then /f${n} returns 200\n`,
+      `Feature: F${n}\n  Scenario: Feature ${n} answers its endpoint\n    Given the service is up\n    When a client requests /f${n}\n    Then /f${n} returns 200\n`,
       "utf8"
     );
   }
@@ -778,9 +804,8 @@ test(
       "--project-dir",
       projectDir,
       "--agent",
-      // Cross-platform agent (cmd.exe and sh): drop a file proving it ran,
-      // then read the prompt file passed as argv.
-      `node -e "require('node:fs').writeFileSync('agent-ran.txt','ok');require('node:fs').readFileSync(process.argv[1])" {prompt_file}`,
+      // Implements what the prompt declares and drops a file proving it ran.
+      implementingAgent(tempRoot),
     ]);
 
     assert.equal(result.status, 0, result.stderr + result.stdout);
@@ -870,7 +895,7 @@ test(
       "--concurrency",
       "2",
       "--agent",
-      `node -e "require('node:fs').writeFileSync('agent-ran.txt','ok')" {prompt_file}`,
+      implementingAgent(tempRoot),
     ]);
 
     assert.equal(result.status, 0, result.stderr + result.stdout);
@@ -904,7 +929,7 @@ test("a parallel run records itself once, not once per worker", { skip: !hasGit(
     "--concurrency",
     "2",
     "--agent",
-    `node -e "require('node:fs').writeFileSync('agent-ran.txt','ok')" {prompt_file}`,
+    implementingAgent(tempRoot),
   ]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
 
@@ -941,12 +966,12 @@ test("a reviewer advises the next step and can never reach the gate", { skip: !h
   fs.writeFileSync(
     implPath,
     [
-      "const fs = require('node:fs');",
       `const marker = ${JSON.stringify(marker)};`,
-      "const n = fs.existsSync(marker) ? Number(fs.readFileSync(marker, 'utf8')) : 0;",
-      "fs.writeFileSync(marker, String(n + 1));",
-      "const prompt = fs.readFileSync(process.argv[2], 'utf8');",
+      "const seen = require('node:fs').existsSync(marker);",
+      "const n = seen ? Number(require('node:fs').readFileSync(marker, 'utf8')) : 0;",
+      "require('node:fs').writeFileSync(marker, String(n + 1));",
       "if (n === 0) process.exit(3);",
+      WRITE_DECLARED_ARTIFACTS,
       "fs.writeFileSync('agent-ran.txt', /Reviewer findings/.test(prompt) ? 'saw-findings' : 'no-findings');",
     ].join("\n"),
     "utf8"
@@ -1644,7 +1669,7 @@ test("harness run --push --pr-cmd publishes green branches (CI mode)", { skip: !
     "--agent",
     // Writes a file: the harness refuses an attempt that produced nothing
     // (H19), and what is under test here is publishing, not the agent.
-    `node -e "require('node:fs').writeFileSync('agent-ran.txt','ok')" {prompt_file}`,
+    implementingAgent(tempRoot),
     "--push",
     "--pr-cmd",
     // The harness runs --pr-cmd through a shell, so the log path is passed as an
