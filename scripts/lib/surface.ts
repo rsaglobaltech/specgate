@@ -204,7 +204,7 @@ export const SURFACE: Command[] = [
       group: "daily",
       order: 1,
       icon: "🧭",
-      summary: "Where the project stands, and the one command to run next.",
+      summary: "What is left, requirement by requirement, and the one command to run next.",
     },
     json: { key: "status", gate: false },
   },
@@ -289,12 +289,8 @@ export const SURFACE: Command[] = [
       icon: "📋",
       summary: "List requirements that still need a test or implementation.",
     },
-    coreHelp: {
-      group: "daily",
-      order: 2,
-      icon: "📋",
-      summary: "Requirements still needing a test or implementation.",
-    },
+    // Not in the daily help: `status` lists the queue itself since phase 1 of
+    // mejoras/plan-simplificacion-equipo.md. `plan` keeps the full detail.
     json: { key: "plan", gate: false },
     mcp: "plan",
   },

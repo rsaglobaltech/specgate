@@ -186,11 +186,9 @@ Scaffolding is day one. From day two the loop is four commands, and none of them
 asks you to edit the ten-column matrix by hand.
 
 ```bash
-specgate status                      # where things stand, and what to run next
-specgate plan                        # the queue: what still needs a test or code
-specgate req add "Operators can export a monthly report"
-specgate req link REQ-007 --feature features/reporting/export.feature \
-                      --test src/ReportTest.java
+specgate status                      # what is left, and the next command to run
+specgate new "Operators can export a monthly report"
+specgate req link REQ-007 --test src/ReportTest.java   # new already linked its scenario
 specgate done REQ-007 --strict --test-cmd "npm test"   # validates AND runs the suite;
                                                       # refuses to write if either fails
 ```

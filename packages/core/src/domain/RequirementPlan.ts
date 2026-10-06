@@ -17,6 +17,8 @@ export interface PlanItem {
   technical_exists: boolean;
   test_exists: boolean;
   category: PlanCategory;
+  /** The row's Use Case cell — what `status` shows as the requirement's name. */
+  title?: string;
   depends_on?: string[];
   blocked_by?: string[];
   [key: string]: any;
@@ -93,6 +95,7 @@ export class RequirementPlan {
       technical_exists: techExists,
       test_exists: testExists,
       category,
+      title: row.useCase || "",
     };
   }
 
