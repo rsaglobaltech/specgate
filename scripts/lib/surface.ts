@@ -240,19 +240,33 @@ export const SURFACE: Command[] = [
     ],
   },
   {
-    name: "validate",
-    script: ["validate_specs.js"],
+    name: "check",
+    script: ["check.js"],
     help: {
       group: "core",
       icon: "✅",
-      summary:
-        "Check structure, traceability, Gherkin. --strict is the gate: TDD, links, scenarios, requirements and coverage.",
+      summary: "The gate: validate --strict, then your tests — before you open a PR.",
     },
     coreHelp: {
       group: "daily",
       order: 5,
       icon: "✅",
-      summary: "The gate: structure, traceability, Gherkin, TDD.",
+      summary: "The gate: specs, links, coverage — and your tests.",
+    },
+    json: { key: "check", gate: true, args: "[dir]" },
+    // Not yet an MCP tool: `validate_project` fronts the spec half today, and
+    // phase 2 of mejoras/plan-simplificacion-equipo.md puts the agent on
+    // `/spec:check`, which shells out to this command.
+    mcp: false,
+  },
+  {
+    name: "validate",
+    script: ["validate_specs.js"],
+    help: {
+      group: "core",
+      icon: "🔎",
+      summary:
+        "Check structure, traceability, Gherkin. --strict is the gate: TDD, links, scenarios, requirements and coverage.",
     },
     json: { key: "validation", gate: true, args: "<dir>" },
     mcp: "validate_project",

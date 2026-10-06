@@ -8,7 +8,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`specgate check` — the gate under one name.** `validate --strict`, then the
+  project's tests (`--test-cmd`, or `test_cmd:` in `harness.config.yaml`). It
+  replaces `validate` in the daily help. Without a test command it passes and
+  says it checked the specification, not the code. First verb of phase 1 of
+  the team-simplification plan.
+
 ### Changed
+
+- **`req link --status` is refused instead of silently dropped.** It printed a
+  tick and left the row `Draft`. The status changes through `specgate done`,
+  which can check the requirement first.
 
 - **The harness and the agent `Stop` hook run the same gate as CI.** Both ran
   `validate --strict-tdd` while `ci init` generated `--strict`, so the harness

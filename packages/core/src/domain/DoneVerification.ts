@@ -92,6 +92,21 @@ export function planDoneVerification(
   return { steps, testsUnverified: testCmd === "" };
 }
 
+/**
+ * The checks `specgate check` runs: the gate, then the suite.
+ *
+ * `check` is the one command a team needs in CI and before a PR. It is
+ * `validate --strict` — not a subset, because a subset is how ten pages ended
+ * up recommending a gate that passed a requirement whose test file was gone —
+ * followed by the project's tests when a command is configured.
+ */
+export function planGateCheck(projectDir: string, testCmd?: string): DoneVerificationPlan {
+  const steps: VerificationStep[] = [{ stage: "validate", argv: [projectDir, "--strict"] }];
+  const cmd = (testCmd || "").trim();
+  if (cmd !== "") steps.push({ stage: "tests", argv: [cmd] });
+  return { steps, testsUnverified: cmd === "" };
+}
+
 /** The line `done` prints when nothing ran the project's tests. */
 export const NO_TEST_COMMAND_WARNING = Object.freeze({
   message: "No test command configured — this checked the specification, not the code.",
