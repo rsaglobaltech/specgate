@@ -52,6 +52,12 @@ export interface DoneVerificationPlan {
 export interface DoneCheckOptions {
   check: boolean;
   strict: boolean;
+  /**
+   * The requirement being closed. Its row still says Draft while the checks
+   * run, and a Draft row owes no files — so without this, `done --check`
+   * would skip the one requirement it is about to mark Implemented.
+   */
+  reqId?: string;
   /** From `--test-cmd`, or `test_cmd:` in harness.config.yaml. */
   testCmd?: string;
 }
@@ -76,6 +82,7 @@ export function planDoneVerification(
     // documentation leaves you with a weaker gate than the tool supports.
     validateArgs.push("--strict-tdd", "--strict-links", "--strict-coverage");
   }
+  if (opts.reqId) validateArgs.push("--delivering", opts.reqId);
 
   const steps: VerificationStep[] = [{ stage: "validate", argv: validateArgs }];
 

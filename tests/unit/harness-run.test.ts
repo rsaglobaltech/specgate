@@ -1198,8 +1198,14 @@ test("no configuration means the built-in protected paths still apply", () => {
 // forbids this repository.
 
 /** The same greenable project, with real paths in the row instead of prose. */
-function projectWithDeclaredPaths() {
+function projectWithDeclaredPaths({ existing = false } = {}) {
   const { parent, projectDir } = greenableProject();
+  if (existing) {
+    // The shared-module case: the declared files are already there.
+    fs.mkdirSync(path.join(projectDir, "src/test"), { recursive: true });
+    fs.writeFileSync(path.join(projectDir, "src/Health.java"), "class Health {}\n");
+    fs.writeFileSync(path.join(projectDir, "src/test/HealthTest.java"), "class HealthTest {}\n");
+  }
   const matrix = path.join(projectDir, "docs/specs/traceability.md");
   fs.writeFileSync(
     matrix,
@@ -1221,7 +1227,7 @@ test("implementing elsewhere warns but does not fail by default", () => {
   // A warning, deliberately: work can legitimately land in a shared module that
   // already exists, and failing on that is the kind of gate that rejects good
   // work — which already cost two runs on REQ-002.
-  const { parent, projectDir } = projectWithDeclaredPaths();
+  const { parent, projectDir } = projectWithDeclaredPaths({ existing: true });
   try {
     const agent = scriptedAgent(parent, [["src/other/Elsewhere.java", "x\n"]]);
     const r = runHarness(projectDir, agent);
@@ -1235,8 +1241,23 @@ test("implementing elsewhere warns but does not fail by default", () => {
   }
 });
 
-test("--strict-artifacts turns the same warning into a failed attempt", () => {
+test("implementing elsewhere when the declared file does not exist fails the gate", () => {
+  // The harness gate is `validate --strict --delivering REQ`, the gate CI runs.
+  // With `--strict-tdd` it passed here and marked REQ-000 Implemented on a
+  // `src/Health.java` that did not exist, so the next CI run went red.
   const { parent, projectDir } = projectWithDeclaredPaths();
+  try {
+    const agent = scriptedAgent(parent, [["src/other/Elsewhere.java", "x\n"]]);
+    const out = runHarness(projectDir, agent).stdout;
+    assert.match(out, /declared_artifact_missing/, out);
+    assert.match(out, /0 passed/, out);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("--strict-artifacts turns the same warning into a failed attempt", () => {
+  const { parent, projectDir } = projectWithDeclaredPaths({ existing: true });
   try {
     const agent = scriptedAgent(parent, [["src/other/Elsewhere.java", "x\n"]]);
     const r = runHarness(projectDir, agent, ["--strict-artifacts"]);

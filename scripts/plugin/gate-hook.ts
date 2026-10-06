@@ -80,7 +80,7 @@ export function renderFindings(diagnostics: GateDiagnostic[]): string {
     if (d.fix) lines.push(`    fix: ${d.fix}`);
   }
   if (diagnostics.length > 10) lines.push(`  … and ${diagnostics.length - 10} more.`);
-  lines.push("", "Run `specgate validate . --strict-tdd` to see all of it.");
+  lines.push("", "Run `specgate validate . --strict` to see all of it.");
   return lines.join("\n");
 }
 
@@ -116,15 +116,11 @@ export function decide(
 function runValidate(cwd: string): { ok: boolean; diagnostics: GateDiagnostic[] } {
   if (!fs.existsSync(path.join(cwd, "spec.md"))) throw new Error("not a spec-driven project");
 
-  const r = spawnSync(
-    "npx",
-    ["--no-install", "specgate", "validate", cwd, "--strict-tdd", "--json"],
-    {
-      encoding: "utf8",
-      timeout: 120_000,
-      maxBuffer: 16 * 1024 * 1024,
-    }
-  );
+  const r = spawnSync("npx", ["--no-install", "specgate", "validate", cwd, "--strict", "--json"], {
+    encoding: "utf8",
+    timeout: 120_000,
+    maxBuffer: 16 * 1024 * 1024,
+  });
   if (r.error || typeof r.status !== "number") throw new Error("could not run specgate");
 
   let parsed: { status?: GateDiagnostic[] };

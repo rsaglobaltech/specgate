@@ -149,9 +149,10 @@ test("a test selector is accepted by req link and by validate", () => {
       `validate must accept what req link wrote:\n${ok.stdout}${ok.stderr}`
     );
 
-    // And a selector on a file that is genuinely absent still fails.
+    // And a selector on a file that is genuinely absent still fails — once the
+    // requirement is being delivered. Draft, it only names where tests will go.
     cli("req", "link", reqId, "--test", "tests/nope.py::test_c", "--project-dir", dir);
-    assert.equal(cli("validate", dir, "--strict").status, 1);
+    assert.equal(cli("validate", dir, "--strict", "--delivering", reqId).status, 1);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

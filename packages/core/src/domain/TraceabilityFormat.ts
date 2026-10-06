@@ -286,6 +286,14 @@ export const ALLOWED_STATUS = new Set([
 /** The statuses that mean work has started — everything but `Draft`. */
 export const POST_DRAFT_STATUS = new Set([...ALLOWED_STATUS].filter((s) => s !== "Draft"));
 
+/**
+ * The statuses that claim the work exists. Before these, a row's declared
+ * paths are a plan — the file a requirement is going to land in — and a
+ * missing one is not drift. `Deprecated` is excluded: its files may have been
+ * removed on purpose.
+ */
+export const DELIVERED_STATUS = new Set(["Implemented", "Verified", "Released"]);
+
 /** Which of the two matrix shapes this file uses, or `null` if neither header is present. */
 export function detectTraceabilityMode(content: string): TraceabilityMode | null {
   if (content.includes(RICH_HEADER)) return "rich";

@@ -14,7 +14,10 @@ import {
   linkIsUnevidenced,
   usesNamingConvention,
 } from "../../../../packages/core/src/domain/ScenarioCoverage";
-import { countDraftExempt } from "../../../../packages/core/src/domain/TraceabilityFormat";
+import {
+  countDraftExempt,
+  DELIVERED_STATUS,
+} from "../../../../packages/core/src/domain/TraceabilityFormat";
 import * as crypto from "node:crypto";
 import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
 import { findUnresolvedPlaceholders } from "../../../lib/placeholders";
@@ -389,7 +392,7 @@ export class ValidateSpecsCommand extends BaseCommand {
    * Opt-in, same promise as `--strict-scenarios`: a project with aspirational
    * rows does not fail its next `validate` over this.
    */
-  private checkDeclaredArtifactsExist(targetDir: string, traceContent: string) {
+  private checkDeclaredArtifactsExist(targetDir: string, traceContent: string, delivering = "") {
     let rows: any[] = [];
     try {
       rows = parseTraceabilityRows(traceContent).rows || [];
@@ -406,6 +409,15 @@ export class ValidateSpecsCommand extends BaseCommand {
     ];
 
     for (const row of rows) {
+      // A row that has not been delivered names where the work is going to
+      // land; only a delivered one claims the file is there. Measured
+      // 2026-10-06: with `--strict` as the CI gate, every planned row failed
+      // the build — and in the harness, one pending requirement's paths failed
+      // its sibling's worktree.
+      const owesFiles =
+        DELIVERED_STATUS.has(String(row.status || "").trim()) ||
+        (delivering !== "" && row.requirement === delivering);
+      if (!owesFiles) continue;
       for (const [label, key] of columns) {
         for (const declared of declaredPaths(row[key])) {
           // A cell may point into a file — an anchor (`login.ts#L15-L89`) or a
@@ -728,7 +740,15 @@ export class ValidateSpecsCommand extends BaseCommand {
     const strictLinks = strict || argv.includes("--strict-links");
     const strictCoverage = strict || argv.includes("--strict-coverage");
     const againstLock = argv.includes("--against-lock");
-    const positional = argv.filter((a) => !a.startsWith("-"));
+    // `--delivering REQ-NNN` holds one requirement to what a delivered row
+    // owes while its Status still says Draft. `done --check` and the harness
+    // gate run before the status flips, so without it they would skip the very
+    // requirement they are about to mark Implemented.
+    const deliveringAt = argv.indexOf("--delivering");
+    const delivering = deliveringAt >= 0 ? argv[deliveringAt + 1] || "" : "";
+    const positional = argv.filter(
+      (a, i) => !a.startsWith("-") && !(deliveringAt >= 0 && i === deliveringAt + 1)
+    );
 
     // Asking what a command does is not a usage error, and it exits 0.
     if (argv.includes("--help") || argv.includes("-h")) {
@@ -942,7 +962,7 @@ export class ValidateSpecsCommand extends BaseCommand {
 
     this.checkScenarioTags(targetDir, traceContent);
     if (strictLinks) {
-      this.checkDeclaredArtifactsExist(targetDir, traceContent);
+      this.checkDeclaredArtifactsExist(targetDir, traceContent, delivering);
     }
     if (strictCoverage) {
       this.checkScenarioCoverage(targetDir, traceContent);

@@ -122,7 +122,7 @@ function cliVersion(): string {
  *
  * The hook is the part no other target can offer. Every other tool here gets
  * *instructions* — text an agent may or may not follow. A plugin gets a hook,
- * which runs whether the agent likes it or not, so `validate --strict-tdd`
+ * which runs whether the agent likes it or not, so `validate --strict`
  * stops being something that reviews the work after the agent has gone and
  * becomes something the agent cannot walk past.
  *

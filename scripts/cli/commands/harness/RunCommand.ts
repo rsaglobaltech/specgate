@@ -4,7 +4,7 @@
  *
  * A spec-driven repo is already an environment for an agent: `plan` is the
  * task queue, the feature file + AI_RULES.md are the per-task context,
- * `validate --strict-tdd` + the project test command are the reward signal,
+ * `validate --strict` + the project test command are the reward signal,
  * and `done` is the state transition. This command is the missing
  * orchestration layer — it runs plan → context → agent → verify → done
  * without a human copy-pasting prompts.
@@ -13,7 +13,7 @@
  * `harness/REQ-NNN` branch:
  *   1. Build a self-contained prompt (Gherkin + AI_RULES + paths + retry feedback).
  *   2. Shell out to the user-configured agent ({prompt_file} placeholder).
- *   3. Gate: `validate --strict-tdd` + the project test command.
+ *   3. Gate: `validate --strict` + the project test command.
  *   4. Green → `done REQ-NNN` + commit. Red → retry N times feeding the failure.
  *   5. Emit a pass/fail/attempts report.
  *
@@ -319,7 +319,7 @@ function runPlan(projectDir) {
 // default 1 MB ceiling otherwise kills the gate with ENOBUFS.
 const SUBPROCESS_MAX_BUFFER = 64 * 1024 * 1024;
 
-/** Run the gate (validate --strict-tdd, then the optional test command). */
+/** Run the gate (validate --strict, then the optional test command). */
 
 /**
  * What Cucumber says it did, when it can be asked (F5).
@@ -354,7 +354,12 @@ function readGateMessages(worktreeDir, reportPath) {
 }
 
 function runGate(worktreeDir, testCmd, timeoutMs, req: any = {}, settings: any = {}) {
-  const validate = spawnSync(process.execPath, [VALIDATE_SCRIPT, worktreeDir, "--strict-tdd"], {
+  // `--delivering`: the requirement is still Draft while its gate runs, and a
+  // Draft row owes no files. Without it the gate would skip the one
+  // requirement this attempt exists to deliver.
+  const validateArgs = [VALIDATE_SCRIPT, worktreeDir, "--strict"];
+  if (req.requirement) validateArgs.push("--delivering", req.requirement);
+  const validate = spawnSync(process.execPath, validateArgs, {
     encoding: "utf8",
     timeout: timeoutMs,
     maxBuffer: SUBPROCESS_MAX_BUFFER,
@@ -362,7 +367,7 @@ function runGate(worktreeDir, testCmd, timeoutMs, req: any = {}, settings: any =
   if (validate.status !== 0) {
     return {
       ok: false,
-      stage: "validate --strict-tdd",
+      stage: "validate --strict",
       output: validate.stdout + validate.stderr,
       hint: "",
     };

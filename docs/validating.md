@@ -181,11 +181,15 @@ Every Feature file / Technical artifact / Test artifact the matrix declares as
 a path still exists on disk. A cell may anchor a line range
 (`src/auth/login.ts#L15-L89`); the anchor is not part of the path.
 
-**Why it is opt-in, measured rather than assumed.** The first version ran
-unconditionally, on the theory that "this path does not exist" has no
-legitimate reading. The test suite disproved that immediately: a `Draft` or
-`In Dev` row routinely names the file a requirement is *going to* land in,
-before anyone writes it. Planning ahead is not documentary drift.
+**Only delivered rows owe their files.** A `Draft` or `In Dev` row routinely
+names the file a requirement is *going to* land in, before anyone writes it.
+Planning ahead is not documentary drift, so the check applies to rows that are
+`Implemented`, `Verified` or `Released`. A delivered row whose file has gone is
+drift, and fails.
+
+`specgate done REQ-NNN --check` and `harness run` hold the requirement they are
+closing to that rule before its status flips — otherwise they would skip the
+one requirement they are about to mark `Implemented`.
 
 ---
 

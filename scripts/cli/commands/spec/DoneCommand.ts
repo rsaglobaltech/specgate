@@ -137,6 +137,7 @@ export class DoneCommand extends BaseCommand {
     const plan = planDoneVerification(projectDir, {
       check: opts.check,
       strict: opts.strict,
+      reqId: opts.reqId || undefined,
       testCmd: opts.testCmd || harness.testCmd,
     });
 

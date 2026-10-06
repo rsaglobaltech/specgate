@@ -143,7 +143,7 @@ keeps exactly the behaviour you have today: one agent, every attempt.
 before the first attempt, since there is nothing to review yet — and its output
 is added to the next prompt as findings. Then everything it touched in the
 worktree is discarded, so it cannot reach the gate even if it tries to write
-code. `validate --strict-tdd` plus your test command stay the only judge, and a
+code. `validate --strict` plus your test command stay the only judge, and a
 finding with the gate green does not block anything.
 
 A profile named by `review_profile` must declare `advisory: true`. Without it

@@ -322,7 +322,11 @@ function dispatchValidate(validateArgs: string[]): void {
     return;
   }
 
-  const positional = validateArgs.filter((a) => !a.startsWith("-"));
+  // `--delivering` takes a value; it is not a second project directory.
+  const deliveringAt = validateArgs.indexOf("--delivering");
+  const positional = validateArgs.filter(
+    (a, i) => !a.startsWith("-") && !(deliveringAt >= 0 && i === deliveringAt + 1)
+  );
   if (positional.length !== 1) {
     error(`'validate' expects exactly one positional argument: <project_dir>`);
     usage();
@@ -337,6 +341,9 @@ function dispatchValidate(validateArgs: string[]): void {
     "--strict-coverage",
     "--against-lock",
     "--json",
+    // Internal: `done --check` and the harness hold the requirement they are
+    // delivering to what a delivered row owes. Not in the help on purpose.
+    "--delivering",
   ]);
   const unknownFlags = validateArgs.filter((a) => a.startsWith("-") && !VALIDATE_FLAGS.has(a));
   if (unknownFlags.length > 0) {
