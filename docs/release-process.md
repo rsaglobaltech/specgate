@@ -181,10 +181,20 @@ tag cannot publish. Run the same things locally first — finding it here costs 
 commit, finding it in the workflow costs a version number:
 
 ```bash
-npm run verify        # typecheck · eslint · prettier · tests · pack dry-run
+npm run verify        # typecheck · eslint · tests · pack dry-run
+npm run format:check  # prettier — CI runs it, verify does not
 npm run test:all      # every suite, including BDD and the package tests
+npm run e2e           # the packed tarball, installed and driven end to end
 npm pack --dry-run    # inspect the tarball contents
 ```
+
+`npm run e2e` (`e2e/run.mjs`) packs this checkout, installs the tarball into an
+empty directory and runs the journeys a team takes against the installed
+binary: adopt, `new` → test → `done --strict`, a stale matrix, a hand-kept
+matrix migrated, `ci init`, the harness, and an upgrade from the last published
+version (`--skip-network` leaves that one out). It is also the `E2E` workflow,
+on every pull request and on all three platforms, and **`publish-npm.yml` will
+not publish a tag unless it passes**.
 
 Check the tarball carries `bin/`, `dist/`, `templates/`, `examples/` and
 `README.md`, and nothing else — no `.local`, no `dist/packages/**` for

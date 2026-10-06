@@ -17,6 +17,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `init`, `status`, `new`, `check`, `done` — and `new` and `status` stop
   recommending `req link` on a generated project.
 
+- **Code is linked the way tests are.** On a generated matrix, a source file
+  that mentions `REQ-NNN` is that requirement's technical artifact, so `req link`
+  is not needed for either column. `plan` and `harness run` stop warning that a
+  row "declares no test/production artifact" there — the mention is the link.
+
 ### Fixed
 
 - **`done --check` and the harness gate refresh a generated matrix first.**
@@ -24,6 +29,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   gate refused the very test that made the requirement deliverable.
 
 ### Added
+
+- **An end-to-end run of the installed package.** `npm run e2e` packs the
+  checkout, installs the tarball into an empty directory and drives the binary
+  through the journeys a team takes — adopt, `new` → test → `done --strict`, a
+  stale matrix, a hand-kept matrix migrated, `ci init`, the harness, an upgrade
+  from the last published version. It runs as the `E2E` workflow on every pull
+  request on Linux, macOS and Windows, and `publish-npm.yml` publishes a tag
+  only if it passes.
 
 - **`specgate matrix` — a traceability matrix nobody edits.** The matrix can be
   generated instead of maintained: requirements and titles from `spec.md`,

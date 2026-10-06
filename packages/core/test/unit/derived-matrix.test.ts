@@ -183,3 +183,18 @@ test("requirements archived into capability specs are rows too", () => {
   assert.equal(r.status, "Implemented");
   assert.equal(r.scenarioId, "SCN-100");
 });
+
+test("the code column comes from source files that mention the requirement", () => {
+  const rows = deriveRows(
+    sources({
+      code: [
+        { path: "lib/totals.js", source: "// REQ-002: half-up rounding\n" },
+        { path: "lib/other.js", source: "// REQ-0021\n" },
+      ],
+    })
+  );
+  const r = rows.find((x) => x.requirement === "REQ-002");
+  assert.equal(r.technicalArtifact, "`lib/totals.js`");
+  const r3 = rows.find((x) => x.requirement === "REQ-003");
+  assert.equal(r3.technicalArtifact, "`lib/orders.js`", "an explicit artifact still wins");
+});

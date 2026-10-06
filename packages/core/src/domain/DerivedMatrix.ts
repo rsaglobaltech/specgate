@@ -18,6 +18,7 @@
  * | Requirement, Use Case | the `## REQ-NNN — title` section in `spec.md` |
  * | Scenario ID, Feature file | scenarios tagged `@REQ-NNN` (their `@SCN-…`), one row each |
  * | Test artifact | test files that mention `REQ-NNN` |
+ * | Technical artifact | other source files that mention `REQ-NNN` |
  * | Status | `status=` in the section's `csda:trace` comment — the one owner |
  * | anything | an explicit key in that comment wins over what is derived |
  *
@@ -62,6 +63,12 @@ export interface DerivationSources {
    * derived matrix that ignored them would drop every archived change.
    */
   readonly capabilities?: ReadonlyArray<SourceFile>;
+  /**
+   * Source files that are not tests. One that mentions `REQ-NNN` — a comment
+   * is enough — is where that requirement is implemented, the same rule tests
+   * follow, so the code column needs no `req link` either.
+   */
+  readonly code?: ReadonlyArray<SourceFile>;
 }
 
 export interface DerivedRequirement {
@@ -130,6 +137,13 @@ export function deriveRows(sources: DerivationSources): any[] {
         .map((t) => t.path)
         .sort();
       if (tests.length > 0) trace.test = tests.join(", ");
+    }
+    if (!trace.artifact) {
+      const code = (sources.code || [])
+        .filter((t) => mentions(t.source, req.id))
+        .map((t) => t.path)
+        .sort();
+      if (code.length > 0) trace.artifact = code.join(", ");
     }
 
     const scenarios = trace.scn || trace.feature ? [] : taggedScenarios(sources.features, req.id);

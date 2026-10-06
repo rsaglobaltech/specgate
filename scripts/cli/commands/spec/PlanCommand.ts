@@ -1,4 +1,5 @@
 import { refreshDerivedMatrix } from "./MatrixCommand";
+import { isDerivedProject } from "../../../lib/derived-writes";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -211,6 +212,7 @@ function readinessFor(projectDir: string, it: any) {
     blockedBy: it.blocked_by ?? it.blockedBy ?? [],
     technicalDeclared: RequirementPlan.isMeaningful(it.technical_artifact ?? it.technicalArtifact),
     testDeclared: RequirementPlan.isMeaningful(it.test_artifact ?? it.testArtifact),
+    derived: isDerivedProject(projectDir),
   });
 }
 

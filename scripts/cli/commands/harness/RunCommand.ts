@@ -22,6 +22,7 @@
  */
 
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
+import { isDerivedProject } from "../../../lib/derived-writes";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -1437,6 +1438,7 @@ function readinessOf(projectDir, req) {
     // dependents `blocked` when a predecessor actually fails. Readiness answers
     // the questions the scheduler cannot.
     blockedBy: [],
+    derived: isDerivedProject(projectDir),
     technicalDeclared: RequirementPlan.isMeaningful(
       req.technicalArtifact || req.technical_artifact
     ),
