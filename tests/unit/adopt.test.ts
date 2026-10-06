@@ -66,7 +66,14 @@ test("adopt on a Maven project detects the stack and passes validate", () => {
       "utf8"
     );
 
-    const r = cli(["adopt", "--project-dir", dir, "--keep-matrix", "--var", "DOMAIN=health information exchange"]);
+    const r = cli([
+      "adopt",
+      "--project-dir",
+      dir,
+      "--keep-matrix",
+      "--var",
+      "DOMAIN=health information exchange",
+    ]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /Stack detection: pom\.xml/);
     assert.match(r.stdout, /Java 21, Spring Boot, HAPI FHIR, Maven/);

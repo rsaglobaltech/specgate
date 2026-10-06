@@ -149,7 +149,10 @@ test("once a project uses the convention, the check holds every row to it", () =
   // Calibration, not abdication: the skipped scenario is still caught.
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-conv-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status, 0);
+    assert.equal(
+      cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status,
+      0
+    );
     const dir = path.join(parent, "my-spec-driven-app");
     fs.mkdirSync(path.join(dir, "features/billing"), { recursive: true });
     fs.mkdirSync(path.join(dir, "tests"), { recursive: true });
@@ -183,7 +186,10 @@ test("adopting the naming convention on one test does not turn other rows red", 
   // which teaches people not to do the correct thing.
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-cliff-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status, 0);
+    assert.equal(
+      cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status,
+      0
+    );
     const dir = path.join(parent, "my-spec-driven-app");
     fs.mkdirSync(path.join(dir, "features/core"), { recursive: true });
     fs.mkdirSync(path.join(dir, "tests"), { recursive: true });
@@ -220,7 +226,10 @@ test("a scenario skipped in a file whose others are named is still caught", () =
   // The calibration is per feature file, so #168's case survives it.
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-skip-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status, 0);
+    assert.equal(
+      cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status,
+      0
+    );
     const dir = path.join(parent, "my-spec-driven-app");
     fs.mkdirSync(path.join(dir, "features/billing"), { recursive: true });
     fs.mkdirSync(path.join(dir, "tests"), { recursive: true });
