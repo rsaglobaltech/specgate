@@ -2,7 +2,7 @@
 description: Merge the change into the spec tree.
 ---
 
-# /csda:archive
+# /specgate:archive
 
 Merge the change into the spec tree.
 

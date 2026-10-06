@@ -52,7 +52,7 @@ function withProject(fn) {
   }
 }
 
-const REL = path.join(".claude", "commands", "csda", "propose.md");
+const REL = path.join(".claude", "commands", "specgate", "propose.md");
 
 /** Put a file, its baseline, and the incoming version into a known state. */
 function stage(dir, { local, base }: { local: string; base?: string }) {
@@ -185,5 +185,78 @@ test("a conflict is surfaced as a diagnostic with a fix", () => {
       assert.ok(d.fix, "a conflict the user has to resolve must say how");
       assert.match(d.fix, /<<<<<<</);
     }
+  });
+});
+
+// ── The csda → specgate rename ───────────────────────────────────────────────
+//
+// Agent files were generated under the tool's old name, so a team typed
+// `specgate` in the terminal and `/csda:apply` in their agent. `update` moves
+// them, keeps the team's edits, and leaves no `/csda:` behind.
+
+/** What 0.9 generated: today's files under the old name, with no baseline. */
+function asGeneratedBy09(dir) {
+  const fresh = path.join(dir, ".claude", "commands", "specgate");
+  const old = path.join(dir, ".claude", "commands", "csda");
+  fs.renameSync(fresh, old);
+  for (const f of fs.readdirSync(old)) {
+    const p = path.join(old, f);
+    fs.writeFileSync(p, fs.readFileSync(p, "utf8").split("/specgate:").join("/csda:"));
+  }
+  fs.rmSync(path.join(dir, BASELINE_DIR), { recursive: true, force: true });
+}
+
+test("update moves csda agent files to specgate, keeping the team's edits", () => {
+  withProject((dir) => {
+    asGeneratedBy09(dir);
+    const old = path.join(dir, ".claude", "commands", "csda", "apply.md");
+    fs.appendFileSync(old, "\nOur team runs the integration suite before /csda:verify.\n");
+
+    const r = cli("update", "--project-dir", dir, "--json");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const outcomes = JSON.parse(r.stdout).update.files.map((f) => f.outcome);
+    assert.ok(outcomes.includes("renamed"), JSON.stringify(outcomes));
+
+    assert.ok(!fs.existsSync(path.join(dir, ".claude", "commands", "csda")), "old dir removed");
+    const moved = fs.readFileSync(
+      path.join(dir, ".claude", "commands", "specgate", "apply.md"),
+      "utf8"
+    );
+    assert.match(moved, /^# \/specgate:apply/m, "the generated heading took the new name");
+    assert.match(moved, /Our team runs the integration suite/, "the edit survived");
+
+    const again = JSON.parse(cli("update", "--project-dir", dir, "--json").stdout);
+    assert.ok(
+      again.update.files.every((f) => f.outcome === "unchanged"),
+      "a second run is a no-op"
+    );
+  });
+});
+
+test("update refuses to choose when both the csda and specgate files exist", () => {
+  withProject((dir) => {
+    const old = path.join(dir, ".claude", "commands", "csda", "apply.md");
+    fs.mkdirSync(path.dirname(old), { recursive: true });
+    fs.writeFileSync(old, "# edited under the old name\n");
+
+    const r = JSON.parse(cli("update", "--project-dir", dir, "--json").stdout);
+    assert.ok(
+      r.status.some((d) => d.code === "rename_conflict"),
+      JSON.stringify(r.status)
+    );
+    assert.ok(fs.existsSync(old), "neither file is deleted");
+  });
+});
+
+test("the project's own README is never taken for the Claude plugin's", () => {
+  // Same path, different file: `update` adopted it as the plugin README, and
+  // the next run would have merged the plugin's README into it.
+  withProject((dir) => {
+    const readme = path.join(dir, "README.md");
+    const before = fs.readFileSync(readme, "utf8");
+    assert.ok(!generatedFiles(dir).some((f) => f.path === "README.md"));
+    cli("update", "--project-dir", dir);
+    assert.equal(fs.readFileSync(readme, "utf8"), before);
+    assert.ok(!fs.existsSync(path.join(dir, BASELINE_DIR, "README.md")));
   });
 });

@@ -2,7 +2,7 @@
 description: Understand the project before proposing anything.
 ---
 
-# /csda:explore
+# /specgate:explore
 
 Understand the project before proposing anything.
 

@@ -118,10 +118,10 @@ test("every step becomes a slash command that calls the engine", () => {
       0
     );
     for (const step of STEPS) {
-      const file = path.join(dir, ".claude/commands/csda", `${step.name}.md`);
+      const file = path.join(dir, ".claude/commands/specgate", `${step.name}.md`);
       assert.ok(fs.existsSync(file), `${step.name} should have a slash command`);
       const body = fs.readFileSync(file, "utf8");
-      assert.match(body, new RegExp(`# /csda:${step.name}`));
+      assert.match(body, new RegExp(`# /specgate:${step.name}`));
       // Thin by design: it defers to the engine rather than restating rules.
       assert.match(body, /specgate change instructions/);
     }
@@ -192,7 +192,7 @@ test("antigravity is registered and writes to the paths its docs state", () => {
   );
 
   const paths = TOOLS.antigravity.files().map((f: any) => f.path.split(path.sep).join("/"));
-  assert.deepEqual(paths.sort(), [".agents/mcp_config.json", ".agents/rules/csda.md"]);
+  assert.deepEqual(paths.sort(), [".agents/mcp_config.json", ".agents/rules/specgate.md"]);
 });
 
 test("antigravity's MCP config is the same server Claude Code is given", () => {
