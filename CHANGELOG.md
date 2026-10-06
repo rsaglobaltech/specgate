@@ -8,6 +8,20 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-10-07
+
+**A matrix nobody edits.** The traceability matrix is now generated for every
+new project: requirements from `spec.md`, scenarios from their tags, tests and
+code from the files that mention the requirement, status from `done`. The daily
+loop is five verbs — `init`, `status`, `new`, `check`, `done` — and no step edits
+the matrix or runs `req link`. Existing projects are untouched until they run
+`specgate matrix --migrate`, which changes nothing unless the result is
+identical row for row. This is the first release published only after an
+end-to-end run of the installed package on Linux, macOS and Windows.
+
+**Known limit:** a domain pack writes its own matrix, so `specops add` / `expand`
+turns a project back to a hand-kept matrix and says so.
+
 ### Changed
 
 - **New projects start with a generated matrix.** `init` and `adopt` write the
