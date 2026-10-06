@@ -116,15 +116,11 @@ export function decide(
 function runValidate(cwd: string): { ok: boolean; diagnostics: GateDiagnostic[] } {
   if (!fs.existsSync(path.join(cwd, "spec.md"))) throw new Error("not a spec-driven project");
 
-  const r = spawnSync(
-    "npx",
-    ["--no-install", "specgate", "validate", cwd, "--strict", "--json"],
-    {
-      encoding: "utf8",
-      timeout: 120_000,
-      maxBuffer: 16 * 1024 * 1024,
-    }
-  );
+  const r = spawnSync("npx", ["--no-install", "specgate", "validate", cwd, "--strict", "--json"], {
+    encoding: "utf8",
+    timeout: 120_000,
+    maxBuffer: 16 * 1024 * 1024,
+  });
   if (r.error || typeof r.status !== "number") throw new Error("could not run specgate");
 
   let parsed: { status?: GateDiagnostic[] };
