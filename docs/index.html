@@ -32,7 +32,7 @@
 
 <header class="top">
   <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
-  <span class="top__version">v0.8.1</span>
+  <span class="top__version">v0.9.0</span>
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -328,7 +328,7 @@ TESTING: node:test
 ℹ️ [INFO] Domain pack expansion completed.
 
 ~/smart-parking $ specgate plan
-  Needs Feature + Test + Code
+  Needs Test + Code
     REQ-002   SCN-001
       ✓ feature: `features/multi-tenant/provisioning_a_tenant_emits_tenantprovisioned.feature`
     REQ-001   SCN-002
@@ -361,11 +361,11 @@ max_attempts: 1
 ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
- .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 83 +++++++++++++++++++++++++
+ .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 96 +++++++++++++++++++++++++
  docs/specs/traceability.md                              |  2 +-
  src/health.js                                           |  9 +++
  test/health.test.js                                     | 10 +++
- 4 files changed, 103 insertions(+), 1 deletion(-)
+ 4 files changed, 116 insertions(+), 1 deletion(-)
 
 ~/smart-parking $ git switch -q harness/REQ-000 &amp;&amp; node --test test/*.test.js
 ✔ GET /health reports the service as UP (12ms)
@@ -388,7 +388,7 @@ max_attempts: 1
     </figure>
 
     <p class="term__meta">
-      Recorded from <strong>v0.8.1</strong>. <a href="./tutorial.html">The same run, explained →</a>
+      Recorded from <strong>v0.9.0</strong>. <a href="./tutorial.html">The same run, explained →</a>
     </p>
   </div>
 </section>
@@ -713,7 +713,7 @@ specgate validate .</code></pre>
       <a href="./release-process.html">Releases</a>
     </p>
     <p class="foot__note">
-      Documentation for v0.8.1. Every number on this page is generated from the
+      Documentation for v0.9.0. Every number on this page is generated from the
       repository, not typed by hand.
     </p>
   </div>

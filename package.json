@@ -1,6 +1,6 @@
 {
   "name": "@rsaglobaltech/specgate",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Specs as executable contracts \u2014 requirements, scenarios and traceability that CI enforces.",
   "license": "MIT",
   "type": "commonjs",
