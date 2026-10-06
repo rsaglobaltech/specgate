@@ -35,7 +35,7 @@
 
 import { TraceabilityMatrix } from "./TraceabilityMatrix";
 import { buildTraceabilityMarkdown, parseTraceabilityRows } from "./TraceabilityFormat";
-import { parseTraceComment } from "./SpecParser";
+import { parseSpec, parseTraceComment } from "./SpecParser";
 import { csdaTagsByScenario } from "./GherkinTags";
 
 /** First line of a derived matrix. Its presence is what makes a project derived. */
@@ -56,6 +56,12 @@ export interface DerivationSources {
   readonly spec: string;
   readonly features: ReadonlyArray<SourceFile>;
   readonly tests: ReadonlyArray<SourceFile>;
+  /**
+   * `docs/specs/capabilities/<cap>/spec.md`, where `change archive` writes
+   * requirements. Their `csda:trace` already maps to a row (`traceRow`); a
+   * derived matrix that ignored them would drop every archived change.
+   */
+  readonly capabilities?: ReadonlyArray<SourceFile>;
 }
 
 export interface DerivedRequirement {
@@ -136,6 +142,26 @@ export function deriveRows(sources: DerivationSources): any[] {
       const row: any = TraceabilityMatrix.traceRow({ id: req.id, trace: t });
       if (t.depends) row.dependsOn = String(t.depends).split(",").filter(Boolean);
       if (t.context) row.context = t.context;
+      rows.push(row);
+    }
+  }
+
+  const fromSpec = new Set(rows.map((r) => r.requirement));
+  for (const cap of [...(sources.capabilities || [])].sort((a, b) =>
+    a.path.localeCompare(b.path)
+  )) {
+    let parsed: any;
+    try {
+      parsed = parseSpec(cap.source);
+    } catch {
+      continue;
+    }
+    for (const req of parsed.requirements || []) {
+      if (!req.id || fromSpec.has(req.id)) continue;
+      const row: any = TraceabilityMatrix.traceRow(req);
+      const trace = req.trace || {};
+      if (trace.depends) row.dependsOn = String(trace.depends).split(",").filter(Boolean);
+      if (trace.context) row.context = trace.context;
       rows.push(row);
     }
   }

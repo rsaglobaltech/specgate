@@ -220,6 +220,14 @@ export class UpdateTraceabilityTool implements ITool {
     }
 
     const content = fs.readFileSync(tracePath, "utf8");
+    // A generated matrix is rebuilt from spec.md and the feature tags; a row
+    // appended here would vanish on the next regeneration.
+    if (content.includes("<!-- specgate:derived")) {
+      throw new Error(
+        "docs/specs/traceability.md is generated. Add the requirement with `specgate new`, " +
+          "or tag its scenario @REQ-NNN @SCN-NNN, then run `specgate matrix`."
+      );
+    }
     const tag = `${args.requirement}.*${args.feature}`;
     if (new RegExp(tag).test(content)) {
       return { updated: false, rowsAdded: 0 };

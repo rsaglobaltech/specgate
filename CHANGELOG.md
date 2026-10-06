@@ -20,6 +20,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `validate` fails with `matrix_stale` when it no longer matches its sources.
   Opt-in: a project that does not migrate is untouched. First part of phase 3
   of the team-simplification plan.
+- **On a generated matrix, the commands write its sources.** `done` sets
+  `status=` and `req link` / `req add --feature …` record links in the
+  requirement's `csda:trace` comment in `spec.md` — an edit to the row would
+  be undone by the next regeneration. `new`, `req rm` and `change archive`
+  regenerate the matrix; `status`, `plan` and `check` read it fresh;
+  requirements archived into capability specs are derived too. `fix` reports
+  there is nothing to repair, `expand` leaves a generated matrix alone, and
+  the MCP add-row tool refuses with a pointer to `specgate new`.
 
 ## [0.10.0] — 2026-10-06
 

@@ -497,6 +497,14 @@ export function renderTraceability(
   }
 
   const markdown = buildTraceabilityMarkdown(rows, mode);
+  if (
+    fs.existsSync(traceTarget) &&
+    fs.readFileSync(traceTarget, "utf8").includes("<!-- specgate:derived")
+  ) {
+    // The pack's features carry @REQ/@SCN tags, so a generated matrix picks
+    // them up on its own; overwriting it would drop the project's own rows.
+    return;
+  }
   writeFile(traceTarget, markdown, dryRun);
 }
 

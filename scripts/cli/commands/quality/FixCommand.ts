@@ -4,7 +4,9 @@ import * as readline from "node:readline/promises";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability, detectOrphans } from "../spec/PlanCommand";
 import { agentIo, wantsJson } from "../../../lib/agent";
-import { error, errorMessage } from "../../../lib/diagnostics";
+import { error, info, errorMessage } from "../../../lib/diagnostics";
+import { isDerivedMatrix } from "../../../../packages/core/src/domain/DerivedMatrix";
+import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { appendRequirement } from "../spec/ReqCommand";
 import { BaseCommand } from "../../../lib/command";
 
@@ -131,6 +133,30 @@ export class FixCommand extends BaseCommand {
     const specContent = fs.existsSync(specPath) ? fs.readFileSync(specPath, "utf8") : "";
 
     const traceContent = fs.readFileSync(tracePath, "utf8");
+    if (isDerivedMatrix(traceContent)) {
+      // Every fix here edits the matrix, and a generated matrix has no edits
+      // to make: regenerating it is the whole repair.
+      const regenerated = !opts.dryRun && refreshDerivedMatrix(projectDir);
+      io.emit(
+        {
+          projectDir,
+          actions: [],
+          dryRun: Boolean(opts.dryRun),
+          applied: regenerated,
+          status: [
+            info("matrix_generated", "The matrix is generated, so there is nothing to fix in it.", {
+              fix: "A feature without a row needs @REQ-NNN on its scenario, or `specgate new`.",
+            }),
+          ],
+        },
+        () =>
+          process.stdout.write(
+            `${regenerated ? "↻ Regenerated docs/specs/traceability.md. " : ""}` +
+              "The matrix is generated: tag an orphan scenario @REQ-NNN, or add it with `specgate new`.\n"
+          )
+      );
+      return;
+    }
     const { content, actions } = computeFixes(projectDir, traceContent, specContent);
 
     const base = { projectDir, actions, dryRun: Boolean(opts.dryRun) };
