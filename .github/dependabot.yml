@@ -1,10 +1,16 @@
 version: 2
+# Every update targets `develop`, like every other PR (CONTRIBUTING.md). With
+# no `target-branch`, Dependabot opened against `main`, skipped the branch
+# where CI and the release are cut from, and put each PR straight back on
+# `main` when someone retargeted it by hand. Dependabot reads this file from
+# the default branch, so it takes effect once it reaches `main`.
 updates:
   # Zero runtime dependencies, so every alert here is about the build and the
   # test suite. That does not make them harmless: a compromised devDependency
   # runs on CI with a publish token in scope.
   - package-ecosystem: npm
     directory: /
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
@@ -30,6 +36,7 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
@@ -42,12 +49,14 @@ updates:
 
   - package-ecosystem: maven
     directory: /packages/maven-plugin
+    target-branch: develop
     schedule:
       interval: monthly
     open-pull-requests-limit: 3
 
   - package-ecosystem: gradle
     directory: /packages/gradle-plugin
+    target-branch: develop
     schedule:
       interval: monthly
     open-pull-requests-limit: 3
