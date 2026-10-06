@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import { migrateToDerived } from "../spec/MatrixCommand";
 import * as path from "node:path";
 import { renderTemplate } from "../../../../packages/core/src/domain/PackSpec";
 import { slugify } from "./WizardCommand";
@@ -61,7 +62,7 @@ function usage() {
       "  --dry-run            Print what would be written without writing\n" +
       "  --monorepo           Adopt every module the repository declares and write\n" +
       "                       the specops.config.yaml that `validate` reads\n" +
-      "  --no-capabilities    Do not seed proposed requirements — skeleton only\n" +
+      "  --no-capabilities    Do not seed proposed requirements — skeleton only\n  --keep-matrix        Keep traceability.md hand-maintained instead of generated\n" +
       "  --var KEY=VALUE      Override a detected value (PROJECT_NAME, PROJECT_SLUG,\n" +
       "                       DOMAIN, STACK, API_STYLE, TESTING, TEST_CMD)\n"
   );
@@ -73,6 +74,7 @@ export function parseArgs(argv: string[]) {
     dryRun: false,
     monorepo: false,
     noCapabilities: false,
+    keepMatrix: false,
     vars: {} as Record<string, string>,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -85,6 +87,8 @@ export function parseArgs(argv: string[]) {
       opts.monorepo = true;
     } else if (a === "--no-capabilities") {
       opts.noCapabilities = true;
+    } else if (a === "--keep-matrix") {
+      opts.keepMatrix = true;
     } else if (a === "--var" && argv[i + 1]) {
       const pair = argv[++i];
       const eq = pair.indexOf("=");
@@ -465,6 +469,11 @@ export class AdoptProjectCommand extends BaseCommand {
     }
 
     const { written, skipped, capabilities } = adoptOne(dir, opts);
+    // A new adoption starts with a generated matrix: nobody maintains it,
+    // `done` and `new` write spec.md, and the gate keeps it honest.
+    if (!opts.dryRun && !opts.keepMatrix && migrateToDerived(dir)) {
+      logInfo("- Traceability: generated from spec.md, tags and tests (`specgate matrix`)");
+    }
 
     logInfo("📋 Summary");
     logInfo(`- Files written: ${written}${opts.dryRun ? " (dry-run, nothing on disk)" : ""}`);

@@ -23,7 +23,7 @@ function generateProject() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-test-"));
   const r = spawnSync(
     process.execPath,
-    [CLI, "init", "--config", CONFIG, "--out", tmp, "--no-git", "--force"],
+    [CLI, "init", "--config", CONFIG, "--out", tmp, "--no-git", "--force", "--keep-matrix"],
     { encoding: "utf8", cwd: REPO_ROOT }
   );
   assert.equal(r.status, 0, `init failed:\n${r.stdout}\n${r.stderr}`);

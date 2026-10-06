@@ -78,6 +78,74 @@ export function refreshDerivedMatrix(projectDir: string): boolean {
   return true;
 }
 
+/** The migration, computed and not written: what spec.md would become, and why it cannot. */
+function planMigration(projectDir: string, original: any[]) {
+  const specFile = path.join(projectDir, "spec.md");
+  const specBefore = fs.existsSync(specFile) ? fs.readFileSync(specFile, "utf8") : "";
+  let spec = specBefore;
+  const sources = readDerivationSources(projectDir);
+  const blocked: string[] = [];
+
+  const byReq = new Map<string, any[]>();
+  for (const row of original) {
+    const id = String(row.requirement || "").trim();
+    if (!/^REQ-/.test(id)) continue;
+    byReq.set(id, [...(byReq.get(id) || []), row]);
+  }
+
+  for (const [id, rows] of byReq) {
+    const titleCell = String(rows[0].useCase || "")
+      .replace(/^UC-\d+\s*/, "")
+      .trim();
+    spec = appendRequirementSection(
+      spec,
+      id,
+      titleCell && titleCell !== "-" ? titleCell : id
+    ).content;
+    const req = requirementsIn(spec).find((r) => r.id === id);
+    if (!req) {
+      // spec.md states it in a table row (the §8 convention), which carries
+      // no csda:trace comment to hold status and links.
+      blocked.push(`${id}: stated in a table in spec.md, not a \`## ${id}\` section`);
+      continue;
+    }
+    const plan = fieldsToReproduce(req, rows, sources);
+    if ("reason" in plan) {
+      blocked.push(`${id}: ${plan.reason}`);
+      continue;
+    }
+    spec = setTraceFields(spec, id, plan.fields) ?? spec;
+  }
+
+  const derived = deriveRows({ ...sources, spec });
+  const d = diffRows(
+    original.filter((r) => /^REQ-/.test(r.requirement || "")),
+    derived
+  );
+
+  return { spec, specFile, derived, blocked, d, byReq };
+}
+
+/**
+ * Switch a project to a generated matrix if that is lossless, silently.
+ * Used by `init` and `adopt`, which create the matrix a moment before: a new
+ * project should start generated, and one whose fresh matrix cannot be
+ * reproduced (it never happens with what they write) stays hand-kept.
+ */
+export function migrateToDerived(projectDir: string): boolean {
+  const file = path.join(projectDir, MATRIX);
+  if (!fs.existsSync(file)) return false;
+  const existing = fs.readFileSync(file, "utf8");
+  if (isDerivedMatrix(existing)) return true;
+  const original = rowsOf(existing);
+  if (original.length === 0) return false;
+  const { spec, specFile, derived, blocked, d } = planMigration(projectDir, original);
+  if (blocked.length > 0 || d.missing.length > 0 || d.extra.length > 0) return false;
+  fs.writeFileSync(specFile, spec, "utf8");
+  fs.writeFileSync(file, renderDerivedMatrix(derived, projectNameOf(existing)), "utf8");
+  return true;
+}
+
 export class MatrixCommand extends BaseCommand {
   public execute(): void {
     const argv = this.args;
@@ -194,42 +262,7 @@ export class MatrixCommand extends BaseCommand {
       ]);
     }
 
-    const specFile = path.join(projectDir, "spec.md");
-    const specBefore = fs.existsSync(specFile) ? fs.readFileSync(specFile, "utf8") : "";
-    let spec = specBefore;
-    const sources = readDerivationSources(projectDir);
-    const blocked: string[] = [];
-
-    const byReq = new Map<string, any[]>();
-    for (const row of original) {
-      const id = String(row.requirement || "").trim();
-      if (!/^REQ-/.test(id)) continue;
-      byReq.set(id, [...(byReq.get(id) || []), row]);
-    }
-
-    for (const [id, rows] of byReq) {
-      const titleCell = String(rows[0].useCase || "")
-        .replace(/^UC-\d+\s*/, "")
-        .trim();
-      spec = appendRequirementSection(
-        spec,
-        id,
-        titleCell && titleCell !== "-" ? titleCell : id
-      ).content;
-      const req = requirementsIn(spec).find((r) => r.id === id)!;
-      const plan = fieldsToReproduce(req, rows, sources);
-      if ("reason" in plan) {
-        blocked.push(`${id}: ${plan.reason}`);
-        continue;
-      }
-      spec = setTraceFields(spec, id, plan.fields) ?? spec;
-    }
-
-    const derived = deriveRows({ ...sources, spec });
-    const d = diffRows(
-      original.filter((r) => /^REQ-/.test(r.requirement || "")),
-      derived
-    );
+    const { spec, specFile, derived, blocked, d, byReq } = planMigration(projectDir, original);
 
     if (blocked.length > 0 || d.missing.length > 0 || d.extra.length > 0) {
       if (!io.json) {

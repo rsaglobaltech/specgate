@@ -13,6 +13,7 @@ import { spawnSync } from "node:child_process";
 import * as path from "node:path";
 import { findCliRoot } from "../../../lib/project-root";
 import { isDerivedProject, writeRequirementFields } from "../../../lib/derived-writes";
+import { refreshDerivedMatrix } from "./MatrixCommand";
 
 const COLOR_ENABLED =
   process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
@@ -133,6 +134,11 @@ export class DoneCommand extends BaseCommand {
     // `--check` and `--strict` used to be parsed and discarded, so `done
     // REQ-001 --check` printed a tick over a matrix pointing at files that do
     // not exist. Four documentation pages said it "validates first".
+    // A test written since the last regeneration is new evidence: bring a
+    // generated matrix up to date before checking it, or `done --check`
+    // would refuse the very test that makes the requirement deliverable.
+    refreshDerivedMatrix(projectDir);
+
     const harness = readHarnessConfig(projectDir) || ({} as any);
     const plan = planDoneVerification(projectDir, {
       check: opts.check,

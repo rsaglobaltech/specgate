@@ -180,8 +180,10 @@ Tagging `@REQ-014` alone therefore fails, and says so:
 
 ## A matrix nobody edits
 
-`docs/specs/traceability.md` can be **generated** instead of maintained. Every
-column is already said somewhere else, so `specgate matrix` computes it:
+`docs/specs/traceability.md` is **generated** instead of maintained — by
+default for every project `init` or `adopt` creates (`--keep-matrix` opts
+out). Every column is already said somewhere else, so `specgate matrix`
+computes it:
 
 | Column | Comes from |
 | --- | --- |
@@ -200,7 +202,7 @@ capability specs already use:
 <!-- csda:trace status=Implemented artifact=lib/orders.js -->
 ```
 
-**Switching an existing project:**
+**Switching a project created before this:**
 
 ```bash
 specgate matrix --migrate   # writes status and explicit links into spec.md
@@ -221,6 +223,8 @@ The everyday commands write the sources for you: `specgate done` sets `status=`
 in the requirement's comment, `req link` and `req add --feature …` record their
 links there, `new`, `req rm` and `change archive` regenerate the matrix, and
 `status`, `plan` and `check` read it fresh. `fix` has nothing to repair in a
-generated matrix. **One limit, for now:** a domain pack's requirements need
-their `## REQ-NNN` section in `spec.md` to become rows.
+generated matrix. **One limit, for now:** a domain pack writes `spec.md` and
+the matrix from its own templates, so `specgate expand` turns the project back
+to a hand-kept matrix and says so; `specgate matrix --migrate` switches it back
+once the pack's requirements have `## REQ-NNN` sections.
 

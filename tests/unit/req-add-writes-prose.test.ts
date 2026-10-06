@@ -40,7 +40,7 @@ function adopted() {
   spawnSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "i"], {
     cwd: dir,
   });
-  const r = cli("adopt", "--project-dir", dir);
+  const r = cli("adopt", "--project-dir", dir, "--keep-matrix");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   return { parent, dir };
 }
@@ -118,7 +118,7 @@ test("a freshly generated project passes its own gates", () => {
   // shipped template gained a REQ-000 section.
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-fresh-"));
   try {
-    const r = cli("init", "--yes", "--out", parent, "--no-git");
+    const r = cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix");
     assert.equal(r.status, 0, r.stdout + r.stderr);
     const dir = path.join(parent, "my-spec-driven-app");
     for (const flags of [

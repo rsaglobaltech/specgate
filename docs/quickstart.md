@@ -32,18 +32,18 @@ Each requirement maps to a Gherkin `.feature` file (the executable spec) and a
 row in `docs/specs/traceability.md`. Read the feature, **write the test first**,
 then the code until the test passes.
 
-```bash
-specgate req list          # readable view of the matrix (no raw markdown)
+## 3. Name the requirement in its test — that is the link
+
+```java
+// REQ-007: a payment over the limit is refused
+@Test void refusesPaymentsOverTheLimit() { … }
 ```
 
-## 3. Link your work to the requirement — never edit the matrix by hand
-
-```bash
-# Point the requirement at the test and code you just wrote
-specgate req link REQ-007 --feature features/billing/pay.feature \
-                      --test src/test/PayTest.java \
-                      --code src/main/Pay.java
-```
+The matrix is generated from `spec.md`, the scenario tags and the tests, so a
+test that mentions `REQ-007` is linked — nothing to run, nothing to edit.
+`specgate check` regenerates it before the gate. (A project that keeps its
+matrix by hand, or a link derivation cannot see, uses
+`specgate req link REQ-007 --test … --code …`.)
 
 Adding a brand-new requirement? One command writes it in all three places:
 

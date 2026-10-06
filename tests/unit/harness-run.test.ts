@@ -373,7 +373,7 @@ test("a requirement straight out of `plan --format json` produces a usable promp
   // format drifts again, this is what notices.
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "harness-seam-"));
   try {
-    const init = spawnSync(process.execPath, [CLI, "init", "--yes", "--out", parent, "--no-git"], {
+    const init = spawnSync(process.execPath, [CLI, "init", "--yes", "--out", parent, "--no-git", "--keep-matrix"], {
       encoding: "utf8",
     });
     assert.equal(init.status, 0, init.stdout + init.stderr);
@@ -493,7 +493,7 @@ test("every key `harness init` generates is a key the reader accepts", () => {
   // the reader understands, or the strict check above turns into a trap.
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "harness-roundtrip-"));
   try {
-    const init = spawnSync(process.execPath, [CLI, "init", "--yes", "--out", parent, "--no-git"], {
+    const init = spawnSync(process.execPath, [CLI, "init", "--yes", "--out", parent, "--no-git", "--keep-matrix"], {
       encoding: "utf8",
     });
     assert.equal(init.status, 0, init.stdout + init.stderr);
@@ -778,7 +778,7 @@ test("filterHint needs a feature file to reason about", () => {
 test("harness run refuses a requirement whose scenario has no steps, before spending the agent", () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "harness-a3-"));
   try {
-    const init = spawnSync(process.execPath, [CLI, "init", "--yes", "--out", parent, "--no-git"], {
+    const init = spawnSync(process.execPath, [CLI, "init", "--yes", "--out", parent, "--no-git", "--keep-matrix"], {
       encoding: "utf8",
     });
     assert.equal(init.status, 0, init.stdout + init.stderr);
@@ -864,7 +864,7 @@ test("harness run refuses a requirement whose scenario has no steps, before spen
 /** A project whose gate can actually go green, so the guard is the only variable. */
 function greenableProject() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "harness-a1-"));
-  const init = spawnSync(process.execPath, [CLI, "init", "--yes", "--out", parent, "--no-git"], {
+  const init = spawnSync(process.execPath, [CLI, "init", "--yes", "--out", parent, "--no-git", "--keep-matrix"], {
     encoding: "utf8",
   });
   assert.equal(init.status, 0, init.stdout + init.stderr);

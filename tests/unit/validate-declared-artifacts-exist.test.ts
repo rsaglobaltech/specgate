@@ -36,7 +36,7 @@ function cli(...args) {
 
 function scaffold() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "declared-exists-"));
-  const init = cli("init", "--yes", "--out", parent, "--no-git");
+  const init = cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix");
   assert.equal(init.status, 0, init.stdout + init.stderr);
   return { parent, projectDir: path.join(parent, fs.readdirSync(parent)[0]) };
 }

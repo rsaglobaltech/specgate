@@ -5,6 +5,7 @@ import { error } from "../../../lib/diagnostics";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import { refreshDerivedMatrix } from "./MatrixCommand";
+import { isDerivedProject } from "../../../lib/derived-writes";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { AddRequirementUseCase } from "../../../../packages/core/src/application/AddRequirementUseCase";
 import { appendRequirementSection } from "../../../../packages/core/src/domain/SpecSections";
@@ -157,7 +158,9 @@ export class NewCommand extends BaseCommand {
               : "") +
             `   ${c.dim}${featureRel.padEnd(28)} @${scenarioId} — fill in the <placeholders>${c.reset}\n` +
             `   ${c.dim}docs/specs/traceability.md   row linked to the scenario${c.reset}\n\n` +
-            `   ${c.dim}Next: write the test, then ${c.reset}specgate req link ${reqId} --test <path> --code <path>\n`
+            (isDerivedProject(projectDir)
+              ? `   ${c.dim}Next: write a test that mentions ${reqId} — that is the link — then ${c.reset}specgate check\n`
+              : `   ${c.dim}Next: write the test, then ${c.reset}specgate req link ${reqId} --test <path> --code <path>\n`)
         )
     );
   }
