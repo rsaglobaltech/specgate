@@ -130,7 +130,7 @@ existentes (regla de ADR-0026: la minor avisa y la siguiente exige).
       diseñarlo: un escenario de pasos plantilla pasaba todas las puertas con el
       requisito `Implemented`. Ahora es `scenario_placeholder_step`, exigido al
       entregar; `done --strict` pasa a ser la puerta completa.
-- [ ] `status` absorbe `plan`
+- [x] `status` absorbe `plan` — **hecho 2026-10-06**, rama `feat/status-absorbs-plan`. `Next` nombra el requisito; `plan` sale de la ayuda diaria.
 - [ ] `init` absorbe `adopt` y `onboard`
 - [ ] `--help` de cinco verbos; el resto, alias con aviso
 - [ ] `/csda:*` → `/specgate:*` con migración en `update`

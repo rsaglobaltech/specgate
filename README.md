@@ -59,10 +59,10 @@ Each level is useful on its own and never requires the ones above it.
 
 ## 🛠️ What it does
 
-**A daily loop, not a one-shot scaffolder.** `specgate status` says where the
-project stands and what to run next; `specgate plan` is the queue; `specgate req` adds
-and links requirements so nobody hand-edits the ten-column matrix; `specgate done`
-closes them.
+**A daily loop, not a one-shot scaffolder.** `specgate status` lists what is left
+and the next command; `specgate new` adds a requirement with its scenario and row;
+`specgate check` is the gate before a PR; `specgate done` closes a requirement.
+Nobody hand-edits the matrix.
 → [Quickstart](docs/quickstart.md) · [Command reference](docs/commands.md)
 
 **Specs that are checked.** `specgate validate` fails the build when a requirement

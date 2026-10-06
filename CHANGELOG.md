@@ -27,6 +27,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Changed
 
+- **`status` lists the queue itself.** One line per requirement — its title and
+  what it still needs — split into *Ready to close* and *To do*, capped at 12
+  per group. `Next` names a requirement (`specgate done REQ-003 --strict`)
+  instead of answering `specgate plan`. `--json` gains a `requirements` array.
+  `plan` leaves the daily help and keeps the full detail.
+- **`plan` no longer says "code & test exist" over a row with no code.** A
+  declared code path is optional; the heading now says *its declared test and
+  code exist*.
 - **The scenario rules are owed on delivery, like the files.** A Draft row's
   feature file is not held to `--strict-scenarios`, so a fresh `specgate new`
   does not turn CI red. The three rules that make a suite report a pass it

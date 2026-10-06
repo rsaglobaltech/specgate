@@ -19,11 +19,12 @@ npm install            # or your project's setup
 ## 1. See where the project stands
 
 ```bash
-specgate plan
+specgate status
 ```
 
-Lists every requirement and what it still needs — a missing `.feature`, a
-missing test, production code, or just a status update. Pick one to work on.
+Lists every requirement and what it still needs — its scenario, its test, its
+code, or just closing — and ends with the one command to run next, naming the
+requirement. `specgate plan` has the full detail when you want it.
 
 ## 2. Read the requirement, then work
 
@@ -83,7 +84,7 @@ specgate fix                 # apply, then re-run validate
 ## Daily loop, in one line
 
 ```
-specgate plan  →  work (test first)  →  specgate req link  →  specgate done  →  specgate check
+specgate status  →  work (test first)  →  specgate req link  →  specgate done  →  specgate check
 ```
 
 That's the whole day-to-day. Reach for the [how-to guide](how-to.md) for

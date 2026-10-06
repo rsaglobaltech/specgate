@@ -72,50 +72,99 @@ export function summarise(projectDir: string, traceContent: string) {
   return { items, counts, pending, orphans };
 }
 
-function nextCommand({ counts, orphans }: any): string {
-  if (orphans.length > 0)
-    return `specgate fix  ${c.dim}— ${orphans.length} orphan feature file(s) not in the matrix${c.reset}`;
-  if (counts.NEEDS_FEATURE > 0)
-    return `specgate plan  ${c.dim}— ${counts.NEEDS_FEATURE} requirement(s) missing a .feature${c.reset}`;
-  if (counts.NEEDS_EVERYTHING > 0 || counts.NEEDS_TEST > 0 || counts.NEEDS_IMPLEMENTATION > 0)
-    return `specgate plan  ${c.dim}— requirements still need a test or code${c.reset}`;
-  if (counts.NEEDS_STATUS_UPDATE > 0)
-    return `specgate done <REQ>  ${c.dim}— ${counts.NEEDS_STATUS_UPDATE} requirement(s) ready to close${c.reset}`;
-  if (counts.total === 0)
-    return `specgate req add "<title>"  ${c.dim}— no requirements yet${c.reset}`;
-  return `specgate validate --strict  ${c.dim}— everything implemented; gate it${c.reset}`;
+/** How many queue lines `status` prints before pointing at `plan` for the rest. */
+const QUEUE_LIMIT = 12;
+
+const TODO_CATEGORIES = ["NEEDS_FEATURE", "NEEDS_EVERYTHING", "NEEDS_TEST", "NEEDS_IMPLEMENTATION"];
+
+/** What one requirement still needs, in words a person reads at a glance. */
+export function needsOf(item: any): string {
+  switch (item.category) {
+    case "NEEDS_FEATURE":
+      return "its scenario";
+    case "NEEDS_EVERYTHING":
+      return "a test and code";
+    case "NEEDS_TEST":
+      return "its test";
+    case "NEEDS_IMPLEMENTATION":
+      return "its code";
+    case "NEEDS_STATUS_UPDATE":
+      return "its test is in place";
+    default:
+      return "";
+  }
 }
 
-export function nextCommandPlain({ counts, orphans }: any): string {
+/**
+ * The one command to run next, named for a requirement when there is one.
+ *
+ * `status` used to answer "specgate plan" — a second command to find out what
+ * the first one meant. The team found the tool hard to absorb, and a dashboard
+ * that sends you elsewhere is part of why.
+ */
+export function nextCommandPlain({ items, counts, orphans }: any): string {
+  const first = (cats: string[]) => (items || []).find((it: any) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
-  if (counts.NEEDS_FEATURE > 0) return "specgate plan";
-  if (counts.NEEDS_EVERYTHING > 0 || counts.NEEDS_TEST > 0 || counts.NEEDS_IMPLEMENTATION > 0)
-    return "specgate plan";
-  if (counts.NEEDS_STATUS_UPDATE > 0) return "specgate done <REQ>";
-  if (counts.total === 0) return 'specgate req add "<title>"';
-  return "specgate validate --strict";
+  const ready = first(["NEEDS_STATUS_UPDATE"]);
+  if (ready) return `specgate done ${ready.requirement} --strict`;
+  const todo = first(TODO_CATEGORIES);
+  if (todo) {
+    if (todo.category === "NEEDS_FEATURE") return `specgate plan`;
+    return `specgate req link ${todo.requirement} --test <path>`;
+  }
+  if (counts.total === 0) return 'specgate new "<what it does>"';
+  return "specgate check";
+}
+
+function nextReason({ items, counts, orphans }: any): string {
+  if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
+  if ((items || []).some((it: any) => it.category === "NEEDS_STATUS_UPDATE"))
+    return "its test exists; close it through the gate";
+  const todo = (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category));
+  if (todo && todo.category === "NEEDS_FEATURE")
+    return `${todo.requirement}'s feature file is missing — plan shows which`;
+  if (todo) return `write the test first, then record where it is`;
+  if (counts.total === 0) return "no requirements yet";
+  return "everything is implemented; run the gate";
+}
+
+function titleOf(item: any): string {
+  const t = String(item.title || "")
+    .replace(/^UC-\d+\s*/, "")
+    .trim();
+  return t && t !== "-" ? t : "";
 }
 
 function emitText(projectDir: string, summary: any, lock: any): void {
-  const { counts, pending, orphans } = summary;
+  const { items, counts, pending, orphans } = summary;
   process.stdout.write(
-    `\n  ${c.bold}📊 Project status${c.reset}  ${c.dim}${projectDir}${c.reset}\n\n`
+    `\n  ${c.bold}📊 Project status${c.reset}  ${c.dim}${path.basename(path.resolve(projectDir))}${c.reset}\n\n`
+  );
+  process.stdout.write(
+    `  ${c.bold}Requirements${c.reset}  ${c.dim}${counts.total} total · ${counts.DONE} done · ${pending} pending${c.reset}\n`
   );
 
-  process.stdout.write(
-    `  ${c.bold}Requirements${c.reset}  ${c.dim}${counts.total} total · ${pending} pending${c.reset}\n`
-  );
-  const line = (label: string, n: number, color: string) =>
-    n > 0 && process.stdout.write(`    ${color}${String(n).padStart(3)}${c.reset}  ${label}\n`);
-  line("✅ done", counts.DONE, c.green);
-  line("feature missing", counts.NEEDS_FEATURE, c.red);
-  line("no test/code", counts.NEEDS_EVERYTHING, c.red);
-  line("test missing", counts.NEEDS_TEST, c.yellow);
-  line("code missing", counts.NEEDS_IMPLEMENTATION, c.yellow);
-  line("ready to mark done", counts.NEEDS_STATUS_UPDATE, c.yellow);
+  const queue = (title: string, cats: string[], color: string) => {
+    const group = items.filter((it: any) => cats.includes(it.category));
+    if (group.length === 0) return;
+    process.stdout.write(`\n  ${c.bold}${title}${c.reset}\n`);
+    for (const it of group.slice(0, QUEUE_LIMIT)) {
+      const name = titleOf(it);
+      process.stdout.write(
+        `    ${c.cyan}${String(it.requirement).padEnd(9)}${c.reset} ${(name.length > 44 ? name.slice(0, 43) + "…" : name).padEnd(45)} ${color}${needsOf(it)}${c.reset}\n`
+      );
+    }
+    if (group.length > QUEUE_LIMIT)
+      process.stdout.write(
+        `    ${c.dim}… ${group.length - QUEUE_LIMIT} more — specgate plan lists them all${c.reset}\n`
+      );
+  };
+  queue("Ready to close", ["NEEDS_STATUS_UPDATE"], c.green);
+  queue("To do", TODO_CATEGORIES, c.yellow);
+
   if (orphans.length > 0)
     process.stdout.write(
-      `    ${c.red}${String(orphans.length).padStart(3)}${c.reset}  orphan feature file(s)\n`
+      `\n  ${c.red}${orphans.length} orphan feature file(s)${c.reset} ${c.dim}— not in the matrix${c.reset}\n`
     );
 
   if (lock && lock.packs && lock.packs.length > 0) {
@@ -128,7 +177,7 @@ function emitText(projectDir: string, summary: any, lock: any): void {
   }
 
   process.stdout.write(
-    `\n  ${c.bold}Next${c.reset}  ${c.green}${nextCommand(summary)}${c.reset}\n\n`
+    `\n  ${c.bold}Next${c.reset}  ${c.green}${nextCommandPlain(summary)}${c.reset}  ${c.dim}— ${nextReason(summary)}${c.reset}\n\n`
   );
 }
 
@@ -144,6 +193,12 @@ function emitJson(projectDir: string, summary: any, lock: any): void {
         counts,
         orphanFeatures: orphans,
         packs: lock && lock.packs ? lock.packs : [],
+        requirements: summary.items.map((it: any) => ({
+          id: it.requirement,
+          title: titleOf(it) || null,
+          category: it.category,
+          needs: needsOf(it) || null,
+        })),
         nextCommand: nextCommandPlain(summary),
         status: [],
       },

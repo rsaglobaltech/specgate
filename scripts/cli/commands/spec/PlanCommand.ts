@@ -283,7 +283,7 @@ function emitText(items: PlanItem[], orphans: string[]): void {
     ["NEEDS_FEATURE", "Needs Feature File", c.red],
     ["NEEDS_TEST", "Needs Test Artifact (TDD)", c.yellow],
     ["NEEDS_IMPLEMENTATION", "Needs Implementation", c.cyan],
-    ["NEEDS_STATUS_UPDATE", "Needs Status Update (code & test exist)", c.green],
+    ["NEEDS_STATUS_UPDATE", "Ready to close (its declared test and code exist)", c.green],
     ["DONE", "Done", c.dim],
   ];
 
