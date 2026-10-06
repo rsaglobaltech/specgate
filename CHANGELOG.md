@@ -16,8 +16,24 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   says it checked the specification, not the code. First verb of phase 1 of
   the team-simplification plan.
 
+- **`specgate new "<title>"` — a requirement in one step.** A draft
+  `## REQ-NNN` in `spec.md`, a scenario tagged `@REQ-NNN @SCN-NNN` under
+  `features/` with `<placeholder>` steps, and the matrix row linked to it —
+  what used to take `req add`, two hand edits and `req link`.
+- **`scenario_placeholder_step`.** An unfilled `<placeholder>` in a plain
+  Scenario is an error under `--strict-scenarios`. Measured first: a scenario
+  of three template steps passed `validate --strict` and `done --strict` with
+  its requirement Implemented.
+
 ### Changed
 
+- **The scenario rules are owed on delivery, like the files.** A Draft row's
+  feature file is not held to `--strict-scenarios`, so a fresh `specgate new`
+  does not turn CI red. The three rules that make a suite report a pass it
+  never ran — no steps, keyword case, Outline without Examples — apply to
+  every row.
+- **`done --strict` is the whole gate.** It ran a subset without
+  `--strict-scenarios`; it now runs `validate --strict`.
 - **`req link --status` is refused instead of silently dropped.** It printed a
   tick and left the row `Draft`. The status changes through `specgate done`,
   which can check the requirement first.

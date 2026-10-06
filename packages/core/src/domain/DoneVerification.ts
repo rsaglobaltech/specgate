@@ -80,7 +80,10 @@ export function planDoneVerification(
     // `--strict` means "the gate this project can actually give me". Anything
     // weaker recreates the defect a cold evaluator named: following the
     // documentation leaves you with a weaker gate than the tool supports.
-    validateArgs.push("--strict-tdd", "--strict-links", "--strict-coverage");
+    // The whole gate, not a subset: a subset let a scenario of unfilled
+    // `<placeholder>` steps close as Implemented (--strict-scenarios was not
+    // in it), and "one gate, one name" is the rule since #174.
+    validateArgs.push("--strict");
   }
   if (opts.reqId) validateArgs.push("--delivering", opts.reqId);
 

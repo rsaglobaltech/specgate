@@ -67,6 +67,7 @@ not run reports an `error` about itself.
 | `specgate plan --json` | `plan` | no |
 | `specgate report --json` | `report` | no |
 | `specgate done <REQ> --json` | `requirement` | no |
+| `specgate new <title> --json` | `requirement` | no |
 | `specgate change list --json` | `changes` | no |
 | `specgate change show <id> --json` | `change` | no |
 | `specgate change status --json` | `artifacts` | no |

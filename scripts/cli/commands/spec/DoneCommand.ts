@@ -88,8 +88,7 @@ export class DoneCommand extends BaseCommand {
           `  --status <Status>   Target status (default: Implemented).\n` +
           `                      One of: ${ALLOWED_STATUSES.join(", ")}\n` +
           "  --check             Run `validate` first and refuse to write if it fails.\n" +
-          "  --strict            --check with the strong gate: --strict-tdd,\n" +
-          "                      --strict-links and --strict-coverage.\n" +
+          "  --strict            --check with the gate: validate --strict.\n" +
           '  --test-cmd "<cmd>"  Also run the project\'s tests and require them to pass.\n' +
           "                      Read from `test_cmd:` in harness.config.yaml when omitted.\n" +
           "                      Without one, `done` says it checked the specification\n" +

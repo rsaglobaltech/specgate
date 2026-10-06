@@ -126,7 +126,10 @@ existentes (regla de ADR-0026: la minor avisa y la siguiente exige).
 - [x] `specgate check` — **hecho 2026-10-06**, rama `feat/check-command`. Sustituye a
       `validate` en la ayuda diaria. De paso: `req link --status` se ignoraba en
       silencio; ahora se rechaza y remite a `done`.
-- [ ] `specgate new`
+- [x] `specgate new` — **hecho 2026-10-06**, rama `feat/new-command`. Hueco encontrado al
+      diseñarlo: un escenario de pasos plantilla pasaba todas las puertas con el
+      requisito `Implemented`. Ahora es `scenario_placeholder_step`, exigido al
+      entregar; `done --strict` pasa a ser la puerta completa.
 - [ ] `status` absorbe `plan`
 - [ ] `init` absorbe `adopt` y `onboard`
 - [ ] `--help` de cinco verbos; el resto, alias con aviso
