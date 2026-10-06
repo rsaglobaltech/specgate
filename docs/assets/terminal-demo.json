@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.9.0",
+    "version": "0.10.0",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
