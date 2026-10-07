@@ -92,6 +92,9 @@ export function inlineDiagrams(source: string, available: Map<string, string>): 
     if (!svg) {
       throw new Error(`no diagram named "${name}" in docs/${DIAGRAM_DIR}/`);
     }
-    return svg;
+    // A blank line ends an HTML block in Markdown, and the indented lines after
+    // it become a code block: the rest of the SVG reached the page as escaped
+    // text on domain-packs and in the article. Inlined, it has none.
+    return svg.replace(/\n[ \t]*(?=\n)/g, "");
   });
 }

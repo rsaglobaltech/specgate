@@ -21,6 +21,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **Diagrams render on every docs page.** A blank line inside an inlined SVG
+  ended Markdown's HTML block, so the rest of the diagram showed as a block of
+  escaped markup on *Domain packs* and in *Specs that cannot lie*. Blank lines
+  are dropped when a diagram is inlined, and a test fails on any page showing
+  diagram markup as text.
 - **`mcp install --help` names the clients it supports.** It offered
   `vscode` and `kiro`, which fail with `unsupported_client`; it supports
   `claude` and `cursor`. The docs no longer mention a `windsurf` client either.
