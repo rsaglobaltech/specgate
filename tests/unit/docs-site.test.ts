@@ -504,6 +504,30 @@ test("an inlined diagram reaches the page as markup, not as escaped text", () =>
   assert.doesNotMatch(article, /&lt;svg/, "the diagram was escaped instead of inlined");
 });
 
+test("no page shows a diagram's markup as text", () => {
+  // A blank line inside a diagram ended the HTML block, and everything after
+  // it rendered as a code block of escaped SVG — on domain-packs and in the
+  // article. Checking for an escaped `<svg` missed it: the opening tag was
+  // fine, the rest was text.
+  const { dir } = site();
+  const offenders = [];
+  const walk = (d: string) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (
+        e.name.endsWith(".html") &&
+        /&lt;(defs&gt;|marker id=|rect x=|path d=|text x=|g class=)/.test(
+          fs.readFileSync(p, "utf8")
+        )
+      )
+        offenders.push(path.relative(dir, p));
+    }
+  };
+  walk(dir);
+  assert.deepEqual(offenders, [], `escaped diagram markup in: ${offenders.join(", ")}`);
+});
+
 test("a diagram's colours come from the token system", () => {
   // An inline diagram is the only place on the site where a hard-coded hex
   // would still follow the page in one theme and not the other.
