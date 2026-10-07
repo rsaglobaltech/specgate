@@ -63,10 +63,12 @@ export interface ScenarioQualityInput {
  * Language that describes nothing checkable.
  *
  * `Then it works correctly` is not falsifiable: it passes or fails on the
- * implementer's mood, which makes the gate's verdict meaningless.
+ * implementer's mood, which makes the gate's verdict meaningless. "Works" is
+ * vague only as a verdict ("it works"): matching the bare word refused trade
+ * terms like "tag work" in a construction pack.
  */
 const VAGUE_STEP_RE =
-  /\b(works?|correctly|properly|as expected|should be fine|should work|somehow|something|some stuff|etc\.?|tbd|todo)\b|\.\.\./i;
+  /\b((?:it|this|that|everything|all|system)\s+works?|correctly|properly|as expected|should be fine|should work|somehow|something|some stuff|etc\.?|tbd|todo)\b|\.\.\./i;
 
 /** Every code this module can emit. Callers branch on these, never on prose. */
 export const QUALITY_CODES = Object.freeze({

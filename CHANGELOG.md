@@ -8,6 +8,24 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+Found by building a real product — the Golden State Reinforcing app, with its
+domain packs in a specops repository:
+
+- **`pack lint` sees scenarios.** It read `scenario.requirement`; the schema
+  names the field `requirement_id`, so a requirement covered only by a
+  scenario failed `--strict` as unreferenced.
+- **The YAML reader takes what YAML libraries write**: indentless sequences
+  (`key:` then `- item` at the same indent), long strings folded over several
+  lines, and the `''` / `\"` escapes inside quotes. A pack generated with
+  PyYAML's defaults failed with "Unexpected YAML token".
+- **"tag work" is not a vague step.** The vague-step check matched the bare
+  word *work*; it now flags verdicts ("it works", "should work"), not trade
+  terms.
+- **Pushes to `main` were never refused by GitHub**: in zsh, `$R:refs/…` is
+  the `:r` modifier. The release process now quotes the refspec.
+
 ## [0.14.0] — 2026-10-07
 
 ### Changed
