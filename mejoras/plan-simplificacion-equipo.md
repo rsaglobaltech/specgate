@@ -291,8 +291,12 @@ Petición del usuario: probar todas las funcionalidades de punta a punta.
       `covers`. `node e2e/run.mjs --coverage` compara con la superficie y con
       `e2e/uncovered.json`, que **solo puede encoger**; lo ejecutan un test
       unitario y el workflow. Punto de partida: **14/60 comandos (23 %)**.
-- [ ] Paso 2 — utilidades: `doctor`, `fix`, `plan`, `report`, `req done/rm/list`,
-      `config *`, `schema *`, `completion *`, `studio`, `onboard`.
+- [x] Paso 2 — utilidades: `doctor`, `fix`, `plan`, `report`, `req done/rm/list`,
+      `config *`, `schema *`, `completion *`, `studio`, `onboard`, y un recorrido
+      que pide `--help` a **todos** los comandos. **34/60 (57 %).** Encontró que
+      11 comandos fallaban al pedirles ayuda (los grupos `ci`, `pack`, `specops`,
+      `harness`, `config`, `agents`, `alm`, `mcp`, más `expand`, `harness prompt`
+      y `mcp install`): arreglados.
 - [ ] Paso 3 — packs y specops sin red: repos git locales con tags
       (`pack *`, `specops *`, `expand`).
 - [ ] Paso 4 — ciclo `change` completo y `harness init/prompt/report`.

@@ -68,6 +68,10 @@ async function main() {
   let argv = process.argv.slice(2);
   if (argv[0] === "alm") argv = argv.slice(1);
   const sub = argv[0];
+  if (sub === "--help" || sub === "-h") {
+    usage();
+    process.exit(0);
+  }
   const opts = parseCommon(argv.slice(1));
 
   let projectDir;

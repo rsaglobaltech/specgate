@@ -624,6 +624,10 @@ export class ExpandDomainPackCommand extends BaseCommand {
   public execute(): void {
     try {
       const rawArgs = this.args[0] === "expand" ? this.args.slice(1) : this.args;
+      if (rawArgs.includes("--help") || rawArgs.includes("-h")) {
+        usage();
+        process.exit(0);
+      }
       const args = parseArgs(rawArgs);
 
       if (!args.pack || !args.projectDir) {

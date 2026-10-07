@@ -175,6 +175,17 @@ function helpProfile(): string {
   return "core";
 }
 
+function groupUsage(row: any) {
+  let out = `\n  ${c.bold}specgate ${row.name}${c.reset} <sub-command> [options]\n`;
+  out += section("SUB-COMMANDS");
+  for (const s of row.subcommands) {
+    const summary = (s.help && s.help.summary) || (row.help && row.help.summary) || "";
+    out += cmd((s.help && s.help.icon) || "·", `${row.name} ${s.name}`, summary, 20);
+  }
+  out += `\n  ${c.dim}Run ‘specgate ${row.name} <sub-command> --help’ for its own options.${c.reset}\n\n`;
+  process.stdout.write(out);
+}
+
 function usage(opts?: { all?: boolean }) {
   if (opts && opts.all) return usageFull();
   if (helpProfile() === "full") return usageFull();
@@ -247,6 +258,22 @@ export class CreateSpecDrivenAppCommand implements ICommand {
     if (!row) {
       info(`Unknown command: ${command}`);
       usage();
+      process.exit(2);
+    }
+
+    // `ci --help`, `pack`, `harness -h`…: a command that groups sub-commands
+    // answered "Unknown ci sub-command: --help" and the global usage, so
+    // asking what a group does was an error. The answer is the group's own
+    // sub-commands, from the same registry the top-level help reads.
+    // A row with its own script (`req`, `mcp`) answers for its sub-commands.
+    if (row.subcommands && !row.script && (args[1] === "--help" || args[1] === "-h")) {
+      groupUsage(row);
+      process.exit(0);
+    }
+    if (row.subcommands && !row.script && args.length === 1) {
+      const expected = row.subcommands.map((s: any) => s.name).join(", ");
+      error(`Unknown ${command} sub-command: (none). Expected: ${expected}`);
+      groupUsage(row);
       process.exit(2);
     }
 
@@ -361,6 +388,14 @@ function dispatchValidate(validateArgs: string[]): void {
  * agent and no gate.
  */
 function dispatchHarnessPrompt(args: string[]): void {
+  if (args.includes("--help") || args.includes("-h")) {
+    process.stdout.write(
+      "\n  specgate harness prompt <REQ-id> [--project-dir <path>]\n\n" +
+        "  Prints the prompt `harness run` would hand an agent for one requirement,\n" +
+        "  and runs nothing.\n\n"
+    );
+    process.exit(0);
+  }
   const reqId = args[2];
   if (!reqId || !/^REQ-\d+$/.test(reqId)) {
     error("`harness prompt` expects a REQ-id, e.g. `specgate harness prompt REQ-001`.");
