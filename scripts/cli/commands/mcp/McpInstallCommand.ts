@@ -6,6 +6,14 @@ import { agentIo } from "../../../lib/agent";
 
 export class McpInstallCommand extends BaseCommand {
   public execute(): void {
+    if (this.args.includes("--help") || this.args.includes("-h")) {
+      process.stdout.write(
+        "\n  specgate mcp install --client <claude|cursor|vscode|kiro> [--json]\n\n" +
+          "  Writes the MCP server configuration for one AI client, so the agent can\n" +
+          "  read the spec tree and run the gate as tools.\n\n"
+      );
+      process.exit(0);
+    }
     const isJson = this.args.includes("--json");
     const io = agentIo(isJson);
     const clientIdx = this.args.indexOf("--client");

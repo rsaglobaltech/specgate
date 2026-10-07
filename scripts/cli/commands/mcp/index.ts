@@ -5,6 +5,13 @@ import { agentIo } from "../../../lib/agent";
 export class McpCommand extends BaseCommand {
   public execute(): void {
     const sub = this.args[0];
+    if (sub === "--help" || sub === "-h") {
+      process.stdout.write(
+        "\n  specgate mcp install --client <claude|cursor|vscode|kiro> [--json]\n\n" +
+          "  Writes the MCP server configuration for one AI client.\n\n"
+      );
+      process.exit(0);
+    }
     if (sub === "install") {
       new McpInstallCommand(this.args.slice(1)).execute();
       return;

@@ -8,6 +8,16 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Asking any command for help is never an error.** `specgate ci --help`,
+  `pack`, `specops`, `harness`, `config`, `agents`, `alm` and `mcp` answered
+  "Unknown … sub-command: --help" over the global usage; `expand`,
+  `harness prompt` and `mcp install` refused `--help` as an unknown argument or
+  a missing value. A group now lists its sub-commands with their summaries, and
+  each of the three answers with its own usage. Found by a new E2E journey that
+  asks every command on the surface.
+
 ### Added
 
 - **E2E coverage is measured and can only grow.** The end-to-end suite is split
@@ -15,7 +25,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   declares the commands it covers. `npm run e2e:coverage` compares them with
   the command surface and with `e2e/uncovered.json` — commands not covered yet,
   a list that can only shrink — and fails a new command that has neither. A
-  unit test and the E2E workflow run it. Starting point: 14 of 60 commands.
+  unit test and the E2E workflow run it. Journeys for the utilities — `doctor`,
+  `fix`, `plan`, `report`, `req list/done/rm`, `config`, `schema`,
+  `completion`, `studio`, `onboard` — take it from 14 to 34 of 60 commands.
 
 ## [0.12.1] — 2026-10-07
 
