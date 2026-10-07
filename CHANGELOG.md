@@ -21,6 +21,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **The pack gallery names Specgate and installs what it shows.** Every card
+  offered `npx create-spec-driven-app expand --pack-root ./packs …` — the old
+  package name, against a `./packs` folder the reader does not have. Cards now
+  show `specgate specops add` from this repository, pinned to the release tag.
+- **A change to the site generator redeploys the site.** The Pages workflow
+  only watched `docs/**`, so the diagram fix reached `main` and was never
+  published.
 - **Diagrams render on every docs page.** A blank line inside an inlined SVG
   ended Markdown's HTML block, so the rest of the diagram showed as a block of
   escaped markup on *Domain packs* and in *Specs that cannot lie*. Blank lines

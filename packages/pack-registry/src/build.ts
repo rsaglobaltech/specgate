@@ -54,7 +54,11 @@ export class PackRegistryBuilder {
     fs.mkdirSync(opts.out, { recursive: true });
 
     // We assume renderIndex is also exported or we will refactor it
-    const html = renderIndex(packs, { title: "Spec-Driven Pack Registry" });
+    // The install command on every card pins the release this site documents.
+    const version = JSON.parse(
+      fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")
+    ).version;
+    const html = renderIndex(packs, { title: "Specgate domain packs", version });
     const outFile = path.join(opts.out, "index.html");
     fs.writeFileSync(outFile, html, "utf8");
     process.stdout.write(`Wrote ${outFile}\n`);

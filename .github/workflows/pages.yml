@@ -7,6 +7,10 @@ on:
       - 'docs/**'
       - 'packs/**'
       - 'packages/pack-registry/**'
+      # The generators: a fix to how the site renders changes no file under
+      # docs/, and used to reach main without redeploying.
+      - 'scripts/docs/**'
+      - 'package.json'
       - 'schemas/**'
       - '.github/workflows/pages.yml'
       - 'README.md'

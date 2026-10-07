@@ -58,15 +58,27 @@ function shortName(fullName) {
     .trim();
 }
 
-function renderCard(pack) {
-  const dm = DOMAIN_META[pack.domain] || { icon: "📦", tagline: pack.description || "" };
-  const tagline = dm.tagline || pack.description || "";
-  const expandCmd = `npx create-spec-driven-app expand \\
-  --pack-root ./packs --pack ${escape(pack.id)} \\
-  --project-dir ./my-project \\
+/**
+ * The command a reader copies. It installs the pack from this repository,
+ * pinned to a release tag, the way `specops add` pins any pack. It used to be
+ * `npx create-spec-driven-app expand --pack-root ./packs …` — the tool's old
+ * name, which installs a different package, against a `./packs` folder the
+ * reader does not have.
+ */
+function installCommand(pack, version) {
+  return `specgate specops add \\
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \\
+  --pack-version v${escape(version)} \\
+  --pack packs/${escape(pack.id)} \\
   --var PROJECT_NAME="My App" \\
   --var PROJECT_SLUG=my-app \\
   --var DOMAIN="${escape(pack.domain)}"`;
+}
+
+function renderCard(pack, version = "0.0.0") {
+  const dm = DOMAIN_META[pack.domain] || { icon: "📦", tagline: pack.description || "" };
+  const tagline = dm.tagline || pack.description || "";
+  const expandCmd = installCommand(pack, version);
 
   const lintSection =
     pack.lintMessages.length > 0
@@ -105,13 +117,13 @@ function renderCard(pack) {
 }
 
 function renderIndex(packs, options: any = {}) {
-  const title = options.title || "Spec-Driven Pack Registry";
+  const title = options.title || "Specgate domain packs";
   const generated = options.generated || new Date().toISOString();
   const passed = packs.filter((p) => p.lintStatus === "pass").length;
   const totalReqs = packs.reduce((s, p) => s + p.requirements, 0);
   const totalScenarios = packs.reduce((s, p) => s + p.scenarios, 0);
 
-  const cards = packs.map(renderCard).join("\n");
+  const cards = packs.map((p) => renderCard(p, options.version)).join("\n");
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -119,7 +131,7 @@ function renderIndex(packs, options: any = {}) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escape(title)}</title>
-<meta name="description" content="Browse ${packs.length} curated domain packs for create-spec-driven-app. Each pack ships requirements, use cases, DDD aggregates, events, and Gherkin scenarios.">
+<meta name="description" content="Browse ${packs.length} curated domain packs for Specgate. Each pack ships requirements, use cases, DDD aggregates, events, and Gherkin scenarios.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -316,7 +328,7 @@ function renderIndex(packs, options: any = {}) {
 <a class="skip" href="#packs">Skip to the packs</a>
 
 <header class="top">
-  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> create-spec-driven-app</a>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
   <div class="top__search">
     <input type="search" id="search" placeholder="Search packs…" aria-label="Search packs" autocomplete="off">
   </div>
@@ -331,7 +343,7 @@ function renderIndex(packs, options: any = {}) {
 <main class="wrap registry" id="packs">
   <h1>${escape(title)}</h1>
   <p class="registry__lede">
-    Curated domain packs for <code>create-spec-driven-app</code>. Each ships
+    Curated domain packs for <code>specgate</code>. Each ships
     requirements, use cases, aggregates, events and Gherkin scenarios, ready to
     expand into a project — see <a href="../domain-packs.html">Domain packs</a>
     for what that means and how to write your own.
@@ -357,7 +369,7 @@ ${cards}
 <footer class="foot">
   <div class="wrap">
     <p>
-      <strong>create-spec-driven-app</strong> ·
+      <strong>Specgate</strong> ·
       <a href="../docs.html">Docs</a> ·
       <a href="./manifest.json">manifest.json</a> ·
     <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
