@@ -329,6 +329,23 @@ Petición del usuario: probar todas las funcionalidades de punta a punta.
       del usuario):** los plugins no interesan de momento.
 - Fuera, dicho: extensiones de VS Code e IntelliJ (exigen el editor).
 
+### Release 0.13.0 — lista para el piloto (2026-10-07)
+
+- [x] Publicada en npm, GitHub Packages y Docker, verificada con el E2E contra
+      el tarball del registro (31/31). Contenido: E2E de los 61 comandos;
+      `done` pasa la puerta antes de escribir; `ci init` detecta el proveedor;
+      [`docs/first-pr.md`](../docs/first-pr.md); README del bucle de cinco
+      comandos (el de npm se actualiza con esta versión).
+- [x] **MCP con el bucle diario.** Al actualizar el capítulo 15 del libro con
+      las herramientas reales salió que `check` y `new` no eran herramientas
+      MCP: un cliente sólo-MCP no podía crear un requisito ni pasar la puerta.
+      Ahora sí, y cada herramienta declara su argumento (`title`,
+      `requirement`, …).
+- [x] Libro actualizado a 0.13 (163 páginas): `done` con puerta, `ci init`
+      con detección, MCP real, sección «El primer PR del equipo» en el cap. 6.
+- [ ] **El piloto con el equipo (#100).** Es lo único que queda, y es del
+      usuario.
+
 ## 4. La medida
 
 Piloto con **personas del equipo** (cierra por fin el espíritu de `GATE-G3`),
