@@ -130,3 +130,39 @@ test("a trade term is not a vague step; a verdict is", () => {
   );
   assert.ok(codes(feature("it works")).includes("vague_step"));
 });
+
+test("a requirement may have several scenarios; a repeat with no scenario is still refused", () => {
+  // A pack expanded REQ-101 with SCN-101 and SCN-102 into two rows, and the
+  // gate called it a duplicate: no requirement could have two scenarios.
+  const {
+    ValidateProjectUseCase,
+  } = require("../../packages/core/src/application/ValidateProjectUseCase");
+  const head =
+    "<!-- specgate:derived — Do not edit by hand. -->\n\n" +
+    "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |\n" +
+    "|---|---|---|---|---|---|---|---|---|---|\n";
+  const row = (req, scn) =>
+    `| ${req} | ${scn} | \`f.feature\` | - | - | - | - | - | TBD | Draft |\n`;
+  const codes = (table) =>
+    new ValidateProjectUseCase({}).checkMatrix(head + table, {}).report.findings.map((f) => f.code);
+  assert.ok(
+    !codes(row("REQ-101", "SCN-101") + row("REQ-101", "SCN-102")).includes(
+      "duplicate_requirement_id"
+    )
+  );
+  assert.ok(
+    codes(row("REQ-101", "SCN-101") + row("REQ-101", "-")).includes("duplicate_requirement_id")
+  );
+  assert.ok(
+    codes(row("REQ-101", "SCN-101") + row("REQ-101", "SCN-101")).includes("duplicate_scenario_id")
+  );
+});
+
+test("a pack template that already carries its tags expands without an error", () => {
+  const { hasScenario, tagScenario } = require("../../packages/core/src/domain/GherkinTags");
+  const src =
+    "Feature: F\n\n  @REQ-101 @SCN-101\n  Scenario: A clock in is accepted\n    Given a\n    When b\n    Then c\n";
+  assert.equal(tagScenario(src, "A clock in is accepted", ["@REQ-101", "@SCN-101"]), src);
+  assert.equal(hasScenario(src, "A clock in is accepted"), true);
+  assert.equal(hasScenario(src, "Something else"), false);
+});

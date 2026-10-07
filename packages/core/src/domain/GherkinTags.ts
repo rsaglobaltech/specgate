@@ -117,3 +117,15 @@ export function csdaTagsIn(source: string): string[] {
   }
   return [...found].sort();
 }
+
+/** Whether `source` has a scenario heading with exactly this name. */
+export function hasScenario(source: string, scenarioName: string): boolean {
+  const target = String(scenarioName || "").trim();
+  return source
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .some((line) => {
+      const match = SCENARIO_LINE.exec(line);
+      return Boolean(match && match[3].trim() === target);
+    });
+}

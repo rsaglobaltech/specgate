@@ -23,6 +23,16 @@ domain packs in a specops repository:
 - **"tag work" is not a vague step.** The vague-step check matched the bare
   word *work*; it now flags verdicts ("it works", "should work"), not trade
   terms.
+- **A requirement can have several scenarios.** On a generated matrix a
+  requirement with two scenarios has two rows, and the gate called it a
+  duplicate id — so any requirement with more than one scenario, including
+  every pack that ships them, failed `check`. Rows with distinct scenario ids
+  are accepted there; a hand-kept matrix keeps the strict rule, and
+  `specgate matrix --migrate` moves a project to the generated one after
+  `specops add`.
+- **A pack template that already carries its `@REQ`/`@SCN` tags expands
+  cleanly.** `expand` reported "declares … which is not in the template" for
+  every pre-tagged scenario.
 - **Pushes to `main` were never refused by GitHub**: in zsh, `$R:refs/…` is
   the `:r` modifier. The release process now quotes the refspec.
 

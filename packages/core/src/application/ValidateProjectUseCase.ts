@@ -1,6 +1,7 @@
 import { ValidationReport } from "../domain/ValidationReport";
 import { ITraceabilityRepository } from "./ports/ITraceabilityRepository";
 import { requirementSections } from "../domain/SpecSections";
+import { isDerivedMatrix } from "../domain/DerivedMatrix";
 import {
   ALLOWED_STATUS,
   LEGACY_HEADER,
@@ -92,7 +93,9 @@ export class ValidateProjectUseCase {
 
     const strictTdd = opts.strictTdd === true;
     const seenScenarios = new Set<string>();
-    const seenRequirements = new Set<string>();
+    const derived = isDerivedMatrix(traceContent);
+    // Requirement id → whether one of its rows had no scenario id.
+    const seenRequirements = new Map<string, boolean>();
 
     for (const cells of parseMatrixRows(traceContent)) {
       const { requirementId, scenarioId, testArtifact, status } = readRowFields(cells, mode);
@@ -104,8 +107,19 @@ export class ValidateProjectUseCase {
       // artifact silently becomes another's, and the matrix asserts a proof
       // that was never run. Three cold adoptions reached that state through the
       // tool's own commands while every gate stayed green.
+      //
+      // On a generated matrix the rows come from spec.md, so a requirement
+      // with several scenarios legitimately has a row per scenario, each
+      // addressable by its unique scenario id. Refusing every repeat there made
+      // any requirement with two scenarios fail the gate. A hand-kept matrix
+      // keeps the strict rule: there, two rows under one id cannot be told
+      // apart from two requirements that collided.
+      const hasScenario = derived && Boolean(scenarioId && scenarioId !== "-");
       if (requirementId && requirementId !== "-") {
-        if (seenRequirements.has(requirementId)) {
+        if (
+          seenRequirements.has(requirementId) &&
+          (!hasScenario || seenRequirements.get(requirementId))
+        ) {
           report.addError(
             "duplicate_requirement_id",
             `Duplicate Requirement ID in traceability.md: ${requirementId}`,
@@ -120,7 +134,10 @@ export class ValidateProjectUseCase {
             }
           );
         }
-        seenRequirements.add(requirementId);
+        seenRequirements.set(
+          requirementId,
+          Boolean(seenRequirements.get(requirementId)) || !hasScenario
+        );
       }
 
       if (requirementId) requirements.add(requirementId);

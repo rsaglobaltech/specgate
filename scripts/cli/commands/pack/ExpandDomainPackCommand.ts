@@ -23,7 +23,7 @@ import {
   writeFile,
 } from "../../../../packages/core/src/infrastructure/DiskPackRepository";
 import { logError, logInfo } from "../../../../packages/core/src/infrastructure/ConsoleReporter";
-import { tagScenario } from "../../../../packages/core/src/domain/GherkinTags";
+import { hasScenario, tagScenario } from "../../../../packages/core/src/domain/GherkinTags";
 import { parseArgs } from "./pack-args";
 import { resolveRemotePack } from "../../../../packages/core/src/infrastructure/RemotePackResolver";
 import { readLock, writeLock, upsertPackEntry, newLock } from "../../../specops/lock";
@@ -98,7 +98,9 @@ export function renderScenarios(
     // title. Idempotent: `expand` runs more than once on the same project.
     const tags = [scenario.requirement_id, scenario.id].filter(Boolean).map((id: any) => `@${id}`);
     const tagged = tagScenario(rendered, scenario.scenario, tags);
-    if (tags.length > 0 && tagged === rendered) {
+    // Unchanged output means either the scenario is missing or its tags were
+    // already there — a template that ships tagged is fine, not an error.
+    if (tags.length > 0 && tagged === rendered && !hasScenario(rendered, scenario.scenario)) {
       logError(
         `Scenario '${scenario.id}' declares "${scenario.scenario}", which is not in ` +
           `${scenario.template} — it goes out untagged, and the matrix will point at ` +
