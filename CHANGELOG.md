@@ -8,6 +8,36 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+Found adopting the Golden State Reinforcing app with six domain packs on the
+published 0.14.1:
+
+- **A pack keeps a generated matrix generated.** Installing a pack wrote
+  matrix rows and turned the project back into a hand-kept matrix; `matrix
+  --migrate` then wrote 47 placeholder sections into `spec.md` titled after
+  use cases. Now each requirement's use case, command, aggregate, event and
+  context go into the `csda:trace` of its section — the pack's capability
+  spec, or a new `spec.md` section carrying the pack's own description — and
+  the matrix is regenerated.
+- **Capability requirements get a row per tagged scenario**, like `spec.md`
+  ones. They got a single scenario-less row, so packs and archived changes
+  never showed their scenarios.
+- **The harness prompt reads capability specs and every scenario.** It read
+  only `spec.md` — telling the agent "no text, stop" for any pack or archived
+  requirement — and showed one scenario of a requirement that has several.
+- **The harness runs each requirement once.** It processed one plan row per
+  scenario: a requirement with two scenarios ran two paid agent sessions on
+  the same branch.
+- **`setup_cmd`** prepares each fresh worktree before the agent (`harness
+  init` proposes `npm ci` / `pnpm install` / `yarn install` from the
+  lockfile), so the agent can run the tests it writes and `check` no longer
+  needs `npm ci` in `test_cmd`. The generated prompt prefix teaches linking by
+  mention instead of "the test named in the matrix".
+- **Private pack repositories in CI.** The GitHub job uses a `SPECOPS_TOKEN`
+  secret when present, and `pack_unavailable` says the repository needs
+  credentials instead of "check network access".
+
 ## [0.14.1] — 2026-10-07
 
 ### Fixed

@@ -69,7 +69,13 @@ export class CheckAgainstLockUseCase {
           code: "pack_unavailable",
           message: `Could not resolve ${entry.pack_id}@${entry.version}: ${err.message}`,
           target: entry.pack_id,
-          fix: "Check network access and that the pinned tag still exists upstream.",
+          // A private pack repository fails the same way as a network outage,
+          // and "check network access" sent a team after the wrong problem.
+          fix: /could not read Username|Authentication failed|terminal prompts disabled|Repository not found|returned error: 40[13]/i.test(
+            String(err.message)
+          )
+            ? "The pack repository needs credentials. In CI, add a SPECOPS_TOKEN secret with read access to it — the job `specgate ci init` writes uses it — or make the repository public."
+            : "Check network access and that the pinned tag still exists upstream.",
         });
         continue;
       }

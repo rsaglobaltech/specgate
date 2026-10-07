@@ -58,6 +58,11 @@ harness_version: 1
 #   test_cmd: "npm ci && npm run verify && npm run test:e2e -- {feature_file}"
 {{TEST_CMD_LINE}}
 
+# Run once in each fresh worktree before the agent starts — the worktree has
+# only what git tracks, so this is where dependencies get installed. `check`
+# does not run it; your own checkout already has them.
+{{SETUP_CMD_LINE}}
+
 # Retries per requirement, each one fed the previous failure. Past three, the
 # loop is usually stuck on something a human needs to read.
 max_attempts: 3

@@ -1,6 +1,13 @@
 export interface HarnessSettings {
   agent: string;
   testCmd: string;
+  /**
+   * Run once in each fresh worktree before the agent — `npm ci`, say. The
+   * worktree carries only what git tracks, so without it the agent could not
+   * run the tests it is asked to write, and a gate of `npm ci && …` made every
+   * local `check` reinstall dependencies too.
+   */
+  setupCmd?: string;
   maxAttempts: number;
   concurrency: number;
   promptPrefix: string;
@@ -90,6 +97,7 @@ export class HarnessConfig {
     return new HarnessConfig({
       agent: cliArgs.agent || file.agent || HarnessConfig.DEFAULT_SETTINGS.agent,
       testCmd: cliArgs.testCmd || file.testCmd || HarnessConfig.DEFAULT_SETTINGS.testCmd,
+      setupCmd: file.setupCmd || "",
       maxAttempts:
         cliArgs.maxAttempts || file.maxAttempts || HarnessConfig.DEFAULT_SETTINGS.maxAttempts,
       concurrency:

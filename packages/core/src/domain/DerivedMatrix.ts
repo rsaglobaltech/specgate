@@ -181,10 +181,21 @@ export function deriveRows(sources: DerivationSources): any[] {
       const trace: Record<string, string> = { ...(req.trace || {}) };
       // Archived requirements link the same way: by being named.
       linkByMention(trace, req.id, sources);
-      const row: any = TraceabilityMatrix.traceRow({ ...req, trace });
-      if (trace.depends) row.dependsOn = String(trace.depends).split(",").filter(Boolean);
-      if (trace.context) row.context = trace.context;
-      rows.push(row);
+      // And by their tagged scenarios, one row each, as spec.md requirements
+      // do. Capability requirements got a single scenario-less row, so a
+      // requirement installed from a pack — or archived from a change — never
+      // showed the scenarios that demonstrate it.
+      const scenarios = trace.scn || trace.feature ? [] : taggedScenarios(sources.features, req.id);
+      const variants: Array<Record<string, string>> =
+        scenarios.length > 0
+          ? scenarios.map((sc) => ({ ...trace, scn: sc.scn, feature: sc.feature }))
+          : [trace];
+      for (const t of variants) {
+        const row: any = TraceabilityMatrix.traceRow({ ...req, trace: t });
+        if (t.depends) row.dependsOn = String(t.depends).split(",").filter(Boolean);
+        if (t.context) row.context = t.context;
+        rows.push(row);
+      }
     }
   }
   return rows;

@@ -84,7 +84,7 @@ test("the harness prompt now carries the requirement it asks for", () => {
 
     const prompt = cli("harness", "prompt", reqId, "--project-dir", dir);
     assert.equal(prompt.status, 0, prompt.stdout + prompt.stderr);
-    assert.match(prompt.stdout, /The requirement \(spec\.md\)/);
+    assert.match(prompt.stdout, /^## The requirement$/m);
     assert.match(prompt.stdout, /Totals are rounded half-up/);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
