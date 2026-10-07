@@ -17,7 +17,6 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - **`status` after adoption points at a first real requirement**
   (`specgate new "…"`), then at `specgate done REQ-NNN` for the newest one —
   not "`specgate check` — write REQ-001's test" for the baseline.
-
 - **The documentation site has a new design ("Editorial").** A warm paper
   ground, a serif display face (Newsreader) over a quiet sans (Instrument
   Sans), one deep green accent, and a warm dark theme from the same tokens —
