@@ -29,7 +29,10 @@ export function pack(sandbox, given) {
   fs.mkdirSync(out, { recursive: true });
   const r = run("npm", ["pack", "--silent", "--pack-destination", out], { cwd: ROOT });
   if (r.status !== 0) throw new Error(`npm pack failed:\n${r.stdout}${r.stderr}`);
-  return path.join(out, fs.readdirSync(out).find((f) => f.endsWith(".tgz")));
+  return path.join(
+    out,
+    fs.readdirSync(out).find((f) => f.endsWith(".tgz"))
+  );
 }
 
 /** Install the tarball into an empty directory; return the installed bin. */
@@ -123,8 +126,16 @@ export function context({ bin, sandbox, tarball, flags }) {
 
     /** A small Node codebase: what `init` adopts. */
     nodeRepo: (dir) => {
-      write(dir, "package.json", '{"name":"shop","version":"1.0.0","scripts":{"test":"node --test"}}');
-      write(dir, "src/orders/index.js", "module.exports = { total: (x) => Math.round(x * 100) / 100 };\n");
+      write(
+        dir,
+        "package.json",
+        '{"name":"shop","version":"1.0.0","scripts":{"test":"node --test"}}'
+      );
+      write(
+        dir,
+        "src/orders/index.js",
+        "module.exports = { total: (x) => Math.round(x * 100) / 100 };\n"
+      );
       return dir;
     },
 

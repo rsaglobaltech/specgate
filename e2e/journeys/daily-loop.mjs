@@ -27,8 +27,14 @@ export default [
       const init = t.sg(dir, "init");
       t.ok(init, "init in a repo with code");
       t.expect(/Existing code found/.test(t.out(init)), "init should say it adopted", init);
-      t.expect(t.read(dir, "src/orders/index.js").includes("Math.round"), "adopt must not touch code");
-      t.expect(t.read(dir, "docs/specs/traceability.md").includes("specgate:derived"), "matrix generated");
+      t.expect(
+        t.read(dir, "src/orders/index.js").includes("Math.round"),
+        "adopt must not touch code"
+      );
+      t.expect(
+        t.read(dir, "docs/specs/traceability.md").includes("specgate:derived"),
+        "matrix generated"
+      );
       t.ok(t.sg(dir, "check"), "check on a fresh adoption");
 
       const created = t.sg(dir, "new", "Totals are rounded to the cent", "--json");
@@ -38,24 +44,48 @@ export default [
 
       const premature = t.sg(dir, "done", req.id, "--strict");
       t.fails(premature, "done --strict on a scenario of placeholders");
-      t.expect(/scenario_placeholder_step/.test(t.out(premature)), "the refusal names the placeholders", premature);
+      t.expect(
+        /scenario_placeholder_step/.test(t.out(premature)),
+        "the refusal names the placeholders",
+        premature
+      );
 
       t.fillScenario(dir, req.featureFile, [
         "an order totalling 10.005 EUR",
         "the total is computed",
         "the total is 10.01 EUR",
       ]);
-      t.write(dir, "test/totals.test.js", `// ${req.id} ${req.scenarioId}\nrequire("node:test");\n`);
-      fs.appendFileSync(path.join(dir, "src/orders/index.js"), `// ${req.id}: rounding to the cent\n`);
+      t.write(
+        dir,
+        "test/totals.test.js",
+        `// ${req.id} ${req.scenarioId}\nrequire("node:test");\n`
+      );
+      fs.appendFileSync(
+        path.join(dir, "src/orders/index.js"),
+        `// ${req.id}: rounding to the cent\n`
+      );
 
-      t.ok(t.sg(dir, "done", req.id, "--strict"), "done --strict once the scenario and a test that names it exist");
-      t.expect(/\| test\/totals\.test\.js \| Implemented \|$/.test(t.matrixRow(dir, req.id)), "test derived");
-      t.expect(/`src\/orders\/index\.js`/.test(t.matrixRow(dir, req.id)), "code derived from its mention");
+      t.ok(
+        t.sg(dir, "done", req.id, "--strict"),
+        "done --strict once the scenario and a test that names it exist"
+      );
+      t.expect(
+        /\| test\/totals\.test\.js \| Implemented \|$/.test(t.matrixRow(dir, req.id)),
+        "test derived"
+      );
+      t.expect(
+        /`src\/orders\/index\.js`/.test(t.matrixRow(dir, req.id)),
+        "code derived from its mention"
+      );
       t.ok(t.sg(dir, "validate", ".", "--strict"), "validate --strict (what CI runs)");
 
       const status = t.sg(dir, "status", "--json");
       t.ok(status, "status --json");
-      t.expect(t.json(status).counts.DONE >= 1, "status should count the delivered requirement", status);
+      t.expect(
+        t.json(status).counts.DONE >= 1,
+        "status should count the delivered requirement",
+        status
+      );
     },
   },
   {
@@ -80,13 +110,20 @@ export default [
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
       const req = t.json(t.sg(dir, "new", "Refunds are logged", "--json")).requirement;
-      t.fillScenario(dir, req.featureFile, ["a paid order", "it is refunded", "the refund is logged"]);
+      t.fillScenario(dir, req.featureFile, [
+        "a paid order",
+        "it is refunded",
+        "the refund is logged",
+      ]);
       t.write(dir, "test/refund.test.js", `// ${req.id}\n`);
       t.ok(t.sg(dir, "done", req.id, "--strict"), "done --strict");
       // Pin the link explicitly, then delete the file: a rotted link.
       t.ok(t.sg(dir, "req", "link", req.id, "--test", "test/refund.test.js"), "req link");
       fs.rmSync(path.join(dir, "test/refund.test.js"));
-      t.fails(t.sg(dir, "check", "--json"), "check with the delivered requirement's test file deleted");
+      t.fails(
+        t.sg(dir, "check", "--json"),
+        "check with the delivered requirement's test file deleted"
+      );
     },
   },
   {
