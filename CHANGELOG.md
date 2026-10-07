@@ -12,6 +12,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **The README teaches the five-command loop** — the test mention as the link,
+  `done` gating, `ci init` detection, the MCP server in the package — and
+  points to the first-PR guide. npm shows it from this release, with a link to
+  the documentation site.
 - **[Your team's first pull request](docs/first-pr.md)** — what the author
   writes, what the reviewer reads (and skips), and every failure a first PR
   meets with its fix.
