@@ -20,7 +20,7 @@ export default [
     },
   },
   {
-    name: "brownfield Node: init adopts, then new → test → done --strict, no req link",
+    name: "brownfield Node: init adopts, then new → test → done, no req link",
     covers: ["init", "new", "done", "check", "validate", "status"],
     run(dir, t) {
       t.nodeRepo(dir);
@@ -42,8 +42,10 @@ export default [
       const req = t.json(created).requirement;
       t.expect(t.exists(dir, req.featureFile), "new should write the feature file");
 
-      const premature = t.sg(dir, "done", req.id, "--strict");
-      t.fails(premature, "done --strict on a scenario of placeholders");
+      // Plain `done`, as the help teaches it: it used to say ✔ here and leave
+      // the next `check` — the one in CI — to fail on the same requirement.
+      const premature = t.sg(dir, "done", req.id);
+      t.fails(premature, "done on a scenario of placeholders");
       t.expect(
         /scenario_placeholder_step/.test(t.out(premature)),
         "the refusal names the placeholders",
@@ -65,10 +67,7 @@ export default [
         `// ${req.id}: rounding to the cent\n`
       );
 
-      t.ok(
-        t.sg(dir, "done", req.id, "--strict"),
-        "done --strict once the scenario and a test that names it exist"
-      );
+      t.ok(t.sg(dir, "done", req.id), "done once the scenario and a test that names it exist");
       t.expect(
         /\| test\/totals\.test\.js \| Implemented \|$/.test(t.matrixRow(dir, req.id)),
         "test derived"

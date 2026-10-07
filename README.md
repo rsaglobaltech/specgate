@@ -55,7 +55,7 @@ Each level is useful on its own and never requires the ones above it.
 and the next command; `specgate new` adds a requirement with its scenario and row;
 `specgate check` is the gate before a PR; `specgate done` closes a requirement.
 Nobody hand-edits the matrix.
-→ [Quickstart](docs/quickstart.md) · [Command reference](docs/commands.md)
+→ [Quickstart](docs/quickstart.md) · [First PR with your team](docs/first-pr.md) · [Command reference](docs/commands.md)
 
 **Specs that are checked.** `specgate validate` fails the build when a requirement
 has no scenario, no test, or no row in the traceability matrix. `--strict` — the

@@ -54,13 +54,13 @@ specgate new "Totals are rounded half-up"
 It assigns the next `REQ-NNN`, drafts its section in `spec.md`, writes a tagged
 scenario of `<placeholders>` under `features/`, and links the row. Rewrite the
 placeholders before you close it: while the requirement is `Draft` the gate
-leaves them alone, and `specgate done --strict` refuses any that are left.
+leaves them alone, and `specgate done` refuses any that are left.
 
 ## 4. Close the loop
 
 ```bash
-specgate done REQ-007 --strict --test-cmd "npm test"   # validates, runs the suite,
-                                                      # then flips the status
+specgate done REQ-007 --test-cmd "npm test"   # the gate, the suite,
+                                             # then flips the status
 ```
 
 ## 5. Check before you push

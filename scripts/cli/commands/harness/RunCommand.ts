@@ -986,10 +986,11 @@ function attemptRequirement(req, ctx) {
       }
     }
 
-    // Close the loop inside the worktree.
+    // Close the loop inside the worktree. The gate above is the check; `done`
+    // running its own again would only double the slowest step.
     const done = spawnSync(
       process.execPath,
-      [DONE_SCRIPT, req.requirement, "--project-dir", worktreeDir],
+      [DONE_SCRIPT, req.requirement, "--no-check", "--project-dir", worktreeDir],
       { encoding: "utf8" }
     );
     if (done.status !== 0) {

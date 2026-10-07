@@ -128,6 +128,7 @@
         </p>
         <ul class="path__links">
           <li><a href="./quickstart.html">Quickstart</a></li>
+          <li><a href="./first-pr.html">Your team's first PR</a></li>
           <li><a href="./getting-started.html">Adopt an existing repo</a></li>
           <li><a href="./validating.html">What the gate checks</a></li>
         </ul>
@@ -339,10 +340,14 @@ TESTING: node:test
     REQ-003   SCN-003
       ✓ feature: `features/multi-tenant/exceeding_a_quota_emits_quotaexceeded.feature`
 
+  Needs Feature File
+    REQ-004   -
+      · feature: -
+
   Needs Implementation
     REQ-000   SCN-000
       ✓ feature: `features/core/health.feature`
-      · code:    `API /health, smoke test`
+… 1 more lines
 
 ~/smart-parking $ cat harness.config.yaml
 harness_version: 1
@@ -364,11 +369,11 @@ max_attempts: 1
 ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
- .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 98 +++++++++++++++++++++++++
+ .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 99 +++++++++++++++++++++++++
  docs/specs/traceability.md                              |  2 +-
  src/health.js                                           |  9 +++
  test/health.test.js                                     | 10 +++
- 4 files changed, 118 insertions(+), 1 deletion(-)
+ 4 files changed, 119 insertions(+), 1 deletion(-)
 
 ~/smart-parking $ git switch -q harness/REQ-000 &amp;&amp; node --test test/*.test.js
 ✔ GET /health reports the service as UP (12ms)

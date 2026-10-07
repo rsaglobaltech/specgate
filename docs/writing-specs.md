@@ -88,13 +88,15 @@ specgate plan --format json
 ### After implementing, mark the REQ done
 
 ```bash
-specgate done REQ-007                          # → Status="Implemented"
-specgate done REQ-007 --status Verified         # → Status="Verified"
-specgate done REQ-007 --check                   # runs `validate` first; aborts on red
-specgate done REQ-007 --strict                  # like --check but uses the gate, `validate --strict`
+specgate done REQ-007                          # the gate first, then Status="Implemented"
+specgate done REQ-007 --status Verified         # → Status="Verified", same gate
+specgate done REQ-007 --test-cmd "npm test"     # the gate, then the suite
+specgate done REQ-007 --no-check                # writes the status without the gate
 ```
 
-`done` edits exactly one cell in `docs/specs/traceability.md`. Combined with `validate --strict` in CI, the matrix is the live source of truth instead of a rear-view mirror.
+`done` runs the gate `specgate check` runs and writes nothing when it fails,
+so a requirement it closes is one CI will not reopen. It then edits exactly
+one status. Combined with `validate --strict` in CI, the matrix is the live source of truth instead of a rear-view mirror.
 
 ### AI agent recipe (Claude Desktop / Cursor / Aider with MCP)
 

@@ -164,11 +164,27 @@ test("test_cmd in harness.config.yaml is honoured without repeating it", () => {
   }
 });
 
-test("plain `done` still just writes the status — this did not become mandatory", () => {
-  // Turning every `done` into a full gate run would be a different command.
+test("plain `done` runs the gate: it refuses what `check` would refuse", () => {
+  // It used to just write the status, so the daily loop's `done` printed a
+  // tick and the `check` in CI went red on the same requirement.
   const { parent, dir } = project({ brokenLinks: true });
   try {
     const r = cli("done", "REQ-001", "--project-dir", dir);
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stdout + r.stderr, /done_validate_failed/);
+    assert.notEqual(statusOf(dir), "Implemented");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("`done --no-check` writes the status without the gate; Approved never ran it", () => {
+  const { parent, dir } = project({ brokenLinks: true });
+  try {
+    const approved = cli("done", "REQ-001", "--status", "Approved", "--project-dir", dir);
+    assert.equal(approved.status, 0, approved.stdout + approved.stderr);
+    assert.equal(statusOf(dir), "Approved");
+    const r = cli("done", "REQ-001", "--no-check", "--project-dir", dir);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.equal(statusOf(dir), "Implemented");
   } finally {

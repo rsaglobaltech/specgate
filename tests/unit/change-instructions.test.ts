@@ -98,7 +98,7 @@ test("a stage carries rules and a next command, not a template", () => {
     assert.equal(ins.kind, "stage");
     assert.equal(ins.template, undefined);
     assert.ok(ins.rules.length > 0);
-    assert.match(ins.nextCommand, /validate \. --strict$/);
+    assert.match(ins.nextCommand, /^specgate check$/);
     // `<id>` is substituted, never handed to the caller raw.
     const archive = buildInstructions(dir, "archive", "add-pricing", TEMPLATES);
     assert.match(archive.nextCommand, /add-pricing/);
