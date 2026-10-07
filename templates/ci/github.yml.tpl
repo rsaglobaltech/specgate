@@ -22,8 +22,16 @@ jobs:
       # matches the digest pinned in .specops.lock — a moved tag, a rewritten
       # history, or a hand-edited generated file. Skipped when the project
       # installs no packs.
+      #
+      # Packs in a private repository: add a SPECOPS_TOKEN secret with read
+      # access to it, and git uses it for github.com. Without one, nothing changes.
       - name: Check pack drift
+        env:
+          SPECOPS_TOKEN: ${{ secrets.SPECOPS_TOKEN }}
         run: |
+          if [ -n "$SPECOPS_TOKEN" ]; then
+            git config --global url."https://x-access-token:${SPECOPS_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
           if [ -f .specops.lock ]; then
             npx @rsaglobaltech/specgate@{{SPECGATE_VERSION}} validate . --against-lock
           else

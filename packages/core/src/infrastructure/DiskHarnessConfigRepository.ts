@@ -9,6 +9,14 @@ export class DiskHarnessConfigRepository implements IHarnessConfigRepository {
     return readHarnessConfig(projectDir);
   }
 
+  public listProjectDir(projectDir: string, relativePath: string): string[] {
+    try {
+      return fs.readdirSync(path.resolve(projectDir, relativePath)).sort();
+    } catch {
+      return [];
+    }
+  }
+
   public readProjectFile(projectDir: string, relativePath: string): string | null {
     const fullPath = path.resolve(projectDir, relativePath);
     try {

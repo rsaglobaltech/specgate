@@ -24,6 +24,7 @@ import {
 } from "../../../../packages/core/src/infrastructure/DiskPackRepository";
 import { logError, logInfo } from "../../../../packages/core/src/infrastructure/ConsoleReporter";
 import { hasScenario, tagScenario } from "../../../../packages/core/src/domain/GherkinTags";
+import { appendRequirementSection } from "../../../../packages/core/src/domain/SpecSections";
 import { parseArgs } from "./pack-args";
 import { resolveRemotePack } from "../../../../packages/core/src/infrastructure/RemotePackResolver";
 import { readLock, writeLock, upsertPackEntry, newLock } from "../../../specops/lock";
@@ -37,6 +38,8 @@ import { snapshotBaseline } from "../../../specops/manifest";
 import { BaseCommand } from "../../../lib/command";
 
 import { findCliRoot } from "../../../lib/project-root";
+import { writeRequirementFields } from "../../../lib/derived-writes";
+import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 
 const PACKAGE_VERSION = (() => {
   try {
@@ -537,21 +540,79 @@ export function renderTraceability(
     }
   }
 
-  const markdown = buildTraceabilityMarkdown(rows, mode);
   if (
+    mode === "rich" &&
     fs.existsSync(traceTarget) &&
     fs.readFileSync(traceTarget, "utf8").includes("<!-- specgate:derived")
   ) {
-    // A pack writes spec.md from its own template, its requirements not in
-    // `## REQ-NNN` sections, so a generated matrix would derive nothing from
-    // it. The pack's matrix takes over and the project is hand-kept again —
-    // said out loud rather than discovered as an empty matrix.
-    process.stderr.write(
-      "⚠️  This pack writes its own traceability matrix: the project's matrix is hand-kept again.\n" +
-        "   `specgate matrix --migrate` switches it back once its requirements have `## REQ-NNN` sections.\n"
-    );
+    // A generated matrix stays generated. Each requirement's use case,
+    // command, aggregate, event and context go into the csda:trace comment of
+    // its section — the capability spec the pack wrote, or a new section in
+    // spec.md carrying the pack's own prose — and the matrix is regenerated,
+    // one row per tagged scenario. Writing rows here instead turned the
+    // project back into a hand-kept matrix, which then refused a requirement
+    // with two scenarios and left spec.md with placeholder sections.
+    if (!dryRun) writeDerivedRequirements(projectDir, rows, pack);
+    return;
   }
+
+  const markdown = buildTraceabilityMarkdown(rows, mode);
   writeFile(traceTarget, markdown, dryRun);
+}
+
+/**
+ * The derived half of `renderTraceability`: the pack's rows become trace
+ * fields on the requirement they belong to.
+ */
+function writeDerivedRequirements(projectDir: string, rows: any[], pack: any) {
+  const bare = (v: any) =>
+    String(v || "")
+      .replace(/`/g, "")
+      .trim();
+  const idOf = (label: any) => (/^(REQ-\d+)/.exec(bare(label)) || [])[1] || "";
+  const titleOf = (label: any) => bare(label).replace(/^REQ-\d+\s*[—-]?\s*/, "");
+  const specFile = path.join(projectDir, "spec.md");
+
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const id = idOf(row.requirement);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const fields: Record<string, string> = {};
+    const put = (key: string, value: any) => {
+      const v = bare(value);
+      if (v && v !== "-") fields[key] = v;
+    };
+    put("uc", row.useCase);
+    put("cmd", row.commandOrQuery);
+    put("agg", row.aggregate);
+    put("evt", row.event);
+    put("context", row.context);
+    if (Array.isArray(row.dependsOn) && row.dependsOn.length > 0)
+      fields.depends = row.dependsOn.join(",");
+
+    if (writeRequirementFields(projectDir, id, fields) === null) {
+      // No section anywhere yet: write one in spec.md with the pack's title,
+      // then record the fields on it.
+      const current = fs.existsSync(specFile) ? fs.readFileSync(specFile, "utf8") : "";
+      const item = (Array.isArray(pack.requirements) ? pack.requirements : []).find(
+        (r: any) => String(r.id) === id
+      );
+      const title = (item && item.title) || titleOf(row.requirement) || id;
+      const { content } = appendRequirementSection(current, id, title);
+      // The pack's own description, not the placeholder a bare `req add` writes.
+      const withProse =
+        item && item.description
+          ? content.replace(
+              /The system MUST satisfy: [^\n]*\n(\n> Written by [^\n]*\n)?$/,
+              `${String(item.description).trim()}\n`
+            )
+          : content;
+      fs.writeFileSync(specFile, withProse, "utf8");
+      writeRequirementFields(projectDir, id, fields);
+    }
+  }
+  refreshDerivedMatrix(projectDir);
 }
 
 export function resolvePackSource(args: any) {

@@ -48,6 +48,8 @@ export interface PromptOptions {
    * close on a brownfield adopt"*. It could not: there was nothing to read.
    */
   requirementText?: string;
+  /** The requirement's other scenarios, beyond the one on this row. */
+  otherScenarios?: Array<{ path: string; content: string }>;
 }
 
 export class AgentPrompt {
@@ -83,9 +85,7 @@ export class AgentPrompt {
     // Before the facts, because it is the thing being implemented and the facts
     // are only pointers to where it goes.
     if (opts.requirementText && String(opts.requirementText).trim()) {
-      parts.push(
-        AgentPrompt.section("The requirement (spec.md)", String(opts.requirementText).trimEnd())
-      );
+      parts.push(AgentPrompt.section("The requirement", String(opts.requirementText).trimEnd()));
     } else {
       parts.push(
         AgentPrompt.section(
@@ -146,6 +146,15 @@ export class AgentPrompt {
             `    specgate req link ${req.requirement} --feature <path>\n\n` +
             `Creating a file that does not exist is not editing the contract — the ` +
             `rule below is about changing scenarios that are already there.`
+        )
+      );
+    }
+
+    for (const other of opts.otherScenarios || []) {
+      parts.push(
+        AgentPrompt.section(
+          `Another scenario of this requirement (${other.path})`,
+          "```gherkin\n" + other.content.trimEnd() + "\n```"
         )
       );
     }

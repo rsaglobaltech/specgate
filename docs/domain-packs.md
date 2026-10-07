@@ -208,6 +208,17 @@ When `.specops.lock` is absent, `sync` reads `specops.config.yaml`, expands ever
 
 ---
 
+## Packs in a private repository
+
+A team's packs often live in a private repository. Locally your git
+credentials are used. In CI, the job `specgate ci init` writes for GitHub
+looks for a `SPECOPS_TOKEN` secret: create a fine-grained token with
+read-only access to the pack repository, add it to the project repository
+as that secret, and the drift check can clone the pack. Without it the check
+fails with `pack_unavailable` and says it needs credentials.
+
+---
+
 ## Bump a pack version safely (`specops diff` + `sync`)
 
 **Goal:** upgrade `parking-management/backend` from `v0.1.0` to `v0.2.0` without surprises.

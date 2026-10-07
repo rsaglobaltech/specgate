@@ -10,4 +10,7 @@ export interface IHarnessConfigRepository {
    * Reads a file content from within the project if it exists.
    */
   readProjectFile(projectDir: string, relativePath: string): string | null;
+
+  /** Names of the entries of a project directory; [] when it does not exist. */
+  listProjectDir?(projectDir: string, relativePath: string): string[];
 }

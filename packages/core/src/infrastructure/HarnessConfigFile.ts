@@ -43,6 +43,7 @@ const KNOWN_KEYS = new Set([
   "agent",
   "agent_profile",
   "test_cmd",
+  "setup_cmd",
   "max_attempts",
   "concurrency",
   "push",
@@ -96,6 +97,7 @@ export function readHarnessConfig(projectDir) {
     config.promptPrecedents = /^(1|true|yes|on)$/i.test(String(parsed.prompt_precedents).trim());
   }
   if (parsed.test_cmd !== undefined) config.testCmd = String(parsed.test_cmd);
+  if (parsed.setup_cmd !== undefined) config.setupCmd = String(parsed.setup_cmd);
   if (parsed.max_attempts !== undefined) {
     const n = Number(parsed.max_attempts);
     if (!Number.isInteger(n) || n < 1) {
@@ -262,6 +264,7 @@ export function resolveHarnessSettings(
   return {
     agent: cliArgs.agent || file.agent || "",
     testCmd: cliArgs.testCmd || file.testCmd || "",
+    setupCmd: file.setupCmd || "",
     maxAttempts: cliArgs.maxAttempts || file.maxAttempts || 3,
     concurrency: cliArgs.concurrency || file.concurrency || 1,
     promptPrefix: cliArgs.promptPrefix || file.promptPrefix || "",

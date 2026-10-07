@@ -166,3 +166,79 @@ test("a pack template that already carries its tags expands without an error", (
   assert.equal(hasScenario(src, "A clock in is accepted"), true);
   assert.equal(hasScenario(src, "Something else"), false);
 });
+
+test("a pack keeps a generated matrix generated, and the harness sees its prose and every scenario", () => {
+  // Installing a pack turned the project back into a hand-kept matrix, wrote
+  // placeholder sections into spec.md, linked no scenario to capability
+  // requirements, and gave the agent "no text — stop" for every one of them;
+  // a requirement with two scenarios was run twice.
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-golden-pack-"));
+  try {
+    const packDir = path.join(root, "packs", "gold", "backend");
+    fs.mkdirSync(path.join(packDir, "templates", "features"), { recursive: true });
+    fs.writeFileSync(
+      path.join(packDir, "pack.yaml"),
+      PACK.replace(
+        "outputs:\n  files: []",
+        'outputs:\n  files:\n    - target: "docs/specs/capabilities/gold/spec.md"\n      template: "templates/capability.md.tpl"'
+      )
+        .replace("templates/fast.feature.tpl", "templates/features/fast.feature.tpl")
+        .replace(
+          "scenarios:\n",
+          'scenarios:\n  - id: "SCN-100"\n    requirement_id: REQ-102\n    target: "features/golden/slow.feature"\n    template: "templates/features/slow.feature.tpl"\n    feature: "A punch is never slow"\n    scenario: "A punch is never slow"\n    status: "Draft"\n'
+        )
+    );
+    fs.writeFileSync(
+      path.join(packDir, "templates", "capability.md.tpl"),
+      "# Capability — Gold\n\n### Requirement: REQ-101 — Clock in inside the geofence\n\nA worker MUST clock in only inside the geofence.\n\n### Requirement: REQ-102 — A punch is confirmed within 2 seconds\n\nA punch MUST be confirmed in under 2 seconds.\n"
+    );
+    const feature = (name) =>
+      `Feature: ${name}\n\n  Scenario: ${name}\n    Given a worker at the jobsite\n    When they clock in\n    Then the confirmation shows in 2 seconds\n`;
+    fs.writeFileSync(
+      path.join(packDir, "templates", "features", "fast.feature.tpl"),
+      feature("A punch is confirmed within 2 seconds")
+    );
+    fs.writeFileSync(
+      path.join(packDir, "templates", "features", "slow.feature.tpl"),
+      feature("A punch is never slow")
+    );
+
+    const dir = path.join(root, "app");
+    fs.mkdirSync(path.join(dir, "lib"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "package.json"), '{"name":"app","version":"1.0.0"}');
+    fs.writeFileSync(path.join(dir, "lib", "index.js"), "module.exports = {};\n");
+    assert.equal(cli("adopt", "--project-dir", dir, "--no-capabilities").status, 0);
+
+    const add = cli(
+      "specops",
+      "add",
+      "--pack-root",
+      path.join(root, "packs"),
+      "--pack",
+      "gold/backend",
+      "--var",
+      "PROJECT_NAME=App",
+      "--project-dir",
+      dir
+    );
+    assert.equal(add.status, 0, add.stdout + add.stderr);
+    const matrix = fs.readFileSync(path.join(dir, "docs/specs/traceability.md"), "utf8");
+    assert.match(matrix, /specgate:derived/, "the matrix stays generated");
+    assert.equal((matrix.match(/^\| REQ-102 \|/gm) || []).length, 2, "a row per scenario");
+    assert.doesNotMatch(fs.readFileSync(path.join(dir, "spec.md"), "utf8"), /## REQ-10[12]/);
+    const check = cli("check", dir);
+    assert.equal(check.status, 0, check.stdout + check.stderr);
+
+    const prompt = cli("harness", "prompt", "REQ-102", "--project-dir", dir).stdout;
+    assert.equal(
+      (prompt.match(/^# Implement REQ-102/gm) || []).length,
+      1,
+      "one run per requirement"
+    );
+    assert.match(prompt, /MUST be confirmed in under 2 seconds/);
+    assert.match(prompt, /A punch is never slow/);
+    assert.match(prompt, /A punch is confirmed within 2 seconds/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

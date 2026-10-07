@@ -1608,6 +1608,21 @@ function processRequirement(req, ctx) {
   }
 
   try {
+    const setupCmd = String((ctx.settings && ctx.settings.setupCmd) || "").trim();
+    if (setupCmd && !survivor) {
+      info(`${req.requirement}: setup — ${setupCmd}`);
+      const setup = spawnSync(setupCmd, { cwd: dir, shell: true, encoding: "utf8" });
+      if (setup.status !== 0) {
+        return {
+          requirement: req.requirement,
+          category: req.category,
+          result: "fail",
+          attempts: 0,
+          branch,
+          error: `setup_cmd failed before the agent ran:\n${setup.stdout || ""}${setup.stderr || ""}`,
+        };
+      }
+    }
     const resumeAt = resuming ? resumeFrom(dir, req.requirement) : null;
     if (resumeAt && resumeAt.attempt > 1) {
       info(`${req.requirement}: resuming at attempt ${resumeAt.attempt}`);
@@ -2153,7 +2168,16 @@ export class RunCommand extends BaseCommand {
       }
 
       const plan = runPlan(projectDir);
-      let pending = (plan.requirements || []).filter((r) => r.category !== "DONE");
+      // The plan has a row per scenario; the harness works per requirement.
+      // A requirement with two scenarios was processed twice — two agent
+      // sessions, paid twice, both on branch harness/REQ-NNN. The prompt carries
+      // every scenario of the requirement, so one run per requirement is enough.
+      const firstRow = new Set<string>();
+      let pending = (plan.requirements || []).filter((r) => {
+        if (r.category === "DONE" || firstRow.has(r.requirement)) return false;
+        firstRow.add(r.requirement);
+        return true;
+      });
       if (args.reqs.length > 0) {
         const wanted = new Set(args.reqs);
         pending = pending.filter((r) => wanted.has(r.requirement));

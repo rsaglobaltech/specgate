@@ -46,6 +46,24 @@ const NULL_SHAPE = { projectDir: null, files: [] };
  * freshly scaffolded project has no build file yet precisely because no code
  * exists, so this is the common case, not the edge one.
  */
+/**
+ * What a fresh worktree needs before anything runs in it: the dependency
+ * install the lockfile pins. `null` when nothing here says.
+ */
+export function setupCommand(projectDir: string): string {
+  const has = (f: string) => fs.existsSync(path.join(projectDir, f));
+  const cmd = has("package-lock.json")
+    ? "npm ci --silent --no-audit --no-fund"
+    : has("pnpm-lock.yaml")
+      ? "pnpm install --frozen-lockfile"
+      : has("yarn.lock")
+        ? "yarn install --frozen-lockfile"
+        : "";
+  return cmd
+    ? `setup_cmd: "${cmd}"`
+    : '# setup_cmd: "npm ci"   # ← run in each fresh worktree before the agent';
+}
+
 export function detectTestCommand(projectDir) {
   // One detector, shared with `adopt`/`onboard`. They used to disagree on the
   // same pom.xml — `./mvnw -B test` there, `mvn -B test` here — which a cold
@@ -176,19 +194,21 @@ export class InitCommand extends BaseCommand {
           "  are code, not specification. This is the one place inside `features/` you\n" +
           "  own."
         : "\nThis project has no Gherkin runner, so nothing executes a `.feature` here.\n" +
-          "The scenarios are the specification and your tests are the proof: make the\n" +
-          "test named in the matrix assert what the scenario says, in the project's own\n" +
-          "test framework. Do not add a BDD runner to satisfy this prompt.",
+          "The scenarios are the specification and your tests are the proof: write a\n" +
+          "test per scenario that asserts what it says, in the project's own test\n" +
+          "framework, and mention the requirement and scenario ids in it\n" +
+          "(`REQ-NNN SCN-NNN`) — that mention is the link. Do not add a BDD runner.",
       SCENARIO_STEP: hasGherkinRunner
         ? "2. Write or extend the step definitions so the scenario fails **for the right\n" +
           "   reason** — a missing implementation, not a typo in a step."
-        : "2. Write the test named in the traceability matrix so it fails **for the right\n" +
+        : "2. Write a test per scenario, mentioning its ids, so it fails **for the right\n" +
           "   reason** — a missing implementation, not a typo in the test.",
+      SETUP_CMD_LINE: setupCommand(projectDir),
       TEST_CMD_LINE: testCmd
         ? `test_cmd: "${testCmd}"`
         : '# test_cmd: "npm test"   # ← set this once the project has a test command',
       GATE_COMMAND: testCmd
-        ? `${testCmd}\nspecgate validate . --strict`
+        ? `${testCmd}\n   specgate validate . --strict`
         : "specgate validate . --strict",
     };
 
