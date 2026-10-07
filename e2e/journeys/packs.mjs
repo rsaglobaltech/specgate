@@ -13,7 +13,7 @@ const VARS = ["--var", "PROJECT_NAME=Shop", "--var", "PROJECT_SLUG=shop", "--var
  * The multi-tenant pack as a git repo: v0.1.0 as shipped, v0.2.0 adding
  * REQ-005. Returns the repo path.
  */
-function packRemote(dir, t) {
+export function packRemote(dir, t) {
   const remote = path.join(dir, "remote");
   fs.cpSync(path.join(ROOT, "packs", "multi-tenant", "backend"), path.join(remote, "backend"), {
     recursive: true,
@@ -47,7 +47,7 @@ function packRemote(dir, t) {
 }
 
 /** A scaffold with no starter requirement: the pack supplies them. */
-function project(dir, t) {
+export function project(dir, t) {
   t.ok(t.sg(dir, "init", "--yes", "--no-git", "--no-sample-req", "--out", "."), "init --yes");
   return path.join(
     dir,

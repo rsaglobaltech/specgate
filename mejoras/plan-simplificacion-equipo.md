@@ -303,7 +303,13 @@ Petición del usuario: probar todas las funcionalidades de punta a punta.
       instalado ponía la CI en rojo**: un requisito sin escenario no llegaba a la
       matriz y `--against-lock` fallaba; el `sync` que sugería no lo arreglaba.
       `specops contribute` pasa al paso 4 (necesita un `change`).
-- [ ] Paso 4 — ciclo `change` completo y `harness init/prompt/report`.
+- [x] Paso 4 — ciclo `change` completo (de `new` a `archive` y entregado con `done`),
+      `change author` (revierte lo que el agente escribe fuera del cambio),
+      `harness init/prompt/run/report`, `specops contribute`. **55/60 (92 %).**
+      Encontró: (1) `change archive` no materializaba el `.feature` del delta —
+      el ciclo documentado dejaba la matriz apuntando a un fichero inexistente;
+      (2) un requisito archivado no se podía cerrar con `done` en matriz
+      generada, y no se enlazaba por mención. Ambos arreglados.
 - [ ] Paso 5 — ALM con un servidor HTTP falso; MCP y LSP por stdio; `mcp install`.
 - [ ] Paso 6 — plugins Maven/Gradle contra el tarball, imagen Docker; nocturno
       con repos públicos fijados.

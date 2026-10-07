@@ -48,16 +48,29 @@ export function writeRequirementFields(
   reqId: string,
   fields: Record<string, string>
 ): number | null {
-  const specFile = path.join(projectDir, "spec.md");
-  if (!fs.existsSync(specFile)) return null;
   const trace: Record<string, string> = {};
   for (const [k, v] of Object.entries(fields)) {
     const key = TRACE_KEY[k] || k;
     trace[key] = String(v).replace(/`/g, "").trim();
   }
-  const next = setTraceFields(fs.readFileSync(specFile, "utf8"), reqId, trace);
-  if (next === null) return null;
-  fs.writeFileSync(specFile, next, "utf8");
+  // spec.md first; then the capability specs `change archive` writes into,
+  // where an archived requirement lives — `done` refused those with "no
+  // section in spec.md" and pointed at `req add`.
+  const candidates = [path.join(projectDir, "spec.md")];
+  const capDir = path.join(projectDir, "docs", "specs", "capabilities");
+  if (fs.existsSync(capDir)) {
+    for (const d of fs.readdirSync(capDir).sort()) candidates.push(path.join(capDir, d, "spec.md"));
+  }
+  let written = false;
+  for (const file of candidates) {
+    if (!fs.existsSync(file)) continue;
+    const next = setTraceFields(fs.readFileSync(file, "utf8"), reqId, trace);
+    if (next === null) continue;
+    fs.writeFileSync(file, next, "utf8");
+    written = true;
+    break;
+  }
+  if (!written) return null;
   refreshDerivedMatrix(projectDir);
   return deriveRows(readDerivationSources(projectDir)).filter((r) => r.requirement === reqId)
     .length;

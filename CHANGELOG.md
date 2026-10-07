@@ -10,6 +10,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **`change archive` writes the feature file the delta describes.** It only
+  copied `.feature` files an author had placed inside the change folder — which
+  neither the template nor `change instructions` asks for — so the documented
+  cycle archived a matrix row naming a feature file that never existed. When
+  the change brings none, the delta's scenarios are rendered as Gherkin, tagged
+  `@REQ-NNN` (and `@SCN-NNN` when the scenario has one). An author's file still
+  wins.
+- **A requirement archived into a capability spec can be closed.** On a
+  generated matrix, `done` and `req link` wrote only to `spec.md`, so an archived
+  requirement got "has no section in spec.md" and a pointer to `req add`. They
+  now write its `csda:trace` comment in the capability spec, and archived
+  requirements link tests and code by mention like any other.
 - **A freshly installed pack no longer fails its own lock gate.** `expand`
   wrote matrix rows per scenario, so a requirement the pack declares without a
   scenario yet — the multi-tenant pack's REQ-004 — never reached the matrix,
@@ -39,7 +51,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `completion`, `studio`, `onboard` — take it from 14 to 34 of 60 commands, and
   offline journeys for packs — `specops add/diff/sync/remove` against a local
   git remote with tags, `pack bundle` for an air-gapped install, `pack
-  init/lint/infer`, `expand` — to 43.
+  init/lint/infer`, `expand` — to 43, and the change cycle (`new` → `archive`
+  → delivered with `done`), `change author` reverting an agent's write outside
+  the change, `harness init/prompt/run/report` and `specops contribute` to 55.
 
 ## [0.12.1] — 2026-10-07
 

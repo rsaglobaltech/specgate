@@ -1,4 +1,5 @@
 import * as path from "node:path";
+import { renderDeltaFeature } from "../domain/DeltaFeature";
 import { IProjectRepository } from "./ports/IProjectRepository";
 import { ArchivePlan } from "../domain/ArchivePlan";
 import { DeltaSpec } from "../domain/DeltaSpec";
@@ -147,6 +148,28 @@ export class ArchiveChangeUseCase {
         contents: this.repo.readFile(feature.file) || "",
         kind: "feature",
       });
+    }
+
+    // A requirement whose trace names a feature file that neither exists nor
+    // came with the change gets one rendered from the delta's own scenarios.
+    // An author's `.feature` in the change folder, or a file already in the
+    // project, always wins.
+    const featureTargets = new Set(
+      plan.writes.filter((w: any) => w.kind === "feature").map((w: any) => w.file)
+    );
+    for (const { req, capability } of applied.upserts) {
+      const rel = String((req.trace || {}).feature || "")
+        .replace(/`/g, "")
+        .trim();
+      if (!rel.endsWith(".feature") || !(req.scenarios || []).length) continue;
+      const target = path.join(p.root, rel);
+      if (featureTargets.has(target) || this.repo.readFile(target) !== null) continue;
+      plan.writes.push({
+        file: target,
+        contents: renderDeltaFeature(req, capability),
+        kind: "feature",
+      });
+      featureTargets.add(target);
     }
 
     let traceTotals = { added: 0, updated: 0, removed: 0, legacyDropped: 0 };
