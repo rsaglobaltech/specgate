@@ -282,6 +282,25 @@ encontró antes de publicar: el harness y `plan` seguían recomendando
 `req link` en proyectos con matriz generada, y el código no se enlazaba por
 mención como los tests — ahora sí, y `req link` sale del flujo diario.
 
+### E2E de todas las funcionalidades — en curso desde 2026-10-07
+
+Petición del usuario: probar todas las funcionalidades de punta a punta.
+
+- [x] **Paso 1** — `e2e/` dividido por áreas (`e2e/journeys/*.mjs`, núcleo en
+      `e2e/lib.mjs`), en paralelo; cada recorrido declara qué comandos
+      `covers`. `node e2e/run.mjs --coverage` compara con la superficie y con
+      `e2e/uncovered.json`, que **solo puede encoger**; lo ejecutan un test
+      unitario y el workflow. Punto de partida: **14/60 comandos (23 %)**.
+- [ ] Paso 2 — utilidades: `doctor`, `fix`, `plan`, `report`, `req done/rm/list`,
+      `config *`, `schema *`, `completion *`, `studio`, `onboard`.
+- [ ] Paso 3 — packs y specops sin red: repos git locales con tags
+      (`pack *`, `specops *`, `expand`).
+- [ ] Paso 4 — ciclo `change` completo y `harness init/prompt/report`.
+- [ ] Paso 5 — ALM con un servidor HTTP falso; MCP y LSP por stdio; `mcp install`.
+- [ ] Paso 6 — plugins Maven/Gradle contra el tarball, imagen Docker; nocturno
+      con repos públicos fijados.
+- Fuera, dicho: extensiones de VS Code e IntelliJ (exigen el editor).
+
 ## 4. La medida
 
 Piloto con **personas del equipo** (cierra por fin el espíritu de `GATE-G3`),

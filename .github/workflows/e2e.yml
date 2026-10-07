@@ -36,5 +36,7 @@ jobs:
         run: |
           git config --global user.email "e2e@example.com"
           git config --global user.name "E2E"
+      - name: Every command has a journey, or is listed as not covered yet
+        run: node e2e/run.mjs --coverage --list
       - name: Pack, install and run the journeys
         run: node e2e/run.mjs

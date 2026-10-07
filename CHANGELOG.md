@@ -8,6 +8,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **E2E coverage is measured and can only grow.** The end-to-end suite is split
+  by area (`e2e/journeys/*.mjs`) and runs its files in parallel; each journey
+  declares the commands it covers. `npm run e2e:coverage` compares them with
+  the command surface and with `e2e/uncovered.json` — commands not covered yet,
+  a list that can only shrink — and fails a new command that has neither. A
+  unit test and the E2E workflow run it. Starting point: 14 of 60 commands.
+
 ## [0.12.1] — 2026-10-07
 
 **Java builds run the current CLI.** The Maven and Gradle plugins were running

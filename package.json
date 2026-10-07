@@ -70,6 +70,7 @@
     "format": "prettier --write \"bin/**/*.{ts,js}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"packages/**/*.ts\" \"features/**/*.ts\"",
     "format:check": "prettier --check \"bin/**/*.{ts,js}\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"packages/**/*.ts\" \"features/**/*.ts\"",
     "e2e": "node e2e/run.mjs",
+    "e2e:coverage": "node e2e/run.mjs --coverage --list",
     "verify": "npm run typecheck && npm run lint && npm test && npm run pack:dry-run && npm run selfcheck",
     "selfcheck": "node bin/specgate.js validate .",
     "docs:agent-contract": "node dist/scripts/gen_agent_contract.js",
