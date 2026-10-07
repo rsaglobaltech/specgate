@@ -8,6 +8,23 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **The documentation site tells the current story.** The landing page opens
+  on `init` and the five-command loop — status, new, a test that mentions the
+  requirement, done, check — with a section on what the author, the reviewer,
+  CI and the agent each do. Three new pages: [How Specgate thinks](docs/concepts.md)
+  (six ideas: what each status owes, where the matrix comes from), [The MCP
+  server](docs/mcp.md) (install, tools, the contract-edit guard) and an
+  [FAQ](docs/faq.md). The landing still taught `onboard`/`adopt`, a four-command
+  loop on `plan` and `validate`, and a harness gating on `--strict-tdd`.
+
+### Fixed
+
+- **`mcp install --help` names the clients it supports.** It offered
+  `vscode` and `kiro`, which fail with `unsupported_client`; it supports
+  `claude` and `cursor`. The docs no longer mention a `windsurf` client either.
+
 ## [0.13.0] — 2026-10-07
 
 ### Added

@@ -65,8 +65,9 @@
 
     <p class="hero__sub">
       Requirements, Gherkin scenarios and a traceability matrix that your CI
-      enforces — plus a harness that drives any coding agent through them, one
-      requirement at a time, in its own git worktree. It never merges.
+      enforces — five commands a day for the team, the same five for its coding
+      agent, and a harness that delivers one requirement at a time in its own
+      git worktree. It never merges.
     </p>
 
     <p class="chips">
@@ -93,7 +94,8 @@
         <span class="code__lang">Install</span>
         <button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button>
       </figcaption>
-      <pre><code class="language-bash">npx @rsaglobaltech/specgate@latest init</code></pre>
+      <pre><code class="language-bash">npx @rsaglobaltech/specgate@latest init
+npx @rsaglobaltech/specgate@latest ci init</code></pre>
     </figure>
 
     <dl class="stats">
@@ -110,10 +112,11 @@
   <div class="wrap">
     <header class="sec">
       <p class="sec__label">Adopt</p>
-      <h2>Two ways in</h2>
+      <h2>Two ways in, one command</h2>
       <p class="sec__lede">
-        The gate is the same either way. What differs is where you start: a
-        repository that already exists, or a folder that does not.
+        <code>specgate init</code> looks before it writes. Where there is code it
+        adopts the repository; where there is none it scaffolds a project. The
+        gate is the same either way.
       </p>
     </header>
 
@@ -121,29 +124,30 @@
       <article class="path">
         <h3 class="path__title">Existing codebase</h3>
         <p class="path__body">
-          The common enterprise case. <code>specgate onboard</code> reads the
-          repository and proposes the capabilities its layout already implies;
-          <code>specgate adopt</code> writes the spec skeleton and touches no
-          source. Nothing is rewritten and nothing is claimed to be verified.
+          The common enterprise case. <code>init</code> sees the build file —
+          <code>pom.xml</code>, <code>package.json</code>, <code>go.mod</code>,
+          <code>pyproject.toml</code>, … — proposes the capabilities your layout
+          already implies, and writes the spec skeleton beside your code. It
+          touches no source file, and the gate is green the same day: a
+          <code>Draft</code> requirement owes nothing yet.
         </p>
         <ul class="path__links">
-          <li><a href="./quickstart.html">Quickstart</a></li>
-          <li><a href="./first-pr.html">Your team's first PR</a></li>
           <li><a href="./getting-started.html">Adopt an existing repo</a></li>
-          <li><a href="./validating.html">What the gate checks</a></li>
+          <li><a href="./first-pr.html">Your team's first PR</a></li>
+          <li><a href="./quickstart.html">Quickstart</a></li>
         </ul>
       </article>
 
       <article class="path">
         <h3 class="path__title">New project</h3>
         <p class="path__body">
-          <code>specgate init</code> scaffolds a project whose specs, scenarios
-          and traceability matrix are wired to CI from the first commit — plus a
-          domain pack if one fits, so the first requirements are arguable rather
-          than blank.
+          In an empty folder, <code>init</code> scaffolds a project whose specs,
+          scenarios and traceability matrix are wired to CI from the first
+          commit — plus a domain pack if one fits, so the first requirements are
+          arguable rather than blank.
         </p>
         <ul class="path__links">
-          <li><a href="./getting-started.html">Generate a project</a></li>
+          <li><a href="./getting-started.html#generate-your-first-project">Generate a project</a></li>
           <li><a href="./domain-packs.html">Domain packs</a></li>
           <li><a href="./tutorial.html">Worked example</a></li>
         </ul>
@@ -163,9 +167,10 @@
     </p>
     <p>
       This tool makes the specification a thing that can be <em>wrong</em>:
-      every requirement has a scenario, every scenario has a file, and
-      <code>specgate validate</code> fails when the link is broken. Then — and only
-      then — an agent is worth pointing at it.
+      every requirement has a scenario, every scenario has a test that names
+      it, and <code>specgate check</code> fails when the link is broken. Then —
+      and only then — an agent is worth pointing at it.
+      <a href="./concepts.html">How Specgate thinks →</a>
     </p>
   </div>
 </section>
@@ -201,78 +206,129 @@
 <section class="band">
   <div class="wrap">
     <header class="sec">
-      <p class="sec__label">Developer journey</p>
-      <h2>The loop</h2>
+      <p class="sec__label">The daily loop</p>
+      <h2>Five commands</h2>
       <p class="sec__lede">
-        Four commands. The same four whether a person or an agent is driving.
+        That is all most of a team ever types — and the same five, as slash
+        commands or MCP tools, are what its coding agent runs.
       </p>
     </header>
 
-    <ol class="journey">
+    <ol class="journey journey--five">
       <li class="journey__stage">
         <p class="journey__n" aria-hidden="true">1</p>
-        <h3 class="journey__title"><code>specgate init</code></h3>
+        <h3 class="journey__title"><code>specgate status</code></h3>
         <p class="journey__body">
-          Scaffold a project: spec, scenarios, traceability matrix, and the
-          execution contract an agent reads before it writes a line. On a
-          repository that already exists, <code>specgate adopt</code> instead.
+          What is open, ordered by what blocks what — and the single next
+          command to run, so nobody has to remember which of the others applies.
         </p>
         <ul class="journey__links">
-          <li><a href="./getting-started.html">Getting started</a></li>
-          <li><a href="./writing-specs.html">Writing specs</a></li>
-          <li><a href="./domain-packs.html">Domain packs</a></li>
+          <li><a href="./commands.html">Command reference</a></li>
         </ul>
       </li>
 
       <li class="journey__stage">
         <p class="journey__n" aria-hidden="true">2</p>
-        <h3 class="journey__title"><code>specgate plan</code></h3>
+        <h3 class="journey__title"><code>specgate new</code></h3>
         <p class="journey__body">
-          What still needs a test, an implementation or a status change —
-          ordered by dependency, with a fix on every blocker.
+          One requirement in one step: its section in <code>spec.md</code> and a
+          tagged scenario. You rewrite the sentence and the three
+          <code>&lt;placeholders&gt;</code>.
         </p>
         <ul class="journey__links">
-          <li><a href="./commands.html">Command reference</a></li>
-          <li><a href="./reviewing-changes.html">Change lifecycle</a></li>
-          <li><a href="./how-to.html">How-to guides</a></li>
+          <li><a href="./writing-specs.html">Writing specs</a></li>
         </ul>
       </li>
 
       <li class="journey__stage">
         <p class="journey__n" aria-hidden="true">3</p>
-        <h3 class="journey__title"><code>specgate harness run</code></h3>
+        <h3 class="journey__title"><code>// REQ-007</code></h3>
         <p class="journey__body">
-          Hand one requirement to an agent in its own worktree, gate the
-          result, and stop if the gate says no.
+          Write the test and the code. A mention of the requirement in the test
+          <em>is</em> the link — there is nothing to declare, and the matrix
+          regenerates itself.
         </p>
         <ul class="journey__links">
-          <li><a href="./harness.html">The harness</a></li>
-          <li><a href="./agent-setup.html">Choosing your agent</a></li>
-          <li><a href="./agents.html">Agent tools</a></li>
+          <li><a href="./concepts.html">How Specgate thinks</a></li>
         </ul>
       </li>
 
       <li class="journey__stage">
         <p class="journey__n" aria-hidden="true">4</p>
-        <h3 class="journey__title"><code>specgate validate</code></h3>
+        <h3 class="journey__title"><code>specgate done</code></h3>
         <p class="journey__body">
-          The gate itself: structure, traceability, Gherkin that Cucumber can
-          actually run, and TDD order. This is what CI runs.
+          Runs the gate for that requirement and marks it Implemented only if it
+          passes. A requirement it closes is one CI will not reopen.
         </p>
         <ul class="journey__links">
           <li><a href="./validating.html">Validating</a></li>
+        </ul>
+      </li>
+
+      <li class="journey__stage">
+        <p class="journey__n" aria-hidden="true">5</p>
+        <h3 class="journey__title"><code>specgate check</code></h3>
+        <p class="journey__body">
+          The whole gate, then your tests. This is what CI runs, and the last
+          thing you run before asking for review.
+        </p>
+        <ul class="journey__links">
           <li><a href="./automation.html">Wire it into CI</a></li>
-          <li><a href="./alm.html">Jira and Azure Boards</a></li>
         </ul>
       </li>
     </ol>
 
     <p class="band__lede band__lede--mid">
-      Step three in detail. One requirement, one branch, one gate — and the
-      branch is yours to merge or throw away.
+      Hand the loop to an agent. <code>specgate harness run</code> takes each
+      pending requirement in its own worktree, runs the gate on the result, and
+      stops if the gate says no. The branch is yours to merge or throw away.
     </p>
 
     <!-- csda:diagram harness-loop -->
+  </div>
+</section>
+
+<!-- ── For your team ────────────────────────────────────────────────────── -->
+<section class="band band--soft">
+  <div class="wrap">
+    <header class="sec">
+      <p class="sec__label">For your team</p>
+      <h2>Everyone knows their part</h2>
+      <p class="sec__lede">
+        A gate only helps if the team knows what to do with it on the first day.
+        Four roles, one page each.
+      </p>
+    </header>
+
+    <div class="grid grid--four">
+      <article>
+        <h3>The author</h3>
+        <p>One requirement, one pull request: <code>new</code>, a real scenario, a
+           test that mentions it, <code>done</code>, <code>check</code> — and commit
+           what <code>check</code> regenerated.</p>
+        <p><a href="./first-pr.html">Your team's first PR →</a></p>
+      </article>
+      <article>
+        <h3>The reviewer</h3>
+        <p>Reads the requirement, the scenario and the test — not the matrix. The
+           gate proved the mechanical part; a test that names a requirement and
+           does not test it is the reviewer's catch.</p>
+        <p><a href="./first-pr.html#the-reviewer-what-to-read-what-to-skip">What to read →</a></p>
+      </article>
+      <article>
+        <h3>CI</h3>
+        <p><code>specgate ci init</code> detects GitHub, GitLab, Azure or Jenkins and
+           writes the job, pinned to the version that wrote it. Every failure
+           carries a code and a <code>fix</code>.</p>
+        <p><a href="./automation.html">CI and automation →</a></p>
+      </article>
+      <article>
+        <h3>The agent</h3>
+        <p>Slash commands for nine agents, or the MCP server inside the package.
+           Tools that would rewrite the spec refuse unless a change is open.</p>
+        <p><a href="./mcp.html">The MCP server →</a></p>
+      </article>
+    </div>
   </div>
 </section>
 
@@ -534,7 +590,7 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
           <tr><th>Unattended harness with a gate</th><td class="y">yes</td><td class="n">no</td><td class="n">no</td><td class="n">no</td></tr>
           <tr><th>MCP server and language server</th><td class="y">both shipped</td><td class="n">no</td><td class="n">no</td><td class="n">no</td></tr>
           <tr><th>Concepts you have to learn</th><td class="m">more</td><td class="y">fewer</td><td class="y">fewer</td><td class="y">none</td></tr>
-          <tr><th>Shortest path to a working loop today</th><td class="m">no</td><td class="y">yes</td><td class="m">—</td><td class="y">yes</td></tr>
+          <tr><th>Commands to learn for the daily loop</th><td class="m">five</td><td class="y">three</td><td class="m">a workflow</td><td class="y">none</td></tr>
         </tbody>
       </table>
     </div>
@@ -562,7 +618,7 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
     <div class="grid">
       <article>
         <h3>It tells you when its own green means nothing</h3>
-        <p>Right after <code>adopt</code>, <code>validate</code> passes — and says
+        <p>Right after <code>init</code>, <code>check</code> passes — and says
            so plainly: <em>&ldquo;this certifies the skeleton, not the code.&rdquo;</em>
            A gate that banks a meaningless green is worse than no gate, so this one
            reports what it did <strong>not</strong> check: how many rows are still
@@ -572,8 +628,9 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
       <article>
         <h3>It runs in your CI, not its own</h3>
         <p><code>specgate ci init</code> writes the workflow for GitHub Actions,
-           GitLab, Azure Pipelines or Jenkins. The gate is one command
-           with a JSON mode, so it fits whatever you already have.</p>
+           GitLab, Azure Pipelines or Jenkins — detected from the repository. The
+           gate is one command with a JSON mode, so it fits whatever you already
+           have.</p>
       </article>
       <article>
         <h3>Your issue tracker stays yours</h3>
@@ -590,9 +647,10 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
       </article>
       <article>
         <h3>In the editor, and in the agent</h3>
-        <p>A language server and an MCP server ship in this repository, along
-           with VS Code and IntelliJ extensions — built and installable from
-           source, not yet on either marketplace.</p>
+        <p>The MCP server ships in the package —
+           <code>specgate mcp install --client claude</code>. A language server and
+           VS Code and IntelliJ extensions are built from this repository, not yet
+           on either marketplace.</p>
       </article>
     </div>
 
@@ -617,10 +675,24 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
 
     <details>
       <summary>Does it work on a repository that already exists?</summary>
-      <p>Yes — <code>specgate adopt</code> installs the specification layer without
+      <p>Yes — <code>specgate init</code> adopts it in place, without
          touching your code. Checks that a legacy repository cannot pass yet are
          flags, and <code>specgate doctor</code> reports them as advisories with a
          fix, so adoption is a door rather than a wall.</p>
+    </details>
+
+    <details>
+      <summary>Does every pull request need a new requirement?</summary>
+      <p>No. A bugfix or a refactor that does not change contracted behaviour
+         adds none; the gate only asks for what delivered requirements owe.
+         <a href="./first-pr.html">Your team's first PR</a> covers the rest.</p>
+    </details>
+
+    <details>
+      <summary>Can the agent rewrite the spec to pass its own test?</summary>
+      <p>Not quietly. Over MCP, tools that write the specification refuse unless
+         a change is open; in the harness, touching <code>spec.md</code> or
+         <code>features/**</code> fails the attempt with the diff fed back.</p>
     </details>
 
     <details>
@@ -651,6 +723,8 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
          <a href="./comparisons.html">comparison</a>, which is honest about where
          the others are the better choice.</p>
     </details>
+
+    <p><a class="button button--quiet" href="./faq.html">All questions →</a></p>
   </div>
 </section>
 
@@ -663,6 +737,10 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
     </header>
 
     <div class="res">
+      <a class="res__card" href="./concepts.html">
+        <strong>How Specgate thinks</strong>
+        <span>Six ideas that explain every command, error and flag.</span>
+      </a>
       <a class="res__card" href="./tutorial.html">
         <strong>Tutorial</strong>
         <span>Smart Parking, from a blank folder to a delivered requirement.</span>
@@ -683,9 +761,9 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
         <strong>Supply chain</strong>
         <span>SBOM, provenance and the licence allow-list.</span>
       </a>
-      <a class="res__card" href="./release-process.html">
-        <strong>Releases</strong>
-        <span>How a version is cut, and what is supported.</span>
+      <a class="res__card" href="./mcp.html">
+        <strong>The MCP server</strong>
+        <span>The daily loop as tools for Claude Desktop and Cursor.</span>
       </a>
     </div>
   </div>
@@ -694,12 +772,14 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
 <!-- ── Close ────────────────────────────────────────────────────────────── -->
 <section class="band band--soft close">
   <div class="wrap wrap--narrow">
-    <h2>Start with an empty folder</h2>
+    <h2>Start on your repository</h2>
     <figure class="code" data-lang="bash">
       <button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button>
-      <pre><code class="language-bash">npx @rsaglobaltech/specgate@latest init
-cd my-spec-driven-app
-specgate validate .</code></pre>
+      <pre><code class="language-bash">npm i -g @rsaglobaltech/specgate
+cd your-repo                 # or an empty folder
+specgate init
+specgate ci init
+specgate check</code></pre>
     </figure>
     <p class="hero__cta">
       <a class="button button--primary" href="./getting-started.html">Getting started</a>

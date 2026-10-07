@@ -177,17 +177,20 @@ test("every page carries the shell: sidebar, search and a way back", () => {
   }
 });
 
-test("the landing page still names the four commands and what they do", () => {
+test("the landing page still names the daily loop and what each step does", () => {
   // A redesign moved this section from a numbered list to a staged journey and
-  // silently dropped `specgate plan` and `specgate harness run` along the way:
-  // the page kept its shape and lost the thing it was for. A visual review does
-  // not catch that, so the four commands are pinned here.
+  // silently dropped two of its commands along the way: the page kept its
+  // shape and lost the thing it was for. A visual review does not catch that,
+  // so the loop is pinned here — the five daily commands since 0.13, and the
+  // harness that hands the same loop to an agent.
   const html = fs.readFileSync(path.join(ROOT, "docs", "index.html"), "utf8");
   for (const command of [
-    "specgate init",
-    "specgate plan",
+    "specgate status",
+    "specgate new",
+    "specgate done",
+    "specgate check",
     "specgate harness run",
-    "specgate validate",
+    "specgate init",
   ]) {
     assert.match(
       html,
@@ -197,9 +200,10 @@ test("the landing page still names the four commands and what they do", () => {
   }
 
   // What each one is for, not only that it exists.
-  assert.match(html, /ordered by dependency, with a fix on every blocker/);
-  assert.match(html, /stop if the gate says no/);
+  assert.match(html, /the single next\s+command to run/);
+  assert.match(html, /marks it Implemented only if it\s+passes/);
   assert.match(html, /This is what CI runs/);
+  assert.match(html, /stops if the gate says no/);
 });
 
 test("the landing page keeps the claims a reader decides on", () => {

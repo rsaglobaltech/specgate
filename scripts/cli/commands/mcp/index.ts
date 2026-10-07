@@ -9,7 +9,7 @@ export class McpCommand extends BaseCommand {
     const sub = this.args[0];
     if (sub === "--help" || sub === "-h") {
       process.stdout.write(
-        "\n  specgate mcp install --client <claude|cursor|vscode|kiro> [--json]\n" +
+        "\n  specgate mcp install --client <claude|cursor> [--json]\n" +
           "  specgate mcp serve\n\n" +
           "  install writes the MCP server configuration for one AI client;\n" +
           "  serve runs the server over stdio, which is what that configuration starts.\n\n"
