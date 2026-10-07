@@ -165,8 +165,27 @@ the CLI supports, so getting this backwards fails CI rather than users.
 5. Merge into `develop`, wait for CI on `develop` itself, then fast-forward
    `main` to it. A release is cut from a `main` that has been green the whole
    way, not from one that was red for the twenty minutes it took to notice.
-6. Tag the merge commit `vX.Y.Z` and push the tag. `publish-npm.yml` fires.
+
+   Three of `main`'s required checks (`npm audit`, `CodeQL`, `SBOM and
+   licences`) only run on pull requests, so open a PR `develop → main` first:
+   it runs all of them on the release commit. Then push that exact commit:
+
+   ```bash
+   git push origin <release-sha>:refs/heads/main   # fast-forward only, never --force
+   ```
+
+   **Expect the first attempts to be refused** even with every check green —
+   it happened on 0.10.0, 0.11.0, 0.12.0 and 0.12.1, and went through on the
+   2nd to 5th try a few seconds apart. Retry; do not force.
+6. **Only once `git rev-parse origin/main` is the release commit**, tag it
+   `vX.Y.Z` and push the tag. On 0.10.0 the tag went out while the push to
+   `main` had failed. `publish-npm.yml` fires, and publishes only after the
+   E2E workflow passes on all three platforms.
 7. Write the GitHub release notes from the changelog entry.
+8. Run the E2E against what the registry serves:
+   `curl -sfLO https://registry.npmjs.org/@rsaglobaltech/specgate/-/specgate-X.Y.Z.tgz && npm run e2e -- --tarball specgate-X.Y.Z.tgz`.
+   The CDN can answer 404 for a few minutes after `dist-tags` already says the
+   new version; wait, do not republish.
 
 ## Pre-releases
 
