@@ -28,12 +28,35 @@ export default [
           "fs.appendFileSync('src/orders/index.js', '// rounding\\n');",
         ].join("\n")
       );
-      const r = t.sg(dir, "harness", "run", "--agent", `node "${agent}" {prompt_file}`, "--max-attempts", "1");
+      const r = t.sg(
+        dir,
+        "harness",
+        "run",
+        "--agent",
+        `node "${agent}" {prompt_file}`,
+        "--max-attempts",
+        "1"
+      );
       t.ok(r, "harness run");
-      t.expect(new RegExp(`✅ ${req.id}\\s+pass`).test(t.out(r)), "the requirement passes the gate", r);
-      t.expect(!/req link/.test(t.out(r)), "nothing tells the user to req link on a generated matrix", r);
-      const branchMatrix = t.git(dir, "show", `harness/${req.id}:docs/specs/traceability.md`).stdout;
-      t.expect(branchMatrix.includes("test/totals.test.js"), "the branch's matrix links the agent's test");
+      t.expect(
+        new RegExp(`✅ ${req.id}\\s+pass`).test(t.out(r)),
+        "the requirement passes the gate",
+        r
+      );
+      t.expect(
+        !/req link/.test(t.out(r)),
+        "nothing tells the user to req link on a generated matrix",
+        r
+      );
+      const branchMatrix = t.git(
+        dir,
+        "show",
+        `harness/${req.id}:docs/specs/traceability.md`
+      ).stdout;
+      t.expect(
+        branchMatrix.includes("test/totals.test.js"),
+        "the branch's matrix links the agent's test"
+      );
     },
   },
 ];

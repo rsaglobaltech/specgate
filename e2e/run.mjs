@@ -66,9 +66,10 @@ async function worker() {
       j.run(dir, t);
       result = { name: j.name, ok: true, ms: Date.now() - started };
     } catch (e) {
-      result = e && e.skip
-        ? { name: j.name, ok: true, skipped: e.skip }
-        : { name: j.name, ok: false, error: String((e && e.message) || e) };
+      result =
+        e && e.skip
+          ? { name: j.name, ok: true, skipped: e.skip }
+          : { name: j.name, ok: false, error: String((e && e.message) || e) };
     }
     process.stdout.write(`@@RESULT ${JSON.stringify(result)}\n`);
   }
@@ -91,20 +92,31 @@ function surfaceCommands() {
 
 async function coverage() {
   const covered = new Set();
-  for (const file of journeyFiles()) for (const j of await load(file)) for (const c of j.covers || []) covered.add(c);
+  for (const file of journeyFiles())
+    for (const j of await load(file)) for (const c of j.covers || []) covered.add(c);
   const surface = surfaceCommands();
   const allowed = new Set(JSON.parse(fs.readFileSync(UNCOVERED, "utf8")).uncovered);
   const unknown = [...covered].filter((c) => !surface.includes(c));
   const missing = surface.filter((c) => !covered.has(c) && !allowed.has(c));
   const stale = [...allowed].filter((c) => covered.has(c) || !surface.includes(c));
 
-  const pct = Math.round(((surface.length - [...surface].filter((c) => !covered.has(c)).length) / surface.length) * 100);
-  process.stdout.write(`E2E coverage: ${surface.length - surface.filter((c) => !covered.has(c)).length}/${surface.length} commands (${pct}%)\n`);
+  const pct = Math.round(
+    ((surface.length - [...surface].filter((c) => !covered.has(c)).length) / surface.length) * 100
+  );
+  process.stdout.write(
+    `E2E coverage: ${surface.length - surface.filter((c) => !covered.has(c)).length}/${surface.length} commands (${pct}%)\n`
+  );
   const problems = [];
-  if (missing.length) problems.push(`not covered and not in e2e/uncovered.json — add a journey: ${missing.join(", ")}`);
-  if (stale.length) problems.push(`in e2e/uncovered.json but covered or gone — remove them: ${stale.join(", ")}`);
-  if (unknown.length) problems.push(`journeys declare commands that do not exist: ${unknown.join(", ")}`);
-  if (flag("--list")) process.stdout.write(`still uncovered: ${surface.filter((c) => !covered.has(c)).join(", ")}\n`);
+  if (missing.length)
+    problems.push(
+      `not covered and not in e2e/uncovered.json — add a journey: ${missing.join(", ")}`
+    );
+  if (stale.length)
+    problems.push(`in e2e/uncovered.json but covered or gone — remove them: ${stale.join(", ")}`);
+  if (unknown.length)
+    problems.push(`journeys declare commands that do not exist: ${unknown.join(", ")}`);
+  if (flag("--list"))
+    process.stdout.write(`still uncovered: ${surface.filter((c) => !covered.has(c)).join(", ")}\n`);
   for (const p of problems) process.stdout.write(`  ✖ ${p}\n`);
   process.exit(problems.length ? 1 : 0);
 }
@@ -115,7 +127,9 @@ async function main() {
   const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-e2e-"));
   const tarball = pack(sandbox, value("--tarball"));
   const bin = install(sandbox, tarball);
-  process.stdout.write(`\nspecgate ${versionOf(bin)} — installed from ${path.basename(tarball)}\n\n`);
+  process.stdout.write(
+    `\nspecgate ${versionOf(bin)} — installed from ${path.basename(tarball)}\n\n`
+  );
 
   const passthrough = ["--skip-network", "--only"].flatMap((f) =>
     flag(f) ? (f === "--only" ? [f, value(f)] : [f]) : []
@@ -130,10 +144,14 @@ async function main() {
         process.execPath,
         [
           path.join(ROOT, "e2e", "run.mjs"),
-          "--worker", file,
-          "--bin", bin,
-          "--sandbox", sandbox,
-          "--tarball-path", tarball,
+          "--worker",
+          file,
+          "--bin",
+          bin,
+          "--sandbox",
+          sandbox,
+          "--tarball-path",
+          tarball,
           ...passthrough,
         ],
         { stdio: ["ignore", "pipe", "pipe"] }
@@ -148,14 +166,21 @@ async function main() {
           .filter((l) => l.startsWith("@@RESULT "))
           .map((l) => JSON.parse(l.slice("@@RESULT ".length)));
         if (code !== 0 && mine.length === 0) {
-          mine.push({ name: path.basename(file), ok: false, error: `worker crashed (exit ${code})\n${err}` });
+          mine.push({
+            name: path.basename(file),
+            ok: false,
+            error: `worker crashed (exit ${code})\n${err}`,
+          });
         }
         for (const r of mine) {
           results.push(r);
           const area = path.basename(file, ".mjs");
           if (r.skipped) process.stdout.write(`  - [${area}] ${r.name} (skipped: ${r.skipped})\n`);
           else if (r.ok) process.stdout.write(`  ✔ [${area}] ${r.name} (${r.ms} ms)\n`);
-          else process.stdout.write(`  ✖ [${area}] ${r.name}\n${String(r.error).replace(/^/gm, "      ")}\n`);
+          else
+            process.stdout.write(
+              `  ✖ [${area}] ${r.name}\n${String(r.error).replace(/^/gm, "      ")}\n`
+            );
         }
         resolve();
       });

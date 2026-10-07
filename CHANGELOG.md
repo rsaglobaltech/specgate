@@ -10,6 +10,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **A freshly installed pack no longer fails its own lock gate.** `expand`
+  wrote matrix rows per scenario, so a requirement the pack declares without a
+  scenario yet — the multi-tenant pack's REQ-004 — never reached the matrix,
+  and `validate --against-lock` failed right after `specops add` with
+  `pack_requirement_missing`. The `specops sync` it suggested re-expanded the
+  same matrix. With a lockfile, `ci init`'s workflow runs that gate, so every
+  project installing such a pack had a red CI from the first commit. The
+  requirement now gets a `Draft` row with no scenario. Found by the new E2E
+  packs journey.
 - **Asking any command for help is never an error.** `specgate ci --help`,
   `pack`, `specops`, `harness`, `config`, `agents`, `alm` and `mcp` answered
   "Unknown … sub-command: --help" over the global usage; `expand`,
@@ -27,7 +36,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   a list that can only shrink — and fails a new command that has neither. A
   unit test and the E2E workflow run it. Journeys for the utilities — `doctor`,
   `fix`, `plan`, `report`, `req list/done/rm`, `config`, `schema`,
-  `completion`, `studio`, `onboard` — take it from 14 to 34 of 60 commands.
+  `completion`, `studio`, `onboard` — take it from 14 to 34 of 60 commands, and
+  offline journeys for packs — `specops add/diff/sync/remove` against a local
+  git remote with tags, `pack bundle` for an air-gapped install, `pack
+  init/lint/infer`, `expand` — to 43.
 
 ## [0.12.1] — 2026-10-07
 

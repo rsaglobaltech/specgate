@@ -297,8 +297,12 @@ Petición del usuario: probar todas las funcionalidades de punta a punta.
       11 comandos fallaban al pedirles ayuda (los grupos `ci`, `pack`, `specops`,
       `harness`, `config`, `agents`, `alm`, `mcp`, más `expand`, `harness prompt`
       y `mcp install`): arreglados.
-- [ ] Paso 3 — packs y specops sin red: repos git locales con tags
-      (`pack *`, `specops *`, `expand`).
+- [x] Paso 3 — packs y specops sin red: repo git local con tags `v0.1.0`/`v0.2.0`
+      (`specops add/diff/sync/remove`, `pack bundle` para air-gap, `pack
+      init/lint/infer`, `expand`). **43/60 (72 %).** Encontró que **un pack recién
+      instalado ponía la CI en rojo**: un requisito sin escenario no llegaba a la
+      matriz y `--against-lock` fallaba; el `sync` que sugería no lo arreglaba.
+      `specops contribute` pasa al paso 4 (necesita un `change`).
 - [ ] Paso 4 — ciclo `change` completo y `harness init/prompt/report`.
 - [ ] Paso 5 — ALM con un servidor HTTP falso; MCP y LSP por stdio; `mcp install`.
 - [ ] Paso 6 — plugins Maven/Gradle contra el tarball, imagen Docker; nocturno

@@ -496,6 +496,45 @@ export function renderTraceability(
     }
   }
 
+  // A requirement the pack declares without a scenario yet still belongs in
+  // the matrix, as Draft with no scenario: rows were only written per
+  // scenario, so `validate --against-lock` failed a freshly installed pack
+  // with `pack_requirement_missing`, and the `specops sync` it suggested
+  // re-expanded the same matrix. Found by the E2E packs journey on the
+  // multi-tenant pack, whose REQ-004 has a use case and no scenario.
+  if (mode === "rich") {
+    const bareId = (v: any) =>
+      String(v || "")
+        .replace(/`/g, "")
+        .trim();
+    const represented = new Set(rows.map((r: any) => bareId(r.requirement)));
+    const defaultStatus =
+      (pack.rules && pack.rules.traceability && pack.rules.traceability.default_status) || "Draft";
+    for (const item of Array.isArray(pack.requirements) ? pack.requirements : []) {
+      if (!item || !item.id || represented.has(String(item.id))) continue;
+      const useCase = (Array.isArray(pack.use_cases) ? pack.use_cases : []).find(
+        (u: any) => String(u.requirement) === String(item.id)
+      );
+      rows.push({
+        dependsOn: asArray(item.depends_on).map((d: any) => String(d)),
+        requirement: resolveLabel(requirements, item.id, item.id),
+        scenarioId: "-",
+        featureFile: "-",
+        useCase: useCase ? entityLabel(useCase, useCase.id || "-") : "-",
+        commandOrQuery:
+          useCase && useCase.command
+            ? resolveLabel(commands, useCase.command, useCase.command)
+            : "-",
+        aggregate: "-",
+        event: "-",
+        technicalArtifact: "-",
+        testArtifact: "TBD",
+        status: item.status || defaultStatus,
+      });
+      represented.add(String(item.id));
+    }
+  }
+
   const markdown = buildTraceabilityMarkdown(rows, mode);
   if (
     fs.existsSync(traceTarget) &&

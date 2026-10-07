@@ -31,7 +31,10 @@ export default [
       t.ok(t.sg(dir, "init", "--yes", "--no-git"), "init --yes");
       const project = fs.readdirSync(dir).find((d) => fs.statSync(path.join(dir, d)).isDirectory());
       const p = path.join(dir, project);
-      t.expect(t.read(p, "docs/specs/traceability.md").includes("specgate:derived"), "matrix generated");
+      t.expect(
+        t.read(p, "docs/specs/traceability.md").includes("specgate:derived"),
+        "matrix generated"
+      );
       t.ok(t.sg(p, "check"), "check on the scaffold");
       t.ok(t.sg(p, "validate", ".", "--strict"), "validate --strict on the scaffold");
     },
@@ -42,11 +45,23 @@ export default [
     run(dir, t) {
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "adopt", "--keep-matrix", "--no-capabilities"), "adopt --keep-matrix");
-      t.expect(!t.read(dir, "docs/specs/traceability.md").includes("specgate:derived"), "hand-kept");
+      t.expect(
+        !t.read(dir, "docs/specs/traceability.md").includes("specgate:derived"),
+        "hand-kept"
+      );
       t.ok(t.sg(dir, "req", "add", "Coupons expire"), "req add");
       t.write(dir, "test/coupon.test.js", "// coupons\n");
       t.ok(
-        t.sg(dir, "req", "link", "REQ-002", "--test", "test/coupon.test.js", "--code", "src/orders/index.js"),
+        t.sg(
+          dir,
+          "req",
+          "link",
+          "REQ-002",
+          "--test",
+          "test/coupon.test.js",
+          "--code",
+          "src/orders/index.js"
+        ),
         "req link"
       );
       t.ok(t.sg(dir, "done", "REQ-002"), "done");
@@ -61,7 +76,8 @@ export default [
           .filter((l) => l.startsWith("| REQ-"))
           .map((l) => l.replace(/`/g, "").replace(/\| TBD \|/g, "| - |"));
       t.expect(
-        JSON.stringify(norm(t.read(dir, "docs/specs/traceability.md"))) === JSON.stringify(norm(before)),
+        JSON.stringify(norm(t.read(dir, "docs/specs/traceability.md"))) ===
+          JSON.stringify(norm(before)),
         "rows identical after migration"
       );
       t.ok(t.sg(dir, "matrix", "--check"), "matrix --check");

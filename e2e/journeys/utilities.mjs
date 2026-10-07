@@ -29,8 +29,16 @@ export default [
       fs.rmSync(path.join(dir, "AI_RULES.md"));
       const broken = t.sg(dir, "doctor", "--json");
       const doc = t.json(broken);
-      t.expect(doc.doctor.errors > 0 || doc.doctor.warnings > 0, "a missing AI_RULES.md is reported", broken);
-      t.expect((doc.status || []).every((d) => d.severity === "info" || d.fix), "every finding carries a fix", broken);
+      t.expect(
+        doc.doctor.errors > 0 || doc.doctor.warnings > 0,
+        "a missing AI_RULES.md is reported",
+        broken
+      );
+      t.expect(
+        (doc.status || []).every((d) => d.severity === "info" || d.fix),
+        "every finding carries a fix",
+        broken
+      );
     },
   },
   {
@@ -40,11 +48,21 @@ export default [
       const hand = path.join(dir, "hand");
       t.nodeRepo(hand);
       t.ok(t.sg(hand, "adopt", "--keep-matrix", "--no-capabilities"), "adopt --keep-matrix");
-      t.write(hand, "features/x/orphan.feature", "Feature: Orphan\n  Scenario: an orphan scenario here\n    Given a\n    When b\n    Then c\n");
+      t.write(
+        hand,
+        "features/x/orphan.feature",
+        "Feature: Orphan\n  Scenario: an orphan scenario here\n    Given a\n    When b\n    Then c\n"
+      );
       t.fails(t.sg(hand, "validate", "."), "validate with an orphan feature");
       const preview = t.json(t.sg(hand, "fix", "--dry-run", "--json"));
-      t.expect(preview.actions.some((a) => a.includes("orphan.feature")), "the dry run names the repair");
-      t.expect(!t.read(hand, "docs/specs/traceability.md").includes("orphan.feature"), "and writes nothing");
+      t.expect(
+        preview.actions.some((a) => a.includes("orphan.feature")),
+        "the dry run names the repair"
+      );
+      t.expect(
+        !t.read(hand, "docs/specs/traceability.md").includes("orphan.feature"),
+        "and writes nothing"
+      );
       t.ok(t.sg(hand, "fix", "--yes"), "fix --yes");
       t.ok(t.sg(hand, "validate", "."), "validate after fix");
 
@@ -62,7 +80,9 @@ export default [
     run(dir, t) {
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
-      const req = t.json(t.sg(dir, "new", "Coupons expire after thirty days", "--json")).requirement;
+      const req = t.json(
+        t.sg(dir, "new", "Coupons expire after thirty days", "--json")
+      ).requirement;
       const plan = t.sg(dir, "plan", "--format", "json");
       t.ok(plan, "plan --format json");
       t.expect(plan.stdout.includes(req.id), "plan lists the new requirement", plan);
@@ -71,7 +91,10 @@ export default [
       t.ok(report, "report --format json --stdout");
       t.expect(report.stdout.includes(req.id), "the report includes it", report);
       t.ok(t.sg(dir, "report", "--out", "coverage.html"), "report --out");
-      t.expect(/<html/i.test(t.read(dir, "coverage.html")), "a self-contained HTML report is written");
+      t.expect(
+        /<html/i.test(t.read(dir, "coverage.html")),
+        "a self-contained HTML report is written"
+      );
     },
   },
   {
@@ -109,9 +132,16 @@ export default [
       const get = t.sg(dir, "config", "get", "profile");
       t.ok(get, "config get");
       t.expect(/full/.test(get.stdout), "the preference is read back", get);
-      t.expect(/profile\s*=\s*full/.test(t.sg(dir, "config", "list").stdout), "config list shows it");
+      t.expect(
+        /profile\s*=\s*full/.test(t.sg(dir, "config", "list").stdout),
+        "config list shows it"
+      );
       const help = t.sg(dir, "--help");
-      t.expect(/specops add/.test(help.stdout), "with profile full, --help lists every command", help);
+      t.expect(
+        /specops add/.test(help.stdout),
+        "with profile full, --help lists every command",
+        help
+      );
     },
   },
   {
@@ -120,11 +150,17 @@ export default [
     run(dir, t) {
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
-      t.expect(/spec-driven/.test(t.sg(dir, "schema", "which").stdout), "the default schema is spec-driven");
+      t.expect(
+        /spec-driven/.test(t.sg(dir, "schema", "which").stdout),
+        "the default schema is spec-driven"
+      );
       t.ok(t.sg(dir, "schema", "init", "myflow"), "schema init");
       t.ok(t.sg(dir, "schema", "fork", "bdd-first", "mybdd"), "schema fork");
       t.ok(t.sg(dir, "schema", "validate", "myflow"), "schema validate");
-      t.expect(/myflow\s+\(project\)/.test(t.sg(dir, "schema", "which", "myflow").stdout), "which knows where it lives");
+      t.expect(
+        /myflow\s+\(project\)/.test(t.sg(dir, "schema", "which", "myflow").stdout),
+        "which knows where it lives"
+      );
     },
   },
   {
@@ -134,7 +170,11 @@ export default [
       for (const shell of ["bash", "zsh", "fish"]) {
         const r = t.sg(dir, "completion", shell);
         t.ok(r, `completion ${shell}`);
-        t.expect(/specgate/.test(r.stdout) && /\bcheck\b/.test(r.stdout), `${shell} completion lists the commands`, r);
+        t.expect(
+          /specgate/.test(r.stdout) && /\bcheck\b/.test(r.stdout),
+          `${shell} completion lists the commands`,
+          r
+        );
       }
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");

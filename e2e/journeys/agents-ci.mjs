@@ -26,12 +26,24 @@ export default [
       t.ok(t.sg(dir, "init"), "init");
       t.ok(t.sg(dir, "agents", "init", "--tool", "claude,cursor"), "agents init");
       t.expect(t.exists(dir, ".cursor/rules/specgate.mdc"), "cursor rule named specgate");
-      t.expect(/# \/specgate:apply/.test(t.read(dir, ".claude/commands/specgate/apply.md")), "heading");
+      t.expect(
+        /# \/specgate:apply/.test(t.read(dir, ".claude/commands/specgate/apply.md")),
+        "heading"
+      );
       for (const step of ["explore", "new", "apply", "verify", "done"]) {
-        t.expect(t.exists(dir, `.claude/commands/specgate/${step}.md`), `the daily loop has /specgate:${step}`);
+        t.expect(
+          t.exists(dir, `.claude/commands/specgate/${step}.md`),
+          `the daily loop has /specgate:${step}`
+        );
       }
-      t.expect(/specgate check --json/.test(t.read(dir, ".claude/commands/specgate/verify.md")), "verify runs check");
-      t.expect(/names `REQ-NNN`/.test(t.read(dir, "AGENTS.md")), "AGENTS.md teaches the mention as the link");
+      t.expect(
+        /specgate check --json/.test(t.read(dir, ".claude/commands/specgate/verify.md")),
+        "verify runs check"
+      );
+      t.expect(
+        /names `REQ-NNN`/.test(t.read(dir, "AGENTS.md")),
+        "AGENTS.md teaches the mention as the link"
+      );
     },
   },
   {
@@ -42,9 +54,13 @@ export default [
       t.needsNetwork();
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
-      const old = t.run("npx", ["-y", "@rsaglobaltech/specgate@0.9.0", "agents", "init", "--tool", "claude,cursor"], {
-        cwd: dir,
-      });
+      const old = t.run(
+        "npx",
+        ["-y", "@rsaglobaltech/specgate@0.9.0", "agents", "init", "--tool", "claude,cursor"],
+        {
+          cwd: dir,
+        }
+      );
       t.expect(old.status === 0, "0.9.0 agents init (needs the network)", old);
       t.expect(t.exists(dir, ".claude/commands/csda/apply.md"), "0.9.0 wrote csda paths");
       fs.appendFileSync(path.join(dir, ".claude/commands/csda/apply.md"), "\nOUR TEAM RULE\n");
@@ -57,7 +73,10 @@ export default [
       t.expect(!/\/csda:/.test(moved), "no /csda: left");
       t.expect(t.read(dir, "README.md") === "# Our project\n", "the project README is untouched");
       const again = t.json(t.sg(dir, "update", "--json"));
-      t.expect(again.update.files.every((f) => f.outcome === "unchanged"), "a second update is a no-op");
+      t.expect(
+        again.update.files.every((f) => f.outcome === "unchanged"),
+        "a second update is a no-op"
+      );
     },
   },
 ];
