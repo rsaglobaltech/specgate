@@ -1,6 +1,6 @@
 # csda-gradle-plugin
 
-Run the `create-spec-driven-app` spec gate from Gradle — Java teams need no
+Run the Specgate spec gate from Gradle — Java teams need no
 local Node.js toolchain. The Gradle counterpart of
 [`csda-maven-plugin`](../maven-plugin); both resolve the CLI identically.
 
@@ -8,7 +8,7 @@ local Node.js toolchain. The Gradle counterpart of
 
 | Task | What it does |
 | --- | --- |
-| `csdaValidate` | Runs `validate . --strict-tdd`; **fails the build** when the gate fails. Wired into `check`. |
+| `csdaValidate` | Runs `validate . --strict` (the gate `specgate ci init` generates); **fails the build** when the gate fails. Wired into `check`. |
 | `csdaPlan` | Lists requirements still needing a test/code/status (`--format=json` for CI). |
 | `csdaDoctor` | Full diagnosis with a fix per finding. |
 
@@ -44,8 +44,8 @@ csda {
 | --- | --- | --- |
 | `csda.launcher` | `auto` | `npx` when Node is on PATH, otherwise `docker` (official image, project mounted at `/workspace`). |
 | `csda.version` | `latest` | CLI version (npx tag / docker tag). Pin it in CI. |
-| `csda.dockerImage` | `ghcr.io/rsaglobaltech/csda` | Override with your internal mirror in air-gapped environments. |
-| `csda.strictTdd` | `true` | Set `false` (or `gradle csdaValidate --no-strict-tdd`) to run the structural gate only. |
+| `csda.dockerImage` | `ghcr.io/rsaglobaltech/specgate` | Override with your internal mirror in air-gapped environments. |
+| `csda.strictTdd` | `true` | Runs the gate, `validate --strict` (the name is kept for existing builds). Set `false` (or `gradle csdaValidate --no-strict-tdd`) to run the structural checks only. |
 | `csda.format` | `text` | `csdaPlan` output; `json` (or `gradle csdaPlan --format=json`) for CI. |
 | `csda.projectDir` | `${projectDir}` | Point at the repo root in multi-project builds. |
 

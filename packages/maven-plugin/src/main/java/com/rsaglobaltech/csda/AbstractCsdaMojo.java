@@ -12,7 +12,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 
 /**
- * Shared launcher for every csda goal. Resolves the create-spec-driven-app
+ * Shared launcher for every csda goal. Resolves the specgate
  * CLI without requiring the developer to manage a Node.js toolchain:
  *
  * <ul>
@@ -34,14 +34,14 @@ public abstract class AbstractCsdaMojo extends AbstractMojo {
     protected String launcher;
 
     /** Docker image used by the docker launcher. */
-    @Parameter(property = "csda.dockerImage", defaultValue = "ghcr.io/rsaglobaltech/csda")
+    @Parameter(property = "csda.dockerImage", defaultValue = "ghcr.io/rsaglobaltech/specgate")
     protected String dockerImage;
 
     /** Directory the CLI operates on (the repo root for multi-module builds). */
     @Parameter(property = "csda.projectDir", defaultValue = "${project.basedir}")
     protected File projectDir;
 
-    /** Arguments for the concrete goal, e.g. ["validate", ".", "--strict-tdd"]. */
+    /** Arguments for the concrete goal, e.g. ["validate", ".", "--strict"]. */
     protected abstract List<String> cliArgs();
 
     @Override
@@ -56,15 +56,15 @@ public abstract class AbstractCsdaMojo extends AbstractMojo {
             int exit = process.waitFor();
             if (exit != 0) {
                 throw new MojoFailureException(
-                        "create-spec-driven-app exited " + exit + " — the spec gate failed. "
+                        "specgate exited " + exit + " — the spec gate failed. "
                                 + "Run `mvn csda:doctor` for a diagnosis with fixes.");
             }
         } catch (IOException e) {
             throw new MojoExecutionException(
-                    "Failed to launch create-spec-driven-app: " + e.getMessage(), e);
+                    "Failed to launch specgate: " + e.getMessage(), e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new MojoExecutionException("Interrupted while waiting for create-spec-driven-app", e);
+            throw new MojoExecutionException("Interrupted while waiting for specgate", e);
         }
     }
 
@@ -91,7 +91,7 @@ public abstract class AbstractCsdaMojo extends AbstractMojo {
                     cmd.add("npx");
                 }
                 cmd.add("--yes");
-                cmd.add("create-spec-driven-app@" + cliVersion);
+                cmd.add("@rsaglobaltech/specgate@" + cliVersion);
                 break;
             case "docker":
                 String tag = "latest".equals(cliVersion) ? dockerImage : dockerImage + ":" + cliVersion;

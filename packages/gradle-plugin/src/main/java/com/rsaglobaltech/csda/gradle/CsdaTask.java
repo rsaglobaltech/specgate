@@ -34,7 +34,7 @@ public abstract class CsdaTask extends DefaultTask {
     @Internal
     public abstract Property<File> getProjectDir();
 
-    /** Arguments for the concrete task, e.g. ["validate", ".", "--strict-tdd"]. */
+    /** Arguments for the concrete task, e.g. ["validate", ".", "--strict"]. */
     protected abstract List<String> cliArgs();
 
     protected void runCli() {

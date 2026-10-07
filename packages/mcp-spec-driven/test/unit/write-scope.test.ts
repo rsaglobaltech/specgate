@@ -126,9 +126,9 @@ test("the refusal says what to do about it", () => {
   const dir = project();
   try {
     assert.throws(
-      () => assertContractEditable("csda_req_add", dir),
+      () => assertContractEditable("specgate_req_add", dir),
       (error: Error) => {
-        assert.match(error.message, /csda_req_add/, "does not name the tool");
+        assert.match(error.message, /specgate_req_add/, "does not name the tool");
         assert.match(error.message, /specgate change new/, "does not name the way forward");
         assert.match(error.message, /mcpAllowContractEdits/, "does not name the escape hatch");
         return true;
@@ -142,7 +142,7 @@ test("the refusal says what to do about it", () => {
 test("an open change lets the edit through", () => {
   const dir = project({ change: "add-billing" });
   try {
-    assert.doesNotThrow(() => assertContractEditable("csda_req_add", dir));
+    assert.doesNotThrow(() => assertContractEditable("specgate_req_add", dir));
   } finally {
     clean(dir);
   }
@@ -153,7 +153,12 @@ test("an open change lets the edit through", () => {
 test("the tools that write the contract are guarded, and the change cycle is not", () => {
   // `change *` is how a specification is edited on purpose. Guarding it would
   // leave no way to open the change the refusal asks for.
-  for (const name of ["csda_req_add", "csda_req_link", "csda_fix", "csda_specops_sync"]) {
+  for (const name of [
+    "specgate_req_add",
+    "specgate_req_link",
+    "specgate_fix",
+    "specgate_specops_sync",
+  ]) {
     assert.equal(TOOLS[name] && TOOLS[name].editsContract, true, `${name} is not guarded`);
   }
   for (const name of Object.keys(TOOLS)) {
@@ -172,7 +177,7 @@ test("append-only tools are not guarded either", () => {
 test("read-only tools are never guarded", () => {
   // A guard on a reading tool would be a bug that only shows up as an agent
   // mysteriously unable to look at anything.
-  for (const name of ["csda_status", "csda_plan", "validate_project", "read_spec"]) {
+  for (const name of ["specgate_status", "csda_plan", "validate_project", "read_spec"]) {
     const tool = TOOLS[name];
     if (!tool) continue;
     assert.notEqual(tool.editsContract, true, `${name} is read-only and must not be guarded`);
@@ -184,7 +189,10 @@ test("a guarded tool refuses before it runs anything", () => {
   // the file is already written and there is nothing to refuse.
   const dir = project();
   try {
-    assert.throws(() => TOOLS["csda_req_add"].handler({ projectDir: dir }), /no change is open/);
+    assert.throws(
+      () => TOOLS["specgate_req_add"].handler({ projectDir: dir }),
+      /no change is open/
+    );
   } finally {
     clean(dir);
   }

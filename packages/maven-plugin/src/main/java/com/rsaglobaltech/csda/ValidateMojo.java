@@ -16,7 +16,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 @Mojo(name = "validate", defaultPhase = LifecyclePhase.VERIFY, threadSafe = true)
 public class ValidateMojo extends AbstractCsdaMojo {
 
-    /** Enforce the strict TDD rules (TDD-1/2/3), not just structure. */
+    /**
+     * Run the gate, {@code validate --strict}: TDD, links, scenarios,
+     * requirements and coverage — the same gate {@code specgate ci init}
+     * generates. {@code false} runs the structural checks only. The property
+     * keeps its old name so existing builds keep their setting.
+     */
     @Parameter(property = "csda.strictTdd", defaultValue = "true")
     private boolean strictTdd;
 
@@ -26,7 +31,7 @@ public class ValidateMojo extends AbstractCsdaMojo {
         args.add("validate");
         args.add(".");
         if (strictTdd) {
-            args.add("--strict-tdd");
+            args.add("--strict");
         }
         return args;
     }

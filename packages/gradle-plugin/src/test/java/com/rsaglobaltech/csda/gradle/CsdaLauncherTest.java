@@ -24,13 +24,13 @@ class CsdaLauncherTest {
     @Test
     void npxCommandPinsTheRequestedVersionAndAppendsArgs() {
         List<String> cmd = CsdaLauncher.buildCommand(
-                "npx", "0.1.4", "ghcr.io/rsaglobaltech/csda", CWD,
-                Arrays.asList("validate", ".", "--strict-tdd"));
+                "npx", "0.1.4", "ghcr.io/rsaglobaltech/specgate", CWD,
+                Arrays.asList("validate", ".", "--strict"));
 
         // On Windows the command is prefixed with cmd.exe /c; assert on the tail.
         assertTrue(cmd.contains("--yes"));
-        assertTrue(cmd.contains("create-spec-driven-app@0.1.4"));
-        assertEquals(Arrays.asList("validate", ".", "--strict-tdd"),
+        assertTrue(cmd.contains("@rsaglobaltech/specgate@0.1.4"));
+        assertEquals(Arrays.asList("validate", ".", "--strict"),
                 cmd.subList(cmd.size() - 3, cmd.size()));
         assertFalse(cmd.contains("docker"));
     }
@@ -38,14 +38,14 @@ class CsdaLauncherTest {
     @Test
     void dockerLatestOmitsTheTagAndMountsTheProjectDir() {
         List<String> cmd = CsdaLauncher.buildCommand(
-                "docker", "latest", "ghcr.io/rsaglobaltech/csda", CWD,
+                "docker", "latest", "ghcr.io/rsaglobaltech/specgate", CWD,
                 Arrays.asList("doctor"));
 
         assertEquals(
                 Arrays.asList(
                         "docker", "run", "--rm",
                         "-v", CWD.getAbsolutePath() + ":/workspace",
-                        "ghcr.io/rsaglobaltech/csda",
+                        "ghcr.io/rsaglobaltech/specgate",
                         "doctor"),
                 cmd);
     }

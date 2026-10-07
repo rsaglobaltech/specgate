@@ -9,7 +9,7 @@ import java.util.List;
 import org.gradle.api.GradleException;
 
 /**
- * Shared launcher for every csda task. Resolves the create-spec-driven-app
+ * Shared launcher for every csda task. Resolves the specgate
  * CLI without requiring the developer to manage a Node.js toolchain:
  *
  * <ul>
@@ -45,15 +45,15 @@ final class CsdaLauncher {
             int exit = process.waitFor();
             if (exit != 0) {
                 throw new GradleException(
-                        "create-spec-driven-app exited " + exit + " — the spec gate failed. "
+                        "specgate exited " + exit + " — the spec gate failed. "
                                 + "Run `gradle csdaDoctor` for a diagnosis with fixes.");
             }
         } catch (IOException e) {
             throw new GradleException(
-                    "Failed to launch create-spec-driven-app: " + e.getMessage(), e);
+                    "Failed to launch specgate: " + e.getMessage(), e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new GradleException("Interrupted while waiting for create-spec-driven-app", e);
+            throw new GradleException("Interrupted while waiting for specgate", e);
         }
     }
 
@@ -81,7 +81,7 @@ final class CsdaLauncher {
                     cmd.add("npx");
                 }
                 cmd.add("--yes");
-                cmd.add("create-spec-driven-app@" + cliVersion);
+                cmd.add("@rsaglobaltech/specgate@" + cliVersion);
                 break;
             case "docker":
                 String tag = "latest".equals(cliVersion) ? dockerImage : dockerImage + ":" + cliVersion;

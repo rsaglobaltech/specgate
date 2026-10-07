@@ -25,7 +25,7 @@ public class CsdaPlugin implements Plugin<Project> {
         ext.getVersion().convention(stringProp(project, "csda.version", "latest"));
         ext.getLauncher().convention(stringProp(project, "csda.launcher", "auto"));
         ext.getDockerImage().convention(
-                stringProp(project, "csda.dockerImage", "ghcr.io/rsaglobaltech/csda"));
+                stringProp(project, "csda.dockerImage", "ghcr.io/rsaglobaltech/specgate"));
         ext.getProjectDir().convention(fileProp(project, "csda.projectDir", project.getProjectDir()));
         ext.getStrictTdd().convention(boolProp(project, "csda.strictTdd", true));
         ext.getFormat().convention(stringProp(project, "csda.format", "text"));
