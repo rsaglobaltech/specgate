@@ -188,7 +188,22 @@ for (const command of SURFACE) {
     // `json.args: "<dir>"` is the surface saying this command takes the project
     // directory positionally rather than behind `--project-dir`.
     const jsonDef = subDef ? subDef.json : cmdDef.json;
-    const dirStyle = jsonDef && jsonDef.args === "<dir>" ? "positional" : "flag";
+    const dirStyle =
+      jsonDef && (jsonDef.args === "<dir>" || jsonDef.args === "[dir]") ? "positional" : "flag";
+    // The one positional a command takes besides the directory — `new`'s title,
+    // `done`'s requirement — declared in the schema. It used to be passed when
+    // an agent happened to send it and named nowhere, so no agent knew to.
+    const positional = jsonDef && /^<(\w+)>$/.exec(jsonDef.args || "");
+    const argName =
+      positional && positional[1] !== "dir"
+        ? positional[1] === "REQ"
+          ? "requirement"
+          : positional[1].toLowerCase()
+        : null;
+    const argProp = argName
+      ? `,\n      ${argName}: { type: "string", description: ${JSON.stringify(`The ${jsonDef.args} argument of \`specgate ${cmdString}\`.`)} }`
+      : "";
+    const required = argName ? `["projectDir", "${argName}"]` : `["projectDir"]`;
     // `change *` is how a specification is edited on purpose; refusing it would
     // leave no way to open the change the guard asks for.
     const editsContract = Boolean(
@@ -203,9 +218,9 @@ for (const command of SURFACE) {
     type: "object",
     properties: {
       projectDir: { type: "string" },
-      cliPath: { type: "string" }
+      cliPath: { type: "string" }${argProp}
     },
-    required: ["projectDir"]
+    required: ${required}
   },
   "${dirStyle}",
   ${editsContract}

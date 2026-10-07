@@ -290,6 +290,21 @@ TOOLS["specgate_alm_pull"] = new GenericCliTool(
   "flag",
   true
 );
+TOOLS["specgate_check"] = new GenericCliTool(
+  "specgate_check",
+  "The gate: validate --strict, then your tests — before you open a PR.",
+  "check",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+    },
+    required: ["projectDir"],
+  },
+  "positional",
+  false
+);
 TOOLS["validate_project"] = new GenericCliTool(
   "validate_project",
   "Check structure, traceability, Gherkin. --strict is the gate: TDD, links, scenarios, requirements and coverage.",
@@ -352,15 +367,32 @@ TOOLS["specgate_report"] = new GenericCliTool(
 );
 TOOLS["mark_requirement_done"] = new GenericCliTool(
   "mark_requirement_done",
-  "Mark a requirement as Implemented in traceability.md.",
+  "Mark a requirement Implemented — after the gate passes for it.",
   "done",
   {
     type: "object",
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      requirement: { type: "string", description: "The <REQ> argument of `specgate done`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "requirement"],
+  },
+  "flag",
+  true
+);
+TOOLS["specgate_new"] = new GenericCliTool(
+  "specgate_new",
+  "One requirement in one step: spec.md section, tagged scenario, matrix row.",
+  "new",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+      title: { type: "string", description: "The <title> argument of `specgate new`." },
+    },
+    required: ["projectDir", "title"],
   },
   "flag",
   true
@@ -494,8 +526,9 @@ TOOLS["specgate_change_show"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      id: { type: "string", description: "The <id> argument of `specgate change show`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "id"],
   },
   "flag",
   false
@@ -524,8 +557,9 @@ TOOLS["specgate_change_validate"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      id: { type: "string", description: "The <id> argument of `specgate change validate`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "id"],
   },
   "flag",
   false
@@ -539,8 +573,9 @@ TOOLS["specgate_change_archive"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      id: { type: "string", description: "The <id> argument of `specgate change archive`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "id"],
   },
   "flag",
   false
@@ -554,8 +589,12 @@ TOOLS["specgate_change_instructions"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      artifact: {
+        type: "string",
+        description: "The <artifact> argument of `specgate change instructions`.",
+      },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "artifact"],
   },
   "flag",
   false
@@ -569,8 +608,9 @@ TOOLS["specgate_change_author"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      id: { type: "string", description: "The <id> argument of `specgate change author`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "id"],
   },
   "flag",
   false

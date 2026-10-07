@@ -7,7 +7,7 @@ hooks and CI.
 
 ## Wire the MCP server into Claude / Cursor / Aider
 
-**Goal:** let an MCP-aware AI agent read specs, list requirements, and run `validate` directly.
+**Goal:** let an MCP-aware AI agent work the daily loop — status, new, check, done — without a terminal.
 
 The server ships inside the CLI: `specgate mcp serve` runs it over stdio.
 `specgate mcp install --client claude` (or `cursor`, `windsurf`) writes the
@@ -26,17 +26,31 @@ Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json
 }
 ```
 
-Tools exposed by the server:
+Every command is a tool, named `specgate_<command>` (`specgate_status`,
+`specgate_ci_init`, …), and each declares the argument it needs. The daily
+loop, and the seven names published before the rest were generated:
 
 | Tool | Purpose |
 | --- | --- |
+| `specgate_status` | What is open, and the next command. |
+| `specgate_new` | `specgate new <title>`: a requirement with its scenario. Takes `title`. |
+| `specgate_check` | The gate, then the tests when a test command is configured. |
+| `mark_requirement_done` | `specgate done <REQ>`: runs the gate, then marks it Implemented. Takes `requirement`. |
+| `validate_project` | `validate --strict`, parsed. |
+| `plan` | The pending queue, with what each requirement still needs. |
 | `read_spec` | Returns `spec.md` and lists every `docs/specs/*.md`. |
 | `list_requirements` | Returns every `REQ-NNN` with title, file, and line. |
-| `update_traceability` | Idempotently appends a row to `traceability.md`. |
+| `update_traceability` | Appends a row to a hand-kept matrix; refuses on a generated one. |
 | `lint_pack` | Runs `pack lint` and returns structured errors. |
-| `validate_project` | Runs `validate` (or `validate --strict`) and parses the output. |
-| `plan` | Returns the same JSON as `specgate plan --format json`. |
-| `mark_requirement_done` | Mirrors `specgate done <REQ>` (supports `--check`/`--strict`). |
+
+**Tools that write the specification are guarded.** An agent may not rewrite
+the spec it is measured against, so `specgate_new`, `mark_requirement_done`
+and the other writers refuse unless a change is open (`specgate change new
+<id>`) or the team allows it in `.csda/config.json`:
+
+```json
+{ "mcpAllowContractEdits": true }
+```
 
 Restart the client; the tools appear in the model's tool list as `spec-driven.*`.
 
