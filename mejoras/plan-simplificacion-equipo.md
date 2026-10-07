@@ -346,6 +346,26 @@ Petición del usuario: probar todas las funcionalidades de punta a punta.
 - [ ] **El piloto con el equipo (#100).** Es lo único que queda, y es del
       usuario.
 
+### Modelo de casos de uso y arquitectura (decidido 2026-10-07)
+
+Debate con el usuario sobre proyectos grandes: un requisito se realiza con
+varios casos de uso y un caso de uso cumple varios requisitos (N:M), con
+`include`/`extend`; los tipos de requisito (funcional, no funcional, regla de
+negocio) entran al caso de uso por sitios distintos; una historia de Jira es
+una porción de caso de uso, no un requisito. Decidido en
+[ADR-0027](../docs/specs/adr/0027-use-cases-are-a-layer-not-a-column.md) y
+[ADR-0028](../docs/specs/adr/0028-architecture-conformance-is-part-of-the-gate.md);
+especificación en [`docs/specs/use-case-model.md`](../docs/specs/use-case-model.md),
+seis fases.
+
+- [x] ADR-0027, ADR-0028 y especificación.
+- [ ] Fase 1 — `arch_cmd` + SARIF + línea base en `check`, `done` y harness.
+- [ ] Fase 2 — tipos de requisito, ficheros de caso de uso, escenarios por camino, grafo, `trace`, reglas.
+- [ ] Fase 3 — `init` propone casos de uso por carpetas; migración de `use-cases.md`; packs N:M.
+- [ ] Fase 4 — Jira: etiquetas `uc:`/`path:`, `alm status` por historia.
+- [ ] Fase 5 — `impact`, entidades, conformidad caso de uso ↔ imports.
+- [ ] Fase 6 — enlace BPMN comprobado.
+
 ## 4. La medida
 
 Piloto con **personas del equipo** (cierra por fin el espíritu de `GATE-G3`),
