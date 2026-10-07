@@ -117,10 +117,11 @@ export class GeneratePlanUseCase {
     const declared = this.graphRepo.readDeclaredDependencies(projectDir);
     const graph = RequirementGraph.fromDependencies(ids, declared);
 
-    const byId = new Map<string, PlanItem>(items.map((it) => [it.requirement, it]));
+    // A requirement with several scenarios has several items: it is done when
+    // all of them are, and the order keeps every one of them, once.
     const isDone = (id: string) => {
-      const item = byId.get(id);
-      return Boolean(item) && item?.category === "DONE";
+      const its = items.filter((it) => it.requirement === id);
+      return its.length > 0 && its.every((it) => it.category === "DONE");
     };
 
     for (const item of items) {
@@ -130,9 +131,11 @@ export class GeneratePlanUseCase {
     }
 
     const ordered: PlanItem[] = [];
+    const placed = new Set<string>();
     for (const id of graph.order) {
-      const item = byId.get(id);
-      if (item) ordered.push(item);
+      if (placed.has(id)) continue;
+      placed.add(id);
+      for (const item of items) if (item.requirement === id) ordered.push(item);
     }
     for (const item of items) {
       if (!ordered.includes(item)) ordered.push(item);

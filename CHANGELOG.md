@@ -8,6 +8,36 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+Found running the harness and upgrading packs on the Golden State
+Reinforcing app with 0.14.2:
+
+- **`specops sync` brings a pack's changes to the trace fields.** A pack that
+  added `depends_on` moved the lock to the new tag while every capability
+  spec answered "kept (local edits preserved)": the trace line is where the
+  pack's model links and the project's `status` meet, and the text merge kept
+  the local line. Trace lines are now merged field by field — what the pack
+  changed since the baseline takes the pack's value, everything else keeps
+  the project's.
+- **`specops sync` regenerates a generated matrix** instead of merging it.
+  It rendered each pack into an empty directory, so a derived project got a
+  hand-kept matrix back and a "CONFLICT (no merge base)" on
+  `docs/specs/traceability.md`.
+- **Domain catalogs are shared by every pack.** `aggregates.md`, `events.md`,
+  `commands.md`, `use-cases.md` and `domain-model.md` held the rows of the
+  last pack installed; a pack's rows now replace the rows with the same id
+  and join the rest.
+- **`plan` lists every scenario of a requirement once,** and counts a
+  requirement done only when all of its scenarios are; it listed the last one
+  once per scenario and dropped the others. An artifact cell naming several
+  files is checked file by file.
+- **The adoption baseline leaves the plan once delivered.** `test='npm test'`
+  and `artifact='existing codebase'` are a command and a description, not
+  files, so the baseline was planned — and handed to the harness — forever.
+- **`pack lint` warns about a requirement with no scenario.** Sixteen of
+  forty-six requirements shipped without one and lint said nothing.
+
 ## [0.14.2] — 2026-10-07
 
 ### Fixed

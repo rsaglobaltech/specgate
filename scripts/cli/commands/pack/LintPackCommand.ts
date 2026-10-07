@@ -100,7 +100,7 @@ function lintTodos(pack: any, errors: string[], warnings: string[]) {
   }
 }
 
-function lintRequirementsCoverage(pack: any, errors: string[], _warnings: string[]) {
+function lintRequirementsCoverage(pack: any, errors: string[], warnings: string[]) {
   const reqIds = new Set(asArray(pack.requirements).map((r: any) => r.id));
   const usedInUC = new Set(
     asArray(pack.use_cases).flatMap((uc: any) =>
@@ -141,6 +141,12 @@ function lintRequirementsCoverage(pack: any, errors: string[], _warnings: string
       errors.push(
         `REQ ${id} is not referenced by any use case, scenario, api_contract, consumer_driven_test, or breaking_change_rules entry.`
       );
+    } else if (!usedInSCN.has(id)) {
+      // Referenced, so not an error — but with no scenario there is no `Then`
+      // to verify it by: the project plans it as "Needs Feature File" and the
+      // harness has nothing to hold an agent to. Sixteen of forty-six
+      // requirements shipped like this without a word (golden_app #28).
+      warnings.push(`REQ ${id} has no scenario; nothing verifies it once installed.`);
     }
   }
 }

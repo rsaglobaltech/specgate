@@ -60,6 +60,16 @@ export class RequirementPlan {
     return !RequirementPlan.PLACEHOLDER_RE.test(stripped);
   }
 
+  /** `src/a.ts`, `a.test.js, b.test.js` — not `npm test` or `existing codebase`. */
+  public static looksLikePath(value: string): boolean {
+    const parts = value
+      .replace(/`/g, "")
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    return parts.length > 0 && parts.every((p) => !/\s/.test(p) && /[/.]/.test(p));
+  }
+
   public static classifyRow(
     row: RawMatrixRow,
     fileChecker: (relPath: string) => boolean
@@ -70,9 +80,16 @@ export class RequirementPlan {
     const featureExists = fileChecker(row.featureFile || "");
     const techDeclared = RequirementPlan.isMeaningful(row.technicalArtifact);
     const testDeclared = RequirementPlan.isMeaningful(row.testArtifact);
-    const techExists = techDeclared && fileChecker(row.technicalArtifact || "");
-    const testExists = testDeclared && fileChecker(row.testArtifact || "");
     const isDone = RequirementPlan.DONE_STATUSES.has(row.status || "");
+    // `adopt` records its baseline as `test='npm test'` and `artifact='existing
+    // codebase'` — a command and a description, not files. Once the
+    // requirement is delivered (`done` ran the gate), such a value is not
+    // missing evidence; without this the baseline was planned, and handed to
+    // the harness, as work forever (golden_app finding #29).
+    const present = (value: string) =>
+      fileChecker(value) || (isDone && !RequirementPlan.looksLikePath(value));
+    const techExists = techDeclared && present(row.technicalArtifact || "");
+    const testExists = testDeclared && present(row.testArtifact || "");
 
     let category: PlanCategory;
     if (!featureExists) category = "NEEDS_FEATURE";

@@ -253,6 +253,12 @@ git commit -m "chore(specs): bump parking-management/backend to v0.2.0"
 
 Plain `sync` (no `--pack` / `--pack-version`) re-expands every pack in the lockfile using the **vars persisted there** — no need to retype `--var` flags.
 
+What `sync` does with the files a pack shares with the project:
+
+- **Requirement trace lines** (`<!-- csda:trace … -->`) merge field by field. A field the pack changed — a new `depends`, a renamed use case — takes the pack's value; the fields the project wrote (`status` from `done`, links) stay.
+- **A generated matrix** (`specgate:derived`) is regenerated once every pack is synced, never merged.
+- **The domain catalogs** (`aggregates.md`, `events.md`, `commands.md`, `use-cases.md`, `domain-model.md`) hold every installed pack's rows: a pack replaces the rows with its ids and leaves the others. Change a catalog row in the pack, not in the project — the pack's next sync rewrites it.
+
 ---
 
 ---

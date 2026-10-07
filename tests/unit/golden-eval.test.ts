@@ -229,6 +229,13 @@ test("a pack keeps a generated matrix generated, and the harness sees its prose 
     const check = cli("check", dir);
     assert.equal(check.status, 0, check.stdout + check.stderr);
 
+    // `plan` listed the requirement's last scenario once per scenario and
+    // dropped the others (golden_app finding #27).
+    const plan = JSON.parse(cli("plan", "--project-dir", dir, "--json").stdout);
+    const items = JSON.stringify(plan);
+    assert.equal((items.match(/SCN-100/g) || []).length, 1, items);
+    assert.equal((items.match(/SCN-101/g) || []).length, 1, items);
+
     const prompt = cli("harness", "prompt", "REQ-102", "--project-dir", dir).stdout;
     assert.equal(
       (prompt.match(/^# Implement REQ-102/gm) || []).length,
@@ -241,4 +248,189 @@ test("a pack keeps a generated matrix generated, and the harness sees its prose 
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("a plan artifact may name several files", () => {
+  const { fileExists } = require("../../scripts/cli/commands/spec/PlanCommand");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-golden-plan-"));
+  try {
+    fs.writeFileSync(path.join(dir, "a.ts"), "");
+    fs.writeFileSync(path.join(dir, "b.ts"), "");
+    assert.equal(fileExists(dir, "`a.ts`, `b.ts`"), true, "golden_app finding #26");
+    assert.equal(fileExists(dir, "a.ts, c.ts"), false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a trace line merges field by field: the pack's model changes arrive, the project's progress stays", () => {
+  const { reconcileTraced } = require("../../packages/core/src/domain/TraceMerge");
+  const merge = () => {
+    throw new Error("the text did not change; no text merge is needed");
+  };
+  const doc = (trace) =>
+    `# Capability\n\n### Requirement: REQ-102 — Fast punch\n\n${trace}\n**Obligation (MUST).** Fast punch.\n`;
+  // The baseline an older `add` recorded: the template, before trace fields.
+  const base = doc("<!-- csda:trace kind=functional -->");
+  const local = doc("<!-- csda:trace status=Implemented uc=UC-101 kind=functional -->");
+  const incoming = doc("<!-- csda:trace uc=UC-101 depends=REQ-101 kind=functional -->");
+  const d = reconcileTraced(base, local, incoming, {}, merge);
+  assert.equal(d.outcome, "merged", "sync used to answer 'kept' and drop the dependency");
+  assert.match(d.write, /status=Implemented/);
+  assert.match(d.write, /depends=REQ-101/);
+  assert.equal(d.baselineContent, incoming);
+
+  // Nothing new from the pack: the line is left exactly as written.
+  const same = reconcileTraced(incoming, d.write, incoming, {}, merge);
+  assert.equal(same.write, null);
+});
+
+test("shared domain catalogs keep every pack's rows", () => {
+  const { mergeCatalog } = require("../../packages/core/src/domain/CatalogMerge");
+  const table = (...rows) =>
+    `# Aggregates\n\n| ID | Aggregate |\n| --- | --- |\n${rows.map((r) => `| ${r} |`).join("\n")}\n`;
+  const merged = mergeCatalog(
+    table("AGG-101 | Punch", "AGG-201 | JobFile (old)"),
+    table("AGG-201 | JobFile", "AGG-202 | Photo")
+  );
+  assert.equal(merged, table("AGG-101 | Punch", "AGG-201 | JobFile", "AGG-202 | Photo"));
+  assert.equal(mergeCatalog(null, table("AGG-1 | A")), table("AGG-1 | A"));
+});
+
+test("specops sync brings a pack's new depends_on into a generated matrix without a false conflict", () => {
+  const git = (cwd, ...a) => {
+    const r = spawnSync("git", a, { cwd, encoding: "utf8" });
+    assert.equal(r.status, 0, r.stderr);
+  };
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-golden-sync-"));
+  try {
+    const repo = path.join(root, "packs");
+    const packDir = path.join(repo, "gold", "backend");
+    fs.mkdirSync(path.join(packDir, "templates"), { recursive: true });
+    const pack = PACK.replace(
+      "outputs:\n  files: []",
+      'outputs:\n  files:\n    - target: "docs/specs/capabilities/gold/spec.md"\n      template: "templates/capability.md.tpl"'
+    );
+    fs.writeFileSync(path.join(packDir, "pack.yaml"), pack);
+    fs.writeFileSync(
+      path.join(packDir, "templates", "capability.md.tpl"),
+      "# Capability — Gold\n\n### Requirement: REQ-101 — Clock in inside the geofence\n\n<!-- csda:trace kind=functional -->\nA worker MUST clock in only inside the geofence.\n\n### Requirement: REQ-102 — A punch is confirmed within 2 seconds\n\n<!-- csda:trace kind=non-functional -->\nA punch MUST be confirmed in under 2 seconds.\n"
+    );
+    fs.writeFileSync(
+      path.join(packDir, "templates", "fast.feature.tpl"),
+      "Feature: A punch is fast\n\n  Scenario: A punch is confirmed within 2 seconds\n    Given a worker at the jobsite\n    When they clock in\n    Then the confirmation shows in 2 seconds\n"
+    );
+    git(root, "init", "--quiet", "--initial-branch=main", repo);
+    for (const [k, v] of [
+      ["user.email", "t@example.com"],
+      ["user.name", "T"],
+      ["commit.gpgsign", "false"],
+      ["tag.gpgsign", "false"],
+    ])
+      git(repo, "config", k, v);
+    git(repo, "add", ".");
+    git(repo, "commit", "--quiet", "-m", "v0.1.0");
+    git(repo, "tag", "v0.1.0");
+
+    const dir = path.join(root, "app");
+    const cache = path.join(root, "cache");
+    fs.mkdirSync(path.join(dir, "lib"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "package.json"), '{"name":"app","version":"1.0.0"}');
+    fs.writeFileSync(path.join(dir, "lib", "index.js"), "module.exports = {};\n");
+    assert.equal(cli("adopt", "--project-dir", dir, "--no-capabilities").status, 0);
+    const add = cli(
+      "specops",
+      "add",
+      "--pack-repo",
+      repo,
+      "--pack-version",
+      "v0.1.0",
+      "--pack",
+      "gold/backend",
+      "--var",
+      "PROJECT_NAME=App",
+      "--project-dir",
+      dir,
+      "--cache-dir",
+      cache
+    );
+    assert.equal(add.status, 0, add.stdout + add.stderr);
+
+    // The pack's next tag declares that a fast punch needs the clock in first.
+    fs.writeFileSync(
+      path.join(packDir, "pack.yaml"),
+      pack.replace(
+        'description: "Covered only by a scenario."',
+        'description: "Covered only by a scenario."\n    depends_on: [REQ-101]'
+      )
+    );
+    git(repo, "commit", "--quiet", "-am", "v0.1.1");
+    git(repo, "tag", "v0.1.1");
+
+    const sync = cli(
+      "specops",
+      "sync",
+      "--pack-version",
+      "v0.1.1",
+      "--project-dir",
+      dir,
+      "--cache-dir",
+      cache
+    );
+    assert.equal(sync.status, 0, sync.stdout + sync.stderr);
+    assert.doesNotMatch(sync.stdout, /CONFLICT/, "traceability.md is regenerated, not merged");
+    const cap = fs.readFileSync(path.join(dir, "docs/specs/capabilities/gold/spec.md"), "utf8");
+    assert.match(cap, /depends=REQ-101/, "the new dependency reached the requirement");
+    const matrix = fs.readFileSync(path.join(dir, "docs/specs/traceability.md"), "utf8");
+    assert.match(matrix, /specgate:derived/);
+    const check = cli("check", dir);
+    assert.equal(check.status, 0, check.stdout + check.stderr);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a delivered requirement is not planned again for evidence that is not a file", () => {
+  const { RequirementPlan } = require("../../packages/core/src/domain/RequirementPlan");
+  const row = {
+    requirement: "REQ-001",
+    scenarioId: "SCN-001",
+    featureFile: "features/adoption/baseline.feature",
+    technicalArtifact: "existing codebase",
+    testArtifact: "npm test",
+  };
+  const exists = (p) => p === "features/adoption/baseline.feature";
+  assert.equal(
+    RequirementPlan.classifyRow({ ...row, status: "Draft" }, exists).category,
+    "NEEDS_EVERYTHING"
+  );
+  assert.equal(
+    RequirementPlan.classifyRow({ ...row, status: "Implemented" }, exists).category,
+    "DONE",
+    "golden_app finding #29: adopt's baseline was handed to the harness forever"
+  );
+  // A real path still has to exist.
+  assert.equal(
+    RequirementPlan.classifyRow(
+      { ...row, technicalArtifact: "src/a.ts", status: "Implemented" },
+      exists
+    ).category,
+    "NEEDS_IMPLEMENTATION"
+  );
+});
+
+test("pack lint says when a requirement has no scenario", () => {
+  const { runLint } = require("../../scripts/cli/commands/pack/LintPackCommand");
+  const { warnings } = runLint(
+    {
+      requirements: [{ id: "REQ-101" }],
+      use_cases: [{ id: "UC-101", actor: "Worker", requirement: "REQ-101" }],
+      scenarios: [],
+    },
+    os.tmpdir()
+  );
+  assert.ok(
+    warnings.some((w) => /REQ-101 has no scenario/.test(w)),
+    warnings.join("\n")
+  );
 });

@@ -131,9 +131,16 @@ export function hintFor(item: any): string {
 
 export function fileExists(projectDir: string, rel: string): boolean {
   if (!RequirementPlan.isMeaningful(rel)) return false;
-  const clean = rel.replace(/^`|`$/g, "").trim();
-  const noAnchor = clean.split("#")[0];
-  return fs.existsSync(path.join(projectDir, noAnchor));
+  // A generated matrix lists every file that mentions the requirement,
+  // comma-separated. Checked as one path it never existed, so an Implemented
+  // requirement with two test files was "NEEDS_EVERYTHING" — and the harness,
+  // which picks its work from the plan, would have implemented it again.
+  const paths = rel
+    .replace(/`/g, "")
+    .split(",")
+    .map((p) => p.trim().split("#")[0])
+    .filter(Boolean);
+  return paths.length > 0 && paths.every((p) => fs.existsSync(path.join(projectDir, p)));
 }
 
 export function buildPlan(rows: any[], exists: any, graph?: any): any[] {
@@ -375,10 +382,10 @@ export function applyDependencies(items: any[], projectDir: string): any[] {
   const ids = items.map((it) => it.requirement);
   const graph = requirementGraphFromProject(projectDir, ids);
 
-  const byId = new Map<string, any>(items.map((it) => [it.requirement, it]));
+  // Done means every scenario of the requirement is done.
   const isDone = (id: string) => {
-    const item = byId.get(id);
-    return Boolean(item) && item?.category === "DONE";
+    const its = items.filter((it) => it.requirement === id);
+    return its.length > 0 && its.every((it) => it.category === "DONE");
   };
 
   for (const item of items) {
@@ -387,10 +394,15 @@ export function applyDependencies(items: any[], projectDir: string): any[] {
     item.blocked_by = deps.filter((dep: string) => !isDone(dep));
   }
 
+  // A requirement with several scenarios has several items: keep all of them,
+  // once each, in dependency order. Indexing by requirement kept only the
+  // last one, and a repeated id in the order pushed it twice.
   const ordered: any[] = [];
+  const placed = new Set<string>();
   for (const id of graph.order) {
-    const item = byId.get(id);
-    if (item) ordered.push(item);
+    if (placed.has(id)) continue;
+    placed.add(id);
+    for (const item of items) if (item.requirement === id) ordered.push(item);
   }
   for (const item of items) {
     if (!ordered.includes(item)) ordered.push(item);
