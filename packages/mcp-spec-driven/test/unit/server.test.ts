@@ -166,3 +166,32 @@ test("the server reports its real version, in either build layout", () => {
   assert.equal(response.result.serverInfo.version, pkg.version);
   assert.notEqual(response.result.serverInfo.version, "0.0.0");
 });
+
+// ── The csda_* → specgate_* rename ──────────────────────────────────────────────
+
+test("tools are listed as specgate_*, never csda_*", () => {
+  const output = captureStdout(() =>
+    handleMessage({ jsonrpc: "2.0", id: 20, method: "tools/list", params: {} })
+  );
+  const names = parseFramed(output).result.tools.map((t) => t.name);
+  assert.ok(names.includes("specgate_status"), names.join(", "));
+  assert.ok(!names.some((n) => n.startsWith("csda_")), "no csda_ names in the listing");
+});
+
+test("a csda_* name from an older agent config still reaches the tool", () => {
+  const call = (name) =>
+    parseFramed(
+      captureStdout(() =>
+        handleMessage({
+          jsonrpc: "2.0",
+          id: 21,
+          method: "tools/call",
+          params: { name, arguments: { projectDir: "/definitely/not/a/project" } },
+        })
+      )
+    );
+  const legacy = call("csda_status");
+  const current = call("specgate_status");
+  assert.equal(legacy.error, undefined, "the old name resolves");
+  assert.deepEqual(legacy.result, current.result, "to the same tool");
+});

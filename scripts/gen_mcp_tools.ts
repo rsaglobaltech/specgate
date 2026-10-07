@@ -226,7 +226,7 @@ for (const command of SURFACE) {
 //
 // #138 generated the whole registry from the command surface and, in doing so,
 // deleted `read_spec`, `list_requirements` and `update_traceability` and renamed
-// the other four to `csda_*`. An MCP tool id lives in someone else's agent
+// the other four to `csda_*` (now `specgate_*`). An MCP tool id lives in someone else's agent
 // config: the seven published names have to keep resolving, so they are
 // registered here as well as the generated ids. Both spellings reach the same
 // handler, and the tools that read files come from `native-tools.ts` — which is
@@ -240,10 +240,10 @@ TOOLS["update_traceability"] = new UpdateTraceabilityTool();
 
 // Aliases: the documented name and the generated id are the same tool.
 for (const [published, generated] of [
-  ["lint_pack", "csda_pack_lint"],
-  ["validate_project", "csda_validate"],
-  ["plan", "csda_plan"],
-  ["mark_requirement_done", "csda_done"],
+  ["lint_pack", "specgate_pack_lint"],
+  ["validate_project", "specgate_validate"],
+  ["plan", "specgate_plan"],
+  ["mark_requirement_done", "specgate_done"],
 ] as const) {
   if (TOOLS[generated]) TOOLS[published] = TOOLS[generated];
 }

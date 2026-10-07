@@ -8,6 +8,31 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Maven and Gradle plugins ran a CLI frozen at 0.7.0.** Their launcher
+  ran `npx create-spec-driven-app@<version>` — the package's pre-rename name,
+  last published as 0.7.0 — and the image `ghcr.io/rsaglobaltech/csda`. With
+  the default version, `latest`, every Java build ran 0.7.0: none of the gate
+  fixes, the five verbs or the generated matrix. They now run
+  `@rsaglobaltech/specgate` and `ghcr.io/rsaglobaltech/specgate`. Pin
+  `csda.version` to a 0.12+ release; a pin below 0.8.0 no longer resolves.
+- **The Maven and Gradle gate is the one gate.** `csda:validate` and
+  `csdaValidate` ran `validate --strict-tdd`, weaker than what `ci init`
+  generates. They run `validate --strict` now; the `csda.strictTdd` setting
+  keeps its name and still turns the gate off (structural checks only).
+  A Java build may go red where it passed: that is a link or scenario the
+  other gates already refused.
+
+### Changed
+
+- **MCP tools are named `specgate_*`.** The generated tools were `csda_*`, the
+  last place the old name faced an agent. Calls by the old names keep
+  resolving, so an agent config that allow-lists `csda_status` still works;
+  only the new names are listed. `validate_project`, `plan`,
+  `mark_requirement_done`, `lint_pack`, `read_spec`, `list_requirements` and
+  `update_traceability` are unchanged.
+
 ## [0.12.0] — 2026-10-07
 
 **The agent works the same loop as the team.** The slash commands `agents init`

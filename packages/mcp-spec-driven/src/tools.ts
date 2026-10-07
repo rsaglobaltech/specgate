@@ -140,9 +140,9 @@ export class GenericCliTool implements ITool {
 
 export const TOOLS: Record<string, ITool> = {};
 
-TOOLS["csda_init"] = new GenericCliTool(
-  "csda_init",
-  "Scaffold a new project; --from-pack <repo>@<tag> also installs a pack.",
+TOOLS["specgate_init"] = new GenericCliTool(
+  "specgate_init",
+  "Adopt this repo if it has code, else scaffold one; --new forces a scaffold.",
   "init",
   {
     type: "object",
@@ -155,8 +155,8 @@ TOOLS["csda_init"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_adopt"] = new GenericCliTool(
-  "csda_adopt",
+TOOLS["specgate_adopt"] = new GenericCliTool(
+  "specgate_adopt",
   "Install SDD on an EXISTING repository (brownfield, non-invasive).",
   "adopt",
   {
@@ -170,8 +170,8 @@ TOOLS["csda_adopt"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_onboard"] = new GenericCliTool(
-  "csda_onboard",
+TOOLS["specgate_onboard"] = new GenericCliTool(
+  "specgate_onboard",
   "Read an existing repo and propose the capabilities its code implies.",
   "onboard",
   {
@@ -185,8 +185,8 @@ TOOLS["csda_onboard"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_doctor"] = new GenericCliTool(
-  "csda_doctor",
+TOOLS["specgate_doctor"] = new GenericCliTool(
+  "specgate_doctor",
   "Diagnose the project and environment; every finding ships a fix.",
   "doctor",
   {
@@ -200,8 +200,8 @@ TOOLS["csda_doctor"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_status"] = new GenericCliTool(
-  "csda_status",
+TOOLS["specgate_status"] = new GenericCliTool(
+  "specgate_status",
   "Daily dashboard: what is done, what is orphaned, what to do next.",
   "status",
   {
@@ -215,8 +215,8 @@ TOOLS["csda_status"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_ci_init"] = new GenericCliTool(
-  "csda_ci_init",
+TOOLS["specgate_ci_init"] = new GenericCliTool(
+  "specgate_ci_init",
   "Generate the spec gate for GitHub, GitLab, Azure, or Jenkins.",
   "ci init",
   {
@@ -230,8 +230,8 @@ TOOLS["csda_ci_init"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_alm_sync"] = new GenericCliTool(
-  "csda_alm_sync",
+TOOLS["specgate_alm_sync"] = new GenericCliTool(
+  "specgate_alm_sync",
   "Sync REQs with Jira / Azure Boards (create, close, drift).",
   "alm sync",
   {
@@ -245,8 +245,8 @@ TOOLS["csda_alm_sync"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_alm_link"] = new GenericCliTool(
-  "csda_alm_link",
+TOOLS["specgate_alm_link"] = new GenericCliTool(
+  "specgate_alm_link",
   "Run specgate alm link",
   "alm link",
   {
@@ -260,8 +260,8 @@ TOOLS["csda_alm_link"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_alm_status"] = new GenericCliTool(
-  "csda_alm_status",
+TOOLS["specgate_alm_status"] = new GenericCliTool(
+  "specgate_alm_status",
   "Run specgate alm status",
   "alm status",
   {
@@ -275,8 +275,8 @@ TOOLS["csda_alm_status"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_alm_pull"] = new GenericCliTool(
-  "csda_alm_pull",
+TOOLS["specgate_alm_pull"] = new GenericCliTool(
+  "specgate_alm_pull",
   "Run specgate alm pull",
   "alm pull",
   {
@@ -305,8 +305,8 @@ TOOLS["validate_project"] = new GenericCliTool(
   "positional",
   false
 );
-TOOLS["csda_expand"] = new GenericCliTool(
-  "csda_expand",
+TOOLS["specgate_expand"] = new GenericCliTool(
+  "specgate_expand",
   "Apply a domain pack (local path or remote git tag).",
   "expand",
   {
@@ -335,8 +335,8 @@ TOOLS["plan"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_report"] = new GenericCliTool(
-  "csda_report",
+TOOLS["specgate_report"] = new GenericCliTool(
+  "specgate_report",
   "Spec-coverage dashboard as self-contained HTML (CI/Pages artifact).",
   "report",
   {
@@ -365,8 +365,8 @@ TOOLS["mark_requirement_done"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_req_add"] = new GenericCliTool(
-  "csda_req_add",
+TOOLS["specgate_req_add"] = new GenericCliTool(
+  "specgate_req_add",
   "Run specgate req add",
   "req add",
   {
@@ -380,8 +380,8 @@ TOOLS["csda_req_add"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_req_link"] = new GenericCliTool(
-  "csda_req_link",
+TOOLS["specgate_req_link"] = new GenericCliTool(
+  "specgate_req_link",
   "Run specgate req link",
   "req link",
   {
@@ -395,8 +395,8 @@ TOOLS["csda_req_link"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_req_done"] = new GenericCliTool(
-  "csda_req_done",
+TOOLS["specgate_req_done"] = new GenericCliTool(
+  "specgate_req_done",
   "Run specgate req done",
   "req done",
   {
@@ -410,8 +410,8 @@ TOOLS["csda_req_done"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_req_rm"] = new GenericCliTool(
-  "csda_req_rm",
+TOOLS["specgate_req_rm"] = new GenericCliTool(
+  "specgate_req_rm",
   "Run specgate req rm",
   "req rm",
   {
@@ -425,8 +425,8 @@ TOOLS["csda_req_rm"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_req_list"] = new GenericCliTool(
-  "csda_req_list",
+TOOLS["specgate_req_list"] = new GenericCliTool(
+  "specgate_req_list",
   "Run specgate req list",
   "req list",
   {
@@ -440,8 +440,8 @@ TOOLS["csda_req_list"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_fix"] = new GenericCliTool(
-  "csda_fix",
+TOOLS["specgate_fix"] = new GenericCliTool(
+  "specgate_fix",
   "Apply the fixes validate suggests (--dry-run to preview).",
   "fix",
   {
@@ -455,8 +455,8 @@ TOOLS["csda_fix"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_change_new"] = new GenericCliTool(
-  "csda_change_new",
+TOOLS["specgate_change_new"] = new GenericCliTool(
+  "specgate_change_new",
   "Run specgate change new",
   "change new",
   {
@@ -470,8 +470,8 @@ TOOLS["csda_change_new"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_change_list"] = new GenericCliTool(
-  "csda_change_list",
+TOOLS["specgate_change_list"] = new GenericCliTool(
+  "specgate_change_list",
   "Run specgate change list",
   "change list",
   {
@@ -485,8 +485,8 @@ TOOLS["csda_change_list"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_change_show"] = new GenericCliTool(
-  "csda_change_show",
+TOOLS["specgate_change_show"] = new GenericCliTool(
+  "specgate_change_show",
   "Run specgate change show",
   "change show",
   {
@@ -500,8 +500,8 @@ TOOLS["csda_change_show"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_change_status"] = new GenericCliTool(
-  "csda_change_status",
+TOOLS["specgate_change_status"] = new GenericCliTool(
+  "specgate_change_status",
   "Run specgate change status",
   "change status",
   {
@@ -515,8 +515,8 @@ TOOLS["csda_change_status"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_change_validate"] = new GenericCliTool(
-  "csda_change_validate",
+TOOLS["specgate_change_validate"] = new GenericCliTool(
+  "specgate_change_validate",
   "Run specgate change validate",
   "change validate",
   {
@@ -530,8 +530,8 @@ TOOLS["csda_change_validate"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_change_archive"] = new GenericCliTool(
-  "csda_change_archive",
+TOOLS["specgate_change_archive"] = new GenericCliTool(
+  "specgate_change_archive",
   "Run specgate change archive",
   "change archive",
   {
@@ -545,8 +545,8 @@ TOOLS["csda_change_archive"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_change_instructions"] = new GenericCliTool(
-  "csda_change_instructions",
+TOOLS["specgate_change_instructions"] = new GenericCliTool(
+  "specgate_change_instructions",
   "Run specgate change instructions",
   "change instructions",
   {
@@ -560,8 +560,8 @@ TOOLS["csda_change_instructions"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_change_author"] = new GenericCliTool(
-  "csda_change_author",
+TOOLS["specgate_change_author"] = new GenericCliTool(
+  "specgate_change_author",
   "Run specgate change author",
   "change author",
   {
@@ -575,8 +575,8 @@ TOOLS["csda_change_author"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_pack_init"] = new GenericCliTool(
-  "csda_pack_init",
+TOOLS["specgate_pack_init"] = new GenericCliTool(
+  "specgate_pack_init",
   "Scaffold a new pack skeleton (backend · frontend · contracts).",
   "pack init",
   {
@@ -605,8 +605,8 @@ TOOLS["lint_pack"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_pack_infer"] = new GenericCliTool(
-  "csda_pack_infer",
+TOOLS["specgate_pack_infer"] = new GenericCliTool(
+  "specgate_pack_infer",
   "Propose a pack.yaml skeleton from a .feature file.",
   "pack infer",
   {
@@ -620,8 +620,8 @@ TOOLS["csda_pack_infer"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_pack_bundle"] = new GenericCliTool(
-  "csda_pack_bundle",
+TOOLS["specgate_pack_bundle"] = new GenericCliTool(
+  "specgate_pack_bundle",
   "Export a pack repo as a git bundle for air-gapped use.",
   "pack bundle",
   {
@@ -635,8 +635,8 @@ TOOLS["csda_pack_bundle"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_specops_add"] = new GenericCliTool(
-  "csda_specops_add",
+TOOLS["specgate_specops_add"] = new GenericCliTool(
+  "specgate_specops_add",
   "Add a pack (npm-install-style); writes .specops.lock.",
   "specops add",
   {
@@ -650,8 +650,8 @@ TOOLS["csda_specops_add"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_specops_remove"] = new GenericCliTool(
-  "csda_specops_remove",
+TOOLS["specgate_specops_remove"] = new GenericCliTool(
+  "specgate_specops_remove",
   "Drop a pack entry from .specops.lock.",
   "specops remove",
   {
@@ -665,8 +665,8 @@ TOOLS["csda_specops_remove"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_specops_sync"] = new GenericCliTool(
-  "csda_specops_sync",
+TOOLS["specgate_specops_sync"] = new GenericCliTool(
+  "specgate_specops_sync",
   "Re-expand packs and three-way merge them, preserving local edits.",
   "specops sync",
   {
@@ -680,8 +680,8 @@ TOOLS["csda_specops_sync"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_specops_diff"] = new GenericCliTool(
-  "csda_specops_diff",
+TOOLS["specgate_specops_diff"] = new GenericCliTool(
+  "specgate_specops_diff",
   "Preview a version bump; --as-change derives a reviewable change.",
   "specops diff",
   {
@@ -695,8 +695,8 @@ TOOLS["csda_specops_diff"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_specops_contribute"] = new GenericCliTool(
-  "csda_specops_contribute",
+TOOLS["specgate_specops_contribute"] = new GenericCliTool(
+  "specgate_specops_contribute",
   "Send a local change back upstream to the pack (never pushes).",
   "specops contribute",
   {
@@ -710,8 +710,8 @@ TOOLS["csda_specops_contribute"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_harness_run"] = new GenericCliTool(
-  "csda_harness_run",
+TOOLS["specgate_harness_run"] = new GenericCliTool(
+  "specgate_harness_run",
   "Run the plan → agent → verify → done loop for every pending requirement.",
   "harness run",
   {
@@ -725,8 +725,8 @@ TOOLS["csda_harness_run"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_harness_prompt"] = new GenericCliTool(
-  "csda_harness_prompt",
+TOOLS["specgate_harness_prompt"] = new GenericCliTool(
+  "specgate_harness_prompt",
   "Print the prompt the harness would hand an agent for one REQ.",
   "harness prompt",
   {
@@ -740,8 +740,8 @@ TOOLS["csda_harness_prompt"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_harness_init"] = new GenericCliTool(
-  "csda_harness_init",
+TOOLS["specgate_harness_init"] = new GenericCliTool(
+  "specgate_harness_init",
   "Scaffold harness.config.yaml and the prompt prefix.",
   "harness init",
   {
@@ -755,8 +755,8 @@ TOOLS["csda_harness_init"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_harness_report"] = new GenericCliTool(
-  "csda_harness_report",
+TOOLS["specgate_harness_report"] = new GenericCliTool(
+  "specgate_harness_report",
   "What the harness has cost: first-attempt rate, time per delivered requirement.",
   "harness report",
   {
@@ -770,8 +770,8 @@ TOOLS["csda_harness_report"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_config_init"] = new GenericCliTool(
-  "csda_config_init",
+TOOLS["specgate_config_init"] = new GenericCliTool(
+  "specgate_config_init",
   "Run specgate config init",
   "config init",
   {
@@ -785,8 +785,8 @@ TOOLS["csda_config_init"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_config_set"] = new GenericCliTool(
-  "csda_config_set",
+TOOLS["specgate_config_set"] = new GenericCliTool(
+  "specgate_config_set",
   "Run specgate config set",
   "config set",
   {
@@ -800,8 +800,8 @@ TOOLS["csda_config_set"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_config_get"] = new GenericCliTool(
-  "csda_config_get",
+TOOLS["specgate_config_get"] = new GenericCliTool(
+  "specgate_config_get",
   "Run specgate config get",
   "config get",
   {
@@ -815,8 +815,8 @@ TOOLS["csda_config_get"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_config_list"] = new GenericCliTool(
-  "csda_config_list",
+TOOLS["specgate_config_list"] = new GenericCliTool(
+  "specgate_config_list",
   "Run specgate config list",
   "config list",
   {
@@ -830,8 +830,8 @@ TOOLS["csda_config_list"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_agents_init"] = new GenericCliTool(
-  "csda_agents_init",
+TOOLS["specgate_agents_init"] = new GenericCliTool(
+  "specgate_agents_init",
   "Wire the loop into Claude, Cursor, Copilot, Aider and more.",
   "agents init",
   {
@@ -845,8 +845,8 @@ TOOLS["csda_agents_init"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_update"] = new GenericCliTool(
-  "csda_update",
+TOOLS["specgate_update"] = new GenericCliTool(
+  "specgate_update",
   "Refresh generated agent files after a CLI upgrade, keeping your edits.",
   "update",
   {
@@ -860,8 +860,8 @@ TOOLS["csda_update"] = new GenericCliTool(
   "flag",
   true
 );
-TOOLS["csda_schema_which"] = new GenericCliTool(
-  "csda_schema_which",
+TOOLS["specgate_schema_which"] = new GenericCliTool(
+  "specgate_schema_which",
   "Run specgate schema which",
   "schema which",
   {
@@ -875,8 +875,8 @@ TOOLS["csda_schema_which"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_schema_init"] = new GenericCliTool(
-  "csda_schema_init",
+TOOLS["specgate_schema_init"] = new GenericCliTool(
+  "specgate_schema_init",
   "Run specgate schema init",
   "schema init",
   {
@@ -890,8 +890,8 @@ TOOLS["csda_schema_init"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_schema_fork"] = new GenericCliTool(
-  "csda_schema_fork",
+TOOLS["specgate_schema_fork"] = new GenericCliTool(
+  "specgate_schema_fork",
   "Run specgate schema fork",
   "schema fork",
   {
@@ -905,8 +905,8 @@ TOOLS["csda_schema_fork"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_schema_validate"] = new GenericCliTool(
-  "csda_schema_validate",
+TOOLS["specgate_schema_validate"] = new GenericCliTool(
+  "specgate_schema_validate",
   "Run specgate schema validate",
   "schema validate",
   {
@@ -920,8 +920,8 @@ TOOLS["csda_schema_validate"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_completion_bash"] = new GenericCliTool(
-  "csda_completion_bash",
+TOOLS["specgate_completion_bash"] = new GenericCliTool(
+  "specgate_completion_bash",
   "Run specgate completion bash",
   "completion bash",
   {
@@ -935,8 +935,8 @@ TOOLS["csda_completion_bash"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_completion_zsh"] = new GenericCliTool(
-  "csda_completion_zsh",
+TOOLS["specgate_completion_zsh"] = new GenericCliTool(
+  "specgate_completion_zsh",
   "Run specgate completion zsh",
   "completion zsh",
   {
@@ -950,8 +950,8 @@ TOOLS["csda_completion_zsh"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_completion_fish"] = new GenericCliTool(
-  "csda_completion_fish",
+TOOLS["specgate_completion_fish"] = new GenericCliTool(
+  "specgate_completion_fish",
   "Run specgate completion fish",
   "completion fish",
   {
@@ -965,8 +965,8 @@ TOOLS["csda_completion_fish"] = new GenericCliTool(
   "flag",
   false
 );
-TOOLS["csda_studio"] = new GenericCliTool(
-  "csda_studio",
+TOOLS["specgate_studio"] = new GenericCliTool(
+  "specgate_studio",
   "Serve a local, read-only HTML view of the spec tree (--json for agents).",
   "studio",
   {
@@ -989,10 +989,10 @@ TOOLS["update_traceability"] = new UpdateTraceabilityTool();
 
 // Aliases: the documented name and the generated id are the same tool.
 for (const [published, generated] of [
-  ["lint_pack", "csda_pack_lint"],
-  ["validate_project", "csda_validate"],
-  ["plan", "csda_plan"],
-  ["mark_requirement_done", "csda_done"],
+  ["lint_pack", "specgate_pack_lint"],
+  ["validate_project", "specgate_validate"],
+  ["plan", "specgate_plan"],
+  ["mark_requirement_done", "specgate_done"],
 ] as const) {
   if (TOOLS[generated]) TOOLS[published] = TOOLS[generated];
 }

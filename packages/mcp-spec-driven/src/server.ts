@@ -210,7 +210,14 @@ export class McpServer implements IServer {
         case "tools/call": {
           const toolName = params && params.name;
           const args = (params && params.arguments) || {};
-          const tool = TOOLS[toolName as keyof typeof TOOLS];
+          // `csda_*` was the generated prefix until 0.12: an agent config
+          // that allow-lists a tool by that name keeps resolving. The old
+          // names are accepted here and never listed.
+          const tool =
+            TOOLS[toolName as keyof typeof TOOLS] ||
+            (typeof toolName === "string" && toolName.startsWith("csda_")
+              ? TOOLS[`specgate_${toolName.slice("csda_".length)}` as keyof typeof TOOLS]
+              : undefined);
           if (!tool) {
             this.writeError(id, -32601, `Unknown tool: ${toolName}`);
             break;

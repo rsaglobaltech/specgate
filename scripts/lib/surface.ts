@@ -731,14 +731,14 @@ export function mcpTools() {
         if (command.mcp === false || sub.mcp === false) continue;
         const toolName =
           (typeof sub.mcp === "string" ? sub.mcp : false) ||
-          `csda_${command.name}_${sub.name}`.replace(/-/g, "_");
+          `specgate_${command.name}_${sub.name}`.replace(/-/g, "_");
         out[toolName] = `${command.name} ${sub.name}`;
       }
     } else {
       if (command.mcp === false) continue;
       const toolName =
         (typeof command.mcp === "string" ? command.mcp : false) ||
-        `csda_${command.name}`.replace(/-/g, "_");
+        `specgate_${command.name}`.replace(/-/g, "_");
       out[toolName] = command.name;
     }
   }
