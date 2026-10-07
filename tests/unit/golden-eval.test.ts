@@ -421,7 +421,7 @@ test("a delivered requirement is not planned again for evidence that is not a fi
 
 test("pack lint says when a requirement has no scenario", () => {
   const { runLint } = require("../../scripts/cli/commands/pack/LintPackCommand");
-  const { warnings } = runLint(
+  const { notes } = runLint(
     {
       requirements: [{ id: "REQ-101" }],
       use_cases: [{ id: "UC-101", actor: "Worker", requirement: "REQ-101" }],
@@ -430,7 +430,7 @@ test("pack lint says when a requirement has no scenario", () => {
     os.tmpdir()
   );
   assert.ok(
-    warnings.some((w) => /REQ-101 has no scenario/.test(w)),
-    warnings.join("\n")
+    notes.some((w) => /REQ-101 has no scenario/.test(w)),
+    notes.join("\n")
   );
 });

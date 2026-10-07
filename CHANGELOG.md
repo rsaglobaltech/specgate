@@ -35,7 +35,7 @@ Reinforcing app with 0.14.2:
 - **The adoption baseline leaves the plan once delivered.** `test='npm test'`
   and `artifact='existing codebase'` are a command and a description, not
   files, so the baseline was planned — and handed to the harness — forever.
-- **`pack lint` warns about a requirement with no scenario.** Sixteen of
+- **`pack lint` notes a requirement with no scenario.** Sixteen of
   forty-six requirements shipped without one and lint said nothing.
 
 ## [0.14.2] — 2026-10-07

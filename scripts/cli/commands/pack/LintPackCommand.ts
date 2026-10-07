@@ -100,7 +100,7 @@ function lintTodos(pack: any, errors: string[], warnings: string[]) {
   }
 }
 
-function lintRequirementsCoverage(pack: any, errors: string[], warnings: string[]) {
+function lintRequirementsCoverage(pack: any, errors: string[], notes: string[]) {
   const reqIds = new Set(asArray(pack.requirements).map((r: any) => r.id));
   const usedInUC = new Set(
     asArray(pack.use_cases).flatMap((uc: any) =>
@@ -146,7 +146,9 @@ function lintRequirementsCoverage(pack: any, errors: string[], warnings: string[
       // to verify it by: the project plans it as "Needs Feature File" and the
       // harness has nothing to hold an agent to. Sixteen of forty-six
       // requirements shipped like this without a word (golden_app #28).
-      warnings.push(`REQ ${id} has no scenario; nothing verifies it once installed.`);
+      // A note, not a warning: every curated pack has a few, and a pack may
+      // ship a Draft requirement on purpose.
+      notes.push(`REQ ${id} has no scenario; nothing verifies it once installed.`);
     }
   }
 }
@@ -391,13 +393,14 @@ export interface LintRunOptions {
 export function runLint(pack: any, packRoot: string, opts: LintRunOptions = {}) {
   const errors: string[] = [];
   const warnings: string[] = [];
+  const notes: string[] = [];
   const scenarioIssues: string[] = [];
 
   lintInstallable(pack, packRoot, errors, warnings);
   lintTodos(pack, errors, warnings);
   lintIdUniqueness(pack, errors, warnings);
   lintVariables(pack, errors, warnings);
-  lintRequirementsCoverage(pack, errors, warnings);
+  lintRequirementsCoverage(pack, errors, notes);
   lintUseCaseActors(pack, errors, warnings);
   lintBoundedContextAggregates(pack, errors, warnings);
   lintEventAggregates(pack, errors, warnings);
@@ -411,7 +414,7 @@ export function runLint(pack: any, packRoot: string, opts: LintRunOptions = {}) 
     warnings.push(...scenarioIssues);
   }
 
-  return { errors, warnings };
+  return { errors, warnings, notes };
 }
 
 export function buildPackGraph(pack: any) {
@@ -663,7 +666,7 @@ export class LintPackCommand extends BaseCommand {
       return;
     }
 
-    const { errors, warnings } = runLint(pack, packRoot, { strict: opts.strict });
+    const { errors, warnings, notes } = runLint(pack, packRoot, { strict: opts.strict });
 
     const status = [
       ...warnings.map((w) => diagWarning("pack_lint_warning", w, { target: opts.packId })),
@@ -671,6 +674,7 @@ export class LintPackCommand extends BaseCommand {
     ];
 
     io.emitAndGate({ pack: opts.packId, packRoot, graph: null, status }, () => {
+      for (const n of notes) process.stdout.write(`💡 [NOTE] ${n}\n`);
       for (const w of warnings) logWarn(w);
       for (const e of errors) logError(e);
 
