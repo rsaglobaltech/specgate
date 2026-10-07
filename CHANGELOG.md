@@ -18,6 +18,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   (`specgate new "…"`), then at `specgate done REQ-NNN` for the newest one —
   not "`specgate check` — write REQ-001's test" for the baseline.
 
+- **The documentation site has a new design ("Editorial").** A warm paper
+  ground, a serif display face (Newsreader) over a quiet sans (Instrument
+  Sans), one deep green accent, and a warm dark theme from the same tokens —
+  so the diagrams follow. The landing page is rebuilt around the five-command
+  loop, what each status owes, the four roles on a team and the harness, with
+  reveal-on-scroll and a slow parallax that both stop under reduced motion.
+  The pack gallery is redesigned to match: centred, monograms instead of emoji,
+  a search bar of its own, and install commands that no longer overflow.
+
 ### Fixed
 
 Found by following the documentation step by step on the published 0.13.0:
