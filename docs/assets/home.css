@@ -385,6 +385,10 @@ details p { margin: 0.75rem 0 0; font-size: 0.93rem; }
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-6);
 }
+.journey--five { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-5, 1.25rem); }
+.grid--four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid--four article p:last-child { margin-top: auto; }
+.grid--four article { display: flex; flex-direction: column; }
 .journey__stage {
   margin: 0;
   padding-top: var(--space-4);
@@ -419,11 +423,12 @@ details p { margin: 0.75rem 0 0; font-size: 0.93rem; }
 .res__card span { color: var(--fg-soft); font-size: var(--text-sm); line-height: 1.55; }
 
 @media (max-width: 900px) {
-  .journey { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .journey, .journey--five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid--four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .res { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 700px) {
   .paths { grid-template-columns: minmax(0, 1fr); }
-  .journey, .res { grid-template-columns: minmax(0, 1fr); }
+  .journey, .journey--five, .res, .grid--four { grid-template-columns: minmax(0, 1fr); }
 }

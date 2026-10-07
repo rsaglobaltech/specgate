@@ -8,7 +8,7 @@ export class McpInstallCommand extends BaseCommand {
   public execute(): void {
     if (this.args.includes("--help") || this.args.includes("-h")) {
       process.stdout.write(
-        "\n  specgate mcp install --client <claude|cursor|vscode|kiro> [--json]\n\n" +
+        "\n  specgate mcp install --client <claude|cursor> [--json]\n\n" +
           "  Writes the MCP server configuration for one AI client, so the agent can\n" +
           "  read the spec tree and run the gate as tools.\n\n"
       );
@@ -22,7 +22,7 @@ export class McpInstallCommand extends BaseCommand {
       io.fail({ installed: false }, [
         {
           code: "missing_client",
-          message: "Missing required flag: --client <claude|cursor|vscode|kiro>",
+          message: "Missing required flag: --client <claude|cursor>",
           severity: "error",
           fix: "Pass --client <client>",
         },

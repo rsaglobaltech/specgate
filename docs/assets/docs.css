@@ -460,6 +460,8 @@ a:hover { text-decoration: underline; }
 .prose blockquote p:last-child { margin-bottom: 0; }
 
 .prose hr { border: 0; border-top: 1px solid var(--line); margin: var(--space-12) 0; }
+/* A `---` right before a section heading drew a second rule above the h2's own. */
+.prose hr:has(+ h2) { display: none; }
 .prose img { max-width: 100%; height: auto; border-radius: var(--radius); }
 
 .prose :not(pre) > code {

@@ -72,6 +72,12 @@ export const NAV: readonly NavSection[] = [
     summary: "What a specification is here, and what the tool does with it.",
     entries: [
       {
+        slug: "concepts",
+        label: "How Specgate thinks",
+        blurb:
+          "Six ideas — requirement, scenario, mention, generated matrix, status, one gate — that explain every command.",
+      },
+      {
         slug: "writing-specs",
         label: "Writing specs",
         blurb: "Requirements, scenarios and the traceability matrix.",
@@ -79,7 +85,7 @@ export const NAV: readonly NavSection[] = [
       {
         slug: "validating",
         label: "Validating",
-        blurb: "The gate: structure, traceability, Gherkin and TDD.",
+        blurb: "Every check the gate runs, what each status owes, and the flags behind check.",
       },
       {
         slug: "reviewing-changes",
@@ -102,7 +108,13 @@ export const NAV: readonly NavSection[] = [
       {
         slug: "agents",
         label: "Agent tools",
-        blurb: "Wire Claude Code, Cursor, Copilot and five others into the same loop.",
+        blurb: "Wire Claude Code, Cursor, Copilot and six others into the same loop.",
+      },
+      {
+        slug: "mcp",
+        label: "The MCP server",
+        blurb:
+          "The daily loop as tools for Claude Desktop, Cursor and other MCP clients, and the guard on the spec.",
       },
       {
         slug: "agent-setup",
@@ -133,7 +145,7 @@ export const NAV: readonly NavSection[] = [
       },
       {
         slug: "alm",
-        label: "Jira and Azure Boards",
+        label: "Jira, Azure Boards, GitHub",
         blurb: "Mirror requirements onto a board without letting the board define them.",
       },
       {
@@ -157,6 +169,11 @@ export const NAV: readonly NavSection[] = [
         slug: "commands",
         label: "Command reference",
         blurb: "Every command, its flags and its JSON shape.",
+      },
+      {
+        slug: "faq",
+        label: "FAQ",
+        blurb: "The questions a team asks in its first week, answered in two lines each.",
       },
       {
         slug: "how-to",

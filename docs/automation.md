@@ -10,7 +10,7 @@ hooks and CI.
 **Goal:** let an MCP-aware AI agent work the daily loop — status, new, check, done — without a terminal.
 
 The server ships inside the CLI: `specgate mcp serve` runs it over stdio.
-`specgate mcp install --client claude` (or `cursor`, `windsurf`) writes the
+`specgate mcp install --client claude` (or `cursor`) writes the
 config for you; by hand it is:
 
 Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
