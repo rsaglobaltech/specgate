@@ -1,12 +1,11 @@
 # {{PROJECT_NAME}} — Specification
 
 > Adopted into Spec-Driven Development on an existing codebase (brownfield).
-> `specgate req add "<title>"` reserves the next `REQ-NNN` and adds its row to
-> `docs/specs/traceability.md` and a draft `## REQ-NNN` section below — rewrite
-> its obligation. It does not write a `.feature`: add a Gherkin scenario under
-> `features/`, then `specgate req link REQ-NNN --feature … --test …` to point
-> the row at both. Existing behaviour is retro-filled requirement by
-> requirement — start with the ones your team is actively changing.
+> `specgate new "<title>"` adds the next `REQ-NNN`: a draft section below and
+> a tagged scenario under `features/` — rewrite both. A test that mentions the
+> id is linked to it; `specgate done REQ-NNN` closes it once the gate passes.
+> Existing behaviour is retro-filled requirement by requirement — start with
+> the ones your team is actively changing.
 
 ## Context
 

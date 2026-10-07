@@ -11,7 +11,8 @@ It assumes the repository has already run `specgate init`; if it has not, the
 ```bash
 specgate init        # adopts the existing code; writes spec.md and the matrix
 specgate ci init     # the gate as a CI job — the provider is detected from
-                     # .github/, .gitlab-ci.yml, … or the origin remote
+                     # .github/, .gitlab-ci.yml, … or the origin remote;
+                     # with neither yet, add --provider github|gitlab|azure|jenkins
 git add -A && git commit -m "chore: adopt Specgate"
 ```
 
@@ -94,8 +95,8 @@ five minutes of the review.
 
 ## When `check` fails
 
-Every failure prints a code in brackets and a `fix:` line. The ones a first
-PR meets:
+Every failure says what is wrong and how to fix it, and most carry a code in
+brackets you can search for. The ones a first PR meets:
 
 ### `scenario_placeholder_step`
 
@@ -133,7 +134,10 @@ status back to Draft in `spec.md`.
 ✖  docs/specs/traceability.md REQ-007's test artifact `test/invoice.test.js` does not exist. [declared_artifact_missing]
 ```
 
-A file the requirement points at is gone. Restore it, or fix the path.
+A file the requirement points at *explicitly* is gone — a path written in its
+`csda:trace` comment (`test='…'`, `artifact='…'`), or in a hand-kept matrix.
+Restore it, or fix the path. A test linked only by mentioning the requirement
+does not produce this: delete that test and you get `[TDD-1]` instead.
 
 ### `check_tests_failed` / `done_tests_failed`
 

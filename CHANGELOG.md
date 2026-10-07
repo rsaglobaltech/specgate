@@ -8,6 +8,40 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **`done` will not close a requirement no test mentions.** On a generated
+  matrix the requirement being closed is judged as delivered, so `done` refuses
+  what the next `check` would — it used to judge it as still `Draft`, write
+  Implemented, and leave `[TDD-1]` for CI.
+- **`status` after adoption points at a first real requirement**
+  (`specgate new "…"`), then at `specgate done REQ-NNN` for the newest one —
+  not "`specgate check` — write REQ-001's test" for the baseline.
+
+### Fixed
+
+Found by following the documentation step by step on the published 0.13.0:
+
+- **The docs' recipes run as written.** Adding a scenario no longer tells you
+  to hand-edit the generated matrix (whose next regeneration removed the row);
+  getting started no longer copies an example file that only exists inside the
+  package; the `plan --format json` sample and the agent recipe use the real
+  keys (`next`, `actionable`, …); an unclosed code fence no longer swallows the
+  `--strict-coverage` section; the `Deferred` status, which does not exist, is
+  gone.
+- **An orphan feature on a generated matrix is told to tag its scenario**, not
+  to add a row the next `check` removes.
+- **`Deprecated` owes nothing.** It failed `[TDD-1]`, while `req rm` past Draft
+  recommends Deprecated — the advice was a loop.
+- **`done --json` (and MCP) says why the gate refused**: the validate findings
+  come before `done_validate_failed`, instead of that code alone.
+- **MCP tools declare their argument**: `specgate_change_*` an `id`,
+  `specgate_req_*` a `requirement` or `title`.
+- **Generated text teaches the current loop**: the adopted `spec.md` header,
+  the retro-fill advice, readiness fixes and the harness prompt recommend
+  `specgate new`, a test that mentions the id and `done` — `req link` only for
+  hand-kept matrices.
+
 ### Added
 
 - **The documentation site tells the current story.** The landing page opens

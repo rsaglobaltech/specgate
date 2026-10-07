@@ -35,7 +35,7 @@ test("--strict means every strict check, so a rotted link cannot pass it", () =>
 
     fs.appendFileSync(
       path.join(dir, "docs/specs/traceability.md"),
-      "\n| REQ-050 | - | - | UC-050 Gone | - | - | - | src/nope.js | tests/does/not/Exist.js |" +
+      "\n| REQ-050 | SCN-050 | - | UC-050 Gone | - | - | - | src/nope.js | tests/does/not/Exist.js |" +
         " Implemented |\n"
     );
 

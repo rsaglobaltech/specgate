@@ -141,7 +141,8 @@ export class AgentPrompt {
             `Write the scenario first, as \`features/<area>/<behaviour>.feature\`, tagged ` +
             `\`@${req.requirement}\` and \`@${
               field("scenarioId", "scenario_id") || "SCN-NNN"
-            }\` above its \`Scenario:\` line. Then record it:\n\n` +
+            }\` above its \`Scenario:\` line. The tag is the link on a generated matrix; on a ` +
+            `hand-kept one, record it:\n\n` +
             `    specgate req link ${req.requirement} --feature <path>\n\n` +
             `Creating a file that does not exist is not editing the contract — the ` +
             `rule below is about changing scenarios that are already there.`

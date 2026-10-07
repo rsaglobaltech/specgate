@@ -81,7 +81,11 @@ test("a delivered requirement is refused without --force", () => {
   // not a typo fix.
   const { parent, dir } = scaffold();
   try {
-    assert.equal(cli("done", "REQ-000", "--status", "Verified", "--project-dir", dir).status, 0);
+    // REQ-000 has no test; the point here is the status, not the gate.
+    assert.equal(
+      cli("done", "REQ-000", "--status", "Verified", "--no-check", "--project-dir", dir).status,
+      0
+    );
 
     const refused = cli("req", "rm", "REQ-000", "--project-dir", dir);
     assert.equal(refused.status, 1, refused.stdout + refused.stderr);

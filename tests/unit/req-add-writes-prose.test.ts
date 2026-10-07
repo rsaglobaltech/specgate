@@ -69,7 +69,8 @@ test("the adopted spec.md describes what req add does today", () => {
   try {
     const spec = fs.readFileSync(path.join(dir, "spec.md"), "utf8");
     assert.doesNotMatch(spec, /does not write a section here/);
-    assert.match(spec, /draft `## REQ-NNN` section/);
+    assert.match(spec, /a draft section below/);
+    assert.match(spec, /specgate new/);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

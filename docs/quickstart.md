@@ -29,8 +29,8 @@ requirement. `specgate plan` has the full detail when you want it.
 ## 2. Read the requirement, then work
 
 Each requirement maps to a Gherkin `.feature` file (the executable spec) and a
-row in `docs/specs/traceability.md`. Read the feature, **write the test first**,
-then the code until the test passes.
+row in `docs/specs/traceability.md`, which is generated — nobody edits it. Read
+the feature, **write the test first**, then the code until the test passes.
 
 ## 3. Name the requirement in its test — that is the link
 
@@ -73,13 +73,9 @@ specgate check --test-cmd "npm test"
 `harness.config.yaml` and it is just `specgate check`. Without a test command
 it still passes — and says it checked the specification, not the code.
 
-Every failure tells you the exact fix. Mechanical problems (an orphan
-`.feature`, a requirement in `spec.md` with no row) can be auto-repaired:
-
-```bash
-specgate fix --dry-run       # see what it would change
-specgate fix                 # apply, then re-run validate
-```
+Every failure tells you the exact fix. An orphan `.feature` — one no
+requirement claims — needs its scenario tagged `@REQ-NNN @SCN-NNN`;
+`specgate fix --dry-run` lists anything it can repair on its own.
 
 ## Daily loop, in one line
 

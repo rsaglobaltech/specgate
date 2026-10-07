@@ -374,7 +374,10 @@ TOOLS["mark_requirement_done"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
-      requirement: { type: "string", description: "The <REQ> argument of `specgate done`." },
+      requirement: {
+        type: "string",
+        description: "The <requirement> argument of `specgate done`.",
+      },
     },
     required: ["projectDir", "requirement"],
   },
@@ -406,8 +409,9 @@ TOOLS["specgate_req_add"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      title: { type: "string", description: "The <title> argument of `specgate req add`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "title"],
   },
   "flag",
   true
@@ -421,8 +425,12 @@ TOOLS["specgate_req_link"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      requirement: {
+        type: "string",
+        description: "The <requirement> argument of `specgate req link`.",
+      },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "requirement"],
   },
   "flag",
   true
@@ -436,8 +444,12 @@ TOOLS["specgate_req_done"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      requirement: {
+        type: "string",
+        description: "The <requirement> argument of `specgate req done`.",
+      },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "requirement"],
   },
   "flag",
   true
@@ -451,8 +463,12 @@ TOOLS["specgate_req_rm"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      requirement: {
+        type: "string",
+        description: "The <requirement> argument of `specgate req rm`.",
+      },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "requirement"],
   },
   "flag",
   true
@@ -496,8 +512,9 @@ TOOLS["specgate_change_new"] = new GenericCliTool(
     properties: {
       projectDir: { type: "string" },
       cliPath: { type: "string" },
+      id: { type: "string", description: "The <id> argument of `specgate change new`." },
     },
-    required: ["projectDir"],
+    required: ["projectDir", "id"],
   },
   "flag",
   false

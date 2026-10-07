@@ -233,7 +233,9 @@ export class DoctorCommand extends BaseCommand {
           this.warn(
             "requirement coverage",
             `${req} is in spec.md but has no traceability row`,
-            "Add a row for it — `specgate plan` lists what each REQ still needs."
+            trace.includes("specgate:derived")
+              ? "Run `specgate matrix` — the matrix is generated from spec.md."
+              : "Add a row for it — `specgate plan` lists what each REQ still needs."
           );
         }
       }
@@ -268,7 +270,7 @@ export class DoctorCommand extends BaseCommand {
           this.warn(
             "capability drift",
             `${req} is in the ${entry.name} capability spec but has no traceability row`,
-            `specgate req add` +
+            "`specgate matrix` regenerates it from the capability spec" +
               " — or re-run `specgate change archive`, which writes the row for you."
           );
         }

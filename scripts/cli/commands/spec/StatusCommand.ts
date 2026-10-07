@@ -104,16 +104,40 @@ export function needsOf(item: any): string {
  * the first one meant. The team found the tool hard to absorb, and a dashboard
  * that sends you elsewhere is part of why.
  */
+/**
+ * The adoption baseline (`features/adoption/baseline.feature`) when it is all
+ * that is pending: the next step is a real requirement, not that one's test.
+ * After `init`, status used to say "specgate check — write REQ-001's test",
+ * a command paired with an instruction about something else.
+ */
+function onlyBaseline(items: any[]): boolean {
+  const todo = (items || []).filter((it: any) => TODO_CATEGORIES.includes(it.category));
+  return (
+    todo.length === 1 &&
+    String(todo[0].feature_file || todo[0].featureFile || "").includes("features/adoption/baseline")
+  );
+}
+
+const isBaseline = (it: any) =>
+  String(it.feature_file || it.featureFile || "").includes("features/adoption/baseline");
+
+/** The first pending requirement that is not the adoption baseline. */
+function firstReal(items: any[]): any {
+  return (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category) && !isBaseline(it));
+}
+
 export function nextCommandPlain({ items, counts, orphans, derived }: any): string {
   const first = (cats: string[]) => (items || []).find((it: any) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
   const ready = first(["NEEDS_STATUS_UPDATE"]);
-  if (ready) return `specgate done ${ready.requirement} --strict`;
-  const todo = first(TODO_CATEGORIES);
+  if (ready) return `specgate done ${ready.requirement}`;
+  const todo = firstReal(items) || first(TODO_CATEGORIES);
   if (todo) {
     if (todo.category === "NEEDS_FEATURE") return `specgate plan`;
-    // On a generated matrix a test that names its requirement is the link.
-    if (derived) return "specgate check";
+    if (onlyBaseline(items)) return 'specgate new "<a behaviour you rely on>"';
+    // On a generated matrix a test that names its requirement is the link;
+    // `done` is what you run once it exists, and it checks first.
+    if (derived) return `specgate done ${todo.requirement}`;
     return `specgate req link ${todo.requirement} --test <path>`;
   }
   if (counts.total === 0) return 'specgate new "<what it does>"';
@@ -124,11 +148,14 @@ function nextReason({ items, counts, orphans, derived }: any): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   if ((items || []).some((it: any) => it.category === "NEEDS_STATUS_UPDATE"))
     return "its test exists; close it through the gate";
-  const todo = (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category));
+  const todo =
+    firstReal(items) || (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category));
   if (todo && todo.category === "NEEDS_FEATURE")
     return `${todo.requirement}'s feature file is missing — plan shows which`;
+  if (todo && onlyBaseline(items))
+    return "only the adoption baseline is specified — add one requirement your code already meets";
   if (todo && derived)
-    return `write ${todo.requirement}'s test — naming ${todo.requirement} in it is the link`;
+    return `once a test mentions ${todo.requirement} — that mention is the link; done checks first`;
   if (todo) return `write the test first, then record where it is`;
   if (counts.total === 0) return "no requirements yet";
   return "everything is implemented; run the gate";

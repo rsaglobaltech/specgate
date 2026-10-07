@@ -168,7 +168,12 @@ export class DoneCommand extends BaseCommand {
         step.stage === "validate"
           ? spawnSync(
               process.execPath,
-              [path.join(findCliRoot(__dirname), "bin", "specgate.js"), "validate", ...step.argv],
+              [
+                path.join(findCliRoot(__dirname), "bin", "specgate.js"),
+                "validate",
+                ...step.argv,
+                ...(opts.json ? ["--json"] : []),
+              ],
               { encoding: "utf8" }
             )
           : spawnSync(step.argv[0], {
@@ -184,7 +189,20 @@ export class DoneCommand extends BaseCommand {
       const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
       if (detail && !opts.json) process.stderr.write(`${detail}\n\n`);
 
+      // Over JSON (and so over MCP) the reason has to travel in the document:
+      // the agent got `done_validate_failed` and nothing it could act on.
+      let findings: any[] = [];
+      if (opts.json && step.stage === "validate") {
+        try {
+          const doc = JSON.parse(String(run.stdout).slice(String(run.stdout).indexOf("{")));
+          findings = (doc.status || []).filter((d: any) => d.severity === "error");
+        } catch {
+          // Not JSON: the diagnostic below still says it failed.
+        }
+      }
+
       io.fail(NULL_SHAPE, [
+        ...findings,
         error(
           step.stage === "validate" ? "done_validate_failed" : "done_tests_failed",
           step.stage === "validate"

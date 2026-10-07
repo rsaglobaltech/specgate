@@ -16,6 +16,13 @@ npx @rsaglobaltech/specgate@latest init    # adopts the repo: writes specs, touc
 npx @rsaglobaltech/specgate@latest check   # the gate — passes right away
 ```
 
+It passes and says *"this checked the specification, not the code"* until it
+knows how to run your tests. Tell it once, in `harness.config.yaml`:
+
+```yaml
+test_cmd: npm test        # or ./mvnw -B verify, go test ./..., pytest
+```
+
 `init` sees the code (a `pom.xml`, `build.gradle`, `package.json`, `go.mod`,
 `pyproject.toml`, `Cargo.toml` or `.csproj`) and adopts the repository in place.
 It proposes the capabilities your layout already implies and names the evidence
@@ -100,19 +107,25 @@ whose only scenario is the baseline certifies the skeleton, not the code.
 **Goal:** scaffold a new repo with `spec.md`, `AI_RULES.md`, `docs/specs/`, an empty `features/` directory, and a traceability matrix.
 
 ```bash
-# 1. Start from the shipped example
-cp examples/project.config.example /tmp/acme-energy-hub.config
+# 1. Describe the project — these seven keys are the minimum
+cat > /tmp/acme-energy-hub.config <<'CONFIG'
+PROJECT_NAME="Acme Energy Hub"
+PROJECT_SLUG="acme-energy-hub"
+PROJECT_TYPE="backend"   # backend | frontend
+DOMAIN="community energy"
+STACK="Quarkus 3.x, Java 21, PostgreSQL, Maven"
+API_STYLE="REST with DTO boundaries"
+TESTING="JUnit 5, Cucumber"
+CONFIG
 
-# 2. Edit /tmp/acme-energy-hub.config — minimum keys:
-#   PROJECT_NAME, PROJECT_SLUG, PROJECT_TYPE, DOMAIN, STACK, API_STYLE, TESTING
-
-# 3. Scaffold
+# 2. Scaffold
 npx @rsaglobaltech/specgate@latest init \
   --config /tmp/acme-energy-hub.config \
   --out /tmp
 
-# 4. Verify
-tree /tmp/acme-energy-hub -L 2
+# 3. Verify
+ls /tmp/acme-energy-hub
+cd /tmp/acme-energy-hub && npx @rsaglobaltech/specgate@latest check
 ```
 
 Useful flags:
@@ -177,11 +190,11 @@ different products.
 
 ## Replace the scaffold with real requirements
 
-**Goal:** turn the template `spec.md` and `traceability.md` into project-specific content.
+**Goal:** turn the template `spec.md` into project-specific content.
 
-1. Open `spec.md`. Replace every placeholder paragraph; keep the `REQ-NNN` heading convention because the validator uses it.
-2. Update `docs/specs/traceability.md`. Use the rich 10-column header if you want full DDD coverage; the legacy 4-column form is also accepted.
-3. Each `REQ-NNN` you add to `spec.md` must appear in `traceability.md` and (eventually) in a `.feature` file. `validate` flags missing rows; `validate --strict-tdd` flags missing scenarios and tests **on rows that have left `Draft`**. A `Draft` row owes nothing yet and is skipped — `validate` says how many it skipped, so a pass never hides its own scope.
+1. Open `spec.md`. Replace every placeholder paragraph; keep the `## REQ-NNN — title` heading convention, because the matrix is generated from it.
+2. Add each new requirement with `specgate new "<title>"`: it writes the section and a tagged scenario. Do not edit `docs/specs/traceability.md` — it is regenerated from `spec.md`, the scenario tags and the tests that mention each requirement.
+3. A `Draft` requirement owes nothing yet and is skipped; once it leaves `Draft` it owes a scenario and a test that mentions it — `check` says how many rows it skipped, so a pass never hides its own scope.
 
 > Tip: keep `AI_RULES.md` open in your editor. It is what every coding agent reads on every prompt — changes there propagate to Claude/Cursor/Aider without re-prompting.
 
@@ -191,8 +204,8 @@ different products.
 
 ## Then: the daily loop
 
-Scaffolding is day one. From day two the loop is four commands, and none of them
-asks you to edit the ten-column matrix by hand.
+Scaffolding is day one. From day two the loop is five commands, and none of them
+asks you to edit the matrix by hand.
 
 ```bash
 specgate status                      # what is left, and the next command to run
@@ -205,9 +218,10 @@ specgate done REQ-007 --test-cmd "npm test"   # the gate AND the suite;
 `specgate status` is the one to start the day with — it names the single next
 command, so you never have to remember which of the others applies.
 
-If `validate` complains about something mechanical — an orphan `.feature`, a
-requirement in `spec.md` with no row — `specgate fix --dry-run` shows what it would
-repair, and `specgate fix` applies it.
+If the gate reports an orphan `.feature` — one no requirement claims — tag its
+scenario `@REQ-NNN @SCN-NNN`, or create the requirement with `specgate new`.
+`specgate fix --dry-run` lists what it can repair on its own; on a generated
+matrix, that is mostly telling you which tag is missing.
 
 ---
 
