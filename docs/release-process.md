@@ -175,9 +175,11 @@ the CLI supports, so getting this backwards fails CI rather than users.
    git push origin <release-sha>:refs/heads/main   # fast-forward only, never --force
    ```
 
-   **Expect the first attempts to be refused** even with every check green —
-   it happened on 0.10.0, 0.11.0, 0.12.0, 0.12.1 and 0.13.0, and went through on
-   the 2nd to 9th try a few seconds apart. Retry; do not force.
+   **Push from a foreground shell and read its output.** Pushes to `main`
+   looked "refused" 2 to 40 times in a row on 0.10.0–0.13.0 — every one of
+   those ran inside a background job. The same command in the foreground went
+   through on the first try, twice. Retrying in the background does not help;
+   never `--force`.
 6. **Only once `git rev-parse origin/main` is the release commit**, tag it
    `vX.Y.Z` and push the tag. On 0.10.0 the tag went out while the push to
    `main` had failed. `publish-npm.yml` fires, and publishes only after the

@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-10-07
+
 ### Changed
 
 - **`done` will not close a requirement no test mentions.** On a generated
