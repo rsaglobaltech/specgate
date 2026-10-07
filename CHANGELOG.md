@@ -8,6 +8,16 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.12.1] — 2026-10-07
+
+**Java builds run the current CLI.** The Maven and Gradle plugins were running
+a CLI frozen at 0.7.0 under the tool's pre-rename package name, with a weaker
+gate. The plugins are installed from source, so the fix reaches a build when
+the plugin is rebuilt from this tag: `git checkout v0.12.1`, then
+`mvn install` in `packages/maven-plugin` or `gradle publishToMavenLocal` in
+`packages/gradle-plugin`. MCP tools are now named `specgate_*`; old names keep
+working.
+
 ### Fixed
 
 - **The Maven and Gradle plugins ran a CLI frozen at 0.7.0.** Their launcher
