@@ -283,7 +283,7 @@ function pageShell(page: Page, version: string): string {
 <meta name="description" content="${escapeHtml(entry?.blurb || page.title)}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
 <meta property="og:title" content="${escapeHtml(page.title)} — Specgate">
 <meta property="og:description" content="${escapeHtml(entry?.blurb || page.title)}">

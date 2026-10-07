@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Specgate — specifications that are checked, not admired</title>
-<meta name="description" content="A CLI for spec-driven development: requirements, Gherkin scenarios and a traceability matrix that CI enforces, plus an unattended harness that drives any coding agent one requirement at a time.">
+<meta name="description" content="Spec-driven development, enforced. Requirements, Gherkin scenarios and a traceability matrix your CI enforces — five commands for the team, the same five for its coding agent.">
 <meta property="og:title" content="Specgate">
 <meta property="og:description" content="Specifications that are checked, not admired. Zero runtime dependencies, any agent CLI, one worktree per requirement.">
 <meta property="og:type" content="website">
@@ -16,7 +16,7 @@
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./assets/docs.css">
 <link rel="stylesheet" href="./assets/home.css">
 <link rel="stylesheet" href="./assets/terminal.css">
@@ -24,6 +24,7 @@
   (function () {
     var t = localStorage.getItem("csda-theme");
     if (t) document.documentElement.setAttribute("data-theme", t);
+    document.documentElement.classList.add("js");
   })();
 </script>
 </head>
@@ -41,8 +42,9 @@
   </button>
   <nav class="top__links">
     <a href="./docs.html">Docs</a>
+    <a href="./concepts.html">Concepts</a>
     <a href="./packs/">Packs</a>
-    <a href="./comparisons.html">Comparisons</a>
+    <a href="./comparisons.html">Compare</a>
     <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
   </nav>
   <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
@@ -51,292 +53,254 @@
 <main id="main">
 
 <!-- ── Hero ─────────────────────────────────────────────────────────────── -->
-<section class="hero">
-  <div class="wrap">
-    <p class="hero__eyebrow">Specgate documentation</p>
+<section class="ed-hero">
+  <div class="ed-wrap ed-hero__grid">
+    <div class="ed-hero__copy reveal">
+      <p class="ed-eyebrow">Spec-driven development, enforced</p>
+      <h1 class="ed-display">Specifications that are <em>checked</em>, not admired.</h1>
+      <p class="ed-lede">
+        Requirements, scenarios and a traceability matrix your CI enforces.
+        Five commands for the team, the same five for its coding agent — and a
+        gate that never approves work it did not check.
+      </p>
+      <p class="ed-actions">
+        <a class="ed-btn ed-btn--primary" href="./getting-started.html">Get started</a>
+        <a class="ed-btn" href="./concepts.html">How Specgate thinks</a>
+      </p>
+      <figure class="code ed-install" data-lang="bash">
+        <figcaption class="code__head"><span class="code__lang">Install</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
+        <pre><code class="language-bash">npx @rsaglobaltech/specgate@latest init</code></pre>
+      </figure>
+    </div>
 
-    <p class="hero__badges">
-      <span class="badge">Zero runtime dependencies</span>
-      <span class="badge">Any agent CLI</span>
-      <span class="badge">MIT</span>
-    </p>
+    <div class="ed-hero__art" aria-label="A requirement, and the gate refusing then accepting it">
+      <article class="ed-paper reveal" data-parallax="0.04">
+        <p class="ed-paper__file">spec.md</p>
+        <h2 class="ed-paper__title">REQ-007 — Customers download invoices as PDF</h2>
+        <p>A customer with a paid invoice MUST be able to download it as a PDF from
+           the invoice page, with the invoice number in the file name.</p>
+      </article>
+      <div class="ed-term reveal" data-parallax="-0.06">
+        <p><span class="ed-term__dim">$</span> specgate done REQ-007</p>
+        <p><span class="ed-term__no">✖</span> invoices.feature:4 unfilled placeholder <span class="ed-term__dim">[scenario_placeholder_step]</span></p>
+        <p><span class="ed-term__no">✖</span> not marked Implemented — nothing was written</p>
+        <p class="ed-term__gap"><span class="ed-term__dim">$</span> specgate done REQ-007</p>
+        <p><span class="ed-term__yes">✔</span> REQ-007 → Implemented</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <h1>Specifications that are<br><em>checked</em>, not admired.</h1>
-
-    <p class="hero__sub">
-      Requirements, Gherkin scenarios and a traceability matrix that your CI
-      enforces — five commands a day for the team, the same five for its coding
-      agent, and a harness that delivers one requirement at a time in its own
-      git worktree. It never merges.
-    </p>
-
-    <p class="chips">
-      <a class="chip" href="./getting-started.html">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 6 3.5-6 3.5Z"/></svg>
-        Get started
-      </a>
-      <a class="chip" href="./commands.html">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 6-5 6 5 6M16 6l5 6-5 6"/></svg>
-        Command reference
-      </a>
-      <a class="chip" href="./docs.html">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg>
-        Read the docs
-      </a>
-      <a class="chip" href="./tutorial.html">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
-        Worked example
-      </a>
-    </p>
-
-    <figure class="code code--hero" data-lang="bash">
-      <figcaption class="code__head">
-        <span class="code__lang">Install</span>
-        <button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button>
-      </figcaption>
-      <pre><code class="language-bash">npx @rsaglobaltech/specgate@latest init
-npx @rsaglobaltech/specgate@latest ci init</code></pre>
-    </figure>
-
+<!-- ── Proof ────────────────────────────────────────────────────────────── -->
+<section class="ed-proof">
+  <div class="ed-wrap">
     <dl class="stats">
       <div><dt>11</dt><dd>curated domain packs</dd></div>
       <div><dt>28</dt><dd>commands, all JSON-capable</dd></div>
       <div><dt>10</dt><dd>agent tools wired from one definition</dd></div>
       <div><dt>0</dt><dd>runtime dependencies</dd></div>
     </dl>
-  </div>
-</section>
-
-<!-- ── Two ways in ──────────────────────────────────────────────────────── -->
-<section class="band">
-  <div class="wrap">
-    <header class="sec">
-      <p class="sec__label">Adopt</p>
-      <h2>Two ways in, one command</h2>
-      <p class="sec__lede">
-        <code>specgate init</code> looks before it writes. Where there is code it
-        adopts the repository; where there is none it scaffolds a project. The
-        gate is the same either way.
-      </p>
-    </header>
-
-    <div class="paths">
-      <article class="path">
-        <h3 class="path__title">Existing codebase</h3>
-        <p class="path__body">
-          The common enterprise case. <code>init</code> sees the build file —
-          <code>pom.xml</code>, <code>package.json</code>, <code>go.mod</code>,
-          <code>pyproject.toml</code>, … — proposes the capabilities your layout
-          already implies, and writes the spec skeleton beside your code. It
-          touches no source file, and the gate is green the same day: a
-          <code>Draft</code> requirement owes nothing yet.
-        </p>
-        <ul class="path__links">
-          <li><a href="./getting-started.html">Adopt an existing repo</a></li>
-          <li><a href="./first-pr.html">Your team's first PR</a></li>
-          <li><a href="./quickstart.html">Quickstart</a></li>
-        </ul>
-      </article>
-
-      <article class="path">
-        <h3 class="path__title">New project</h3>
-        <p class="path__body">
-          In an empty folder, <code>init</code> scaffolds a project whose specs,
-          scenarios and traceability matrix are wired to CI from the first
-          commit — plus a domain pack if one fits, so the first requirements are
-          arguable rather than blank.
-        </p>
-        <ul class="path__links">
-          <li><a href="./getting-started.html#generate-your-first-project">Generate a project</a></li>
-          <li><a href="./domain-packs.html">Domain packs</a></li>
-          <li><a href="./tutorial.html">Worked example</a></li>
-        </ul>
-      </article>
-    </div>
+    <p class="ed-proof__claims">
+      <span>Zero runtime dependencies</span><span>Any agent CLI</span><span>MIT</span><span>Every command tested end to end on Linux, macOS and Windows</span>
+    </p>
   </div>
 </section>
 
 <!-- ── The problem ──────────────────────────────────────────────────────── -->
-<section class="band">
-  <div class="wrap wrap--narrow">
-    <h2>A specification nobody checks is a wish</h2>
-    <p>
-      Most teams already write requirements. They live in a wiki, drift from the
-      code within a sprint, and nothing fails when they disagree. Point a coding
-      agent at that and you have automated the drift.
-    </p>
-    <p>
-      This tool makes the specification a thing that can be <em>wrong</em>:
-      every requirement has a scenario, every scenario has a test that names
-      it, and <code>specgate check</code> fails when the link is broken. Then —
-      and only then — an agent is worth pointing at it.
-      <a href="./concepts.html">How Specgate thinks →</a>
-    </p>
+<section class="ed-band">
+  <div class="ed-wrap ed-split">
+    <h2 class="ed-h2 reveal">A specification nobody checks is a wish.</h2>
+    <div class="ed-prose reveal">
+      <p>Most teams already write requirements. They live in a wiki, drift from
+         the code within a sprint, and nothing fails when they disagree. Point a
+         coding agent at that and you have automated the drift.</p>
+      <p>Specgate makes the specification a thing that can be <strong>wrong</strong>:
+         every requirement has a scenario, every scenario a test that names it,
+         and <code>specgate check</code> fails the moment one link breaks. Then —
+         and only then — an agent is worth pointing at it.</p>
+      <p><a class="ed-link" href="./concepts.html">Six ideas that explain every command →</a></p>
+    </div>
   </div>
 </section>
 
-<!-- ── The chain ────────────────────────────────────────────────────────── -->
-<section class="band band--soft">
-  <div class="wrap">
-    <h2>What makes it checkable</h2>
-    <p class="band__lede">
-      One row of the traceability matrix, read left to right, is a sentence about
-      your system. Every link in it resolves to a real file, and the build fails
-      when one does not.
-    </p>
-
-    <!-- csda:diagram traceability-chain -->
-
-    <p class="band__after">
-      <em>This requirement is demonstrated by this scenario, in this feature file,
-      realised by this use case, which dispatches this command against this
-      aggregate, emitting this event, implemented here, proven by this test,
-      currently in this state.</em>
-    </p>
-    <p>
-      An event emitted by an aggregate nobody declared is a build failure, the
-      same way an undefined symbol is. That is the whole idea, and everything
-      else on this page exists to keep it true.
-      <a href="./writing-specs.html">How a matrix row is written →</a>
-    </p>
-  </div>
-</section>
-
-<!-- ── The journey ──────────────────────────────────────────────────────── -->
-<section class="band">
-  <div class="wrap">
-    <header class="sec">
-      <p class="sec__label">The daily loop</p>
-      <h2>Five commands</h2>
-      <p class="sec__lede">
-        That is all most of a team ever types — and the same five, as slash
-        commands or MCP tools, are what its coding agent runs.
-      </p>
-    </header>
-
-    <ol class="journey journey--five">
-      <li class="journey__stage">
-        <p class="journey__n" aria-hidden="true">1</p>
-        <h3 class="journey__title"><code>specgate status</code></h3>
-        <p class="journey__body">
-          What is open, ordered by what blocks what — and the single next
-          command to run, so nobody has to remember which of the others applies.
-        </p>
-        <ul class="journey__links">
-          <li><a href="./commands.html">Command reference</a></li>
-        </ul>
+<!-- ── The loop ─────────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper" id="loop">
+  <div class="ed-wrap ed-split">
+    <div class="ed-split__head reveal">
+      <p class="ed-eyebrow">The daily loop</p>
+      <h2 class="ed-h2">Five commands. That is the whole method.</h2>
+      <p class="ed-muted">The same five whether a person or an agent is driving —
+         as commands, as slash commands, or as MCP tools. Mentioning a requirement
+         in a test is the link; the matrix writes itself.</p>
+    </div>
+    <ol class="ed-steps">
+      <li class="reveal">
+        <span class="ed-steps__n">1</span>
+        <div><h3><code>specgate status</code></h3>
+          <p>What is open, ordered by what blocks what — and the single next
+             command to run.</p></div>
       </li>
-
-      <li class="journey__stage">
-        <p class="journey__n" aria-hidden="true">2</p>
-        <h3 class="journey__title"><code>specgate new</code></h3>
-        <p class="journey__body">
-          One requirement in one step: its section in <code>spec.md</code> and a
-          tagged scenario. You rewrite the sentence and the three
-          <code>&lt;placeholders&gt;</code>.
-        </p>
-        <ul class="journey__links">
-          <li><a href="./writing-specs.html">Writing specs</a></li>
-        </ul>
+      <li class="reveal">
+        <span class="ed-steps__n">2</span>
+        <div><h3><code>specgate new</code></h3>
+          <p>A requirement and its tagged scenario, in one step. You rewrite the
+             sentence and the three placeholders.</p></div>
       </li>
-
-      <li class="journey__stage">
-        <p class="journey__n" aria-hidden="true">3</p>
-        <h3 class="journey__title"><code>// REQ-007</code></h3>
-        <p class="journey__body">
-          Write the test and the code. A mention of the requirement in the test
-          <em>is</em> the link — there is nothing to declare, and the matrix
-          regenerates itself.
-        </p>
-        <ul class="journey__links">
-          <li><a href="./concepts.html">How Specgate thinks</a></li>
-        </ul>
+      <li class="reveal">
+        <span class="ed-steps__n">3</span>
+        <div><h3><code>// REQ-007</code></h3>
+          <p>Write the test and the code. A test that mentions the requirement
+             <em>is</em> the link — nothing to declare.</p></div>
       </li>
-
-      <li class="journey__stage">
-        <p class="journey__n" aria-hidden="true">4</p>
-        <h3 class="journey__title"><code>specgate done</code></h3>
-        <p class="journey__body">
-          Runs the gate for that requirement and marks it Implemented only if it
-          passes. A requirement it closes is one CI will not reopen.
-        </p>
-        <ul class="journey__links">
-          <li><a href="./validating.html">Validating</a></li>
-        </ul>
+      <li class="reveal">
+        <span class="ed-steps__n">4</span>
+        <div><h3><code>specgate done</code></h3>
+          <p>Runs the gate for that requirement and marks it Implemented only if it
+             passes. What it closes, CI will not reopen.</p></div>
       </li>
-
-      <li class="journey__stage">
-        <p class="journey__n" aria-hidden="true">5</p>
-        <h3 class="journey__title"><code>specgate check</code></h3>
-        <p class="journey__body">
-          The whole gate, then your tests. This is what CI runs, and the last
-          thing you run before asking for review.
-        </p>
-        <ul class="journey__links">
-          <li><a href="./automation.html">Wire it into CI</a></li>
-        </ul>
+      <li class="reveal">
+        <span class="ed-steps__n">5</span>
+        <div><h3><code>specgate check</code></h3>
+          <p>The whole gate, then your tests. This is what CI runs, and the last
+             thing you run before asking for review.</p></div>
       </li>
     </ol>
-
-    <p class="band__lede band__lede--mid">
-      Hand the loop to an agent. <code>specgate harness run</code> takes each
-      pending requirement in its own worktree, runs the gate on the result, and
-      stops if the gate says no. The branch is yours to merge or throw away.
-    </p>
-
-    <!-- csda:diagram harness-loop -->
   </div>
 </section>
 
-<!-- ── For your team ────────────────────────────────────────────────────── -->
-<section class="band band--soft">
-  <div class="wrap">
-    <header class="sec">
-      <p class="sec__label">For your team</p>
-      <h2>Everyone knows their part</h2>
-      <p class="sec__lede">
-        A gate only helps if the team knows what to do with it on the first day.
-        Four roles, one page each.
-      </p>
-    </header>
-
-    <div class="grid grid--four">
-      <article>
-        <h3>The author</h3>
-        <p>One requirement, one pull request: <code>new</code>, a real scenario, a
-           test that mentions it, <code>done</code>, <code>check</code> — and commit
-           what <code>check</code> regenerated.</p>
-        <p><a href="./first-pr.html">Your team's first PR →</a></p>
+<!-- ── Status ───────────────────────────────────────────────────────────── -->
+<section class="ed-band">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <h2 class="ed-h2">A status is a promise. The gate collects on it.</h2>
+      <p class="ed-muted">Green on the day you adopt it, stricter with every
+         requirement you deliver — and a green run always says what it did not
+         check.</p>
+    </div>
+    <div class="ed-cards">
+      <article class="ed-card reveal">
+        <p class="ed-card__tag">Draft</p>
+        <h3>Owes nothing</h3>
+        <p>Except honesty: no scenario without steps, no keyword Cucumber would
+           read as prose.</p>
       </article>
-      <article>
-        <h3>The reviewer</h3>
-        <p>Reads the requirement, the scenario and the test — not the matrix. The
-           gate proved the mechanical part; a test that names a requirement and
-           does not test it is the reviewer's catch.</p>
-        <p><a href="./first-pr.html#the-reviewer-what-to-read-what-to-skip">What to read →</a></p>
+      <article class="ed-card reveal">
+        <p class="ed-card__tag">In progress</p>
+        <h3>Owes a test</h3>
+        <p>One that mentions it — the moment work on it has started.</p>
       </article>
-      <article>
-        <h3>CI</h3>
-        <p><code>specgate ci init</code> detects GitHub, GitLab, Azure or Jenkins and
-           writes the job, pinned to the version that wrote it. Every failure
-           carries a code and a <code>fix</code>.</p>
-        <p><a href="./automation.html">CI and automation →</a></p>
-      </article>
-      <article>
-        <h3>The agent</h3>
-        <p>Slash commands for nine agents, or the MCP server inside the package.
-           Tools that would rewrite the spec refuse unless a change is open.</p>
-        <p><a href="./mcp.html">The MCP server →</a></p>
+      <article class="ed-card ed-card--deep reveal">
+        <p class="ed-card__tag">Implemented · Verified · Released</p>
+        <h3>Owes everything</h3>
+        <p>Every file it points at exists, and its scenario has real steps.</p>
       </article>
     </div>
   </div>
 </section>
 
+<!-- ── Two ways in ──────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper">
+  <div class="ed-wrap ed-split">
+    <div class="ed-split__head reveal">
+      <p class="ed-eyebrow">Adopt</p>
+      <h2 class="ed-h2">On the repository you already have.</h2>
+      <p class="ed-muted"><code>specgate init</code> looks before it writes:
+         where there is code it adopts the repository, where there is none it
+         scaffolds a project. The gate is the same either way.</p>
+    </div>
+    <div class="ed-paths">
+      <article class="ed-path reveal">
+        <h3>Existing codebase</h3>
+        <p>It sees the build file — <code>pom.xml</code>, <code>package.json</code>,
+           <code>go.mod</code>, … — proposes the capabilities your layout already
+           implies, and writes the spec beside your code. It touches no source
+           file.</p>
+        <a class="ed-link" href="./first-pr.html">Your team's first PR →</a>
+      </article>
+      <article class="ed-path reveal">
+        <h3>New project</h3>
+        <p>In an empty folder it scaffolds a project wired to CI from the first
+           commit — plus a domain pack if one fits, so the first requirements are
+           arguable rather than blank.</p>
+        <a class="ed-link" href="./domain-packs.html">Domain packs →</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ── For your team ────────────────────────────────────────────────────── -->
+<section class="ed-band">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <p class="ed-eyebrow">For your team</p>
+      <h2 class="ed-h2">Everyone knows their part.</h2>
+    </div>
+    <div class="ed-roles">
+      <article class="reveal">
+        <h3>The author</h3>
+        <p>One requirement, one pull request: <code>new</code>, a real scenario, a
+           test that mentions it, <code>done</code>, <code>check</code>.</p>
+        <a class="ed-link" href="./first-pr.html#the-author-one-requirement-one-pull-request">Write the PR →</a>
+      </article>
+      <article class="reveal">
+        <h3>The reviewer</h3>
+        <p>Reads the requirement, the scenario and the test — not the matrix. A
+           test that names a requirement and does not test it is the catch.</p>
+        <a class="ed-link" href="./first-pr.html#the-reviewer-what-to-read-what-to-skip">What to read →</a>
+      </article>
+      <article class="reveal">
+        <h3>CI</h3>
+        <p><code>specgate ci init</code> detects GitHub, GitLab, Azure or Jenkins and
+           writes the job, pinned to its version.</p>
+        <a class="ed-link" href="./automation.html">CI and automation →</a>
+      </article>
+      <article class="reveal">
+        <h3>The agent</h3>
+        <p>Slash commands for nine agents, or the MCP server inside the package.
+           Tools that would rewrite the spec refuse unless a change is open.</p>
+        <a class="ed-link" href="./mcp.html">The MCP server →</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ── The harness ──────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <p class="ed-eyebrow">Unattended delivery</p>
+      <h2 class="ed-h2">Hand the loop to an agent.</h2>
+      <p class="ed-muted"><code>specgate harness run</code> takes each pending
+         requirement in its own git worktree, runs the gate on the result, and
+         stops if the gate says no. It never merges — the branch is yours to merge
+         or throw away. The agent is any shell command; there is no runtime or SDK.</p>
+    </div>
+
+    <!-- csda:diagram harness-loop -->
+
+    <figure class="code ed-agents" data-lang="bash">
+      <figcaption class="code__head"><span class="code__lang">Any agent CLI</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
+      <pre><code class="language-bash">specgate harness run --agent "claude -p &lt; {prompt_file}"
+specgate harness run --agent "aider --yes --message-file {prompt_file}"
+specgate harness run --agent "./my-wrapper.sh {prompt_file}"</code></pre>
+    </figure>
+    <p class="ed-tools">
+      <span>Wired from one definition</span>
+      <code>claude</code><code>claude-plugin</code><code>cursor</code><code>copilot</code><code>windsurf</code><code>aider</code><code>gemini</code><code>cline</code><code>codex</code><code>antigravity</code>
+    </p>
+    <p class="ed-actions">
+      <a class="ed-link" href="./harness.html">How the harness works →</a>
+      <a class="ed-link" href="./agent-setup.html">Choosing your agent →</a>
+    </p>
+  </div>
+</section>
+
 <!-- ── What it prints ───────────────────────────────────────────────────── -->
-<section class="band band--soft" id="watch">
-  <div class="wrap">
-    <h2>What it actually prints</h2>
-    <p class="band__lede">
+<section class="ed-band ed-band--paper" id="watch">
+  <div class="ed-wrap">
+    <p class="ed-eyebrow">Not a mockup</p>
+    <h2 class="ed-h2">What it actually prints.</h2>
+    <p class="ed-muted">
       Not a mockup. This is stdout from a real run — scaffold, pack, plan,
       harness, gate — captured by <code>npm run docs:terminal</code> and committed
       to the repository. A test checks it was recorded from this version of the CLI.
@@ -458,126 +422,43 @@ max_attempts: 1
 </section>
 
 
-<!-- ── Agents ───────────────────────────────────────────────────────────── -->
-<section class="band">
-  <div class="wrap">
-    <h2>Bring your own agent</h2>
-    <p class="band__lede">
-      No agent runtime, no SDK dependency. The agent is any shell command
-      containing <code>{prompt_file}</code> — the harness writes the prompt,
-      substitutes the path, and reads the exit code plus the gate result.
-    </p>
-
-    <figure class="code" data-lang="bash">
-      <button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button>
-      <pre><code class="language-bash">specgate harness run --agent "claude -p &lt; {prompt_file}"
-specgate harness run --agent "aider --yes --message-file {prompt_file}"
-specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</code></pre>
-    </figure>
-
-    <p>
-      Commit the commands your team uses in <code>.harness/profiles.yaml</code>
-      and pick one by name — or let a profile select itself per requirement, so
-      an infrastructure task and a domain task get different tools and different
-      allowances in the same run.
-    </p>
-
-    <p class="tools">
-      <span>Wired from one definition:</span>
-      <code>claude</code><code>claude-plugin</code><code>cursor</code><code>copilot</code><code>windsurf</code><code>aider</code><code>gemini</code><code>cline</code><code>codex</code><code>antigravity</code>
-    </p>
-
-    <p><a class="button" href="./agent-setup.html">Choosing your agent →</a>
-       <a class="button button--quiet" href="./harness.html">How the harness works →</a>
-       <a class="button button--quiet" href="./agents.html">Wiring agent tools →</a></p>
-  </div>
-</section>
 
 <!-- ── What the gate checks ─────────────────────────────────────────────── -->
-<section class="band band--soft" id="evidence">
-  <div class="wrap">
-    <h2>What the gate actually checks</h2>
-    <p class="band__lede">
-      Every item here exists because the loop was caught approving work it had
-      not checked. They are not features; they are scars.
-    </p>
-
-    <ul class="scars">
-      <li>
-        <strong>27 of 28</strong> scenarios in the shipped domain packs executed
-        nothing. Gherkin keywords are case-sensitive, so <code>GIVEN</code> parsed
-        as prose — no error, no warning, and an empty scenario passes. The
-        in-house linter matched case-insensitively and called all 28 fine.
-      </li>
-      <li>
-        An agent that could not pass a scenario <strong>rewrote the scenario</strong>
-        as <code>Given nothing / Then nothing is asserted</code> and got
-        <code>1 passed &middot; 0 failed</code>. The branch was published and the
-        requirement closed.
-      </li>
-      <li>
-        <strong>10 of 11</strong> packs failed the JSON schema while all 11 passed
-        <code>pack lint --strict</code>. A schema that declares authority it does
-        not exercise is worse than none.
-      </li>
-    </ul>
-
-    <p class="scars__note">
-      All three were found by running the tool against a real project and reading
-      the output, not by reasoning about it. Each is now a test that fails when
-      the guard is removed.
-    </p>
-
-    <div class="grid">
-      <article>
-        <h3>The scenario can fail</h3>
-        <p>Gherkin keywords are case-sensitive, so <code>GIVEN</code> is prose and
-           the scenario runs zero steps — and passes. The gate refuses a scenario
-           Cucumber would see as empty.</p>
-      </article>
-      <article>
-        <h3>The scenario actually ran</h3>
-        <p>A filter that matches nothing exits 0. When the runner is Cucumber, the
-           gate reads its message protocol instead of its exit code.</p>
-      </article>
-      <article>
-        <h3>The agent did not edit the contract</h3>
-        <p>An agent that cannot pass a scenario can relax the scenario. Touching
-           <code>spec.md</code>, <code>features/**</code> or the rules fails the
-           attempt, with the diff fed back.</p>
-      </article>
-      <article>
-        <h3>The diff touched what was promised</h3>
-        <p>The matrix names a test and a production artifact. A green diff that
-           never goes near them is reported, and fails under
-           <code>--strict-artifacts</code>.</p>
-      </article>
-      <article>
-        <h3>The requirement was worth attempting</h3>
-        <p>No feature file, unmet dependencies, or a status of
-           <code>Needs Clarification</code> — checked before an agent is paid for,
-           not after.</p>
-      </article>
-      <article>
-        <h3>The run has a ceiling</h3>
-        <p><code>--budget-seconds</code> and <code>--max-requirements</code>. Running
-           out is not an error: the run stops cleanly and still reports what it
-           did.</p>
-      </article>
+<section class="ed-band" id="evidence">
+  <div class="ed-wrap ed-split">
+    <div class="ed-split__head reveal">
+      <p class="ed-eyebrow">Evidence</p>
+      <h2 class="ed-h2">Every check is a scar.</h2>
+      <p class="ed-muted">Each one exists because the loop was caught approving
+         work it had not checked — found by running the tool on real projects,
+         and now a test that fails when the guard is removed.</p>
     </div>
+    <ul class="ed-scars">
+      <li class="reveal"><strong>27 of 28</strong> scenarios in the shipped domain
+        packs executed nothing. Gherkin keywords are case-sensitive, so
+        <code>GIVEN</code> parsed as prose — and an empty scenario passes. The gate
+        now refuses a scenario Cucumber would see as empty.</li>
+      <li class="reveal">An agent that could not pass a scenario
+        <strong>rewrote the scenario</strong> and got <code>1 passed · 0 failed</code>.
+        Now touching <code>spec.md</code> or <code>features/**</code> fails the
+        attempt, with the diff fed back.</li>
+      <li class="reveal"><code>done</code> printed ✔ over a scenario of template
+        steps and no test, and the next <code>check</code> — the one in CI —
+        failed. Now <code>done</code> runs the gate first and writes nothing
+        while it fails.</li>
+    </ul>
   </div>
 </section>
 
-<!-- ── Where it sits ────────────────────────────────────────────────────── -->
-<section class="band">
-  <div class="wrap">
-    <h2>How it compares</h2>
-    <p class="band__lede">
-      OpenSpec is the closest thing and the one worth reading first. The honest
-      summary: it is smaller, and smaller is a feature.
-    </p>
-
-    <div class="table-wrap">
+<!-- ── How it compares ──────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <h2 class="ed-h2">How it compares.</h2>
+      <p class="ed-muted">OpenSpec is the closest tool and the one worth reading
+         first. The honest summary: it is smaller, and smaller is a feature.</p>
+    </div>
+    <div class="table-wrap reveal">
       <table class="compare">
         <thead>
           <tr><th>&nbsp;</th><th>Specgate</th><th>OpenSpec</th><th>Spec Kit</th><th>A wiki page</th></tr>
@@ -589,222 +470,105 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"   # anything else</
           <tr><th>Versioned, installable domain packs</th><td class="y">yes</td><td class="n">no</td><td class="n">no</td><td class="n">no</td></tr>
           <tr><th>Unattended harness with a gate</th><td class="y">yes</td><td class="n">no</td><td class="n">no</td><td class="n">no</td></tr>
           <tr><th>MCP server and language server</th><td class="y">both shipped</td><td class="n">no</td><td class="n">no</td><td class="n">no</td></tr>
-          <tr><th>Concepts you have to learn</th><td class="m">more</td><td class="y">fewer</td><td class="y">fewer</td><td class="y">none</td></tr>
           <tr><th>Commands to learn for the daily loop</th><td class="m">five</td><td class="y">three</td><td class="m">a workflow</td><td class="y">none</td></tr>
         </tbody>
       </table>
     </div>
-
-    <p class="compare__note">
-      If you want the change loop and nothing else, or your specs are prose
-      rather than a domain model, OpenSpec is the better tool and the table says
-      so. We took the delta format and the audited agent contract from their
-      design.
-      <a href="./comparisons.html">The full comparison, including where we lose →</a>
-    </p>
-  </div>
-</section>
-
-<!-- ── Running it for real ──────────────────────────────────────────────── -->
-<section class="band band--soft">
-  <div class="wrap">
-    <h2>The parts a team asks about second</h2>
-    <p class="band__lede">
-      The specification layer is the interesting half. This is the other half —
-      the answers that decide whether it survives contact with a real
-      organisation.
-    </p>
-
-    <div class="grid">
-      <article>
-        <h3>It tells you when its own green means nothing</h3>
-        <p>Right after <code>init</code>, <code>check</code> passes — and says
-           so plainly: <em>&ldquo;this certifies the skeleton, not the code.&rdquo;</em>
-           A gate that banks a meaningless green is worse than no gate, so this one
-           reports what it did <strong>not</strong> check: how many rows are still
-           <code>Draft</code> and therefore exempt, and whether anything ran your
-           tests at all.</p>
-      </article>
-      <article>
-        <h3>It runs in your CI, not its own</h3>
-        <p><code>specgate ci init</code> writes the workflow for GitHub Actions,
-           GitLab, Azure Pipelines or Jenkins — detected from the repository. The
-           gate is one command with a JSON mode, so it fits whatever you already
-           have.</p>
-      </article>
-      <article>
-        <h3>Your issue tracker stays yours</h3>
-        <p><code>specgate alm sync</code> pushes requirements to Jira, Azure Boards,
-           GitHub or GitLab and <code>specgate alm pull</code> brings status back. The
-           board is a mirror; it never gets to define what a requirement
-           <em>is</em>.</p>
-      </article>
-      <article>
-        <h3>An audit surface of one package</h3>
-        <p>Zero runtime dependencies. A CycloneDX SBOM is generated on every push
-           and kept 90 days, the licence policy is a build gate, and every domain
-           pack is pinned by content digest in <code>.specops.lock</code>.</p>
-      </article>
-      <article>
-        <h3>In the editor, and in the agent</h3>
-        <p>The MCP server ships in the package —
-           <code>specgate mcp install --client claude</code>. A language server and
-           VS Code and IntelliJ extensions are built from this repository, not yet
-           on either marketplace.</p>
-      </article>
-    </div>
-
-    <p><a class="button" href="./automation.html">CI and automation →</a>
-       <a class="button button--quiet" href="./alm.html">Issue trackers →</a>
-       <a class="button button--quiet" href="./supply-chain.html">Supply chain →</a></p>
+    <p class="ed-muted ed-note">If you want the change loop and nothing else,
+       OpenSpec is the better tool and the table says so.
+       <a class="ed-link" href="./comparisons.html">The full comparison, including where we lose →</a></p>
   </div>
 </section>
 
 <!-- ── FAQ ──────────────────────────────────────────────────────────────── -->
-<section class="band">
-  <div class="wrap wrap--narrow">
-    <h2>Questions people actually ask</h2>
-
-    <details>
-      <summary>Do I have to use DDD, hexagonal architecture and CQRS?</summary>
-      <p>No. Patterns are optional; principles are not (ADR-0022). Pick an
-         architecture profile and you get only the vocabulary it declares — a
-         static site is not handed six documents describing aggregates it does
-         not have.</p>
-    </details>
-
-    <details>
-      <summary>Does it work on a repository that already exists?</summary>
-      <p>Yes — <code>specgate init</code> adopts it in place, without
-         touching your code. Checks that a legacy repository cannot pass yet are
-         flags, and <code>specgate doctor</code> reports them as advisories with a
-         fix, so adoption is a door rather than a wall.</p>
-    </details>
-
-    <details>
-      <summary>Does every pull request need a new requirement?</summary>
-      <p>No. A bugfix or a refactor that does not change contracted behaviour
-         adds none; the gate only asks for what delivered requirements owe.
-         <a href="./first-pr.html">Your team's first PR</a> covers the rest.</p>
-    </details>
-
-    <details>
-      <summary>Can the agent rewrite the spec to pass its own test?</summary>
-      <p>Not quietly. Over MCP, tools that write the specification refuse unless
-         a change is open; in the harness, touching <code>spec.md</code> or
-         <code>features/**</code> fails the attempt with the diff fed back.</p>
-    </details>
-
-    <details>
-      <summary>Which AI agent does it need?</summary>
-      <p>None in particular, and none at all if you do not want one. Every
-         command works by hand. The harness takes any shell command; there is no
-         SDK and no vendor lock.</p>
-    </details>
-
-    <details>
-      <summary>Will the harness merge things for me?</summary>
-      <p>Never. It produces a branch per requirement and stops. Merging is a
-         judgement, and a tool that merges its own work removes the only place a
-         person was still reviewing it.</p>
-    </details>
-
-    <details>
-      <summary>What does it cost to run?</summary>
-      <p>Whatever your agent costs — the harness measures wall-clock, because an
-         agent is any shell command and only the agent knows its token spend. A
-         profile may declare a cost hint, and the report multiplies it out and
-         says it is declared rather than measured.</p>
-    </details>
-
-    <details>
-      <summary>How is this different from OpenSpec or Spec Kit?</summary>
-      <p>Mostly in what happens after the specification is written. See the
-         <a href="./comparisons.html">comparison</a>, which is honest about where
-         the others are the better choice.</p>
-    </details>
-
-    <p><a class="button button--quiet" href="./faq.html">All questions →</a></p>
-  </div>
-</section>
-
-<!-- ── Resources ────────────────────────────────────────────────────────── -->
-<section class="band">
-  <div class="wrap">
-    <header class="sec">
-      <p class="sec__label">Resources</p>
-      <h2>Keep reading</h2>
-    </header>
-
-    <div class="res">
-      <a class="res__card" href="./concepts.html">
-        <strong>How Specgate thinks</strong>
-        <span>Six ideas that explain every command, error and flag.</span>
-      </a>
-      <a class="res__card" href="./tutorial.html">
-        <strong>Tutorial</strong>
-        <span>Smart Parking, from a blank folder to a delivered requirement.</span>
-      </a>
-      <a class="res__card" href="./case-studies/case-1.html">
-        <strong>Worked example</strong>
-        <span>A brownfield repository adopted end to end.</span>
-      </a>
-      <a class="res__card" href="./articles/specs-that-cannot-lie.html">
-        <strong>The gate that approved work it never checked</strong>
-        <span>What went wrong, and what the gate does about it now.</span>
-      </a>
-      <a class="res__card" href="./packs/">
-        <strong>Domain packs</strong>
-        <span>Curated requirement sets you can install and argue with.</span>
-      </a>
-      <a class="res__card" href="./supply-chain.html">
-        <strong>Supply chain</strong>
-        <span>SBOM, provenance and the licence allow-list.</span>
-      </a>
-      <a class="res__card" href="./mcp.html">
-        <strong>The MCP server</strong>
-        <span>The daily loop as tools for Claude Desktop and Cursor.</span>
-      </a>
+<section class="ed-band">
+  <div class="ed-wrap ed-split">
+    <div class="ed-split__head reveal">
+      <h2 class="ed-h2">Questions teams ask first.</h2>
+      <p><a class="ed-link" href="./faq.html">All questions →</a></p>
+    </div>
+    <div class="ed-faq">
+      <details>
+        <summary>Does it work on a repository that already exists?</summary>
+        <p>Yes, that is the common case. <code>specgate init</code> adopts it in
+           place without touching your code, and the gate is green the same day:
+           a Draft requirement owes nothing yet.</p>
+      </details>
+      <details>
+        <summary>Does every pull request need a new requirement?</summary>
+        <p>No. A bugfix or a refactor that does not change contracted behaviour
+           adds none; the gate only asks for what delivered requirements owe.</p>
+      </details>
+      <details>
+        <summary>Do we have to use DDD?</summary>
+        <p>No. Patterns are optional; principles are not. Pick an architecture
+           profile and you get only the vocabulary it declares.</p>
+      </details>
+      <details>
+        <summary>Can the agent rewrite the spec to pass its own test?</summary>
+        <p>Not quietly. Over MCP, tools that write the specification refuse unless
+           a change is open; in the harness, touching the spec fails the attempt.</p>
+      </details>
+      <details>
+        <summary>Will the harness merge things for me?</summary>
+        <p>Never. It leaves one branch per requirement and stops. Merging is a
+           judgement, and it stays yours.</p>
+      </details>
     </div>
   </div>
 </section>
 
 <!-- ── Close ────────────────────────────────────────────────────────────── -->
-<section class="band band--soft close">
-  <div class="wrap wrap--narrow">
-    <h2>Start on your repository</h2>
-    <figure class="code" data-lang="bash">
-      <button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button>
-      <pre><code class="language-bash">npm i -g @rsaglobaltech/specgate
-cd your-repo                 # or an empty folder
-specgate init
-specgate ci init
+<section class="ed-close">
+  <div class="ed-wrap ed-split">
+    <h2 class="ed-display ed-display--close reveal">Start on your repository today.</h2>
+    <div class="reveal">
+      <figure class="code ed-close__code" data-lang="bash">
+        <figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
+        <pre><code class="language-bash">npm i -g @rsaglobaltech/specgate
+specgate init        # adopts it; touches no code
+specgate ci init     # the gate in your CI
 specgate check</code></pre>
-    </figure>
-    <p class="hero__cta">
-      <a class="button button--primary" href="./getting-started.html">Getting started</a>
-      <a class="button" href="./quickstart.html">I was handed a repo</a>
-    </p>
+      </figure>
+      <p class="ed-actions">
+        <a class="ed-btn ed-btn--light" href="./getting-started.html">Get started</a>
+        <a class="ed-btn ed-btn--ghost" href="./docs.html">Read the docs</a>
+      </p>
+    </div>
   </div>
 </section>
 
 </main>
 
-<footer class="foot">
-  <div class="wrap">
-    <p>
-      <strong>Specgate</strong> · MIT ·
-      <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a> ·
-      <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a> ·
-      <a href="./docs.html">Docs</a> ·
-      <a href="./supply-chain.html">Supply chain</a> ·
+<footer class="ed-foot">
+  <div class="ed-wrap ed-foot__grid">
+    <div>
+      <p class="ed-foot__brand"><span aria-hidden="true">⬡</span> Specgate</p>
+      <p class="ed-muted">Specifications that are checked, not admired. MIT.</p>
+    </div>
+    <nav aria-label="Product">
+      <p class="ed-foot__h">Product</p>
+      <a href="./concepts.html">Concepts</a>
+      <a href="./packs/">Packs</a>
+      <a href="./mcp.html">MCP server</a>
+      <a href="./comparisons.html">Compare</a>
+    </nav>
+    <nav aria-label="Learn">
+      <p class="ed-foot__h">Learn</p>
+      <a href="./quickstart.html">Quickstart</a>
+      <a href="./tutorial.html">Tutorial</a>
+      <a href="./faq.html">FAQ</a>
+      <a href="./commands.html">Command reference</a>
+    </nav>
+    <nav aria-label="Project">
+      <p class="ed-foot__h">Project</p>
+      <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+      <a href="./supply-chain.html">Supply chain</a>
       <a href="./release-process.html">Releases</a>
-    </p>
-    <p class="foot__note">
-      Documentation for v0.13.0. Every number on this page is generated from the
-      repository, not typed by hand.
-    </p>
+    </nav>
   </div>
+  <p class="ed-wrap ed-foot__note">Documentation for v0.13.0. Every number on this page is generated from the repository, not typed by hand.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>
@@ -824,6 +588,36 @@ specgate check</code></pre>
   </div>
 </div>
 
+<script>
+  // Reveal on scroll and a slow parallax on the hero. Both are decoration:
+  // without JavaScript, or with reduced motion, everything is simply there.
+  (function () {
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var items = document.querySelectorAll(".reveal");
+    if (reduce || !("IntersectionObserver" in window)) {
+      items.forEach(function (el) { el.classList.add("is-in"); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -8% 0px" });
+    items.forEach(function (el) { io.observe(el); });
+    var layers = document.querySelectorAll("[data-parallax]");
+    var ticking = false;
+    function move() {
+      var y = window.scrollY;
+      layers.forEach(function (el) {
+        el.style.setProperty("--py", (y * parseFloat(el.dataset.parallax)).toFixed(1) + "px");
+      });
+      ticking = false;
+    }
+    window.addEventListener("scroll", function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(move); }
+    }, { passive: true });
+  })();
+</script>
 <script src="./assets/docs.js" defer></script>
 </body>
 </html>
