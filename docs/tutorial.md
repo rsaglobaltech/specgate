@@ -1029,8 +1029,8 @@ The `mcp-spec-driven` server exposes `plan`, `mark_requirement_done`,
 specgate agents init                     # or --tool claude,cursor
 ```
 
-That writes `/specgate:explore`, `/specgate:propose`, `/specgate:verify`, `/specgate:apply`,
-`/specgate:archive` and `/specgate:onboard`, plus the instruction file each tool reads
+That writes `/specgate:explore`, `/specgate:new`, `/specgate:apply`, `/specgate:verify`,
+`/specgate:done`, `/specgate:propose`, `/specgate:archive` and `/specgate:onboard`, plus the instruction file each tool reads
 — `.cursor/rules/`, `.github/copilot-instructions.md`, `CONVENTIONS.md` and so
 on. They are thin on purpose: rather than restating the delta grammar, which
 would be stale the moment it moved, they call `specgate change instructions

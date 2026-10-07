@@ -163,6 +163,15 @@ aprender para el 80 % del equipo.
 
 ### Fase 2 — El agente es la interfaz (1–2 semanas)
 
+**Hecho 2026-10-07**, rama `feat/agent-daily-loop`: los comandos del agente son
+el flujo diario — `/specgate:explore` (status), `new`, `apply`, `verify`
+(check), `done` — más `propose`/`archive` para lo ya entregado y `onboard`
+(init). Se conservan los nombres existentes para no dejar ficheros huérfanos
+en quien actualice. Las reglas enseñan que nombrar `REQ-NNN` en un test o en
+el código **es** el enlace. El hook `Stop` regenera la matriz antes de juzgar.
+No se hizo: fusionar `AI_RULES.md` en `AGENTS.md` (cambio de formato que
+merece su propia decisión).
+
 **Objetivo:** el desarrollador habla con su agente; el CLI es lo que el agente y
 la CI ejecutan.
 
@@ -218,6 +227,12 @@ la CI ejecutan.
       Gherkin sólo si el repo tiene Cucumber/behave/SpecFlow, o con `--gherkin`.
 
 ### Fase 5 — El proceso se ajusta al tamaño del cambio (3–4 días)
+
+**Descartada 2026-10-07, tras medir:** la puerta que genera `ci init` es
+`validate --strict` y **no exige un requisito nuevo por PR** — un bugfix sin
+requisito ya pasa hoy. `Spec: none` resolvería un problema que no existe. Si el
+piloto muestra que alguien *cree* que lo exige, es un problema de
+documentación, no de herramienta.
 
 Respuesta directa a la crítica «waterfall» que reciben todas las herramientas SDD.
 

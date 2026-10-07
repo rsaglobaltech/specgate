@@ -3,7 +3,7 @@
  * `specgate agents init --tool <names>` — wire the spec-driven loop into the agent
  * tools a team already uses.
  *
- * One definition of the six steps (`./commands`), rendered into each tool's
+ * One definition of the steps (`./commands`), rendered into each tool's
  * own convention. The generated files are thin on purpose: they tell the agent
  * to run `specgate change instructions`, they do not restate the rules. A markdown
  * file that copies the delta grammar is out of date the moment the grammar
@@ -126,7 +126,7 @@ function cliVersion(): string {
 }
 
 /**
- * The Claude Code plugin: the six steps as slash commands, the MCP server, and
+ * The Claude Code plugin: the steps as slash commands, the MCP server, and
  * the gate as a `Stop` hook.
  *
  * The hook is the part no other target can offer. Every other tool here gets

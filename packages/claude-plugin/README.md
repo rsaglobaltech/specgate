@@ -6,7 +6,7 @@ wired from, so editing here makes them drift.
 
 ## What it adds
 
-- **6 slash commands** — `/specgate:explore`, `/specgate:propose`, `/specgate:verify`, `/specgate:apply`, `/specgate:archive`, `/specgate:onboard`.
+- **8 slash commands** — `/specgate:explore`, `/specgate:new`, `/specgate:apply`, `/specgate:verify`, `/specgate:done`, `/specgate:propose`, `/specgate:archive`, `/specgate:onboard`.
 - **The spec tree over MCP** — read specs, list requirements and run
   `validate` as tools rather than by scraping terminal output.
 - **The gate as a `Stop` hook** — `specgate validate --strict` runs when the
