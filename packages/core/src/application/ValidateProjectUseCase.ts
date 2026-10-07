@@ -16,6 +16,12 @@ export interface ValidateProjectOptions {
   strictTdd?: boolean;
   /** `spec.md`, needed only by the strict-TDD check that every REQ it names has a row. */
   specContent?: string | null;
+  /**
+   * The requirement `done` is about to close (`validate --delivering`). Its row
+   * still says Draft while the gate runs, so without this the TDD rules let
+   * `done` approve what the next `check` refused.
+   */
+  delivering?: string;
 }
 
 export interface ValidateMatrixResult {
@@ -148,18 +154,26 @@ export class ValidateProjectUseCase {
 
       if (!strictTdd) continue;
 
-      if (testArtifact.toUpperCase() === "TBD" && status && POST_DRAFT_STATUS.has(status)) {
+      // `Deprecated` owes nothing: its files may be gone on purpose, and
+      // `req rm` past Draft points at Deprecated — a TDD-1 here made the
+      // advice a loop.
+      const judged =
+        opts.delivering && requirementId === opts.delivering && status === "Draft"
+          ? "Implemented"
+          : status;
+      const owesTdd = judged && POST_DRAFT_STATUS.has(judged) && judged !== "Deprecated";
+      if (testArtifact.toUpperCase() === "TBD" && owesTdd) {
         report.addError(
           "strict_tdd_violation",
-          `[TDD-1] Test artifact is TBD but status is '${status}' (scenario: ${scenarioId || "(no id)"})`,
+          `[TDD-1] Test artifact is TBD but status is '${judged}' (scenario: ${scenarioId || "(no id)"})`,
           { target: "TDD-1" }
         );
       }
 
-      if (mode === "rich" && !scenarioId && status && status !== "Draft") {
+      if (mode === "rich" && !scenarioId && owesTdd) {
         report.addError(
           "strict_tdd_violation",
-          `[TDD-2] Traceability row missing Scenario ID with status '${status}' (requirement: ${requirementId || "(none)"})`,
+          `[TDD-2] Traceability row missing Scenario ID with status '${judged}' (requirement: ${requirementId || "(none)"})`,
           { target: "TDD-2" }
         );
       }
@@ -204,7 +218,7 @@ export class ValidateProjectUseCase {
             target: reqId,
             file: "spec.md",
             fix:
-              `Write its prose — \`specgate req add\` does it for you, and \`## ${reqId} — ` +
+              `Write its prose — \`specgate new\` does it for a new one, and \`## ${reqId} — ` +
               `<title>\` by hand works too. Until then the harness prompt cannot tell an ` +
               `agent what ${reqId} requires.`,
           }

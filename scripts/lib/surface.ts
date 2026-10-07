@@ -90,6 +90,13 @@ interface Subcommand {
    */
   mcp?: string | boolean;
   /**
+   * The positional argument the MCP tool must declare, for a command with no
+   * JSON contract to carry it (`json.args` does otherwise): `change new`'s id,
+   * `req link`'s requirement. Without it the tool's schema named only
+   * `projectDir`, and an agent had no way to know the id was required.
+   */
+  mcpArg?: string;
+  /**
    * True when this command may write a path `WriteScope.DEFAULT_PROTECTED_PATHS`
    * protects — `spec.md`, `AI_RULES.md`, `features/**\/*.feature`,
    * `docs/specs/**`, `.specops.lock` or `harness.config.yaml`.
@@ -116,6 +123,13 @@ interface Command {
    * runtime — the link is a declaration both sides make and a test compares.
    */
   mcp?: string | boolean;
+  /**
+   * The positional argument the MCP tool must declare, for a command with no
+   * JSON contract to carry it (`json.args` does otherwise): `change new`'s id,
+   * `req link`'s requirement. Without it the tool's schema named only
+   * `projectDir`, and an agent had no way to know the id was required.
+   */
+  mcpArg?: string;
   /**
    * True when this command may write a path `WriteScope.DEFAULT_PROTECTED_PATHS`
    * protects — `spec.md`, `AI_RULES.md`, `features/**\/*.feature`,
@@ -342,10 +356,10 @@ export const SURFACE: Command[] = [
     name: "req",
     script: ["req.js"],
     subcommands: [
-      { name: "add", editsContract: true },
-      { name: "link", editsContract: true },
-      { name: "done", editsContract: true },
-      { name: "rm", editsContract: true },
+      { name: "add", editsContract: true, mcpArg: "title" },
+      { name: "link", editsContract: true, mcpArg: "requirement" },
+      { name: "done", editsContract: true, mcpArg: "requirement" },
+      { name: "rm", editsContract: true, mcpArg: "requirement" },
       { name: "list" },
     ],
     help: {
@@ -370,7 +384,7 @@ export const SURFACE: Command[] = [
     name: "change",
     script: ["change", "cli.js"],
     subcommands: [
-      { name: "new", editsContract: true },
+      { name: "new", editsContract: true, mcpArg: "id" },
       { name: "list", json: { key: "changes", gate: false } },
       { name: "show", json: { key: "change", gate: false, args: "<id>" } },
       { name: "status", json: { key: "artifacts", gate: false } },

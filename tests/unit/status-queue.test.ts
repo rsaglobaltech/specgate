@@ -58,10 +58,10 @@ test("a requirement whose test exists is next, by id, through the gate", () => {
 
     const out = cli("status", "--project-dir", dir).stdout;
     assert.match(out, /Ready to close/);
-    assert.match(out, /Next\s+specgate done REQ-002 --strict/);
+    assert.match(out, /Next\s+specgate done REQ-002/);
 
     const doc = JSON.parse(cli("status", "--project-dir", dir, "--json").stdout);
-    assert.equal(doc.nextCommand, "specgate done REQ-002 --strict");
+    assert.equal(doc.nextCommand, "specgate done REQ-002");
     const req = doc.requirements.find((r) => r.id === "REQ-002");
     assert.equal(req.title, "Totals are rounded half-up");
     assert.equal(req.category, "NEEDS_STATUS_UPDATE");

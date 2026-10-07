@@ -46,9 +46,11 @@ over stdio, calling the CLI that serves it. You never run it yourself.
 ## The tools
 
 Every command is a tool named `specgate_<command>` — `specgate_status`,
-`specgate_ci_init`, `specgate_change_new`, … — and each declares in its input
-schema the argument it needs besides `projectDir`. The ones an agent uses
-every day:
+`specgate_ci_init`, `specgate_change_new`, … A tool whose command takes a
+positional argument declares it in its input schema — `title` for
+`specgate_new`, `requirement` for `mark_requirement_done` and `req_*`, `id` for
+`specgate_change_*`. Commands driven by flags (`specops add`, `pack init`, …)
+are better run from a terminal. The ones an agent uses every day:
 
 | Tool | Does | Arguments |
 |---|---|---|

@@ -194,14 +194,16 @@ for (const command of SURFACE) {
     // `done`'s requirement — declared in the schema. It used to be passed when
     // an agent happened to send it and named nowhere, so no agent knew to.
     const positional = jsonDef && /^<(\w+)>$/.exec(jsonDef.args || "");
-    const argName =
-      positional && positional[1] !== "dir"
+    const declared = subDef ? subDef.mcpArg : cmdDef.mcpArg;
+    const argName = declared
+      ? declared
+      : positional && positional[1] !== "dir"
         ? positional[1] === "REQ"
           ? "requirement"
           : positional[1].toLowerCase()
         : null;
     const argProp = argName
-      ? `,\n      ${argName}: { type: "string", description: ${JSON.stringify(`The ${jsonDef.args} argument of \`specgate ${cmdString}\`.`)} }`
+      ? `,\n      ${argName}: { type: "string", description: ${JSON.stringify(`The <${argName}> argument of \`specgate ${cmdString}\`.`)} }`
       : "";
     const required = argName ? `["projectDir", "${argName}"]` : `["projectDir"]`;
     // `change *` is how a specification is edited on purpose; refusing it would

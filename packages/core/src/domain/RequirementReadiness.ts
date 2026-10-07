@@ -117,7 +117,9 @@ export function requirementReadiness(input: ReadinessInput): Readiness {
           : "the row declares no feature file, so there is no acceptance criterion to satisfy.",
         {
           target,
-          fix: `Write the scenario first: \`specgate req link ${target} --feature <path>\`.`,
+          fix:
+            `Write the scenario first and tag it \`@${target}\`; on a hand-kept matrix, ` +
+            `\`specgate req link ${target} --feature <path>\` records it.`,
         }
       )
     );
@@ -177,7 +179,12 @@ export function requirementReadiness(input: ReadinessInput): Readiness {
         READINESS_CODES.NO_TECHNICAL_ARTIFACT,
         "the row declares no production artifact, so the agent chooses where the " +
           "implementation goes and the matrix will point somewhere else.",
-        { target, fix: `specgate req link ${target} --code <path>` }
+        {
+          target,
+          fix:
+            `Mention ${target} in the file that implements it; on a hand-kept matrix, ` +
+            `\`specgate req link ${target} --code <path>\`.`,
+        }
       )
     );
   }

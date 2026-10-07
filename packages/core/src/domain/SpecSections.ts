@@ -41,7 +41,7 @@ export function renderRequirementSection(reqId: string, title: string): string {
   return (
     `${heading}\n\n` +
     `The system MUST satisfy: ${obligation}.\n\n` +
-    `> Written by \`specgate req add\`. Replace this sentence with the real ` +
+    `> Written by Specgate. Replace this sentence with the real ` +
     `obligation — what must hold, under which conditions, and how it is ` +
     `observed.\n`
   );

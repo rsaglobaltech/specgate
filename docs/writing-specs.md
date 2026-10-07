@@ -5,31 +5,51 @@ artefacts everything else is built on.
 
 ---
 
-## Add a Gherkin scenario and keep traceability green
+## Add a requirement and its scenario
 
-**Goal:** add a feature file and register it in the matrix so `validate` stays green.
+**Goal:** a new requirement with an executable scenario, linked to a test, with
+`check` green — without touching the matrix.
+
+The short way is one command:
 
 ```bash
-# 1. Create the feature
-mkdir -p features/billing
-cat > features/billing/discounts.feature <<'EOF'
+specgate new "Premium customers get 10% off at checkout"
+```
+
+It writes the `## REQ-NNN` section in `spec.md` and a tagged scenario under
+`features/`. Rewrite the sentence and the three `<placeholders>`.
+
+By hand, it is the same two edits. The section in `spec.md`:
+
+```markdown
+## REQ-007 — Premium customers get 10% off at checkout
+
+A premium customer's order MUST be discounted 10% before tax at checkout.
+```
+
+And the scenario in `features/billing/discounts.feature`, tagged with both ids:
+
+```gherkin
 Feature: Apply discount on checkout
+
+  @REQ-007 @SCN-007
   Scenario: Premium customer receives 10% discount
     Given a logged-in premium customer
     When they checkout with an order of 100 EUR
     Then the final price is 90 EUR
-EOF
-
-# 2. Add a row to docs/specs/traceability.md (rich header shown below)
-#    | REQ-007 | SCN-007 | features/billing/discounts.feature | UC-007 | ApplyDiscountCommand | CartAggregate | DiscountApplied | DiscountService.java | DiscountServiceTest | Draft |
-
-# 3. Validate
-npx @rsaglobaltech/specgate@latest validate .
 ```
 
-If the new `.feature` is not in `traceability.md`, the validator exits with a non-zero status and tells you the missing file.
+Then a test that mentions the requirement — that mention is the link — and the
+gate:
 
----
+```bash
+specgate check     # regenerates the matrix from spec.md, the tags and the tests
+```
+
+Do **not** add a row to `docs/specs/traceability.md`: it is generated, and the
+next `check` replaces it with what the sources say. A feature file with no
+`@REQ-NNN` tag is reported as an orphan; tag its scenario, or create the
+requirement with `specgate new`.
 
 ---
 
@@ -43,26 +63,18 @@ specgate status          # one line per requirement, and the next command
 specgate plan            # the same queue with every artifact spelled out
 ```
 
-`plan` gives the full bucketed report:
+`plan` gives the full bucketed report — one bucket per thing still missing:
 
 ```
-📋 Plan  (12 requirement(s), 3 pending)
+  Needs Test + Code
+    REQ-001   SCN-001
+      ✓ feature: `features/audit-log/recording_an_action_emits_auditentryrecorded.feature`
+    REQ-002   SCN-002
+      ✓ feature: `features/audit-log/tampering_breaks_the_chain_verification.feature`
 
-  ❌ Needs everything (no test, no code)
-    REQ-007    SCN-007
-      · feature: features/pricing/dynamic_pricing.feature
-      · test:    src/test/.../DynamicPricingTest.java
-      · code:    src/main/.../DynamicPricing.java
-
-  ⚠️  Test exists, production code missing
-    REQ-008    SCN-008
-      ✓ test:    src/test/.../SeasonalRateTest.java
-      · code:    src/main/.../SeasonalRateService.java
-
-  ⚠️  Artifacts present — run `specgate done <REQ>`
-    REQ-009    SCN-009
-
-  Next: read the feature file, write the test, write the code, then run `specgate done <REQ-id>`.
+  Needs Feature File
+    REQ-003   -
+      · feature: -
 ```
 
 For AI agents, swap to JSON:
@@ -73,17 +85,29 @@ specgate plan --format json
 
 ```json
 {
-  "schema_version": 1,
-  "total": 12,
-  "pending": 3,
-  "summary": { "NEEDS_EVERYTHING": 1, "NEEDS_IMPLEMENTATION": 1, "NEEDS_STATUS_UPDATE": 1, "DONE": 9 },
-  "next_steps": [
-    { "requirement": "REQ-007", "category": "NEEDS_EVERYTHING", "hint": "Read features/pricing/dynamic_pricing.feature, then write the test, then the production code." }
+  "schemaVersion": 1,
+  "summary": { "NEEDS_EVERYTHING": 2, "NEEDS_FEATURE": 2 },
+  "total": 4,
+  "actionable": 4,
+  "next": "REQ-001",
+  "requirements": [
+    {
+      "requirement": "REQ-001",
+      "scenarioId": "SCN-001",
+      "category": "NEEDS_EVERYTHING",
+      "status": "Draft",
+      "ready": true,
+      "blockers": []
+    }
   ],
-  "requirements": [],
-  "orphan_features": []
+  "orphanFeatures": [],
+  "status": []
 }
 ```
+
+`next` is the requirement to work on; `actionable` is how many are left that
+can be started now. Each requirement carries its `category`, whether it is
+`ready`, and the `blockers` in its way (each with a `code` and a `fix`).
 
 ### After implementing, mark the REQ done
 
@@ -100,18 +124,23 @@ one status. Combined with `validate --strict` in CI, the matrix is the live sour
 
 ### AI agent recipe (Claude Desktop / Cursor / Aider with MCP)
 
-The MCP server exposes `plan` and `mark_requirement_done`. A canonical prompt:
+The MCP server exposes the daily loop as tools — `specgate_status`,
+`specgate_new`, `plan`, `specgate_check`, `mark_requirement_done`
+([the MCP server](mcp.md)). A canonical prompt:
 
 ```
-1. Call the `plan` tool with projectDir set to my repo.
-2. Pick the first item from next_steps.
-3. Read the feature file (using `read_spec` or your editor).
-4. Write the test file at the expected path. Run the test — confirm it fails.
-5. Write production code until the test passes.
-6. Run `validate_project` to confirm gates are green.
-7. Call `mark_requirement_done` with that requirement id and check=true.
-8. Repeat from step 1 until plan returns pending=0.
+1. Call `plan` with projectDir set to my repo. Work on the requirement in `next`.
+2. Read its scenario (`read_spec`, or the feature file in your editor).
+3. Write a test that mentions the requirement id. Run it — confirm it fails.
+4. Write production code until the test passes.
+5. Call `mark_requirement_done` with `requirement` set to that id. It runs the
+   gate first; if it returns done_validate_failed, fix what it reports and retry.
+6. Repeat from step 1 until `plan` returns actionable = 0.
+7. Call `specgate_check` before you stop.
 ```
+
+Writing tools are guarded over MCP: they refuse unless a change is open or the
+team set `mcpAllowContractEdits` ([why](mcp.md#the-guard-an-agent-may-not-rewrite-its-own-exam)).
 
 ---
 
@@ -174,12 +203,17 @@ file carries any of these tags, every row pointing into that file must find its
 `@SCN-NNN` there — a half-tagged file is how a matrix ends up pointing at a
 scenario nobody renamed but everybody moved.
 
-Tagging `@REQ-014` alone therefore fails, and says so:
+On a **hand-kept** matrix, a row that declares `SCN-014` and a file tagged
+`@REQ-014` alone therefore fails, and says so:
 
 ```
 ✖ features/vets/listing.feature carries traceability tags but not @SCN-014,
   which REQ-014 declares. The matrix points at a scenario that is not there.
 ```
+
+On a **generated** matrix the row is built from the tags, so a scenario tagged
+`@REQ-014` alone still links — its row shows no scenario id. Add `@SCN-NNN`
+anyway: it is what a reviewer, a Cucumber filter and a renamed title all keep.
 
 ## A matrix nobody edits
 

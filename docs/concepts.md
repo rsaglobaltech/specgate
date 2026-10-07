@@ -20,8 +20,9 @@ invoice page, within two seconds, with the invoice number in the file name.
 ```
 
 The prose is for people. The `csda:trace` comment is for the tool — it holds
-the status, and any link the tool cannot infer. `specgate new` writes both; you
-rewrite the sentence.
+the status, and any link the tool cannot infer. `specgate new` writes the
+section with a draft sentence for you to rewrite; `specgate done` adds the
+comment when it records a status.
 
 A requirement is useful when two people could test it and agree on the
 answer. "Invoices are easy to get" is a wish; the paragraph above is a
@@ -85,7 +86,7 @@ promises:
 | Status | What it owes |
 |---|---|
 | `Draft` | Nothing — except that its scenarios cannot lie: no scenario without steps, no keyword Cucumber would read as prose, no `Outline` without `Examples`. |
-| Past `Draft` (`Approved`, `In Dev`, `In Review`, …) | A test that mentions it, and a scenario id. |
+| Past `Draft` (`Approved`, `In Dev`, `In Review`, …) | A test that mentions it (and, on a hand-kept matrix, a scenario id). |
 | Delivered (`Implemented`, `Verified`, `Released`) | All of the above, plus every file it points at exists and its scenario has no `<placeholder>` steps. |
 | `Deprecated` | Its files may be gone; nothing is owed. |
 
@@ -149,7 +150,7 @@ requirement only when it passes. It never merges. → [The harness](harness.md)
 | **The gate** | `validate --strict`; `check` adds your tests. |
 | **Delivered** | A status of `Implemented`, `Verified` or `Released`. |
 | **Change** | A reviewable delta to requirements that already shipped. |
-| **Pack** | A versioned domain model installed with `specops add`. |
+| **Pack** | A versioned domain model installed with `specgate specops add`. |
 | **Harness** | The unattended plan → agent → gate → done loop. |
 
 ---

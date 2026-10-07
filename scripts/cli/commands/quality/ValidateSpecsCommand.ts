@@ -977,6 +977,11 @@ export class ValidateSpecsCommand extends BaseCommand {
       // Reading only the root spec.md flagged 14 requirements in our own repo
       // that are documented perfectly well one directory down.
       specContent: this.collectSpecProse(targetDir, specPath),
+      // On a generated matrix a test that mentions the requirement fills its
+      // column, so the requirement being closed can be judged as delivered. A
+      // hand-kept matrix still says TBD until someone links the test, which
+      // the harness and older flows rely on.
+      delivering: isDerivedMatrix(traceContent) ? delivering : undefined,
     });
 
     const strictTddViolations = report.findings
@@ -1050,10 +1055,19 @@ export class ValidateSpecsCommand extends BaseCommand {
           traceMode === "rich"
             ? `| REQ-TBD | SCN-TBD | \`${rel}\` | UC-TBD | TBD | TBD | TBD | TBD | TBD | Draft |`
             : `| \`${rel}\` | <scenario> | TBD | Draft |`;
-        this.fail("feature_not_in_matrix", `Feature file missing from traceability.md: ${rel}`, 1, [
-          "Add a row for it to docs/specs/traceability.md, e.g.:",
-          `  ${exampleRow}`,
-        ]);
+        // A generated matrix has no rows to add: the advice to add one sent
+        // readers round in a loop, because the next `check` removed it.
+        this.fail(
+          "feature_not_in_matrix",
+          `Feature file missing from traceability.md: ${rel}`,
+          1,
+          isDerivedMatrix(traceContent)
+            ? [
+                "Tag its scenario with the requirement it demonstrates (`@REQ-NNN @SCN-NNN`),",
+                "or create the requirement with `specgate new`, then run `specgate check`.",
+              ]
+            : ["Add a row for it to docs/specs/traceability.md, e.g.:", `  ${exampleRow}`]
+        );
       }
     }
 
@@ -1198,7 +1212,7 @@ export class ValidateSpecsCommand extends BaseCommand {
             message:
               "The only scenario in this project is the adoption baseline. Nothing the codebase actually does is specified yet.",
             target: "features/adoption/baseline.feature",
-            fix: 'Retro-fill one requirement you already rely on: specgate onboard, then specgate req add "<behaviour>" and specgate req link.',
+            fix: 'Retro-fill one requirement you already rely on: specgate new "<behaviour>", then a test that mentions it, then specgate done.',
           },
         ])
       : lockAdvisories;
@@ -1259,8 +1273,8 @@ export class ValidateSpecsCommand extends BaseCommand {
       this.logFix([
         "This passes, but it certifies the skeleton, not the code.",
         "  specgate onboard                     # what this codebase already implies",
-        '  specgate req add "<behaviour>"        # one requirement you already rely on',
-        "  specgate req link REQ-NNN --code <path> --test <path>",
+        '  specgate new "<behaviour>"            # one requirement you already rely on',
+        "  # then a test that mentions REQ-NNN, and: specgate done REQ-NNN",
       ]);
     }
     process.exit(0);

@@ -630,7 +630,7 @@ export class OnboardCommand extends BaseCommand {
       ? "specgate adopt"
       : capabilities.length > 0
         ? `specgate change new describe-${capabilities[0].id}`
-        : 'specgate req add "<the first behaviour you rely on>"';
+        : 'specgate new "<the first behaviour you rely on>"';
 
     const diagnostics = [];
     if (!stack.detected) {

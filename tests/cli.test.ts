@@ -182,7 +182,9 @@ test("req done marks the requirement Implemented, not a silent no-op", () => {
     assert.equal(init.status, 0, init.stdout + init.stderr);
     const projectDir = path.join(tempRoot, "my-spec-driven-app");
 
-    const done = runCli(["req", "done", "REQ-000"], { cwd: projectDir });
+    // REQ-000 has no test, so the gate `done` runs would refuse it: this test
+    // is about the alias writing at all, so it skips the gate.
+    const done = runCli(["req", "done", "REQ-000", "--no-check"], { cwd: projectDir });
     assert.equal(done.status, 0, done.stdout + done.stderr);
     assert.match(done.stdout, /Implemented/);
 

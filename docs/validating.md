@@ -103,6 +103,7 @@ scenario proved, whatever the status — that is `--strict-coverage` below.
 
 ```bash
 npx @rsaglobaltech/specgate@latest validate . --strict-tdd
+```
 
 ### `--strict-coverage` — every scenario is actually proved
 
@@ -129,11 +130,10 @@ title itself, against the test artifact the row declares. **It is a name match:
 this does not run your suite.** That is why it is opt-in rather than part of
 `--strict-tdd` — a project that names its tests some other way should not start
 failing because a release shipped a heuristic.
-```
 
 `--strict-tdd` is in addition to the normal checks. It is intended for "no contract without a test" gates — particularly useful in `contracts` packs (see §8). Wire it into CI exactly like `validate`, just append the flag.
 
-> When a `REQ` is intentionally not yet implemented, set its status in `traceability.md` to `Deferred` — `--strict-tdd` accepts that as an explicit signal and won't fail.
+> A requirement that is not going to be delivered is `Deprecated` (`specgate done REQ-NNN --status Deprecated`): it owes nothing, and `--strict-tdd` skips it. One not started yet simply stays `Draft`.
 
 ## The other three gates
 
