@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.14.1",
+    "version": "0.14.2",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
@@ -142,7 +142,7 @@
       "surface": "specops add",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1330,
+      "holdMs": 1060,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -165,21 +165,6 @@
           "t": "ℹ️ [INFO] Domain pack expansion completed.",
           "c": "info",
           "s": "out"
-        },
-        {
-          "t": "",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "⚠️  This pack writes its own traceability matrix: the project's matrix is hand-kept again.",
-          "c": "warn",
-          "s": "err"
-        },
-        {
-          "t": "   `specgate matrix --migrate` switches it back once its requirements have `## REQ-NNN` sections.",
-          "c": "out",
-          "s": "err"
         }
       ]
     },
@@ -314,23 +299,13 @@
       "surface": "harness run",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1690,
+      "holdMs": 1510,
       "truncated": false,
       "omitted": 0,
       "lines": [
         {
           "t": "ℹ️  [harness] Processing 1 requirement(s) from base HEAD.",
           "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "⚠️  [harness] REQ-000: the row declares no test artifact, so the agent chooses where the test goes and the matrix will point somewhere else. [requirement_declares_no_test_artifact]",
-          "c": "warn",
-          "s": "out"
-        },
-        {
-          "t": "⚠️  [harness]   fix: specgate req link REQ-000 --test <path>",
-          "c": "warn",
           "s": "out"
         },
         {
@@ -383,7 +358,7 @@
       "surface": null,
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1150,
+      "holdMs": 1240,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -398,17 +373,22 @@
           "s": "out"
         },
         {
+          "t": " spec.md                                                 |  2 +-",
+          "c": "out",
+          "s": "out"
+        },
+        {
           "t": " src/health.js                                           |  9 +++",
           "c": "out",
           "s": "out"
         },
         {
-          "t": " test/health.test.js                                     | 10 +++",
+          "t": " test/health.test.js                                     | 11 +++",
           "c": "out",
           "s": "out"
         },
         {
-          "t": " 4 files changed, 119 insertions(+), 1 deletion(-)",
+          "t": " 5 files changed, 121 insertions(+), 2 deletions(-)",
           "c": "out",
           "s": "out"
         }
@@ -427,7 +407,7 @@
       "omitted": 0,
       "lines": [
         {
-          "t": "✔ GET /health reports the service as UP (12ms)",
+          "t": "✔ REQ-000 SCN-000: GET /health reports the service as UP (12ms)",
           "c": "ok",
           "s": "out"
         },
