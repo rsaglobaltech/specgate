@@ -43,7 +43,8 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { health } = require("../src/health");
 
-test("GET /health reports the service as UP", () => {
+// REQ-000 SCN-000 — mentioning the ids is the link.
+test("REQ-000 SCN-000: GET /health reports the service as UP", () => {
   const res = health();
   assert.equal(res.status, "UP");
 });

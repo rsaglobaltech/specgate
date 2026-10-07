@@ -375,28 +375,24 @@ max_attempts: 1
 ~/smart-parking $ specgate harness run --req REQ-000
 ℹ️  [harness] Processing 1 requirement(s) from base HEAD.
 ℹ️  [harness] REQ-000: attempt 1/1
-⚠️  [harness] REQ-000: gate failed at validate --strict
 
 ── harness report ──
-  ❌ REQ-000  fail (1 attempt)  → harness/REQ-000
-       Gate failed at: validate --strict
-       │ ❌ [ERROR] --strict-tdd violations detected:
-       │   [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-000)
-       │ 💡 [FIX] TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link — or move it back to Draft in spec.md.
-       └ full output: --format json · reproduce: --keep-worktrees
-       ↳ the attempt is committed on harness/REQ-000 — review it
+  ✅ REQ-000  pass (1 attempt)  → harness/REQ-000
 
-  0 passed · 1 failed · 0 skipped
-… 1 more lines
+  1 passed · 0 failed · 0 skipped
+  Review and merge the harness/* branches you trust.
+ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
  .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 99 +++++++++++++++++++++++++
+ docs/specs/traceability.md                              |  2 +-
+ spec.md                                                 |  2 +-
  src/health.js                                           |  9 +++
- test/health.test.js                                     | 10 +++
- 3 files changed, 118 insertions(+)
+ test/health.test.js                                     | 11 +++
+ 5 files changed, 121 insertions(+), 2 deletions(-)
 
 ~/smart-parking $ git switch -q harness/REQ-000 &amp;&amp; node --test test/*.test.js
-✔ GET /health reports the service as UP (12ms)
+✔ REQ-000 SCN-000: GET /health reports the service as UP (12ms)
 ℹ tests 1
 ℹ suites 0
 ℹ pass 1
