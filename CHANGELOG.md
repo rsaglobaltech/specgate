@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.14.1] — 2026-10-07
+
 ### Fixed
 
 Found by building a real product — the Golden State Reinforcing app, with its
