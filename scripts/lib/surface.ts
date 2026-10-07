@@ -250,10 +250,6 @@ export const SURFACE: Command[] = [
       summary: "The gate: specs, links, coverage — and your tests.",
     },
     json: { key: "check", gate: true, args: "[dir]" },
-    // Not yet an MCP tool: `validate_project` fronts the spec half today, and
-    // phase 2 of mejoras/plan-simplificacion-equipo.md puts the agent on
-    // `/spec:check`, which shells out to this command.
-    mcp: false,
   },
   {
     name: "matrix",
@@ -319,7 +315,7 @@ export const SURFACE: Command[] = [
     help: {
       group: "core",
       icon: "✔",
-      summary: "Mark a requirement as Implemented in traceability.md.",
+      summary: "Mark a requirement Implemented — after the gate passes for it.",
     },
     coreHelp: { group: "daily", order: 7, icon: "✔", summary: "Mark a requirement Implemented." },
     json: { key: "requirement", gate: false, args: "<REQ>" },
@@ -341,8 +337,6 @@ export const SURFACE: Command[] = [
       summary: "Add a requirement: its prose, its scenario and its row.",
     },
     json: { key: "requirement", gate: false, args: "<title>" },
-    // Not yet an MCP tool, like `check`: phase 2 fronts both from the agent.
-    mcp: false,
   },
   {
     name: "req",

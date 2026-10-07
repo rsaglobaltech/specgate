@@ -12,6 +12,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **The README teaches the five-command loop** — the test mention as the link,
+  `done` gating, `ci init` detection, the MCP server in the package — and
+  points to the first-PR guide. npm shows it from this release, with a link to
+  the documentation site.
 - **[Your team's first pull request](docs/first-pr.md)** — what the author
   writes, what the reviewer reads (and skips), and every failure a first PR
   meets with its fix.
@@ -38,6 +42,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `change instructions apply` no longer names an `In Dev` status that does not
   exist or `req link`: mention the requirement in the test, close it with
   `done`, run `check`.
+- **The daily loop over MCP.** `check` and `new` were not MCP tools, so an
+  MCP-only client (Claude Desktop, Cursor) could not add a requirement or run
+  the gate; they are now `specgate_check` and `specgate_new`. Every tool that
+  takes an argument besides the project directory — `new`'s title, `done`'s
+  requirement, a change id — declares it in its schema; it used to be passed
+  only if an agent guessed to send it.
 - **The MCP server starts.** `mcp install`, `agents init` and the Claude plugin
   configured clients to run `npx -y @specgate/mcp-server`, a package that was
   never published: every client set up that way started nothing. The server now

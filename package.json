@@ -28,6 +28,10 @@
     "type": "git",
     "url": "git+https://github.com/rsaglobaltech/specgate.git"
   },
+  "homepage": "https://rsaglobaltech.github.io/specgate/",
+  "bugs": {
+    "url": "https://github.com/rsaglobaltech/specgate/issues"
+  },
   "keywords": [
     "spec-driven-development",
     "sdd",
@@ -35,7 +39,10 @@
     "traceability",
     "ci-gate",
     "ai-agents",
-    "cli"
+    "cli",
+    "requirements",
+    "bdd",
+    "mcp"
   ],
   "scripts": {
     "build": "tsc",

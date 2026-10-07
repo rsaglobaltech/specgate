@@ -41,6 +41,23 @@ export default [
         `the config starts a package that exists (${server.args.join(" ")})`
       );
 
+      // Over MCP an agent may not rewrite the specification it is measured
+      // against unless a change is open or the team allows it (C10-04).
+      const guarded = t.sgEnv(
+        dir,
+        {
+          __stdin: `${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "specgate_new", arguments: { projectDir: dir, title: "Not yet" } } })}\n`,
+        },
+        "mcp",
+        "serve"
+      );
+      t.expect(
+        /mcpAllowContractEdits/.test(responses(guarded.stdout)[0].result.content[0].text),
+        "new over MCP is refused until the team allows contract edits",
+        guarded
+      );
+      t.write(dir, ".csda/config.json", JSON.stringify({ mcpAllowContractEdits: true }));
+
       // Start what the config starts — from the installed package — and talk to it.
       const input = [
         { jsonrpc: "2.0", id: 1, method: "initialize", params: {} },
@@ -56,6 +73,32 @@ export default [
           id: 4,
           method: "tools/call",
           params: { name: "csda_status", arguments: { projectDir: dir } },
+        },
+        // The daily loop, from an MCP-only client: `new` and `check` were not
+        // tools at all, and `done` never said it needs a requirement.
+        {
+          jsonrpc: "2.0",
+          id: 5,
+          method: "tools/call",
+          params: {
+            name: "specgate_new",
+            arguments: { projectDir: dir, title: "Invoices download as PDF" },
+          },
+        },
+        {
+          jsonrpc: "2.0",
+          id: 6,
+          method: "tools/call",
+          params: { name: "specgate_check", arguments: { projectDir: dir } },
+        },
+        {
+          jsonrpc: "2.0",
+          id: 7,
+          method: "tools/call",
+          params: {
+            name: "mark_requirement_done",
+            arguments: { projectDir: dir, requirement: "REQ-002" },
+          },
         },
       ]
         .map((m) => JSON.stringify(m))
@@ -77,6 +120,25 @@ export default [
       const status = JSON.parse(byId[3].result.content[0].text);
       t.expect(status.schemaVersion === 1, "a tool call runs the CLI and returns its JSON", r);
       t.expect(byId[4] && !byId[4].error, "an old csda_* name still resolves", r);
+
+      const tool = (n) => byId[2].result.tools.find((x) => x.name === n);
+      t.expect(
+        tool("specgate_new").inputSchema.required.includes("title") &&
+          tool("mark_requirement_done").inputSchema.required.includes("requirement"),
+        "the schema names the argument each tool needs",
+        r
+      );
+      const created = JSON.parse(byId[5].result.content[0].text);
+      t.expect(created.requirement && created.requirement.id === "REQ-002", "new over MCP", r);
+      const gate = JSON.parse(byId[6].result.content[0].text);
+      t.expect(gate.check && gate.check.validate === "passed", "check over MCP", r);
+      // A scenario of placeholders: done refuses, as it does from the terminal.
+      const done = JSON.parse(byId[7].result.content[0].text);
+      t.expect(
+        JSON.stringify(done).includes("done_validate_failed"),
+        "done over MCP runs the gate and refuses",
+        r
+      );
     },
   },
 ];
