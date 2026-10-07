@@ -34,6 +34,8 @@ for the policy on when and how to write an ADR.
 | [0024](0024-the-tool-is-renamed-the-format-is-not.md) | The tool is renamed to Specgate; the on-disk format is not | Accepted | 2026-08-26 |
 | [0025](0025-simulated-adoption-is-not-external-adoption.md) | Simulated adoption is GATE-G6, not GATE-G3 | Accepted | 2026-09-01 |
 | [0026](0026-the-default-gate-is-the-strong-gate.md) | The default gate is the strong gate, from 1.0 | Accepted | 2026-09-02 |
+| [0027](0027-use-cases-are-a-layer-not-a-column.md) | Use cases are a layer, not a column | Accepted | 2026-10-07 |
+| [0028](0028-architecture-conformance-is-part-of-the-gate.md) | Architecture conformance is part of the gate | Accepted | 2026-10-07 |
 
 ## Template
 
