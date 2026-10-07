@@ -116,6 +116,13 @@ export function decide(
 function runValidate(cwd: string): { ok: boolean; diagnostics: GateDiagnostic[] } {
   if (!fs.existsSync(path.join(cwd, "spec.md"))) throw new Error("not a spec-driven project");
 
+  // The agent's tests are new evidence for a generated matrix: regenerate it
+  // first, or the hook would block the session over a stale cache instead of
+  // judging the work. A no-op on a hand-kept matrix.
+  spawnSync("npx", ["--no-install", "specgate", "matrix", "--project-dir", cwd], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
   const r = spawnSync("npx", ["--no-install", "specgate", "validate", cwd, "--strict", "--json"], {
     encoding: "utf8",
     timeout: 120_000,

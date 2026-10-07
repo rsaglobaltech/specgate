@@ -1,12 +1,12 @@
 ---
-description: Merge the change into the spec tree.
+description: Merge an accepted change into the spec tree.
 ---
 
 # /specgate:archive
 
-Merge the change into the spec tree.
+Merge an accepted change into the spec tree.
 
-**Use when:** The work is done and every task is checked.
+**Use when:** The change is implemented and every task is checked.
 
 ## Run
 
@@ -18,9 +18,8 @@ specgate change archive <change-id> --json
 
 ## Guidance
 
-- Preview with `--dry-run` first: it lists the specs and matrix rows that will move.
-- Archiving inserts the traceability rows and materialises the feature files. It is not a file move.
-- After archiving, `specgate plan` lists the requirement as pending work.
+- Preview with `--dry-run` first: it lists the specs that will move.
+- Archiving writes the specs and materialises the feature files; the matrix follows on its own.
 
 > The authoritative rules come from `specgate change instructions <artifact> --json`.
 > If this file and the engine disagree, the engine is right — say so and continue.

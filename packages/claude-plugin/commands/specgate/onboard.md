@@ -11,16 +11,14 @@ Install spec-driven development on a repository that lacks it.
 ## Run
 
 ```bash
-specgate adopt
-specgate doctor --json
-specgate validate . --json
+specgate init
+specgate check --json
 ```
 
 ## Guidance
 
-- `specgate adopt` never overwrites a file and never touches source code.
-- Retro-fill real requirements one at a time; a baseline REQ-001 anchors the matrix until then.
-- `specgate doctor` reports a concrete fix per finding — work through them before adding the CI gate.
+- `specgate init` adopts a repository that has code: it never overwrites a file and never touches source.
+- Then add real requirements one at a time with `specgate new`, starting with what the team is changing now.
 
 > The authoritative rules come from `specgate change instructions <artifact> --json`.
 > If this file and the engine disagree, the engine is right — say so and continue.

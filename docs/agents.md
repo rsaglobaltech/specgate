@@ -18,8 +18,10 @@ specgate agents init --tool claude,cursor     # or pick
 specgate agents init --dry-run                # list destinations, write nothing
 ```
 
-This writes the six slash commands (`/specgate:explore`, `/specgate:propose`,
-`/specgate:verify`, `/specgate:apply`, `/specgate:archive`, `/specgate:onboard`) and the
+This writes the slash commands for the daily loop — `/specgate:explore` (what is
+left), `/specgate:new`, `/specgate:apply`, `/specgate:verify` (the gate) and
+`/specgate:done` — plus `/specgate:propose` and `/specgate:archive` for changing
+requirements that already shipped, and `/specgate:onboard`. Then the
 instruction file each tool reads — `.cursor/rules/specgate.mdc`,
 `.github/copilot-instructions.md`, `CONVENTIONS.md`, `AGENTS.md` and so on.
 

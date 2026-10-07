@@ -8,6 +8,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **The agent's commands are the daily loop.** `agents init` writes
+  `/specgate:explore` (status), `/specgate:new`, `/specgate:apply`,
+  `/specgate:verify` (now `check`) and `/specgate:done`, plus
+  `/specgate:propose` and `/specgate:archive` for requirements that already
+  shipped and `/specgate:onboard` (now `init`). The existing names are kept, so
+  `specgate update` refreshes them in place. The project rules teach that a
+  test or source file naming `REQ-NNN` is the link, instead of `req link`.
+- **The Claude plugin's `Stop` hook regenerates a generated matrix before
+  judging**, so a test the agent just wrote is evidence rather than a
+  `matrix_stale` block.
+
 ## [0.11.0] — 2026-10-07
 
 **A matrix nobody edits.** The traceability matrix is now generated for every

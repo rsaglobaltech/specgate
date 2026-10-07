@@ -1,12 +1,12 @@
 ---
-description: Open a change and write its proposal and delta.
+description: Change a requirement that already shipped, as a reviewable delta.
 ---
 
 # /specgate:propose
 
-Open a change and write its proposal and delta.
+Change a requirement that already shipped, as a reviewable delta.
 
-**Use when:** A requirement needs adding, rewording or retiring.
+**Use when:** Rewording, extending or retiring something delivered — not for new work, use `new`.
 
 ## Run
 
