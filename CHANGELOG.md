@@ -10,6 +10,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Changed
 
+- **The documentation teaches one way in.** `getting-started` starts with
+  `init` and a five-command first requirement; `quickstart`, `writing-specs`,
+  `tutorial` and `comparisons` stop teaching `onboard`, `adopt`, `req link` and
+  `plan` as the main path (all of them still work and are documented).
+
 - **The agent's commands are the daily loop.** `agents init` writes
   `/specgate:explore` (status), `/specgate:new`, `/specgate:apply`,
   `/specgate:verify` (now `check`) and `/specgate:done`, plus

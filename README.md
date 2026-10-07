@@ -105,7 +105,7 @@ reports what has drifted, with a fix per finding.
 | Traceability matrix + CI gate | ✅ | ❌ | ⚠️ | ❌ | ❌ |
 | Agent JSON contract | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Vendor-neutral | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Smaller surface to learn | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Smaller surface to learn | ⚠️ five daily verbs | ✅ | ✅ | ✅ | ✅ |
 
 OpenSpec is the closest tool and the honest comparison: if you want the change
 loop without versioned packs or an enforced matrix, theirs is the better fit.

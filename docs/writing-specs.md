@@ -33,16 +33,17 @@ If the new `.feature` is not in `traceability.md`, the validator exits with a no
 
 ---
 
-## Close the loop: `plan` → implement → `done`
+## Close the loop: `status` → implement → `done`
 
 **Goal:** after a `specops sync` brings new requirements into the project, drive a human or AI agent through the implementation cycle without manually reading every `.feature` file.
 
 ```bash
 # 1. After sync (or any time), see what's left
-specgate plan
+specgate status          # one line per requirement, and the next command
+specgate plan            # the same queue with every artifact spelled out
 ```
 
-You get a bucketed report:
+`plan` gives the full bucketed report:
 
 ```
 📋 Plan  (12 requirement(s), 3 pending)

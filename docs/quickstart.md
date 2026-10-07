@@ -84,7 +84,7 @@ specgate fix                 # apply, then re-run validate
 ## Daily loop, in one line
 
 ```
-specgate status  →  work (test first)  →  specgate req link  →  specgate done  →  specgate check
+specgate status  →  specgate new  →  test that names the REQ  →  specgate done  →  specgate check
 ```
 
 That's the whole day-to-day. Reach for the [how-to guide](how-to.md) for

@@ -219,6 +219,11 @@ la CI ejecutan.
 
 ### Fase 4 — Perfil simple por defecto (1 semana)
 
+**Descartada por ahora, 2026-10-07 (decisión del usuario).** Con la matriz
+generada (fase 3) nadie la edita y las columnas DDD sin usar salen como `-`;
+unos 20 lectores esperan la cabecera de 10 columnas. Mucho riesgo para poco
+beneficio. Se reabre si el piloto se queja del vocabulario DDD.
+
 - [ ] Columnas por defecto: **Requisito · Escenario · Test · Estado**. Use Case,
       Command/Query, Aggregate y Event sólo con `profile: ddd`
       ([arquitectura-opcional-perfiles](arquitectura-opcional-perfiles.md) ya lo
@@ -243,6 +248,12 @@ Respuesta directa a la crítica «waterfall» que reciben todas las herramientas
       comportamiento contratado, no para todo.
 
 ### Fase 6 — Documentación de una página (3–4 días)
+
+**Hecho en `docs/`, 2026-10-07**, rama `docs/phase-6-one-way`: `getting-started`
+entra por `init` y enseña los cinco verbos; `quickstart`, `writing-specs`,
+`tutorial` y `comparisons` dejan de enseñar `onboard`/`adopt`/`req link`/`plan`
+como camino principal. **`mejoras/` y `book/` se quedan en el repo**
+(decisión del usuario).
 
 - [ ] `docs/` se reduce a: **Quickstart (10 min)**, Flujo diario, La puerta en
       CI, Brownfield, Referencia, Extensiones. Resto, a «Avanzado».
