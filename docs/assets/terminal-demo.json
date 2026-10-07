@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.11.0",
+    "version": "0.12.0",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-10-06",
+  "recordedAt": "2026-10-07",
   "title": "smart-parking",
   "cols": 88,
   "streamsMerged": false,
