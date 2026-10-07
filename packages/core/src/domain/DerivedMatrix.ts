@@ -77,7 +77,9 @@ export interface DerivedRequirement {
   readonly trace: Record<string, string>;
 }
 
-const SECTION_HEADING = /^(#{2,4})\s+(REQ-[A-Za-z0-9.]+)\b\s*[—–:-]?\s*(.*)$/;
+// `## REQ-002 — title` in spec.md, or `### Requirement: REQ-002 — title` in a
+// capability spec, where `change archive` writes.
+const SECTION_HEADING = /^(#{2,4})\s+(?:Requirement:\s*)?(REQ-[A-Za-z0-9.]+)\b\s*[—–:-]?\s*(.*)$/;
 const TRACE_LINE = /^\s*<!--\s*csda:trace\b/;
 
 /** Every `## REQ-NNN — title` section in `spec.md`, in document order. */
@@ -125,26 +127,30 @@ function taggedScenarios(
   return out;
 }
 
+/** A test or source file that names the requirement is its link. */
+function linkByMention(trace: Record<string, string>, id: string, sources: DerivationSources) {
+  const named = (files: ReadonlyArray<SourceFile>) =>
+    files
+      .filter((f) => mentions(f.source, id))
+      .map((f) => f.path)
+      .sort();
+  if (!trace.test) {
+    const tests = named(sources.tests);
+    if (tests.length > 0) trace.test = tests.join(", ");
+  }
+  if (!trace.artifact) {
+    const code = named(sources.code || []);
+    if (code.length > 0) trace.artifact = code.join(", ");
+  }
+}
+
 /** The matrix rows the sources imply. */
 export function deriveRows(sources: DerivationSources): any[] {
   const rows: any[] = [];
   for (const req of requirementsIn(sources.spec)) {
     const trace: Record<string, string> = { ...req.trace };
     if (!trace.uc && req.title) trace.uc = req.title;
-    if (!trace.test) {
-      const tests = sources.tests
-        .filter((t) => mentions(t.source, req.id))
-        .map((t) => t.path)
-        .sort();
-      if (tests.length > 0) trace.test = tests.join(", ");
-    }
-    if (!trace.artifact) {
-      const code = (sources.code || [])
-        .filter((t) => mentions(t.source, req.id))
-        .map((t) => t.path)
-        .sort();
-      if (code.length > 0) trace.artifact = code.join(", ");
-    }
+    linkByMention(trace, req.id, sources);
 
     const scenarios = trace.scn || trace.feature ? [] : taggedScenarios(sources.features, req.id);
     const variants: Array<Record<string, string>> =
@@ -172,8 +178,10 @@ export function deriveRows(sources: DerivationSources): any[] {
     }
     for (const req of parsed.requirements || []) {
       if (!req.id || fromSpec.has(req.id)) continue;
-      const row: any = TraceabilityMatrix.traceRow(req);
-      const trace = req.trace || {};
+      const trace: Record<string, string> = { ...(req.trace || {}) };
+      // Archived requirements link the same way: by being named.
+      linkByMention(trace, req.id, sources);
+      const row: any = TraceabilityMatrix.traceRow({ ...req, trace });
       if (trace.depends) row.dependsOn = String(trace.depends).split(",").filter(Boolean);
       if (trace.context) row.context = trace.context;
       rows.push(row);

@@ -5,18 +5,6 @@
     "alm link",
     "alm status",
     "alm pull",
-    "change new",
-    "change list",
-    "change show",
-    "change status",
-    "change validate",
-    "change archive",
-    "change instructions",
-    "change author",
-    "specops contribute",
-    "harness prompt",
-    "harness init",
-    "harness report",
     "mcp install"
   ]
 }

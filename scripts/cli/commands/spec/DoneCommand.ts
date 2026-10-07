@@ -202,7 +202,7 @@ export class DoneCommand extends BaseCommand {
           ? {
               ok: false,
               code: "requirement_not_in_matrix",
-              error: `${opts.reqId} has no section in spec.md.`,
+              error: `${opts.reqId} has no section in spec.md or in a capability spec.`,
               updated: 0,
             }
           : { ok: true, updated: derivedRows };
