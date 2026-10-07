@@ -8,8 +8,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **The E2E suite covers every command** (61/61): ALM against a stand-in Jira
+  server, and MCP from `mcp install` to a tool call over stdio.
+
 ### Fixed
 
+- **The MCP server starts.** `mcp install`, `agents init` and the Claude plugin
+  configured clients to run `npx -y @specgate/mcp-server`, a package that was
+  never published: every client set up that way started nothing. The server now
+  ships inside the CLI package as `specgate mcp serve`, its tools call the CLI
+  that serves them, and it announces that CLI's version. Re-run `mcp install`
+  (or `agents init`) to rewrite an existing config.
 - **`change archive` writes the feature file the delta describes.** It only
   copied `.feature` files an author had placed inside the change folder — which
   neither the template nor `change instructions` asks for — so the documented

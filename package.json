@@ -14,6 +14,7 @@
     "dist/bin/",
     "dist/scripts/",
     "dist/packages/core/",
+    "dist/packages/mcp-spec-driven/src/",
     "templates/",
     "examples/",
     "vendor/",

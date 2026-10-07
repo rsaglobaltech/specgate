@@ -59,7 +59,12 @@ function packageVersion(): string {
           // the compiled file, because the root build flattens into dist/.
           return JSON.parse(fs.readFileSync(sibling, "utf8")).version;
         }
-        if (typeof pkg.name === "string" && pkg.name.endsWith("/mcp-server")) {
+        // Shipped inside the CLI package and started by `specgate mcp serve`:
+        // the server is that package's version.
+        if (
+          typeof pkg.name === "string" &&
+          (pkg.name.endsWith("/mcp-server") || pkg.name === "@rsaglobaltech/specgate")
+        ) {
           return pkg.version;
         }
       } catch {

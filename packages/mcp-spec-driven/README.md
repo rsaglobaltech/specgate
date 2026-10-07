@@ -24,11 +24,12 @@ The server exposes 5 tools over MCP:
 
 ## Installation
 
-```bash
-npm install -g @specgate/mcp-server
-```
+The server ships inside the CLI package; nothing else to install:
 
-This installs the `mcp-spec-driven` binary on your PATH.
+```bash
+npx -y @rsaglobaltech/specgate mcp serve      # what the client configs start
+npx -y @rsaglobaltech/specgate mcp install --client claude
+```
 
 ---
 
@@ -43,7 +44,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`
 {
   "mcpServers": {
     "spec-driven": {
-      "command": "mcp-spec-driven"
+      "command": "npx",
+      "args": ["-y", "@rsaglobaltech/specgate", "mcp", "serve"]
     }
   }
 }
@@ -60,7 +62,8 @@ Add to `~/.cursor/mcp.json` (or your workspace's `.cursor/mcp.json`):
 {
   "mcpServers": {
     "spec-driven": {
-      "command": "mcp-spec-driven"
+      "command": "npx",
+      "args": ["-y", "@rsaglobaltech/specgate", "mcp", "serve"]
     }
   }
 }
@@ -71,7 +74,7 @@ Add to `~/.cursor/mcp.json` (or your workspace's `.cursor/mcp.json`):
 Aider supports MCP via the `--mcp` flag (Aider 0.70+):
 
 ```bash
-aider --mcp mcp-spec-driven
+aider --mcp "npx -y @rsaglobaltech/specgate mcp serve"
 ```
 
 ### Custom clients (raw stdio)

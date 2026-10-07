@@ -20,7 +20,8 @@ copy of the same version instead.
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
 | `specgate-gradle-plugin` | Gradle Plugin Portal or an internal repo | none yet | C7-06 |
 | `specgate-vscode` | VS Code Marketplace | none yet | C7-07 |
-| `@specgate/mcp-server`, `@specgate/lsp-server` | npm | none yet | C7-08, blocked on C6-03 |
+| MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
+| `@specgate/lsp-server` | npm | none yet | C7-08, blocked on C6-03 |
 
 ## The Specgate rename — one-time cutover
 

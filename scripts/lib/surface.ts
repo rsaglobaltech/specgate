@@ -615,6 +615,15 @@ export const SURFACE: Command[] = [
     script: ["cli", "commands", "mcp", "index.js"],
     subcommands: [
       {
+        name: "serve",
+        mcp: false,
+        help: {
+          group: "core",
+          icon: "🔌",
+          summary: "Run the MCP server over stdio — what the generated MCP configs start.",
+        },
+      },
+      {
         name: "install",
         mcp: false,
         help: {
