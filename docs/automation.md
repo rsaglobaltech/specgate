@@ -142,7 +142,7 @@ is the whole reason the Docker image and the Maven and Gradle plugins exist.
 
 ```bash
 docker run --rm -v "$PWD:/workspace" \
-  ghcr.io/rsaglobaltech/specgate:0.12.1 validate . --strict
+  ghcr.io/rsaglobaltech/specgate:0.13.0 validate . --strict
 ```
 
 Pin the version. `latest` is a convenience for a laptop, not for a pipeline —
@@ -153,7 +153,7 @@ In GitLab CI, that is the whole job:
 
 ```yaml
 spec-gate:
-  image: ghcr.io/rsaglobaltech/specgate:0.12.1
+  image: ghcr.io/rsaglobaltech/specgate:0.13.0
   stage: test
   script:
     - specgate validate . --strict
@@ -163,7 +163,7 @@ In Jenkins:
 
 ```groovy
 stage('Spec gate') {
-    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:0.12.1' } }
+    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:0.13.0' } }
     steps { sh 'specgate validate . --strict' }
 }
 ```
@@ -205,9 +205,9 @@ Plain shell (works without husky/lefthook):
 #!/usr/bin/env bash
 set -e
 echo "→ specgate validate --strict"
-npx --yes @rsaglobaltech/specgate@0.12.1 validate . --strict
+npx --yes @rsaglobaltech/specgate@0.13.0 validate . --strict
 echo "→ specgate specops diff (must be clean)"
-DIFF=$(npx --yes @rsaglobaltech/specgate@0.12.1 specops diff --format json 2>/dev/null || true)
+DIFF=$(npx --yes @rsaglobaltech/specgate@0.13.0 specops diff --format json 2>/dev/null || true)
 if echo "$DIFF" | grep -q '"added":\[\([^]].\)\]\|"modified":\[\([^]].\)\]'; then
   echo "✖ Pack content drifted. Run \`specgate specops sync\` and commit again."
   exit 1
@@ -219,7 +219,7 @@ Or with **husky** (`package.json`):
 ```bash
 npm install --save-dev husky
 npx husky init
-echo 'npx --yes @rsaglobaltech/specgate@0.12.1 validate . --strict' > .husky/pre-commit
+echo 'npx --yes @rsaglobaltech/specgate@0.13.0 validate . --strict' > .husky/pre-commit
 ```
 
 Mirror the same call in CI (see §4) so the gate survives `--no-verify`.
