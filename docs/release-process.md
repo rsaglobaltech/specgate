@@ -176,8 +176,8 @@ the CLI supports, so getting this backwards fails CI rather than users.
    ```
 
    **Expect the first attempts to be refused** even with every check green —
-   it happened on 0.10.0, 0.11.0, 0.12.0 and 0.12.1, and went through on the
-   2nd to 5th try a few seconds apart. Retry; do not force.
+   it happened on 0.10.0, 0.11.0, 0.12.0, 0.12.1 and 0.13.0, and went through on
+   the 2nd to 9th try a few seconds apart. Retry; do not force.
 6. **Only once `git rev-parse origin/main` is the release commit**, tag it
    `vX.Y.Z` and push the tag. On 0.10.0 the tag went out while the push to
    `main` had failed. `publish-npm.yml` fires, and publishes only after the
