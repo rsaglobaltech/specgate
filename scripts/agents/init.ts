@@ -242,7 +242,7 @@ function pluginReadme(): string {
 export function mcpServerConfig() {
   return {
     mcpServers: {
-      "spec-driven": { command: "npx", args: ["-y", "@specgate/mcp-server"] },
+      "spec-driven": { command: "npx", args: ["-y", "@rsaglobaltech/specgate", "mcp", "serve"] },
     },
   };
 }

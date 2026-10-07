@@ -3,7 +3,7 @@
  * binary, fixtures and assertions. Plain Node, no dependencies.
  */
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,6 +47,36 @@ export function install(sandbox, tarball) {
   return bin;
 }
 
+/**
+ * Start a stand-in server from e2e/fakes/<name>.mjs in its own process — the
+ * journeys drive the CLI synchronously, so an in-process server could never
+ * answer. Resolves once it prints `PORT <n>`.
+ */
+export function startFake(name) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [path.join(ROOT, "e2e", "fakes", `${name}.mjs`)], {
+      stdio: ["ignore", "pipe", "inherit"],
+    });
+    let buf = "";
+    child.stdout.on("data", (d) => {
+      buf += d;
+      const m = /PORT (\d+)/.exec(buf);
+      if (!m) return;
+      const url = `http://127.0.0.1:${m[1]}`;
+      resolve({
+        url,
+        json: async (p, init) => {
+          const r = await fetch(`${url}${p}`, init);
+          return r.status === 204 ? null : r.json();
+        },
+        stop: () => child.kill("SIGTERM"),
+      });
+    });
+    child.on("error", reject);
+    setTimeout(() => reject(new Error(`fake ${name} did not start`)), 10000);
+  });
+}
+
 export function versionOf(bin) {
   return JSON.parse(fs.readFileSync(path.join(path.dirname(bin), "..", "package.json"), "utf8"))
     .version;
@@ -76,6 +106,19 @@ export function context({ bin, sandbox, tarball, flags }) {
       env: { ...process.env, NO_COLOR: "1" },
     });
 
+  /**
+   * The installed CLI with extra environment, e.g. a throwaway HOME; `__stdin`
+   * in it is fed to the process instead.
+   */
+  const sgEnv = (cwd, { __stdin, ...env }, ...cliArgs) =>
+    spawnSync(process.execPath, [bin, ...cliArgs], {
+      cwd,
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      env: { ...process.env, NO_COLOR: "1", ...env },
+      input: __stdin,
+    });
+
   const expect = (cond, message, r) => {
     if (cond) return;
     const detail = r ? `\n--- exit ${r.status}\n${r.stdout}\n${r.stderr}` : "";
@@ -99,6 +142,7 @@ export function context({ bin, sandbox, tarball, flags }) {
     tarball,
     flags,
     sg,
+    sgEnv,
     run,
     expect,
     out,

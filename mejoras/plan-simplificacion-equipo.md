@@ -310,7 +310,14 @@ Petición del usuario: probar todas las funcionalidades de punta a punta.
       el ciclo documentado dejaba la matriz apuntando a un fichero inexistente;
       (2) un requisito archivado no se podía cerrar con `done` en matriz
       generada, y no se enlazaba por mención. Ambos arreglados.
-- [ ] Paso 5 — ALM con un servidor HTTP falso; MCP y LSP por stdio; `mcp install`.
+- [x] Paso 5 — ALM contra un Jira falso en su propio proceso (`alm sync/link/
+      status/pull`: crea, cierra al entregar, detecta deriva, trae peticiones
+      como cambios); MCP de punta a punta (`mcp install` con un `HOME` de usar y
+      tirar, y el servidor que esa config arranca, por stdio). **61/61 (100 %).**
+      Encontró que **el MCP nunca funcionó**: `mcp install`, `agents init` y el
+      plugin de Claude apuntaban a `@specgate/mcp-server`, que no está publicado.
+      Ahora el servidor va dentro del paquete (`specgate mcp serve`). El LSP sale
+      del paso: no se publica fuera de la extensión de VS Code.
 - [ ] Paso 6 — plugins Maven/Gradle contra el tarball, imagen Docker; nocturno
       con repos públicos fijados.
 - Fuera, dicho: extensiones de VS Code e IntelliJ (exigen el editor).

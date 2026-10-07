@@ -1,10 +1,4 @@
 {
   "_comment": "Commands no E2E journey covers yet. It can only shrink: node e2e/run.mjs --coverage fails if a listed command becomes covered or a new command is neither covered nor listed.",
-  "uncovered": [
-    "alm sync",
-    "alm link",
-    "alm status",
-    "alm pull",
-    "mcp install"
-  ]
+  "uncovered": []
 }

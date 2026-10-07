@@ -9,11 +9,9 @@ hooks and CI.
 
 **Goal:** let an MCP-aware AI agent read specs, list requirements, and run `validate` directly.
 
-Install:
-
-```bash
-npm i -g @specgate/mcp-server
-```
+The server ships inside the CLI: `specgate mcp serve` runs it over stdio.
+`specgate mcp install --client claude` (or `cursor`, `windsurf`) writes the
+config for you; by hand it is:
 
 Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
@@ -22,7 +20,7 @@ Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json
   "mcpServers": {
     "spec-driven": {
       "command": "npx",
-      "args": ["-y", "@specgate/mcp-server"]
+      "args": ["-y", "@rsaglobaltech/specgate", "mcp", "serve"]
     }
   }
 }

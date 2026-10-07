@@ -63,7 +63,7 @@ async function worker() {
     const started = Date.now();
     let result;
     try {
-      j.run(dir, t);
+      await j.run(dir, t);
       result = { name: j.name, ok: true, ms: Date.now() - started };
     } catch (e) {
       result =

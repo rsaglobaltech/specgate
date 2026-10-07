@@ -36,7 +36,7 @@ export class McpInstallCommand extends BaseCommand {
     let configObj: any = {};
     const mcpConfig = {
       command: "npx",
-      args: ["-y", "@specgate/mcp-server@latest"],
+      args: ["-y", "@rsaglobaltech/specgate@latest", "mcp", "serve"],
     };
 
     if (client === "claude") {
