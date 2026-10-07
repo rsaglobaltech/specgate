@@ -150,7 +150,7 @@ adopt ours and regret it.
 
 The delta format is deliberately the same, so the specs come across as-is.
 
-1. `specgate adopt` in the repo — it never overwrites an existing file.
+1. `specgate init` in the repo — it adopts it and never overwrites an existing file.
 2. Move `openspec/changes/<id>/` to `docs/specs/changes/<id>/` and add a
    `change.yaml` (`specgate change new <id>` writes one to copy).
 3. Move `openspec/specs/<capability>/spec.md` to

@@ -12,20 +12,15 @@ matrix on a codebase that already exists, without touching a line of code.
 
 ```bash
 cd your-existing-repo
-
-# Read the repository first. Writes nothing.
-npx @rsaglobaltech/specgate@latest onboard
-
-# Detects the stack from pom.xml / build.gradle / package.json / go.mod
-npx @rsaglobaltech/specgate@latest adopt
-
-# Passes immediately — the generated baseline REQ-001 anchors the matrix
-npx @rsaglobaltech/specgate@latest validate .
+npx @rsaglobaltech/specgate@latest init    # adopts the repo: writes specs, touches no code
+npx @rsaglobaltech/specgate@latest check   # the gate — passes right away
 ```
 
-Start with `onboard`. It proposes the capabilities your layout already implies
-and names the evidence for each — the modules your build declares, or the level
-at which your code divides:
+`init` sees the code (a `pom.xml`, `build.gradle`, `package.json`, `go.mod`,
+`pyproject.toml`, `Cargo.toml` or `.csproj`) and adopts the repository in place.
+It proposes the capabilities your layout already implies and names the evidence
+for each — the modules your build declares, or the level at which your code
+divides. (`specgate onboard` shows the same proposals without writing anything.)
 
 ```
 3. Capabilities this codebase already implies
@@ -46,7 +41,7 @@ What `adopt` writes (and only if the file does not already exist):
 | `spec.md` | REQ-001 "existing behaviour is preserved", plus one proposed requirement per capability. |
 | `AI_RULES.md` | Agent/human rulebook with your detected stack and test command. |
 | `features/adoption/baseline.feature` | Baseline Gherkin scenario pinning the adoption invariant. |
-| `docs/specs/traceability.md` | Rich matrix with the baseline row and a row per proposal. |
+| `docs/specs/traceability.md` | The traceability matrix — **generated** from `spec.md`, the scenario tags and the files that mention each requirement. Nobody edits it ([why](writing-specs.md#a-matrix-nobody-edits)); `--keep-matrix` keeps one by hand. |
 | `docs/specs/adr/README.md` | ADR index for future decisions. |
 
 Override anything the detection got wrong with `--var`, and skip the proposals
@@ -57,6 +52,20 @@ npx @rsaglobaltech/specgate@latest adopt \
   --var DOMAIN="health information exchange" \
   --var TEST_CMD="./mvnw -B verify"
 ```
+
+## Your first requirement — five commands
+
+```bash
+specgate status                                  # what is left, and the next command
+specgate new "Totals are rounded to the cent"    # spec section + tagged scenario + row
+# 1. rewrite the <placeholders> in the scenario it wrote
+# 2. write a test that mentions REQ-002 — that mention is the link
+specgate done REQ-002 --strict                   # the gate for this requirement, then closes it
+specgate check                                   # the whole gate, before the pull request
+```
+
+That is the whole daily loop. Nothing edits the matrix and nothing runs
+`req link`: a test or a source file that names `REQ-002` is linked to it.
 
 ### A repository with more than one module
 

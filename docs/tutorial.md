@@ -1042,9 +1042,9 @@ survive.
 ### Keeping an existing repository honest
 
 This tutorial started from `init`, on a blank page. On a repository that
-already has code, start with `specgate onboard` — it reads the layout and proposes
-the capabilities the code already implies — then `specgate adopt`, which writes the
-spec skeleton without touching a line of source. `specgate doctor` reports what has
+already has code, `specgate init` adopts it: it reads the layout, proposes the
+capabilities the code already implies and writes the spec skeleton without
+touching a line of source. `specgate doctor` reports what has
 drifted, with a fix per finding.
 
 ---
