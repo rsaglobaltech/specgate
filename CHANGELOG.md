@@ -10,11 +10,32 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **[Your team's first pull request](docs/first-pr.md)** — what the author
+  writes, what the reviewer reads (and skips), and every failure a first PR
+  meets with its fix.
+- **`ci init` detects the provider** from the repository's CI files or its
+  `origin` remote. `init` ends by suggesting `specgate ci init`, which answered
+  "--provider is required".
+
 - **The E2E suite covers every command** (61/61): ALM against a stand-in Jira
   server, and MCP from `mcp install` to a tool call over stdio.
 
+### Changed
+
+- **`done` runs the gate before it writes.** Closing a requirement as
+  `Implemented`, `Verified` or `Released` now runs what `check` runs and writes
+  nothing when it fails. Plain `done` used to print ✔ over a scenario of
+  unfilled `<placeholders>` and no test, and the next `check` — the one in CI —
+  failed on the same requirement. `--no-check` writes the status without it;
+  `--check`/`--strict` still work and are now the default for those statuses.
+
 ### Fixed
 
+- **Fix lines and agent rules speak the generated matrix.** On a generated
+  matrix, `[TDD-1]`–`[TDD-3]` no longer tell you to edit a matrix column, and
+  `change instructions apply` no longer names an `In Dev` status that does not
+  exist or `req link`: mention the requirement in the test, close it with
+  `done`, run `check`.
 - **The MCP server starts.** `mcp install`, `agents init` and the Claude plugin
   configured clients to run `npx -y @specgate/mcp-server`, a package that was
   never published: every client set up that way started nothing. The server now

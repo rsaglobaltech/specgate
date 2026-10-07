@@ -60,7 +60,7 @@ specgate status                                  # what is left, and the next co
 specgate new "Totals are rounded to the cent"    # spec section + tagged scenario + row
 # 1. rewrite the <placeholders> in the scenario it wrote
 # 2. write a test that mentions REQ-002 — that mention is the link
-specgate done REQ-002 --strict                   # the gate for this requirement, then closes it
+specgate done REQ-002                            # the gate for this requirement, then closes it
 specgate check                                   # the whole gate, before the pull request
 ```
 
@@ -198,8 +198,8 @@ asks you to edit the ten-column matrix by hand.
 specgate status                      # what is left, and the next command to run
 specgate new "Operators can export a monthly report"
 # write src/ReportTest.java and mention REQ-007 in it — that is the link
-specgate done REQ-007 --strict --test-cmd "npm test"   # validates AND runs the suite;
-                                                      # refuses to write if either fails
+specgate done REQ-007 --test-cmd "npm test"   # the gate AND the suite;
+                                             # refuses to write if either fails
 ```
 
 `specgate status` is the one to start the day with — it names the single next
@@ -213,6 +213,7 @@ repair, and `specgate fix` applies it.
 
 ## Next
 
+- [Your team's first pull request — author and reviewer](first-pr.md)
 - [Every command, grouped by when you need it](commands.md)
 - [Write your first scenario](writing-specs.md)
 - [Put the gate in CI](validating.md)

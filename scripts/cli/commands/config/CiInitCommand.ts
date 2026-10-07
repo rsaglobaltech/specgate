@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { spawnSync } from "node:child_process";
 import { renderTemplate } from "../../../../packages/core/src/domain/PackSpec";
 import { BaseCommand } from "../../../lib/command";
 
@@ -16,6 +17,30 @@ export const PROVIDERS: Record<string, { template: string; dest: string }> = {
   jenkins: { template: "jenkins.tpl", dest: "Jenkinsfile" },
 };
 
+/**
+ * The provider a repository already shows: its CI files first, then where
+ * `origin` points. `init` ends by suggesting `specgate ci init`, which used to
+ * answer "--provider is required" — the first step of the loop's own advice
+ * was a usage error.
+ */
+export function detectProvider(projectDir: string): { provider: string; from: string } | null {
+  const has = (rel: string) => fs.existsSync(path.join(projectDir, rel));
+  if (has(".github/workflows")) return { provider: "github", from: ".github/workflows/" };
+  if (has(".gitlab-ci.yml")) return { provider: "gitlab", from: ".gitlab-ci.yml" };
+  if (has("azure-pipelines.yml")) return { provider: "azure", from: "azure-pipelines.yml" };
+  if (has("Jenkinsfile")) return { provider: "jenkins", from: "Jenkinsfile" };
+  const remote = spawnSync("git", ["remote", "get-url", "origin"], {
+    cwd: projectDir,
+    encoding: "utf8",
+  });
+  const url = remote.status === 0 ? remote.stdout.trim() : "";
+  if (/github\.com[:/]/.test(url)) return { provider: "github", from: "the origin remote" };
+  if (/gitlab\./.test(url)) return { provider: "gitlab", from: "the origin remote" };
+  if (/dev\.azure\.com|visualstudio\.com/.test(url))
+    return { provider: "azure", from: "the origin remote" };
+  return null;
+}
+
 function logInfo(msg: string) {
   process.stdout.write(`ℹ️ [INFO] ${msg}\n`);
 }
@@ -29,10 +54,11 @@ function logFix(msg: string) {
 function usage() {
   process.stdout.write(
     "Usage:\n" +
-      "  specgate ci init --provider <provider> [options]\n\n" +
+      "  specgate ci init [--provider <provider>] [options]\n\n" +
       `Providers: ${Object.keys(PROVIDERS).join(" | ")}\n\n` +
       "Options:\n" +
-      "  --provider <name>    CI provider (required)\n" +
+      "  --provider <name>    CI provider (default: detected from the repository's CI\n" +
+      "                       files or its origin remote)\n" +
       "  --project-dir <dir>  Repository root (default: current directory)\n" +
       "  --stdout             Print the config instead of writing it\n" +
       "  --force              Overwrite the destination file if it exists\n"
@@ -73,7 +99,17 @@ export class CiInitCommand extends BaseCommand {
     const opts = parseArgs(rawArgs);
 
     if (!opts.provider) {
-      logError("--provider is required.");
+      const detected = detectProvider(opts.projectDir);
+      if (detected) {
+        opts.provider = detected.provider;
+        // On stderr under --stdout: that output is the file, piped somewhere.
+        const line = `provider: ${detected.provider} (detected from ${detected.from})`;
+        if (opts.stdout) process.stderr.write(`ℹ️ [INFO] ${line}\n`);
+        else logInfo(line);
+      }
+    }
+    if (!opts.provider) {
+      logError("--provider is required: nothing in this repository names its CI.");
       logFix(`Pick one: ci init --provider ${Object.keys(PROVIDERS).join(" | ")}`);
       process.exit(2);
     }

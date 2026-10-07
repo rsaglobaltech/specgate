@@ -48,7 +48,7 @@ function project() {
     "--project-dir",
     dir
   );
-  cli("done", "REQ-003", "--project-dir", dir);
+  cli("done", "REQ-003", "--no-check", "--project-dir", dir);
   return { parent, dir };
 }
 
@@ -157,7 +157,10 @@ const row = (dir, id) =>
 test("done writes the status into spec.md, where regeneration reads it", () => {
   const { parent, dir } = derived();
   try {
-    assert.equal(cli("done", "REQ-002", "--status", "Verified", "--project-dir", dir).status, 0);
+    assert.equal(
+      cli("done", "REQ-002", "--status", "Verified", "--no-check", "--project-dir", dir).status,
+      0
+    );
     assert.match(fs.readFileSync(path.join(dir, "spec.md"), "utf8"), /csda:trace status=Verified/);
     assert.match(row(dir, "REQ-002"), /\| Verified \|$/);
     assert.equal(cli("matrix", "--check", "--project-dir", dir).status, 0, "nothing left stale");

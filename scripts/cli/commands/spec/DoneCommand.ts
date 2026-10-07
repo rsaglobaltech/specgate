@@ -36,12 +36,17 @@ export const ALLOWED_STATUSES = [
   "Deprecated",
 ];
 
+/** Statuses that claim the behaviour exists: `done` gates them by default. */
+export const DELIVERED_STATUSES = ["Implemented", "Verified", "Released"];
+
 export interface DoneOptions {
   reqId: string | null;
   status: string;
   projectDir: string;
   check: boolean;
   strict: boolean;
+  /** `--no-check`: write the status without running the gate first. */
+  noCheck?: boolean;
   /** Overrides `test_cmd:` in harness.config.yaml for this invocation. */
   testCmd?: string;
   json?: boolean;
@@ -60,6 +65,7 @@ export function parseArgs(argv: string[]): DoneOptions {
     if (a === "--status" && argv[i + 1]) opts.status = argv[++i];
     else if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
     else if (a === "--check") opts.check = true;
+    else if (a === "--no-check") opts.noCheck = true;
     else if (a === "--test-cmd" && argv[i + 1]) opts.testCmd = argv[++i];
     else if (a === "--json") opts.json = true;
     else if (a === "--strict") {
@@ -68,6 +74,14 @@ export function parseArgs(argv: string[]): DoneOptions {
     } else if (!opts.reqId && !a.startsWith("-")) {
       opts.reqId = a;
     }
+  }
+  // A status that claims delivery runs the gate unless told not to. `done`
+  // used to print a tick over a scenario of unfilled <placeholder> steps and
+  // no test, and the next `check` — the one in CI — failed: the daily loop's
+  // last verb said yes to what its fourth said no to.
+  if (!opts.noCheck && DELIVERED_STATUSES.includes(opts.status)) {
+    opts.check = true;
+    opts.strict = true;
   }
   return opts;
 }
@@ -83,14 +97,16 @@ export class DoneCommand extends BaseCommand {
     if (this.args.includes("--help") || this.args.includes("-h")) {
       process.stdout.write(
         "Usage:\n" +
-          "  specgate done <REQ-id> [--status <Status>] [--check] [--strict]\n" +
+          "  specgate done <REQ-id> [--status <Status>] [--no-check]\n" +
           '                       [--test-cmd "<command>"] [--project-dir <path>] [--json]\n\n' +
-          "Marks a requirement's row in docs/specs/traceability.md.\n\n" +
+          "Marks a requirement delivered — after the gate `specgate check` runs passes\n" +
+          "for it. Nothing is written when it fails.\n\n" +
           "Options:\n" +
           `  --status <Status>   Target status (default: Implemented).\n` +
           `                      One of: ${ALLOWED_STATUSES.join(", ")}\n` +
-          "  --check             Run `validate` first and refuse to write if it fails.\n" +
-          "  --strict            --check with the gate: validate --strict.\n" +
+          "  --no-check          Write the status without running the gate (Implemented,\n" +
+          "                      Verified and Released run it by default).\n" +
+          "  --check, --strict   Run the gate for any status, Approved included.\n" +
           '  --test-cmd "<cmd>"  Also run the project\'s tests and require them to pass.\n' +
           "                      Read from `test_cmd:` in harness.config.yaml when omitted.\n" +
           "                      Without one, `done` says it checked the specification\n" +

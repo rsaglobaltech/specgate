@@ -261,8 +261,14 @@ como camino principal. **`mejoras/` y `book/` se quedan en el repo**
       `PLAN_PREDICTABLE_CODE_EVOLUTION.md` salen del repositorio del producto (a
       un repo de notas o a `docs/internal/` excluido de la web). Un recién
       llegado que abre el repo no debe ver 10k líneas de diario de diseño.
-- [ ] Guía «primer PR con Specgate en tu equipo»: rol del revisor, qué mirar
-      en el diff de la spec, qué hacer cuando `check` falla.
+- [x] Guía «primer PR con Specgate en tu equipo»: rol del revisor, qué mirar
+      en el diff de la spec, qué hacer cuando `check` falla — **hecho
+      2026-10-07**, [`docs/first-pr.md`](../docs/first-pr.md). Escribirla con
+      salidas reales destapó tres tropiezos del primer día, arreglados: `done`
+      marcaba ✔ lo que `check` rechazaba después (ahora pasa la puerta antes de
+      escribir); `ci init`, el paso 4 que recomienda `init`, fallaba sin
+      `--provider` (ahora lo detecta); los `fix:` de TDD y las reglas de
+      `change apply` hablaban de la matriz a mano.
 
 ### Fase 7 — Congelar superficie
 
@@ -318,8 +324,9 @@ Petición del usuario: probar todas las funcionalidades de punta a punta.
       plugin de Claude apuntaban a `@specgate/mcp-server`, que no está publicado.
       Ahora el servidor va dentro del paquete (`specgate mcp serve`). El LSP sale
       del paso: no se publica fuera de la extensión de VS Code.
-- [ ] Paso 6 — plugins Maven/Gradle contra el tarball, imagen Docker; nocturno
-      con repos públicos fijados.
+- [-] Paso 6 — plugins Maven/Gradle contra el tarball, imagen Docker; nocturno
+      con repos públicos fijados. **Descartado por ahora, 2026-10-07 (decisión
+      del usuario):** los plugins no interesan de momento.
 - Fuera, dicho: extensiones de VS Code e IntelliJ (exigen el editor).
 
 ## 4. La medida

@@ -191,9 +191,9 @@
       "surface": "plan",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1780,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 2050,
+      "truncated": true,
+      "omitted": 1,
       "lines": [
         {
           "t": "  Needs Test + Code",
@@ -236,6 +236,26 @@
           "s": "out"
         },
         {
+          "t": "  Needs Feature File",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-004   -",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "      · feature: -",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
           "t": "  Needs Implementation",
           "c": "out",
           "s": "out"
@@ -248,11 +268,6 @@
         {
           "t": "      ✓ feature: `features/core/health.feature`",
           "c": "ok",
-          "s": "out"
-        },
-        {
-          "t": "      · code:    `API /health, smoke test`",
-          "c": "out",
           "s": "out"
         }
       ]
@@ -373,7 +388,7 @@
       "omitted": 0,
       "lines": [
         {
-          "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 98 +++++++++++++++++++++++++",
+          "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 99 +++++++++++++++++++++++++",
           "c": "out",
           "s": "out"
         },
@@ -393,7 +408,7 @@
           "s": "out"
         },
         {
-          "t": " 4 files changed, 118 insertions(+), 1 deletion(-)",
+          "t": " 4 files changed, 119 insertions(+), 1 deletion(-)",
           "c": "out",
           "s": "out"
         }

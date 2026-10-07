@@ -115,3 +115,34 @@ for (const { provider, dest } of CASES) {
     });
   });
 }
+
+test("ci init without --provider uses the one the origin remote names", () => {
+  // `init` ends by suggesting `specgate ci init`; it used to be a usage error.
+  withTmp((tmp) => {
+    spawnSync("git", ["init", "-q"], { cwd: tmp });
+    spawnSync("git", ["remote", "add", "origin", "git@github.com:acme/shop.git"], { cwd: tmp });
+    const r = cli("ci", "init", "--project-dir", tmp);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /provider: github \(detected from the origin remote\)/);
+    assert.ok(fs.existsSync(path.join(tmp, ".github/workflows/spec-gate.yml")));
+  });
+});
+
+test("ci init without --provider prefers the CI file already in the repo", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(path.join(tmp, "Jenkinsfile"), "pipeline {}\n");
+    const r = cli("ci", "init", "--project-dir", tmp, "--stdout");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /pipeline \{/);
+    assert.doesNotMatch(r.stdout, /detected/, "--stdout is the file and nothing else");
+    assert.match(r.stderr, /provider: jenkins/);
+  });
+});
+
+test("ci init without --provider and nothing to detect still asks for one", () => {
+  withTmp((tmp) => {
+    const r = cli("ci", "init", "--project-dir", tmp);
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /--provider is required/);
+  });
+});

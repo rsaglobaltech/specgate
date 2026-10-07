@@ -999,13 +999,18 @@ export class ValidateSpecsCommand extends BaseCommand {
 
     const traceMode = mode as string;
 
+    // A generated matrix is not edited: the fix is in the test or in spec.md.
+    const derived = isDerivedMatrix(traceContent);
     const TDD_FIXES: Record<string, string> = {
-      "TDD-1":
-        "Write the test first, then set its path in the row's 'Test artifact' column (or move the status back to Draft).",
-      "TDD-2":
-        "Give the row a Scenario ID that matches a scenario in its feature file (e.g. SCN-001).",
-      "TDD-3":
-        "Add a traceability row for the requirement — run `specgate plan` to list what each REQ still needs.",
+      "TDD-1": derived
+        ? "Write a test that mentions the requirement (REQ-NNN) — that is the link — or move it back to Draft in spec.md."
+        : "Write the test first, then set its path in the row's 'Test artifact' column (or move the status back to Draft).",
+      "TDD-2": derived
+        ? "Tag a scenario in the feature file with the requirement's @REQ-NNN and an @SCN-NNN."
+        : "Give the row a Scenario ID that matches a scenario in its feature file (e.g. SCN-001).",
+      "TDD-3": derived
+        ? "Give the requirement a `## REQ-NNN` section in spec.md — `specgate new` writes one."
+        : "Add a traceability row for the requirement — run `specgate status` to list what each REQ still needs.",
     };
 
     if (strictTddViolations.length > 0) {

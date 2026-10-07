@@ -116,7 +116,8 @@ test("check is the strong gate, not a subset of it", () => {
       "--project-dir",
       dir
     );
-    assert.equal(cli("done", reqId, "--project-dir", dir).status, 0);
+    // `done` would refuse it now; --no-check is how a row gets ahead of the gate.
+    assert.equal(cli("done", reqId, "--no-check", "--project-dir", dir).status, 0);
     const r = cli("check", dir, "--json", "--test-cmd", 'node -e ""');
     assert.equal(r.status, 1, r.stdout + r.stderr);
     assert.equal(json(r).status[0].code, "check_validate_failed");

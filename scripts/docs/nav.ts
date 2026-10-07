@@ -50,6 +50,11 @@ export const NAV: readonly NavSection[] = [
         blurb: "Someone handed you a spec-driven repository. Start here instead.",
       },
       {
+        slug: "first-pr",
+        label: "Your team's first PR",
+        blurb: "What the author writes, what the reviewer reads, and what to do when check fails.",
+      },
+      {
         slug: "walkthrough",
         label: "Walkthrough",
         blurb: "The whole loop end to end, in one sitting.",

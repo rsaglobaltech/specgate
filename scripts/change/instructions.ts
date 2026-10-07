@@ -72,12 +72,13 @@ export const STAGES = {
   apply: {
     summary: "Implement the change: write the tests first, then the code.",
     rules: [
-      "Work one requirement at a time. `specgate plan` is the queue.",
+      "Work one requirement at a time. `specgate status` is the queue.",
       "The scenario in the delta is the acceptance criterion — implement to it, not around it.",
-      "Set the row's Test artifact and move its status to `In Dev` only once the test exists; `validate --strict` fails with `[TDD-1]` otherwise.",
-      "Do not edit `docs/specs/traceability.md` by hand — `specgate req link` and `specgate done` write it.",
+      "Write the test first and mention the requirement's REQ-NNN in it — that mention is the link.",
+      "Close each requirement with `specgate done REQ-NNN`: it runs the gate first and writes nothing while it fails.",
+      "Do not edit `docs/specs/traceability.md` by hand — it is generated (`specgate matrix`, and `specgate check` refreshes it).",
     ],
-    nextCommand: "specgate validate . --strict",
+    nextCommand: "specgate check",
   },
   archive: {
     summary: "Merge the change into the spec tree and file it away.",
