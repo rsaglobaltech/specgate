@@ -107,9 +107,12 @@ function lintRequirementsCoverage(pack: any, errors: string[], _warnings: string
       asArray(uc.requirements || (uc.requirement ? [uc.requirement] : []))
     )
   );
+  // The schema names the field `requirement_id`; reading only `requirement`
+  // made every scenario invisible here, so a requirement covered only by a
+  // scenario failed `--strict` as unreferenced.
   const usedInSCN = new Set(
     asArray(pack.scenarios)
-      .map((s: any) => s.requirement)
+      .map((s: any) => s.requirement_id || s.requirement)
       .filter(Boolean)
   );
   const usedInAC = new Set(

@@ -1,0 +1,25 @@
+<idea-plugin>
+  <id>com.rsaglobaltech.spec-driven</id>
+  <name>Spec-Driven</name>
+  <vendor email="oss@rsaglobaltech.com" url="https://github.com/rsaglobaltech">RSA Global Tech</vendor>
+
+  <description><![CDATA[
+    Inline diagnostics for spec-driven projects' <code>traceability.md</code> —
+    the same rules as <code>csda validate --strict-tdd</code>, surfaced as you type.
+    Powered by the shared <code>@specgate/lsp-server</code> via LSP4IJ, so the
+    checks are never reimplemented per IDE.
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.redhat.devtools.lsp4ij</depends>
+
+  <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+    <server
+        id="spec-driven-lsp"
+        name="Spec-Driven Language Server"
+        factoryClass="com.rsaglobaltech.specdriven.SpecDrivenLanguageServerFactory"/>
+    <fileNamePatternMapping
+        patterns="traceability.md"
+        serverId="spec-driven-lsp"/>
+  </extensions>
+</idea-plugin>

@@ -98,11 +98,13 @@ function splitFlowItems(inner: string): string[] {
 function parseScalar(raw) {
   const text = raw.trim();
 
-  if (
-    (text.startsWith('"') && text.endsWith('"')) ||
-    (text.startsWith("'") && text.endsWith("'"))
-  ) {
-    return text.slice(1, -1);
+  // Quoted scalars, with the escapes YAML defines for each: `''` inside single
+  // quotes is one quote (`'the device''s fix'`), and `\"` inside double quotes.
+  if (text.length > 1 && text.startsWith("'") && text.endsWith("'")) {
+    return text.slice(1, -1).replace(/''/g, "'");
+  }
+  if (text.length > 1 && text.startsWith('"') && text.endsWith('"')) {
+    return text.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\");
   }
 
   // Inline flow sequences: `aggregates: [Invoice, Payment]`. Ordinary YAML, and
@@ -126,8 +128,43 @@ function parseScalar(raw) {
   return text;
 }
 
+/** A line that starts a mapping entry: a key, then `:` and a space or the end. */
+function isKeyLine(text: string): boolean {
+  return /^(?:"[^"]*"|'[^']*'|[^\s'"#-][^:]*?):(?:\s|$)/.test(text);
+}
+
 function parseTokens(tokens) {
   let index = 0;
+
+  /**
+   * A scalar written over several lines — what YAML emitters produce for a
+   * long description. A quoted one runs to its closing quote; a plain one takes
+   * every deeper line that is neither a key nor a list item. Lines are joined
+   * with a space, as YAML folds them. Both used to stop the parse with
+   * "Unexpected YAML token", so a pack written by a YAML library would not load.
+   */
+  function continueScalar(raw: string, indent: number): string {
+    let text = raw;
+    const quote = text[0] === '"' || text[0] === "'" ? text[0] : "";
+    const closed = () => text.length > 1 && text.endsWith(quote);
+    if (quote) {
+      while (!closed() && index < tokens.length) {
+        text += " " + tokens[index].text;
+        index += 1;
+      }
+      return text;
+    }
+    while (
+      index < tokens.length &&
+      tokens[index].indent > indent &&
+      !tokens[index].text.startsWith("- ") &&
+      !isKeyLine(tokens[index].text)
+    ) {
+      text += " " + tokens[index].text;
+      index += 1;
+    }
+    return text;
+  }
 
   function parseNode(indent) {
     if (index >= tokens.length) return null;
@@ -158,11 +195,19 @@ function parseTokens(tokens) {
       if (pair.value === "") {
         if (index < tokens.length && tokens[index].indent > indent) {
           obj[pair.key] = parseNode(tokens[index].indent);
+        } else if (
+          index < tokens.length &&
+          tokens[index].indent === indent &&
+          tokens[index].text.startsWith("- ")
+        ) {
+          // An indentless sequence: `key:` then `- item` at the key's own
+          // indent. Valid YAML, and the default of PyYAML and most editors.
+          obj[pair.key] = parseList(indent);
         } else {
           obj[pair.key] = {};
         }
       } else {
-        obj[pair.key] = parseScalar(pair.value);
+        obj[pair.key] = parseScalar(continueScalar(pair.value, indent));
       }
     }
 
@@ -188,9 +233,9 @@ function parseTokens(tokens) {
         continue;
       }
 
-      const inlinePair = splitKeyValue(itemText);
+      const inlinePair = isKeyLine(itemText) ? splitKeyValue(itemText) : null;
       if (!inlinePair) {
-        arr.push(parseScalar(itemText));
+        arr.push(parseScalar(continueScalar(itemText, indent)));
         continue;
       }
 
@@ -202,7 +247,7 @@ function parseTokens(tokens) {
           obj[inlinePair.key] = {};
         }
       } else {
-        obj[inlinePair.key] = parseScalar(inlinePair.value);
+        obj[inlinePair.key] = parseScalar(continueScalar(inlinePair.value, indent + 2));
       }
 
       if (
