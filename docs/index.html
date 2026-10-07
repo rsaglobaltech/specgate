@@ -33,7 +33,7 @@
 
 <header class="top">
   <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
-  <span class="top__version">v0.14.1</span>
+  <span class="top__version">v0.14.2</span>
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -348,9 +348,6 @@ TESTING: node:test
 ℹ️ [INFO] Generated 3 scenario file(s).
 ℹ️ [INFO] Domain pack expansion completed.
 
-⚠️  This pack writes its own traceability matrix: the project's matrix is hand-kept again.
-   `specgate matrix --migrate` switches it back once its requirements have `## REQ-NNN` sections.
-
 ~/smart-parking $ specgate plan
   Needs Test + Code
     REQ-002   SCN-001
@@ -377,23 +374,26 @@ max_attempts: 1
 
 ~/smart-parking $ specgate harness run --req REQ-000
 ℹ️  [harness] Processing 1 requirement(s) from base HEAD.
-⚠️  [harness] REQ-000: the row declares no test artifact, so the agent chooses where the test goes and the matrix will point somewhere else. [requirement_declares_no_test_artifact]
-⚠️  [harness]   fix: specgate req link REQ-000 --test &lt;path&gt;
 ℹ️  [harness] REQ-000: attempt 1/1
+⚠️  [harness] REQ-000: gate failed at validate --strict
 
 ── harness report ──
-  ✅ REQ-000  pass (1 attempt)  → harness/REQ-000
+  ❌ REQ-000  fail (1 attempt)  → harness/REQ-000
+       Gate failed at: validate --strict
+       │ ❌ [ERROR] --strict-tdd violations detected:
+       │   [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-000)
+       │ 💡 [FIX] TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link — or move it back to Draft in spec.md.
+       └ full output: --format json · reproduce: --keep-worktrees
+       ↳ the attempt is committed on harness/REQ-000 — review it
 
-  1 passed · 0 failed · 0 skipped
-  Review and merge the harness/* branches you trust.
-ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`
+  0 passed · 1 failed · 0 skipped
+… 1 more lines
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
  .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 99 +++++++++++++++++++++++++
- docs/specs/traceability.md                              |  2 +-
  src/health.js                                           |  9 +++
  test/health.test.js                                     | 10 +++
- 4 files changed, 119 insertions(+), 1 deletion(-)
+ 3 files changed, 118 insertions(+)
 
 ~/smart-parking $ git switch -q harness/REQ-000 &amp;&amp; node --test test/*.test.js
 ✔ GET /health reports the service as UP (12ms)
@@ -416,7 +416,7 @@ max_attempts: 1
     </figure>
 
     <p class="term__meta">
-      Recorded from <strong>v0.14.1</strong>. <a href="./tutorial.html">The same run, explained →</a>
+      Recorded from <strong>v0.14.2</strong>. <a href="./tutorial.html">The same run, explained →</a>
     </p>
   </div>
 </section>
@@ -568,7 +568,7 @@ specgate check</code></pre>
       <a href="./release-process.html">Releases</a>
     </nav>
   </div>
-  <p class="ed-wrap ed-foot__note">Documentation for v0.14.1. Every number on this page is generated from the repository, not typed by hand.</p>
+  <p class="ed-wrap ed-foot__note">Documentation for v0.14.2. Every number on this page is generated from the repository, not typed by hand.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>

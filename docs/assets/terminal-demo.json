@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.14.1",
+    "version": "0.14.2",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
@@ -142,7 +142,7 @@
       "surface": "specops add",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1330,
+      "holdMs": 1060,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -165,21 +165,6 @@
           "t": "ℹ️ [INFO] Domain pack expansion completed.",
           "c": "info",
           "s": "out"
-        },
-        {
-          "t": "",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "⚠️  This pack writes its own traceability matrix: the project's matrix is hand-kept again.",
-          "c": "warn",
-          "s": "err"
-        },
-        {
-          "t": "   `specgate matrix --migrate` switches it back once its requirements have `## REQ-NNN` sections.",
-          "c": "out",
-          "s": "err"
         }
       ]
     },
@@ -312,11 +297,11 @@
       "cwd": "~/smart-parking",
       "command": "specgate harness run --req REQ-000",
       "surface": "harness run",
-      "exit": 0,
+      "exit": 1,
       "typeMs": 26,
-      "holdMs": 1690,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 1960,
+      "truncated": true,
+      "omitted": 1,
       "lines": [
         {
           "t": "ℹ️  [harness] Processing 1 requirement(s) from base HEAD.",
@@ -324,18 +309,13 @@
           "s": "out"
         },
         {
-          "t": "⚠️  [harness] REQ-000: the row declares no test artifact, so the agent chooses where the test goes and the matrix will point somewhere else. [requirement_declares_no_test_artifact]",
-          "c": "warn",
-          "s": "out"
-        },
-        {
-          "t": "⚠️  [harness]   fix: specgate req link REQ-000 --test <path>",
-          "c": "warn",
-          "s": "out"
-        },
-        {
           "t": "ℹ️  [harness] REQ-000: attempt 1/1",
           "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "⚠️  [harness] REQ-000: gate failed at validate --strict",
+          "c": "warn",
           "s": "out"
         },
         {
@@ -349,8 +329,38 @@
           "s": "out"
         },
         {
-          "t": "  ✅ REQ-000  pass (1 attempt)  → harness/REQ-000",
-          "c": "ok",
+          "t": "  ❌ REQ-000  fail (1 attempt)  → harness/REQ-000",
+          "c": "err",
+          "s": "out"
+        },
+        {
+          "t": "       Gate failed at: validate --strict",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "       │ ❌ [ERROR] --strict-tdd violations detected:",
+          "c": "err",
+          "s": "out"
+        },
+        {
+          "t": "       │   [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-000)",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "       │ 💡 [FIX] TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link — or move it back to Draft in spec.md.",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "       └ full output: --format json · reproduce: --keep-worktrees",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "       ↳ the attempt is committed on harness/REQ-000 — review it",
+          "c": "out",
           "s": "out"
         },
         {
@@ -359,18 +369,8 @@
           "s": "out"
         },
         {
-          "t": "  1 passed · 0 failed · 0 skipped",
+          "t": "  0 passed · 1 failed · 0 skipped",
           "c": "ok",
-          "s": "out"
-        },
-        {
-          "t": "  Review and merge the harness/* branches you trust.",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`",
-          "c": "info",
           "s": "out"
         }
       ]
@@ -383,17 +383,12 @@
       "surface": null,
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1150,
+      "holdMs": 1060,
       "truncated": false,
       "omitted": 0,
       "lines": [
         {
           "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 99 +++++++++++++++++++++++++",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": " docs/specs/traceability.md                              |  2 +-",
           "c": "out",
           "s": "out"
         },
@@ -408,7 +403,7 @@
           "s": "out"
         },
         {
-          "t": " 4 files changed, 119 insertions(+), 1 deletion(-)",
+          "t": " 3 files changed, 118 insertions(+)",
           "c": "out",
           "s": "out"
         }
