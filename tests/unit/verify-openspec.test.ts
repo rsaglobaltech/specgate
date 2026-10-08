@@ -334,7 +334,7 @@ test("verify --ids prints every criterion id to name in a test", () => {
     for (const f of files()) write(f.path, f.source);
     const r = cli(dir, "verify", "--ids");
     assert.equal(r.status, 0);
-    assert.match(r.stdout, new RegExp(VALID.replace(/[/.]/g, "\\$&")));
+    assert.ok(r.stdout.includes(VALID), r.stdout);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
