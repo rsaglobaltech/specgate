@@ -46,5 +46,7 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
       enseña `pack lint` como nota). Escribirlos y, entonces, subir la nota a aviso.
 - [ ] #21: `depends_on` entre packs.
 - [x] Harness sobre los 30 requisitos reabiertos por v0.2.0 (2026-10-08): 30/30, PR #53–#82; 28 al primer paso, REQ-501 tras #35 y REQ-302 tras #37 (0.14.6). Resultado: 99/99, 41 rutas API, 14 pantallas, 67 casos de uso, 599 tests (core 400, web 146, mobile 53), gate verde.
-- [ ] Idea del usuario: `specgate draft --from ficha.md` (borrador de REQ con checklist) — pendiente de ADR.
+- [x] Idea del usuario: ADR-0029 y spec `docs/specs/draft-from-brief.md` (2026-10-08).
+- [ ] `specgate draft` fase 1: checklist D1–D8 + `draft --check`.
+- [ ] `specgate draft` fase 3: prototipo y evaluación contra la ficha de golden_app (guardar la ficha original como fixture).
 - [ ] Informe final de evaluación.

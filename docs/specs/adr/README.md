@@ -36,6 +36,7 @@ for the policy on when and how to write an ADR.
 | [0026](0026-the-default-gate-is-the-strong-gate.md) | The default gate is the strong gate, from 1.0 | Accepted | 2026-09-02 |
 | [0027](0027-use-cases-are-a-layer-not-a-column.md) | Use cases are a layer, not a column | Accepted | 2026-10-07 |
 | [0028](0028-architecture-conformance-is-part-of-the-gate.md) | Architecture conformance is part of the gate | Accepted | 2026-10-07 |
+| [0029](0029-a-brief-becomes-a-draft-change-not-a-spec.md) | A brief becomes a draft change, not a spec | Accepted | 2026-10-08 |
 
 ## Template
 
