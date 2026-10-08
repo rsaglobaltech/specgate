@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.14.4] — 2026-10-08
+
 ### Fixed
 
 Found when the Golden State packs gained API and screen scenarios for 30
