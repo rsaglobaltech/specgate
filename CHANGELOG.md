@@ -12,6 +12,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 - **MCP tool `specgate_verify`** (ADR-0030): the agent working from an OpenSpec
   spec gets the same check `specgate verify` runs, inside its own loop.
+- **A weekly check that `verify` still reads OpenSpec.** OpenSpec releases
+  weekly; `e2e/openspec-compat.mjs` installs the latest, lets it write and
+  archive a change, checks `verify` fails then passes on it, and reads
+  OpenSpec's own repository with nothing unreadable. Runs every Monday and on
+  demand with a version (`openspec-compat.yml`).
 
 ### Fixed
 

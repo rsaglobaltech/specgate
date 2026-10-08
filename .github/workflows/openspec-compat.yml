@@ -1,0 +1,39 @@
+# Does `specgate verify` still read what the current OpenSpec writes? (ADR-0030)
+#
+# OpenSpec releases weekly. A format change the reader does not understand
+# would read as zero scenarios — every claim green, silently. This installs
+# the latest OpenSpec, lets it write and archive a change, checks verify
+# fails then passes on it, and reads OpenSpec's own repository with no
+# unreadable file. A failure is a task, not a silent miss.
+#
+# Not on pull requests: it depends on a package Specgate does not control,
+# and a new OpenSpec release must not turn an unrelated PR red.
+name: OpenSpec — does verify still read it?
+
+on:
+  schedule:
+    - cron: '41 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "@fission-ai/openspec version to test (default: latest)"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+
+jobs:
+  compat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - name: Verify against OpenSpec ${{ inputs.version || 'latest' }}
+        run: node e2e/openspec-compat.mjs --version "${{ inputs.version || 'latest' }}"
