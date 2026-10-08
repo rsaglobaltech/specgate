@@ -45,6 +45,6 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 - [ ] Packs curados: 21 requisitos sin escenario en los 11 packs (lo que ahora
       enseña `pack lint` como nota). Escribirlos y, entonces, subir la nota a aviso.
 - [ ] #21: `depends_on` entre packs.
-- [ ] Harness sobre los 30 requisitos reabiertos por v0.2.0.
+- [x] Harness sobre los 30 requisitos reabiertos por v0.2.0 (2026-10-08): 30/30, PR #53–#82; 28 al primer paso, REQ-501 tras #35 y REQ-302 tras #37 (0.14.6). Resultado: 99/99, 41 rutas API, 14 pantallas, 67 casos de uso, 599 tests (core 400, web 146, mobile 53), gate verde.
 - [ ] Idea del usuario: `specgate draft --from ficha.md` (borrador de REQ con checklist) — pendiente de ADR.
 - [ ] Informe final de evaluación.
