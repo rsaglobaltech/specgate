@@ -596,3 +596,30 @@ test("the harness publishes a branch again after the remote deleted it", () => {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("a regenerated matrix is not an edit to the contract; a hand edit still is", () => {
+  const { isRegeneratedMatrix } = require("../../scripts/cli/commands/harness/RunCommand");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-golden-regen-"));
+  try {
+    fs.mkdirSync(path.join(dir, "lib"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "package.json"), '{"name":"app","version":"1.0.0"}');
+    fs.writeFileSync(path.join(dir, "lib", "index.js"), "module.exports = {};\n");
+    assert.equal(cli("adopt", "--project-dir", dir, "--no-capabilities").status, 0);
+    const rel = "docs/specs/traceability.md";
+    assert.match(fs.readFileSync(path.join(dir, rel), "utf8"), /specgate:derived/);
+
+    // The agent adds a test naming a requirement; something runs `specgate`.
+    fs.mkdirSync(path.join(dir, "test"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "test", "baseline.test.js"), "// REQ-001 SCN-001\n");
+    assert.equal(cli("matrix", "--project-dir", dir).status, 0);
+    assert.equal(isRegeneratedMatrix(dir, rel), true, "golden_app #37: refused as tampering");
+
+    fs.appendFileSync(
+      path.join(dir, rel),
+      "| REQ-999 | - | - | - | - | - | - | - | - | Implemented |\n"
+    );
+    assert.equal(isRegeneratedMatrix(dir, rel), false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
