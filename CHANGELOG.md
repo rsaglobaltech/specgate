@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.14.5] — 2026-10-08
+
 ### Fixed
 
 - **The pack drift gate checks every scenario of a requirement.** It compared
