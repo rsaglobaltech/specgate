@@ -51,7 +51,7 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 - [x] `verify` fase 1: lector OpenSpec + V1–V7 + `verify.lock` + Action (rama `feat/verify-openspec`). Probado contra el repo de OpenSpec: 747 escenarios, 108 claims.
 - [x] `verify` fase 1: piloto con defectos sembrados — 5/5 detectados, 0 falsos positivos, adopción 2,7 min. Informe: `mejoras/verify-pilot-openspec.md`.
 - [ ] `verify`: piloto externo (otro equipo/módulo) antes del caso público.
-- [ ] `verify`: herramienta MCP `specgate_verify`.
+- [x] `verify`: herramienta MCP `specgate_verify` (probada por stdio sobre el piloto; destapó #40).
 - [ ] `specgate draft` fase 1: checklist D1–D8 + `draft --check`.
 - [ ] `specgate draft` fase 3: prototipo y evaluación contra la ficha de golden_app (guardar la ficha original como fixture).
 - [ ] Informe final de evaluación.

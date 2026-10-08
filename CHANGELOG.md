@@ -8,6 +8,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **MCP tool `specgate_verify`** (ADR-0030): the agent working from an OpenSpec
+  spec gets the same check `specgate verify` runs, inside its own loop.
+
 ### Fixed
 
 - **No command's output is cut short when piped.** On macOS, Node writes to a
@@ -15,6 +20,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   64 KB reached the program reading it truncated at exactly 65,536 bytes. 0.14.4
   fixed `plan`; twenty-eight more commands exited the same way. Every command
   now runs with blocking stdio, so the write completes before the exit.
+- **MCP tools accept an OpenSpec project.** Every tool refused a directory
+  without `spec.md` as "not a spec-driven project", so `specgate_verify` could
+  not run on the projects it was built for. A directory with `openspec/` is a
+  project too.
 
 ## [0.15.0] — 2026-10-08
 
