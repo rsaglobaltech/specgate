@@ -2,7 +2,7 @@
 description: Run the gate: specs, links, coverage and the project's tests.
 ---
 
-# /specgate:verify
+# /specgate:check
 
 Run the gate: specs, links, coverage and the project's tests.
 

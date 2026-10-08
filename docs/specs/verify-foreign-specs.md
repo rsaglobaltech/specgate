@@ -1,14 +1,14 @@
-# Verifying other tools' specs — specification
+# Verifying OpenSpec specs — specification
 
-Status: **Accepted design, not implemented.** Decided in
+Status: **Phase 1 implemented and piloted (without the MCP tool).** Decided in
 [ADR-0030](adr/0030-specgate-verifies-specs-it-did-not-write.md).
-Each format ships in its own phase, and only after its pilot (§8).
+It ships only after its pilot (§8) — [result](../../mejoras/verify-pilot-openspec.md): 5/5 planted defects found, 0 false positives.
 
 ---
 
 ## 1. The promise, and its limit
 
-> Write your spec with Spec Kit or OpenSpec. Specgate guarantees that
+> Write your spec with OpenSpec. Specgate guarantees that
 > what it calls done is done.
 
 **Done** means a claim the tool's own files make: a ticked task, an archived
@@ -23,39 +23,6 @@ so in its own output.
 ## 2. What is read
 
 Read-only. Nothing outside `.specgate/` is written.
-
-### Spec Kit
-
-```
-specs/<NNN-feature>/spec.md
-specs/<NNN-feature>/tasks.md
-```
-
-```markdown
-### User Story 1 - Clock in at the jobsite (Priority: P1)
-**Acceptance Scenarios**:
-1. **Given** a worker inside the geofence, **When** they clock in, **Then** the punch is accepted
-### Functional Requirements
-- **FR-001**: System MUST refuse a clock in outside the geofence
-### Measurable Outcomes
-- **SC-001**: A punch is confirmed in under 2 seconds
-```
-
-```markdown
-- [X] T012 [P] [US1] Create Punch model in src/models/punch.py
-```
-
-| Element | Read as | Id |
-|---|---|---|
-| `### User Story N` | requirement | `speckit:<feature>/USN` |
-| acceptance scenario `M.` | acceptance criterion | `speckit:<feature>/USN.M` |
-| `**FR-NNN**` | functional requirement | `speckit:<feature>/FR-NNN` |
-| `**SC-NNN**` | measurable outcome | `speckit:<feature>/SC-NNN` |
-| `- [X] Tnnn … [USN] …` | claim on story N; **all** tasks of the story ticked = the story is claimed done | — |
-
-FRs and SCs are not referenced by Spec Kit's tasks, so no claim reaches them:
-their coverage is reported, not gated, unless the project opts in with
-`verify.speckit.gate_requirements: true`.
 
 ### OpenSpec
 
@@ -89,8 +56,8 @@ A test proves a criterion by naming its id, anywhere in the file — a test
 title, a comment, a tag:
 
 ```ts
-// speckit:001-clock-in/US1.2
-it("refuses a clock in outside the geofence (speckit:001-clock-in/US1.2)", …)
+// openspec:time-attendance/clock-punches/clock-in-requires-being-inside-an-assigned-jobsite-geofence/inside-an-assigned-jobsite
+it("Scenario: Inside an assigned jobsite", …)
 ```
 
 `specgate verify --ids [--feature <name>]` prints every id with its criterion
@@ -104,7 +71,7 @@ the same.
 | `V1_unproved_claim` | a claimed criterion has no test naming it | gate |
 | `V2_failing_suite` | with `--run`, the test command fails | gate |
 | `V3_criterion_changed` | a claimed criterion's text differs from the text recorded when it was last verified | gate |
-| `V4_unknown_reference` | a claim names a criterion that does not exist (a task tagged `[US9]` in a spec with no User Story 9) | gate |
+| `V4_unknown_reference` | an archived change names a requirement the spec no longer has (removed or renamed since) | report |
 | `V5_unreadable` | a spec or task file does not parse as its format | gate — never "zero criteria" |
 | `V6_orphan_name` | a test names an id that does not exist | report |
 | `V7_unclaimed_coverage` | criteria with no claim and no test | report (percentage) |
@@ -124,7 +91,7 @@ now on.
 ## 6. Interfaces
 
 ```bash
-specgate verify [--from spec-kit|openspec] [--project-dir <dir>]
+specgate verify [--from openspec] [--project-dir <dir>]
                 [--run] [--test-cmd "<cmd>"] [--since <ref>]
                 [--record] [--ids] [--json] [--format text|github|sarif]
 ```
@@ -133,17 +100,17 @@ specgate verify [--from spec-kit|openspec] [--project-dir <dir>]
   --since <base>` on a pull request, posts annotations on the spec lines whose
   claims fail, and one summary comment.
 - **MCP**: `specgate_verify` returns the same JSON, so the agent working from
-  the Spec Kit or OpenSpec spec sees the failure inside its own loop.
+  the OpenSpec spec sees the failure inside its own loop.
 - **JSON** follows the agent contract (`docs/specs/agent-contract.md`).
 
 ## 7. Formats move
 
-- Each reader has fixtures: minimal files written to each tool's published
-  template, plus excerpts of public repositories pinned to a commit
-  (attribution in the fixture header, within each repository's licence).
-- A scheduled job fetches each tool's current templates and runs the readers
-  over them. A template that no longer parses fails the job: a format change
-  becomes a task, not a silent miss.
+- The reader has fixtures written to OpenSpec's published layout, and is run
+  against OpenSpec's own repository, whose `openspec/` is the format's widest
+  real use (747 scenarios, 108 changes, history back to January 2025).
+- A scheduled job installs the latest `@fission-ai/openspec`, runs its own
+  `init`/`archive` on a fixture and reads the result. A format that no longer
+  parses fails the job: a format change becomes a task, not a silent miss.
 - A file that does not parse is `V5`, never zero criteria. A reader that
   silently finds nothing would turn every claim green.
 
@@ -151,8 +118,8 @@ specgate verify [--from spec-kit|openspec] [--project-dir <dir>]
 
 Before a format ships:
 
-1. One Golden State module is specified with that tool and built with that
-   tool's own workflow and agent, by its book.
+1. One Golden State module is specified with OpenSpec and built with its own
+   workflow (`/opsx:propose`, `/opsx:apply`, `openspec archive`), by the book.
 2. Defects are planted on a branch, recorded in a sealed list:
    - a ticked task whose criteria have no test;
    - a test that names a criterion and fails;
@@ -166,17 +133,15 @@ branch (0 false positives), and the time to adopt on the honest branch — from
 
 ## 9. Phases
 
-| Phase | Delivers | Why this order |
+| Phase | Delivers | State |
 |---|---|---|
-| 1 | OpenSpec reader, `verify`, V1–V7, `verify.lock`, the GitHub Action | closest to Specgate's own format (ADR-0016): the idea is tested fastest |
-| 2 | Spec Kit reader | largest audience; the story-level claim rule is the least obvious |
-| 3 | Guides "Specgate with Spec Kit / OpenSpec" and the published pilot results | only formats whose pilot met the bar |
+| 1 | OpenSpec reader, `verify`, V1–V7, `verify.lock`, the GitHub Action, the pilot | done — [pilot](../../mejoras/verify-pilot-openspec.md) |
+| 2 | MCP tool `specgate_verify`; the scheduled format re-read | next |
+| 3 | An external pilot (another team or module), then the guide "Specgate with OpenSpec" and the published case | before announcing |
 
-Kiro is out of scope (ADR-0030, alternatives).
+Spec Kit and Kiro are out of scope (ADR-0030, alternatives).
 
 ## 10. Sources
 
-- Spec Kit templates: `github/spec-kit`, `templates/spec-template.md` and
-  `templates/tasks-template.md` (read 2026-10-08).
 - OpenSpec: `Fission-AI/OpenSpec`, its own `openspec/specs/` and
   `openspec/changes/archive/` (read 2026-10-08).

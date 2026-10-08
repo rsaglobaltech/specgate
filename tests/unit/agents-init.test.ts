@@ -223,3 +223,35 @@ test("every rule file stays under Antigravity's 12,000 character limit", () => {
     );
   }
 });
+
+test("update moves /specgate:verify to /specgate:check, keeping the team's edits", () => {
+  // 0.15: `specgate verify` became the OpenSpec check (ADR-0030), so the slash
+  // command that runs `check` took that name.
+  const { migrateRenamedFiles } = require("../../scripts/cli/commands/project/UpdateCommand");
+  const { renamedPaths } = require("../../scripts/agents/init");
+  const pairs = renamedPaths().map(([a, b]: [string, string]) => `${a} -> ${b}`);
+  assert.ok(
+    pairs.includes(
+      `${path.join(".claude", "commands", "specgate", "verify.md")} -> ${path.join(".claude", "commands", "specgate", "check.md")}`
+    )
+  );
+  assert.ok(
+    pairs.includes(
+      `${path.join(".claude", "commands", "csda", "verify.md")} -> ${path.join(".claude", "commands", "specgate", "check.md")}`
+    )
+  );
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-rename-verify-"));
+  try {
+    const old = path.join(dir, ".claude", "commands", "specgate", "verify.md");
+    fs.mkdirSync(path.dirname(old), { recursive: true });
+    fs.writeFileSync(old, "# team note: run it twice\n");
+    const results = migrateRenamedFiles(dir, { dryRun: false });
+    const moved = path.join(dir, ".claude", "commands", "specgate", "check.md");
+    assert.equal(fs.existsSync(old), false);
+    assert.equal(fs.readFileSync(moved, "utf8"), "# team note: run it twice\n");
+    assert.ok(results.some((r: any) => r.outcome === "renamed"));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

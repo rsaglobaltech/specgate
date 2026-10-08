@@ -1029,7 +1029,7 @@ The `mcp-spec-driven` server exposes `plan`, `mark_requirement_done`,
 specgate agents init                     # or --tool claude,cursor
 ```
 
-That writes `/specgate:explore`, `/specgate:new`, `/specgate:apply`, `/specgate:verify`,
+That writes `/specgate:explore`, `/specgate:new`, `/specgate:apply`, `/specgate:check`,
 `/specgate:done`, `/specgate:propose`, `/specgate:archive` and `/specgate:onboard`, plus the instruction file each tool reads
 — `.cursor/rules/`, `.github/copilot-instructions.md`, `CONVENTIONS.md` and so
 on. They are thin on purpose: rather than restating the delta grammar, which

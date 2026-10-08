@@ -1,0 +1,75 @@
+name: "Specgate Verify"
+description: "Fails a pull request while something OpenSpec calls done has no test naming each criterion it covers (ADR-0030)."
+
+# Needs git history for `since`: check out with `fetch-depth: 0`.
+#
+#   - uses: actions/checkout@v4
+#     with: { fetch-depth: 0 }
+#   - uses: rsaglobaltech/specgate/actions/verify@main
+#     with:
+#       run: "true"
+#       test-cmd: "npm test"
+
+inputs:
+  project-dir:
+    description: "Project root, relative to the repository."
+    required: false
+    default: "."
+  since:
+    description: "Gate only claims made after this ref. Defaults to the pull request's base commit, so adoption never fails on old work."
+    required: false
+    default: ""
+  run:
+    description: "Also run the test command; a failing suite fails the check."
+    required: false
+    default: "false"
+  test-cmd:
+    description: "The command that runs the suite (with run: true). Default: npm test when package.json has one."
+    required: false
+    default: ""
+  version:
+    description: "Specgate version."
+    required: false
+    default: "latest"
+  node-version:
+    description: "Node.js version."
+    required: false
+    default: "22"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Verify claims of done
+      shell: bash
+      env:
+        SINCE: ${{ inputs.since || github.event.pull_request.base.sha }}
+        RUN: ${{ inputs.run }}
+        TEST_CMD: ${{ inputs.test-cmd }}
+        DIR: ${{ inputs.project-dir }}
+        VERSION: ${{ inputs.version }}
+      run: |
+        args=(verify --project-dir "$DIR")
+        [ -n "$SINCE" ] && args+=(--since "$SINCE")
+        gate=("${args[@]}")
+        [ "$RUN" = "true" ] && gate+=(--run)
+        [ -n "$TEST_CMD" ] && gate+=(--test-cmd "$TEST_CMD")
+        sg() { npx --yes "@rsaglobaltech/specgate@${VERSION}" "$@"; }
+
+        # Annotations on the spec lines, then the readable report as the summary.
+        set +e
+        sg "${gate[@]}" --format github
+        code=$?
+        # The summary reads the claims again without re-running the suite.
+        {
+          echo "## Specgate verify"
+          echo
+          echo '```'
+          NO_COLOR=1 sg "${args[@]}" 2>&1 | sed -e 's/\x1b\[[0-9;]*m//g'
+          echo '```'
+          [ "$RUN" = "true" ] && echo "Test suite: $([ $code -eq 0 ] && echo passed || echo 'see the annotations')"
+        } >> "$GITHUB_STEP_SUMMARY"
+        exit $code

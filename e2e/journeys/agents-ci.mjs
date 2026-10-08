@@ -30,15 +30,15 @@ export default [
         /# \/specgate:apply/.test(t.read(dir, ".claude/commands/specgate/apply.md")),
         "heading"
       );
-      for (const step of ["explore", "new", "apply", "verify", "done"]) {
+      for (const step of ["explore", "new", "apply", "check", "done"]) {
         t.expect(
           t.exists(dir, `.claude/commands/specgate/${step}.md`),
           `the daily loop has /specgate:${step}`
         );
       }
       t.expect(
-        /specgate check --json/.test(t.read(dir, ".claude/commands/specgate/verify.md")),
-        "verify runs check"
+        /specgate check --json/.test(t.read(dir, ".claude/commands/specgate/check.md")),
+        "/specgate:check runs check"
       );
       t.expect(
         /names `REQ-NNN`/.test(t.read(dir, "AGENTS.md")),

@@ -266,6 +266,17 @@ export const SURFACE: Command[] = [
     json: { key: "check", gate: true, args: "[dir]" },
   },
   {
+    name: "verify",
+    script: ["verify.js"],
+    help: {
+      group: "core",
+      icon: "🔎",
+      summary: "Gate what OpenSpec calls done on tests that name each criterion (ADR-0030).",
+    },
+    json: { key: "verify", gate: true },
+    mcp: false,
+  },
+  {
     name: "matrix",
     editsContract: true,
     script: ["matrix.js"],

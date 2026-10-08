@@ -112,7 +112,7 @@ There is exactly one gate: `validate --strict`. Everything runs it.
 | Your machine, before a PR | `specgate check` — the gate, then your tests if a test command is configured |
 | Closing a requirement | `specgate done` — the gate for that requirement, then the status |
 | CI | the job `specgate ci init` writes — `validate . --strict` |
-| An agent | the `/specgate:verify` command, the `Stop` hook, the harness |
+| An agent | the `/specgate:check` command, the `Stop` hook, the harness |
 
 A gate that was slightly different in each place used to approve work in one
 and fail it in the next. Now a green in one place is a green everywhere.
