@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.14.6] — 2026-10-08
+
 ### Fixed
 
 - **The harness no longer fails an attempt for a regenerated matrix.** The
