@@ -21,7 +21,7 @@
  * harness never merges a branch — a human reviews and merges.
  */
 
-import { refreshDerivedMatrix } from "../spec/MatrixCommand";
+import { derivedMatrixFor, refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import * as fs from "node:fs";
 import * as os from "node:os";
@@ -653,9 +653,31 @@ function producedNothing(worktreeDir) {
   return isEmptyAttempt(touchedPaths(worktreeDir));
 }
 
+/**
+ * A generated matrix that says exactly what regenerating it says was not
+ * edited — it was regenerated. Writing tests that name scenarios changes the
+ * derived matrix the moment anything runs `specgate` in the worktree, and the
+ * write-scope guard failed REQ-302 twice for a matrix identical to its own
+ * regeneration (golden_app finding #37). A hand edit still differs, and still
+ * fails.
+ */
+export function isRegeneratedMatrix(worktreeDir, rel) {
+  if (rel !== "docs/specs/traceability.md" || !isDerivedProject(worktreeDir)) return false;
+  try {
+    const current = fs.readFileSync(path.join(worktreeDir, rel), "utf8");
+    return derivedMatrixFor(worktreeDir, current) === current;
+  } catch {
+    return false;
+  }
+}
+
 function checkWriteScopeInWorktree(worktreeDir, settings) {
-  const changes = worktreeChanges(worktreeDir);
-  if (!changes) return null;
+  const all = worktreeChanges(worktreeDir);
+  if (!all) return null;
+  const changes = {
+    ...all,
+    modified: all.modified.filter((p) => !isRegeneratedMatrix(worktreeDir, p)),
+  };
 
   const violations = checkWriteScope(changes, {
     protectedPaths: settings.protectedPaths.length ? settings.protectedPaths : undefined,

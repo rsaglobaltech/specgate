@@ -10,6 +10,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **The harness no longer fails an attempt for a regenerated matrix.** The
+  write-scope guard counted any change to `docs/specs/traceability.md` as an
+  edit to the contract, and on a derived project the matrix changes the
+  moment tests name their scenarios and anything runs `specgate`. A matrix
+  identical to its own regeneration is not an edit; a hand edit still fails.
 - **The harness publishes a requirement it ran before.** `--push` uses
   `--force-with-lease`, which trusts the local remote-tracking ref; once the
   branch had been merged and deleted on the remote, that ref was stale and

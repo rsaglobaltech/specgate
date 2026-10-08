@@ -30,6 +30,7 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 | 33 | `plan --json` cortado a 65.536 bytes en pipe (`process.exit` antes de vaciar stdout); 28 comandos más hacen lo mismo | [x] plan · [ ] resto |
 | 34 | `validate --against-lock` compara solo el primer escenario de cada requisito: con varios, falsa deriva | [x] fix/drift-multi-scenario |
 | 35 | Harness en verde pero push rechazado ("stale info") en la 2.ª ronda | [x] fix/harness-stale-lease |
+| 37 | Harness rechaza una matriz derivada regenerada como "edición prohibida" (REQ-302) | [x] fix/harness-derived-matrix |
 | 31 | 48/48 "done" y el producto no se puede usar: 59 casos de uso en `core`, cero rutas API ni pantallas nuevas. Los escenarios solo piden dominio, y el agente hace lo mínimo que los pasa | [x] packs v0.2.0 (52 escenarios de API y pantalla) + plataforma de tests (golden_app #51) |
 
 ## Tareas
