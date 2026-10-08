@@ -1672,10 +1672,27 @@ interface PublishOutcome {
  * flip a pass to a fail — the code is good; the human just has to publish
  * manually — but they are reported.
  */
-function publishBranch(projectDir, branch, req, settings) {
+export function publishBranch(projectDir, branch, req, settings) {
   const published: PublishOutcome = {};
   if (!settings.push) return published;
 
+  // `--force-with-lease` trusts the local remote-tracking ref. When the branch
+  // was merged and deleted on the remote, that ref is stale and the push is
+  // refused ("stale info") — every requirement the harness ran a second time
+  // failed to publish (golden_app finding #35). Bring the ref in line with
+  // the remote first: drop it when the branch is gone, refresh it when not.
+  const remoteHead = git(projectDir, ["ls-remote", "--heads", settings.remote, branch]);
+  if (remoteHead.status === 0) {
+    if (String(remoteHead.stdout || "").trim() === "") {
+      git(projectDir, ["update-ref", "-d", `refs/remotes/${settings.remote}/${branch}`]);
+    } else {
+      git(projectDir, [
+        "fetch",
+        settings.remote,
+        `+refs/heads/${branch}:refs/remotes/${settings.remote}/${branch}`,
+      ]);
+    }
+  }
   const push = git(projectDir, ["push", "--force-with-lease", "-u", settings.remote, branch]);
   if (push.status !== 0) {
     published.pushed = false;
