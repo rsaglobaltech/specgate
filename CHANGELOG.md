@@ -8,6 +8,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The pack drift gate checks every scenario of a requirement.** It compared
+  a requirement's first matrix row with the pack's first scenario, which was
+  right only while each requirement had one: once the Golden State packs gave
+  requirements API scenarios, `validate --against-lock` reported 30 of them
+  as drifted while every scenario was in place.
+
 ## [0.14.4] — 2026-10-08
 
 ### Fixed

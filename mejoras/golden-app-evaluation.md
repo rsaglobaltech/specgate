@@ -25,6 +25,7 @@ Flujo: develop + un PR por requisito, todo implementado con `harness run`.
 | 30 | `sync` sin cambios reescribe `expanded_at` en el lock (diff ruidoso) | [ ] abierto |
 | 32 | Un escenario añadido a un requisito entregado hereda sus tests: 99/99 "done" con 52 sin probar | [x] fix/scenario-links |
 | 33 | `plan --json` cortado a 65.536 bytes en pipe (`process.exit` antes de vaciar stdout); 28 comandos más hacen lo mismo | [x] plan · [ ] resto |
+| 34 | `validate --against-lock` compara solo el primer escenario de cada requisito: con varios, falsa deriva | [x] fix/drift-multi-scenario |
 | 31 | 48/48 "done" y el producto no se puede usar: 59 casos de uso en `core`, cero rutas API ni pantallas nuevas. Los escenarios solo piden dominio, y el agente hace lo mínimo que los pasa | [x] packs v0.2.0 (52 escenarios de API y pantalla) + plataforma de tests (golden_app #51) |
 
 ## Tareas

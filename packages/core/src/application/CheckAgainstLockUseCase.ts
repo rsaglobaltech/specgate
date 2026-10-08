@@ -136,36 +136,42 @@ export class CheckAgainstLockUseCase {
         continue;
       }
 
-      const packScenarios = scenarios.get(id) || [];
-      const expectedScenario = packScenarios[0] && packScenarios[0].id;
-      const expectedFeature = packScenarios[0] && packScenarios[0].target;
-
-      if (
-        expectedScenario &&
-        !isEmpty(row.scenarioId) &&
-        bare(row.scenarioId) !== expectedScenario
-      ) {
+      // Every scenario the pack declares for the requirement must be in the
+      // project, at the feature the pack names. Comparing the requirement's
+      // first row with the pack's first scenario was right only while each
+      // requirement had one: with several, the order of the rows decided, and
+      // a pack that added `api_…` scenarios failed every one of them as
+      // drifted while all were present (golden_app finding #34).
+      const drift = (message: string) =>
         diagnostics.push({
           severity: "error",
           code: "pack_requirement_drifted",
-          message: `${label} points at scenario ${bare(row.scenarioId)}, but the pack declares ${expectedScenario}.`,
+          message,
           target: id,
           fix: `Reconcile with \`specgate specops diff --pack ${entry.pack_id} --as-change\`, or accept the local decision by recording it in a change.`,
         });
-      }
-
-      if (
-        expectedFeature &&
-        !isEmpty(row.featureFile) &&
-        bare(row.featureFile) !== expectedFeature
-      ) {
-        diagnostics.push({
-          severity: "error",
-          code: "pack_requirement_drifted",
-          message: `${label} points at feature ${bare(row.featureFile)}, but the pack declares ${expectedFeature}.`,
-          target: id,
-          fix: `Reconcile with \`specgate specops diff --pack ${entry.pack_id} --as-change\`, or accept the local decision by recording it in a change.`,
-        });
+      const rows = matrixRows.filter(
+        (r) => bare(r.requirement).toUpperCase() === String(id).toUpperCase()
+      );
+      const linked = rows.filter((r) => !isEmpty(r.scenarioId));
+      for (const scn of scenarios.get(id) || []) {
+        if (!scn.id) continue;
+        const match = rows.find((r) => bare(r.scenarioId) === scn.id);
+        if (!match) {
+          // A requirement the project has not linked to any scenario yet is
+          // not drift; one linked elsewhere is.
+          if (linked.length > 0) {
+            drift(
+              `${label} points at scenario ${linked.map((r) => bare(r.scenarioId)).join(", ")}, but the pack declares ${scn.id}.`
+            );
+          }
+          continue;
+        }
+        if (scn.target && !isEmpty(match.featureFile) && bare(match.featureFile) !== scn.target) {
+          drift(
+            `${label} points at feature ${bare(match.featureFile)} for ${scn.id}, but the pack declares ${scn.target}.`
+          );
+        }
       }
     }
 

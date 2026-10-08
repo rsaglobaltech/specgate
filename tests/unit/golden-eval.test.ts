@@ -498,3 +498,46 @@ test("plan --json is complete through a pipe when it is larger than 64 KB", () =
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("the drift gate checks every scenario of a requirement, whatever the row order", () => {
+  const { checkPackAgainstProject } = require("../../scripts/specops/against_lock");
+  const pack = {
+    requirements: [{ id: "REQ-209", title: "Search a job file" }],
+    scenarios: [
+      {
+        id: "SCN-209",
+        requirement_id: "REQ-209",
+        target: "features/job-files/office_finds.feature",
+      },
+      { id: "SCN-221", requirement_id: "REQ-209", target: "features/job-files/api_search.feature" },
+    ],
+  };
+  const row = (scn, feature) => ({
+    requirement: "REQ-209",
+    scenarioId: scn,
+    featureFile: `\`${feature}\``,
+    status: "Draft",
+  });
+  const entry = { pack_id: "job-files/backend", version: "v0.2.0", repo: "https://x/y.git" };
+  const drifted = (rows) =>
+    checkPackAgainstProject(pack, entry, rows).filter((d) => d.code === "pack_requirement_drifted");
+
+  // Both present, the API one sorted first: golden_app #34 called it drift.
+  assert.deepEqual(
+    drifted([
+      row("SCN-221", "features/job-files/api_search.feature"),
+      row("SCN-209", "features/job-files/office_finds.feature"),
+    ]),
+    []
+  );
+  // One missing is still drift.
+  assert.equal(drifted([row("SCN-209", "features/job-files/office_finds.feature")]).length, 1);
+  // One at the wrong feature is still drift.
+  assert.equal(
+    drifted([
+      row("SCN-209", "features/job-files/office_finds.feature"),
+      row("SCN-221", "features/job-files/elsewhere.feature"),
+    ]).length,
+    1
+  );
+});
