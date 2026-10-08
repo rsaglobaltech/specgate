@@ -19,6 +19,15 @@ task list. Neither checks that what its task list calls done is proved:
 (Formats read from the tools' own templates and from public repositories that
 use them, October 2026; the specification pins the sources.)
 
+OpenSpec does ship an optional `/opsx:verify` workflow (1.14). It is an agent
+skill: a model searches the codebase for keywords related to each requirement
+and assesses whether an implementation "likely exists", before archiving, and
+its report is declared advisory. That helps an agent finish a change; it is
+not a deterministic check, it does not link a scenario to a test, and nothing
+runs it after the change is archived. Specgate's check is the complement: the
+same answer every time, in CI, on every pull request, including the ones that
+quietly break a scenario archived months ago.
+
 In each, "done" is a ticked box. A ticked box is exactly the claim Specgate
 was built to refuse without evidence — the status-is-a-promise rule
 (ADR-0026) — and the Golden State pilot showed what that refusal is worth: it
