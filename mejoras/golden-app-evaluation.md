@@ -23,7 +23,9 @@ Flujo: develop + un PR por requisito, todo implementado con `harness run`.
 | 28 | 16/46 requisitos sin escenario y `pack lint` callado | [x] nota en lint + packs v0.1.3 |
 | 29 | La línea base de `adopt` se planifica para siempre | [x] fix/golden-eval-3 |
 | 30 | `sync` sin cambios reescribe `expanded_at` en el lock (diff ruidoso) | [ ] abierto |
-| 31 | 48/48 "done" y el producto no se puede usar: 59 casos de uso en `core`, cero rutas API ni pantallas nuevas. Los escenarios solo piden dominio, y el agente hace lo mínimo que los pasa | [ ] abierto — el más importante |
+| 32 | Un escenario añadido a un requisito entregado hereda sus tests: 99/99 "done" con 52 sin probar | [x] fix/scenario-links |
+| 33 | `plan --json` cortado a 65.536 bytes en pipe (`process.exit` antes de vaciar stdout); 28 comandos más hacen lo mismo | [x] plan · [ ] resto |
+| 31 | 48/48 "done" y el producto no se puede usar: 59 casos de uso en `core`, cero rutas API ni pantallas nuevas. Los escenarios solo piden dominio, y el agente hace lo mínimo que los pasa | [x] packs v0.2.0 (52 escenarios de API y pantalla) + plataforma de tests (golden_app #51) |
 
 ## Tareas
 
@@ -37,4 +39,6 @@ Flujo: develop + un PR por requisito, todo implementado con `harness run`.
 - [ ] Packs curados: 21 requisitos sin escenario en los 11 packs (lo que ahora
       enseña `pack lint` como nota). Escribirlos y, entonces, subir la nota a aviso.
 - [ ] #21: `depends_on` entre packs.
+- [ ] Harness sobre los 30 requisitos reabiertos por v0.2.0.
+- [ ] Idea del usuario: `specgate draft --from ficha.md` (borrador de REQ con checklist) — pendiente de ADR.
 - [ ] Informe final de evaluación.

@@ -144,19 +144,68 @@ function linkByMention(trace: Record<string, string>, id: string, sources: Deriv
   }
 }
 
+/**
+ * One row per tagged scenario, each with the tests that prove *it*.
+ *
+ * A requirement linked by mention gave every one of its rows the tests that
+ * name the requirement, so a scenario added after delivery inherited the old
+ * tests and the gate stayed green. Found when a pack gave 30 delivered
+ * requirements API and screen scenarios: `status` said 99/99 done with 52 of
+ * them untested (golden_app finding #32).
+ *
+ * Once any test names one of the requirement's scenario ids, the project
+ * links by scenario for that requirement, and each row gets the tests that
+ * name its scenario — none, if none do. Calibrated per requirement, not per
+ * project or file: a requirement whose tests name only the requirement keeps
+ * linking that way, and a `test=` written in the trace is never overridden.
+ *
+ * Such a row is `Draft`, whatever the requirement's status: the scenario has
+ * not been started. The requirement keeps its status — what was delivered
+ * stays delivered — and the project stays valid, so the work can be done in
+ * PRs against a green branch. Nothing is let off: delivering the requirement
+ * again (`done`, the harness) judges its Draft rows as Implemented, and an
+ * untested scenario fails that gate.
+ */
+function scenarioVariants(
+  trace: Record<string, string>,
+  scenarios: ReadonlyArray<{ scn: string; feature: string }>,
+  sources: DerivationSources,
+  explicitTest: boolean
+): Array<Record<string, string>> {
+  if (scenarios.length === 0) return [trace];
+  const naming = scenarios.map((s) =>
+    s.scn === "-"
+      ? []
+      : sources.tests
+          .filter((f) => mentions(f.source, s.scn))
+          .map((f) => f.path)
+          .sort()
+  );
+  const byScenario = !explicitTest && naming.some((n) => n.length > 0);
+  return scenarios.map((s, i) => {
+    const row: Record<string, string> = { ...trace, scn: s.scn, feature: s.feature };
+    if (byScenario) {
+      if (naming[i].length > 0) row.test = naming[i].join(", ");
+      else {
+        delete row.test;
+        if (row.status && row.status !== "Deprecated") row.status = "Draft";
+      }
+    }
+    return row;
+  });
+}
+
 /** The matrix rows the sources imply. */
 export function deriveRows(sources: DerivationSources): any[] {
   const rows: any[] = [];
   for (const req of requirementsIn(sources.spec)) {
     const trace: Record<string, string> = { ...req.trace };
+    const explicitTest = Boolean(trace.test);
     if (!trace.uc && req.title) trace.uc = req.title;
     linkByMention(trace, req.id, sources);
 
     const scenarios = trace.scn || trace.feature ? [] : taggedScenarios(sources.features, req.id);
-    const variants: Array<Record<string, string>> =
-      scenarios.length > 0
-        ? scenarios.map((s) => ({ ...trace, scn: s.scn, feature: s.feature }))
-        : [trace];
+    const variants = scenarioVariants(trace, scenarios, sources, explicitTest);
 
     for (const t of variants) {
       const row: any = TraceabilityMatrix.traceRow({ id: req.id, trace: t });
@@ -179,6 +228,7 @@ export function deriveRows(sources: DerivationSources): any[] {
     for (const req of parsed.requirements || []) {
       if (!req.id || fromSpec.has(req.id)) continue;
       const trace: Record<string, string> = { ...(req.trace || {}) };
+      const explicitTest = Boolean(trace.test);
       // Archived requirements link the same way: by being named.
       linkByMention(trace, req.id, sources);
       // And by their tagged scenarios, one row each, as spec.md requirements
@@ -186,10 +236,7 @@ export function deriveRows(sources: DerivationSources): any[] {
       // requirement installed from a pack — or archived from a change — never
       // showed the scenarios that demonstrate it.
       const scenarios = trace.scn || trace.feature ? [] : taggedScenarios(sources.features, req.id);
-      const variants: Array<Record<string, string>> =
-        scenarios.length > 0
-          ? scenarios.map((sc) => ({ ...trace, scn: sc.scn, feature: sc.feature }))
-          : [trace];
+      const variants = scenarioVariants(trace, scenarios, sources, explicitTest);
       for (const t of variants) {
         const row: any = TraceabilityMatrix.traceRow({ ...req, trace: t });
         if (t.depends) row.dependsOn = String(t.depends).split(",").filter(Boolean);

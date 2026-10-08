@@ -8,6 +8,24 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+Found when the Golden State packs gained API and screen scenarios for 30
+requirements already delivered:
+
+- **A scenario added after delivery is no longer reported as done.** Linked
+  by mention, every row of a requirement got the tests that name the
+  requirement, so 52 new scenarios inherited the old tests and `status` said
+  99/99 done. Once a requirement's tests name one of its scenario ids, each
+  scenario is proved only by the tests that name it. A scenario without one
+  is a `Draft` row — pending in `status`, `NEEDS_TEST` in `plan`, picked up by
+  the harness — while the requirement keeps its status. Delivering it again
+  judges those rows as Implemented, so an untested scenario still fails.
+- **`plan` counts a row with no test as not done.**
+- **`plan --json` is complete through a pipe.** It exited before stdout
+  drained, so a plan over 64 KB reached the harness cut at 65,536 bytes
+  ("plan produced invalid JSON").
+
 ## [0.14.3] — 2026-10-08
 
 ### Fixed

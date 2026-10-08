@@ -374,7 +374,10 @@ export class PlanCommand extends BaseCommand {
     if (opts.format === "json") emitJson(items, projectDir, orphans);
     else emitText(items, orphans);
 
-    process.exit(0);
+    // Return instead of `process.exit(0)`: exiting does not wait for a piped
+    // stdout to drain, so a plan over 64 KB reached the harness cut at
+    // exactly 65,536 bytes — "plan produced invalid JSON" (golden_app #33).
+    process.exitCode = 0;
   }
 }
 
