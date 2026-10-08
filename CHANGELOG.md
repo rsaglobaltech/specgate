@@ -8,6 +8,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **No command's output is cut short when piped.** On macOS, Node writes to a
+  pipe asynchronously and `process.exit()` does not wait: a JSON document over
+  64 KB reached the program reading it truncated at exactly 65,536 bytes. 0.14.4
+  fixed `plan`; twenty-eight more commands exited the same way. Every command
+  now runs with blocking stdio, so the write completes before the exit.
+
 ## [0.15.0] — 2026-10-08
 
 ### Changed
