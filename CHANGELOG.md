@@ -8,6 +8,20 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`specgate verify` — gate what OpenSpec calls done** (ADR-0030). Reads
+  `openspec/` in place, without writing to it. An archived change claims the
+  current scenarios of every requirement it added or modified. The check
+  fails while one of them has no test naming its id
+  (`openspec:<capability>/<requirement>/<scenario>`), while the suite is red
+  (`--run`), or after a scenario's text changed since `--record` pinned it.
+  `--since <ref>` gates only claims made after the ref, so adopting it never
+  fails a project for its past. `--ids` prints the ids to name; `--format
+  github` annotates the spec lines; `actions/verify` runs it on pull requests.
+  Read against OpenSpec's own repository: 747 scenarios, 108 claims, including
+  its archived history from before the structured format.
+
 ## [0.14.6] — 2026-10-08
 
 ### Fixed

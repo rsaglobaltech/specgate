@@ -1,6 +1,6 @@
 # Verifying other tools' specs — specification
 
-Status: **Accepted design, not implemented.** Decided in
+Status: **Phase 1 implemented (OpenSpec, without the MCP tool); phase 2 (Spec Kit) not started.** Decided in
 [ADR-0030](adr/0030-specgate-verifies-specs-it-did-not-write.md).
 Each format ships in its own phase, and only after its pilot (§8).
 
