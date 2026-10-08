@@ -47,7 +47,10 @@ export const STEPS = [
     ],
   },
   {
-    name: "verify",
+    // Was `verify` until 0.15, when `specgate verify` became the OpenSpec
+    // check (ADR-0030); the slash command takes the name of what it runs.
+    // `specgate update` moves files generated under the old name.
+    name: "check",
     summary: "Run the gate: specs, links, coverage and the project's tests.",
     when: "After every change, and before saying the work is done.",
     run: ["specgate check --json"],

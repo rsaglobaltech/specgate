@@ -361,10 +361,25 @@ export function renamedPaths(): Array<[string, string]> {
         seen.add(old);
         pairs.push([old, file.path]);
       }
+      // A slash command renamed since: its file moves too, from either
+      // namespace — `csda/verify.md` and `specgate/verify.md` → `specgate/check.md`.
+      for (const [was, now] of RENAMED_COMMANDS) {
+        if (parts[parts.length - 1] !== `${now}.md`) continue;
+        for (const base of [file.path, old]) {
+          const before = path.join(path.dirname(base), `${was}.md`);
+          if (!seen.has(before)) {
+            seen.add(before);
+            pairs.push([before, file.path]);
+          }
+        }
+      }
     }
   }
   return pairs;
 }
+
+/** Slash commands renamed after they shipped: [old name, new name]. */
+export const RENAMED_COMMANDS: ReadonlyArray<[string, string]> = [["verify", "check"]];
 
 /** What `--tool` defaults to: everything that belongs inside a project. */
 export const DEFAULT_TOOLS = ALL_TOOLS.filter((t) => !TOOLS[t].optIn);

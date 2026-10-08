@@ -1,4 +1,4 @@
-# ADR-0030 — Specgate verifies specs it did not write
+# ADR-0030 — Specgate verifies OpenSpec specs it did not write
 
 ## Status
 
@@ -41,66 +41,67 @@ times the adoption. The second is a product nobody else offers.
 
 ## Decision
 
-**Specgate reads Spec Kit and OpenSpec specifications in place, and
-gates their claims of done the way it gates its own. It never writes to their
-files.**
+**Specgate reads OpenSpec specifications in place and gates their claims of
+done the way it gates its own. It never writes to OpenSpec's files.** OpenSpec
+is the one format supported, by decision: of the tools above it is the most
+actively maintained and the closest to Specgate's own model — requirements,
+scenarios, delta changes, an archive (ADR-0016) — so the check means the same
+thing on both sides. Spec Kit has the larger audience; it is out of scope, not
+ruled out.
 
-1. **`specgate verify --from spec-kit|openspec`** (or detected) reads the
-   other tool's files read-only and maps them onto Specgate's model:
-   requirement, acceptance criterion, and claim of done. Nothing is converted
-   and nothing is written outside `.specgate/`. A team keeps its tool; Specgate
-   is the gate in front of the merge.
+1. **`specgate verify`** reads `openspec/` read-only and maps it onto
+   Specgate's model: requirement, scenario, and claim of done. Nothing is
+   converted and nothing is written outside `.specgate/`. A team keeps
+   OpenSpec; Specgate is the gate in front of the merge.
 
-2. **Every acceptance criterion gets a stable id from its own format** —
-   `speckit:<feature>/US1.2`, `openspec:<capability>/<requirement>/<scenario>` — and a test is linked to it
+2. **Every scenario gets a stable id from OpenSpec's own names** —
+   `openspec:<capability>/<requirement>/<scenario>` — and a test is linked to it
    **by naming it**, the rule Specgate already uses for `REQ`/`SCN`.
 
-3. **A claim of done owes a test for every criterion it covers.** A ticked
-   Spec Kit story task owes every
-   acceptance scenario of that story; an archived OpenSpec change owes every
-   scenario it added or modified. With `--run`, the test command must pass too.
-   A criterion whose text changed after it was verified must be verified again.
+3. **A claim of done owes a test for every scenario it covers.** An archived
+   change owes the current scenarios of every requirement it added or
+   modified. With `--run`, the test command must pass too. A scenario whose
+   text changed after it was verified must be verified again.
 
 4. **Adoption never turns a project red on day one** (ADR-0023). `--since
    <git-ref>` gates only claims made after the ref; everything older is a
    report. A project raises the bar when it chooses to.
 
-5. **It is proved before it is offered.** Each format ships only after a pilot
-   in which defects are planted on purpose — ticked boxes without tests, failing
-   tests, criteria edited after verification — and `verify` finds all of them
-   with no false alarm on the honest work. Formats are pinned in fixtures and
-   re-read on a schedule, because these tools release weekly.
+5. **It is proved before it is offered.** It ships only after a pilot in which
+   defects are planted on purpose — changes archived without tests, failing
+   tests, scenarios edited after verification — and `verify` finds all of them
+   with no false alarm on the honest work. OpenSpec's format is pinned in
+   fixtures and re-read on a schedule, because it releases weekly.
 
 ## Consequences
 
-- Specgate's position becomes "write your spec with Spec Kit or OpenSpec;
-  Specgate guarantees what it calls done is done". The daily loop for those
-  teams does not change; one check is added to their PRs.
-- Two readers to maintain against formats Specgate does not control. The
+- Specgate's position becomes "write your spec with OpenSpec; Specgate
+  guarantees what it calls done is done". The daily loop of an OpenSpec team
+  does not change; one check is added to their PRs.
+- One reader to maintain against a format Specgate does not control. The
   scheduled re-read turns a format change into a failing job, not a silent
-  skip — an unparseable file is an error, never zero criteria.
+  skip — an unparseable file is an error, never zero scenarios.
 - `verify` reuses the gate, the link-by-mention rule and the agent contract;
-  the new code is the readers and the claim rules.
-- Naming a criterion in a test is a convention those teams do not have yet.
+  the new code is the reader and the claim rules.
+- Naming a scenario in a test is a convention OpenSpec teams do not have yet.
   `verify --ids` prints the names to copy, and the check reports which
-  criteria are unnamed — the same calibration `--strict-coverage` already does.
-- What it cannot say stays stated: a test that names a criterion and passes
-  is evidence the criterion was exercised, not proof it was asserted
-  correctly.
+  scenarios are unnamed.
+- What it cannot say stays stated: a test that names a scenario and passes is
+  evidence the scenario was exercised, not proof it was asserted correctly.
 
 ## Alternatives considered
 
 - **Import into Specgate's format.** A one-way migration, a second source of
   truth, and a reason not to adopt.
-- **Plugins for each tool.** Two plugin systems, two release cycles, and
-  each tool decides what a plugin may block. A CI check is the one place every
-  team already accepts being blocked.
+- **A plugin for OpenSpec.** Its release cycle, its decision about what a
+  plugin may block. A CI check is the one place every team already accepts
+  being blocked.
 - **Only Specgate's own format.** Keeps the codebase smaller and the product
   invisible.
-- **A Kiro reader too.** Kiro's tasks already reference criteria
-  (`_Requirements: 1.2_`), which would make its claim rule the simplest of the
-  three. Left out by decision of the team this was designed for, which does not
-  use it; the reader interface does not preclude adding it later.
+- **Spec Kit and Kiro readers too.** Spec Kit has the largest audience and
+  Kiro's tasks already reference criteria. Both left out by decision of the
+  team this was designed for, to do one format well; the reader interface
+  (`ForeignSpec`) does not preclude adding them.
 
 ## References
 

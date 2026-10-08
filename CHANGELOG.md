@@ -8,6 +8,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **The agent slash command `/specgate:verify` is now `/specgate:check`**, the
+  name of the command it runs. `specgate verify` is the OpenSpec check below,
+  and two things called "verify" doing different things is one too many.
+  `specgate update` moves `.claude/commands/specgate/verify.md` (and the older
+  `csda/verify.md`) to `check.md`, keeping the team's edits.
+
 ### Added
 
 - **`specgate verify` — gate what OpenSpec calls done** (ADR-0030). Reads

@@ -19,7 +19,7 @@ specgate agents init --dry-run                # list destinations, write nothing
 ```
 
 This writes the slash commands for the daily loop — `/specgate:explore` (what is
-left), `/specgate:new`, `/specgate:apply`, `/specgate:verify` (the gate) and
+left), `/specgate:new`, `/specgate:apply`, `/specgate:check` (the gate) and
 `/specgate:done` — plus `/specgate:propose` and `/specgate:archive` for changing
 requirements that already shipped, and `/specgate:onboard`. Then the
 instruction file each tool reads — `.cursor/rules/specgate.mdc`,
