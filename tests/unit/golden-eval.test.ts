@@ -434,3 +434,67 @@ test("pack lint says when a requirement has no scenario", () => {
     notes.join("\n")
   );
 });
+
+test("a scenario added to a delivered requirement is pending until a test names it", () => {
+  const { deriveRows } = require("../../packages/core/src/domain/DerivedMatrix");
+  const feature = (scn, title) => ({
+    path: `features/${scn}.feature`,
+    source: `Feature: F\n\n  @REQ-101 @${scn}\n  Scenario: ${title}\n    Given a\n    When b\n    Then c\n`,
+  });
+  const spec = "## REQ-101 — Clock in\n\n<!-- csda:trace status=Implemented -->\n\nText.\n";
+  const features = [feature("SCN-101", "Domain"), feature("SCN-115", "API")];
+
+  // The tests name the scenario they prove: the new one has no test.
+  const byScenario = deriveRows({
+    spec,
+    features,
+    tests: [{ path: "tests/clock.test.ts", source: "// REQ-101 SCN-101\n" }],
+  });
+  const row = (rows, scn) => rows.find((r) => r.scenarioId === scn);
+  assert.equal(row(byScenario, "SCN-101").status, "Implemented");
+  assert.match(row(byScenario, "SCN-101").testArtifact, /clock\.test\.ts/);
+  assert.equal(
+    row(byScenario, "SCN-115").testArtifact,
+    "TBD",
+    "golden_app #32: it inherited the old test"
+  );
+  assert.equal(row(byScenario, "SCN-115").status, "Draft");
+
+  // Tests that name only the requirement keep linking every row, as before.
+  const byRequirement = deriveRows({
+    spec,
+    features,
+    tests: [{ path: "tests/clock.test.ts", source: "// REQ-101\n" }],
+  });
+  assert.match(row(byRequirement, "SCN-115").testArtifact, /clock\.test\.ts/);
+  assert.equal(row(byRequirement, "SCN-115").status, "Implemented");
+});
+
+test("plan --json is complete through a pipe when it is larger than 64 KB", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-golden-bigplan-"));
+  try {
+    const rows = [];
+    for (let i = 1; i <= 400; i += 1) {
+      const id = String(i).padStart(3, "0");
+      rows.push(
+        `| REQ-${id} | SCN-${id} | \`features/f${id}.feature\` | UC-${id} A use case with a long enough name | - | - | - | \`src/f${id}.ts\` | \`test/f${id}.test.ts\` | Draft |`
+      );
+    }
+    fs.mkdirSync(path.join(dir, "docs", "specs"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "docs", "specs", "traceability.md"),
+      "# Traceability\n\n| Requirement | Scenario ID | Feature File | Use Case | Command/Query | Aggregate | Event | Technical Artifact | Test Artifact | Status |\n|---|---|---|---|---|---|---|---|---|---|\n" +
+        rows.join("\n") +
+        "\n"
+    );
+    const r = cli("plan", "--project-dir", dir, "--json");
+    assert.ok(
+      r.stdout.length > 65536,
+      `only ${r.stdout.length} bytes — the fixture must exceed one pipe buffer`
+    );
+    const plan = JSON.parse(r.stdout); // golden_app #33: cut at 65,536 bytes
+    assert.equal(plan.total, 400);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

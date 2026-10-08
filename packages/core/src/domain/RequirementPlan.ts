@@ -97,6 +97,9 @@ export class RequirementPlan {
     else if (testDeclared && !testExists && techDeclared && !techExists)
       category = "NEEDS_EVERYTHING";
     else if (testDeclared && !testExists) category = "NEEDS_TEST";
+    // A scenario with no test is not done, whatever the requirement's status:
+    // it is how a scenario added after delivery shows up (golden_app #32).
+    else if (!testDeclared) category = "NEEDS_TEST";
     else if (techDeclared && !techExists) category = "NEEDS_IMPLEMENTATION";
     else if (!isDone) category = "NEEDS_STATUS_UPDATE";
     else category = "DONE";
