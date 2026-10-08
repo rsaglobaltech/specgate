@@ -541,3 +541,58 @@ test("the drift gate checks every scenario of a requirement, whatever the row or
     1
   );
 });
+
+test("the harness publishes a branch again after the remote deleted it", () => {
+  const { publishBranch } = require("../../scripts/cli/commands/harness/RunCommand");
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-golden-lease-"));
+  const git = (cwd, ...a) => {
+    const r = spawnSync("git", a, { cwd, encoding: "utf8" });
+    assert.equal(r.status, 0, `git ${a.join(" ")}: ${r.stderr}`);
+    return r.stdout;
+  };
+  try {
+    const remote = path.join(root, "remote.git");
+    git(root, "init", "--quiet", "--bare", "--initial-branch=main", remote);
+    const app = path.join(root, "app");
+    git(root, "clone", "--quiet", remote, app);
+    for (const [k, v] of [
+      ["user.email", "t@example.com"],
+      ["user.name", "T"],
+      ["commit.gpgsign", "false"],
+    ])
+      git(app, "config", k, v);
+    fs.writeFileSync(path.join(app, "a.txt"), "1\n");
+    git(app, "add", ".");
+    git(app, "commit", "--quiet", "-m", "base");
+    git(app, "push", "--quiet", "origin", "main");
+
+    // Round 1: the harness pushes its branch; the PR is merged and the
+    // branch deleted on the remote — from elsewhere, so this clone's
+    // remote-tracking ref goes stale.
+    git(app, "checkout", "--quiet", "-b", "harness/REQ-501");
+    fs.writeFileSync(path.join(app, "a.txt"), "2\n");
+    git(app, "commit", "--quiet", "-am", "round 1");
+    git(app, "push", "--quiet", "-u", "origin", "harness/REQ-501");
+    const other = path.join(root, "other");
+    git(root, "clone", "--quiet", remote, other);
+    git(other, "push", "--quiet", "origin", "--delete", "harness/REQ-501");
+
+    // Round 2: the branch is recreated with new work and pushed again.
+    git(app, "checkout", "--quiet", "main");
+    git(app, "branch", "--quiet", "-D", "harness/REQ-501");
+    git(app, "checkout", "--quiet", "-b", "harness/REQ-501");
+    fs.writeFileSync(path.join(app, "a.txt"), "3\n");
+    git(app, "commit", "--quiet", "-am", "round 2");
+
+    const out = publishBranch(
+      app,
+      "harness/REQ-501",
+      { requirement: "REQ-501" },
+      { push: true, remote: "origin" }
+    );
+    assert.equal(out.pushed, true, out.publishError || "golden_app #35: refused as stale info");
+    assert.match(git(app, "ls-remote", "--heads", "origin", "harness/REQ-501"), /harness\/REQ-501/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

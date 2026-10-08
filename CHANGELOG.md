@@ -8,6 +8,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The harness publishes a requirement it ran before.** `--push` uses
+  `--force-with-lease`, which trusts the local remote-tracking ref; once the
+  branch had been merged and deleted on the remote, that ref was stale and
+  every second-round push was refused ("stale info") although the
+  requirement had passed. The ref is now refreshed from the remote first.
+
 ## [0.14.5] — 2026-10-08
 
 ### Fixed
