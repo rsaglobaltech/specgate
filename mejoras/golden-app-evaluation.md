@@ -47,7 +47,7 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 - [ ] #21: `depends_on` entre packs.
 - [x] Harness sobre los 30 requisitos reabiertos por v0.2.0 (2026-10-08): 30/30, PR #53–#82; 28 al primer paso, REQ-501 tras #35 y REQ-302 tras #37 (0.14.6). Resultado: 99/99, 41 rutas API, 14 pantallas, 67 casos de uso, 599 tests (core 400, web 146, mobile 53), gate verde.
 - [x] Idea del usuario: ADR-0029 y spec `docs/specs/draft-from-brief.md` (2026-10-08).
-- [x] ADR-0030 y spec `docs/specs/verify-foreign-specs.md`: verificar specs de Spec Kit, OpenSpec y Kiro (2026-10-08). **Va antes que `draft`** (decisión del usuario).
+- [x] ADR-0030 y spec `docs/specs/verify-foreign-specs.md`: verificar specs de Spec Kit y OpenSpec (2026-10-08; Kiro fuera de alcance por decisión del usuario). **Va antes que `draft`** (decisión del usuario).
 - [ ] `verify` fase 1: lector OpenSpec + V1–V7 + `verify.lock` + Action; piloto con defectos sembrados.
 - [ ] `specgate draft` fase 1: checklist D1–D8 + `draft --check`.
 - [ ] `specgate draft` fase 3: prototipo y evaluación contra la ficha de golden_app (guardar la ficha original como fixture).

@@ -8,7 +8,7 @@ Each format ships in its own phase, and only after its pilot (§8).
 
 ## 1. The promise, and its limit
 
-> Write your spec with Spec Kit, OpenSpec or Kiro. Specgate guarantees that
+> Write your spec with Spec Kit or OpenSpec. Specgate guarantees that
 > what it calls done is done.
 
 **Done** means a claim the tool's own files make: a ticked task, an archived
@@ -23,34 +23,6 @@ so in its own output.
 ## 2. What is read
 
 Read-only. Nothing outside `.specgate/` is written.
-
-### Kiro
-
-```
-.kiro/specs/<feature>/requirements.md
-.kiro/specs/<feature>/tasks.md
-```
-
-```markdown
-### Requirement 1
-**User Story:** As a client …
-#### Acceptance Criteria
-1. WHEN a client sends a POST request to `/v1/jobs` with a valid prompt THEN the system SHALL return HTTP 202 …
-2. WHEN a client sends a POST request without a prompt THEN the system SHALL return HTTP 400 …
-```
-
-```markdown
-- [x] 3. Create core API models and validation
-  - Implement Pydantic models for job requests, responses, and status
-  - _Requirements: 1.2, 1.3, 8.4_
-```
-
-| Element | Read as | Id |
-|---|---|---|
-| `### Requirement N` | requirement | `kiro:<feature>/N` |
-| criterion `M.` under it | acceptance criterion | `kiro:<feature>/N.M` |
-| `- [x] K. …` with `_Requirements: …_` | claim of done on those criteria | — |
-| `- [x]` with no `_Requirements:_` | claim on nothing; reported, never gated | — |
 
 ### Spec Kit
 
@@ -117,8 +89,8 @@ A test proves a criterion by naming its id, anywhere in the file — a test
 title, a comment, a tag:
 
 ```ts
-// kiro:api-server/1.2
-it("rejects a job without a prompt (kiro:api-server/1.2)", …)
+// speckit:001-clock-in/US1.2
+it("refuses a clock in outside the geofence (speckit:001-clock-in/US1.2)", …)
 ```
 
 `specgate verify --ids [--feature <name>]` prints every id with its criterion
@@ -132,7 +104,7 @@ the same.
 | `V1_unproved_claim` | a claimed criterion has no test naming it | gate |
 | `V2_failing_suite` | with `--run`, the test command fails | gate |
 | `V3_criterion_changed` | a claimed criterion's text differs from the text recorded when it was last verified | gate |
-| `V4_unknown_reference` | a claim names a criterion that does not exist (`_Requirements: 9.9_`) | gate |
+| `V4_unknown_reference` | a claim names a criterion that does not exist (a task tagged `[US9]` in a spec with no User Story 9) | gate |
 | `V5_unreadable` | a spec or task file does not parse as its format | gate — never "zero criteria" |
 | `V6_orphan_name` | a test names an id that does not exist | report |
 | `V7_unclaimed_coverage` | criteria with no claim and no test | report (percentage) |
@@ -152,7 +124,7 @@ now on.
 ## 6. Interfaces
 
 ```bash
-specgate verify [--from kiro|spec-kit|openspec] [--project-dir <dir>]
+specgate verify [--from spec-kit|openspec] [--project-dir <dir>]
                 [--run] [--test-cmd "<cmd>"] [--since <ref>]
                 [--record] [--ids] [--json] [--format text|github|sarif]
 ```
@@ -160,8 +132,8 @@ specgate verify [--from kiro|spec-kit|openspec] [--project-dir <dir>]
 - **GitHub Action** `rsaglobaltech/specgate/actions/verify`: runs `verify --run
   --since <base>` on a pull request, posts annotations on the spec lines whose
   claims fail, and one summary comment.
-- **MCP**: `specgate_verify` returns the same JSON, so a Kiro or Spec Kit agent
-  sees the failure inside its own loop.
+- **MCP**: `specgate_verify` returns the same JSON, so the agent working from
+  the Spec Kit or OpenSpec spec sees the failure inside its own loop.
 - **JSON** follows the agent contract (`docs/specs/agent-contract.md`).
 
 ## 7. Formats move
@@ -197,9 +169,10 @@ branch (0 false positives), and the time to adopt on the honest branch — from
 | Phase | Delivers | Why this order |
 |---|---|---|
 | 1 | OpenSpec reader, `verify`, V1–V7, `verify.lock`, the GitHub Action | closest to Specgate's own format (ADR-0016): the idea is tested fastest |
-| 2 | Kiro reader | its tasks already reference criteria, so the claim rule is the clearest |
-| 3 | Spec Kit reader | largest audience; the story-level claim rule is the least obvious |
-| 4 | Guides "Specgate with Kiro / Spec Kit / OpenSpec" and the published pilot results | only formats whose pilot met the bar |
+| 2 | Spec Kit reader | largest audience; the story-level claim rule is the least obvious |
+| 3 | Guides "Specgate with Spec Kit / OpenSpec" and the published pilot results | only formats whose pilot met the bar |
+
+Kiro is out of scope (ADR-0030, alternatives).
 
 ## 10. Sources
 
@@ -207,5 +180,3 @@ branch (0 false positives), and the time to adopt on the honest branch — from
   `templates/tasks-template.md` (read 2026-10-08).
 - OpenSpec: `Fission-AI/OpenSpec`, its own `openspec/specs/` and
   `openspec/changes/archive/` (read 2026-10-08).
-- Kiro: `kiro.dev/docs/specs`, and the public `.kiro/specs/` of
-  `trilogy-group/ttv-pipeline` (read 2026-10-08).

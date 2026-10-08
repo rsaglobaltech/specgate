@@ -7,16 +7,14 @@ Accepted — 2026-10-08
 ## Context
 
 Spec-driven development has a market, and Specgate is not where most of it
-is. GitHub Spec Kit, OpenSpec and AWS Kiro each own a large share of the
-teams writing specs for coding agents. All three are good at producing a
-specification and a task list. None of them checks that what their task list
-calls done is proved:
+is. GitHub Spec Kit and OpenSpec each own a large share of the teams writing
+specs for coding agents. Both are good at producing a specification and a
+task list. Neither checks that what its task list calls done is proved:
 
 | Tool | Where "done" is said | What stands behind it |
 |---|---|---|
 | Spec Kit | `- [X] T012 [US1] …` in `specs/<feature>/tasks.md` | Nothing required. Its own task template marks tests *"OPTIONAL — only if tests requested"*. |
 | OpenSpec | `- [x] 1.1 …` in a change's `tasks.md`; the change archived into `openspec/specs/` | Requirements and scenarios are named; nothing links a scenario to a test. |
-| Kiro | `- [x] 3. …` in `.kiro/specs/<feature>/tasks.md`, with `_Requirements: 1.2, 1.3_` | The link from task to acceptance criterion exists; the link to a test does not. |
 
 (Formats read from the tools' own templates and from public repositories that
 use them, October 2026; the specification pins the sources.)
@@ -34,23 +32,22 @@ times the adoption. The second is a product nobody else offers.
 
 ## Decision
 
-**Specgate reads Spec Kit, OpenSpec and Kiro specifications in place, and
+**Specgate reads Spec Kit and OpenSpec specifications in place, and
 gates their claims of done the way it gates its own. It never writes to their
 files.**
 
-1. **`specgate verify --from spec-kit|openspec|kiro`** (or detected) reads the
+1. **`specgate verify --from spec-kit|openspec`** (or detected) reads the
    other tool's files read-only and maps them onto Specgate's model:
    requirement, acceptance criterion, and claim of done. Nothing is converted
    and nothing is written outside `.specgate/`. A team keeps its tool; Specgate
    is the gate in front of the merge.
 
 2. **Every acceptance criterion gets a stable id from its own format** —
-   `kiro:<feature>/1.2`, `speckit:<feature>/US1.2`,
-   `openspec:<capability>/<requirement>/<scenario>` — and a test is linked to it
+   `speckit:<feature>/US1.2`, `openspec:<capability>/<requirement>/<scenario>` — and a test is linked to it
    **by naming it**, the rule Specgate already uses for `REQ`/`SCN`.
 
 3. **A claim of done owes a test for every criterion it covers.** A ticked
-   Kiro task owes its `_Requirements:`; a ticked Spec Kit story task owes every
+   Spec Kit story task owes every
    acceptance scenario of that story; an archived OpenSpec change owes every
    scenario it added or modified. With `--run`, the test command must pass too.
    A criterion whose text changed after it was verified must be verified again.
@@ -67,10 +64,10 @@ files.**
 
 ## Consequences
 
-- Specgate's position becomes "write your spec with the tool you like;
-  Specgate guarantees what it calls done is done". The daily loop for a Spec
-  Kit or Kiro team does not change; one check is added to their PRs.
-- Three readers to maintain against formats Specgate does not control. The
+- Specgate's position becomes "write your spec with Spec Kit or OpenSpec;
+  Specgate guarantees what it calls done is done". The daily loop for those
+  teams does not change; one check is added to their PRs.
+- Two readers to maintain against formats Specgate does not control. The
   scheduled re-read turns a format change into a failing job, not a silent
   skip — an unparseable file is an error, never zero criteria.
 - `verify` reuses the gate, the link-by-mention rule and the agent contract;
@@ -86,11 +83,15 @@ files.**
 
 - **Import into Specgate's format.** A one-way migration, a second source of
   truth, and a reason not to adopt.
-- **Plugins for each tool.** Three plugin systems, three release cycles, and
+- **Plugins for each tool.** Two plugin systems, two release cycles, and
   each tool decides what a plugin may block. A CI check is the one place every
   team already accepts being blocked.
 - **Only Specgate's own format.** Keeps the codebase smaller and the product
   invisible.
+- **A Kiro reader too.** Kiro's tasks already reference criteria
+  (`_Requirements: 1.2_`), which would make its claim rule the simplest of the
+  three. Left out by decision of the team this was designed for, which does not
+  use it; the reader interface does not preclude adding it later.
 
 ## References
 
