@@ -37,6 +37,7 @@ for the policy on when and how to write an ADR.
 | [0027](0027-use-cases-are-a-layer-not-a-column.md) | Use cases are a layer, not a column | Accepted | 2026-10-07 |
 | [0028](0028-architecture-conformance-is-part-of-the-gate.md) | Architecture conformance is part of the gate | Accepted | 2026-10-07 |
 | [0029](0029-a-brief-becomes-a-draft-change-not-a-spec.md) | A brief becomes a draft change, not a spec | Accepted | 2026-10-08 |
+| [0030](0030-specgate-verifies-specs-it-did-not-write.md) | Specgate verifies specs it did not write | Accepted | 2026-10-08 |
 
 ## Template
 
