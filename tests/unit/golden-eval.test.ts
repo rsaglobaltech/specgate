@@ -623,3 +623,17 @@ test("a regenerated matrix is not an edit to the contract; a hand edit still is"
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("a command that exits right after a large write is not cut short in a pipe", () => {
+  // golden_app #33: `process.exit()` does not wait for an asynchronous pipe,
+  // so a JSON document over 64 KB reached its reader truncated. Blocking stdio
+  // (loaded for every command the dispatcher runs) makes the write complete.
+  const preload = path.join(ROOT_DIR, "dist", "scripts", "lib", "blocking-stdio.js");
+  const script = 'process.stdout.write("x".repeat(300000)); process.exit(0);';
+  const r = spawnSync(process.execPath, ["--require", preload, "-e", script], {
+    encoding: "utf8",
+    maxBuffer: 10 * 1024 * 1024,
+  });
+  assert.equal(r.status, 0);
+  assert.equal(r.stdout.length, 300000);
+});

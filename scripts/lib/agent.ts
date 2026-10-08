@@ -1,3 +1,4 @@
+import "./blocking-stdio";
 /**
  * The machine-facing half of every command, in one place.
  *

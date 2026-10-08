@@ -219,8 +219,13 @@ function ensureExecutable(scriptPath: string): void {
   }
 }
 
+// Every command runs with blocking stdio, so `process.exit()` in it cannot
+// truncate output piped to another program (golden_app finding #33).
+const BLOCKING_STDIO = path.join(rootDir, "dist", "scripts", "lib", "blocking-stdio.js");
+
 function runNodeScript(scriptPath: string, args: string[]): void {
-  const result = spawnSync(process.execPath, [scriptPath, ...args], {
+  const preload = fs.existsSync(BLOCKING_STDIO) ? ["--require", BLOCKING_STDIO] : [];
+  const result = spawnSync(process.execPath, [...preload, scriptPath, ...args], {
     stdio: "inherit",
     env: process.env,
   });
