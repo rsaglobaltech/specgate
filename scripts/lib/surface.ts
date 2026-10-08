@@ -274,7 +274,6 @@ export const SURFACE: Command[] = [
       summary: "Gate what OpenSpec calls done on tests that name each criterion (ADR-0030).",
     },
     json: { key: "verify", gate: true },
-    mcp: false,
   },
   {
     name: "matrix",

@@ -46,6 +46,7 @@ diseño) va al final, separado, para que el historial no se infle.
 | 37 | 2026-10-08 | golden_app, harness 2.ª ronda | REQ-302 rechazado dos veces por "tocar" `traceability.md` | la protección de escritura trataba como edición una matriz derivada idéntica a su regeneración | 0.14.6 |
 | 38 | 2026-10-08 | piloto de `verify` con OpenSpec (antes de publicar) | El lector de OpenSpec ignoraba en silencio las capacidades anidadas (`specs/time-attendance/clock-punches/spec.md`) | la expresión regular aceptaba un solo segmento de ruta | 0.15.0 (antes de publicar) |
 | 39 | 2026-10-08 | revisión antes de publicar `verify` | Dos cosas se llaman "verify": el comando para agentes `/specgate:verify` (ejecuta el gate `check`) y el nuevo `specgate verify` (OpenSpec) | nombre elegido sin revisar los comandos que `agents init` ya escribe | `/specgate:verify` → `/specgate:check` (decisión del usuario), migrado por `specgate update`; 0.15.0 |
+| 40 | 2026-10-08 | prueba real de la herramienta MCP `specgate_verify` | El servidor MCP rechazaba el proyecto OpenSpec: "Not a spec-driven project (no spec.md)" | toda herramienta exigía `spec.md`; un proyecto OpenSpec no lo tiene | rama `feat/verify-mcp` |
 | 36 | 2026-10-08 | CI de Specgate | El job de lint se colgó 6 h | `apt-get update` colgado en ShellCheck, sin timeout | `ci.yml` (#242) |
 
 ## No son defectos de Specgate

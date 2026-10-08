@@ -33,8 +33,16 @@ class ProjectHelper {
     if (!fs.existsSync(projectDir)) {
       throw new Error(`projectDir does not exist: ${projectDir}`);
     }
-    if (!fs.existsSync(path.join(projectDir, "spec.md"))) {
-      throw new Error(`Not a spec-driven project (no spec.md): ${projectDir}`);
+    // A Specgate project has spec.md; an OpenSpec one has openspec/, and
+    // `specgate_verify` exists for it (ADR-0030). Requiring spec.md refused
+    // every OpenSpec project the tool was built for.
+    if (
+      !fs.existsSync(path.join(projectDir, "spec.md")) &&
+      !fs.existsSync(path.join(projectDir, "openspec"))
+    ) {
+      throw new Error(
+        `Not a Specgate or OpenSpec project (no spec.md, no openspec/): ${projectDir}`
+      );
     }
     return projectDir;
   }
@@ -303,6 +311,21 @@ TOOLS["specgate_check"] = new GenericCliTool(
     required: ["projectDir"],
   },
   "positional",
+  false
+);
+TOOLS["specgate_verify"] = new GenericCliTool(
+  "specgate_verify",
+  "Gate what OpenSpec calls done on tests that name each criterion (ADR-0030).",
+  "verify",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+    },
+    required: ["projectDir"],
+  },
+  "flag",
   false
 );
 TOOLS["validate_project"] = new GenericCliTool(

@@ -57,6 +57,7 @@ are better run from a terminal. The ones an agent uses every day:
 | `specgate_status` | What is open, and the next command to run. | `projectDir` |
 | `specgate_new` | A requirement with its tagged scenario. | `projectDir`, `title` |
 | `specgate_check` | The gate, then the tests when a test command is configured. | `projectDir` |
+| `specgate_verify` | For an OpenSpec project: every scenario an archived change claims must be named by a test (ADR-0030). Accepts a directory with `openspec/` and no `spec.md`. | `projectDir` |
 | `mark_requirement_done` | Runs the gate for the requirement, then marks it Implemented. | `projectDir`, `requirement` |
 | `plan` | The pending queue, with what each requirement still needs. | `projectDir` |
 | `validate_project` | `validate --strict`, parsed. | `projectDir` |

@@ -1,6 +1,6 @@
 # Verifying OpenSpec specs — specification
 
-Status: **Phase 1 implemented and piloted (without the MCP tool).** Decided in
+Status: **Phase 1 implemented and piloted; MCP tool `specgate_verify` added.** Decided in
 [ADR-0030](adr/0030-specgate-verifies-specs-it-did-not-write.md).
 It ships only after its pilot (§8) — [result](../../mejoras/verify-pilot-openspec.md): 5/5 planted defects found, 0 false positives.
 
@@ -136,7 +136,7 @@ branch (0 false positives), and the time to adopt on the honest branch — from
 | Phase | Delivers | State |
 |---|---|---|
 | 1 | OpenSpec reader, `verify`, V1–V7, `verify.lock`, the GitHub Action, the pilot | done — [pilot](../../mejoras/verify-pilot-openspec.md) |
-| 2 | MCP tool `specgate_verify`; the scheduled format re-read | next |
+| 2 | MCP tool `specgate_verify` (done); the scheduled format re-read | in progress |
 | 3 | An external pilot (another team or module), then the guide "Specgate with OpenSpec" and the published case | before announcing |
 
 Spec Kit and Kiro are out of scope (ADR-0030, alternatives).

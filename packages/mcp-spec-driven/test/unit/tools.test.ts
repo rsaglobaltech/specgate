@@ -207,7 +207,30 @@ test("validate_project succeeds on a freshly generated project", () => {
 test("validate_project throws when projectDir is not a spec-driven project", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "not-spec-"));
   try {
-    assert.throws(() => validateProject({ projectDir: tmp }) as any, /Not a spec-driven project/);
+    assert.throws(
+      () => validateProject({ projectDir: tmp }) as any,
+      /Not a Specgate or OpenSpec project/
+    );
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("specgate_verify accepts an OpenSpec project, which has no spec.md", () => {
+  // ADR-0030: the tool exists for OpenSpec projects; the spec.md check
+  // refused every one of them (finding #40).
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "openspec-only-"));
+  try {
+    fs.mkdirSync(path.join(tmp, "openspec"));
+    // Past the project check: whatever happens next, it is not refused as
+    // "not a project".
+    let message = "";
+    try {
+      validateProject({ projectDir: tmp });
+    } catch (err: any) {
+      message = String(err && err.message);
+    }
+    assert.doesNotMatch(message, /Not a .*project/);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
