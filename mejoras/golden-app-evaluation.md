@@ -49,7 +49,8 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 - [x] Idea del usuario: ADR-0029 y spec `docs/specs/draft-from-brief.md` (2026-10-08).
 - [x] ADR-0030 y spec `docs/specs/verify-foreign-specs.md`: verificar specs de Spec Kit y OpenSpec (2026-10-08; Kiro fuera de alcance por decisión del usuario). **Va antes que `draft`** (decisión del usuario).
 - [x] `verify` fase 1: lector OpenSpec + V1–V7 + `verify.lock` + Action (rama `feat/verify-openspec`). Probado contra el repo de OpenSpec: 747 escenarios, 108 claims.
-- [ ] `verify` fase 1: piloto con defectos sembrados (listón: 100 % detectados, 0 falsos positivos, < 30 min adopción).
+- [x] `verify` fase 1: piloto con defectos sembrados — 5/5 detectados, 0 falsos positivos, adopción 2,7 min. Informe: `mejoras/verify-pilot-openspec.md`.
+- [ ] `verify`: piloto externo (otro equipo/módulo) antes del caso público.
 - [ ] `verify`: herramienta MCP `specgate_verify`.
 - [ ] `verify` fase 2: lector Spec Kit.
 - [ ] `specgate draft` fase 1: checklist D1–D8 + `draft --check`.
