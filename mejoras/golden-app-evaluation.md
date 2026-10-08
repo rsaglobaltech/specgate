@@ -22,15 +22,16 @@ Flujo: develop + un PR por requisito, todo implementado con `harness run`.
 | 27 | `plan`: filas duplicadas con varios escenarios | [x] fix/golden-eval-3 |
 | 28 | 16/46 requisitos sin escenario y `pack lint` callado | [x] nota en lint + packs v0.1.3 |
 | 29 | La línea base de `adopt` se planifica para siempre | [x] fix/golden-eval-3 |
+| 30 | `sync` sin cambios reescribe `expanded_at` en el lock (diff ruidoso) | [ ] abierto |
 
 ## Tareas
 
 - [x] Lote 3 de correcciones (#22–#29) con tests en `tests/unit/golden-eval.test.ts`.
 - [x] Packs v0.1.3: un escenario por requisito.
-- [ ] Release 0.14.3.
-- [ ] golden_app: PR `chore/packs-v0.1.3` a develop (tras 0.14.3).
+- [x] Release 0.14.3 (2026-10-08; E2E del registro 31/31).
+- [x] golden_app: packs v0.1.3 en develop (PR #7).
 - [ ] Harness sobre los 43 requisitos restantes, PR por requisito; métricas por lote.
-- [ ] CI de tests en golden_app (forja no trae; spec-gate no corre tests).
+- [x] CI de tests en golden_app (PR #6).
 - [ ] Puerto/stub del proveedor de IA (REQ-5xx, plan reader REQ-608).
 - [ ] Packs curados: 21 requisitos sin escenario en los 11 packs (lo que ahora
       enseña `pack lint` como nota). Escribirlos y, entonces, subir la nota a aviso.
