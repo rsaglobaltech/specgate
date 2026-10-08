@@ -339,3 +339,21 @@ test("verify --ids prints every criterion id to name in a test", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("a nested capability is read, not skipped", () => {
+  // OpenSpec 1.14 writes `specs/time-attendance/clock-punches/spec.md`; the
+  // first reader took one path segment and silently found nothing there.
+  const spec = readOpenSpec([
+    { path: "openspec/specs/time-attendance/clock-punches/spec.md", source: MAIN },
+    {
+      path: "openspec/changes/archive/2026-10-08-x/specs/time-attendance/clock-punches/spec.md",
+      source: DELTA,
+    },
+  ]);
+  assert.equal(spec.requirements.length, 2);
+  assert.ok(
+    spec.claims[0].criteria.includes(
+      "openspec:time-attendance/clock-punches/sign-in-with-a-crew-code/valid-code"
+    )
+  );
+});

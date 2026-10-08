@@ -15,7 +15,8 @@
  * ```
  *
  * OpenSpec names requirements and scenarios; it numbers neither. The id is
- * built from the names: `openspec:<capability>/<slug(requirement)>/<slug(scenario)>`.
+ * built from the names: `openspec:<capability>/<slug(requirement)>/<slug(scenario)>`,
+ * where a nested capability keeps its path (`time-attendance/clock-punches`).
  *
  * Its claim of done is the archive: a change moved under `changes/archive/`
  * has been applied to the specification, and every requirement its delta
@@ -39,8 +40,11 @@ import {
 } from "./ForeignSpec";
 
 const ROOT = "openspec/";
-const MAIN_SPEC = /^openspec\/specs\/([^/]+)\/spec\.md$/;
-const DELTA_SPEC = /^openspec\/changes\/(archive\/)?([^/]+)\/specs\/([^/]+)\/spec\.md$/;
+// A capability may be nested — `specs/time-attendance/clock-punches/spec.md`
+// (OpenSpec 1.14). Reading one level only skipped those files silently, which
+// is the one thing this reader must never do; found by the verify pilot.
+const MAIN_SPEC = /^openspec\/specs\/(.+)\/spec\.md$/;
+const DELTA_SPEC = /^openspec\/changes\/(archive\/)?([^/]+)\/specs\/(.+)\/spec\.md$/;
 const TASKS = /^openspec\/changes\/(archive\/)?([^/]+)\/tasks\.md$/;
 
 const REQUIREMENT = /^###\s+Requirement:\s*(.+?)\s*$/;
