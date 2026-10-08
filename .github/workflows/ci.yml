@@ -33,8 +33,11 @@ jobs:
       # demo recording helpers are shell now — ADR-0008 removed the rest — but a
       # claim in the contributor guide should be true.
       - name: ShellCheck
+        # The runner image ships shellcheck; apt only when it does not. A hung
+        # `apt-get update` once held this job for the full 6 h job limit.
+        timeout-minutes: 5
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          command -v shellcheck >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck; }
           shellcheck --severity=warning $(git ls-files '*.sh')
 
   # ── Cross-platform test matrix ───────────────────────────────────────────────

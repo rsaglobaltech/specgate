@@ -38,8 +38,12 @@ import { threeWayMerge } from "../../../../packages/core/src/infrastructure/GitM
 import {
   CONFLICT_OUTCOMES,
   OUTCOME_LABEL,
-  reconcile,
 } from "../../../../packages/core/src/domain/Reconciliation";
+import { reconcileTraced } from "../../../../packages/core/src/domain/TraceMerge";
+import { CATALOG_DOCS } from "../../../../packages/core/src/domain/CatalogMerge";
+import { DERIVED_MARKER } from "../../../../packages/core/src/domain/DerivedMatrix";
+import { isDerivedProject } from "../../../lib/derived-writes";
+import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { resolveRemotePack } from "../../../../packages/core/src/infrastructure/RemotePackResolver";
 import { depositPackChanges } from "../../../../packages/core/src/infrastructure/PackChangeDeposit";
@@ -183,12 +187,15 @@ export function resolvePacks(projectDir) {
  * Returns { outcome, baselineContent } where baselineContent is what should
  * be recorded as the next merge base for this file.
  */
-export function reconcileFile(rel, incoming, projectDir, packId, args) {
+export function reconcileFile(rel, incoming, projectDir, packId, args, seeded = null) {
   const localPath = path.join(projectDir, rel);
   const local = fs.existsSync(localPath) ? fs.readFileSync(localPath, "utf8") : null;
-  const base = readBaseline(projectDir, packId, rel);
+  // A file sync seeded the render with is one `expand` merges into rather
+  // than writes whole: what it rendered is the project's copy plus this
+  // pack's changes, so the project's copy is the base.
+  const base = seeded !== null ? seeded : readBaseline(projectDir, packId, rel);
 
-  const decision = reconcile(base, local, incoming, args, threeWayMerge);
+  const decision = reconcileTraced(base, local, incoming, args, threeWayMerge);
 
   if (decision.write !== null && !args.dryRun) {
     fs.mkdirSync(path.dirname(localPath), { recursive: true });
@@ -227,6 +234,7 @@ function syncPack(entry, args, projectDir) {
   info(`Syncing ${entry.pack_id} @ ${version}` + (bumping ? ` (was ${entry.version})` : ""));
 
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "specops-sync-"));
+  const seeded = seedRender(projectDir, tmpDir);
   try {
     // Always render into a throwaway dir (never --dry-run: we need the bytes).
     const expandArgs = buildExpandArgs(entry, version, tmpDir, args.cacheDir, false, args.vars);
@@ -248,17 +256,25 @@ function syncPack(entry, args, projectDir) {
     const baselineEntries = [];
 
     for (const rel of renderedFiles) {
+      // A generated matrix is regenerated once every pack is in, never merged.
+      if (seeded.derived && rel === MATRIX) continue;
       const incoming = fs.readFileSync(path.join(tmpDir, rel), "utf8");
+      const seed = seeded.files.has(rel) ? seeded.files.get(rel) : null;
+      // Seeded and untouched: this pack has nothing to say about the file.
+      if (seed !== null && incoming === seed) continue;
       const { outcome, baselineContent } = reconcileFile(
         rel,
         incoming,
         projectDir,
         entry.pack_id,
-        args
+        args,
+        seed
       );
       counts[outcome] = (counts[outcome] || 0) + 1;
       if (CONFLICT_OUTCOMES.has(outcome)) conflictFiles.push({ rel, outcome });
-      if (baselineContent !== null) baselineEntries.push({ rel, content: baselineContent });
+      if (baselineContent !== null && seed === null) {
+        baselineEntries.push({ rel, content: baselineContent });
+      }
     }
 
     printPackSummary(entry.pack_id, version, counts, conflictFiles);
@@ -302,6 +318,39 @@ function syncPack(entry, args, projectDir) {
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
+}
+
+const MATRIX = "docs/specs/traceability.md";
+
+/**
+ * Give the throwaway render what `expand` would find in the project, for the
+ * files it merges into instead of writing whole. Rendered into an empty
+ * directory, a derived project's pack wrote a hand-kept matrix (a false
+ * "no merge base" conflict on traceability.md, finding #23), never wrote the
+ * trace fields into the capability specs (so a pack's new `depends_on` never
+ * arrived, #24), and every shared catalog held one pack's rows (#22).
+ *
+ * The matrix gets only its marker — `expand` then writes trace fields
+ * instead of rows; spec.md and the catalogs get the project's copy.
+ */
+export function seedRender(projectDir, tmpDir) {
+  const files = new Map<string, string>();
+  const derived = isDerivedProject(projectDir);
+  const copy = (rel) => {
+    const from = path.join(projectDir, rel);
+    if (!fs.existsSync(from)) return;
+    const content = fs.readFileSync(from, "utf8");
+    fs.mkdirSync(path.dirname(path.join(tmpDir, rel)), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, rel), content, "utf8");
+    files.set(rel, content);
+  };
+  if (derived) {
+    fs.mkdirSync(path.join(tmpDir, "docs", "specs"), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, MATRIX), `${DERIVED_MARKER}\n`, "utf8");
+    copy("spec.md");
+  }
+  for (const rel of CATALOG_DOCS) copy(rel);
+  return { derived, files };
 }
 
 function printPackSummary(packId, version, counts, conflictFiles) {
@@ -362,6 +411,11 @@ export class SyncCommand extends BaseCommand {
           });
         }
         writeLock(projectDir, lock);
+      }
+
+      // The trace fields are in; the generated matrix follows from them.
+      if (!args.dryRun && isDerivedProject(projectDir) && refreshDerivedMatrix(projectDir)) {
+        info(`Regenerated ${MATRIX} from the synced specs.`);
       }
 
       if (anyFailure) {

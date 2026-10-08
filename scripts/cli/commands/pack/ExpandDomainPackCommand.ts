@@ -39,6 +39,7 @@ import { BaseCommand } from "../../../lib/command";
 
 import { findCliRoot } from "../../../lib/project-root";
 import { writeRequirementFields } from "../../../lib/derived-writes";
+import { mergeCatalog } from "../../../../packages/core/src/domain/CatalogMerge";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 
 const PACKAGE_VERSION = (() => {
@@ -334,8 +335,12 @@ export function renderDomainDocs(pack: any, projectDir: string, dryRun: boolean)
     ],
   ]);
 
+  // Shared by every pack in the project: this pack's rows join the rows other
+  // packs wrote instead of replacing the file (golden_app finding #22).
   for (const [target, content] of docs.entries()) {
-    writeFile(safeResolve(projectDir, target), content, dryRun);
+    const file = safeResolve(projectDir, target);
+    const existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+    writeFile(file, mergeCatalog(existing, content), dryRun);
   }
 }
 

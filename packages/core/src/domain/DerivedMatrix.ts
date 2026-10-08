@@ -277,7 +277,7 @@ const KEY_ORDER = [
   "evt",
 ];
 
-function renderTraceComment(trace: Record<string, string>): string | null {
+export function renderTraceComment(trace: Record<string, string>): string | null {
   const keys = Object.keys(trace).sort((a, b) => {
     const ia = KEY_ORDER.indexOf(a);
     const ib = KEY_ORDER.indexOf(b);
