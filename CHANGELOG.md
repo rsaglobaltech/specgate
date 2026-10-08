@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-10-08
+
 ### Changed
 
 - **The agent slash command `/specgate:verify` is now `/specgate:check`**, the
