@@ -42,8 +42,8 @@ diseño) va al final, separado, para que el historial no se infle.
 | 32 | 2026-10-08 | golden_app, packs v0.2.0 | `status` "99/99 done" con 52 escenarios nuevos sin test | el test se enlazaba por requisito: cada escenario heredaba los del requisito | 0.14.4 |
 | 33 | 2026-10-08 | golden_app, harness | "plan produced invalid JSON" | `plan` llamaba a `process.exit(0)` antes de vaciar stdout; en pipe se cortaba a 65.536 bytes | 0.14.4 (`plan`); **abierto** en otros 28 comandos |
 | 34 | 2026-10-08 | golden_app, CI | `validate --against-lock` marcó 30 requisitos como desviados con todos sus escenarios presentes | comparaba la primera fila con el primer escenario del pack | 0.14.5 |
-| 35 | 2026-10-08 | golden_app, harness 2.ª ronda | Requisito en verde pero "push failed (stale info)" | `--force-with-lease` con la referencia de seguimiento obsoleta (rama ya borrada en el remoto tras el merge) | develop (#252), pendiente de release |
-| 37 | 2026-10-08 | golden_app, harness 2.ª ronda | REQ-302 rechazado dos veces por "tocar" `traceability.md` | la protección de escritura trataba como edición una matriz derivada idéntica a su regeneración | rama `fix/harness-derived-matrix` |
+| 35 | 2026-10-08 | golden_app, harness 2.ª ronda | Requisito en verde pero "push failed (stale info)" | `--force-with-lease` con la referencia de seguimiento obsoleta (rama ya borrada en el remoto tras el merge) | 0.14.6 |
+| 37 | 2026-10-08 | golden_app, harness 2.ª ronda | REQ-302 rechazado dos veces por "tocar" `traceability.md` | la protección de escritura trataba como edición una matriz derivada idéntica a su regeneración | 0.14.6 |
 | 36 | 2026-10-08 | CI de Specgate | El job de lint se colgó 6 h | `apt-get update` colgado en ShellCheck, sin timeout | `ci.yml` (#242) |
 
 ## No son defectos de Specgate
