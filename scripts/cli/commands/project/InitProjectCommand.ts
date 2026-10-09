@@ -164,6 +164,8 @@ function usage() {
       "  --new             Scaffold a new project even where code already exists\n" +
       "  --keep-matrix     Keep traceability.md hand-maintained instead of generated\n" +
       "  --no-agents       Do not install the /specgate:* commands for the agents found here\n" +
+      "  --no-capabilities When adopting: seed no proposed requirements from the folder\n" +
+      "                    layout (a freshly generated scaffold has nothing to propose)\n" +
       "  --multi-stack <a,b,c>\n" +
       "                    Scaffold one sibling project per stack under a single root,\n" +
       "                    sharing one spec.md and one features/ tree. Each stack keeps\n" +
@@ -198,6 +200,7 @@ export function parseArgs(argv: string[]) {
     newProject: false,
     keepMatrix: false,
     noAgents: false,
+    noCapabilities: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -225,6 +228,11 @@ export function parseArgs(argv: string[]) {
       opts.keepMatrix = true;
     } else if (a === "--no-agents") {
       opts.noAgents = true;
+    } else if (a === "--no-capabilities") {
+      // Passed to adopt. The docs offered it next to `init`, and `init`
+      // refused it; three pilots on fresh scaffolds then deleted three
+      // folder-named proposals by hand each time (#60).
+      opts.noCapabilities = true;
     } else if (a === "--help" || a === "-h") {
       usage();
       process.exit(0);
@@ -1035,6 +1043,7 @@ export class InitProjectCommand extends BaseCommand {
         ...(opts.dryRun ? ["--dry-run"] : []),
         ...(opts.keepMatrix ? ["--keep-matrix"] : []),
         ...(opts.noAgents ? ["--no-agents"] : []),
+        ...(opts.noCapabilities ? ["--no-capabilities"] : []),
       ]).execute();
       return;
     }
