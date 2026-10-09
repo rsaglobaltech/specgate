@@ -156,6 +156,6 @@ brief, públicos y privados, aplicados al reservar y visibles en la agenda.
 - [x] Prueba de humo del flujo completo (propietario → cliente → cancelación).
 - [x] Segundo borrador: agenda por día, enlace público, navegación (ciclo 2).
 - [ ] Tercer borrador: cupones (ciclo 3).
-- [ ] Arreglar #51–#54 y documentar el flujo de un requisito modificado.
+- [x] Arreglar #51–#54 y documentar el flujo de un requisito modificado (0.17.2).
 - [ ] Borradores siguientes: escaparate, cupones, feedback, notificaciones, integración.
-- [x] Arreglar #42–#50 (rama `fix/reservas-defects`, 0.17.1).
+- [x] Arreglar #42–#50 (0.17.1).
