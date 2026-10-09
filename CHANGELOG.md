@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.2] — 2026-10-09
+
 ### Fixed
 
 From a second and third cycle on the same product (reservas_app), on 0.17.1.
