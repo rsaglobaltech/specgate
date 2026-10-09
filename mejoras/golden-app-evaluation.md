@@ -56,4 +56,4 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 - [x] `specgate draft` fase 1: checklist D1–D8 + `draft --check` (2026-10-09).
 - [x] `specgate draft`: D4–D5 como notas en `status` (D1 ya lo da `plan`; D2 no es omisión fuera de un borrador). Destapó #41.
 - [ ] `specgate draft` fase 3: prototipo y evaluación contra la ficha de golden_app (guardar la ficha original como fixture).
-- [ ] Informe final de evaluación.
+- [x] Informe final de evaluación: [`golden-app-informe-final.md`](golden-app-informe-final.md) (2026-10-09).
