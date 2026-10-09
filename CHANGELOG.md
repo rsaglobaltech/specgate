@@ -20,6 +20,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   edit to `docs/specs/**`, and the agent had to start again. A change that only
   sets `status=` on a trace is now allowed; any other edit to the
   specification is still refused.
+- **A requirement waiting on a question does not turn the gate red.**
+  `validate --strict` demanded a test of every `Needs Clarification` row —
+  the status a draft gives a requirement its open question blocks, and which
+  the harness refuses to build. A draft that asked instead of guessing failed
+  the gate. It is now exempt, like `Draft`.
 
 ## [0.17.2] — 2026-10-09
 
