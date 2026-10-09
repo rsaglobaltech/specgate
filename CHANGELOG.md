@@ -8,6 +8,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The harness accepts the `done` it asks for, whatever order `done` writes.**
+  0.17.3 allowed a status-only change to a spec trace, comparing the text; but
+  `done` also reorders the attributes, so the change still looked like an edit
+  and two requirements lost an attempt each. Attributes are now compared as a
+  set.
+
 ## [0.17.4] — 2026-10-09
 
 ### Fixed

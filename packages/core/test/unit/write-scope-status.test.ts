@@ -35,3 +35,25 @@ test("any other change to the trace, or to the text, still is", () => {
   );
   assert.equal(onlyTraceStatusChanged(""), false);
 });
+
+test("#65: done also reorders the attributes; still a status-only change", () => {
+  assert.equal(
+    onlyTraceStatusChanged(
+      diff(
+        "<!-- csda:trace actor=Propietario feature=features/escaparate/REQ-220.feature kind=functional -->",
+        "<!-- csda:trace status=Implemented feature=features/escaparate/REQ-220.feature actor=Propietario kind=functional -->"
+      )
+    ),
+    true
+  );
+  assert.equal(
+    onlyTraceStatusChanged(
+      diff(
+        '<!-- csda:trace actor=Cliente status="Needs Clarification" kind=functional -->',
+        "<!-- csda:trace kind=functional actor=Cliente -->"
+      )
+    ),
+    true,
+    "a quoted status with a space is one attribute"
+  );
+});
