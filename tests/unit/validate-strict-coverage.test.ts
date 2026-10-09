@@ -38,7 +38,7 @@ const FEATURE = `Feature: Invoice totals
     Then the tax is zero
 `;
 
-function project(testFileBody) {
+function project(testFileBody, status = "Implemented") {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-coverage-"));
   const r = cli("init", "--yes", "--out", parent, "--no-git", "--no-sample-req");
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -55,7 +55,7 @@ function project(testFileBody) {
   fs.appendFileSync(
     trace,
     "\n| REQ-010 | SCN-010 | `features/billing/totals.feature` | UC-010 Totals | - | - | - |" +
-      " src/totals.js | tests/totals.test.js | Implemented |\n"
+      ` src/totals.js | tests/totals.test.js | ${status} |\n`
   );
   return { parent, dir };
 }
@@ -201,6 +201,29 @@ test("naming the requirement in the test is evidence enough", () => {
     );
     const r = cli("validate", dir, "--strict-coverage");
     assert.equal(r.status, 0, r.stdout + r.stderr);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("#64: a Draft requirement owes no scenario its test until it is the one delivered", () => {
+  const { parent, dir } = project(
+    'test("SCN-010 subtotal is the sum of line amounts", () => {});\n',
+    "Draft"
+  );
+  try {
+    const pending = cli("validate", dir, "--strict-coverage");
+    assert.doesNotMatch(
+      pending.stdout + pending.stderr,
+      /scenario_not_covered/,
+      "another requirement's gate is not blocked by it"
+    );
+    const delivering = cli("validate", dir, "--strict-coverage", "--delivering", "REQ-010");
+    assert.match(
+      delivering.stdout + delivering.stderr,
+      /scenario_not_covered/,
+      "the one being delivered still owes every scenario"
+    );
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

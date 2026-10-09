@@ -2194,3 +2194,24 @@ test("#50: an agent out of quota fails the requirement after one attempt, not th
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+
+test("#62: harness init gates on the build when package.json has one", () => {
+  const { withBuild } = require("../../scripts/harness/init");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-build-"));
+  try {
+    fs.writeFileSync(
+      path.join(dir, "package.json"),
+      JSON.stringify({ scripts: { test: "vitest", build: "next build" } })
+    );
+    assert.equal(withBuild(dir, "npm test"), "npm test && npm run build");
+    assert.equal(withBuild(dir, "npm test && npm run build"), "npm test && npm run build");
+    assert.equal(withBuild(dir, "./mvnw -B verify"), "./mvnw -B verify", "only npm commands");
+    fs.writeFileSync(
+      path.join(dir, "package.json"),
+      JSON.stringify({ scripts: { test: "vitest" } })
+    );
+    assert.equal(withBuild(dir, "npm test"), "npm test");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

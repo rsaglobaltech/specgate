@@ -43,6 +43,10 @@ export function specSideFailure(
   for (const line of gateOutput.split(/\r?\n/)) {
     const m = LOCATED.exec(line);
     if (!m) continue;
+    // "Nothing proves <scenario>" points at the feature file, but its fix is a
+    // test — the agent's job. Read as a specification failure, it stopped the
+    // harness after one attempt (#63).
+    if (/scenario_not_covered|Nothing proves/.test(line)) return null;
     if (!isProtected(m[1])) return null;
     if (!files.includes(m[1])) files.push(m[1]);
   }

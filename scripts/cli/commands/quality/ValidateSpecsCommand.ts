@@ -520,7 +520,7 @@ export class ValidateSpecsCommand extends BaseCommand {
    * through no fault of its own. Opting in is the honest interface for a
    * heuristic.
    */
-  private checkScenarioCoverage(targetDir: string, traceContent: string) {
+  private checkScenarioCoverage(targetDir: string, traceContent: string, delivering = "") {
     let rows: any[] = [];
     try {
       rows = parseTraceabilityRows(traceContent).rows || [];
@@ -640,6 +640,14 @@ export class ValidateSpecsCommand extends BaseCommand {
       }
 
       if (!featurePath || !fs.existsSync(featurePath)) continue; // --strict-links reports this.
+
+      // A requirement that is not owed yet — Draft, or waiting on a question —
+      // owes no scenario its test either, unless it is the one being
+      // delivered. A change that modified two delivered requirements put both
+      // back to Draft with new scenarios, and each one's harness gate then
+      // failed on the other's (reservas_app, #64). `plan` still lists the gap.
+      const pending = ["Draft", "Needs Clarification"].includes(String(row.status || "").trim());
+      if (pending && row.requirement !== delivering) continue;
 
       for (const scenario of skippedScenarios(feature, sources)) {
         const key = `${featureRel}::${scenario.title}`;
@@ -1048,7 +1056,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       this.checkDeclaredArtifactsExist(targetDir, traceContent, delivering);
     }
     if (strictCoverage) {
-      this.checkScenarioCoverage(targetDir, traceContent);
+      this.checkScenarioCoverage(targetDir, traceContent, delivering);
     }
 
     for (const ff of featureFiles.sort()) {

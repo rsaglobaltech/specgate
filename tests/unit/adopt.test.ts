@@ -162,6 +162,18 @@ test("#44: after adoption, check names the test command it found and how to turn
   });
 });
 
+test("#60: init passes --no-capabilities to the adoption it runs", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(path.join(tmp, "package.json"), JSON.stringify({ name: "fresh" }), "utf8");
+    fs.mkdirSync(path.join(tmp, "packages/core/src"), { recursive: true });
+    fs.writeFileSync(path.join(tmp, "packages/core/src/a.ts"), "export {};\n", "utf8");
+    const r = cli(["init", "--no-capabilities"], { cwd: tmp });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const spec = fs.readFileSync(path.join(tmp, "spec.md"), "utf8");
+    assert.deepEqual(spec.match(/^## REQ-\d+/gm), ["## REQ-001"], "no folder-named proposals");
+  });
+});
+
 test("adopt refuses a project that already has spec.md", () => {
   withTmp((tmp) => {
     const dir = path.join(tmp, "already");

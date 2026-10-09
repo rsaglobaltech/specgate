@@ -8,6 +8,35 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`init --no-capabilities`.** The guide offered it for adoption and `init`
+  refused it ("Unknown argument"); on a freshly generated scaffold every
+  pilot deleted three folder-named proposals by hand. `init` now passes it to
+  the adoption it runs.
+- **D3 asks for the actor's own screen.** A requirement the owner drives had
+  its only screen scenario written from the client's side ("un cliente abre la
+  página"), and D3 counted it; the owner then got no screen to enter the data.
+  A scenario now counts for the actor it names, or for any actor when it names
+  none.
+- **A modified requirement no longer blocks the gate of another.** Archiving a
+  change that modified two delivered requirements put both back to `Draft`
+  with new scenarios, and each one's harness gate failed on the other's
+  untested scenarios. Scenario coverage is now owed by delivered rows and by
+  the one being delivered, like `--strict-tdd`. The specification of a modified
+  requirement merges on its own; the branch flow is no longer needed.
+- **The harness retries an untested scenario.** "Nothing proves" names the
+  feature file but is fixed by a test, and the harness had stopped after one
+  attempt as if the specification were wrong.
+
+### Changed
+
+- **`harness init` gates on the build when there is one.** A requirement in
+  reservas_app passed typecheck and tests and broke `next build`, and nothing
+  in the gate built. For an npm project with a `build` script the detected
+  gate is now `npm test && npm run build`; an explicit `--test-cmd` is taken as
+  written.
+
 ## [0.17.3] — 2026-10-09
 
 ### Fixed

@@ -168,9 +168,12 @@ test("once a project uses the convention, the check holds every row to it", () =
     fs.appendFileSync(
       path.join(dir, "docs/specs/traceability.md"),
       "\n| REQ-010 | SCN-010 | `features/billing/totals.feature` | UC-010 Totals | - | - | - |" +
-        " src/totals.js | tests/totals.test.js | Draft |\n"
+        " src/totals.js | tests/totals.test.js | Implemented |\n"
     );
 
+    // Implemented: since #64 a Draft row owes its scenarios only when it is
+    // the one being delivered (`--delivering`), which is where an agent would
+    // skip one. This pins the calibration, on a row that owes coverage.
     const r = cli("validate", dir, "--strict-coverage");
     assert.equal(r.status, 1, r.stdout + r.stderr);
     assert.match(r.stdout + r.stderr, /SCN-012/, "the skipped scenario is still caught");
@@ -245,7 +248,7 @@ test("a scenario skipped in a file whose others are named is still caught", () =
     fs.appendFileSync(
       path.join(dir, "docs/specs/traceability.md"),
       "\n| REQ-010 | SCN-010 | `features/billing/totals.feature` | UC-010 T | - | - | - |" +
-        " src/t.js | tests/t.test.js | Draft |\n"
+        " src/t.js | tests/t.test.js | Implemented |\n"
     );
 
     const r = cli("validate", dir, "--strict-coverage");

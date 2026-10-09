@@ -52,7 +52,8 @@ What `adopt` writes (and only if the file does not already exist):
 | `docs/specs/adr/README.md` | ADR index for future decisions. |
 
 Override anything the detection got wrong with `--var`, and skip the proposals
-entirely with `--no-capabilities`:
+entirely with `--no-capabilities` — on `init` too, which is what you want on a
+scaffold you have just generated (its folders name no behaviour yet):
 
 ```bash
 npx @rsaglobaltech/specgate@latest adopt \
