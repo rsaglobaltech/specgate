@@ -77,13 +77,26 @@ pantalla que haga lo mismo. Dos casos reales; sin implementar todavía (casar
 escenarios de API y de pantalla no es mecánico).
 
 Arreglo en el producto: `tienda-2` (REQ-005 MODIFIED: añadir desde la tienda y
-quitar; REQ-027: menú por rol).
+quitar; REQ-027: menú por rol). Con 0.17.5, los dos al primer intento y sin
+perder intentos por write-scope (#65 confirmado).
+
+**Segunda prueba de humo — el recorrido entero, sin tocar código:** menú por
+rol; Ana entra por el enlace de LUIS10, añade la bicicleta (envío 0 €, más de
+50 €), confirma y pide financiar a 12 meses → cuota 106,62 €, TIN 12 %, TAE
+12,68 %, coste 1279,44 €; el administrador la ve "viable" y la aprueba; Ana
+firma el contrato; el pedido pasa a enviado y entregado; Luis ve 60,00 € de
+comisión pendiente; el administrador liquida → pagada; rendimiento: LUIS10, 1
+pedido, 1200 €, 60 €. Bea compra un taladro de 49,90 €: "Envío: 4,95 €",
+total 54,85 €.
+
+Cierre: 25/25, gate con build, `main` en **v0.1.0**.
 
 ## Tareas
 
 - [x] Esqueleto, brief, adopción (0.17.2 → 0.17.3), plataforma de tests, CI.
 - [x] Tres borradores con `draft --check` en verde, archivados.
 - [x] Harness: 20/20 + REQ-008 y REQ-016 tras responder las preguntas.
-- [ ] Prueba de humo: comprar, financiar, comisión.
+- [x] Prueba de humo: comprar, financiar, aprobar, firmar, entregar, comisión, liquidar.
 - [x] Responder las dos preguntas y construir REQ-008 y REQ-016.
-- [ ] `tienda-2` y repetir la prueba de humo de compra.
+- [x] `tienda-2` y repetir la prueba de humo de compra; v0.1.0.
+- [ ] D11 (acción de API sin escenario de pantalla): diseñar antes de implementar.
