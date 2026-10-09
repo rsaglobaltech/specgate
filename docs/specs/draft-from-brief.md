@@ -1,6 +1,6 @@
 # Drafting from a brief — specification
 
-Status: **Accepted design, not implemented.** Decided in
+Status: **Phase 1 implemented (`draft --check`, D1–D8); D1–D5 in `status`/`plan` and phases 2–4 pending.** Decided in
 [ADR-0029](adr/0029-a-brief-becomes-a-draft-change-not-a-spec.md).
 Implemented in the phases at the end; phase 1 is an evaluation, not a release.
 
