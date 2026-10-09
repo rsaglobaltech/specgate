@@ -87,11 +87,13 @@ const norm = (s: string) =>
     .replace(/[,\s]+/g, " ")
     .trim();
 
+const escapeRegExp = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 function inText(value: string, text: string): boolean {
   if (/^\d/.test(value)) {
     const bare = value.replace(/,/g, "");
     const plain = text.replace(/(\d),(\d)/g, "$1$2");
-    return new RegExp(`(?<![\\d.])${bare.replace(/\./g, "\\.")}(?![\\d])`).test(plain);
+    return new RegExp(`(?<![\\d.])${escapeRegExp(bare)}(?![\\d])`).test(plain);
   }
   return norm(text).includes(norm(value));
 }
