@@ -41,14 +41,49 @@ Tres borradores, uno por módulo (D8 limita a 25 por borrador):
   shared) en un esqueleto recién generado; hubo que borrarlos otra vez.
 - **Ruido menor:** D6 saca el "500" de una ruta (`/taladro-500-w`) como valor.
 
-## Harness
+## Harness (0.17.3)
 
-(en curso — 22 requisitos; REQ-008 y REQ-016 deben ser rechazados por no estar listos)
+| Medida | Valor |
+|---|---|
+| Requisitos | 20/20 construibles integrados (PR #1, #3–#21) |
+| Al primer intento | 15/20 |
+| Reintentos | REQ-011, REQ-017, REQ-018: write-scope por el `done` que reordena la traza (#65); en dos casos el agente intentó después marcar la fila a mano en la matriz, y write-scope lo paró. REQ-023: el gate (con build) falló una vez |
+| Bloqueados | REQ-008 y REQ-016 rechazados en 1 s: "status is Needs Clarification — … an agent asked to settle a disagreement will settle it by guessing". Ninguna llamada al agente |
+
+**Respuestas.** Las dos preguntas se respondieron como cambio (`respuestas`,
+REQ-008 y REQ-016 MODIFIED con los valores decididos: envío 4,95 € por debajo
+de 50 €; la tienda financia y el contrato se acepta en línea). Archivar
+regeneró los dos `.feature` (#53 funcionando). Harness: REQ-016 al primer
+intento; REQ-008 pasó en el segundo, después de que el primero se colgara
+53 minutos con un límite de 20 (#66).
+
+## Prueba de humo
+
+El administrador da de alta productos y vendedores; los precios con coma
+("49,90") no se escriben en un `input type=number` de un navegador en inglés.
+Pero **no se pudo comprar**:
+
+- la tienda no tiene "Añadir al carrito": REQ-005 solo tenía escenario de API
+  para añadir (el de pantalla era cambiar la cantidad);
+- ninguna pantalla tiene menú: el panel del administrador dice "Hola" y nada más.
+
+Es el mismo patrón que las fotos de reservas_app (REQ-221): una acción con
+escenario de API y sin escenario de pantalla no se construye en pantalla. D3
+no lo ve porque el requisito sí tiene *un* escenario de pantalla.
+
+**Regla candidata (D11):** para un actor que usa API y pantalla, cada escenario
+de API que cambia algo (`POST`/`PUT`/`PATCH`/`DELETE`) debería tener uno de
+pantalla que haga lo mismo. Dos casos reales; sin implementar todavía (casar
+escenarios de API y de pantalla no es mecánico).
+
+Arreglo en el producto: `tienda-2` (REQ-005 MODIFIED: añadir desde la tienda y
+quitar; REQ-027: menú por rol).
 
 ## Tareas
 
 - [x] Esqueleto, brief, adopción (0.17.2 → 0.17.3), plataforma de tests, CI.
 - [x] Tres borradores con `draft --check` en verde, archivados.
-- [ ] Harness sobre 22 requisitos.
+- [x] Harness: 20/20 + REQ-008 y REQ-016 tras responder las preguntas.
 - [ ] Prueba de humo: comprar, financiar, comisión.
-- [ ] Responder Q1 (envío) y Q1 (financiadora) y construir REQ-008 y REQ-016.
+- [x] Responder las dos preguntas y construir REQ-008 y REQ-016.
+- [ ] `tienda-2` y repetir la prueba de humo de compra.
