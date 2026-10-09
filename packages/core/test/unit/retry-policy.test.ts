@@ -31,3 +31,9 @@ test("a gate that blames code, or nothing located, is the agent's to fix", () =>
   assert.equal(specSideFailure(mixed, isFeature), null);
   assert.equal(specSideFailure("FAIL tests/x.test.ts > REQ-101 expected 201", isFeature), null);
 });
+
+test("#63: an uncovered scenario is the agent's to fix, though it names a feature file", () => {
+  const out =
+    '  ✖  features/escaparate/REQ-221.feature Nothing proves "Las fotos en la página pública" (features/escaparate/REQ-221.feature). [scenario_not_covered]';
+  assert.equal(specSideFailure(out, isFeature), null);
+});

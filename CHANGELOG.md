@@ -19,6 +19,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   página"), and D3 counted it; the owner then got no screen to enter the data.
   A scenario now counts for the actor it names, or for any actor when it names
   none.
+- **A modified requirement no longer blocks the gate of another.** Archiving a
+  change that modified two delivered requirements put both back to `Draft`
+  with new scenarios, and each one's harness gate failed on the other's
+  untested scenarios. Scenario coverage is now owed by delivered rows and by
+  the one being delivered, like `--strict-tdd`. The specification of a modified
+  requirement merges on its own; the branch flow is no longer needed.
+- **The harness retries an untested scenario.** "Nothing proves" names the
+  feature file but is fixed by a test, and the harness had stopped after one
+  attempt as if the specification were wrong.
 
 ### Changed
 
