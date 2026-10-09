@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.5] — 2026-10-09
+
 ### Fixed
 
 - **The harness accepts the `done` it asks for, whatever order `done` writes.**
