@@ -433,6 +433,59 @@ export function parseArgs(argv) {
   return opts;
 }
 
+/**
+ * Write the files for `tools` into `projectDir`. An existing file is left
+ * untouched unless `force`. Shared by `agents init` and by `init`/`adopt`,
+ * which install for the agents they detect.
+ */
+export function writeAgentFiles(
+  projectDir: string,
+  tools: string[],
+  opts: { force?: boolean; dryRun?: boolean } = {}
+) {
+  const written = [];
+  const skipped = [];
+  const diagnostics = [];
+
+  // Several tools share a destination — Claude and Codex both read AGENTS.md —
+  // so a file is written once and attributed to the tools that asked for it.
+  const planned = new Map();
+  for (const tool of tools) {
+    for (const file of TOOLS[tool].files()) {
+      const entry = planned.get(file.path);
+      if (entry) entry.tools.push(tool);
+      else planned.set(file.path, { ...file, tools: [tool] });
+    }
+  }
+
+  {
+    for (const file of planned.values()) {
+      const tool = file.tools.join("+");
+      const target = path.join(projectDir, file.path);
+      const exists = fs.existsSync(target);
+
+      if (exists && !opts.force) {
+        skipped.push({ tool, path: file.path, reason: "exists" });
+        diagnostics.push(
+          warning("agent_file_exists", `${file.path} already exists — left untouched.`, {
+            file: file.path,
+            fix: "Pass --force to overwrite it, or merge the generated content by hand.",
+          })
+        );
+        continue;
+      }
+
+      if (!opts.dryRun) {
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, file.contents, "utf8");
+      }
+      written.push({ tool, path: file.path });
+    }
+  }
+
+  return { written, skipped, diagnostics };
+}
+
 export function main(argv) {
   const opts = parseArgs(argv);
   const io = agentIo(opts.json || wantsJson(argv));
@@ -472,45 +525,10 @@ export function main(argv) {
     ]);
   }
 
-  const written = [];
-  const skipped = [];
-  const diagnostics = [];
-
-  // Several tools share a destination — Claude and Codex both read AGENTS.md —
-  // so a file is written once and attributed to the tools that asked for it.
-  const planned = new Map();
-  for (const tool of opts.tools) {
-    for (const file of TOOLS[tool].files()) {
-      const entry = planned.get(file.path);
-      if (entry) entry.tools.push(tool);
-      else planned.set(file.path, { ...file, tools: [tool] });
-    }
-  }
-
-  {
-    for (const file of planned.values()) {
-      const tool = file.tools.join("+");
-      const target = path.join(projectDir, file.path);
-      const exists = fs.existsSync(target);
-
-      if (exists && !opts.force) {
-        skipped.push({ tool, path: file.path, reason: "exists" });
-        diagnostics.push(
-          warning("agent_file_exists", `${file.path} already exists — left untouched.`, {
-            file: file.path,
-            fix: "Pass --force to overwrite it, or merge the generated content by hand.",
-          })
-        );
-        continue;
-      }
-
-      if (!opts.dryRun) {
-        fs.mkdirSync(path.dirname(target), { recursive: true });
-        fs.writeFileSync(target, file.contents, "utf8");
-      }
-      written.push({ tool, path: file.path });
-    }
-  }
+  const { written, skipped, diagnostics } = writeAgentFiles(projectDir, opts.tools, {
+    force: opts.force,
+    dryRun: opts.dryRun,
+  });
 
   io.emit(
     {

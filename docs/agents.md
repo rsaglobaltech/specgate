@@ -12,6 +12,13 @@ prose at a caller that asked for a document.
 
 ## Wire it in
 
+`specgate init` already does it for the agents your project uses: it looks for
+`.claude/` or `CLAUDE.md`, `.cursor/`, `.github/copilot-instructions.md`,
+`GEMINI.md`, `.windsurf/`, `.clinerules`, `.aider.conf.yml`, `.agents/` and
+`.codex/`, installs the commands for each one it finds, and never overwrites a
+file. `AGENTS.md` alone is not a sign of any one agent. `--no-agents` skips it.
+For any other agent, or later:
+
 ```bash
 specgate agents init                          # every tool below
 specgate agents init --tool claude,cursor     # or pick

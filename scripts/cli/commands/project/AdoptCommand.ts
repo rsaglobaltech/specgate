@@ -1,3 +1,4 @@
+import { installDetectedAgents } from "../../../agents/detect";
 import * as fs from "node:fs";
 import { migrateToDerived } from "../spec/MatrixCommand";
 import * as path from "node:path";
@@ -62,7 +63,7 @@ function usage() {
       "  --dry-run            Print what would be written without writing\n" +
       "  --monorepo           Adopt every module the repository declares and write\n" +
       "                       the specops.config.yaml that `validate` reads\n" +
-      "  --no-capabilities    Do not seed proposed requirements — skeleton only\n  --keep-matrix        Keep traceability.md hand-maintained instead of generated\n" +
+      "  --no-capabilities    Do not seed proposed requirements — skeleton only\n  --keep-matrix        Keep traceability.md hand-maintained instead of generated\n  --no-agents          Do not install the /specgate:* commands for the agents found here\n" +
       "  --var KEY=VALUE      Override a detected value (PROJECT_NAME, PROJECT_SLUG,\n" +
       "                       DOMAIN, STACK, API_STYLE, TESTING, TEST_CMD)\n"
   );
@@ -75,6 +76,7 @@ export function parseArgs(argv: string[]) {
     monorepo: false,
     noCapabilities: false,
     keepMatrix: false,
+    noAgents: false,
     vars: {} as Record<string, string>,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -89,6 +91,8 @@ export function parseArgs(argv: string[]) {
       opts.noCapabilities = true;
     } else if (a === "--keep-matrix") {
       opts.keepMatrix = true;
+    } else if (a === "--no-agents") {
+      opts.noAgents = true;
     } else if (a === "--var" && argv[i + 1]) {
       const pair = argv[++i];
       const eq = pair.indexOf("=");
@@ -296,6 +300,7 @@ interface AdoptOptions {
   dryRun: boolean;
   monorepo: boolean;
   noCapabilities: boolean;
+  noAgents?: boolean;
   vars: Record<string, string>;
 }
 
@@ -443,6 +448,7 @@ function adoptMonorepo(dir: string, opts: AdoptOptions): never {
   logInfo("  1. specgate validate .          # validates every module listed");
   logInfo("  2. Replace the seeded proposals in each module's spec.md with real behaviour");
   logInfo("  3. Add `validate . --strict` to CI to lock the gate in");
+  installDetectedAgents(dir, { dryRun: opts.dryRun, skip: opts.noAgents }, logInfo);
   process.exit(0);
 }
 
@@ -496,6 +502,7 @@ export class AdoptProjectCommand extends BaseCommand {
     }
     logInfo("  3. specgate status              # what each requirement still needs");
     logInfo("  4. specgate ci init             # put the gate in CI");
+    installDetectedAgents(dir, { dryRun: opts.dryRun, skip: opts.noAgents }, logInfo);
     process.exit(0);
   }
 }
