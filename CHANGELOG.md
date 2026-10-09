@@ -14,6 +14,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   refused it ("Unknown argument"); on a freshly generated scaffold every
   pilot deleted three folder-named proposals by hand. `init` now passes it to
   the adoption it runs.
+- **D3 asks for the actor's own screen.** A requirement the owner drives had
+  its only screen scenario written from the client's side ("un cliente abre la
+  página"), and D3 counted it; the owner then got no screen to enter the data.
+  A scenario now counts for the actor it names, or for any actor when it names
+  none.
 
 ## [0.17.3] — 2026-10-09
 

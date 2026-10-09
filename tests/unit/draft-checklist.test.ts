@@ -430,3 +430,35 @@ test("#55 / D10: an id the project already uses is caught before archiving; MODI
   ];
   assert.deepEqual(d10(modified), [], "a modified requirement reuses its own ids");
 });
+
+test("#61: another actor's screen does not prove this actor's screen", () => {
+  const brief =
+    "---\nactors:\n  - { name: Propietario, surfaces: [api, web] }\n  - { name: Cliente, surfaces: [api, web] }\n---\n";
+  const datos = (screenStep) =>
+    req("REQ-220", "kind=functional actor=Propietario", "El sistema SHALL guardar los datos.", [
+      [
+        "SCN-250",
+        [
+          "DADO el propietario de Pelu1",
+          "CUANDO hace PUT /api/comercios/pelu1",
+          "ENTONCES la respuesta es 200",
+        ],
+      ],
+      ["SCN-251", ["DADO Pelu1 con sus datos", screenStep, "ENTONCES ve la dirección"]],
+    ]);
+  const d3 = (step) =>
+    checkDraft({ deltas: delta(datos(step)), brief }).status.filter(
+      (d) => d.code === "D3_surface_missing"
+    );
+  assert.equal(
+    d3("CUANDO un cliente abre la página de Pelu1").length,
+    1,
+    "the client's screen is not the owner's"
+  );
+  assert.deepEqual(d3("CUANDO el propietario abre Mi comercio y pulsa Guardar"), []);
+  assert.deepEqual(
+    d3("CUANDO abre Mi comercio y pulsa Guardar"),
+    [],
+    "a step that names nobody still counts"
+  );
+});

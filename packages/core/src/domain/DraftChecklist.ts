@@ -253,7 +253,16 @@ export function checkDraft(files: DraftFiles): DraftReport {
         .filter(Boolean);
       const wanted = own.length > 0 && actor ? own : surfaces.get(actor);
       if (!actor || !wanted) continue;
-      const steps = r.scenarios.flatMap((s) => s.steps);
+      // A scenario counts for this actor when it names them, or names no other
+      // actor of the brief. "Un cliente abre la página" proved the client's
+      // screen, and D3 took it as the owner's: the owner then had no screen
+      // to enter the data the requirement was about (reservas_app, #61).
+      const others = [...surfaces.keys()].filter((a) => a !== actor);
+      const theirs = r.scenarios.filter((s) => {
+        const text = s.steps.join(" ").toLowerCase();
+        return text.includes(actor) || !others.some((o) => text.includes(o));
+      });
+      const steps = theirs.flatMap((s) => s.steps);
       const has = {
         api: steps.some((s) => API.test(s)),
         screen: steps.some((s) => SCREEN.test(s)),
