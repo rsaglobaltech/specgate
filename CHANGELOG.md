@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.3] — 2026-10-09
+
 ### Fixed
 
 - **`draft --check` catches an id the project already uses (D10).** A second
