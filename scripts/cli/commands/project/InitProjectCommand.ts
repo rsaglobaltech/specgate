@@ -1,3 +1,4 @@
+import { installDetectedAgents } from "../../../agents/detect";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -144,6 +145,7 @@ function usage() {
       "Options:\n" +
       "  --new             Scaffold a new project even where code already exists\n" +
       "  --keep-matrix     Keep traceability.md hand-maintained instead of generated\n" +
+      "  --no-agents       Do not install the /specgate:* commands for the agents found here\n" +
       "  --multi-stack <a,b,c>\n" +
       "                    Scaffold one sibling project per stack under a single root,\n" +
       "                    sharing one spec.md and one features/ tree. Each stack keeps\n" +
@@ -177,6 +179,7 @@ export function parseArgs(argv: string[]) {
     noSampleReq: false,
     newProject: false,
     keepMatrix: false,
+    noAgents: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -202,6 +205,8 @@ export function parseArgs(argv: string[]) {
       opts.newProject = true;
     } else if (a === "--keep-matrix") {
       opts.keepMatrix = true;
+    } else if (a === "--no-agents") {
+      opts.noAgents = true;
     } else if (a === "--help" || a === "-h") {
       usage();
       process.exit(0);
@@ -1008,6 +1013,7 @@ export class InitProjectCommand extends BaseCommand {
         process.cwd(),
         ...(opts.dryRun ? ["--dry-run"] : []),
         ...(opts.keepMatrix ? ["--keep-matrix"] : []),
+        ...(opts.noAgents ? ["--no-agents"] : []),
       ]).execute();
       return;
     }
@@ -1112,6 +1118,7 @@ export class InitProjectCommand extends BaseCommand {
     if (wizardAnswers && !opts.dryRun) {
       logInfo("- Config: saved to project.yaml (reproduce with `init --config project.yaml`)");
     }
+    installDetectedAgents(projectDir, { dryRun: opts.dryRun, skip: opts.noAgents }, logInfo);
     logInfo("✅ Generation completed");
     process.exit(0);
   }

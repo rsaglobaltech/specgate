@@ -90,8 +90,9 @@ does not test it. → [Your team's first pull request](first-pr.md#the-reviewer-
 
 ### Which AI agent does it need?
 
-None. Every command works by hand. To wire one in, `specgate agents init`
-writes slash commands and rules for Claude Code, Cursor, Copilot, Windsurf,
+None. Every command works by hand. `specgate init` installs the slash commands
+for the agents it finds in your project (`CLAUDE.md`, `.cursor/`, …); `specgate agents init`
+writes them for any other, with slash commands and rules for Claude Code, Cursor, Copilot, Windsurf,
 Aider, Gemini, Cline, Codex or Antigravity. → [Agent tools](agents.md)
 
 ### Can an agent rewrite the spec to make its own test pass?

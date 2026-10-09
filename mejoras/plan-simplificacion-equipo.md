@@ -175,9 +175,11 @@ merece su propia decisión).
 **Objetivo:** el desarrollador habla con su agente; el CLI es lo que el agente y
 la CI ejecutan.
 
-- [ ] `specgate init` instala por defecto **skills/slash commands** en el agente
-      detectado (no los 10 a la vez): `/spec:propose`, `/spec:apply`,
-      `/spec:check`, `/spec:done`. Cada uno llama al CLI con `--json`.
+- [x] `specgate init` instala por defecto **skills/slash commands** en el agente
+      detectado (no los 10 a la vez) — **hecho 2026-10-09**, rama
+      `feat/init-agent-default`: detecta por marcas (`.claude/`, `CLAUDE.md`,
+      `.cursor/`, `GEMINI.md`…), instala los `/specgate:*` solo para esos, nunca
+      sobrescribe; sin agente, dice cómo; `--no-agents` lo salta.
 - [ ] Un solo `AGENTS.md` corto (≤ 60 líneas) como contrato. `AI_RULES.md` se
       funde en él.
 - [ ] Hook opcional (Claude Code / Kiro / git pre-push) que corre

@@ -255,3 +255,68 @@ test("update moves /specgate:verify to /specgate:check, keeping the team's edits
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── init/adopt install for the agents they find (simplification plan, phase 2) ──
+
+function codeRepo(extra: Record<string, string> = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-init-agents-"));
+  fs.writeFileSync(
+    path.join(dir, "package.json"),
+    '{"name":"x","version":"1.0.0","scripts":{"test":"echo ok"}}'
+  );
+  fs.mkdirSync(path.join(dir, "lib"));
+  fs.writeFileSync(path.join(dir, "lib", "i.js"), "module.exports = {};\n");
+  for (const [rel, body] of Object.entries(extra)) {
+    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+    fs.writeFileSync(path.join(dir, rel), body);
+  }
+  return dir;
+}
+const initIn = (dir: string, ...args: string[]) =>
+  spawnSync(process.execPath, [path.join(ROOT_DIR, "bin", "specgate.js"), "init", ...args], {
+    cwd: dir,
+    encoding: "utf8",
+  });
+
+test("init installs the /specgate:* commands for the agent the project uses, and nothing else", () => {
+  const { detectAgents } = require("../../scripts/agents/detect");
+  const dir = codeRepo({ "CLAUDE.md": "# our notes\n", ".cursor/settings.json": "{}" });
+  try {
+    assert.deepEqual(detectAgents(dir).sort(), ["claude", "cursor"]);
+    const r = initIn(dir);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.ok(fs.existsSync(path.join(dir, ".claude", "commands", "specgate", "check.md")));
+    assert.ok(fs.existsSync(path.join(dir, ".cursor", "rules", "specgate.mdc")));
+    assert.equal(
+      fs.existsSync(path.join(dir, ".windsurf")),
+      false,
+      "no files for agents nobody uses"
+    );
+    assert.equal(
+      fs.readFileSync(path.join(dir, "CLAUDE.md"), "utf8"),
+      "# our notes\n",
+      "never overwritten"
+    );
+    assert.match(r.stdout, /\/specgate:explore/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("init with no agent found says how to install, and --no-agents installs nothing", () => {
+  const bare = codeRepo();
+  const opted = codeRepo({ "CLAUDE.md": "# x\n" });
+  try {
+    const r = initIn(bare);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /none detected[\s\S]*specgate agents init --tool/);
+    assert.equal(fs.existsSync(path.join(bare, ".claude")), false);
+
+    const q = initIn(opted, "--no-agents");
+    assert.equal(q.status, 0, q.stdout + q.stderr);
+    assert.equal(fs.existsSync(path.join(opted, ".claude", "commands")), false);
+  } finally {
+    fs.rmSync(bare, { recursive: true, force: true });
+    fs.rmSync(opted, { recursive: true, force: true });
+  }
+});

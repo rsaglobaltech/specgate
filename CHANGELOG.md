@@ -16,6 +16,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   version, commit or variables do.
 
 ## [0.16.0] — 2026-10-09
+### Changed
+
+- **`specgate init` installs the `/specgate:*` commands for the agents your
+  project already uses** — Claude Code (`.claude/`, `CLAUDE.md`), Cursor,
+  Copilot, Gemini, Windsurf, Cline, Aider, Codex, Antigravity — and only for
+  those, never overwriting a file. With none found it says how to add one.
+  `--no-agents` skips it. The developer talks to the agent they already have
+  from the first minute, without `agents init` to discover.
 
 ### Added
 
