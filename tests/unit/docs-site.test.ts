@@ -269,7 +269,7 @@ test("the sidebar opens the group holding the page you are on", () => {
     const html = fs.readFileSync(path.join(dir, "harness.html"), "utf8");
     assert.match(
       html,
-      /<details class="side__group" data-group="Agents and the harness" open>/,
+      /<details class="side__group" data-group="Extensions" open>/,
       "the current page's group is not open"
     );
   } finally {
