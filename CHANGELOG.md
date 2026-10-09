@@ -20,6 +20,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   A scenario now counts for the actor it names, or for any actor when it names
   none.
 
+### Changed
+
+- **`harness init` gates on the build when there is one.** A requirement in
+  reservas_app passed typecheck and tests and broke `next build`, and nothing
+  in the gate built. For an npm project with a `build` script the detected
+  gate is now `npm test && npm run build`; an explicit `--test-cmd` is taken as
+  written.
+
 ## [0.17.3] — 2026-10-09
 
 ### Fixed

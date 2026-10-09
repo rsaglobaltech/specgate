@@ -154,6 +154,24 @@ export function harnessFiles(
   ];
 }
 
+/**
+ * The gate builds too, when the project has a `build` script. In the
+ * reservas_app pilot a requirement passed typecheck and tests and broke `next
+ * build`; nothing in the gate built, so it shipped (#62). Only added to a
+ * detected npm command — an explicit --test-cmd is taken as written.
+ */
+export function withBuild(projectDir: string, testCmd: string | null): string | null {
+  if (!testCmd || !/^npm /.test(testCmd) || /npm run build/.test(testCmd)) return testCmd;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(projectDir, "package.json"), "utf8"));
+    return pkg.scripts && typeof pkg.scripts.build === "string"
+      ? `${testCmd} && npm run build`
+      : testCmd;
+  } catch {
+    return testCmd;
+  }
+}
+
 export function projectName(projectDir) {
   const specPath = path.join(projectDir, "spec.md");
   if (fs.existsSync(specPath)) {
@@ -240,7 +258,7 @@ export class InitCommand extends BaseCommand {
       return;
     }
 
-    const testCmd = opts.testCmd || detectTestCommand(projectDir);
+    const testCmd = opts.testCmd || withBuild(projectDir, detectTestCommand(projectDir));
     const outputs = harnessFiles(projectDir, testCmd);
 
     if (opts.stdout) {
