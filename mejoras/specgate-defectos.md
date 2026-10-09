@@ -38,7 +38,7 @@ diseño) va al final, separado, para que el historial no se infle.
 | 27 | 2026-10-07 | golden_app, `plan` | Filas duplicadas y escenarios perdidos | `byId` guardaba un ítem por requisito | 0.14.3 |
 | 28 | 2026-10-08 | golden_app, packs | 16 de 46 requisitos sin escenario y `pack lint` no dijo nada | ninguna comprobación de cobertura de escenarios | 0.14.3 (nota de lint) |
 | 29 | 2026-10-08 | golden_app, harness | La línea base de `adopt` se planificaba como trabajo para siempre | `npm test` / `existing codebase` no son rutas | 0.14.3 |
-| 30 | 2026-10-08 | golden_app, `specops sync` | Sync sin cambios reescribe `expanded_at` en el lock: diff ruidoso | timestamp escrito siempre | **abierto** |
+| 30 | 2026-10-08 | golden_app, `specops sync` | Sync sin cambios reescribe `expanded_at` en el lock: diff ruidoso | timestamp escrito siempre | rama `fix/sync-quiet-lock`: `expanded_at` solo cambia si cambia el pack (repo, versión, commit o vars) |
 | 32 | 2026-10-08 | golden_app, packs v0.2.0 | `status` "99/99 done" con 52 escenarios nuevos sin test | el test se enlazaba por requisito: cada escenario heredaba los del requisito | 0.14.4 |
 | 33 | 2026-10-08 | golden_app, harness | "plan produced invalid JSON" | `plan` llamaba a `process.exit(0)` antes de vaciar stdout; en pipe se cortaba a 65.536 bytes | 0.14.4 (`plan`); el resto con stdio bloqueante para todo comando, rama `fix/blocking-stdio` |
 | 34 | 2026-10-08 | golden_app, CI | `validate --against-lock` marcó 30 requisitos como desviados con todos sus escenarios presentes | comparaba la primera fila con el primer escenario del pack | 0.14.5 |

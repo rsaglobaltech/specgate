@@ -25,7 +25,7 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 | 27 | `plan`: filas duplicadas con varios escenarios | [x] fix/golden-eval-3 |
 | 28 | 16/46 requisitos sin escenario y `pack lint` callado | [x] nota en lint + packs v0.1.3 |
 | 29 | La línea base de `adopt` se planifica para siempre | [x] fix/golden-eval-3 |
-| 30 | `sync` sin cambios reescribe `expanded_at` en el lock (diff ruidoso) | [ ] abierto |
+| 30 | `sync` sin cambios reescribe `expanded_at` en el lock (diff ruidoso) | [x] fix/sync-quiet-lock |
 | 32 | Un escenario añadido a un requisito entregado hereda sus tests: 99/99 "done" con 52 sin probar | [x] fix/scenario-links |
 | 33 | `plan --json` cortado a 65.536 bytes en pipe (`process.exit` antes de vaciar stdout); 28 comandos más hacen lo mismo | [x] plan (0.14.4) · resto con stdio bloqueante (#261) |
 | 34 | `validate --against-lock` compara solo el primer escenario de cada requisito: con varios, falsa deriva | [x] fix/drift-multi-scenario |

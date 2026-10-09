@@ -8,6 +8,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`specops sync` that changes nothing leaves `.specops.lock` alone.** It
+  rewrote each pack's `expanded_at` on every run, so a no-op sync left a diff
+  to commit or revert. The timestamp now moves only when the pack's repo,
+  version, commit or variables do.
+
 ## [0.16.0] — 2026-10-09
 
 ### Added
