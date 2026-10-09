@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.16.0",
+    "version": "0.17.0",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
@@ -68,7 +68,7 @@
       "surface": "init",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1780,
+      "holdMs": 1960,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -124,6 +124,16 @@
         },
         {
           "t": "ℹ️ [INFO] - Git: skipped",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO]   specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)",
           "c": "info",
           "s": "out"
         },
@@ -363,7 +373,7 @@
       "omitted": 0,
       "lines": [
         {
-          "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 99 +++++++++++++++++++++++++",
+          "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 94 +++++++++++++++++++++++++",
           "c": "out",
           "s": "out"
         },
@@ -388,7 +398,7 @@
           "s": "out"
         },
         {
-          "t": " 5 files changed, 121 insertions(+), 2 deletions(-)",
+          "t": " 5 files changed, 116 insertions(+), 2 deletions(-)",
           "c": "out",
           "s": "out"
         }

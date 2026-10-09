@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-10-09
+
 ### Fixed
 
 - **`specops sync` that changes nothing leaves `.specops.lock` alone.** It

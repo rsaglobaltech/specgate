@@ -33,7 +33,7 @@
 
 <header class="top">
   <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
-  <span class="top__version">v0.16.0</span>
+  <span class="top__version">v0.17.0</span>
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -340,6 +340,8 @@ TESTING: node:test
 ℹ️ [INFO] - Output: ~/smart-parking
 ℹ️ [INFO] - Dry-run: false
 ℹ️ [INFO] - Git: skipped
+ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:
+ℹ️ [INFO]   specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)
 ℹ️ [INFO] ✅ Generation completed
 
 ~/smart-parking $ specgate specops add --pack-root ~/packs --pack multi-tenant/backend --var &quot;PROJECT_NAME=Smart Parking&quot; --var PROJECT_SLUG=smart-parking --var &quot;DOMAIN=parking operations&quot;
@@ -384,12 +386,12 @@ max_attempts: 1
 ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
- .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 99 +++++++++++++++++++++++++
+ .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 94 +++++++++++++++++++++++++
  docs/specs/traceability.md                              |  2 +-
  spec.md                                                 |  2 +-
  src/health.js                                           |  9 +++
  test/health.test.js                                     | 11 +++
- 5 files changed, 121 insertions(+), 2 deletions(-)
+ 5 files changed, 116 insertions(+), 2 deletions(-)
 
 ~/smart-parking $ git switch -q harness/REQ-000 &amp;&amp; node --test test/*.test.js
 ✔ REQ-000 SCN-000: GET /health reports the service as UP (12ms)
@@ -412,7 +414,7 @@ max_attempts: 1
     </figure>
 
     <p class="term__meta">
-      Recorded from <strong>v0.16.0</strong>. <a href="./tutorial.html">The same run, explained →</a>
+      Recorded from <strong>v0.17.0</strong>. <a href="./tutorial.html">The same run, explained →</a>
     </p>
   </div>
 </section>
@@ -564,7 +566,7 @@ specgate check</code></pre>
       <a href="./release-process.html">Releases</a>
     </nav>
   </div>
-  <p class="ed-wrap ed-foot__note">Documentation for v0.16.0. Every number on this page is generated from the repository, not typed by hand.</p>
+  <p class="ed-wrap ed-foot__note">Documentation for v0.17.0. Every number on this page is generated from the repository, not typed by hand.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>
