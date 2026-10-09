@@ -405,3 +405,28 @@ test("#52: a value already in the project's specification is not unlisted", () =
   assert.equal(d6(undefined).length, 2);
   assert.deepEqual(d6('Cuando abre "Configuración" … pulsa "Agenda"'), []);
 });
+
+test("#55 / D10: an id the project already uses is caught before archiving; MODIFIED keeps its own", () => {
+  const used = new Map([
+    ["REQ-206", "REQ-206"],
+    ["SCN-212", "REQ-209"],
+    ["REQ-145", "REQ-145"],
+    ["SCN-148", "REQ-145"],
+  ]);
+  const added = req("REQ-212", "kind=business-rule", "Text.", [
+    ["SCN-212", ["GIVEN a booking", "WHEN the task runs", "THEN a mail goes out"]],
+  ]);
+  const d10 = (deltas) =>
+    checkDraft({ deltas, idsInUse: used }).status.filter((d) => d.code === "D10_id_in_use");
+  assert.match(d10(delta(added))[0].message, /SCN-212 is already a scenario of REQ-209/);
+
+  const modified = [
+    {
+      path: "specs/reservas/spec.md",
+      source: `## MODIFIED Requirements\n\n${req("REQ-145", "kind=functional", "Text.", [
+        ["SCN-148", ["GIVEN a day", "WHEN the owner opens the agenda", "THEN the bookings show"]],
+      ])}`,
+    },
+  ];
+  assert.deepEqual(d10(modified), [], "a modified requirement reuses its own ids");
+});

@@ -160,6 +160,14 @@ test("TDD-1 does not fire while the row is still Draft", () => {
   assert.deepEqual(report.findings, []);
 });
 
+test("#59: TDD-1 does not fire while the row waits on a question", () => {
+  const { report } = useCase().checkMatrix(
+    richMatrix([["REQ-008", "SCN-023", "TBD", "Needs Clarification"]]),
+    { strictTdd: true }
+  );
+  assert.deepEqual(report.findings, []);
+});
+
 test("TDD-2: a row past Draft with no Scenario ID is a violation", () => {
   const { report } = useCase().checkMatrix(
     richMatrix([["REQ-001", "", "tests/a.test.ts", "Ready for Dev"]]),

@@ -173,12 +173,19 @@ export class ValidateProjectUseCase {
 
       // `Deprecated` owes nothing: its files may be gone on purpose, and
       // `req rm` past Draft points at Deprecated — a TDD-1 here made the
-      // advice a loop.
+      // advice a loop. `Needs Clarification` owes nothing yet either: it is
+      // waiting on a question, and the harness refuses it until it is
+      // answered. Demanding its test turned a draft that asked instead of
+      // guessing into a red gate (credito-tienda, #59).
       const judged =
         opts.delivering && requirementId === opts.delivering && status === "Draft"
           ? "Implemented"
           : status;
-      const owesTdd = judged && POST_DRAFT_STATUS.has(judged) && judged !== "Deprecated";
+      const owesTdd =
+        judged &&
+        POST_DRAFT_STATUS.has(judged) &&
+        judged !== "Deprecated" &&
+        judged !== "Needs Clarification";
       if (testArtifact.toUpperCase() === "TBD" && owesTdd) {
         report.addError(
           "strict_tdd_violation",

@@ -172,3 +172,43 @@ export function parseGitStatus(porcelain: string): WriteScopeChanges {
   }
   return { modified, added };
 }
+
+const isTraceLine = (line: string) => {
+  const t = line.trim();
+  return (
+    t.startsWith("<!--") && t.endsWith("-->") && t.slice(4).trimStart().startsWith("csda:trace")
+  );
+};
+// Whitespace is collapsed by splitting, not by a regex: a `\s+` ahead of the
+// attribute ran polynomially on lines of spaces (CodeQL js/polynomial-redos).
+const withoutStatus = (line: string) =>
+  line
+    .split(/[ \t]/)
+    .filter(Boolean)
+    .join(" ")
+    .replace(/ status=("[^"]*"|'[^']*'|[^ ]+)/, "");
+
+/**
+ * Whether a unified diff (`git diff -U0`) changes nothing but the `status=` of
+ * `csda:trace` lines — exactly what `specgate done` writes.
+ *
+ * The harness prompt tells the agent to close its requirement with `done`, and
+ * `done` records the status in the capability spec. Write-scope then rejected
+ * the attempt as an edit to `docs/specs/**` (reservas_app, #56) — a rule the
+ * harness's own instruction broke. Any other change to the line, or to any
+ * other line, is still an edit to the contract.
+ */
+export function onlyTraceStatusChanged(diff: string): boolean {
+  const removed: string[] = [];
+  const added: string[] = [];
+  for (const line of diff.split("\n")) {
+    if (/^(---|\+\+\+|@@|diff |index )/.test(line)) continue;
+    if (line.startsWith("-")) removed.push(line.slice(1));
+    else if (line.startsWith("+")) added.push(line.slice(1));
+  }
+  if (removed.length === 0 || removed.length !== added.length) return false;
+  return removed.every(
+    (r, i) =>
+      isTraceLine(r) && isTraceLine(added[i]) && withoutStatus(r) === withoutStatus(added[i])
+  );
+}

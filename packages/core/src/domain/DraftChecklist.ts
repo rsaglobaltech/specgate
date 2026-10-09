@@ -32,6 +32,13 @@ export interface DraftFiles {
    * brief (reservas_app, #52).
    */
   readonly specText?: string;
+  /**
+   * Who owns each id the project already uses: `REQ-007` → `REQ-007`,
+   * `SCN-012` → the requirement its feature file tags it with. A draft that
+   * reuses one collides with a delivered requirement; `validate` found it only
+   * after archiving ("Duplicate Scenario ID", reservas_app #55).
+   */
+  readonly idsInUse?: ReadonlyMap<string, string>;
   readonly questions?: string;
   readonly maxRequirements?: number;
 }
@@ -52,6 +59,8 @@ interface Req {
   file: string;
   trace: Record<string, string>;
   scenarios: Array<{ id: string; name: string; steps: string[]; line: number }>;
+  /** In `## MODIFIED Requirements`: its own ids already exist, legitimately. */
+  modified: boolean;
 }
 
 // ── The brief's front matter ──────────────────────────────────────────────────
@@ -176,8 +185,10 @@ export function checkDraft(files: DraftFiles): DraftReport {
 
   for (const d of files.deltas) {
     const delta: any = parseDelta(d.source);
+    const modifiedIds = new Set((delta.modified || []).map((r: any) => r.id || r.name));
     for (const r of [...(delta.added || []), ...(delta.modified || [])]) {
       reqs.push({
+        modified: modifiedIds.has(r.id || r.name),
         id: r.id || r.name,
         name: r.name,
         text: r.text || "",
@@ -415,6 +426,34 @@ export function checkDraft(files: DraftFiles): DraftReport {
             fix: d.fix,
           })
         );
+      }
+    }
+  }
+
+  // D10 — an id the project already uses belongs to someone else.
+  if (files.idsInUse && files.idsInUse.size > 0) {
+    const used = files.idsInUse;
+    for (const r of reqs) {
+      if (!r.modified && used.has(r.id)) {
+        status.push(
+          error("D10_id_in_use", `${r.id} already exists in this project.`, {
+            ...at(r),
+            fix: "Use an id from the range `change new` reserved, or put the requirement under MODIFIED if this change rewrites it.",
+          })
+        );
+      }
+      for (const s of r.scenarios) {
+        const owner = used.get(s.id);
+        if (owner && owner !== r.id) {
+          status.push(
+            error("D10_id_in_use", `${s.id} is already a scenario of ${owner}.`, {
+              file: r.file,
+              line: s.line,
+              target: s.id,
+              fix: `Number ${r.id}'s scenarios after the highest SCN id in features/.`,
+            })
+          );
+        }
       }
     }
   }

@@ -13,7 +13,8 @@ import { BaseCommand } from "../../../lib/command";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { error, info } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
-import { checkDraft } from "../../../../packages/core/src/domain/DraftChecklist";
+import { checkDraft, requirementTitles } from "../../../../packages/core/src/domain/DraftChecklist";
+import { csdaTagsByScenario } from "../../../../packages/core/src/domain/GherkinTags";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 
 const CHANGES = path.join("docs", "specs", "changes");
@@ -35,7 +36,8 @@ function usage(): string {
     "  D2 every requirement has a kind              D6 a stated value is in the brief or an assumption\n" +
     "  D3 a scenario per surface each actor uses    D7 an open question names what it blocks\n" +
     "  D4 a non-functional requirement is measured  D8 the draft is small enough to review\n" +
-    "                                                D9 every scenario passes the harness gate's rules\n\n" +
+    "                                                D9 every scenario passes the harness gate's rules\n" +
+    "                                                D10 no id the project already uses\n\n" +
     "  --brief <file>   The brief the draft came from. Without it D3 and D6 cannot\n" +
     "                   run, and the report says so. Also read from `brief:` in change.yaml.\n"
   );
@@ -105,6 +107,29 @@ function projectSpecText(projectDir: string): string {
   }
 }
 
+/** REQ and SCN ids the project already uses, each with the requirement that owns it (#55). */
+function projectIds(projectDir: string): Map<string, string> {
+  const owners = new Map<string, string>();
+  try {
+    const sources = readDerivationSources(projectDir);
+    const specs = [sources.spec || "", ...(sources.capabilities || []).map((c: any) => c.source)];
+    for (const id of requirementTitles(specs.map((source) => ({ source }))).keys()) {
+      owners.set(id, id);
+    }
+    for (const f of sources.features || []) {
+      for (const tags of Object.values(csdaTagsByScenario(f.source))) {
+        const req = tags.find((t) => /^@REQ-/.test(t));
+        for (const t of tags.filter((x) => /^@SCN-/.test(x))) {
+          if (req) owners.set(t.slice(1), req.slice(1));
+        }
+      }
+    }
+  } catch {
+    /* no project specification yet: nothing can collide */
+  }
+  return owners;
+}
+
 const readIf = (file: string) => (fs.existsSync(file) ? fs.readFileSync(file, "utf8") : undefined);
 
 export class DraftCommand extends BaseCommand {
@@ -166,6 +191,7 @@ export class DraftCommand extends BaseCommand {
       brief,
       assumptions: readIf(path.join(changeDir, "assumptions.md")),
       specText: projectSpecText(projectDir),
+      idsInUse: projectIds(projectDir),
       questions: readIf(path.join(changeDir, "questions.md")),
       maxRequirements: opts.maxRequirements,
     });
