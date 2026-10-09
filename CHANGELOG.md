@@ -8,6 +8,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`draft --check` catches an id the project already uses (D10).** A second
+  draft numbered its scenarios from SCN-212, which a delivered requirement
+  already owned; nothing said so until `validate` reported "Duplicate Scenario
+  ID" after archiving. A modified requirement keeps its own ids.
+- **The harness no longer rejects the `specgate done` it asks for.** Its prompt
+  tells the agent to close the requirement with `done`, which records the
+  status in the capability spec; write-scope then refused the attempt as an
+  edit to `docs/specs/**`, and the agent had to start again. A change that only
+  sets `status=` on a trace is now allowed; any other edit to the
+  specification is still refused.
+
 ## [0.17.2] — 2026-10-09
 
 ### Fixed

@@ -1,6 +1,6 @@
 # Drafting from a brief — specification
 
-Status: **Phase 1 implemented: `draft --check` (D1–D9), and D4–D5 as notes in `status` (D1 is `plan`'s "Needs Feature File"; D2–D3 need a draft or a brief). Phases 2–4 pending.** Decided in
+Status: **Phase 1 implemented: `draft --check` (D1–D10), and D4–D5 as notes in `status` (D1 is `plan`'s "Needs Feature File"; D2–D3 need a draft or a brief). Phases 2–4 pending.** Decided in
 [ADR-0029](adr/0029-a-brief-becomes-a-draft-change-not-a-spec.md).
 Implemented in the phases at the end; phase 1 is an evaluation, not a release.
 
@@ -105,6 +105,7 @@ harness gate). On a hand-written project, D1–D5 are a report in `status` and
 | `D7_floating_question` | An open question names what it blocks | every unanswered row of `questions.md` has `Blocks`, and each of those requirements is `Needs Clarification`. A row is answered by a filled `Answer` column, or a line below the table such as `Answer (Q1): …` |
 | `D8_too_large` | The draft is reviewable | at most `draft.max_requirements` requirements (default 25) |
 | `D9_scenario_quality` | Every scenario passes the rules the harness gate applies | the scenario-quality rules of `validate --strict` (a title that names a behaviour, a When and a Then, no placeholder or vague step), in English or Spanish keywords. They run on a requirement only once it leaves Draft, so without D9 a draft could pass this checklist and fail the harness on a scenario the agent may not edit (reservas_app) |
+| `D10_id_in_use` | No id collides with the project | an ADDED requirement's id, or any scenario id, already used in `spec.md`, the capability specs or a feature file by another requirement. A MODIFIED requirement keeps its own ids. `validate` found the collision only after archiving ("Duplicate Scenario ID") |
 
 D6 is the rule that makes a draft honest. It is mechanical on purpose: it does
 not judge whether "100 m" is right, only that nobody can mistake it for

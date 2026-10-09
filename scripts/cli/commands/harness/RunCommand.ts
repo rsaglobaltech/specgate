@@ -45,6 +45,7 @@ import {
   checkWriteScope,
   parseGitStatus,
   protectingPattern,
+  onlyTraceStatusChanged,
 } from "../../../../packages/core/src/domain/WriteScope";
 import {
   agentUnavailable,
@@ -679,12 +680,21 @@ export function isRegeneratedMatrix(worktreeDir, rel) {
   }
 }
 
+/** A spec file whose only change is the `status=` `specgate done` writes (#56). */
+function isStatusOnlyEdit(worktreeDir, rel) {
+  if (!/\.md$/.test(rel)) return false;
+  const d = git(worktreeDir, ["diff", "-U0", "HEAD", "--", rel]);
+  return d.status === 0 && onlyTraceStatusChanged(d.stdout || "");
+}
+
 function checkWriteScopeInWorktree(worktreeDir, settings) {
   const all = worktreeChanges(worktreeDir);
   if (!all) return null;
   const changes = {
     ...all,
-    modified: all.modified.filter((p) => !isRegeneratedMatrix(worktreeDir, p)),
+    modified: all.modified.filter(
+      (p) => !isRegeneratedMatrix(worktreeDir, p) && !isStatusOnlyEdit(worktreeDir, p)
+    ),
   };
 
   const violations = checkWriteScope(changes, {
