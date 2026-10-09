@@ -138,6 +138,30 @@ test("adopt on a Node project reads package.json facts", () => {
   });
 });
 
+test("#44: after adoption, check names the test command it found and how to turn it on", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(
+      path.join(tmp, "package.json"),
+      JSON.stringify({ name: "booking", scripts: { test: "node -e 0" } }),
+      "utf8"
+    );
+    const a = cli(["adopt", "--project-dir", tmp]);
+    assert.equal(a.status, 0, a.stdout + a.stderr);
+    assert.match(a.stdout, /Test command: npm test/);
+
+    // Adoption does not switch the tests on: the first gate stays the
+    // specification, as documented. But it no longer contradicts adoption.
+    const c = cli(["check"], { cwd: tmp });
+    assert.equal(c.status, 0, c.stdout + c.stderr);
+    assert.match(c.stdout, /looks like `npm test`/);
+    assert.match(c.stdout, /specgate harness init/);
+
+    assert.equal(cli(["harness", "init", "--project-dir", tmp]).status, 0);
+    const after = cli(["check"], { cwd: tmp });
+    assert.match(after.stdout, /the specification and `npm test`/, after.stdout + after.stderr);
+  });
+});
+
 test("adopt refuses a project that already has spec.md", () => {
   withTmp((tmp) => {
     const dir = path.join(tmp, "already");

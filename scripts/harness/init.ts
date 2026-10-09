@@ -84,6 +84,76 @@ export function detectTestCommand(projectDir) {
   );
 }
 
+/**
+ * The files `harness init` writes, as `{ dest, body }`. Shared with
+ * `init`/`adopt`, which write them when they detect a test command: `init`
+ * printed "Test command: npm test" and the very next `check` said "No test
+ * command configured" (reservas_app, #44). One renderer, so a later
+ * `harness init` finds the same bytes and reports no conflict.
+ */
+export function harnessFiles(
+  projectDir: string,
+  testCmd: string | null
+): Array<{ dest: string; body: string }> {
+  // Rendered into the config as a live key when known, and as a commented-out
+  // one when not — see detectTestCommand for why a placeholder would be worse
+  // than an absent key.
+  // Shared with `doctor`, which used to call a Gherkin quality check
+  // "every scenario runnable" in projects where nothing runs one.
+  const hasGherkinRunner = detectGherkinRunner({
+    exists: (rel) => fs.existsSync(path.join(projectDir, rel)),
+    read: (rel) => {
+      try {
+        return fs.readFileSync(path.join(projectDir, rel), "utf8");
+      } catch {
+        return null;
+      }
+    },
+  });
+
+  const vars = {
+    PROJECT_NAME: projectName(projectDir),
+    STEP_DEFS_LINE: hasGherkinRunner
+      ? "- `features/step_definitions/**` and `features/support/**` — step definitions\n" +
+        "  are code, not specification. This is the one place inside `features/` you\n" +
+        "  own."
+      : "\nThis project has no Gherkin runner, so nothing executes a `.feature` here.\n" +
+        "The scenarios are the specification and your tests are the proof: write a\n" +
+        "test per scenario that asserts what it says, in the project's own test\n" +
+        "framework, and mention the requirement and scenario ids in it\n" +
+        "(`REQ-NNN SCN-NNN`) — that mention is the link. Do not add a BDD runner.",
+    SCENARIO_STEP: hasGherkinRunner
+      ? "2. Write or extend the step definitions so the scenario fails **for the right\n" +
+        "   reason** — a missing implementation, not a typo in a step."
+      : "2. Write a test per scenario, mentioning its ids, so it fails **for the right\n" +
+        "   reason** — a missing implementation, not a typo in the test.",
+    SETUP_CMD_LINE: setupCommand(projectDir),
+    TEST_CMD_LINE: testCmd
+      ? `test_cmd: "${testCmd}"`
+      : '# test_cmd: "npm test"   # ← set this once the project has a test command',
+    GATE_COMMAND: testCmd
+      ? `${testCmd}\n   specgate validate . --strict`
+      : "specgate validate . --strict",
+  };
+
+  return [
+    {
+      dest: CONFIG_FILE,
+      body: renderTemplate(
+        fs.readFileSync(path.join(TEMPLATES, "harness.config.yaml.tpl"), "utf8"),
+        vars
+      ),
+    },
+    {
+      dest: PREFIX_FILE,
+      body: renderTemplate(
+        fs.readFileSync(path.join(TEMPLATES, "prompt-prefix.md.tpl"), "utf8"),
+        vars
+      ),
+    },
+  ];
+}
+
 export function projectName(projectDir) {
   const specPath = path.join(projectDir, "spec.md");
   if (fs.existsSync(specPath)) {
@@ -171,63 +241,7 @@ export class InitCommand extends BaseCommand {
     }
 
     const testCmd = opts.testCmd || detectTestCommand(projectDir);
-    // Rendered into the config as a live key when known, and as a commented-out
-    // one when not — see detectTestCommand for why a placeholder would be worse
-    // than an absent key.
-    // Shared with `doctor`, which used to call a Gherkin quality check
-    // "every scenario runnable" in projects where nothing runs one.
-    const hasGherkinRunner = detectGherkinRunner({
-      exists: (rel) => fs.existsSync(path.join(projectDir, rel)),
-      read: (rel) => {
-        try {
-          return fs.readFileSync(path.join(projectDir, rel), "utf8");
-        } catch {
-          return null;
-        }
-      },
-    });
-
-    const vars = {
-      PROJECT_NAME: projectName(projectDir),
-      STEP_DEFS_LINE: hasGherkinRunner
-        ? "- `features/step_definitions/**` and `features/support/**` — step definitions\n" +
-          "  are code, not specification. This is the one place inside `features/` you\n" +
-          "  own."
-        : "\nThis project has no Gherkin runner, so nothing executes a `.feature` here.\n" +
-          "The scenarios are the specification and your tests are the proof: write a\n" +
-          "test per scenario that asserts what it says, in the project's own test\n" +
-          "framework, and mention the requirement and scenario ids in it\n" +
-          "(`REQ-NNN SCN-NNN`) — that mention is the link. Do not add a BDD runner.",
-      SCENARIO_STEP: hasGherkinRunner
-        ? "2. Write or extend the step definitions so the scenario fails **for the right\n" +
-          "   reason** — a missing implementation, not a typo in a step."
-        : "2. Write a test per scenario, mentioning its ids, so it fails **for the right\n" +
-          "   reason** — a missing implementation, not a typo in the test.",
-      SETUP_CMD_LINE: setupCommand(projectDir),
-      TEST_CMD_LINE: testCmd
-        ? `test_cmd: "${testCmd}"`
-        : '# test_cmd: "npm test"   # ← set this once the project has a test command',
-      GATE_COMMAND: testCmd
-        ? `${testCmd}\n   specgate validate . --strict`
-        : "specgate validate . --strict",
-    };
-
-    const outputs = [
-      {
-        dest: CONFIG_FILE,
-        body: renderTemplate(
-          fs.readFileSync(path.join(TEMPLATES, "harness.config.yaml.tpl"), "utf8"),
-          vars
-        ),
-      },
-      {
-        dest: PREFIX_FILE,
-        body: renderTemplate(
-          fs.readFileSync(path.join(TEMPLATES, "prompt-prefix.md.tpl"), "utf8"),
-          vars
-        ),
-      },
-    ];
+    const outputs = harnessFiles(projectDir, testCmd);
 
     if (opts.stdout) {
       io.emit({ projectDir, testCmd, files: outputs.map((o) => o.dest) }, () => {
@@ -242,7 +256,17 @@ export class InitCommand extends BaseCommand {
       return;
     }
 
+    // A file that already holds exactly what this would write is not a
+    // conflict: `init` writes the config when it detects a test command.
+    const same = (o: { dest: string; body: string }) => {
+      try {
+        return fs.readFileSync(path.join(projectDir, o.dest), "utf8") === o.body;
+      } catch {
+        return false;
+      }
+    };
     const existing = outputs
+      .filter((o) => !same(o))
       .map((o) => o.dest)
       .filter((dest) => fs.existsSync(path.join(projectDir, dest)));
     if (existing.length > 0 && !opts.force) {

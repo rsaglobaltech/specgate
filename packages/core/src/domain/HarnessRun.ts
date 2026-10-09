@@ -93,6 +93,16 @@ export interface AttemptRecord {
      * under a failing gate.
      */
     | "no-op"
+    /**
+     * The agent could not run at all — out of quota or rate-limited — so
+     * retrying could not help (#50).
+     */
+    | "agent-unavailable"
+    /**
+     * The gate failed only on files the agent may not edit, so the fix belongs
+     * to a person changing the specification, not to another attempt (#50).
+     */
+    | "spec"
     | "gate"
     /** Green gate, but the diff missed the declared artifacts (A2, --strict-artifacts). */
     | "artifacts"

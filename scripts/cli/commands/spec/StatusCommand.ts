@@ -6,7 +6,7 @@ import { readLock } from "../../../specops/lock";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
-import { specNotes } from "../../../../packages/core/src/domain/DraftChecklist";
+import { requirementTitles, specNotes } from "../../../../packages/core/src/domain/DraftChecklist";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { refreshDerivedMatrix } from "./MatrixCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
@@ -294,10 +294,13 @@ export class StatusCommand extends BaseCommand {
     let notes: any[] = [];
     try {
       const sources = readDerivationSources(projectDir);
-      notes = specNotes(
-        [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])],
-        sources.features
-      );
+      const specs = [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])];
+      notes = specNotes(specs, sources.features);
+      // A row with no use case still has a title in its spec section (#48).
+      const titles = requirementTitles(specs);
+      for (const it of summary.items) {
+        if (!titleOf(it) && titles.has(it.requirement)) it.title = titles.get(it.requirement);
+      }
     } catch {
       notes = [];
     }

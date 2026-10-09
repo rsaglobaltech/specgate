@@ -95,14 +95,25 @@ export const QUALITY_CODES = Object.freeze({
 const PLACEHOLDER_RE = /<[^<>]+>/;
 
 /**
- * A title that names nothing: `Test`, `Scenario 1`, or fewer than three words.
+ * A title that names nothing: `Test`, `Scenario 1`, `Escenario 2`, or a
+ * single word.
+ *
+ * Two words are enough to name a behaviour: "Franja cerrada" and
+ * "Identificador repetido" do, and requiring three failed the harness on both
+ * in the reservas_app pilot (defect #49) — a scenario the agent may not edit,
+ * so three attempts were spent on a gate nobody could pass. The placeholder
+ * words below catch "Scenario A" and "Test 1" whatever their length.
  *
  * Exported because `pack lint` has always exposed it and its tests pin it.
  */
 export function isGenericTitle(title: string): boolean {
   if (!title) return true;
-  if (/^(test|scenario|example|untitled)\b/i.test(title)) return true;
-  return title.split(/\s+/).filter(Boolean).length < 3;
+  if (
+    /^(test|scenario|example|untitled|prueba|escenario|ejemplo|caso|sin t[ií]tulo)\b/i.test(title)
+  ) {
+    return true;
+  }
+  return title.split(/\s+/).filter(Boolean).length < 2;
 }
 
 /**

@@ -1,6 +1,6 @@
 # Drafting from a brief — specification
 
-Status: **Phase 1 implemented: `draft --check` (D1–D8), and D4–D5 as notes in `status` (D1 is `plan`'s "Needs Feature File"; D2–D3 need a draft or a brief). Phases 2–4 pending.** Decided in
+Status: **Phase 1 implemented: `draft --check` (D1–D9), and D4–D5 as notes in `status` (D1 is `plan`'s "Needs Feature File"; D2–D3 need a draft or a brief). Phases 2–4 pending.** Decided in
 [ADR-0029](adr/0029-a-brief-becomes-a-draft-change-not-a-spec.md).
 Implemented in the phases at the end; phase 1 is an evaluation, not a release.
 
@@ -99,11 +99,12 @@ harness gate). On a hand-written project, D1–D5 are a report in `status` and
 | `D1_no_scenario` | Every requirement has a scenario | a feature file tagged `@REQ-NNN` |
 | `D2_no_kind` | Every requirement has a kind | `kind=` in its `csda:trace` |
 | `D3_surface_missing` | Every use case a person drives has a scenario per surface its actor uses | `api`: a step matching `(GET\|POST\|PUT\|PATCH\|DELETE) /`; a screen: a step naming a control (`taps`, `opens`, `sees`, `toca`, `abre`) |
-| `D4_unmeasured_nfr` | A non-functional requirement that promises a quantity states it | it uses a quantity word (fast, latency, scalable, availability, load…) and no number followed by a unit (`ms`, `s`, `%`, `MB`, `req/s`…) in its text or scenarios. Qualitative constraints (offline, privacy, devices) are not quantities: flagging them was 4 false positives out of 4 on the Golden State packs |
+| `D4_unmeasured_nfr` | A non-functional requirement that promises a quantity states it | it uses a quantity word (fast, latency, scalable, availability, load…) and no number followed by a unit (`ms`, `s`, `%`, `MB`, `px`, `req/s`…) in its text or scenarios. Qualitative constraints (offline, privacy, devices) are not quantities: flagging them was 4 false positives out of 4 on the Golden State packs. "Responsive" names a layout, not a response time (reservas_app) |
 | `D5_unsourced_rule` | A business rule that mentions a law, code, standard or contract names its source | a mention (`Code §`, `ACI`, `OSHA`, `GDPR`, `CBA`, `contract`…) and no link or `Source:` line |
-| `D6_unlisted_value` | A value in a scenario is in the brief or in `assumptions.md` | every number and every quoted string in a scenario's steps is found in the brief text, or in an assumption row that names that scenario |
-| `D7_floating_question` | A question names what it blocks | every row of `questions.md` has `Blocks`, and each of those requirements is `Needs Clarification` |
+| `D6_unlisted_value` | A value in a scenario is in the brief or in `assumptions.md` | every number and every quoted string in a scenario's steps is found in the brief text, or in an assumption row that names that scenario or its requirement; one finding per value per scenario |
+| `D7_floating_question` | An open question names what it blocks | every unanswered row of `questions.md` has `Blocks`, and each of those requirements is `Needs Clarification`. A row is answered by a filled `Answer` column, or a line below the table such as `Answer (Q1): …` |
 | `D8_too_large` | The draft is reviewable | at most `draft.max_requirements` requirements (default 25) |
+| `D9_scenario_quality` | Every scenario passes the rules the harness gate applies | the scenario-quality rules of `validate --strict` (a title that names a behaviour, a When and a Then, no placeholder or vague step), in English or Spanish keywords. They run on a requirement only once it leaves Draft, so without D9 a draft could pass this checklist and fail the harness on a scenario the agent may not edit (reservas_app) |
 
 D6 is the rule that makes a draft honest. It is mechanical on purpose: it does
 not judge whether "100 m" is right, only that nobody can mistake it for
@@ -136,7 +137,8 @@ Nothing new: `change show`, `change validate`, `change archive`. Two rules are
 added to `change archive` for a change whose schema is `draft`:
 
 - it refuses while any row of `questions.md` is unanswered (an answer is a
-  `Answer:` line under the row, written by a person);
+  filled `Answer` column, or a line below the table such as `Answer (Q1): …`,
+  written by a person);
 - it refuses while any assumption is not marked `confirmed` or `replaced`.
 
 The brief's digest is recorded in `change.yaml`. A later `draft` of the same
@@ -168,7 +170,7 @@ what changes; the command does not ship on hope.
 
 | Phase | Delivers | Ships as |
 |---|---|---|
-| 1 | Checklist rules D1–D8 as a library + `draft --check` | release; D1–D5 also reported by `status`/`plan` |
+| 1 | Checklist rules D1–D9 as a library + `draft --check` | release; D1–D5 also reported by `status`/`plan` |
 | 2 | `draft --prompt-only` and the prompt contract | release |
 | 3 | Prototype `draft` with the agent profile; the evaluation in §7 on the Golden State brief | evaluation report in `mejoras/` |
 | 4 | `draft` as a command, `--as-pack`, archive rules for `draft` changes | release, only if phase 3 met the bar |

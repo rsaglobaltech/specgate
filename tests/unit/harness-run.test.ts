@@ -2157,3 +2157,40 @@ test("no adversary_profile means no probe at all", () => {
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+
+// ── #50: an attempt that cannot change the outcome is not repeated ───────────
+
+test("#50: an agent out of quota fails the requirement after one attempt, not three", () => {
+  // reservas_app: "You've hit your session limit · resets 11:20am", retried
+  // three times in 22 seconds.
+  const { parent, projectDir } = greenableProject();
+  try {
+    const agent = `${process.execPath} -e "console.log('You\\'ve hit your session limit · resets 11:20am'); process.exit(1)"`;
+    const r = spawnSync(
+      process.execPath,
+      [
+        CLI,
+        "harness",
+        "run",
+        "--project-dir",
+        projectDir,
+        "--agent",
+        `${agent} {prompt_file}`,
+        "--max-attempts",
+        "3",
+        "--format",
+        "json",
+      ],
+      { encoding: "utf8" }
+    );
+    const out = r.stdout + r.stderr;
+    assert.match(out, /cannot run now/, out);
+    assert.doesNotMatch(out, /attempt 2\/3/, "a second attempt meets the same quota");
+    const report = JSON.parse(r.stdout);
+    assert.equal(report.results[0].result, "fail");
+    assert.equal(report.results[0].attempts, 1);
+    assert.equal(report.results[0].attemptLog[0].endedAt, "agent-unavailable");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
