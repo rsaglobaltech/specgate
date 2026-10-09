@@ -8,6 +8,29 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+From a second and third cycle on the same product (reservas_app), on 0.17.1.
+
+- **A requirement modified by a change gets the scenarios it gained.**
+  Archiving left its feature file as it was, so the new scenarios never reached
+  the gate — silently. The file is now rewritten from the delta when everything
+  in it belongs to the requirement (`archive_feature_regenerated`); otherwise
+  archiving names the scenarios it lacks (`archive_feature_stale`).
+- **`plan` and `status` agree with `validate` about untested scenarios.** A
+  requirement with two scenarios no test named was "Ready to close — its test
+  is in place", and `NEEDS_STATUS_UPDATE` to the harness, while `validate
+  --strict` said "Nothing proves" them. It is now `NEEDS_TEST`.
+- **`draft --check`:** a requirement can say it lives on one surface
+  (`surfaces=web` in its trace), so a menu is not asked for an API scenario
+  (D3); a value already in the project's specification — reviewed in an
+  earlier change — is not "unlisted" (D6).
+
+### Documentation
+
+- `reviewing-changes.md`: changing a requirement that already shipped — why the
+  specification cannot merge before its code, and the branch flow that works.
+
 ## [0.17.1] — 2026-10-09
 
 ### Changed

@@ -141,6 +141,8 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `archive_change_not_found` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
 | `archive_change_symlink` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
 | `archive_feature_exists` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
+| `archive_feature_regenerated` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
+| `archive_feature_stale` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
 | `archive_no_deltas` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
 | `archive_retire_not_declared` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
 | `archive_target_exists` | `packages/core/src/application/ArchiveChangeUseCase.ts` |

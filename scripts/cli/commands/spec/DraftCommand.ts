@@ -14,6 +14,7 @@ import { agentIo, wantsJson } from "../../../lib/agent";
 import { error, info } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { checkDraft } from "../../../../packages/core/src/domain/DraftChecklist";
+import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 
 const CHANGES = path.join("docs", "specs", "changes");
 
@@ -92,6 +93,18 @@ function specFiles(dir: string, rel = ""): string[] {
   return out;
 }
 
+/** `spec.md` and the capability specs: values already reviewed in this project (#52). */
+function projectSpecText(projectDir: string): string {
+  try {
+    const sources = readDerivationSources(projectDir);
+    return [sources.spec || "", ...(sources.capabilities || []).map((c: any) => c.source)].join(
+      "\n"
+    );
+  } catch {
+    return "";
+  }
+}
+
 const readIf = (file: string) => (fs.existsSync(file) ? fs.readFileSync(file, "utf8") : undefined);
 
 export class DraftCommand extends BaseCommand {
@@ -152,6 +165,7 @@ export class DraftCommand extends BaseCommand {
       deltas,
       brief,
       assumptions: readIf(path.join(changeDir, "assumptions.md")),
+      specText: projectSpecText(projectDir),
       questions: readIf(path.join(changeDir, "questions.md")),
       maxRequirements: opts.maxRequirements,
     });

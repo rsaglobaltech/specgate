@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import { renderDeltaFeature, withDefaultFeaturePaths } from "../domain/DeltaFeature";
+import { csdaTagsIn } from "../domain/GherkinTags";
 import { IProjectRepository } from "./ports/IProjectRepository";
 import { ArchivePlan } from "../domain/ArchivePlan";
 import { DeltaSpec } from "../domain/DeltaSpec";
@@ -93,8 +94,11 @@ export class ArchiveChangeUseCase {
       plan.totals.removed += merged.applied.removed.length;
 
       const parsedDelta = parseDelta(deltaSource);
-      for (const req of [...parsedDelta.added, ...parsedDelta.modified]) {
+      for (const req of parsedDelta.added) {
         applied.upserts.push({ req, capability: entry.capability });
+      }
+      for (const req of parsedDelta.modified) {
+        applied.upserts.push({ req, capability: entry.capability, modified: true });
       }
       for (const req of parsedDelta.removed) {
         applied.removals.push(req.id || req.name);
@@ -162,13 +166,52 @@ export class ArchiveChangeUseCase {
     const featureTargets = new Set(
       plan.writes.filter((w: any) => w.kind === "feature").map((w: any) => w.file)
     );
-    for (const { req, capability } of applied.upserts) {
+    for (const { req, capability, modified } of applied.upserts) {
       const rel = String((req.trace || {}).feature || "")
         .replace(/`/g, "")
         .trim();
       if (!rel.endsWith(".feature") || !(req.scenarios || []).length) continue;
       const target = path.join(p.root, rel);
-      if (featureTargets.has(target) || this.repo.readFile(target) !== null) continue;
+      if (featureTargets.has(target)) continue;
+      const existing = this.repo.readFile(target);
+      if (existing !== null) {
+        // A MODIFIED requirement's feature file is the old version of the
+        // delta. Left alone, the scenarios the change added never reached the
+        // gate, silently (reservas_app, #53). Rewritten when everything in it
+        // belongs to the delta; otherwise the scenarios still missing are named.
+        if (!modified || bringsFeatures) continue;
+        const inFile = csdaTagsIn(existing).filter((t) => /^@SCN-/.test(t));
+        const inDelta = (req.scenarios || [])
+          .map((sc: any) => (sc.id ? `@${sc.id}` : null))
+          .filter(Boolean) as string[];
+        const rendered = renderDeltaFeature(req, capability);
+        if (rendered === existing) continue;
+        if (inFile.every((t) => inDelta.includes(t))) {
+          plan.writes.push({ file: target, contents: rendered, kind: "feature" });
+          featureTargets.add(target);
+          plan.warnings.push(
+            warning(
+              "archive_feature_regenerated",
+              `${rel} rewritten from ${req.id}'s modified scenarios.`,
+              { target: rel, fix: "Review the diff: the feature file now matches the delta." }
+            )
+          );
+        } else {
+          const missing = inDelta.filter((t) => !inFile.includes(t));
+          plan.warnings.push(
+            warning(
+              "archive_feature_stale",
+              `${rel} was not rewritten — it holds scenarios that are not in ${req.id}'s delta` +
+                (missing.length ? `, and lacks ${missing.join(", ")}.` : "."),
+              {
+                target: rel,
+                fix: `Bring ${rel} in line with ${req.id}'s scenarios in the spec; the gate reads the feature file.`,
+              }
+            )
+          );
+        }
+        continue;
+      }
       plan.writes.push({
         file: target,
         contents: renderDeltaFeature(req, capability),

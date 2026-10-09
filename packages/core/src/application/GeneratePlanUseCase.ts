@@ -13,7 +13,9 @@ export class GeneratePlanUseCase {
   constructor(
     private traceRepo: ITraceabilityRepository,
     private fileExistsFn: (projectDir: string, relPath: string) => boolean,
-    private graphRepo: IRequirementGraphRepository
+    private graphRepo: IRequirementGraphRepository,
+    /** A scenario of the row with no test naming it (#54); see `classifyRow`. */
+    private scenarioGapFn?: (projectDir: string, row: any) => boolean
   ) {}
 
   public execute(projectDir: string): GeneratePlanResult {
@@ -39,7 +41,11 @@ export class GeneratePlanUseCase {
     const unconstrainedItems: PlanItem[] = [];
 
     for (const row of rows) {
-      const item = RequirementPlan.classifyRow(row, (rel) => this.fileExistsFn(projectDir, rel));
+      const item = RequirementPlan.classifyRow(
+        row,
+        (rel) => this.fileExistsFn(projectDir, rel),
+        this.scenarioGapFn ? (r) => this.scenarioGapFn!(projectDir, r) : undefined
+      );
       if (item) {
         unconstrainedItems.push(item);
       }

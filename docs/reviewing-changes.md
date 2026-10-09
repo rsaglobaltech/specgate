@@ -218,6 +218,24 @@ specgate validate . --strict-tdd
 
 That is the whole point: a merged proposal cannot quietly become undone work.
 
+### When the change modifies a requirement that already shipped
+
+A `MODIFIED` requirement keeps its tests, so it is not `Draft`: the scenarios
+the change adds are owed at once. Archiving rewrites its feature file from the
+delta (`archive_feature_regenerated`), `plan` and `status` list it as needing
+a test, and `validate --strict` fails with "Nothing proves" until those
+scenarios have one.
+
+So the specification cannot go to your main branch on its own. Archive on a
+branch, implement on top of it — by hand or with
+`specgate harness run --base-branch <that branch>` — and merge the branch when
+the gate is green. A change that only **adds** requirements can merge first:
+its rows arrive as `Draft`, which nothing owes yet.
+
+If the feature file holds scenarios that are not in the delta (written by
+hand, or removed by the change), archiving leaves it alone and says which
+scenarios it lacks (`archive_feature_stale`).
+
 ### It composes with packs
 
 | You want | Command |

@@ -25,6 +25,13 @@ export interface DraftFiles {
   /** The brief the draft was written from, as text. Without it, D3 and D6 cannot run. */
   readonly brief?: string;
   readonly assumptions?: string;
+  /**
+   * The project's specification as it stands — `spec.md` and the capability
+   * specs. A value already there was reviewed in an earlier change; D6
+   * flagged "Configuración" and "11:00" in a second draft for not being in the
+   * brief (reservas_app, #52).
+   */
+  readonly specText?: string;
   readonly questions?: string;
   readonly maxRequirements?: number;
 }
@@ -227,7 +234,13 @@ export function checkDraft(files: DraftFiles): DraftReport {
     const SCREEN = /\b(taps?|clicks?|opens?|sees?|toca|abre|pulsa|ve)\b/i;
     for (const r of reqs) {
       const actor = (r.trace.actor || "").toLowerCase();
-      const wanted = surfaces.get(actor);
+      // `surfaces=web` on the requirement narrows its actor's surfaces: a menu
+      // lives on a screen and has no API, and D3 used to demand one (#51).
+      const own = (r.trace.surfaces || "")
+        .split(/[,\s]+/)
+        .map((x) => x.trim().toLowerCase())
+        .filter(Boolean);
+      const wanted = own.length > 0 && actor ? own : surfaces.get(actor);
       if (!actor || !wanted) continue;
       const steps = r.scenarios.flatMap((s) => s.steps);
       const has = {
@@ -305,6 +318,7 @@ export function checkDraft(files: DraftFiles): DraftReport {
             if (seen.has(v)) continue;
             seen.add(v);
             if (inText(v, files.brief)) continue;
+            if (files.specText && inText(v, files.specText)) continue;
             const listed = assumptions
               .split("\n")
               .some((row) => inText(v, row) && (row.includes(s.id) || row.includes(r.id)));
