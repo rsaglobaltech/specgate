@@ -323,6 +323,30 @@ function syncPack(entry, args, projectDir) {
 const MATRIX = "docs/specs/traceability.md";
 
 /**
+ * The entry's previous `expanded_at`, when nothing that decides the expansion
+ * changed. A sync that changed nothing rewrote the timestamp anyway, so every
+ * `specops sync` left a one-line diff in `.specops.lock` to commit or revert
+ * (golden_app finding #30). The timestamp now moves only with the pack.
+ */
+const sortedJson = (o) =>
+  JSON.stringify(
+    Object.keys(o || {})
+      .sort()
+      .map((k) => [k, o[k]])
+  );
+
+export function keptExpandedAt(lock, resolved): string | null {
+  const prev = ((lock && lock.packs) || []).find((p) => p.pack_id === resolved.pack_id);
+  if (!prev || !prev.expanded_at) return null;
+  const same =
+    prev.repo === resolved.repo &&
+    prev.version === resolved.version &&
+    prev.commit === resolved.commit &&
+    sortedJson(prev.vars) === sortedJson(resolved.vars);
+  return same ? prev.expanded_at : null;
+}
+
+/**
  * Give the throwaway render what `expand` would find in the project, for the
  * files it merges into instead of writing whole. Rendered into an empty
  * directory, a derived project's pack wrote a hand-kept matrix (a false
@@ -406,7 +430,8 @@ export class SyncCommand extends BaseCommand {
             version: resolved.version,
             commit: resolved.commit,
             pack_id: resolved.pack_id,
-            expanded_at: resolved.expanded_at || new Date().toISOString(),
+            expanded_at:
+              keptExpandedAt(lock, resolved) || resolved.expanded_at || new Date().toISOString(),
             vars: resolved.vars || {},
           });
         }

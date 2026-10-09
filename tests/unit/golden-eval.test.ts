@@ -385,6 +385,12 @@ test("specops sync brings a pack's new depends_on into a generated matrix withou
     assert.match(matrix, /specgate:derived/);
     const check = cli("check", dir);
     assert.equal(check.status, 0, check.stdout + check.stderr);
+
+    // A sync that changes nothing leaves the lock as it was (finding #30).
+    const lockBefore = fs.readFileSync(path.join(dir, ".specops.lock"), "utf8");
+    const again = cli("specops", "sync", "--project-dir", dir, "--cache-dir", cache);
+    assert.equal(again.status, 0, again.stdout + again.stderr);
+    assert.equal(fs.readFileSync(path.join(dir, ".specops.lock"), "utf8"), lockBefore);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
