@@ -8,7 +8,7 @@
  * describes behaviour, which is the point of writing it in Gherkin. But the
  * traceability matrix maps a requirement to the file that implements it and the
  * file that proves it, and those are different files in every stack — so the
- * matrix cannot be shared, and neither can AI_RULES.md, which is the rulebook
+ * matrix cannot be shared, and neither can AGENTS.md, which is the rulebook
  * for one toolchain.
  *
  * Sharing the first set and splitting the second is the whole design. Copying
@@ -20,7 +20,7 @@
 export const SHARED_PATHS = ["spec.md", "features", "docs/specs/adr"] as const;
 
 /** Paths each stack owns outright — they name files that differ per toolchain. */
-export const PER_STACK_PATHS = ["AI_RULES.md", "README.md", "docs/specs/traceability.md"] as const;
+export const PER_STACK_PATHS = ["AGENTS.md", "README.md", "docs/specs/traceability.md"] as const;
 
 export interface StackPlan {
   /** Directory name under the root, and the value of STACK for that project. */

@@ -64,15 +64,15 @@ test("PROJECT_TYPE: mobile scaffolds, and the recorded type is the truth", () =>
 test("a mobile project gets mobile rules, not the web ones", () => {
   const { parent, dir } = scaffoldMobile();
   try {
-    const rules = fs.readFileSync(path.join(dir, "AI_RULES.md"), "utf8");
-    assert.match(rules, /AI Rules - Mobile/);
+    const rules = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
+    assert.match(rules, /mobile project/);
     // The vocabulary that made `frontend` the wrong answer.
     assert.match(rules, /Offline is a state, not an error/);
     assert.match(rules, /process can die at any moment/i);
     assert.match(rules, /store review/i);
-    assert.match(rules, /Permissions are a flow with a denial branch/);
+    assert.match(rules, /permission is a flow with a denial branch/i);
     assert.doesNotMatch(rules, /Responsive behavior as acceptance criteria/);
-    assert.ok(!/\{\{[A-Z_]+\}\}/.test(rules), "unrendered placeholder in AI_RULES.md");
+    assert.ok(!/\{\{[A-Z_]+\}\}/.test(rules), "unrendered placeholder in AGENTS.md");
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

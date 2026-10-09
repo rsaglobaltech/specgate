@@ -73,6 +73,20 @@ does not, so nothing here depends on that.
 
 ---
 
+## AGENTS.md is the contract
+
+`init` and `adopt` write `AGENTS.md` (ADR-0031): what the project is, the
+commands, the loop in four lines, what never to do and your stack's rules — at
+most 60 lines. Specgate keeps its part between `<!-- specgate:begin -->` and
+`<!-- specgate:end -->`; everything outside the block is yours, and no command
+rewrites it.
+
+**Coming from `AI_RULES.md`?** `specgate update` moves its text, verbatim,
+below the block and removes the file (git keeps it). Until then both are read,
+so no rule drops out of the agent's prompt.
+
+---
+
 ## Why the generated files are thin
 
 They do not restate the delta grammar. A markdown copy of the format is stale

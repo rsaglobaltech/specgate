@@ -176,7 +176,7 @@ not want this tool.
 ### From `.cursorrules` → `specgate`
 
 1. Generate a project with `specgate init`.
-2. Move your Cursor rules into `AGENTS.md` and `AI_RULES.md` (we generate both).
+2. Move your Cursor rules into `AGENTS.md`, below the block Specgate keeps there.
 3. Reference the generated traceability matrix from your rules so Cursor
    reads them on every prompt.
 

@@ -858,9 +858,12 @@ export class ValidateSpecsCommand extends BaseCommand {
       return walk(rootDir).filter(predicate);
     }
 
+    // The agent contract is AGENTS.md; a project not yet migrated has
+    // AI_RULES.md, and either one satisfies it (ADR-0031).
+    const RULES_FILES = ["AGENTS.md", "AI_RULES.md"];
     const REQUIRED_FILES = [
       "spec.md",
-      "AI_RULES.md",
+      ...(RULES_FILES.some((f) => fs.existsSync(path.join(targetDir, f))) ? [] : ["AGENTS.md"]),
       "README.md",
       "docs/specs/traceability.md",
       "docs/specs/adr/README.md",
@@ -880,8 +883,8 @@ export class ValidateSpecsCommand extends BaseCommand {
     const FILE_FIXES: Record<string, string> = {
       "spec.md":
         "Author it from the shipped template (templates/base/spec.md.tpl) — one `## REQ-NNN — <title>` section per requirement.",
-      "AI_RULES.md":
-        "Author it from templates/backend/AI_RULES.md.tpl (or frontend) — it is the agent's project rulebook.",
+      "AGENTS.md":
+        "Run `specgate update` to write it — it is the agent contract: commands, the loop, what never to do, the stack's rules.",
       "README.md": "Add a README.md describing how to build and test the project.",
       "docs/specs/traceability.md": `Create it with the rich matrix header:\n  ${RICH_HEADER}`,
       "docs/specs/adr/README.md":

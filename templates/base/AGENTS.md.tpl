@@ -1,32 +1,30 @@
-# Agent Manifest — {{PROJECT_NAME}}
+# AGENTS.md — {{PROJECT_NAME}}
 
-> This file helps AI coding agents (Claude, Copilot, Cursor, Aider, etc.)
-> understand the structure and constraints of this project.
+{{PROJECT_TYPE}} project · architecture: {{ARCHITECTURE}} · domain: {{DOMAIN}}
+Stack: {{STACK}} · API: {{API_STYLE}} · Testing: {{TESTING}}
 
-## Project overview
-- **Name**: {{PROJECT_NAME}}
-- **Domain**: {{DOMAIN}}
-- **Stack**: {{STACK}}
-- **API style**: {{API_STYLE}}
-- **Testing**: {{TESTING}}
+This project uses spec-driven development with `specgate`. `spec.md`,
+`features/` and `docs/specs/` are the contract your work is judged against.
 
-## Specification entry points
-| Artefact | Path | Purpose |
-|---|---|---|
-| Root spec | `spec.md` | Vision, requirements, bounded contexts, risks |
-| Domain model | `docs/specs/domain-model.md` | Aggregates, bounded contexts, value objects |
-| Traceability | `docs/specs/traceability.md` | REQ → Scenario → UC → Aggregate → test |
-| AI guardrails | `AI_RULES.md` | Stack constraints and conventions for this project |
-| ADRs | `docs/specs/adr/` | Architecture decision records |
+## Work
 
-## Constraints
-- **Always read `AI_RULES.md` before writing any code.** It specifies the exact stack, conventions and forbidden patterns.
-- **Always check `docs/specs/traceability.md`** before claiming a requirement is implemented.
-- **Do not implement features not linked to a requirement** in `spec.md`.
-- **Run `npx @rsaglobaltech/specgate validate .`** after any change to `docs/specs/` or `features/`.
+1. `specgate status` — what is left, and the next requirement.
+2. Write the test first and name the requirement in it (`REQ-007`, and its
+   scenario `SCN-007a` when there is one). That mention is the link.
+3. Implement until `specgate check` passes: specs, links, coverage, tests.
+4. `specgate done REQ-007` — refused unless the gate passes.
 
-## Quality gates
-A change is considered complete only when:
-1. `npx @rsaglobaltech/specgate validate .` exits 0.
-2. All Gherkin scenarios linked to the changed requirement are passing.
-3. The traceability matrix is updated to reflect the new status.
+Each step in detail: the `/specgate:*` commands, or
+`specgate change instructions <artifact> --json`.
+
+## Never
+
+- Edit `spec.md`, `features/`, `docs/specs/` or this file to make a test pass.
+- Choose or replace the stack; if a field above is TBD, stop and ask.
+- Say work is done that `specgate check` has not passed.
+
+## Project rules
+
+{{STACK_RULES}}
+{{ARCHITECTURE_MODELING_RULES}}
+{{ARCHITECTURE_CHECKS}}

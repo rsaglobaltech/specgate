@@ -41,7 +41,7 @@ export default [
         "/specgate:check runs check"
       );
       t.expect(
-        /names `REQ-NNN`/.test(t.read(dir, "AGENTS.md")),
+        /That mention is the link/.test(t.read(dir, "AGENTS.md")),
         "AGENTS.md teaches the mention as the link"
       );
     },

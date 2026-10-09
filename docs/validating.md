@@ -37,7 +37,7 @@ jobs:
 What `validate` checks:
 
 - required directories (`features/`, `docs/specs/`),
-- required files (`spec.md`, `AI_RULES.md`, `traceability.md`, ADR entrypoint),
+- required files (`spec.md`, `AGENTS.md` — or a legacy `AI_RULES.md` — `traceability.md`, ADR entrypoint),
 - at least one `.feature`,
 - no unresolved `{{...}}` placeholders,
 - traceability matrix header presence,

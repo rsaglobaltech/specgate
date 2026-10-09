@@ -82,7 +82,7 @@ test("adopt on a Maven project detects the stack and passes validate", () => {
     // SDD artifacts generated.
     for (const f of [
       "spec.md",
-      "AI_RULES.md",
+      "AGENTS.md",
       "features/adoption/baseline.feature",
       "docs/specs/traceability.md",
       "docs/specs/adr/README.md",
@@ -126,7 +126,7 @@ test("adopt on a Node project reads package.json facts", () => {
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /Stack detection: package\.json/);
     assert.match(r.stdout, /Node\.js, TypeScript, express/);
-    const rules = fs.readFileSync(path.join(dir, "AI_RULES.md"), "utf8");
+    const rules = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
     assert.match(rules, /web-api/);
     assert.match(rules, /Vitest/);
     assert.match(rules, /npm test/);
@@ -165,10 +165,16 @@ test("adopt never overwrites an existing artifact", () => {
   withTmp((tmp) => {
     const dir = makeMavenProject(tmp);
     fs.writeFileSync(path.join(dir, "AI_RULES.md"), "# My custom rules\n", "utf8");
+    fs.writeFileSync(path.join(dir, "AGENTS.md"), "# Our agent notes\n\nUse pnpm.\n", "utf8");
     const r = cli(["adopt", "--project-dir", dir, "--keep-matrix"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /skip \(exists\): AI_RULES\.md/);
+    // AI_RULES.md stays the team's until `specgate update` moves it (ADR-0031).
     assert.equal(fs.readFileSync(path.join(dir, "AI_RULES.md"), "utf8"), "# My custom rules\n");
+    // The team's AGENTS.md keeps its text; the contract arrives in a marked block.
+    const agents = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
+    assert.match(agents, /specgate:begin/);
+    assert.match(agents, /# Our agent notes\n\nUse pnpm\./);
+    assert.match(r.stdout, /add the specgate block to AGENTS\.md \(your text kept\)/);
   });
 });
 

@@ -237,9 +237,12 @@ test("can init and validate a generated project end-to-end", () => {
   assert.equal(validateResult.status, 0);
   assert.match(validateResult.stdout, /Validation passed/);
 
-  const aiRules = fs.readFileSync(path.join(projectDir, "AI_RULES.md"), "utf8");
+  // ADR-0031: the agent contract is AGENTS.md; init writes no AI_RULES.md.
+  assert.equal(fs.existsSync(path.join(projectDir, "AI_RULES.md")), false);
+  const aiRules = fs.readFileSync(path.join(projectDir, "AGENTS.md"), "utf8");
   assert.match(aiRules, /Stack: Quarkus 3\.x, Java 21, PostgreSQL/);
-  assert.match(aiRules, /Do not infer or replace the stack/);
+  assert.match(aiRules, /Choose or replace the stack/);
+  assert.ok(aiRules.split("\n").length <= 62, "AGENTS.md stays short (block markers included)");
 
   fs.rmSync(tempRoot, { recursive: true, force: true });
 });
@@ -305,10 +308,10 @@ test("can init, expand, and validate a generated project end-to-end", () => {
   assert.ok(fs.existsSync(path.join(projectDir, "docs", "specs", "events.md")));
   assert.ok(fs.existsSync(path.join(projectDir, "docs", "specs", "aggregates.md")));
 
-  const aiRules = fs.readFileSync(path.join(projectDir, "AI_RULES.md"), "utf8");
+  const aiRules = fs.readFileSync(path.join(projectDir, "AGENTS.md"), "utf8");
   assert.match(aiRules, /Stack: Quarkus 3\.x, Java 21, PostgreSQL/);
   assert.match(aiRules, /Testing: Quarkus Test, Testcontainers, JUnit 5, Cucumber/);
-  assert.match(aiRules, /Do not infer or replace the stack/);
+  assert.match(aiRules, /Choose or replace the stack/);
 
   const traceability = fs.readFileSync(
     path.join(projectDir, "docs", "specs", "traceability.md"),
@@ -1399,9 +1402,9 @@ test("the gate is identical under every architecture profile", () => {
 });
 
 test("the rulebook demands aggregates only where the profile does", () => {
-  // Where the obligation actually lives: nothing checks AI_RULES.md, and the
+  // Where the obligation actually lives: nothing checks AGENTS.md, and the
   // agent obeys it on every prompt.
-  const read = (dir: string) => fs.readFileSync(path.join(dir, "AI_RULES.md"), "utf8");
+  const read = (dir: string) => fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
 
   const minimal = read(initRuntimeProject(['ARCHITECTURE="minimal"']).projectDir);
   assert.doesNotMatch(minimal, /maps to (an )?aggregate/i);
@@ -1414,20 +1417,17 @@ test("the rulebook demands aggregates only where the profile does", () => {
   const ddd = read(initRuntimeProject(['ARCHITECTURE="tactical-ddd"']).projectDir);
   assert.match(ddd, /Command\/query maps to aggregate/);
 
-  // The principles are not negotiable, so they survive in every profile.
+  // The principles are not negotiable, so they survive in every profile. Ids
+  // and a complete row are what `specgate check` verifies (ADR-0031).
   for (const rules of [minimal, layered, ddd]) {
-    assert.match(rules, /Requirement has ID/);
-    assert.match(rules, /Traceability row is complete/);
+    assert.match(rules, /specgate check/);
     assert.match(rules, /business logic out of framework code/i);
   }
 });
 
 test("the declared profile is recorded where the agent reads it", () => {
   const { projectDir: dir } = initRuntimeProject(['ARCHITECTURE="layered"']);
-  assert.match(
-    fs.readFileSync(path.join(dir, "AI_RULES.md"), "utf8"),
-    /^- Architecture: layered$/m
-  );
+  assert.match(fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8"), /architecture: layered ·/);
 });
 
 test("an unknown architecture profile is refused with the supported list", () => {
@@ -1621,7 +1621,7 @@ test("init accepts a YAML config and produces a valid project", () => {
   assert.equal(validateResult.status, 0, validateResult.stderr);
   assert.match(validateResult.stdout, /Validation passed/);
 
-  const aiRules = fs.readFileSync(path.join(projectDir, "AI_RULES.md"), "utf8");
+  const aiRules = fs.readFileSync(path.join(projectDir, "AGENTS.md"), "utf8");
   assert.match(aiRules, /Stack: Quarkus 3\.x, Java 21, PostgreSQL/);
 
   fs.rmSync(tempRoot, { recursive: true, force: true });

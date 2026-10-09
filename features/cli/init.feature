@@ -10,7 +10,7 @@ Feature: init command
     When I run "init" with the config file
     Then the command exits with code 0
     And the output directory contains "spec.md"
-    And the output directory contains "AI_RULES.md"
+    And the output directory contains "AGENTS.md"
     And the output directory contains "docs/specs/traceability.md"
     And the output directory contains "README.md"
 

@@ -23,6 +23,8 @@ export interface PromptOptions {
   maxAttempts?: number;
   featureContent?: string | null;
   aiRulesContent?: string | null;
+  /** Which file the rules came from: AGENTS.md, or a legacy AI_RULES.md. */
+  rulesFile?: string;
   stageRules?: string[];
   /** Ask the use case to look one up. `precedent` is what it found. */
   withPrecedents?: boolean;
@@ -162,7 +164,7 @@ export class AgentPrompt {
     if (opts.aiRulesContent) {
       parts.push(
         AgentPrompt.section(
-          "Project rules (AI_RULES.md — non-negotiable)",
+          `Project rules (${opts.rulesFile || "AGENTS.md"} — non-negotiable)`,
           opts.aiRulesContent.trimEnd()
         )
       );
@@ -207,7 +209,7 @@ export class AgentPrompt {
 
     const doneRules = [
       ...baseRules,
-      "**Do not modify** `spec.md`, `AI_RULES.md`, or any existing `features/**/*.feature` — " +
+      "**Do not modify** `spec.md`, `AGENTS.md` (or `AI_RULES.md`), or any existing `features/**/*.feature` — " +
         "they are the contract you are being judged against. Creating a feature file that " +
         "does not exist yet is not modifying one, and the gate allows it: an agent asked " +
         "to write a missing scenario is not being asked to break this rule.",

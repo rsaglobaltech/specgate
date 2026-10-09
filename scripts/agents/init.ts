@@ -10,6 +10,7 @@
  * moves; a file that calls the engine never is.
  */
 
+import { ensureContract } from "./contract-file";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -461,6 +462,14 @@ export function writeAgentFiles(
   {
     for (const file of planned.values()) {
       const tool = file.tools.join("+");
+      // AGENTS.md is shared with the team and other tools: Specgate owns a
+      // marked block in it, never the whole file (ADR-0031).
+      if (file.path === "AGENTS.md") {
+        const done = ensureContract(projectDir, { dryRun: opts.dryRun });
+        if (done) written.push({ tool, path: file.path });
+        else skipped.push({ tool, path: file.path, reason: "has the specgate block" });
+        continue;
+      }
       const target = path.join(projectDir, file.path);
       const exists = fs.existsSync(target);
 

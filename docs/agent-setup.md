@@ -196,7 +196,7 @@ prompt_precedents: 1
 ```
 
 Everything else in the prompt is **normative** — the requirement's facts, its
-Gherkin, `AI_RULES.md`, the definition of done. None of it is an *example*, and
+Gherkin, `AGENTS.md`, the definition of done. None of it is an *example*, and
 an agent starts every requirement with no conversation history, so it has never
 seen what an accepted implementation looks like in your repository. It invents a
 house style, and the next attempt is spent correcting it.

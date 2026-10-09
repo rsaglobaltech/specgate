@@ -146,7 +146,7 @@ what it would do, write nothing), `--no-git` (skip `git init`).
 ```text
 smart-parking/
 ├── spec.md                  # the requirements document — prose
-├── AI_RULES.md              # stack guardrails for AI agents
+├── AGENTS.md              # stack guardrails for AI agents
 ├── README.md
 ├── features/                # Gherkin scenarios will live here
 └── docs/specs/
@@ -405,7 +405,7 @@ specgate req link REQ-101 \
 `req add` picks the next free ID, so it cannot collide with the pack's range,
 and `req link` fills the columns you name and leaves the rest alone.
 
-> `AI_RULES.md` tells every agent never to edit `traceability.md` directly.
+> `AGENTS.md` tells every agent never to edit `traceability.md` directly.
 > The same applies to you: `specgate req`, `specgate done` and `specgate change archive`
 > are the three things that write it.
 
@@ -818,7 +818,7 @@ The complete prompt, ready to paste, lives at
 
 - it is your **Lead Architect**;
 - the current directory is the only scope;
-- `spec.md`, `AI_RULES.md`, `features/**/*.feature` are **read-only**;
+- `spec.md`, `AGENTS.md`, `features/**/*.feature` are **read-only**;
 - to make `specgate validate . --strict` + the project test command pass
   with the first bounded context end-to-end — then **stop**.
 
@@ -850,7 +850,7 @@ code, run `done` — is a loop a machine can drive. `harness run` is that
 driver. For each pending requirement, in an **isolated `git worktree`** on a
 fresh `harness/REQ-NNN` branch, it:
 
-1. builds a self-contained prompt (the Gherkin scenario + `AI_RULES.md` +
+1. builds a self-contained prompt (the Gherkin scenario + `AGENTS.md` +
    the exact artifact paths + any previous failure),
 2. shells out to **your** AI agent,
 3. gates the result with `validate --strict` + your test command,
@@ -908,8 +908,8 @@ You are the Lead Technical Architect and Senior Backend Engineer.
 # Execution Policy
 
 - Start coding. No planning-only output.
-- Hexagonal architecture is non-negotiable (see AI_RULES.md).
-- Never modify AI_RULES.md, spec.md, or features/\*_/_.feature.
+- Hexagonal architecture is non-negotiable (see AGENTS.md).
+- Never modify AGENTS.md, spec.md, or features/\*_/_.feature.
 ```
 
 With a config file you do not have to retype anything. (Any other agent
@@ -968,7 +968,7 @@ Prints the exact prompt the harness _would_ hand the agent for one REQ —
 prefix included — without invoking the agent, creating worktrees, or
 touching git. Use it to:
 
-- iterate on `AI_RULES.md` and `prompt_prefix` and see the effect immediately;
+- iterate on `AGENTS.md` and `prompt_prefix` and see the effect immediately;
 - copy-paste the prompt into a web AI when no CLI agent is available;
 - review what the team's bootstrap directives currently say.
 
@@ -996,7 +996,7 @@ Each project runs its own `specgate init` with a different `STACK` in the
 config, its own `specgate specops add` against the **same** pack repo +
 version + domain `--var`s, its own bootstrap-prompt run, and its own
 harness loop. `spec.md`, `features/**` and `traceability.md` are
-**identical** across stacks (rendered from the same pack); `AI_RULES.md`
+**identical** across stacks (rendered from the same pack); `AGENTS.md`
 differs because its `{{STACK}}` substitution does.
 
 Useful for migration POCs, framework comparisons, educational material

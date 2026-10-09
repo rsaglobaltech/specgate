@@ -46,7 +46,7 @@ What `adopt` writes (and only if the file does not already exist):
 | File | Purpose |
 | --- | --- |
 | `spec.md` | REQ-001 "existing behaviour is preserved", plus one proposed requirement per capability. |
-| `AI_RULES.md` | Agent/human rulebook with your detected stack and test command. |
+| `AGENTS.md` | The agent contract — commands, the loop, what never to do, your stack's rules. The file Codex, Cursor, Copilot and most agents read. |
 | `features/adoption/baseline.feature` | Baseline Gherkin scenario pinning the adoption invariant. |
 | `docs/specs/traceability.md` | The traceability matrix — **generated** from `spec.md`, the scenario tags and the files that mention each requirement. Nobody edits it ([why](writing-specs.md#a-matrix-nobody-edits)); `--keep-matrix` keeps one by hand. |
 | `docs/specs/adr/README.md` | ADR index for future decisions. |
@@ -104,7 +104,7 @@ whose only scenario is the baseline certifies the skeleton, not the code.
 
 ## Generate your first project
 
-**Goal:** scaffold a new repo with `spec.md`, `AI_RULES.md`, `docs/specs/`, an empty `features/` directory, and a traceability matrix.
+**Goal:** scaffold a new repo with `spec.md`, `AGENTS.md`, `docs/specs/`, an empty `features/` directory, and a traceability matrix.
 
 ```bash
 # 1. Describe the project — these seven keys are the minimum
@@ -159,7 +159,7 @@ my-spec-driven-app/
 ├── specops.config.yaml      projects: ./spring, ./quarkus, ./micronaut
 ├── spring/
 │   ├── spec.md → ../spec.md         shared, not copied
-│   ├── AI_RULES.md                  its own — one rulebook per toolchain
+│   ├── AGENTS.md                  its own — one rulebook per toolchain
 │   └── docs/specs/traceability.md   its own — see below
 ├── quarkus/
 └── micronaut/
@@ -196,7 +196,7 @@ different products.
 2. Add each new requirement with `specgate new "<title>"`: it writes the section and a tagged scenario. Do not edit `docs/specs/traceability.md` — it is regenerated from `spec.md`, the scenario tags and the tests that mention each requirement.
 3. A `Draft` requirement owes nothing yet and is skipped; once it leaves `Draft` it owes a scenario and a test that mentions it — `check` says how many rows it skipped, so a pass never hides its own scope.
 
-> Tip: keep `AI_RULES.md` open in your editor. It is what every coding agent reads on every prompt — changes there propagate to Claude/Cursor/Aider without re-prompting.
+> Tip: keep `AGENTS.md` open in your editor. It is what every coding agent reads on every prompt — changes there propagate to Claude/Cursor/Aider without re-prompting.
 
 ---
 

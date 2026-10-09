@@ -117,14 +117,22 @@ export interface InstructionContext {
 
 /** The project's declared stack, so an agent does not invent one. */
 function projectContext(projectDir) {
-  const rules = readIfExists(path.join(projectDir, "AI_RULES.md"));
+  // AGENTS.md is the agent contract (ADR-0031); AI_RULES.md when it is the only one.
+  const agentsMd = readIfExists(path.join(projectDir, "AGENTS.md"));
+  const rules = agentsMd || readIfExists(path.join(projectDir, "AI_RULES.md"));
   const context: InstructionContext = {};
   if (rules) {
-    const stack = /^-?\s*\**Stack:?\**:?\s*(.+)$/m.exec(rules);
-    if (stack) context.stack = stack[1].trim();
-    const testing = /^-?\s*\**Testing:?\**:?\s*(.+)$/m.exec(rules);
-    if (testing) context.testing = testing[1].trim();
-    context.rulesFile = "AI_RULES.md";
+    // `- Stack: …` on its own line (AI_RULES.md), or `Stack: … · API: … ·
+    // Testing: …` on one (AGENTS.md): a field ends at the line or at a `·`.
+    const field = (name: string) => {
+      const m = new RegExp(`(?:^|·)\\s*-?\\s*\\**${name}:?\\**:?\\s*([^·\\n]+)`, "m").exec(rules);
+      return m ? m[1].trim() : null;
+    };
+    const stack = field("Stack");
+    if (stack) context.stack = stack;
+    const testing = field("Testing");
+    if (testing) context.testing = testing;
+    context.rulesFile = agentsMd ? "AGENTS.md" : "AI_RULES.md";
   }
   const capabilities = path.join(projectDir, CAPABILITIES_DIR);
   if (fs.existsSync(capabilities)) {

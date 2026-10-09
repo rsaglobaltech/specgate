@@ -45,6 +45,7 @@
  */
 export const DEFAULT_PROTECTED_PATHS: readonly string[] = Object.freeze([
   "spec.md",
+  "AGENTS.md",
   "AI_RULES.md",
   "features/**/*.feature",
   "docs/specs/**",

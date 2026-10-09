@@ -53,7 +53,8 @@ test("nothing tells a user to run a weaker gate than --strict", () => {
   // eleventh, so the check is that no shipped text recommends the old command.
   const shipped = [
     "docs/quickstart.md",
-    "templates/adopt/AI_RULES.md.tpl",
+    "templates/base/AGENTS.md.tpl",
+    "templates/adopt/stack-rules.md",
     "templates/ci/github.yml.tpl",
     "templates/ci/gitlab.yml.tpl",
     "templates/ci/azure.yml.tpl",

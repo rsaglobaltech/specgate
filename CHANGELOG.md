@@ -18,6 +18,16 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 ## [0.16.0] — 2026-10-09
 ### Changed
 
+- **`AGENTS.md` is the agent contract; `AI_RULES.md` folds into it**
+  (ADR-0031). `init` and `adopt` write one short `AGENTS.md` — the file
+  Codex, Cursor, Copilot and most agents read — with the commands, the loop,
+  what never to do and the stack's rules, instead of an `AI_RULES.md`, an
+  "Agent Manifest" and `agents init`'s instructions that overlapped. Specgate
+  keeps its part in a marked block; a team's own `AGENTS.md` text is never
+  rewritten. `specgate update` moves an existing `AI_RULES.md` below the block,
+  verbatim. Until then both are read, so no rule drops out of the agent's
+  prompt; `validate` and `doctor` accept either.
+
 - **`specgate init` installs the `/specgate:*` commands for the agents your
   project already uses** — Claude Code (`.claude/`, `CLAUDE.md`), Cursor,
   Copilot, Gemini, Windsurf, Cline, Aider, Codex, Antigravity — and only for

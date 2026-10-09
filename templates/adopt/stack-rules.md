@@ -1,0 +1,3 @@
+- Never delete or weaken an existing test to get to green.
+- One requirement at a time: extend or write the test first, then the code.
+- Do not modify generated or vendored code unless the requirement says so.

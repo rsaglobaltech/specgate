@@ -320,3 +320,87 @@ test("init with no agent found says how to install, and --no-agents installs not
     fs.rmSync(opted, { recursive: true, force: true });
   }
 });
+
+// ── AGENTS.md is the agent contract (ADR-0031) ──────────────────────────────
+
+test("init writes one short AGENTS.md per project type, and no AI_RULES.md", () => {
+  for (const type of ["backend", "frontend", "mobile"]) {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), `specgate-agentsmd-${type}-`));
+    try {
+      const cfg = path.join(tmp, "p.config");
+      fs.writeFileSync(
+        cfg,
+        [
+          `PROJECT_NAME="X"`,
+          `PROJECT_SLUG="x"`,
+          `PROJECT_TYPE="${type}"`,
+          `DOMAIN="d"`,
+          `STACK="s"`,
+          `API_STYLE="a"`,
+          `TESTING="t"`,
+          `LANG="en"`,
+        ].join("\n") + "\n"
+      );
+      const r = spawnSync(
+        process.execPath,
+        [CLI, "init", "--config", cfg, "--out", tmp, "--force", "--no-git"],
+        { encoding: "utf8" }
+      );
+      assert.equal(r.status, 0, r.stdout + r.stderr);
+      const agents = fs.readFileSync(path.join(tmp, "x", "AGENTS.md"), "utf8");
+      const lines = agents.trimEnd().split("\n").length;
+      assert.ok(lines <= 62, `${type}: ${lines} lines — 60 plus the two block markers`);
+      assert.match(agents, /specgate:begin/);
+      assert.ok(!/\{\{[A-Z_]+\}\}/.test(agents), `${type}: unrendered placeholder`);
+      assert.equal(fs.existsSync(path.join(tmp, "x", "AI_RULES.md")), false);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }
+});
+
+test("update folds AI_RULES.md into AGENTS.md: verbatim, below the block, the old file gone", () => {
+  const { migrateAiRules, writtenByOlderSpecgate } = require("../../scripts/agents/contract-file");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-migrate-"));
+  try {
+    fs.writeFileSync(
+      path.join(dir, "AI_RULES.md"),
+      "# AI Rules — shop\n\n- Stack: Node 22, Fastify\n- Testing: vitest\n\nNever log a card number.\n"
+    );
+    // What an older `agents init` wrote: replaced, not kept below the block.
+    fs.writeFileSync(
+      path.join(dir, "AGENTS.md"),
+      "# Agent instructions\n\nThis project uses Spec-Driven Development through the `specgate` CLI.\n"
+    );
+    assert.equal(
+      writtenByOlderSpecgate(fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8")),
+      true
+    );
+
+    const dry = migrateAiRules(dir, { dryRun: true });
+    assert.equal(dry.moved, true);
+    assert.ok(fs.existsSync(path.join(dir, "AI_RULES.md")), "a dry run moves nothing");
+
+    const r = migrateAiRules(dir);
+    assert.equal(r.agents, "replaced");
+    assert.equal(fs.existsSync(path.join(dir, "AI_RULES.md")), false);
+    const agents = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
+    assert.match(agents, /# AGENTS\.md — shop/);
+    assert.match(agents, /Stack: Node 22, Fastify/);
+    assert.match(agents, /## Project rules \(from AI_RULES\.md\)[\s\S]*Never log a card number\./);
+    assert.doesNotMatch(agents, /Spec-Driven Development through the/);
+    assert.equal(migrateAiRules(dir).moved, false, "nothing left to move");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a team's own AGENTS.md is kept; only Specgate's block changes", () => {
+  const { mergeContract, outsideBlock } = require("../../scripts/agents/contract-file");
+  const team = "# Our agent notes\n\nUse pnpm.\n";
+  const once = mergeContract(team, "# Contract v1\n");
+  const twice = mergeContract(once, "# Contract v2\n");
+  assert.equal(outsideBlock(twice), team.trim());
+  assert.match(twice, /Contract v2/);
+  assert.doesNotMatch(twice, /Contract v1/);
+});

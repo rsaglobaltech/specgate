@@ -66,9 +66,9 @@ for (const [label, files, stack, testCmd] of CASES) {
       const r = cli("adopt", "--project-dir", dir);
       assert.equal(r.status, 0, r.stdout + r.stderr);
       assert.doesNotMatch(r.stdout, /Stack: unknown/, r.stdout);
-      const rules = fs.readFileSync(path.join(dir, "AI_RULES.md"), "utf8");
-      assert.match(rules, stack, `AI_RULES should name the stack:\n${rules.slice(0, 400)}`);
-      assert.ok(rules.includes(testCmd), `AI_RULES should name \`${testCmd}\``);
+      const rules = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
+      assert.match(rules, stack, `AGENTS.md should name the stack:\n${rules.slice(0, 400)}`);
+      assert.ok(rules.includes(testCmd), `AGENTS.md should name \`${testCmd}\``);
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
     }
@@ -84,7 +84,7 @@ test("tox wins over pytest when the project runs its suite through tox", () => {
   });
   try {
     assert.equal(cli("adopt", "--project-dir", dir).status, 0);
-    assert.match(fs.readFileSync(path.join(dir, "AI_RULES.md"), "utf8"), /\btox\b/);
+    assert.match(fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8"), /\btox\b/);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }
@@ -98,7 +98,7 @@ test("adopt and harness init agree about the same Python project", () => {
     assert.equal(cli("adopt", "--project-dir", dir).status, 0);
     assert.equal(cli("harness", "init", "--project-dir", dir).status, 0);
 
-    const rules = fs.readFileSync(path.join(dir, "AI_RULES.md"), "utf8");
+    const rules = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
     const config = fs.readFileSync(path.join(dir, "harness.config.yaml"), "utf8");
     const effective = config
       .split("\n")
@@ -107,7 +107,7 @@ test("adopt and harness init agree about the same Python project", () => {
 
     assert.match(rules, /pytest/);
     assert.match(effective, /test_cmd:\s*"pytest"/);
-    assert.doesNotMatch(rules, /Testing: unknown/, "AI_RULES must not contradict itself");
+    assert.doesNotMatch(rules, /Testing: unknown/, "AGENTS.md must not contradict itself");
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }
