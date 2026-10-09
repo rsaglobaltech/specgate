@@ -1,3 +1,4 @@
+import { mergeContract } from "../../../agents/contract-file";
 import { installDetectedAgents } from "../../../agents/detect";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -56,7 +57,7 @@ const ALL_DOMAIN_DOCS = ARCHITECTURE_DOCS["tactical-ddd"];
  * The agent's rulebook, per profile.
  *
  * This is where the obligation people actually feel lives. `validate` never
- * asks for an aggregate; `AI_RULES.md` does, on every prompt, and the agent
+ * asks for an aggregate; `AGENTS.md` does, on every prompt, and the agent
  * obeys prose no machine checks. So the profile has to reach here or it changes
  * nothing that matters (ADR-0022).
  *
@@ -65,6 +66,15 @@ const ALL_DOMAIN_DOCS = ARCHITECTURE_DOCS["tactical-ddd"];
  * The second is not DDD — a business rule inside a controller is equally wrong
  * without aggregates — and it is the part teams believe DDD is giving them.
  */
+/**
+ * The stack's own rules, one line each, for the `## Project rules` section of
+ * AGENTS.md (ADR-0031). They were the body of a separate AI_RULES.md.
+ */
+export function stackRules(projectType: string): string {
+  const file = path.join(TEMPLATES_DIR, projectType, "stack-rules.md");
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8").trimEnd() : "";
+}
+
 export function architectureSections(cfg: any): Record<string, string> {
   const profile = cfg.ARCHITECTURE;
   const isFrontend = cfg.PROJECT_TYPE === "frontend" || cfg.PROJECT_TYPE === "mobile";
@@ -116,7 +126,15 @@ export function architectureSections(cfg: any): Record<string, string> {
     ? `2. Read ${docs.map((d) => `\`docs/specs/${d}\``).join(", ")}.`
     : "2. Read `docs/specs/traceability.md`.";
 
+  // AGENTS.md keeps the checks the profile adds; the ones every profile shares
+  // (ids, a complete row) are what `specgate check` verifies (ADR-0031).
+  const shared = new Set([...invariantGates, "- [ ] Traceability row is complete."]);
+  const profileChecks = (gates[profile] || gates["tactical-ddd"])
+    .filter((g) => !shared.has(g))
+    .map((g) => g.replace(/^- \[ \] /, "- Before implementing: ").replace(/\.$/, "."));
+
   return {
+    ARCHITECTURE_CHECKS: profileChecks.join("\n"),
     ARCHITECTURE_MODELING_RULES: (modeling[profile] || modeling["tactical-ddd"]).join("\n"),
     ARCHITECTURE_GATES: (gates[profile] || gates["tactical-ddd"]).join("\n"),
     ARCHITECTURE_READS: reads,
@@ -149,7 +167,7 @@ function usage() {
       "  --multi-stack <a,b,c>\n" +
       "                    Scaffold one sibling project per stack under a single root,\n" +
       "                    sharing one spec.md and one features/ tree. Each stack keeps\n" +
-      "                    its own AI_RULES.md and traceability matrix, because the\n" +
+      "                    its own AGENTS.md and traceability matrix, because the\n" +
       "                    files that implement and prove a requirement differ per\n" +
       "                    stack. Registers them in specops.config.yaml, which\n" +
       "                    validate/plan/status/report already fan out over.\n" +
@@ -401,7 +419,7 @@ function runtimeDatabaseSection(cfg: any) {
       "## Data",
       "",
       "This project owns no datastore (`DATASTORE=none`). It reads its data through",
-      "the APIs declared in `AI_RULES.md`; the environments above differ in",
+      "the APIs declared in `AGENTS.md`; the environments above differ in",
       "configuration, not in schema.",
     ].join("\n");
   }
@@ -544,6 +562,7 @@ export function validateConfig(cfg: any) {
   cfg.DATABASE_URL_PROD = dbUrl(cfg.DATABASE_NAME_PROD);
 
   Object.assign(cfg, architectureSections(cfg));
+  cfg.STACK_RULES = stackRules(cfg.PROJECT_TYPE);
   cfg.RUNTIME_DOCKER_SECTION = runtimeDockerSection(cfg);
   cfg.RUNTIME_ENV_TABLE = runtimeEnvTable(cfg);
   cfg.RUNTIME_DATABASE_SECTION = runtimeDatabaseSection(cfg);
@@ -773,16 +792,18 @@ export function generateProject(
 ) {
   logInfo("🧩 Rendering base template");
   renderTree(path.join(TEMPLATES_DIR, "base"), projectDir, cfg, opts.dryRun);
+  // AGENTS.md carries the contract in a marked block, so `update` can renew it
+  // without touching what the team adds around it (ADR-0031).
+  const agentsMd = path.join(projectDir, "AGENTS.md");
+  if (!opts.dryRun && fs.existsSync(agentsMd)) {
+    fs.writeFileSync(agentsMd, mergeContract(null, fs.readFileSync(agentsMd, "utf8")), "utf8");
+  }
   applyRuntimeSupportFlags(projectDir, cfg, opts.dryRun);
   applyArchitectureProfile(projectDir, cfg, opts.dryRun);
 
+  // The stack's rules are part of AGENTS.md (rendered from `base`), not a
+  // second file: ADR-0031.
   logInfo(`🛠️ Applying project type template: ${cfg.PROJECT_TYPE}`);
-  renderFile(
-    path.join(TEMPLATES_DIR, cfg.PROJECT_TYPE, "AI_RULES.md.tpl"),
-    path.join(projectDir, "AI_RULES.md"),
-    cfg,
-    opts.dryRun
-  );
   if (opts.noSampleReq) {
     logInfo("🧩 Skipping the sample requirement (--no-sample-req)");
     if (!opts.dryRun) fs.mkdirSync(path.join(projectDir, "features"), { recursive: true });
@@ -956,7 +977,7 @@ function renderMultiStackReadme(
     plan.stacks
       .map(
         (s) =>
-          `${s.name}/${" ".repeat(Math.max(1, 16 - s.name.length - 1))}its own AI_RULES.md and traceability matrix\n`
+          `${s.name}/${" ".repeat(Math.max(1, 16 - s.name.length - 1))}its own AGENTS.md and traceability matrix\n`
       )
       .join("") +
     `\`\`\`\n\n` +
@@ -1112,7 +1133,7 @@ export class InitProjectCommand extends BaseCommand {
     if (plan) {
       logInfo(`- Stacks: ${plan.stacks.map((st) => st.name).join(", ")}`);
       logInfo("- Shared: spec.md, features/, docs/specs/adr/ — one copy at the root");
-      logInfo("- Per stack: AI_RULES.md, README.md, docs/specs/traceability.md");
+      logInfo("- Per stack: AGENTS.md, README.md, docs/specs/traceability.md");
       logInfo("- Next: specgate validate .   # validates every stack from this root");
     }
     if (wizardAnswers && !opts.dryRun) {

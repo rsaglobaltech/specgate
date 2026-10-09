@@ -26,12 +26,12 @@ export default [
       t.ok(t.sg(dir, "init"), "init");
       const clean = t.json(t.sg(dir, "doctor", "--json"));
       t.expect(clean.doctor.errors === 0, "no errors on a fresh adoption");
-      fs.rmSync(path.join(dir, "AI_RULES.md"));
+      fs.rmSync(path.join(dir, "AGENTS.md"));
       const broken = t.sg(dir, "doctor", "--json");
       const doc = t.json(broken);
       t.expect(
         doc.doctor.errors > 0 || doc.doctor.warnings > 0,
-        "a missing AI_RULES.md is reported",
+        "a missing AGENTS.md is reported",
         broken
       );
       t.expect(

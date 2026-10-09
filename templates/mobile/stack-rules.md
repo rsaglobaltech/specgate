@@ -1,0 +1,7 @@
+- Offline is a state, not an error: every screen that reads data says what it shows offline.
+- The process can die at any moment: what the user typed survives backgrounding, unless the scenario says otherwise.
+- Platform differences are stated in the scenario; silent iOS/Android divergence is a defect.
+- A permission is a flow with a denial branch, including a permanent denial.
+- A screen reachable by deep link works cold, with no back stack.
+- Store review is part of done: privacy declarations and permission rationales belong in the spec first.
+- Domain and use-case code import neither the UI framework nor device APIs; both arrive through a port.

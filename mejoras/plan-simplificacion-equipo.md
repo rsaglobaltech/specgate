@@ -180,8 +180,9 @@ la CI ejecutan.
       `feat/init-agent-default`: detecta por marcas (`.claude/`, `CLAUDE.md`,
       `.cursor/`, `GEMINI.md`…), instala los `/specgate:*` solo para esos, nunca
       sobrescribe; sin agente, dice cómo; `--no-agents` lo salta.
-- [ ] Un solo `AGENTS.md` corto (≤ 60 líneas) como contrato. `AI_RULES.md` se
-      funde en él.
+- [x] Un solo `AGENTS.md` corto (≤ 60 líneas) como contrato. `AI_RULES.md` se
+      funde en él — **hecho 2026-10-09** (ADR-0031, rama `feat/agents-md`):
+      bloque marcado, `update` migra, backend/frontend 36 líneas, móvil 41.
 - [ ] Hook opcional (Claude Code / Kiro / git pre-push) que corre
       `specgate check` al terminar: la verificación determinista enganchada a un
       evento real (principio 12 del mercado, donde somos fuertes).

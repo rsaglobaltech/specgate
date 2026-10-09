@@ -82,8 +82,8 @@ test("the matrix is NOT shared — artifacts differ per stack", () => {
 
 test("each stack's rulebook names its own stack", () => {
   withTree("spring,quarkus", (root) => {
-    const spring = fs.readFileSync(path.join(root, "spring/AI_RULES.md"), "utf8");
-    const quarkus = fs.readFileSync(path.join(root, "quarkus/AI_RULES.md"), "utf8");
+    const spring = fs.readFileSync(path.join(root, "spring/AGENTS.md"), "utf8");
+    const quarkus = fs.readFileSync(path.join(root, "quarkus/AGENTS.md"), "utf8");
     assert.match(spring, /spring/i);
     assert.match(quarkus, /quarkus/i);
     assert.notEqual(spring, quarkus, "one rulebook for two toolchains is not a rulebook");

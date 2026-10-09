@@ -105,7 +105,7 @@ test("buildPrompt embeds the requirement facts and the definition of done", () =
     // Sourced from `change instructions apply`, so assert the substance rather
     // than the emphasis markers it happens to use.
     assert.match(prompt, /Do not edit `docs\/specs\/traceability\.md`/);
-    assert.match(prompt, /Do not modify\*\* `spec\.md`, `AI_RULES\.md`/);
+    assert.match(prompt, /Do not modify\*\* `spec\.md`, `AGENTS\.md` \(or `AI_RULES\.md`\)/);
     assert.match(prompt, /specgate status` is the queue/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

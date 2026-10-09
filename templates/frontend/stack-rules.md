@@ -1,0 +1,2 @@
+- Componentized and reusable by default.
+- Responsive behaviour is an acceptance criterion, not polish.

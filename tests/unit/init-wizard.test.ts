@@ -161,7 +161,7 @@ test("init --yes scaffolds a valid project with zero other flags", () => {
 
     const projectDir = path.join(tmp, "my-spec-driven-app");
     assert.ok(fs.existsSync(path.join(projectDir, "spec.md")));
-    assert.ok(fs.existsSync(path.join(projectDir, "AI_RULES.md")));
+    assert.ok(fs.existsSync(path.join(projectDir, "AGENTS.md")));
 
     // Wizard/--yes runs persist their config for reproducibility.
     const savedConfig = path.join(projectDir, "project.yaml");

@@ -1,3 +1,4 @@
+import { mergeContract } from "../../../agents/contract-file";
 import { installDetectedAgents } from "../../../agents/detect";
 import * as fs from "node:fs";
 import { migrateToDerived } from "../spec/MatrixCommand";
@@ -32,6 +33,7 @@ function sharedTestCommand(dir: string): string {
 
 const ROOT_DIR = findCliRoot(__dirname);
 const ADOPT_TEMPLATES = path.join(ROOT_DIR, "templates", "adopt");
+const ADOPT_AGENTS_TEMPLATE = path.join(ROOT_DIR, "templates", "base", "AGENTS.md.tpl");
 
 function logInfo(msg: string) {
   process.stdout.write(`ℹ️ [INFO] ${msg}\n`);
@@ -121,8 +123,8 @@ function readIfExists(p: string): string | null {
 export function detectStack(dir: string) {
   const facts = {
     PROJECT_NAME: path.basename(dir),
-    STACK: "unknown — edit AI_RULES.md with your stack",
-    TESTING: "unknown — edit AI_RULES.md with your test toolchain",
+    STACK: "unknown — edit AGENTS.md with your stack",
+    TESTING: "unknown — edit AGENTS.md with your test toolchain",
     TEST_CMD: "echo 'configure your test command'",
     detected: "none",
   };
@@ -249,7 +251,6 @@ export function detectStack(dir: string) {
 
 const ADOPT_FILES = [
   ["spec.md.tpl", "spec.md"],
-  ["AI_RULES.md.tpl", "AI_RULES.md"],
   ["baseline.feature.tpl", "features/adoption/baseline.feature"],
   ["traceability.md.tpl", "docs/specs/traceability.md"],
   ["adr-readme.md.tpl", "docs/specs/adr/README.md"],
@@ -337,7 +338,7 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
   say(`- Stack: ${vars.STACK}`);
   say(`- Test command: ${vars.TEST_CMD}`);
   if (detected.detected === "none" && !quiet) {
-    logWarn("Could not detect the stack — review AI_RULES.md and traceability.md after adoption.");
+    logWarn("Could not detect the stack — review AGENTS.md and traceability.md after adoption.");
   }
 
   let written = 0;
@@ -356,6 +357,38 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
       fs.mkdirSync(path.dirname(dstPath), { recursive: true });
       fs.writeFileSync(dstPath, rendered, "utf8");
       say(`write ${dst}`);
+    }
+    written++;
+  }
+
+  // AGENTS.md: the agent contract (ADR-0031). A repository often has one
+  // already; the contract goes in a marked block and the team's text stays.
+  {
+    const agentsPath = path.join(dir, "AGENTS.md");
+    const existing = fs.existsSync(agentsPath) ? fs.readFileSync(agentsPath, "utf8") : null;
+    const contract = renderTemplate(fs.readFileSync(ADOPT_AGENTS_TEMPLATE, "utf8"), {
+      PROJECT_TYPE: "existing",
+      ARCHITECTURE: "minimal",
+      DOMAIN: "see spec.md",
+      API_STYLE: "as built",
+      ...vars,
+      STACK_RULES: [
+        `- The test command is \`${vars.TEST_CMD}\`.`,
+        fs.readFileSync(path.join(ADOPT_TEMPLATES, "stack-rules.md"), "utf8").trimEnd(),
+      ].join("\n"),
+      ARCHITECTURE_MODELING_RULES:
+        "- Keep business logic out of framework code: no business rules in controllers, components, or infrastructure adapters.",
+      ARCHITECTURE_CHECKS: "",
+    });
+    if (opts.dryRun) {
+      say(`[dry-run] ${existing === null ? "write" : "add the specgate block to"} AGENTS.md`);
+    } else {
+      fs.writeFileSync(agentsPath, mergeContract(existing, contract), "utf8");
+      say(
+        existing === null
+          ? "write AGENTS.md"
+          : "add the specgate block to AGENTS.md (your text kept)"
+      );
     }
     written++;
   }

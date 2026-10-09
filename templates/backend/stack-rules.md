@@ -1,0 +1,2 @@
+- Keep domain logic out of framework code; respect the layers and the domain's boundaries.
+- Tests assert the acceptance criteria with the scenario's own values.

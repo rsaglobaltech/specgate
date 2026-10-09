@@ -1,3 +1,4 @@
+import { migrateAiRules } from "../../../agents/contract-file";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -63,7 +64,10 @@ export function generatedFiles(projectDir: string) {
       else planned.set(file.path, { ...file, tools: [tool] });
     }
   }
-  return [...planned.values()].filter((f) => fs.existsSync(path.join(projectDir, f.path)));
+  // AGENTS.md is kept by its marked block, not merged as a whole (ADR-0031).
+  return [...planned.values()].filter(
+    (f) => f.path !== "AGENTS.md" && fs.existsSync(path.join(projectDir, f.path))
+  );
 }
 
 export interface GeneratedFile {
@@ -280,13 +284,26 @@ export class UpdateCommand extends BaseCommand {
       return;
     }
 
-    const renamed = migrateRenamedFiles(projectDir, { dryRun });
+    // ADR-0031: AI_RULES.md folds into AGENTS.md.
+    const agentsMigration = migrateAiRules(projectDir, { dryRun });
+    const renamed: UpdateResult[] = [
+      ...(agentsMigration.moved
+        ? [
+            {
+              path: "AGENTS.md",
+              outcome: "renamed" as const,
+              note: "AI_RULES.md moved below the specgate block, verbatim",
+            },
+          ]
+        : []),
+      ...migrateRenamedFiles(projectDir, { dryRun }),
+    ];
     // In a dry run nothing moved, so plan the merge against where the files
     // will be — otherwise the preview would show a renamed file as missing.
     const files = generatedFiles(projectDir).concat(
       dryRun
         ? renamed
-            .filter((r) => r.outcome === "renamed")
+            .filter((r) => r.outcome === "renamed" && r.path !== "AGENTS.md")
             .map((r) => allGenerated().find((g) => g.path === r.path))
             .filter(Boolean)
         : []

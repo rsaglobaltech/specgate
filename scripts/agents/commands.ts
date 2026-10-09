@@ -18,7 +18,7 @@ export const STEPS = [
     when: "Starting work, or unsure what to do next.",
     run: ["specgate status --json"],
     guidance: [
-      "Read `spec.md` and `AI_RULES.md` first — `AI_RULES.md` is binding, not advisory.",
+      "Read `spec.md` and `AGENTS.md` first — `AGENTS.md` is binding, not advisory.",
       "`requirements` lists each one with what it still needs; `nextCommand` names the step.",
       "Do not start on a requirement until you can say which `REQ-NNN` it is.",
     ],
@@ -113,7 +113,7 @@ export const STEPS = [
 
 /** The rules every tool's instruction file repeats, in its own format. */
 export const PROJECT_RULES = [
-  "`spec.md`, `AI_RULES.md` and `features/**/*.feature` are the source of truth. Do not edit them to make a test pass.",
+  "`spec.md`, `AGENTS.md` and `features/**/*.feature` are the source of truth. Do not edit them to make a test pass.",
   "`docs/specs/traceability.md` is generated — never edit it. A test or source file that names `REQ-NNN` is linked to that requirement; that is how work is traced.",
   "Every command takes `--json`. Use it: one document on stdout, diagnostics in `status`, each with a `fix`.",
   "Exit codes are a contract: 0 success, 1 failure or gate finding, 2 usage error.",

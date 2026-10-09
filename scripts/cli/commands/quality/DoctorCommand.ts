@@ -124,9 +124,10 @@ export class DoctorCommand extends BaseCommand {
   }
 
   private checkStructure(dir: string) {
+    const hasRules = ["AGENTS.md", "AI_RULES.md"].some((f) => fs.existsSync(path.join(dir, f)));
     const required = [
       "spec.md",
-      "AI_RULES.md",
+      ...(hasRules ? [] : ["AGENTS.md"]),
       "README.md",
       "docs/specs/traceability.md",
       "docs/specs/adr/README.md",
@@ -406,16 +407,22 @@ export class DoctorCommand extends BaseCommand {
    * to be mid-move.
    */
   private checkArchitectureProfile(dir: string) {
-    const rules = path.join(dir, "AI_RULES.md");
-    if (!fs.existsSync(rules)) return;
-    const declared = /^-\s*Architecture:\s*(\S+)/m.exec(fs.readFileSync(rules, "utf8"))?.[1];
+    // AGENTS.md says `… · architecture: X · …`; a legacy AI_RULES.md `- Architecture: X`.
+    const rules = ["AGENTS.md", "AI_RULES.md"]
+      .map((f) => path.join(dir, f))
+      .find((f) => fs.existsSync(f));
+    if (!rules) return;
+    const declared = /(?:^|·)\s*-?\s*architecture:\s*([a-z-]+)/im.exec(
+      fs.readFileSync(rules, "utf8")
+    )?.[1];
+    const rulesName = path.basename(rules);
     if (!declared) return;
 
     const known = ["minimal", "layered", "tactical-ddd"];
     if (!known.includes(declared)) {
       this.warn(
         "architecture",
-        `AI_RULES.md declares an unknown architecture profile '${declared}'`,
+        `${rulesName} declares an unknown architecture profile '${declared}'`,
         `Use one of: ${known.join(", ")}.`
       );
       return;
@@ -448,7 +455,7 @@ export class DoctorCommand extends BaseCommand {
       this.warn(
         "architecture",
         "profile is 'minimal' but requirements name aggregates or events in the matrix",
-        "Move to `layered` or `tactical-ddd` in AI_RULES.md. A profile the project has outgrown tells the agent the wrong thing."
+        `Move to \`layered\` or \`tactical-ddd\` in ${rulesName}. A profile the project has outgrown tells the agent the wrong thing.`
       );
       return;
     }

@@ -21,7 +21,15 @@ export class GenerateAgentPromptUseCase {
     const featureContent = featurePath
       ? this.configRepo.readProjectFile(projectDir, featurePath)
       : null;
-    const aiRulesContent = this.configRepo.readProjectFile(projectDir, "AI_RULES.md");
+    // AGENTS.md is the agent contract (ADR-0031). Until `specgate update`
+    // folds a team's AI_RULES.md into it, both are read: the team's rules must
+    // not drop out of the prompt because AGENTS.md appeared.
+    const agentsMd = this.configRepo.readProjectFile(projectDir, "AGENTS.md");
+    const legacyRules = this.configRepo.readProjectFile(projectDir, "AI_RULES.md");
+    const aiRulesContent = [agentsMd, legacyRules].filter(Boolean).join("\n\n") || null;
+    const rulesFile = [agentsMd && "AGENTS.md", legacyRules && "AI_RULES.md"]
+      .filter(Boolean)
+      .join(" + ");
 
     // The requirement's own prose. Not reading it is how the prompt came to say
     // "Implement REQ-002" with every fact `-` and nothing to implement.
@@ -50,6 +58,7 @@ export class GenerateAgentPromptUseCase {
       ...opts,
       featureContent,
       aiRulesContent,
+      rulesFile,
       requirementText: requirementText || undefined,
       otherScenarios,
       // Opt-in: the caller decides, because a precedent costs prompt budget and

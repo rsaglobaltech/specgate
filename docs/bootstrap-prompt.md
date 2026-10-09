@@ -18,7 +18,7 @@ prompt deterministically.
 ## How to use it
 
 1. Run `specgate init` and `specgate specops add` so the project has `spec.md`,
-   `AI_RULES.md` and `features/**/*.feature`.
+   `AGENTS.md` and `features/**/*.feature`.
 2. Open your coding agent inside the project directory.
 3. Paste the prompt below verbatim, then say "go".
 4. When the agent says it is done, run:
@@ -50,7 +50,7 @@ You are my **Lead Technical Architect** and **Senior Engineer**.
 - Read files only inside the active project unless an explicit path is provided by the Product Owner.
 
 ## Source of Truth (Read-Only for You)
-- `@./AI_RULES.md` — stack, architectural constraints, workflow rules.
+- `@./AGENTS.md` — stack, architectural constraints, workflow rules.
 - `@./spec.md` — the domain map.
 - `@./features/**/*.feature` — the executable acceptance criteria.
 - `@./docs/specs/traceability.md` — the requirement ↔ code matrix; `specgate done` owns it.
@@ -60,7 +60,7 @@ You **must not** rewrite, refine, or "improve" any of those files.
 ## Execution Policy (Non-Negotiable)
 - Start coding from this prompt — do **not** stop at a plan.
 - Prioritise executable implementation and passing tests over narrative summaries.
-- Respect the architectural constraints in `AI_RULES.md` (Hexagonal / Clean / DDD as declared).
+- Respect the architectural constraints in `AGENTS.md` (Hexagonal / Clean / DDD as declared).
 - Use `csda` to introspect — never to rewrite specs:
   - `specgate plan`                — which REQs are pending and what is missing.
   - `specgate validate . --strict` — the gate you must satisfy.
@@ -69,7 +69,7 @@ You **must not** rewrite, refine, or "improve" any of those files.
 ## Phase 1 — Goal
 Make the project executable end-to-end:
 1. **Build manifest + dependencies** — create `pom.xml` / `build.gradle` /
-   `package.json` (whichever the stack in `AI_RULES.md` calls for) with
+   `package.json` (whichever the stack in `AGENTS.md` calls for) with
    runtime and test deps that match the declared `TESTING` value (e.g.
    JUnit 5 + Cucumber + Testcontainers).
 2. **BDD wiring** — wire the BDD framework so it executes the existing
@@ -78,7 +78,7 @@ Make the project executable end-to-end:
    first; widen as more REQs land.
 3. **Hexagonal skeleton** — set up the package/folder layout
    (`domain`, `application`, `infrastructure`/`adapter`) per the
-   architectural constraints in `AI_RULES.md`.
+   architectural constraints in `AGENTS.md`.
 4. **First bounded context, end-to-end** — pick the highest-priority
    bounded context in `spec.md` and implement enough domain model + one
    adapter so the first scenario passes through.
@@ -149,8 +149,8 @@ You are the Lead Technical Architect and Senior Backend Engineer.
 # Execution Policy
 
 - Start coding. No planning-only output.
-- Hexagonal architecture is non-negotiable (see AI_RULES.md).
-- Never modify AI_RULES.md, spec.md, or features/\*_/_.feature.
+- Hexagonal architecture is non-negotiable (see AGENTS.md).
+- Never modify AGENTS.md, spec.md, or features/\*_/_.feature.
 ```
 
 Verify what the agent will receive at any time with:
