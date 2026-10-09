@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.1] — 2026-10-09
+
 ### Changed
 
 - **The documentation reads in the order a team needs it**: Start (a
