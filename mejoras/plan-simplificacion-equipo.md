@@ -258,9 +258,13 @@ entra por `init` y enseña los cinco verbos; `quickstart`, `writing-specs`,
 como camino principal. **`mejoras/` y `book/` se quedan en el repo**
 (decisión del usuario).
 
-- [ ] `docs/` se reduce a: **Quickstart (10 min)**, Flujo diario, La puerta en
-      CI, Brownfield, Referencia, Extensiones. Resto, a «Avanzado».
-- [ ] `mejoras/`, `book/`, `BOOK_PLAN.md`, `GEMINI_BOOK_PROMPT.md` y
+- [x] `docs/` se reduce a: **Quickstart (10 min)**, Flujo diario, La puerta en
+      CI, Brownfield, Referencia, Extensiones. Resto, a «Avanzado» — **hecho
+      2026-10-09**, rama `docs/phase-6-nav`: siete grupos (Start, Every day, The
+      gate in CI, Existing code, Reference, Extensions, Advanced); las 27 páginas
+      siguen publicadas, cada una en un grupo.
+- [ ] ~~`mejoras/`, `book/`…~~ **Descartado por decisión del usuario:** se quedan en el repo.
+      `mejoras/`, `book/`, `BOOK_PLAN.md`, `GEMINI_BOOK_PROMPT.md` y
       `PLAN_PREDICTABLE_CODE_EVOLUTION.md` salen del repositorio del producto (a
       un repo de notas o a `docs/internal/` excluido de la web). Un recién
       llegado que abre el repo no debe ver 10k líneas de diario de diseño.

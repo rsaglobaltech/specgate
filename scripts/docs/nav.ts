@@ -33,15 +33,21 @@ export interface NavSection {
   readonly entries: readonly NavEntry[];
 }
 
+/**
+ * Simplification plan, phase 6: six places a reader goes, in the order they
+ * need them — start, every day, the gate, existing code, reference,
+ * extensions — and everything else under "Advanced". Every shipped document
+ * is still in exactly one section.
+ */
 export const NAV: readonly NavSection[] = [
   {
-    title: "Start here",
+    title: "Start",
     icon: "rocket",
-    summary: "Fifteen minutes from nothing to a project whose specs are checked by CI.",
+    summary: "Ten minutes from nothing to your first requirement through the gate.",
     entries: [
       {
         slug: "getting-started",
-        label: "Getting started",
+        label: "Quickstart — 10 minutes",
         blurb: "Install, scaffold a project, and run the gate for the first time.",
       },
       {
@@ -49,33 +55,17 @@ export const NAV: readonly NavSection[] = [
         label: "You cloned a repo",
         blurb: "Someone handed you a spec-driven repository. Start here instead.",
       },
+    ],
+  },
+  {
+    title: "Every day",
+    icon: "file",
+    summary: "The loop a team runs on every pull request.",
+    entries: [
       {
         slug: "first-pr",
         label: "Your team's first PR",
         blurb: "What the author writes, what the reviewer reads, and what to do when check fails.",
-      },
-      {
-        slug: "walkthrough",
-        label: "Walkthrough",
-        blurb: "The whole loop end to end, in one sitting.",
-      },
-      {
-        slug: "tutorial",
-        label: "Tutorial: Smart Parking",
-        blurb: "A complete worked example, from a blank folder to a delivered requirement.",
-      },
-    ],
-  },
-  {
-    title: "Working with specs",
-    icon: "file",
-    summary: "What a specification is here, and what the tool does with it.",
-    entries: [
-      {
-        slug: "concepts",
-        label: "How Specgate thinks",
-        blurb:
-          "Six ideas — requirement, scenario, mention, generated matrix, status, one gate — that explain every command.",
       },
       {
         slug: "writing-specs",
@@ -83,27 +73,79 @@ export const NAV: readonly NavSection[] = [
         blurb: "Requirements, scenarios and the traceability matrix.",
       },
       {
+        slug: "reviewing-changes",
+        label: "Reviewing changes",
+        blurb: "Propose, review and archive a change to specs that already shipped.",
+      },
+    ],
+  },
+  {
+    title: "The gate in CI",
+    icon: "server",
+    summary: "What fails a pull request, and how to wire it in.",
+    entries: [
+      {
         slug: "validating",
         label: "Validating",
         blurb: "Every check the gate runs, what each status owes, and the flags behind check.",
       },
       {
-        slug: "reviewing-changes",
-        label: "Reviewing changes",
-        blurb: "Propose, review and archive a change to specs that already shipped.",
-      },
-      {
-        slug: "domain-packs",
-        label: "Domain packs",
-        blurb: "Install a curated domain model instead of writing one from scratch.",
+        slug: "automation",
+        label: "Automation",
+        blurb: "Generate the gate for GitHub, GitLab, Azure or Jenkins.",
       },
     ],
   },
   {
-    title: "Agents and the harness",
+    title: "Existing code",
+    icon: "compass",
+    summary: "Adopting Specgate on a repository that already ships.",
+    entries: [
+      {
+        slug: "case-studies/case-1",
+        label: "Worked example: brownfield adoption",
+        blurb:
+          "An illustration — invented company, constructed numbers — of the workflow end to end.",
+      },
+      {
+        slug: "comparisons",
+        label: "Comparisons",
+        blurb: "How this differs from OpenSpec, Spec Kit and writing it yourself.",
+      },
+    ],
+  },
+  {
+    title: "Reference",
+    icon: "book",
+    summary: "Every command, the ideas behind them, and what to do when something fails.",
+    entries: [
+      {
+        slug: "commands",
+        label: "Command reference",
+        blurb: "Every command, its flags and its JSON shape.",
+      },
+      {
+        slug: "concepts",
+        label: "How Specgate thinks",
+        blurb:
+          "Six ideas — requirement, scenario, mention, generated matrix, status, one gate — that explain every command.",
+      },
+      {
+        slug: "faq",
+        label: "FAQ",
+        blurb: "The questions a team asks in its first week, answered in two lines each.",
+      },
+      {
+        slug: "troubleshooting",
+        label: "Troubleshooting",
+        blurb: "When the gate says no and you disagree.",
+      },
+    ],
+  },
+  {
+    title: "Extensions",
     icon: "robot",
-    summary:
-      "The part that spends money. Read the harness page before pointing an agent at anything.",
+    summary: "Agents, MCP, the harness, domain packs and your issue tracker.",
     entries: [
       {
         slug: "agents",
@@ -117,36 +159,51 @@ export const NAV: readonly NavSection[] = [
           "The daily loop as tools for Claude Desktop, Cursor and other MCP clients, and the guard on the spec.",
       },
       {
-        slug: "agent-setup",
-        label: "Choosing your agent",
-        blurb: "Claude, Aider, Cursor or a three-line wrapper — and the two things that bite.",
-      },
-      {
         slug: "harness",
         label: "The harness",
         blurb: "Unattended delivery: plan → agent → gate → done, one worktree per requirement.",
+      },
+      {
+        slug: "domain-packs",
+        label: "Domain packs",
+        blurb: "Install a curated domain model instead of writing one from scratch.",
+      },
+      {
+        slug: "alm",
+        label: "Jira, Azure Boards, GitHub",
+        blurb: "Mirror requirements onto a board without letting the board define them.",
+      },
+    ],
+  },
+  {
+    title: "Advanced",
+    icon: "book",
+    summary: "Longer reads, setups and the reasons behind the design.",
+    entries: [
+      {
+        slug: "walkthrough",
+        label: "Walkthrough",
+        blurb: "The whole loop end to end, in one sitting.",
+      },
+      {
+        slug: "tutorial",
+        label: "Tutorial: Smart Parking",
+        blurb: "A complete worked example, from a blank folder to a delivered requirement.",
+      },
+      {
+        slug: "agent-setup",
+        label: "Choosing your agent",
+        blurb: "Claude, Aider, Cursor or a three-line wrapper — and the two things that bite.",
       },
       {
         slug: "bootstrap-prompt",
         label: "Bootstrap prompt",
         blurb: "The prompt that turns an idea into a first specification.",
       },
-    ],
-  },
-  {
-    title: "Running it for real",
-    icon: "server",
-    summary: "CI, boards, and the things an enterprise asks before it says yes.",
-    entries: [
       {
-        slug: "automation",
-        label: "Automation",
-        blurb: "Generate the gate for GitHub, GitLab, Azure or Jenkins.",
-      },
-      {
-        slug: "alm",
-        label: "Jira, Azure Boards, GitHub",
-        blurb: "Mirror requirements onto a board without letting the board define them.",
+        slug: "how-to",
+        label: "How-to guides",
+        blurb: "Short answers to specific questions.",
       },
       {
         slug: "deployment",
@@ -158,63 +215,15 @@ export const NAV: readonly NavSection[] = [
         label: "Supply chain",
         blurb: "SBOM, licences, provenance and what ships in the tarball.",
       },
-    ],
-  },
-  {
-    title: "Reference",
-    icon: "book",
-    summary: "Look things up.",
-    entries: [
-      {
-        slug: "commands",
-        label: "Command reference",
-        blurb: "Every command, its flags and its JSON shape.",
-      },
-      {
-        slug: "faq",
-        label: "FAQ",
-        blurb: "The questions a team asks in its first week, answered in two lines each.",
-      },
-      {
-        slug: "how-to",
-        label: "How-to guides",
-        blurb: "Short answers to specific questions.",
-      },
-      {
-        slug: "troubleshooting",
-        label: "Troubleshooting",
-        blurb: "When the gate says no and you disagree.",
-      },
-      {
-        slug: "comparisons",
-        label: "Comparisons",
-        blurb: "How this differs from OpenSpec, Spec Kit and writing it yourself.",
-      },
       {
         slug: "release-process",
         label: "Release process",
         blurb: "How a version is cut, and what support it gets.",
       },
-    ],
-  },
-  {
-    // These two were published and linked from nowhere. They are the two
-    // documents that explain *why* the tool is shaped this way, which makes
-    // them the wrong ones to leave unreachable.
-    title: "Background",
-    icon: "compass",
-    summary: "Why it works this way.",
-    entries: [
       {
         slug: "articles/specs-that-cannot-lie",
         label: "Specs that cannot lie",
         blurb: "The argument the tool is built on, and the defects that shaped it.",
-      },
-      {
-        slug: "case-studies/case-1",
-        label: "Worked example: brownfield adoption",
-        blurb:
-          "An illustration — invented company, constructed numbers — of the workflow end to end.",
       },
     ],
   },

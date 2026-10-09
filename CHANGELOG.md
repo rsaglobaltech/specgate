@@ -8,6 +8,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **The documentation reads in the order a team needs it**: Start (a
+  10-minute quickstart), Every day, The gate in CI, Existing code, Reference,
+  Extensions — and everything else under Advanced. Every page is still
+  published.
+
 ## [0.17.0] — 2026-10-09
 
 ### Fixed
