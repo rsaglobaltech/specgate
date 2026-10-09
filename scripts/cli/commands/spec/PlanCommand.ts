@@ -7,6 +7,11 @@ import { requirementGraphFromProject } from "../../../lib/requirement-graph";
 import { BaseCommand } from "../../../lib/command";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { GeneratePlanUseCase } from "../../../../packages/core/src/application/GeneratePlanUseCase";
+import { skippedScenarios } from "../../../../packages/core/src/domain/ScenarioCoverage";
+import {
+  declaredPaths,
+  artifactFile,
+} from "../../../../packages/core/src/domain/DeclaredArtifacts";
 import { DiskRequirementGraphRepository } from "../../../../packages/core/src/infrastructure/DiskRequirementGraphRepository";
 import { RequirementPlan, PlanItem } from "../../../../packages/core/src/domain/RequirementPlan";
 import { requirementReadiness } from "../../../../packages/core/src/domain/RequirementReadiness";
@@ -107,7 +112,30 @@ export function parseTraceability(content: string): any[] {
 
 export function classify(row: any, exists: any): any {
   const checker = typeof exists === "string" ? (rel: string) => fileExists(exists, rel) : exists;
-  return RequirementPlan.classifyRow(row, checker);
+  const gap = typeof exists === "string" ? (r: any) => scenarioGap(exists, r) : undefined;
+  return RequirementPlan.classifyRow(row, checker, gap);
+}
+
+/**
+ * A scenario in the row's feature file that no declared test names, while
+ * others in the file are named — the same judgement as `validate --strict`'s
+ * "Nothing proves" (`skippedScenarios`), so the plan cannot call a requirement
+ * ready that the gate refuses (#54).
+ */
+export function scenarioGap(projectDir: string, row: any): boolean {
+  const tests = declaredPaths(row.testArtifact || "").filter(
+    (t) => t && t !== "-" && t.toUpperCase() !== "TBD"
+  );
+  const featureRel = declaredPaths(row.featureFile || "")[0];
+  if (tests.length === 0 || !featureRel) return false;
+  const featurePath = path.join(projectDir, artifactFile(featureRel));
+  if (!fs.existsSync(featurePath) || !fs.statSync(featurePath).isFile()) return false;
+  const sources = tests.flatMap((t) => {
+    const full = path.join(projectDir, artifactFile(t));
+    return fs.existsSync(full) && fs.statSync(full).isFile() ? [fs.readFileSync(full, "utf8")] : [];
+  });
+  if (sources.length === 0) return false;
+  return skippedScenarios(fs.readFileSync(featurePath, "utf8"), sources).length > 0;
 }
 
 export function hintFor(item: any): string {
@@ -359,7 +387,8 @@ export class PlanCommand extends BaseCommand {
     const useCase = new GeneratePlanUseCase(
       repo,
       (pDir, rel) => fileExists(pDir, rel),
-      new DiskRequirementGraphRepository()
+      new DiskRequirementGraphRepository(),
+      scenarioGap
     );
     const planResult = useCase.execute(projectDir);
 

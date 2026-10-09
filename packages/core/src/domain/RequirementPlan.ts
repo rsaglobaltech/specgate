@@ -70,9 +70,17 @@ export class RequirementPlan {
     return parts.length > 0 && parts.every((p) => !/\s/.test(p) && /[/.]/.test(p));
   }
 
+  /**
+   * `scenarioGap` says whether a scenario of the row's feature has no test
+   * naming it while its siblings do — what `validate --strict` reports as
+   * "Nothing proves". Without it, a requirement that gained two scenarios was
+   * "Ready to close — its test is in place" in `status` and NEEDS_STATUS_UPDATE
+   * to the harness, while `validate` refused it (reservas_app, #54).
+   */
   public static classifyRow(
     row: RawMatrixRow,
-    fileChecker: (relPath: string) => boolean
+    fileChecker: (relPath: string) => boolean,
+    scenarioGap?: (row: RawMatrixRow) => boolean
   ): PlanItem | null {
     const reqId = row.requirement || "";
     if (!/^REQ-\d+/.test(reqId)) return null;
@@ -100,6 +108,7 @@ export class RequirementPlan {
     // A scenario with no test is not done, whatever the requirement's status:
     // it is how a scenario added after delivery shows up (golden_app #32).
     else if (!testDeclared) category = "NEEDS_TEST";
+    else if (scenarioGap && scenarioGap(row)) category = "NEEDS_TEST";
     else if (techDeclared && !techExists) category = "NEEDS_IMPLEMENTATION";
     else if (!isDone) category = "NEEDS_STATUS_UPDATE";
     else category = "DONE";

@@ -365,3 +365,43 @@ test("#48: titles come from spec sections, in spec.md and capability specs", () 
   assert.equal(titles.get("REQ-001"), "Existing behaviour is preserved");
   assert.equal(titles.get("REQ-111"), "Varios calendarios por comercio");
 });
+
+test("#51: a requirement that lives on one surface says so, and D3 asks for that one", () => {
+  const menu = (trace) =>
+    req("REQ-200", trace, "El sistema SHALL mostrar el menú.", [
+      [
+        "SCN-202",
+        [
+          "DADO un propietario",
+          'CUANDO abre su panel y pulsa "Calendarios"',
+          "ENTONCES ve la pantalla",
+        ],
+      ],
+    ]);
+  const brief = "---\nactors:\n  - { name: Propietario, surfaces: [api, web] }\n---\n";
+  const d3 = (trace) =>
+    checkDraft({ deltas: delta(menu(trace)), brief }).status.filter(
+      (d) => d.code === "D3_surface_missing"
+    );
+  assert.equal(d3("kind=functional actor=Propietario").length, 1, "api still owed by default");
+  assert.deepEqual(d3("kind=functional actor=Propietario surfaces=web"), []);
+});
+
+test("#52: a value already in the project's specification is not unlisted", () => {
+  const second = req("REQ-200", "kind=functional", "Text.", [
+    [
+      "SCN-203",
+      [
+        'DADO un propietario en la pantalla "Configuración"',
+        'CUANDO pulsa "Agenda"',
+        "ENTONCES ve la agenda",
+      ],
+    ],
+  ]);
+  const d6 = (specText) =>
+    checkDraft({ deltas: delta(second), brief: BRIEF, specText }).status.filter(
+      (d) => d.code === "D6_unlisted_value"
+    );
+  assert.equal(d6(undefined).length, 2);
+  assert.deepEqual(d6('Cuando abre "Configuración" … pulsa "Agenda"'), []);
+});

@@ -384,6 +384,64 @@ El sistema SHALL rechazar una reserva cuando los puestos están llenos.
   }
 });
 
+test("#53: a MODIFIED requirement's feature file gains the scenarios the change added", () => {
+  const root = mkProject();
+  try {
+    const spec = (scenarios) => `### Requirement: REQ-145 — Agenda del propietario
+
+<!-- csda:trace feature=features/reservas/REQ-145.feature actor=Propietario kind=functional -->
+
+El sistema SHALL mostrar al propietario las reservas de un día.
+
+${scenarios}`;
+    const s148 = `#### Scenario: SCN-148 — Agenda por API
+
+- DADO "Peluquería" con 2 reservas mañana
+- CUANDO el propietario hace GET /api/calendarios/peluqueria/agenda para mañana
+- ENTONCES la respuesta trae las 2 reservas
+`;
+    const s200 = `#### Scenario: SCN-200 — Ver las reservas de otro día
+
+- DADO "Peluquería" con una reserva el sábado
+- CUANDO el propietario elige el sábado en "Agenda"
+- ENTONCES ve la reserva del sábado
+`;
+    // Delivered: REQ-145 archived with one scenario and its feature file.
+    run(root, ["new", "agenda-dia", "--capability", "reservas"]);
+    const dir = path.join(root, "docs/specs/changes/agenda-dia");
+    fs.writeFileSync(path.join(dir, "tasks.md"), "# Tasks\n\n- [x] 1.1 spec\n", "utf8");
+    fs.writeFileSync(
+      path.join(dir, "specs/reservas/spec.md"),
+      `## ADDED Requirements\n\n${spec(s148)}`,
+      "utf8"
+    );
+    assert.ok(json(run(root, ["archive", "agenda-dia", "--json"])).archive);
+    const featurePath = path.join(root, "features/reservas/REQ-145.feature");
+    assert.match(fs.readFileSync(featurePath, "utf8"), /@SCN-148/);
+
+    // The change: REQ-145 MODIFIED, now with a second scenario.
+    run(root, ["new", "agenda-otro-dia", "--capability", "reservas"]);
+    const dir2 = path.join(root, "docs/specs/changes/agenda-otro-dia");
+    fs.writeFileSync(path.join(dir2, "tasks.md"), "# Tasks\n\n- [x] 1.1 spec\n", "utf8");
+    fs.writeFileSync(
+      path.join(dir2, "specs/reservas/spec.md"),
+      `## MODIFIED Requirements\n\n${spec(s148 + "\n" + s200)}`,
+      "utf8"
+    );
+    const doc = json(run(root, ["archive", "agenda-otro-dia", "--json"]));
+    assert.ok(doc.archive, JSON.stringify(doc.status));
+    const feature = fs.readFileSync(featurePath, "utf8");
+    assert.match(feature, /@REQ-145 @SCN-148/);
+    assert.match(feature, /@REQ-145 @SCN-200\n {2}Escenario: Ver las reservas de otro día/);
+    assert.ok(
+      JSON.stringify(doc).includes("archive_feature_regenerated"),
+      "the rewrite is reported, not silent"
+    );
+  } finally {
+    cleanup(root);
+  }
+});
+
 test("archive refuses while tasks are unchecked, and --force overrides", () => {
   const root = mkProject();
   try {
