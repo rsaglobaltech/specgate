@@ -41,7 +41,15 @@ import {
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 import { agentIo } from "../../../lib/agent";
-import { checkWriteScope, parseGitStatus } from "../../../../packages/core/src/domain/WriteScope";
+import {
+  checkWriteScope,
+  parseGitStatus,
+  protectingPattern,
+} from "../../../../packages/core/src/domain/WriteScope";
+import {
+  agentUnavailable,
+  specSideFailure,
+} from "../../../../packages/core/src/domain/RetryPolicy";
 import { gateCommandIntegrity } from "../../../../packages/core/src/domain/GateCommandIntegrity";
 import {
   isEmptyAttempt,
@@ -816,6 +824,8 @@ function attemptRequirement(req, ctx) {
   let probe: ProbeOutcome = NO_PROBE;
 
   const firstAttempt = Math.max(1, (ctx.resumeAt && ctx.resumeAt.attempt) || 1);
+  /** Set when another attempt cannot change the outcome (#50). */
+  let stopRetrying = false;
 
   for (let attempt = firstAttempt; attempt <= settings.maxAttempts; attempt += 1) {
     info(`${req.requirement}: attempt ${attempt}/${settings.maxAttempts}`);
@@ -921,9 +931,19 @@ function attemptRequirement(req, ctx) {
         }
 
         if (agent.status !== 0) {
-          previousFailure = `Agent exited ${agent.status}.\n${agent.stdout || ""}${agent.stderr || ""}`;
+          const output = `${agent.stdout || ""}${agent.stderr || ""}`;
+          previousFailure = `Agent exited ${agent.status}.\n${output}`;
           warn(`${req.requirement}: agent exited ${agent.status}`);
-          record("agent-error");
+          // Out of quota: another attempt seconds later meets the same wall (#50).
+          const unavailable = agentUnavailable(output);
+          if (unavailable) {
+            warn(`${req.requirement}: the agent cannot run now — ${unavailable}`);
+            warn(`  not retrying; run it again once the agent is available`);
+            record("agent-unavailable");
+            stopRetrying = true;
+          } else {
+            record("agent-error");
+          }
           stepFailed = true;
           break;
         }
@@ -931,6 +951,7 @@ function attemptRequirement(req, ctx) {
     } finally {
       /* each step removes its own prompt file */
     }
+    if (stopRetrying) break;
     if (stepFailed) continue;
 
     // Before the gate: an agent that wrote nothing cannot have implemented
@@ -981,6 +1002,26 @@ function attemptRequirement(req, ctx) {
         `Gate failed at: ${gate.stage}\n\n` + (gate.hint ? `⚠ ${gate.hint}\n\n` : "") + gate.output;
       warn(`${req.requirement}: gate failed at ${gate.stage}`);
       if (gate.hint) warn(gate.hint);
+      // Every finding is in a file the agent may not edit: no attempt can pass (#50).
+      const rules = {
+        protectedPaths: settings.protectedPaths.length ? settings.protectedPaths : undefined,
+        allowPaths: settings.allowPaths,
+      };
+      const specFiles = specSideFailure(gate.output, (f) => protectingPattern(f, rules) !== null);
+      if (specFiles) {
+        previousFailure =
+          `The gate fails on the specification, which the agent may not edit:\n` +
+          specFiles.map((f) => `  ${f}`).join("\n") +
+          `\n\nFix the scenario (a person, or \`specgate change\`), then run the harness again.\n\n` +
+          previousFailure;
+        warn(
+          `${req.requirement}: the failure is in ${specFiles.join(", ")}, which the agent may not edit`
+        );
+        warn(`  not retrying; fix the specification and run it again`);
+        record("spec");
+        stopRetrying = true;
+        break;
+      }
       record("gate");
       continue;
     }
@@ -1091,7 +1132,7 @@ function attemptRequirement(req, ctx) {
     result: "fail",
     // Attempts *this* run spent. On a resume that starts at 3 of 3, one attempt
     // was spent here, and reporting 3 would double-count the earlier run's.
-    attempts: settings.maxAttempts - firstAttempt + 1,
+    attempts: stopRetrying ? attemptLog.length : settings.maxAttempts - firstAttempt + 1,
     error: previousFailure,
     workPreserved: preserved,
     attemptLog,

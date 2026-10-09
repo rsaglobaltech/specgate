@@ -6,6 +6,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   checkDraft,
+  requirementTitles,
   statedValues,
   actorSurfaces,
 } = require("../../packages/core/src/domain/DraftChecklist");
@@ -26,7 +27,7 @@ const req = (id, trace, body, scenarios) =>
   scenarios
     .map(
       ([sid, steps]) =>
-        `#### Scenario: ${sid} — ${sid}\n\n${steps.map((s) => `- ${s}`).join("\n")}\n`
+        `#### Scenario: ${sid} — the behaviour ${sid} pins\n\n${steps.map((s) => `- ${s}`).join("\n")}\n`
     )
     .join("\n");
 
@@ -267,4 +268,100 @@ test("D4 flags a promised quantity with no number, not a qualitative constraint"
       ["D5_unsourced_rule", "REQ-012", "info"],
     ]
   );
+});
+
+// ── reservas_app pilot (2026-10-09) ──────────────────────────────────────────
+
+test("#42: a page that adapts to the screen is not a promised response time", () => {
+  const nfr = req(
+    "REQ-147",
+    "kind=non-functional",
+    "La página de reserva es responsive y usable desde 360 px de ancho.",
+    [["SCN-152", ["DADO una pantalla de 360 px", "CUANDO abre la página", "ENTONCES ve el botón"]]]
+  );
+  const r = checkDraft({ deltas: delta(nfr) });
+  assert.ok(!codes(r).includes("D4_unmeasured_nfr"), codes(r).join(","));
+});
+
+test("#43: a value repeated in one scenario is one D6 finding", () => {
+  const twice = req("REQ-122", "kind=functional", "Text.", [
+    [
+      "SCN-124",
+      [
+        'GIVEN "Curling Ironing" of 30 minutes',
+        "WHEN a client GETs the services",
+        'THEN the answer includes "Curling Ironing"',
+      ],
+    ],
+  ]);
+  const d6 = checkDraft({ deltas: delta(twice), brief: BRIEF }).status.filter(
+    (d) => d.code === "D6_unlisted_value" && /Curling Ironing/.test(d.message)
+  );
+  assert.equal(d6.length, 1);
+});
+
+test("#45: an answered question no longer holds its requirement", () => {
+  const built = req("REQ-146", "kind=functional", "Text.", [
+    ["SCN-150", ["GIVEN a booking", "WHEN the client cancels it", "THEN the slot is free"]],
+  ]);
+  const table = "| # | Question | Blocks |\n|---|---|---|\n| Q1 | Can a client cancel? | REQ-146 |";
+  const open = checkDraft({ deltas: delta(built), brief: BRIEF, questions: table });
+  assert.ok(codes(open).includes("D7_floating_question"), "unanswered: REQ-146 must wait");
+
+  const below = `${table}\n\nAnswer (Q1): yes, until the business's blocking window starts.\n`;
+  assert.ok(
+    !codes(checkDraft({ deltas: delta(built), brief: BRIEF, questions: below })).includes(
+      "D7_floating_question"
+    )
+  );
+
+  const column =
+    "| # | Question | Blocks | Answer |\n|---|---|---|---|\n| Q1 | Can a client cancel? | REQ-146 | yes |";
+  assert.ok(
+    !codes(checkDraft({ deltas: delta(built), brief: BRIEF, questions: column })).includes(
+      "D7_floating_question"
+    )
+  );
+});
+
+test("#49 / D9: a scenario the harness gate would refuse fails the draft, in either language", () => {
+  const titled = (title, steps) =>
+    `## ADDED Requirements\n\n### Requirement: REQ-113 — Sin puestos no hay reserva\n\n<!-- csda:trace kind=business-rule -->\n\nEl sistema SHALL cerrar la franja.\n\n#### Scenario: SCN-115 — ${title}\n\n${steps.map((s) => `- ${s}`).join("\n")}\n`;
+  const es = [
+    "DADO un calendario sin puestos",
+    "CUANDO un cliente consulta los huecos",
+    "ENTONCES no hay franjas",
+    "Y no se puede reservar",
+  ];
+  const run = (src) =>
+    checkDraft({ deltas: [{ path: "specs/c/spec.md", source: src }] }).status.filter(
+      (d) => d.code === "D9_scenario_quality"
+    );
+
+  assert.deepEqual(
+    run(titled("Franja cerrada", es)),
+    [],
+    "two words name a behaviour; Y inherits ENTONCES"
+  );
+  assert.equal(
+    run(titled("Escenario 1", es)).length,
+    1,
+    "a placeholder title is refused before the harness sees it"
+  );
+  assert.ok(
+    run(titled("Franja cerrada", ["DADO un calendario", "Y nada más"])).length > 0,
+    "no CUANDO / ENTONCES"
+  );
+});
+
+test("#48: titles come from spec sections, in spec.md and capability specs", () => {
+  const titles = requirementTitles([
+    { source: "## REQ-001 — Existing behaviour is preserved\n\nText." },
+    {
+      source:
+        "## ADDED Requirements\n\n### Requirement: REQ-111 — Varios calendarios por comercio\n",
+    },
+  ]);
+  assert.equal(titles.get("REQ-001"), "Existing behaviour is preserved");
+  assert.equal(titles.get("REQ-111"), "Varios calendarios por comercio");
 });

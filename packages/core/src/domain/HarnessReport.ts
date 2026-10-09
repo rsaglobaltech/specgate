@@ -118,6 +118,8 @@ export const STAGE_LABELS: Readonly<Record<string, string>> = Object.freeze({
   "agent-timeout": "agent timed out",
   "agent-error": "agent exited non-zero",
   "write-scope": "agent edited protected files",
+  "agent-unavailable": "agent out of quota or rate-limited",
+  spec: "the specification fails the gate",
   gate: "gate rejected the work",
   artifacts: "diff missed the declared artifacts",
   done: "`specgate done` failed",

@@ -16,7 +16,7 @@ const DELTA = `## ADDED Requirements
 
 The system SHALL accept a clock in inside the geofence.
 
-#### Scenario: SCN-101 — Inside
+#### Scenario: SCN-101 — A punch inside the geofence
 
 - GIVEN a worker 40 m from the center of a 100 m geofence
 - WHEN they POST /api/attendance/punches

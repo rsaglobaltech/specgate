@@ -15,6 +15,42 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   Extensions — and everything else under Advanced. Every page is still
   published.
 
+### Fixed
+
+Found building a second real product from a client brief (reservas_app,
+written in Spanish).
+
+- **A draft archives into feature files, in its own language.** `change
+  archive` wrote no `.feature` for a requirement whose trace named none — a
+  draft that passed `draft --check` archived with "0 materialised". Each
+  requirement with scenarios now gets `features/<capability>/<REQ>.feature`.
+  Scenarios written with `DADO / CUANDO / ENTONCES` become Spanish Gherkin
+  (`# language: es`); they used to be written as English `Feature:` files whose
+  steps Cucumber read as prose, and `validate --strict` called every one empty.
+- **`draft --check` runs the rules the harness gate will apply (D9).** A
+  scenario title, a missing When or Then, a placeholder step: the gate checks
+  them once a requirement leaves Draft, so a draft could pass the checklist and
+  fail the harness on a scenario the agent may not edit.
+- **Two words name a behaviour.** "Franja cerrada" and "Identificador
+  repetido" were refused as generic titles; a title is now generic when it is a
+  single word or a placeholder ("Scenario 1", "Escenario 2", "Test").
+- **The harness stops when another attempt cannot help.** An agent out of
+  quota ("You've hit your session limit") was retried three times in 22
+  seconds; a gate failing only on files the agent may not edit was retried
+  three times too. Both now end the requirement after one attempt, saying who
+  has to act.
+- **`check` names the test command adoption found.** `init` printed "Test
+  command: npm test" and the next `check` said "No test command configured"
+  without saying which, or how. The warning now names the detected command and
+  the one line that turns it on (`specgate harness init`). The first gate after
+  adoption still checks the specification only, as documented.
+- **`draft --check`:** an answered question (an `Answer` column, or `Answer
+  (Q1): …` below the table) no longer keeps its requirement waiting; a value
+  repeated in a scenario is one finding, not one per mention; "responsive" is
+  not read as a promised response time, and `px` is a unit.
+- **`status` shows the title of a requirement archived from a change** instead
+  of a blank.
+
 ## [0.17.0] — 2026-10-09
 
 ### Fixed

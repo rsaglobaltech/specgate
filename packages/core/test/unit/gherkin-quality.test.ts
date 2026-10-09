@@ -86,10 +86,28 @@ test("every finding carries the target it was asked to report against", () => {
 });
 
 test("isGenericTitle knows a name from a placeholder", () => {
-  for (const bad of ["", "Test", "Scenario 1", "Example", "Untitled", "two words"]) {
+  for (const bad of [
+    "",
+    "Test",
+    "Scenario 1",
+    "Example",
+    "Untitled",
+    "works",
+    "Escenario 2",
+    "Prueba",
+  ]) {
     assert.equal(isGenericTitle(bad), true, `${JSON.stringify(bad)} should be generic`);
   }
   assert.equal(isGenericTitle("Defining a flag emits FlagDefined"), false);
+  // #49: two words name a behaviour — the reservas_app titles that failed the harness.
+  for (const good of [
+    "Franja cerrada",
+    "Identificador repetido",
+    "Último puesto",
+    "Refund rejected",
+  ]) {
+    assert.equal(isGenericTitle(good), false, `${JSON.stringify(good)} names a behaviour`);
+  }
 });
 
 test("keyword case is judged on the raw text, with the line and the fix", () => {

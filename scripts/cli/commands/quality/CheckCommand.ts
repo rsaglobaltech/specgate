@@ -1,3 +1,4 @@
+import { detectTestCommand } from "../../../harness/init";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -145,10 +146,21 @@ export class CheckCommand extends BaseCommand {
       ]);
     }
 
+    // Name the command the build files give away: adoption printed "Test
+    // command: npm test", and this warning then said none was configured
+    // without saying which one, or how (reservas_app, #44).
+    const detected = plan.testsUnverified ? detectTestCommand(projectDir) : null;
+    const fixLines = detected
+      ? [
+          `This project's test command looks like \`${detected}\`. Configure it once:`,
+          `  specgate harness init      # writes test_cmd: "${detected}" to harness.config.yaml`,
+          `or pass --test-cmd "${detected}". Until then, nothing here runs your tests.`,
+        ]
+      : NO_TEST_COMMAND_WARNING.fix;
     const status = plan.testsUnverified
       ? [
           warning("tests_not_configured", NO_TEST_COMMAND_WARNING.message, {
-            fix: NO_TEST_COMMAND_WARNING.fix.join(" "),
+            fix: fixLines.join(" "),
           }),
         ]
       : [];
@@ -165,7 +177,7 @@ export class CheckCommand extends BaseCommand {
         if (plan.testsUnverified) {
           process.stdout.write(
             `${c.yellow}⚠${c.reset}  ${NO_TEST_COMMAND_WARNING.message}\n` +
-              NO_TEST_COMMAND_WARNING.fix.map((l) => `   ${c.dim}${l}${c.reset}\n`).join("") +
+              fixLines.map((l) => `   ${c.dim}${l}${c.reset}\n`).join("") +
               `\n${c.green}✔${c.reset}  ${c.bold}Gate passed${c.reset} ${c.dim}— the specification${c.reset}\n`
           );
         } else {

@@ -33,7 +33,8 @@ function usage(): string {
     "  D1 every requirement has a scenario          D5 a cited law or standard names its source\n" +
     "  D2 every requirement has a kind              D6 a stated value is in the brief or an assumption\n" +
     "  D3 a scenario per surface each actor uses    D7 an open question names what it blocks\n" +
-    "  D4 a non-functional requirement is measured  D8 the draft is small enough to review\n\n" +
+    "  D4 a non-functional requirement is measured  D8 the draft is small enough to review\n" +
+    "                                                D9 every scenario passes the harness gate's rules\n\n" +
     "  --brief <file>   The brief the draft came from. Without it D3 and D6 cannot\n" +
     "                   run, and the report says so. Also read from `brief:` in change.yaml.\n"
   );

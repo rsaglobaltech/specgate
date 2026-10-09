@@ -337,6 +337,53 @@ test("archive merges the spec, the matrix and the feature, then moves the change
   }
 });
 
+test("#46/#47: a draft with no feature= and no .feature files gets one per requirement, in its language", () => {
+  const root = mkProject();
+  try {
+    run(root, ["new", "draft-reservas", "--capability", "reservas"]);
+    const dir = path.join(root, "docs/specs/changes/draft-reservas");
+    fs.writeFileSync(
+      path.join(dir, "specs/reservas/spec.md"),
+      `## ADDED Requirements
+
+### Requirement: REQ-143 — No se reserva por encima de los puestos
+
+<!-- csda:trace kind=business-rule -->
+
+El sistema SHALL rechazar una reserva cuando los puestos están llenos.
+
+#### Scenario: SCN-145 — No se reserva el último puesto ya ocupado
+
+- DADO "Peluquería" con 2 puestos a las 10:00 y 2 reservas a esa hora
+- CUANDO un cliente hace POST /api/reservas para las 10:00
+- ENTONCES la respuesta es 409 y la reserva no se crea
+`,
+      "utf8"
+    );
+    fs.writeFileSync(path.join(dir, "tasks.md"), "# Tasks\n\n- [x] 1.1 done\n", "utf8");
+
+    const doc = json(run(root, ["archive", "draft-reservas", "--json"]));
+    assert.ok(doc.archive, JSON.stringify(doc.status));
+
+    const feature = fs.readFileSync(path.join(root, "features/reservas/REQ-143.feature"), "utf8");
+    assert.match(
+      feature,
+      /^# language: es\nCaracterística: No se reserva por encima de los puestos/
+    );
+    assert.match(feature, /@REQ-143 @SCN-145\n {2}Escenario: .*\n {4}Dado "Peluquería"/);
+
+    const spec = fs.readFileSync(
+      path.join(root, "docs/specs/capabilities/reservas/spec.md"),
+      "utf8"
+    );
+    assert.match(spec, /feature=features\/reservas\/REQ-143\.feature/);
+    const matrix = fs.readFileSync(path.join(root, "docs/specs/traceability.md"), "utf8");
+    assert.match(matrix, /\| REQ-143 \| SCN-145 \| `?features\/reservas\/REQ-143\.feature/);
+  } finally {
+    cleanup(root);
+  }
+});
+
 test("archive refuses while tasks are unchecked, and --force overrides", () => {
   const root = mkProject();
   try {

@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { renderDeltaFeature } from "../domain/DeltaFeature";
+import { renderDeltaFeature, withDefaultFeaturePaths } from "../domain/DeltaFeature";
 import { IProjectRepository } from "./ports/IProjectRepository";
 import { ArchivePlan } from "../domain/ArchivePlan";
 import { DeltaSpec } from "../domain/DeltaSpec";
@@ -63,8 +63,13 @@ export class ArchiveChangeUseCase {
     const applied = { upserts: [] as any[], removals: [] as string[] };
     const p = this.repo.getPaths();
 
+    // A change that brings no .feature files gets one per requirement with
+    // scenarios, rendered from the delta (#46). One that brings its own keeps
+    // the mapping its author chose.
+    const bringsFeatures = this.repo.listChangeFeatures(changeId).length > 0;
     for (const entry of deltas) {
-      const deltaSource = this.repo.readFile(entry.file) || "";
+      const raw = this.repo.readFile(entry.file) || "";
+      const deltaSource = bringsFeatures ? raw : withDefaultFeaturePaths(raw, entry.capability);
       const specFile = p.capabilitySpec(entry.capability);
       const specSource = this.repo.readFile(specFile);
 

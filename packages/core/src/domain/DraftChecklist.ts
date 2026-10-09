@@ -15,6 +15,7 @@
 import type { Diagnostic } from "./Diagnostic";
 import { error, info } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
+import { analyseScenario } from "./GherkinQuality";
 
 export const KINDS = new Set(["functional", "non-functional", "business-rule"]);
 
@@ -100,20 +101,37 @@ function inText(value: string, text: string): boolean {
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
-/** Rows of `questions.md`: `| # | Question | Blocks | … |`. */
-function questionRows(md: string): Array<{ row: string; blocks: string[]; line: number }> {
+/**
+ * Rows of `questions.md`: `| # | Question | Blocks | … |`.
+ *
+ * A row is answered when its `Answer` (or `Respuesta`) cell is filled, or when
+ * a line below the table starts with `Answer` / `Respuesta` and names the row,
+ * as in `Answer (Q1): …`. The spec once said "an `Answer:` line under the
+ * row", which a Markdown table cannot hold; D7 then kept an answered question
+ * open and demanded its requirement stay `Needs Clarification` (#45).
+ */
+function questionRows(
+  md: string
+): Array<{ row: string; blocks: string[]; line: number; answered: boolean }> {
   const lines = md.replace(/\r\n/g, "\n").split("\n");
   const header = lines.findIndex((l) => /^\|.*\bBlocks\b.*\|/i.test(l));
   if (header === -1) return [];
   const cols = lines[header].split("|").map((c) => c.trim().toLowerCase());
   const at = cols.indexOf("blocks");
-  const out: Array<{ row: string; blocks: string[]; line: number }> = [];
+  const answerCol = cols.findIndex((c) => c === "answer" || c === "respuesta");
+  const answerLines = lines.filter((l) => /^\s*(?:[-*]\s*)?\**(answer|respuesta)\b/i.test(l));
+  const out: Array<{ row: string; blocks: string[]; line: number; answered: boolean }> = [];
   for (let i = header + 2; i < lines.length && /^\|/.test(lines[i]); i += 1) {
     const cells = lines[i].split("|").map((c) => c.trim());
+    const row = cells[1] || `row ${i + 1}`;
+    const named = new RegExp(`(^|[^A-Za-z0-9])${escapeRegExp(row)}(?![A-Za-z0-9])`);
     out.push({
-      row: cells[1] || `row ${i + 1}`,
+      row,
       blocks: (cells[at] || "").match(/REQ-[A-Za-z0-9.]+/g) || [],
       line: i + 1,
+      answered:
+        (answerCol > 0 && (cells[answerCol] || "").length > 0) ||
+        answerLines.some((l) => named.test(l)),
     });
   }
   return out;
@@ -122,7 +140,7 @@ function questionRows(md: string): Array<{ row: string; blocks: string[]; line: 
 // ── What D4 and D5 look for ───────────────────────────────────────────────────
 
 const MEASURE =
-  /\d+(?:[.,]\d+)?\s*(ms|s|sec|seconds?|min|minutes?|h|hours?|%|m|km|kb|mb|gb|req\/s|rps|users?|days?)\b/i;
+  /\d+(?:[.,]\d+)?\s*(ms|s|sec|seconds?|min|minutes?|h|hours?|%|m|km|kb|mb|gb|px|req\/s|rps|users?|days?)\b/i;
 const CITES =
   /(\bCode\s*§|§\s*\d|\bACI\b|\bOSHA\b|\bGDPR\b|\bCCPA\b|\bHIPAA\b|\bISO\s*\d|\bCBA\b|\bcontract\b|\bregulation\b|\bLey\b|\bnorma\b)/i;
 const SOURCED = /(https?:\/\/|\bSource:|\bFuente:)/i;
@@ -131,10 +149,11 @@ const SOURCED = /(https?:\/\/|\bSource:|\bFuente:)/i;
  * when it uses one and states no number: "fast", "scalable", "low latency".
  * A qualitative constraint — offline, privacy, which devices — is verifiable
  * without a number; flagging every one of those was 4 false positives out of
- * 4 on the Golden State packs.
+ * 4 on the Golden State packs. "Responsive" is not on the list: it names a
+ * layout that adapts to the screen, not a response time (reservas_app, #42).
  */
 const QUANTITATIVE =
-  /\b(fast|faster|quick(ly)?|slow|speed|latency|response time|responsive|performan(t|ce)|throughput|concurren(t|cy)|load|scal(able|e|ability)|uptime|availab(le|ility)|capacity|real[- ]time|instant(ly)?|r[aá]pid[oa]?|veloz|escalable|disponibilidad)\b/i;
+  /\b(fast|faster|quick(ly)?|slow|speed|latency|response time|performan(t|ce)|throughput|concurren(t|cy)|load|scal(able|e|ability)|uptime|availab(le|ility)|capacity|real[- ]time|instant(ly)?|r[aá]pid[oa]?|veloz|escalable|disponibilidad)\b/i;
 
 /** Promises a quantity and states none. */
 export function unmeasured(text: string): boolean {
@@ -278,8 +297,13 @@ export function checkDraft(files: DraftFiles): DraftReport {
     const assumptions = files.assumptions || "";
     for (const r of reqs) {
       for (const s of r.scenarios) {
+        // One finding per value per scenario: a name repeated in three steps is
+        // one thing to list, not three (#43).
+        const seen = new Set<string>();
         for (const step of s.steps) {
           for (const v of statedValues(step)) {
+            if (seen.has(v)) continue;
+            seen.add(v);
             if (inText(v, files.brief)) continue;
             const listed = assumptions
               .split("\n")
@@ -307,6 +331,7 @@ export function checkDraft(files: DraftFiles): DraftReport {
   if (files.questions) {
     const byId = new Map(reqs.map((r) => [r.id, r]));
     for (const q of questionRows(files.questions)) {
+      if (q.answered) continue;
       if (q.blocks.length === 0) {
         status.push(
           error("D7_floating_question", `Question ${q.row} blocks no requirement.`, {
@@ -331,6 +356,51 @@ export function checkDraft(files: DraftFiles): DraftReport {
             )
           );
         }
+      }
+    }
+  }
+
+  // D9 — every scenario passes the rules the harness gate will apply to it.
+  // The scenario-quality rules run once a requirement leaves Draft, so a draft
+  // that passed this checklist could still fail the harness on a title — and
+  // the agent may not edit the scenario (reservas_app, #49).
+  const KIND: Record<string, string> = {
+    given: "given",
+    dado: "given",
+    dada: "given",
+    dados: "given",
+    dadas: "given",
+    when: "when",
+    cuando: "when",
+    then: "then",
+    entonces: "then",
+    and: "and",
+    y: "and",
+    but: "but",
+    pero: "but",
+  };
+  for (const r of reqs) {
+    for (const s of r.scenarios) {
+      let previous = "";
+      const steps = s.steps.map((raw) => {
+        const m = /^\s*(\S+)\s*(.*)$/.exec(raw) || ["", "", raw];
+        const kind = KIND[m[1].toLowerCase()] || "";
+        // `And` / `Y` inherit the step above, as Gherkin reads them.
+        previous = kind === "and" || kind === "but" ? previous : kind;
+        return { keyword: previous, text: m[2] };
+      });
+      for (const d of analyseScenario(
+        { name: s.name, steps, outline: false, hasExamples: false, line: s.line },
+        s.id
+      )) {
+        status.push(
+          error("D9_scenario_quality", `${s.id}: ${d.message}`, {
+            file: r.file,
+            line: s.line,
+            target: s.id,
+            fix: d.fix,
+          })
+        );
       }
     }
   }
@@ -384,6 +454,26 @@ function sections(source: string) {
       body.push(lines[j]);
     }
     out.push({ id: m[2], line: i + 1, text: body.join("\n"), trace });
+  }
+  return out;
+}
+
+/**
+ * Each requirement's title, from `spec.md` and the capability specs.
+ *
+ * The matrix names a use case, not a title; a requirement archived from a
+ * change has no use case, so `status` listed eighteen of them with a blank
+ * name (reservas_app, #48).
+ */
+export function requirementTitles(
+  specs: ReadonlyArray<{ readonly source: string }>
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const f of specs) {
+    for (const line of f.source.replace(/\r\n/g, "\n").split("\n")) {
+      const m = SECTION.exec(line.trim());
+      if (m && m[3].trim() && !out.has(m[2])) out.set(m[2], m[3].trim());
+    }
   }
   return out;
 }
