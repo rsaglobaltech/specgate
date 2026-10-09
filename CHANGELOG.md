@@ -10,6 +10,20 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **`specgate draft --check <change-id>`** (ADR-0029, phase 1): the checklist a
+  draft change must pass before anyone reviews it — a scenario and a kind for
+  every requirement (D1, D2), a scenario on each surface an actor uses (D3), a
+  measure for every non-functional requirement (D4), a source for every cited
+  law (D5), every stated value either in the brief or listed in
+  `assumptions.md` (D6), every open question blocking something (D7), and a
+  size a person can review (D8). A rule that cannot run says so instead of
+  passing. Works on any change, drafted by an agent or by hand.
+- **`specgate status` notes D4 and D5 on the project's own specification**: a
+  non-functional requirement that promises a quantity ("fast", "scalable")
+  without stating it, and a business rule that cites a law with no source.
+  Notes, never failures. D4 flags a promised quantity, not every qualitative
+  constraint: on the Golden State packs the first version flagged 4
+  requirements about offline use, privacy and devices, none of them omissions.
 - **MCP tool `specgate_verify`** (ADR-0030): the agent working from an OpenSpec
   spec gets the same check `specgate verify` runs, inside its own loop.
 - **A weekly check that `verify` still reads OpenSpec.** OpenSpec releases

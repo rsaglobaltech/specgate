@@ -47,6 +47,7 @@ diseño) va al final, separado, para que el historial no se infle.
 | 38 | 2026-10-08 | piloto de `verify` con OpenSpec (antes de publicar) | El lector de OpenSpec ignoraba en silencio las capacidades anidadas (`specs/time-attendance/clock-punches/spec.md`) | la expresión regular aceptaba un solo segmento de ruta | 0.15.0 (antes de publicar) |
 | 39 | 2026-10-08 | revisión antes de publicar `verify` | Dos cosas se llaman "verify": el comando para agentes `/specgate:verify` (ejecuta el gate `check`) y el nuevo `specgate verify` (OpenSpec) | nombre elegido sin revisar los comandos que `agents init` ya escribe | `/specgate:verify` → `/specgate:check` (decisión del usuario), migrado por `specgate update`; 0.15.0 |
 | 40 | 2026-10-08 | prueba real de la herramienta MCP `specgate_verify` | El servidor MCP rechazaba el proyecto OpenSpec: "Not a spec-driven project (no spec.md)" | toda herramienta exigía `spec.md`; un proyecto OpenSpec no lo tiene | rama `feat/verify-mcp` |
+| 41 | 2026-10-09 | `status` con D4 sobre golden_app (antes de publicar) | D4 marcaba 4 de 4 requisitos no funcionales cualitativos (offline, privacidad, dispositivos) como "sin medida" | la regla exigía un número a todo requisito no funcional; la omisión real es prometer una cantidad ("rápido", "escalable") sin darla | 0.16.0 (antes de publicar) |
 | 36 | 2026-10-08 | CI de Specgate | El job de lint se colgó 6 h | `apt-get update` colgado en ShellCheck, sin timeout | `ci.yml` (#242) |
 
 ## No son defectos de Specgate

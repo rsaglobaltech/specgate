@@ -266,6 +266,18 @@ export const SURFACE: Command[] = [
     json: { key: "check", gate: true, args: "[dir]" },
   },
   {
+    name: "draft",
+    script: ["draft.js"],
+    help: {
+      group: "core",
+      icon: "📝",
+      summary:
+        "Check a draft change is complete enough to review: scenarios, kinds, surfaces, sources (ADR-0029).",
+    },
+    json: { key: "draft", gate: true },
+    mcp: false,
+  },
+  {
     name: "verify",
     script: ["verify.js"],
     help: {

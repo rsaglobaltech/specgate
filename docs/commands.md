@@ -45,6 +45,7 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 | `specgate change author <id>` | Have an agent write one artefact, confined to the change directory and gated by `change validate`. |
 | `specgate change validate` | Check the deltas. Runs inside `specgate validate` too. |
 | `specgate change archive <id>` | Merge the delta into the specs, write the matrix rows, materialise the feature files. `--dry-run` first. |
+| `specgate draft --check <id> [--brief <file>]` | Is a draft change complete enough to review? Every requirement has a scenario and a kind, each actor's surfaces (API, screen) have a scenario, non-functional requirements are measured, cited laws name a source, every value is in the brief or listed in `assumptions.md`, every question blocks something. [ADR-0029](specs/adr/0029-a-brief-becomes-a-draft-change-not-a-spec.md) |
 
 → [Reviewing changes](reviewing-changes.md)
 

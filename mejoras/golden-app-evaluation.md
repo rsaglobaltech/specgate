@@ -27,7 +27,7 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 | 29 | La línea base de `adopt` se planifica para siempre | [x] fix/golden-eval-3 |
 | 30 | `sync` sin cambios reescribe `expanded_at` en el lock (diff ruidoso) | [ ] abierto |
 | 32 | Un escenario añadido a un requisito entregado hereda sus tests: 99/99 "done" con 52 sin probar | [x] fix/scenario-links |
-| 33 | `plan --json` cortado a 65.536 bytes en pipe (`process.exit` antes de vaciar stdout); 28 comandos más hacen lo mismo | [x] plan · [ ] resto |
+| 33 | `plan --json` cortado a 65.536 bytes en pipe (`process.exit` antes de vaciar stdout); 28 comandos más hacen lo mismo | [x] plan (0.14.4) · resto con stdio bloqueante (#261) |
 | 34 | `validate --against-lock` compara solo el primer escenario de cada requisito: con varios, falsa deriva | [x] fix/drift-multi-scenario |
 | 35 | Harness en verde pero push rechazado ("stale info") en la 2.ª ronda | [x] fix/harness-stale-lease |
 | 37 | Harness rechaza una matriz derivada regenerada como "edición prohibida" (REQ-302) | [x] fix/harness-derived-matrix |
@@ -53,6 +53,7 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 - [ ] `verify`: piloto externo (otro equipo/módulo) antes del caso público.
 - [x] `verify`: herramienta MCP `specgate_verify` (probada por stdio sobre el piloto; destapó #40).
 - [x] `verify`: job semanal de compatibilidad con la última OpenSpec (`openspec-compat.yml`).
-- [ ] `specgate draft` fase 1: checklist D1–D8 + `draft --check`.
+- [x] `specgate draft` fase 1: checklist D1–D8 + `draft --check` (2026-10-09).
+- [x] `specgate draft`: D4–D5 como notas en `status` (D1 ya lo da `plan`; D2 no es omisión fuera de un borrador). Destapó #41.
 - [ ] `specgate draft` fase 3: prototipo y evaluación contra la ficha de golden_app (guardar la ficha original como fixture).
 - [ ] Informe final de evaluación.

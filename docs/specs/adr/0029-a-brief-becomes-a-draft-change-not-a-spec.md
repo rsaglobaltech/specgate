@@ -62,7 +62,7 @@ to review; a person decides what it becomes.**
    | D1 | a requirement has no scenario |
    | D2 | a requirement has no `kind` (`functional`, `non-functional`, `business-rule`) |
    | D3 | a use case a person drives has no scenario on each surface the brief declares (`api`, `mobile`, `web`) |
-   | D4 | a non-functional requirement states no number with a unit |
+   | D4 | a non-functional requirement promises a quantity ("fast", "scalable") and states no number with a unit |
    | D5 | a business rule that cites a law, standard or contract names no source |
    | D6 | a scenario uses a value that is not in the brief and is not listed as an assumption |
    | D7 | an open question is not attached to the requirements it blocks |
