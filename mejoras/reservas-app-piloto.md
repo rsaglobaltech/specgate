@@ -151,6 +151,46 @@ El agente añadió "Cupones" al menú del panel sin que nadie lo pidiera: leyó
 REQ-200 ("un acceso a cada pantalla del propietario") como una regla viva, no
 como una lista cerrada.
 
+## Ciclo 4 — feedback tras la cita (0.17.2)
+
+5 requisitos (encuesta por correo una sola vez, valoración 1–5, 4–5 a Google
+Maps, enlace de reseñas del comercio, pantalla de valoraciones). Primer uso de
+un servicio externo: el correo sale por el puerto `IMailer`; Google Maps es un
+enlace (Google no deja publicar reseñas de terceros).
+
+- `draft --check`: solo 11 D6, todos nuevos — el arreglo #52 quitó el ruido de
+  valores ya revisados. Pero el borrador reutilizó SCN-212–216 de cupones y
+  nada lo dijo hasta `validate` (#55 → D10).
+- Harness 5/5; REQ-212 perdió un intento porque el agente ejecutó el `done` que
+  le pide el prompt y write-scope lo castigó (#56).
+- Prueba de humo: enlace de Google validado; la tarea de encuestas estaba
+  **abierta** (sin `CRON_SECRET`, 200). El envío real de la encuesta no se pudo
+  probar sin manipular el reloj: solo lo cubren los tests con reloj fijo.
+
+## Ciclo 5 — escaparate y escaparate-2 (0.17.2 → 0.17.4)
+
+7 requisitos (datos, cabecera y fotos, mapa, reseñas públicas, directorio por
+ciudad, subdominio, cron siempre protegido). Harness 7/7 al primer intento.
+
+La prueba de humo encontró lo que los tests no:
+
+- **`develop` no compilaba en producción**: REQ-224 dejó un `eslint-disable` de
+  una regla no cargada. Typecheck y tests en verde; el gate no hacía build
+  (#62 → `harness init` lo añade). Gate y CI de los dos proyectos con build.
+- **El propietario no tenía pantalla para sus datos ni para sus fotos**, y la
+  página pública no enseñaba las fotos. D3 había aceptado la pantalla del
+  cliente como la del propietario (#61); y "mostrarlas en su página pública"
+  estaba en el texto de REQ-221 sin escenario que lo probara — el agente no lo
+  hizo. Lección: lo que no tiene escenario no existe.
+
+`escaparate-2` (REQ-220/221 MODIFIED) destapó #63 (el harness tomaba "Nothing
+proves" por fallo de la spec) y #64 (dos modificados se bloqueaban el gate el
+uno al otro); con 0.17.4 la spec modificada entró en `develop` antes que el
+código y el harness la construyó desde `develop` (#65 le costó un intento a
+cada uno). Prueba de humo: datos y fotos desde la pantalla, galería pública.
+
+Cierre: 38/38, gate con build, `main` en **v0.3.0**.
+
 ## Tareas
 
 - [x] Ficha leída y guardada en `docs/brief.md` (2026-10-09).
@@ -162,7 +202,8 @@ como una lista cerrada.
 - [x] Prueba de humo del flujo completo (propietario → cliente → cancelación).
 - [x] Segundo borrador: agenda por día, enlace público, navegación (ciclo 2).
 - [x] Tercer borrador: cupones (ciclo 3), v0.2.0.
-- [ ] Siguiente: feedback tras la cita (necesita correo saliente y Google Maps) o escaparate (fotos, mapa, reseñas).
+- [x] Feedback tras la cita (ciclo 4) y escaparate (ciclo 5), v0.3.0.
+- [ ] Recordatorio push 24 h e integración (widget para la web y Facebook): lo que queda de la ficha.
 - [x] Arreglar #51–#54 y documentar el flujo de un requisito modificado (0.17.2).
 - [ ] Borradores siguientes: escaparate, cupones, feedback, notificaciones, integración.
 - [x] Arreglar #42–#50 (0.17.1).
