@@ -54,6 +54,6 @@ Los defectos de Specgate, con causa y versión que los arregla, están en
 - [x] `verify`: herramienta MCP `specgate_verify` (probada por stdio sobre el piloto; destapó #40).
 - [x] `verify`: job semanal de compatibilidad con la última OpenSpec (`openspec-compat.yml`).
 - [x] `specgate draft` fase 1: checklist D1–D8 + `draft --check` (2026-10-09).
-- [ ] `specgate draft`: D1–D5 como informe en `status`/`plan` sobre specs escritas a mano.
+- [x] `specgate draft`: D4–D5 como notas en `status` (D1 ya lo da `plan`; D2 no es omisión fuera de un borrador). Destapó #41.
 - [ ] `specgate draft` fase 3: prototipo y evaluación contra la ficha de golden_app (guardar la ficha original como fixture).
 - [ ] Informe final de evaluación.

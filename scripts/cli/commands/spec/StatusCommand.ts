@@ -6,6 +6,8 @@ import { readLock } from "../../../specops/lock";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
+import { specNotes } from "../../../../packages/core/src/domain/DraftChecklist";
+import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { refreshDerivedMatrix } from "./MatrixCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 
@@ -168,7 +170,7 @@ function titleOf(item: any): string {
   return t && t !== "-" ? t : "";
 }
 
-function emitText(projectDir: string, summary: any, lock: any): void {
+function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []): void {
   const { items, counts, pending, orphans } = summary;
   process.stdout.write(
     `\n  ${c.bold}📊 Project status${c.reset}  ${c.dim}${path.basename(path.resolve(projectDir))}${c.reset}\n\n`
@@ -200,6 +202,17 @@ function emitText(projectDir: string, summary: any, lock: any): void {
       `\n  ${c.red}${orphans.length} orphan feature file(s)${c.reset} ${c.dim}— not in the matrix${c.reset}\n`
     );
 
+  if (notes.length > 0) {
+    process.stdout.write(
+      `\n  ${c.bold}Spec notes${c.reset}  ${c.dim}(not failures — ADR-0029)${c.reset}\n`
+    );
+    for (const n of notes.slice(0, 5)) {
+      process.stdout.write(`    ${c.yellow}${n.code}${c.reset} ${n.message}\n`);
+    }
+    if (notes.length > 5)
+      process.stdout.write(`    ${c.dim}… ${notes.length - 5} more in --json${c.reset}\n`);
+  }
+
   if (lock && lock.packs && lock.packs.length > 0) {
     process.stdout.write(`\n  ${c.bold}Packs${c.reset}  ${c.dim}(.specops.lock)${c.reset}\n`);
     for (const p of lock.packs) {
@@ -214,7 +227,7 @@ function emitText(projectDir: string, summary: any, lock: any): void {
   );
 }
 
-function emitJson(projectDir: string, summary: any, lock: any): void {
+function emitJson(projectDir: string, summary: any, lock: any, notes: any[] = []): void {
   const { counts, pending, orphans } = summary;
   process.stdout.write(
     JSON.stringify(
@@ -233,7 +246,7 @@ function emitJson(projectDir: string, summary: any, lock: any): void {
           needs: needsOf(it) || null,
         })),
         nextCommand: nextCommandPlain(summary),
-        status: [],
+        status: notes,
       },
       null,
       2
@@ -277,8 +290,20 @@ export class StatusCommand extends BaseCommand {
       lock = null;
     }
 
-    if (opts.format === "json") emitJson(projectDir, summary, lock);
-    else emitText(projectDir, summary, lock);
+    // D4 and D5 on the project's own specification: notes, never failures.
+    let notes: any[] = [];
+    try {
+      const sources = readDerivationSources(projectDir);
+      notes = specNotes(
+        [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])],
+        sources.features
+      );
+    } catch {
+      notes = [];
+    }
+
+    if (opts.format === "json") emitJson(projectDir, summary, lock, notes);
+    else emitText(projectDir, summary, lock, notes);
     process.exit(0);
   }
 }

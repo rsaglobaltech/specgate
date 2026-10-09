@@ -13,7 +13,7 @@
  */
 
 import type { Diagnostic } from "./Diagnostic";
-import { error } from "./Diagnostic";
+import { error, info } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
 
 export const KINDS = new Set(["functional", "non-functional", "business-rule"]);
@@ -117,6 +117,28 @@ function questionRows(md: string): Array<{ row: string; blocks: string[]; line: 
   return out;
 }
 
+// ── What D4 and D5 look for ───────────────────────────────────────────────────
+
+const MEASURE =
+  /\d+(?:[.,]\d+)?\s*(ms|s|sec|seconds?|min|minutes?|h|hours?|%|m|km|kb|mb|gb|req\/s|rps|users?|days?)\b/i;
+const CITES =
+  /(\bCode\s*§|§\s*\d|\bACI\b|\bOSHA\b|\bGDPR\b|\bCCPA\b|\bHIPAA\b|\bISO\s*\d|\bCBA\b|\bcontract\b|\bregulation\b|\bLey\b|\bnorma\b)/i;
+const SOURCED = /(https?:\/\/|\bSource:|\bFuente:)/i;
+/**
+ * Words that promise a quantity. A non-functional requirement is unmeasured
+ * when it uses one and states no number: "fast", "scalable", "low latency".
+ * A qualitative constraint — offline, privacy, which devices — is verifiable
+ * without a number; flagging every one of those was 4 false positives out of
+ * 4 on the Golden State packs.
+ */
+const QUANTITATIVE =
+  /\b(fast|faster|quick(ly)?|slow|speed|latency|response time|responsive|performan(t|ce)|throughput|concurren(t|cy)|load|scal(able|e|ability)|uptime|availab(le|ility)|capacity|real[- ]time|instant(ly)?|r[aá]pid[oa]?|veloz|escalable|disponibilidad)\b/i;
+
+/** Promises a quantity and states none. */
+export function unmeasured(text: string): boolean {
+  return QUANTITATIVE.test(text) && !MEASURE.test(text);
+}
+
 // ── The checklist ─────────────────────────────────────────────────────────────
 
 export function checkDraft(files: DraftFiles): DraftReport {
@@ -213,25 +235,24 @@ export function checkDraft(files: DraftFiles): DraftReport {
   }
 
   // D4 — a non-functional requirement states a number with a unit.
-  const MEASURE =
-    /\d+(?:[.,]\d+)?\s*(ms|s|sec|seconds?|min|minutes?|h|hours?|%|m|km|kb|mb|gb|req\/s|rps|users?|days?)\b/i;
   for (const r of reqs) {
     if (r.trace.kind !== "non-functional") continue;
     const all = [r.text, ...r.scenarios.flatMap((s) => s.steps)].join("\n");
-    if (!MEASURE.test(all)) {
+    if (unmeasured(all)) {
       status.push(
-        error("D4_unmeasured_nfr", `${r.id} is non-functional and states no number with a unit.`, {
-          ...at(r),
-          fix: 'State the measure: "within 2 seconds", "99.5 % of requests", "under 200 MB".',
-        })
+        error(
+          "D4_unmeasured_nfr",
+          `${r.id} promises a quantity (speed, load, availability) and states no number with a unit.`,
+          {
+            ...at(r),
+            fix: 'State the measure: "within 2 seconds", "99.5 % of requests", "under 200 MB".',
+          }
+        )
       );
     }
   }
 
   // D5 — a business rule that cites a law, standard or contract names its source.
-  const CITES =
-    /(\bCode\s*§|§\s*\d|\bACI\b|\bOSHA\b|\bGDPR\b|\bCCPA\b|\bHIPAA\b|\bISO\s*\d|\bCBA\b|\bcontract\b|\bregulation\b|\bLey\b|\bnorma\b)/i;
-  const SOURCED = /(https?:\/\/|\bSource:|\bFuente:)/i;
   for (const r of reqs) {
     if (r.trace.kind !== "business-rule") continue;
     if (CITES.test(r.text) && !SOURCED.test(r.text)) {
@@ -332,4 +353,84 @@ export function checkDraft(files: DraftFiles): DraftReport {
     skipped,
     status,
   };
+}
+
+// ── The same rules on a hand-written specification ─────────────────────────────
+
+const SECTION = /^(#{2,4})\s+(?:Requirement:\s*)?(REQ-[A-Za-z0-9.]+)\b\s*[—–:-]?\s*(.*)$/;
+const TRACE = /<!--\s*csda:trace\b(.*?)-->/;
+
+/** Each requirement section of `spec.md` or a capability spec: id, line, text, trace. */
+function sections(source: string) {
+  const lines = source.replace(/\r\n/g, "\n").split("\n");
+  const out: Array<{ id: string; line: number; text: string; trace: Record<string, string> }> = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const m = SECTION.exec(lines[i].trim());
+    if (!m) continue;
+    const level = m[1].length;
+    const body: string[] = [];
+    const trace: Record<string, string> = {};
+    for (let j = i + 1; j < lines.length; j += 1) {
+      if (new RegExp(`^#{1,${level}}\\s+\\S`).test(lines[j])) break;
+      const t = TRACE.exec(lines[j]);
+      if (t) {
+        for (const kv of t[1].matchAll(/([a-z_]+)=("([^"]*)"|'([^']*)'|(\S+))/gi)) {
+          trace[kv[1].toLowerCase()] = kv[3] ?? kv[4] ?? kv[5];
+        }
+        continue;
+      }
+      body.push(lines[j]);
+    }
+    out.push({ id: m[2], line: i + 1, text: body.join("\n"), trace });
+  }
+  return out;
+}
+
+/**
+ * D4 and D5 as a report on a project's own specification (ADR-0029 decision 6).
+ *
+ * The checks that need no brief and say something `plan` does not already:
+ * D1 is `plan`'s "Needs Feature File"; D2 is not an omission outside a draft,
+ * since a requirement with no kind is functional (use-case model, §2). Info
+ * severity: adopting a release never turns a project red over its past
+ * (ADR-0023).
+ */
+export function specNotes(
+  specs: ReadonlyArray<{ readonly path: string; readonly source: string }>,
+  features: ReadonlyArray<{ readonly path: string; readonly source: string }>
+): Diagnostic[] {
+  const notes: Diagnostic[] = [];
+  for (const f of specs) {
+    for (const r of sections(f.source)) {
+      const where = { file: f.path, line: r.line, target: r.id };
+      if (r.trace.kind === "non-functional") {
+        const tagged = features.filter((x) => new RegExp(`@${r.id}(?![A-Za-z0-9])`).test(x.source));
+        if (unmeasured([r.text, ...tagged.map((x) => x.source)].join("\n"))) {
+          notes.push(
+            info(
+              "D4_unmeasured_nfr",
+              `${r.id} promises a quantity (speed, load, availability) and states no number with a unit.`,
+              {
+                ...where,
+                fix: 'State the measure: "within 2 seconds", "99.5 % of requests".',
+              }
+            )
+          );
+        }
+      }
+      if (r.trace.kind === "business-rule" && CITES.test(r.text) && !SOURCED.test(r.text)) {
+        notes.push(
+          info(
+            "D5_unsourced_rule",
+            `${r.id} cites a law, standard or contract and names no source.`,
+            {
+              ...where,
+              fix: 'Add a "Source:" line: a link, or the clause and edition.',
+            }
+          )
+        );
+      }
+    }
+  }
+  return notes;
 }

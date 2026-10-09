@@ -1,6 +1,6 @@
 # Drafting from a brief — specification
 
-Status: **Phase 1 implemented (`draft --check`, D1–D8); D1–D5 in `status`/`plan` and phases 2–4 pending.** Decided in
+Status: **Phase 1 implemented: `draft --check` (D1–D8), and D4–D5 as notes in `status` (D1 is `plan`'s "Needs Feature File"; D2–D3 need a draft or a brief). Phases 2–4 pending.** Decided in
 [ADR-0029](adr/0029-a-brief-becomes-a-draft-change-not-a-spec.md).
 Implemented in the phases at the end; phase 1 is an evaluation, not a release.
 
@@ -99,7 +99,7 @@ harness gate). On a hand-written project, D1–D5 are a report in `status` and
 | `D1_no_scenario` | Every requirement has a scenario | a feature file tagged `@REQ-NNN` |
 | `D2_no_kind` | Every requirement has a kind | `kind=` in its `csda:trace` |
 | `D3_surface_missing` | Every use case a person drives has a scenario per surface its actor uses | `api`: a step matching `(GET\|POST\|PUT\|PATCH\|DELETE) /`; a screen: a step naming a control (`taps`, `opens`, `sees`, `toca`, `abre`) |
-| `D4_unmeasured_nfr` | A non-functional requirement states a number with a unit | a number followed by a unit (`ms`, `s`, `m`, `%`, `MB`, `req/s`…) in its text or its scenario |
+| `D4_unmeasured_nfr` | A non-functional requirement that promises a quantity states it | it uses a quantity word (fast, latency, scalable, availability, load…) and no number followed by a unit (`ms`, `s`, `%`, `MB`, `req/s`…) in its text or scenarios. Qualitative constraints (offline, privacy, devices) are not quantities: flagging them was 4 false positives out of 4 on the Golden State packs |
 | `D5_unsourced_rule` | A business rule that mentions a law, code, standard or contract names its source | a mention (`Code §`, `ACI`, `OSHA`, `GDPR`, `CBA`, `contract`…) and no link or `Source:` line |
 | `D6_unlisted_value` | A value in a scenario is in the brief or in `assumptions.md` | every number and every quoted string in a scenario's steps is found in the brief text, or in an assumption row that names that scenario |
 | `D7_floating_question` | A question names what it blocks | every row of `questions.md` has `Blocks`, and each of those requirements is `Needs Clarification` |

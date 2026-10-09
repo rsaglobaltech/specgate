@@ -234,3 +234,37 @@ test("draft --check runs the checklist on a change, with the brief from change.y
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("D4 flags a promised quantity with no number, not a qualitative constraint", () => {
+  const { unmeasured, specNotes } = require("../../packages/core/src/domain/DraftChecklist");
+  assert.equal(unmeasured("Punches SHALL be fast."), true);
+  assert.equal(unmeasured("A punch SHALL be confirmed within 2 seconds."), false);
+  // The four Golden State NFRs it wrongly flagged at first: verifiable, no quantity.
+  for (const text of [
+    "A downloaded course is usable without network; progress syncs later.",
+    "The app reads location only while a punch is being taken.",
+    "Email content is not stored beyond the session unless the user saves the draft.",
+    "All job-file actions work from the worker's own Android or iPhone, offline included.",
+  ]) {
+    assert.equal(unmeasured(text), false, text);
+  }
+  const notes = specNotes(
+    [
+      {
+        path: "spec.md",
+        source:
+          "## REQ-011 — Fast punch\n\n<!-- csda:trace kind=non-functional -->\n\nPunches SHALL be fast.\n\n" +
+          "## REQ-012 — Meal\n\n<!-- csda:trace kind=business-rule -->\n\nMeal periods follow Labor Code §512.\n\n" +
+          "## REQ-013 — Offline\n\n<!-- csda:trace kind=non-functional -->\n\nLessons work offline.\n",
+      },
+    ],
+    []
+  );
+  assert.deepEqual(
+    notes.map((n) => [n.code, n.target, n.severity]),
+    [
+      ["D4_unmeasured_nfr", "REQ-011", "info"],
+      ["D5_unsourced_rule", "REQ-012", "info"],
+    ]
+  );
+});
