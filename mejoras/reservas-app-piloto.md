@@ -143,7 +143,13 @@ brief, públicos y privados, aplicados al reservar y visibles en la agenda.
 |---|---|
 | `draft --check` | 29 D6, todos legítimos salvo 4 (#52): códigos de cupón, motivos de rechazo, el precio final de 18 €. D3 = 0 |
 | `change archive` | limpio (sin `--force`: `tasks.md` solo con tareas de spec); 5 features en español |
-| Harness | (en curso) |
+| Harness | 5/5 al primer intento (REQ-206 1093 s: crea el módulo entero; el resto 135–429 s), PR #27–#31 |
+| Prueba de humo | cupón público y privado; la página pública muestra "Ofertas" con el público y oculta el privado; reserva a 360 px con "OTONO10" → "Precio final: 18,00 €"; la agenda del sábado muestra el cupón y 18,00 € |
+| Cierre | Specgate 0.17.2 en el repo, 26/26 requisitos, `main` en `v0.2.0` |
+
+El agente añadió "Cupones" al menú del panel sin que nadie lo pidiera: leyó
+REQ-200 ("un acceso a cada pantalla del propietario") como una regla viva, no
+como una lista cerrada.
 
 ## Tareas
 
@@ -155,7 +161,8 @@ brief, públicos y privados, aplicados al reservar y visibles en la agenda.
 - [x] `specgate update` a 0.17.0 en el repo real: migración limpia, gate verde.
 - [x] Prueba de humo del flujo completo (propietario → cliente → cancelación).
 - [x] Segundo borrador: agenda por día, enlace público, navegación (ciclo 2).
-- [ ] Tercer borrador: cupones (ciclo 3).
+- [x] Tercer borrador: cupones (ciclo 3), v0.2.0.
+- [ ] Siguiente: feedback tras la cita (necesita correo saliente y Google Maps) o escaparate (fotos, mapa, reseñas).
 - [x] Arreglar #51–#54 y documentar el flujo de un requisito modificado (0.17.2).
 - [ ] Borradores siguientes: escaparate, cupones, feedback, notificaciones, integración.
 - [x] Arreglar #42–#50 (0.17.1).
