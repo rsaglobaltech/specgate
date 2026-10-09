@@ -111,6 +111,40 @@ no que el escenario de pantalla describa una pantalla útil. Un escenario de
 pantalla debería nombrar cómo se llega a ella y qué datos varía la persona
 (el día, en la agenda).
 
+## Ciclo 2 — huecos de uso (Specgate 0.17.1, 2026-10-09)
+
+Borrador `draft-panel` desde la prueba de humo: REQ-145 **modificado** (agenda
+de cualquier día) y REQ-200/201 nuevos (menú del panel, enlace público). Flujo
+documentado de punta a punta: `change new` → delta → `draft --check` →
+`change archive` → harness desde la rama de la spec.
+
+| Paso | Resultado |
+|---|---|
+| `draft --check` | 8 hallazgos: 1 D3 falso (#51), 7 D6; 3 de ellos, valores ya revisados en el primer borrador (#52) |
+| `change archive` | se niega por la tarea "Implementación" de `tasks.md`; `--force` (fricción) |
+| Features | los 2 nuevos en Gherkin español sin retoques (arreglos #46/#47 confirmados); el modificado, obsoleto (#53) |
+| `status` / plan | REQ-145 "Ready to close" con dos escenarios sin probar (#54); el gate por escenario obligó al agente igualmente |
+| Harness | 3/3 al primer intento (163–308 s), PR #22–#24 sobre la rama de la spec, luego #25 a `develop` |
+| Prueba de humo | menú en cada pantalla, "Copiar enlace" copia la URL real, la agenda pasa al sábado y muestra la reserva |
+
+**Flujo con un requisito modificado.** Modificar un requisito entregado deja
+el gate en rojo hasta que existe el código (los escenarios nuevos no tienen
+test), así que la spec no puede entrar sola en `develop`: el harness trabaja
+sobre la rama de la spec y la rama entra entera. Con requisitos solo añadidos
+(ciclo 3) la spec entra antes, porque las filas `Draft` no se exigen. Debería
+estar en la guía.
+
+## Ciclo 3 — cupones (Specgate 0.17.1)
+
+Borrador `draft-cupones`: 5 requisitos, 11 escenarios, los tres tipos del
+brief, públicos y privados, aplicados al reservar y visibles en la agenda.
+
+| Paso | Resultado |
+|---|---|
+| `draft --check` | 29 D6, todos legítimos salvo 4 (#52): códigos de cupón, motivos de rechazo, el precio final de 18 €. D3 = 0 |
+| `change archive` | limpio (sin `--force`: `tasks.md` solo con tareas de spec); 5 features en español |
+| Harness | (en curso) |
+
 ## Tareas
 
 - [x] Ficha leída y guardada en `docs/brief.md` (2026-10-09).
@@ -120,6 +154,8 @@ pantalla debería nombrar cómo se llega a ella y qué datos varía la persona
 - [x] Harness sobre los 18 requisitos: 18/18, gate verde.
 - [x] `specgate update` a 0.17.0 en el repo real: migración limpia, gate verde.
 - [x] Prueba de humo del flujo completo (propietario → cliente → cancelación).
-- [ ] Segundo borrador: los huecos de uso de arriba como requisitos (agenda por día, enlace público, navegación).
+- [x] Segundo borrador: agenda por día, enlace público, navegación (ciclo 2).
+- [ ] Tercer borrador: cupones (ciclo 3).
+- [x] Arreglar #51–#54 y documentar el flujo de un requisito modificado (0.17.2).
 - [ ] Borradores siguientes: escaparate, cupones, feedback, notificaciones, integración.
-- [x] Arreglar #42–#50 (rama `fix/reservas-defects`, 0.17.1).
+- [x] Arreglar #42–#50 (0.17.1).
