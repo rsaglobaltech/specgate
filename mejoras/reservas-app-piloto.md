@@ -122,4 +122,4 @@ pantalla debería nombrar cómo se llega a ella y qué datos varía la persona
 - [x] Prueba de humo del flujo completo (propietario → cliente → cancelación).
 - [ ] Segundo borrador: los huecos de uso de arriba como requisitos (agenda por día, enlace público, navegación).
 - [ ] Borradores siguientes: escaparate, cupones, feedback, notificaciones, integración.
-- [ ] Arreglar #42–#48.
+- [x] Arreglar #42–#50 (rama `fix/reservas-defects`, 0.17.1).
