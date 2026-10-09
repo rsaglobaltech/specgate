@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-10-09
+
 ### Added
 
 - **`specgate draft --check <change-id>`** (ADR-0029, phase 1): the checklist a
