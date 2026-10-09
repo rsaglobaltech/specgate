@@ -173,12 +173,20 @@ export function parseGitStatus(porcelain: string): WriteScopeChanges {
   return { modified, added };
 }
 
-const TRACE_LINE = /^<!--\s*csda:trace\b.*-->\s*$/;
+const isTraceLine = (line: string) => {
+  const t = line.trim();
+  return (
+    t.startsWith("<!--") && t.endsWith("-->") && t.slice(4).trimStart().startsWith("csda:trace")
+  );
+};
+// Whitespace is collapsed by splitting, not by a regex: a `\s+` ahead of the
+// attribute ran polynomially on lines of spaces (CodeQL js/polynomial-redos).
 const withoutStatus = (line: string) =>
   line
-    .replace(/\s+status=("[^"]*"|'[^']*'|\S+)/, "")
-    .replace(/\s+/g, " ")
-    .trim();
+    .split(/[ \t]/)
+    .filter(Boolean)
+    .join(" ")
+    .replace(/ status=("[^"]*"|'[^']*'|[^ ]+)/, "");
 
 /**
  * Whether a unified diff (`git diff -U0`) changes nothing but the `status=` of
@@ -201,8 +209,6 @@ export function onlyTraceStatusChanged(diff: string): boolean {
   if (removed.length === 0 || removed.length !== added.length) return false;
   return removed.every(
     (r, i) =>
-      TRACE_LINE.test(r.trim()) &&
-      TRACE_LINE.test(added[i].trim()) &&
-      withoutStatus(r) === withoutStatus(added[i])
+      isTraceLine(r) && isTraceLine(added[i]) && withoutStatus(r) === withoutStatus(added[i])
   );
 }
