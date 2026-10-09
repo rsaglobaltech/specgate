@@ -179,14 +179,39 @@ const isTraceLine = (line: string) => {
     t.startsWith("<!--") && t.endsWith("-->") && t.slice(4).trimStart().startsWith("csda:trace")
   );
 };
-// Whitespace is collapsed by splitting, not by a regex: a `\s+` ahead of the
-// attribute ran polynomially on lines of spaces (CodeQL js/polynomial-redos).
-const withoutStatus = (line: string) =>
-  line
-    .split(/[ \t]/)
-    .filter(Boolean)
-    .join(" ")
-    .replace(/ status=("[^"]*"|'[^']*'|[^ ]+)/, "");
+/**
+ * A trace's attributes without `status=`, sorted: `specgate done` writes the
+ * status and also rewrites the attribute order (`actor=` moved after
+ * `feature=`), so comparing the text missed a status-only change and
+ * write-scope rejected it anyway (#65). Tokens are read by hand — a quoted
+ * value may hold spaces — so the scan stays linear (CodeQL polynomial-redos).
+ */
+const attributesWithoutStatus = (line: string): string => {
+  const t = line.trim();
+  const body = t.slice(t.indexOf("csda:trace") + "csda:trace".length, t.lastIndexOf("-->"));
+  const tokens: string[] = [];
+  let current = "";
+  let quote = "";
+  for (const ch of body) {
+    if (quote) {
+      current += ch;
+      if (ch === quote) quote = "";
+    } else if (ch === '"' || ch === "'") {
+      current += ch;
+      quote = ch;
+    } else if (ch === " " || ch === "\t") {
+      if (current) tokens.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  if (current) tokens.push(current);
+  return tokens
+    .filter((x) => !x.startsWith("status="))
+    .sort()
+    .join(" ");
+};
 
 /**
  * Whether a unified diff (`git diff -U0`) changes nothing but the `status=` of
@@ -209,6 +234,8 @@ export function onlyTraceStatusChanged(diff: string): boolean {
   if (removed.length === 0 || removed.length !== added.length) return false;
   return removed.every(
     (r, i) =>
-      isTraceLine(r) && isTraceLine(added[i]) && withoutStatus(r) === withoutStatus(added[i])
+      isTraceLine(r) &&
+      isTraceLine(added[i]) &&
+      attributesWithoutStatus(r) === attributesWithoutStatus(added[i])
   );
 }

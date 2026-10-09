@@ -8,6 +8,20 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The harness accepts the `done` it asks for, whatever order `done` writes.**
+  0.17.3 allowed a status-only change to a spec trace, comparing the text; but
+  `done` also reorders the attributes, so the change still looked like an edit
+  and two requirements lost an attempt each. Attributes are now compared as a
+  set.
+- **An agent that runs out of time is stopped, not orphaned.** On timeout the
+  harness killed the shell it had started and moved on, leaving an agent that
+  ignores SIGTERM still running in the worktree — in credito-tienda one hung
+  for 53 minutes under a 20-minute limit until a person killed it. The agent
+  now runs in its own process group, and the whole group is killed at the
+  deadline.
+
 ## [0.17.4] — 2026-10-09
 
 ### Fixed

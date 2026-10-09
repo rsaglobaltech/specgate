@@ -21,6 +21,7 @@
  * harness never merges a branch — a human reviews and merges.
  */
 
+import { runWithDeadline } from "../../../lib/run-with-deadline";
 import { derivedMatrixFor, refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import * as fs from "node:fs";
@@ -900,13 +901,10 @@ function attemptRequirement(req, ctx) {
           info(`${req.requirement}: ${step.advisory ? "reviewing" : "running"} as '${profile}'`);
         }
         const agentStart = Date.now();
-        const agent = spawnSync(command, {
-          shell: true,
+        const agent = runWithDeadline(command, {
           cwd: worktreeDir,
-          encoding: "utf8",
-          timeout: timeoutMs,
+          timeoutMs,
           maxBuffer: SUBPROCESS_MAX_BUFFER,
-          stdio: ["ignore", "pipe", "pipe"],
         });
         // Node reports a timeout as an errno-carrying Error; the base `Error`
         // type the spawnSync signature declares does not have `code`.

@@ -2215,3 +2215,53 @@ test("#62: harness init gates on the build when package.json has one", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test(
+  "#66: an agent cut at the deadline leaves nothing running",
+  { skip: process.platform === "win32" && "pgrep is POSIX" },
+  () => {
+    // credito-tienda: an agent hung for 53 minutes under a 20-minute limit. A
+    // shell-spawned agent that ignores SIGTERM outlived spawnSync's timeout as an
+    // orphan, still running in the worktree. The whole process group is now killed.
+    const { parent, projectDir } = greenableProject();
+    const marker = `csda-hang-${process.pid}-${Date.now()}`;
+    const script = path.join(parent, "hang.js");
+    fs.writeFileSync(
+      script,
+      `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000); // ${marker}\n`
+    );
+    try {
+      const t0 = Date.now();
+      const r = spawnSync(
+        process.execPath,
+        [
+          CLI,
+          "harness",
+          "run",
+          "--project-dir",
+          projectDir,
+          "--agent",
+          `${process.execPath} ${script} ${marker} < {prompt_file}`,
+          "--timeout",
+          "3",
+          "--max-attempts",
+          "1",
+          "--format",
+          "json",
+        ],
+        { encoding: "utf8", timeout: 120000 }
+      );
+      assert.ok((Date.now() - t0) / 1000 < 60, "cut at the deadline");
+      assert.match(r.stdout + r.stderr, /timed out/);
+      const left = spawnSync("pgrep", ["-f", marker], { encoding: "utf8" });
+      assert.equal(
+        left.stdout.trim(),
+        "",
+        "the agent is still running after the harness gave up on it"
+      );
+    } finally {
+      spawnSync("pkill", ["-f", marker]);
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  }
+);
