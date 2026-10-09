@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.4] — 2026-10-09
+
 ### Fixed
 
 - **`init --no-capabilities`.** The guide offered it for adoption and `init`
