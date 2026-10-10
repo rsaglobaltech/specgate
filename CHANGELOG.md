@@ -10,10 +10,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Documentation
 
-- **A 55-second vertical demo for social networks** (`scripts/demo/social/`):
-  console only, in Spanish — `new`, then `done` refused with no test and again
-  with the test failing, then implemented and `check` green. Rendered with VHS
-  from this checkout.
+- **A real tutorial video, from an empty directory** (`scripts/demo/tutorial/`):
+  `npm init`, the published package, a requirement written by hand (the
+  obligation in `vim`, the scenario, the test, the code), `done` refusing a red
+  suite, `check`, `ci init` and the commit — in 16:9 and 9:16, in Spanish. It
+  replaces the 55-second social clip, which copied its files in off camera.
 - **The README comparison row** now states what a team learns before its first
   pull request — five commands, the other 26 opt-in — instead of a warning.
 
