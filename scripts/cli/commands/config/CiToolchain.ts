@@ -39,9 +39,13 @@ function plainVersion(v: string | undefined): string | null {
 export function javaVersion(projectDir: string): string {
   const pom = read(projectDir, "pom.xml");
   if (pom !== null) {
-    for (const tag of ["java.version", "maven.compiler.release", "maven.compiler.source"]) {
-      const m = new RegExp(`<${tag.replace(/\./g, "\\.")}>([^<]+)</`).exec(pom);
-      const v = plainVersion(m?.[1]);
+    const tags = [
+      /<java\.version>([^<]+)</,
+      /<maven\.compiler\.release>([^<]+)</,
+      /<maven\.compiler\.source>([^<]+)</,
+    ];
+    for (const tag of tags) {
+      const v = plainVersion(tag.exec(pom)?.[1]);
       if (v) return v;
     }
     return DEFAULT_JAVA;
