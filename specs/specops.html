@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en" data-slug="specs/specops">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpecOps Workflow — Specgate</title>
+<meta name="description" content="SpecOps Workflow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="SpecOps Workflow — Specgate">
+<meta property="og:description" content="SpecOps Workflow">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="specops-workflow">SpecOps Workflow<a class="anchor" href="#specops-workflow" aria-label="Link to this section">#</a></h1>
+<p><strong>Status:</strong> Stable (M1 — remote packs + lockfile, M2 — <code>sync</code> and <code>diff</code>, M3 — conflict detection)
+<strong>Owner:</strong> specgate
+<strong>Companion ADRs:</strong> <a href="./adr/0009-specops-remote-packs.html">ADR-0009</a>, <a href="./adr/0010-specops-sync-diff.html">ADR-0010</a></p>
+<p>This page documents how <code>specgate</code> consumes a <strong>versioned
+domain pack repository</strong> (&quot;SpecOps repo&quot;) into an implementation project.
+It is the day-to-day workflow for teams that maintain their domain
+knowledge in Git, separately from the code that implements it.</p>
+<h2 id="tl-dr">TL;DR<a class="anchor" href="#tl-dr" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate expand \
+  <span class="tok tok--o">--pack-repo</span> https://github.com/rsaglobaltech/parking-management-specops.git \
+  <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">1.0</span> \
+  <span class="tok tok--o">--pack</span> backend \
+  <span class="tok tok--o">--project-dir</span> ./smart-parking \
+  <span class="tok tok--o">--var</span> PROJECT_NAME=<span class="tok tok--s">&quot;Smart Parking&quot;</span> \
+  <span class="tok tok--o">--var</span> PROJECT_SLUG=smart-parking \
+  <span class="tok tok--o">--var</span> DOMAIN=<span class="tok tok--s">&quot;parking operations&quot;</span></code></pre></figure>
+<p>The CLI clones the pack into a per-user cache, runs the normal <code>expand</code>
+pipeline against the resolved local path, then writes
+<code>./smart-parking/.specops.lock</code> recording the exact commit consumed.</p>
+<h2 id="the-three-repos">The three repos<a class="anchor" href="#the-three-repos" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">specgate          → the tool       (this repo)
+parking-management-specops      → domain pack    (versioned knowledge)
+smart-parking                   → implementation (the actual code)</code></pre></figure>
+<p>Each has a different lifecycle:</p>
+<div class="table-wrap"><table><thead><tr><th>Piece</th><th>Changes when…</th></tr></thead><tbody><tr><td><strong>Tool</strong></td><td>the CLI gains features or fixes</td></tr><tr><td><strong>Pack</strong></td><td>the domain evolves (new requirements, scenarios, events)</td></tr><tr><td><strong>Implementation</strong></td><td>features are built</td></tr></tbody></table></div>
+<p>The pack is consumed by tagged version, exactly like an npm dependency.</p>
+<h2 id="flag-reference">Flag reference<a class="anchor" href="#flag-reference" aria-label="Link to this section">#</a></h2>
+<p><code>expand</code> now has two mutually-exclusive sources for the pack:</p>
+<div class="table-wrap"><table><thead><tr><th>Flag</th><th>Use when</th></tr></thead><tbody><tr><td><code>--pack-root &lt;local-dir&gt;</code></td><td>The pack lives next to the project (monorepo) or has been cloned manually</td></tr><tr><td><code>--pack-repo &lt;git-url&gt; --pack-version &lt;tag&gt;</code></td><td>The pack lives in its own Git repo and is consumed by tagged version</td></tr></tbody></table></div>
+<p><code>--pack-version</code> accepts a tag or a commit SHA. Tags are recommended;
+commits are useful when pinning to a specific revision.</p>
+<p>Additional flags:</p>
+<ul>
+<li><code>--cache-dir &lt;path&gt;</code> — override the default cache location
+(<code>~/.cache/specgate/packs/</code>). Mainly useful for CI/tests.</li>
+</ul>
+<h2 id="specops-lock"><code>.specops.lock</code><a class="anchor" href="#specops-lock" aria-label="Link to this section">#</a></h2>
+<p>After a successful (non–dry-run) <code>expand --pack-repo …</code>, the CLI writes a
+lockfile to the project root:</p>
+<figure class="code" data-lang="json"><figcaption class="code__head"><span class="code__lang">json</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-json">{
+  <span class="tok tok--a">&quot;specops_version&quot;</span>: <span class="tok tok--n">1</span>,
+  <span class="tok tok--a">&quot;csda_version&quot;</span>: <span class="tok tok--s">&quot;0.1.0-beta.4&quot;</span>,
+  <span class="tok tok--a">&quot;packs&quot;</span>: [
+    {
+      <span class="tok tok--a">&quot;repo&quot;</span>: <span class="tok tok--s">&quot;https://github.com/rsaglobaltech/parking-management-specops.git&quot;</span>,
+      <span class="tok tok--a">&quot;version&quot;</span>: <span class="tok tok--s">&quot;v0.1.0&quot;</span>,
+      <span class="tok tok--a">&quot;commit&quot;</span>: <span class="tok tok--s">&quot;c37fbcb1a2…&quot;</span>,
+      <span class="tok tok--a">&quot;pack_id&quot;</span>: <span class="tok tok--s">&quot;backend&quot;</span>,
+      <span class="tok tok--a">&quot;expanded_at&quot;</span>: <span class="tok tok--s">&quot;2026-05-12T18:30:00.000Z&quot;</span>,
+      <span class="tok tok--a">&quot;vars&quot;</span>: {
+        <span class="tok tok--a">&quot;PROJECT_NAME&quot;</span>: <span class="tok tok--s">&quot;Smart Parking&quot;</span>,
+        <span class="tok tok--a">&quot;PROJECT_SLUG&quot;</span>: <span class="tok tok--s">&quot;smart-parking&quot;</span>,
+        <span class="tok tok--a">&quot;DOMAIN&quot;</span>: <span class="tok tok--s">&quot;parking operations&quot;</span>
+      }
+    }
+  ]
+}</code></pre></figure>
+<p><strong>Properties:</strong></p>
+<ul>
+<li>One entry per <code>(repo, pack_id)</code> pair. Re-expanding the same pack
+upgrades the entry in place.</li>
+<li>Multiple packs in the same project are supported (e.g. a backend pack
+plus a frontend pack).</li>
+<li>Sorted deterministically by <code>repo</code> then <code>pack_id</code> so diffs are stable.</li>
+<li>The <code>vars</code> block records the substitution values used at expand time,
+so <code>specops sync</code> can reproduce the exact same output without the user
+re-typing every <code>--var KEY=VALUE</code>.</li>
+</ul>
+<p><strong>Convention:</strong> commit <code>.specops.lock</code> to your project repository.</p>
+<h2 id="specops-the-baseline-manifest"><code>.specops/</code> — the baseline manifest<a class="anchor" href="#specops-the-baseline-manifest" aria-label="Link to this section">#</a></h2>
+<p>After a successful (non–dry-run) <code>expand --pack-repo …</code>, the CLI also
+records a <strong>baseline</strong> under <code>.specops/</code>:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">.specops/
+  manifest.json              index: pack_id -&gt; { version, files: {rel: sha256} }
+  baseline/&lt;pack_id&gt;/&lt;rel&gt;   verbatim copy of what the pack last rendered</code></pre></figure>
+<p>This is the missing &quot;common ancestor&quot; that lets <code>specops sync</code> do a
+three-way merge instead of blindly overwriting. It is what tells sync
+whether a file was edited by you (or an AI agent) since the last sync.</p>
+<p><strong>Convention:</strong> commit <code>.specops/</code> to your project repository — a fresh
+clone needs it for the next <code>sync</code> to have a merge base.</p>
+<h2 id="specops-sync"><code>specops sync</code><a class="anchor" href="#specops-sync" aria-label="Link to this section">#</a></h2>
+<p>Re-expands every pack listed in <code>.specops.lock</code> and <strong>three-way merges</strong>
+the result into the project, preserving local edits. Useful after
+re-cloning the project, after hand-editing (or agent-editing) generated
+files, or to bump a pack to a new version without re-typing the original
+flags.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># Re-expand everything at the locked versions</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate specops sync <span class="tok tok--o">--project-dir</span> ./smart-parking
+
+<span class="tok tok--c"># Bump only one pack to a new tag (updates the lockfile)</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate specops sync \
+  <span class="tok tok--o">--project-dir</span> ./smart-parking \
+  <span class="tok tok--o">--pack</span> parking-management/backend \
+  <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">2.0</span>
+
+<span class="tok tok--c"># Preview without writing anything</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate specops sync <span class="tok tok--o">--project-dir</span> ./smart-parking <span class="tok tok--o">--dry-run</span>
+
+<span class="tok tok--c"># Pack always wins — discard local edits</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate specops sync <span class="tok tok--o">--project-dir</span> ./smart-parking <span class="tok tok--o">--force</span>
+
+<span class="tok tok--c"># Never write conflict markers — leave conflicting files untouched</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate specops sync <span class="tok tok--o">--project-dir</span> ./smart-parking <span class="tok tok--o">--abort-on-conflict</span></code></pre></figure>
+<p>Behaviour:</p>
+<ul>
+<li>Reads <code>.specops.lock</code> from <code>--project-dir</code> (defaults to <code>.</code>).</li>
+<li>For each entry (or the one matching <code>--pack</code>), renders the pack into a
+throwaway temp dir, then reconciles each file against the project using
+the <code>.specops/</code> baseline as the merge base.</li>
+<li>Use <code>--pack-version</code> to override the locked version; the lockfile is
+rewritten with the new tag + commit.</li>
+<li>Exits non-zero if no lockfile is found, <code>--pack</code> does not match, or any
+file is left in a conflicted state.</li>
+</ul>
+<h3 id="per-file-outcomes">Per-file outcomes<a class="anchor" href="#per-file-outcomes" aria-label="Link to this section">#</a></h3>
+<p>For each file the pack renders, sync compares three versions — <code>base</code>
+(<code>.specops/baseline/</code>), <code>local</code> (the project copy) and <code>incoming</code> (the new
+render) — and classifies the file:</p>
+<div class="table-wrap"><table><thead><tr><th>Outcome</th><th>Meaning</th></tr></thead><tbody><tr><td><code>added</code></td><td>File did not exist locally — written</td></tr><tr><td><code>unchanged</code></td><td>Local already matches the new render</td></tr><tr><td><code>updated</code></td><td>Local was untouched since last sync — replaced with the new render</td></tr><tr><td><code>kept</code></td><td>Pack did not change this file but you did — local edits preserved</td></tr><tr><td><code>merged</code></td><td>Both sides changed, non-overlapping — three-way merged cleanly</td></tr><tr><td><code>CONFLICT</code></td><td>Both sides changed the same lines — git-style merge markers written (or skipped with <code>--abort-on-conflict</code>)</td></tr></tbody></table></div>
+<p><code>--force</code> overwrites locally-edited files with the pack version.
+<code>--abort-on-conflict</code> leaves conflicting files untouched instead of
+writing markers. The two flags are mutually exclusive. When any file ends
+up conflicted, sync exits non-zero so CI and AI-agent harnesses can detect
+that a human needs to intervene.</p>
+<p>Conflicting files keep their previous baseline, so re-running <code>sync</code> after
+you resolve the markers picks up cleanly from where it left off.</p>
+<h2 id="specops-diff"><code>specops diff</code><a class="anchor" href="#specops-diff" aria-label="Link to this section">#</a></h2>
+<p>Reports the files that would change if <code>specops sync</code> ran at the chosen
+version — without writing anything to the project.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># What would change if I bumped to v0.2.0?</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate specops diff \
+  <span class="tok tok--o">--project-dir</span> ./smart-parking \
+  <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">2.0</span></code></pre></figure>
+<p>Output:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">── parking-management/backend @ v0.2.0 (current: v0.1.0) ──
+  + features/pricing/dynamic_pricing.feature
+  ~ docs/specs/use-cases.md
+  ~ docs/specs/traceability.md
+
+  1 added · 2 modified · 9 unchanged
+
+ℹ️ [INFO] Diff completed for 1 pack(s).</code></pre></figure>
+<p>Legend:</p>
+<ul>
+<li><code>+ path</code> — file would be added (does not exist in the project today)</li>
+<li><code>~ path</code> — file exists but its content would change</li>
+</ul>
+<p>Files present in the project but not generated by the pack (your own
+source code) are never reported.</p>
+<h2 id="caching">Caching<a class="anchor" href="#caching" aria-label="Link to this section">#</a></h2>
+<p>Resolved packs are cached under
+<code>~/.cache/specgate/packs/&lt;sha256(repo)[:16]&gt;/&lt;safe-version&gt;/</code>. The cache key
+hashes the repo URL so different repos with the same tag never collide.
+A <code>.git</code> directory inside the slot signals &quot;already cloned&quot;; subsequent
+runs reuse it without network traffic.</p>
+<p>To force a re-clone, delete the cache slot:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">rm</span> <span class="tok tok--o">-rf</span> ~/.cache/specgate/packs</code></pre></figure>
+<h2 id="end-to-end-example-smart-parking">End-to-end example: <code>smart-parking</code><a class="anchor" href="#end-to-end-example-smart-parking" aria-label="Link to this section">#</a></h2>
+<p>Given the public reference pack at
+<a href="https://github.com/rsaglobaltech/parking-management-specops" target="_blank" rel="noreferrer"><code>rsaglobaltech/parking-management-specops</code></a>
+(currently at tag <code>v0.1.0</code>):</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># 1. Scaffold the implementation project</span>
+<span class="tok tok--f">mkdir</span> <span class="tok tok--o">-p</span> ~/dev/smart-parking &amp;&amp;<span class="tok tok--f"> cd</span> ~/dev/smart-parking
+<span class="tok tok--f">cat</span> &gt; project.config &lt;&lt;<span class="tok tok--s">'CFG'</span>
+PROJECT_NAME=<span class="tok tok--s">&quot;Smart Parking&quot;</span>
+PROJECT_SLUG=<span class="tok tok--s">&quot;smart-parking&quot;</span>
+PROJECT_TYPE=<span class="tok tok--s">&quot;backend&quot;</span>
+DOMAIN=<span class="tok tok--s">&quot;parking operations&quot;</span>
+STACK=<span class="tok tok--s">&quot;Quarkus 3.x, Java 21, PostgreSQL&quot;</span>
+API_STYLE=<span class="tok tok--s">&quot;REST + GraphQL&quot;</span>
+TESTING=<span class="tok tok--s">&quot;JUnit 5, Cucumber, Testcontainers&quot;</span>
+LANG=<span class="tok tok--s">&quot;en&quot;</span>
+MODULES=<span class="tok tok--s">&quot;&quot;</span>
+CFG
+<span class="tok tok--f">
+npx</span> @rsaglobaltech/specgate init <span class="tok tok--o">--config</span> ./project.config <span class="tok tok--o">--out</span> . <span class="tok tok--o">--force</span>
+
+<span class="tok tok--c"># 2. Expand the pack into it (writes .specops.lock)</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate expand \
+  <span class="tok tok--o">--pack-repo</span> https://github.com/rsaglobaltech/parking-management-specops.git \
+  <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">1.0</span> \
+  <span class="tok tok--o">--pack</span> backend \
+  <span class="tok tok--o">--project-dir</span> ./smart-parking \
+  <span class="tok tok--o">--var</span> PROJECT_NAME=<span class="tok tok--s">&quot;Smart Parking&quot;</span> \
+  <span class="tok tok--o">--var</span> PROJECT_SLUG=smart-parking \
+  <span class="tok tok--o">--var</span> DOMAIN=<span class="tok tok--s">&quot;parking operations&quot;</span>
+
+<span class="tok tok--c"># 3. Verify</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate validate ./smart-parking
+<span class="tok tok--f">cat</span> smart-parking/.specops.lock</code></pre></figure>
+<h2 id="upgrading-a-project-to-a-new-pack-version">Upgrading a project to a new pack version<a class="anchor" href="#upgrading-a-project-to-a-new-pack-version" aria-label="Link to this section">#</a></h2>
+<p>When the pack tags a new version (<code>v0.2.0</code>), bump the project:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate expand \
+  <span class="tok tok--o">--pack-repo</span> https://github.com/rsaglobaltech/parking-management-specops.git \
+  <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">2.0</span> \
+  <span class="tok tok--o">--pack</span> backend \
+  <span class="tok tok--o">--project-dir</span> ./smart-parking \
+  <span class="tok tok--o">--var</span> PROJECT_NAME=<span class="tok tok--s">&quot;Smart Parking&quot;</span> \
+  <span class="tok tok--o">--var</span> PROJECT_SLUG=smart-parking \
+  <span class="tok tok--o">--var</span> DOMAIN=<span class="tok tok--s">&quot;parking operations&quot;</span></code></pre></figure>
+<p>The lockfile entry is updated in place, and the generated specs (<code>spec.md</code>,
+<code>docs/specs/traceability.md</code>, etc.) re-render. Commit the diff to capture
+what changed in the pack since the last sync.</p>
+<h2 id="roadmap">Roadmap<a class="anchor" href="#roadmap" aria-label="Link to this section">#</a></h2>
+<p>Shipped:</p>
+<ul>
+<li><strong>M1</strong> — remote packs + <code>.specops.lock</code></li>
+<li><strong>M2</strong> — <code>specops sync</code> + <code>specops diff</code></li>
+<li><strong>M3</strong> — conflict detection: <code>.specops/</code> baseline + three-way merge in <code>sync</code></li>
+<li><strong>M4</strong> — <code>validate --against-lock</code>: fails in CI when the project has drifted
+from the locked pack version, reusing the <code>specops diff</code> machinery with a
+non-zero exit policy (<code>scripts/specops/against_lock.ts</code>)</li>
+<li><strong>M4</strong> — multi-pack composition: <code>specops.config.yaml</code> applies several packs
+from one file (<code>scripts/specops/config.ts</code>)</li>
+<li><strong>M5</strong> — the bidirectional loop: <code>specops diff --as-change</code> turns a pack bump
+into a reviewable change proposal, and <code>specops contribute</code> sends a local
+change back upstream to the pack</li>
+</ul>
+<p>Planned:</p>
+<ul>
+<li><code>pack publish</code> — depends on a hosted registry, which is not deployed yet.</li>
+</ul>
+<h2 id="limitations">Limitations<a class="anchor" href="#limitations" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>git</code> must be available on <code>PATH</code> when using <code>--pack-repo</code>. The CLI
+detects this and exits cleanly with a message if not.</li>
+<li>Force-moved tags upstream are not detected automatically; the cache
+must be cleared manually to re-fetch.</li>
+<li>Private repos are supported when the user&#39;s git is already configured
+for them (SSH keys, credential helpers, etc.). The CLI does not handle
+authentication directly.</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/specops.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#tl-dr">TL;DR</a></li><li class="toc__l2"><a href="#the-three-repos">The three repos</a></li><li class="toc__l2"><a href="#flag-reference">Flag reference</a></li><li class="toc__l2"><a href="#specops-lock">.specops.lock</a></li><li class="toc__l2"><a href="#specops-the-baseline-manifest">.specops/ — the baseline manifest</a></li><li class="toc__l2"><a href="#specops-sync">specops sync</a></li><li class="toc__l3"><a href="#per-file-outcomes">Per-file outcomes</a></li><li class="toc__l2"><a href="#specops-diff">specops diff</a></li><li class="toc__l2"><a href="#caching">Caching</a></li><li class="toc__l2"><a href="#end-to-end-example-smart-parking">End-to-end example: smart-parking</a></li><li class="toc__l2"><a href="#upgrading-a-project-to-a-new-pack-version">Upgrading a project to a new pack version</a></li><li class="toc__l2"><a href="#roadmap">Roadmap</a></li><li class="toc__l2"><a href="#limitations">Limitations</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en" data-slug="articles/specs-that-cannot-lie">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Gate That Approved Work It Never Checked — Specgate</title>
+<meta name="description" content="The argument the tool is built on, and the defects that shaped it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="The Gate That Approved Work It Never Checked — Specgate">
+<meta property="og:description" content="The argument the tool is built on, and the defects that shaped it.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html" class="is-active" aria-current="page">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../docs.html">Docs</a></li><li>Advanced</li><li aria-current="page">Specs that cannot lie</li></ol></nav>
+    <article class="prose">
+<!--
+  FOR PUBLICATION ON MEDIUM.
+
+  Medium does not render Mermaid. Two options per diagram:
+    The two `<!-- csda:diagram … -->` markers are replaced with inline SVG when
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">the site is built (see docs/diagrams/). For Medium, screenshot them
+from the published page, or link to the section on the docs site.</code></pre></figure>
+<p>  Suggested tags: ai-agents, spec-driven-development, software-testing,
+  developer-tools, domain-driven-design
+--&gt;</p>
+<h1 id="the-gate-that-approved-work-it-never-checked">The Gate That Approved Work It Never Checked<a class="anchor" href="#the-gate-that-approved-work-it-never-checked" aria-label="Link to this section">#</a></h1>
+<h2 id="we-spent-months-building-a-pipeline-so-an-ai-agent-could-write-code-from-our-specifications-the-first-time-we-ran-it-it-worked-that-turned-out-to-be-the-problem">We spent months building a pipeline so an AI agent could write code from our specifications. The first time we ran it, it worked. That turned out to be the problem.<a class="anchor" href="#we-spent-months-building-a-pipeline-so-an-ai-agent-could-write-code-from-our-specifications-the-first-time-we-ran-it-it-worked-that-turned-out-to-be-the-problem" aria-label="Link to this section">#</a></h2>
+<p>I want to tell you about the ten minutes that changed how I think about agentic
+coding, and the fifteen commits that came out of them.</p>
+<p>But first you need to know what we had built, because the whole story turns on
+one design decision we got wrong.</p>
+<hr>
+<h2 id="the-bet">The bet<a class="anchor" href="#the-bet" aria-label="Link to this section">#</a></h2>
+<p>Everyone has noticed the same thing this year: an agent can write a thousand
+lines before you finish reading the ticket. The scarce resource stopped being
+typing and became <strong>saying precisely what you want</strong>.</p>
+<p>The obvious response is &quot;write better specifications&quot;. That is not a plan. Here
+is why, in one example.</p>
+<p>A requirement in your repository says the system rejects expired tokens. It
+stopped doing that in March. Nobody noticed, because nothing was watching — the
+document has no referents, so there is nothing to check it against.</p>
+<p>For years that was survivable. A developer reading it would frown, ask someone,
+and learn the truth in ninety seconds. Documents were hints, and we are good at
+discounting hints.</p>
+<p><strong>An agent does not frown.</strong> It reads the stale requirement as ground truth,
+builds three features on top of it, and writes tests that assert the wrong
+behaviour convincingly. You have not automated engineering. You have automated
+the propagation of stale documentation, at machine speed, with a plausible
+commit message attached.</p>
+<p>So our bet was: a specification has to stop being a document and become a
+<strong>model</strong> — one where every claim has somewhere to be checked against.</p>
+<p>Concretely, three practices most of us already believe in, wired together so
+that continuous integration can verify them link by link.</p>
+<p>From <strong>Domain-Driven Design</strong>, the vocabulary: bounded contexts, aggregates,
+commands and queries, domain events, use cases with actors. Not as prose —
+as records with identifiers that reference each other. From <strong>BDD</strong>, a Gherkin
+scenario per requirement, which is the executable half. From <strong>TDD</strong>, the rule
+that a requirement may not claim to be built without naming the test that
+proves it.</p>
+<p>The join is a ten-column traceability matrix, one row per requirement:</p>
+<figure class="dia dia--chain">
+  <ol class="chain" aria-label="The traceability chain, from requirement to status">
+    <li class="chain__n"><b>REQ-001</b><span>requirement</span></li>
+    <li class="chain__n"><b>SCN-001</b><span>scenario</span></li>
+    <li class="chain__n"><b>load_pack.feature</b><span>Gherkin</span></li>
+    <li class="chain__n"><b>UC-001</b><span>use case</span></li>
+    <li class="chain__n"><b>CMD-001</b><span>command</span></li>
+    <li class="chain__n"><b>AGG-001</b><span>aggregate</span></li>
+    <li class="chain__n"><b>EVT-001</b><span>event</span></li>
+    <li class="chain__n"><b>src/…</b><span>code</span></li>
+    <li class="chain__n"><b>…steps.ts</b><span>test</span></li>
+    <li class="chain__n chain__n--end"><b>Verified</b><span>status</span></li>
+  </ol>
+  <figcaption>
+    One row of the matrix, read as a sentence. Break any link and
+    <code>specgate check</code> fails — which is what stops a specification from
+    quietly becoming false.
+  </figcaption>
+</figure><p>Read left to right, a row is a sentence: <em>this requirement is demonstrated by
+this scenario, in this feature file, realised by this use case, which dispatches
+this command against this aggregate, emitting this event, implemented here,
+proven by this test, currently in this state.</em></p>
+<p>Break a link and the build fails. That is the point. <strong>A specification cannot
+quietly become false, because the moment it does, CI goes red.</strong></p>
+<p>The tooling around that grew for months. A linter that resolves the references —
+an event emitted by an aggregate nobody declared is a build failure, the same
+way an undefined symbol is. Domain packs, so <code>auth</code> requirements are installed
+and version-pinned like a library rather than copy-pasted into eleven services.
+A gate command, <code>validate --strict-tdd</code>. And finally a harness: point it at a
+requirement, it creates a git worktree, hands your agent a prompt, runs the
+gate, and commits on green.</p>
+<p>Vendor-neutral by construction — the agent is any shell command containing a
+<code>{prompt_file}</code> placeholder — and it never merges. It leaves a branch for a
+human.</p>
+<p>Then we ran it.</p>
+<hr>
+<h2 id="run-one-it-worked-and-that-was-the-problem">Run one: it worked, and that was the problem<a class="anchor" href="#run-one-it-worked-and-that-was-the-problem" aria-label="Link to this section">#</a></h2>
+<p>We pointed it at a real project: a spec viewer, fifteen requirements, all
+supplied by a domain pack. Claude as the agent. First requirement: load a
+<code>pack.yaml</code> from disk and show its contents.</p>
+<figure class="dia dia--loop">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 760 420" class="dia__svg" role="img" aria-labelledby="csda-hl-t csda-hl-d">
+    <title id="csda-hl-t">One turn of the harness</title>
+    <desc id="csda-hl-d">The harness picks the next pending requirement, creates a git
+      worktree on a branch named after it, hands the agent a prompt, lets the agent write
+      code and tests in the worktree, runs the gate, and commits only if the gate is green.
+      It reports and never merges.</desc>
+    <defs>
+      <marker id="csda-hl-a" viewBox="0 0 10 8" refX="9" refY="4"
+              markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="csda-hl-g" viewBox="0 0 10 8" refX="9" refY="4"
+              markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--green)"/>
+      </marker>
+    </defs>
+    <g class="dia__lane">
+      <rect x="10"  y="10" width="140" height="34" rx="8"/>
+      <rect x="210" y="10" width="140" height="34" rx="8"/>
+      <rect x="400" y="10" width="140" height="34" rx="8"/>
+      <rect x="600" y="10" width="140" height="34" rx="8"/>
+    </g>
+    <g class="dia__actor">
+      <text x="80"  y="32" text-anchor="middle">harness</text>
+      <text x="280" y="32" text-anchor="middle">git worktree</text>
+      <text x="470" y="32" text-anchor="middle">your agent</text>
+      <text x="670" y="32" text-anchor="middle">the gate</text>
+    </g>
+    <g class="dia__life">
+      <line x1="80"  y1="48" x2="80"  y2="408"/>
+      <line x1="280" y1="48" x2="280" y2="408"/>
+      <line x1="470" y1="48" x2="470" y2="408"/>
+      <line x1="670" y1="48" x2="670" y2="408"/>
+    </g>
+    <g class="dia__msg">
+      <path d="M80 78 H150 V102 H86" marker-end="url(#csda-hl-a)"/>
+      <text x="158" y="84">plan → the next pending requirement</text>
+      <line x1="80" y1="140" x2="274" y2="140" marker-end="url(#csda-hl-a)"/>
+      <text x="86" y="132">create worktree on <tspan class="dia__mono">harness/REQ-001</tspan></text>
+      <line x1="80" y1="192" x2="464" y2="192" marker-end="url(#csda-hl-a)"/>
+      <text x="86" y="184">the prompt — Gherkin, rules, boundaries</text>
+      <line x1="470" y1="238" x2="286" y2="238" marker-end="url(#csda-hl-a)"/>
+      <text x="464" y="230" text-anchor="end">writes code and tests</text>
+      <line x1="80" y1="290" x2="664" y2="290" marker-end="url(#csda-hl-a)"/>
+      <text x="86" y="282"><tspan class="dia__mono">validate --strict</tspan> + the project's own tests</text>
+      <line x1="670" y1="326" x2="86" y2="326" class="dia__ok" stroke-dasharray="6 5" marker-end="url(#csda-hl-g)"/>
+      <text x="664" y="318" text-anchor="end" class="dia__ok-t">green — and only then</text>
+      <line x1="80" y1="368" x2="274" y2="368" marker-end="url(#csda-hl-a)"/>
+      <text x="86" y="360">mark done, commit</text>
+    </g>
+    <text x="80" y="404" class="dia__note">…and reports. It never merges — that stays yours.</text>
+  </svg>
+  </div>
+</figure><p>Attempt one timed out. Attempt two passed.</p>
+<p>I opened the branch expecting to be disappointed and was not. Eighteen files,
+laid out across the hexagonal boundaries the rules demanded — domain logic with
+no framework imports, a port, an adapter, the React component at the edge. Step
+definitions written. Its scenario passed. It had not touched the feature files
+or the specs, which was the one boundary that would have invalidated the whole
+exercise.</p>
+<p>I was, briefly, delighted.</p>
+<p>Then I checked whether the gate had actually verified any of that.</p>
+<p>It had not.</p>
+<p>Two ordinary decisions had combined into a hole. The gate ran the project&#39;s
+build and unit tests, and it ran <code>validate --strict-tdd</code>. But strict-TDD only
+demands a test once a requirement moves past <code>Draft</code> — and the requirement was
+still <code>Draft</code> at that moment, because the harness marks it done <em>after</em> the
+gate. Meanwhile the test command was a fixed string with no way to say &quot;run the
+scenario belonging to the requirement you are currently gating&quot;.</p>
+<p>So the loop could take a requirement, watch an agent produce anything at all,
+and mark it <strong>Implemented with its scenario never executed</strong>.</p>
+<p>The work was good because the agent was good. Nothing had checked. And that is
+strictly worse than a failure, because it would have reported success just as
+confidently on garbage — which is the exact failure the entire tool exists to
+prevent, reproduced inside the tool.</p>
+<p>I sat with that one for a while.</p>
+<hr>
+<h2 id="run-two-the-gate-rejected-correct-work">Run two: the gate rejected correct work<a class="anchor" href="#run-two-the-gate-rejected-correct-work" aria-label="Link to this section">#</a></h2>
+<p>Fix in hand — the gate command now substitutes <code>{feature_file}</code>, so it runs the
+scenario under test and only that one — I moved to the second requirement:
+surface a clear error when a pack file is malformed.</p>
+<p>It failed both attempts.</p>
+<p>The agent&#39;s code was right. I ran its scenario by hand and it passed. The gate
+had run the <strong>entire</strong> suite instead of one scenario, and thirteen unimplemented
+scenarios failed with it.</p>
+<p>The cause was a single configuration key. Cucumber lets you pin <code>paths</code> in its
+config file, and a config <code>paths</code> silently overrides the path you pass on the
+command line. I had fixed that on <code>main</code>; the run was stacked on a branch cut
+before the fix, and a branch carries its own configuration.</p>
+<p>That is correct git behaviour and an expensive trap. But the part that cost me
+real time was different:</p>
+<p><strong>Diagnosing it required a second full agent run.</strong> A failed run deleted the
+worktree and committed nothing, so the branch came back byte-identical to its
+base. The report said <code>Gate failed at: test command</code> and stopped. Fifteen
+minutes of agent time to recover information the first run had already had and
+thrown away.</p>
+<p>Two more defects, then. A failing gate has to say <strong>which command it ran</strong> — a
+gate that silently does the wrong thing fails identically to a real failure. And
+a failed attempt has to be <strong>committed</strong>, not deleted, so there is something to
+read.</p>
+<hr>
+<h2 id="run-three-the-account-ran-out-of-money">Run three: the account ran out of money<a class="anchor" href="#run-three-the-account-ran-out-of-money" aria-label="Link to this section">#</a></h2>
+<p>By the third run the fixes were in. It failed again, for a reason I had not
+planned to test:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">❌ REQ-002  fail (2 attempts)  → harness/REQ-002
+     Agent exited 1.
+     │ You've hit your monthly spend limit · raise it at claude.ai/settings/usage
+     └ full output: --format json · reproduce: --keep-worktrees
+     ↳ the attempt is committed on harness/REQ-002 — review it</code></pre></figure>
+<p>It was the best possible test.</p>
+<p>Before the fixes that would have printed <code>Agent exited 1</code>, and 861 lines of
+perfectly good work would have gone into the bin with the worktree. Instead the
+cause is on screen and the work is on a branch.</p>
+<hr>
+<h2 id="the-tally">The tally<a class="anchor" href="#the-tally" aria-label="Link to this section">#</a></h2>
+<p>Three runs. Ten defects, all of them in our machinery rather than the agent&#39;s.</p>
+<p>The gate that approved without verifying. The gate that rejected correct work
+and could not say why. A harness that <strong>blocked its own second run</strong>, because it
+archived prompts into the project directory and then refused to start on a dirty
+tree. A test that had been quietly <em>weakened</em> to accommodate that, filtering the
+offending directory out of its own clean-tree assertion in order to pass — which
+is how the mess had stayed invisible. A report holding the full failure output
+and printing only its first line. A default timeout both runs disproved.</p>
+<p>Not one of them was visible by reading the code. I know, because I had read the
+code. Several of them I had written myself, with tests, in the weeks before.</p>
+<hr>
+<h2 id="what-i-actually-believe-now">What I actually believe now<a class="anchor" href="#what-i-actually-believe-now" aria-label="Link to this section">#</a></h2>
+<p><strong>Running it once is worth more than a month of design.</strong> That is not a platitude
+about testing; it is specific. These were not edge cases. They were two ordinary
+decisions meeting in the middle, and the only instrument that detects that is
+execution.</p>
+<p><strong>The strategic writing on this topic ends one step too early.</strong> There is a lot
+of it, and it is good — the case that specs become the human/agent interface is
+made and I agree with it. But it ends at the architecture. Nobody writes down
+what happens on Tuesday when you run the thing, and Tuesday is where the
+information is.</p>
+<p><strong>&quot;Eventually agents write all the code, humans review specs&quot; is directionally
+right and currently unearned.</strong> If you remove the human from authoring, the gate
+becomes the only thing between an agent&#39;s output and your main branch. We
+discovered by running it that ours approved work it had not verified. So the
+sequencing is the reverse of how it is usually pitched:</p>
+<blockquote>
+<p>You do not earn the right to remove human authorship by adopting specs. You
+earn it by demonstrating your gate can tell good work from bad — and the only
+way to demonstrate that is to run it, repeatedly, and count how often it is
+wrong in each direction.</p>
+</blockquote>
+<p>We now instrument exactly that. It is the metric that mattered, and the one we
+did not have on the day it would have saved us.</p>
+<p><strong>Scenario quality stopped being a style preference.</strong> Every team accumulates
+these:</p>
+<figure class="code" data-lang="gherkin"><figcaption class="code__head"><span class="code__lang">gherkin</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-gherkin"><span class="tok tok--k">Scenario</span>: Test login
+<span class="tok tok--g">  Given</span> the system is ready
+<span class="tok tok--g">  When</span> something happens
+<span class="tok tok--g">  Then</span> it works</code></pre></figure>
+<p>That used to be a smell. With an agent reading it, it is a defect: a human asks
+a colleague what &quot;it works&quot; means, and an agent picks an interpretation,
+implements it confidently, and turns the scenario green. So generic titles,
+missing <code>When</code>, missing <code>Then</code> and vague steps are now lint rules that fail the
+build under <code>--strict</code>.</p>
+<hr>
+<h2 id="if-you-want-to-poke-at-it">If you want to poke at it<a class="anchor" href="#if-you-want-to-poke-at-it" aria-label="Link to this section">#</a></h2>
+<p>It is MIT-licensed and on npm. The honest framing: one dogfood project and one
+pilot, nobody outside our own repositories has used it in anger, and everything
+above is what we measured on our own work.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> create-spec-driven-app@latest onboard   <span class="tok tok--c"># reads your repo, proposes capabilities, writes nothing</span>
+<span class="tok tok--f">npx</span> create-spec-driven-app@latest adopt     <span class="tok tok--c"># writes the spec skeleton, touches no source</span>
+<span class="tok tok--f">npx</span> create-spec-driven-app@latest validate . <span class="tok tok--o">--strict-tdd</span></code></pre></figure>
+<p>Start at the gate, not at the agent. A pull-request check that fails when a
+requirement loses its test is worth more than any amount of orchestration on top
+of specifications nobody trusts yet. Most teams should stop there for a while.</p>
+<p>And whichever tool you are evaluating, including this one, the question I would
+ask is not what the specification format looks like.</p>
+<p><strong>It is: has anyone run the loop, and what broke?</strong></p>
+<p>If the answer is nothing, they have not run it.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="../release-process.html"><span>Previous</span>Release process</a><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/articles/specs-that-cannot-lie.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#we-spent-months-building-a-pipeline-so-an-ai-agent-could-write-code-from-our-specifications-the-first-time-we-ran-it-it-worked-that-turned-out-to-be-the-problem">We spent months building a pipeline so an AI agent could write code from our specifications. The first time we ran it, it worked. That turned out to be the problem.</a></li><li class="toc__l2"><a href="#the-bet">The bet</a></li><li class="toc__l2"><a href="#run-one-it-worked-and-that-was-the-problem">Run one: it worked, and that was the problem</a></li><li class="toc__l2"><a href="#run-two-the-gate-rejected-correct-work">Run two: the gate rejected correct work</a></li><li class="toc__l2"><a href="#run-three-the-account-ran-out-of-money">Run three: the account ran out of money</a></li><li class="toc__l2"><a href="#the-tally">The tally</a></li><li class="toc__l2"><a href="#what-i-actually-believe-now">What I actually believe now</a></li><li class="toc__l2"><a href="#if-you-want-to-poke-at-it">If you want to poke at it</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

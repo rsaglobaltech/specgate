@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0012-plan-done-implementation-loop">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0012 — plan + done: closing the pack→code implementation loop — Specgate</title>
+<meta name="description" content="ADR-0012 — plan + done: closing the pack→code implementation loop">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0012 — plan + done: closing the pack→code implementation loop — Specgate">
+<meta property="og:description" content="ADR-0012 — plan + done: closing the pack→code implementation loop">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0012-plan-done-closing-the-pack-code-implementation-loop">ADR-0012 — <code>plan</code> + <code>done</code>: closing the pack→code implementation loop<a class="anchor" href="#adr-0012-plan-done-closing-the-pack-code-implementation-loop" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-05-13</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>The CLI already lets users <strong>bring specs into a project</strong> (<code>expand</code>,
+<code>specops sync</code>) and <strong>block merges when specs and code drift apart</strong>
+(<code>validate --strict-tdd</code>). What it did <strong>not</strong> offer was a structured answer
+to the question every consumer (human or AI) asks right after <code>specops sync</code>:</p>
+<blockquote>
+<p>Three new <code>.feature</code> files landed in <code>features/</code>. <strong>Which one should I
+implement first, and where do I put the code?</strong></p>
+</blockquote>
+<p>Today the workflow is:</p>
+<ol>
+<li>Read <code>git diff</code> after <code>sync</code>.</li>
+<li>Open each new <code>.feature</code> by hand.</li>
+<li>Cross-reference the row in <code>traceability.md</code> to recover the planned
+technical / test artifact paths.</li>
+<li>Implement the test → implement the code → manually edit
+<code>traceability.md</code> to flip the <code>Status</code> cell from <code>Draft</code> to
+<code>Implemented</code>.</li>
+</ol>
+<p>That is workable for a careful human, but it is <strong>noise</strong> for an AI
+agent (which has to parse free-form text) and <strong>error-prone for the
+human</strong> (the matrix often stays at <code>Draft</code> long after the code lands,
+breaking audit trails).</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p>Ship three small, composable commands that close the loop:</p>
+<ol>
+<li><p><strong><code>plan</code></strong> — read <code>docs/specs/traceability.md</code> plus the filesystem
+and emit a bucketed report:</p>
+<ul>
+<li><code>NEEDS_FEATURE</code>, <code>NEEDS_EVERYTHING</code>, <code>NEEDS_TEST</code>,
+<code>NEEDS_IMPLEMENTATION</code>, <code>NEEDS_STATUS_UPDATE</code>, <code>DONE</code>.</li>
+<li>Default output is colourised text.</li>
+<li><code>--format json</code> emits a stable structure for AI agents, editors,
+and CI dashboards.</li>
+</ul>
+</li>
+<li><p><strong><code>done &lt;REQ-id&gt;</code></strong> — update the matching row in
+<code>traceability.md</code> to a terminal status (default: <code>Implemented</code>).</p>
+<ul>
+<li><code>--status</code> overrides the target status.</li>
+<li><code>--check</code> re-runs <code>validate</code> before writing; aborts on failure so
+the matrix never moves ahead of the gates.</li>
+</ul>
+</li>
+<li><p><strong><code>specops diff --format json</code> (alias <code>--plan</code>)</strong> — the existing
+<code>diff</code> already enumerates added/modified files; we add a
+machine-readable mode so an agent can react to a pack version bump
+without parsing text.</p>
+</li>
+</ol>
+<p>We <strong>also</strong> mirror these in the MCP server as <code>plan</code> and
+<code>mark_requirement_done</code>, so MCP-aware AI clients (Claude Desktop,
+Cursor, Aider) can drive the same loop natively.</p>
+<h2 id="rationale">Rationale<a class="anchor" href="#rationale" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>plan</code> is <strong>pure read</strong> — fully cacheable, fully testable, and a
+natural fit for an MCP tool. It reuses the traceability matrix as
+the single source of truth: no separate state file, no drift.</li>
+<li><code>done</code> is <strong>a minimal, surgical edit</strong> — one cell, with the same
+allow-list <code>validate</code> already enforces. Adding it as a CLI command
+(rather than asking agents to do markdown surgery) makes the change
+reviewable in a single git diff.</li>
+<li>The <code>--format json</code> + <code>--plan</code> aliases keep the existing text UX
+intact while opening a stable contract for tooling.</li>
+<li>Bucketing by what&#39;s <em>missing</em> (test vs code vs status) matches the
+way both human and AI workflows think about &quot;what&#39;s next&quot; — and it
+gives <code>--strict-tdd</code> a positive counterpart instead of just blocking.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><p><strong>Embed all of this into <code>validate --strict-tdd</code>.</strong> Rejected: the
+gate&#39;s job is to block; mixing planning into it conflates &quot;what&#39;s
+wrong&quot; with &quot;what to do next&quot; and produces hostile error messages.</p>
+</li>
+<li><p><strong>Generate GitHub issues automatically after <code>sync</code>.</strong> Considered
+for a follow-up. It is opinionated (GitHub-only), surface-heavy
+(needs auth, rate limits, idempotency), and tangential to the core
+ergonomic gap. We will revisit when the registry/GitHub App work
+lands.</p>
+</li>
+<li><p><strong>Auto-bump status when the test passes (no <code>done</code> command).</strong>
+Rejected for v1: detecting &quot;the test passes for <em>this</em> REQ&quot;
+requires per-pack/per-stack runner knowledge we do not have. An
+explicit <code>done</code> keeps the contract clear and the audit trail
+deliberate.</p>
+</li>
+</ol>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<h3 id="positive">Positive<a class="anchor" href="#positive" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>AI agents can call <code>plan</code> → know exactly what to implement → call
+<code>mark_requirement_done</code> when finished. No text parsing.</li>
+<li>Humans get a colourised &quot;to-do list&quot; that matches their mental
+model after a pack sync.</li>
+<li>The traceability matrix becomes a <em>living</em> artifact instead of a
+rear-view mirror that has to be updated by hand.</li>
+<li><code>validate --strict-tdd</code> and <code>plan</code> are now complementary: one
+blocks, the other guides.</li>
+</ul>
+<h3 id="negative-trade-offs">Negative / trade-offs<a class="anchor" href="#negative-trade-offs" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>The status update is still <em>trust-based</em> — <code>done</code> will mark a row
+Implemented even if the test does not actually pass, unless the
+user passes <code>--check</code>. We expect CI to enforce <code>validate --strict-tdd</code> as the real backstop.</li>
+<li>We now have two ways to write a status (<code>done</code> and direct markdown
+edit). We accept the redundancy — direct edits remain valid; <code>done</code>
+is the recommended, auditable path.</li>
+</ul>
+<h2 id="follow-ups">Follow-ups<a class="anchor" href="#follow-ups" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>csda watch</code> mode that re-runs <code>plan</code> on every save.</li>
+<li>A <code>done --auto</code> mode that runs the project&#39;s test command for the
+specific REQ and bumps the status only on green.</li>
+<li>A future <code>specops</code> command (<code>specops add</code>/<code>specops remove</code>) that
+changes the lockfile so <code>plan</code> and <code>done</code> close a fully scripted
+loop without manual markdown editing.</li>
+</ul>
+<h2 id="references">References<a class="anchor" href="#references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>scripts/plan.ts</code></li>
+<li><code>scripts/done.ts</code></li>
+<li><code>packages/mcp-spec-driven/src/tools.ts</code> — <code>plan</code> + <code>mark_requirement_done</code></li>
+<li>ADR-0010 — specops sync/diff (M2)</li>
+<li>ADR-0011 — contracts pack + <code>--strict-tdd</code> gate (M3)</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0012-plan-done-implementation-loop.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#rationale">Rationale</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l3"><a href="#positive">Positive</a></li><li class="toc__l3"><a href="#negative-trade-offs">Negative / trade-offs</a></li><li class="toc__l2"><a href="#follow-ups">Follow-ups</a></li><li class="toc__l2"><a href="#references">References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

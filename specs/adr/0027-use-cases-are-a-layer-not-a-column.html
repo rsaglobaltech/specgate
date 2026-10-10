@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0027-use-cases-are-a-layer-not-a-column">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0027 — Use cases are a layer, not a column — Specgate</title>
+<meta name="description" content="ADR-0027 — Use cases are a layer, not a column">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0027 — Use cases are a layer, not a column — Specgate">
+<meta property="og:description" content="ADR-0027 — Use cases are a layer, not a column">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0027-use-cases-are-a-layer-not-a-column">ADR-0027 — Use cases are a layer, not a column<a class="anchor" href="#adr-0027-use-cases-are-a-layer-not-a-column" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-10-07</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>Specgate&#39;s unit is the requirement, and its traceability matrix is one row per
+scenario. That row has a <code>Use Case</code> column, a <code>Command/Query</code> column and an
+<code>Aggregate</code> column, each holding <strong>one</strong> value. The domain-pack schema says the
+same thing another way: a use case has exactly one <code>requirement</code>.</p>
+<p>That is a 1:1:1 model, and real projects are not shaped like it. A team that
+works from use cases — the case that prompted this record: Jira epics and
+stories, code organised by use case, some use cases modelled in BPMN —
+describes three relations the matrix cannot hold:</p>
+<ul>
+<li><strong>One requirement, several use cases.</strong> &quot;A customer manages their profile&quot;
+is realised by <em>Change password</em>, <em>Update photo</em> and <em>Change address</em>.</li>
+<li><strong>One use case, several requirements.</strong> <em>Checkout</em> satisfies &quot;VAT is computed
+per country&quot;, &quot;stock is checked in real time&quot; and &quot;a receipt is emailed&quot; at
+once.</li>
+<li><strong>Use cases that reuse each other.</strong> <em>Buy product</em> and <em>Subscribe to premium</em>
+both <code>&lt;&lt;include&gt;&gt;</code> <em>Authenticate</em>; an <code>&lt;&lt;extend&gt;&gt;</code> adds an optional path.</li>
+</ul>
+<p>And the kinds of requirement enter a use case through different doors:</p>
+<ul>
+<li>a <strong>functional</strong> requirement becomes the steps of its main and alternative flows;</li>
+<li>a <strong>non-functional</strong> one becomes a constraint on a step (&quot;bank validation &lt; 2 s&quot;);</li>
+<li>a <strong>business rule</strong> becomes a precondition, or the alternative flow that enforces it.</li>
+</ul>
+<p>Two more facts shape the decision:</p>
+<ul>
+<li><strong>A user story is a slice of a use case</strong>, not a requirement. The main flow
+ships in one sprint and the alternative flows in the next ones. Mapping a
+story to a <code>REQ</code>, as earlier drafts of the ALM integration assumed, is wrong.</li>
+<li><strong>Each path through a use case is a test.</strong> The happy path, the validation
+error and the network failure are each a scenario — that is where BDD meets
+the use case.</li>
+</ul>
+<p>Teams feel two different pains, and both are real: <em>&quot;is what we promised
+done?&quot;</em> and <em>&quot;what do I break if I touch this?&quot;</em>. A table answers the first
+badly and the second not at all.</p>
+<p>At the same time, ADR-0022 holds: patterns are optional. Many of the same
+team&#39;s projects use none of this, and a CRUD service must never be handed use
+cases it does not have.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p><strong>The requirement stays the unit of acceptance. The use case becomes an
+optional layer of its own, related N:M to requirements, and the matrix becomes
+a graph derived from both.</strong></p>
+<ol>
+<li><p><strong>The elements.</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Element</th><th>Is</th><th>Present</th></tr></thead><tbody><tr><td>Requirement <code>REQ-NNN</code></td><td>What must hold, with a <strong>kind</strong>: <code>functional</code>, <code>non-functional</code> or <code>business-rule</code></td><td>Always</td></tr><tr><td>Use case <code>UC-NNN</code></td><td>Actor, preconditions, main flow, alternative flows, <code>include</code>/<code>extend</code>, an <em>architecturally significant</em> flag</td><td><code>layered</code> and <code>tactical-ddd</code> profiles</td></tr><tr><td>Scenario <code>SCN-NNN</code></td><td>One path through a use case — or through a requirement when there are no use cases</td><td>Always</td></tr><tr><td>Story</td><td>A slice of a use case; it lives in the issue tracker</td><td>Never in the repository</td></tr><tr><td>Entity</td><td>What a use case touches</td><td><code>tactical-ddd</code> profile only</td></tr></tbody></table></div>
+</li>
+<li><p><strong>The N:M relation is declared on the use case</strong>, which says which
+requirements it <em>realises</em>. The requirement stays stable and abstract; design
+happens in the use case; the reverse view is derived, exactly as the matrix is
+derived today. A requirement never lists its use cases.</p>
+</li>
+<li><p><strong>A use case is a Markdown file</strong>, one per use case, under
+<code>docs/specs/use-cases/</code>, with fixed sections. On a codebase organised by use
+case, <code>init</code> proposes the skeletons from the folders, as it already proposes
+capabilities.</p>
+</li>
+<li><p><strong>With use cases, scenarios are written per path of a use case</strong> and tagged
+with it. A requirement is covered <em>through</em> the use cases that realise it, so
+<em>Checkout</em>&#39;s scenarios are written once, not once per requirement it
+satisfies. Projects without use cases keep tagging scenarios with the
+requirement, as today.</p>
+</li>
+<li><p><strong>The gate collects in both directions</strong>, keeping ADR-0026&#39;s rule that a
+status is a promise and a <code>Draft</code> owes nothing:</p>
+<ul>
+<li>a delivered requirement owes every use case that realises it, each with its
+paths covered by a test;</li>
+<li>a use case that realises no requirement is <strong>gold-plating</strong>: a warning on
+adoption, an error under the strict profile;</li>
+<li>a non-functional requirement owes a test tagged with it, or a stated reason
+it is verified elsewhere;</li>
+<li>a business rule owes at least one alternative-flow scenario that exercises it;</li>
+<li>an architecturally significant use case also owes the architecture check
+(ADR-0028).</li>
+</ul>
+</li>
+<li><p><strong>Profiles, not obligations.</strong> ADR-0022&#39;s <code>minimal</code> profile is today&#39;s model,
+unchanged. <code>layered</code> — which already scaffolds <code>use-cases.md</code> — turns the
+use-case layer on. <code>tactical-ddd</code> adds entities and events. Each layer is
+additive: a project moves up a profile without migrating anything it has.</p>
+</li>
+<li><p><strong>The issue tracker mirrors, it does not define</strong> (ADR-0021). An epic maps to
+a capability or a large use case; a story maps to one or more paths of a use
+case. Stories are not recorded in the repository: one source of truth for
+each thing.</p>
+</li>
+</ol>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The matrix is no longer the model; it is one <strong>view</strong> of a graph. The graph
+answers &quot;is it done?&quot; by requirement and &quot;what do I break?&quot; by use case or
+entity. Both views are generated; nothing in them is edited by hand.</li>
+<li>The pack schema&#39;s <code>use_cases[].requirement</code> (one id) gains a
+<code>requirements</code> list. A pack that writes the single field keeps validating:
+the single value reads as a one-item list.</li>
+<li><code>use-cases.md</code>, the one-table file <code>layered</code> scaffolds today, is superseded by
+one file per use case. Existing tables are migrated losslessly or not at all,
+the rule <code>matrix --migrate</code> follows.</li>
+<li>Two new commands earn a place outside the daily five: a trace view of one
+element and an impact view. The daily loop does not grow.</li>
+<li>The scope is larger than any change since the derived matrix. It ships in
+phases (the specification lists them), each behind the <code>layered</code> profile,
+so a <code>minimal</code> project sees no difference at any point.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Comma-separated lists in the matrix cells.</strong> The cheapest change and the
+worst one: unreadable at three values, and a merge conflict generator.</li>
+<li><strong>Declare the relation on the requirement.</strong> Puts design inside the most
+stable artefact, and makes every new use case edit requirements it does not
+change.</li>
+<li><strong>Model stories in the repository.</strong> A second source of truth for something
+the tracker already owns, and the first to drift.</li>
+<li><strong>Make use cases mandatory.</strong> Contradicts ADR-0022, and is how this tool got
+its &quot;hard to use&quot; reputation.</li>
+</ul>
+<h2 id="references">References<a class="anchor" href="#references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="../use-case-model.html">The use-case model — specification</a></li>
+<li>ADR-0021 — The ALM is a mirror; ADR-0022 — Patterns are optional;
+ADR-0026 — The default gate is the strong gate; ADR-0028 — Architecture
+conformance</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0027-use-cases-are-a-layer-not-a-column.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li><li class="toc__l2"><a href="#references">References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

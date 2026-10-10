@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0015-change-lifecycle">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0015 — The change lifecycle: propose → review → archive — Specgate</title>
+<meta name="description" content="ADR-0015 — The change lifecycle: propose → review → archive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0015 — The change lifecycle: propose → review → archive — Specgate">
+<meta property="og:description" content="ADR-0015 — The change lifecycle: propose → review → archive">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0015-the-change-lifecycle-propose-review-archive">ADR-0015 — The change lifecycle: propose → review → archive<a class="anchor" href="#adr-0015-the-change-lifecycle-propose-review-archive" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-08-15</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>Until now the tool had no object for &quot;a change in flight&quot;. A requirement was
+either in <code>docs/specs/traceability.md</code> or it was not, and its history lived
+only in git. Two consequences followed:</p>
+<ol>
+<li><strong>There was no reviewable unit of intent.</strong> A reviewer opening a PR saw a
+diff of <code>spec.md</code>, <code>use-cases.md</code> and <code>traceability.md</code> and had to
+reconstruct <em>what behaviour was being proposed</em> from the wreckage. The
+review happened over the code, not over the intent.</li>
+<li><strong>Brownfield was second class.</strong> Every command assumed a project was
+generated by <code>init</code> or expanded from a pack. Adding one requirement to an
+existing system meant hand-editing three files in lockstep.</li>
+</ol>
+<p>The benchmark against OpenSpec (<code>mejoras/openspec-benchmark-plan.md</code>) made the
+gap explicit: their entire product is this lifecycle, and it is the reason a
+reviewer can look at a change and understand it in a minute.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p>Introduce the <strong>change</strong> as a first-class object: a folder holding everything
+needed to understand and implement one proposed modification.</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">docs/specs/
+├── capabilities/&lt;cap&gt;/spec.md              ← source of truth: how it behaves today
+├── changes/&lt;change-id&gt;/
+│   ├── proposal.md                         ← why + scope
+│   ├── design.md                           ← how (optional, full rigor only)
+│   ├── tasks.md                            ← implementation checklist
+│   ├── change.yaml                         ← schema, rigor, skip_specs, req_range
+│   ├── specs/&lt;cap&gt;/spec.md                 ← DELTA (see ADR-0016)
+│   └── features/&lt;module&gt;/&lt;name&gt;.feature    ← proposed Gherkin
+└── changes/archive/YYYY-MM-DD-&lt;change-id&gt;/ ← history, full context preserved</code></pre></figure>
+<p>Six commands: <code>csda change new | list | show | status | validate | archive</code>.</p>
+<p><strong>Location: under <code>docs/specs/</code>, not a top-level <code>openspec/</code>-style directory.</strong>
+The change lifecycle is part of the specification, and the specification
+already lives in <code>docs/specs/</code>. A second root would split the spec surface in
+two and force every existing command to learn about both.</p>
+<p><strong>Capabilities are optional and additive.</strong> <code>docs/specs/capabilities/</code> is new;
+<code>spec.md</code>, <code>use-cases.md</code> and the rest are untouched. A project generated
+before this ADR has no <code>changes/</code> directory, and every command above reports
+&quot;no active changes&quot; rather than failing. That is a tested contract, not a
+convention.</p>
+<h2 id="rationale">Rationale<a class="anchor" href="#rationale" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>The folder is the reviewable unit.</strong> Proposal, design, tasks and deltas in
+one place means a reviewer opens one directory instead of correlating a
+scattered diff. It also makes parallel work safe: two changes touching the
+same capability do not conflict as long as they touch different
+requirements.</li>
+<li><strong>Archiving is an engineering act, not a filing act.</strong> <code>archive</code> merges the
+deltas into the capability specs <strong>and</strong> upserts the traceability matrix
+<strong>and</strong> materialises the proposed <code>.feature</code> files. The requirement lands
+under the existing <code>validate --strict-tdd</code> gate. This is the whole point:
+where a documentation tool stops at markdown, the archive here arms a gate.</li>
+<li><strong>Dependencies are enablers, not gates.</strong> <code>change status</code> reports which
+artefact is <em>possible</em> to write next, never which one is mandatory. A change
+can skip <code>design.md</code> entirely; lite rigor is the default.</li>
+<li><strong><code>req_range</code> reserves ids at creation.</strong> Two changes worked in parallel
+would otherwise both mint <code>REQ-014</code>. The reservation scans the matrix, the
+capability specs, and every other change — including archived ones, because
+ids must never be recycled.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>Keep everything in <code>traceability.md</code> and rely on git history.</strong> Rejected —
+the matrix records <em>state</em>, not <em>intent</em>. &quot;REQ-014 exists and is
+Implemented&quot; does not tell you why it was proposed, what was ruled out of
+scope, or what the alternative was. Git history holds the diff but not the
+argument.</li>
+<li><strong>A top-level <code>openspec/</code>-shaped directory.</strong> Rejected — see above. Two spec
+roots is a worse problem than a longer path.</li>
+<li><strong>One file per change instead of a folder.</strong> Rejected — a single file cannot
+hold per-capability deltas plus proposed <code>.feature</code> files, and it makes the
+archive a rename rather than a merge.</li>
+<li><strong>Make capabilities mandatory, migrating <code>spec.md</code> into them.</strong> Rejected for
+this phase — it would break every existing project. Capabilities are opt-in;
+<code>archive</code> creates one on demand the first time a delta targets it.</li>
+</ol>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<h3 id="positive">Positive<a class="anchor" href="#positive" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Review happens over intent (<code>proposal.md</code> + spec deltas) before it happens
+over code.</li>
+<li>Brownfield adoption no longer requires a pack or a generated project: any
+repo with <code>docs/specs/</code> can take a change.</li>
+<li>The archive produces a queue item — <code>csda plan</code> lists the new REQ
+immediately — which the harness can pick up without further glue.</li>
+</ul>
+<h3 id="negative-trade-offs">Negative / trade-offs<a class="anchor" href="#negative-trade-offs" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Two places now describe requirements: the capability spec (behaviour) and
+the traceability matrix (state). The risk of drift is real; <code>doctor</code> gains a
+drift check in a later phase, and <code>archive</code> is the only writer of both.</li>
+<li>Deeper paths (<code>docs/specs/changes/&lt;id&gt;/specs/&lt;cap&gt;/spec.md</code>). Accepted as the
+cost of not splitting the spec root.</li>
+<li>A change archived in <code>Draft</code> does not immediately fail <code>--strict-tdd</code>; the
+gate fires when the requirement moves to <code>In Dev</code>. Finishing a specification
+is not the same as starting to build it, and the status model already
+encodes that distinction.</li>
+</ul>
+<h2 id="follow-ups">Follow-ups<a class="anchor" href="#follow-ups" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>F1B: <code>specops diff --as-change</code> — a pack version bump materialises a
+reviewable change instead of a file diff (see the benchmark plan §F1B).</li>
+<li><code>doctor</code> checks: orphaned deltas, archived changes with unchecked tasks,
+drift between the matrix and the capability specs.</li>
+<li>A configurable artefact graph per schema (currently the built-in
+<code>spec-driven</code> graph is hard-coded in <code>scripts/change/cli.ts</code>).</li>
+</ul>
+<h2 id="references">References<a class="anchor" href="#references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>scripts/change/</code> — <code>common.ts</code>, <code>cli.ts</code>, <code>archive.ts</code></li>
+<li>ADR-0016 — the delta spec format</li>
+<li>ADR-0011 — the <code>--strict-tdd</code> gate this lifecycle arms</li>
+<li><code>mejoras/openspec-benchmark-plan.md</code> §F1</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0015-change-lifecycle.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#rationale">Rationale</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l3"><a href="#positive">Positive</a></li><li class="toc__l3"><a href="#negative-trade-offs">Negative / trade-offs</a></li><li class="toc__l2"><a href="#follow-ups">Follow-ups</a></li><li class="toc__l2"><a href="#references">References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

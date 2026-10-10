@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en" data-slug="specs/architecture">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🏛️ Architecture — the full spec-driven delivery flow — Specgate</title>
+<meta name="description" content="🏛️ Architecture — the full spec-driven delivery flow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="🏛️ Architecture — the full spec-driven delivery flow — Specgate">
+<meta property="og:description" content="🏛️ Architecture — the full spec-driven delivery flow">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="architecture-the-full-spec-driven-delivery-flow">🏛️ Architecture — the full spec-driven delivery flow<a class="anchor" href="#architecture-the-full-spec-driven-delivery-flow" aria-label="Link to this section">#</a></h1>
+<p>This page is the <strong>single source of truth</strong> for how the tool, the domain
+pack and an implementation project fit together, and where in that picture
+the harness, opencode/Claude, and the human reviewer live.</p>
+<blockquote>
+<p>Companion docs: <a href="../tutorial.html"><code>tutorial.md</code></a> is the step-by-step
+walkthrough; <a href="../bootstrap-prompt.html"><code>bootstrap-prompt.md</code></a> is the
+hand-off prompt for Phase 1; <a href="./harness.html"><code>harness.md</code></a>,
+<a href="./specops.html"><code>specops.md</code></a> and
+<a href="./domain-pack-format.html"><code>domain-pack-format.md</code></a> drill into individual
+subsystems.</p>
+</blockquote>
+<hr>
+<h2 id="1-the-three-repos">1. The three repos<a class="anchor" href="#1-the-three-repos" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">                                          ┌──────────────────────────────────┐
+                                          │   specgate (TOOL)  │
+                                          │   npm package · CLI binary       │
+                                          │   commands: init, specops,       │
+                                          │   pack, plan, done, validate,    │
+                                          │   harness                        │
+                                          └─────────────┬────────────────────┘
+                                                        │ uses
+       ┌─────────────────────────────────┐              │              ┌────────────────────────────────────┐
+       │  DOMAIN PACK REPO               │              │              │  IMPLEMENTATION PROJECT REPO       │
+       │  parking-management-specops/    │              │              │  smart-parking-spring/             │
+       │                                 │              │              │                                    │
+       │  pack.yaml                      │              │              │  spec.md           ◄─ rendered     │
+       │  templates/                     │              │              │  AI_RULES.md       ◄─ rendered     │
+       │    AI_RULES.md.tpl              │              │              │  features/**/*.feature ◄─ rendered │
+       │    spec.md.tpl                  │   specgate       │   specgate       │  docs/specs/                       │
+       │    features/**/*.feature.tpl    ├──pack lint──►│◄─specops add │  pom.xml | build.gradle | …        │
+       │                                 │   --graph    │   --pack-repo│  src/main, src/test                │
+       │  git tags: v0.1.0, v0.2.0 …     │   --strict   │   --version  │  .specops.lock  ── points back     │
+       │                                 │   pack infer │   --var …    │  .specops/baseline/  (merge base)  │
+       │  AUTHORED by domain experts     │              │              │  .specops/harness-prompts/ (audit) │
+       │  Stack-agnostic                 │              │  specgate        │  harness.config.yaml               │
+       │                                 │              │  specops sync│                                    │
+       │                                 │              │  --pack-vers │  IMPLEMENTED by humans + agents    │
+       │                                 │              │              │  ONE per stack (Spring / Quarkus / │
+       └─────────────────────────────────┘              │              │   Micronaut / Node / Quarkus / …)  │
+                                                        │              │                                    │
+                                                        │              │  Iteration loop:                   │
+                                                        │              │  ┌──────────────────────────────┐  │
+                                                        │              │  │  specgate harness run --req REQ  │  │
+                                                        │              │  │                              │  │
+                                                        │              │  │  ┌────────────────────────┐  │  │
+                                                        │              │  │  │ git worktree           │  │  │
+                                                        │              │  │  │ harness/REQ-NNN        │  │  │
+                                                        │              │  │  │                        │  │  │
+                                                        │              │  │  │  prompt = prefix +     │  │  │
+                                                        │              │  │  │   facts + Gherkin +    │  │  │
+                                                        │              │  │  │   AI_RULES + DoD       │  │  │
+                                                        │              │  │  │                        │  │  │
+                                                        │              │  │  │      ▼                 │  │  │
+                                                        │              │  │  │  opencode / claude /   │  │  │
+                                                        │              │  │  │  aider / stub agent    │  │  │
+                                                        │              │  │  │      │ writes code     │  │  │
+                                                        │              │  │  │      ▼                 │  │  │
+                                                        │              │  │  │  src/, test/           │  │  │
+                                                        │              │  │  │      │                 │  │  │
+                                                        │              │  │  │      ▼ GATE            │  │  │
+                                                        │              │  │  │  validate --strict-tdd │  │  │
+                                                        │              │  │  │  + test_cmd            │  │  │
+                                                        │              │  │  │      │                 │  │  │
+                                                        │              │  │  │  green: done + commit  │  │  │
+                                                        │              │  │  │  red:   retry w/ fail  │  │  │
+                                                        │              │  │  └────────────────────────┘  │  │
+                                                        │              │  └──────────────────────────────┘  │
+                                                        │              │                                    │
+                                                        │              │  Human reviews harness/REQ-*       │
+                                                        │              │  branches and merges to main.      │
+                                                        │              └────────────────────────────────────┘
+                                                        │
+                                                        ▼
+                                          ┌──────────────────────────────────┐
+                                          │  Companion tools                 │
+                                          │  - vscode-spec-driven extension  │
+                                          │     · pack.yaml schema squigglies│
+                                          │     · dangling-ref autocomplete  │
+                                          │     · &quot;Show Pack Graph&quot; webview  │
+                                          │  - mcp-spec-driven server        │
+                                          │     · plan / done / lint_pack    │
+                                          │       as MCP tools for Claude    │
+                                          │       Desktop, Cursor, opencode  │
+                                          └──────────────────────────────────┘</code></pre></figure>
+<p>Three lifecycles, three responsibilities.</p>
+<div class="table-wrap"><table><thead><tr><th>Piece</th><th>Changes when…</th><th>Owner</th></tr></thead><tbody><tr><td><strong>Tool</strong></td><td>the CLI gains features / fixes</td><td>tool maintainers</td></tr><tr><td><strong>Pack</strong></td><td>the domain evolves (new requirements, scenarios, events)</td><td>domain experts</td></tr><tr><td><strong>Implementation</strong></td><td>features are built / bugs are fixed</td><td>the product team</td></tr></tbody></table></div>
+<hr>
+<h2 id="2-per-project-chronology">2. Per-project chronology<a class="anchor" href="#2-per-project-chronology" aria-label="Link to this section">#</a></h2>
+<p>Read top-to-bottom — every step is a real command somebody runs.</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">Day 1 (human)            ┌──► specgate init  (scaffold from project.yaml)
+                         │
+Day 1 (human)            ├──► specgate specops add  (pulls pack, renders specs)
+                         │
+Day 1 (human + AI)       ├──► Bootstrap prompt → opencode / Claude
+                         │     PHASE 1: build files, BDD wired, hex skeleton,
+                         │     first bounded context green
+                         │
+                         ├──► git commit &quot;phase 1 complete&quot;
+                         │
+Day N (AI via harness)   ├──► specgate harness prompt REQ-001   (preview)
+                         ├──► specgate harness run    --req REQ-001
+                         │       └─ worktree, prompt(prefix+facts+Gherkin+AI_RULES),
+                         │          agent writes code, gate, done, commit on
+                         │          harness/REQ-001
+                         │
+                         ├──► human reviews + merges harness/REQ-001
+                         │
+                         ├──► specgate harness run --req REQ-002
+                         │   …
+                         │
+Pack v0.2.0 ships        ├──► specgate specops diff --pack-version v0.2.0
+                         ├──► specgate specops sync --pack-version v0.2.0
+                         │   …
+                         └──► continues</code></pre></figure>
+<p>The line <code>Bootstrap prompt → opencode / Claude</code> is the <strong>only</strong>
+freeform-AI step. Everything that follows is the harness driving the same
+loop, deterministically, one requirement at a time.</p>
+<hr>
+<h2 id="3-responsibility-layers">3. Responsibility layers<a class="anchor" href="#3-responsibility-layers" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Layer</th><th>Who</th><th>Cadence</th><th>Output</th></tr></thead><tbody><tr><td><strong>Pack authoring</strong></td><td>domain expert + tech lead</td><td>once, then per new business feature</td><td><code>pack.yaml</code> versioned, git-tagged</td></tr><tr><td><strong>Project bootstrap (Phase 1)</strong></td><td>human + AI via the bootstrap prompt</td><td>once per <em>(project, stack)</em></td><td>build manifest + hex skeleton + first context green</td></tr><tr><td><strong>Per-REQ implementation (Phase 2..N)</strong></td><td>AI agent via the harness</td><td>iterative, one REQ per worktree</td><td>branch <code>harness/REQ-NNN</code> with code + test</td></tr><tr><td><strong>Review &amp; merge</strong></td><td>human</td><td>iterative</td><td><code>main</code> advances with verified code</td></tr><tr><td><strong>Pack version bumps</strong></td><td>pack maintainer publishes; each project syncs</td><td>when a new tag ships</td><td><code>specops sync</code> three-way-merges the delta</td></tr></tbody></table></div>
+<blockquote>
+<p><strong>The harness never operates on a pack repo, only on implementation
+projects.</strong> Pack authoring is a separate flow (<code>pack init</code> / <code>pack lint</code>
+/ <code>pack lint --graph</code> / <code>pack infer</code>) run inside the pack repo.</p>
+</blockquote>
+<hr>
+<h2 id="4-what-the-harness-prompt-actually-contains">4. What the harness prompt actually contains<a class="anchor" href="#4-what-the-harness-prompt-actually-contains" aria-label="Link to this section">#</a></h2>
+<p>Every per-REQ prompt the harness hands the agent is assembled in this
+order — top to bottom — by <a href="https://github.com/rsaglobaltech/specgate/blob/main/scripts/harness/prompt.ts" target="_blank" rel="noreferrer"><code>scripts/harness/prompt.ts</code></a>:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">┌────────────────────────────────────────────────────────────────────┐
+│  promptPrefix          (from harness.config.yaml: prompt_prefix or │
+│                         prompt_prefix_file — your universal Role / │
+│                         Active Project Boundary / Execution Policy)│
+├────────────────────────────────────────────────────────────────────┤
+│  ---                                                                │
+├────────────────────────────────────────────────────────────────────┤
+│  # Implement REQ-NNN                                                │
+│  ## Requirement facts                                               │
+│    feature_file · test_artifact · technical_artifact · status …    │
+│  ## Suggested approach        (hint from `specgate plan`)              │
+│  ## Gherkin scenario          (inlined from features/…feature)     │
+│  ## Project rules             (AI_RULES.md inlined verbatim)       │
+│  ## Definition of done                                              │
+│    - write the test first                                           │
+│    - then the production code                                       │
+│    - DO NOT modify spec.md / AI_RULES.md / features/**.feature      │
+│    - DO NOT edit docs/specs/traceability.md (harness handles it)    │
+│    - validate --strict-tdd + the project test command must pass    │
+│  ## Previous attempt failed   (only on retries, with the gate log)  │
+└────────────────────────────────────────────────────────────────────┘</code></pre></figure>
+<p><code>specgate harness prompt REQ-NNN</code> prints exactly that text to stdout — no git,
+no agent invocation, no gate. Use it to inspect what an agent receives.
+Every prompt the harness actually sends during <code>harness run</code> is also
+mirrored to <code>.specops/harness-prompts/REQ-NNN-&lt;timestamp&gt;-attempt-N.md</code>
+for audit.</p>
+<hr>
+<h2 id="5-multi-stack-one-pack-many-implementations">5. Multi-stack: one pack, many implementations<a class="anchor" href="#5-multi-stack-one-pack-many-implementations" aria-label="Link to this section">#</a></h2>
+<p>The pack/implementation split lets you ship the <strong>same domain spec</strong> in
+multiple stacks without duplicating requirements or scenarios:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">parking-management-specops@v0.1.0      ◄── one spec, stack-agnostic
+        ├──► smart-parking-spring/      (STACK=Spring Boot, JUnit+Cucumber)
+        ├──► smart-parking-quarkus/     (STACK=Quarkus,     JUnit+Cucumber)
+        └──► smart-parking-micronaut/   (STACK=Micronaut,   JUnit+Cucumber)</code></pre></figure>
+<p>Each implementation is its own repo, with its own <code>specgate init</code> (different
+<code>STACK</code>), its own <code>specgate specops add</code> (same pack + version + domain vars),
+its own bootstrap prompt run, and its own harness loop. The pack&#39;s
+<code>spec.md</code>, <code>features/**</code> and traceability matrix are <strong>identical</strong> across
+all three; <code>AI_RULES.md</code> differs because its <code>{{STACK}}</code> substitution does.</p>
+<p><strong>For this to work cleanly, packs must be stack-neutral.</strong> No Java/Spring
+code in <code>spec.md.tpl</code> or <code>features/**.feature.tpl</code>. Only the
+<code>AI_RULES.md.tpl</code> is allowed to reference <code>{{STACK}}</code> / <code>{{TESTING}}</code>.
+<code>pack lint --strict</code> catches scenario-quality issues that would otherwise
+manifest as stack-specific debt later.</p>
+<p>Useful patterns:</p>
+<ul>
+<li>Reference implementations across frameworks for tech-lead comparisons.</li>
+<li>Migration POCs (run two stacks side by side, retire one).</li>
+<li>Educational material (&quot;same problem, three stacks&quot;).</li>
+</ul>
+<hr>
+<h2 id="6-boundaries-the-architecture-enforces">6. Boundaries the architecture enforces<a class="anchor" href="#6-boundaries-the-architecture-enforces" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>The pack is read-only from the project&#39;s perspective.</strong> <code>specops add</code>
+/ <code>sync</code> only ever <em>read</em> the pack. The pack&#39;s git history is the audit
+trail for domain decisions.</li>
+<li><strong>The implementation project is the only thing the harness writes to.</strong>
+Worktrees live under <code>$TMPDIR</code>, but branches and commits land in the
+project&#39;s own git repo.</li>
+<li><strong><code>spec.md</code>, <code>AI_RULES.md</code>, <code>features/**</code></strong> are the agent&#39;s
+source of truth — explicitly <strong>immutable</strong> for the agent. The harness
+prompt says so; <code>specops sync</code> is the only legitimate path to change
+them (and even then, three-way merges preserve local edits).</li>
+<li><strong><code>docs/specs/traceability.md</code></strong> is the matrix; <code>specgate done</code> owns it.
+Agents must not hand-edit it.</li>
+<li><strong><code>.specops.lock</code></strong> records which pack and version the project consumes
+and the <code>--var</code> values used. Commit it.</li>
+<li><strong><code>.specops/baseline/</code></strong> is the merge base for <code>specops sync</code>. Commit it.</li>
+<li><strong><code>.specops/harness-prompts/</code></strong> is the audit log for what was sent to
+the agent on each attempt. Commit or gitignore — your call.</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/architecture.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#1-the-three-repos">1. The three repos</a></li><li class="toc__l2"><a href="#2-per-project-chronology">2. Per-project chronology</a></li><li class="toc__l2"><a href="#3-responsibility-layers">3. Responsibility layers</a></li><li class="toc__l2"><a href="#4-what-the-harness-prompt-actually-contains">4. What the harness prompt actually contains</a></li><li class="toc__l2"><a href="#5-multi-stack-one-pack-many-implementations">5. Multi-stack: one pack, many implementations</a></li><li class="toc__l2"><a href="#6-boundaries-the-architecture-enforces">6. Boundaries the architecture enforces</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

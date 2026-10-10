@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en" data-slug="specs/draft-from-brief">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drafting from a brief — specification — Specgate</title>
+<meta name="description" content="Drafting from a brief — specification">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Drafting from a brief — specification — Specgate">
+<meta property="og:description" content="Drafting from a brief — specification">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="drafting-from-a-brief-specification">Drafting from a brief — specification<a class="anchor" href="#drafting-from-a-brief-specification" aria-label="Link to this section">#</a></h1>
+<p>Status: <strong>Phase 1 implemented: <code>draft --check</code> (D1–D10, D12; D11 reserved), and D4–D5 as notes in <code>status</code> (D1 is <code>plan</code>&#39;s &quot;Needs Feature File&quot;; D2–D3 need a draft or a brief). Phases 2–4 pending.</strong> Decided in
+<a href="adr/0029-a-brief-becomes-a-draft-change-not-a-spec.html">ADR-0029</a>.
+Implemented in the phases at the end; phase 1 is an evaluation, not a release.</p>
+<hr>
+<h2 id="1-what-it-is-for">1. What it is for<a class="anchor" href="#1-what-it-is-for" aria-label="Link to this section">#</a></h2>
+<p>A team starts from a brief: a page that names the product, its users, its
+modules and its constraints. <code>specgate draft</code> turns one module of that brief
+into a <strong>proposed change</strong> — requirements, use cases, scenarios, the
+assumptions it made and the questions it could not answer — for a person to
+review, correct and archive.</p>
+<p>It does not decide what the product is. It removes the blank page and the
+omissions a checklist catches.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> draft <span class="tok tok--o">--from</span> docs/brief.md <span class="tok tok--o">--module</span> attendance
+<span class="tok tok--c"># → docs/specs/changes/draft-attendance/   (a change, not applied)</span>
+<span class="tok tok--f">specgate</span> change show draft-attendance      <span class="tok tok--c"># review the delta</span>
+<span class="tok tok--c"># edit, answer questions.md, confirm assumptions.md</span>
+<span class="tok tok--f">specgate</span> change archive draft-attendance   <span class="tok tok--c"># only now does it become spec</span></code></pre></figure>
+<h2 id="2-the-brief">2. The brief<a class="anchor" href="#2-the-brief" aria-label="Link to this section">#</a></h2>
+<p>Any Markdown. Specgate reads it as text; no structure is required. An optional
+front matter makes the checklist sharper:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">---
+product: Golden State Reinforcing field app
+surfaces: [api, mobile]          # D3: which scenarios each human use case owes
+actors:
+  - { name: Worker,     surfaces: [mobile] }
+  - { name: Foreman,    surfaces: [mobile] }
+  - { name: Office,     surfaces: [api] }
+modules: [attendance, job-files, foreman-log, daily-reports, communication, learning]
+---
+
+# Golden State Reinforcing — field app
+…the brief as the client wrote it…</code></pre></figure>
+<p>Without front matter, <code>surfaces</code> defaults to the project&#39;s detected ones (an
+<code>apps/web/app/api</code> tree is <code>api</code>, an Expo app is <code>mobile</code>), and actors are
+whatever the agent finds — listed in the draft for the reviewer to confirm.</p>
+<h2 id="3-what-a-draft-contains">3. What a draft contains<a class="anchor" href="#3-what-a-draft-contains" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">docs/specs/changes/draft-&lt;module&gt;/
+  change.yaml          # schema: draft · brief digest · module · REQ range reserved
+  proposal.md          # what the module is for, in the brief's words, with citations
+  specs/&lt;capability&gt;/spec.md   # ADDED requirements (delta format, ADR-0016)
+  use-cases/UC-NNN.md  # when the project's profile has use cases (ADR-0027)
+  features/*.feature   # one file per scenario, tagged @REQ-NNN @SCN-NNN
+  assumptions.md       # every value or fact not found in the brief
+  questions.md         # every question the brief does not answer
+  draft-report.json    # the checklist result (§4)</code></pre></figure>
+<p>Every requirement carries <code>kind</code> and, in its prose, a citation of the brief
+passage it comes from (<code>&gt; Brief: &quot;…&quot;</code>). A requirement with no passage to cite
+is an assumption and is listed as one.</p>
+<h3 id="assumptions-md"><code>assumptions.md</code><a class="anchor" href="#assumptions-md" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">| # | Assumption | Used in | Why |
+|---|---|---|---|
+| A1 | Default geofence radius 100 m | REQ-109, SCN-113 | Industry default; the brief does not say |</code></pre></figure>
+<h3 id="questions-md"><code>questions.md</code><a class="anchor" href="#questions-md" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">| # | Question | Blocks | Options seen |
+|---|---|---|---|
+| Q1 | Is the meal-break threshold the Labor Code §512 default or the union agreement's? | REQ-206 | §512: before the 5th hour · CBA: varies |</code></pre></figure>
+<p>A requirement listed under <strong>Blocks</strong> is written with status
+<code>Needs Clarification</code>. The harness refuses it until the question is answered
+and the status changed — the readiness rule that exists today.</p>
+<h2 id="4-the-checklist">4. The checklist<a class="anchor" href="#4-the-checklist" aria-label="Link to this section">#</a></h2>
+<p>Deterministic rules over the draft&#39;s files. In a draft, a failing rule fails
+<code>specgate draft</code> (the agent gets the findings and another attempt, like the
+harness gate). On a hand-written project, D1–D5 are a report in <code>status</code> and
+<code>plan</code>, never a gate (ADR-0023).</p>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Rule</th><th>How it is decided</th></tr></thead><tbody><tr><td><code>D1_no_scenario</code></td><td>Every requirement has a scenario</td><td>a feature file tagged <code>@REQ-NNN</code></td></tr><tr><td><code>D2_no_kind</code></td><td>Every requirement has a kind</td><td><code>kind=</code> in its <code>csda:trace</code></td></tr><tr><td><code>D3_surface_missing</code></td><td>Every use case a person drives has a scenario per surface its actor uses</td><td><code>surfaces=web</code> in the requirement&#39;s trace narrows its actor&#39;s surfaces (a menu has no API). A scenario counts for the actor it names, or for any actor when it names none — another actor&#39;s screen does not count. <code>api</code>: a step matching <code>(GET|POST|PUT|PATCH|DELETE) /</code>; a screen: a step naming a control (<code>taps</code>, <code>opens</code>, <code>sees</code>, <code>toca</code>, <code>abre</code>)</td></tr><tr><td><code>D4_unmeasured_nfr</code></td><td>A non-functional requirement that promises a quantity states it</td><td>it uses a quantity word (fast, latency, scalable, availability, load…) and no number followed by a unit (<code>ms</code>, <code>s</code>, <code>%</code>, <code>MB</code>, <code>px</code>, <code>req/s</code>…) in its text or scenarios. Qualitative constraints (offline, privacy, devices) are not quantities: flagging them was 4 false positives out of 4 on the Golden State packs. &quot;Responsive&quot; names a layout, not a response time (reservas_app)</td></tr><tr><td><code>D5_unsourced_rule</code></td><td>A business rule that mentions a law, code, standard or contract names its source</td><td>a mention (<code>Code §</code>, <code>ACI</code>, <code>OSHA</code>, <code>GDPR</code>, <code>CBA</code>, <code>contract</code>…) and no link or <code>Source:</code> line</td></tr><tr><td><code>D6_unlisted_value</code></td><td>A value in a scenario is in the brief or in <code>assumptions.md</code></td><td>every number and every quoted string in a scenario&#39;s steps is found in the brief text, or in the project&#39;s specification as it stands (a value an earlier change already reviewed), or in an assumption row that names that scenario or its requirement; one finding per value per scenario</td></tr><tr><td><code>D7_floating_question</code></td><td>An open question names what it blocks</td><td>every unanswered row of <code>questions.md</code> has <code>Blocks</code>, and each of those requirements is <code>Needs Clarification</code>. A row is answered by a filled <code>Answer</code> column, or a line below the table such as <code>Answer (Q1): …</code></td></tr><tr><td><code>D8_too_large</code></td><td>The draft is reviewable</td><td>at most <code>draft.max_requirements</code> requirements (default 25)</td></tr><tr><td><code>D9_scenario_quality</code></td><td>Every scenario passes the rules the harness gate applies</td><td>the scenario-quality rules of <code>validate --strict</code> (a title that names a behaviour, a When and a Then, no placeholder or vague step), in English or Spanish keywords. They run on a requirement only once it leaves Draft, so without D9 a draft could pass this checklist and fail the harness on a scenario the agent may not edit (reservas_app)</td></tr><tr><td><code>D10_id_in_use</code></td><td>No id collides with the project</td><td>an ADDED requirement&#39;s id, or any scenario id, already used in <code>spec.md</code>, the capability specs or a feature file by another requirement. A MODIFIED requirement keeps its own ids. <code>validate</code> found the collision only after archiving (&quot;Duplicate Scenario ID&quot;)</td></tr><tr><td><code>D12_unreachable_id</code></td><td>An actor can get the ids they act on</td><td>a step where an actor calls a path with an id segment (<code>{id}</code>, or a concrete id such as an IBAN or <code>C-004</code>) has, for the same actor, a scenario that does <code>GET</code> on the collection before that id or <code>POST</code>s to it — in the draft or the project&#39;s specification — or a row of <code>assumptions.md</code> naming the requirement and the collection path. The actor is the requirement&#39;s <code>actor=</code>, else a brief actor named in the step; with neither, the step is not judged. FinCore: the operator settled a transfer by id with no list of pending ones (#76)</td></tr></tbody></table></div>
+<p>D6 is the rule that makes a draft honest. It is mechanical on purpose: it does
+not judge whether &quot;100 m&quot; is right, only that nobody can mistake it for
+something the client said.</p>
+<h2 id="5-the-agent">5. The agent<a class="anchor" href="#5-the-agent" aria-label="Link to this section">#</a></h2>
+<p><code>specgate draft</code> builds a prompt — the brief, the module, the project&#39;s
+profile and stack, the checklist with its codes, and the file layout above —
+and runs the project&#39;s agent profile with it, confined to the change directory
+exactly as <code>change author</code> is. Then it runs the checklist. On failures it
+feeds the findings back, up to <code>--max-attempts</code> (default 3).</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> draft <span class="tok tok--o">--from</span> &lt;brief.md&gt; <span class="tok tok--o">--module</span> &lt;name&gt; \
+  [--as-pack &lt;dir&gt;]         <span class="tok tok--c"># a pack fragment instead of a change (specops projects)</span>
+  [--agent <span class="tok tok--s">&quot;&lt;cmd&gt;&quot;</span>]          <span class="tok tok--c"># override the profile, as `harness run --agent`</span>
+  [--prompt-only]            <span class="tok tok--c"># write the prompt + checklist to a file and stop</span>
+  [--check &lt;change-id&gt;]      <span class="tok tok--c"># run the checklist on a draft written elsewhere</span>
+  [--max-attempts &lt;n&gt;]</code></pre></figure>
+<p><code>--prompt-only</code> and <code>--check</code> together are the path for teams with no agent on
+the command line: paste the prompt into any assistant, put its answer in the
+change directory, run <code>--check</code>.</p>
+<h2 id="6-review-and-archive">6. Review and archive<a class="anchor" href="#6-review-and-archive" aria-label="Link to this section">#</a></h2>
+<p>Nothing new: <code>change show</code>, <code>change validate</code>, <code>change archive</code>. Two rules are
+added to <code>change archive</code> for a change whose schema is <code>draft</code>:</p>
+<ul>
+<li>it refuses while any row of <code>questions.md</code> is unanswered (an answer is a
+filled <code>Answer</code> column, or a line below the table such as <code>Answer (Q1): …</code>,
+written by a person);</li>
+<li>it refuses while any assumption is not marked <code>confirmed</code> or <code>replaced</code>.</li>
+</ul>
+<p>The brief&#39;s digest is recorded in <code>change.yaml</code>. A later <code>draft</code> of the same
+module against a changed brief says which requirements cite passages that
+changed.</p>
+<h2 id="7-evaluation-before-release">7. Evaluation before release<a class="anchor" href="#7-evaluation-before-release" aria-label="Link to this section">#</a></h2>
+<p>The Golden State pilot left a reference: the brief, and the reviewed packs
+v0.2.0 built from it (46 requirements, 31 use cases, 98 scenarios).</p>
+<p><strong>Protocol.</strong> Run the prototype on the brief, one draft per module, with no
+access to the reference. For each module, a reviewer — not the author of the
+prototype — matches draft requirements to reference requirements and records:</p>
+<div class="table-wrap"><table><thead><tr><th>Measure</th><th>Meaning</th></tr></thead><tbody><tr><td>Recall</td><td>reference requirements the draft contains, or asks about in <code>questions.md</code></td></tr><tr><td>Precision</td><td>draft requirements that are in the reference, or that the reviewer would add</td></tr><tr><td>Surface coverage</td><td>reference API and screen scenarios the draft has an equivalent for</td></tr><tr><td>Honesty</td><td>values in draft scenarios that are neither in the brief nor in <code>assumptions.md</code> (must be 0: D6)</td></tr><tr><td>Review time</td><td>minutes to bring the draft to archivable</td></tr></tbody></table></div>
+<p><strong>Bar to ship.</strong> Recall ≥ 70 %, honesty violations = 0, and review time
+below the time the reference took to write. Below the bar, the findings decide
+what changes; the command does not ship on hope.</p>
+<h2 id="8-phases">8. Phases<a class="anchor" href="#8-phases" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Phase</th><th>Delivers</th><th>Ships as</th></tr></thead><tbody><tr><td>1</td><td>Checklist rules D1–D9 as a library + <code>draft --check</code></td><td>release; D1–D5 also reported by <code>status</code>/<code>plan</code></td></tr><tr><td>2</td><td><code>draft --prompt-only</code> and the prompt contract</td><td>release</td></tr><tr><td>3</td><td>Prototype <code>draft</code> with the agent profile; the evaluation in §7 on the Golden State brief</td><td>evaluation report in <code>mejoras/</code></td></tr><tr><td>4</td><td><code>draft</code> as a command, <code>--as-pack</code>, archive rules for <code>draft</code> changes</td><td>release, only if phase 3 met the bar</td></tr></tbody></table></div>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/draft-from-brief.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#1-what-it-is-for">1. What it is for</a></li><li class="toc__l2"><a href="#2-the-brief">2. The brief</a></li><li class="toc__l2"><a href="#3-what-a-draft-contains">3. What a draft contains</a></li><li class="toc__l3"><a href="#assumptions-md">assumptions.md</a></li><li class="toc__l3"><a href="#questions-md">questions.md</a></li><li class="toc__l2"><a href="#4-the-checklist">4. The checklist</a></li><li class="toc__l2"><a href="#5-the-agent">5. The agent</a></li><li class="toc__l2"><a href="#6-review-and-archive">6. Review and archive</a></li><li class="toc__l2"><a href="#7-evaluation-before-release">7. Evaluation before release</a></li><li class="toc__l2"><a href="#8-phases">8. Phases</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

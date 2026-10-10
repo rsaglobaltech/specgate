@@ -1,0 +1,148 @@
+{
+  "generated": "2026-10-10T19:19:00.454Z",
+  "packs": [
+    {
+      "id": "audit-log/backend",
+      "name": "Audit Log Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 4,
+        "useCases": 4,
+        "aggregates": 1,
+        "events": 2,
+        "scenarios": 2
+      }
+    },
+    {
+      "id": "auth/backend",
+      "name": "Authentication Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 5,
+        "useCases": 5,
+        "aggregates": 2,
+        "events": 5,
+        "scenarios": 3
+      }
+    },
+    {
+      "id": "billing/backend",
+      "name": "Billing Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 4,
+        "useCases": 4,
+        "aggregates": 2,
+        "events": 4,
+        "scenarios": 3
+      }
+    },
+    {
+      "id": "feature-flags/backend",
+      "name": "Feature Flags Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 4,
+        "useCases": 4,
+        "aggregates": 2,
+        "events": 3,
+        "scenarios": 2
+      }
+    },
+    {
+      "id": "file-storage/backend",
+      "name": "File Storage Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 5,
+        "useCases": 5,
+        "aggregates": 2,
+        "events": 5,
+        "scenarios": 3
+      }
+    },
+    {
+      "id": "multi-tenant/backend",
+      "name": "Multi-Tenant Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 4,
+        "useCases": 4,
+        "aggregates": 2,
+        "events": 3,
+        "scenarios": 3
+      }
+    },
+    {
+      "id": "notifications/backend",
+      "name": "Notifications Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 4,
+        "useCases": 4,
+        "aggregates": 2,
+        "events": 4,
+        "scenarios": 2
+      }
+    },
+    {
+      "id": "reporting/backend",
+      "name": "Reporting Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 5,
+        "useCases": 5,
+        "aggregates": 3,
+        "events": 6,
+        "scenarios": 3
+      }
+    },
+    {
+      "id": "sample-contracts/contracts",
+      "name": "API Contracts Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 4,
+        "useCases": 0,
+        "aggregates": 0,
+        "events": 0,
+        "scenarios": 0
+      }
+    },
+    {
+      "id": "search/backend",
+      "name": "Search Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 4,
+        "useCases": 4,
+        "aggregates": 2,
+        "events": 3,
+        "scenarios": 3
+      }
+    },
+    {
+      "id": "webhooks/backend",
+      "name": "Webhooks Backend Domain Pack",
+      "version": "0.1.0",
+      "lintStatus": "pass",
+      "counts": {
+        "requirements": 5,
+        "useCases": 5,
+        "aggregates": 2,
+        "events": 4,
+        "scenarios": 3
+      }
+    }
+  ]
+}

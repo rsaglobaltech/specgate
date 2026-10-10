@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en" data-slug="agents">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agents — Specgate</title>
+<meta name="description" content="Wire Claude Code, Cursor, Copilot and six others into the same loop.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Agents — Specgate">
+<meta property="og:description" content="Wire Claude Code, Cursor, Copilot and six others into the same loop.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html" class="is-active" aria-current="page">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Extensions</li><li aria-current="page">Agent tools</li></ol></nav>
+    <article class="prose">
+<h1 id="agents">Agents<a class="anchor" href="#agents" aria-label="Link to this section">#</a></h1>
+<p>Twelve commands speak JSON — <code>status</code>, <code>plan</code>, <code>validate</code>, <code>report</code>, <code>doctor</code>,
+<code>fix</code>, <code>req list</code>, <code>change</code>, <code>schema which</code>, <code>onboard</code>, <code>update</code> and <code>done</code> —
+and the loop can be driven entirely from Claude Code, Cursor, Copilot,
+Windsurf, Aider, Gemini, Cline, Codex or Antigravity.</p>
+<p><code>pack lint</code> and <code>specops diff</code> do not yet, and will say so rather than printing
+prose at a caller that asked for a document.</p>
+<hr>
+<h2 id="wire-it-in">Wire it in<a class="anchor" href="#wire-it-in" aria-label="Link to this section">#</a></h2>
+<p><code>specgate init</code> already does it for the agents your project uses: it looks for
+<code>.claude/</code> or <code>CLAUDE.md</code>, <code>.cursor/</code>, <code>.github/copilot-instructions.md</code>,
+<code>GEMINI.md</code>, <code>.windsurf/</code>, <code>.clinerules</code>, <code>.aider.conf.yml</code>, <code>.agents/</code> and
+<code>.codex/</code>, installs the commands for each one it finds, and never overwrites a
+file. <code>AGENTS.md</code> alone is not a sign of any one agent. <code>--no-agents</code> skips it.
+For any other agent, or later:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> agents init                          <span class="tok tok--c"># every tool below</span>
+<span class="tok tok--f">specgate</span> agents init <span class="tok tok--o">--tool</span> claude,cursor     <span class="tok tok--c"># or pick</span>
+<span class="tok tok--f">specgate</span> agents init <span class="tok tok--o">--dry-run</span>                <span class="tok tok--c"># list destinations, write nothing</span></code></pre></figure>
+<p>This writes the slash commands for the daily loop — <code>/specgate:explore</code> (what is
+left), <code>/specgate:new</code>, <code>/specgate:apply</code>, <code>/specgate:check</code> (the gate) and
+<code>/specgate:done</code> — plus <code>/specgate:propose</code> and <code>/specgate:archive</code> for changing
+requirements that already shipped, and <code>/specgate:onboard</code>. Then the
+instruction file each tool reads — <code>.cursor/rules/specgate.mdc</code>,
+<code>.github/copilot-instructions.md</code>, <code>CONVENTIONS.md</code>, <code>AGENTS.md</code> and so on.</p>
+<p>Existing files are never overwritten without <code>--force</code>.</p>
+<p><strong>Upgrading from 0.9 or earlier?</strong> Those versions wrote the commands as
+<code>/csda:*</code> (<code>.claude/commands/csda/</code>, <code>.cursor/rules/csda.mdc</code>, …). Run
+<code>specgate update</code>: it moves each file to its <code>specgate</code> name and merges the new
+text in, keeping your edits. If both names exist it touches neither and tells
+you which to keep.</p>
+<hr>
+<h2 id="antigravity">Antigravity<a class="anchor" href="#antigravity" aria-label="Link to this section">#</a></h2>
+<p>Antigravity gets two files, because it reads both halves of what specgate offers:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">.agents/rules/specgate.md        the workspace rulebook
+.agents/mcp_config.json      a live MCP connection to the project's own specs</code></pre></figure>
+<p>The MCP half is the one that matters. An instruction file is a snapshot that
+starts drifting the moment it is written; the MCP server answers from the
+current spec tree, so an agent asking what <code>REQ-014</code> requires gets today&#39;s
+answer rather than the one that was true when the file was generated.</p>
+<p>Three details taken from Antigravity&#39;s own documentation rather than assumed:</p>
+<ul>
+<li>the rules directory is <code>.agents/rules/</code> — plural. The older <code>.agent/rules</code>
+still works, which is exactly why the plural is written deliberately;</li>
+<li><code>.agents/mcp_config.json</code> is discovered by the IDE <em>and</em> the CLI, in the same
+<code>mcpServers</code> shape Claude Code uses — so both hosts are pointed at one server
+definition, and a test asserts they never diverge;</li>
+<li>a rule file is capped at <strong>12,000 characters</strong>. The generated rulebook is
+around 700, and a test keeps it that way, because a file over the cap is
+truncated silently and a truncated rulebook is worse than none.</li>
+</ul>
+<p>Antigravity&#39;s own <code>GEMINI.md</code> convention is already covered by the <code>gemini</code>
+row. Some third-party guides say it also reads <code>AGENTS.md</code>; its documentation
+does not, so nothing here depends on that.</p>
+<hr>
+<h2 id="agents-md-is-the-contract">AGENTS.md is the contract<a class="anchor" href="#agents-md-is-the-contract" aria-label="Link to this section">#</a></h2>
+<p><code>init</code> and <code>adopt</code> write <code>AGENTS.md</code> (ADR-0031): what the project is, the
+commands, the loop in four lines, what never to do and your stack&#39;s rules — at
+most 60 lines. Specgate keeps its part between <code>&lt;!-- specgate:begin --&gt;</code> and
+<code>&lt;!-- specgate:end --&gt;</code>; everything outside the block is yours, and no command
+rewrites it.</p>
+<p><strong>Coming from <code>AI_RULES.md</code>?</strong> <code>specgate update</code> moves its text, verbatim,
+below the block and removes the file (git keeps it). Until then both are read,
+so no rule drops out of the agent&#39;s prompt.</p>
+<hr>
+<h2 id="why-the-generated-files-are-thin">Why the generated files are thin<a class="anchor" href="#why-the-generated-files-are-thin" aria-label="Link to this section">#</a></h2>
+<p>They do not restate the delta grammar. A markdown copy of the format is stale
+the moment the format moves, and an agent following a stale copy fails in a way
+that looks like the agent&#39;s fault.</p>
+<p>Instead they call the engine:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change instructions specs <span class="tok tok--o">--json</span></code></pre></figure>
+<p>which returns the template, the rules the validator actually enforces, the
+project&#39;s declared stack, the reserved <code>REQ</code> range, and what writing that
+artefact unblocks. <code>harness run</code> builds its prompt from the same call, so the
+slash commands, the harness and the MCP server cannot disagree.</p>
+<p>Each generated command says so out loud: <em>if this file and the engine disagree,
+the engine is right</em>.</p>
+<hr>
+<h2 id="the-contract">The contract<a class="anchor" href="#the-contract" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> validate . <span class="tok tok--o">--json</span> <span class="tok tok--n">2</span>&gt;/dev/null |<span class="tok tok--f"> jq</span> .</code></pre></figure>
+<ul>
+<li>One JSON document on stdout. Prose goes to stderr.</li>
+<li>Every document carries <code>status</code>: an array of diagnostics, each with a stable
+<code>code</code> and a <code>fix</code>.</li>
+<li>Branch on <code>code</code>, never on <code>message</code> — the message is prose and may be
+reworded.</li>
+<li>A failure carries the command&#39;s null-shape, so the document has the same keys
+whether the command succeeded or not.</li>
+<li>Exit codes: <code>0</code> success, <code>1</code> failure or gate finding, <code>2</code> usage error.</li>
+</ul>
+<p>→ Full rules, the code catalogue and the exit-code table:
+<a href="specs/agent-contract.html"><code>specs/agent-contract.md</code></a>. It is generated from the
+source, and CI fails when it drifts.</p>
+<hr>
+<h2 id="instructions-for-a-stage-not-just-a-file">Instructions for a stage, not just a file<a class="anchor" href="#instructions-for-a-stage-not-just-a-file" aria-label="Link to this section">#</a></h2>
+<p><code>apply</code> and <code>archive</code> are stages rather than artefacts — they return the rules
+for carrying out a step, with no template:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change instructions apply <span class="tok tok--o">--json</span>
+<span class="tok tok--f">specgate</span> change instructions archive <span class="tok tok--o">--json</span></code></pre></figure>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="reviewing-changes.html">Reviewing changes</a> — the loop the agent drives</li>
+<li><a href="specs/agent-contract.html">The agent contract</a> — the full reference</li>
+<li><a href="specs/harness.html">The harness spec</a> — unattended delivery, one requirement per worktree</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="troubleshooting.html"><span>Previous</span>Troubleshooting</a><a class="pager__next" href="mcp.html"><span>Next</span>The MCP server</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/agents.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#wire-it-in">Wire it in</a></li><li class="toc__l2"><a href="#antigravity">Antigravity</a></li><li class="toc__l2"><a href="#agents-md-is-the-contract">AGENTS.md is the contract</a></li><li class="toc__l2"><a href="#why-the-generated-files-are-thin">Why the generated files are thin</a></li><li class="toc__l2"><a href="#the-contract">The contract</a></li><li class="toc__l2"><a href="#instructions-for-a-stage-not-just-a-file">Instructions for a stage, not just a file</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

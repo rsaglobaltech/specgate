@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0023-checking-content-gate-or-report">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0023 — Checking content: a gate where it is decidable, a report where it is not — Specgate</title>
+<meta name="description" content="ADR-0023 — Checking content: a gate where it is decidable, a report where it is not">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0023 — Checking content: a gate where it is decidable, a report where it is not — Specgate">
+<meta property="og:description" content="ADR-0023 — Checking content: a gate where it is decidable, a report where it is not">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0023-checking-content-a-gate-where-it-is-decidable-a-report-where-it-is-not">ADR-0023 — Checking content: a gate where it is decidable, a report where it is not<a class="anchor" href="#adr-0023-checking-content-a-gate-where-it-is-decidable-a-report-where-it-is-not" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-08-26</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>Every check <code>csda validate</code> performed until now read the paperwork, not the
+work. Structure, traceability coverage, legal statuses, Gherkin parseability
+and — under <code>--strict-tdd</code> — three rules over the matrix. All of them answer
+&quot;are these documents internally consistent?&quot;. None answers &quot;does the code do
+what the spec says?&quot;.</p>
+<p>That gap has a name in this repository. The whole <code>H</code> series in
+<code>mejoras/plan-cierre-enterprise.md</code> §12.11 is one defect repeated — <em>the gate
+approves what it did not check</em> — and H1 was described as &quot;the negation of the
+product&quot;. So crossing from paperwork to content is not a feature decision; it
+is the decision this project has been circling for a month.</p>
+<p>The crossing raises a question the paperwork checks never had to answer. A
+structural rule is decidable: a matrix row either has a Scenario ID or it does
+not. A content rule usually is not. Three shapes turned up while building
+<code>--strict-requirements</code>, <code>--strict-links</code> and the declared-value comparison,
+and they do not want the same answer:</p>
+<ol>
+<li><strong>Decidable, and failing is always a defect.</strong> Gherkin that a real parser
+sees as zero steps is never intentional.</li>
+<li><strong>Decidable, but failing is sometimes legitimate.</strong> A <code>Draft</code> row naming
+the file a requirement is <em>going to</em> land in declares a path that does not
+exist yet. That is planning, not drift.</li>
+<li><strong>Not decidable at all without asserting a grammar we do not parse.</strong>
+Whether <code>15m</code> and <code>900000</code> are the same timeout. Whether &quot;the system&quot; in a
+requirement is a subject or part of a response clause.</li>
+</ol>
+<p>The third shape is where the temptation lives, and it is the one that has cost
+this repository the most. H13 was exactly this: <code>schemas/pack.schema.json</code>
+declared as &quot;the single authority&quot; by ADR-0020 while nothing validated against
+it. A check that claims more authority than it exercises is worse than no
+check, because people stop looking.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p><strong>Three rules, applied to every content check from here on.</strong></p>
+<p><strong>1. A content check is a gate only when failing it is always a defect.</strong>
+Otherwise it is opt-in, or it is not a gate at all.</p>
+<p><strong>2. Every content gate ships opt-in and off by default.</strong> <code>--strict-tdd</code>,
+<code>--strict-scenarios</code>, <code>--strict-requirements</code> and <code>--strict-links</code> are all
+additive flags. A project that turns one on has decided its repository is
+clean for that rule. The alternative — on by default, with an escape hatch —
+fires on honest work during adoption and gets switched off permanently, which
+is how a gate becomes decoration.</p>
+<p>This was measured, not assumed. <code>--strict-links</code> was first written
+unconditional, on the reasoning that a path that does not exist has no
+legitimate reading. <code>tests/unit/validate-strict-tdd.test.ts</code> disproved it
+immediately, and the same reasoning already existed in the codebase:
+<code>declared_artifact_untouched</code> in <code>DeclaredArtifacts</code> is a warning, not a
+certainty, for the same reason.</p>
+<p><strong>3. Where the rule is not decidable, ship a report, not a gate — and say so
+in the flag&#39;s absence.</strong> Declared-value drift (<code>csda:trace value_&lt;id&gt;=…</code>
+against <code>csda:value &lt;id&gt;=…</code>) is <strong>not</strong> <code>--strict-values</code>. It is a section of
+<code>csda report</code> and three additive fields in <code>--record</code> history. It classifies
+into <code>matched</code> / <code>diverging</code> / <code>spec_only</code> / <code>code_only</code> and never decides
+pass or fail.</p>
+<p>The first design of that feature <em>was</em> a binary gate, modelled on the two
+flags beside it. It was rejected for two reasons, both about scale rather than
+correctness:</p>
+<ul>
+<li><strong>The cost of annotating grows with the number of checkable facts; coverage
+does not.</strong> Every fact needs its pair of annotations written by hand. A
+large project accumulates hundreds of pairs, and the more there are, the
+likelier someone updates one side and forgets the other — which the check
+catches, but only for what somebody annotated on both sides first.</li>
+<li><strong>The more complex the system, the smaller the fraction of requirements that
+reduce to a scalar.</strong> A timeout or a retry limit fits. A business rule with
+branches does not.</li>
+</ul>
+<p>A hard gate over a partial, hand-maintained annotation set would mostly measure
+who remembered to annotate. As a report, partial coverage is honest: it shows
+what it knows about and stays silent about the rest — the same shape as
+<code>orphanFeatures</code>, which does not fail a build either.</p>
+<p><strong>4. No check asserts a grammar it does not parse.</strong> <code>--strict-requirements</code>
+does not validate EARS. It checks the two things a regex can assert honestly:
+that an obligation keyword (RFC 2119) is present, and that a requirement
+opening with <code>IF</code> resolves with <code>THEN</code>. The other four EARS shapes have no
+second keyword to be missing. Declared-value comparison is exact string
+equality: <code>15m</code> and <code>900000</code> are different strings, and interpreting units
+would be the H13 mistake with a stopwatch.</p>
+<p><strong>5. A finding a user cannot act on is half a feature.</strong> Value drift ships with
+its resolution path: <code>csda change new &lt;id&gt; --from-value-drift REQ-ID:value_id</code>
+seeds a <code>## MODIFIED Requirements</code> delta with the structured <code>value_&lt;id&gt;</code>
+rewritten to the code&#39;s value — and the prose left alone under an explicit
+<code>TODO:</code>, because rewriting a human&#39;s sentence is guessing how it should sound.
+The other two routes needed no new command and got none.</p>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The gate can now fail for reasons that are about content, and every such
+reason is opt-in. Adoption cost stays at zero for existing projects: nothing
+that passed <code>validate</code> before fails it now.</li>
+<li><strong><code>csda validate</code> has four opt-in gates, not one.</strong> They are documented
+together in <a href="../../validating.html">validating.md</a>, and the user-facing
+command tables list all four. <code>--strict-scenarios</code> shipped in 0.7.0 and was
+documented nowhere for three days — a gate users cannot find is a gate that
+does not exist for them, and that is the same defect as H13 pointed at the
+documentation instead of the schema.</li>
+<li>Declared-value coverage is now a measurable number over time
+(<code>valuesTotal</code>, <code>valuesMatched</code>, <code>valuesDiverging</code> in the report history), so
+a later decision to promote it to a gate can be argued from data rather than
+from taste.</li>
+<li><strong>This ADR does not claim verification.</strong> Nothing here proves code matches a
+spec. It checks more than paperwork and less than behaviour, and the risk
+named in <code>PLAN_PREDICTABLE_CODE_EVOLUTION.md</code> §10 stands: the word
+&quot;verification&quot; must not grow faster than what the gate actually checks.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<p><strong><code>--strict-values</code> as a binary gate.</strong> Rejected above. Reversible: the report
+is the data a future gate would need, so promoting it later costs a flag, not
+a redesign.</p>
+<p><strong>All content checks on by default, with opt-out.</strong> Rejected. Every existing
+project would fail its next <code>validate</code> on rows it wrote deliberately, and the
+predictable response is to pin the old version or drop the flag forever.</p>
+<p><strong>Parse the code with an AST to infer values rather than annotate them.</strong>
+Rejected for this step. It buys accuracy at the cost of a parser per language
+and a per-language definition of &quot;the same value&quot;, which is the dependency the
+plan explicitly costed and refused. Annotation is language-agnostic and
+honest about being manual.</p>
+<p><strong>Full EARS grammar validation.</strong> Rejected: no regex parses it reliably, and
+this repository has already paid once for a check that claimed authority it did
+not exercise (H13, ADR-0020).</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0023-checking-content-gate-or-report.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

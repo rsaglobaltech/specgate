@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en" data-slug="agent-setup">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Choosing and wiring your agent — Specgate</title>
+<meta name="description" content="Claude, Aider, Cursor or a three-line wrapper — and the two things that bite.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Choosing and wiring your agent — Specgate">
+<meta property="og:description" content="Claude, Aider, Cursor or a three-line wrapper — and the two things that bite.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html" class="is-active" aria-current="page">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Advanced</li><li aria-current="page">Choosing your agent</li></ol></nav>
+    <article class="prose">
+<h1 id="choosing-and-wiring-your-agent">Choosing and wiring your agent<a class="anchor" href="#choosing-and-wiring-your-agent" aria-label="Link to this section">#</a></h1>
+<p>The harness has no agent runtime and no SDK dependency. <strong>The agent is any shell
+command containing <code>{prompt_file}</code></strong> — the harness writes the prompt to a
+temporary file, substitutes the path, runs the command, and reads its exit code
+plus the gate result.</p>
+<p>That is the whole contract. Everything below is detail.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--req</span> REQ-<span class="tok tok--n">001</span> <span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span></code></pre></figure>
+<h2 id="the-commands-for-the-tools-people-actually-use">The commands for the tools people actually use<a class="anchor" href="#the-commands-for-the-tools-people-actually-use" aria-label="Link to this section">#</a></h2>
+<p>Each of these is a working <code>--agent</code> value. Pick the one you have.</p>
+<div class="table-wrap"><table><thead><tr><th>Tool</th><th><code>--agent</code> value</th></tr></thead><tbody><tr><td>Claude Code</td><td><code>claude -p &lt; {prompt_file}</code></td></tr><tr><td>Aider</td><td><code>aider --yes --message-file {prompt_file}</code></td></tr><tr><td>Cursor CLI</td><td><code>cursor-agent --prompt-file {prompt_file}</code></td></tr><tr><td>OpenCode</td><td><code>opencode run &quot;$(cat {prompt_file})&quot;</code></td></tr><tr><td>Anything else</td><td><code>./my-agent.sh {prompt_file}</code></td></tr></tbody></table></div>
+<p><strong>Tool allowances matter more than the model.</strong> An agent in non-interactive mode
+cannot ask permission, so without them it reads the prompt, fails to write a
+file, and the attempt is wasted:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;claude -p --allowedTools Read Write Edit Glob Grep 'Bash(npm:*)' &lt; {prompt_file}&quot;</span></code></pre></figure>
+<p>Scope them rather than reaching for <code>--dangerously-skip-permissions</code>. The agent
+needs <code>Bash</code> to run the project&#39;s build, and <code>Bash(npm:*)</code> is enough for a Node
+project. It works inside a throwaway git worktree, which is the whole reason the
+harness uses one.</p>
+<h2 id="a-tool-whose-invocation-fits-none-of-those">A tool whose invocation fits none of those<a class="anchor" href="#a-tool-whose-invocation-fits-none-of-those" aria-label="Link to this section">#</a></h2>
+<p>Write a wrapper. It is three lines, and it is the supported answer — not a
+workaround:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c">#!/bin/sh</span>
+<span class="tok tok--c"># my-agent.sh — $1 is the path to the prompt file</span>
+<span class="tok tok--f">exec</span> some-agent <span class="tok tok--o">--instructions</span> <span class="tok tok--s">&quot;$(cat &quot;</span>$<span class="tok tok--n">1</span><span class="tok tok--s">&quot;)&quot;</span></code></pre></figure>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;./my-agent.sh {prompt_file}&quot;</span></code></pre></figure>
+<p>The harness never inspects the command. If your tool reads the prompt from
+stdin, from a flag, from an environment variable or from a file it is told
+about, a wrapper turns that into the one shape the harness expects.</p>
+<h2 id="committing-the-commands-your-team-uses">Committing the commands your team uses<a class="anchor" href="#committing-the-commands-your-team-uses" aria-label="Link to this section">#</a></h2>
+<p>Typing the command every run is how it ends up different on every machine. Put
+the ones your team uses in <code>.harness/profiles.yaml</code> and name one:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># .harness/profiles.yaml</span>
+<span class="tok tok--a">profiles_version</span>: <span class="tok tok--n">1</span>
+<span class="tok tok--a">profiles</span>:
+<span class="tok tok--a">  local</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p --allowedTools Read Write Edit 'Bash(npm:*)' &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">  ci</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;aider --yes --message-file {prompt_file}&quot;</span></code></pre></figure>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># harness.config.yaml</span>
+<span class="tok tok--a">agent_profile</span>: local</code></pre></figure>
+<p><strong>Write profiles in block form, as above.</strong> The reader is a dependency-free YAML
+subset, and an inline mapping — <code>local: { agent: &quot;…&quot; }</code> — parses as a <em>string</em>,
+leaving the profile with no <code>agent</code> and the run stopping with <code>no profile &#39;local&#39; with an agent</code>.</p>
+<p>An explicit <code>agent:</code> in <code>harness.config.yaml</code> beats a profile: the narrower
+statement wins.</p>
+<h2 id="a-different-agent-per-requirement">A different agent per requirement<a class="anchor" href="#a-different-agent-per-requirement" aria-label="Link to this section">#</a></h2>
+<p>A profile that declares <code>match:</code> selects itself, so one run can give an
+infrastructure requirement different tools from a domain one — instead of the
+allowances being the greatest common denominator of the whole plan:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">profiles</span>:
+<span class="tok tok--a">  infra</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p --allowedTools Read Write Edit 'Bash(terraform:*)' &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">    match</span>: { bounded_context: Platform }
+<span class="tok tok--a">  domain</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p --allowedTools Read Write Edit 'Bash(npm:*)' &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">    match</span>: { bounded_context: <span class="tok tok--s">&quot;*&quot;</span> }</code></pre></figure>
+<p>First match wins, so order in the file is the priority, and a <code>&quot;*&quot;</code> catch-all
+belongs last. No match uses the run&#39;s default — that is not an error.</p>
+<p>Matchable keys are <code>bounded_context</code>, <code>requirement</code>, <code>feature</code> and <code>category</code>.
+An <strong>unknown key matches nothing</strong> rather than being ignored, so
+<code>bounded_contex:</code> — one letter short — cannot quietly become a rule that matches
+everything.</p>
+<p><code>specgate expand</code> records each requirement&#39;s bounded context beside the traceability
+matrix, so the match has something to work with without anybody maintaining a
+second list.</p>
+<h2 id="a-ladder-of-roles-within-one-requirement">A ladder of roles within one requirement<a class="anchor" href="#a-ladder-of-roles-within-one-requirement" aria-label="Link to this section">#</a></h2>
+<p><code>attempt_profiles</code> names a profile per attempt, and the last rung repeats — a
+cheaper model first, a stronger one on the retry:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">attempt_profiles</span>: [fast, strong]
+<span class="tok tok--a">review_profile</span>: reviewer     <span class="tok tok--c"># advisory: it never approves</span></code></pre></figure>
+<p>A reviewer runs before a retry, its findings go into the next prompt, and
+anything it wrote is discarded. That is the line between this and a committee:
+<strong>the gate stays the only judge.</strong></p>
+<h2 id="what-a-run-costs">What a run costs<a class="anchor" href="#what-a-run-costs" aria-label="Link to this section">#</a></h2>
+<p>The harness measures wall-clock, because an agent is any shell command and only
+the agent knows what it spent in tokens. A profile may declare an estimate:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">profiles</span>:
+<span class="tok tok--a">  local</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">    cost_per_run_hint</span>: <span class="tok tok--n">0.35</span></code></pre></figure>
+<p><code>specgate harness report</code> multiplies it out and labels it <em>declared, not measured</em>.
+Attempts by a profile with no hint are counted separately, so the total never
+reads as complete when part of the run is missing from it.</p>
+<p>Put a ceiling on the run itself:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--budget-seconds</span> <span class="tok tok--n">3600</span> <span class="tok tok--o">--max-requirements</span> <span class="tok tok--n">5</span></code></pre></figure>
+<p>Both are checked <strong>before starting</strong> each requirement, never mid-attempt —
+interrupting one would throw away the money already spent on it. Running out is
+not an error: the run ends normally, names what it never started, and still
+writes its ledger.</p>
+<h2 id="two-things-that-will-bite-you">Two things that will bite you<a class="anchor" href="#two-things-that-will-bite-you" aria-label="Link to this section">#</a></h2>
+<p><strong>A command without <code>{prompt_file}</code> is refused.</strong> The harness will not guess
+where your agent wants the prompt:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">❌ The agent command must contain the {prompt_file} placeholder,
+   e.g. --agent &quot;claude -p &lt; {prompt_file}&quot;</code></pre></figure>
+<p><strong>The agent works in a fresh worktree, which carries only what git tracks.</strong>
+There is no <code>node_modules</code>, no <code>target/</code>, no <code>.venv</code>. An agent must not spend
+its attempt installing dependencies — put that in the gate command, which is the
+only part that knows how:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--test-cmd</span> <span class="tok tok--s">&quot;npm ci &amp;&amp; npm test&quot;</span></code></pre></figure>
+<p>This was found the expensive way: an agent spent its first attempt on <code>npm install</code> and timed out.</p>
+<h2 id="trying-it-without-spending-anything">Trying it without spending anything<a class="anchor" href="#trying-it-without-spending-anything" aria-label="Link to this section">#</a></h2>
+<p>Every one of these is safe to run against a real project:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness prompt REQ-<span class="tok tok--n">001</span>          <span class="tok tok--c"># the exact prompt, printed, no agent</span>
+<span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--dry-run</span>           <span class="tok tok--c"># what it would do, in order</span>
+<span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;true {prompt_file}&quot;</span> <span class="tok tok--o">--max-attempts</span> <span class="tok tok--n">1</span></code></pre></figure>
+<p>The last one runs the whole loop with an agent that does nothing, which is the
+quickest way to find out whether your gate can go green at all before an agent
+is paid to try.</p>
+<h2 id="show-the-agent-what-quot-accepted-quot-looks-like-here">Show the agent what &quot;accepted&quot; looks like here<a class="anchor" href="#show-the-agent-what-quot-accepted-quot-looks-like-here" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># harness.config.yaml</span>
+<span class="tok tok--a">prompt_precedents</span>: <span class="tok tok--n">1</span></code></pre></figure>
+<p>Everything else in the prompt is <strong>normative</strong> — the requirement&#39;s facts, its
+Gherkin, <code>AGENTS.md</code>, the definition of done. None of it is an <em>example</em>, and
+an agent starts every requirement with no conversation history, so it has never
+seen what an accepted implementation looks like in your repository. It invents a
+house style, and the next attempt is spent correcting it.</p>
+<p>With this on, the prompt gains one section: the most recent <strong>Verified</strong>
+requirement in the same bounded context, with the first forty lines of its test
+and of its production code. Three rules decide what is shown, and each exists to
+stop the section doing harm:</p>
+<div class="table-wrap"><table><thead><tr><th>Rule</th><th>Why</th></tr></thead><tbody><tr><td>Same bounded context, from the <code>context=</code> key <code>expand</code> already derives</td><td>A precedent from elsewhere teaches conventions that do not apply — with the authority of having been accepted</td></tr><tr><td><code>Verified</code>, never <code>Implemented</code></td><td>One means the code exists; the other means somebody checked it</td></tr><tr><td>An earlier requirement only</td><td>Precedent means already settled</td></tr></tbody></table></div>
+<p>The section says in as many words that it is an example of <em>shape</em>, not of
+behaviour, so it is not read as a second specification. If nothing qualifies it
+does not appear — never empty — and a moved artifact never stops a run.</p>
+<p>Off by default: it costs prompt budget and says nothing until a project has
+accepted work to point at.</p>
+<h2 id="let-something-try-to-break-it">Let something try to break it<a class="anchor" href="#let-something-try-to-break-it" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># harness.config.yaml</span>
+<span class="tok tok--a">adversary_profile</span>: breaker</code></pre></figure>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># .harness/profiles.yaml</span>
+<span class="tok tok--a">profiles_version</span>: <span class="tok tok--n">1</span>
+<span class="tok tok--a">profiles</span>:
+<span class="tok tok--a">  breaker</span>:
+<span class="tok tok--a">    advisory</span>: <span class="tok tok--k">true</span>
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span></code></pre></figure>
+<p>The reviewer above returns <strong>prose</strong>. An adversary returns a <strong>test</strong>, and a
+test either fails or it does not — one is an argument, the other is evidence.</p>
+<p>Once a requirement&#39;s gate has gone green and the work is committed, the
+adversary is asked for one additional test: a case the requirement should
+handle and might not — an empty input, a boundary, a duplicate, a failure path.
+The project&#39;s own test command then runs again with that test in place.</p>
+<p><strong>A failing probe never changes the verdict.</strong> The requirement still passes, and
+a warning is recorded on the run:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">⚠️  REQ-007: The gate passed for REQ-007, and an adversarial probe then made the
+    project's tests fail. That is either a defect the scenario does not cover,
+    or a test asserting something REQ-007 never promised.</code></pre></figure>
+<p>That wording is the design. An adversary can always assert a behaviour nobody
+specified, so letting it fail the run would block work that is correct — and
+would make it a second judge. <code>validate --strict</code> plus your test command
+stay the only one, for the same reason the reviewer is advisory.</p>
+<p>The probe runs <strong>once per requirement</strong>, only on a green gate, and its writes
+are discarded so the branch carries the implementer&#39;s work alone. The profile
+must declare <code>advisory: true</code>; without it the harness refuses to start, because
+a profile whose output you expect to be kept is not an adversary.</p>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="harness.html">The harness</a> — what happens around the agent: worktrees, the
+gate, retries, resuming and the run ledger.</li>
+<li><a href="agents.html">Agent tools</a> — wiring Claude Code, Cursor, Copilot and six others
+into the same loop, so the instructions live in one place.</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="tutorial.html"><span>Previous</span>Tutorial: Smart Parking</a><a class="pager__next" href="bootstrap-prompt.html"><span>Next</span>Bootstrap prompt</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/agent-setup.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#the-commands-for-the-tools-people-actually-use">The commands for the tools people actually use</a></li><li class="toc__l2"><a href="#a-tool-whose-invocation-fits-none-of-those">A tool whose invocation fits none of those</a></li><li class="toc__l2"><a href="#committing-the-commands-your-team-uses">Committing the commands your team uses</a></li><li class="toc__l2"><a href="#a-different-agent-per-requirement">A different agent per requirement</a></li><li class="toc__l2"><a href="#a-ladder-of-roles-within-one-requirement">A ladder of roles within one requirement</a></li><li class="toc__l2"><a href="#what-a-run-costs">What a run costs</a></li><li class="toc__l2"><a href="#two-things-that-will-bite-you">Two things that will bite you</a></li><li class="toc__l2"><a href="#trying-it-without-spending-anything">Trying it without spending anything</a></li><li class="toc__l2"><a href="#show-the-agent-what-quot-accepted-quot-looks-like-here">Show the agent what &amp;quot;accepted&amp;quot; looks like here</a></li><li class="toc__l2"><a href="#let-something-try-to-break-it">Let something try to break it</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

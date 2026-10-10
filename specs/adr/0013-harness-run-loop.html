@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0013-harness-run-loop">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0013 — harness run: the spec-driven delivery loop for AI agents — Specgate</title>
+<meta name="description" content="ADR-0013 — harness run: the spec-driven delivery loop for AI agents">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0013 — harness run: the spec-driven delivery loop for AI agents — Specgate">
+<meta property="og:description" content="ADR-0013 — harness run: the spec-driven delivery loop for AI agents">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0013-harness-run-the-spec-driven-delivery-loop-for-ai-agents">ADR-0013 — <code>harness run</code>: the spec-driven delivery loop for AI agents<a class="anchor" href="#adr-0013-harness-run-the-spec-driven-delivery-loop-for-ai-agents" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-05-14</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>After ADR-0012 the CLI exposes every <em>piece</em> an AI coding agent needs to
+implement a requirement:</p>
+<ul>
+<li><code>plan --format json</code> — the task queue.</li>
+<li>the feature file + <code>AI_RULES.md</code> — the per-task context.</li>
+<li><code>validate --strict-tdd</code> + the project test command — the reward signal.</li>
+<li><code>done REQ-NNN</code> — the state transition.</li>
+<li>the MCP tools — vendor-neutral access.</li>
+</ul>
+<p>What was missing is the <strong>orchestration layer</strong>: the loop that runs
+plan → context → agent → verify → done without a human copy-pasting
+prompts between a terminal and a chat window. That gap is exactly what
+&quot;harness engineering&quot; names — and it reframes the product from &quot;a
+scaffolder&quot; to &quot;a spec-driven delivery harness for AI agents&quot;.</p>
+<p>It is a milestone, not a sprint: it touches git worktrees, subprocess
+management, retries, timeouts and prompt templating. It also has a hard
+prerequisite — conflict detection (ADR pending / <code>specops sync</code> M3) — so
+that agent edits and a <code>specops sync</code> cannot silently corrupt a checkout.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p>Ship <code>csda harness run</code>. For each pending requirement from
+<code>plan --format json</code>, in an isolated <code>git worktree</code> on a fresh
+<code>harness/REQ-NNN</code> branch:</p>
+<ol>
+<li><strong>Build a self-contained prompt</strong> (<code>scripts/harness/prompt.ts</code>) —
+Gherkin scenario, <code>AI_RULES.md</code>, the exact artifact paths, the <code>plan</code>
+hint, and on a retry the previous gate failure. An agent gets no
+conversation history, so everything must be in the text.</li>
+<li><strong>Shell out to the configured agent.</strong> The agent is <em>any</em> command
+containing the <code>{prompt_file}</code> placeholder; the harness writes the
+prompt to a temp file and substitutes the path. No built-in agent
+runtime, no SDK dependency.</li>
+<li><strong>Gate it</strong> — <code>validate --strict-tdd</code>, then the optional project test
+command. Both must exit zero.</li>
+<li><strong>Green → <code>done REQ-NNN</code> + commit</strong> on the branch. <strong>Red → retry</strong> up
+to <code>--max-attempts</code>, feeding the specific failure back into the prompt.</li>
+<li><strong>Emit a pass/fail/attempts report</strong> (text or <code>--format json</code>); exit
+non-zero if any requirement did not pass.</li>
+</ol>
+<p>Settings (<code>agent</code>, <code>test_cmd</code>, <code>max_attempts</code>) may live in
+<code>harness.config.yaml</code>; CLI flags override the file.</p>
+<h2 id="rationale">Rationale<a class="anchor" href="#rationale" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Worktree per requirement</strong> is the isolation unit. A failed REQ leaves
+an inspectable branch, not a corrupted main checkout; concurrent or
+half-finished work cannot leak between requirements; the main working
+tree is never touched (the harness refuses a dirty tree).</li>
+<li><strong>Shell-out, not an SDK.</strong> The product&#39;s value is being vendor-neutral.
+Coupling to one agent (or building a bespoke agent runtime) would throw
+that away. A configurable command + exit code + gate result is enough.</li>
+<li><strong>The harness never merges.</strong> Integration stays a human decision. The
+harness produces reviewable branches; it does not push to <code>main</code>.</li>
+<li><strong>Retries feed back the <em>specific</em> failure</strong>, not a generic &quot;try
+again&quot; — the gate output is the highest-signal context a second
+attempt can get.</li>
+<li><strong>The gate is the reward signal, and it is only as strong as the
+pack&#39;s scenarios.</strong> This is why hardening <code>pack lint</code> to flag vague
+scenarios matters more than pack-authoring ergonomics: without good
+scenarios the harness amplifies weak code.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>Run in-place on branches, no worktree.</strong> Simpler, but dirties the
+working tree, serialises badly, and a crashing agent leaves the main
+checkout in an unknown state. Rejected — isolation is the point.</li>
+<li><strong>No git isolation, one commit per REQ on the current branch.</strong> Fine
+for a demo, unacceptable as the product thesis: one bad REQ corrupts
+the run. Rejected.</li>
+<li><strong>Pass the prompt over stdin.</strong> Some agents do not read stdin, and it
+makes the <code>--agent</code> template less obvious. The <code>{prompt_file}</code>
+placeholder is explicit and works for every agent shape.</li>
+<li><strong>Inline <code>{prompt}</code> substitution.</strong> Shell-escaping hazard and shell
+length limits on large prompts. Rejected in favour of a temp file.</li>
+<li><strong>Build an agent runtime / embed an SDK.</strong> Rejected — kills vendor
+neutrality, the core differentiator.</li>
+</ol>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<h3 id="positive">Positive<a class="anchor" href="#positive" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Repositions the product from scaffolder to <strong>spec-driven delivery
+harness</strong> — the natural milestone after <code>plan</code>/<code>done</code>.</li>
+<li>A spec-driven repo becomes a turn-key environment for <em>any</em> agent.</li>
+<li>Failures are contained and inspectable; successes are reviewable
+branches.</li>
+</ul>
+<h3 id="negative-trade-offs">Negative / trade-offs<a class="anchor" href="#negative-trade-offs" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>The reward signal is only as good as the pack&#39;s tests — weak scenarios
+let weak code through. Mitigation: harden <code>pack lint</code> (separate track).</li>
+<li><code>git</code> and a git repo are hard requirements.</li>
+<li>The harness shells out to a user-supplied command; that command runs
+with the user&#39;s privileges in a worktree. This is the same trust model
+as any build script, but it is worth stating explicitly.</li>
+<li>Cost/time scale with <code>--max-attempts</code> × pending requirements. The
+per-invocation <code>--timeout</code> bounds a hung agent but not total spend.</li>
+</ul>
+<h2 id="follow-ups">Follow-ups<a class="anchor" href="#follow-ups" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>harness run --merge</code> (opt-in) to fast-forward green branches once a
+team trusts the loop.</li>
+<li>Parallel worktree execution behind a <code>--jobs N</code> flag.</li>
+<li>Per-requirement cost/token accounting in the JSON report.</li>
+<li>Expose the loop as an MCP tool so an MCP-native agent can self-drive.</li>
+</ul>
+<h2 id="references">References<a class="anchor" href="#references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>scripts/harness/run.ts</code> — orchestrator</li>
+<li><code>scripts/harness/prompt.ts</code> — prompt builder</li>
+<li><code>scripts/harness/config.ts</code> — <code>harness.config.yaml</code> reader</li>
+<li><code>docs/specs/harness.md</code> — user-facing guide</li>
+<li>ADR-0012 — <code>plan</code> + <code>done</code> (M4)</li>
+<li>ADR-0010 — specops sync/diff (M2)</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0013-harness-run-loop.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#rationale">Rationale</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l3"><a href="#positive">Positive</a></li><li class="toc__l3"><a href="#negative-trade-offs">Negative / trade-offs</a></li><li class="toc__l2"><a href="#follow-ups">Follow-ups</a></li><li class="toc__l2"><a href="#references">References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

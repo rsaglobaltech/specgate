@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en" data-slug="comparisons">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparison: specgate vs. alternatives — Specgate</title>
+<meta name="description" content="How this differs from OpenSpec, Spec Kit and writing it yourself.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Comparison: specgate vs. alternatives — Specgate">
+<meta property="og:description" content="How this differs from OpenSpec, Spec Kit and writing it yourself.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html" class="is-active" aria-current="page">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Existing code</li><li aria-current="page">Comparisons</li></ol></nav>
+    <article class="prose">
+<h1 id="comparison-specgate-vs-alternatives">Comparison: <code>specgate</code> vs. alternatives<a class="anchor" href="#comparison-specgate-vs-alternatives" aria-label="Link to this section">#</a></h1>
+<p>This document positions <code>specgate</code> honestly against the tools
+teams commonly evaluate when adopting Spec-Driven Development or AI-assisted
+scaffolding: <strong>OpenSpec</strong>, GitHub <code>spec-kit</code>, Cursor rules, Aider conventions,
+and plain <code>README.md</code> files.</p>
+<p>OpenSpec is the closest comparison and the one worth reading first — it is the
+best current exponent of the change-lifecycle idea, and several things in this
+tool exist because of it.</p>
+<blockquote>
+<p><strong>Bias disclosure.</strong> This is written by the maintainers of
+<code>specgate</code>. Where we lose, we say so. We have asked the
+maintainers of each compared tool for review; their feedback (if received)
+is referenced in footnotes.</p>
+</blockquote>
+<hr>
+<h2 id="1-at-a-glance-matrix">1. At-a-glance matrix<a class="anchor" href="#1-at-a-glance-matrix" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Capability</th><th><code>specgate</code></th><th><strong>OpenSpec</strong></th><th>GitHub <code>spec-kit</code></th><th>Cursor <code>.cursorrules</code></th><th>Aider <code>CONVENTIONS.md</code></th><th>Plain <code>README.md</code></th></tr></thead><tbody><tr><td><strong>Generates an initial repo structure</strong></td><td>✅</td><td>⚠️ minimal</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Ships with a domain pack format</strong></td><td>✅ (YAML+schema)</td><td>❌</td><td>⚠️ ad-hoc</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>DDD-lite artefacts (aggregates, contexts, events)</strong></td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Gherkin scenario stubs</strong></td><td>✅</td><td>⚠️ prose scenarios</td><td>⚠️ via templates</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Traceability matrix</strong></td><td>✅ rich + legacy</td><td>❌</td><td>⚠️ basic</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong><code>validate</code> CI gate</strong></td><td>✅ shipped GHA</td><td>✅</td><td>⚠️ external</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>JSON Schema for the DSL</strong></td><td>✅ draft 2020-12</td><td>n/a (plain markdown)</td><td>❌</td><td>❌</td><td>❌</td><td>n/a</td></tr><tr><td><strong>VS Code extension</strong></td><td>⚠️ built, not on the Marketplace</td><td>❌</td><td>❌</td><td>n/a (own editor)</td><td>❌</td><td>❌</td></tr><tr><td><strong>MCP server</strong></td><td>✅ shipped</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Language server (LSP)</strong></td><td>✅ shipped</td><td>❌</td><td>❌</td><td>n/a (own editor)</td><td>❌</td><td>❌</td></tr><tr><td><strong>Change lifecycle (propose → review → archive)</strong></td><td>✅ shipped</td><td>✅ <strong>their idea first</strong></td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Versioned, installable packs (<code>specops</code>)</strong></td><td>✅ shipped</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Cross-platform CLI (Windows/Linux/macOS)</strong></td><td>✅ Node</td><td>✅ Node</td><td>⚠️ Bash-heavy</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td><strong>Locked-in to one AI vendor</strong></td><td>❌</td><td>❌</td><td>❌</td><td>✅ Cursor</td><td>❌</td><td>❌</td></tr><tr><td><strong>Discoverable pack registry</strong></td><td>⚠️ generator ships, not yet hosted</td><td>n/a</td><td>❌</td><td>❌</td><td>❌</td><td>n/a</td></tr><tr><td><strong>Zero-install (just docs)</strong></td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td></tr><tr><td><strong>Agent JSON contract, documented and tested</strong></td><td>✅ generated from source</td><td>✅ hand-written</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Slash commands for agent tools</strong></td><td>✅ 8 tools</td><td>✅</td><td>❌</td><td>n/a</td><td>❌</td><td>❌</td></tr><tr><td><strong>Configurable artefact graph</strong></td><td>✅ <code>specgate schema</code></td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Multi-repo spec sharing</strong></td><td>✅ private packs</td><td>⚠️ Stores</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Time to first value</strong></td><td>✅ <strong>&lt; 1s CLI, measured</strong>[^ttfv]</td><td>✅ minutes</td><td>✅ minutes</td><td>✅ instant</td><td>✅ instant</td><td>✅ instant</td></tr></tbody></table></div>
+<p>✅ supported · ⚠️ partial / via workaround · ❌ not supported · 🚧 in progress</p>
+<p>[^ttfv]: Measured 2026-08-26 on a fresh two-file Java repo:
+    <code>adopt</code> + first <code>validate .</code> — 0.23s combined, green on the first try.
+    That is the CLI&#39;s own overhead, not a claim about how fast a person
+    orients themselves; this row used to say &quot;⚠️ minutes&quot; as an unmeasured
+    self-rating, and turning it into a number was overdue. The honest
+    limitation: the columns for OpenSpec and <code>spec-kit</code> are not independently
+    timed here, so this is our own number next to their own stated claims, not
+    an apples-to-apples benchmark. What the CLI <em>cannot</em> make instant, in any
+    of the compared tools: writing the first real Gherkin scenario and test is
+    human time regardless of tooling.</p>
+<hr>
+<h2 id="2-when-each-tool-wins">2. When each tool wins<a class="anchor" href="#2-when-each-tool-wins" aria-label="Link to this section">#</a></h2>
+<h3 id="specgate-wins-when"><code>specgate</code> wins when…<a class="anchor" href="#specgate-wins-when" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Your team needs <strong>explicit traceability</strong> between requirements, scenarios,
+and code (regulated industries, audited deliveries).</li>
+<li>You want a <strong>DDD-lite domain model</strong> in machine-readable form so AI agents
+and humans share the same vocabulary.</li>
+<li>You operate <strong>multiple environments</strong> (dev/feature/prod) and want generated
+Docker / devcontainer / <code>.env</code> scaffolding aligned with the domain.</li>
+<li>You want a <strong>portable, vendor-neutral</strong> workflow that works with Claude,
+Cursor, Aider, Copilot, or no agent at all.</li>
+</ul>
+<h3 id="openspec-wins-when">OpenSpec wins when…<a class="anchor" href="#openspec-wins-when" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>You want the <strong>change lifecycle and nothing else</strong>. OpenSpec is smaller, and
+smaller is a feature: fewer concepts to teach, less to get wrong.</li>
+<li>Your specs are <strong>prose, not a domain model</strong>. If aggregates, commands and
+events would be ceremony for your team, our DDD-lite artefacts are cost
+without benefit.</li>
+<li>You want <strong>plain markdown with no schema</strong>. Our <code>pack.yaml</code> buys reuse and
+validation; it also buys a format to learn.</li>
+<li>You are <strong>starting today and want the shortest path</strong> to a working loop.</li>
+</ul>
+<p>We took the delta format, the <code>ADDED</code>/<code>MODIFIED</code>/<code>REMOVED</code> grammar and the
+idea of an audited agent contract from their design. Where we differ is
+deliberate: they optimise for the change loop, we add versioned domain packs
+(<code>specops</code>) and a traceability matrix that CI enforces. If you do not need
+those two things, their smaller surface is the better tool.</p>
+<blockquote>
+<p>Their contract documents a set of known inconsistencies — snake_case in one
+command family and camelCase in another. We had the advantage of reading that
+before writing ours, and picked one. We are not cleverer; we were later.</p>
+</blockquote>
+<h3 id="github-spec-kit-wins-when">GitHub <code>spec-kit</code> wins when…<a class="anchor" href="#github-spec-kit-wins-when" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>You&#39;re already deep in the GitHub ecosystem and want first-party tooling
+with deeper repo integration (issues, PRs, projects).</li>
+<li>You only need lightweight templates without DDD vocabulary.</li>
+<li>You prefer Microsoft/GitHub to govern the spec format directly.</li>
+</ul>
+<blockquote>
+<p><code>spec-kit</code> is fast-moving; some gaps above will close. Recheck quarterly.</p>
+</blockquote>
+<h3 id="cursor-cursorrules-wins-when">Cursor <code>.cursorrules</code> wins when…<a class="anchor" href="#cursor-cursorrules-wins-when" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Cursor is your <strong>only</strong> AI coding tool and your team has standardised on it.</li>
+<li>You want rules that bias the model&#39;s behaviour without changing the repo
+layout or tests.</li>
+</ul>
+<blockquote>
+<p>Locks you into Cursor; not portable to other agents or to plain
+command-line workflows.</p>
+</blockquote>
+<h3 id="aider-conventions-md-wins-when">Aider <code>CONVENTIONS.md</code> wins when…<a class="anchor" href="#aider-conventions-md-wins-when" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>You work primarily from the terminal with Aider and want a single,
+human-readable file the agent reads on every prompt.</li>
+<li>Your team is small (1–3 engineers) and the overhead of formal traceability
+isn&#39;t justified.</li>
+</ul>
+<blockquote>
+<p>No structural enforcement — conventions drift over time without CI gates.</p>
+</blockquote>
+<h3 id="plain-readme-md-wins-when">Plain <code>README.md</code> wins when…<a class="anchor" href="#plain-readme-md-wins-when" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>The project is a <strong>prototype or research spike</strong> that may not survive the
+quarter.</li>
+<li>You&#39;re solo and the cost of any tooling exceeds the cost of forgetting.</li>
+</ul>
+<blockquote>
+<p>Fine for week-1. Doesn&#39;t scale past week-12.</p>
+</blockquote>
+<hr>
+<h2 id="3-when-specgate-loses">3. When <code>specgate</code> loses<a class="anchor" href="#3-when-specgate-loses" aria-label="Link to this section">#</a></h2>
+<p>These are the honest trade-offs. We&#39;d rather you choose a different tool than
+adopt ours and regret it.</p>
+<div class="table-wrap"><table><thead><tr><th>Scenario</th><th>What hurts</th><th>Recommendation</th></tr></thead><tbody><tr><td><strong>Solo developer, 1-week throwaway</strong></td><td>Setup overhead exceeds the project lifespan</td><td>Use a <code>README.md</code> + Gherkin in a single file</td></tr><tr><td><strong>Cursor-only team, no portability concern</strong></td><td>Our CLI duplicates what <code>.cursorrules</code> already does for them</td><td>Stick with Cursor rules</td></tr><tr><td><strong>Already on GitHub <code>spec-kit</code> for 6+ months</strong></td><td>Switching cost &gt; marginal feature gap</td><td>Wait for <code>spec-kit</code> to add DDD/JSON-Schema; we&#39;ll re-publish this page</td></tr><tr><td><strong>Front-end-only project with no domain logic</strong></td><td>DDD vocabulary feels heavy</td><td>Use <code>--type frontend</code> (lighter) but consider plain templates</td></tr><tr><td><strong>Highly conservative shop, no Node.js allowed</strong></td><td>We require Node ≥ 22 at runtime</td><td>Run the published Docker image, or the Maven / Gradle plugin, which launch the CLI for you</td></tr><tr><td><strong>You hate YAML</strong></td><td>Pack format is YAML</td><td>We won&#39;t ship JSON/TOML packs in 0.x; revisit in 1.0</td></tr></tbody></table></div>
+<hr>
+<h2 id="4-migration-paths">4. Migration paths<a class="anchor" href="#4-migration-paths" aria-label="Link to this section">#</a></h2>
+<h3 id="from-openspec-specgate">From OpenSpec → <code>specgate</code><a class="anchor" href="#from-openspec-specgate" aria-label="Link to this section">#</a></h3>
+<p>The delta format is deliberately the same, so the specs come across as-is.</p>
+<ol>
+<li><code>specgate init</code> in the repo — it adopts it and never overwrites an existing file.</li>
+<li>Move <code>openspec/changes/&lt;id&gt;/</code> to <code>docs/specs/changes/&lt;id&gt;/</code> and add a
+<code>change.yaml</code> (<code>specgate change new &lt;id&gt;</code> writes one to copy).</li>
+<li>Move <code>openspec/specs/&lt;capability&gt;/spec.md</code> to
+<code>docs/specs/capabilities/&lt;capability&gt;/spec.md</code>.</li>
+<li><code>specgate change validate</code> — the <code>ADDED</code>/<code>MODIFIED</code>/<code>REMOVED</code> grammar is
+compatible; what it will flag is missing RFC-2119 keywords and scenario
+steps that are prose rather than <code>- GIVEN</code> bullets.</li>
+<li>Optionally add <code>&lt;!-- csda:trace uc=… cmd=… --&gt;</code> comments where you want
+requirements to reach the traceability matrix. Without them a requirement
+still archives, with <code>-</code> in those columns.</li>
+</ol>
+<p><strong>Do not migrate</strong> if what you valued was the smaller surface. Steps 4 and 5
+are the tax for the matrix and the CI gate; if you do not want those, you do
+not want this tool.</p>
+<h3 id="from-spec-kit-specgate">From <code>spec-kit</code> → <code>specgate</code><a class="anchor" href="#from-spec-kit-specgate" aria-label="Link to this section">#</a></h3>
+<ol>
+<li>Run <code>npx @rsaglobaltech/specgate init --config your.config --out ./next</code>.</li>
+<li>Copy your existing <code>spec-kit</code> artefacts into the generated <code>docs/specs/</code>.</li>
+<li>Run <code>validate</code> — it will tell you what&#39;s missing in the traceability matrix.</li>
+<li>Keep <code>spec-kit</code> running for 1 release cycle as a parallel checker.</li>
+</ol>
+<h3 id="from-cursorrules-specgate">From <code>.cursorrules</code> → <code>specgate</code><a class="anchor" href="#from-cursorrules-specgate" aria-label="Link to this section">#</a></h3>
+<ol>
+<li>Generate a project with <code>specgate init</code>.</li>
+<li>Move your Cursor rules into <code>AGENTS.md</code>, below the block Specgate keeps there.</li>
+<li>Reference the generated traceability matrix from your rules so Cursor
+reads them on every prompt.</li>
+</ol>
+<h3 id="from-plain-readme-md-specgate">From plain <code>README.md</code> → <code>specgate</code><a class="anchor" href="#from-plain-readme-md-specgate" aria-label="Link to this section">#</a></h3>
+<ol>
+<li>Generate a project as above.</li>
+<li>Copy the existing README into <code>docs/specs/glossary.md</code>.</li>
+<li>Run <code>pack init</code> to scaffold a domain pack from your existing module list.</li>
+</ol>
+<hr>
+<h2 id="5-questions-worth-asking-before-you-choose">5. Questions worth asking before you choose<a class="anchor" href="#5-questions-worth-asking-before-you-choose" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>Will my team use this in 12 months?</strong> — Tools that require discipline die.
+Tools that have a CI gate survive.</li>
+<li><strong>Does my AI agent of choice exist in 12 months?</strong> — Vendor lock-in is
+expensive when the vendor pivots or shuts down.</li>
+<li><strong>Do I care about audit trails?</strong> — If yes, traceability matrix and
+schema-validated specs are non-negotiable.</li>
+<li><strong>Do I need cross-team consistency?</strong> — If yes, a versioned pack format
+beats prose conventions.</li>
+<li><strong>What&#39;s the cost of being wrong?</strong> — All four alternatives are reversible
+in &lt;1 day; choose the one that lets you experiment cheapest.</li>
+</ol>
+<hr>
+<h2 id="6-references">6. References<a class="anchor" href="#6-references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="case-studies/case-1.html">Case Study 1: Smart Parking brownfield adoption</a></li>
+<li><a href="https://github.com/Fission-AI/OpenSpec" target="_blank" rel="noreferrer">OpenSpec</a> (last reviewed 2026-08) — the benchmark that shaped this tool&#39;s change lifecycle; the full analysis is in <a href="https://github.com/rsaglobaltech/specgate/blob/main/mejoras/openspec-benchmark-plan.md" target="_blank" rel="noreferrer"><code>mejoras/openspec-benchmark-plan.md</code></a></li>
+<li><a href="https://github.com/github/spec-kit" target="_blank" rel="noreferrer">GitHub spec-kit</a> (last reviewed 2026-05)</li>
+<li><a href="https://docs.cursor.com/context/rules-for-ai" target="_blank" rel="noreferrer">Cursor <code>.cursorrules</code> documentation</a></li>
+<li><a href="https://aider.chat/docs/usage/conventions.html" target="_blank" rel="noreferrer">Aider CONVENTIONS.md guide</a></li>
+</ul>
+<p>Our own column was last verified against the shipped CLI on <strong>2026-08-16</strong>,
+and the &quot;Time to first value&quot; row re-measured on <strong>2026-08-26</strong> (see the footnote).
+OpenSpec was reviewed <strong>2026-08</strong>; the other columns <strong>2026-05</strong>.
+Pull requests with corrections are welcome — see
+<a href="https://github.com/rsaglobaltech/specgate/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">CONTRIBUTING.md</a>.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="openspec.html"><span>Previous</span>Already on OpenSpec</a><a class="pager__next" href="commands.html"><span>Next</span>Command reference</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/comparisons.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#1-at-a-glance-matrix">1. At-a-glance matrix</a></li><li class="toc__l2"><a href="#2-when-each-tool-wins">2. When each tool wins</a></li><li class="toc__l3"><a href="#specgate-wins-when">specgate wins when…</a></li><li class="toc__l3"><a href="#openspec-wins-when">OpenSpec wins when…</a></li><li class="toc__l3"><a href="#github-spec-kit-wins-when">GitHub spec-kit wins when…</a></li><li class="toc__l3"><a href="#cursor-cursorrules-wins-when">Cursor .cursorrules wins when…</a></li><li class="toc__l3"><a href="#aider-conventions-md-wins-when">Aider CONVENTIONS.md wins when…</a></li><li class="toc__l3"><a href="#plain-readme-md-wins-when">Plain README.md wins when…</a></li><li class="toc__l2"><a href="#3-when-specgate-loses">3. When specgate loses</a></li><li class="toc__l2"><a href="#4-migration-paths">4. Migration paths</a></li><li class="toc__l3"><a href="#from-openspec-specgate">From OpenSpec → specgate</a></li><li class="toc__l3"><a href="#from-spec-kit-specgate">From spec-kit → specgate</a></li><li class="toc__l3"><a href="#from-cursorrules-specgate">From .cursorrules → specgate</a></li><li class="toc__l3"><a href="#from-plain-readme-md-specgate">From plain README.md → specgate</a></li><li class="toc__l2"><a href="#5-questions-worth-asking-before-you-choose">5. Questions worth asking before you choose</a></li><li class="toc__l2"><a href="#6-references">6. References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

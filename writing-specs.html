@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en" data-slug="writing-specs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing specs — Specgate</title>
+<meta name="description" content="Requirements, scenarios and the traceability matrix.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Writing specs — Specgate">
+<meta property="og:description" content="Requirements, scenarios and the traceability matrix.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html" class="is-active" aria-current="page">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Every day</li><li aria-current="page">Writing specs</li></ol></nav>
+    <article class="prose">
+<h1 id="writing-specs">Writing specs<a class="anchor" href="#writing-specs" aria-label="Link to this section">#</a></h1>
+<p>Requirements, Gherkin scenarios and the traceability matrix — the three
+artefacts everything else is built on.</p>
+<hr>
+<h2 id="add-a-requirement-and-its-scenario">Add a requirement and its scenario<a class="anchor" href="#add-a-requirement-and-its-scenario" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> a new requirement with an executable scenario, linked to a test, with
+<code>check</code> green — without touching the matrix.</p>
+<p>The short way is one command:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> new <span class="tok tok--s">&quot;Premium customers get 10% off at checkout&quot;</span></code></pre></figure>
+<p>It writes the <code>## REQ-NNN</code> section in <code>spec.md</code> and a tagged scenario under
+<code>features/</code>. Rewrite the sentence and the three <code>&lt;placeholders&gt;</code>.</p>
+<p>By hand, it is the same two edits. The section in <code>spec.md</code>:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">## REQ-007 — Premium customers get 10% off at checkout
+
+A premium customer's order MUST be discounted 10% before tax at checkout.</code></pre></figure>
+<p>And the scenario in <code>features/billing/discounts.feature</code>, tagged with both ids:</p>
+<figure class="code" data-lang="gherkin"><figcaption class="code__head"><span class="code__lang">gherkin</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-gherkin"><span class="tok tok--k">Feature</span>: Apply discount on checkout
+
+  <span class="tok tok--an">@REQ-007</span> <span class="tok tok--an">@SCN-007</span>
+<span class="tok tok--k">  Scenario</span>: Premium customer receives 10% discount
+<span class="tok tok--g">    Given</span> a logged-in premium customer
+<span class="tok tok--g">    When</span> they checkout with an order of 100 EUR
+<span class="tok tok--g">    Then</span> the final price is 90 EUR</code></pre></figure>
+<p>Then a test that mentions the requirement — that mention is the link — and the
+gate:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> check     <span class="tok tok--c"># regenerates the matrix from spec.md, the tags and the tests</span></code></pre></figure>
+<p>Do <strong>not</strong> add a row to <code>docs/specs/traceability.md</code>: it is generated, and the
+next <code>check</code> replaces it with what the sources say. A feature file with no
+<code>@REQ-NNN</code> tag is reported as an orphan; tag its scenario, or create the
+requirement with <code>specgate new</code>.</p>
+<hr>
+<h3 id="writing-in-spanish">Writing in Spanish<a class="anchor" href="#writing-in-spanish" aria-label="Link to this section">#</a></h3>
+<p>Scenarios can use <code>DADO / CUANDO / ENTONCES / Y</code>; feature files are then written
+as Spanish Gherkin (<code># language: es</code>, <code>Característica</code>, <code>Escenario</code>). Starting
+from a client&#39;s brief instead of a blank page: <a href="from-a-brief.html">From a client brief</a>.</p>
+<h2 id="close-the-loop-status-implement-done">Close the loop: <code>status</code> → implement → <code>done</code><a class="anchor" href="#close-the-loop-status-implement-done" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> after a <code>specops sync</code> brings new requirements into the project, drive a human or AI agent through the implementation cycle without manually reading every <code>.feature</code> file.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># 1. After sync (or any time), see what's left</span>
+<span class="tok tok--f">specgate</span> status          <span class="tok tok--c"># one line per requirement, and the next command</span>
+<span class="tok tok--f">specgate</span> plan            <span class="tok tok--c"># the same queue with every artifact spelled out</span></code></pre></figure>
+<p><code>plan</code> gives the full bucketed report — one bucket per thing still missing:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">  Needs Test + Code
+    REQ-001   SCN-001
+      ✓ feature: `features/audit-log/recording_an_action_emits_auditentryrecorded.feature`
+    REQ-002   SCN-002
+      ✓ feature: `features/audit-log/tampering_breaks_the_chain_verification.feature`
+
+  Needs Feature File
+    REQ-003   -
+      · feature: -</code></pre></figure>
+<p>For AI agents, swap to JSON:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> plan <span class="tok tok--o">--format</span> json</code></pre></figure>
+<figure class="code" data-lang="json"><figcaption class="code__head"><span class="code__lang">json</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-json">{
+  <span class="tok tok--a">&quot;schemaVersion&quot;</span>: <span class="tok tok--n">1</span>,
+  <span class="tok tok--a">&quot;summary&quot;</span>: { <span class="tok tok--a">&quot;NEEDS_EVERYTHING&quot;</span>: <span class="tok tok--n">2</span>, <span class="tok tok--a">&quot;NEEDS_FEATURE&quot;</span>: <span class="tok tok--n">2</span> },
+  <span class="tok tok--a">&quot;total&quot;</span>: <span class="tok tok--n">4</span>,
+  <span class="tok tok--a">&quot;actionable&quot;</span>: <span class="tok tok--n">4</span>,
+  <span class="tok tok--a">&quot;next&quot;</span>: <span class="tok tok--s">&quot;REQ-001&quot;</span>,
+  <span class="tok tok--a">&quot;requirements&quot;</span>: [
+    {
+      <span class="tok tok--a">&quot;requirement&quot;</span>: <span class="tok tok--s">&quot;REQ-001&quot;</span>,
+      <span class="tok tok--a">&quot;scenarioId&quot;</span>: <span class="tok tok--s">&quot;SCN-001&quot;</span>,
+      <span class="tok tok--a">&quot;category&quot;</span>: <span class="tok tok--s">&quot;NEEDS_EVERYTHING&quot;</span>,
+      <span class="tok tok--a">&quot;status&quot;</span>: <span class="tok tok--s">&quot;Draft&quot;</span>,
+      <span class="tok tok--a">&quot;ready&quot;</span>: <span class="tok tok--k">true</span>,
+      <span class="tok tok--a">&quot;blockers&quot;</span>: []
+    }
+  ],
+  <span class="tok tok--a">&quot;orphanFeatures&quot;</span>: [],
+  <span class="tok tok--a">&quot;status&quot;</span>: []
+}</code></pre></figure>
+<p><code>next</code> is the requirement to work on; <code>actionable</code> is how many are left that
+can be started now. Each requirement carries its <code>category</code>, whether it is
+<code>ready</code>, and the <code>blockers</code> in its way (each with a <code>code</code> and a <code>fix</code>).</p>
+<h3 id="after-implementing-mark-the-req-done">After implementing, mark the REQ done<a class="anchor" href="#after-implementing-mark-the-req-done" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> <span class="tok tok--k">done</span> REQ-<span class="tok tok--n">007</span>                          <span class="tok tok--c"># the gate first, then Status=&quot;Implemented&quot;</span>
+<span class="tok tok--f">specgate</span> <span class="tok tok--k">done</span> REQ-<span class="tok tok--n">007</span> <span class="tok tok--o">--status</span> Verified         <span class="tok tok--c"># → Status=&quot;Verified&quot;, same gate</span>
+<span class="tok tok--f">specgate</span> <span class="tok tok--k">done</span> REQ-<span class="tok tok--n">007</span> <span class="tok tok--o">--test-cmd</span> <span class="tok tok--s">&quot;npm test&quot;</span>     <span class="tok tok--c"># the gate, then the suite</span>
+<span class="tok tok--f">specgate</span> <span class="tok tok--k">done</span> REQ-<span class="tok tok--n">007</span> <span class="tok tok--o">--no-check</span>                <span class="tok tok--c"># writes the status without the gate</span></code></pre></figure>
+<p><code>done</code> runs the gate <code>specgate check</code> runs and writes nothing when it fails,
+so a requirement it closes is one CI will not reopen. It then edits exactly
+one status. Combined with <code>validate --strict</code> in CI, the matrix is the live source of truth instead of a rear-view mirror.</p>
+<h3 id="ai-agent-recipe-claude-desktop-cursor-aider-with-mcp">AI agent recipe (Claude Desktop / Cursor / Aider with MCP)<a class="anchor" href="#ai-agent-recipe-claude-desktop-cursor-aider-with-mcp" aria-label="Link to this section">#</a></h3>
+<p>The MCP server exposes the daily loop as tools — <code>specgate_status</code>,
+<code>specgate_new</code>, <code>plan</code>, <code>specgate_check</code>, <code>mark_requirement_done</code>
+(<a href="mcp.html">the MCP server</a>). A canonical prompt:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">1. Call `plan` with projectDir set to my repo. Work on the requirement in `next`.
+2. Read its scenario (`read_spec`, or the feature file in your editor).
+3. Write a test that mentions the requirement id. Run it — confirm it fails.
+4. Write production code until the test passes.
+5. Call `mark_requirement_done` with `requirement` set to that id. It runs the
+   gate first; if it returns done_validate_failed, fix what it reports and retry.
+6. Repeat from step 1 until `plan` returns actionable = 0.
+7. Call `specgate_check` before you stop.</code></pre></figure>
+<p>Writing tools are guarded over MCP: they refuse unless a change is open or the
+team set <code>mcpAllowContractEdits</code> (<a href="mcp.html#the-guard-an-agent-may-not-rewrite-its-own-exam">why</a>).</p>
+<hr>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="reviewing-changes.html">Change something that already shipped</a></li>
+<li><a href="validating.html">Enforce it in CI</a></li>
+</ul>
+<h2 id="removing-a-requirement">Removing a requirement<a class="anchor" href="#removing-a-requirement" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> req rm REQ-<span class="tok tok--n">014</span> <span class="tok tok--o">--dry-run</span>   <span class="tok tok--c"># what would go</span>
+<span class="tok tok--f">specgate</span> req rm REQ-<span class="tok tok--n">014</span></code></pre></figure>
+<p>It takes the matrix row (all of them, if the id somehow has more than one) and
+the requirement&#39;s prose in <code>spec.md</code>. Past <code>Draft</code> it refuses without <code>--force</code>:
+removing a delivered requirement deletes the record that it shipped, and
+<code>specgate done REQ-014 --status Deprecated</code> is usually what you meant.</p>
+<p>It reports what it leaves behind — a feature file no row references any more
+will fail <code>validate</code>, and finding that out from a red build instead of from the
+command would waste an afternoon.</p>
+<h3 id="there-is-no-req-renumber-on-purpose">There is no <code>req renumber</code>, on purpose<a class="anchor" href="#there-is-no-req-renumber-on-purpose" aria-label="Link to this section">#</a></h3>
+<p>A requirement id is not only a cell in the matrix. It appears in <code>@REQ-014</code>
+Gherkin tags, in test names, in commit messages, in the <code>harness/REQ-014</code> branch
+somebody already pushed, and in whatever your issue tracker says. Renumbering
+the two files this tool owns while every other mention keeps the old id would
+leave the project in a worse state than the one you were fixing.</p>
+<p>If you need a different id: <code>req rm</code> the old one and <code>req add</code> the new, which
+makes the change visible in the diff rather than spread across files nobody
+looked at.</p>
+<h2 id="tagging-a-scenario">Tagging a scenario<a class="anchor" href="#tagging-a-scenario" aria-label="Link to this section">#</a></h2>
+<p>A matrix row names a <code>Scenario ID</code>. Tags are how the feature file names it back,
+and they are what survives somebody rewording the scenario title:</p>
+<figure class="code" data-lang="gherkin"><figcaption class="code__head"><span class="code__lang">gherkin</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-gherkin"><span class="tok tok--an">@REQ-014</span> <span class="tok tok--an">@SCN-014</span>
+<span class="tok tok--k">Scenario</span>: A vet with no speciality is listed under &quot;general practice&quot;
+<span class="tok tok--g">  Given</span> a vet with no speciality
+<span class="tok tok--g">  When</span> the directory is listed
+<span class="tok tok--g">  Then</span> the vet appears under &quot;general practice&quot;</code></pre></figure>
+<p><strong>Both tags, and <code>@SCN-NNN</code> is the one the gate matches.</strong> <code>@REQ-NNN</code> says which
+requirement the scenario belongs to and is what a Cucumber <code>--tags &quot;@REQ-014&quot;</code>
+filter selects; <code>@SCN-NNN</code> is what <code>validate</code> compares against the row&#39;s
+<code>Scenario ID</code> column.</p>
+<p><strong>A file with no tags at all is left alone.</strong> Tagging is optional, and adding it
+to one scenario does not force it on the rest of the project. But once a feature
+file carries any of these tags, every row pointing into that file must find its
+<code>@SCN-NNN</code> there — a half-tagged file is how a matrix ends up pointing at a
+scenario nobody renamed but everybody moved.</p>
+<p>On a <strong>hand-kept</strong> matrix, a row that declares <code>SCN-014</code> and a file tagged
+<code>@REQ-014</code> alone therefore fails, and says so:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">✖ features/vets/listing.feature carries traceability tags but not @SCN-014,
+  which REQ-014 declares. The matrix points at a scenario that is not there.</code></pre></figure>
+<p>On a <strong>generated</strong> matrix the row is built from the tags, so a scenario tagged
+<code>@REQ-014</code> alone still links — its row shows no scenario id. Add <code>@SCN-NNN</code>
+anyway: it is what a reviewer, a Cucumber filter and a renamed title all keep.</p>
+<h2 id="a-matrix-nobody-edits">A matrix nobody edits<a class="anchor" href="#a-matrix-nobody-edits" aria-label="Link to this section">#</a></h2>
+<p><code>docs/specs/traceability.md</code> is <strong>generated</strong> instead of maintained — by
+default for every project <code>init</code> or <code>adopt</code> creates (<code>--keep-matrix</code> opts
+out). Every column is already said somewhere else, so <code>specgate matrix</code>
+computes it:</p>
+<div class="table-wrap"><table><thead><tr><th>Column</th><th>Comes from</th></tr></thead><tbody><tr><td>Requirement, Use Case</td><td>the <code>## REQ-NNN — title</code> section in <code>spec.md</code></td></tr><tr><td>Scenario ID, Feature file</td><td>scenarios tagged <code>@REQ-NNN @SCN-NNN</code> (<code>specgate new</code> writes them)</td></tr><tr><td>Test artifact</td><td>test files that mention <code>REQ-NNN</code> — a comment or a test name is enough</td></tr><tr><td>Technical artifact</td><td>other source files that mention <code>REQ-NNN</code></td></tr><tr><td>Status</td><td><code>status=</code> in the section&#39;s <code>&lt;!-- csda:trace … --&gt;</code> comment</td></tr></tbody></table></div>
+<p>Anything derivation cannot see — a code path, a test that does not name its
+requirement, the DDD columns — goes in that same comment, with the grammar
+capability specs already use:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">## REQ-003 — Orders can be cancelled
+
+&lt;!-- csda:trace status=Implemented artifact=lib/orders.js --&gt;</code></pre></figure>
+<p><strong>Switching a project created before this:</strong></p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> matrix <span class="tok tok--o">--migrate</span>   <span class="tok tok--c"># writes status and explicit links into spec.md</span></code></pre></figure>
+<p>It writes only what derivation would get wrong, then derives the matrix and
+compares it with yours row for row. Any difference and <strong>nothing is changed</strong>:
+it names the requirements it cannot express yet — usually several rows for one
+requirement whose scenarios are not tagged — and how to fix them.</p>
+<p><strong>After it:</strong> the matrix carries a <code>specgate:derived</code> marker and is never edited
+by hand. <code>specgate check</code> regenerates it before the gate; plain <code>validate</code> —
+what CI runs — fails with <code>matrix_stale</code> if a commit forgot to, and
+<code>specgate matrix</code> fixes that. A project that has not migrated is untouched by
+all of this.</p>
+<p>The everyday commands write the sources for you: <code>specgate done</code> sets <code>status=</code>
+in the requirement&#39;s comment, <code>req link</code> and <code>req add --feature …</code> record their
+links there, <code>new</code>, <code>req rm</code> and <code>change archive</code> regenerate the matrix, and
+<code>status</code>, <code>plan</code> and <code>check</code> read it fresh. <code>fix</code> has nothing to repair in a
+generated matrix. <strong>One limit, for now:</strong> a domain pack writes <code>spec.md</code> and
+the matrix from its own templates, so <code>specgate expand</code> turns the project back
+to a hand-kept matrix and says so; <code>specgate matrix --migrate</code> switches it back
+once the pack&#39;s requirements have <code>## REQ-NNN</code> sections.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="first-pr.html"><span>Previous</span>Your team's first PR</a><a class="pager__next" href="reviewing-changes.html"><span>Next</span>Reviewing changes</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/writing-specs.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#add-a-requirement-and-its-scenario">Add a requirement and its scenario</a></li><li class="toc__l3"><a href="#writing-in-spanish">Writing in Spanish</a></li><li class="toc__l2"><a href="#close-the-loop-status-implement-done">Close the loop: status → implement → done</a></li><li class="toc__l3"><a href="#after-implementing-mark-the-req-done">After implementing, mark the REQ done</a></li><li class="toc__l3"><a href="#ai-agent-recipe-claude-desktop-cursor-aider-with-mcp">AI agent recipe (Claude Desktop / Cursor / Aider with MCP)</a></li><li class="toc__l2"><a href="#next">Next</a></li><li class="toc__l2"><a href="#removing-a-requirement">Removing a requirement</a></li><li class="toc__l3"><a href="#there-is-no-req-renumber-on-purpose">There is no req renumber, on purpose</a></li><li class="toc__l2"><a href="#tagging-a-scenario">Tagging a scenario</a></li><li class="toc__l2"><a href="#a-matrix-nobody-edits">A matrix nobody edits</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

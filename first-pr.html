@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en" data-slug="first-pr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your team&amp;#39;s first pull request with Specgate — Specgate</title>
+<meta name="description" content="What the author writes, what the reviewer reads, and what to do when check fails.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Your team&amp;#39;s first pull request with Specgate — Specgate">
+<meta property="og:description" content="What the author writes, what the reviewer reads, and what to do when check fails.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html" class="is-active" aria-current="page">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Every day</li><li aria-current="page">Your team's first PR</li></ol></nav>
+    <article class="prose">
+<h1 id="your-team-39-s-first-pull-request-with-specgate">Your team&#39;s first pull request with Specgate<a class="anchor" href="#your-team-39-s-first-pull-request-with-specgate" aria-label="Link to this section">#</a></h1>
+<p>For the people who write the pull request and for the people who review it.
+It assumes the repository has already run <code>specgate init</code>; if it has not, the
+<a href="quickstart.html">Quickstart</a> gets it there in ten minutes.</p>
+<hr>
+<h2 id="once-per-repository">Once per repository<a class="anchor" href="#once-per-repository" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> init        <span class="tok tok--c"># adopts the existing code; writes spec.md and the matrix</span>
+<span class="tok tok--f">specgate</span> ci init     <span class="tok tok--c"># the gate as a CI job — the provider is detected from</span>
+                     <span class="tok tok--c"># .github/, .gitlab-ci.yml, … or the origin remote;</span>
+                     <span class="tok tok--c"># with neither yet, add --provider github|gitlab|azure|jenkins</span>
+<span class="tok tok--f">git</span> add <span class="tok tok--o">-A</span> &amp;&amp;<span class="tok tok--f"> git</span> commit <span class="tok tok--o">-m</span> <span class="tok tok--s">&quot;chore: adopt Specgate&quot;</span></code></pre></figure>
+<p>The CI job runs <code>specgate check</code> on every pull request — the specification,
+then your tests — after setting up what the project needs: a JDK for a
+<code>pom.xml</code> or <code>build.gradle</code>, <code>npm ci</code> for a lockfile. It is the <code>check</code> you run
+on your machine, so a green there is a green in CI. It runs the <code>test_cmd</code> you
+configured (<code>specgate config set test_cmd …</code>), or the one it detects; with
+neither, it runs <code>validate . --strict</code> alone and <code>ci init</code> says so.</p>
+<hr>
+<h2 id="the-author-one-requirement-one-pull-request">The author: one requirement, one pull request<a class="anchor" href="#the-author-one-requirement-one-pull-request" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> status                                   <span class="tok tok--c"># what is open, and the next command</span>
+<span class="tok tok--f">specgate</span> new <span class="tok tok--s">&quot;Customers download invoices as PDF&quot;</span> <span class="tok tok--c"># spec section + scenario + row</span></code></pre></figure>
+<p><code>new</code> writes three things. Edit two of them:</p>
+<ol>
+<li><strong><code>spec.md</code>, the <code>## REQ-NNN</code> section</strong> — replace the generated sentence
+with the obligation: what must hold, when, and how someone would observe
+it. One requirement, one obligation. <code>done</code> refuses the requirement while
+the generated sentence is still there (<code>requirement_template_obligation</code>).</li>
+<li><strong><code>features/&lt;name&gt;.feature</code></strong> — replace the three <code>&lt;placeholders&gt;</code> with a
+concrete Given / When / Then. Real values, not &quot;valid data&quot;.</li>
+<li><strong><code>docs/specs/traceability.md</code></strong> — do not touch it. It is generated.</li>
+</ol>
+<p>Then write the test, and <strong>mention the requirement in it</strong>. The mention is the
+link; there is nothing else to declare:</p>
+<figure class="code" data-lang="js"><figcaption class="code__head"><span class="code__lang">js</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-js"><span class="tok tok--c">// REQ-007 SCN-007 — customers download invoices as PDF</span>
+test(<span class="tok tok--s">&quot;a paid invoice downloads as a PDF&quot;</span>, () =&gt; { <span class="tok tok--c">/* … */</span> });</code></pre></figure>
+<p>Write the code, then close the requirement:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> <span class="tok tok--k">done</span> REQ-<span class="tok tok--n">007</span>     <span class="tok tok--c"># runs the gate for it first; writes nothing if it fails</span>
+<span class="tok tok--f">specgate</span> check            <span class="tok tok--c"># the whole gate, the one CI runs</span></code></pre></figure>
+<p>Commit everything <code>check</code> touched — <code>spec.md</code>, the feature file, the tests,
+the code <strong>and</strong> <code>docs/specs/traceability.md</code>. A matrix left behind is the
+most common red build on a first PR (see <code>matrix_stale</code> below).</p>
+<h3 id="fixes-and-refactors">Fixes and refactors<a class="anchor" href="#fixes-and-refactors" aria-label="Link to this section">#</a></h3>
+<p>A bugfix or a refactor that does not change contracted behaviour <strong>needs no
+new requirement</strong>. The gate runs on every pull request, but it only asks for
+what a delivered requirement owes; a PR that adds none owes nothing new.</p>
+<p>If the fix changes what a delivered requirement promises, change its
+<code>spec.md</code> section and scenario in the same PR. For a larger change to
+behaviour that already shipped, use a <a href="reviewing-changes.html">change</a>.</p>
+<hr>
+<h2 id="the-reviewer-what-to-read-what-to-skip">The reviewer: what to read, what to skip<a class="anchor" href="#the-reviewer-what-to-read-what-to-skip" aria-label="Link to this section">#</a></h2>
+<p>The gate already proved the mechanical part: every delivered requirement has
+a scenario, the scenario has real steps, a test names it, and the files the
+matrix points at exist. <strong>Do not re-check that by hand.</strong> Spend the review on
+what no tool can judge:</p>
+<div class="table-wrap"><table><thead><tr><th>Read</th><th>Ask</th></tr></thead><tbody><tr><td>The <code>## REQ-NNN</code> section in <code>spec.md</code></td><td>Is it one obligation? Could two people test it and agree? Is it what the ticket asked for?</td></tr><tr><td>The scenario</td><td>Do Given / When / Then describe <em>this</em> behaviour with real values, or a generic happy path? Is the interesting edge case missing?</td></tr><tr><td>The test that mentions <code>REQ-NNN</code></td><td>Does it assert what the scenario&#39;s <em>Then</em> says — or only that nothing throws? A test that mentions the ID and checks nothing passes the gate.</td></tr><tr><td>The status change</td><td><code>csda:trace … status=Implemented</code> in <code>spec.md</code>. Only on a requirement whose code is in this PR.</td></tr></tbody></table></div>
+<p>Skip <code>docs/specs/traceability.md</code>. It is generated from the files above, and
+CI fails when it is out of date, so a diff there is a consequence, not a
+decision.</p>
+<p>The one thing the gate cannot catch is a test that names a requirement and
+does not test it. That is the reviewer&#39;s job, and it is the most valuable
+five minutes of the review.</p>
+<hr>
+<h2 id="when-check-fails">When <code>check</code> fails<a class="anchor" href="#when-check-fails" aria-label="Link to this section">#</a></h2>
+<p>Every failure says what is wrong and how to fix it, and most carry a code in
+brackets you can search for. The ones a first PR meets:</p>
+<h3 id="scenario-placeholder-step"><code>scenario_placeholder_step</code><a class="anchor" href="#scenario-placeholder-step" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">✖  features/invoices.feature:4 unfilled placeholder in &quot;given &lt;the state before the action&gt;&quot; … [scenario_placeholder_step]</code></pre></figure>
+<p>The scenario still has the <code>&lt;placeholders&gt;</code> <code>new</code> wrote. A Draft requirement
+may keep them; one being delivered may not, because Cucumber reports a
+scenario of placeholders as <code>0 steps · exit 0</code>. Write the real steps.</p>
+<h3 id="matrix-stale"><code>matrix_stale</code><a class="anchor" href="#matrix-stale" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">❌ [ERROR] docs/specs/traceability.md no longer matches spec.md, the feature tags and the tests.
+💡 [FIX] Run `specgate matrix` and commit the result — `specgate check` does it for you.</code></pre></figure>
+<p>Only in CI: a test or a tag changed and the regenerated matrix was not
+committed. Run <code>specgate check</code> locally and commit <code>traceability.md</code>.</p>
+<h3 id="tdd-1-delivered-without-a-test"><code>[TDD-1]</code> — delivered without a test<a class="anchor" href="#tdd-1-delivered-without-a-test" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">[TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-007)</code></pre></figure>
+<p>The requirement is past Draft and no test mentions it — usually the test was
+renamed or deleted. Mention <code>REQ-007</code> in the test that covers it, or move the
+status back to Draft in <code>spec.md</code>.</p>
+<h3 id="declared-artifact-missing"><code>declared_artifact_missing</code><a class="anchor" href="#declared-artifact-missing" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">✖  docs/specs/traceability.md REQ-007's test artifact `test/invoice.test.js` does not exist. [declared_artifact_missing]</code></pre></figure>
+<p>A file the requirement points at <em>explicitly</em> is gone — a path written in its
+<code>csda:trace</code> comment (<code>test=&#39;…&#39;</code>, <code>artifact=&#39;…&#39;</code>), or in a hand-kept matrix.
+Restore it, or fix the path. A test linked only by mentioning the requirement
+does not produce this: delete that test and you get <code>[TDD-1]</code> instead.</p>
+<h3 id="requirement-template-obligation"><code>requirement_template_obligation</code><a class="anchor" href="#requirement-template-obligation" aria-label="Link to this section">#</a></h3>
+<p>The requirement claims delivery while its <code>## REQ-NNN</code> section still says
+&quot;The system MUST satisfy: <title>.&quot; with the note <code>new</code> left below it. Write
+the real obligation and delete the note. A Draft owes nothing yet.</p>
+<h3 id="check-tests-failed-done-tests-failed"><code>check_tests_failed</code> / <code>done_tests_failed</code><a class="anchor" href="#check-tests-failed-done-tests-failed" aria-label="Link to this section">#</a></h3>
+<p>The project&#39;s tests failed. These run only when a test command is configured
+(<code>--test-cmd &quot;npm test&quot;</code>, or <code>specgate config set test_cmd &quot;npm test&quot;</code> once). Without
+one, <code>check</code> and <code>done</code> say they checked the specification and not the code —
+read that warning as &quot;nothing ran&quot;, not as a pass.</p>
+<h3 id="done-validate-failed"><code>done_validate_failed</code><a class="anchor" href="#done-validate-failed" aria-label="Link to this section">#</a></h3>
+<p><code>done</code> ran the gate and it failed; the output above it says why. Nothing was
+written. Fix it and run <code>done</code> again. <code>done --no-check</code> writes the status
+anyway — keep it for the rare case you know the gate is wrong, and say so in
+the PR.</p>
+<hr>
+<h2 id="the-agreement-to-make-as-a-team">The agreement to make as a team<a class="anchor" href="#the-agreement-to-make-as-a-team" aria-label="Link to this section">#</a></h2>
+<p>Three sentences are enough. Put them in the repository&#39;s contributing guide:</p>
+<ol>
+<li>A pull request that delivers behaviour carries its requirement, its
+scenario and a test that mentions it.</li>
+<li><code>specgate check</code> is green before review is requested.</li>
+<li>The reviewer reads the requirement, the scenario and the test — not the
+matrix.</li>
+</ol>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="commands.html">The five commands, and the rest</a></li>
+<li><a href="writing-specs.html">Write a scenario that is worth testing</a></li>
+<li><a href="reviewing-changes.html">Change a requirement that already shipped</a></li>
+<li><a href="validating.html">What the gate checks, flag by flag</a></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="quickstart.html"><span>Previous</span>You cloned a repo</a><a class="pager__next" href="writing-specs.html"><span>Next</span>Writing specs</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/first-pr.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#once-per-repository">Once per repository</a></li><li class="toc__l2"><a href="#the-author-one-requirement-one-pull-request">The author: one requirement, one pull request</a></li><li class="toc__l3"><a href="#fixes-and-refactors">Fixes and refactors</a></li><li class="toc__l2"><a href="#the-reviewer-what-to-read-what-to-skip">The reviewer: what to read, what to skip</a></li><li class="toc__l2"><a href="#when-check-fails">When check fails</a></li><li class="toc__l3"><a href="#scenario-placeholder-step">scenario_placeholder_step</a></li><li class="toc__l3"><a href="#matrix-stale">matrix_stale</a></li><li class="toc__l3"><a href="#tdd-1-delivered-without-a-test">[TDD-1] — delivered without a test</a></li><li class="toc__l3"><a href="#declared-artifact-missing">declared_artifact_missing</a></li><li class="toc__l3"><a href="#requirement-template-obligation">requirement_template_obligation</a></li><li class="toc__l3"><a href="#check-tests-failed-done-tests-failed">check_tests_failed / done_tests_failed</a></li><li class="toc__l3"><a href="#done-validate-failed">done_validate_failed</a></li><li class="toc__l2"><a href="#the-agreement-to-make-as-a-team">The agreement to make as a team</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

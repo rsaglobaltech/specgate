@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"
+     role="img" aria-label="Specgate — specifications that are checked, not admired">
+  <!--
+    The social card, rasterised to PNG by .github/workflows/pages.yml.
+    It is not committed as a PNG: this repository ships no binaries, and a
+    generated one is reproducible from this file.
+
+    Deliberately carries no version number. A card that names a release is a
+    second place the version lives, and the one nobody remembers to update.
+
+    Self-contained by necessity — a scraper fetches the PNG with no stylesheet,
+    so every colour is literal and every glyph is a path or a common face.
+  -->
+  <defs>
+    <linearGradient id="csda-og-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d0f14"/>
+      <stop offset="100%" stop-color="#171c2e"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#csda-og-bg)"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#4f46e5"/>
+
+  <g transform="translate(80 78)">
+    <path d="M27 0 L54 15.6 L54 46.8 L27 62.4 L0 46.8 L0 15.6 Z"
+          fill="none" stroke="#8b93ff" stroke-width="4.5" stroke-linejoin="round"/>
+    <circle cx="27" cy="31.2" r="4.6" fill="#8b93ff"/>
+  </g>
+
+  <text x="164" y="122" fill="#e8eaf0"
+        font-family="'IBM Plex Mono', 'DejaVu Sans Mono', monospace"
+        font-size="30" font-weight="600">Specgate</text>
+
+  <text x="80" y="270" fill="#ffffff"
+        font-family="'Space Grotesk', 'DejaVu Sans', sans-serif"
+        font-size="76" font-weight="700">Specifications that are</text>
+  <text x="80" y="356" fill="#ffffff"
+        font-family="'Space Grotesk', 'DejaVu Sans', sans-serif"
+        font-size="76" font-weight="700">
+    <tspan fill="#8b93ff" font-style="italic">checked</tspan><tspan>, not admired.</tspan>
+  </text>
+
+  <text x="80" y="424" fill="#a3a9b8"
+        font-family="'Space Grotesk', 'DejaVu Sans', sans-serif"
+        font-size="28">A CLI for spec-driven development, plus a harness that drives</text>
+  <text x="80" y="462" fill="#a3a9b8"
+        font-family="'Space Grotesk', 'DejaVu Sans', sans-serif"
+        font-size="28">any coding agent one requirement at a time. It never merges.</text>
+
+  <g font-family="'IBM Plex Mono', 'DejaVu Sans Mono', monospace" font-size="20" fill="#8a909c">
+    <rect x="80" y="518" width="354" height="50" rx="25" fill="none" stroke="#2b3145" stroke-width="1.5"/>
+    <text x="106" y="549">Zero runtime dependencies</text>
+    <rect x="454" y="518" width="210" height="50" rx="25" fill="none" stroke="#2b3145" stroke-width="1.5"/>
+    <text x="480" y="549">Any agent CLI</text>
+    <rect x="684" y="518" width="90" height="50" rx="25" fill="none" stroke="#2b3145" stroke-width="1.5"/>
+    <text x="710" y="549">MIT</text>
+  </g>
+</svg>

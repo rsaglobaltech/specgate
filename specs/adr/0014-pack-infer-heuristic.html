@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0014-pack-infer-heuristic">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0014 — pack infer: heuristic .feature → pack.yaml inference — Specgate</title>
+<meta name="description" content="ADR-0014 — pack infer: heuristic .feature → pack.yaml inference">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0014 — pack infer: heuristic .feature → pack.yaml inference — Specgate">
+<meta property="og:description" content="ADR-0014 — pack infer: heuristic .feature → pack.yaml inference">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0014-pack-infer-heuristic-feature-pack-yaml-inference">ADR-0014 — <code>pack infer</code>: heuristic <code>.feature</code> → pack.yaml inference<a class="anchor" href="#adr-0014-pack-infer-heuristic-feature-pack-yaml-inference" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-05-14</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>Authoring a <code>pack.yaml</code> is model-first: you write <code>requirements</code> →
+<code>use_cases</code> → <code>commands</code> → <code>events</code>, and only then the Gherkin
+<code>scenarios</code>. The executable artifact — the <code>.feature</code> — comes last.</p>
+<p>That ordering has a waterfall smell, and it is also the hardest way to
+start: a blank <code>pack.yaml</code> is a blank page. The friction analysis in
+<code>mejoras/visual-pack-authoring-todo.md</code> flagged &quot;invert the flow&quot; as the
+highest-leverage ergonomic move — higher than any visual editor, because
+it removes the blank-page problem rather than decorating it.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p>Ship <code>pack infer --from &lt;feature-file&gt;</code>. It reads a Gherkin <code>.feature</code>
+and prints a proposed <code>pack.yaml</code> fragment (<code>requirements</code>, <code>use_cases</code>,
+<code>commands</code>, <code>events</code>, <code>scenarios</code>) to stdout.</p>
+<p>The inference is <strong>heuristic and deterministic</strong>:</p>
+<div class="table-wrap"><table><thead><tr><th>Source in the <code>.feature</code></th><th>Inferred</th></tr></thead><tbody><tr><td><code>@REQ-NNN</code> tag</td><td>a <code>requirement</code> reference (else a <code>REQ-XXX</code> placeholder)</td></tr><tr><td><code>Feature:</code> name</td><td>the <code>use_case</code> name</td></tr><tr><td><code>When</code> step</td><td>a PascalCased <code>command</code></td></tr><tr><td>quoted PascalCase token in a <code>Then</code> step</td><td>an <code>event</code></td></tr><tr><td>each <code>Scenario:</code></td><td>a <code>scenarios[]</code> entry</td></tr></tbody></table></div>
+<p>Everything the heuristic cannot infer is emitted as an explicit <code>TODO:</code>
+string. <code>--format json</code> emits the same model as a structured object.</p>
+<h2 id="rationale">Rationale<a class="anchor" href="#rationale" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Heuristic, not LLM, for v1.</strong> Deterministic output is testable,
+reviewable in a git diff, works offline, has no vendor dependency, and
+is instant. An LLM would produce richer guesses but at the cost of
+every one of those properties. The heuristic is intentionally crude —
+its job is to kill the blank page, not to be correct.</li>
+<li><strong><code>TODO:</code> over silent guesses.</strong> A field the heuristic cannot fill is
+marked, not invented. The author always knows exactly what still needs
+judgement. The fragment is a skeleton, never a final answer.</li>
+<li><strong>stdout, not in-place edit.</strong> <code>pack infer</code> prints; it does not mutate
+<code>pack.yaml</code>. The author decides what to merge. This keeps the command
+pure, composable (<code>pack infer ... &gt;&gt; pack.yaml</code>, or pipe to a diff),
+and impossible to use destructively by accident.</li>
+<li><strong>Round-trips through the project&#39;s own YAML reader.</strong> The emitted
+fragment is parseable by <code>parseYamlLite</code> — verified in tests — so it
+drops straight into a real <code>pack.yaml</code>.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>LLM-assisted inference as the default.</strong> Rejected for v1 — kills
+determinism, testability, offline use and vendor neutrality. Kept as a
+possible future <code>--llm</code> flag using the same shell-out pattern as
+<code>harness run</code>.</li>
+<li><strong>Edit <code>pack.yaml</code> in place / merge automatically.</strong> Rejected —
+merging into a structured file is a judgement call (which <code>UC</code> does
+this belong to? does the <code>REQ</code> already exist?). Printing to stdout
+keeps the author in control and the command non-destructive.</li>
+<li><strong>One use case per scenario.</strong> Rejected for v1 — over-produces. One
+use case per feature, one command per scenario, is a saner default
+skeleton; the author splits further if needed.</li>
+<li><strong>Infer aggregates / bounded contexts too.</strong> Rejected — nothing in a
+<code>.feature</code> reliably signals an aggregate boundary. Guessing it would
+produce confident noise. Left as an explicit <code>TODO:</code>.</li>
+</ol>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<h3 id="positive">Positive<a class="anchor" href="#positive" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Inverts the authoring flow: the executable scenario leads, the model
+follows. No blank-page start.</li>
+<li>Deterministic and fast — usable in a pre-commit hook or a scaffold
+script, not just interactively.</li>
+<li>Pairs with <code>pack lint --graph</code> and the VS Code extension: infer a
+skeleton, then see and link-check the graph it produced.</li>
+</ul>
+<h3 id="negative-trade-offs">Negative / trade-offs<a class="anchor" href="#negative-trade-offs" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>The heuristic is crude. Command names from <code>When</code> steps are often
+awkward (<code>MoreVehiclesEnterTheCommand</code>); the author must rename them.
+This is acceptable — a named thing to rename beats a blank line.</li>
+<li>It only reads one <code>.feature</code> at a time. Multi-file inference (a whole
+<code>features/</code> tree → one pack) is a follow-up.</li>
+<li>No aggregate/bounded-context inference — those stay <code>TODO:</code>.</li>
+</ul>
+<h2 id="follow-ups">Follow-ups<a class="anchor" href="#follow-ups" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>--llm</code> mode: shell out to a configurable agent for richer inference,
+vendor-neutral, same pattern as <code>harness run</code>.</li>
+<li>Multi-file inference: <code>pack infer --from-dir features/</code>.</li>
+<li>An <code>init_pack</code> integration that offers to seed from an existing
+<code>.feature</code> directory.</li>
+</ul>
+<h2 id="references">References<a class="anchor" href="#references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>scripts/infer_pack.ts</code></li>
+<li><code>docs/specs/domain-pack-format.md</code> §5c</li>
+<li><code>mejoras/visual-pack-authoring-todo.md</code> — Phase 3. <em>(Document removed 2026-08-16 once its phases were done; it is in git history.)</em></li>
+<li>ADR-0013 — <code>harness run</code> (the shell-out pattern a future <code>--llm</code> mode would reuse)</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0014-pack-infer-heuristic.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#rationale">Rationale</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l3"><a href="#positive">Positive</a></li><li class="toc__l3"><a href="#negative-trade-offs">Negative / trade-offs</a></li><li class="toc__l2"><a href="#follow-ups">Follow-ups</a></li><li class="toc__l2"><a href="#references">References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en" data-slug="supply-chain">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply chain — Specgate</title>
+<meta name="description" content="SBOM, licences, provenance and what ships in the tarball.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Supply chain — Specgate">
+<meta property="og:description" content="SBOM, licences, provenance and what ships in the tarball.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html" class="is-active" aria-current="page">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Advanced</li><li aria-current="page">Supply chain</li></ol></nav>
+    <article class="prose">
+<h1 id="supply-chain">Supply chain<a class="anchor" href="#supply-chain" aria-label="Link to this section">#</a></h1>
+<p>A domain pack is a dependency that writes files into your repository. That
+makes it the most interesting attack surface this tool has, and the reason the
+guarantees below exist. This page covers what is enforced, what is opt-in, and
+how to run any of it on a network that cannot reach GitHub.</p>
+<p>For reporting a vulnerability, see <a href="https://github.com/rsaglobaltech/specgate/blob/main/SECURITY.md" target="_blank" rel="noreferrer">SECURITY.md</a>.</p>
+<h2 id="what-a-pack-can-do">What a pack can do<a class="anchor" href="#what-a-pack-can-do" aria-label="Link to this section">#</a></h2>
+<p><code>specgate specops add</code> clones a pack repository at a pinned tag and renders its
+templates into your project. Rendering writes files. It does not execute pack
+code — there is no install hook, no lifecycle script, no plugin entry point —
+but a malicious pack can still write a <code>.feature</code> file, an ADR, or a CI config
+your pipeline then runs.</p>
+<p>Treat installing a pack the way you treat adding a dependency: from a source
+you trust, at a version you pinned.</p>
+<h2 id="pinning-and-integrity">Pinning and integrity<a class="anchor" href="#pinning-and-integrity" aria-label="Link to this section">#</a></h2>
+<p>Every installed pack is recorded in <code>.specops.lock</code> with its repository,
+version and a <strong>content digest</strong>: a <code>sha256</code> over the pack&#39;s file tree, taken
+from sorted POSIX-relative paths and file contents, so it is stable across
+operating systems and clone order.</p>
+<p>Re-installing the same <code>(repo, pack, version)</code> recomputes the digest and fails
+loudly when it differs:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">Pack integrity check failed for payments@v1.2.0:
+  locked digest:  sha256:9f2c…
+  fetched digest: sha256:41ab…</code></pre></figure>
+<p>That is the signature of a <strong>moved tag</strong>, a rewritten history, or a poisoned
+cache — the three ways a version number stops meaning one thing. A version tag
+is a label, not a promise; the digest is the promise.</p>
+<p>The fix is deliberately manual. Investigate the pack repository first. If the
+change is legitimate, re-pin to a new version, or delete the cached copy and
+re-run <code>specops add</code> to accept the new digest explicitly. Nothing auto-heals,
+because auto-healing here means silently accepting substituted content.</p>
+<h2 id="drift-in-the-other-direction">Drift in the other direction<a class="anchor" href="#drift-in-the-other-direction" aria-label="Link to this section">#</a></h2>
+<p>The digest catches the pack changing under a fixed version. <code>validate --against-lock</code> catches the opposite: rendered files in your repository no
+longer matching the locked pack.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> validate . <span class="tok tok--o">--against-lock</span></code></pre></figure>
+<p><code>specgate ci init</code> now emits this step for all four providers, guarded on
+<code>.specops.lock</code> existing so a project without packs is unaffected. If you
+generated your gate before this existed, re-run <code>ci init --stdout</code> and copy the
+<code>Check pack drift</code> step across.</p>
+<h2 id="signed-packs">Signed packs<a class="anchor" href="#signed-packs" aria-label="Link to this section">#</a></h2>
+<p>Signature verification uses GPG through git — <code>git verify-tag</code>, falling back to
+<code>git verify-commit</code> for workflows without annotated tags. No new dependency:
+organisations that sign already distribute keys through git tooling.</p>
+<p>It is <strong>opt-in</strong>, per project:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># specops.config.yaml</span>
+<span class="tok tok--a">require_signed_packs</span>: <span class="tok tok--k">true</span></code></pre></figure>
+<p>With that set, an unsigned or unverifiable pack is a hard error.</p>
+<p><strong>It is off by default, and that is deliberate.</strong> Turning it on by default
+would break every project installing a pack whose tags are not signed —
+including the ten curated packs in this repository. A default that fails on
+correct usage teaches people to disable the check, which is worse than not
+having it. Turn it on once your organisation signs its own packs; that is when
+the check starts distinguishing anything.</p>
+<h2 id="air-gapped-and-offline-networks">Air-gapped and offline networks<a class="anchor" href="#air-gapped-and-offline-networks" aria-label="Link to this section">#</a></h2>
+<p>Two independent mechanisms, for two different situations.</p>
+<p><strong>A machine that has the pack cached already.</strong> Packs are cached under
+<code>~/.cache/specgate/packs/&lt;sha256-of-repo&gt;/&lt;version&gt;/</code>. Setting <code>CSDA_OFFLINE=1</code>
+makes resolution use the cache and refuse to reach the network:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash">CSDA_OFFLINE=<span class="tok tok--n">1</span> specgate specops add <span class="tok tok--o">--pack-repo</span> &lt;url&gt; <span class="tok tok--o">--pack-version</span> v1.<span class="tok tok--n">2.0</span> <span class="tok tok--o">--pack</span> payments</code></pre></figure>
+<p>A cache miss is an error naming the exact directory it looked in, rather than a
+silent fetch. Use this on CI runners that must not egress.</p>
+<p><strong>A network that has never seen the pack.</strong> Export the pack repository as a git
+bundle on a connected machine, carry the single file across, and install from
+it — <code>specops add</code> accepts a bundle path anywhere it accepts a URL:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># connected side</span>
+<span class="tok tok--f">specgate</span> pack bundle <span class="tok tok--o">--repo</span> https://github.com/acme/packs.git <span class="tok tok--o">--out</span> acme-packs.bundle
+
+<span class="tok tok--c"># air-gapped side</span>
+<span class="tok tok--f">specgate</span> specops add <span class="tok tok--o">--pack-repo</span> ./acme-packs.bundle <span class="tok tok--o">--pack-version</span> v1.<span class="tok tok--n">2.0</span> <span class="tok tok--o">--pack</span> payments</code></pre></figure>
+<p>The bundle carries full history and tags, so version pinning, digests and
+signature verification all still work. Nothing about the security model is
+weakened by the transport.</p>
+<p>Both paths are worth rehearsing before you need them. A restore procedure that
+has never been run is a hope, not a procedure.</p>
+<h2 id="dependencies-of-this-tool">Dependencies of this tool<a class="anchor" href="#dependencies-of-this-tool" aria-label="Link to this section">#</a></h2>
+<p>The published package has <strong>zero runtime dependencies</strong>. Everything in
+<code>package.json</code> is a devDependency, so nothing in the dependency tree ships to
+users.</p>
+<p>That is not the same as harmless. A compromised devDependency executes on CI
+with a publish token in scope, which is why <code>npm audit</code>, CodeQL and Dependabot
+all gate the build, and why npm releases carry
+<a href="https://docs.npmjs.com/generating-provenance-statements" target="_blank" rel="noreferrer">provenance</a>.</p>
+<h3 id="sbom">SBOM<a class="anchor" href="#sbom" aria-label="Link to this section">#</a></h3>
+<p>A CycloneDX SBOM is generated on every push, pull request and weekly schedule,
+and retained for 90 days as the <code>sbom-cyclonedx</code> artifact — so an audit can ask
+&quot;what was in the tree that day&quot; without reconstructing a historical dependency
+graph.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npm</span> run sbom        <span class="tok tok--c"># writes sbom.cyclonedx.json</span>
+<span class="tok tok--f">npm</span> run licenses    <span class="tok tok--c"># SBOM + the licence policy gate</span></code></pre></figure>
+<p>It comes from <code>npm sbom</code>, not a third-party generator. Adding a dependency to
+document having few dependencies would be a poor trade.</p>
+<h3 id="licence-policy">Licence policy<a class="anchor" href="#licence-policy" aria-label="Link to this section">#</a></h3>
+<p><code>scripts/license_check.ts</code> fails the build when any component carries a licence
+outside an allow-list of permissive terms. Dual licences (<code>MIT OR CC0-1.0</code>)
+pass when either side is allowed; <code>AND</code> expressions require every term.</p>
+<p>The tree today — 377 components, all permissive, no copyleft:</p>
+<div class="table-wrap"><table><thead><tr><th>Licence</th><th>Components</th></tr></thead><tbody><tr><td>MIT</td><td>288</td></tr><tr><td>Apache-2.0</td><td>33</td></tr><tr><td>ISC</td><td>27</td></tr><tr><td>BSD-3-Clause</td><td>9</td></tr><tr><td>BSD-2-Clause</td><td>7</td></tr><tr><td>BlueOak-1.0.0</td><td>5</td></tr><tr><td>MIT OR CC0-1.0</td><td>3</td></tr><tr><td>Python-2.0 · CC-BY-4.0 · CC-BY-3.0 · CC0-1.0 · 0BSD</td><td>1 each</td></tr></tbody></table></div>
+<p>The unusual four are worth naming, because &quot;we allow CC-BY&quot; reads alarming
+without them: <code>argparse</code> is Python-2.0, <code>caniuse-lite</code> is CC-BY-4.0 over a
+browser-support <strong>dataset</strong>, and <code>spdx-exceptions</code> / <code>spdx-license-ids</code> are
+CC-BY-3.0 and CC0-1.0 over lists of licence identifiers. All four are data or
+tooling, none imposes an obligation on distributing this CLI.</p>
+<p>A copyleft licence is not banned so much as undecided: allowing one silently
+would skip the review of what it obliges. If you need to add a licence, add it
+to <code>ALLOWED</code> in <code>scripts/license_check.ts</code> and say why here — the allow-list and
+its justification stay in the same change.</p>
+<h2 id="what-this-does-not-do">What this does not do<a class="anchor" href="#what-this-does-not-do" aria-label="Link to this section">#</a></h2>
+<p><code>specgate validate</code> is a specification gate, not a security scanner. It checks that
+requirements have scenarios, tests and traceability rows. It will not tell you
+your application has an injection flaw, and it never claims to.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="deployment.html"><span>Previous</span>Deployment</a><a class="pager__next" href="release-process.html"><span>Next</span>Release process</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/supply-chain.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#what-a-pack-can-do">What a pack can do</a></li><li class="toc__l2"><a href="#pinning-and-integrity">Pinning and integrity</a></li><li class="toc__l2"><a href="#drift-in-the-other-direction">Drift in the other direction</a></li><li class="toc__l2"><a href="#signed-packs">Signed packs</a></li><li class="toc__l2"><a href="#air-gapped-and-offline-networks">Air-gapped and offline networks</a></li><li class="toc__l2"><a href="#dependencies-of-this-tool">Dependencies of this tool</a></li><li class="toc__l3"><a href="#sbom">SBOM</a></li><li class="toc__l3"><a href="#licence-policy">Licence policy</a></li><li class="toc__l2"><a href="#what-this-does-not-do">What this does not do</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

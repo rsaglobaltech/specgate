@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0025-simulated-adoption-is-not-external-adoption">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0025 — Simulated adoption is a gate of its own, not GATE-G3 — Specgate</title>
+<meta name="description" content="ADR-0025 — Simulated adoption is a gate of its own, not GATE-G3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0025 — Simulated adoption is a gate of its own, not GATE-G3 — Specgate">
+<meta property="og:description" content="ADR-0025 — Simulated adoption is a gate of its own, not GATE-G3">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0025-simulated-adoption-is-a-gate-of-its-own-not-gate-g3">ADR-0025 — Simulated adoption is a gate of its own, not <code>GATE-G3</code><a class="anchor" href="#adr-0025-simulated-adoption-is-a-gate-of-its-own-not-gate-g3" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-09-01</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p><code>GATE-G3</code> is the last open gate on the road to 1.0, and the only one no test can
+close: <em>an outside team adopts L1–L2 and reports back, including what they could
+not work out from the docs.</em> Nobody outside this repository has used the tool.</p>
+<p>There is nobody to ask yet. The proposal on the table is to have agents simulate
+a company adopting it — three brownfield repositories, in unfamiliar domains,
+driven cold.</p>
+<p>The question this ADR settles is not whether that is worth doing. It is worth
+doing, and this ADR authorises it. The question is <strong>what it is allowed to
+close.</strong></p>
+<h2 id="what-simulated-adoption-genuinely-produces">What simulated adoption genuinely produces<a class="anchor" href="#what-simulated-adoption-genuinely-produces" aria-label="Link to this section">#</a></h2>
+<p>Every genuine defect this project has found came from running the tool against
+real work rather than from reading the code, and the four the earlier pilots
+produced are exactly the kind an agent meets on its first afternoon:</p>
+<ul>
+<li><strong>H14</strong> — <code>onboard</code> reported <code>Platform 1</code> where there are 38 source files,
+because <code>countFiles</code> prunes <code>src</code>, <code>main</code> and <code>java</code>. The list sorts by that
+number, so the ranking came out near-inverted.</li>
+<li><strong>H15</strong> — <code>validate</code> printed <code>✅ Validation passed</code> over an adoption abandoned
+months earlier: 297 real test cases, a matrix describing none of them.</li>
+<li><strong>H16</strong> — <code>onboard</code> escaped upward out of an un-adopted subproject and
+analysed a <em>different</em> codebase in silence, while <code>adopt</code> in the same
+directory got it right. Two commands disagreeing about which project you are
+standing in.</li>
+<li><strong>H17</strong> — zero capabilities proposed on a 299-file hexagonal project, because
+<code>descendThroughWrappers</code> descends only through a single child and <code>build/</code> was
+the second one.</li>
+</ul>
+<p>None of those needed a human&#39;s judgement. They needed somebody without the
+author&#39;s map to type the first command and read what came back. An agent given
+only the published documentation and an unfamiliar repository does that
+faithfully, cheaply, and three times over.</p>
+<p>There is already a measured list waiting for one: the entry documentation calls
+the tool by three different names across <code>case-1.md</code>, <code>getting-started.md</code> and
+<code>mejoras/</code>; the greenfield path opens with <code>cp examples/project.config.example</code>,
+which assumes a checkout that somebody following the <code>npx</code> instructions does not
+have; and neither entry document mentions the harness at all.</p>
+<h2 id="what-it-does-not-produce-and-why-that-is-decisive">What it does not produce, and why that is decisive<a class="anchor" href="#what-it-does-not-produce-and-why-that-is-decisive" aria-label="Link to this section">#</a></h2>
+<p><code>GATE-G3</code> does not buy <em>&quot;the tool works&quot;</em>. It buys two things an agent cannot
+supply.</p>
+<p><strong>Independence from the author&#39;s assumptions.</strong> An agent this repository&#39;s
+maintainer orchestrates inherits those assumptions through the prompt, the
+choice of repositories and the definition of success. The isolation described in
+the plan — published package only, published docs only, no checkout, no
+conversation history — narrows that leak. It does not close it, because somebody
+still wrote the prompt.</p>
+<p><strong>The signal that somebody with something at stake keeps using it.</strong> An agent
+has no fatigue, no team politics, no deadline it actually feels, and will never
+abandon the tool out of frustration. Abandonment is the loudest thing a real
+adopter ever tells you, and a simulation is structurally incapable of it.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p><strong>Simulated adoption is recorded as <code>GATE-G6</code>, and <code>GATE-G3</code> stays open.</strong></p>
+<p><code>GATE-G6</code> is satisfied when three brownfield repositories in distinct domains
+have been taken to L1–L2 by isolated agents, each producing a measured
+assessment in the shape <code>mejoras/*-pilot-assessment.md</code> already uses, with every
+defect reproduced from this repository before it is filed.</p>
+<p><code>GATE-G3</code> is satisfied only by a team outside this repository. It continues to
+govern 1.0.</p>
+<p>A case study written from a simulated pilot carries a third disclaimer, beside
+the two <code>docs-site.test.ts</code> already enforces: not <em>&quot;illustration, not a
+customer&quot;</em> (which is <code>case-1.md</code>, and is invented), not <em>&quot;verified customer&quot;</em>,
+but <strong>&quot;agent-driven adoption, not a customer&quot;</strong> — measured for real, by nobody
+who chose to be there.</p>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>1.0 does not move.</strong> The simulation can close <code>C8-01</code> through <code>C8-04</code>, and
+cannot close <code>#100</code>. Anyone reading <code>GATE-G6</code> as evidence of external adoption
+is reading it wrong, and this ADR is the answer to them.</li>
+<li><strong>The defects it finds are as real as any other.</strong> A crash is a crash whoever
+typed the command. They are filed as <code>H&lt;n&gt;</code>, reproduced from this repository
+with a failing test, and fixed on their own merits.</li>
+<li><strong>One step stays human.</strong> <code>harness report</code> leaves <code>realFailureRate</code> at <code>null</code>
+until somebody marks a failure as the gate&#39;s fault rather than the agent&#39;s —
+because <em>&quot;guessing 100% would be the most flattering possible lie about our
+own gate&quot;</em>. A simulated pilot that never adjudicates produces an incomplete
+ledger by this project&#39;s own definition, so adjudication is a maintainer&#39;s
+task and is not delegated.</li>
+<li><strong>The cost of being wrong here is the project&#39;s signature failure.</strong> Closing
+G3 on simulated evidence would be a gate approving what it did not check —
+the exact defect this product exists to prevent — applied to its own release
+gate. That is why this is an ADR and not a line in a plan.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<p><strong>Re-scope <code>GATE-G3</code> so the simulation satisfies it.</strong> Rejected. It would be
+honest only if the ADR said plainly that the bar had been lowered and why, and
+having written that sentence, there is no reason to lower it: the gate costs
+nothing to leave open, and 1.0 is not otherwise ready.</p>
+<p><strong>Do nothing until a real team appears.</strong> Rejected. It concedes the defects the
+simulation would find, for as long as nobody shows up. H14 through H17 were all
+found this way, and each was fixed the same day it was measured.</p>
+<p><strong>Run the simulation without isolating the agent.</strong> Rejected as worthless: an
+agent with the repository checked out reads the answer instead of discovering
+it, and the whole value is the cold read.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0025-simulated-adoption-is-not-external-adoption.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#what-simulated-adoption-genuinely-produces">What simulated adoption genuinely produces</a></li><li class="toc__l2"><a href="#what-it-does-not-produce-and-why-that-is-decisive">What it does not produce, and why that is decisive</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

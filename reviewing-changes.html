@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en" data-slug="reviewing-changes">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reviewing changes — Specgate</title>
+<meta name="description" content="Propose, review and archive a change to specs that already shipped.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Reviewing changes — Specgate">
+<meta property="og:description" content="Propose, review and archive a change to specs that already shipped.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html" class="is-active" aria-current="page">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Every day</li><li aria-current="page">Reviewing changes</li></ol></nav>
+    <article class="prose">
+<h1 id="reviewing-changes">Reviewing changes<a class="anchor" href="#reviewing-changes" aria-label="Link to this section">#</a></h1>
+<p>How to modify a spec that already shipped, without the matrix and the
+feature files drifting apart.</p>
+<hr>
+<h2 id="change-a-requirement-that-already-shipped">Change a requirement that already shipped<a class="anchor" href="#change-a-requirement-that-already-shipped" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> modify the spec tree of a live project without the matrix, the specs
+and the feature files drifting apart. Recipes 2–3 cover writing requirements on
+day one; this is the loop for every day after.</p>
+<h3 id="1-open-the-change">1. Open the change<a class="anchor" href="#1-open-the-change" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change new add-dynamic-pricing</code></pre></figure>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">  ✔ Change add-dynamic-pricing created (lite · REQ ids REQ-014…REQ-016 reserved)
+
+    + docs/specs/changes/add-dynamic-pricing/change.yaml
+    + docs/specs/changes/add-dynamic-pricing/proposal.md
+    + docs/specs/changes/add-dynamic-pricing/tasks.md</code></pre></figure>
+<p>The reserved ID range is written into <code>change.yaml</code>, so two changes in flight
+never hand out the same <code>REQ-NNN</code>. Use <code>--full</code> instead of the default <code>--lite</code>
+when the change also needs a <code>design.md</code> and contract artefacts.</p>
+<h3 id="2-let-the-tool-tell-you-what-to-write-next">2. Let the tool tell you what to write next<a class="anchor" href="#2-let-the-tool-tell-you-what-to-write-next" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change status</code></pre></figure>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">  add-dynamic-pricing (spec-driven)
+
+    ✔ proposal   proposal.md
+    ▶ specs      specs/**/spec.md
+    — design     design.md
+    ✔ tasks      tasks.md
+
+  Next
+    → Write specs/**/spec.md</code></pre></figure>
+<p>Artefacts are a dependency graph, not a phase gate (ADR-0018): <code>▶</code> is what is
+ready to write, <code>—</code> is not applicable at this rigor level. Nothing blocks you
+from writing them out of order.</p>
+<h3 id="3-write-the-delta">3. Write the delta<a class="anchor" href="#3-write-the-delta" aria-label="Link to this section">#</a></h3>
+<p>Only what moves — never a copy of the whole spec. One file per capability
+under <code>specs/&lt;capability&gt;/spec.md</code>:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown"># Delta — pricing
+
+## ADDED Requirements
+
+### Requirement: REQ-014 — Dynamic peak pricing
+
+The system SHALL raise the tariff automatically when occupancy crosses a
+configured threshold.
+
+#### Scenario: SCN-014 — Peak rate applies above the threshold
+
+- GIVEN occupancy is above 85%
+- WHEN a vehicle enters
+- THEN the peak tariff is applied
+
+&lt;!-- csda:trace uc=UC-007 cmd=CMD-011 agg=AGG-Pricing evt=EVT-PriceApplied
+     feature=features/pricing/dynamic_pricing.feature --&gt;</code></pre></figure>
+<p>Three sections are valid: <code>## ADDED Requirements</code>, <code>## MODIFIED Requirements</code>,
+<code>## REMOVED Requirements</code>. <code>MODIFIED</code> replaces the whole requirement block — it
+does not merge scenario by scenario.</p>
+<p>Two things the validator is strict about:</p>
+<ul>
+<li><strong>Steps are plain <code>- GIVEN</code> bullets.</strong> <code>- **GIVEN**</code> fails with
+<code>scenario_not_gherkin</code>, because the keyword has to start the line.</li>
+<li><strong>The body needs an RFC-2119 keyword</strong> (<code>SHALL</code> / <code>MUST</code> / <code>SHOULD</code> / <code>MAY</code>),
+otherwise you get <code>no_rfc2119_keyword</code>. A requirement that states no
+obligation is not a requirement.</li>
+</ul>
+<p>The <code>csda:trace</code> comment is optional — it is the bridge to the DDD matrix.
+Without it the requirement still archives, with <code>-</code> in those columns.</p>
+<p><strong><code>depends=</code> says what a requirement builds on.</strong> One more key in the same
+comment, and the only one <code>plan</code> and the harness read rather than the matrix:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">&lt;!-- csda:trace uc=UC-008 feature=features/pricing/refunds.feature
+     depends=REQ-014 --&gt;</code></pre></figure>
+<p>Several are separated by commas — <code>depends=REQ-014, REQ-016</code>. What it changes:</p>
+<ul>
+<li><strong><code>specgate plan</code> orders the queue</strong> so a requirement never comes before the work
+it needs, and marks one whose dependency is still pending as <code>⛔ blocked</code>.
+Blocked work stops appearing under &quot;next steps&quot;, because recommending it was
+never useful.</li>
+<li><strong><code>specgate validate</code> fails</strong> on a cycle (<code>requirement_cycle</code>), on a dependency
+that names no requirement in the project (<code>unknown_dependency</code>), and on a
+requirement that depends on itself (<code>self_dependency</code>). Each says which ids
+are involved and what to delete.</li>
+</ul>
+<p>Declaring nothing means no dependencies, so a project that never writes a
+<code>depends=</code> behaves exactly as it did before.</p>
+<h3 id="3b-or-have-an-agent-draft-it">3b. Or have an agent draft it<a class="anchor" href="#3b-or-have-an-agent-draft-it" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change author add-dynamic-pricing <span class="tok tok--o">--artifact</span> proposal <span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--f">specgate</span> change author add-dynamic-pricing <span class="tok tok--o">--artifact</span> specs   <span class="tok tok--o">--agent-profile</span> <span class="tok tok--k">local</span>-claude</code></pre></figure>
+<p>This is the <code>spec-author</code> role of the multi-agent harness, and it is a separate
+loop from <code>specgate harness run</code> on purpose. That loop is built around a
+requirement — a worktree per REQ, a branch named for it, a gate of
+<code>validate --strict-tdd</code> plus your tests. A change has no requirement yet;
+writing one is the job. So authoring has its own scope and its own gate.</p>
+<p>The prompt is not a second description of what an artefact is for: it is
+<code>specgate change instructions</code> rendered for an agent, so the rules, the reserved
+REQ range and the template are the same ones a person is shown.</p>
+<p><strong>The scope is enforced, not requested.</strong> The agent may write inside
+<code>docs/specs/changes/&lt;id&gt;/</code> and nowhere else. Anything it writes elsewhere is
+put back before you see it: a file it created is deleted, a file it modified is
+restored from git. An agent asked to <em>describe</em> a change, and able to edit the
+capability spec it is describing, can make the change unnecessary instead of
+proposing it — quietly, in a diff that looks like the work. <code>specgate change archive</code> is what moves a delta into a capability spec, after a human has read
+it.</p>
+<p><strong>It refuses to run on a dirty tree</strong>, and that is not ceremony. Enforcing the
+scope means reverting what the agent wrote outside it, and on a dirty tree that
+cannot be told apart from what you were in the middle of. Commit or stash
+first, and the revert can only ever discard the agent&#39;s own work.</p>
+<p><code>--dry-run</code> prints the prompt and writes nothing, which is the cheap way to see
+what an agent would be asked before paying for it.</p>
+<h3 id="4-validate">4. Validate<a class="anchor" href="#4-validate" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change validate add-dynamic-pricing</code></pre></figure>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">  ✔ add-dynamic-pricing (1 delta(s))</code></pre></figure>
+<p>You rarely need to run this by hand: plain <code>specgate validate</code> validates every
+active change, so a broken delta fails the PR gate on its own. A project with
+no <code>docs/specs/changes/</code> directory is unaffected.</p>
+<h3 id="5-archive-it">5. Archive it<a class="anchor" href="#5-archive-it" aria-label="Link to this section">#</a></h3>
+<p>Archiving is the step that earns the ceremony. Preview first:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change archive add-dynamic-pricing <span class="tok tok--o">--dry-run</span></code></pre></figure>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">  Archive plan (dry run — nothing written)
+
+    ~ docs/specs/capabilities/pricing/spec.md (spec)
+    ~ docs/specs/traceability.md (traceability)
+    → docs/specs/changes/add-dynamic-pricing moves to docs/specs/changes/archive/2026-08-16-add-dynamic-pricing</code></pre></figure>
+<p>Unchecked tasks block it (<code>archive_tasks_incomplete</code>); <code>--force</code> overrides.
+Then apply:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change archive add-dynamic-pricing <span class="tok tok--o">--yes</span></code></pre></figure>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">  ✔ Archived as 2026-08-16-add-dynamic-pricing
+
+    specs:        1 added · 0 modified · 0 removed
+    traceability: 1 row(s) added · 0 updated · 0 removed
+    features:     0 materialised</code></pre></figure>
+<h3 id="6-the-requirement-is-now-real-work">6. The requirement is now real work<a class="anchor" href="#6-the-requirement-is-now-real-work" aria-label="Link to this section">#</a></h3>
+<p>The archive merged the delta into <code>docs/specs/capabilities/pricing/spec.md</code> and
+added the matrix row:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">| REQ-014 | SCN-014 | `features/pricing/dynamic_pricing.feature` | UC-007 | CMD-011 | AGG-Pricing | EVT-PriceApplied | - | TBD | Draft |</code></pre></figure>
+<p><code>specgate plan</code> lists it as pending immediately. It arrives as <code>Draft</code>, which
+<code>--strict-tdd</code> deliberately tolerates — an accepted proposal is not yet a
+commitment to have written the test. The gate bites the moment you start:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># after moving the row's status to In Dev</span>
+<span class="tok tok--f">specgate</span> validate . <span class="tok tok--o">--strict-tdd</span></code></pre></figure>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">❌ [ERROR] --strict-tdd violations detected:
+  [TDD-1] Test artifact is TBD but status is 'In Dev' (scenario: SCN-014)
+💡 [FIX] TDD-1: write the test first, then set its path in the row's 'Test artifact' column (or move the status back to Draft).</code></pre></figure>
+<p>That is the whole point: a merged proposal cannot quietly become undone work.</p>
+<h3 id="when-the-change-modifies-a-requirement-that-already-shipped">When the change modifies a requirement that already shipped<a class="anchor" href="#when-the-change-modifies-a-requirement-that-already-shipped" aria-label="Link to this section">#</a></h3>
+<p>A <code>MODIFIED</code> requirement goes back to <code>Draft</code> with its new scenarios. Archiving
+rewrites its feature file from the delta (<code>archive_feature_regenerated</code>), and
+<code>plan</code> and <code>status</code> list it as needing a test. Like any <code>Draft</code> row, it owes
+nothing to the gate yet, so the specification merges on its own.</p>
+<p>When it is delivered — <code>specgate done</code>, or the harness — every scenario must be
+named by a test (<code>--delivering</code> holds that one requirement to it). Two
+requirements modified by the same change are delivered one at a time; neither
+waits for the other.</p>
+<p>If the feature file holds scenarios that are not in the delta (written by
+hand, or removed by the change), archiving leaves it alone and says which
+scenarios it lacks (<code>archive_feature_stale</code>).</p>
+<h3 id="it-composes-with-packs">It composes with packs<a class="anchor" href="#it-composes-with-packs" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table><thead><tr><th>You want</th><th>Command</th></tr></thead><tbody><tr><td>Review an upstream pack bump as intent, not as a file diff</td><td><code>specops diff --as-change --pack-version v0.2.0</code></td></tr><tr><td>Send a local change back upstream to the pack</td><td><code>specops contribute --change add-dynamic-pricing</code></td></tr><tr><td>Fail CI when the project has drifted from the locked pack</td><td><code>validate --against-lock</code></td></tr></tbody></table></div>
+<p>See recipe 10 for the version-bump workflow those hook into.</p>
+<hr>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="agents.html">The agent surface</a></li>
+<li><a href="domain-packs.html">Pack version bumps as changes</a></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="writing-specs.html"><span>Previous</span>Writing specs</a><a class="pager__next" href="from-a-brief.html"><span>Next</span>From a client brief</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/reviewing-changes.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#change-a-requirement-that-already-shipped">Change a requirement that already shipped</a></li><li class="toc__l3"><a href="#1-open-the-change">1. Open the change</a></li><li class="toc__l3"><a href="#2-let-the-tool-tell-you-what-to-write-next">2. Let the tool tell you what to write next</a></li><li class="toc__l3"><a href="#3-write-the-delta">3. Write the delta</a></li><li class="toc__l3"><a href="#3b-or-have-an-agent-draft-it">3b. Or have an agent draft it</a></li><li class="toc__l3"><a href="#4-validate">4. Validate</a></li><li class="toc__l3"><a href="#5-archive-it">5. Archive it</a></li><li class="toc__l3"><a href="#6-the-requirement-is-now-real-work">6. The requirement is now real work</a></li><li class="toc__l3"><a href="#when-the-change-modifies-a-requirement-that-already-shipped">When the change modifies a requirement that already shipped</a></li><li class="toc__l3"><a href="#it-composes-with-packs">It composes with packs</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

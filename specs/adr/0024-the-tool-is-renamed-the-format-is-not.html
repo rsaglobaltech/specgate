@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0024-the-tool-is-renamed-the-format-is-not">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0024 — The tool is renamed to Specgate; the on-disk format is not — Specgate</title>
+<meta name="description" content="ADR-0024 — The tool is renamed to Specgate; the on-disk format is not">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0024 — The tool is renamed to Specgate; the on-disk format is not — Specgate">
+<meta property="og:description" content="ADR-0024 — The tool is renamed to Specgate; the on-disk format is not">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0024-the-tool-is-renamed-to-specgate-the-on-disk-format-is-not">ADR-0024 — The tool is renamed to Specgate; the on-disk format is not<a class="anchor" href="#adr-0024-the-tool-is-renamed-to-specgate-the-on-disk-format-is-not" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-08-26</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>The product shipped under five different names at once:</p>
+<div class="table-wrap"><table><thead><tr><th>Where</th><th>Name</th></tr></thead><tbody><tr><td>GitHub repository</td><td><code>specgate</code></td></tr><tr><td>npm package</td><td><code>create-spec-driven-app</code></td></tr><tr><td>Binary</td><td><code>csda</code></td></tr><tr><td>Docker image</td><td><code>ghcr.io/rsaglobaltech/csda</code></td></tr><tr><td>Sibling package scope</td><td><code>@spec-driven/*</code> (never published)</td></tr></tbody></table></div>
+<p>Two of those are actively misleading. <code>create-spec-driven-app</code> reads as a
+scaffolder in the <code>create-react-app</code> mould, and the product stopped being a
+scaffolder several minors ago — it has a change lifecycle, an enforcing gate, an
+agent harness, versioned domain packs and ALM sync. <code>csda</code> is what people
+actually type (measured: 529 uses across <code>docs/</code> and <code>README.md</code>, against 95 for
+the long name) and it is an unpronounceable acronym.</p>
+<p>The differentiator against the closest comparable tool is not that this one has
+specs. It is that <strong>the gate enforces them</strong>. The README tagline already says so:
+<em>&quot;specs as executable contracts — requirements, scenarios and traceability that
+CI enforces.&quot;</em></p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p><strong>The tool is named Specgate.</strong> npm package <code>specgate</code>, binary <code>specgate</code>,
+Docker image <code>specgate</code>, scope <code>@specgate/*</code>.</p>
+<p><strong>The on-disk format keeps the <code>csda:</code> prefix, unchanged and indefinitely.</strong></p>
+<p>That second half is the part worth writing down, because it looks like an
+oversight and is not.</p>
+<p><code>csda:</code> is not branding in these positions — it is a parsed file format that
+lives inside <strong>user repositories</strong>, not ours:</p>
+<ul>
+<li><code>&lt;!-- csda:trace REQ-002 depends=REQ-001 --&gt;</code> in every adopted
+<code>traceability.md</code> and capability <code>spec.md</code> (103 occurrences in this repository
+alone), read by <code>RE_TRACE_LINE</code> in <code>TraceabilityFormat.ts:108</code></li>
+<li><code>// csda:value session_timeout=15m</code> in user <strong>source code</strong> (ADR-0023)</li>
+<li><code>&lt;!-- csda:allow-placeholders --&gt;</code> in spec and template files</li>
+</ul>
+<p>Renaming those would be a silent breaking change to every repository that has
+adopted the tool — their specs would stop parsing, and the failure would surface
+as &quot;requirement not found&quot; rather than as &quot;your marker prefix changed&quot;. A rename
+of <em>our</em> package is not a licence to rewrite <em>their</em> files.</p>
+<p><strong>The alternative was considered and rejected for now:</strong> read both <code>csda:</code> and
+<code>specgate:</code>, write <code>specgate:</code>. That is a real migration feature — a dual-read
+parser, a <code>specgate migrate</code> command, and tests pinning both directions — not a
+find-and-replace. It can be built later if the mismatch ever bothers anyone. It
+has never bothered anyone yet, because nobody outside this repository has
+adopted the tool (<code>GATE-G3</code>, #100).</p>
+<p><strong>Backwards compatibility for the CLI:</strong> <code>csda</code> stays as an alias binary, and
+<code>create-spec-driven-app</code> stays as a deprecated npm package pointing at
+<code>specgate</code>. Neither is removed in the 0.x line. An <code>npx</code> invocation that used to
+work must keep working — the same rule <code>docs/release-process.md</code> already applies
+to raising the Node floor.</p>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>The name says what the tool does in one word</strong>, and the acronym disappears
+from the surface a newcomer meets first.</li>
+<li><strong>A cosmetic mismatch is now permanent and deliberate</strong>: a tool called
+Specgate writing markers that say <code>csda:</code>. This ADR is the answer to anyone who
+finds that and assumes it was missed.</li>
+<li><strong>Existing repositories keep working with no action.</strong> Nothing on disk changes
+meaning.</li>
+<li><strong>The timing is the cheapest it will ever be.</strong> <code>GATE-G3</code> is still open and no
+outside team has adopted the tool, so the migration cost is documentation and
+packaging rather than other people&#39;s repositories. Every week of real adoption
+makes this more expensive; that is the argument for doing it now rather than
+after 1.0.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<p><strong>Keep <code>create-spec-driven-app</code>.</strong> Rejected: it describes a product that no
+longer exists, and it is the first thing an evaluator reads.</p>
+<p><strong>Promote <code>csda</code> to the real name.</strong> Rejected: it is already the de facto name
+and that is precisely the problem — it cannot be pronounced, and it explains
+nothing to someone who has not read the README.</p>
+<p><strong>Rename the format markers too, in the same change.</strong> Rejected above. The
+correct version of this is a dual-read migration, not a rename.</p>
+<p><strong><code>reqgate</code></strong> was the cleanest on availability (npm free, GitHub org free, one
+homonymous repository). Rejected because &quot;req&quot; narrows the product to
+requirements when it already governs scenarios, packs, artefacts and agent runs.</p>
+<p><strong><code>tracewright</code></strong> was available and distinctive. Rejected because it names
+traceability — a capability — rather than enforcement, which is the thing the
+comparable tools do not have.</p>
+<h2 id="addendum-2026-09-01-the-unscoped-name-was-not-available-after-all">Addendum — 2026-09-01: the unscoped name was not available after all<a class="anchor" href="#addendum-2026-09-01-the-unscoped-name-was-not-available-after-all" aria-label="Link to this section">#</a></h2>
+<p><code>specgate</code> cannot be published to the public npm registry. The 0.8.0 release
+attempted it and got:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">npm error 403 Forbidden - PUT https://registry.npmjs.org/specgate
+           - You may not perform that action with these credentials.</code></pre></figure>
+<p>Not a permissions problem — the token is a classic automation token with no
+package restriction, and it publishes <code>create-spec-driven-app</code> fine. npm
+compares a new package name against existing ones <strong>with punctuation removed</strong>,
+and <a href="https://www.npmjs.com/package/spec-gate" target="_blank" rel="noreferrer"><code>spec-gate</code></a> — published
+2026-03-03, &quot;AI spec validation for Claude Code&quot; — normalises to exactly
+<code>specgate</code>. The registry refuses the name to everyone while that package exists,
+and reports it as a credentials error.</p>
+<p><strong>This ADR&#39;s availability check was wrong, and the way it was wrong is worth
+recording.</strong> It read <code>npm view specgate</code> → 404 as &quot;the name is free&quot;. A 404 says
+<em>not published</em>; it does not say <em>creatable</em>. The two differ for every name
+within one punctuation mark of something that already exists. Any future name
+check has to attempt a publish — <code>npm publish --dry-run</code> does not contact the
+registry and would not have caught it either.</p>
+<p><strong>Decision: the npm package is <code>@rsaglobaltech/specgate</code>.</strong> Scoped names are
+exempt from the similarity rule, so the scope is what makes the name reachable
+at all. It is the same coordinate the package already has on GitHub Packages and
+the same name as the GitHub organisation, so the tool now answers to one
+spelling in both registries instead of two.</p>
+<p>Nothing else moves: the tool is still Specgate, the binary is still <code>specgate</code>,
+the repository and the Docker image are unchanged, and <code>csda</code> and
+<code>create-spec-driven-app</code> remain alias binaries.</p>
+<p>The cost is one line of friction on the way in — <code>npx @rsaglobaltech/specgate</code>
+rather than <code>npx specgate</code> — and it is paid on the front door, which is the
+worst place to pay anything. It was accepted because the alternative is a third
+rename of a product that has now been renamed twice.</p>
+<p><code>create-spec-driven-app</code> is still the deprecation target and now points at
+<code>@rsaglobaltech/specgate</code>.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0024-the-tool-is-renamed-the-format-is-not.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li><li class="toc__l2"><a href="#addendum-2026-09-01-the-unscoped-name-was-not-available-after-all">Addendum — 2026-09-01: the unscoped name was not available after all</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

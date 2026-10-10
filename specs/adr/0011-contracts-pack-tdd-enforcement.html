@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0011-contracts-pack-tdd-enforcement">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0011: contracts Pack Type and validate --strict-tdd — Specgate</title>
+<meta name="description" content="ADR-0011: contracts Pack Type and validate --strict-tdd">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0011: contracts Pack Type and validate --strict-tdd — Specgate">
+<meta property="og:description" content="ADR-0011: contracts Pack Type and validate --strict-tdd">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0011-contracts-pack-type-and-validate-strict-tdd">ADR-0011: <code>contracts</code> Pack Type and <code>validate --strict-tdd</code><a class="anchor" href="#adr-0011-contracts-pack-type-and-validate-strict-tdd" aria-label="Link to this section">#</a></h1>
+<p><strong>Date:</strong> 2026-05-13
+<strong>Status:</strong> Accepted
+<strong>Depends on:</strong> <a href="0009-specops-remote-packs.html">ADR-0009 — SpecOps Remote Packs</a>, <a href="0010-specops-sync-diff.html">ADR-0010 — SpecOps sync/diff</a></p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>After M1 (remote packs) and M2 (<code>sync</code> / <code>diff</code>) landed, two gaps remained:</p>
+<ol>
+<li><p><strong>No first-class contract layer.</strong> Teams building microservices use the tool to scaffold
+backend and frontend packs, but there is no <code>project_type</code> for cross-service API contracts
+(OpenAPI, AsyncAPI, Pact). Contract artefacts were either omitted or jammed into backend packs
+where they conceptually don&#39;t belong.</p>
+</li>
+<li><p><strong>No machine-enforceable TDD gate.</strong> The traceability matrix supports a <code>Test artifact</code>
+column, but nothing prevented engineers from shipping <code>TBD</code> in that column while the row&#39;s
+status advanced to <code>In Dev</code> or beyond. The gap between &quot;we have a requirement&quot; and &quot;we have a
+test for that requirement&quot; was invisible to CI.</p>
+</li>
+</ol>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<h3 id="1-add-contracts-to-the-project-type-enum-in-schemas-pack-schema-json">1. Add <code>contracts</code> to the <code>project_type</code> enum in <code>schemas/pack.schema.json</code><a class="anchor" href="#1-add-contracts-to-the-project-type-enum-in-schemas-pack-schema-json" aria-label="Link to this section">#</a></h3>
+<p><code>contracts</code> packs describe the API surface between services rather than a single service&#39;s
+internals. They have a different domain model:</p>
+<div class="table-wrap"><table><thead><tr><th>Section</th><th><code>backend</code>/<code>frontend</code></th><th><code>contracts</code></th></tr></thead><tbody><tr><td><code>bounded_contexts</code></td><td>Required</td><td>Optional</td></tr><tr><td><code>use_cases</code>, <code>commands</code>, <code>aggregates</code>, <code>events</code>, <code>scenarios</code></td><td>Required</td><td>Optional</td></tr><tr><td><code>api_contracts[]</code></td><td>Not present</td><td><strong>Required</strong></td></tr><tr><td><code>consumer_driven_tests[]</code></td><td>Not present</td><td>Optional</td></tr><tr><td><code>breaking_change_rules[]</code></td><td>Not present</td><td>Optional</td></tr></tbody></table></div>
+<p>The JSON Schema uses an <code>if</code>/<code>then</code>/<code>else</code> to enforce this split: when
+<code>metadata.project_type</code> is <code>backend</code> or <code>frontend</code>, the DDD sections remain required; when it is
+<code>contracts</code>, <code>api_contracts</code> is required instead.</p>
+<p>New schema sections:</p>
+<ul>
+<li><strong><code>api_contracts[]</code></strong> — one entry per API surface (<code>AC-*</code>), with <code>type</code> (<code>REST</code>, <code>GraphQL</code>,
+<code>AsyncAPI</code>, <code>gRPC</code>), <code>provider</code>, <code>consumers[]</code>, <code>schema_ref</code> (path to the OpenAPI/AsyncAPI
+file), and an optional <code>requirement</code> back-reference.</li>
+<li><strong><code>consumer_driven_tests[]</code></strong> — Pact definitions (<code>CDT-*</code>): <code>consumer</code>, <code>provider</code>, <code>pact_file</code>.</li>
+<li><strong><code>breaking_change_rules[]</code></strong> — per-contract list of prose rules that define what constitutes
+a breaking change. Enforced by humans and AI rules, not by the CLI (deliberate).</li>
+</ul>
+<h3 id="2-new-templates-under-templates-contracts">2. New templates under <code>templates/contracts/</code><a class="anchor" href="#2-new-templates-under-templates-contracts" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table><thead><tr><th>Template</th><th>Generated file</th></tr></thead><tbody><tr><td><code>AI_RULES.md.tpl</code></td><td><code>AI_RULES.md</code> — 7 contract-specific rules for AI tools</td></tr><tr><td><code>test-strategy.md.tpl</code></td><td><code>docs/specs/test-strategy.md</code> — CDCT pyramid + metrics</td></tr><tr><td><code>openapi-stub.yaml.tpl</code></td><td><code>contracts/openapi/provider-v1.yaml</code></td></tr><tr><td><code>asyncapi-stub.yaml.tpl</code></td><td><code>contracts/asyncapi/provider-events-v1.yaml</code></td></tr><tr><td><code>contract-traceability.md.tpl</code></td><td><code>docs/specs/contract-traceability.md</code></td></tr><tr><td><code>pacts-gitkeep.tpl</code></td><td><code>contracts/pacts/.gitkeep</code></td></tr></tbody></table></div>
+<h3 id="3-validate-strict-tdd">3. <code>validate --strict-tdd</code><a class="anchor" href="#3-validate-strict-tdd" aria-label="Link to this section">#</a></h3>
+<p>A new optional flag on the existing <code>validate</code> command (no new top-level command). When passed,
+three additional checks run after the standard checks:</p>
+<div class="table-wrap"><table><thead><tr><th>Rule</th><th>Condition for failure</th></tr></thead><tbody><tr><td><strong>TDD-1</strong></td><td>A row in the rich traceability matrix has <code>Test artifact = TBD</code> and <code>Status</code> ∈ <code>{In Dev, In Review, Verified, Released, Deprecated, …}</code></td></tr><tr><td><strong>TDD-2</strong></td><td>A rich-mode row has no Scenario ID and <code>Status</code> ≠ <code>Draft</code></td></tr><tr><td><strong>TDD-3</strong></td><td>A <code>REQ-*</code> identifier found in <code>spec.md</code> has no corresponding row in <code>traceability.md</code></td></tr></tbody></table></div>
+<p>The command exits non-zero with a list of violations when any rule triggers.</p>
+<h3 id="4-specops-config-yaml-declarative-pack-composition">4. <code>specops.config.yaml</code> — declarative pack composition<a class="anchor" href="#4-specops-config-yaml-declarative-pack-composition" aria-label="Link to this section">#</a></h3>
+<p>A new optional file at the project root. When <code>.specops.lock</code> is absent, <code>specops sync</code> reads
+this file instead, bootstrapping a fresh clone without requiring a prior <code>expand</code> run.</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">specops_version</span>: <span class="tok tok--n">1</span>
+<span class="tok tok--a">packs</span>:
+  - repo: https://github.com/rsaglobaltech/parking-management-specops.git
+<span class="tok tok--a">    version</span>: v0.<span class="tok tok--n">1.0</span>
+<span class="tok tok--a">    pack_id</span>: backend
+<span class="tok tok--a">    vars</span>:
+<span class="tok tok--a">      PROJECT_NAME</span>: Smart Parking
+<span class="tok tok--a">      PROJECT_SLUG</span>: smart-parking
+<span class="tok tok--a">      DOMAIN</span>: parking operations</code></pre></figure>
+<p>After the first successful <code>sync</code>, the lockfile is written and subsequent runs use it (pinning
+the resolved commit SHA). <code>specops.config.yaml</code> is the human-edited declarative source;
+<code>.specops.lock</code> is the machine-written reproducible source.</p>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<p><strong>Positive:</strong></p>
+<ul>
+<li>Contracts between services are first-class citizens with their own type, their own breaking-
+change rules, and AI rules that enforce contract-first development.</li>
+<li><code>validate --strict-tdd</code> gives CI a machine-checkable gate on the gap between requirements and
+tests, which was previously invisible.</li>
+<li><code>specops.config.yaml</code> removes the chicken-and-egg problem: a fresh clone of a project that has
+never been expanded can now run <code>specops sync</code> without error.</li>
+<li>No new runtime dependency: the YAML reader in <code>config.js</code> reuses <code>parseYamlLite</code> from
+<code>common.js</code>.</li>
+</ul>
+<p><strong>Negative / accepted trade-offs:</strong></p>
+<ul>
+<li><code>breaking_change_rules</code> are prose, not machine-checked. The rules exist to inform AI tools and
+reviewers; automated enforcement (via <code>oasdiff</code> or similar) is left to the project&#39;s own CI.</li>
+<li><code>validate --strict-tdd</code> only covers the rich traceability format; legacy-format projects are
+not checked for TDD-2 and TDD-3 (row structure is ambiguous in the legacy format).</li>
+<li>The <code>if</code>/<code>then</code>/<code>else</code> in the JSON Schema is correct but less obvious than a flat <code>required</code>
+list. Pack authors must know which type they are writing.</li>
+</ul>
+<h2 id="rejected-alternatives">Rejected alternatives<a class="anchor" href="#rejected-alternatives" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Separate <code>validate-contracts</code> command.</strong> Would duplicate the file-walking, placeholder, and
+status-validation logic already in <code>validate</code>. The <code>--strict-tdd</code> flag composition is simpler.</li>
+<li><strong><code>fullstack</code> as a new project_type.</strong> Considered (per external review). Rejected in favour of
+the composition model: a fullstack project is two packs (backend + frontend) both listed in
+<code>.specops.lock</code> / <code>specops.config.yaml</code>. No new enum value needed; the tool&#39;s multi-pack
+support already handles it.</li>
+<li><strong>Machine-check <code>breaking_change_rules</code>.</strong> Would require integrating <code>oasdiff</code> or similar as a
+runtime dependency and understanding each contract format. Deferred; a future ADR can add a
+<code>contracts lint</code> subcommand.</li>
+</ul>
+<h2 id="references">References<a class="anchor" href="#references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Schema: <code>schemas/pack.schema.json</code></li>
+<li>Sample pack: <code>packs/sample-contracts/contracts/pack.yaml</code></li>
+<li>Templates: <code>templates/contracts/</code></li>
+<li>Validator: <code>scripts/validate_specs.js</code> (<code>--strict-tdd</code> flag)</li>
+<li>Config reader: <code>scripts/specops/config.js</code></li>
+<li>Sync update: <code>scripts/specops/sync.js</code> (<code>resolvePacks</code> fallback logic)</li>
+<li>Foundational ADRs: <a href="0009-specops-remote-packs.html">ADR-0009</a>, <a href="0010-specops-sync-diff.html">ADR-0010</a></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0011-contracts-pack-tdd-enforcement.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l3"><a href="#1-add-contracts-to-the-project-type-enum-in-schemas-pack-schema-json">1. Add contracts to the project_type enum in schemas/pack.schema.json</a></li><li class="toc__l3"><a href="#2-new-templates-under-templates-contracts">2. New templates under templates/contracts/</a></li><li class="toc__l3"><a href="#3-validate-strict-tdd">3. validate --strict-tdd</a></li><li class="toc__l3"><a href="#4-specops-config-yaml-declarative-pack-composition">4. specops.config.yaml — declarative pack composition</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l2"><a href="#rejected-alternatives">Rejected alternatives</a></li><li class="toc__l2"><a href="#references">References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

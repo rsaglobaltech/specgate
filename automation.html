@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en" data-slug="automation">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Automation — Specgate</title>
+<meta name="description" content="Generate the gate for GitHub, GitLab, Azure or Jenkins.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Automation — Specgate">
+<meta property="og:description" content="Generate the gate for GitHub, GitLab, Azure or Jenkins.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html" class="is-active" aria-current="page">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>The gate in CI</li><li aria-current="page">Automation</li></ol></nav>
+    <article class="prose">
+<h1 id="automation">Automation<a class="anchor" href="#automation" aria-label="Link to this section">#</a></h1>
+<p>Wiring the loop into the tools a team already runs: editors, agents,
+hooks and CI.</p>
+<hr>
+<h2 id="wire-the-mcp-server-into-claude-cursor-aider">Wire the MCP server into Claude / Cursor / Aider<a class="anchor" href="#wire-the-mcp-server-into-claude-cursor-aider" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> let an MCP-aware AI agent work the daily loop — status, new, check, done — without a terminal.</p>
+<p>The server ships inside the CLI: <code>specgate mcp serve</code> runs it over stdio.
+<code>specgate mcp install --client claude</code> (or <code>cursor</code>) writes the
+config for you; by hand it is:</p>
+<p>Claude Desktop (<code>~/Library/Application Support/Claude/claude_desktop_config.json</code> on macOS):</p>
+<figure class="code" data-lang="json"><figcaption class="code__head"><span class="code__lang">json</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-json">{
+  <span class="tok tok--a">&quot;mcpServers&quot;</span>: {
+    <span class="tok tok--a">&quot;spec-driven&quot;</span>: {
+      <span class="tok tok--a">&quot;command&quot;</span>: <span class="tok tok--s">&quot;npx&quot;</span>,
+      <span class="tok tok--a">&quot;args&quot;</span>: [<span class="tok tok--s">&quot;-y&quot;</span>, <span class="tok tok--s">&quot;@rsaglobaltech/specgate&quot;</span>, <span class="tok tok--s">&quot;mcp&quot;</span>, <span class="tok tok--s">&quot;serve&quot;</span>]
+    }
+  }
+}</code></pre></figure>
+<p>Every command is a tool, named <code>specgate_&lt;command&gt;</code> (<code>specgate_status</code>,
+<code>specgate_ci_init</code>, …), and each declares the argument it needs. The daily
+loop, and the seven names published before the rest were generated:</p>
+<div class="table-wrap"><table><thead><tr><th>Tool</th><th>Purpose</th></tr></thead><tbody><tr><td><code>specgate_status</code></td><td>What is open, and the next command.</td></tr><tr><td><code>specgate_new</code></td><td><code>specgate new &lt;title&gt;</code>: a requirement with its scenario. Takes <code>title</code>.</td></tr><tr><td><code>specgate_check</code></td><td>The gate, then the tests when a test command is configured.</td></tr><tr><td><code>mark_requirement_done</code></td><td><code>specgate done &lt;REQ&gt;</code>: runs the gate, then marks it Implemented. Takes <code>requirement</code>.</td></tr><tr><td><code>validate_project</code></td><td><code>validate --strict</code>, parsed.</td></tr><tr><td><code>plan</code></td><td>The pending queue, with what each requirement still needs.</td></tr><tr><td><code>read_spec</code></td><td>Returns <code>spec.md</code> and lists every <code>docs/specs/*.md</code>.</td></tr><tr><td><code>list_requirements</code></td><td>Returns every <code>REQ-NNN</code> with title, file, and line.</td></tr><tr><td><code>update_traceability</code></td><td>Appends a row to a hand-kept matrix; refuses on a generated one.</td></tr><tr><td><code>lint_pack</code></td><td>Runs <code>pack lint</code> and returns structured errors.</td></tr></tbody></table></div>
+<p><strong>Tools that write the specification are guarded.</strong> An agent may not rewrite
+the spec it is measured against, so <code>specgate_new</code>, <code>mark_requirement_done</code>
+and the other writers refuse unless a change is open (<code>specgate change new &lt;id&gt;</code>) or the team allows it in <code>.csda/config.json</code>:</p>
+<figure class="code" data-lang="json"><figcaption class="code__head"><span class="code__lang">json</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-json">{ <span class="tok tok--a">&quot;mcpAllowContractEdits&quot;</span>: <span class="tok tok--k">true</span> }</code></pre></figure>
+<p>Restart the client; the tools appear in the model&#39;s tool list as <code>spec-driven.*</code>.</p>
+<hr>
+<hr>
+<h2 id="install-the-claude-code-plugin">Install the Claude Code plugin<a class="anchor" href="#install-the-claude-code-plugin" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> the loop as slash commands, the spec tree over MCP, and the gate
+running <em>before</em> the session can end rather than after it in CI.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> agents init <span class="tok tok--o">--tool</span> claude-plugin <span class="tok tok--o">--project-dir</span> ./csda-plugin</code></pre></figure>
+<p>That writes a complete plugin: <code>.claude-plugin/plugin.json</code>, the six commands
+of the loop under <code>commands/specgate/</code>, an <code>.mcp.json</code> pointing at the spec-driven
+MCP server, and <code>hooks/hooks.json</code> with the gate.</p>
+<p><strong>The hook is the part no other target can offer.</strong> Every other tool here gets
+<em>instructions</em> — text an agent may or may not follow. A plugin gets a <code>Stop</code>
+hook, which runs whether the agent likes it or not:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">The spec gate is failing, so this work is not finished:
+
+  • [strict_tdd_1] Test artifact is TBD but status is 'In Dev'
+    fix: Write the test first, then set its path in the row's
+         'Test artifact' column.
+
+Run `specgate validate . --strict` to see all of it.</code></pre></figure>
+<p>The session does not end while that is true. <code>validate --strict</code> stops
+being something that reviews an agent&#39;s work after it has gone and becomes
+something it cannot walk past.</p>
+<p><strong>It will not trap you.</strong> The hook blocks <strong>once per prompt</strong>. The second time
+the same prompt reaches it, the findings are reported and the session ends: by
+then the agent has been told, and a human needs to see the answer more than the
+loop needs another turn. A project without <code>spec.md</code>, or a machine without
+<code>specgate</code> on <code>PATH</code>, is left alone entirely.</p>
+<p><code>claude-plugin</code> is the one target <code>specgate agents init</code> does <em>not</em> write by
+default — a plugin is an installable artefact, not something to scatter into
+every project.</p>
+<hr>
+<hr>
+<h2 id="use-the-vs-code-extension">Use the VS Code extension<a class="anchor" href="#use-the-vs-code-extension" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> get inline diagnostics for <code>pack.yaml</code>, code-lens to jump to the traceability row, and validate-on-save.</p>
+<ol>
+<li>Install <a href="https://github.com/rsaglobaltech/specgate/blob/main/packages/vscode-spec-driven" target="_blank" rel="noreferrer"><code>vscode-spec-driven</code></a> from the Marketplace (<code>ext install rsaglobaltech.vscode-spec-driven</code>).</li>
+<li>Open a project root. The extension auto-detects <code>spec.md</code> / <code>docs/specs/traceability.md</code>.</li>
+<li>Open any <code>pack.yaml</code> — diagnostics from the JSON Schema appear in the Problems panel.</li>
+<li>Hover any <code>REQ-NNN</code> (or <code>UC-</code>, <code>SCN-</code>, <code>AGG-</code>, <code>EVT-</code>, <code>RUL-</code>, <code>CMD-</code>) → CodeLens shows &quot;Reveal in traceability&quot;.</li>
+<li>Enable validate-on-save: open settings, search <strong>Spec-Driven</strong>, tick <code>validateOnSave</code>. The CLI runs after every save and posts results to the Problems panel.</li>
+</ol>
+<p>Settings:</p>
+<div class="table-wrap"><table><thead><tr><th>Setting</th><th>Default</th><th>Purpose</th></tr></thead><tbody><tr><td><code>spec-driven.validateOnSave</code></td><td><code>false</code></td><td>Run <code>validate</code> on every file save.</td></tr><tr><td><code>spec-driven.codeLens</code></td><td><code>true</code></td><td>Show &quot;Reveal in traceability&quot; code lenses.</td></tr><tr><td><code>spec-driven.cliPath</code></td><td><code>npx @rsaglobaltech/specgate</code></td><td>Override if you ship the CLI vendored.</td></tr><tr><td><code>spec-driven.schemaPath</code></td><td>bundled</td><td>Point at a custom <code>pack.schema.json</code>.</td></tr></tbody></table></div>
+<hr>
+<hr>
+<h2 id="drive-delivery-with-the-harness">Drive delivery with the harness<a class="anchor" href="#drive-delivery-with-the-harness" aria-label="Link to this section">#</a></h2>
+<p><code>specgate harness run</code> drives plan → agent → verify → done for every pending
+requirement, each in its own git worktree, in dependency order, and it never
+merges.</p>
+<p>→ <a href="harness.html">The harness</a></p>
+<hr>
+<hr>
+<h2 id="run-the-gate-without-node-on-the-build-agent">Run the gate without Node on the build agent<a class="anchor" href="#run-the-gate-without-node-on-the-build-agent" aria-label="Link to this section">#</a></h2>
+<p>The generated CI configs call <code>npx</code>, which needs Node. Plenty of build agents
+do not have it — a Java shop&#39;s Jenkins agent, a locked-down runner — and that
+is the whole reason the Docker image and the Maven and Gradle plugins exist.</p>
+<blockquote>
+<p><strong>Image name across the rename.</strong> The examples below name
+<code>ghcr.io/rsaglobaltech/specgate:&lt;version&gt;</code>, which is where every tag cut from
+0.8.0 on lands. Tags published before the rename live at
+<code>ghcr.io/rsaglobaltech/csda:&lt;version&gt;</code> and keep working — a published tag is
+never rebuilt in place, so nothing was republished under the new name
+retroactively. They are the same tool, but only the <code>specgate</code> images carry a
+<code>specgate</code> binary: an image tagged <code>csda:0.2.1</code> answers to <code>csda</code> and
+<code>create-spec-driven-app</code>, so pin the image and the command name together.</p>
+</blockquote>
+<p><strong>Docker.</strong> Mount the workspace and run the gate:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">docker</span> run <span class="tok tok--o">--rm</span> <span class="tok tok--o">-v</span> <span class="tok tok--s">&quot;$PWD:/workspace&quot;</span> \
+<span class="tok tok--f">  ghcr</span>.io/rsaglobaltech/specgate:<span class="tok tok--n">0.17</span>.<span class="tok tok--n">9</span> validate . <span class="tok tok--o">--strict</span></code></pre></figure>
+<p>Pin the version. <code>latest</code> is a convenience for a laptop, not for a pipeline —
+a gate that changes under you is not a gate. The image is published for
+<code>linux/amd64</code> and <code>linux/arm64</code>, so ARM runners work unchanged.</p>
+<p>In GitLab CI, that is the whole job:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">spec-gate</span>:
+<span class="tok tok--a">  image</span>: ghcr.io/rsaglobaltech/specgate:<span class="tok tok--n">0.17</span>.<span class="tok tok--n">9</span>
+<span class="tok tok--a">  stage</span>: test
+<span class="tok tok--a">  script</span>:
+    - specgate validate . --strict</code></pre></figure>
+<p>In Jenkins:</p>
+<figure class="code" data-lang="groovy"><figcaption class="code__head"><span class="code__lang">groovy</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-groovy"><span class="tok tok--k">stage</span>(<span class="tok tok--s">'Spec gate'</span>) {
+    <span class="tok tok--k">agent</span> { <span class="tok tok--k">docker</span> { <span class="tok tok--k">image</span> <span class="tok tok--s">'ghcr.io/rsaglobaltech/specgate:0.17.9'</span> } }
+    <span class="tok tok--k">steps</span> { <span class="tok tok--k">sh</span> <span class="tok tok--s">'specgate validate . --strict'</span> }
+}</code></pre></figure>
+<p><strong>Maven or Gradle.</strong> If the build already runs one of those, bind the gate to a
+phase instead of adding a container:</p>
+<figure class="code" data-lang="xml"><figcaption class="code__head"><span class="code__lang">xml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-xml"><span class="tok tok--t">&lt;plugin</span><span class="tok tok--t">&gt;</span>
+  <span class="tok tok--t">&lt;groupId</span><span class="tok tok--t">&gt;</span>com.rsaglobaltech<span class="tok tok--t">&lt;/groupId</span><span class="tok tok--t">&gt;</span>
+  <span class="tok tok--t">&lt;artifactId</span><span class="tok tok--t">&gt;</span>csda-maven-plugin<span class="tok tok--t">&lt;/artifactId</span><span class="tok tok--t">&gt;</span>
+  <span class="tok tok--t">&lt;executions</span><span class="tok tok--t">&gt;</span>
+    <span class="tok tok--t">&lt;execution</span><span class="tok tok--t">&gt;</span>
+      <span class="tok tok--t">&lt;goals</span><span class="tok tok--t">&gt;</span><span class="tok tok--t">&lt;goal</span><span class="tok tok--t">&gt;</span>validate<span class="tok tok--t">&lt;/goal</span><span class="tok tok--t">&gt;</span><span class="tok tok--t">&lt;/goals</span><span class="tok tok--t">&gt;</span>
+    <span class="tok tok--t">&lt;/execution</span><span class="tok tok--t">&gt;</span>
+  <span class="tok tok--t">&lt;/executions</span><span class="tok tok--t">&gt;</span>
+<span class="tok tok--t">&lt;/plugin</span><span class="tok tok--t">&gt;</span></code></pre></figure>
+<p><code>validate</code> binds to the <code>verify</code> phase by default, so <code>mvn verify</code> runs the
+gate without further wiring. <code>plan</code> and <code>doctor</code> are goals too.</p>
+<p><strong>Not published yet.</strong> The plugin builds and its tests run in CI, but it is not
+on Maven Central — that needs an OSSRH account and a signing key. Until then,
+<code>mvn -f packages/maven-plugin install</code> from a clone puts it in your local
+repository. The Docker path above needs nothing.</p>
+<p>The plugins target <strong>Java 11</strong> deliberately: a corporate build agent is exactly
+where you cannot choose the JDK.</p>
+<h2 id="wire-validate-into-a-pre-commit-hook">Wire <code>validate</code> into a pre-commit hook<a class="anchor" href="#wire-validate-into-a-pre-commit-hook" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> block commits that drop a <code>REQ</code> without a <code>.feature</code> or a <code>traceability.md</code> row before they ever leave the developer&#39;s machine.</p>
+<p>Plain shell (works without husky/lefthook):</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># .git/hooks/pre-commit  (chmod +x)</span>
+<span class="tok tok--c">#!/usr/bin/env bash</span>
+<span class="tok tok--k">set</span> <span class="tok tok--o">-e</span>
+<span class="tok tok--k">echo</span> <span class="tok tok--s">&quot;→ specgate validate --strict&quot;</span>
+<span class="tok tok--f">npx</span> <span class="tok tok--o">--yes</span> @rsaglobaltech/specgate@<span class="tok tok--n">0.17</span>.<span class="tok tok--n">9</span> validate . <span class="tok tok--o">--strict</span>
+<span class="tok tok--k">echo</span> <span class="tok tok--s">&quot;→ specgate specops diff (must be clean)&quot;</span>
+DIFF=$(npx <span class="tok tok--o">--yes</span> @rsaglobaltech/specgate@<span class="tok tok--n">0.17</span>.<span class="tok tok--n">9</span> specops diff <span class="tok tok--o">--format</span> json <span class="tok tok--n">2</span>&gt;/dev/null ||<span class="tok tok--f"> true</span>)
+<span class="tok tok--k">if</span> <span class="tok tok--k">echo</span> <span class="tok tok--s">&quot;$DIFF&quot;</span> |<span class="tok tok--f"> grep</span> <span class="tok tok--o">-q</span> <span class="tok tok--s">'&quot;added&quot;:\[\([^]].\)\]\|&quot;modified&quot;:\[\([^]].\)\]'</span>;<span class="tok tok--f"> then</span>
+<span class="tok tok--f">  echo</span> <span class="tok tok--s">&quot;✖ Pack content drifted. Run \`specgate specops sync\` and commit again.&quot;</span>
+<span class="tok tok--f">  exit</span> <span class="tok tok--n">1</span>
+<span class="tok tok--k">fi</span></code></pre></figure>
+<p>Or with <strong>husky</strong> (<code>package.json</code>):</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npm</span> install <span class="tok tok--o">--save-dev</span> husky
+<span class="tok tok--f">npx</span> husky init
+<span class="tok tok--k">echo</span> <span class="tok tok--s">'npx --yes @rsaglobaltech/specgate@0.17.9 validate . --strict'</span> &gt; .husky/pre-commit</code></pre></figure>
+<p>Mirror the same call in CI (see §4) so the gate survives <code>--no-verify</code>.</p>
+<hr>
+<hr>
+<h2 id="sync-requirements-with-jira-or-azure-boards">Sync requirements with Jira or Azure Boards<a class="anchor" href="#sync-requirements-with-jira-or-azure-boards" aria-label="Link to this section">#</a></h2>
+<p><code>specgate alm sync</code> keeps the traceability matrix and the board in step — creating
+an issue for each unlinked requirement, closing it when the requirement is
+done, and reporting drift rather than resolving it.</p>
+<p>→ <a href="alm.html">Jira and Azure Boards</a></p>
+<hr>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="harness.html">The harness</a></li>
+<li><a href="alm.html">Jira and Azure Boards</a></li>
+<li><a href="specs/agent-contract.html">The agent contract</a></li>
+<li><a href="specs/harness.html">The harness spec</a></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="validating.html"><span>Previous</span>Validating</a><a class="pager__next" href="case-studies/case-1.html"><span>Next</span>Worked example: brownfield adoption</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/automation.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#wire-the-mcp-server-into-claude-cursor-aider">Wire the MCP server into Claude / Cursor / Aider</a></li><li class="toc__l2"><a href="#install-the-claude-code-plugin">Install the Claude Code plugin</a></li><li class="toc__l2"><a href="#use-the-vs-code-extension">Use the VS Code extension</a></li><li class="toc__l2"><a href="#drive-delivery-with-the-harness">Drive delivery with the harness</a></li><li class="toc__l2"><a href="#run-the-gate-without-node-on-the-build-agent">Run the gate without Node on the build agent</a></li><li class="toc__l2"><a href="#wire-validate-into-a-pre-commit-hook">Wire validate into a pre-commit hook</a></li><li class="toc__l2"><a href="#sync-requirements-with-jira-or-azure-boards">Sync requirements with Jira or Azure Boards</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en" data-slug="mcp">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The MCP server — Specgate</title>
+<meta name="description" content="The daily loop as tools for Claude Desktop, Cursor and other MCP clients, and the guard on the spec.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="The MCP server — Specgate">
+<meta property="og:description" content="The daily loop as tools for Claude Desktop, Cursor and other MCP clients, and the guard on the spec.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html" class="is-active" aria-current="page">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Extensions</li><li aria-current="page">The MCP server</li></ol></nav>
+    <article class="prose">
+<h1 id="the-mcp-server">The MCP server<a class="anchor" href="#the-mcp-server" aria-label="Link to this section">#</a></h1>
+<p>Give an MCP client — Claude Desktop, Cursor, Claude Code, Antigravity — the
+same daily loop the terminal has: what is open, a new requirement, the gate,
+closing a requirement. The server ships inside the CLI package; there is
+nothing else to install.</p>
+<hr>
+<h2 id="install-it">Install it<a class="anchor" href="#install-it" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> mcp install <span class="tok tok--o">--client</span> claude    <span class="tok tok--c"># Claude Desktop</span>
+<span class="tok tok--f">specgate</span> mcp install <span class="tok tok--o">--client</span> cursor    <span class="tok tok--c"># Cursor (~/.cursor/mcp.json)</span></code></pre></figure>
+<p>It merges a <code>spec-driven</code> entry into the client&#39;s config and leaves the rest
+of the file alone. Restart the client and the tools appear.</p>
+<p>By hand, the entry is:</p>
+<figure class="code" data-lang="json"><figcaption class="code__head"><span class="code__lang">json</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-json">{
+  <span class="tok tok--a">&quot;mcpServers&quot;</span>: {
+    <span class="tok tok--a">&quot;spec-driven&quot;</span>: {
+      <span class="tok tok--a">&quot;command&quot;</span>: <span class="tok tok--s">&quot;npx&quot;</span>,
+      <span class="tok tok--a">&quot;args&quot;</span>: [<span class="tok tok--s">&quot;-y&quot;</span>, <span class="tok tok--s">&quot;@rsaglobaltech/specgate@latest&quot;</span>, <span class="tok tok--s">&quot;mcp&quot;</span>, <span class="tok tok--s">&quot;serve&quot;</span>]
+    }
+  }
+}</code></pre></figure>
+<div class="table-wrap"><table><thead><tr><th>Client</th><th>Config file</th></tr></thead><tbody><tr><td>Claude Desktop (macOS)</td><td><code>~/Library/Application Support/Claude/claude_desktop_config.json</code></td></tr><tr><td>Claude Desktop (Windows)</td><td><code>%APPDATA%\Claude\claude_desktop_config.json</code></td></tr><tr><td>Cursor</td><td><code>~/.cursor/mcp.json</code></td></tr><tr><td>Claude Code</td><td>the Specgate plugin&#39;s <code>.mcp.json</code> — see <a href="automation.html">Install the Claude Code plugin</a></td></tr><tr><td>Antigravity</td><td><code>.agents/mcp_config.json</code> — written by <code>specgate agents init --tool antigravity</code></td></tr></tbody></table></div>
+<p><code>specgate mcp serve</code> is what every one of those configs starts: the server,
+over stdio, calling the CLI that serves it. You never run it yourself.</p>
+<hr>
+<h2 id="the-tools">The tools<a class="anchor" href="#the-tools" aria-label="Link to this section">#</a></h2>
+<p>Every command is a tool named <code>specgate_&lt;command&gt;</code> — <code>specgate_status</code>,
+<code>specgate_ci_init</code>, <code>specgate_change_new</code>, … A tool whose command takes a
+positional argument declares it in its input schema — <code>title</code> for
+<code>specgate_new</code>, <code>requirement</code> for <code>mark_requirement_done</code> and <code>req_*</code>, <code>id</code> for
+<code>specgate_change_*</code>. Commands driven by flags (<code>specops add</code>, <code>pack init</code>, …)
+are better run from a terminal. The ones an agent uses every day:</p>
+<div class="table-wrap"><table><thead><tr><th>Tool</th><th>Does</th><th>Arguments</th></tr></thead><tbody><tr><td><code>specgate_status</code></td><td>What is open, and the next command to run.</td><td><code>projectDir</code></td></tr><tr><td><code>specgate_new</code></td><td>A requirement with its tagged scenario.</td><td><code>projectDir</code>, <code>title</code></td></tr><tr><td><code>specgate_check</code></td><td>The gate, then the tests when a test command is configured.</td><td><code>projectDir</code></td></tr><tr><td><code>specgate_verify</code></td><td>For an OpenSpec project: every scenario an archived change claims must be named by a test (ADR-0030). Accepts a directory with <code>openspec/</code> and no <code>spec.md</code>.</td><td><code>projectDir</code></td></tr><tr><td><code>mark_requirement_done</code></td><td>Runs the gate for the requirement, then marks it Implemented.</td><td><code>projectDir</code>, <code>requirement</code></td></tr><tr><td><code>plan</code></td><td>The pending queue, with what each requirement still needs.</td><td><code>projectDir</code></td></tr><tr><td><code>validate_project</code></td><td><code>validate --strict</code>, parsed.</td><td><code>projectDir</code></td></tr><tr><td><code>read_spec</code></td><td><code>spec.md</code>, and the list of every <code>docs/specs/*.md</code>.</td><td><code>projectDir</code></td></tr><tr><td><code>list_requirements</code></td><td>Every <code>REQ-NNN</code> with its title, file and line.</td><td><code>projectDir</code></td></tr></tbody></table></div>
+<p>Seven of those names — <code>read_spec</code>, <code>list_requirements</code>,
+<code>update_traceability</code>, <code>lint_pack</code>, <code>validate_project</code>, <code>plan</code>,
+<code>mark_requirement_done</code> — were published before the rest were generated, and
+keep resolving. The old <code>csda_*</code> names resolve too.</p>
+<p>Every tool answers with the command&#39;s JSON document: a payload plus <code>status</code>,
+a list of diagnostics with a stable <code>code</code> and a <code>fix</code>. Branch on <code>code</code>, never
+on the message. → <a href="specs/agent-contract.html">The agent contract</a></p>
+<hr>
+<h2 id="the-guard-an-agent-may-not-rewrite-its-own-exam">The guard: an agent may not rewrite its own exam<a class="anchor" href="#the-guard-an-agent-may-not-rewrite-its-own-exam" aria-label="Link to this section">#</a></h2>
+<p>Tools that write the specification — <code>specgate_new</code>,
+<code>mark_requirement_done</code>, <code>specgate_req_*</code>, <code>specgate_fix</code>, <code>specgate_expand</code>,
+<code>specgate_specops_*</code>, <code>specgate_init</code>, <code>specgate_update</code>, <code>specgate_harness_run</code>
+— <strong>refuse unless a change is open</strong>:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">specgate_new writes files the specification contract protects, and no change
+is open. Open one first: specgate change new &lt;id&gt;.</code></pre></figure>
+<p>An agent that cannot make a scenario pass can otherwise relax the scenario,
+and the gate would approve. The change cycle is the way to edit a spec on
+purpose, and it leaves a reviewable trail.</p>
+<p>When the team wants the agent to drive the daily loop directly, allow it in
+the repository, where the decision is reviewed like any other — in
+<code>.csda/config.json</code>:</p>
+<figure class="code" data-lang="json"><figcaption class="code__head"><span class="code__lang">json</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-json">{ <span class="tok tok--a">&quot;mcpAllowContractEdits&quot;</span>: <span class="tok tok--k">true</span> }</code></pre></figure>
+<p><code>specgate_change_*</code> tools are never guarded — they are how a change is opened.</p>
+<hr>
+<h2 id="a-session">A session<a class="anchor" href="#a-session" aria-label="Link to this section">#</a></h2>
+<p>With the server configured, ask in plain words:</p>
+<blockquote>
+<p>Add a requirement for downloading invoices as PDF, implement it, and close
+it when the gate is green.</p>
+</blockquote>
+<p>The client calls <code>specgate_new</code> (title: <em>Invoices download as PDF</em>), writes
+the scenario steps and a test that mentions the new <code>REQ-NNN</code>, writes the
+code, then calls <code>mark_requirement_done</code>. If the scenario still has template
+steps or no test mentions the requirement, that call comes back with
+<code>done_validate_failed</code> and the reason — exactly what the terminal would say —
+and nothing is written.</p>
+<hr>
+<h2 id="when-it-does-not-work">When it does not work<a class="anchor" href="#when-it-does-not-work" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead><tbody><tr><td>No tools appear</td><td>The client was not restarted, or <code>npx</code> is not on its <code>PATH</code></td><td>Restart; on macOS GUI apps, point <code>command</code> at the absolute path of <code>npx</code></td></tr><tr><td>Every writing tool refuses</td><td>The guard, working</td><td>Open a change, or set <code>mcpAllowContractEdits</code></td></tr><tr><td><code>specgate_check</code> says <em>tests not configured</em></td><td>No test command</td><td><code>specgate config set test_cmd &quot;npm test&quot;</code></td></tr><tr><td>An old config runs <code>@specgate/mcp-server</code></td><td>Written before 0.13; that package was never published</td><td>Re-run <code>specgate mcp install</code> or <code>specgate agents init</code></td></tr></tbody></table></div>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="agents.html">Agent tools</a> — slash commands and rules for nine agents</li>
+<li><a href="specs/agent-contract.html">The agent contract</a> — the JSON every tool returns</li>
+<li><a href="harness.html">The harness</a> — the same loop, unattended</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="agents.html"><span>Previous</span>Agent tools</a><a class="pager__next" href="harness.html"><span>Next</span>The harness</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/mcp.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#install-it">Install it</a></li><li class="toc__l2"><a href="#the-tools">The tools</a></li><li class="toc__l2"><a href="#the-guard-an-agent-may-not-rewrite-its-own-exam">The guard: an agent may not rewrite its own exam</a></li><li class="toc__l2"><a href="#a-session">A session</a></li><li class="toc__l2"><a href="#when-it-does-not-work">When it does not work</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

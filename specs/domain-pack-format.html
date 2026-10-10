@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en" data-slug="specs/domain-pack-format">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domain Pack Format — Contract Specification — Specgate</title>
+<meta name="description" content="Domain Pack Format — Contract Specification">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Domain Pack Format — Contract Specification — Specgate">
+<meta property="og:description" content="Domain Pack Format — Contract Specification">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="domain-pack-format-contract-specification">Domain Pack Format — Contract Specification<a class="anchor" href="#domain-pack-format-contract-specification" aria-label="Link to this section">#</a></h1>
+<blockquote>
+<p>Authoritative reference for the <code>pack.yaml</code> schema (version <code>1.1.0</code>).
+Every key, cardinality, allowed value and example is documented here.
+The companion JSON Schema lives at <a href="https://github.com/rsaglobaltech/specgate/blob/main/schemas/pack.schema.json" target="_blank" rel="noreferrer"><code>/schemas/pack.schema.json</code></a>.</p>
+</blockquote>
+<hr>
+<h2 id="1-overview">1. Overview<a class="anchor" href="#1-overview" aria-label="Link to this section">#</a></h2>
+<p>A <strong>domain pack</strong> is a single YAML file (<code>pack.yaml</code>) that encodes a
+reusable domain model for a specific business subdomain. When consumed by
+<code>specgate expand</code>, it generates Gherkin feature files, domain
+documentation (traceability matrix, aggregates, commands, events, use cases)
+and AI guardrails.</p>
+<p>A pack is versioned independently of the CLI using SemVer on the
+<code>schema_version</code> field.</p>
+<hr>
+<h2 id="2-top-level-structure">2. Top-level structure<a class="anchor" href="#2-top-level-structure" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">schema_version</span>: <span class="tok tok--s">&quot;1.1.0&quot;</span> <span class="tok tok--c"># required</span>
+<span class="tok tok--a">metadata</span>: { ... } <span class="tok tok--c"># required</span>
+<span class="tok tok--a">variables</span>: { ... } <span class="tok tok--c"># required</span>
+<span class="tok tok--a">requirements</span>: [...] <span class="tok tok--c"># required, min 1</span>
+<span class="tok tok--a">bounded_contexts</span>: [...] <span class="tok tok--c"># required, min 1</span>
+<span class="tok tok--a">use_cases</span>: [...] <span class="tok tok--c"># required, min 1</span>
+<span class="tok tok--a">commands</span>: [...] <span class="tok tok--c"># required, min 1</span>
+<span class="tok tok--a">aggregates</span>: [...] <span class="tok tok--c"># required, min 1</span>
+<span class="tok tok--a">value_objects</span>: [...] <span class="tok tok--c"># optional</span>
+<span class="tok tok--a">events</span>: [...] <span class="tok tok--c"># required, min 1</span>
+<span class="tok tok--a">business_rules</span>: [...] <span class="tok tok--c"># optional — domain invariants</span>
+<span class="tok tok--a">outputs</span>: { ... } <span class="tok tok--c"># required</span>
+<span class="tok tok--a">rules</span>: { ... } <span class="tok tok--c"># required — render config, NOT domain rules</span>
+<span class="tok tok--a">scenarios</span>: [...] <span class="tok tok--c"># required, min 1</span></code></pre></figure>
+<hr>
+<h2 id="3-field-reference">3. Field reference<a class="anchor" href="#3-field-reference" aria-label="Link to this section">#</a></h2>
+<h3 id="3-1-schema-version">3.1 <code>schema_version</code><a class="anchor" href="#3-1-schema-version" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody><tr><td>Type</td><td><code>string</code></td></tr><tr><td>Required</td><td>yes</td></tr><tr><td>Format</td><td>SemVer (<code>MAJOR.MINOR.PATCH</code>)</td></tr><tr><td>Current value</td><td><code>&quot;1.1.0&quot;</code></td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">schema_version</span>: <span class="tok tok--s">&quot;1.1.0&quot;</span></code></pre></figure>
+<p>Breaking changes to the schema increment <code>MAJOR</code>. Additive changes
+increment <code>MINOR</code>. Bug fixes increment <code>PATCH</code>.</p>
+<hr>
+<h3 id="3-2-metadata">3.2 <code>metadata</code><a class="anchor" href="#3-2-metadata" aria-label="Link to this section">#</a></h3>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td>string</td><td>yes</td><td>Human-readable name of the pack.</td></tr><tr><td><code>version</code></td><td>string</td><td>yes</td><td>SemVer version of this pack (independent of the schema version).</td></tr><tr><td><code>language</code></td><td>string</td><td>yes</td><td>ISO 639-1 language code (e.g. <code>&quot;en&quot;</code>, <code>&quot;es&quot;</code>).</td></tr><tr><td><code>project_type</code></td><td>string</td><td>yes</td><td><code>&quot;backend&quot;</code> or <code>&quot;frontend&quot;</code>.</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">metadata</span>:
+<span class="tok tok--a">  name</span>: <span class="tok tok--s">&quot;Parking Management Backend Domain Pack&quot;</span>
+<span class="tok tok--a">  version</span>: <span class="tok tok--s">&quot;1.1.0&quot;</span>
+<span class="tok tok--a">  language</span>: <span class="tok tok--s">&quot;en&quot;</span>
+<span class="tok tok--a">  project_type</span>: <span class="tok tok--s">&quot;backend&quot;</span></code></pre></figure>
+<hr>
+<h3 id="3-3-variables">3.3 <code>variables</code><a class="anchor" href="#3-3-variables" aria-label="Link to this section">#</a></h3>
+<p>Declares variables that the CLI must receive (via <code>--var KEY=VALUE</code>) before
+expanding the pack. The CLI fails early if any required variable is absent.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody><tr><td><code>required</code></td><td>string[]</td><td>yes</td><td>List of variable names.</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">variables</span>:
+<span class="tok tok--a">  required</span>:
+    - PROJECT_NAME
+    - PROJECT_SLUG
+    - DOMAIN</code></pre></figure>
+<hr>
+<h3 id="3-4-requirements">3.4 <code>requirements</code><a class="anchor" href="#3-4-requirements" aria-label="Link to this section">#</a></h3>
+<p>Captures the business requirements that the pack addresses.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>yes</td><td><code>REQ-{NNN}</code> (e.g. <code>REQ-001</code>). Must be unique within the pack.</td></tr><tr><td><code>title</code></td><td>string</td><td>yes</td><td>Short imperative statement of the requirement.</td></tr><tr><td><code>priority</code></td><td>string</td><td>yes</td><td><code>Must</code>, <code>Should</code>, <code>Could</code>, <code>Wont</code></td></tr><tr><td><code>description</code></td><td>string</td><td>yes</td><td>One-paragraph explanation in business language.</td></tr><tr><td><code>status</code></td><td>string</td><td>yes</td><td><code>Draft</code>, <code>Needs Clarification</code>, <code>Domain Reviewed</code>, <code>Architecture Reviewed</code>, <code>Ready for Dev</code>, <code>In Dev</code>, <code>In Review</code>, <code>Verified</code>, <code>Released</code>, <code>Deprecated</code></td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">requirements</span>:
+  - id: REQ-<span class="tok tok--n">001</span>
+<span class="tok tok--a">    title</span>: <span class="tok tok--s">&quot;Alert operators when parking capacity reaches a threshold&quot;</span>
+<span class="tok tok--a">    priority</span>: Must
+<span class="tok tok--a">    description</span>: <span class="tok tok--s">&quot;Operators need proactive alerts when occupancy approaches capacity.&quot;</span>
+<span class="tok tok--a">    status</span>: Draft</code></pre></figure>
+<hr>
+<h3 id="3-5-bounded-contexts">3.5 <code>bounded_contexts</code><a class="anchor" href="#3-5-bounded-contexts" aria-label="Link to this section">#</a></h3>
+<p>Defines the DDD Lite bounded contexts covered by this pack.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>yes</td><td><code>BC-{NNN}</code>. Unique within the pack.</td></tr><tr><td><code>name</code></td><td>string</td><td>yes</td><td>Short noun phrase.</td></tr><tr><td><code>type</code></td><td>string</td><td>yes</td><td><code>Core</code>, <code>Supporting</code>, <code>Generic</code></td></tr><tr><td><code>responsibility</code></td><td>string</td><td>yes</td><td>One sentence describing the context&#39;s single responsibility.</td></tr><tr><td><code>aggregates</code></td><td>string[]</td><td>yes</td><td>Names of aggregates (must match entries in <code>aggregates</code>).</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">bounded_contexts</span>:
+  - id: BC-<span class="tok tok--n">001</span>
+<span class="tok tok--a">    name</span>: Parking Operations
+<span class="tok tok--a">    type</span>: Core
+<span class="tok tok--a">    responsibility</span>: <span class="tok tok--s">&quot;Capacity, vehicle entry, occupancy, and stay lifecycle&quot;</span>
+<span class="tok tok--a">    aggregates</span>:
+      - ParkingFacility
+      - ParkingSession</code></pre></figure>
+<hr>
+<h3 id="3-6-use-cases">3.6 <code>use_cases</code><a class="anchor" href="#3-6-use-cases" aria-label="Link to this section">#</a></h3>
+<p>Maps each requirement to a command, an aggregate and a set of emitted events.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>yes</td><td><code>UC-{NNN}</code>. Unique.</td></tr><tr><td><code>name</code></td><td>string</td><td>yes</td><td>Verb phrase (e.g. <code>&quot;Register Vehicle Entry&quot;</code>).</td></tr><tr><td><code>actor</code></td><td>string</td><td>yes</td><td>Role interacting with the system (e.g. <code>Driver</code>, <code>Operator</code>).</td></tr><tr><td><code>requirement</code></td><td>string</td><td>yes</td><td>ID of the requirement this use case implements.</td></tr><tr><td><code>command</code></td><td>string</td><td>yes</td><td>Name of the command dispatched (must match <code>commands[].name</code>).</td></tr><tr><td><code>aggregate</code></td><td>string</td><td>yes</td><td>Aggregate root that handles the command.</td></tr><tr><td><code>emits</code></td><td>string[]</td><td>yes</td><td>Names of events emitted on success.</td></tr><tr><td><code>scenarios</code></td><td>string[]</td><td>yes</td><td>IDs of Gherkin scenarios (<code>SCN-{NNN}</code>).</td></tr><tr><td><code>status</code></td><td>string</td><td>yes</td><td>Same allowed values as <code>requirements[].status</code>.</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">use_cases</span>:
+  - id: UC-<span class="tok tok--n">002</span>
+<span class="tok tok--a">    name</span>: Register Vehicle Entry
+<span class="tok tok--a">    actor</span>: Driver
+<span class="tok tok--a">    requirement</span>: REQ-<span class="tok tok--n">002</span>
+<span class="tok tok--a">    command</span>: RegisterVehicleEntryCommand
+<span class="tok tok--a">    aggregate</span>: ParkingFacility
+<span class="tok tok--a">    emits</span>:
+      - VehicleEntered
+<span class="tok tok--a">    scenarios</span>:
+      - SCN-<span class="tok tok--n">002</span>
+<span class="tok tok--a">    status</span>: Draft</code></pre></figure>
+<hr>
+<h3 id="3-7-commands">3.7 <code>commands</code><a class="anchor" href="#3-7-commands" aria-label="Link to this section">#</a></h3>
+<p>Represents the intent to change system state.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>yes</td><td><code>CMD-{NNN}</code>. Unique.</td></tr><tr><td><code>name</code></td><td>string</td><td>yes</td><td><code>PascalCase</code> ending in <code>Command</code>.</td></tr><tr><td><code>use_case</code></td><td>string</td><td>yes</td><td>ID of the use case that dispatches this command.</td></tr><tr><td><code>fields</code></td><td>string[]</td><td>yes</td><td>Names of the command&#39;s input fields.</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">commands</span>:
+  - id: CMD-<span class="tok tok--n">002</span>
+<span class="tok tok--a">    name</span>: RegisterVehicleEntryCommand
+<span class="tok tok--a">    use_case</span>: UC-<span class="tok tok--n">002</span>
+<span class="tok tok--a">    fields</span>:
+      - facility_id
+      - license_plate
+      - entry_time</code></pre></figure>
+<hr>
+<h3 id="3-8-aggregates">3.8 <code>aggregates</code><a class="anchor" href="#3-8-aggregates" aria-label="Link to this section">#</a></h3>
+<p>Domain aggregate roots with their invariants.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>yes</td><td><code>AGG-{NNN}</code>. Unique.</td></tr><tr><td><code>name</code></td><td>string</td><td>yes</td><td><code>PascalCase</code>. Must appear in at least one <code>bounded_context.aggregates</code>.</td></tr><tr><td><code>context</code></td><td>string</td><td>yes</td><td>Name of the bounded context that owns this aggregate.</td></tr><tr><td><code>invariants</code></td><td>string[]</td><td>yes</td><td>Business rules the aggregate enforces. Min 1.</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">aggregates</span>:
+  - id: AGG-<span class="tok tok--n">001</span>
+<span class="tok tok--a">    name</span>: ParkingFacility
+<span class="tok tok--a">    context</span>: Parking Operations
+<span class="tok tok--a">    invariants</span>:
+      - <span class="tok tok--s">&quot;Occupancy cannot exceed facility capacity.&quot;</span>
+      - <span class="tok tok--s">&quot;A vehicle can enter only when a slot is available.&quot;</span></code></pre></figure>
+<hr>
+<h3 id="3-9-value-objects-optional">3.9 <code>value_objects</code> (optional)<a class="anchor" href="#3-9-value-objects-optional" aria-label="Link to this section">#</a></h3>
+<p>Immutable objects identified by their value, not by an ID.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>yes</td><td><code>VO-{NNN}</code>. Unique.</td></tr><tr><td><code>name</code></td><td>string</td><td>yes</td><td><code>PascalCase</code>.</td></tr><tr><td><code>fields</code></td><td>string[]</td><td>yes</td><td>Constituent fields.</td></tr><tr><td><code>invariants</code></td><td>string[]</td><td>yes</td><td>Validation rules.</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">value_objects</span>:
+  - id: VO-<span class="tok tok--n">002</span>
+<span class="tok tok--a">    name</span>: Money
+<span class="tok tok--a">    fields</span>:
+      - amount
+      - currency
+<span class="tok tok--a">    invariants</span>:
+      - <span class="tok tok--s">&quot;Amount cannot be negative.&quot;</span></code></pre></figure>
+<hr>
+<h3 id="3-10-events">3.10 <code>events</code><a class="anchor" href="#3-10-events" aria-label="Link to this section">#</a></h3>
+<p>Domain or integration events emitted by aggregates.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed values</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>yes</td><td><code>EVT-{NNN}</code>. Unique.</td></tr><tr><td><code>name</code></td><td>string</td><td>yes</td><td><code>PascalCase</code>. Past tense (e.g. <code>VehicleEntered</code>).</td></tr><tr><td><code>type</code></td><td>string</td><td>yes</td><td><code>domain</code> or <code>integration</code></td></tr><tr><td><code>producer</code></td><td>string</td><td>yes</td><td>Aggregate name that emits the event.</td></tr><tr><td><code>consumers</code></td><td>string[]</td><td>yes</td><td>Context or service names that subscribe.</td></tr><tr><td><code>payload</code></td><td>string[]</td><td>yes</td><td>Field names included in the event. Always include <code>occurred_at</code>.</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">events</span>:
+  - id: EVT-<span class="tok tok--n">002</span>
+<span class="tok tok--a">    name</span>: VehicleEntered
+<span class="tok tok--a">    type</span>: domain
+<span class="tok tok--a">    producer</span>: ParkingFacility
+<span class="tok tok--a">    consumers</span>:
+      - Billing
+<span class="tok tok--a">    payload</span>:
+      - session_id
+      - facility_id
+      - license_plate
+      - occurred_at</code></pre></figure>
+<hr>
+<h3 id="3-11-outputs">3.11 <code>outputs</code><a class="anchor" href="#3-11-outputs" aria-label="Link to this section">#</a></h3>
+<p>Declares static files to generate during <code>expand</code>.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>files</code></td><td>object[]</td><td>yes</td><td>Min 1. Each entry has <code>target</code> (output path) and <code>template</code> (template path relative to the pack root).</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">outputs</span>:
+<span class="tok tok--a">  files</span>:
+    - target: <span class="tok tok--s">&quot;AI_RULES.md&quot;</span>
+<span class="tok tok--a">      template</span>: <span class="tok tok--s">&quot;templates/AI_RULES.md.tpl&quot;</span>
+    - target: <span class="tok tok--s">&quot;spec.md&quot;</span>
+<span class="tok tok--a">      template</span>: <span class="tok tok--s">&quot;templates/spec.md.tpl&quot;</span></code></pre></figure>
+<hr>
+<h3 id="3-11b-business-rules">3.11b <code>business_rules</code><a class="anchor" href="#3-11b-business-rules" aria-label="Link to this section">#</a></h3>
+<p>Invariants the domain imposes, independent of any implementation.</p>
+<p><strong>Not to be confused with <code>rules</code>.</strong> <code>rules</code> configures how the pack renders;
+<code>business_rules</code> is domain content. The two shared one key until ADR-0020, and
+that collision is what made every curated pack impossible to install.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>yes</td><td><code>RUL-{NNN}</code>.</td></tr><tr><td><code>title</code></td><td>string</td><td>yes</td><td>The invariant, stated as a rule.</td></tr><tr><td><code>context</code></td><td>string</td><td>no</td><td>The bounded context it belongs to (<code>BC-NNN</code>).</td></tr><tr><td><code>description</code></td><td>string</td><td>no</td><td>Why it holds, and what violating it costs.</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">business_rules</span>:
+  - id: RUL-<span class="tok tok--n">001</span>
+<span class="tok tok--a">    title</span>: <span class="tok tok--s">&quot;Invoices are immutable once issued&quot;</span>
+<span class="tok tok--a">    context</span>: BC-<span class="tok tok--n">001</span>
+<span class="tok tok--a">    description</span>: <span class="tok tok--s">&quot;Corrections require credit notes, not edits.&quot;</span></code></pre></figure>
+<hr>
+<h3 id="3-12-rules">3.12 <code>rules</code><a class="anchor" href="#3-12-rules" aria-label="Link to this section">#</a></h3>
+<p>Instructs the CLI on how to update cross-cutting artefacts. This is <strong>render
+configuration</strong>, not domain rules — those are <code>business_rules</code> above.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>traceability.target</code></td><td>string</td><td>yes</td><td>Path to the traceability matrix relative to the project root.</td></tr><tr><td><code>traceability.include_existing_rows</code></td><td>boolean</td><td>yes</td><td>Whether to preserve rows already in the matrix.</td></tr><tr><td><code>traceability.default_status</code></td><td>string</td><td>yes</td><td>Status assigned to new rows (e.g. <code>&quot;Draft&quot;</code>).</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">rules</span>:
+<span class="tok tok--a">  traceability</span>:
+<span class="tok tok--a">    target</span>: <span class="tok tok--s">&quot;docs/specs/traceability.md&quot;</span>
+<span class="tok tok--a">    include_existing_rows</span>: <span class="tok tok--k">true</span>
+<span class="tok tok--a">    default_status</span>: <span class="tok tok--s">&quot;Draft&quot;</span></code></pre></figure>
+<hr>
+<h3 id="3-13-scenarios">3.13 <code>scenarios</code><a class="anchor" href="#3-13-scenarios" aria-label="Link to this section">#</a></h3>
+<p>Links each business requirement to an executable Gherkin scenario.</p>
+<p><strong>Required is what the installer needs</strong> to render the feature file and write
+the traceability row. The domain-linkage fields are optional so a pack for a
+domain without CQRS is not forced to invent a command it does not have — but
+they are validated when present, so a typo does not become a silent empty cell.
+See <a href="adr/0020-pack-format-standard.html">ADR-0020</a>.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>yes</td><td><code>SCN-{NNN}</code>. Unique.</td></tr><tr><td><code>requirement_id</code></td><td>string</td><td>yes</td><td>ID of the requirement being verified.</td></tr><tr><td><code>target</code></td><td>string</td><td>yes</td><td>Output path for the <code>.feature</code> file (relative to project root).</td></tr><tr><td><code>template</code></td><td>string</td><td>yes</td><td>Template path relative to the pack root.</td></tr><tr><td><code>feature</code></td><td>string</td><td>yes</td><td>Name of the Gherkin Feature block.</td></tr><tr><td><code>scenario</code></td><td>string</td><td>yes</td><td>Name of the primary Gherkin Scenario.</td></tr><tr><td><code>status</code></td><td>string</td><td>yes</td><td>Same allowed values as <code>requirements[].status</code>.</td></tr><tr><td><code>use_case</code></td><td>string</td><td>no</td><td>ID of the use case.</td></tr><tr><td><code>seed</code></td><td>boolean</td><td>no</td><td>If <code>true</code>, the CLI writes an example Gherkin file at <code>target</code>.</td></tr><tr><td><code>command</code></td><td>string</td><td>no</td><td>Command name exercised in the scenario.</td></tr><tr><td><code>aggregate</code></td><td>string</td><td>no</td><td>Aggregate under test.</td></tr><tr><td><code>events</code></td><td>string[]</td><td>no</td><td>Events asserted in the Then clause.</td></tr><tr><td><code>technical_artifacts</code></td><td>string[]</td><td>no</td><td>Artefacts to build. Absent, the matrix renders <code>TBD</code> — which is what <code>plan</code> reads as work still to do.</td></tr><tr><td><code>test_artifact</code></td><td>string</td><td>no</td><td>Name of the step-definition file.</td></tr></tbody></table></div>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">scenarios</span>:
+  - id: <span class="tok tok--s">&quot;SCN-002&quot;</span>
+<span class="tok tok--a">    requirement_id</span>: REQ-<span class="tok tok--n">002</span>
+<span class="tok tok--a">    use_case</span>: UC-<span class="tok tok--n">002</span>
+<span class="tok tok--a">    seed</span>: <span class="tok tok--k">true</span>
+<span class="tok tok--a">    target</span>: <span class="tok tok--s">&quot;features/entry_exit/vehicle_entry.feature&quot;</span>
+<span class="tok tok--a">    template</span>: <span class="tok tok--s">&quot;templates/features/entry_exit/vehicle_entry.feature.tpl&quot;</span>
+<span class="tok tok--a">    feature</span>: <span class="tok tok--s">&quot;Vehicle Entry&quot;</span>
+<span class="tok tok--a">    scenario</span>: <span class="tok tok--s">&quot;Registering vehicle entry with available slot&quot;</span>
+<span class="tok tok--a">    command</span>: RegisterVehicleEntryCommand
+<span class="tok tok--a">    aggregate</span>: ParkingFacility
+<span class="tok tok--a">    events</span>:
+      - VehicleEntered
+<span class="tok tok--a">    technical_artifacts</span>:
+      - <span class="tok tok--s">&quot;Entry use case&quot;</span>
+      - <span class="tok tok--s">&quot;VehicleEntered event&quot;</span>
+<span class="tok tok--a">    test_artifact</span>: <span class="tok tok--s">&quot;vehicle_entry.steps&quot;</span>
+<span class="tok tok--a">    status</span>: <span class="tok tok--s">&quot;Draft&quot;</span></code></pre></figure>
+<hr>
+<h2 id="4-versioning-policy">4. Versioning policy<a class="anchor" href="#4-versioning-policy" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Change</th><th>Version bump</th></tr></thead><tbody><tr><td>Remove or rename a required field</td><td><code>MAJOR</code></td></tr><tr><td>Add a new required field</td><td><code>MAJOR</code></td></tr><tr><td>Add an optional field</td><td><code>MINOR</code></td></tr><tr><td>Change an allowed value list in a non-breaking way</td><td><code>MINOR</code></td></tr><tr><td>Correct documentation only</td><td><code>PATCH</code></td></tr></tbody></table></div>
+<hr>
+<h2 id="5-validation-rules-enforced-by-pack-lint">5. Validation rules (enforced by <code>pack lint</code>)<a class="anchor" href="#5-validation-rules-enforced-by-pack-lint" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>All IDs within a section must be unique (e.g. no two <code>REQ-001</code>).</li>
+<li>Every <code>use_case.requirement</code> must reference a declared <code>requirement.id</code>.</li>
+<li>Every <code>use_case.command</code> must reference a declared <code>command.name</code>.</li>
+<li>Every <code>use_case.aggregate</code> must reference a declared <code>aggregate.name</code>.</li>
+<li>Every <code>scenario.requirement_id</code> must reference a declared <code>requirement.id</code>.</li>
+<li>Every <code>scenario.use_case</code> must reference a declared <code>use_case.id</code>.</li>
+<li>Every <code>scenario.id</code> must appear in at least one <code>use_cases[].scenarios</code>.</li>
+<li>Every <code>aggregate.name</code> referenced in <code>bounded_context.aggregates</code> must appear in <code>aggregates</code>.</li>
+<li>Every <code>event.producer</code> must match a declared <code>aggregate.name</code>.</li>
+<li>Event payloads must include <code>occurred_at</code>.</li>
+<li><code>scenarios[].status</code> must be one of the ten allowed status values.</li>
+</ol>
+<hr>
+<h2 id="5a-scenario-quality-rules-pack-lint">5a. Scenario-quality rules (<code>pack lint</code>)<a class="anchor" href="#5a-scenario-quality-rules-pack-lint" aria-label="Link to this section">#</a></h2>
+<p>A pack&#39;s scenarios are the reward signal for <code>harness run</code> — weak Gherkin
+lets the harness wave through weak code. <code>pack lint</code> therefore inspects
+each scenario&#39;s actual content, whether it is a <code>template:</code> <code>.feature.tpl</code>
+file or inline <code>given</code>/<code>when</code>/<code>then</code> fields:</p>
+<ul>
+<li><strong>Broken template link</strong> → error. The <code>.feature.tpl</code> does not exist.</li>
+<li><strong>Scenario Outline with no <code>Examples:</code></strong> → error. It would never run.</li>
+<li><strong>No <code>When</code> step</strong> → the scenario exercises no action.</li>
+<li><strong>No <code>Then</code> step</strong> → the scenario asserts nothing.</li>
+<li><strong>Fewer than 3 steps</strong> → too thin to be a real scenario.</li>
+<li><strong>Generic title</strong> (<code>test</code>, <code>Scenario 1</code>, fewer than 3 words) → name the
+behaviour under test.</li>
+<li><strong>Vague step language</strong> (<code>works</code>, <code>correctly</code>, <code>properly</code>, <code>as expected</code>, <code>etc</code>, <code>TODO</code>, <code>...</code>) → a non-falsifiable assertion.</li>
+<li><strong>Name drift</strong> → the <code>pack.yaml</code> <code>scenario:</code> does not match the
+template&#39;s <code>Scenario:</code> title.</li>
+</ul>
+<p>By default these are <strong>warnings</strong>. <code>pack lint --strict</code> promotes them to
+<strong>errors</strong> — use it in CI and before a pack feeds <code>harness run</code>.</p>
+<hr>
+<h2 id="5b-reference-graph-pack-lint-graph">5b. Reference graph (<code>pack lint --graph</code>)<a class="anchor" href="#5b-reference-graph-pack-lint-graph" aria-label="Link to this section">#</a></h2>
+<p>The hardest part of authoring a pack is keeping the ID cross-references
+consistent by hand: <code>REQ-001 → UC-001 → CMD-001 / AGG-001 → EVT-001</code>. One
+typo and the linker breaks.</p>
+<p><code>pack lint --graph</code> renders that spine so you can <em>see</em> it:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># Mermaid (default) — renders natively in GitHub and VS Code</span>
+<span class="tok tok--f">specgate</span> pack lint <span class="tok tok--o">--pack-root</span> ./packs <span class="tok tok--o">--pack</span> billing/backend <span class="tok tok--o">--graph</span>
+
+<span class="tok tok--c"># Graphviz DOT</span>
+<span class="tok tok--f">specgate</span> pack lint <span class="tok tok--o">--pack-root</span> ./packs <span class="tok tok--o">--pack</span> billing/backend <span class="tok tok--o">--graph</span> <span class="tok tok--o">--graph-format</span> dot</code></pre></figure>
+<ul>
+<li>Nodes: requirements, use cases, commands/queries, aggregates, events —
+one colour per type.</li>
+<li>Edges: <code>implements</code>, <code>dispatches</code>/<code>runs</code>, <code>handled by</code>, <code>emits</code>.</li>
+<li>A reference to an ID or name that does not exist becomes a red
+<strong>missing</strong> node, so the break is visible in the diagram. Every
+dangling reference is also listed on stderr, and the command <strong>exits
+non-zero</strong> — making <code>--graph</code> usable as a CI link-check, not just a
+drawing tool.</li>
+</ul>
+<p>The output is plain text: pipe it into any Mermaid/DOT renderer, commit
+it to a doc, or paste it into a diagram tool. No account, no network, no
+vendor dependency.</p>
+<hr>
+<h2 id="5c-inferring-a-pack-from-a-feature-pack-infer">5c. Inferring a pack from a <code>.feature</code> (<code>pack infer</code>)<a class="anchor" href="#5c-inferring-a-pack-from-a-feature-pack-infer" aria-label="Link to this section">#</a></h2>
+<p>The default authoring flow is model-first: write <code>requirements</code> →
+<code>use_cases</code> → <code>commands</code> → <code>events</code>, then the scenarios. That has a
+waterfall smell — the executable artifact comes last.</p>
+<p><code>pack infer</code> inverts it. Write the Gherkin <code>.feature</code> first, then:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> pack infer <span class="tok tok--o">--from</span> ./drafts/capacity.feature</code></pre></figure>
+<p>prints a proposed <code>pack.yaml</code> fragment — <code>requirements</code>, <code>use_cases</code>,
+<code>commands</code>, <code>events</code>, <code>scenarios</code> — derived heuristically from the file:</p>
+<div class="table-wrap"><table><thead><tr><th>Source in the <code>.feature</code></th><th>Becomes</th></tr></thead><tbody><tr><td><code>@REQ-001</code> tag</td><td>a <code>requirement</code> reference (else a <code>REQ-XXX</code> placeholder)</td></tr><tr><td><code>Feature:</code> name</td><td>the <code>use_case</code> name</td></tr><tr><td><code>When</code> step</td><td>a proposed <code>command</code> (PascalCased)</td></tr><tr><td>Quoted PascalCase token in a <code>Then</code> step</td><td>a proposed <code>event</code></td></tr><tr><td>each <code>Scenario:</code></td><td>a <code>scenarios[]</code> entry</td></tr></tbody></table></div>
+<p>The inference is <strong>heuristic and deterministic</strong> — no LLM, no network.
+Anything it cannot infer is left as an explicit <code>TODO:</code> string, so the
+fragment is a starting skeleton to review and fill in, never a
+silently-guessed final answer. <code>--format json</code> emits the same model as a
+structured object for tooling.</p>
+<blockquote>
+<p>An LLM-assisted mode (shell-out, vendor-neutral — the same pattern as
+<code>harness run</code>) is a possible follow-up behind a <code>--llm</code> flag.</p>
+</blockquote>
+<hr>
+<h2 id="6-references">6. References<a class="anchor" href="#6-references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Example pack: <a href="https://github.com/rsaglobaltech/specgate/blob/main/tests/fixtures/domain-packs/parking-management/backend/pack.yaml" target="_blank" rel="noreferrer"><code>tests/fixtures/domain-packs/parking-management/backend/pack.yaml</code></a></li>
+<li>JSON Schema: <a href="https://github.com/rsaglobaltech/specgate/blob/main/schemas/pack.schema.json" target="_blank" rel="noreferrer"><code>schemas/pack.schema.json</code></a> <em>(Phase 1 — P1-04)</em></li>
+<li>Expansion engine: <a href="https://github.com/rsaglobaltech/specgate/blob/main/scripts/expand_domain_pack.js" target="_blank" rel="noreferrer"><code>scripts/expand_domain_pack.js</code></a></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/domain-pack-format.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#1-overview">1. Overview</a></li><li class="toc__l2"><a href="#2-top-level-structure">2. Top-level structure</a></li><li class="toc__l2"><a href="#3-field-reference">3. Field reference</a></li><li class="toc__l3"><a href="#3-1-schema-version">3.1 schema_version</a></li><li class="toc__l3"><a href="#3-2-metadata">3.2 metadata</a></li><li class="toc__l3"><a href="#3-3-variables">3.3 variables</a></li><li class="toc__l3"><a href="#3-4-requirements">3.4 requirements</a></li><li class="toc__l3"><a href="#3-5-bounded-contexts">3.5 bounded_contexts</a></li><li class="toc__l3"><a href="#3-6-use-cases">3.6 use_cases</a></li><li class="toc__l3"><a href="#3-7-commands">3.7 commands</a></li><li class="toc__l3"><a href="#3-8-aggregates">3.8 aggregates</a></li><li class="toc__l3"><a href="#3-9-value-objects-optional">3.9 value_objects (optional)</a></li><li class="toc__l3"><a href="#3-10-events">3.10 events</a></li><li class="toc__l3"><a href="#3-11-outputs">3.11 outputs</a></li><li class="toc__l3"><a href="#3-11b-business-rules">3.11b business_rules</a></li><li class="toc__l3"><a href="#3-12-rules">3.12 rules</a></li><li class="toc__l3"><a href="#3-13-scenarios">3.13 scenarios</a></li><li class="toc__l2"><a href="#4-versioning-policy">4. Versioning policy</a></li><li class="toc__l2"><a href="#5-validation-rules-enforced-by-pack-lint">5. Validation rules (enforced by pack lint)</a></li><li class="toc__l2"><a href="#5a-scenario-quality-rules-pack-lint">5a. Scenario-quality rules (pack lint)</a></li><li class="toc__l2"><a href="#5b-reference-graph-pack-lint-graph">5b. Reference graph (pack lint --graph)</a></li><li class="toc__l2"><a href="#5c-inferring-a-pack-from-a-feature-pack-infer">5c. Inferring a pack from a .feature (pack infer)</a></li><li class="toc__l2"><a href="#6-references">6. References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en" data-slug="alm">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jira and Azure Boards — Specgate</title>
+<meta name="description" content="Mirror requirements onto a board without letting the board define them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Jira and Azure Boards — Specgate">
+<meta property="og:description" content="Mirror requirements onto a board without letting the board define them.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html" class="is-active" aria-current="page">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Extensions</li><li aria-current="page">Jira, Azure Boards, GitHub</li></ol></nav>
+    <article class="prose">
+<h1 id="jira-and-azure-boards">Jira and Azure Boards<a class="anchor" href="#jira-and-azure-boards" aria-label="Link to this section">#</a></h1>
+<p><strong>Goal:</strong> every requirement in the matrix has exactly one issue on the board,
+and the two never quietly disagree.</p>
+<p><code>specgate alm sync</code> creates an issue for each unlinked <code>REQ</code>, closes the issue when
+its requirement reaches a done status, and reports <strong>drift</strong> — an issue closed
+while its requirement is still open — without resolving it for you.</p>
+<p><strong>The ALM is a mirror, not a source of truth.</strong> The spec and the matrix are the
+contract; an issue reflects a requirement, it never defines one. That is why
+<code>sync</code> closes issues but never reopens requirements, and why drift is reported
+rather than reconciled.</p>
+<h2 id="configure">Configure<a class="anchor" href="#configure" aria-label="Link to this section">#</a></h2>
+<p><code>alm.config.yaml</code> at the project root. <strong>Tokens never live in this file</strong> —
+only the <em>name</em> of the environment variable that holds them, so the file is
+safe to commit and CI supplies the secret.</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">alm_version</span>: <span class="tok tok--n">1</span>
+<span class="tok tok--a">provider</span>: jira            <span class="tok tok--c"># jira | azure</span>
+<span class="tok tok--a">base_url</span>: https://acme.atlassian.net
+<span class="tok tok--a">project_key</span>: HIE
+<span class="tok tok--a">token_env</span>: JIRA_TOKEN     <span class="tok tok--c"># env var holding the API token</span>
+<span class="tok tok--a">user_env</span>: JIRA_USER       <span class="tok tok--c"># jira only: env var holding the account email</span></code></pre></figure>
+<p>Which keys a provider reads is the provider&#39;s own declaration, and they differ:</p>
+<!-- csda:alm-provider-table — checked by tests/unit/alm-conformance.test.ts --><div class="table-wrap"><table><thead><tr><th>Provider</th><th>Required</th><th>Optional</th></tr></thead><tbody><tr><td><code>jira</code></td><td><code>base_url</code>, <code>project_key</code>, <code>token_env</code></td><td><code>user_env</code>, <code>issue_type</code></td></tr><tr><td><code>azure</code></td><td><code>base_url</code>, <code>project_key</code>, <code>token_env</code></td><td><code>issue_type</code>, <code>done_state</code></td></tr><tr><td><code>github</code></td><td><code>repo</code>, <code>token_env</code></td><td><code>base_url</code></td></tr></tbody></table></div>
+<p>Three asymmetries worth knowing, because the first two used to fail silently:</p>
+<ul>
+<li><strong><code>done_state</code> is Azure-only.</strong> Jira&#39;s workflows are per-project, so &quot;done&quot;
+there is a status <em>category</em> and closing means finding a transition into it.
+Setting <code>done_state</code> on a Jira project does nothing — and <code>sync</code> now says so
+before its first request.</li>
+<li><strong><code>user_env</code> is Jira-only</strong>, because Jira Cloud&#39;s Basic auth pairs the token
+with an account email. It defaults to <code>JIRA_USER</code> when omitted.</li>
+<li><strong>GitHub takes <code>repo</code>, not <code>project_key</code></strong>, and its <code>base_url</code> is optional.
+Its unit is a repository — <code>repo: acme/widgets</code> — and github.com has one API
+host, so only GitHub Enterprise Server needs a base URL. It has no
+<code>issue_type</code> (GitHub has labels) and no <code>done_state</code> (an issue is open or
+closed).</li>
+</ul>
+<p>Any key that the configured provider does not read is reported as a warning
+with a fix, naming the provider that <em>would</em> have read it.</p>
+<h3 id="closed-is-not-always-done-on-github">Closed is not always done, on GitHub<a class="anchor" href="#closed-is-not-always-done-on-github" aria-label="Link to this section">#</a></h3>
+<p>GitHub records <em>why</em> an issue was closed. Closing as <strong>not planned</strong> means the
+team decided against the work; closing as <strong>completed</strong> means it happened. Only
+the second reads as <code>done</code> here.</p>
+<p>Collapsing both would tell <code>traceability.md</code> that a requirement was delivered
+when it had in fact been abandoned. Instead a not-planned close leaves the
+requirement open, and the disagreement shows up as drift for a person to
+settle — which is what <a href="specs/adr/0021-alm-is-a-mirror.html">ADR-0021</a> asks for:
+the board is a mirror, and it never advances a requirement on its own.</p>
+<h2 id="two-tiers-core-and-community">Two tiers: core and community<a class="anchor" href="#two-tiers-core-and-community" aria-label="Link to this section">#</a></h2>
+<p><code>jira</code>, <code>azure</code> and <code>github</code> are <strong>core</strong> — maintained in this repository and
+exercised by the conformance kit on every CI run. Anything else is resolved by
+package name:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># alm.config.yaml</span>
+<span class="tok tok--a">provider</span>: npm:csda-alm-youtrack</code></pre></figure>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npm</span> install <span class="tok tok--o">--save-dev</span> csda-alm-youtrack   <span class="tok tok--c"># you install it; specgate never does</span></code></pre></figure>
+<p>The split is not a preference. Every connector is somebody else&#39;s API, changing
+on their schedule: carrying six here would tie this repository&#39;s release cadence
+to six vendors, and carrying none would make the tool useless to a team on
+YouTrack. So the port is the contract, and anyone can implement it.</p>
+<h3 id="what-you-are-agreeing-to">What you are agreeing to<a class="anchor" href="#what-you-are-agreeing-to" aria-label="Link to this section">#</a></h3>
+<p><strong>A community provider is code that runs in your process, and it is handed your
+ALM credential</strong> — a connector cannot talk to a board without one. The trust
+model is exactly that of a devDependency, and it deserves the same scrutiny:
+read it, pin it, and treat an update like any other dependency update.</p>
+<p>Three things the CLI does so that it is no <em>worse</em> than a devDependency:</p>
+<ul>
+<li><strong>Nothing is ever installed automatically.</strong> The package must already be in
+your <code>node_modules</code>. Editing a config file can never fetch and run new code —
+adding a provider stays a dependency decision, made deliberately.</li>
+<li><strong>The name must be a package name.</strong> No paths, no URLs, no <code>..</code>. A committed
+config file cannot be made to load an arbitrary file from your disk.</li>
+<li><strong>The module is checked against the port before anything is called.</strong> A
+package that is not a provider, or one that claims a capability it has no
+method for, fails with a diagnostic naming the problem — not with a stack
+trace from inside <code>sync</code>, halfway through a run.</li>
+</ul>
+<h3 id="writing-one">Writing one<a class="anchor" href="#writing-one" aria-label="Link to this section">#</a></h3>
+<p>Export an object satisfying <code>AlmProvider</code> — <code>id</code>, <code>label</code>, <code>config</code>,
+<code>capabilities</code> and a <code>create(cfg, fetchImpl)</code> factory. Taking <code>fetchImpl</code> is
+what lets the conformance kit exercise a provider against recorded responses,
+with no network; the three core providers are worth reading as examples, and
+<code>scripts/alm/port.ts</code> documents every field and why it exists.</p>
+<p>Declare capabilities honestly. <code>capabilities.listIssues: false</code> is a supported
+answer — <code>azure</code> gives it — and it makes <code>alm pull</code> degrade with a message
+rather than fail at the first request.</p>
+<h2 id="bringing-work-in-alm-pull">Bringing work in: <code>alm pull</code><a class="anchor" href="#bringing-work-in-alm-pull" aria-label="Link to this section">#</a></h2>
+<p>The request every team makes after seeing <code>sync</code> is the other direction — <em>the
+product owner opens the ticket, make it appear in the repo</em>. It does, as a
+<strong>change</strong>, never as a matrix row:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> alm pull <span class="tok tok--o">--label</span> spec-driven            <span class="tok tok--c"># one change per labelled issue</span>
+<span class="tok tok--f">specgate</span> alm pull <span class="tok tok--o">--label</span> spec-driven <span class="tok tok--o">--dry-run</span>  <span class="tok tok--c"># see what it would open</span></code></pre></figure>
+<p>Each pulled issue becomes <code>docs/specs/changes/alm-&lt;key&gt;/</code> with a proposal
+quoting the issue verbatim — not summarised, so a reviewer reads the reporter&#39;s
+words and not this tool&#39;s paraphrase — and a delta carrying one requirement.</p>
+<p><strong>The scenario is left unwritten, and <code>change validate</code> refuses the change until
+you write it.</strong> That is the design, not a gap. A ticket has a title, a
+description and a status; it has no executable acceptance criterion. Generating
+Gherkin from prose would invent the one thing the spec exists to pin down, and
+the gate would then be checking fiction. The empty scenario marks the only work
+that cannot be automated — yours, or the <code>spec-author</code> role&#39;s via
+<a href="reviewing-changes.html"><code>specgate change author</code></a>.</p>
+<p>Pulling twice is safe: a change that already exists is skipped, so edits you
+have started are never overwritten.</p>
+<p><strong>Searching is a declared capability.</strong> <code>github</code> and <code>jira</code> can filter by label;
+<code>azure</code> cannot, because Azure searches with WIQL — a different shape entirely —
+and says so rather than failing at the first request.</p>
+<h2 id="run">Run<a class="anchor" href="#run" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--k">export</span> JIRA_TOKEN=…  JIRA_USER=…
+<span class="tok tok--f">specgate</span> alm sync <span class="tok tok--o">--dry-run</span>     <span class="tok tok--c"># plan only: no issue is created or closed</span>
+<span class="tok tok--f">specgate</span> alm sync               <span class="tok tok--c"># do it, and write .specops/alm-map.json</span>
+<span class="tok tok--f">specgate</span> alm status             <span class="tok tok--c"># the REQ ↔ issue mapping, no network</span>
+<span class="tok tok--f">specgate</span> alm link REQ-<span class="tok tok--n">007</span> HIE-<span class="tok tok--n">42</span>   <span class="tok tok--c"># adopt an issue that already exists</span></code></pre></figure>
+<p><code>.specops/alm-map.json</code> is the mapping and <strong>belongs in git</strong>: it is what makes
+<code>sync</code> idempotent, and what lets a second machine pick up where the first left
+off. <code>sync</code> exits 1 when it finds drift, so it works as a scheduled CI job.</p>
+<h2 id="adding-a-provider">Adding a provider<a class="anchor" href="#adding-a-provider" aria-label="Link to this section">#</a></h2>
+<p>A provider is one module under <code>scripts/alm/providers/</code> plus a row in that
+directory&#39;s <code>index.ts</code>. It declares which config keys it reads and which
+operations it supports, and implements three methods — <code>createIssue</code>,
+<code>getIssueStatus</code>, <code>closeIssue</code>. <code>tests/unit/alm-conformance.test.ts</code> then runs
+the same suite against it as against the two that ship, from a recorded fixture
+in <code>tests/fixtures/alm/&lt;id&gt;.json</code>; a registered provider without one fails.</p>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="automation.html">Automation</a></li>
+<li><a href="commands.html">Command reference</a></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="domain-packs.html"><span>Previous</span>Domain packs</a><a class="pager__next" href="walkthrough.html"><span>Next</span>Walkthrough</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/alm.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#configure">Configure</a></li><li class="toc__l3"><a href="#closed-is-not-always-done-on-github">Closed is not always done, on GitHub</a></li><li class="toc__l2"><a href="#two-tiers-core-and-community">Two tiers: core and community</a></li><li class="toc__l3"><a href="#what-you-are-agreeing-to">What you are agreeing to</a></li><li class="toc__l3"><a href="#writing-one">Writing one</a></li><li class="toc__l2"><a href="#bringing-work-in-alm-pull">Bringing work in: alm pull</a></li><li class="toc__l2"><a href="#run">Run</a></li><li class="toc__l2"><a href="#adding-a-provider">Adding a provider</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

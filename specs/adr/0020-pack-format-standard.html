@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0020-pack-format-standard">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0020 — One pack format, with the JSON Schema as its authority — Specgate</title>
+<meta name="description" content="ADR-0020 — One pack format, with the JSON Schema as its authority">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0020 — One pack format, with the JSON Schema as its authority — Specgate">
+<meta property="og:description" content="ADR-0020 — One pack format, with the JSON Schema as its authority">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0020-one-pack-format-with-the-json-schema-as-its-authority">ADR-0020 — One pack format, with the JSON Schema as its authority<a class="anchor" href="#adr-0020-one-pack-format-with-the-json-schema-as-its-authority" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-08-17 · <strong>Amended — 2026-08-23</strong> (see <em>Amendment</em>)</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>The domain pack format had drifted into three descriptions that disagreed with
+each other, and nothing in the build compared them.</p>
+<div class="table-wrap"><table><thead><tr><th></th><th><code>schemas/pack.schema.json</code></th><th><code>expand</code> / <code>validatePackModel</code></th><th>the eleven packs in <code>packs/</code></th></tr></thead><tbody><tr><td>Outputs</td><td><code>outputs.files[]</code> (target + template)</td><td>same</td><td><code>outputs.features[]</code></td></tr><tr><td>Rules</td><td><code>rules.traceability{…}</code></td><td>same</td><td><code>rules:</code> as a list of <code>RUL-*</code></td></tr><tr><td>Scenarios</td><td>14 required fields</td><td>5 required fields</td><td>inline <code>given/when/then</code></td></tr><tr><td><code>contracts</code> type</td><td>in the enum</td><td>rejected outright</td><td><code>sample-contracts</code> uses it</td></tr></tbody></table></div>
+<p>The consequences were not theoretical. <strong>Every curated pack failed to install</strong>,
+with the same error — <code>outputs.files must contain at least one file definition</code>. <code>csda pack init</code> generated packs in the same unusable shape, so
+the authoring command produced something the installing command refused. And
+<code>pack lint</code> reported all of them as clean, because it validated cross-
+references between requirements and use cases but never the structure the
+installer actually requires.</p>
+<p>It went unnoticed for as long as it did because nothing exercised <code>packs/</code>:
+not CI, not a test. Ten packs were advertised in the README as the reason to
+adopt the tool, and not one of them could be applied to a project.</p>
+<p>The parser had a matching gap: <code>parseYamlLite</code> did not understand inline flow
+sequences (<code>aggregates: [Invoice, Payment]</code>), which the packs used 54 times.
+Those parsed as the literal string <code>&quot;[Invoice]&quot;</code> and then failed cross-
+reference checks against an aggregate nobody had declared.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p><strong><code>schemas/pack.schema.json</code> is the single authority.</strong> The validator, the
+installer, <code>pack init</code> and every shipped pack conform to it. Where they
+previously disagreed, the schema moved only where it was wrong on the merits.</p>
+<p><strong>1. <code>outputs.files</code> is the only output shape.</strong> <code>outputs.features</code> was never
+implemented by anything and is gone. A capability pack renders a capability
+document under <code>docs/specs/capabilities/</code>; the feature files come from
+<code>scenarios[]</code>, which is where they were always meant to come from.</p>
+<p><strong>2. <code>business_rules</code> is a first-class collection.</strong> The invariants the packs
+carried — <em>&quot;Invoices are immutable once issued&quot;</em> — are genuine domain content
+and had no home in the schema at all. They now have one, validated for id
+shape and a title, and cross-referenced to a bounded context. <code>rules</code> keeps
+its narrow meaning: how the pack renders. Two different ideas had been sharing
+one key, and that is what made every pack uninstallable.</p>
+<p><strong>3. A scenario requires what the installer needs, and no more.</strong> Required:
+<code>id</code>, <code>requirement_id</code>, <code>target</code>, <code>template</code>, <code>feature</code>, <code>scenario</code>, <code>status</code> —
+enough to render the feature file and write the traceability row. Optional but
+validated when present: <code>use_case</code>, <code>command</code>, <code>aggregate</code>, <code>events</code>,
+<code>technical_artifacts</code>, <code>test_artifact</code>, <code>seed</code>.</p>
+<p>The old 14-field requirement forced every pack to express full CQRS. A
+front-end pack had to invent a command it does not have, which is the kind of
+rule that teaches people to write fiction to satisfy a validator.
+<code>technical_artifacts</code> in particular is now optional on purpose: a pack author
+describes a domain, not the caller&#39;s implementation. Absent, the matrix renders
+<code>TBD</code>, which is exactly the gap <code>plan</code> reads as <code>NEEDS_IMPLEMENTATION</code>.</p>
+<p><strong>4. <code>contracts</code> is a supported project type.</strong> It was in the schema and in
+<code>pack init</code>, and rejected by the installer. API-first delivery is a real
+enterprise case and the sample pack already existed, so the installer now
+accepts it rather than the schema quietly withdrawing the promise.</p>
+<p><strong>5. Inline flow sequences are valid YAML and now parse as such.</strong></p>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<p><strong>The eleven curated packs were migrated</strong>, and they install. The migration was
+mechanical: inline scenarios became <code>target</code> + <code>template</code> pairs with the
+Gherkin moved into real <code>.feature.tpl</code> files, <code>rules:</code> became
+<code>business_rules:</code>, and the <code>commands:</code> blocks were <em>derived</em> rather than
+invented — every command name and its use-case linkage was already written in
+<code>use_cases:</code> and had simply never been declared.</p>
+<p><strong><code>pack lint</code> now runs the installer&#39;s own validation.</strong> &quot;Lint passes&quot; means
+&quot;this pack can be installed&quot;. A lint that says yes to a pack nobody can install
+is worse than no lint, because it is trusted.</p>
+<p><strong><code>pack init</code> produces an installable pack</strong>, including the template files its
+<code>pack.yaml</code> declares. It previously wrote <code>pack.yaml</code> alone, so the pack it
+produced failed at the very next step it told you to run.</p>
+<p><strong>A test installs every pack in <code>packs/</code> into a scaffolded project.</strong> This is
+the guard that would have caught all of it, and it is the reason the format can
+now be trusted to stay coherent.</p>
+<p><code>PACK_SCHEMA_VERSION</code> moves to <strong>1.3.0</strong>. Older packs still load — only a
+version newer than the CLI understands is refused, which is the compatibility
+window ADR set out in <code>docs/release-process.md</code>.</p>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<p><strong>Relax the schema to match the code.</strong> Cheapest, and it would have made the
+schema stop describing anything worth validating — the domain linkage would go
+unchecked precisely when a pack does declare it.</p>
+<p><strong>Tighten the code to the schema&#39;s 14 fields.</strong> Maximum consistency of the
+domain model, at the price of forcing every pack into CQRS. Rejected for the
+same reason phase gates were rejected in ADR-0018: a rule that does not survive
+contact with real work gets satisfied with fiction.</p>
+<p><strong>Drop the business rules while migrating.</strong> Faster, and it would have thrown
+away written domain knowledge to avoid adding one key to a schema.</p>
+<h2 id="amendment-2026-08-23-e1-h13">Amendment — 2026-08-23 (E1 / H13)<a class="anchor" href="#amendment-2026-08-23-e1-h13" aria-label="Link to this section">#</a></h2>
+<p>The decision above stands: the schema is the authority. What was wrong was the
+schema, and nothing enforced it against the packs, so the two drifted quietly
+apart for six days.</p>
+<p><strong>Measured before amending.</strong> Ten of the eleven curated packs failed
+<code>schemas/pack.schema.json</code>, while all eleven passed <code>pack lint --strict</code>.
+<code>tests/unit/pack-schema.test.ts</code> existed and looked like the check that would
+have caught it — it validates <strong>one fixture pack</strong>. The packs actually shipped
+were read by nobody. Same shape as H14: a check that exists, appears to cover
+something, and is pointed somewhere else.</p>
+<p><strong>It was not paperwork.</strong> The schema said <code>context</code> and <code>invariants</code>, the packs
+write <code>bounded_context</code> and <code>responsibilities</code>, and the renderer read the
+schema&#39;s names. So installing any curated pack produced domain documents with
+empty columns:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">| AGG-001 | Invoice       | - | - |
+| EVT-001 | InvoiceIssued | - | - | invoiceId: string, … |</code></pre></figure>
+<p>The pack declared every one of those values, under its real name. A schema
+enforced against nothing had let three vocabularies grow — schema, packs,
+renderer — and the user paid for it in worse documents.</p>
+<p><strong>What changed.</strong></p>
+<ol>
+<li><p><strong>The schema describes the format that exists.</strong> <code>use_cases</code> requires
+<code>id</code>, <code>name</code>, <code>actor</code>, <code>requirement</code>; <code>commands</code> requires <code>id</code> and <code>name</code>;
+<code>aggregates</code> and <code>events</code> require <code>id</code> and <code>name</code>. Everything else is
+optional and validated when present — the treatment this ADR already gave
+<code>scenarios[]</code>, applied to the collections it missed.</p>
+<p>This is ADR-0022 reaching the schema. Requiring <code>aggregate</code>, <code>emits</code> and
+<code>scenarios</code> on every use case, or <code>fields</code> on every command, is full CQRS as
+the price of entry — <em>&quot;the kind of rule that teaches people to write fiction
+to satisfy a validator&quot;</em>, in this ADR&#39;s own words about the 14-field
+scenario.</p>
+</li>
+<li><p><strong>The real vocabulary is described, with the old names kept as aliases.</strong>
+<code>bounded_context</code> and <code>context</code>; <code>aggregate</code> and <code>producer</code>.
+<code>responsibilities</code> and <code>invariants</code> are <strong>different things</strong> and now have
+separate columns: what an aggregate owns is not the rules it must keep, and
+rendering one under the other&#39;s heading would be a mislabelled fact rather
+than a missing one.</p>
+</li>
+<li><p><strong>Both payload spellings are valid.</strong> Ten packs write
+<code>payload: [fileId: string]</code>, which reads as a string; <code>file-storage</code> writes a
+block sequence of mappings, which reads as objects. Both are in use and both
+are readable, so the schema describes both rather than retiring one by a rule
+nobody was enforcing. <em>(That inconsistency is worth settling on its own
+merits; this amendment does not settle it by validator.)</em></p>
+</li>
+<li><p><strong>The shipped packs are validated against the schema in the suite.</strong>
+<code>tests/unit/shipped-packs-schema.test.ts</code> walks <code>packs/**</code>. Without it this
+amendment would be one more statement of authority with nothing behind it.</p>
+</li>
+<li><p><strong>The rendered documents are checked, not just the install.</strong>
+<code>curated-packs.test.ts</code> now asserts that each pack&#39;s context and producer
+reach <code>aggregates.md</code> and <code>events.md</code>. Installing cleanly was never the
+claim worth testing.</p>
+</li>
+</ol>
+<p><code>PACK_SCHEMA_VERSION</code> moves to <strong>1.4.0</strong>: the format accepts more spellings than
+it did. No pack changed, and none had to — this amendment relaxes and corrects,
+so nothing that validated before stops validating, and the eleven packs keep
+declaring <code>1.3.0</code>.</p>
+<p><strong><code>depends_on</code> (B1, 2026-08-23).</strong> Optional on <code>requirements[]</code>: which
+requirements must land before this one, so the harness stacks a dependent&#39;s
+branch on its predecessor&#39;s instead of on the run&#39;s base. Validated here rather
+than at run time — a dependency naming nothing, or a cycle, is a defect in the
+pack, and <code>runLevels</code> discovering it mid-run means the pack is installed and an
+agent already paid for.</p>
+<p>It reaches the project through the matrix, on its own line beneath the table:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">&lt;!-- csda:trace REQ-002 depends=REQ-001 --&gt;</code></pre></figure>
+<p>Not inside a cell. The row parser splits on <code>|</code> and requires exactly ten cells,
+so anything appended to a row makes an eleventh and the row stops parsing — the
+annotation would survive one write and vanish on the next <code>expand</code>. Beneath the
+table it is ignored by the row parser by construction, which is round-trip
+safety rather than round-trip carefulness.</p>
+<p><strong>Two defects found on the way, fixed separately</strong> because they stand on their
+own: <code>validatePackModel</code> cross-referenced <code>aggregate.context</code> and was therefore
+inert on all eleven packs, and <code>parseYamlLite</code> split inline flow sequences on
+every comma, so one quoted responsibility parsed as four items.</p>
+<p><strong>Item 3 settled, not just described (2026-08-26, issue #116) — and item 3&#39;s
+own count was wrong.</strong> The 2026-08-23 amendment said ten packs wrote the
+string spelling and <code>file-storage</code> was the exception. Walking all eleven for
+this fix (<code>tests/unit/shipped-packs-schema.test.ts</code> now does this walk
+instead of naming one pack) found <strong>five</strong> writing the object spelling —
+<code>file-storage</code>, <code>multi-tenant</code>, <code>reporting</code>, <code>search</code>, <code>webhooks</code> — against
+six that already wrote the string form. The 2026-08-23 count was never
+re-verified after being written; this one is, by a test that walks every
+shipped pack rather than naming an example. All five are migrated; every
+curated pack now writes <code>payload: [fileId: string, …]</code>. The schema still
+describes both spellings — retiring the object form there is a separate,
+larger decision (it would reject any community pack that already uses it,
+which this migration has no evidence about either way) and stays out of
+scope here. <code>PACK_SCHEMA_VERSION</code> is unchanged: the schema itself did not
+change, only five packs&#39; content did.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0020-pack-format-standard.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li><li class="toc__l2"><a href="#amendment-2026-08-23-e1-h13">Amendment — 2026-08-23 (E1 / H13)</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

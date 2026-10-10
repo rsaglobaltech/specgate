@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en" data-slug="specs/harness">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harness — the spec-driven delivery loop — Specgate</title>
+<meta name="description" content="Harness — the spec-driven delivery loop">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Harness — the spec-driven delivery loop — Specgate">
+<meta property="og:description" content="Harness — the spec-driven delivery loop">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="harness-the-spec-driven-delivery-loop">Harness — the spec-driven delivery loop<a class="anchor" href="#harness-the-spec-driven-delivery-loop" aria-label="Link to this section">#</a></h1>
+<p><strong>Status:</strong> Stable (M5 — <code>harness run</code>)
+<strong>Owner:</strong> specgate
+<strong>Companion ADR:</strong> <a href="./adr/0013-harness-run-loop.html">ADR-0013</a></p>
+<p>A spec-driven repo is already a complete environment for an AI coding
+agent — it just needs an orchestrator:</p>
+<div class="table-wrap"><table><thead><tr><th>Agent need</th><th>Spec-driven repo provides</th></tr></thead><tbody><tr><td>Task queue</td><td><code>plan --format json</code></td></tr><tr><td>Per-task context</td><td>the feature file + <code>AI_RULES.md</code></td></tr><tr><td>Reward signal</td><td><code>validate --strict-tdd</code> + the project test command</td></tr><tr><td>State transition</td><td><code>done REQ-NNN</code></td></tr></tbody></table></div>
+<p><code>specgate harness run</code> is that orchestrator. It runs <strong>plan → context → agent
+→ verify → done</strong> for every pending requirement, with no human
+copy-pasting prompts.</p>
+<h2 id="tl-dr">TL;DR<a class="anchor" href="#tl-dr" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span> <span class="tok tok--o">--test-cmd</span> <span class="tok tok--s">&quot;npm test&quot;</span></code></pre></figure>
+<p>For each pending requirement, in an isolated <code>git worktree</code> on a fresh
+<code>harness/REQ-NNN</code> branch:</p>
+<ol>
+<li>Build a self-contained prompt — Gherkin scenario, <code>AI_RULES.md</code>, the
+exact artifact paths, and (on a retry) the previous gate failure.</li>
+<li>Shell out to the configured agent.</li>
+<li>Gate it: <code>validate --strict-tdd</code>, then the project test command.</li>
+<li>Green → <code>done REQ-NNN</code> + commit on the branch. Red → retry up to
+<code>--max-attempts</code>, feeding the specific failure back into the prompt.</li>
+<li>Emit a pass/fail/attempts report.</li>
+</ol>
+<p>The harness <strong>never merges a branch.</strong> A human reviews <code>harness/*</code> and
+merges what they trust.</p>
+<h2 id="why-a-worktree-per-requirement">Why a worktree per requirement<a class="anchor" href="#why-a-worktree-per-requirement" aria-label="Link to this section">#</a></h2>
+<p>Each requirement is implemented in its own <code>git worktree</code> cut from a
+clean base. Consequences:</p>
+<ul>
+<li>The agent for REQ-002 cannot see or break REQ-001&#39;s half-finished work.</li>
+<li>A failed requirement leaves a <code>harness/REQ-NNN</code> branch you can inspect,
+not a corrupted main checkout.</li>
+<li>The main working tree is never touched — the harness refuses to start
+if it is dirty.</li>
+</ul>
+<h2 id="vendor-neutrality">Vendor neutrality<a class="anchor" href="#vendor-neutrality" aria-label="Link to this section">#</a></h2>
+<p>The agent is <strong>any shell command</strong> containing the <code>{prompt_file}</code>
+placeholder. The harness writes the prompt to a temp file and substitutes
+the path:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;aider --yes --message-file {prompt_file}&quot;</span>
+<span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;cursor-agent --prompt-file {prompt_file}&quot;</span>
+<span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;my-wrapper.sh {prompt_file}&quot;</span></code></pre></figure>
+<p>There is no built-in agent runtime and no SDK dependency — the harness
+shells out and reads the exit code plus the gate result.</p>
+<h2 id="flags">Flags<a class="anchor" href="#flags" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Flag</th><th>Meaning</th></tr></thead><tbody><tr><td><code>--agent &lt;cmd&gt;</code></td><td>Agent command; must contain <code>{prompt_file}</code>. Required (unless <code>--dry-run</code>).</td></tr><tr><td><code>--test-cmd &lt;cmd&gt;</code></td><td>Project test command run as part of the gate. Optional.</td></tr><tr><td><code>--max-attempts &lt;n&gt;</code></td><td>Retries per requirement, feeding back the failure (default 3).</td></tr><tr><td><code>--req &lt;REQ-NNN&gt;</code></td><td>Limit to specific requirement(s). Repeatable.</td></tr><tr><td><code>--project-dir &lt;path&gt;</code></td><td>Project root (auto-detected from cwd if omitted).</td></tr><tr><td><code>--base-branch &lt;ref&gt;</code></td><td>Branch/ref each worktree is cut from (default: current HEAD).</td></tr><tr><td><code>--timeout &lt;seconds&gt;</code></td><td>Per-agent-invocation timeout (default 600).</td></tr><tr><td><code>--keep-worktrees</code></td><td>Do not remove worktrees after each requirement.</td></tr><tr><td><code>--force</code></td><td>Recreate <code>harness/REQ-NNN</code> branches that already exist.</td></tr><tr><td><code>--format &lt;text|json&gt;</code></td><td>Report format (default text).</td></tr><tr><td><code>--dry-run</code></td><td>Build and print prompts; never invoke the agent or touch git.</td></tr></tbody></table></div>
+<p><code>--agent</code>, <code>--test-cmd</code> and <code>--max-attempts</code> may also be set in
+<code>harness.config.yaml</code> so they need not be retyped:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">harness_version</span>: <span class="tok tok--n">1</span>
+<span class="tok tok--a">agent</span>: <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">test_cmd</span>: <span class="tok tok--s">&quot;npm test&quot;</span>
+<span class="tok tok--a">max_attempts</span>: <span class="tok tok--n">3</span>
+
+<span class="tok tok--c"># Project-wide directives prepended to every per-REQ prompt — your Role,</span>
+<span class="tok tok--c"># Active Project Boundary, Execution Policy. Use prompt_prefix for a</span>
+<span class="tok tok--c"># one-liner; prompt_prefix_file for the realistic multi-line case</span>
+<span class="tok tok--c"># (parseYamlLite has no block-scalar support).</span>
+<span class="tok tok--a">prompt_prefix_file</span>: ./.harness/prompt-prefix.md</code></pre></figure>
+<p>CLI flags always override the file.</p>
+<h3 id="prompt-prefix-prompt-prefix-file"><code>prompt_prefix</code> / <code>prompt_prefix_file</code><a class="anchor" href="#prompt-prefix-prompt-prefix-file" aria-label="Link to this section">#</a></h3>
+<p>The harness prompt is composed top-to-bottom as:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">[prompt_prefix or prompt_prefix_file]
+---
+# Implement REQ-NNN
+## Requirement facts
+## Suggested approach
+## Gherkin scenario
+## Project rules (AI_RULES.md inlined verbatim)
+## Definition of done
+## Previous attempt failed   (only on retries)</code></pre></figure>
+<p><code>prompt_prefix</code> is the natural home for the <strong>Role / Active Project
+Boundary / Execution Policy</strong> directives that used to live in a
+hand-crafted &quot;base prompt&quot; outside the harness. By moving them into
+<code>harness.config.yaml</code>, they ride along on every REQ without duplication
+and they version with the project.</p>
+<p>When both keys are set, <code>prompt_prefix_file</code> wins.</p>
+<h2 id="inspect-the-prompt-the-harness-will-hand-the-agent">Inspect the prompt the harness will hand the agent<a class="anchor" href="#inspect-the-prompt-the-harness-will-hand-the-agent" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness prompt REQ-<span class="tok tok--n">001</span></code></pre></figure>
+<p>Friendly alias for <code>specgate harness run --dry-run --req REQ-001</code>. Prints the
+exact prompt — prefix included — without invoking the agent, creating a
+worktree, or touching git. Use it to iterate on <code>AI_RULES.md</code> /
+<code>prompt_prefix</code>, or to copy-paste into a web AI when no CLI agent is
+available.</p>
+<p>Every prompt actually sent during <code>harness run</code> is also mirrored to
+<code>.specops/harness-prompts/REQ-NNN-&lt;timestamp&gt;-attempt-N.md</code> in the
+project for after-the-fact audit. Commit or gitignore that directory per
+your team&#39;s preference.</p>
+<h2 id="the-gate">The gate<a class="anchor" href="#the-gate" aria-label="Link to this section">#</a></h2>
+<p>The reward signal is <code>validate --strict-tdd</code> followed by the optional
+<code>--test-cmd</code>. Both must exit zero for a requirement to count as passed.</p>
+<h3 id="reading-what-the-runner-did-not-what-it-printed">Reading what the runner did, not what it printed<a class="anchor" href="#reading-what-the-runner-did-not-what-it-printed" aria-label="Link to this section">#</a></h3>
+<p>The gate&#39;s question has always been &quot;did the command exit zero?&quot;, and both
+silent holes this repository found live underneath it:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">1 scenario (1 passed) · 0 steps · exit 0     a scenario with no steps
+0 scenarios                     · exit 0     a filter that matched nothing</code></pre></figure>
+<p>Measured: a harness run whose test command was <code>cucumber-js --tags &#39;@does-not-exist&#39;</code> reported <code>1 passed</code>, published the branch and closed the
+requirement.</p>
+<p>When the message stream is available the gate reads it instead, and checks
+that a scenario for the requirement exists, that it <strong>ran</strong>, that it had
+steps, and that every one of them ended <code>PASSED</code> — plus how many scenarios
+ran in total, which is the number <code>filterHint</code> used to infer with a regex
+over prose.</p>
+<p>Two ways in, and neither guesses:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># harness.config.yaml — any runner, any command</span>
+<span class="tok tok--a">message_report</span>: .harness/cucumber.ndjson</code></pre></figure>
+<p>or a <strong>direct</strong> <code>cucumber-js</code> invocation, which the harness appends
+<code>--format message:&lt;tmp&gt;</code> to by itself. Deliberately narrow: <code>npm test</code> may
+well run Cucumber and there is no way to know from here, so it is left
+alone.</p>
+<p>None of it is required. A project that does not use Cucumber keeps the
+exit-code gate — a check that never applied must not fail anybody.</p>
+<p><strong>The gate is only as strong as the pack&#39;s scenarios.</strong> A pack with weak
+or vague Gherkin lets the harness wave through weak code. Hardening
+<code>pack lint</code> to flag vague scenarios therefore matters <em>more</em> than authoring
+ergonomics — it is what makes the harness an amplifier of good specs
+rather than an amplifier of bad ones.</p>
+<p>Those scenario rules now run here too, not only in <code>pack lint</code>: <code>specgate validate --strict-scenarios</code> applies them to <code>features/**/*.feature</code>, and
+<code>harness run</code> refuses a requirement whose scenario Cucumber would see as
+empty <strong>before</strong> creating the worktree — an attempt costs <code>max_attempts</code> ×
+the timeout, and there is no point buying that against a scenario that
+cannot fail.</p>
+<h3 id="filtering-by-tag">Filtering by tag<a class="anchor" href="#filtering-by-tag" aria-label="Link to this section">#</a></h3>
+<p><code>specgate expand</code> tags every scenario it generates with the requirement and
+scenario it belongs to:</p>
+<figure class="code" data-lang="gherkin"><figcaption class="code__head"><span class="code__lang">gherkin</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-gherkin"><span class="tok tok--an">@REQ-001</span> <span class="tok tok--an">@SCN-001</span>
+<span class="tok tok--k">Scenario</span>: Issuing an invoice emits InvoiceIssued</code></pre></figure>
+<p>A tag survives a rename and a title does not, which matters here more than
+anywhere: rewording a scenario is the one thing an agent does that turns the
+gate green and empty. Filter on the tag rather than the name:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--o">--test-cmd</span> <span class="tok tok--s">&quot;npx cucumber-js --tags '@{req}'&quot;</span></code></pre></figure>
+<p><code>{req}</code> and <code>{scenario}</code> are substituted per requirement, and the message
+protocol check above already prefers tags when matching a scenario to the
+requirement under test.</p>
+<p><code>specgate validate</code> uses the same tags to check the matrix points at a scenario
+that exists — a file that carries no tags is left alone, so an adopted
+repository is not failed for a link it was never given the means to make.</p>
+<h3 id="write-scope">Write scope<a class="anchor" href="#write-scope" aria-label="Link to this section">#</a></h3>
+<p>Before the gate runs, the harness checks what the agent actually wrote.
+The prompt asks it not to touch the spec; that was never verified, and an
+agent that cannot make a scenario pass can relax the scenario instead. A
+measured run of exactly that reported <code>1 passed</code>, published the branch and
+closed the requirement.</p>
+<p>Protected by default:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">spec.md            AI_RULES.md          features/**/*.feature
+docs/specs/**      .specops.lock        harness.config.yaml</code></pre></figure>
+<p>Touch one and the attempt fails with <code>agent_touched_protected_path</code>; the
+diff of the offending paths is fed into the next attempt&#39;s prompt, because
+the agent usually did it without meaning to and seeing the hunk is what
+corrects it.</p>
+<h3 id="the-gate-39-s-own-command-is-part-of-the-contract">The gate&#39;s own command is part of the contract<a class="anchor" href="#the-gate-39-s-own-command-is-part-of-the-contract" aria-label="Link to this section">#</a></h3>
+<p>The list above is the specification. It is not the file that defines the
+command the gate <em>runs</em>, and that gap was the same hole one level up: measured
+with a stub agent that wrote no implementation at all and only replaced
+<code>&quot;test&quot;: &quot;node --test tests/*.test.js&quot;</code> with <code>&quot;echo &#39;all good&#39;&quot;</code> over a red
+suite, the harness reported <code>✅ pass (1 attempt)</code>. An agent that could not pass
+the test could weaken the test.</p>
+<p>So the attempt also fails with <code>agent_rewrote_gate_command</code> when the script the
+gate command invokes is not the same before and after. The before and after go
+back to the agent, like the write-scope diff does.</p>
+<p>This does <strong>not</strong> protect the manifest. Adding a dependency mid-implementation
+is legitimate, and a guard that blocked it would be switched off within a day —
+at which point it protects nothing. Only the one script the gate names is
+compared. <code>npm test</code>, <code>npm run &lt;name&gt;</code>, <code>yarn</code>, <code>pnpm</code> and <code>make &lt;target&gt;</code>
+resolve to something readable; <code>mvn -B test</code>, <code>pytest</code> and <code>go test</code> do not,
+and there the check reports that it did not look rather than that it passed.</p>
+<p><strong>Creating a file that did not exist is not a violation.</strong> A requirement in
+category <code>NEEDS_FEATURE</code> is supposed to write its feature file, and git
+already separates the two cases: untracked is new, a tracked change is an
+edit. Deleting the declared feature and writing a fresh one shows up as a
+deletion, and is refused.</p>
+<p>Both lists are configurable, from the file only — a flag that widens what
+the agent may edit is a flag somebody eventually types to turn a red run
+green:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">protected_paths</span>: <span class="tok tok--c"># naming your own list replaces the defaults</span>
+  - <span class="tok tok--s">&quot;spec.md&quot;</span>
+  - <span class="tok tok--s">&quot;features/**/*.feature&quot;</span>
+<span class="tok tok--a">allow_paths</span>: <span class="tok tok--c"># an explicit escape hatch, never a silent one</span>
+  - <span class="tok tok--s">&quot;features/legacy/**&quot;</span></code></pre></figure>
+<h3 id="declared-artifacts">Declared artifacts<a class="anchor" href="#declared-artifacts" aria-label="Link to this section">#</a></h3>
+<p>After a <strong>green</strong> gate, the harness compares the diff with the paths the
+matrix row declares as the requirement&#39;s test and production artifacts. An
+agent can implement somewhere else, pass the scenario, and leave the row
+pointing at a file where the logic does not live.</p>
+<p>Missing → <code>declared_artifact_untouched</code>, a <strong>warning</strong> by default, an error
+under <code>--strict-artifacts</code>. Warning, because work can legitimately land in
+a shared module that already exists, and failing on that is the kind of
+gate that rejects good work.</p>
+<p>Only declarations that name a file are checked. A real matrix cell is
+markdown written by a person — the scaffolded one says <code>`API /health`, smoke test</code> and <code>TBD</code> — and comparing prose against a diff would warn on
+every project, which is how a warning becomes noise people skip.</p>
+<h2 id="is-the-requirement-ready-for-an-agent">Is the requirement ready for an agent?<a class="anchor" href="#is-the-requirement-ready-for-an-agent" aria-label="Link to this section">#</a></h2>
+<p><code>plan</code> has always known when a requirement&#39;s feature does not exist, its
+dependencies are unmet, or its row is <code>Deprecated</code>. The harness never used
+any of it as a filter, so the agent found out halfway through and the run
+paid <code>max_attempts</code> × the timeout to discover it.</p>
+<p><code>specgate plan --format json</code> now carries <code>ready</code> and <code>blockers[]</code> per
+requirement, each blocker with a <code>fix</code>:</p>
+<div class="table-wrap"><table><thead><tr><th>Check</th><th>Effect</th></tr></thead><tbody><tr><td>The feature file exists</td><td>blocks</td></tr><tr><td>Its scenarios are ones Cucumber could fail</td><td><strong>always skips</strong></td></tr><tr><td>Dependencies are done</td><td>blocks</td></tr><tr><td>Status is not <code>Deprecated</code></td><td>blocks</td></tr><tr><td>Status is not <code>Needs Clarification</code></td><td>blocks</td></tr><tr><td>The row declares a test artifact</td><td>warns</td></tr><tr><td>The row declares a production artifact</td><td>warns</td></tr></tbody></table></div>
+<p>&quot;Blocks&quot; means <code>harness run --skip-not-ready</code> will pass it over. Without
+the flag the harness warns and runs it anyway: the default is unchanged,
+and someone who wants to point an agent at a half-ready requirement may.</p>
+<p>The scenario check is the exception and skips regardless of the flag. That
+is not a preference — Cucumber passes an empty scenario, so the reward
+signal is counterfeit and a green run would prove nothing (H14).</p>
+<p><code>Needs Clarification</code> blocks for a reason worth stating: an agent asked to
+settle a disagreement settles it by guessing, and the guess arrives wearing
+a green gate.</p>
+<h2 id="an-agent-profile-per-requirement">An agent profile per requirement<a class="anchor" href="#an-agent-profile-per-requirement" aria-label="Link to this section">#</a></h2>
+<p><code>agent_profile</code> resolved one profile for the whole run, so an infrastructure
+requirement and a domain one got the same prompt prefix and the same allowed
+tools — and the allowances had to be the greatest common denominator of
+everything in the plan.</p>
+<p>A profile that declares <code>match:</code> selects itself instead:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--a">profiles</span>:
+<span class="tok tok--a">  infra</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p --allowedTools Read Write Edit 'Bash(terraform:*)' &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">    match</span>: { bounded_context: Platform }
+<span class="tok tok--a">  domain</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p --allowedTools Read Write Edit 'Bash(npm:*)' &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">    match</span>: { bounded_context: <span class="tok tok--s">&quot;*&quot;</span> }</code></pre></figure>
+<p>First match wins, so order in the file is the priority. No match uses the
+run&#39;s default — that is not an error. A profile with <strong>no</strong> <code>match:</code> is not
+a rule: it is chosen by name through <code>agent_profile</code>, and treating an absent
+<code>match:</code> as &quot;matches everything&quot; would make the first profile in the file
+swallow every requirement the moment somebody added a rule to another.</p>
+<p>Matchable keys are <code>bounded_context</code>, <code>requirement</code>, <code>feature</code> and
+<code>category</code>. <code>*</code> matches any value; an unknown key matches <strong>nothing</strong> rather
+than being ignored, so <code>bounded_contex:</code> — one letter short — cannot quietly
+become a rule that matches everything. A role named by <code>attempt_profiles</code>
+still wins for its own step: a step that says which role it is has already
+answered the question.</p>
+<h3 id="where-the-bounded-context-comes-from">Where the bounded context comes from<a class="anchor" href="#where-the-bounded-context-comes-from" aria-label="Link to this section">#</a></h3>
+<p>It is derived, not declared. Measured across the eleven curated packs: <strong>no
+scenario names an aggregate</strong> — not directly, and not through its use case —
+so matching on the bounded context would have matched nothing and used the
+default every time.</p>
+<p>The link exists one step further round. Use case → command → aggregate →
+bounded context resolves for <strong>all twenty-seven</strong> scenarios, so <code>specgate expand</code>
+follows it and records the result beside the matrix, by name rather than by
+id:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">&lt;!-- csda:trace REQ-002 depends=REQ-001 context=Payments --&gt;</code></pre></figure>
+<p><code>Payments</code> is what a person writes in <code>match:</code>; <code>BC-002</code> is an identifier
+they never chose. Same line as B1&#39;s <code>depends=</code>, because a trace line carries
+keys and a second regular expression would have agreed with the first only
+by luck.</p>
+<h2 id="a-ceiling-on-the-run">A ceiling on the run<a class="anchor" href="#a-ceiling-on-the-run" aria-label="Link to this section">#</a></h2>
+<p><code>max_attempts</code> was the only limit. Fourteen requirements × 3 attempts ×
+1200 s is hours of wall-clock and an unbounded bill — and the third real
+run ended because the account hit its monthly limit, which is the expensive
+way to find out there was no ceiling of our own.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--budget-seconds</span> <span class="tok tok--n">3600</span> <span class="tok tok--o">--max-requirements</span> <span class="tok tok--n">5</span></code></pre></figure>
+<p>Both are asked <strong>before starting</strong> each requirement, never in the middle of
+one: interrupting an attempt in flight would throw away the money already
+spent on it. A budget bounds what a run begins.</p>
+<p>Exhausting one is not an error. The run ends the ordinary way, the
+requirements it never started are reported as <code>skipped</code> with the reason,
+and the ledger is still written — a run that dies halfway writes none, so
+<code>specgate harness report</code> cannot say what the money bought.</p>
+<p>Neither relaxes anything: every worktree that does run passes the same
+gate.</p>
+<h3 id="what-a-run-costs-when-a-profile-says-so">What a run costs, when a profile says so<a class="anchor" href="#what-a-run-costs-when-a-profile-says-so" aria-label="Link to this section">#</a></h3>
+<p>The harness cannot see an agent&#39;s tokens — an agent is any shell command.
+A profile may declare roughly what a run of it costs, and <code>harness report</code>
+multiplies it out, labelled as declared rather than measured:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># .harness/profiles.yaml</span>
+<span class="tok tok--a">profiles</span>:
+<span class="tok tok--a">  local-claude</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">    cost_per_run_hint</span>: <span class="tok tok--n">0.35</span></code></pre></figure>
+<p>Attempts by a profile with no hint are counted separately, so the total
+never reads as complete when part of the run is missing from it.</p>
+<h2 id="resuming-an-interrupted-run">Resuming an interrupted run<a class="anchor" href="#resuming-an-interrupted-run" aria-label="Link to this section">#</a></h2>
+<p>An existing <code>harness/REQ-NNN</code> branch used to leave two options: skip it, or
+delete it with <code>--force</code>. After a crash, a Ctrl-C or a spend limit, neither
+is what you want — you either lose the work or cannot continue.</p>
+<p><code>--resume</code> re-attaches to the branch and, when it is still registered, to
+the worktree holding the agent&#39;s uncommitted work, and picks up where the
+run stopped. <code>--force</code> and <code>--resume</code> are refused together: they are
+opposites, and quietly choosing one is how work gets deleted.</p>
+<p>Where it picks up is read from the prompt archive, not from
+<code>.harness/runs/</code>. The run ledger is written when a run <em>finishes</em>, so an
+interrupted run leaves none — measured with <code>kill -9</code>, which leaves the
+branch, the worktree, the archive, and an empty ledger.</p>
+<p>Interrupted and exhausted get different answers, and the branch says which:</p>
+<div class="table-wrap"><table><thead><tr><th>Last run</th><th>Evidence</th><th>Resumes at</th></tr></thead><tbody><tr><td>Attempts exhausted</td><td>a <code>wip(…): FAILED the gate</code> commit</td><td>the next attempt</td></tr><tr><td>Interrupted</td><td>no such commit</td><td>the attempt that was cut short</td></tr></tbody></table></div>
+<p>An attempt that was killed never reached a gate verdict, so nothing was
+learned and the budget is not charged for it. The last failure the gate did
+report is recovered from the archived prompt that carried it, so the
+resumed attempt is not started blind.</p>
+<h2 id="retries">Retries<a class="anchor" href="#retries" aria-label="Link to this section">#</a></h2>
+<p>On a red gate, the harness captures the failing stage and its output,
+appends it to the next prompt under &quot;Previous attempt failed&quot;, and
+re-invokes the agent in the same worktree. After <code>--max-attempts</code> the
+requirement is <strong>parked</strong>: marked <code>fail</code> in the report, branch left for a
+human to pick up.</p>
+<h2 id="report">Report<a class="anchor" href="#report" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">── harness report ──
+  ✅ REQ-001  pass (1 attempt)   → harness/REQ-001
+  ✅ REQ-002  pass (2 attempts)  → harness/REQ-002
+  ❌ REQ-003  fail (3 attempts)  → harness/REQ-003
+       Gate failed at: test command
+
+  2 passed · 1 failed · 0 skipped
+  Review and merge the harness/* branches you trust.</code></pre></figure>
+<p><code>--format json</code> emits the same data as a machine-readable structure for
+CI dashboards. The command exits non-zero when any requirement did not
+pass.</p>
+<h3 id="specgate-harness-report-what-it-has-cost-and-whether-the-gate-is-any-good"><code>specgate harness report</code> — what it has cost, and whether the gate is any good<a class="anchor" href="#specgate-harness-report-what-it-has-cost-and-whether-the-gate-is-any-good" aria-label="Link to this section">#</a></h3>
+<p>Reads the run ledger (<code>.harness/runs/*.json</code>) and answers four questions
+the ledger alone does not:</p>
+<ul>
+<li><strong>where attempts end.</strong> Counted per attempt, not per requirement: one
+that passed on attempt 3 still failed twice, and those two are the
+interesting ones. The stages include <code>write-scope</code> and <code>artifacts</code>, so an
+attempt rejected for editing the spec reads differently from one that
+failed its tests.</li>
+<li><strong>which requirements spent every attempt and delivered nothing</strong> — the
+ones costing <code>max_attempts</code> × the timeout for no result.</li>
+<li><strong>the series over time</strong>, so a rate can be seen moving rather than
+guessed at.</li>
+<li><strong>how many failures were real.</strong></li>
+</ul>
+<p>That last one cannot be derived. A gate rejecting good work and a gate
+catching a genuine defect look identical in the ledger; only somebody who
+looked can say which happened. So it stays <code>—</code> until a person marks one:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness report <span class="tok tok--o">--mark-false-failure</span> REQ-<span class="tok tok--n">002</span> \
+  <span class="tok tok--o">--reason</span> <span class="tok tok--s">&quot;the shared module already implemented it; the row was wrong&quot;</span></code></pre></figure>
+<p><code>--reason</code> is required — a number nobody can audit later is worse than an
+honest blank. Marks are appended one JSON object per line to
+<code>.harness/false-failures.jsonl</code>, which is what survives a process dying
+mid-write, and a mark applies to the <strong>requirement</strong>, not to one run of it:
+what a person is saying is &quot;the gate was wrong about REQ-002&quot;.</p>
+<h2 id="limitations">Limitations<a class="anchor" href="#limitations" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>git</code> must be on <code>PATH</code>; the project must be a git repository.</li>
+<li>The harness does not merge branches — integration is a human decision.</li>
+<li>A requirement whose <code>harness/REQ-NNN</code> branch already exists is skipped
+unless <code>--force</code> is passed (which deletes and recreates the branch).</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/harness.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#tl-dr">TL;DR</a></li><li class="toc__l2"><a href="#why-a-worktree-per-requirement">Why a worktree per requirement</a></li><li class="toc__l2"><a href="#vendor-neutrality">Vendor neutrality</a></li><li class="toc__l2"><a href="#flags">Flags</a></li><li class="toc__l3"><a href="#prompt-prefix-prompt-prefix-file">prompt_prefix / prompt_prefix_file</a></li><li class="toc__l2"><a href="#inspect-the-prompt-the-harness-will-hand-the-agent">Inspect the prompt the harness will hand the agent</a></li><li class="toc__l2"><a href="#the-gate">The gate</a></li><li class="toc__l3"><a href="#reading-what-the-runner-did-not-what-it-printed">Reading what the runner did, not what it printed</a></li><li class="toc__l3"><a href="#filtering-by-tag">Filtering by tag</a></li><li class="toc__l3"><a href="#write-scope">Write scope</a></li><li class="toc__l3"><a href="#the-gate-39-s-own-command-is-part-of-the-contract">The gate&amp;#39;s own command is part of the contract</a></li><li class="toc__l3"><a href="#declared-artifacts">Declared artifacts</a></li><li class="toc__l2"><a href="#is-the-requirement-ready-for-an-agent">Is the requirement ready for an agent?</a></li><li class="toc__l2"><a href="#an-agent-profile-per-requirement">An agent profile per requirement</a></li><li class="toc__l3"><a href="#where-the-bounded-context-comes-from">Where the bounded context comes from</a></li><li class="toc__l2"><a href="#a-ceiling-on-the-run">A ceiling on the run</a></li><li class="toc__l3"><a href="#what-a-run-costs-when-a-profile-says-so">What a run costs, when a profile says so</a></li><li class="toc__l2"><a href="#resuming-an-interrupted-run">Resuming an interrupted run</a></li><li class="toc__l2"><a href="#retries">Retries</a></li><li class="toc__l2"><a href="#report">Report</a></li><li class="toc__l3"><a href="#specgate-harness-report-what-it-has-cost-and-whether-the-gate-is-any-good">specgate harness report — what it has cost, and whether the gate is any good</a></li><li class="toc__l2"><a href="#limitations">Limitations</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

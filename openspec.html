@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" data-slug="openspec">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Already on OpenSpec — Specgate</title>
+<meta name="description" content="Keep your OpenSpec specs; verify proves that what they call done is done.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Already on OpenSpec — Specgate">
+<meta property="og:description" content="Keep your OpenSpec specs; verify proves that what they call done is done.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html" class="is-active" aria-current="page">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Existing code</li><li aria-current="page">Already on OpenSpec</li></ol></nav>
+    <article class="prose">
+<h1 id="already-on-openspec">Already on OpenSpec<a class="anchor" href="#already-on-openspec" aria-label="Link to this section">#</a></h1>
+<p>Keep writing your specs with <a href="https://github.com/Fission-AI/OpenSpec" target="_blank" rel="noreferrer">OpenSpec</a>.
+Specgate checks that what OpenSpec calls done is done: every scenario an
+archived change claims has a test that names it. It reads <code>openspec/</code> in place
+and never writes to it.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest verify          <span class="tok tok--c"># the check</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest verify <span class="tok tok--o">--ids</span>    <span class="tok tok--c"># every scenario id, to name in tests</span></code></pre></figure>
+<h2 id="how-a-scenario-is-named">How a scenario is named<a class="anchor" href="#how-a-scenario-is-named" aria-label="Link to this section">#</a></h2>
+<p>Each scenario gets a stable id from its capability, requirement and scenario
+titles:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">openspec:&lt;capability&gt;/&lt;requirement&gt;/&lt;scenario&gt;
+openspec:billing/refunds/a-refund-over-the-limit-needs-approval</code></pre></figure>
+<p>A test is linked to a scenario by naming its id anywhere — the test title, a
+comment. That mention is the only link; there is nothing else to declare.</p>
+<figure class="code" data-lang="ts"><figcaption class="code__head"><span class="code__lang">ts</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-ts"><span class="tok tok--c">// openspec:billing/refunds/a-refund-over-the-limit-needs-approval</span>
+it(<span class="tok tok--s">&quot;a refund over the limit needs approval&quot;</span>, () =&gt; { … });</code></pre></figure>
+<h2 id="what-fails-and-what-is-only-reported">What fails, and what is only reported<a class="anchor" href="#what-fails-and-what-is-only-reported" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Means</th><th></th></tr></thead><tbody><tr><td><code>V1_unproved_claim</code></td><td>an archived change claims a scenario no test names</td><td>fails</td></tr><tr><td><code>V2_failing_suite</code></td><td>with <code>--run</code>, the test command fails</td><td>fails</td></tr><tr><td><code>V3_criterion_changed</code></td><td>a scenario&#39;s text changed since it was last verified (<code>--record</code>)</td><td>fails</td></tr><tr><td><code>V4_unknown_reference</code></td><td>an archived change names a requirement the spec no longer has</td><td>reported</td></tr><tr><td><code>V5_unreadable</code></td><td>a spec or task file does not parse</td><td>fails</td></tr><tr><td><code>V6_orphan_name</code></td><td>a test names an id that does not exist</td><td>reported</td></tr><tr><td><code>V7_unclaimed_coverage</code></td><td>scenarios with no claim and no test, as a percentage</td><td>reported</td></tr></tbody></table></div>
+<p>An active change whose tasks are all ticked is reported, not gated: it is not
+archived yet, so it claims nothing.</p>
+<h2 id="adopting-it-on-a-project-with-history">Adopting it on a project with history<a class="anchor" href="#adopting-it-on-a-project-with-history" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> verify <span class="tok tok--o">--since</span> origin/main   <span class="tok tok--c"># gate only what changed after this ref</span>
+<span class="tok tok--f">specgate</span> verify <span class="tok tok--o">--run</span>                 <span class="tok tok--c"># also run the suite (npm test by default)</span>
+<span class="tok tok--f">specgate</span> verify <span class="tok tok--o">--record</span>              <span class="tok tok--c"># after a green run, pin each verified scenario's text</span></code></pre></figure>
+<p><code>--since</code> lets you adopt without fixing the past first: older claims are
+reported, new ones are gated. <code>--record</code> writes <code>.specgate/verify.lock</code>, so a
+scenario edited later must be verified again (V3).</p>
+<h2 id="in-ci">In CI<a class="anchor" href="#in-ci" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml">- uses: actions/checkout@v4
+<span class="tok tok--a">  with</span>: { fetch-depth: <span class="tok tok--n">0</span> } <span class="tok tok--c"># `since` needs history</span>
+- uses: rsaglobaltech/specgate/actions/verify@main
+<span class="tok tok--a">  with</span>:
+<span class="tok tok--a">    run</span>: <span class="tok tok--s">&quot;true&quot;</span>
+<span class="tok tok--a">    test-cmd</span>: <span class="tok tok--s">&quot;npm test&quot;</span></code></pre></figure>
+<p>Without <code>since</code>, the action gates only claims made after the pull request&#39;s
+base commit. <code>--format github</code> turns findings into annotations on the spec
+lines. The same check is the MCP tool <code>specgate_verify</code>.</p>
+<h2 id="what-this-is-not">What this is not<a class="anchor" href="#what-this-is-not" aria-label="Link to this section">#</a></h2>
+<p><code>verify</code> does not run Specgate&#39;s own workflow — no <code>spec.md</code>, no matrix, no
+packs. It is the one thing a team on OpenSpec asks of it: that &quot;done&quot; is
+proved. Decided in <a href="specs/adr/README.html">ADR-0030</a>; the specification is
+<a href="specs/verify-foreign-specs.html">verify-foreign-specs</a>.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="case-studies/case-1.html"><span>Previous</span>Worked example: brownfield adoption</a><a class="pager__next" href="comparisons.html"><span>Next</span>Comparisons</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/openspec.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#how-a-scenario-is-named">How a scenario is named</a></li><li class="toc__l2"><a href="#what-fails-and-what-is-only-reported">What fails, and what is only reported</a></li><li class="toc__l2"><a href="#adopting-it-on-a-project-with-history">Adopting it on a project with history</a></li><li class="toc__l2"><a href="#in-ci">In CI</a></li><li class="toc__l2"><a href="#what-this-is-not">What this is not</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

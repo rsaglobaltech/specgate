@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en" data-slug="tutorial">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🚗 End-to-end tutorial — building Smart Parking — Specgate</title>
+<meta name="description" content="A complete worked example, from a blank folder to a delivered requirement.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="🚗 End-to-end tutorial — building Smart Parking — Specgate">
+<meta property="og:description" content="A complete worked example, from a blank folder to a delivered requirement.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html" class="is-active" aria-current="page">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Advanced</li><li aria-current="page">Tutorial: Smart Parking</li></ol></nav>
+    <article class="prose">
+<h1 id="end-to-end-tutorial-building-smart-parking">🚗 End-to-end tutorial — building <strong>Smart Parking</strong><a class="anchor" href="#end-to-end-tutorial-building-smart-parking" aria-label="Link to this section">#</a></h1>
+<p>A friendly, step-by-step walk through <strong>every</strong> command in
+<code>specgate</code>. We build one real backend project — <strong>Smart
+Parking</strong> — on top of the public demo pack
+<a href="https://github.com/rsaglobaltech/parking-management-specops" target="_blank" rel="noreferrer"><code>rsaglobaltech/parking-management-specops</code></a>.</p>
+<p>You do <strong>not</strong> need to understand the whole tool up front. Each step
+explains the <em>concept</em> first, then the command, then what you should see.</p>
+<blockquote>
+<p><strong><code>specgate</code></strong> is the short name for <code>specgate</code>. If you have not
+installed it globally, replace every <code>specgate</code> in this guide with
+<code>npx @rsaglobaltech/specgate@latest</code>.</p>
+</blockquote>
+<hr>
+<h2 id="before-anything-else-the-two-places-you-will-work">Before anything else: the two places you will work<a class="anchor" href="#before-anything-else-the-two-places-you-will-work" aria-label="Link to this section">#</a></h2>
+<p>This is the single most important idea in the tool, and the one that trips
+people up. There are <strong>two separate folders</strong> on your disk, and they are not
+the same thing:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">┌─────────────────────────────────────┐     ┌─────────────────────────────────────┐
+│  THE PACK REPO                      │     │  YOUR IMPLEMENTATION PROJECT        │
+│  parking-management-specops/        │     │  smart-parking/                     │
+│                                     │     │                                     │
+│  • pack.yaml  (the domain model)    │     │  • spec.md                          │
+│  • templates/ (Gherkin templates)   │     │  • features/**/*.feature            │
+│                                     │ ──▶ │  • docs/specs/traceability.md       │
+│  Reusable knowledge, versioned      │     │  • src/, test/  (the code YOU write)│
+│  with git tags (v0.1.0, v0.2.0…).   │     │  • .specops.lock  ← the link        │
+│  You only open this if you AUTHOR   │     │                                     │
+│  packs.                             │     │  Where you spend 95% of your time.  │
+└─────────────────────────────────────┘     └─────────────────────────────────────┘
+        the SOURCE of specs                       the project that CONSUMES them</code></pre></figure>
+<ul>
+<li>The <strong>pack repo</strong> is a library of domain knowledge. Think of it like a
+package on npm — you usually just <em>consume</em> a published version of it,
+you do not edit it.</li>
+<li>Your <strong>implementation project</strong> is the app you are building. It is a
+normal git repo with your real source code. <code>init</code> created it; <code>expand</code> /
+<code>specops add</code> copied rendered specs <em>into</em> it; and <code>.specops.lock</code> (a file
+<strong>inside your project</strong>) remembers which pack and version it came from.</li>
+</ul>
+<p><strong>The rule of thumb:</strong> unless a step explicitly says &quot;the pack repo&quot;, you
+run the command <strong>from inside your implementation project</strong>
+(<code>smart-parking/</code>). Every step below carries a 📍 badge so you are never in
+doubt.</p>
+<div class="table-wrap"><table><thead><tr><th>You run it from…</th><th>These commands</th></tr></thead><tbody><tr><td>📍 your <strong>implementation project</strong> (<code>smart-parking/</code>)</td><td><code>init</code>* · <code>validate</code> · <code>plan</code> · <code>done</code> · <code>specops add</code> · <code>specops diff</code> · <code>specops sync</code> · <code>specops remove</code> · <code>expand</code> · <code>harness run</code></td></tr><tr><td>📦 the <strong>pack repo</strong> (<code>parking-management-specops/</code>)</td><td><code>pack init</code> · <code>pack lint</code> · <code>pack lint --graph</code> · <code>pack infer</code> · and &quot;add a requirement as a pack author&quot;</td></tr></tbody></table></div>
+<p>* <code>init</code> is run from the <em>parent</em> directory — it <em>creates</em> the project
+folder. After that, you <code>cd</code> into it and stay there.</p>
+<hr>
+<h2 id="table-of-contents">Table of contents<a class="anchor" href="#table-of-contents" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><a href="#1-prerequisites">Prerequisites</a></li>
+<li><a href="#2-step-1--scaffold-the-project-init">Step 1 — Scaffold the project (<code>init</code>)</a></li>
+<li><a href="#3-step-2--apply-the-domain-pack-specops-add">Step 2 — Apply the domain pack (<code>specops add</code>)</a></li>
+<li><a href="#4-step-3--validate-the-project-validate">Step 3 — Validate the project (<code>validate</code>)</a></li>
+<li><a href="#5-step-4--see-what-is-left-to-build-plan">Step 4 — See what is left to build (<code>plan</code>)</a></li>
+<li><a href="#6-step-5--implement-a-requirement-and-close-the-loop-done">Step 5 — Implement a requirement and close the loop (<code>done</code>)</a></li>
+<li><a href="#7-step-6--add-a-new-requirement-as-a-project-consumer">Step 6 — Add a NEW requirement (as a project consumer)</a></li>
+<li><a href="#8-step-7--upgrade-the-pack-version-specops-diff--specops-sync">Step 7 — Upgrade the pack version (<code>specops diff</code> + <code>specops sync</code>)</a></li>
+<li><a href="#9-step-8--remove-a-pack-specops-remove">Step 8 — Remove a pack (<code>specops remove</code>)</a></li>
+<li><a href="#10-step-9--author-your-own-pack">Step 9 — Author your own pack (<code>pack init</code> · <code>lint</code> · <code>--graph</code> · <code>infer</code>)</a></li>
+<li><a href="#11-step-10--add-a-new-requirement-as-a-pack-author">Step 10 — Add a NEW requirement (as a pack author)</a>
+11½. <a href="#11-step-10--change-a-requirement-that-already-shipped">Step 10½ — Change a requirement that already shipped (<code>change</code>)</a></li>
+<li><a href="#12-step-11--automate-delivery-with-the-harness-harness-run">Step 11 — Automate delivery with the harness (<code>harness run</code>)</a></li>
+<li><a href="#13-step-12--companion-tooling">Step 12 — Companion tooling (VS Code · MCP · agents)</a></li>
+<li><a href="#14-command-cheat-sheet">Command cheat-sheet</a></li>
+</ol>
+<hr>
+<h2 id="1-prerequisites">1. Prerequisites<a class="anchor" href="#1-prerequisites" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Node.js ≥ 22</strong> and <strong>git</strong> on your <code>PATH</code>.</li>
+<li>Network access the first time you run <code>specops add</code> — it clones the pack
+repo into a per-user cache (<code>~/.cache/specgate/packs/…</code>). After that it is
+offline.</li>
+</ul>
+<p>Optionally install the CLI globally so <code>specgate</code> works everywhere:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npm</span> install <span class="tok tok--o">-g</span> @rsaglobaltech/specgate@latest
+<span class="tok tok--f">specgate</span> <span class="tok tok--o">--version</span>          <span class="tok tok--c"># 0.2.0</span>
+<span class="tok tok--f">specgate</span> <span class="tok tok--o">--help</span>             <span class="tok tok--c"># the eight commands of the daily loop</span>
+<span class="tok tok--f">specgate</span> <span class="tok tok--o">--help</span> <span class="tok tok--o">--all</span>       <span class="tok tok--c"># the whole surface</span></code></pre></figure>
+<hr>
+<h2 id="2-step-1-scaffold-the-project-init">2. Step 1 — Scaffold the project (<code>init</code>)<a class="anchor" href="#2-step-1-scaffold-the-project-init" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> the <strong>parent</strong> directory (e.g. <code>~/sandbox</code>). <code>init</code>
+<em>creates</em> <code>smart-parking/</code> for you.</p>
+</blockquote>
+<h3 id="concept">Concept<a class="anchor" href="#concept" aria-label="Link to this section">#</a></h3>
+<p><code>init</code> does not write any business logic. It creates an <strong>empty-but-valid
+spec-driven project</strong>: the folders, the requirements document, and the
+traceability matrix — the skeleton everything else fills in. It is the
+<code>git init</code> of spec-driven development.</p>
+<p>You describe the project in a small <strong>config file</strong>. It can be a YAML
+mapping (<code>.yaml</code> / <code>.yml</code>) or the legacy <code>KEY=&quot;value&quot;</code> format (<code>.config</code>);
+<code>init</code> picks the parser from the file extension. We use YAML here.</p>
+<h3 id="do-it">Do it<a class="anchor" href="#do-it" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">mkdir</span> <span class="tok tok--o">-p</span> ~/sandbox &amp;&amp;<span class="tok tok--f"> cd</span> ~/sandbox
+<span class="tok tok--f">
+cat</span> &gt; smart-parking.yaml &lt;&lt;<span class="tok tok--s">'EOF'</span>
+<span class="tok tok--c"># Required</span>
+PROJECT_NAME: Smart Parking
+PROJECT_SLUG: smart-parking
+PROJECT_TYPE: backend <span class="tok tok--c"># backend | frontend | mobile</span>
+DOMAIN: parking operations
+STACK: Quarkus <span class="tok tok--n">3</span>.x, Java <span class="tok tok--n">21</span>, PostgreSQL, RESTEasy Reactive, Maven
+API_STYLE: REST with DTO boundaries
+TESTING: JUnit <span class="tok tok--n">5</span>, Testcontainers, Cucumber
+
+<span class="tok tok--c"># Optional</span>
+LANG: en
+MODULES: <span class="tok tok--s">&quot;&quot;</span> <span class="tok tok--c"># e.g. auth,billing</span>
+EOF
+<span class="tok tok--f">
+specgate</span> init <span class="tok tok--o">--config</span> ./smart-parking.yaml <span class="tok tok--o">--out</span> .
+<span class="tok tok--k">cd</span> smart-parking          <span class="tok tok--c"># ← from here on, you stay inside the project</span></code></pre></figure>
+<p><strong>Flags:</strong> <code>--force</code> (overwrite an existing folder), <code>--dry-run</code> (print
+what it would do, write nothing), <code>--no-git</code> (skip <code>git init</code>).</p>
+<h3 id="what-you-should-see">What you should see<a class="anchor" href="#what-you-should-see" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">smart-parking/
+├── spec.md                  # the requirements document — prose
+├── AGENTS.md              # stack guardrails for AI agents
+├── README.md
+├── features/                # Gherkin scenarios will live here
+└── docs/specs/
+    ├── traceability.md       # the requirement ↔ code matrix — the spine
+    └── adr/</code></pre></figure>
+<p>The scaffold ships with one placeholder requirement, so the project is
+already valid. Now we give it a real domain.</p>
+<hr>
+<h2 id="3-step-2-apply-the-domain-pack-specops-add">3. Step 2 — Apply the domain pack (<code>specops add</code>)<a class="anchor" href="#3-step-2-apply-the-domain-pack-specops-add" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>.</p>
+</blockquote>
+<h3 id="concept-2">Concept<a class="anchor" href="#concept-2" aria-label="Link to this section">#</a></h3>
+<p>A <strong>domain pack</strong> is reusable, versioned domain knowledge: requirements,
+use cases, commands, aggregates, events, and the Gherkin scenarios that pin
+them down. It lives in its own repo (here:
+<code>parking-management-specops</code>), tagged with versions like <code>v0.1.0</code>.</p>
+<p><code>specops add</code> is the <strong>npm-install of spec-driven development</strong>. It:</p>
+<ol>
+<li>clones the pack repo (at the version you pin),</li>
+<li><strong>renders the pack&#39;s templates into your project</strong> — this is the arrow
+in the diagram at the top: knowledge flows <em>from</em> the pack repo <em>into</em>
+<code>smart-parking/</code>,</li>
+<li>writes a <strong><code>.specops.lock</code></strong> file in your project that remembers the
+repo, version, commit and variables — so you never retype them.</li>
+</ol>
+<p>You are not editing the pack. You are pulling a snapshot of it into your
+project.</p>
+<h3 id="do-it-2">Do it<a class="anchor" href="#do-it-2" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> specops add \
+  <span class="tok tok--o">--pack-repo</span> https://github.com/rsaglobaltech/parking-management-specops.git \
+  <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">1.0</span> \
+  <span class="tok tok--o">--pack</span> backend \
+  <span class="tok tok--o">--var</span> PROJECT_NAME=<span class="tok tok--s">&quot;Smart Parking&quot;</span> \
+  <span class="tok tok--o">--var</span> PROJECT_SLUG=smart-parking \
+  <span class="tok tok--o">--var</span> DOMAIN=<span class="tok tok--s">&quot;parking operations&quot;</span></code></pre></figure>
+<h3 id="what-you-should-see-all-of-this-lands-inside-smart-parking">What you should see — all of this lands <strong>inside <code>smart-parking/</code></strong><a class="anchor" href="#what-you-should-see-all-of-this-lands-inside-smart-parking" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>New <code>.feature</code> files under <code>features/</code> (vehicle entry, capacity
+threshold, billing, overstay, receipts…).</li>
+<li>New rows in <code>docs/specs/traceability.md</code> — one per scenario.</li>
+<li>Rich domain docs: <code>docs/specs/{use-cases,aggregates,commands,events,domain-model}.md</code>.</li>
+<li><strong><code>.specops.lock</code></strong> — the link back to the pack. Records repo, version,
+resolved commit, and your <code>--var</code> values.</li>
+<li><strong><code>.specops/baseline/…</code></strong> — a verbatim copy of exactly what the pack
+rendered. This is the &quot;known-good ancestor&quot; that makes a later
+<code>specops sync</code> able to merge safely instead of clobbering your edits.</li>
+</ul>
+<blockquote>
+<p>✅ <strong>Commit <code>.specops.lock</code> and <code>.specops/</code> to git.</strong> A teammate who
+clones your project needs both for <code>specops sync</code> to work.</p>
+</blockquote>
+<p><strong>Useful flags:</strong> <code>--dry-run</code>, <code>--no-examples</code> (skip files marked
+<code>seed: true</code>), <code>--cache-dir &lt;path&gt;</code>, <code>--pack-root &lt;path&gt;</code> (point at a local
+pack folder instead of a git URL — handy offline or for testing).</p>
+<blockquote>
+<p><strong><code>expand</code> is the low-level version of this.</strong> <code>specops add</code> is the
+friendly wrapper; <code>expand</code> does the same rendering with more explicit
+flags and no lockfile bookkeeping. Use <code>specops add</code> day to day.</p>
+</blockquote>
+<hr>
+<h2 id="4-step-3-validate-the-project-validate">4. Step 3 — Validate the project (<code>validate</code>)<a class="anchor" href="#4-step-3-validate-the-project-validate" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>.</p>
+</blockquote>
+<h3 id="concept-3">Concept<a class="anchor" href="#concept-3" aria-label="Link to this section">#</a></h3>
+<p><code>validate</code> is your <strong>safety net</strong>. It checks that the project still hangs
+together: required files and folders exist, there is at least one
+<code>.feature</code>, every feature file is referenced in the traceability matrix,
+status values are valid, and the Gherkin parses.</p>
+<h3 id="do-it-3">Do it<a class="anchor" href="#do-it-3" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> validate .</code></pre></figure>
+<p>A clean run prints <code>Validation passed</code> and a feature count.</p>
+<h3 id="the-tdd-gate-strict-tdd">The TDD gate — <code>--strict-tdd</code><a class="anchor" href="#the-tdd-gate-strict-tdd" aria-label="Link to this section">#</a></h3>
+<p>Plain <code>validate</code> checks structure. <code>--strict-tdd</code> adds the rule that <strong>the
+matrix may not run ahead of reality</strong>:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> validate . <span class="tok tok--o">--strict-tdd</span></code></pre></figure>
+<p>It additionally fails when:</p>
+<ul>
+<li>a row has a <code>TBD</code> test artifact but a status past <code>Draft</code> — <code>[TDD-1]</code>,</li>
+<li>a row has a status but no Scenario ID — <code>[TDD-2]</code>,</li>
+<li>a <code>REQ-NNN</code> is mentioned in <code>spec.md</code> but has no row in
+<code>traceability.md</code> — <code>[TDD-3]</code>.</li>
+</ul>
+<p>Wire <code>validate --strict</code> into CI and a git pre-commit hook. It is the
+gate that keeps specs and code honest.</p>
+<hr>
+<h2 id="5-step-4-see-what-is-left-to-build-plan">5. Step 4 — See what is left to build (<code>plan</code>)<a class="anchor" href="#5-step-4-see-what-is-left-to-build-plan" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>.</p>
+</blockquote>
+<h3 id="concept-4">Concept<a class="anchor" href="#concept-4" aria-label="Link to this section">#</a></h3>
+<p>After <code>specops add</code>, your project has a pile of scenarios but no code yet.
+<code>plan</code> answers <strong>&quot;what do I do next?&quot;</strong> It reads <code>traceability.md</code> and looks
+at the filesystem, then tells you, per requirement, what is missing.</p>
+<h3 id="do-it-4">Do it<a class="anchor" href="#do-it-4" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> plan</code></pre></figure>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">📋 Plan  (5 requirements, 5 pending)
+
+  ⚠️  Test missing (write the test first)
+    REQ-001   SCN-001
+      ✓ feature: features/capacity/capacity_threshold.feature
+      · test:    capacity_threshold.steps
+      · code:    Occupancy monitor
+  …</code></pre></figure>
+<p>Each requirement lands in one bucket: <code>NEEDS_FEATURE</code>, <code>NEEDS_EVERYTHING</code>,
+<code>NEEDS_TEST</code>, <code>NEEDS_IMPLEMENTATION</code>, <code>NEEDS_STATUS_UPDATE</code>, or <code>DONE</code>. A
+<code>✓</code> means the file exists; a <code>·</code> means it is still missing.</p>
+<h3 id="machine-readable-mode">Machine-readable mode<a class="anchor" href="#machine-readable-mode" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> plan <span class="tok tok--o">--format</span> json</code></pre></figure>
+<p>Emits a stable JSON structure (<code>summary</code>, <code>next_steps[]</code>,
+<code>requirements[]</code>…). This is the <strong>task queue</strong> the harness consumes in
+Step 11, and what an AI agent reads to know what to work on.</p>
+<hr>
+<h2 id="6-step-5-implement-a-requirement-and-close-the-loop-done">6. Step 5 — Implement a requirement and close the loop (<code>done</code>)<a class="anchor" href="#6-step-5-implement-a-requirement-and-close-the-loop-done" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>.</p>
+</blockquote>
+<h3 id="concept-5">Concept<a class="anchor" href="#concept-5" aria-label="Link to this section">#</a></h3>
+<p>Now you write actual code. The loop for every requirement is always the
+same four moves:</p>
+<ol>
+<li><strong>Read</strong> the <code>.feature</code> file <code>plan</code> pointed you at — it is the
+executable spec, the source of truth for behaviour.</li>
+<li><strong>Write the test first</strong>, so it fails for the right reason (TDD).</li>
+<li><strong>Write the production code</strong> until the test passes.</li>
+<li><strong>Close the loop</strong> with <code>done</code> — this updates the matrix.</li>
+</ol>
+<h3 id="do-it-5">Do it<a class="anchor" href="#do-it-5" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># After the test + code for REQ-001 exist:</span>
+<span class="tok tok--f">specgate</span> <span class="tok tok--k">done</span> REQ-<span class="tok tok--n">001</span> <span class="tok tok--o">--strict</span> <span class="tok tok--o">--test-cmd</span> <span class="tok tok--s">&quot;npm test&quot;</span></code></pre></figure>
+<p><code>done</code> flips that requirement&#39;s <code>Status</code> cell in <code>traceability.md</code> to
+<code>Implemented</code>. <code>--check</code> runs <code>validate</code> first and refuses to write on failure,
+so the matrix can never claim something is done while the gates are red.
+<code>--strict</code> runs the strong gate instead — <code>--strict-tdd --strict-links --strict-coverage</code>. <code>--status &lt;Status&gt;</code> targets another terminal state
+(<code>Verified</code>, <code>Released</code>, …).</p>
+<p><strong>Pass <code>--test-cmd</code>, or set <code>test_cmd:</code> in <code>harness.config.yaml</code>.</strong> Without one,
+<code>done</code> checks the specification and never runs your code — and it says so rather
+than reporting a pass. <code>Implemented</code> is what other people read off the matrix;
+it should not be a claim nothing executed.</p>
+<p>Re-run <code>specgate plan</code> — <code>REQ-001</code> is now under <strong>✅ Done</strong>.</p>
+<hr>
+<h2 id="7-step-6-add-a-new-requirement-as-a-project-consumer">7. Step 6 — Add a NEW requirement (as a project consumer)<a class="anchor" href="#7-step-6-add-a-new-requirement-as-a-project-consumer" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>. You do <strong>not</strong>
+touch the pack repo here.</p>
+</blockquote>
+<h3 id="concept-6">Concept<a class="anchor" href="#concept-6" aria-label="Link to this section">#</a></h3>
+<p>The pack covers parking operations in general, but <strong>your</strong> project needs
+something extra — say, <em>&quot;operators can reserve a parking spot in advance.&quot;</em>
+You add it <strong>locally, in your project</strong>. It is yours; it is not part of the
+pack; and — importantly — it will <strong>survive every future <code>specops sync</code></strong>,
+because sync only reconciles files the pack owns.</p>
+<p>The workflow is the same <code>validate</code>/<code>plan</code>/<code>done</code> loop you already know,
+with two new files in front of it.</p>
+<h3 id="7-1-describe-it-in-spec-md">7.1 Describe it in <code>spec.md</code><a class="anchor" href="#7-1-describe-it-in-spec-md" aria-label="Link to this section">#</a></h3>
+<p>Add a section to <code>spec.md</code>:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">## REQ-101 — Reserve a parking spot in advance
+
+An operator can reserve a specific spot for a future time window so a
+known vehicle is guaranteed space on arrival.</code></pre></figure>
+<blockquote>
+<p>Use an ID range that will not collide with the pack. The pack uses
+<code>REQ-001…</code>; keep your project-local requirements at <code>REQ-101</code> and up.</p>
+</blockquote>
+<h3 id="7-2-write-the-gherkin-scenario-first">7.2 Write the Gherkin scenario first<a class="anchor" href="#7-2-write-the-gherkin-scenario-first" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">mkdir</span> <span class="tok tok--o">-p</span> features/reservations
+<span class="tok tok--f">cat</span> &gt; features/reservations/reserve_spot.feature &lt;&lt;<span class="tok tok--s">'EOF'</span>
+@REQ-<span class="tok tok--n">101</span>
+Feature: Reserve a parking spot
+
+  Scenario: Reserving an available spot <span class="tok tok--k">for</span> a future window
+    Given spot <span class="tok tok--s">&quot;A-12&quot;</span> is free between <span class="tok tok--s">&quot;09:00&quot;</span> and <span class="tok tok--s">&quot;11:00&quot;</span>
+    When an operator reserves spot <span class="tok tok--s">&quot;A-12&quot;</span> <span class="tok tok--k">for</span> that window
+    Then spot <span class="tok tok--s">&quot;A-12&quot;</span> is marked <span class="tok tok--s">&quot;Reserved&quot;</span> <span class="tok tok--k">for</span> that window
+    And a <span class="tok tok--s">&quot;SpotReserved&quot;</span> event is emitted
+EOF</code></pre></figure>
+<h3 id="7-3-add-the-traceability-row-with-specgate-req-not-by-hand">7.3 Add the traceability row — with <code>specgate req</code>, not by hand<a class="anchor" href="#7-3-add-the-traceability-row-with-specgate-req-not-by-hand" aria-label="Link to this section">#</a></h3>
+<p>The matrix is a ten-column pipe table. Editing it by hand is the single most
+common source of broken links in a spec-driven project, and one misplaced <code>|</code>
+breaks the row silently. <code>specgate req</code> writes it for you:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> req add <span class="tok tok--s">&quot;Reserve a parking spot in advance&quot;</span>
+<span class="tok tok--c">#   ✔  Added REQ-101 (SCN-101, status Draft)</span>
+<span class="tok tok--f">
+specgate</span> req link REQ-<span class="tok tok--n">101</span> \
+  <span class="tok tok--o">--feature</span> features/reservations/reserve_spot.feature \
+  <span class="tok tok--o">--uc</span> UC-<span class="tok tok--n">101</span> <span class="tok tok--o">--cmd</span> ReserveSpotCommand \
+  <span class="tok tok--o">--agg</span> ParkingFacility <span class="tok tok--o">--evt</span> SpotReserved</code></pre></figure>
+<p><code>req add</code> picks the next free ID, so it cannot collide with the pack&#39;s range,
+and <code>req link</code> fills the columns you name and leaves the rest alone.</p>
+<blockquote>
+<p><code>AGENTS.md</code> tells every agent never to edit <code>traceability.md</code> directly.
+The same applies to you: <code>specgate req</code>, <code>specgate done</code> and <code>specgate change archive</code>
+are the three things that write it.</p>
+</blockquote>
+<h3 id="7-4-validate-plan-implement-close">7.4 Validate, plan, implement, close<a class="anchor" href="#7-4-validate-plan-implement-close" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> status                      <span class="tok tok--c"># where the project stands, and what is next</span>
+<span class="tok tok--f">specgate</span> validate . <span class="tok tok--o">--strict</span>     <span class="tok tok--c"># confirms REQ-101 is wired in correctly</span>
+<span class="tok tok--f">specgate</span> plan                        <span class="tok tok--c"># REQ-101 now appears as pending</span>
+<span class="tok tok--c"># …write ReservationServiceTest, then ReservationService.java…</span>
+<span class="tok tok--f">specgate</span> req link REQ-<span class="tok tok--n">101</span> <span class="tok tok--o">--test</span> ReservationServiceTest <span class="tok tok--o">--code</span> ReservationService.java
+<span class="tok tok--f">specgate</span> <span class="tok tok--k">done</span> REQ-<span class="tok tok--n">101</span> <span class="tok tok--o">--strict</span></code></pre></figure>
+<p>That is the whole consumer loop: <strong>spec → scenario → matrix row → validate
+→ plan → implement → done.</strong> To put a requirement into the <strong>pack</strong> so
+every project gets it, see Step 10.</p>
+<blockquote>
+<p><strong>This is the day-one path.</strong> Once a requirement has shipped, changing it
+goes through the change lifecycle instead — Step 11½ — so the modification
+is reviewable as intent rather than as a diff of the matrix.</p>
+</blockquote>
+<hr>
+<h2 id="8-step-7-upgrade-the-pack-version-specops-diff-specops-sync">8. Step 7 — Upgrade the pack version (<code>specops diff</code> + <code>specops sync</code>)<a class="anchor" href="#8-step-7-upgrade-the-pack-version-specops-diff-specops-sync" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>.</p>
+<p>⚠️ <strong>This is the step people get wrong.</strong> <code>diff</code> and <code>sync</code> run <strong>from
+your implementation project</strong>, <em>not</em> from the pack repo. The pack repo is
+just the source. <code>diff</code>/<code>sync</code> reconcile <strong>your project</strong> against a newer
+pack version, using the <code>.specops.lock</code> that lives inside your project.
+You never <code>cd</code> into <code>parking-management-specops</code> for this.</p>
+</blockquote>
+<h3 id="concept-7">Concept<a class="anchor" href="#concept-7" aria-label="Link to this section">#</a></h3>
+<p>Time passes. The pack maintainers publish a new git tag — say <code>v0.2.0</code> —
+with new scenarios and fixes. You decide <em>when</em> to adopt it. Two commands:</p>
+<ul>
+<li><strong><code>specops diff</code></strong> — <em>preview</em>. Renders the pack at the new version into a
+throwaway temp folder and shows you what would change. Writes nothing.</li>
+<li><strong><code>specops sync</code></strong> — <em>apply</em>. Re-renders the pack and <strong>three-way merges</strong>
+the result into your project, preserving your local edits.</li>
+</ul>
+<h3 id="8-1-preview-the-change-specops-diff">8.1 Preview the change — <code>specops diff</code><a class="anchor" href="#8-1-preview-the-change-specops-diff" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># still inside smart-parking/</span>
+<span class="tok tok--f">specgate</span> specops diff <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">2.0</span></code></pre></figure>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">── backend @ v0.2.0 (current: v0.1.0) ──
+  + features/pricing/dynamic_pricing.feature
+  ~ docs/specs/use-cases.md
+  ~ docs/specs/traceability.md
+
+  1 added · 2 modified · 9 unchanged</code></pre></figure>
+<p><code>+</code> is a new file, <code>~</code> is a modified one. Nothing is written.
+<code>--format json</code> (alias <code>--plan</code>) emits the same data for tooling.</p>
+<h3 id="8-2-apply-it-specops-sync">8.2 Apply it — <code>specops sync</code><a class="anchor" href="#8-2-apply-it-specops-sync" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> specops sync <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">2.0</span></code></pre></figure>
+<p><code>sync</code> re-renders the pack and, for every file, compares <strong>three versions</strong>:</p>
+<ul>
+<li><strong>base</strong> — what the pack rendered last time (kept in <code>.specops/baseline/</code>),</li>
+<li><strong>local</strong> — what is in your project now (you may have hand-edited it),</li>
+<li><strong>incoming</strong> — what the pack renders at the new version.</li>
+</ul>
+<p>From that it picks a per-file outcome:</p>
+<div class="table-wrap"><table><thead><tr><th>Outcome</th><th>Meaning</th></tr></thead><tbody><tr><td><code>added</code></td><td>new file from the pack — written</td></tr><tr><td><code>unchanged</code></td><td>identical already — nothing to do</td></tr><tr><td><code>updated</code></td><td>you never touched it → take the pack&#39;s new version</td></tr><tr><td><code>kept</code></td><td>the pack did <strong>not</strong> change it but you did → <strong>your edit is preserved</strong></td></tr><tr><td><code>merged</code></td><td>both changed, different lines → merged cleanly</td></tr><tr><td><code>CONFLICT</code></td><td>both changed the <strong>same</strong> lines → git-style <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> markers written</td></tr></tbody></table></div>
+<p><code>sync</code> <strong>exits non-zero</strong> if any file is left in <code>CONFLICT</code>, so CI notices.
+Resolve the markers by hand, then re-run.</p>
+<p><strong>Flags:</strong> <code>--dry-run</code> (preview, write nothing), <code>--force</code> (pack always
+wins — discard local edits), <code>--abort-on-conflict</code> (leave conflicting files
+untouched instead of writing markers), <code>--pack &lt;id&gt;</code> (sync just one pack).</p>
+<h3 id="8-3-after-a-sync">8.3 After a sync<a class="anchor" href="#8-3-after-a-sync" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> validate . <span class="tok tok--o">--strict</span>
+<span class="tok tok--f">specgate</span> plan                        <span class="tok tok--c"># new REQs from the pack now show as pending</span>
+<span class="tok tok--f">git</span> add .specops.lock .specops/ docs/ features/
+<span class="tok tok--f">git</span> commit <span class="tok tok--o">-m</span> <span class="tok tok--s">&quot;chore: sync parking pack to v0.2.0&quot;</span></code></pre></figure>
+<blockquote>
+<p>Running <code>specgate specops sync</code> <strong>without</strong> <code>--pack-version</code> just re-renders
+everything at the versions already pinned in <code>.specops.lock</code> — handy
+after a fresh clone, or to regenerate a file someone deleted.</p>
+</blockquote>
+<hr>
+<h2 id="9-step-8-remove-a-pack-specops-remove">9. Step 8 — Remove a pack (<code>specops remove</code>)<a class="anchor" href="#9-step-8-remove-a-pack-specops-remove" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>.</p>
+</blockquote>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> specops remove backend</code></pre></figure>
+<p><code>remove</code> drops the pack&#39;s entry from <code>.specops.lock</code>. It deliberately does
+<strong>not</strong> delete the generated files — you may have hand-edited tests that
+point at them. Review with <code>git status</code> and delete what you no longer want
+by hand. <code>--dry-run</code> shows what would be removed.</p>
+<hr>
+<h2 id="10-step-9-author-your-own-pack">10. Step 9 — Author your own pack<a class="anchor" href="#10-step-9-author-your-own-pack" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📦 <strong>Run from:</strong> the <strong>pack repo</strong> — a folder for <em>your</em> pack (e.g.
+<code>~/sandbox/domain-packs/…</code>), <strong>not</strong> your implementation project. This is
+the one place in the tutorial where you leave <code>smart-parking/</code>.</p>
+</blockquote>
+<h3 id="concept-8">Concept<a class="anchor" href="#concept-8" aria-label="Link to this section">#</a></h3>
+<p>So far you have <em>consumed</em> a pack. Eventually you will want to package
+<strong>your own</strong> domain knowledge so other projects (or your future self) can
+<code>specops add</code> it. Four commands cover the authoring lifecycle.</p>
+<h3 id="10-1-scaffold-pack-init">10.1 Scaffold — <code>pack init</code><a class="anchor" href="#10-1-scaffold-pack-init" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--k">cd</span> ~/sandbox
+<span class="tok tok--f">specgate</span> pack init <span class="tok tok--o">--out</span> ./domain-packs <span class="tok tok--o">--name</span> <span class="tok tok--s">&quot;Reservations Backend&quot;</span> <span class="tok tok--o">--type</span> backend
+<span class="tok tok--c"># flavours: backend · frontend · contracts</span></code></pre></figure>
+<p>Writes <code>./domain-packs/reservations/backend/pack.yaml</code> plus a <code>templates/</code>
+folder.</p>
+<h3 id="10-2-lint-pack-lint">10.2 Lint — <code>pack lint</code><a class="anchor" href="#10-2-lint-pack-lint" aria-label="Link to this section">#</a></h3>
+<p><code>pack lint</code> validates a pack beyond its JSON Schema: unique IDs,
+cross-reference integrity, and <strong>scenario quality</strong>.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> pack lint <span class="tok tok--o">--pack-root</span> ./domain-packs <span class="tok tok--o">--pack</span> reservations/backend</code></pre></figure>
+<p>The scenario-quality rules flag vague or thin Gherkin — a <code>Scenario Outline</code> with no <code>Examples</code>, a scenario missing a <code>When</code>/<code>Then</code>, fewer than
+three steps, a generic title, vague step language (<code>works</code>, <code>correctly</code>,
+<code>as expected</code>, <code>etc</code>, <code>TODO</code>, <code>...</code>), or a <code>pack.yaml</code> scenario name that
+has drifted from its template title.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># In CI — and before a pack feeds the harness — promote those to errors:</span>
+<span class="tok tok--f">specgate</span> pack lint <span class="tok tok--o">--pack-root</span> ./domain-packs <span class="tok tok--o">--pack</span> reservations/backend <span class="tok tok--o">--strict</span></code></pre></figure>
+<p>This matters because the pack&#39;s scenarios become the <strong>reward signal</strong> for
+the harness (Step 11): weak scenarios let the harness wave through weak
+code.</p>
+<h3 id="10-3-see-the-reference-graph-pack-lint-graph">10.3 See the reference graph — <code>pack lint --graph</code><a class="anchor" href="#10-3-see-the-reference-graph-pack-lint-graph" aria-label="Link to this section">#</a></h3>
+<p>The hardest part of authoring a pack is keeping the
+<code>REQ → UC → CMD/QUERY/AGG → EVT</code> cross-references consistent by hand.
+<code>--graph</code> draws that spine so you can <em>see</em> it:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># Mermaid (default) — renders natively in GitHub and VS Code</span>
+<span class="tok tok--f">specgate</span> pack lint <span class="tok tok--o">--pack-root</span> ./domain-packs <span class="tok tok--o">--pack</span> reservations/backend <span class="tok tok--o">--graph</span>
+
+<span class="tok tok--c"># Graphviz DOT</span>
+<span class="tok tok--f">specgate</span> pack lint <span class="tok tok--o">--pack-root</span> ./domain-packs <span class="tok tok--o">--pack</span> reservations/backend <span class="tok tok--o">--graph</span> <span class="tok tok--o">--graph-format</span> dot</code></pre></figure>
+<p>A reference to an ID/name that does not exist becomes a red <strong>missing</strong>
+node in the diagram <strong>and</strong> is listed on stderr — and the command exits
+non-zero, so <code>--graph</code> doubles as a CI link-check.</p>
+<h3 id="10-4-invert-the-flow-pack-infer">10.4 Invert the flow — <code>pack infer</code><a class="anchor" href="#10-4-invert-the-flow-pack-infer" aria-label="Link to this section">#</a></h3>
+<p>Writing the model first (requirements → use cases → commands → events) and
+the scenarios last has a waterfall smell. <code>pack infer</code> flips it: write the
+<code>.feature</code> first, get a proposed <code>pack.yaml</code> skeleton back.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> pack infer <span class="tok tok--o">--from</span> ./drafts/reserve_spot.feature</code></pre></figure>
+<p>It heuristically maps a <code>@REQ-NNN</code> tag → a requirement reference; the
+<code>Feature:</code> name → the use case name; each <code>When</code> step → a command <strong>or a
+query</strong>; a quoted PascalCase token in a <code>Then</code> step → an event; each
+<code>Scenario:</code> → a <code>scenarios[]</code> entry. Anything it cannot infer is left as an
+explicit <code>TODO:</code> — a skeleton to review, never a silent guess. Output goes to
+stdout (<code>--format json</code> for tooling); it never mutates <code>pack.yaml</code>.</p>
+<p>Five things it does that are worth knowing, because each one used to be a
+correction you made by hand:</p>
+<ul>
+<li><p><strong>The same operation is proposed once.</strong> A happy path and its failure
+exercise one command; they used to arrive as two entries with two ids.</p>
+</li>
+<li><p><strong>A <code>When</code> that reads becomes a query</strong>, with a <code>QRY-</code> id — &quot;searches&quot;,
+&quot;views&quot;, &quot;lists&quot;. The pack model already separates queries from commands;
+inference now does too.</p>
+</li>
+<li><p><strong>Names drop the glue.</strong> &quot;10 more vehicles enter the facility&quot; gives
+<code>MoreVehiclesEnterFacility</code>, not <code>MoreVehiclesEnterThe</code>.</p>
+</li>
+<li><p><strong>Field names are proposed from the Gherkin</strong> — <code>&lt;placeholders&gt;</code> in a
+Scenario Outline and <code>key: value</code> pairs — each with a <code>TODO</code> for its type.
+The names are in the file; the types are not, and a guessed type that looked
+confident is exactly what <a href="specs/adr/0014-pack-infer-heuristic.html">ADR-0014</a>
+refuses.</p>
+</li>
+<li><p><strong><code>--from</code> repeats, and takes a directory.</strong> A capability is rarely one file,
+and inferring per file proposes a shared command once per file:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> pack infer <span class="tok tok--o">--from</span> ./drafts/            <span class="tok tok--c"># every .feature in it</span>
+<span class="tok tok--f">specgate</span> pack infer <span class="tok tok--o">--from</span> a.feature <span class="tok tok--o">--from</span> b.feature</code></pre></figure>
+</li>
+</ul>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># Review the proposal, then merge the parts you want:</span>
+<span class="tok tok--f">specgate</span> pack infer <span class="tok tok--o">--from</span> ./drafts/reserve_spot.feature &gt;&gt; domain-packs/reservations/backend/pack.yaml</code></pre></figure>
+<hr>
+<h2 id="11-step-10-add-a-new-requirement-as-a-pack-author">11. Step 10 — Add a NEW requirement (as a pack author)<a class="anchor" href="#11-step-10-add-a-new-requirement-as-a-pack-author" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📦 <strong>Run from:</strong> the <strong>pack repo</strong> (e.g. a clone of
+<code>parking-management-specops</code>, or your own pack folder). This is the
+<em>other half</em> of &quot;adding a requirement&quot; — Step 6 added one to a single
+project; this adds one to the <strong>pack</strong>, so <strong>every</strong> project that
+<code>specops sync</code>s will receive it.</p>
+</blockquote>
+<h3 id="11-1-draft-the-scenario-then-infer-the-model">11.1 Draft the scenario, then infer the model<a class="anchor" href="#11-1-draft-the-scenario-then-infer-the-model" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># inside the pack repo</span>
+<span class="tok tok--f">cat</span> &gt; drafts/waitlist.feature &lt;&lt;<span class="tok tok--s">'EOF'</span>
+@REQ-<span class="tok tok--n">006</span>
+Feature: Capacity waitlist
+
+  Scenario: Joining the waitlist when the facility is full
+    Given the facility is at full capacity
+    When a driver requests entry
+    Then the driver is added to the waitlist
+    And a <span class="tok tok--s">&quot;DriverWaitlisted&quot;</span> event is emitted
+EOF
+<span class="tok tok--f">
+specgate</span> pack infer <span class="tok tok--o">--from</span> drafts/waitlist.feature</code></pre></figure>
+<h3 id="11-2-merge-the-inferred-skeleton-into-pack-yaml">11.2 Merge the inferred skeleton into <code>pack.yaml</code><a class="anchor" href="#11-2-merge-the-inferred-skeleton-into-pack-yaml" aria-label="Link to this section">#</a></h3>
+<p>Add the new <code>requirement</code>, <code>use_case</code>, <code>command</code>, <code>event</code> and <code>scenario</code>
+entries to <code>pack.yaml</code>, replacing every <code>TODO:</code> with real values and fixing
+the IDs so they fit the pack&#39;s numbering. Add the feature template under
+<code>templates/features/…</code> and point the scenario&#39;s <code>template:</code> / <code>target:</code>
+fields at it.</p>
+<h3 id="11-3-lint-including-the-graph">11.3 Lint — including the graph<a class="anchor" href="#11-3-lint-including-the-graph" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> pack lint <span class="tok tok--o">--pack-root</span> . <span class="tok tok--o">--pack</span> backend <span class="tok tok--o">--strict</span>
+<span class="tok tok--f">specgate</span> pack lint <span class="tok tok--o">--pack-root</span> . <span class="tok tok--o">--pack</span> backend <span class="tok tok--o">--graph</span></code></pre></figure>
+<p><code>--strict</code> catches a weak new scenario; <code>--graph</code> shows the new
+<code>REQ-006 → UC-006 → … → DriverWaitlisted</code> spine and shouts if you mistyped
+a reference.</p>
+<h3 id="11-4-version-tag-publish">11.4 Version, tag, publish<a class="anchor" href="#11-4-version-tag-publish" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># bump metadata.version in pack.yaml (e.g. 0.1.0 → 0.2.0), then:</span>
+<span class="tok tok--f">git</span> commit <span class="tok tok--o">-am</span> <span class="tok tok--s">&quot;feat: add capacity waitlist (REQ-006)&quot;</span>
+<span class="tok tok--f">git</span> tag v0.<span class="tok tok--n">2.0</span>
+<span class="tok tok--f">git</span> push <span class="tok tok--o">--tags</span></code></pre></figure>
+<h3 id="11-5-consumers-adopt-it-back-in-their-projects">11.5 Consumers adopt it — back in their projects<a class="anchor" href="#11-5-consumers-adopt-it-back-in-their-projects" aria-label="Link to this section">#</a></h3>
+<p>Now anyone with a project that uses this pack picks up <code>REQ-006</code> through
+the normal Step 7 flow — <strong>from inside their own implementation project</strong>:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># 📍 inside smart-parking/  (NOT the pack repo)</span>
+<span class="tok tok--f">specgate</span> specops diff <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">2.0</span>     <span class="tok tok--c"># preview: + waitlist feature, ~ matrix</span>
+<span class="tok tok--f">specgate</span> specops sync <span class="tok tok--o">--pack-version</span> v0.<span class="tok tok--n">2.0</span>     <span class="tok tok--c"># three-way merge into the project</span>
+<span class="tok tok--f">specgate</span> plan                                   <span class="tok tok--c"># REQ-006 now shows as pending</span></code></pre></figure>
+<p>That is the full pack-author loop: <strong>draft scenario → <code>pack infer</code> → merge
+→ <code>pack lint --strict --graph</code> → version + tag → consumers <code>diff</code> +
+<code>sync</code>.</strong></p>
+<hr>
+<h2 id="11-step-10-change-a-requirement-that-already-shipped">11¼. Step 10½ — Change a requirement that already shipped<a class="anchor" href="#11-step-10-change-a-requirement-that-already-shipped" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>.</p>
+</blockquote>
+<h3 id="concept-9">Concept<a class="anchor" href="#concept-9" aria-label="Link to this section">#</a></h3>
+<p>Step 6 added a requirement on a blank page. This is the other case, and it is
+the one you hit for the rest of the project&#39;s life: <strong>REQ-101 shipped, and now
+it has to change.</strong></p>
+<p>Editing <code>spec.md</code> and the matrix directly would work, and it would leave no
+record of <em>why</em>. A change makes the modification reviewable as intent — a
+delta stating only what moves — and archiving it writes the matrix rows for you.</p>
+<h3 id="open-it">Open it<a class="anchor" href="#open-it" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change new reservations-need-a-deposit
+<span class="tok tok--c">#   ✔ Change reservations-need-a-deposit created (lite · REQ ids REQ-102…REQ-104 reserved)</span>
+<span class="tok tok--f">
+specgate</span> change status
+<span class="tok tok--c">#   ✔ proposal   proposal.md</span>
+<span class="tok tok--c">#   ▶ specs      specs/**/spec.md</span>
+<span class="tok tok--c">#   Next → Write specs/**/spec.md</span></code></pre></figure>
+<p>The reserved ID range means two changes in flight never hand out the same
+<code>REQ-NNN</code>.</p>
+<h3 id="write-the-delta">Write the delta<a class="anchor" href="#write-the-delta" aria-label="Link to this section">#</a></h3>
+<p>Only what moves. <code>specgate change instructions specs</code> prints the template, the
+rules the validator enforces and your project&#39;s declared stack:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown"># Delta — reservations
+
+## MODIFIED Requirements
+
+### Requirement: REQ-101 — Reserve a parking spot in advance
+
+The system SHALL require a deposit before confirming a reservation, and SHALL
+release the spot if the deposit is not paid within 15 minutes.
+
+#### Scenario: SCN-101 — A reservation without a deposit expires
+
+- GIVEN spot &quot;A-12&quot; is reserved but unpaid
+- WHEN 15 minutes pass
+- THEN the reservation is cancelled and the spot is free again
+
+&lt;!-- csda:trace uc=UC-101 cmd=ReserveSpotCommand agg=ParkingFacility evt=ReservationExpired
+     feature=features/reservations/reserve_spot.feature --&gt;</code></pre></figure>
+<p><code>MODIFIED</code> replaces the whole requirement block; it does not merge scenario by
+scenario. Steps are plain <code>- GIVEN</code> bullets, and the body needs <code>SHALL</code>,
+<code>MUST</code>, <code>SHOULD</code> or <code>MAY</code> — the validator rejects both alternatives.</p>
+<h3 id="review-archive-implement">Review, archive, implement<a class="anchor" href="#review-archive-implement" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change validate                       <span class="tok tok--c"># runs inside `specgate validate` too</span>
+<span class="tok tok--f">specgate</span> change archive reservations-need-a-deposit <span class="tok tok--o">--dry-run</span>
+<span class="tok tok--f">specgate</span> change archive reservations-need-a-deposit <span class="tok tok--o">--yes</span></code></pre></figure>
+<p>Archiving is the part that earns the ceremony. It applies the delta to
+<code>docs/specs/capabilities/</code>, <strong>writes the traceability rows</strong>, copies the
+proposed <code>.feature</code> files into <code>features/</code>, and files the change under
+<code>docs/specs/changes/archive/&lt;date&gt;-&lt;id&gt;/</code>.</p>
+<p>The moment it lands, the requirement is real work again:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> plan                        <span class="tok tok--c"># the modified REQ is pending once more</span>
+<span class="tok tok--f">specgate</span> validate . <span class="tok tok--o">--strict</span>     <span class="tok tok--c"># fails with [TDD-1] once you move it to In Dev</span></code></pre></figure>
+<blockquote>
+<p><strong>It composes with packs.</strong> When the pack itself changes, <code>specgate specops diff --as-change</code> derives exactly this kind of proposal from the version bump — so
+you review an upstream upgrade as intent rather than as a file diff. That is
+Step 7 with one extra flag.</p>
+</blockquote>
+<p>→ <a href="reviewing-changes.html">Reviewing changes</a> for the full reference.</p>
+<hr>
+<h2 id="11-bootstrap-before-the-harness-the-only-freeform-ai-step">11½. Bootstrap before the harness (the only freeform-AI step)<a class="anchor" href="#11-bootstrap-before-the-harness-the-only-freeform-ai-step" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>.</p>
+</blockquote>
+<h3 id="concept-10">Concept<a class="anchor" href="#concept-10" aria-label="Link to this section">#</a></h3>
+<p>The harness implements <strong>one REQ at a time</strong> inside an isolated worktree.
+That is great for <em>iterating</em>, but it does not bootstrap your project:
+it assumes the build system is already there, the BDD framework is wired,
+and at least one bounded context runs end-to-end. Phase 1 — that first
+scaffolding — is the only step where you hand a freeform AI prompt to
+opencode/Claude/Cursor.</p>
+<p>The complete prompt, ready to paste, lives at
+<a href="./bootstrap-prompt.html"><code>docs/bootstrap-prompt.md</code></a>. It tells the agent:</p>
+<ul>
+<li>it is your <strong>Lead Architect</strong>;</li>
+<li>the current directory is the only scope;</li>
+<li><code>spec.md</code>, <code>AGENTS.md</code>, <code>features/**/*.feature</code> are <strong>read-only</strong>;</li>
+<li>to make <code>specgate validate . --strict</code> + the project test command pass
+with the first bounded context end-to-end — then <strong>stop</strong>.</li>
+</ul>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># 1. Open opencode/Claude/Cursor inside smart-parking/</span>
+<span class="tok tok--c"># 2. Paste docs/bootstrap-prompt.md verbatim, then &quot;go&quot;.</span>
+<span class="tok tok--c"># 3. When the agent is done, prove it:</span>
+<span class="tok tok--f">specgate</span> validate . <span class="tok tok--o">--strict</span>
+<span class="tok tok--f">mvn</span> <span class="tok tok--o">-B</span> test          <span class="tok tok--c"># or your stack's test command</span>
+<span class="tok tok--f">specgate</span> plan            <span class="tok tok--c"># remaining REQs show as pending</span>
+<span class="tok tok--f">git</span> commit <span class="tok tok--o">-am</span> <span class="tok tok--s">&quot;phase 1: bootstrap&quot;</span></code></pre></figure>
+<p>From this point on the harness takes over — you never paste a prompt
+again. The universal directives from <code>bootstrap-prompt.md</code> (Role, Active
+Project Boundary, Execution Policy) move into <code>harness.config.yaml</code> so
+they ride along on every REQ.</p>
+<hr>
+<h2 id="12-step-11-automate-delivery-with-the-harness-harness-run">12. Step 11 — Automate delivery with the harness (<code>harness run</code>)<a class="anchor" href="#12-step-11-automate-delivery-with-the-harness-harness-run" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>📍 <strong>Run from:</strong> inside your project — <code>smart-parking/</code>.</p>
+</blockquote>
+<h3 id="concept-11">Concept<a class="anchor" href="#concept-11" aria-label="Link to this section">#</a></h3>
+<p>Everything in Steps 4–6 — read the scenario, write the test, write the
+code, run <code>done</code> — is a loop a machine can drive. <code>harness run</code> is that
+driver. For each pending requirement, in an <strong>isolated <code>git worktree</code></strong> on a
+fresh <code>harness/REQ-NNN</code> branch, it:</p>
+<ol>
+<li>builds a self-contained prompt (the Gherkin scenario + <code>AGENTS.md</code> +
+the exact artifact paths + any previous failure),</li>
+<li>shells out to <strong>your</strong> AI agent,</li>
+<li>gates the result with <code>validate --strict</code> + your test command,</li>
+<li>on green → runs <code>done</code> and commits; on red → retries, feeding the
+failure back into the next prompt,</li>
+<li>prints a pass/fail/attempts report.</li>
+</ol>
+<p>It is <strong>vendor-neutral</strong>: the agent is <em>any shell command</em> that contains
+the <code>{prompt_file}</code> placeholder. The harness never merges a branch — you
+review and merge <code>harness/*</code> yourself.</p>
+<h3 id="12-1-configure-it-using-opencode-as-the-agent-with-a-project-wide-prompt-prefix">12.1 Configure it — using <strong>opencode</strong> as the agent, with a project-wide prompt prefix<a class="anchor" href="#12-1-configure-it-using-opencode-as-the-agent-with-a-project-wide-prompt-prefix" aria-label="Link to this section">#</a></h3>
+<p>Start by generating the two files rather than copying them out of this page:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness init</code></pre></figure>
+<p>It writes <code>harness.config.yaml</code> and <code>.harness/prompt-prefix.md</code>, detects your
+gate from the build files it finds (<code>mvn -B test</code> here, from <code>pom.xml</code>), and
+deliberately leaves <code>agent:</code> unset — which agent runs this is your choice and
+your credentials. Read the prefix it generates and make it sound like your
+team; the rest of this section is what a filled-in version looks like.</p>
+<p>If you drive your editor with <a href="https://opencode.ai" target="_blank" rel="noreferrer">opencode</a>, point the
+harness at it. The harness writes each prompt to a temp file and substitutes
+its path for <code>{prompt_file}</code>; <code>opencode run</code> takes a prompt string, so read
+the file in:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># harness.config.yaml — at the root of smart-parking/</span>
+<span class="tok tok--a">harness_version</span>: <span class="tok tok--n">1</span>
+<span class="tok tok--a">agent</span>: <span class="tok tok--s">'opencode run &quot;$(cat {prompt_file})&quot;'</span>
+<span class="tok tok--a">test_cmd</span>: <span class="tok tok--s">&quot;mvn -q test&quot;</span>
+<span class="tok tok--a">max_attempts</span>: <span class="tok tok--n">3</span>
+
+<span class="tok tok--c"># Project-wide directives prepended to every per-REQ prompt: Role,</span>
+<span class="tok tok--c"># Active Project Boundary, Execution Policy. Use prompt_prefix for a</span>
+<span class="tok tok--c"># one-liner; prompt_prefix_file for the realistic multi-line case.</span>
+<span class="tok tok--a">prompt_prefix_file</span>: ./.harness/prompt-prefix.md</code></pre></figure>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">&lt;!-- .harness/prompt-prefix.md --&gt;
+
+# Role
+
+You are the Lead Technical Architect and Senior Backend Engineer.
+
+# Active Project Boundary
+
+- Current directory is the only scope. Do NOT scan siblings.
+
+# Execution Policy
+
+- Start coding. No planning-only output.
+- Hexagonal architecture is non-negotiable (see AGENTS.md).
+- Never modify AGENTS.md, spec.md, or features/\*_/_.feature.</code></pre></figure>
+<p>With a config file you do not have to retype anything. (Any other agent
+works the same way — e.g. <code>claude -p &lt; {prompt_file}</code> or
+<code>aider --yes --message-file {prompt_file}</code>.) The <code>prompt_prefix</code> /
+<code>prompt_prefix_file</code> rides along on <strong>every</strong> per-REQ prompt, so your
+universal directives are not duplicated and not forgotten.</p>
+<h3 id="12-2-dry-run-first">12.2 Dry-run first<a class="anchor" href="#12-2-dry-run-first" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--dry-run</span></code></pre></figure>
+<p><code>--dry-run</code> builds and prints the prompt for every pending requirement
+<strong>without</strong> invoking the agent or touching git. Read what opencode would
+receive before you spend tokens.</p>
+<h3 id="12-3-run-it">12.3 Run it<a class="anchor" href="#12-3-run-it" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># the working tree must be clean — the harness refuses a dirty tree</span>
+<span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--agent</span> <span class="tok tok--s">'opencode run &quot;$(cat {prompt_file})&quot;'</span> <span class="tok tok--o">--test-cmd</span> <span class="tok tok--s">&quot;mvn -q test&quot;</span></code></pre></figure>
+<p>(If you put the agent and test command in <code>harness.config.yaml</code>, plain
+<code>specgate harness run</code> is enough.)</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">── harness report ──
+  ✅ REQ-002  pass (1 attempt)   → harness/REQ-002
+  ✅ REQ-003  pass (2 attempts)  → harness/REQ-003
+  ❌ REQ-004  fail (3 attempts)  → harness/REQ-004
+       Gate failed at: test command
+
+  2 passed · 1 failed · 0 skipped
+  Review and merge the harness/* branches you trust.</code></pre></figure>
+<p><strong>Flags:</strong> <code>--req REQ-NNN</code> (limit to specific requirements, repeatable —
+great for trying one first), <code>--max-attempts &lt;n&gt;</code>, <code>--base-branch &lt;ref&gt;</code>,
+<code>--timeout &lt;seconds&gt;</code>, <code>--keep-worktrees</code>, <code>--force</code> (recreate existing
+<code>harness/*</code> branches), <code>--format json</code>.</p>
+<p>The command exits non-zero if any requirement did not pass, so CI can gate
+on it. Each result is a branch you can check out, inspect, and merge — or
+throw away.</p>
+<h3 id="12-4-inspect-what-the-agent-will-receive-harness-prompt">12.4 Inspect what the agent will receive (<code>harness prompt</code>)<a class="anchor" href="#12-4-inspect-what-the-agent-will-receive-harness-prompt" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness prompt REQ-<span class="tok tok--n">001</span></code></pre></figure>
+<p>Prints the exact prompt the harness <em>would</em> hand the agent for one REQ —
+prefix included — without invoking the agent, creating worktrees, or
+touching git. Use it to:</p>
+<ul>
+<li>iterate on <code>AGENTS.md</code> and <code>prompt_prefix</code> and see the effect immediately;</li>
+<li>copy-paste the prompt into a web AI when no CLI agent is available;</li>
+<li>review what the team&#39;s bootstrap directives currently say.</li>
+</ul>
+<p>Every prompt the harness actually sends during <code>harness run</code> is also
+mirrored to <code>.specops/harness-prompts/REQ-NNN-&lt;timestamp&gt;-attempt-N.md</code>
+for after-the-fact review. Commit or gitignore that folder per your
+team&#39;s preference.</p>
+<hr>
+<h2 id="12-multi-stack-one-pack-many-implementations">12½. Multi-stack: one pack, many implementations<a class="anchor" href="#12-multi-stack-one-pack-many-implementations" aria-label="Link to this section">#</a></h2>
+<p>The pack/implementation split lets you ship the <strong>same domain spec</strong> in
+multiple stacks without duplicating requirements or scenarios. Each
+implementation is its own repo:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">parking-management-specops@v0.1.0      ◄── one spec, stack-agnostic
+        ├──► smart-parking-spring/      (STACK=Spring Boot, JUnit+Cucumber)
+        ├──► smart-parking-quarkus/     (STACK=Quarkus,     JUnit+Cucumber)
+        └──► smart-parking-micronaut/   (STACK=Micronaut,   JUnit+Cucumber)</code></pre></figure>
+<p>Each project runs its own <code>specgate init</code> with a different <code>STACK</code> in the
+config, its own <code>specgate specops add</code> against the <strong>same</strong> pack repo +
+version + domain <code>--var</code>s, its own bootstrap-prompt run, and its own
+harness loop. <code>spec.md</code>, <code>features/**</code> and <code>traceability.md</code> are
+<strong>identical</strong> across stacks (rendered from the same pack); <code>AGENTS.md</code>
+differs because its <code>{{STACK}}</code> substitution does.</p>
+<p>Useful for migration POCs, framework comparisons, educational material
+(&quot;same problem, three stacks&quot;). The architecture explicitly supports it —
+see <a href="./specs/architecture.html"><code>docs/specs/architecture.md</code></a> §5.</p>
+<hr>
+<h2 id="13-step-12-companion-tooling">13. Step 12 — Companion tooling<a class="anchor" href="#13-step-12-companion-tooling" aria-label="Link to this section">#</a></h2>
+<h3 id="vs-code-extension">VS Code extension<a class="anchor" href="#vs-code-extension" aria-label="Link to this section">#</a></h3>
+<p>The <code>vscode-spec-driven</code> extension turns the editor into a pack-authoring
+surface: live JSON Schema squigglies on <code>pack.yaml</code>, <strong>dangling-reference
+diagnostics</strong>, <strong>reference-field autocomplete</strong> (offers the IDs/names that
+actually exist), <strong>go-to-definition</strong> on a reference, a <strong>CodeLens</strong> showing
+how many use cases and scenarios point at each requirement,
+validate-on-save, and the <strong><code>Spec-Driven: Show Pack Graph</code></strong> command — a
+side-panel Mermaid render of the pack graph that refreshes as you edit.</p>
+<h3 id="mcp-server">MCP server<a class="anchor" href="#mcp-server" aria-label="Link to this section">#</a></h3>
+<p>The <code>mcp-spec-driven</code> server exposes <code>plan</code>, <code>mark_requirement_done</code>,
+<code>read_spec</code>, <code>lint_pack</code> and friends as MCP tools, so an MCP-aware client
+(Claude Desktop, Cursor, opencode, Aider) can drive the same loop natively.</p>
+<h3 id="slash-commands-for-eight-tools-at-once">Slash commands, for eight tools at once<a class="anchor" href="#slash-commands-for-eight-tools-at-once" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> agents init                     <span class="tok tok--c"># or --tool claude,cursor</span></code></pre></figure>
+<p>That writes <code>/specgate:explore</code>, <code>/specgate:new</code>, <code>/specgate:apply</code>, <code>/specgate:check</code>,
+<code>/specgate:done</code>, <code>/specgate:propose</code>, <code>/specgate:archive</code> and <code>/specgate:onboard</code>, plus the instruction file each tool reads
+— <code>.cursor/rules/</code>, <code>.github/copilot-instructions.md</code>, <code>CONVENTIONS.md</code> and so
+on. They are thin on purpose: rather than restating the delta grammar, which
+would be stale the moment it moved, they call <code>specgate change instructions &lt;artifact&gt; --json</code> for it.</p>
+<p>After a CLI upgrade, <code>specgate update</code> three-way merges those files so your edits
+survive.</p>
+<h3 id="keeping-an-existing-repository-honest">Keeping an existing repository honest<a class="anchor" href="#keeping-an-existing-repository-honest" aria-label="Link to this section">#</a></h3>
+<p>This tutorial started from <code>init</code>, on a blank page. On a repository that
+already has code, <code>specgate init</code> adopts it: it reads the layout, proposes the
+capabilities the code already implies and writes the spec skeleton without
+touching a line of source. <code>specgate doctor</code> reports what has
+drifted, with a fix per finding.</p>
+<hr>
+<h2 id="14-command-cheat-sheet">14. Command cheat-sheet<a class="anchor" href="#14-command-cheat-sheet" aria-label="Link to this section">#</a></h2>
+<p>The 📍 / 📦 column is the thing to remember — <strong>where</strong> you run it.</p>
+<div class="table-wrap"><table><thead><tr><th>Command</th><th>Run from</th><th>What it does</th></tr></thead><tbody><tr><td><code>specgate init --config &lt;f.yaml&gt; --out &lt;dir&gt;</code></td><td>📍 parent dir</td><td>Scaffold a new spec-driven project</td></tr><tr><td><code>specgate validate &lt;dir&gt; [--strict]</code></td><td>📍 project</td><td>Check structure, traceability, Gherkin; <code>--strict</code> is the gate</td></tr><tr><td><code>specgate plan [--format json]</code></td><td>📍 project</td><td>List requirements still needing work</td></tr><tr><td><code>specgate done REQ-NNN [--check|--strict]</code></td><td>📍 project</td><td>Mark a requirement done in the matrix</td></tr><tr><td><code>specgate status</code></td><td>📍 project</td><td>Daily dashboard: totals, orphans, pack versions, next command</td></tr><tr><td><code>specgate req add|link|done|list</code></td><td>📍 project</td><td>Manage matrix rows without hand-editing the table</td></tr><tr><td><code>specgate fix [--dry-run]</code></td><td>📍 project</td><td>Apply the repairs <code>validate</code> suggests</td></tr><tr><td><code>specgate change new &lt;id&gt; [--lite|--full]</code></td><td>📍 project</td><td>Open a change against specs that already shipped</td></tr><tr><td><code>specgate change status | validate | show | list</code></td><td>📍 project</td><td>What to write next · check the deltas · inspect · enumerate</td></tr><tr><td><code>specgate change archive &lt;id&gt; [--dry-run|--yes]</code></td><td>📍 project</td><td>Merge the delta into the specs + matrix, then file the change away</td></tr><tr><td><code>specgate specops add --pack-repo … --pack-version … --pack … --var …</code></td><td>📍 project</td><td>Pull a pack in; writes <code>.specops.lock</code> + <code>.specops/</code> baseline</td></tr><tr><td><code>specgate specops diff [--pack-version …]</code></td><td>📍 project</td><td>Preview what a sync would change — writes nothing</td></tr><tr><td><code>specgate specops sync [--pack-version …]</code></td><td>📍 project</td><td>Re-render + three-way merge the pack into the project</td></tr><tr><td><code>specgate specops remove &lt;pack-id&gt;</code></td><td>📍 project</td><td>Drop a pack from <code>.specops.lock</code></td></tr><tr><td><code>specgate specops diff --as-change</code></td><td>📍 project</td><td>Turn an upstream pack bump into a reviewable change proposal</td></tr><tr><td><code>specgate specops contribute --change &lt;id&gt;</code></td><td>📍 project</td><td>Send a local change back upstream to the pack (never pushes)</td></tr><tr><td><code>specgate validate --against-lock</code></td><td>📍 project</td><td>Fail CI when the project has drifted from the locked pack version</td></tr><tr><td><code>specgate expand --pack-repo … --pack-version … --pack …</code></td><td>📍 project</td><td>Low-level pack render (what <code>sync</code> calls)</td></tr><tr><td><code>specgate harness run --agent &quot;… {prompt_file}&quot; [--test-cmd …]</code></td><td>📍 project</td><td>Run the plan→agent→verify→done loop per requirement</td></tr><tr><td><code>specgate pack init --out … --name … --type backend|frontend|contracts</code></td><td>📦 pack repo</td><td>Scaffold a pack skeleton</td></tr><tr><td><code>specgate pack lint --pack-root … --pack … [--strict]</code></td><td>📦 pack repo</td><td>Lint a pack: schema, cross-refs, scenario quality</td></tr><tr><td><code>specgate pack lint … --graph [--graph-format mermaid|dot]</code></td><td>📦 pack repo</td><td>Render the pack reference graph; CI link-check</td></tr><tr><td><code>specgate pack infer --from &lt;feature&gt; [--format json]</code></td><td>📦 pack repo</td><td>Propose a <code>pack.yaml</code> skeleton from a <code>.feature</code></td></tr></tbody></table></div>
+<p><strong>Three ways to add a requirement, side by side:</strong></p>
+<div class="table-wrap"><table><thead><tr><th></th><th>Day one, by hand (Step 6)</th><th>As a change (recipe 12)</th><th>As a pack author (Step 10)</th></tr></thead><tbody><tr><td>Where</td><td>📍 your implementation project</td><td>📍 your implementation project</td><td>📦 the pack repo</td></tr><tr><td>1</td><td>edit <code>spec.md</code></td><td><code>change new &lt;id&gt;</code></td><td>draft a <code>.feature</code>, run <code>pack infer</code></td></tr><tr><td>2</td><td>write <code>features/**.feature</code></td><td>write the delta under <code>specs/&lt;cap&gt;/spec.md</code></td><td>merge the inferred skeleton into <code>pack.yaml</code></td></tr><tr><td>3</td><td>add a row to <code>traceability.md</code></td><td><code>change validate</code></td><td>add the feature template under <code>templates/</code></td></tr><tr><td>4</td><td><code>validate --strict-tdd</code></td><td><code>change archive</code> — writes the row <strong>for you</strong></td><td><code>pack lint --strict --graph</code></td></tr><tr><td>5</td><td><code>plan</code> → implement → <code>done</code></td><td><code>plan</code> → implement → <code>done</code></td><td>bump version, tag, push</td></tr><tr><td>6</td><td>survives every <code>specops sync</code></td><td>reviewable as intent, archived with a date</td><td>consumers <code>specops diff</code> + <code>specops sync</code></td></tr></tbody></table></div>
+<p>Use the middle column once the project is live: it is the only one of the three
+that leaves an audit trail of <em>why</em> a requirement changed, and the only one
+where you do not touch the ten-column matrix by hand.</p>
+<hr>
+<p>You have now exercised every command the tool ships. For deeper reference
+see <a href="./how-to.html"><code>docs/how-to.md</code></a>, the
+<a href="./specs/domain-pack-format.html">domain-pack format spec</a>, the
+<a href="./specs/specops.html">SpecOps workflow</a> and the
+<a href="./specs/harness.html">harness spec</a>.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="walkthrough.html"><span>Previous</span>Walkthrough</a><a class="pager__next" href="agent-setup.html"><span>Next</span>Choosing your agent</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/tutorial.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#before-anything-else-the-two-places-you-will-work">Before anything else: the two places you will work</a></li><li class="toc__l2"><a href="#table-of-contents">Table of contents</a></li><li class="toc__l2"><a href="#1-prerequisites">1. Prerequisites</a></li><li class="toc__l2"><a href="#2-step-1-scaffold-the-project-init">2. Step 1 — Scaffold the project (init)</a></li><li class="toc__l3"><a href="#concept">Concept</a></li><li class="toc__l3"><a href="#do-it">Do it</a></li><li class="toc__l3"><a href="#what-you-should-see">What you should see</a></li><li class="toc__l2"><a href="#3-step-2-apply-the-domain-pack-specops-add">3. Step 2 — Apply the domain pack (specops add)</a></li><li class="toc__l3"><a href="#concept-2">Concept</a></li><li class="toc__l3"><a href="#do-it-2">Do it</a></li><li class="toc__l3"><a href="#what-you-should-see-all-of-this-lands-inside-smart-parking">What you should see — all of this lands inside smart-parking/</a></li><li class="toc__l2"><a href="#4-step-3-validate-the-project-validate">4. Step 3 — Validate the project (validate)</a></li><li class="toc__l3"><a href="#concept-3">Concept</a></li><li class="toc__l3"><a href="#do-it-3">Do it</a></li><li class="toc__l3"><a href="#the-tdd-gate-strict-tdd">The TDD gate — --strict-tdd</a></li><li class="toc__l2"><a href="#5-step-4-see-what-is-left-to-build-plan">5. Step 4 — See what is left to build (plan)</a></li><li class="toc__l3"><a href="#concept-4">Concept</a></li><li class="toc__l3"><a href="#do-it-4">Do it</a></li><li class="toc__l3"><a href="#machine-readable-mode">Machine-readable mode</a></li><li class="toc__l2"><a href="#6-step-5-implement-a-requirement-and-close-the-loop-done">6. Step 5 — Implement a requirement and close the loop (done)</a></li><li class="toc__l3"><a href="#concept-5">Concept</a></li><li class="toc__l3"><a href="#do-it-5">Do it</a></li><li class="toc__l2"><a href="#7-step-6-add-a-new-requirement-as-a-project-consumer">7. Step 6 — Add a NEW requirement (as a project consumer)</a></li><li class="toc__l3"><a href="#concept-6">Concept</a></li><li class="toc__l3"><a href="#7-1-describe-it-in-spec-md">7.1 Describe it in spec.md</a></li><li class="toc__l3"><a href="#7-2-write-the-gherkin-scenario-first">7.2 Write the Gherkin scenario first</a></li><li class="toc__l3"><a href="#7-3-add-the-traceability-row-with-specgate-req-not-by-hand">7.3 Add the traceability row — with specgate req, not by hand</a></li><li class="toc__l3"><a href="#7-4-validate-plan-implement-close">7.4 Validate, plan, implement, close</a></li><li class="toc__l2"><a href="#8-step-7-upgrade-the-pack-version-specops-diff-specops-sync">8. Step 7 — Upgrade the pack version (specops diff + specops sync)</a></li><li class="toc__l3"><a href="#concept-7">Concept</a></li><li class="toc__l3"><a href="#8-1-preview-the-change-specops-diff">8.1 Preview the change — specops diff</a></li><li class="toc__l3"><a href="#8-2-apply-it-specops-sync">8.2 Apply it — specops sync</a></li><li class="toc__l3"><a href="#8-3-after-a-sync">8.3 After a sync</a></li><li class="toc__l2"><a href="#9-step-8-remove-a-pack-specops-remove">9. Step 8 — Remove a pack (specops remove)</a></li><li class="toc__l2"><a href="#10-step-9-author-your-own-pack">10. Step 9 — Author your own pack</a></li><li class="toc__l3"><a href="#concept-8">Concept</a></li><li class="toc__l3"><a href="#10-1-scaffold-pack-init">10.1 Scaffold — pack init</a></li><li class="toc__l3"><a href="#10-2-lint-pack-lint">10.2 Lint — pack lint</a></li><li class="toc__l3"><a href="#10-3-see-the-reference-graph-pack-lint-graph">10.3 See the reference graph — pack lint --graph</a></li><li class="toc__l3"><a href="#10-4-invert-the-flow-pack-infer">10.4 Invert the flow — pack infer</a></li><li class="toc__l2"><a href="#11-step-10-add-a-new-requirement-as-a-pack-author">11. Step 10 — Add a NEW requirement (as a pack author)</a></li><li class="toc__l3"><a href="#11-1-draft-the-scenario-then-infer-the-model">11.1 Draft the scenario, then infer the model</a></li><li class="toc__l3"><a href="#11-2-merge-the-inferred-skeleton-into-pack-yaml">11.2 Merge the inferred skeleton into pack.yaml</a></li><li class="toc__l3"><a href="#11-3-lint-including-the-graph">11.3 Lint — including the graph</a></li><li class="toc__l3"><a href="#11-4-version-tag-publish">11.4 Version, tag, publish</a></li><li class="toc__l3"><a href="#11-5-consumers-adopt-it-back-in-their-projects">11.5 Consumers adopt it — back in their projects</a></li><li class="toc__l2"><a href="#11-step-10-change-a-requirement-that-already-shipped">11¼. Step 10½ — Change a requirement that already shipped</a></li><li class="toc__l3"><a href="#concept-9">Concept</a></li><li class="toc__l3"><a href="#open-it">Open it</a></li><li class="toc__l3"><a href="#write-the-delta">Write the delta</a></li><li class="toc__l3"><a href="#review-archive-implement">Review, archive, implement</a></li><li class="toc__l2"><a href="#11-bootstrap-before-the-harness-the-only-freeform-ai-step">11½. Bootstrap before the harness (the only freeform-AI step)</a></li><li class="toc__l3"><a href="#concept-10">Concept</a></li><li class="toc__l2"><a href="#12-step-11-automate-delivery-with-the-harness-harness-run">12. Step 11 — Automate delivery with the harness (harness run)</a></li><li class="toc__l3"><a href="#concept-11">Concept</a></li><li class="toc__l3"><a href="#12-1-configure-it-using-opencode-as-the-agent-with-a-project-wide-prompt-prefix">12.1 Configure it — using opencode as the agent, with a project-wide prompt prefix</a></li><li class="toc__l3"><a href="#12-2-dry-run-first">12.2 Dry-run first</a></li><li class="toc__l3"><a href="#12-3-run-it">12.3 Run it</a></li><li class="toc__l3"><a href="#12-4-inspect-what-the-agent-will-receive-harness-prompt">12.4 Inspect what the agent will receive (harness prompt)</a></li><li class="toc__l2"><a href="#12-multi-stack-one-pack-many-implementations">12½. Multi-stack: one pack, many implementations</a></li><li class="toc__l2"><a href="#13-step-12-companion-tooling">13. Step 12 — Companion tooling</a></li><li class="toc__l3"><a href="#vs-code-extension">VS Code extension</a></li><li class="toc__l3"><a href="#mcp-server">MCP server</a></li><li class="toc__l3"><a href="#slash-commands-for-eight-tools-at-once">Slash commands, for eight tools at once</a></li><li class="toc__l3"><a href="#keeping-an-existing-repository-honest">Keeping an existing repository honest</a></li><li class="toc__l2"><a href="#14-command-cheat-sheet">14. Command cheat-sheet</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

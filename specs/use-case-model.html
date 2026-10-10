@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en" data-slug="specs/use-case-model">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The use-case model — specification — Specgate</title>
+<meta name="description" content="The use-case model — specification">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="The use-case model — specification — Specgate">
+<meta property="og:description" content="The use-case model — specification">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="the-use-case-model-specification">The use-case model — specification<a class="anchor" href="#the-use-case-model-specification" aria-label="Link to this section">#</a></h1>
+<p>Status: <strong>Accepted design, not implemented.</strong> Decided in
+<a href="adr/0027-use-cases-are-a-layer-not-a-column.html">ADR-0027</a> (use cases) and
+<a href="adr/0028-architecture-conformance-is-part-of-the-gate.html">ADR-0028</a>
+(architecture). Implemented in the phases at the end; each phase is a release.</p>
+<hr>
+<h2 id="1-profiles-decide-what-exists">1. Profiles decide what exists<a class="anchor" href="#1-profiles-decide-what-exists" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Profile (ADR-0022)</th><th>Elements</th><th>Who it is for</th></tr></thead><tbody><tr><td><code>minimal</code></td><td>requirement → scenario → test</td><td>Scripts, sites, small services. <strong>Today&#39;s model, unchanged.</strong></td></tr><tr><td><code>layered</code></td><td>+ use cases, requirement kinds, N:M, gold-plating</td><td>Teams that work from use cases</td></tr><tr><td><code>tactical-ddd</code></td><td>+ entities and events per use case</td><td>Complex domains</td></tr></tbody></table></div>
+<p><code>ARCHITECTURE=</code> sets it at <code>init</code>; changing it later is one line in the
+project config (<code>specgate config set profile</code> is a different setting — the
+help profile — and is not reused). Moving up a profile adds checks, never
+migrates files.</p>
+<h2 id="2-requirement-kinds">2. Requirement kinds<a class="anchor" href="#2-requirement-kinds" aria-label="Link to this section">#</a></h2>
+<p>A requirement keeps its <code>## REQ-NNN — title</code> section in <code>spec.md</code> or a
+capability spec. Its <code>csda:trace</code> comment gains <code>kind</code>:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">## REQ-011 — Card authorisation answers within 2 seconds
+
+&lt;!-- csda:trace kind=non-functional --&gt;</code></pre></figure>
+<div class="table-wrap"><table><thead><tr><th><code>kind</code></th><th>Default</th><th>Enters a use case as</th><th>Owes when delivered</th></tr></thead><tbody><tr><td><code>functional</code></td><td>yes</td><td>steps of a main or alternative flow</td><td>its use cases&#39; paths, each tested</td></tr><tr><td><code>non-functional</code></td><td></td><td>a constraint on a step</td><td>a test tagged <code>@REQ-NNN</code>, <strong>or</strong> <code>verified-elsewhere=&quot;&lt;where&gt;&quot;</code> in its comment</td></tr><tr><td><code>business-rule</code></td><td></td><td>a precondition or an alternative flow</td><td>at least one alternative-flow scenario that exercises it</td></tr></tbody></table></div>
+<p><code>specgate new &quot;&lt;title&gt;&quot; --kind business-rule</code> writes it. <code>minimal</code> projects
+ignore <code>kind</code>.</p>
+<h2 id="3-a-use-case-is-a-file">3. A use case is a file<a class="anchor" href="#3-a-use-case-is-a-file" aria-label="Link to this section">#</a></h2>
+<p>One file per use case: <code>docs/specs/use-cases/UC-NNN-&lt;slug&gt;.md</code>.</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown"># UC-012 — Checkout
+
+&lt;!-- csda:uc realises=REQ-003,REQ-004,REQ-007,REQ-009,REQ-011 actor=&quot;Customer&quot;
+     include=UC-002 significant=true bpmn=processes/sales.bpmn#Task_Checkout --&gt;
+
+## Preconditions
+- The cart is not empty.
+- REQ-009 — buyers of age-restricted items are adults.
+
+## Main flow
+1. The customer confirms the cart.
+2. The system computes VAT for the delivery country (REQ-003).
+3. The system authorises the card (REQ-011: under 2 s).
+4. The system reserves stock (REQ-004) and emails a receipt (REQ-007).
+
+## Alternative flows
+### A1 — Card declined
+### A2 — Underage buyer (REQ-009)
+
+## Touches
+- Order, Payment, Stock          &lt;!-- tactical-ddd only --&gt;</code></pre></figure>
+<div class="table-wrap"><table><thead><tr><th>Field (in <code>csda:uc</code>)</th><th>Required</th><th>Meaning</th></tr></thead><tbody><tr><td><code>realises</code></td><td>yes</td><td>Requirement ids this use case satisfies. <strong>The N:M relation lives here, and only here.</strong></td></tr><tr><td><code>actor</code></td><td>yes</td><td>Who starts it</td></tr><tr><td><code>include</code> / <code>extend</code></td><td>no</td><td>Other use cases it reuses or optionally extends</td></tr><tr><td><code>significant</code></td><td>no</td><td>Architecturally significant (ASUC): owes the architecture check</td></tr><tr><td><code>bpmn</code></td><td>no</td><td>Path and element id of the process it models</td></tr></tbody></table></div>
+<p>Section headings are fixed so the tool can read flow ids (<code>Main flow</code>, <code>A1</code>,
+<code>A2</code>, …). The prose is for people; the tool reads ids and the comment only.</p>
+<p><code>specgate new --use-case &quot;Checkout&quot; --realises REQ-003,REQ-004</code> writes the
+skeleton. On a codebase organised by use case (<code>…/usecases/checkout/</code>,
+<code>…/application/checkout/</code>), <code>init</code> proposes one skeleton per folder, with no
+<code>realises</code> yet — a proposal, never a claim.</p>
+<h2 id="4-scenarios-are-paths">4. Scenarios are paths<a class="anchor" href="#4-scenarios-are-paths" aria-label="Link to this section">#</a></h2>
+<p>With use cases, a scenario is one path through one use case:</p>
+<figure class="code" data-lang="gherkin"><figcaption class="code__head"><span class="code__lang">gherkin</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-gherkin"><span class="tok tok--an">@UC-012</span> <span class="tok tok--an">@SCN-031</span> <span class="tok tok--an">@main</span>
+<span class="tok tok--k">Scenario</span>: A customer checks out a cart delivered to Spain
+
+<span class="tok tok--an">@UC-012</span> <span class="tok tok--an">@SCN-032</span> <span class="tok tok--an">@A2</span> <span class="tok tok--an">@REQ-009</span>
+<span class="tok tok--k">Scenario</span>: An underage buyer cannot check out an age-restricted item</code></pre></figure>
+<ul>
+<li><code>@UC-NNN</code> and <code>@SCN-NNN</code> are required; the path tag (<code>@main</code>, <code>@A1</code>, …)
+names the flow it walks.</li>
+<li>A requirement is covered <strong>through</strong> the use cases that realise it. Adding
+<code>@REQ-NNN</code> is optional — it is how a business rule or a non-functional
+requirement says <em>this</em> path is the one that exercises it.</li>
+<li>Tests link exactly as today: a test that mentions <code>SCN-031</code>, <code>UC-012</code> or the
+requirement is linked to it.</li>
+</ul>
+<p><code>minimal</code> projects keep tagging <code>@REQ-NNN @SCN-NNN</code>. Both forms validate.</p>
+<h2 id="5-the-graph">5. The graph<a class="anchor" href="#5-the-graph" aria-label="Link to this section">#</a></h2>
+<p>Everything is derived; nothing below is edited by hand.</p>
+<div class="table-wrap"><table><thead><tr><th>Node</th><th>Declared in</th></tr></thead><tbody><tr><td>Requirement</td><td><code>spec.md</code>, capability specs</td></tr><tr><td>Use case</td><td><code>docs/specs/use-cases/*.md</code></td></tr><tr><td>Scenario</td><td><code>features/**/*.feature</code></td></tr><tr><td>Test, code</td><td>files that mention an id</td></tr><tr><td>Entity</td><td>a use case&#39;s <code>Touches</code> (tactical-ddd)</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Edge</th><th>From</th></tr></thead><tbody><tr><td>use case <strong>realises</strong> requirement</td><td><code>csda:uc realises=</code></td></tr><tr><td>use case <strong>includes / extends</strong> use case</td><td><code>csda:uc include= / extend=</code></td></tr><tr><td>scenario <strong>walks</strong> use-case path</td><td>scenario tags</td></tr><tr><td>scenario <strong>exercises</strong> requirement</td><td><code>@REQ-NNN</code> on the scenario, or through its use case</td></tr><tr><td>test <strong>proves</strong> scenario</td><td>mention</td></tr><tr><td>use case <strong>touches</strong> entity</td><td><code>Touches</code> section</td></tr></tbody></table></div>
+<p><strong>Generated outputs</strong></p>
+<ul>
+<li><code>docs/specs/traceability.md</code> — unchanged shape, one row per scenario; its
+<code>Use Case</code> column is filled from the scenario&#39;s <code>@UC-NNN</code>.</li>
+<li><code>docs/specs/use-case-matrix.md</code> (<code>layered</code> and up) — requirements × use
+cases, with coverage per cell: the N:M view, regenerated by <code>check</code>.</li>
+</ul>
+<p><strong>Views</strong></p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> trace REQ-<span class="tok tok--n">007</span>        <span class="tok tok--c"># use cases that realise it, their paths, tests, status</span>
+<span class="tok tok--f">specgate</span> trace UC-<span class="tok tok--n">012</span>         <span class="tok tok--c"># requirements it realises, includes, paths, tests</span>
+<span class="tok tok--f">specgate</span> impact Invoice       <span class="tok tok--c"># use cases that touch it → requirements → scenarios</span>
+<span class="tok tok--f">specgate</span> impact src/billing/  <span class="tok tok--c"># the same, starting from code</span></code></pre></figure>
+<p>Both accept <code>--json</code> under the agent contract. <code>status</code> gains one line per
+use case only in <code>layered</code> and up.</p>
+<h2 id="6-what-the-gate-collects">6. What the gate collects<a class="anchor" href="#6-what-the-gate-collects" aria-label="Link to this section">#</a></h2>
+<p>A <code>Draft</code> requirement owes nothing, as today. From delivery on:</p>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Severity</th><th>When</th></tr></thead><tbody><tr><td><code>uc_realises_unknown_requirement</code></td><td>error</td><td><code>realises</code> names an id no spec section has</td></tr><tr><td><code>requirement_not_realised</code></td><td>error</td><td>a delivered functional requirement no use case realises</td></tr><tr><td><code>uc_path_untested</code></td><td>error</td><td>a use case realising a delivered requirement has a path with no scenario, or a scenario no test proves</td></tr><tr><td><code>uc_gold_plating</code></td><td>warning; error with <code>strict_use_cases: true</code></td><td>a use case realises nothing</td></tr><tr><td><code>nfr_unverified</code></td><td>error</td><td>a delivered non-functional requirement with no tagged test and no <code>verified-elsewhere</code></td></tr><tr><td><code>business_rule_unexercised</code></td><td>error</td><td>a delivered business rule no alternative-flow scenario tags</td></tr><tr><td><code>asuc_without_arch_check</code></td><td>error</td><td>a significant use case realising a delivered requirement, and no <code>arch_cmd</code></td></tr><tr><td><code>uc_include_cycle</code></td><td>error</td><td><code>include</code>/<code>extend</code> form a cycle</td></tr><tr><td><code>requirement_spans_many_use_cases</code></td><td>warning</td><td>more than 4 use cases realise one requirement — probably an epic</td></tr></tbody></table></div>
+<p>Each carries a <code>fix</code>, as every diagnostic does. <code>done REQ-NNN</code> runs these for
+the requirement it closes.</p>
+<h2 id="7-the-issue-tracker">7. The issue tracker<a class="anchor" href="#7-the-issue-tracker" aria-label="Link to this section">#</a></h2>
+<p>The tracker mirrors the model (ADR-0021); stories are not stored in the repo.</p>
+<div class="table-wrap"><table><thead><tr><th>Tracker</th><th>Model</th></tr></thead><tbody><tr><td>Epic</td><td>a capability, or a large use case</td></tr><tr><td>Story</td><td>one or more paths of one use case</td></tr></tbody></table></div>
+<p>A story names what it slices with a label — <code>uc:UC-012</code>, <code>path:A2</code> — and
+<code>specgate alm status</code> reports, per story, whether the paths it names have
+passing scenarios. <code>alm sync</code> creates nothing from use cases; a story is
+planning, and planning stays in the tracker.</p>
+<h2 id="8-packs">8. Packs<a class="anchor" href="#8-packs" aria-label="Link to this section">#</a></h2>
+<p><code>schemas/pack.schema.json</code>:</p>
+<ul>
+<li><code>use_cases[].requirement</code> (one id) gains <code>use_cases[].requirements</code> (a list).
+A pack using the single field still validates; it reads as a one-item list.</li>
+<li><code>use_cases[]</code> gains optional <code>include</code>, <code>extend</code>, <code>significant</code>.</li>
+<li><code>requirements[]</code> gains optional <code>kind</code>.</li>
+</ul>
+<p><code>expand</code> writes one use-case file per pack use case.</p>
+<h2 id="9-architecture-adr-0028">9. Architecture (ADR-0028)<a class="anchor" href="#9-architecture-adr-0028" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># harness.config.yaml</span>
+<span class="tok tok--a">test_cmd</span>: ./mvnw -B test
+<span class="tok tok--a">arch_cmd</span>: ./mvnw -B test -Dtest=<span class="tok tok--s">'*ArchTest'</span>
+<span class="tok tok--a">arch_sarif</span>: target/arch-results.sarif     <span class="tok tok--c"># optional</span></code></pre></figure>
+<div class="table-wrap"><table><thead><tr><th>Runs in</th><th>Order</th></tr></thead><tbody><tr><td><code>specgate check</code></td><td><code>validate --strict</code> → <code>arch_cmd</code> → <code>test_cmd</code></td></tr><tr><td><code>specgate done</code></td><td>the same, for the requirement it closes</td></tr><tr><td>harness gate</td><td>the same; a failure is fed back to the agent</td></tr></tbody></table></div>
+<p><code>specgate arch baseline</code> writes <code>.specgate/arch-baseline.json</code> from the SARIF
+findings; afterwards only findings not in it fail (<code>arch_violation_new</code>). The
+baseline growing needs <code>--accept-new</code>, and shows in review. Without SARIF the
+exit code decides and <code>check</code> says the baseline cannot apply.</p>
+<p>Recipes in the docs, one per language: ArchUnit / Konsist (JVM), ArchUnitNET /
+NetArchTest (.NET), dependency-cruiser (TS/JS), import-linter (Python),
+go-arch-lint (Go), Deptrac (PHP), Semgrep (any).</p>
+<p><strong>Later (phase 5):</strong> <code>uc_touches_undeclared_entity</code> — a use case&#39;s code imports
+an entity its <code>Touches</code> does not list. Needs an import graph per language,
+read from the tools above where they export one.</p>
+<h2 id="10-phases">10. Phases<a class="anchor" href="#10-phases" aria-label="Link to this section">#</a></h2>
+<p>Each phase is one release, behind its profile; <code>minimal</code> never changes.</p>
+<div class="table-wrap"><table><thead><tr><th>Phase</th><th>Ships</th><th>Done when</th></tr></thead><tbody><tr><td><strong>1</strong></td><td><code>arch_cmd</code>, SARIF, <code>arch baseline</code>, in <code>check</code>, <code>done</code>, harness</td><td>a legacy Java repo with ArchUnit adopts green, and a new violation fails <code>check</code> and the harness</td></tr><tr><td><strong>2</strong></td><td>requirement <code>kind</code>; use-case files; <code>@UC</code> path scenarios; the graph; <code>use-case-matrix.md</code>; <code>trace</code>; the gate codes of §6</td><td>Checkout realising five requirements has its scenarios written once, and each requirement&#39;s coverage is reported through it</td></tr><tr><td><strong>3</strong></td><td><code>init</code> proposes use cases from folders; <code>use-cases.md</code> table → files (lossless or nothing); pack schema N:M</td><td>a repo organised by use case adopts with one proposed file per folder</td></tr><tr><td><strong>4</strong></td><td>tracker mapping: <code>uc:</code>/<code>path:</code> labels, <code>alm status</code> per story</td><td>a Jira story slicing A2 shows whether A2&#39;s scenarios pass</td></tr><tr><td><strong>5</strong></td><td><code>impact</code>; entities; <code>uc_touches_undeclared_entity</code></td><td><code>impact Invoice</code> lists the requirements at stake</td></tr><tr><td><strong>6</strong></td><td>BPMN link checked: the element id exists in the file</td><td>a renamed BPMN task fails the link</td></tr></tbody></table></div>
+<h2 id="11-out-of-scope">11. Out of scope<a class="anchor" href="#11-out-of-scope" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Drawing UML or BPMN. Specgate reads ids; diagrams stay in the tools that draw them.</li>
+<li>Estimation, sprints, boards. Scrum or Kanban is the tracker&#39;s business.</li>
+<li>A rule language for architecture.</li>
+</ul>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="../concepts.html">How Specgate thinks</a> — the model this extends</li>
+<li><a href="adr/0027-use-cases-are-a-layer-not-a-column.html">ADR-0027</a> ·
+<a href="adr/0028-architecture-conformance-is-part-of-the-gate.html">ADR-0028</a></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/use-case-model.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#1-profiles-decide-what-exists">1. Profiles decide what exists</a></li><li class="toc__l2"><a href="#2-requirement-kinds">2. Requirement kinds</a></li><li class="toc__l2"><a href="#3-a-use-case-is-a-file">3. A use case is a file</a></li><li class="toc__l2"><a href="#4-scenarios-are-paths">4. Scenarios are paths</a></li><li class="toc__l2"><a href="#5-the-graph">5. The graph</a></li><li class="toc__l2"><a href="#6-what-the-gate-collects">6. What the gate collects</a></li><li class="toc__l2"><a href="#7-the-issue-tracker">7. The issue tracker</a></li><li class="toc__l2"><a href="#8-packs">8. Packs</a></li><li class="toc__l2"><a href="#9-architecture-adr-0028">9. Architecture (ADR-0028)</a></li><li class="toc__l2"><a href="#10-phases">10. Phases</a></li><li class="toc__l2"><a href="#11-out-of-scope">11. Out of scope</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

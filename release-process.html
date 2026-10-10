@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en" data-slug="release-process">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release process — Specgate</title>
+<meta name="description" content="How a version is cut, and what support it gets.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Release process — Specgate">
+<meta property="og:description" content="How a version is cut, and what support it gets.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html" class="is-active" aria-current="page">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Advanced</li><li aria-current="page">Release process</li></ol></nav>
+    <article class="prose">
+<h1 id="release-process">Release process<a class="anchor" href="#release-process" aria-label="Link to this section">#</a></h1>
+<p>Replaces the frozen <code>RELEASE_0.1.0_CHECKLIST.md</code>, which described a manual
+0.1.0 dry run and had drifted (it claimed Node ≥ 18, and every box was
+unticked long after 0.1.4 shipped).</p>
+<h2 id="what-gets-published">What gets published<a class="anchor" href="#what-gets-published" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Artefact</th><th>Registry</th><th>Workflow</th><th>Status</th></tr></thead><tbody><tr><td><code>@rsaglobaltech/specgate</code></td><td>npm, public</td><td><code>publish-npm.yml</code></td><td>Live</td></tr><tr><td><code>@rsaglobaltech/specgate</code></td><td>GitHub Packages</td><td><code>publish-github-packages.yml</code></td><td>Live</td></tr></tbody></table></div>
+<p>The first two rows are the same coordinate in two registries, and that is
+deliberate: one name to document, one name to type. Public npm is the default
+resolution; a consumer who routes the scope with
+<code>@rsaglobaltech:registry=https://npm.pkg.github.com</code> gets the GitHub Packages
+copy of the same version instead.
+| CLI image | <code>ghcr.io</code> | <code>publish-docker.yml</code> | Live, <code>linux/amd64</code> and <code>linux/arm64</code> |
+| <code>specgate-maven-plugin</code> | Maven Central or an internal Nexus | none yet | C7-05 |
+| <code>specgate-gradle-plugin</code> | Gradle Plugin Portal or an internal repo | none yet | C7-06 |
+| <code>specgate-vscode</code> | VS Code Marketplace | none yet | C7-07 |
+| MCP server | inside the CLI package | <code>publish-npm.yml</code> | Live: <code>specgate mcp serve</code> |
+| <code>@specgate/lsp-server</code> | npm | none yet | C7-08, blocked on C6-03 |</p>
+<h2 id="the-specgate-rename-one-time-cutover">The Specgate rename — one-time cutover<a class="anchor" href="#the-specgate-rename-one-time-cutover" aria-label="Link to this section">#</a></h2>
+<p>The package renamed from <code>create-spec-driven-app</code> to <code>specgate</code> in
+<a href="specs/adr/0024-the-tool-is-renamed-the-format-is-not.html">ADR-0024</a>. The
+workflows read the name from <code>package.json</code>, so the first tag cut after that
+change publishes <code>specgate</code> with no workflow edit. Three things are <strong>not</strong>
+automated, because each is a one-time act with no undo:</p>
+<p><strong>1. Deprecate the old package, pointing at the new one.</strong> Run once, after the
+first <code>specgate</code> version is live on npm:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npm</span> deprecate create-spec-driven-app \
+  <span class="tok tok--s">&quot;Renamed to Specgate. Install @rsaglobaltech/specgate instead — same tool, same CLI, and csda still works as a binary alias.&quot;</span></code></pre></figure>
+<p>Deprecating does <strong>not</strong> unpublish. Every existing version stays installable, so
+a pinned dependency keeps resolving; users get a warning, not a failure. Do not
+unpublish: npm blocks reusing an unpublished name, and someone&#39;s build would
+break for no gain.</p>
+<p><strong>2. The Docker image changes name with the same tag.</strong> New tags land under
+<code>ghcr.io/&lt;owner&gt;/specgate</code>. Tags already published as <code>csda</code> are never rebuilt
+in place and keep working — that rule predates the rename and does not bend for
+it.</p>
+<p><strong>2b. The unscoped name is not available.</strong> <code>specgate</code> on the public registry is
+blocked by <a href="https://www.npmjs.com/package/spec-gate" target="_blank" rel="noreferrer"><code>spec-gate</code></a>: npm compares
+new names with punctuation removed, so the two collide and the registry answers
+<code>403 ... You may not perform that action with these credentials</code> — which reads
+like a token problem and is not one. The package is <code>@rsaglobaltech/specgate</code>; see the
+2026-09-01 addendum to <a href="specs/adr/0024-the-tool-is-renamed-the-format-is-not.html">ADR-0024</a>.
+A <code>npm view &lt;name&gt;</code> returning 404 means <em>not published</em>, never <em>creatable</em> —
+check a name by attempting a real publish.</p>
+<p><strong>3. The sibling packages move to <code>@specgate/*</code>.</strong> They were never published
+under <code>@spec-driven/*</code> (verified: <code>npm view @spec-driven/core</code> → 404), so there
+is nothing to deprecate — the scope change costs nothing.</p>
+<p><strong>Sequencing that matters.</strong> <code>README.md</code> and the guides describe the tool by its
+new name, so the rename branch and the release that publishes <code>specgate</code> belong
+to the same event. Merging the rename and not releasing leaves a README whose
+first command does not resolve — the exact failure mode this project keeps
+finding elsewhere, in its own front door.</p>
+<h2 id="versioning">Versioning<a class="anchor" href="#versioning" aria-label="Link to this section">#</a></h2>
+<p>Semantic versioning. The CLI and the companion packages version independently;
+a CLI release does not force a bump of the VS Code extension.</p>
+<p><strong>Tags are <code>vX.Y.Z</code>.</strong> The publish workflows trigger on <code>v*</code>, and the two tags
+that predate this document (<code>0.1.0-beta.1</code>, <code>0.1.4</code>) have no <code>v</code> prefix, which
+is why the tag-triggered path had never once fired. Do not create unprefixed
+tags.</p>
+<h2 id="support-policy">Support policy<a class="anchor" href="#support-policy" aria-label="Link to this section">#</a></h2>
+<p><strong>Which versions get fixes.</strong> Pre-1.0, only the latest minor. Backports to an
+older minor are not promised — the upgrade path is forward, and pretending
+otherwise would be a commitment one maintainer cannot keep. The same table is
+in <a href="https://github.com/rsaglobaltech/specgate/blob/main/SECURITY.md#supported-versions" target="_blank" rel="noreferrer">SECURITY.md</a> for vulnerabilities
+specifically.</p>
+<p><strong>From 1.0 on, this is a commitment and not an intention.</strong> One supported line
+at a time, plus the previous minor for <strong>six months</strong> from the day its successor
+ships. Security fixes and correctness fixes both; a feature does not get
+backported.</p>
+<p>Until 2026-08-26 this paragraph ended with an escape clause saying it held only
+until the clause itself was deleted. Deleting it <em>is</em> the commitment — that was
+the point of writing it that way — so it is gone, and the git history has the
+wording for anyone who wants it. This closes <code>GATE-G5</code> on the road to 1.0.</p>
+<p>What it costs is worth naming, because a promise nobody costed is how the first
+version of this paragraph came to need an escape hatch: for six months after
+every minor, two lines need a release path, and a fix that lands on <code>main</code> has
+to be evaluated against the previous minor rather than only forward. If that
+ever stops being sustainable, the honest move is to change this paragraph in a
+release and say so under Breaking — not to quietly stop doing it.</p>
+<p><strong>Node.js.</strong> <code>package.json</code> declares <code>&gt;=22</code> and CI tests Node 22 and 24 across
+Linux, macOS and Windows — the floor and the current LTS, so a break at either
+end shows up. Raising the floor is <strong>breaking</strong> for the CLI, never a quiet
+minor: an <code>npx</code> invocation that used to work and now refuses to run is breaking,
+whatever the changelog calls it.</p>
+<p>The floor moved from 20 to 22 in August 2026, because Node 20 left LTS
+maintenance that April and testing against an unsupported runtime proves
+nothing. The rule from here: <strong>the floor is a maintained LTS.</strong> When one leaves
+maintenance the floor moves in the next release, and the changelog says so under
+Breaking.</p>
+<p><strong>Docker.</strong> Images are tagged <code>X.Y.Z</code> and <code>latest</code>, for <code>linux/amd64</code> and
+<code>linux/arm64</code>. A published tag is never rebuilt in place — <code>0.2.0</code> shipped
+amd64-only and the fix had to be <code>0.2.1</code>, because re-running a workflow against
+an old tag checks out the workflow <em>as it was at that tag</em>. Pin <code>X.Y.Z</code> in CI
+and treat <code>latest</code> as a convenience only.</p>
+<h2 id="compatibility-windows">Compatibility windows<a class="anchor" href="#compatibility-windows" aria-label="Link to this section">#</a></h2>
+<p>Three version numbers travel with a project, and they are checked, not merely
+recorded. Both gates below were added after finding that the fields were
+written by the CLI and read by nothing.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Where</th><th>This CLI supports</th><th>On mismatch</th></tr></thead><tbody><tr><td><code>schema_version</code></td><td><code>pack.yaml</code></td><td>up to <strong>1.2.0</strong></td><td>A pack declaring a newer schema is rejected with the reason and the upgrade command</td></tr><tr><td><code>specops_version</code></td><td><code>.specops.lock</code></td><td><strong>1</strong></td><td>A lockfile from a newer CLI is rejected on read</td></tr><tr><td>pack <code>version</code></td><td><code>.specops.lock</code></td><td>any</td><td>Pinned; a content digest change fails the build — see <a href="supply-chain.html">supply chain</a></td></tr></tbody></table></div>
+<p><strong>Older is always readable.</strong> A pack on an older schema, or a lockfile with no
+<code>specops_version</code> at all, works unchanged — those files predate the field, and
+refusing them would strand existing projects to enforce a rule invented later.
+Only <em>newer than this CLI</em> is refused, because <code>schemas/pack.schema.json</code> sets
+<code>additionalProperties: false</code>: a newer minor is genuinely unreadable here, not
+merely unfamiliar. Failing at the top with &quot;upgrade the CLI&quot; beats failing
+twenty lines in with &quot;unknown property&quot;.</p>
+<p><strong>Bumping the pack schema</strong> is a two-step release, in this order:</p>
+<ol>
+<li>Ship the CLI that understands the new schema — raise <code>PACK_SCHEMA_VERSION</code>
+in <code>scripts/domain-pack/common.ts</code> in the same change as the field.</li>
+<li>Only then publish packs that use it.</li>
+</ol>
+<p>Reverse the order and every curated pack becomes uninstallable on the released
+CLI. A unit test asserts that no pack in <code>packs/</code> declares a schema newer than
+the CLI supports, so getting this backwards fails CI rather than users.</p>
+<h2 id="cutting-a-release">Cutting a release<a class="anchor" href="#cutting-a-release" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><p>Update <code>CHANGELOG.md</code>. Every user-visible change gets a line; group by
+Added / Changed / Fixed / Removed.</p>
+</li>
+<li><p>Bump <code>version</code> in <code>package.json</code>.</p>
+</li>
+<li><p>Re-record the landing page&#39;s terminal: <code>npm run build &amp;&amp; npm run docs:terminal</code>,
+then update the version in <code>docs/index.html</code>. The recording carries the
+version it was made from and a test compares the two, so skipping this fails
+the build rather than shipping a page that claims the wrong release.</p>
+</li>
+<li><p>Open a PR to <strong><code>develop</code></strong> — never straight to <code>main</code>. <code>main</code> is protected: the twelve required checks in
+<a href="https://github.com/rsaglobaltech/specgate/blob/main/CONTRIBUTING.md#required-checks" target="_blank" rel="noreferrer">CONTRIBUTING.md</a> must be green, and the
+branch must be up to date with <code>main</code> before it will merge.</p>
+</li>
+<li><p>Merge into <code>develop</code>, wait for CI on <code>develop</code> itself, then fast-forward
+<code>main</code> to it. A release is cut from a <code>main</code> that has been green the whole
+way, not from one that was red for the twenty minutes it took to notice.</p>
+<p>Three of <code>main</code>&#39;s required checks (<code>npm audit</code>, <code>CodeQL</code>, <code>SBOM and licences</code>) only run on pull requests, so open a PR <code>develop → main</code> first:
+it runs all of them on the release commit. Then push that exact commit:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">git</span> push origin &lt;release-sha&gt;:refs/heads/main   <span class="tok tok--c"># fast-forward only, never --force</span></code></pre></figure>
+<p><strong>Quote the refspec: <code>&quot;${R}:refs/heads/main&quot;</code>.</strong> In zsh, <code>$R:refs/…</code>
+applies the <code>:r</code> modifier to <code>$R</code> and the refspec no longer names the
+commit — that, not GitHub, is why pushes to <code>main</code> looked &quot;refused&quot; 2 to
+40 times on 0.10.0–0.13.0. Read the push output; never <code>--force</code>.</p>
+</li>
+<li><p><strong>Only once <code>git rev-parse origin/main</code> is the release commit</strong>, tag it
+<code>vX.Y.Z</code> and push the tag. On 0.10.0 the tag went out while the push to
+<code>main</code> had failed. <code>publish-npm.yml</code> fires, and publishes only after the
+E2E workflow passes on all three platforms.</p>
+</li>
+<li><p>Write the GitHub release notes from the changelog entry.</p>
+</li>
+<li><p>Run the E2E against what the registry serves:
+<code>curl -sfLO https://registry.npmjs.org/@rsaglobaltech/specgate/-/specgate-X.Y.Z.tgz &amp;&amp; npm run e2e -- --tarball specgate-X.Y.Z.tgz</code>.
+The CDN can answer 404 for a few minutes after <code>dist-tags</code> already says the
+new version; wait, do not republish.</p>
+</li>
+</ol>
+<h2 id="pre-releases">Pre-releases<a class="anchor" href="#pre-releases" aria-label="Link to this section">#</a></h2>
+<p>Run <code>publish-github-packages.yml</code> manually (<code>workflow_dispatch</code>) with
+<code>dist_tag: beta</code> and a version like <code>0.2.0-beta.1</code>. Pre-releases never go to
+the public npm registry with the <code>latest</code> tag.</p>
+<h2 id="before-you-tag-the-gate">Before you tag — the gate<a class="anchor" href="#before-you-tag-the-gate" aria-label="Link to this section">#</a></h2>
+<p><code>publish-npm.yml</code> gates on <code>npm run test:all</code> and a <code>pack:dry-run</code>, so a broken
+tag cannot publish. Run the same things locally first — finding it here costs a
+commit, finding it in the workflow costs a version number:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npm</span> run verify        <span class="tok tok--c"># typecheck · eslint · tests · pack dry-run</span>
+<span class="tok tok--f">npm</span> run format:check  <span class="tok tok--c"># prettier — CI runs it, verify does not</span>
+<span class="tok tok--f">npm</span> run test:all      <span class="tok tok--c"># every suite, including BDD and the package tests</span>
+<span class="tok tok--f">npm</span> run e2e           <span class="tok tok--c"># the packed tarball, installed and driven end to end</span>
+<span class="tok tok--f">npm</span> pack <span class="tok tok--o">--dry-run</span>    <span class="tok tok--c"># inspect the tarball contents</span></code></pre></figure>
+<p><code>npm run e2e</code> (<code>e2e/run.mjs</code>) packs this checkout, installs the tarball into an
+empty directory and runs the journeys a team takes against the installed
+binary: adopt, <code>new</code> → test → <code>done --strict</code>, a stale matrix, a hand-kept
+matrix migrated, <code>ci init</code>, the harness, and an upgrade from the last published
+version (<code>--skip-network</code> leaves that one out). It is also the <code>E2E</code> workflow,
+on every pull request and on all three platforms, and <strong><code>publish-npm.yml</code> will
+not publish a tag unless it passes</strong>.</p>
+<p>Check the tarball carries <code>bin/</code>, <code>dist/</code>, <code>templates/</code>, <code>examples/</code> and
+<code>README.md</code>, and nothing else — no <code>.local</code>, no <code>dist/packages/**</code> for
+unpublished packages, no coverage output.</p>
+<h2 id="verifying-a-published-release">Verifying a published release<a class="anchor" href="#verifying-a-published-release" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@X.Y.Z <span class="tok tok--o">--help</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate@X.Y.Z init <span class="tok tok--o">--config</span> ./project.config <span class="tok tok--o">--out</span> /tmp <span class="tok tok--o">--dry-run</span></code></pre></figure>
+<h2 id="after-the-release">After the release<a class="anchor" href="#after-the-release" aria-label="Link to this section">#</a></h2>
+<p>Open the next milestone and record the release in
+<a href="https://github.com/rsaglobaltech/specgate/blob/main/mejoras/plan-cierre-enterprise.md" target="_blank" rel="noreferrer"><code>mejoras/plan-cierre-enterprise.md</code></a>
+if it closes one of its tasks.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="supply-chain.html"><span>Previous</span>Supply chain</a><a class="pager__next" href="articles/specs-that-cannot-lie.html"><span>Next</span>Specs that cannot lie</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/release-process.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#what-gets-published">What gets published</a></li><li class="toc__l2"><a href="#the-specgate-rename-one-time-cutover">The Specgate rename — one-time cutover</a></li><li class="toc__l2"><a href="#versioning">Versioning</a></li><li class="toc__l2"><a href="#support-policy">Support policy</a></li><li class="toc__l2"><a href="#compatibility-windows">Compatibility windows</a></li><li class="toc__l2"><a href="#cutting-a-release">Cutting a release</a></li><li class="toc__l2"><a href="#pre-releases">Pre-releases</a></li><li class="toc__l2"><a href="#before-you-tag-the-gate">Before you tag — the gate</a></li><li class="toc__l2"><a href="#verifying-a-published-release">Verifying a published release</a></li><li class="toc__l2"><a href="#after-the-release">After the release</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

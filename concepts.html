@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en" data-slug="concepts">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Specgate thinks — Specgate</title>
+<meta name="description" content="Six ideas — requirement, scenario, mention, generated matrix, status, one gate — that explain every command.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="How Specgate thinks — Specgate">
+<meta property="og:description" content="Six ideas — requirement, scenario, mention, generated matrix, status, one gate — that explain every command.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html" class="is-active" aria-current="page">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Reference</li><li aria-current="page">How Specgate thinks</li></ol></nav>
+    <article class="prose">
+<h1 id="how-specgate-thinks">How Specgate thinks<a class="anchor" href="#how-specgate-thinks" aria-label="Link to this section">#</a></h1>
+<p>Six ideas explain everything the CLI does. Read this once and every command,
+error and flag has a reason you can predict.</p>
+<hr>
+<h2 id="1-a-requirement-is-a-sentence-that-can-be-wrong">1. A requirement is a sentence that can be wrong<a class="anchor" href="#1-a-requirement-is-a-sentence-that-can-be-wrong" aria-label="Link to this section">#</a></h2>
+<p>A requirement lives in <code>spec.md</code> (or in a capability spec under
+<code>docs/specs/</code>) as a numbered section:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">## REQ-007 — Customers download invoices as PDF
+
+&lt;!-- csda:trace status=Implemented --&gt;
+
+A customer with a paid invoice MUST be able to download it as a PDF from the
+invoice page, within two seconds, with the invoice number in the file name.</code></pre></figure>
+<p>The prose is for people. The <code>csda:trace</code> comment is for the tool — it holds
+the status, and any link the tool cannot infer. <code>specgate new</code> writes the
+section with a draft sentence for you to rewrite; <code>specgate done</code> adds the
+comment when it records a status.</p>
+<p>A requirement is useful when two people could test it and agree on the
+answer. &quot;Invoices are easy to get&quot; is a wish; the paragraph above is a
+requirement.</p>
+<h2 id="2-a-scenario-makes-it-executable">2. A scenario makes it executable<a class="anchor" href="#2-a-scenario-makes-it-executable" aria-label="Link to this section">#</a></h2>
+<p>Every requirement has at least one Gherkin scenario, tagged with its ids:</p>
+<figure class="code" data-lang="gherkin"><figcaption class="code__head"><span class="code__lang">gherkin</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-gherkin"><span class="tok tok--an">@REQ-007</span> <span class="tok tok--an">@SCN-007</span>
+<span class="tok tok--k">Scenario</span>: A paid invoice downloads as a PDF
+<span class="tok tok--g">  Given</span> a customer with a paid invoice INV-2041
+<span class="tok tok--g">  When</span> they download it from the invoice page
+<span class="tok tok--g">  Then</span> they receive &quot;INV-2041.pdf&quot; within 2 seconds</code></pre></figure>
+<p>The scenario is the acceptance criterion. Gherkin, rather than prose, because a
+runner can execute it — and because the gate can check things about it that it
+cannot check about prose: that it has steps, that its keywords are ones
+Cucumber recognises, that an <code>Outline</code> has <code>Examples</code>.</p>
+<h2 id="3-a-mention-is-a-link">3. A mention is a link<a class="anchor" href="#3-a-mention-is-a-link" aria-label="Link to this section">#</a></h2>
+<p>There is nothing to declare. <strong>A test or a source file that mentions
+<code>REQ-007</code> is linked to it</strong>:</p>
+<figure class="code" data-lang="js"><figcaption class="code__head"><span class="code__lang">js</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-js"><span class="tok tok--c">// REQ-007 SCN-007 — a paid invoice downloads as a PDF</span>
+test(<span class="tok tok--s">&quot;a paid invoice downloads as a PDF&quot;</span>, <span class="tok tok--k">async</span> () =&gt; { <span class="tok tok--c">/* … */</span> });</code></pre></figure>
+<p>That is the whole linking model. Rename the test and the link moves with it;
+delete it and the requirement loses its test — which the gate then reports.</p>
+<h2 id="4-the-matrix-is-generated-never-edited">4. The matrix is generated, never edited<a class="anchor" href="#4-the-matrix-is-generated-never-edited" aria-label="Link to this section">#</a></h2>
+<p><code>docs/specs/traceability.md</code> is one row per scenario: requirement, scenario,
+feature file, test, code, status. Every column is already said somewhere else,
+so it is <strong>computed</strong> from those sources:</p>
+<figure class="dia dia--chain">
+  <ol class="chain" aria-label="The traceability chain, from requirement to status">
+    <li class="chain__n"><b>REQ-001</b><span>requirement</span></li>
+    <li class="chain__n"><b>SCN-001</b><span>scenario</span></li>
+    <li class="chain__n"><b>load_pack.feature</b><span>Gherkin</span></li>
+    <li class="chain__n"><b>UC-001</b><span>use case</span></li>
+    <li class="chain__n"><b>CMD-001</b><span>command</span></li>
+    <li class="chain__n"><b>AGG-001</b><span>aggregate</span></li>
+    <li class="chain__n"><b>EVT-001</b><span>event</span></li>
+    <li class="chain__n"><b>src/…</b><span>code</span></li>
+    <li class="chain__n"><b>…steps.ts</b><span>test</span></li>
+    <li class="chain__n chain__n--end"><b>Verified</b><span>status</span></li>
+  </ol>
+  <figcaption>
+    One row of the matrix, read as a sentence. Break any link and
+    <code>specgate check</code> fails — which is what stops a specification from
+    quietly becoming false.
+  </figcaption>
+</figure><div class="table-wrap"><table><thead><tr><th>Column</th><th>Comes from</th></tr></thead><tbody><tr><td>Requirement, title</td><td>the <code>## REQ-NNN</code> sections in <code>spec.md</code> and capability specs</td></tr><tr><td>Scenario, feature file</td><td><code>@REQ-NNN @SCN-NNN</code> tags in <code>features/**/*.feature</code></td></tr><tr><td>Test, code</td><td>files that mention <code>REQ-NNN</code></td></tr><tr><td>Status</td><td>the <code>csda:trace</code> comment, written by <code>specgate done</code></td></tr></tbody></table></div>
+<p><code>specgate check</code> and <code>specgate done</code> regenerate it before they judge.
+<code>specgate validate</code> — what CI runs — fails with <code>matrix_stale</code> when the
+committed copy no longer matches its sources. It stays committed because
+people and tools read it; it just has no author.</p>
+<h2 id="5-a-status-is-a-promise-and-the-gate-collects-on-it">5. A status is a promise, and the gate collects on it<a class="anchor" href="#5-a-status-is-a-promise-and-the-gate-collects-on-it" aria-label="Link to this section">#</a></h2>
+<p>The gate is strict, but it only asks a requirement for what its status
+promises:</p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>What it owes</th></tr></thead><tbody><tr><td><code>Draft</code></td><td>Nothing — except that its scenarios cannot lie: no scenario without steps, no keyword Cucumber would read as prose, no <code>Outline</code> without <code>Examples</code>.</td></tr><tr><td>Past <code>Draft</code> (<code>Approved</code>, <code>In Dev</code>, <code>In Review</code>, …)</td><td>A test that mentions it (and, on a hand-kept matrix, a scenario id).</td></tr><tr><td>Delivered (<code>Implemented</code>, <code>Verified</code>, <code>Released</code>)</td><td>All of the above, plus every file it points at exists and its scenario has no <code>&lt;placeholder&gt;</code> steps.</td></tr><tr><td><code>Deprecated</code></td><td>Its files may be gone; nothing is owed.</td></tr></tbody></table></div>
+<p>This is why the gate is green on the day you adopt it and means more with
+every requirement you deliver. It is also why it never lies about its own
+reach — a green run says how many rows were exempt:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">- Strict TDD gate: passed (3 row(s) exempt — still Draft, so not checked)</code></pre></figure>
+<p><code>specgate done REQ-007</code> is how a requirement reaches a delivered status, and
+it runs the gate for that requirement first: if the gate would fail, nothing
+is written. (<code>--no-check</code> skips it, for the rare case the gate is wrong — say
+so in the pull request.)</p>
+<h2 id="6-one-gate-one-name">6. One gate, one name<a class="anchor" href="#6-one-gate-one-name" aria-label="Link to this section">#</a></h2>
+<p>There is exactly one gate: <code>validate --strict</code>. Everything runs it.</p>
+<div class="table-wrap"><table><thead><tr><th>Where</th><th>What runs</th></tr></thead><tbody><tr><td>Your machine, before a PR</td><td><code>specgate check</code> — the gate, then your tests if a test command is configured</td></tr><tr><td>Closing a requirement</td><td><code>specgate done</code> — the gate for that requirement, then the status</td></tr><tr><td>CI</td><td>the job <code>specgate ci init</code> writes — <code>specgate check</code>, with the project&#39;s JDK or Node set up</td></tr><tr><td>An agent</td><td>the <code>/specgate:check</code> command, the <code>Stop</code> hook, the harness</td></tr></tbody></table></div>
+<p>A gate that was slightly different in each place used to approve work in one
+and fail it in the next. Now a green in one place is a green everywhere.</p>
+<hr>
+<h2 id="around-the-core">Around the core<a class="anchor" href="#around-the-core" aria-label="Link to this section">#</a></h2>
+<p>Three things build on those six ideas. None of them is needed on day one.</p>
+<p><strong>Changes.</strong> A requirement that already shipped changes through a reviewable
+delta under <code>docs/specs/changes/&lt;id&gt;/</code> — only what moves, never a copy.
+Archiving merges it into the spec tree and writes the feature files.
+→ <a href="reviewing-changes.html">Reviewing changes</a></p>
+<p><strong>Domain packs.</strong> A versioned, schema-validated set of requirements and
+scenarios for a domain (multi-tenancy, payments, …), installed like a
+dependency, pinned by digest in <code>.specops.lock</code>, and upgraded through a
+reviewable diff. → <a href="domain-packs.html">Domain packs</a></p>
+<p><strong>The harness.</strong> Hands one pending requirement at a time to any coding agent
+in its own git worktree, runs the gate on the result, and closes the
+requirement only when it passes. It never merges. → <a href="harness.html">The harness</a></p>
+<hr>
+<h2 id="the-vocabulary">The vocabulary<a class="anchor" href="#the-vocabulary" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody><tr><td><strong>Requirement</strong> (<code>REQ-NNN</code>)</td><td>One obligation of the system, in <code>spec.md</code>.</td></tr><tr><td><strong>Scenario</strong> (<code>SCN-NNN</code>)</td><td>A Gherkin example that demonstrates a requirement.</td></tr><tr><td><strong>Capability spec</strong></td><td>A <code>docs/specs/&lt;capability&gt;/spec.md</code> holding the requirements of one area.</td></tr><tr><td><strong>The matrix</strong></td><td><code>docs/specs/traceability.md</code>, generated from the above.</td></tr><tr><td><strong>The gate</strong></td><td><code>validate --strict</code>; <code>check</code> adds your tests.</td></tr><tr><td><strong>Delivered</strong></td><td>A status of <code>Implemented</code>, <code>Verified</code> or <code>Released</code>.</td></tr><tr><td><strong>Change</strong></td><td>A reviewable delta to requirements that already shipped.</td></tr><tr><td><strong>Pack</strong></td><td>A versioned domain model installed with <code>specgate specops add</code>.</td></tr><tr><td><strong>Harness</strong></td><td>The unattended plan → agent → gate → done loop.</td></tr></tbody></table></div>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="getting-started.html">Getting started</a> — the five commands on your repository</li>
+<li><a href="first-pr.html">Your team&#39;s first pull request</a> — author, reviewer, and every failure</li>
+<li><a href="writing-specs.html">Writing specs</a> — requirements and scenarios worth testing</li>
+<li><a href="validating.html">Validating</a> — every check the gate runs, flag by flag</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="commands.html"><span>Previous</span>Command reference</a><a class="pager__next" href="faq.html"><span>Next</span>FAQ</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/concepts.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#1-a-requirement-is-a-sentence-that-can-be-wrong">1. A requirement is a sentence that can be wrong</a></li><li class="toc__l2"><a href="#2-a-scenario-makes-it-executable">2. A scenario makes it executable</a></li><li class="toc__l2"><a href="#3-a-mention-is-a-link">3. A mention is a link</a></li><li class="toc__l2"><a href="#4-the-matrix-is-generated-never-edited">4. The matrix is generated, never edited</a></li><li class="toc__l2"><a href="#5-a-status-is-a-promise-and-the-gate-collects-on-it">5. A status is a promise, and the gate collects on it</a></li><li class="toc__l2"><a href="#6-one-gate-one-name">6. One gate, one name</a></li><li class="toc__l2"><a href="#around-the-core">Around the core</a></li><li class="toc__l2"><a href="#the-vocabulary">The vocabulary</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

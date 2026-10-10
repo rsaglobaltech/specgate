@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0022-patterns-are-optional-principles-are-not">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0022 — Patterns are optional; principles are not — Specgate</title>
+<meta name="description" content="ADR-0022 — Patterns are optional; principles are not">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0022 — Patterns are optional; principles are not — Specgate">
+<meta property="og:description" content="ADR-0022 — Patterns are optional; principles are not">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0022-patterns-are-optional-principles-are-not">ADR-0022 — Patterns are optional; principles are not<a class="anchor" href="#adr-0022-patterns-are-optional-principles-are-not" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-08-21</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>Every project this tool scaffolds is handed the tactical vocabulary of
+Domain-Driven Design. <code>csda init</code> writes <code>domain-model.md</code>, <code>use-cases.md</code>,
+<code>commands.md</code>, <code>aggregates.md</code>, <code>events.md</code> and <code>status-model.md</code> whatever the
+project is, and the generated <code>AI_RULES.md</code> tells the agent, before it writes a
+line, that <em>every scenario maps to a use case, every use case to a command or
+query, and every command to an aggregate or read model</em>.</p>
+<p>For a payments engine that is good advice. For a static marketing site it is 74
+lines of vocabulary describing structures the system does not have — and worse
+than useless, because an agent reads them as a description of the system and
+produces a <code>CreateInvoiceCommandHandler</code> for a contact form. That is accidental
+complexity, manufactured by the scaffolder.</p>
+<p>The uncomfortable part is that <strong>the tool never actually required any of it.</strong>
+Measured: delete all five domain documents from a generated project and
+<code>csda validate</code> passes. The gate asks for stable requirement ids, an executable
+scenario per requirement, a complete traceability matrix, legal statuses and —
+under <code>--strict-tdd</code> — a test declared before work starts. Not one of those
+mentions an aggregate. <code>use-cases.md</code> and <code>events.md</code> are checked only <em>if they
+exist</em>, and then only for their table header.</p>
+<p>So the obligation people feel does not come from the gate. It comes from two
+softer places that are harder to see: the scaffolder, which creates the files
+whether or not they fit, and the agent rulebook, which is prose no machine
+verifies and every agent obeys. An option the generator always takes is not an
+option.</p>
+<p>The other half of this product already got the answer right.
+<code>schemas/pack.schema.json</code> requires <code>requirements</code> and declares
+<code>bounded_contexts</code>, <code>use_cases</code>, <code>commands</code>, <code>aggregates</code>, <code>value_objects</code> and
+<code>events</code> <strong>optional</strong>, and <code>ExpandDomainPackCommand</code> already branches on it:</p>
+<figure class="code" data-lang="ts"><figcaption class="code__head"><span class="code__lang">ts</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-ts"><span class="tok tok--k">let</span> mode = hasStructuredDomainModel(pack) ? <span class="tok tok--s">&quot;rich&quot;</span> : <span class="tok tok--s">&quot;legacy&quot;</span>;</code></pre></figure>
+<p>A pack with no domain model expands to the four-column matrix; one with a model
+gets the ten-column matrix. The idea that a project may legitimately have no
+aggregates is already implemented, tested and shipping — it simply never reached
+<code>init</code>. The generated frontend row even carries <code>-</code> in Aggregate and Event, so
+the format was never the thing insisting.</p>
+<p>The industry position is not controversial: DDD earns its cost in complex,
+long-lived domains with several teams, and is overkill for CRUD, prototypes and
+short-lived work. Applying it by default is how a method acquires a reputation
+for ceremony.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p><strong>Architectural patterns are a choice the project declares. Architectural
+principles are not, and the gate only ever enforces the second.</strong></p>
+<ol>
+<li><p><strong><code>validate</code> stays pattern-agnostic, and does not move.</strong> No profile makes
+the gate weaker or stronger. A <code>minimal</code> project with a requirement lacking a
+scenario fails exactly as a <code>tactical-ddd</code> one does. This is what makes the
+rest of the ADR safe: the only thing holding the product up is untouched.</p>
+</li>
+<li><p><strong>A project declares an <code>ARCHITECTURE</code> profile</strong>, and the scaffolder obeys
+it — the same mechanism <code>DOCKER_SUPPORT</code> and <code>DATASTORE</code> already use, down to
+rejecting combinations that cannot be true.</p>
+<div class="table-wrap"><table><thead><tr><th>Profile</th><th>For</th><th>Domain documents</th><th>Matrix</th></tr></thead><tbody><tr><td><code>minimal</code></td><td>scripts, landing pages, prototypes, CLIs</td><td>none</td><td>4 columns</td></tr><tr><td><code>layered</code></td><td>most work: CRUD APIs, frontends, services</td><td><code>use-cases.md</code></td><td>10 columns, <code>-</code> where absent</td></tr><tr><td><code>tactical-ddd</code></td><td>complex domains, several teams</td><td>all six</td><td>10 columns</td></tr></tbody></table></div>
+</li>
+<li><p><strong><code>AI_RULES.md</code> is generated per profile.</strong> The pre-implementation gates that
+demand a command and an aggregate belong to <code>tactical-ddd</code> alone. What every
+profile keeps is the part that is not DDD at all: business logic stays out of
+the framework, and nothing is implemented without a traceability row.</p>
+</li>
+<li><p><strong>These principles are invariant across every profile</strong>, and each is already
+enforced by the gate except the last:</p>
+<ul>
+<li>every requirement has a stable id;</li>
+<li>every requirement has an executable acceptance criterion — a Gherkin
+scenario, not prose;</li>
+<li>traceability is complete, and the build fails when it is not;</li>
+<li>a test is declared before a requirement moves past Draft (<code>--strict-tdd</code>);</li>
+<li>the spec is the source of truth and the board is a mirror (ADR-0021);</li>
+<li>decisions are recorded as ADRs;</li>
+<li><strong>business logic does not live in framework code.</strong> This one is
+separation of concerns, not DDD: a business rule inside an Express
+controller is equally wrong with or without aggregates. It survives when
+the aggregates go, because it is the value teams believe DDD is giving
+them.</li>
+</ul>
+</li>
+<li><p><strong>The profile is declared, never inferred.</strong> Guessing it from <code>DOMAIN</code> or
+<code>STACK</code> — &quot;banking, therefore DDD&quot; — would be the original mistake wearing a
+different hat: the tool deciding the architecture for the team.</p>
+</li>
+<li><p><strong>Raising a profile is supported; lowering it is not automatic.</strong> Going from
+<code>minimal</code> to <code>tactical-ddd</code> adds scaffolding. Going the other way would delete
+documents that may hold real content, so it is reported and left to a human.</p>
+</li>
+<li><p><strong><code>doctor</code> reports drift between the declared profile and the project.</strong> A
+<code>minimal</code> project with twelve aggregates in its model, or a <code>tactical-ddd</code>
+one whose <code>aggregates.md</code> has been empty for six months, is a finding. This
+is what turns the profile into something verifiable rather than a preference
+recorded once and forgotten.</p>
+</li>
+</ol>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<p>The cost is three scaffolding paths instead of one, and two of them will be
+exercised less than the default — met the way this repository meets it
+elsewhere, with a test per profile that generates a project and validates it,
+as already exists for Docker and the datastore.</p>
+<p>The gain is that the method stops arguing with the project. A team that does not
+need aggregates is no longer handed a document telling its agent to invent some,
+and a team that does need them declares it and gets the full vocabulary. The
+tool&#39;s opinion moves from <em>&quot;model your domain this way&quot;</em> to <em>&quot;whatever you
+model, it must be traceable and tested&quot;</em> — which is the opinion it can actually
+defend.</p>
+<p>It also removes an inconsistency that was becoming a liability: packs already
+treated the domain model as optional while projects did not, so the same
+question had two answers depending on which half of the product you entered
+through.</p>
+<p><strong>The default is not changed by this ADR.</strong> New projects continue to receive
+<code>tactical-ddd</code> until a separate decision moves the default to <code>layered</code>, because
+that change alters what an unchanged command produces and belongs to a major
+release. Recording the reasoning now and changing the default later is
+deliberate: the ADR is about what is possible, not about what arrives by
+surprise.</p>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<p><strong>Leave it, and document that the files are optional.</strong> They already are
+technically, and everyone still fills them in — because the generator writes
+them and the rulebook demands them. Documentation does not undo a default.</p>
+<p><strong>Relax <code>validate</code> for simpler projects.</strong> The obvious reading of &quot;make it
+optional&quot;, and the wrong one. The gate is the product; it is also already
+pattern-agnostic, so loosening it would break the working part to fix the
+scaffolding.</p>
+<p><strong>Drop the Aggregate and Event columns from the rich matrix.</strong> They already
+accept <code>-</code>, and removing them would break <code>done</code> and <code>alm/core</code>, which read
+Status as the penultimate cell — the same fact that made E1-01 reject adding an
+eleventh column.</p>
+<p><strong>A profile per framework.</strong> Spring gets one shape, Express another. This
+confuses the shape of the problem with the shape of the tooling; a Spring CRUD
+and an Express CRUD want the same profile.</p>
+<p><strong>Infer the profile from the existing code during <code>adopt</code>.</strong> Attractive, and
+there is precedent in <code>pack infer</code>. It is also a guess that the project then
+inherits silently, which is what principle 5 exists to prevent. It may return
+later as an explicit <em>suggestion</em> the user confirms.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0022-patterns-are-optional-principles-are-not.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

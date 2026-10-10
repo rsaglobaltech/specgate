@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en" data-slug="faq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frequently asked questions — Specgate</title>
+<meta name="description" content="The questions a team asks in its first week, answered in two lines each.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Frequently asked questions — Specgate">
+<meta property="og:description" content="The questions a team asks in its first week, answered in two lines each.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html" class="is-active" aria-current="page">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Reference</li><li aria-current="page">FAQ</li></ol></nav>
+    <article class="prose">
+<h1 id="frequently-asked-questions">Frequently asked questions<a class="anchor" href="#frequently-asked-questions" aria-label="Link to this section">#</a></h1>
+<p>The questions teams ask in the first week, with the short answer and where the
+long one lives.</p>
+<hr>
+<h2 id="adopting-it">Adopting it<a class="anchor" href="#adopting-it" aria-label="Link to this section">#</a></h2>
+<h3 id="does-it-work-on-a-repository-that-already-exists">Does it work on a repository that already exists?<a class="anchor" href="#does-it-work-on-a-repository-that-already-exists" aria-label="Link to this section">#</a></h3>
+<p>Yes, and that is the common case. <code>specgate init</code> sees the code
+(<code>pom.xml</code>, <code>package.json</code>, <code>go.mod</code>, <code>pyproject.toml</code>, <code>Cargo.toml</code>, …),
+adopts the repository in place and touches no source file. The gate is green
+the same day because a <code>Draft</code> requirement owes nothing yet.
+→ <a href="getting-started.html">Getting started</a></p>
+<h3 id="which-languages-and-build-tools">Which languages and build tools?<a class="anchor" href="#which-languages-and-build-tools" aria-label="Link to this section">#</a></h3>
+<p>Any. Specgate reads markdown, Gherkin and file names; the link between a
+requirement and a test is a mention of <code>REQ-NNN</code>, which any language can
+carry in a comment or a test name. Your own test command runs your suite.</p>
+<h3 id="do-i-need-node-js">Do I need Node.js?<a class="anchor" href="#do-i-need-node-js" aria-label="Link to this section">#</a></h3>
+<p>Node.js 22 or later for the CLI. Without it: the Docker image
+(<code>ghcr.io/rsaglobaltech/specgate</code>), or the Maven and Gradle plugins on a JVM
+build agent.</p>
+<h3 id="do-i-have-to-use-ddd-hexagonal-architecture-or-cqrs">Do I have to use DDD, hexagonal architecture or CQRS?<a class="anchor" href="#do-i-have-to-use-ddd-hexagonal-architecture-or-cqrs" aria-label="Link to this section">#</a></h3>
+<p>No. Patterns are optional; principles are not
+(<a href="specs/adr/0022-patterns-are-optional-principles-are-not.html">ADR-0022</a>). The matrix has columns for use cases,
+commands, aggregates and events; leave them as <code>-</code> if your system has none.</p>
+<h3 id="do-i-need-cucumber">Do I need Cucumber?<a class="anchor" href="#do-i-need-cucumber" aria-label="Link to this section">#</a></h3>
+<p>No. Scenarios are written in Gherkin so they <em>can</em> be executed and so the gate
+can check them, but the gate links a requirement to whatever test mentions it.
+If you do run Cucumber, the gate reads its message protocol and refuses a
+scenario that ran zero steps.</p>
+<h3 id="how-do-we-stop-using-it">How do we stop using it?<a class="anchor" href="#how-do-we-stop-using-it" aria-label="Link to this section">#</a></h3>
+<p>Delete <code>spec.md</code>, <code>features/</code>, <code>docs/specs/</code> and the CI job. Adoption never
+touched your code, so nothing else depends on it.</p>
+<hr>
+<h2 id="day-to-day">Day to day<a class="anchor" href="#day-to-day" aria-label="Link to this section">#</a></h2>
+<h3 id="does-every-pull-request-need-a-new-requirement">Does every pull request need a new requirement?<a class="anchor" href="#does-every-pull-request-need-a-new-requirement" aria-label="Link to this section">#</a></h3>
+<p>No. A bugfix or a refactor that does not change contracted behaviour adds
+none, and the gate only asks for what delivered requirements owe.
+→ <a href="first-pr.html">Your team&#39;s first pull request</a></p>
+<h3 id="who-edits-the-traceability-matrix">Who edits the traceability matrix?<a class="anchor" href="#who-edits-the-traceability-matrix" aria-label="Link to this section">#</a></h3>
+<p>Nobody. It is generated from <code>spec.md</code>, the scenario tags and the files that
+mention each requirement. Commit what <code>specgate check</code> regenerates; CI fails
+with <code>matrix_stale</code> when you forget. → <a href="concepts.html">How Specgate thinks</a></p>
+<h3 id="two-branches-both-changed-the-matrix-and-now-it-conflicts">Two branches both changed the matrix and now it conflicts.<a class="anchor" href="#two-branches-both-changed-the-matrix-and-now-it-conflicts" aria-label="Link to this section">#</a></h3>
+<p>Take either side and run <code>specgate matrix</code>: it is regenerated from the merged
+sources, so the conflict resolves itself.</p>
+<h3 id="done-refuses-can-i-force-it"><code>done</code> refuses. Can I force it?<a class="anchor" href="#done-refuses-can-i-force-it" aria-label="Link to this section">#</a></h3>
+<p><code>specgate done REQ-NNN --no-check</code> writes the status without the gate. Use it
+when the gate is wrong, say so in the pull request — and open an issue,
+because a wrong gate is a bug.</p>
+<h3 id="check-says-it-checked-the-specification-not-the-code"><code>check</code> says it checked the specification, not the code.<a class="anchor" href="#check-says-it-checked-the-specification-not-the-code" aria-label="Link to this section">#</a></h3>
+<p>No test command is configured, so nothing ran your tests. Run
+<code>specgate config set test_cmd &quot;npm test&quot;</code> once, or pass <code>--test-cmd &quot;npm test&quot;</code>. Until then a green
+<code>check</code> means the specification is consistent, nothing more.</p>
+<h3 id="what-does-a-reviewer-look-at">What does a reviewer look at?<a class="anchor" href="#what-does-a-reviewer-look-at" aria-label="Link to this section">#</a></h3>
+<p>The requirement, its scenario and the test that mentions it — not the matrix.
+The one thing the gate cannot catch is a test that names a requirement and
+does not test it. → <a href="first-pr.html#the-reviewer-what-to-read-what-to-skip">Your team&#39;s first pull request</a></p>
+<hr>
+<h2 id="agents">Agents<a class="anchor" href="#agents" aria-label="Link to this section">#</a></h2>
+<h3 id="which-ai-agent-does-it-need">Which AI agent does it need?<a class="anchor" href="#which-ai-agent-does-it-need" aria-label="Link to this section">#</a></h3>
+<p>None. Every command works by hand. <code>specgate init</code> installs the slash commands
+for the agents it finds in your project (<code>CLAUDE.md</code>, <code>.cursor/</code>, …); <code>specgate agents init</code>
+writes them for any other, with slash commands and rules for Claude Code, Cursor, Copilot, Windsurf,
+Aider, Gemini, Cline, Codex or Antigravity. → <a href="agents.html">Agent tools</a></p>
+<h3 id="can-an-agent-rewrite-the-spec-to-make-its-own-test-pass">Can an agent rewrite the spec to make its own test pass?<a class="anchor" href="#can-an-agent-rewrite-the-spec-to-make-its-own-test-pass" aria-label="Link to this section">#</a></h3>
+<p>Not quietly. Over MCP, tools that write the specification refuse unless a
+change is open or the team set <code>mcpAllowContractEdits</code>. In the harness,
+touching <code>spec.md</code>, <code>features/**</code> or the rules fails the attempt.
+→ <a href="mcp.html">The MCP server</a> · <a href="harness.html">The harness</a></p>
+<h3 id="will-the-harness-merge-its-work">Will the harness merge its work?<a class="anchor" href="#will-the-harness-merge-its-work" aria-label="Link to this section">#</a></h3>
+<p>Never. It leaves one branch per requirement and stops. Merging is a judgement,
+and a tool that merges its own work removes the last place a person reviews it.</p>
+<h3 id="what-does-a-harness-run-cost">What does a harness run cost?<a class="anchor" href="#what-does-a-harness-run-cost" aria-label="Link to this section">#</a></h3>
+<p>Whatever your agent costs. The harness measures wall-clock time; a profile
+may declare a cost hint, and <code>specgate harness report</code> multiplies it out and
+says the figure is declared, not measured.</p>
+<hr>
+<h2 id="security-and-operations">Security and operations<a class="anchor" href="#security-and-operations" aria-label="Link to this section">#</a></h2>
+<h3 id="does-the-cli-send-telemetry">Does the CLI send telemetry?<a class="anchor" href="#does-the-cli-send-telemetry" aria-label="Link to this section">#</a></h3>
+<p>No. It makes network calls only when you ask for something remote: an ALM
+sync, a pack fetched from a git URL, or <code>npx</code> downloading the package itself.</p>
+<h3 id="can-it-run-air-gapped">Can it run air-gapped?<a class="anchor" href="#can-it-run-air-gapped" aria-label="Link to this section">#</a></h3>
+<p>Yes. Use the Docker image or a vendored package, and install packs from a git
+bundle (<code>specgate pack bundle</code>). → <a href="supply-chain.html">Supply chain</a></p>
+<h3 id="what-does-it-install">What does it install?<a class="anchor" href="#what-does-it-install" aria-label="Link to this section">#</a></h3>
+<p>One package with zero runtime dependencies. Every release ships a CycloneDX
+SBOM, and its licence policy is a build gate. → <a href="supply-chain.html">Supply chain</a></p>
+<h3 id="how-do-we-pin-the-version-in-ci">How do we pin the version in CI?<a class="anchor" href="#how-do-we-pin-the-version-in-ci" aria-label="Link to this section">#</a></h3>
+<p><code>specgate ci init</code> writes the job with the version that generated it
+(<code>npx @rsaglobaltech/specgate@&lt;version&gt;</code>), so CI does not change behaviour the
+day a new release is published.</p>
+<hr>
+<h2 id="compared-with-others">Compared with others<a class="anchor" href="#compared-with-others" aria-label="Link to this section">#</a></h2>
+<h3 id="how-is-this-different-from-openspec-or-spec-kit">How is this different from OpenSpec or Spec Kit?<a class="anchor" href="#how-is-this-different-from-openspec-or-spec-kit" aria-label="Link to this section">#</a></h3>
+<p>Mostly in what happens after the specification is written: a matrix CI
+enforces, Gherkin a runner can execute, versioned domain packs and an
+unattended harness. OpenSpec is smaller, and if you only want the change loop
+it is the better fit. → <a href="comparisons.html">Comparisons</a></p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="concepts.html"><span>Previous</span>How Specgate thinks</a><a class="pager__next" href="troubleshooting.html"><span>Next</span>Troubleshooting</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/faq.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#adopting-it">Adopting it</a></li><li class="toc__l3"><a href="#does-it-work-on-a-repository-that-already-exists">Does it work on a repository that already exists?</a></li><li class="toc__l3"><a href="#which-languages-and-build-tools">Which languages and build tools?</a></li><li class="toc__l3"><a href="#do-i-need-node-js">Do I need Node.js?</a></li><li class="toc__l3"><a href="#do-i-have-to-use-ddd-hexagonal-architecture-or-cqrs">Do I have to use DDD, hexagonal architecture or CQRS?</a></li><li class="toc__l3"><a href="#do-i-need-cucumber">Do I need Cucumber?</a></li><li class="toc__l3"><a href="#how-do-we-stop-using-it">How do we stop using it?</a></li><li class="toc__l2"><a href="#day-to-day">Day to day</a></li><li class="toc__l3"><a href="#does-every-pull-request-need-a-new-requirement">Does every pull request need a new requirement?</a></li><li class="toc__l3"><a href="#who-edits-the-traceability-matrix">Who edits the traceability matrix?</a></li><li class="toc__l3"><a href="#two-branches-both-changed-the-matrix-and-now-it-conflicts">Two branches both changed the matrix and now it conflicts.</a></li><li class="toc__l3"><a href="#done-refuses-can-i-force-it">done refuses. Can I force it?</a></li><li class="toc__l3"><a href="#check-says-it-checked-the-specification-not-the-code">check says it checked the specification, not the code.</a></li><li class="toc__l3"><a href="#what-does-a-reviewer-look-at">What does a reviewer look at?</a></li><li class="toc__l2"><a href="#agents">Agents</a></li><li class="toc__l3"><a href="#which-ai-agent-does-it-need">Which AI agent does it need?</a></li><li class="toc__l3"><a href="#can-an-agent-rewrite-the-spec-to-make-its-own-test-pass">Can an agent rewrite the spec to make its own test pass?</a></li><li class="toc__l3"><a href="#will-the-harness-merge-its-work">Will the harness merge its work?</a></li><li class="toc__l3"><a href="#what-does-a-harness-run-cost">What does a harness run cost?</a></li><li class="toc__l2"><a href="#security-and-operations">Security and operations</a></li><li class="toc__l3"><a href="#does-the-cli-send-telemetry">Does the CLI send telemetry?</a></li><li class="toc__l3"><a href="#can-it-run-air-gapped">Can it run air-gapped?</a></li><li class="toc__l3"><a href="#what-does-it-install">What does it install?</a></li><li class="toc__l3"><a href="#how-do-we-pin-the-version-in-ci">How do we pin the version in CI?</a></li><li class="toc__l2"><a href="#compared-with-others">Compared with others</a></li><li class="toc__l3"><a href="#how-is-this-different-from-openspec-or-spec-kit">How is this different from OpenSpec or Spec Kit?</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en" data-slug="bootstrap-prompt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🪄 Bootstrap prompt — Phase 1 — Specgate</title>
+<meta name="description" content="The prompt that turns an idea into a first specification.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="🪄 Bootstrap prompt — Phase 1 — Specgate">
+<meta property="og:description" content="The prompt that turns an idea into a first specification.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html" class="is-active" aria-current="page">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Advanced</li><li aria-current="page">Bootstrap prompt</li></ol></nav>
+    <article class="prose">
+<h1 id="bootstrap-prompt-phase-1">🪄 Bootstrap prompt — Phase 1<a class="anchor" href="#bootstrap-prompt-phase-1" aria-label="Link to this section">#</a></h1>
+<p>Hand this prompt to your coding agent (opencode, Claude, Aider, Cursor)
+the first time you sit down in a fresh project, <strong>after</strong> you have run
+<code>specgate init</code> and <code>specgate specops add</code> but <strong>before</strong> you start the harness
+loop. It is the only freeform-AI step in the whole flow — every later
+requirement goes through <code>specgate harness run</code>, which builds its own
+prompt deterministically.</p>
+<blockquote>
+<p>Why a separate prompt? The harness implements <strong>one REQ at a time</strong>.
+Project-level scaffolding — build manifest, wired BDD framework, hex
+skeleton, the first bounded context end-to-end — is not &quot;a REQ&quot;, so it
+does not belong in the harness. This prompt is what wires the project so
+the harness can take over.</p>
+</blockquote>
+<hr>
+<h2 id="how-to-use-it">How to use it<a class="anchor" href="#how-to-use-it" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Run <code>specgate init</code> and <code>specgate specops add</code> so the project has <code>spec.md</code>,
+<code>AGENTS.md</code> and <code>features/**/*.feature</code>.</li>
+<li>Open your coding agent inside the project directory.</li>
+<li>Paste the prompt below verbatim, then say &quot;go&quot;.</li>
+<li>When the agent says it is done, run:<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> validate . <span class="tok tok--o">--strict</span>
+&lt;your test command&gt;      <span class="tok tok--c"># e.g. mvn -B test</span>
+<span class="tok tok--f">specgate</span> plan</code></pre></figure>
+<code>validate --strict</code> and the project test command must pass. <code>plan</code>
+should show the remaining REQs as pending. <strong>This is Phase 1&#39;s
+acceptance test — do not move on until both are green.</strong></li>
+<li>Commit: <code>git commit -am &quot;phase 1: bootstrap&quot;</code>.</li>
+<li>From now on, every REQ is <code>specgate harness run</code>&#39;s job.</li>
+</ol>
+<p>After Phase 1 is in, the universal directives from this prompt belong in
+<strong><code>harness.config.yaml: prompt_prefix</code></strong> (or <code>prompt_prefix_file</code>) so they
+ride along on every per-REQ harness invocation without being retyped.</p>
+<hr>
+<h2 id="the-prompt">The prompt<a class="anchor" href="#the-prompt" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">You are my **Lead Technical Architect** and **Senior Engineer**.
+
+## Active Project Boundary (Critical)
+- Treat the **current working directory** as the only active project scope.
+- Do **NOT** scan or reason over sibling projects or the whole monorepo by default.
+- Read files only inside the active project unless an explicit path is provided by the Product Owner.
+
+## Source of Truth (Read-Only for You)
+- `@./AGENTS.md` — stack, architectural constraints, workflow rules.
+- `@./spec.md` — the domain map.
+- `@./features/**/*.feature` — the executable acceptance criteria.
+- `@./docs/specs/traceability.md` — the requirement ↔ code matrix; `specgate done` owns it.
+
+You **must not** rewrite, refine, or &quot;improve&quot; any of those files.
+
+## Execution Policy (Non-Negotiable)
+- Start coding from this prompt — do **not** stop at a plan.
+- Prioritise executable implementation and passing tests over narrative summaries.
+- Respect the architectural constraints in `AGENTS.md` (Hexagonal / Clean / DDD as declared).
+- Use `csda` to introspect — never to rewrite specs:
+  - `specgate plan`                — which REQs are pending and what is missing.
+  - `specgate validate . --strict` — the gate you must satisfy.
+  - `specgate pack lint --pack-root &lt;cached pack dir&gt; --pack &lt;id&gt; --graph` — visualise the domain.
+
+## Phase 1 — Goal
+Make the project executable end-to-end:
+1. **Build manifest + dependencies** — create `pom.xml` / `build.gradle` /
+   `package.json` (whichever the stack in `AGENTS.md` calls for) with
+   runtime and test deps that match the declared `TESTING` value (e.g.
+   JUnit 5 + Cucumber + Testcontainers).
+2. **BDD wiring** — wire the BDD framework so it executes the existing
+   `features/**/*.feature` files at their current location. Do **not**
+   modify the feature text. Filter discovery to whichever REQ you take
+   first; widen as more REQs land.
+3. **Hexagonal skeleton** — set up the package/folder layout
+   (`domain`, `application`, `infrastructure`/`adapter`) per the
+   architectural constraints in `AGENTS.md`.
+4. **First bounded context, end-to-end** — pick the highest-priority
+   bounded context in `spec.md` and implement enough domain model + one
+   adapter so the first scenario passes through.
+5. **Stop.** Subsequent requirements go through `specgate harness run`, not
+   you.
+
+## Acceptance (Phase 1 is &quot;done&quot; when…)
+- `specgate validate . --strict` passes.
+- `&lt;your test command&gt;` passes — with at least one scenario executed for
+  real (not skipped, not Pending).
+- `specgate plan` lists the still-pending REQs cleanly.
+- `docs/specs/traceability.md` remains valid (you did not edit it).
+- Working tree is committable: build manifests in place, hex skeleton
+  present, no orphan files.
+
+## Deliver
+- A short summary at the end with:
+  - the build manifest you created (and why),
+  - the BDD wiring approach (config, runner class, discovery filter),
+  - the first bounded context you picked and the files you created,
+  - the test command that proves Phase 1 (so the Product Owner can run it),
+  - any architectural call you made that the next REQs will inherit.
+
+Start. Do not ask permission for tactical decisions inside the scope above.</code></pre></figure>
+<hr>
+<h2 id="what-changed-vs-the-older-base-prompt">What changed vs. the older Base Prompt<a class="anchor" href="#what-changed-vs-the-older-base-prompt" aria-label="Link to this section">#</a></h2>
+<p>If you used the older <code>Phase 1 Bootstrap</code> prompt that talked about
+&quot;Mode Detection&quot; between Domain-pack and Generated-project mode, you can
+drop those sections. With <code>csda</code> the mode is decided <strong>before</strong> the agent
+is invoked — by the time you paste this prompt, the project is always in
+Generated-project mode. The prompt above also names the <code>csda</code> commands
+explicitly so the agent can self-introspect, and ties the acceptance
+criteria to <code>validate --strict</code> + the project test command so &quot;done&quot;
+is a hard-edged definition, not a feel.</p>
+<hr>
+<h2 id="recommended-harness-config-yaml">Recommended <code>harness.config.yaml</code><a class="anchor" href="#recommended-harness-config-yaml" aria-label="Link to this section">#</a></h2>
+<p>After Phase 1 is in, lift the <strong>universal</strong> sections of the prompt above
+(Role, Active Project Boundary, Execution Policy) into a file the harness
+prepends to every per-REQ prompt:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># harness.config.yaml</span>
+<span class="tok tok--a">harness_version</span>: <span class="tok tok--n">1</span>
+<span class="tok tok--a">agent</span>: <span class="tok tok--s">'opencode run &quot;$(cat {prompt_file})&quot;'</span>
+<span class="tok tok--a">test_cmd</span>: <span class="tok tok--s">&quot;mvn -B test&quot;</span>
+<span class="tok tok--a">max_attempts</span>: <span class="tok tok--n">3</span>
+<span class="tok tok--a">prompt_prefix_file</span>: ./.harness/prompt-prefix.md</code></pre></figure>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">&lt;!-- .harness/prompt-prefix.md --&gt;
+
+# Role
+
+You are the Lead Technical Architect and Senior Backend Engineer.
+
+# Active Project Boundary
+
+- Current directory is the only scope. Do NOT scan siblings.
+
+# Execution Policy
+
+- Start coding. No planning-only output.
+- Hexagonal architecture is non-negotiable (see AGENTS.md).
+- Never modify AGENTS.md, spec.md, or features/\*_/_.feature.</code></pre></figure>
+<p>Verify what the agent will receive at any time with:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness prompt REQ-NNN</code></pre></figure>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="agent-setup.html"><span>Previous</span>Choosing your agent</a><a class="pager__next" href="how-to.html"><span>Next</span>How-to guides</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/bootstrap-prompt.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#how-to-use-it">How to use it</a></li><li class="toc__l2"><a href="#the-prompt">The prompt</a></li><li class="toc__l2"><a href="#what-changed-vs-the-older-base-prompt">What changed vs. the older Base Prompt</a></li><li class="toc__l2"><a href="#recommended-harness-config-yaml">Recommended harness.config.yaml</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

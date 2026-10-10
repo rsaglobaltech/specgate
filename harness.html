@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en" data-slug="harness">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The harness — Specgate</title>
+<meta name="description" content="Unattended delivery: plan → agent → gate → done, one worktree per requirement.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="The harness — Specgate">
+<meta property="og:description" content="Unattended delivery: plan → agent → gate → done, one worktree per requirement.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html" class="is-active" aria-current="page">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Extensions</li><li aria-current="page">The harness</li></ol></nav>
+    <article class="prose">
+<h1 id="the-harness">The harness<a class="anchor" href="#the-harness" aria-label="Link to this section">#</a></h1>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness init</code></pre></figure>
+<p>Writes <code>harness.config.yaml</code> and <code>.harness/prompt-prefix.md</code>, detects the gate
+from your build files, and leaves <code>agent:</code> unset — which agent runs the loop is
+your choice and your credentials.</p>
+<p>Name the agent when you run it:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--req</span> REQ-<span class="tok tok--n">001</span> \
+  <span class="tok tok--o">--agent</span> <span class="tok tok--s">&quot;claude -p --allowedTools Read Write Edit Glob Grep 'Bash(npm:*)' &lt; {prompt_file}&quot;</span></code></pre></figure>
+<p><strong>The tool allowances matter.</strong> An agent in non-interactive mode has no way to
+ask permission, so without them it reads the prompt, cannot write a file, and
+the attempt is wasted. Scope them rather than reaching for
+<code>--dangerously-skip-permissions</code>: the agent needs <code>Bash</code> to run the project&#39;s
+build, and <code>Bash(npm:*)</code> is enough for a Node project. It works in a throwaway
+git worktree, which is the whole reason the harness uses one.</p>
+<p>Other agents take the prompt differently — <code>aider --yes --message-file {prompt_file}</code>, <code>opencode run &quot;$(cat {prompt_file})&quot;</code>. The harness only requires
+that the command contain <code>{prompt_file}</code>.</p>
+<p>A tool that fits none of those shapes needs a wrapper, and a command <strong>without</strong>
+<code>{prompt_file}</code> is refused rather than silently run.
+→ <a href="agent-setup.html">Choosing and wiring your agent</a> covers both, with the
+commands for the tools people actually use.</p>
+<p><strong>The agent works in a fresh worktree, which carries only what git tracks</strong> — no
+<code>node_modules</code>, no <code>target/</code>, no <code>.venv</code>. An agent must not spend its attempt
+installing dependencies: put that in the gate command (<code>--test-cmd &quot;npm ci &amp;&amp; npm test&quot;</code>), the only part that knows how. Found the expensive way, by an agent
+that spent its first attempt on <code>npm install</code> and timed out.</p>
+<p>Or commit the commands your team uses and pick one by name:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># harness.config.yaml</span>
+<span class="tok tok--a">agent_profile</span>: local-claude
+
+<span class="tok tok--c"># .harness/profiles.yaml</span>
+<span class="tok tok--a">profiles_version</span>: <span class="tok tok--n">1</span>
+<span class="tok tok--a">profiles</span>:
+<span class="tok tok--a">  local-claude</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">  ci</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;aider --yes --message-file {prompt_file}&quot;</span></code></pre></figure>
+<p>Write profiles in block form, as above: the reader is a dependency-free YAML
+subset, and an inline mapping (<code>local-claude: { agent: &quot;…&quot; }</code>) parses as a
+<em>string</em>, leaving the profile with no <code>agent</code>.</p>
+<p>A profile may also declare <code>match:</code> and select itself, so one run gives
+different requirements different agents — and different tool allowances —
+rather than the greatest common denominator of the whole plan.
+→ <a href="specs/harness.html">A profile per requirement</a></p>
+<h2 id="parallel-branches-and-the-traceability-matrix">Parallel branches and the traceability matrix<a class="anchor" href="#parallel-branches-and-the-traceability-matrix" aria-label="Link to this section">#</a></h2>
+<p>Every harness branch flips its own row in <code>docs/specs/traceability.md</code>. Git
+merges by lines and needs an unchanged line between two changed regions to treat
+them as independent — and matrix rows are consecutive lines. So two branches
+that touched <strong>different</strong> requirements still collide, purely because their rows
+are neighbours. Measured on a three-requirement project: rows 1 and 2 conflict,
+rows 1 and 5 merge clean.</p>
+<p><code>specgate harness init</code> sets up a merge driver that merges the matrix by row instead
+of by line:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness init <span class="tok tok--o">--project-dir</span> .   <span class="tok tok--c"># writes .gitattributes, registers the driver</span>
+<span class="tok tok--f">git</span> add .gitattributes &amp;&amp;<span class="tok tok--f"> git</span> commit <span class="tok tok--o">-m</span> <span class="tok tok--s">&quot;merge the matrix by row&quot;</span></code></pre></figure>
+<p>It resolves the case it exists for — two branches, two different rows — and it
+still <strong>conflicts</strong> when two branches set the <em>same</em> row to different values,
+because quietly discarding somebody&#39;s decision is worse than asking.</p>
+<p><strong>Every clone registers it once.</strong> <code>.gitattributes</code> is committed, but
+<code>merge.csda-matrix.driver</code> is local git config that nothing can commit, so a
+fresh checkout and every CI job needs <code>specgate harness init</code> too. Until then git
+falls back to its built-in merge — the conflict the project had before, never a
+silently wrong result — and <code>specgate doctor</code> reports the gap rather than leaving it
+to be found mid-merge.</p>
+<h3 id="resolving-one-by-hand">Resolving one by hand<a class="anchor" href="#resolving-one-by-hand" aria-label="Link to this section">#</a></h3>
+<p>When two branches really did change the same row, the file gets git&#39;s usual
+markers around that one row:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">&lt;&lt;&lt;&lt;&lt;&lt;&lt; ours
+| REQ-002 | SCN-002 | … | Implemented |
+=======
+| REQ-002 | SCN-002 | … | Verified |
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; theirs</code></pre></figure>
+<p>Keep exactly one of the two lines and delete the three marker lines. <strong>Never
+keep both:</strong> a duplicated requirement is the one corruption this file must not
+have — it is also what a naive <code>merge=union</code> produces, which is why that is not
+what csda configures. Then run <code>specgate validate .</code>, which checks the statuses are
+legal and that no scenario id repeats.</p>
+<h2 id="change-agent-between-attempts">Change agent between attempts<a class="anchor" href="#change-agent-between-attempts" aria-label="Link to this section">#</a></h2>
+<p>Three attempts with the same agent, the same model and only a different prompt
+is mostly a re-roll. A ladder gives each attempt its own profile, and can put an
+advisory reviewer in front of every retry:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># harness.config.yaml</span>
+<span class="tok tok--a">attempt_profiles</span>:
+  - implementer <span class="tok tok--c"># attempt 1</span>
+  - repairer <span class="tok tok--c"># attempt 2</span>
+  - repairer-strong <span class="tok tok--c"># attempt 3, and any beyond it</span>
+<span class="tok tok--a">review_profile</span>: reviewer
+
+<span class="tok tok--c"># .harness/profiles.yaml</span>
+<span class="tok tok--a">profiles</span>:
+<span class="tok tok--a">  implementer</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">  repairer</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">  repairer-strong</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude --model opus -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">  reviewer</span>:
+<span class="tok tok--a">    agent</span>: <span class="tok tok--s">&quot;claude -p &lt; {prompt_file}&quot;</span>
+<span class="tok tok--a">    advisory</span>: <span class="tok tok--k">true</span></code></pre></figure>
+<p>A ladder shorter than <code>max_attempts</code> reuses its last rung. Declaring neither key
+keeps exactly the behaviour you have today: one agent, every attempt.</p>
+<p><strong>The reviewer advises; it never approves.</strong> It runs before each retry — never
+before the first attempt, since there is nothing to review yet — and its output
+is added to the next prompt as findings. Then everything it touched in the
+worktree is discarded, so it cannot reach the gate even if it tries to write
+code. <code>validate --strict</code> plus your test command stay the only judge, and a
+finding with the gate green does not block anything.</p>
+<p>A profile named by <code>review_profile</code> must declare <code>advisory: true</code>. Without it
+the harness refuses to start, because a reviewer whose work <em>was</em> gated and
+committed is not a reviewer.</p>
+<p>Every agent is still bound to exactly one requirement: an attempt may run two
+roles, but both work on the same REQ, in the same worktree, against the same
+gate. <code>.harness/runs/&lt;ts&gt;.json</code> names the roles that ran each attempt, and the
+branch carries one archived prompt per role — <code>attempt-2-reviewer.md</code>,
+<code>attempt-2-implementer.md</code> — so a reviewer can see exactly what each was asked.</p>
+<h2 id="run-more-than-one-requirement-at-a-time">Run more than one requirement at a time<a class="anchor" href="#run-more-than-one-requirement-at-a-time" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--concurrency</span> <span class="tok tok--n">4</span></code></pre></figure>
+<p><strong>Only requirements that do not depend on each other ever run together.</strong> The
+harness reads the dependency graph — the <code>depends=</code> keys in each requirement&#39;s
+<code>csda:trace</code> comment — and processes the queue in levels: everything in a level
+is independent, so it can go out to the pool at once; the next level waits.</p>
+<p><strong>A failure blocks what waits on it; it does not fail it.</strong> Before dependencies
+were expressible, one broken predecessor produced a failure for every
+requirement behind it — N failures for one cause, and N agent invocations paid
+for work that could not have succeeded. Now the report says so:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">  ❌ REQ-001  fail (1 attempt)     → harness/REQ-001
+  ⛔ REQ-002  blocked (0 attempts) → harness/REQ-002
+       Not attempted: REQ-001 did not pass.
+
+  0 passed · 1 failed · 0 skipped · 1 blocked</code></pre></figure>
+<p>A requirement caught in a dependency cycle is reported the same way and never
+attempted; <code>specgate validate</code> is what explains the cycle and how to break it.</p>
+<p><strong>The base is derived, not passed.</strong> A requirement is cut from the branch of
+the dependency it builds on, because that is the only place its code exists
+during a run. Nobody has to know the order and pass <code>--base-branch</code> by hand —
+which used to cost a whole agent run when the base turned out to be missing a
+fix that had landed on <code>main</code>. The harness now says so when it happens:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">⚠️  REQ-002: base harness/REQ-001 is 3 commit(s) behind main.
+    A fix that landed on main is not in this worktree —
+    a gate failure may not be about REQ-002.</code></pre></figure>
+<p><strong>A requirement with several dependencies gets them merged.</strong> Their branches
+know nothing of each other, so cutting from one would silently omit the rest.
+The harness assembles a throwaway <code>harness/base/REQ-NNN</code> first. Two things
+worth knowing about it:</p>
+<ul>
+<li>It resolves conflicts in <code>docs/specs/traceability.md</code> by keeping the base&#39;s
+version. Sibling branches <em>always</em> conflict there — each run ends with <code>csda done</code>, editing the same table — and the integration base exists only so the
+agent can see code. Each real <code>harness/REQ-NNN</code> branch keeps its own row.</li>
+<li>A conflict in an actual source file blocks the requirement and names the
+file. That is a genuine finding: two dependencies changed the same code in
+incompatible ways, and no automatic answer would be right.</li>
+</ul>
+<p>This is not the merge the harness refuses to do. That one is into a branch a
+human reviews; this one assembles the context a requirement was declared to
+need, and it is thrown away afterwards.</p>
+<p><strong>The default is 1, deliberately.</strong> Two reasons, and neither is timidity:</p>
+<ul>
+<li>Every step of a requirement — the gate, the agent, <code>specgate done</code>, git — is a
+blocking call, so above 1 each requirement runs in a worker process. That
+path is newer than the serial one, which has years of real agent runs behind
+it.</li>
+<li>Parallelism moves the bottleneck rather than removing it. Four green branches
+are four reviews, and the harness still never merges.</li>
+</ul>
+<p><code>concurrency: 4</code> in <code>harness.config.yaml</code> sets it for the project.</p>
+<h2 id="what-the-harness-has-cost">What the harness has cost<a class="anchor" href="#what-the-harness-has-cost" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness report            <span class="tok tok--c"># everything recorded</span>
+<span class="tok tok--f">specgate</span> harness report <span class="tok tok--o">--last</span> <span class="tok tok--n">5</span>   <span class="tok tok--c"># the five most recent runs</span></code></pre></figure>
+<p>Every run writes <code>.harness/runs/&lt;timestamp&gt;.json</code>, and the report reads them:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">  📈 harness report  (12 run(s))
+
+    requirements attempted    31
+    passed                    24
+    failed                     5
+    blocked                    2
+
+    first attempt worked      67%  (16 of 24 passes)
+    cost per delivered REQ    4m 12s  wall-clock, failed attempts included</code></pre></figure>
+<p><strong>Two numbers, chosen because they decide things.</strong> &quot;First attempt worked&quot; says
+whether the retry ladder is buying anything or spending three times as much on
+the same mistake. &quot;Cost per delivered requirement&quot; divides <em>all</em> the time —
+including the attempts that failed — by the requirements that actually landed,
+because that is what delivery costs.</p>
+<p>Wall-clock, not tokens: an agent is any shell command, and only the agent knows
+what it spent. Recording a number the harness cannot observe would be worse
+than recording none.</p>
+<p><strong>The ledger is local.</strong> <code>.harness/runs/</code> ignores itself, for two reasons: the
+harness refuses to start on a dirty tree, so a ledger git could see would mean
+the first run makes the second one refuse; and a file every run rewrites is a
+merge conflict waiting to happen. The agent command is never recorded — it is
+the kind of string that carries an API key.</p>
+<hr>
+<hr>
+<h2 id="when-a-run-fails">When a run fails<a class="anchor" href="#when-a-run-fails" aria-label="Link to this section">#</a></h2>
+<p>The report prints the tail of the gate output and the command that failed.
+Some failures end it after one attempt: <a href="troubleshooting.html#when-another-attempt-cannot-help">when retrying cannot help</a>.</p>
+<p>The attempt is <strong>committed on the branch</strong> with a <code>wip(REQ-NNN): FAILED the gate</code> subject, so the agent&#39;s work is there to read instead of discarded. The
+requirement stays <code>Draft</code>, because <code>specgate done</code> never ran.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--req</span> REQ-<span class="tok tok--n">002</span> <span class="tok tok--o">--format</span> json      <span class="tok tok--c"># the whole gate output</span>
+<span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--req</span> REQ-<span class="tok tok--n">002</span> <span class="tok tok--o">--keep-worktrees</span>   <span class="tok tok--c"># reproduce it in place</span></code></pre></figure>
+<p><strong>A requirement that builds on another needs its branch as the base:</strong></p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> harness run <span class="tok tok--o">--req</span> REQ-<span class="tok tok--n">002</span> <span class="tok tok--o">--base-branch</span> harness/REQ-<span class="tok tok--n">001</span></code></pre></figure>
+<p>That branch also supplies the project configuration for the run, so a fix
+committed to <code>main</code> does not apply to a stacked run until the base has it. A
+false failure from that is indistinguishable from a real one — check the gate
+command the report prints.</p>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="automation.html">Automation</a></li>
+<li><a href="specs/harness.html">The harness spec</a></li>
+<li><a href="commands.html">Command reference</a></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="mcp.html"><span>Previous</span>The MCP server</a><a class="pager__next" href="domain-packs.html"><span>Next</span>Domain packs</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/harness.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#parallel-branches-and-the-traceability-matrix">Parallel branches and the traceability matrix</a></li><li class="toc__l3"><a href="#resolving-one-by-hand">Resolving one by hand</a></li><li class="toc__l2"><a href="#change-agent-between-attempts">Change agent between attempts</a></li><li class="toc__l2"><a href="#run-more-than-one-requirement-at-a-time">Run more than one requirement at a time</a></li><li class="toc__l2"><a href="#what-the-harness-has-cost">What the harness has cost</a></li><li class="toc__l2"><a href="#when-a-run-fails">When a run fails</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

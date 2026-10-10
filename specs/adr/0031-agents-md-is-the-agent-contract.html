@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0031-agents-md-is-the-agent-contract">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0031 — AGENTS.md is the agent contract; AI_RULES.md folds into it — Specgate</title>
+<meta name="description" content="ADR-0031 — AGENTS.md is the agent contract; AI_RULES.md folds into it">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0031 — AGENTS.md is the agent contract; AI_RULES.md folds into it — Specgate">
+<meta property="og:description" content="ADR-0031 — AGENTS.md is the agent contract; AI_RULES.md folds into it">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0031-agents-md-is-the-agent-contract-ai-rules-md-folds-into-it">ADR-0031 — AGENTS.md is the agent contract; AI_RULES.md folds into it<a class="anchor" href="#adr-0031-agents-md-is-the-agent-contract-ai-rules-md-folds-into-it" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-10-09</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>A Specgate project carries two files an agent is meant to read:</p>
+<ul>
+<li><strong><code>AI_RULES.md</code></strong>, written by <code>init</code>/<code>adopt</code> from a per-stack template
+(27–56 lines): the agent&#39;s role, the stack&#39;s rules, what it must never do,
+the domain-modelling rules.</li>
+<li><strong><code>AGENTS.md</code></strong>, written by <code>agents init</code> for Claude Code and Codex: the
+non-negotiables again, and the daily loop step by step — over 60 lines.</li>
+</ul>
+<p>They overlap, they drift, and only one of them is a convention anyone else
+knows. <code>AGENTS.md</code> is the file the market settled on: around twenty agents
+read it by name — OpenAI Codex, Cursor, GitHub Copilot, Google Jules, Aider,
+Windsurf, Zed, Amp among them — and it is now a Linux Foundation standard
+(checked 2026-10-09). <code>AI_RULES.md</code> is read only because Specgate&#39;s generated
+files point at it. The
+simplification plan (phase 2) asks for one short contract; the team asked to
+keep to the market standard.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p><strong><code>AGENTS.md</code> is the one agent contract. <code>init</code> and <code>adopt</code> write it;
+<code>AI_RULES.md</code> is no longer written, and its content moves into <code>AGENTS.md</code>.</strong></p>
+<ol>
+<li><strong>Short by rule.</strong> The generated <code>AGENTS.md</code> is at most 60 lines, and a
+test keeps it so. It holds what an agent needs on every turn — what the
+project is, the commands (test, gate, next), the loop in four lines, what
+it must never do — and a <code>## Project rules</code> section for the stack&#39;s and
+the team&#39;s own rules. The detail of each step lives in the <code>/specgate:*</code>
+commands and in <code>specgate change instructions</code>, which the engine answers.</li>
+<li><strong>Readers accept both.</strong> Everything that read <code>AI_RULES.md</code> — the agent
+prompt, <code>change instructions</code>, <code>validate</code>, <code>doctor</code>, the harness — reads
+<code>AGENTS.md</code> first and <code>AI_RULES.md</code> when it is the only one. A project that
+has not migrated keeps working, unchanged.</li>
+<li><strong>Both are protected.</strong> The write-scope guard covers <code>AGENTS.md</code> as it
+covers <code>AI_RULES.md</code>: an agent may not rewrite the contract it is judged by.</li>
+<li><strong>Migration is <code>specgate update</code>.</strong> It writes <code>AGENTS.md</code> with the
+generated contract and moves the existing <code>AI_RULES.md</code> content, verbatim,
+under <code>## Project rules (from AI_RULES.md)</code>, then removes <code>AI_RULES.md</code>.
+<code>--dry-run</code> shows it first. When <code>AGENTS.md</code> already exists and was not
+written by Specgate, the team&#39;s text is kept and the generated part is
+added above it, never replacing it. Git keeps the old file.</li>
+<li><strong><code>agents init</code> stops duplicating it.</strong> For Claude Code and Codex it writes
+the same contract; on a project <code>init</code> already set up, the file exists and
+is left alone.</li>
+</ol>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>One file to read, in the place every agent looks.</li>
+<li>Templates: one <code>templates/base/AGENTS.md.tpl</code> for every project type, with
+each type&#39;s rules — one line per rule, none dropped — in
+<code>templates/&lt;type&gt;/stack-rules.md</code>. Generated sizes: backend and frontend 36
+lines, mobile 41 (<code>tactical-ddd</code>, the default profile, with its checks).</li>
+<li>Packs that render an <code>AI_RULES.md</code> (the contracts pack does) keep doing so;
+it is read as a legacy rules file, alongside <code>AGENTS.md</code>. Moving a pack&#39;s
+rules into a team&#39;s <code>AGENTS.md</code> would mean <code>expand</code> writing into a file the
+team owns, which this decision forbids.</li>
+<li>Measured on the Golden State app: <code>specgate update</code> folded its 28-line
+<code>AI_RULES.md</code> under the block, replaced the <code>AGENTS.md</code> an older Specgate had
+generated, and left a 58-line <code>AGENTS.md</code>; <code>validate --strict</code> stayed green.</li>
+<li>Tests and docs that name <code>AI_RULES.md</code> move to <code>AGENTS.md</code>; the ones that
+test a legacy project keep <code>AI_RULES.md</code> on purpose.</li>
+<li>A team that edited <code>AI_RULES.md</code> loses nothing: the text moves, and the
+migration is a reviewable diff.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Keep both, point one at the other.</strong> The current state; two files drift.</li>
+<li><strong>Keep <code>AI_RULES.md</code> as the name.</strong> A convention of one tool.</li>
+<li><strong>Write <code>AGENTS.md</code> and leave <code>AI_RULES.md</code> in place.</strong> Two contracts that
+disagree is worse than either alone.</li>
+</ul>
+<h2 id="references">References<a class="anchor" href="#references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>mejoras/plan-simplificacion-equipo.md</code> — phase 2</li>
+<li>ADR-0017 — The agent JSON contract; ADR-0022 — Patterns are optional</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0031-agents-md-is-the-agent-contract.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li><li class="toc__l2"><a href="#references">References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en" data-slug="from-a-brief">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>From a client brief to a spec — Specgate</title>
+<meta name="description" content="A brief to a reviewed draft: assumptions, open questions and the draft checklist.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="From a client brief to a spec — Specgate">
+<meta property="og:description" content="A brief to a reviewed draft: assumptions, open questions and the draft checklist.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html" class="is-active" aria-current="page">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Every day</li><li aria-current="page">From a client brief</li></ol></nav>
+    <article class="prose">
+<h1 id="from-a-client-brief-to-a-spec">From a client brief to a spec<a class="anchor" href="#from-a-client-brief-to-a-spec" aria-label="Link to this section">#</a></h1>
+<p>A project usually starts as a brief: a page, a document, a few screenshots.
+This is the path from that page to requirements the gate and the harness can
+work with — the one three products were built on, from briefs as different as
+a detailed booking document and a five-line description of a credit shop.</p>
+<h2 id="1-keep-the-brief-in-the-repository">1. Keep the brief in the repository<a class="anchor" href="#1-keep-the-brief-in-the-repository" aria-label="Link to this section">#</a></h2>
+<p>Save it as <code>docs/brief.md</code>, as the client wrote it. Add a front matter that
+names who uses the product and how:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">---
+product: Bookings for local businesses
+surfaces: [api, web]
+actors:
+  - { name: Cliente, surfaces: [api, web] }
+  - { name: Propietario, surfaces: [api, web] }
+modules: [calendario, reservas, cupones]
+---
+
+# The brief, unchanged
+
+…</code></pre></figure>
+<p>If the brief has screenshots, describe what they show below it — values that
+only appear in an image are otherwise invisible to the checklist.</p>
+<h2 id="2-draft-one-module-as-a-change">2. Draft one module as a change<a class="anchor" href="#2-draft-one-module-as-a-change" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change new draft-reservas <span class="tok tok--o">--capability</span> reservas <span class="tok tok--o">--reserve</span> <span class="tok tok--n">10</span>
+<span class="tok tok--k">echo</span> <span class="tok tok--s">&quot;brief: docs/brief.md&quot;</span> &gt;&gt; docs/specs/changes/draft-reservas/change.yaml</code></pre></figure>
+<p>Write the delta under <code>specs/&lt;capability&gt;/spec.md</code> — by hand or with your
+agent. Two files go next to it:</p>
+<ul>
+<li><strong><code>assumptions.md</code></strong> — every value the brief does not give: prices, limits,
+button labels, status codes. A row names the requirements or scenarios that
+use it, one by one or as a range (<code>REQ-004..REQ-010</code>).</li>
+<li><strong><code>questions.md</code></strong> — what the brief cannot answer, and the requirements each
+question blocks. A blocked requirement carries
+<code>status=&quot;Needs Clarification&quot;</code> in its trace; the harness and <code>done</code> refuse
+it until someone answers, and <code>status</code> lists it under &quot;Waiting for an
+answer&quot; with the question that blocks it.</li>
+</ul>
+<h2 id="3-check-the-draft">3. Check the draft<a class="anchor" href="#3-check-the-draft" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> draft <span class="tok tok--o">--check</span> draft-reservas</code></pre></figure>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Asks</th></tr></thead><tbody><tr><td>D1</td><td>every requirement has a scenario</td></tr><tr><td>D2</td><td>every requirement has a kind (<code>functional</code>, <code>non-functional</code>, <code>business-rule</code>)</td></tr><tr><td>D3</td><td>each actor&#39;s surfaces have a scenario of that actor — an API call and a screen. <code>surfaces=web</code> on a requirement narrows it (a menu has no API)</td></tr><tr><td>D4</td><td>a non-functional requirement that promises a quantity states a number with a unit</td></tr><tr><td>D5</td><td>a rule that cites a law, standard or contract names its source (<code>Source:</code> and a link)</td></tr><tr><td>D6</td><td>every value in a scenario is in the brief, in the project&#39;s specification, or in <code>assumptions.md</code></td></tr><tr><td>D7</td><td>every open question blocks a requirement, and that requirement waits</td></tr><tr><td>D8</td><td>the draft is small enough to review (25 requirements by default)</td></tr><tr><td>D9</td><td>every scenario passes the rules the harness gate will apply (titles, Given/When/Then)</td></tr><tr><td>D10</td><td>no requirement or scenario id another requirement already owns</td></tr><tr><td>D12</td><td>an actor who acts on an id (<code>…/{id}/…</code>) has a scenario that lists or creates it, or an assumption says where it comes from</td></tr></tbody></table></div>
+<p>D6 is the one that keeps a draft honest: on a vague brief it lists almost every
+value, and that list is the conversation to have with the client.</p>
+<p>D12 catches what every pilot found only by running the product: each scenario
+right on its own, and an operator who can settle a transfer by its id with no
+way to see which transfers are pending. A <code>GET</code> on the collection by the same
+actor, or the <code>POST</code> that creates it, closes it — in the draft or in the
+project&#39;s specification. When the id reaches the actor outside the API (a
+customer reads their IBAN to the teller), say so in <code>assumptions.md</code>, in a row
+naming the requirement and the collection path. D11 is reserved for a rule
+still being designed.</p>
+<p>An answered question gets an <code>Answer</code> column, or a line below the table such as
+<code>Answer (Q1): free shipping from 50 €</code>; the requirement it blocked then drops
+<code>Needs Clarification</code>.</p>
+<h2 id="4-archive-then-build">4. Archive, then build<a class="anchor" href="#4-archive-then-build" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change archive draft-reservas</code></pre></figure>
+<p>Archiving merges the requirements into <code>docs/specs/capabilities/</code>, adds their
+rows to the matrix and writes one feature file per requirement. New
+requirements arrive as <code>Draft</code>, so the specification can merge before any code
+exists. Then <code>specgate harness run</code> — or a person — delivers them one at a
+time.</p>
+<h2 id="writing-in-spanish">Writing in Spanish<a class="anchor" href="#writing-in-spanish" aria-label="Link to this section">#</a></h2>
+<p>Write scenarios with <code>DADO / CUANDO / ENTONCES / Y</code>; the requirement body keeps
+<code>SHALL</code> (or <code>DEBE</code>). Archiving writes Spanish Gherkin (<code># language: es</code>,
+<code>Característica</code>, <code>Escenario</code>), and every rule above reads both languages.</p>
+<h2 id="what-the-checklist-cannot-see">What the checklist cannot see<a class="anchor" href="#what-the-checklist-cannot-see" aria-label="Link to this section">#</a></h2>
+<p>It checks that a scenario exists for each surface, and (D12) that an actor can
+reach the ids they act on, not that the draft asks for everything. In every pilot, an action with only an API scenario — upload a
+photo, add to cart — was built as an API with no button, and the gate stayed
+green. Run the product once, by hand or headless, after each module: that is
+where those gaps show, and each became a short follow-up change.</p>
+<p>The design is <a href="specs/adr/README.html">ADR-0029</a> and
+<a href="specs/draft-from-brief.html">draft-from-brief</a>.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="reviewing-changes.html"><span>Previous</span>Reviewing changes</a><a class="pager__next" href="validating.html"><span>Next</span>Validating</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/from-a-brief.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#1-keep-the-brief-in-the-repository">1. Keep the brief in the repository</a></li><li class="toc__l2"><a href="#2-draft-one-module-as-a-change">2. Draft one module as a change</a></li><li class="toc__l2"><a href="#3-check-the-draft">3. Check the draft</a></li><li class="toc__l2"><a href="#4-archive-then-build">4. Archive, then build</a></li><li class="toc__l2"><a href="#writing-in-spanish">Writing in Spanish</a></li><li class="toc__l2"><a href="#what-the-checklist-cannot-see">What the checklist cannot see</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

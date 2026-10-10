@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en" data-slug="specs/agent-contract">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The agent contract — Specgate</title>
+<meta name="description" content="The agent contract">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="The agent contract — Specgate">
+<meta property="og:description" content="The agent contract">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="the-agent-contract">The agent contract<a class="anchor" href="#the-agent-contract" aria-label="Link to this section">#</a></h1>
+<!-- GENERATED by scripts/gen_agent_contract.ts — do not edit by hand.
+     Run `npm run docs:agent-contract` after changing a command's JSON shape or
+     adding a diagnostic code. tests/unit/agent-contract.test.ts fails when this
+     file is stale. --><p>How a machine drives this CLI. The rules are fixed by
+<a href="adr/0017-agent-json-contract.html">ADR-0017</a>; this document is generated from the
+source so it cannot drift from it.</p>
+<h2 id="the-rules">The rules<a class="anchor" href="#the-rules" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><p><strong>One JSON document per invocation.</strong> In <code>--json</code> mode stdout carries exactly
+one JSON document. Prose, progress and warnings go to stderr, so
+<code>cmd --json 2&gt;/dev/null | jq .</code> always parses.</p>
+</li>
+<li><p><strong>One diagnostic envelope</strong>, everywhere:</p>
+<figure class="code" data-lang="json"><figcaption class="code__head"><span class="code__lang">json</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-json">{
+  <span class="tok tok--a">&quot;severity&quot;</span>: <span class="tok tok--s">&quot;error&quot;</span> | <span class="tok tok--s">&quot;warning&quot;</span> | <span class="tok tok--s">&quot;info&quot;</span>,
+  <span class="tok tok--a">&quot;code&quot;</span>: <span class="tok tok--s">&quot;snake_case_stable_string&quot;</span>,
+  <span class="tok tok--a">&quot;message&quot;</span>: <span class="tok tok--s">&quot;human sentence&quot;</span>,
+  <span class="tok tok--a">&quot;target&quot;</span>: <span class="tok tok--s">&quot;the thing at fault (optional)&quot;</span>,
+  <span class="tok tok--a">&quot;fix&quot;</span>: <span class="tok tok--s">&quot;one actionable sentence or command (optional)&quot;</span>,
+  <span class="tok tok--a">&quot;file&quot;</span>: <span class="tok tok--s">&quot;relative/path.md (optional)&quot;</span>,
+  <span class="tok tok--a">&quot;line&quot;</span>: <span class="tok tok--n">42</span>
+}</code></pre></figure>
+<p>Branch on <code>code</code>, never on <code>message</code>. <code>message</code> is prose and may be reworded;
+<code>code</code> is the published surface.</p>
+</li>
+<li><p><strong>Failure carries the command&#39;s null-shape.</strong> A failure prints
+<code>{ ...nullShape, &quot;status&quot;: [diagnostic] }</code> and exits 1 — never bare stderr,
+never a partial document. A consumer never has to tell &quot;it failed&quot; apart from
+&quot;it printed nothing&quot;.</p>
+</li>
+<li><p><strong>camelCase everywhere</strong> in command output. (The on-disk formats are not
+command output: <code>pack.yaml</code> keeps <code>schema_version</code> and <code>.specops.lock</code> keeps
+<code>pack_id</code>.)</p>
+</li>
+<li><p><strong><code>--json</code> and <code>--format json</code> are the same flag.</strong> The second spelling
+predates the contract and keeps working.</p>
+</li>
+</ol>
+<h2 id="exit-codes">Exit codes<a class="anchor" href="#exit-codes" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Situation</th><th>Exit</th></tr></thead><tbody><tr><td>Success, including advisory warnings</td><td><code>0</code></td></tr><tr><td>Command failure — one JSON document with <code>status</code></td><td><code>1</code></td></tr><tr><td>Gate failure (<code>validate</code>, <code>doctor</code>, <code>change validate</code>)</td><td><code>1</code></td></tr><tr><td>Usage error — unknown flag, missing or malformed argument</td><td><code>2</code></td></tr><tr><td>Required script missing (a broken installation)</td><td><code>3</code></td></tr><tr><td>Cancelled by the user</td><td><code>130</code></td></tr></tbody></table></div>
+<p>A gate command exits 1 when it <em>finds</em> something, which is not the
+same as failing to run. The <code>status</code> array tells the two apart: a gate that could
+not run reports an <code>error</code> about itself.</p>
+<h2 id="commands">Commands<a class="anchor" href="#commands" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Command</th><th>Document key</th><th>Gate</th></tr></thead><tbody><tr><td><code>specgate doctor --json</code></td><td><code>doctor</code></td><td>yes</td></tr><tr><td><code>specgate status --json</code></td><td><code>status</code></td><td>no</td></tr><tr><td><code>specgate alm pull --json</code></td><td><code>pulled</code></td><td>no</td></tr><tr><td><code>specgate check [dir] --json</code></td><td><code>check</code></td><td>yes</td></tr><tr><td><code>specgate draft --json</code></td><td><code>draft</code></td><td>yes</td></tr><tr><td><code>specgate verify --json</code></td><td><code>verify</code></td><td>yes</td></tr><tr><td><code>specgate matrix --json</code></td><td><code>matrix</code></td><td>yes</td></tr><tr><td><code>specgate validate &lt;dir&gt; --json</code></td><td><code>validation</code></td><td>yes</td></tr><tr><td><code>specgate plan --json</code></td><td><code>plan</code></td><td>no</td></tr><tr><td><code>specgate report --json</code></td><td><code>report</code></td><td>no</td></tr><tr><td><code>specgate done &lt;REQ&gt; --json</code></td><td><code>requirement</code></td><td>no</td></tr><tr><td><code>specgate new &lt;title&gt; --json</code></td><td><code>requirement</code></td><td>no</td></tr><tr><td><code>specgate change list --json</code></td><td><code>changes</code></td><td>no</td></tr><tr><td><code>specgate change show &lt;id&gt; --json</code></td><td><code>change</code></td><td>no</td></tr><tr><td><code>specgate change status --json</code></td><td><code>artifacts</code></td><td>no</td></tr><tr><td><code>specgate change validate &lt;id&gt; --json</code></td><td><code>change</code></td><td>yes</td></tr><tr><td><code>specgate change archive &lt;id&gt; --json</code></td><td><code>archive</code></td><td>yes</td></tr><tr><td><code>specgate change instructions &lt;artifact&gt; --json</code></td><td><code>instructions</code></td><td>no</td></tr><tr><td><code>specgate change author &lt;id&gt; --json</code></td><td><code>change</code></td><td>yes</td></tr><tr><td><code>specgate specops diff --json</code></td><td><code>changes</code></td><td>no</td></tr><tr><td><code>specgate harness run --format json</code></td><td><code>results</code></td><td>no</td></tr><tr><td><code>specgate harness report --json</code></td><td><code>report</code></td><td>no</td></tr></tbody></table></div>
+<p>The document key is what the payload carries on success and what is set to
+<code>null</code> on failure. Every document also carries <code>status</code>: an array of
+diagnostics, empty when there is nothing to report.</p>
+<h2 id="diagnostic-codes">Diagnostic codes<a class="anchor" href="#diagnostic-codes" aria-label="Link to this section">#</a></h2>
+<p>Harvested from the source. A trailing <code>*</code> marks a family whose suffix is
+computed — <code>strict_tdd_*</code> covers <code>strict_tdd_1</code> through <code>strict_tdd_3</code>.</p>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Emitted by</th></tr></thead><tbody><tr><td><code>events_header_missing</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>feature_not_in_matrix</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>missing_required_file</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>no_features</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>requirement_cycle</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>self_dependency</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>strict_tdd_1</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>strict_tdd_2</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>strict_tdd_3</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>traceability_unrecognized</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>unknown_dependency</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>use_cases_header_missing</code></td><td><code>scripts/validate_specs.ts</code></td></tr><tr><td><code>archive_change_name_required</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>archive_spec_update_failed</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>author_agent_failed</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>author_agent_unset</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>author_needs_git</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>author_out_of_scope</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>author_tree_dirty</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>change_error</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>change_exists</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>change_id_required</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>change_not_found</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>change_required</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>conflicting_seed_flags</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>invalid_change_id</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>invalid_value_drift_spec</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>value_drift_already_matches</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>value_drift_id_not_declared</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>value_drift_no_code_value</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>value_drift_requirement_not_found</code></td><td><code>scripts/cli/commands/change/ChangeCommand.ts</code></td></tr><tr><td><code>missing_proposal</code></td><td><code>packages/core/src/application/ValidateChangeUseCase.ts</code></td></tr><tr><td><code>no_deltas</code></td><td><code>packages/core/src/application/ValidateChangeUseCase.ts</code></td></tr><tr><td><code>delta_empty</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>delta_unknown_section</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>duplicate_requirement</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>invalid_requirement_id</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>no_rfc2119_keyword</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>requirement_already_exists</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>requirement_without_scenario</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>scenario_not_gherkin</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>scenario_steps_unwritten</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>scenario_without_steps</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>unknown_requirement</code></td><td><code>packages/core/src/domain/DeltaSpec.ts</code></td></tr><tr><td><code>archive_capability_retired</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>archive_change_not_found</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>archive_change_symlink</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>archive_feature_exists</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>archive_feature_regenerated</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>archive_feature_stale</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>archive_no_deltas</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>archive_retire_not_declared</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>archive_target_exists</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>archive_tasks_incomplete</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>traceability_upgraded</code></td><td><code>packages/core/src/application/ArchiveChangeUseCase.ts</code></td></tr><tr><td><code>artifact_required</code></td><td><code>scripts/change/instructions.ts</code></td></tr><tr><td><code>artifact_unknown</code></td><td><code>scripts/change/instructions.ts</code></td></tr><tr><td><code>change_not_found</code></td><td><code>scripts/change/instructions.ts</code></td></tr><tr><td><code>project_not_found</code></td><td><code>scripts/change/instructions.ts</code></td></tr><tr><td><code>ambiguous_pack</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr><tr><td><code>change_has_no_deltas</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr><tr><td><code>change_not_found</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr><tr><td><code>change_required</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr><tr><td><code>contribute_not_pushed</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr><tr><td><code>contribute_stage_failed</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr><tr><td><code>no_lockfile</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr><tr><td><code>nothing_to_contribute</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr><tr><td><code>pack_has_no_repo</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr><tr><td><code>pack_not_found</code></td><td><code>scripts/cli/commands/specops/ContributeCommand.ts</code></td></tr></tbody></table></div>
+<h2 id="worked-example">Worked example<a class="anchor" href="#worked-example" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> change instructions specs <span class="tok tok--o">--json</span> <span class="tok tok--n">2</span>&gt;/dev/null |<span class="tok tok--f"> jq</span> <span class="tok tok--o">-r</span> <span class="tok tok--s">'.instructions.rules[]'</span></code></pre></figure>
+<p>An agent that reads <code>fix</code> self-corrects; one that reads only <code>message</code> retries
+the same mistake. That is why a check without a <code>fix</code> is treated as unfinished.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/agent-contract.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#the-rules">The rules</a></li><li class="toc__l2"><a href="#exit-codes">Exit codes</a></li><li class="toc__l2"><a href="#commands">Commands</a></li><li class="toc__l2"><a href="#diagnostic-codes">Diagnostic codes</a></li><li class="toc__l2"><a href="#worked-example">Worked example</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en" data-slug="case-studies/case-1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worked Example — Smart Parking Platform: From Brownfield to Spec-Driven — Specgate</title>
+<meta name="description" content="An illustration — invented company, constructed numbers — of the workflow end to end.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Worked Example — Smart Parking Platform: From Brownfield to Spec-Driven — Specgate">
+<meta property="og:description" content="An illustration — invented company, constructed numbers — of the workflow end to end.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html" class="is-active" aria-current="page">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../docs.html">Docs</a></li><li>Existing code</li><li aria-current="page">Worked example: brownfield adoption</li></ol></nav>
+    <article class="prose">
+<h1 id="worked-example-smart-parking-platform-from-brownfield-to-spec-driven">Worked Example — Smart Parking Platform: From Brownfield to Spec-Driven<a class="anchor" href="#worked-example-smart-parking-platform-from-brownfield-to-spec-driven" aria-label="Link to this section">#</a></h1>
+<blockquote>
+<p><strong>This is an illustration, not a customer.</strong> &quot;UrbanFlow&quot; is invented, and every
+number below — the coverage figures, the defect rate, the onboarding time — is
+a plausible construction written to show what the workflow looks like end to
+end. None of it was measured, and none of it should be cited as evidence that
+the tool produces these results.</p>
+<p>What <em>is</em> measured lives elsewhere, and it is about this repository&#39;s own
+defects: the <a href="../index.html#evidence">evidence behind the gate</a> and
+<a href="../articles/specs-that-cannot-lie.html">the article</a> both quote figures that
+came from running the tool and reading what it printed.</p>
+<p>If you have adopted this on a real system and are willing to be named, the
+maintainers would far rather publish that than this.</p>
+</blockquote>
+<p><strong>Industry:</strong> Urban Mobility / Smart City Infrastructure
+<strong>Team size:</strong> 6 engineers, 1 product owner, 1 domain expert
+<strong>Duration:</strong> 8 weeks (Phase 1 adoption)
+<strong>Tooling:</strong> <code>create-spec-driven-app</code> v0.1.0-beta, Node.js 20, PostgreSQL 16, Docker</p>
+<hr>
+<h2 id="1-background">1. Background<a class="anchor" href="#1-background" aria-label="Link to this section">#</a></h2>
+<p>UrbanFlow, a mid-size mobility startup, operated a parking management SaaS that had grown
+organically over three years. The system handled vehicle entry/exit events, fee calculation,
+and operator alerts for ~40 municipal car parks. The codebase showed classic brownfield signs:</p>
+<ul>
+<li><strong>No formal requirements document.</strong> Business rules lived in engineers&#39; heads or scattered
+Confluence pages that were months out of date.</li>
+<li><strong>No domain model.</strong> Entities like <code>ParkingSession</code>, <code>Tariff</code>, and <code>FacilityCapacity</code> were
+implicit concepts encoded differently in the REST API, the database schema, and the
+front-end state.</li>
+<li><strong>Test coverage ≈ 23%.</strong> A Postman collection served as the de-facto acceptance suite; it
+ran manually before each release.</li>
+<li><strong>Onboarding time: ~3 weeks.</strong> New engineers spent their first sprint decoding undocumented
+domain logic before writing their first feature.</li>
+</ul>
+<p>A new regulatory requirement — mandatory real-time capacity reporting to the city API — forced
+the team to extend the system. The product owner estimated two weeks of work; the tech lead
+estimated six. The gap was a symptom of the undocumented domain.</p>
+<hr>
+<h2 id="2-the-approach-spec-driven-adoption">2. The Approach: Spec-Driven Adoption<a class="anchor" href="#2-the-approach-spec-driven-adoption" aria-label="Link to this section">#</a></h2>
+<p>Rather than rewriting the codebase, the team used <code>create-spec-driven-app</code> to create a
+<strong>specification overlay</strong> — a parallel artifact space that documented what the system <em>should</em>
+do, independent of what it <em>currently</em> does.</p>
+<h3 id="2-1-scaffolding-the-spec-project">2.1 Scaffolding the spec project<a class="anchor" href="#2-1-scaffolding-the-spec-project" aria-label="Link to this section">#</a></h3>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> create-spec-driven-app@latest init \
+  <span class="tok tok--o">--config</span> smart-parking.config \
+  <span class="tok tok--o">--out</span> ./specs</code></pre></figure>
+<p>The config file captured the domain context:</p>
+<figure class="code" data-lang="ini"><figcaption class="code__head"><span class="code__lang">ini</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-ini">PROJECT_NAME=&quot;Smart Parking Platform&quot;
+PROJECT_SLUG=&quot;smart-parking&quot;
+PROJECT_TYPE=&quot;backend&quot;
+DOMAIN=&quot;urban parking operations&quot;
+STACK=&quot;Node.js 20&quot;
+API_STYLE=&quot;REST&quot;
+TESTING=&quot;Jest&quot;
+DOCKER_SUPPORT=&quot;true&quot;</code></pre></figure>
+<p>The generator produced <code>spec.md</code>, a rich traceability matrix, domain model stubs, and Gherkin
+feature templates in under 30 seconds. The team spent the next two days filling in the
+domain content rather than building boilerplate.</p>
+<h3 id="2-2-domain-pack-expansion">2.2 Domain pack expansion<a class="anchor" href="#2-2-domain-pack-expansion" aria-label="Link to this section">#</a></h3>
+<p>The <code>parking-management/backend</code> domain pack (shipped with the tool) provided a pre-authored
+starting point for the bounded contexts, aggregates, events, and use cases relevant to the
+domain:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> create-spec-driven-app@latest expand \
+  <span class="tok tok--o">--pack-root</span> ./domain-packs \
+  <span class="tok tok--o">--pack</span> parking-management/backend \
+  <span class="tok tok--o">--project-dir</span> ./specs/smart-parking \
+  <span class="tok tok--o">--var</span> PROJECT_NAME=<span class="tok tok--s">&quot;Smart Parking Platform&quot;</span> \
+  <span class="tok tok--o">--var</span> PROJECT_SLUG=smart-parking \
+  <span class="tok tok--o">--var</span> DOMAIN=<span class="tok tok--s">&quot;urban parking operations&quot;</span></code></pre></figure>
+<p>The expansion injected 5 requirements, 3 bounded contexts, 4 aggregates, and 12 Gherkin
+scenarios into the spec project within seconds. The domain expert immediately recognised the
+vocabulary — <code>ParkingSession</code>, <code>FacilityCapacity</code>, <code>OccupancyAlert</code> — and confirmed the model
+was 85% accurate without any coaching.</p>
+<h3 id="2-3-traceability-first-development">2.3 Traceability-first development<a class="anchor" href="#2-3-traceability-first-development" aria-label="Link to this section">#</a></h3>
+<p>The traceability matrix (<code>docs/specs/traceability.md</code>) became the team&#39;s single source of
+truth. Each requirement (<code>REQ-001</code> through <code>REQ-005</code>) was linked to:</p>
+<ul>
+<li>A Gherkin scenario (<code>SCN-001</code> through <code>SCN-012</code>)</li>
+<li>The aggregate that owned the invariant</li>
+<li>The command/query that implemented it</li>
+<li>The Jest test that verified it</li>
+</ul>
+<p>The new capacity-reporting feature was modelled as <code>REQ-006</code> in the spec before a single line
+of implementation code was written. The linked Gherkin scenario was agreed with the product
+owner in a 30-minute session. Implementation began only after the scenario was marked <em>Accepted</em>.</p>
+<hr>
+<h2 id="3-before-vs-after-quantitative-metrics">3. Before vs. After — Quantitative Metrics<a class="anchor" href="#3-before-vs-after-quantitative-metrics" aria-label="Link to this section">#</a></h2>
+<blockquote>
+<p>Reminder: every figure in this table is illustrative. See the note at the top.</p>
+</blockquote>
+<div class="table-wrap"><table><thead><tr><th>Metric</th><th>Before (brownfield)</th><th>After (8 weeks)</th><th>Change</th></tr></thead><tbody><tr><td>Requirements documented</td><td>0</td><td>18 (REQ-001..REQ-018)</td><td>+18</td></tr><tr><td>Gherkin scenarios</td><td>0</td><td>27</td><td>+27</td></tr><tr><td>Test coverage (lines)</td><td>23%</td><td>71%</td><td>+48 pp</td></tr><tr><td>Onboarding time (est.)</td><td>~3 weeks</td><td>~5 days</td><td>−76%</td></tr><tr><td>Sprint estimation accuracy</td><td>±60%</td><td>±20%</td><td>+40 pp</td></tr><tr><td>Bugs in production (6-month trailing avg.)</td><td>4.2 / sprint</td><td>1.1 / sprint</td><td>−74%</td></tr><tr><td>Unresolved traceability rows</td><td>—</td><td>3 of 27 (TBD)</td><td>—</td></tr></tbody></table></div>
+<p><strong>Estimation accuracy</strong> was measured as the ratio of actual story points delivered to estimated.
+The improvement came from engineers being able to reference the spec to identify which
+aggregates were affected by a change, rather than doing exploratory archaeology in the code.</p>
+<hr>
+<h2 id="4-qualitative-observations">4. Qualitative Observations<a class="anchor" href="#4-qualitative-observations" aria-label="Link to this section">#</a></h2>
+<h3 id="quot-the-domain-finally-has-a-name-quot">&quot;The domain finally has a name&quot;<a class="anchor" href="#quot-the-domain-finally-has-a-name-quot" aria-label="Link to this section">#</a></h3>
+<blockquote>
+<p><em>&quot;Before, I had to explain to every new hire what a &#39;session&#39; actually meant in our system —
+was it the HTTP session, the parking session, the billing session? The spec gives us a glossary
+we can point to. Words have agreed meanings now.&quot;</em></p>
+<p>— Backend engineer, 2.5 years on the team</p>
+</blockquote>
+<p>The bounded-context map in <code>docs/specs/domain-model.md</code> separated <code>Parking Operations</code>
+(capacity, entry, exit) from <code>Billing</code> (fees, receipts) from <code>Regulatory Reporting</code>
+(city API integration). The third context had never been formally named before — it was called
+&quot;the webhook thing&quot; in backlog tickets.</p>
+<h3 id="bdd-as-a-communication-bridge">BDD as a communication bridge<a class="anchor" href="#bdd-as-a-communication-bridge" aria-label="Link to this section">#</a></h3>
+<p>The product owner had no prior exposure to Gherkin. After the domain expert walked through
+two scenarios in a 45-minute session, she was writing her own acceptance criteria in Given/When/Then
+format. The format&#39;s constraint — no conditionals, no implementation details — forced precision
+that prose requirements rarely achieve.</p>
+<h3 id="the-validate-gate-as-a-quality-ratchet">The validate gate as a quality ratchet<a class="anchor" href="#the-validate-gate-as-a-quality-ratchet" aria-label="Link to this section">#</a></h3>
+<p>Integrating <code>csda validate</code> into the CI pipeline created a ratchet effect:
+once a feature file was added to the traceability matrix, it could not be removed without a
+deliberate <code>git revert</code>. The team described this as &quot;spec debt becoming visible in the same
+way technical debt becomes visible via coverage thresholds.&quot;</p>
+<hr>
+<h2 id="5-challenges-and-mitigations">5. Challenges and Mitigations<a class="anchor" href="#5-challenges-and-mitigations" aria-label="Link to this section">#</a></h2>
+<h3 id="challenge-1-retrofitting-specs-onto-existing-code">Challenge 1: Retrofitting specs onto existing code<a class="anchor" href="#challenge-1-retrofitting-specs-onto-existing-code" aria-label="Link to this section">#</a></h3>
+<p>Writing specs for features that already existed felt backward. The team mitigated this by
+treating the first sprint as a &quot;spec archaeology&quot; sprint — they read the code, wrote the
+scenarios that the code <em>appeared</em> to implement, then added characterisation tests to confirm
+them. This produced 14 of the 27 Gherkin scenarios.</p>
+<h3 id="challenge-2-domain-expert-availability">Challenge 2: Domain expert availability<a class="anchor" href="#challenge-2-domain-expert-availability" aria-label="Link to this section">#</a></h3>
+<p>The domain expert (a parking operations manager from a municipal client) was available for
+only half a day per week. The team solved this by batching questions and using the spec
+document as an async communication channel — the expert would annotate requirements directly
+in the markdown file via a shared repository.</p>
+<h3 id="challenge-3-placeholder-debt">Challenge 3: Placeholder debt<a class="anchor" href="#challenge-3-placeholder-debt" aria-label="Link to this section">#</a></h3>
+<p>After the domain pack expansion, 9 of the 27 Gherkin scenarios contained <code>TODO</code> markers.
+The <code>pack lint</code> command was added in this phase to detect TODOs automatically:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">⚠️ [WARN] Pack contains 9 TODO placeholder(s). Replace before shipping.</code></pre></figure>
+<p>This became part of the Definition of Done: no story could be merged if <code>pack lint</code> reported
+TODOs in scenarios linked to the story&#39;s requirement ID.</p>
+<hr>
+<h2 id="6-return-on-investment">6. Return on Investment<a class="anchor" href="#6-return-on-investment" aria-label="Link to this section">#</a></h2>
+<p>The team estimated the spec-driven adoption cost at approximately <strong>80 engineer-hours</strong> over
+8 weeks (scaffolding, domain modelling, writing scenarios, hooking up CI). Against this:</p>
+<ul>
+<li>The capacity-reporting feature was delivered in <strong>9 days</strong> vs. the tech lead&#39;s original
+estimate of <strong>30 days</strong>, saving ~3 weeks of engineer time.</li>
+<li>Onboarding the next junior engineer took <strong>4.5 days</strong> vs. the historical average of 3 weeks,
+saving ~2 weeks.</li>
+<li>The reduction in production bugs (from 4.2 to 1.1 per sprint) translated to approximately
+<strong>1 sprint-worth of bug-fix time</strong> reclaimed over the following quarter.</li>
+</ul>
+<p>Rough ROI at a blended rate of €600/day:</p>
+<div class="table-wrap"><table><thead><tr><th>Cost</th><th>Hours</th><th>€</th></tr></thead><tbody><tr><td>Adoption investment</td><td>80 h</td><td>€6 000</td></tr><tr><td>Capacity feature saving</td><td>~120 h</td><td>€9 000</td></tr><tr><td>Onboarding saving (first hire)</td><td>~80 h</td><td>€6 000</td></tr><tr><td>Bug-fix time reclaimed (1 sprint)</td><td>~80 h</td><td>€6 000</td></tr><tr><td><strong>Net gain (first quarter)</strong></td><td></td><td><strong>+€15 000</strong></td></tr></tbody></table></div>
+<hr>
+<h2 id="7-what-we-would-do-differently">7. What We Would Do Differently<a class="anchor" href="#7-what-we-would-do-differently" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><p><strong>Start with the glossary.</strong> The team discovered naming conflicts mid-sprint (two engineers
+used &quot;session&quot; to mean different things). Starting with <code>docs/specs/glossary.md</code> would
+have caught this in week one.</p>
+</li>
+<li><p><strong>Run <code>pack lint</code> from day one.</strong> The TODO warning was only added in week 5. Earlier
+enforcement would have prevented 9 placeholder scenarios from accumulating.</p>
+</li>
+<li><p><strong>Scope the first pack to the core domain.</strong> The initial expansion pulled in all five
+requirements including <code>REQ-004</code> (overstay detection) and <code>REQ-005</code> (receipt sending),
+which were out of scope for the first phase. Scoping to 3 requirements would have kept
+the first sprint focused.</p>
+</li>
+</ol>
+<hr>
+<h2 id="8-key-takeaways">8. Key Takeaways<a class="anchor" href="#8-key-takeaways" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Spec-driven is not spec-first by default</strong> — retroactively adding specs to an existing
+system is viable and delivers measurable ROI within a single quarter.</li>
+<li><strong>The traceability matrix is a forcing function.</strong> Teams cannot hide undocumented behaviour
+once every feature file must be linked to a requirement.</li>
+<li><strong>Domain packs dramatically reduce the &quot;blank page&quot; problem.</strong> The parking-management pack
+gave the team a shared vocabulary and a structural starting point in under an hour.</li>
+<li><strong>The validate CI gate raises the quality floor</strong> without requiring discipline from individuals
+— the pipeline enforces it automatically.</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="../automation.html"><span>Previous</span>Automation</a><a class="pager__next" href="../openspec.html"><span>Next</span>Already on OpenSpec</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/case-studies/case-1.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#1-background">1. Background</a></li><li class="toc__l2"><a href="#2-the-approach-spec-driven-adoption">2. The Approach: Spec-Driven Adoption</a></li><li class="toc__l3"><a href="#2-1-scaffolding-the-spec-project">2.1 Scaffolding the spec project</a></li><li class="toc__l3"><a href="#2-2-domain-pack-expansion">2.2 Domain pack expansion</a></li><li class="toc__l3"><a href="#2-3-traceability-first-development">2.3 Traceability-first development</a></li><li class="toc__l2"><a href="#3-before-vs-after-quantitative-metrics">3. Before vs. After — Quantitative Metrics</a></li><li class="toc__l2"><a href="#4-qualitative-observations">4. Qualitative Observations</a></li><li class="toc__l3"><a href="#quot-the-domain-finally-has-a-name-quot">&amp;quot;The domain finally has a name&amp;quot;</a></li><li class="toc__l3"><a href="#bdd-as-a-communication-bridge">BDD as a communication bridge</a></li><li class="toc__l3"><a href="#the-validate-gate-as-a-quality-ratchet">The validate gate as a quality ratchet</a></li><li class="toc__l2"><a href="#5-challenges-and-mitigations">5. Challenges and Mitigations</a></li><li class="toc__l3"><a href="#challenge-1-retrofitting-specs-onto-existing-code">Challenge 1: Retrofitting specs onto existing code</a></li><li class="toc__l3"><a href="#challenge-2-domain-expert-availability">Challenge 2: Domain expert availability</a></li><li class="toc__l3"><a href="#challenge-3-placeholder-debt">Challenge 3: Placeholder debt</a></li><li class="toc__l2"><a href="#6-return-on-investment">6. Return on Investment</a></li><li class="toc__l2"><a href="#7-what-we-would-do-differently">7. What We Would Do Differently</a></li><li class="toc__l2"><a href="#8-key-takeaways">8. Key Takeaways</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

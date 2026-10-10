@@ -1,0 +1,501 @@
+{
+  "schemaVersion": 1,
+  "recordedWith": {
+    "version": "0.17.9",
+    "node": "v24.x",
+    "platform": "darwin",
+    "packSource": "local"
+  },
+  "recordedAt": "2026-10-10",
+  "title": "smart-parking",
+  "cols": 88,
+  "streamsMerged": false,
+  "steps": [
+    {
+      "id": "config",
+      "caption": "Everything you have to write by hand. Seven lines.",
+      "cwd": "~",
+      "command": "cat smart-parking.yaml",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1330,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "PROJECT_NAME: Smart Parking",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "PROJECT_SLUG: smart-parking",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "PROJECT_TYPE: backend",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "DOMAIN: parking operations",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "STACK: Node 20, Express, PostgreSQL",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "API_STYLE: REST with DTO boundaries",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "TESTING: node:test",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "init",
+      "caption": "Requirements, Gherkin, a traceability matrix and the rules for agents.",
+      "cwd": "~",
+      "command": "specgate init --config ./smart-parking.yaml --out . --no-git",
+      "surface": "init",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1960,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "ℹ️ [INFO] 🧩 Rendering base template",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] 🛠️ Applying project type template: backend",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] 🧩 No optional modules selected. Generating base + project-type features only.",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] 📋 Summary",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Project: Smart Parking",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Slug: smart-parking",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Type: backend",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Domain: parking operations",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Output: ~/smart-parking",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Dry-run: false",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Git: skipped",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO]   specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] ✅ Generation completed",
+          "c": "ok",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "specops-add",
+      "caption": "A domain pack, installed and pinned. Not copy-pasted.",
+      "cwd": "~/smart-parking",
+      "command": "specgate specops add --pack-root ~/packs --pack multi-tenant/backend --var \"PROJECT_NAME=Smart Parking\" --var PROJECT_SLUG=smart-parking --var \"DOMAIN=parking operations\"",
+      "surface": "specops add",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1060,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "ℹ  Adding multi-tenant/backend to ~/smart-parking",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] Using pack: ~/packs/multi-tenant/backend/pack.yaml",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] Generated 3 scenario file(s).",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] Domain pack expansion completed.",
+          "c": "info",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "caption": "The queue, derived from the matrix. Nobody maintains this by hand.",
+      "cwd": "~/smart-parking",
+      "command": "specgate plan",
+      "surface": "plan",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 2050,
+      "truncated": true,
+      "omitted": 1,
+      "lines": [
+        {
+          "t": "  Needs Test + Code",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-002   SCN-001",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "      ✓ feature: `features/multi-tenant/provisioning_a_tenant_emits_tenantprovisioned.feature`",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-001   SCN-002",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "      ✓ feature: `features/multi-tenant/cross_tenant_read_attempts_are_rejected.feature`",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-003   SCN-003",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "      ✓ feature: `features/multi-tenant/exceeding_a_quota_emits_quotaexceeded.feature`",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Needs Feature File",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-004   -",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "      · feature: -",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Needs Test Artifact (TDD)",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-000   SCN-000",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "      ✓ feature: `features/core/health.feature`",
+          "c": "ok",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "harness-config",
+      "caption": "Any CLI that takes a prompt. The tool never talks to a model itself.",
+      "cwd": "~/smart-parking",
+      "command": "cat harness.config.yaml",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1060,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "harness_version: 1",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "agent: 'csda-stub-agent {prompt_file}'",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "test_cmd: 'node --test test/*.test.js'",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "max_attempts: 1",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "harness-run",
+      "caption": "One requirement, one worktree, one agent — and a gate that can say no.",
+      "cwd": "~/smart-parking",
+      "command": "specgate harness run --req REQ-000",
+      "surface": "harness run",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1510,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "ℹ️  [harness] Processing 1 requirement(s) from base HEAD.",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️  [harness] REQ-000: attempt 1/1",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "── harness report ──",
+          "c": "dim",
+          "s": "out"
+        },
+        {
+          "t": "  ✅ REQ-000  pass (1 attempt)  → harness/REQ-000",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  1 passed · 0 failed · 0 skipped",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "  Review and merge the harness/* branches you trust.",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`",
+          "c": "info",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "diff",
+      "caption": "What the agent touched. The feature files are not on this list.",
+      "cwd": "~/smart-parking",
+      "command": "git diff --stat main harness/REQ-000",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1240,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 94 +++++++++++++++++++++++++",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": " docs/specs/traceability.md                              |  2 +-",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": " spec.md                                                 |  2 +-",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": " src/health.js                                           |  9 +++",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": " test/health.test.js                                     | 11 +++",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": " 5 files changed, 116 insertions(+), 2 deletions(-)",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "tests",
+      "caption": "Its own test, on its own branch. Nothing was merged for you.",
+      "cwd": "~/smart-parking",
+      "command": "git switch -q harness/REQ-000 && node --test test/*.test.js",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1510,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "✔ REQ-000 SCN-000: GET /health reports the service as UP (12ms)",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "ℹ tests 1",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ suites 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ pass 1",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ fail 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ cancelled 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ skipped 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ todo 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ duration_ms 1.234",
+          "c": "info",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "validate",
+      "caption": "And the chain still holds. This is the command CI runs.",
+      "cwd": "~/smart-parking",
+      "command": "specgate validate .",
+      "surface": "validate",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1060,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "ℹ️ [INFO] ✅ Validation passed",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Features detected: 4",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Base SDD structure: complete",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Traceability mode: rich",
+          "c": "info",
+          "s": "out"
+        }
+      ]
+    }
+  ]
+}

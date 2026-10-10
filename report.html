@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec coverage — specgate</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0; padding: 2rem; background: #f7f8fa; color: #1a1a1a; }
+  @media (prefers-color-scheme: dark) { body { background: #16181d; color: #e6e6e6; } }
+  header { max-width: 960px; margin: 0 auto 1.5rem; }
+  h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+  .meta { color: #888; font-size: .85rem; }
+  main { max-width: 960px; margin: 0 auto; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem; margin: 1.5rem 0; }
+  .tile { background: #fff; border: 1px solid #e3e5e9; border-radius: 10px; padding: 1rem 1.25rem; }
+  @media (prefers-color-scheme: dark) { .tile { background: #21242b; border-color: #2f333c; } }
+  .tile-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+  .tile-label { color: #888; font-size: .8rem; margin-top: .35rem; text-transform: uppercase; letter-spacing: .03em; }
+  .tile.good .tile-value { color: #2f9e44; }
+  .tile.warn .tile-value { color: #e8a91d; }
+  .tile.bad .tile-value { color: #e03131; }
+  .bar { height: 12px; border-radius: 6px; background: #e3e5e9; overflow: hidden; margin: .5rem 0 0; }
+  @media (prefers-color-scheme: dark) { .bar { background: #2f333c; } }
+  .bar > span { display: block; height: 100%; background: #2f9e44; }
+  .trend { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; }
+  .trend-label { color: #888; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+  table { width: 100%; border-collapse: collapse; margin-top: .5rem; font-size: .9rem;
+    background: #fff; border: 1px solid #e3e5e9; border-radius: 10px; overflow: hidden; }
+  @media (prefers-color-scheme: dark) { table { background: #21242b; border-color: #2f333c; } }
+  th, td { padding: .55rem .75rem; text-align: left; border-bottom: 1px solid #eceef1; }
+  @media (prefers-color-scheme: dark) { th, td { border-color: #2a2e36; } }
+  th { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #888; }
+  td.ctr, th.ctr { text-align: center; }
+  td.req { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; }
+  .ok { color: #2f9e44; font-weight: 700; }
+  .no { color: #c0c4cc; }
+  .badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; }
+  .badge.done { background: #d3f9d8; color: #2b8a3e; }
+  .badge.todo { background: #fff3bf; color: #b08900; }
+  @media (prefers-color-scheme: dark) {
+    .badge.done { background: #133a1c; color: #69db7c; }
+    .badge.todo { background: #3a3312; color: #ffd43b; }
+  }
+  h2 { font-size: 1rem; margin: 1.75rem 0 .5rem; }
+  .drift { color: #e03131; }
+  .ok-line { color: #2f9e44; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em; }
+  .table-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Spec coverage — specgate</h1>
+  <div class="meta">Generated 2026-10-10T19:18:47.127Z · 22 requirement(s)</div>
+</header>
+<main>
+  <div class="tiles">
+    <div class="tile bad"><div class="tile-value">18.2%</div><div class="tile-label">Implemented</div></div>
+    <div class="tile "><div class="tile-value">4</div><div class="tile-label">Done</div></div>
+    <div class="tile "><div class="tile-value">18</div><div class="tile-label">Pending</div></div>
+    <div class="tile warn"><div class="tile-value">8</div><div class="tile-label">Missing a test</div></div>
+    <div class="tile good"><div class="tile-value">0</div><div class="tile-label">Orphan features</div></div>
+    
+  </div>
+  <div class="bar"><span style="width:18.2%"></span></div>
+  
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th>REQ</th><th>Status</th><th class="ctr">Feature</th>
+      <th class="ctr">Test</th><th class="ctr">Code</th><th>State</th>
+    </tr></thead>
+    <tbody>
+<tr><td class="req">REQ-001</td><td>Verified</td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge done">Done</span></td></tr>
+<tr><td class="req">REQ-002</td><td>Verified</td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge done">Done</span></td></tr>
+<tr><td class="req">REQ-003</td><td>Verified</td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge done">Done</span></td></tr>
+<tr><td class="req">REQ-004</td><td>Verified</td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge done">Done</span></td></tr>
+<tr><td class="req">REQ-005</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-006</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-007</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-008</td><td>Draft</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-009</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-010</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-011</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-012</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-013</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-014</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-015</td><td>Verified</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="ok">✓</span></td><td class="ctr"><span class="ok">✓</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-100</td><td>Draft</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-101</td><td>Draft</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-102</td><td>Draft</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-103</td><td>Draft</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-104</td><td>Draft</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-105</td><td>Draft</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+<tr><td class="req">REQ-106</td><td>Draft</td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td class="ctr"><span class="no">·</span></td><td><span class="badge todo">Feature missing</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  
+  
+  
+</main>
+</body>
+</html>

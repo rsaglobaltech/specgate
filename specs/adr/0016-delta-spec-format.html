@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0016-delta-spec-format">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0016 — Delta spec format: ADDED / MODIFIED / REMOVED — Specgate</title>
+<meta name="description" content="ADR-0016 — Delta spec format: ADDED / MODIFIED / REMOVED">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0016 — Delta spec format: ADDED / MODIFIED / REMOVED — Specgate">
+<meta property="og:description" content="ADR-0016 — Delta spec format: ADDED / MODIFIED / REMOVED">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0016-delta-spec-format-added-modified-removed">ADR-0016 — Delta spec format: ADDED / MODIFIED / REMOVED<a class="anchor" href="#adr-0016-delta-spec-format-added-modified-removed" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-08-15</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>ADR-0015 introduced the change folder. It needs a format for &quot;what this change
+does to the specification&quot;. Two shapes were possible: ship the full new spec
+and diff it, or ship only the difference.</p>
+<p>Shipping the full spec makes the reviewer do the diffing mentally, and makes
+two parallel changes to the same capability conflict on every line even when
+they touch unrelated requirements.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p>A delta is plain markdown with three operation sections, plus an optional
+<code>## Purpose</code> used only when the change creates a brand-new capability:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown"># Delta — pricing
+
+## ADDED Requirements
+
+### Requirement: REQ-014 — Dynamic peak pricing
+
+El sistema SHALL aplicar un recargo del 20 % en hora punta.
+
+#### Scenario: SCN-014a — Recargo en hora punta
+
+- GIVEN una sesión iniciada a las 18:00
+- WHEN se calcula la tarifa
+- THEN el importe incluye un recargo del 20 %
+
+&lt;!-- csda:trace uc=UC-007 cmd=CMD-011 agg=AGG-Pricing evt=EVT-PriceApplied
+     feature=features/billing/dynamic_pricing.feature --&gt;
+
+## MODIFIED Requirements
+## REMOVED Requirements</code></pre></figure>
+<div class="table-wrap"><table><thead><tr><th>Section</th><th>Meaning</th><th>Effect on archive</th></tr></thead><tbody><tr><td><code>## ADDED Requirements</code></td><td>new behaviour</td><td>appended to the capability spec</td></tr><tr><td><code>## MODIFIED Requirements</code></td><td>changed behaviour</td><td><strong>replaces the whole block</strong></td></tr><tr><td><code>## REMOVED Requirements</code></td><td>retired behaviour</td><td>deleted; retiring the last one deletes the spec file, and only when the change declares <code>retire_capabilities: true</code></td></tr><tr><td><code>## Purpose</code></td><td>what a new capability is for</td><td>seeds the Purpose of a spec being created; ignored when the spec exists</td></tr></tbody></table></div>
+<p>Two extensions over the plain markdown form, both <strong>optional</strong>:</p>
+<ul>
+<li><strong><code>REQ-NNN</code> / <code>SCN-NNN</code> ids</strong> in the heading. Without them, identity falls
+back to a slug of the requirement name, so a pure-markdown delta round-trips.</li>
+<li><strong>The <code>csda:trace</code> comment</strong>, which carries the DDD coordinates and the
+feature path. It is the bridge to the traceability matrix — the one thing a
+documentation-only tool cannot do.</li>
+</ul>
+<h2 id="rationale">Rationale<a class="anchor" href="#rationale" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Markdown, not YAML or a custom syntax.</strong> A delta is read by humans in a PR
+far more often than it is written. It also has to be draftable by an agent
+with no schema in context.</li>
+<li><strong>MODIFIED replaces, it does not merge.</strong> Merging two scenario lists would
+silently keep scenarios the author deliberately deleted. Replacement makes the
+delta the complete statement of the requirement&#39;s new form; the old version
+stays recoverable in the archive and in git.</li>
+<li><strong>The trace comment is a comment.</strong> A delta with no <code>csda:trace</code> is still
+valid; it just archives with <code>-</code> in the DDD columns. Trace data must never be
+the price of entry, or brownfield adoption stalls on the first requirement.</li>
+<li><strong>The id prefix list is closed.</strong> <code>REQ|SCN|UC|CMD|QRY|AGG|EVT</code> only. A
+permissive <code>[A-Z]{2,4}-\w+</code> reads &quot;TOTP-based two-factor authentication&quot; as an
+id of <code>TOTP-based</code>, silently mangling the requirement name. There is a test
+for exactly that.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="anchor" href="#alternatives-considered" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>Ship the full new spec and diff it at archive time.</strong> Rejected — the
+reviewer loses the statement of intent, and parallel changes to one
+capability collide on unrelated lines.</li>
+<li><strong>YAML deltas, consistent with <code>pack.yaml</code>.</strong> Rejected — requirements and
+scenarios are prose; YAML would force quoting, block scalars and escaping
+onto text meant to be read. The pack format stays YAML because it is a
+<em>model</em>; a delta is a <em>document</em>.</li>
+<li><strong>A <code>RENAMED Requirements</code> section.</strong> Parsed but not yet acted on: a rename
+is expressible today as REMOVED + ADDED, and doing it properly means
+deciding whether the traceability row and its implementation history follow
+the old id or the new one. Deferred rather than guessed at.</li>
+<li><strong>Requiring an explicit <code>REQ-NNN</code> on every requirement.</strong> Rejected — it
+blocks the lightest possible first change on a brownfield repo. Ids are
+reserved automatically by <code>change new</code> for those who want them.</li>
+</ol>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<h3 id="positive">Positive<a class="anchor" href="#positive" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>A reviewer reads the change, not the context around it.</li>
+<li>Two changes can touch one capability without conflicting, as long as they
+touch different requirements.</li>
+<li>The same AST serves the spec and the delta, so <code>parse → apply → render → parse</code> is a fixed point. That is a test, not an aspiration.</li>
+</ul>
+<h3 id="negative-trade-offs">Negative / trade-offs<a class="anchor" href="#negative-trade-offs" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>MODIFIED requires restating the whole requirement, including scenarios that
+did not change. Verbose, but unambiguous — and the alternative loses data.</li>
+<li>Identity by name-slug is fragile: renaming a requirement in a delta that has
+no id reads as REMOVED + ADDED rather than a rename. Mitigated by <code>change new</code>
+reserving real ids up front.</li>
+<li>Markdown parsing is inherently forgiving; a malformed heading degrades to
+prose rather than erroring. The validator catches the cases that matter
+(unknown section, requirement with no scenario, dangling MODIFIED/REMOVED).</li>
+</ul>
+<h2 id="references">References<a class="anchor" href="#references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>scripts/change/parser.ts</code> — the shared AST</li>
+<li><code>scripts/change/delta.ts</code> — <code>validateDelta</code> and <code>applyDelta</code></li>
+<li><code>tests/unit/change-delta.test.ts</code></li>
+<li>ADR-0015 — the lifecycle this format serves</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0016-delta-spec-format.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#rationale">Rationale</a></li><li class="toc__l2"><a href="#alternatives-considered">Alternatives considered</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l3"><a href="#positive">Positive</a></li><li class="toc__l3"><a href="#negative-trade-offs">Negative / trade-offs</a></li><li class="toc__l2"><a href="#references">References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

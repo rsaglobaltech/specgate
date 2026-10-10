@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en" data-slug="specs/traceability">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traceability Matrix — the Specgate CLI — Specgate</title>
+<meta name="description" content="Traceability Matrix — the Specgate CLI">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Traceability Matrix — the Specgate CLI — Specgate">
+<meta property="og:description" content="Traceability Matrix — the Specgate CLI">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../first-pr.html">Your team's first PR</a></li><li><a href="../writing-specs.html">Writing specs</a></li><li><a href="../reviewing-changes.html">Reviewing changes</a></li><li><a href="../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../validating.html">Validating</a></li><li><a href="../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../openspec.html">Already on OpenSpec</a></li><li><a href="../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../commands.html">Command reference</a></li><li><a href="../concepts.html">How Specgate thinks</a></li><li><a href="../faq.html">FAQ</a></li><li><a href="../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../agents.html">Agent tools</a></li><li><a href="../mcp.html">The MCP server</a></li><li><a href="../harness.html">The harness</a></li><li><a href="../domain-packs.html">Domain packs</a></li><li><a href="../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../walkthrough.html">Walkthrough</a></li><li><a href="../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../agent-setup.html">Choosing your agent</a></li><li><a href="../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../how-to.html">How-to guides</a></li><li><a href="../deployment.html">Deployment</a></li><li><a href="../supply-chain.html">Supply chain</a></li><li><a href="../release-process.html">Release process</a></li><li><a href="../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="traceability-matrix-the-specgate-cli">Traceability Matrix — the Specgate CLI<a class="anchor" href="#traceability-matrix-the-specgate-cli" aria-label="Link to this section">#</a></h1>
+<blockquote>
+<p>Links every CLI requirement to its scenario, feature file, implementation and
+test. All requirement IDs reference <a href="https://github.com/rsaglobaltech/specgate/blob/main/spec.md" target="_blank" rel="noreferrer"><code>/spec.md</code></a>.</p>
+<p><strong>This is the rich 10-column format the CLI generates for user projects</strong> —
+the tool has to be able to operate on its own repository, and
+<code>specgate change archive</code> rewrites the table below. <code>tests/unit/docs-truth.test.ts</code>
+fails the build if any path named here stops existing.</p>
+<p>Columns the CLI&#39;s own domain does not use (<code>Use Case</code>, <code>Command/Query</code>,
+<code>Aggregate</code>, <code>Event</code>) carry <code>-</code>. Bounded contexts live in <a href="https://github.com/rsaglobaltech/specgate/blob/main/spec.md" target="_blank" rel="noreferrer"><code>/spec.md</code></a> §7.</p>
+<p><strong>Supporting sections avoid 3-, 4- and 10-column pipe tables.</strong> The matrix
+parser reads any table of that shape as matrix rows and takes its first column
+for Scenario IDs, which trips the duplicate-ID check. §2 is a 5-column table
+and coexists fine; §3 and §4 are lists because they would not.</p>
+</blockquote>
+<hr>
+<h2 id="1-requirements">1. Requirements<a class="anchor" href="#1-requirements" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>Requirement</th><th>Scenario ID</th><th>Feature file</th><th>Use Case</th><th>Command/Query</th><th>Aggregate</th><th>Event</th><th>Technical artifact</th><th>Test artifact</th><th>Status</th></tr></thead><tbody><tr><td>REQ-001</td><td>SCN-001</td><td><code>features/cli/init.feature</code></td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/init_project.ts</code></td><td><code>tests/cli.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-002</td><td>SCN-002</td><td><code>features/cli/validate.feature</code></td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/validate_specs.ts</code></td><td><code>tests/unit/validate-remedies.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-003</td><td>SCN-003</td><td><code>features/cli/expand.feature</code></td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/expand_domain_pack.ts</code></td><td><code>tests/unit/common.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-004</td><td>SCN-004</td><td><code>features/pack/expand-parking.feature</code></td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/cli/commands/pack/ExpandDomainPackCommand.ts</code></td><td><code>tests/unit/init-engine-parity.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-005</td><td>SCN-005</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>templates/base/docs/specs/runtime-environments.md.tpl</code></td><td><code>tests/cli.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-006</td><td>SCN-006</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/init_pack.ts</code></td><td><code>tests/unit/pack-commands.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-007</td><td>SCN-007</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/lint_pack.ts</code></td><td><code>tests/unit/pack-lint-quality.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-008</td><td>SCN-008</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>actions/spec-driven-action/action.yml</code></td><td>TBD</td><td>Draft</td></tr><tr><td>REQ-009</td><td>SCN-009</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/init_project.ts</code></td><td><code>tests/snapshot/init-determinism.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-010</td><td>SCN-010</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/change/cli.ts</code></td><td><code>tests/unit/change-cli.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-011</td><td>SCN-011</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/specops/sync.ts</code></td><td><code>tests/unit/specops-f1b.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-012</td><td>SCN-012</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/harness/run.ts</code></td><td><code>tests/unit/harness-run.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-013</td><td>SCN-013</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/adopt_project.ts</code></td><td><code>tests/unit/adopt.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-014</td><td>SCN-014</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/doctor.ts</code></td><td><code>tests/unit/doctor.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-015</td><td>SCN-015</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td><code>scripts/req.ts</code></td><td><code>tests/unit/req-commands.test.ts</code></td><td>Verified</td></tr><tr><td>REQ-100</td><td>SCN-100a</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>TBD</td><td>Draft</td></tr><tr><td>REQ-101</td><td>SCN-101a</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>TBD</td><td>Draft</td></tr><tr><td>REQ-102</td><td>SCN-102a</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>TBD</td><td>Draft</td></tr><tr><td>REQ-103</td><td>SCN-103a</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>TBD</td><td>Draft</td></tr><tr><td>REQ-104</td><td>SCN-104a</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>TBD</td><td>Draft</td></tr><tr><td>REQ-105</td><td>SCN-105a</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>TBD</td><td>Draft</td></tr><tr><td>REQ-106</td><td>SCN-106a</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>TBD</td><td>Draft</td></tr></tbody></table></div>
+<p><strong>REQ-008 is the one row that is honest about being unfinished.</strong> The composite
+action in <code>actions/spec-driven-action/</code> is exercised by nothing — a broken step
+would ship unnoticed. It stays <code>Draft</code> with a <code>TBD</code> test until C6-08 covers it,
+which is exactly what <code>--strict-tdd</code> is designed to tolerate: an acknowledged
+gap, not a hidden one.</p>
+<hr>
+<h2 id="2-non-functional-requirements">2. Non-functional requirements<a class="anchor" href="#2-non-functional-requirements" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>NFR</th><th>Requirement</th><th>Quality attribute</th><th>Measured by</th><th>Status</th></tr></thead><tbody><tr><td>NFR-001</td><td><code>init</code> to green <code>validate</code> ≤ 60 s on clean env</td><td>Performance</td><td>Not measured automatically; <code>npm run smoke:init</code> is manual and not run by CI</td><td>Draft</td></tr><tr><td>NFR-002</td><td>Unit coverage ≥ 80 % lines / ≥ 70 % branches</td><td>Reliability</td><td><code>c8 --check-coverage</code> in CI. <strong>Today: 74.8 % lines · 71.1 % branches · 80.4 % functions</strong>, gated at 74/70/80. Branches and functions meet the target; lines does not</td><td>In Dev</td></tr><tr><td>NFR-003</td><td>Zero ESLint errors and zero Prettier diffs on <code>main</code></td><td>Maintainability</td><td>CI <code>lint</code> job: <code>npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm run format:check</code></td><td>Verified</td></tr><tr><td>NFR-004</td><td>CLI emits structured JSON for agents via <code>--json</code></td><td>Usability</td><td><code>change --json</code> and <code>plan --format json</code> only. Whole-surface coverage is C3-02</td><td>In Dev</td></tr><tr><td>NFR-005</td><td>Every shipped <code>pack.yaml</code> passes schema and lint checks in CI</td><td>Reliability</td><td><code>npm run registry:build</code> lints all 11 packs in <code>packs/</code> and exits 1 on failure</td><td>Verified</td></tr></tbody></table></div>
+<blockquote>
+<p><strong>NFR-003 changed meaning.</strong> It used to promise &quot;zero ShellCheck warnings&quot;.
+ADR-0008 removed every shell script from the CLI, so there is nothing for
+ShellCheck to lint but the demo recording scripts. Adding that step is C6-05.</p>
+</blockquote>
+<hr>
+<h2 id="3-test-inventory">3. Test inventory<a class="anchor" href="#3-test-inventory" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong><code>tests/cli.test.ts</code></strong> — E2E / integration, <code>node:test</code>. Covers REQ-001,
+REQ-005 and REQ-012: dispatch, dry-run, the runtime contract, harness CI mode.</li>
+<li><strong><code>tests/unit/</code></strong> — unit, <code>node:test</code> via <code>scripts/run-tests.cjs</code>. Covers
+REQ-002, REQ-003, REQ-006, REQ-007 and REQ-010 through REQ-015.</li>
+<li><strong><code>tests/snapshot/init-determinism.test.ts</code></strong> — snapshot, <code>node:test</code>. Covers REQ-009.</li>
+<li><strong><code>features/cli/</code> and <code>features/pack/</code></strong> — BDD, 22 Cucumber scenarios. Covers REQ-001 to REQ-004.</li>
+<li><strong><code>packages/*/test/unit/</code></strong> — unit, <code>node:test</code>. VS Code extension, MCP server,
+pack registry and LSP server.</li>
+<li><strong><code>tests/unit/docs-truth.test.ts</code></strong> — guard. Every path named in this file must exist.</li>
+</ul>
+<hr>
+<h2 id="4-coverage-gaps-open-work">4. Coverage gaps (open work)<a class="anchor" href="#4-coverage-gaps-open-work" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>P0 — REQ-008 has no test at all.</strong> The composite action in
+<code>actions/spec-driven-action/</code> is exercised by nothing. <em>(C6-08)</em></li>
+<li><strong>P0 — <code>--json</code> covers 2 commands of ~20.</strong> <em>(C3-02)</em></li>
+<li><strong>P1 — NFR-002 target not met.</strong> Lines at 74.8 % against a target of 80 %. The
+gate is real, but ratcheted at 74. <em>(C6-01)</em></li>
+<li><strong>P2 — NFR-001 is unmeasured.</strong> No automated timing of <code>init</code> → green
+<code>validate</code>. <em>(C6-08)</em></li>
+<li><strong>P2 — ShellCheck is not in CI</strong>, though <code>CONTRIBUTING.md</code> used to claim it
+was. <em>(C6-05)</em></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/traceability.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#1-requirements">1. Requirements</a></li><li class="toc__l2"><a href="#2-non-functional-requirements">2. Non-functional requirements</a></li><li class="toc__l2"><a href="#3-test-inventory">3. Test inventory</a></li><li class="toc__l2"><a href="#4-coverage-gaps-open-work">4. Coverage gaps (open work)</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../assets/docs.js" defer></script>
+</body>
+</html>

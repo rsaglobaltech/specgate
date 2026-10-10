@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en" data-slug="deployment">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deployment — Specgate</title>
+<meta name="description" content="How specgate's own docs site, npm package and container image are published.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Deployment — Specgate">
+<meta property="og:description" content="How specgate's own docs site, npm package and container image are published.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html" class="is-active" aria-current="page">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Advanced</li><li aria-current="page">Deployment</li></ol></nav>
+    <article class="prose">
+<h1 id="deployment">Deployment<a class="anchor" href="#deployment" aria-label="Link to this section">#</a></h1>
+<p>This page documents how <code>specgate</code>&#39;s public surfaces are deployed.</p>
+<h2 id="github-pages-site">GitHub Pages site<a class="anchor" href="#github-pages-site" aria-label="Link to this section">#</a></h2>
+<p>The <code>pages.yml</code> workflow deploys two artifacts to the <code>gh-pages</code> branch on
+every push to <code>main</code> that touches <code>docs/</code>, <code>packs/</code>, <code>packages/pack-registry/</code>,
+<code>schemas/</code>, or <code>README.md</code>:</p>
+<ol>
+<li>The contents of <code>docs/</code> are copied to the site root.</li>
+<li>The pack-registry generator runs and writes to <code>/packs/</code> inside the deployment.</li>
+</ol>
+<p>After a successful run, you can reach:</p>
+<ul>
+<li><strong>Docs landing page</strong> — <code>https://&lt;user&gt;.github.io/&lt;repo&gt;/</code></li>
+<li><strong>Comparisons matrix</strong> — <code>/comparisons.md</code></li>
+<li><strong>Pack registry</strong> — <code>/packs/index.html</code></li>
+<li><strong>Pack manifest (JSON)</strong> — <code>/packs/manifest.json</code></li>
+<li><strong>Spec coverage report</strong> — <code>/report.html</code> — this repository&#39;s own <code>specgate report</code>
+(P2): done/pending, orphan features, specops drift. A snapshot from the last
+deploy, not live — re-run the workflow (or push a change under the trigger
+paths above) to refresh it.</li>
+</ul>
+<h2 id="custom-domain-packs-spec-driven-dev-or-similar">Custom domain (<code>packs.spec-driven.dev</code> or similar)<a class="anchor" href="#custom-domain-packs-spec-driven-dev-or-similar" aria-label="Link to this section">#</a></h2>
+<p>To serve the registry from a custom domain such as <code>packs.spec-driven.dev</code>:</p>
+<ol>
+<li><p><strong>Add a repository variable</strong> named <code>SITE_CNAME</code> set to your domain
+(Settings → Secrets and variables → Actions → Variables → <code>New repository variable</code>).
+The workflow only writes a <code>CNAME</code> file when this variable is present, so
+the deployment is safe even before the domain is configured.</p>
+</li>
+<li><p><strong>Point DNS</strong> at GitHub Pages. The full HOWTO is at
+<a href="https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site" target="_blank" rel="noreferrer">https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site</a>.</p>
+</li>
+<li><p><strong>Enable HTTPS</strong> in Settings → Pages → &quot;Enforce HTTPS&quot; once the certificate
+has been issued (usually within minutes of DNS propagation).</p>
+</li>
+<li><p><strong>Re-run the workflow</strong> so the <code>CNAME</code> file is published. Click <em>Actions
+→ Deploy Docs + Pack Registry → Run workflow</em> on <code>main</code>.</p>
+</li>
+</ol>
+<h2 id="local-preview">Local preview<a class="anchor" href="#local-preview" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">node</span> packages/pack-registry/src/build.js <span class="tok tok--o">--packs</span> ./packs <span class="tok tok--o">--out</span> _site/packs
+<span class="tok tok--f">cp</span> <span class="tok tok--o">-R</span> docs/. _site/
+<span class="tok tok--f">npx</span> serve _site</code></pre></figure>
+<p>Then open <a href="http://localhost:3000/packs/" target="_blank" rel="noreferrer">http://localhost:3000/packs/</a> in your browser.</p>
+<h2 id="verifying-a-deployment">Verifying a deployment<a class="anchor" href="#verifying-a-deployment" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">curl</span> <span class="tok tok--o">-sI</span> https://&lt;host&gt;/packs/manifest.json |<span class="tok tok--f"> head</span> -<span class="tok tok--n">1</span>
+<span class="tok tok--c"># expect: HTTP/2 200</span>
+<span class="tok tok--f">curl</span> <span class="tok tok--o">-s</span>  https://&lt;host&gt;/packs/manifest.json |<span class="tok tok--f"> jq</span> <span class="tok tok--s">'.packs | length'</span>
+<span class="tok tok--c"># expect: 10  (or whatever your current pack count is)</span></code></pre></figure>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="how-to.html"><span>Previous</span>How-to guides</a><a class="pager__next" href="supply-chain.html"><span>Next</span>Supply chain</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/deployment.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#github-pages-site">GitHub Pages site</a></li><li class="toc__l2"><a href="#custom-domain-packs-spec-driven-dev-or-similar">Custom domain (packs.spec-driven.dev or similar)</a></li><li class="toc__l2"><a href="#local-preview">Local preview</a></li><li class="toc__l2"><a href="#verifying-a-deployment">Verifying a deployment</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

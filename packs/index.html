@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Specgate domain packs</title>
+<meta name="description" content="Browse 11 curated domain packs for Specgate. Each pack ships requirements, use cases, DDD aggregates, events, and Gherkin scenarios.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Specgate domain packs">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>
+  // Same pre-paint theme read as the rest of the site, so following a link here
+  // does not flip from light to dark.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+<style>
+  /* The pack gallery, in the site's Editorial direction. Every colour is a
+     docs.css token, so both themes follow. */
+  .registry { width: 100%; max-width: 76rem; margin: 0 auto; padding: clamp(3rem, 7vw, 5rem) clamp(1rem, 4vw, 2.5rem) 4rem; }
+  .registry__eyebrow { margin: 0 0 1rem; font-size: 0.75rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .registry h1 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.04; letter-spacing: -0.025em; }
+  .registry__lede { max-width: 42rem; margin: 1.25rem 0 0; font-size: 1.12rem; color: var(--fg-soft); }
+
+  .stats { margin: 2.5rem 0 0; padding: 1.5rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+           display: grid; grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr)); gap: 1.5rem; }
+  .stats div { display: flex; align-items: baseline; gap: .6rem; }
+  .stats dt { font-family: var(--serif); font-size: 2.2rem; line-height: 1; color: var(--accent); }
+  .stats dd { margin: 0; color: var(--fg-soft); font-size: .85rem; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; margin: 3rem 0 1.5rem; }
+  .toolbar h2 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 1.8rem; }
+  .toolbar__right { display: flex; gap: .75rem; align-items: center; }
+  .toolbar input[type="search"] {
+    min-width: min(20rem, 70vw); min-height: 2.75rem; padding: 0 1rem;
+    border: 1px solid var(--line-strong); border-radius: 999px; background: var(--bg-raised);
+    color: var(--fg); font: inherit;
+  }
+  .toolbar input[type="search"]:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .count-badge { font-size: .8rem; color: var(--fg-faint); white-space: nowrap; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(21rem, 100%), 1fr)); gap: 1rem; }
+  .card {
+    display: flex; flex-direction: column; gap: .9rem; min-width: 0;
+    padding: 1.5rem; background: var(--bg-raised); border: 1px solid var(--line); border-radius: 16px;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .card.hidden { display: none; }
+  .card__head { display: flex; gap: .85rem; align-items: center; }
+  .card__mono {
+    display: inline-grid; place-items: center; flex: none; width: 2.6rem; height: 2.6rem; border-radius: 10px;
+    background: var(--accent-soft); color: var(--accent); font-family: var(--mono); font-size: .8rem; font-weight: 500;
+  }
+  .card__title-block { display: flex; flex-direction: column; min-width: 0; flex-grow: 1; }
+  .card__name { margin: 0; font-family: var(--serif); font-weight: 500; font-size: 1.35rem; line-height: 1.2; }
+  .card__id { font-family: var(--mono); font-size: .75rem; color: var(--fg-faint); }
+  .card__tagline { margin: 0; color: var(--fg-soft); }
+  .card__stats { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: .82rem; color: var(--fg-soft); }
+  .stat { display: inline-flex; gap: .3rem; }
+  .stat__val { font-weight: 600; color: var(--fg); }
+
+  .badge { flex: none; font-size: .68rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+           padding: .2rem .55rem; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--fg-soft); }
+  .badge--pass { color: var(--green); border-color: currentColor; }
+  .badge--warn { color: var(--amber); border-color: currentColor; }
+  .badge--fail { color: var(--red); border-color: currentColor; }
+
+  .card__cmd-wrap { position: relative; margin-top: auto; }
+  .card__cmd {
+    margin: 0; padding: 2.9rem 1rem .9rem; overflow-x: auto;
+    background: var(--bg-code); border: 1px solid var(--line); border-radius: 10px;
+    font-family: var(--mono); font-size: .72rem; line-height: 1.6; color: var(--fg);
+  }
+  .card__copy {
+    position: absolute; top: .5rem; right: .5rem; min-height: 2rem; padding: 0 .75rem;
+    border: 1px solid var(--line-strong); border-radius: 999px; background: var(--bg-raised);
+    color: var(--fg-soft); font: inherit; font-size: .75rem; cursor: pointer;
+  }
+  .card__copy:hover, .card__copy.copied { color: var(--accent); border-color: var(--accent); }
+  .card__foot { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .card__ver, .card__lang, .card__type {
+    font-family: var(--mono); font-size: .68rem; color: var(--fg-faint);
+    border: 1px solid var(--line); border-radius: 999px; padding: .1rem .55rem;
+  }
+
+  .lint-details { font-size: .8rem; color: var(--fg-soft); }
+  .lint-details summary { cursor: pointer; }
+  .lint-list { margin: .5rem 0 0; padding-left: 1.1rem; }
+
+  .top__links { margin-left: auto; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .no-results { display: none; color: var(--fg-soft); grid-column: 1 / -1; }
+  .no-results.visible { display: block; }
+
+  .foot { border-top: 1px solid var(--line); }
+  .foot .wrap { max-width: 76rem; margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 2.5rem); font-size: .85rem; color: var(--fg-soft); }
+  .foot__note { color: var(--fg-faint); font-size: .78rem; }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#packs">Skip to the packs</a>
+
+<header class="top">
+  <a class="top__brand" href="../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <nav class="top__links">
+    <a href="../docs.html">Docs</a>
+    <a href="../domain-packs.html">Using packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<main class="registry" id="packs">
+  <p class="registry__eyebrow">Domain knowledge as a dependency</p>
+  <h1>Specgate domain packs</h1>
+  <p class="registry__lede">
+    Curated, versioned requirement sets — use cases, aggregates, events and
+    Gherkin scenarios — that you install like a dependency, pin by tag and
+    upgrade through a reviewable diff. <a href="../domain-packs.html">How packs work →</a>
+  </p>
+
+  <dl class="stats">
+    <div><dt>11</dt><dd>packs</dd></div>
+    <div><dt>11</dt><dd>passing lint</dd></div>
+    <div><dt>48</dt><dd>requirements</dd></div>
+    <div><dt>27</dt><dd>scenarios</dd></div>
+  </dl>
+
+  <div class="toolbar">
+    <h2>All packs</h2>
+    <div class="toolbar__right">
+      <label class="sr-only" for="search">Search packs</label>
+      <input type="search" id="search" placeholder="Search packs…" autocomplete="off">
+      <span class="count-badge" id="visible-count">11 shown</span>
+    </div>
+  </div>
+  <div class="grid" id="pack-grid">
+
+<article class="card" data-name="audit log" data-id="audit-log/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">AL</span>
+    <div class="card__title-block">
+      <h2 class="card__name">Audit Log</h2>
+      <span class="card__id">audit-log/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Immutable event trail, GDPR-compliant queries</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">1</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-audit-log-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/audit-log/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="audit-log"</pre>
+    <button class="card__copy" data-target="cmd-audit-log-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="authentication" data-id="auth/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">AU</span>
+    <div class="card__title-block">
+      <h2 class="card__name">Authentication</h2>
+      <span class="card__id">auth/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Authentication, JWT, OAuth2, RBAC &amp; MFA</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-auth-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/auth/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="auth"</pre>
+    <button class="card__copy" data-target="cmd-auth-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="billing" data-id="billing/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">BI</span>
+    <div class="card__title-block">
+      <h2 class="card__name">Billing</h2>
+      <span class="card__id">billing/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Subscriptions, invoicing &amp; payment processing</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-billing-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/billing/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="billing"</pre>
+    <button class="card__copy" data-target="cmd-billing-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="feature flags" data-id="feature-flags/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">FF</span>
+    <div class="card__title-block">
+      <h2 class="card__name">Feature Flags</h2>
+      <span class="card__id">feature-flags/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Gradual rollouts, A/B targeting &amp; kill-switches</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-feature-flags-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/feature-flags/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="feature-flags"</pre>
+    <button class="card__copy" data-target="cmd-feature-flags-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="file storage" data-id="file-storage/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">FS</span>
+    <div class="card__title-block">
+      <h2 class="card__name">File Storage</h2>
+      <span class="card__id">file-storage/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Upload pipeline, CDN delivery &amp; virus scanning</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-file-storage-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/file-storage/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="file-storage"</pre>
+    <button class="card__copy" data-target="cmd-file-storage-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="multi-tenant" data-id="multi-tenant/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">MT</span>
+    <div class="card__title-block">
+      <h2 class="card__name">Multi-Tenant</h2>
+      <span class="card__id">multi-tenant/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Tenant isolation, row-level security &amp; onboarding</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-multi-tenant-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/multi-tenant/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="multi-tenant"</pre>
+    <button class="card__copy" data-target="cmd-multi-tenant-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="notifications" data-id="notifications/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">NO</span>
+    <div class="card__title-block">
+      <h2 class="card__name">Notifications</h2>
+      <span class="card__id">notifications/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Email, SMS, push &amp; in-app delivery channels</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-notifications-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/notifications/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="notifications"</pre>
+    <button class="card__copy" data-target="cmd-notifications-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="reporting" data-id="reporting/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">RE</span>
+    <div class="card__title-block">
+      <h2 class="card__name">Reporting</h2>
+      <span class="card__id">reporting/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Scheduled reports, export formats &amp; dashboards</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">6</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-reporting-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/reporting/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="reporting"</pre>
+    <button class="card__copy" data-target="cmd-reporting-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="api contracts pack" data-id="sample-contracts/contracts">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">SC</span>
+    <div class="card__title-block">
+      <h2 class="card__name">API Contracts Pack</h2>
+      <span class="card__id">sample-contracts/contracts</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">A machine-readable OpenAPI 3.x specification describing the provider's HTTP surface.</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">0</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">0</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">0</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">0</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-sample-contracts-contracts">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/sample-contracts/contracts \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="sample-contracts"</pre>
+    <button class="card__copy" data-target="cmd-sample-contracts-contracts" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">contracts</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="search" data-id="search/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">SE</span>
+    <div class="card__title-block">
+      <h2 class="card__name">Search</h2>
+      <span class="card__id">search/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Full-text, facets, elasticsearch/pgvector adapters</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-search-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/search/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="search"</pre>
+    <button class="card__copy" data-target="cmd-search-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+
+<article class="card" data-name="webhooks" data-id="webhooks/backend">
+  <div class="card__head">
+    <span class="card__mono" aria-hidden="true">WE</span>
+    <div class="card__title-block">
+      <h2 class="card__name">Webhooks</h2>
+      <span class="card__id">webhooks/backend</span>
+    </div>
+    <span class="badge badge--pass">verified</span>
+  </div>
+  <p class="card__tagline">Event delivery, retry logic &amp; HMAC signing</p>
+  <div class="card__stats">
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">req</span></div>
+    <div class="stat"><span class="stat__val">5</span><span class="stat__label">use cases</span></div>
+    <div class="stat"><span class="stat__val">2</span><span class="stat__label">aggregates</span></div>
+    <div class="stat"><span class="stat__val">4</span><span class="stat__label">events</span></div>
+    <div class="stat"><span class="stat__val">3</span><span class="stat__label">scenarios</span></div>
+  </div>
+  <div class="card__cmd-wrap">
+    <pre class="card__cmd" id="cmd-webhooks-backend">specgate specops add \
+  --pack-repo https://github.com/rsaglobaltech/specgate.git \
+  --pack-version v0.17.9 \
+  --pack packs/webhooks/backend \
+  --var PROJECT_NAME="My App" \
+  --var PROJECT_SLUG=my-app \
+  --var DOMAIN="webhooks"</pre>
+    <button class="card__copy" data-target="cmd-webhooks-backend" aria-label="Copy expand command">Copy</button>
+  </div>
+  <div class="card__foot">
+    <span class="card__ver">v0.1.0</span>
+    <span class="card__lang">EN</span>
+    <span class="card__type">backend</span>
+  </div>
+  
+</article>
+    <p class="no-results" id="no-results">No packs match your search.</p>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>
+      <strong>Specgate</strong> ·
+      <a href="../docs.html">Docs</a> ·
+      <a href="./manifest.json">manifest.json</a> ·
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    </p>
+    <p class="foot__note">
+      Generated 2026-10-10T19:19:00.453Z from <code>packs/&lt;domain&gt;/&lt;type&gt;/pack.yaml</code>.
+      Submit a pack by opening a pull request that adds one.
+    </p>
+  </div>
+</footer>
+
+<!-- The theme toggle and the pre-paint read come from the site's own script;
+     what follows is the pack filter, which only this page has. -->
+<script src="../assets/docs.js" defer></script>
+<script>
+(function () {
+  const input = document.getElementById('search');
+  const grid  = document.getElementById('pack-grid');
+  const cards = Array.from(grid.querySelectorAll('.card'));
+  const noRes = document.getElementById('no-results');
+  const countEl = document.getElementById('visible-count');
+
+  function filterCards(q) {
+    const term = q.trim().toLowerCase();
+    let visible = 0;
+    cards.forEach(function (card) {
+      const match = !term
+        || card.dataset.name.includes(term)
+        || card.dataset.id.includes(term);
+      card.classList.toggle('hidden', !match);
+      if (match) visible++;
+    });
+    countEl.textContent = visible + ' shown';
+    noRes.classList.toggle('visible', visible === 0);
+  }
+
+  input.addEventListener('input', function () { filterCards(input.value); });
+
+  // Copy-to-clipboard
+  grid.addEventListener('click', function (e) {
+    const btn = e.target.closest('.card__copy');
+    if (!btn) return;
+    const pre = document.getElementById(btn.dataset.target);
+    if (!pre) return;
+    navigator.clipboard.writeText(pre.textContent).then(function () {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(function () {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 1500);
+    }).catch(function () {
+      btn.textContent = 'Copy manually';
+    });
+  });
+})();
+</script>
+</body>
+</html>

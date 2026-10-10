@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/0019-studio-surface">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADR-0019 — One studio surface: csda studio, not a standalone app — Specgate</title>
+<meta name="description" content="ADR-0019 — One studio surface: csda studio, not a standalone app">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="ADR-0019 — One studio surface: csda studio, not a standalone app — Specgate">
+<meta property="og:description" content="ADR-0019 — One studio surface: csda studio, not a standalone app">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="adr-0019-one-studio-surface-csda-studio-not-a-standalone-app">ADR-0019 — One studio surface: <code>csda studio</code>, not a standalone app<a class="anchor" href="#adr-0019-one-studio-surface-csda-studio-not-a-standalone-app" aria-label="Link to this section">#</a></h1>
+<h2 id="status">Status<a class="anchor" href="#status" aria-label="Link to this section">#</a></h2>
+<p>Accepted — 2026-08-16</p>
+<h2 id="context">Context<a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>Three separate tracks converged on the same idea — &quot;let people <em>see</em> the spec
+tree&quot; — and each answered it differently. None knew about the others, because
+they were written on branches that forked from the same commit.</p>
+<ol>
+<li><strong><code>mejoras/visual-pack-authoring-todo.md</code>, Phase 4.</strong> Evaluated a StudioApp
+and deferred it: <em>&quot;do not start&quot;</em>, and if ever approved, <em>&quot;scope as a thin
+CLI front-end via the VS Code extension webview, not a standalone app&quot;</em>. Its
+gate conditions were: pack format stable, DDD opt-in shipped, <code>pack infer</code>
+shipped, explicit stakeholder buy-in.</li>
+<li><strong><code>mejoras/csda-studio-brief.md</code> + <code>csda-studio-handoff.md</code>.</strong> Building
+exactly what Phase 4 forbade — a standalone Vite/React SPA in its own repo,
+with 15 requirements, as a dogfood experiment. Pack authored and tagged
+<code>v0.1.0</code>; the app itself is unimplemented and the handoff has been idle
+since 2026-05-15.</li>
+<li><strong><code>csda studio</code></strong> (recovered in C0-11). A subcommand that serves a
+read-only HTML view of the spec tree from a local port, plus <code>--json</code>. No
+build step, no dependencies, ~300 lines.</li>
+</ol>
+<p>Of the four Phase-4 gate conditions, two are met (<code>pack infer</code> shipped, the
+pack format is stable behind a JSON Schema). &quot;DDD opt-in shipped&quot; and
+&quot;explicit stakeholder buy-in&quot; are recorded nowhere as satisfied.</p>
+<h2 id="decision">Decision<a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p><strong><code>csda studio</code> is the studio surface.</strong> It ships, it is the one we maintain,
+and it is where visualisation features land.</p>
+<p><strong>The standalone SPA (<code>csda-studio-app</code>) stays a dogfood experiment and is
+explicitly not a product.</strong> Its purpose is to prove that the CSDA flow can
+deliver a real application end-to-end — pack → <code>specops add</code> → bootstrap →
+<code>harness run</code> per requirement. That purpose is served whether or not anyone
+ever uses the resulting app. It keeps its own repo and its own lifecycle, and
+nothing in this repository depends on it.</p>
+<p><strong>Phase 4 of <code>visual-pack-authoring-todo.md</code> is closed, not deferred.</strong> Its
+recommendation — deliver through an existing surface rather than a new app —
+is upheld. It was wrong only about <em>which</em> surface: a terminal command that
+serves HTML turned out cheaper than a VS Code webview, and it works in any
+editor, over SSH, and in CI.</p>
+<h2 id="consequences">Consequences<a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<p><strong>Positive:</strong></p>
+<ul>
+<li>One answer to &quot;how do I look at this?&quot;, available wherever the CLI is.</li>
+<li><code>csda studio --json</code> is the same data the future agent contract (C3-02)
+needs, so the view and the machine surface do not diverge.</li>
+<li>The VS Code extension keeps its pack graph webview, which solves a different
+problem — authoring a <code>pack.yaml</code> — and is not a spec-tree viewer.</li>
+</ul>
+<p><strong>Negative / accepted trade-offs:</strong></p>
+<ul>
+<li>A served HTML page cannot be as rich as a full SPA. Accepted: the cost of a
+second build pipeline, a second dependency tree and a second release train is
+not worth the polish, and the SPA was never funded as a product.</li>
+<li><code>csda studio</code> is read-only. Editing a pack through a UI remains out of scope;
+<code>csda req</code> covers the mutation people actually asked for, from the terminal.</li>
+<li>The dogfood experiment&#39;s own requirements (REQ-001..015 in <code>csda-studio-app</code>)
+overlap with what <code>csda studio</code> does. That duplication is deliberate — the
+point of the exercise is the process, not the artefact.</li>
+</ul>
+<h2 id="rejected-alternatives">Rejected alternatives<a class="anchor" href="#rejected-alternatives" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Build the SPA as the product.</strong> Rejected: it needs a hosting story, a
+release train and a dependency tree, for a view the CLI can serve in 300
+lines with none of that.</li>
+<li><strong>Deliver through the VS Code webview</strong>, as Phase 4 originally proposed.
+Rejected: it locks the feature to one editor, and the extension already has a
+distinct job (authoring <code>pack.yaml</code>).</li>
+<li><strong>Kill the dogfood experiment.</strong> Rejected: it is the only end-to-end test of
+the whole delivery flow this project has, and its value is independent of
+whether the app is ever used.</li>
+</ul>
+<h2 id="references">References<a class="anchor" href="#references" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>mejoras/visual-pack-authoring-todo.md</code> — Phase 4, closed by this ADR. <em>(Document removed 2026-08-16; it is in git history.)</em></li>
+<li><code>mejoras/csda-studio-brief.md</code>, <code>mejoras/csda-studio-handoff.md</code></li>
+<li><code>scripts/studio.ts</code></li>
+<li><code>mejoras/plan-cierre-enterprise.md</code> — C1-07 (this decision), C8-01 (the experiment)</li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/0019-studio-surface.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#status">Status</a></li><li class="toc__l2"><a href="#context">Context</a></li><li class="toc__l2"><a href="#decision">Decision</a></li><li class="toc__l2"><a href="#consequences">Consequences</a></li><li class="toc__l2"><a href="#rejected-alternatives">Rejected alternatives</a></li><li class="toc__l2"><a href="#references">References</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en" data-slug="getting-started">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started — Specgate</title>
+<meta name="description" content="Install, scaffold a project, and run the gate for the first time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Getting started — Specgate">
+<meta property="og:description" content="Install, scaffold a project, and run the gate for the first time.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html" class="is-active" aria-current="page">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>Start</li><li aria-current="page">Quickstart — 10 minutes</li></ol></nav>
+    <article class="prose">
+<h1 id="getting-started">Getting started<a class="anchor" href="#getting-started" aria-label="Link to this section">#</a></h1>
+<p>Two ways in, depending on whether the code already exists. Both take
+under an hour and neither requires reading anything else first.</p>
+<hr>
+<h2 id="adopt-sdd-on-an-existing-repository">Adopt SDD on an existing repository<a class="anchor" href="#adopt-sdd-on-an-existing-repository" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> the brownfield path (L1) — install specs, rules and the traceability
+matrix on a codebase that already exists, without touching a line of code.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--k">cd</span> your-existing-repo
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest init    <span class="tok tok--c"># adopts the repo: writes specs, touches no code</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest check   <span class="tok tok--c"># the gate — passes right away</span></code></pre></figure>
+<p>It passes and says <em>&quot;this checked the specification, not the code&quot;</em> until it
+knows how to run your tests. Tell it once:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> specgate config <span class="tok tok--k">set</span> test_cmd <span class="tok tok--s">&quot;npm test&quot;</span>   <span class="tok tok--c"># or ./mvnw -B verify, go test ./..., pytest</span></code></pre></figure>
+<p>It writes <code>test_cmd:</code> to <code>harness.config.yaml</code>, where <code>check</code> and <code>done</code> read it.</p>
+<p><code>init</code> sees the code (a <code>pom.xml</code>, <code>build.gradle</code>, <code>package.json</code>, <code>go.mod</code>,
+<code>pyproject.toml</code>, <code>Cargo.toml</code> or <code>.csproj</code>) and adopts the repository in place.
+It proposes the capabilities your layout already implies and names the evidence
+for each — the modules your build declares, or the level at which your code
+divides. (<code>specgate onboard</code> shows the same proposals without writing anything.)</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">3. Capabilities this codebase already implies
+   · Booking       domain/src/main/java/com/acme/booking   (28 files)
+   · Business      domain/src/main/java/com/acme/business   (20 files)
+   · Wallet        domain/src/main/java/com/acme/wallet       (6 files)</code></pre></figure>
+<p><code>adopt</code> then seeds one <strong>proposed</strong> requirement per capability, so <code>spec.md</code>
+starts as a handful of statements to argue with instead of a blank page. Each
+one says it is a guess and names where it came from; each gets a <code>Draft</code> row
+with a <code>TBD</code> test, so nothing claims to be specified or verified.</p>
+<p>What <code>adopt</code> writes (and only if the file does not already exist):</p>
+<div class="table-wrap"><table><thead><tr><th>File</th><th>Purpose</th></tr></thead><tbody><tr><td><code>spec.md</code></td><td>REQ-001 &quot;existing behaviour is preserved&quot;, plus one proposed requirement per capability.</td></tr><tr><td><code>AGENTS.md</code></td><td>The agent contract — commands, the loop, what never to do, your stack&#39;s rules. The file Codex, Cursor, Copilot and most agents read.</td></tr><tr><td><code>features/adoption/baseline.feature</code></td><td>Baseline Gherkin scenario pinning the adoption invariant.</td></tr><tr><td><code>docs/specs/traceability.md</code></td><td>The traceability matrix — <strong>generated</strong> from <code>spec.md</code>, the scenario tags and the files that mention each requirement. Nobody edits it (<a href="writing-specs.html#a-matrix-nobody-edits">why</a>); <code>--keep-matrix</code> keeps one by hand.</td></tr><tr><td><code>docs/specs/adr/README.md</code></td><td>ADR index for future decisions.</td></tr></tbody></table></div>
+<p>Override anything the detection got wrong with <code>--var</code>, and skip the proposals
+entirely with <code>--no-capabilities</code> — on <code>init</code> too, which is what you want on a
+scaffold you have just generated (its folders name no behaviour yet):</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest adopt \
+  <span class="tok tok--o">--var</span> DOMAIN=<span class="tok tok--s">&quot;health information exchange&quot;</span> \
+  <span class="tok tok--o">--var</span> TEST_CMD=<span class="tok tok--s">&quot;./mvnw -B verify&quot;</span></code></pre></figure>
+<h2 id="your-first-requirement-five-commands">Your first requirement — five commands<a class="anchor" href="#your-first-requirement-five-commands" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> status                                  <span class="tok tok--c"># what is left, and the next command</span>
+<span class="tok tok--f">specgate</span> new <span class="tok tok--s">&quot;Totals are rounded to the cent&quot;</span>    <span class="tok tok--c"># spec section + tagged scenario + row</span>
+<span class="tok tok--c"># 1. rewrite the &lt;placeholders&gt; in the scenario it wrote</span>
+<span class="tok tok--c"># 2. write a test that mentions REQ-002 — that mention is the link</span>
+<span class="tok tok--f">specgate</span> <span class="tok tok--k">done</span> REQ-<span class="tok tok--n">002</span>                            <span class="tok tok--c"># the gate for this requirement, then closes it</span>
+<span class="tok tok--f">specgate</span> check                                   <span class="tok tok--c"># the whole gate, before the pull request</span></code></pre></figure>
+<p>That is the whole daily loop. Nothing edits the matrix and nothing runs
+<code>req link</code>: a test or a source file that names <code>REQ-002</code> is linked to it.</p>
+<h3 id="a-repository-with-more-than-one-module">A repository with more than one module<a class="anchor" href="#a-repository-with-more-than-one-module" aria-label="Link to this section">#</a></h3>
+<p><code>adopt</code> reads <code>pom.xml</code>, <code>build.gradle</code>, <code>package.json</code>, <code>go.mod</code>,
+<code>pyproject.toml</code>, <code>setup.py</code>, <code>Cargo.toml</code> and <code>*.csproj</code>. When it cannot
+identify the stack it says so rather than guessing, and <code>--var STACK=…</code>
+<code>--var TEST_CMD=…</code> fill it in.</p>
+<p>If your build declares modules — Maven or Gradle sub-projects, npm or pnpm
+workspaces, Cargo members, Go modules, gems, <code>.csproj</code> files — adopt each one
+and let <code>validate</code> aggregate:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest adopt <span class="tok tok--o">--monorepo</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest validate .   <span class="tok tok--c"># one line per module</span></code></pre></figure>
+<p>That writes <code>specops.config.yaml</code> listing every module it adopted. The
+repository root stays out of it: in monorepo mode <code>validate</code> checks the
+children.</p>
+<p>Then retro-fill real requirements one at a time (recipe 2) and lock the gate
+in CI (recipes 4–5). Until you do, <code>validate</code> passes but says so — an adoption
+whose only scenario is the baseline certifies the skeleton, not the code.</p>
+<hr>
+<hr>
+<h2 id="generate-your-first-project">Generate your first project<a class="anchor" href="#generate-your-first-project" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> scaffold a new repo with <code>spec.md</code>, <code>AGENTS.md</code>, <code>docs/specs/</code>, an empty <code>features/</code> directory, and a traceability matrix.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--c"># 1. Describe the project — these seven keys are the minimum</span>
+<span class="tok tok--f">cat</span> &gt; /tmp/acme-energy-hub.config &lt;&lt;<span class="tok tok--s">'CONFIG'</span>
+PROJECT_NAME=<span class="tok tok--s">&quot;Acme Energy Hub&quot;</span>
+PROJECT_SLUG=<span class="tok tok--s">&quot;acme-energy-hub&quot;</span>
+PROJECT_TYPE=<span class="tok tok--s">&quot;backend&quot;</span>   <span class="tok tok--c"># backend | frontend</span>
+DOMAIN=<span class="tok tok--s">&quot;community energy&quot;</span>
+STACK=<span class="tok tok--s">&quot;Quarkus 3.x, Java 21, PostgreSQL, Maven&quot;</span>
+API_STYLE=<span class="tok tok--s">&quot;REST with DTO boundaries&quot;</span>
+TESTING=<span class="tok tok--s">&quot;JUnit 5, Cucumber&quot;</span>
+CONFIG
+
+<span class="tok tok--c"># 2. Scaffold</span>
+<span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest init \
+  <span class="tok tok--o">--config</span> /tmp/acme-energy-hub.config \
+  <span class="tok tok--o">--out</span> /tmp
+
+<span class="tok tok--c"># 3. Verify</span>
+<span class="tok tok--f">ls</span> /tmp/acme-energy-hub
+<span class="tok tok--k">cd</span> /tmp/acme-energy-hub &amp;&amp;<span class="tok tok--f"> npx</span> @rsaglobaltech/specgate@latest check</code></pre></figure>
+<p>Useful flags:</p>
+<div class="table-wrap"><table><thead><tr><th>Flag</th><th>Use</th></tr></thead><tbody><tr><td><code>--dry-run</code></td><td>Print every file that would be written; don&#39;t touch disk.</td></tr><tr><td><code>--force</code></td><td>Overwrite a pre-existing target directory.</td></tr><tr><td><code>--no-git</code></td><td>Skip <code>git init</code> (defaults to initialising).</td></tr><tr><td><code>--multi-stack &lt;a,b,c&gt;</code></td><td>Scaffold one sibling project per stack under a single root, sharing one spec. See below.</td></tr></tbody></table></div>
+<h3 id="one-specification-several-stacks">One specification, several stacks<a class="anchor" href="#one-specification-several-stacks" aria-label="Link to this section">#</a></h3>
+<p>When the same product is being built in more than one stack — a migration, a
+bake-off, the same API in two languages — the requirements are the same
+sentences and the scenarios describe the same behaviour. Only the code differs.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest init <span class="tok tok--o">--yes</span> \
+  <span class="tok tok--o">--multi-stack</span> spring,quarkus,micronaut \
+  <span class="tok tok--o">--out</span> /tmp</code></pre></figure>
+<p>That writes one root holding the shared spec, and one project per stack:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">my-spec-driven-app/
+├── spec.md                  the requirements — one copy
+├── features/                the scenarios — behaviour is the same everywhere
+├── docs/specs/adr/          decisions about the product, not one toolchain
+├── specops.config.yaml      projects: ./spring, ./quarkus, ./micronaut
+├── spring/
+│   ├── spec.md → ../spec.md         shared, not copied
+│   ├── AGENTS.md                  its own — one rulebook per toolchain
+│   └── docs/specs/traceability.md   its own — see below
+├── quarkus/
+└── micronaut/</code></pre></figure>
+<p><code>validate</code>, <code>plan</code>, <code>status</code> and <code>report</code> already fan out over <code>projects:</code>, so
+one command covers every stack:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest validate .   <span class="tok tok--c"># 3/3 project(s) passed</span></code></pre></figure>
+<p><strong>Why the matrix is not shared.</strong> A requirement is the same sentence whether
+Spring or Quarkus implements it. But the traceability matrix maps a requirement
+to <em>the file that implements it</em> and <em>the file that proves it</em>, and those are
+different files in every stack. Sharing the matrix would mean claiming a Quarkus
+test proves the Spring implementation.</p>
+<p><strong>On Windows.</strong> Symlinks need Developer Mode or an elevated shell. Without them
+the shared paths are copied instead, and <code>init</code> says so. The guarantee moves
+into the gate rather than disappearing: <code>validate</code> fails when a copy no longer
+matches the root, so three stacks cannot quietly drift into describing three
+different products.</p>
+<hr>
+<hr>
+<h2 id="replace-the-scaffold-with-real-requirements">Replace the scaffold with real requirements<a class="anchor" href="#replace-the-scaffold-with-real-requirements" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> turn the template <code>spec.md</code> into project-specific content.</p>
+<ol>
+<li>Open <code>spec.md</code>. Replace every placeholder paragraph; keep the <code>## REQ-NNN — title</code> heading convention, because the matrix is generated from it.</li>
+<li>Add each new requirement with <code>specgate new &quot;&lt;title&gt;&quot;</code>: it writes the section and a tagged scenario. Do not edit <code>docs/specs/traceability.md</code> — it is regenerated from <code>spec.md</code>, the scenario tags and the tests that mention each requirement.</li>
+<li>A <code>Draft</code> requirement owes nothing yet and is skipped; once it leaves <code>Draft</code> it owes a scenario and a test that mentions it — <code>check</code> says how many rows it skipped, so a pass never hides its own scope.</li>
+</ol>
+<blockquote>
+<p>Tip: keep <code>AGENTS.md</code> open in your editor. It is what every coding agent reads on every prompt — changes there propagate to Claude/Cursor/Aider without re-prompting.</p>
+</blockquote>
+<hr>
+<hr>
+<h2 id="then-the-daily-loop">Then: the daily loop<a class="anchor" href="#then-the-daily-loop" aria-label="Link to this section">#</a></h2>
+<p>Scaffolding is day one. From day two the loop is five commands, and none of them
+asks you to edit the matrix by hand.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">specgate</span> status                      <span class="tok tok--c"># what is left, and the next command to run</span>
+<span class="tok tok--f">specgate</span> new <span class="tok tok--s">&quot;Operators can export a monthly report&quot;</span>
+<span class="tok tok--c"># write src/ReportTest.java and mention REQ-007 in it — that is the link</span>
+<span class="tok tok--f">specgate</span> <span class="tok tok--k">done</span> REQ-<span class="tok tok--n">007</span> <span class="tok tok--o">--test-cmd</span> <span class="tok tok--s">&quot;npm test&quot;</span>   <span class="tok tok--c"># the gate AND the suite;</span>
+                                             <span class="tok tok--c"># refuses to write if either fails</span></code></pre></figure>
+<p><code>specgate status</code> is the one to start the day with — it names the single next
+command, so you never have to remember which of the others applies.</p>
+<p>If the gate reports an orphan <code>.feature</code> — one no requirement claims — tag its
+scenario <code>@REQ-NNN @SCN-NNN</code>, or create the requirement with <code>specgate new</code>.
+<code>specgate fix --dry-run</code> lists what it can repair on its own; on a generated
+matrix, that is mostly telling you which tag is missing.</p>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="first-pr.html">Your team&#39;s first pull request — author and reviewer</a></li>
+<li><a href="commands.html">Every command, grouped by when you need it</a></li>
+<li><a href="writing-specs.html">Write your first scenario</a></li>
+<li><a href="validating.html">Put the gate in CI</a></li>
+<li><a href="tutorial.html">The whole loop, end to end</a></li>
+</ul>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><a class="pager__next" href="quickstart.html"><span>Next</span>You cloned a repo</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/getting-started.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#adopt-sdd-on-an-existing-repository">Adopt SDD on an existing repository</a></li><li class="toc__l2"><a href="#your-first-requirement-five-commands">Your first requirement — five commands</a></li><li class="toc__l3"><a href="#a-repository-with-more-than-one-module">A repository with more than one module</a></li><li class="toc__l2"><a href="#generate-your-first-project">Generate your first project</a></li><li class="toc__l3"><a href="#one-specification-several-stacks">One specification, several stacks</a></li><li class="toc__l2"><a href="#replace-the-scaffold-with-real-requirements">Replace the scaffold with real requirements</a></li><li class="toc__l2"><a href="#then-the-daily-loop">Then: the daily loop</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>

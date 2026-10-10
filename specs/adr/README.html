@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" data-slug="specs/adr/README">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture Decision Records — Specgate</title>
+<meta name="description" content="Architecture Decision Records">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Architecture Decision Records — Specgate">
+<meta property="og:description" content="Architecture Decision Records">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="../../index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="../../docs.html">Docs</a>
+    <a href="../../packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="../../getting-started.html">Quickstart — 10 minutes</a></li><li><a href="../../quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="../../first-pr.html">Your team's first PR</a></li><li><a href="../../writing-specs.html">Writing specs</a></li><li><a href="../../reviewing-changes.html">Reviewing changes</a></li><li><a href="../../from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="../../validating.html">Validating</a></li><li><a href="../../automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="../../case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="../../openspec.html">Already on OpenSpec</a></li><li><a href="../../comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="../../commands.html">Command reference</a></li><li><a href="../../concepts.html">How Specgate thinks</a></li><li><a href="../../faq.html">FAQ</a></li><li><a href="../../troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="../../agents.html">Agent tools</a></li><li><a href="../../mcp.html">The MCP server</a></li><li><a href="../../harness.html">The harness</a></li><li><a href="../../domain-packs.html">Domain packs</a></li><li><a href="../../alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="../../walkthrough.html">Walkthrough</a></li><li><a href="../../tutorial.html">Tutorial: Smart Parking</a></li><li><a href="../../agent-setup.html">Choosing your agent</a></li><li><a href="../../bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="../../how-to.html">How-to guides</a></li><li><a href="../../deployment.html">Deployment</a></li><li><a href="../../supply-chain.html">Supply chain</a></li><li><a href="../../release-process.html">Release process</a></li><li><a href="../../articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    
+    <article class="prose">
+<h1 id="architecture-decision-records">Architecture Decision Records<a class="anchor" href="#architecture-decision-records" aria-label="Link to this section">#</a></h1>
+<p>This directory contains the ADRs (Architecture Decision Records) for
+<code>create-spec-driven-app</code>. See <a href="https://github.com/rsaglobaltech/specgate/blob/main/CONTRIBUTING.md#3-adr-policy" target="_blank" rel="noreferrer">CONTRIBUTING.md</a>
+for the policy on when and how to write an ADR.</p>
+<h2 id="index">Index<a class="anchor" href="#index" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>Title</th><th>Status</th><th>Date</th></tr></thead><tbody><tr><td><a href="0001-node-test-over-jest.html">0001</a></td><td><code>node:test</code> over Jest</td><td>Accepted</td><td>2026-05-12</td></tr><tr><td><a href="0002-bash-for-init-script.html">0002</a></td><td>Bash for init script</td><td>Superseded by ADR-0008</td><td>2026-05-12</td></tr><tr><td><a href="0003-javascript-for-expand.html">0003</a></td><td>JavaScript for expand engine</td><td>Accepted</td><td>2026-05-12</td></tr><tr><td><a href="0004-yaml-for-pack-format.html">0004</a></td><td>YAML for pack format</td><td>Accepted</td><td>2026-05-12</td></tr><tr><td><a href="0005-multi-env-dotenv.html">0005</a></td><td>Multi-environment <code>.env.*</code> strategy</td><td>Accepted</td><td>2026-05-12</td></tr><tr><td><a href="0006-node-engine-for-init.html">0006</a></td><td>Node.js engine for <code>init</code></td><td>Accepted</td><td>2026-05-12</td></tr><tr><td><a href="0007-flip-default-engine-to-node.html">0007</a></td><td>Flip default engine to Node.js</td><td>Accepted</td><td>2026-05-12</td></tr><tr><td><a href="0008-remove-shell-scripts.html">0008</a></td><td>Remove Bash engine and <code>validate_specs.sh</code></td><td>Accepted</td><td>2026-05-12</td></tr><tr><td><a href="0009-specops-remote-packs.html">0009</a></td><td>SpecOps remote packs + <code>.specops.lock</code></td><td>Accepted</td><td>2026-05-12</td></tr><tr><td><a href="0010-specops-sync-diff.html">0010</a></td><td>SpecOps <code>sync</code> + <code>diff</code></td><td>Accepted</td><td>2026-05-12</td></tr><tr><td><a href="0011-contracts-pack-tdd-enforcement.html">0011</a></td><td>Contracts pack + <code>--strict-tdd</code> gate</td><td>Accepted</td><td>2026-05-13</td></tr><tr><td><a href="0012-plan-done-implementation-loop.html">0012</a></td><td><code>plan</code> + <code>done</code> implementation loop</td><td>Accepted</td><td>2026-05-13</td></tr><tr><td><a href="0013-harness-run-loop.html">0013</a></td><td><code>harness run</code> — spec-driven delivery loop for AI agents</td><td>Accepted</td><td>2026-05-14</td></tr><tr><td><a href="0014-pack-infer-heuristic.html">0014</a></td><td><code>pack infer</code> — heuristic .feature → pack.yaml inference</td><td>Accepted</td><td>2026-05-14</td></tr><tr><td><a href="0015-change-lifecycle.html">0015</a></td><td>Change lifecycle — propose → review → archive</td><td>Accepted</td><td>2026-08-15</td></tr><tr><td><a href="0016-delta-spec-format.html">0016</a></td><td>Delta spec format — ADDED / MODIFIED / REMOVED</td><td>Accepted</td><td>2026-08-15</td></tr><tr><td><a href="0017-agent-json-contract.html">0017</a></td><td>The agent JSON contract</td><td>Accepted</td><td>2026-08-15</td></tr><tr><td><a href="0018-artifact-schemas.html">0018</a></td><td>Artifact schemas — a dependency graph, not a phase gate</td><td>Accepted</td><td>2026-08-15</td></tr><tr><td><a href="0019-studio-surface.html">0019</a></td><td>One studio surface — <code>csda studio</code>, not a standalone app</td><td>Accepted</td><td>2026-08-16</td></tr><tr><td><a href="0020-pack-format-standard.html">0020</a></td><td>One pack format, with the JSON Schema as its authority</td><td>Accepted</td><td>2026-08-17</td></tr><tr><td><a href="0021-alm-is-a-mirror.html">0021</a></td><td>The ALM is a mirror; inbound work enters through a change</td><td>Accepted</td><td>2026-08-20</td></tr><tr><td><a href="0022-patterns-are-optional-principles-are-not.html">0022</a></td><td>Patterns are optional; principles are not</td><td>Accepted</td><td>2026-08-21</td></tr><tr><td><a href="0023-checking-content-gate-or-report.html">0023</a></td><td>Checking content: a gate where it is decidable, a report where it is not</td><td>Accepted</td><td>2026-08-26</td></tr><tr><td><a href="0024-the-tool-is-renamed-the-format-is-not.html">0024</a></td><td>The tool is renamed to Specgate; the on-disk format is not</td><td>Accepted</td><td>2026-08-26</td></tr><tr><td><a href="0025-simulated-adoption-is-not-external-adoption.html">0025</a></td><td>Simulated adoption is GATE-G6, not GATE-G3</td><td>Accepted</td><td>2026-09-01</td></tr><tr><td><a href="0026-the-default-gate-is-the-strong-gate.html">0026</a></td><td>The default gate is the strong gate, from 1.0</td><td>Accepted</td><td>2026-09-02</td></tr><tr><td><a href="0027-use-cases-are-a-layer-not-a-column.html">0027</a></td><td>Use cases are a layer, not a column</td><td>Accepted</td><td>2026-10-07</td></tr><tr><td><a href="0028-architecture-conformance-is-part-of-the-gate.html">0028</a></td><td>Architecture conformance is part of the gate</td><td>Accepted</td><td>2026-10-07</td></tr><tr><td><a href="0029-a-brief-becomes-a-draft-change-not-a-spec.html">0029</a></td><td>A brief becomes a draft change, not a spec</td><td>Accepted</td><td>2026-10-08</td></tr><tr><td><a href="0030-specgate-verifies-specs-it-did-not-write.html">0030</a></td><td>Specgate verifies OpenSpec specs it did not write</td><td>Accepted</td><td>2026-10-08</td></tr><tr><td><a href="0031-agents-md-is-the-agent-contract.html">0031</a></td><td>AGENTS.md is the agent contract; AI_RULES.md folds into it</td><td>Accepted</td><td>2026-10-09</td></tr></tbody></table></div>
+<h2 id="template">Template<a class="anchor" href="#template" aria-label="Link to this section">#</a></h2>
+<p>Copy <code>docs/specs/adr/0001-node-test-over-jest.md</code> as a starting point, or use
+the template in <a href="https://github.com/rsaglobaltech/specgate/blob/main/CONTRIBUTING.md#3-adr-policy" target="_blank" rel="noreferrer">CONTRIBUTING.md</a>.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><span></span><span></span></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/specs/adr/README.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#index">Index</a></li><li class="toc__l2"><a href="#template">Template</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="../../assets/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en" data-slug="validating">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validating — Specgate</title>
+<meta name="description" content="Every check the gate runs, what each status owes, and the flags behind check.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Validating — Specgate">
+<meta property="og:description" content="Every check the gate runs, what each status owes, and the flags behind check.">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/docs.css">
+<script>
+  // Applied before paint so the page never flashes the wrong theme.
+  (function () {
+    var t = localStorage.getItem("csda-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+    <span aria-hidden="true">☰</span>
+  </button>
+  <a class="top__brand" href="index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v0.17.9</span>
+  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">Search</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="docs.html">Docs</a>
+    <a href="packs/">Packs</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+  </nav>
+  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <nav aria-label="Documentation"><details class="side__group" data-group="Start"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 2 5 5.5 5 9l-5 4-5-4c0-3.5 2-7 5-9Z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 17l-2 4 4-2M15 17l2 4-4-2"/></svg><span>Start</span></summary><ul><li><a href="getting-started.html">Quickstart — 10 minutes</a></li><li><a href="quickstart.html">You cloned a repo</a></li></ul></details><details class="side__group" data-group="Every day"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span>Every day</span></summary><ul><li><a href="first-pr.html">Your team's first PR</a></li><li><a href="writing-specs.html">Writing specs</a></li><li><a href="reviewing-changes.html">Reviewing changes</a></li><li><a href="from-a-brief.html">From a client brief</a></li></ul></details><details class="side__group" data-group="The gate in CI" open><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg><span>The gate in CI</span></summary><ul><li><a href="validating.html" class="is-active" aria-current="page">Validating</a></li><li><a href="automation.html">Automation</a></li></ul></details><details class="side__group" data-group="Existing code"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg><span>Existing code</span></summary><ul><li><a href="case-studies/case-1.html">Worked example: brownfield adoption</a></li><li><a href="openspec.html">Already on OpenSpec</a></li><li><a href="comparisons.html">Comparisons</a></li></ul></details><details class="side__group" data-group="Reference"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Reference</span></summary><ul><li><a href="commands.html">Command reference</a></li><li><a href="concepts.html">How Specgate thinks</a></li><li><a href="faq.html">FAQ</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul></details><details class="side__group" data-group="Extensions"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M8 4h8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>Extensions</span></summary><ul><li><a href="agents.html">Agent tools</a></li><li><a href="mcp.html">The MCP server</a></li><li><a href="harness.html">The harness</a></li><li><a href="domain-packs.html">Domain packs</a></li><li><a href="alm.html">Jira, Azure Boards, GitHub</a></li></ul></details><details class="side__group" data-group="Advanced"><summary class="side__head"><svg class="icon side__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 5.5v15"/></svg><span>Advanced</span></summary><ul><li><a href="walkthrough.html">Walkthrough</a></li><li><a href="tutorial.html">Tutorial: Smart Parking</a></li><li><a href="agent-setup.html">Choosing your agent</a></li><li><a href="bootstrap-prompt.html">Bootstrap prompt</a></li><li><a href="how-to.html">How-to guides</a></li><li><a href="deployment.html">Deployment</a></li><li><a href="supply-chain.html">Supply chain</a></li><li><a href="release-process.html">Release process</a></li><li><a href="articles/specs-that-cannot-lie.html">Specs that cannot lie</a></li></ul></details></nav>
+  </aside>
+
+  <main class="content" id="content">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="docs.html">Docs</a></li><li>The gate in CI</li><li aria-current="page">Validating</li></ol></nav>
+    <article class="prose">
+<h1 id="validating">Validating<a class="anchor" href="#validating" aria-label="Link to this section">#</a></h1>
+<p>The gate. <code>validate</code> is what makes a spec a contract rather than a
+document — run it locally, then make it a required check.</p>
+<hr>
+<h2 id="run-validate-locally-and-in-ci">Run <code>validate</code> locally and in CI<a class="anchor" href="#run-validate-locally-and-in-ci" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> make <code>validate</code> part of every PR.</p>
+<p>Local:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest validate .</code></pre></figure>
+<p>GitHub Actions:</p>
+<figure class="code" data-lang="yaml"><figcaption class="code__head"><span class="code__lang">yaml</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-yaml"><span class="tok tok--c"># .github/workflows/specs.yml</span>
+<span class="tok tok--a">name</span>: Spec validation
+<span class="tok tok--a">on</span>: [push, pull_request]
+<span class="tok tok--a">jobs</span>:
+<span class="tok tok--a">  validate</span>:
+<span class="tok tok--a">    runs-on</span>: ubuntu-latest
+<span class="tok tok--a">    steps</span>:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+<span class="tok tok--a">        with</span>: { node-version: <span class="tok tok--s">'22'</span> }
+      <span class="tok tok--c"># --strict-links is what checks the matrix against the filesystem: without</span>
+      <span class="tok tok--c"># it a row pointing at a deleted test file still passes. Pin the version in</span>
+      <span class="tok tok--c"># CI so a release cannot change the gate under a green branch.</span>
+      - run: npx --<span class="tok tok--k">yes</span> @rsaglobaltech/specgate@<span class="tok tok--n">0.17</span>.<span class="tok tok--n">9</span> validate . --strict</code></pre></figure>
+<p><code>specgate ci init</code> writes a fuller job for you: it sets up the project&#39;s
+toolchain (Temurin for Maven or Gradle, at the Java version the build declares;
+<code>npm ci</code> for Node) and runs <code>specgate check</code>, so the job fails when the tests
+do, not only when the specification does.</p>
+<p>What <code>validate</code> checks:</p>
+<ul>
+<li>required directories (<code>features/</code>, <code>docs/specs/</code>),</li>
+<li>required files (<code>spec.md</code>, <code>AGENTS.md</code> — or a legacy <code>AI_RULES.md</code> — <code>traceability.md</code>, ADR entrypoint),</li>
+<li>at least one <code>.feature</code>,</li>
+<li>no unresolved <code>{{...}}</code> placeholders,</li>
+<li>traceability matrix header presence,</li>
+<li>every <code>.feature</code> appears in <code>traceability.md</code>,</li>
+<li>allowed traceability statuses,</li>
+<li>duplicate <code>Scenario ID</code> detection,</li>
+<li>expected <code>use-cases.md</code> and <code>events.md</code> headers when those files exist.</li>
+</ul>
+<p>Exit codes: <code>0</code> ok · <code>1</code> unhandled · <code>2</code> usage · <code>3</code> missing prerequisite · <code>4</code> destination conflict.</p>
+<h3 id="the-one-thing-a-pass-does-not-tell-you">The one thing a pass does not tell you<a class="anchor" href="#the-one-thing-a-pass-does-not-tell-you" aria-label="Link to this section">#</a></h3>
+<p>A freshly adopted repository passes on day one — deliberately, because a gate
+that rejects a new adoption is a gate nobody installs. So <code>validate</code> warns when
+the only scenario in the project is still the baseline <code>adopt</code> wrote:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">✅ Validation passed
+⚠️ [WARN] Adoption never retro-filled — the only scenario is the adoption baseline.</code></pre></figure>
+<p>It is a warning, not a failure: the exit code stays <code>0</code> and CI stays green. It
+exists because the alternative is worse — a project that specified nothing
+looking exactly like a healthy one at the only place most teams check. In
+<code>--json</code>, <code>validation.adoptionRetrofilled</code> carries the same fact, alongside an
+<code>adoption_not_retrofilled</code> advisory in <code>status[]</code>.</p>
+<hr>
+<hr>
+<h2 id="the-gate-is-validate-strict">The gate is <code>validate . --strict</code><a class="anchor" href="#the-gate-is-validate-strict" aria-label="Link to this section">#</a></h2>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest validate . <span class="tok tok--o">--strict</span></code></pre></figure>
+<p>One name, every check below. The individual <code>--strict-*</code> flags still work, so an
+existing CI invocation keeps meaning what it meant — but <code>--strict</code> is what to
+put in CI and what every other page recommends.</p>
+<p>This matters more than it sounds. Ten places used to call <code>--strict-tdd</code> &quot;the
+gate&quot; while only the generated workflow ran the stronger command, so anyone
+following the documentation got a check that <strong>passes on an <code>Implemented</code>
+requirement whose test file does not exist</strong>. One name that means all of them is
+the fix; correcting the wording in ten places would have left the same trap for
+the eleventh.</p>
+<h2 id="enforce-tdd-with-validate-strict-tdd">Enforce TDD with <code>validate --strict-tdd</code><a class="anchor" href="#enforce-tdd-with-validate-strict-tdd" aria-label="Link to this section">#</a></h2>
+<p><strong>Goal:</strong> fail PRs when a <code>REQ</code> that has started work has no scenario, no implementing test, or no row in <code>traceability.md</code>.</p>
+<p><strong><code>Draft</code> rows are exempt, on purpose.</strong> A requirement nobody has started owes
+nothing yet, so <code>--strict-tdd</code> skips it and the run reports how many it skipped:</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">- Strict TDD gate: passed (3 row(s) exempt — still Draft, so not checked)</code></pre></figure>
+<p>A row starts being checked the moment its <code>Status</code> leaves <code>Draft</code>, which
+<code>specgate done &lt;REQ&gt;</code> does. If you want the stricter reading — every declared
+scenario proved, whatever the status — that is <code>--strict-coverage</code> below.</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest validate . <span class="tok tok--o">--strict-tdd</span></code></pre></figure>
+<h3 id="strict-coverage-every-scenario-is-actually-proved"><code>--strict-coverage</code> — every scenario is actually proved<a class="anchor" href="#strict-coverage-every-scenario-is-actually-proved" aria-label="Link to this section">#</a></h3>
+<p>A matrix row names one <code>Scenario ID</code> and one feature file. The file may hold
+five scenarios, and until this flag nothing related the other four to anything:</p>
+<figure class="code" data-lang="bash"><figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-bash"><span class="tok tok--f">npx</span> @rsaglobaltech/specgate@latest validate . <span class="tok tok--o">--strict-coverage</span></code></pre></figure>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">❌ [ERROR] Declared scenarios nothing proves: 1
+  ✖  Nothing proves &quot;SCN-012 a fully discounted invoice carries no tax&quot;
+     fix: Add a test naming SCN-012 to tests/totals.test.js, or delete the
+          scenario if it no longer describes behaviour this project promises.</code></pre></figure>
+<p>This is the scenario an agent skips when it cannot satisfy it — measured: given
+five scenarios where one contradicted another, an agent wrote tests for four,
+the gate approved, and the row went to <code>Implemented</code>.</p>
+<p>It matches a scenario&#39;s <code>@SCN-NNN</code> tag, the id in its title, or failing both the
+title itself, against the test artifact the row declares. <strong>It is a name match:
+this does not run your suite.</strong> That is why it is opt-in rather than part of
+<code>--strict-tdd</code> — a project that names its tests some other way should not start
+failing because a release shipped a heuristic.</p>
+<p><code>--strict-tdd</code> is in addition to the normal checks. It is intended for &quot;no contract without a test&quot; gates — particularly useful in <code>contracts</code> packs (see §8). Wire it into CI exactly like <code>validate</code>, just append the flag.</p>
+<blockquote>
+<p>A requirement that is not going to be delivered is <code>Deprecated</code> (<code>specgate done REQ-NNN --status Deprecated</code>): it owes nothing, and <code>--strict-tdd</code> skips it. One not started yet simply stays <code>Draft</code>.</p>
+</blockquote>
+<h2 id="the-other-three-gates">The other three gates<a class="anchor" href="#the-other-three-gates" aria-label="Link to this section">#</a></h2>
+<p><code>--strict-tdd</code> is one of four opt-in gates. Every one of them is <strong>additive</strong> to
+the normal checks and <strong>off by default</strong>, for the same reason: each one is
+legitimate to fail while a project is still finding its shape, and a gate that
+fires on honest work gets switched off for good.</p>
+<p>Turn them on one at a time, in CI, once the repository is clean for that rule.</p>
+<h3 id="strict-scenarios-the-scenarios-say-something-falsifiable"><code>--strict-scenarios</code> — the scenarios say something falsifiable<a class="anchor" href="#strict-scenarios-the-scenarios-say-something-falsifiable" aria-label="Link to this section">#</a></h3>
+<p>Applies the pack&#39;s eight scenario quality rules to <code>features/**/*.feature</code>:</p>
+<ul>
+<li>No scenario Cucumber would see as empty. Upper-case <code>GIVEN</code>/<code>WHEN</code>/<code>THEN</code> is
+the usual cause — Gherkin keywords are case-sensitive, so the real parser
+absorbs them as description and the scenario runs zero steps and exits <code>0</code>.</li>
+<li>Every scenario has a <code>When</code> and a <code>Then</code>, at least three steps, and a title
+that names the behaviour.</li>
+<li>No vague, unfalsifiable step text; no <code>Scenario Outline</code> without <code>Examples</code>.</li>
+</ul>
+<p><code>specgate doctor</code> reports the same rules as advisories rather than failures, which
+is the gradual path for a repository brought in with <code>specgate adopt</code>.</p>
+<h3 id="strict-requirements-the-requirement-states-an-obligation"><code>--strict-requirements</code> — the requirement states an obligation<a class="anchor" href="#strict-requirements-the-requirement-states-an-obligation" aria-label="Link to this section">#</a></h3>
+<p>Over <code>docs/specs/capabilities/**/spec.md</code>:</p>
+<ul>
+<li>Every requirement states an obligation — <code>SHALL</code>, <code>MUST</code>, <code>SHOULD</code>, <code>MAY</code>,
+<code>DEBE</code>, <code>DEBERÁ</code>.</li>
+<li>A requirement that opens with <code>IF</code> resolves with <code>THEN</code> in the same sentence.</li>
+</ul>
+<p><strong>What it deliberately does not do:</strong> parse EARS grammar. No regex can reliably
+tell &quot;the system&quot; from a response clause, and a check that claims to enforce a
+grammar it does not parse is worse than no check. These two rules are what a
+regex can assert honestly — nothing wider.</p>
+<p>The point is upstream of any code checking: <code>- Max 5 failed attempts per hour per user</code> is not something a machine can hold code to. This gate makes the
+requirement itself say something before anything tries to verify against it.</p>
+<h3 id="strict-links-the-matrix-points-at-files-that-exist"><code>--strict-links</code> — the matrix points at files that exist<a class="anchor" href="#strict-links-the-matrix-points-at-files-that-exist" aria-label="Link to this section">#</a></h3>
+<p>Every Feature file / Technical artifact / Test artifact the matrix declares as
+a path still exists on disk. A cell may anchor a line range
+(<code>src/auth/login.ts#L15-L89</code>); the anchor is not part of the path.</p>
+<p><strong>Only delivered rows owe their files.</strong> A <code>Draft</code> or <code>In Dev</code> row routinely
+names the file a requirement is <em>going to</em> land in, before anyone writes it.
+Planning ahead is not documentary drift, so the check applies to rows that are
+<code>Implemented</code>, <code>Verified</code> or <code>Released</code>. A delivered row whose file has gone is
+drift, and fails.</p>
+<p>The same line applies to <code>--strict-scenarios</code>: the scenario rules are owed on
+delivery — including <code>scenario_placeholder_step</code>, an unfilled <code>&lt;placeholder&gt;</code> in
+a plain Scenario, which is what <code>specgate new</code> writes for you to fill in. The
+three rules that make a suite report a pass it never ran — no steps, a keyword
+in the wrong case, an Outline with no Examples — apply to every row.</p>
+<p><code>specgate done REQ-NNN --check</code> and <code>harness run</code> hold the requirement they are
+closing to that rule before its status flips — otherwise they would skip the
+one requirement they are about to mark <code>Implemented</code>.</p>
+<hr>
+<hr>
+<h2 id="declared-value-drift-a-report-not-a-gate">Declared-value drift — a report, not a gate<a class="anchor" href="#declared-value-drift-a-report-not-a-gate" aria-label="Link to this section">#</a></h2>
+<p>The one thing none of the four gates catches is the case where the spec and the
+code both exist, both are consistent, and <strong>disagree</strong>: <em>session timeout is 30m
+but the spec requires 15m</em>. <code>--strict-requirements</code> checks the shape of the
+sentence; <code>--strict-links</code> checks that the file exists; neither reads what is
+in it.</p>
+<p>Annotate the value on both sides, and <code>specgate report</code> compares them:</p>
+<figure class="code" data-lang="markdown"><figcaption class="code__head"><span class="code__lang">markdown</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-markdown">&lt;!-- csda:trace uc=Login value_session_timeout=15m --&gt;</code></pre></figure>
+<figure class="code" data-lang="ts"><figcaption class="code__head"><span class="code__lang">ts</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-ts"><span class="tok tok--c">// csda:value session_timeout=15m</span></code></pre></figure>
+<p><code>csda:value</code> is a plain literal string found by scanning line by line, so it
+reads the same behind <code>//</code>, <code>#</code>, <code>--</code>, or no comment marker at all — the same
+reason <code>csda:trace</code> works in any markdown file. Comparison is exact string
+equality between two things a human or an agent wrote on purpose.</p>
+<p>Each identifier lands in one of four states: <strong>matched</strong>, <strong>diverging</strong>,
+<strong>spec only</strong>, <strong>code only</strong>. The report gains a section listing them with
+<code>file:line</code> for the code side, and <code>--record</code> appends <code>valuesTotal</code>,
+<code>valuesMatched</code> and <code>valuesDiverging</code> to the history — additive, so an older
+history line simply lacks them.</p>
+<p><strong>Why this is a report and not <code>--strict-values</code>.</strong> Two reasons, both about
+scale. Annotating every checkable fact is hand work that grows with the number
+of facts while coverage does not; and the more complex a system gets, the
+smaller the fraction of its requirements that reduce to a scalar at all. A hard
+gate over a partial, hand-maintained set of annotations would mostly measure
+who remembered to annotate. See ADR-0023.</p>
+<p><strong>It does not interpret units.</strong> <code>15m</code> and <code>900000</code> are different strings, and
+this compares strings. Claiming otherwise would be asserting authority over two
+grammars it does not parse.</p>
+<h3 id="acting-on-a-divergence">Acting on a divergence<a class="anchor" href="#acting-on-a-divergence" aria-label="Link to this section">#</a></h3>
+<p>Three routes, and only one of them needed a new command:</p>
+<ol>
+<li><strong>Fix the code</strong> — the report already gives <code>file:line</code>. Open it.</li>
+<li><strong>Update the spec</strong> — <code>specgate change new &lt;id&gt; --from-value-drift REQ-ID:value_id</code>
+writes the delta: the full requirement copied into a <code>## MODIFIED Requirements</code> section with <code>value_&lt;id&gt;</code> rewritten to the code&#39;s value.
+<strong>The prose is not rewritten</strong> — turning &quot;expires after 15 minutes&quot; into
+&quot;after 30&quot; would be guessing how a sentence should sound on someone&#39;s
+behalf, so it leaves an explicit <code>TODO:</code> instead. Review it, then
+<code>specgate change validate</code> and <code>specgate change archive</code> as usual.</li>
+<li><strong>Retire the requirement</strong> — already <code>specgate change new &lt;id&gt; --capability &lt;cap&gt;</code>
+with a <code>## REMOVED Requirements</code> section. The removal mechanism does not
+care why something is removed.</li>
+</ol>
+<hr>
+<hr>
+<h2 id="next">Next<a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="automation.html">Automate the loop</a></li>
+<li><a href="troubleshooting.html">Troubleshooting</a></li>
+</ul>
+<p><strong>On a brownfield repository it says so instead of failing you.</strong> Retro-fitting
+specs onto tests written years earlier means pointing a row at a test that does
+not mention any requirement — and the only way to satisfy a name match there
+would be to edit that test, which is the one thing <code>adopt</code> promises never to
+make you do. So the check calibrates: if no test artifact in the project names
+its requirement or a scenario, the convention is not in use here and <code>validate</code>
+reports that it could not run rather than failing every row.</p>
+<figure class="code" data-lang="text"><figcaption class="code__head"><span class="code__lang">text</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption><pre><code class="language-text">⚠ --strict-coverage could not run: no test artifact in this project names its
+  requirement or any of its scenarios.</code></pre></figure>
+<p>Name one requirement in the test that proves it — a comment is enough — and the
+check starts holding the rest of the matrix to the same standard.</p>
+
+    </article>
+    <nav class="pager" aria-label="Neighbouring pages"><a class="pager__prev" href="from-a-brief.html"><span>Previous</span>From a client brief</a><a class="pager__next" href="automation.html"><span>Next</span>Automation</a></nav>
+    <footer class="page-foot">
+      <p class="page-foot__ask">Was this page useful?</p>
+      <a href="https://github.com/rsaglobaltech/specgate/edit/main/docs/validating.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/rsaglobaltech/specgate/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+    </footer>
+  </main>
+
+  <div class="rail"><nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li class="toc__l2"><a href="#run-validate-locally-and-in-ci">Run validate locally and in CI</a></li><li class="toc__l3"><a href="#the-one-thing-a-pass-does-not-tell-you">The one thing a pass does not tell you</a></li><li class="toc__l2"><a href="#the-gate-is-validate-strict">The gate is validate . --strict</a></li><li class="toc__l2"><a href="#enforce-tdd-with-validate-strict-tdd">Enforce TDD with validate --strict-tdd</a></li><li class="toc__l3"><a href="#strict-coverage-every-scenario-is-actually-proved">--strict-coverage — every scenario is actually proved</a></li><li class="toc__l2"><a href="#the-other-three-gates">The other three gates</a></li><li class="toc__l3"><a href="#strict-scenarios-the-scenarios-say-something-falsifiable">--strict-scenarios — the scenarios say something falsifiable</a></li><li class="toc__l3"><a href="#strict-requirements-the-requirement-states-an-obligation">--strict-requirements — the requirement states an obligation</a></li><li class="toc__l3"><a href="#strict-links-the-matrix-points-at-files-that-exist">--strict-links — the matrix points at files that exist</a></li><li class="toc__l2"><a href="#declared-value-drift-a-report-not-a-gate">Declared-value drift — a report, not a gate</a></li><li class="toc__l3"><a href="#acting-on-a-divergence">Acting on a divergence</a></li><li class="toc__l2"><a href="#next">Next</a></li></ul></nav></div>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Search the documentation…"
+             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+    </p>
+  </div>
+</div>
+
+<script src="assets/docs.js" defer></script>
+</body>
+</html>
