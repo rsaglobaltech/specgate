@@ -65,9 +65,19 @@ specgate draft --check draft-reservas
 | D8   | the draft is small enough to review (25 requirements by default)                                                                               |
 | D9   | every scenario passes the rules the harness gate will apply (titles, Given/When/Then)                                                          |
 | D10  | no requirement or scenario id another requirement already owns                                                                                 |
+| D12  | an actor who acts on an id (`…/{id}/…`) has a scenario that lists or creates it, or an assumption says where it comes from                     |
 
 D6 is the one that keeps a draft honest: on a vague brief it lists almost every
 value, and that list is the conversation to have with the client.
+
+D12 catches what every pilot found only by running the product: each scenario
+right on its own, and an operator who can settle a transfer by its id with no
+way to see which transfers are pending. A `GET` on the collection by the same
+actor, or the `POST` that creates it, closes it — in the draft or in the
+project's specification. When the id reaches the actor outside the API (a
+customer reads their IBAN to the teller), say so in `assumptions.md`, in a row
+naming the requirement and the collection path. D11 is reserved for a rule
+still being designed.
 
 An answered question gets an `Answer` column, or a line below the table such as
 `Answer (Q1): free shipping from 50 €`; the requirement it blocked then drops
@@ -93,8 +103,8 @@ Write scenarios with `DADO / CUANDO / ENTONCES / Y`; the requirement body keeps
 
 ## What the checklist cannot see
 
-It checks that a scenario exists for each surface, not that it asks for
-everything. In every pilot, an action with only an API scenario — upload a
+It checks that a scenario exists for each surface, and (D12) that an actor can
+reach the ids they act on, not that the draft asks for everything. In every pilot, an action with only an API scenario — upload a
 photo, add to cart — was built as an API with no button, and the gate stayed
 green. Run the product once, by hand or headless, after each module: that is
 where those gaps show, and each became a short follow-up change.

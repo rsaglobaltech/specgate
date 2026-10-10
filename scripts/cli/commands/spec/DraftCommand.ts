@@ -107,6 +107,18 @@ function projectSpecText(projectDir: string): string {
   }
 }
 
+/** The project's specification files, for D12's "where does this actor get the id". */
+function projectSpecs(projectDir: string): Array<{ source: string }> {
+  try {
+    const sources = readDerivationSources(projectDir);
+    return [sources.spec || "", ...(sources.capabilities || []).map((c: any) => c.source)].map(
+      (source) => ({ source })
+    );
+  } catch {
+    return [];
+  }
+}
+
 /** REQ and SCN ids the project already uses, each with the requirement that owns it (#55). */
 function projectIds(projectDir: string): Map<string, string> {
   const owners = new Map<string, string>();
@@ -192,6 +204,7 @@ export class DraftCommand extends BaseCommand {
       assumptions: readIf(path.join(changeDir, "assumptions.md")),
       specText: projectSpecText(projectDir),
       idsInUse: projectIds(projectDir),
+      specs: projectSpecs(projectDir),
       questions: readIf(path.join(changeDir, "questions.md")),
       maxRequirements: opts.maxRequirements,
     });

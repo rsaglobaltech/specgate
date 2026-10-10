@@ -484,3 +484,141 @@ test("#61: another actor's screen does not prove this actor's screen", () => {
     "a step that names nobody still counts"
   );
 });
+
+const BANK = `---
+product: Banca
+actors:
+  - { name: Cliente, surfaces: [api] }
+  - { name: Operador, surfaces: [api] }
+---
+
+Transferencias SEPA que un operador liquida.
+`;
+
+const SETTLE = req(
+  "REQ-022",
+  "kind=functional actor=Operador",
+  "El sistema SHALL permitir que un operador liquide una transferencia pendiente.",
+  [
+    [
+      "SCN-026",
+      [
+        'DADO una transferencia SEPA "pendiente"',
+        'CUANDO el operador hace POST /api/transferencias/{id}/liquidacion con el resultado "aceptada"',
+        'ENTONCES la respuesta es 200 con el estado "completada"',
+      ],
+    ],
+  ]
+);
+
+const d12 = (files) => checkDraft(files).status.filter((d) => d.code === "D12_unreachable_id");
+
+test("#76 / D12: an actor acts on an id no scenario lets them get", () => {
+  const found = d12({ deltas: delta(SETTLE), brief: BANK });
+  assert.equal(found.length, 1);
+  assert.match(
+    found[0].message,
+    /SCN-026: Operador does POST \/api\/transferencias\/\{id\}\/liquidacion/
+  );
+  assert.match(found[0].message, /from \/api\/transferencias/);
+  assert.match(found[0].fix, /GET \/api\/transferencias/);
+});
+
+test("#76 / D12: a list by the same actor, here or in the project, gives them the id", () => {
+  const list = req(
+    "REQ-029",
+    "kind=functional actor=Operador",
+    "El sistema SHALL mostrar al operador las transferencias pendientes.",
+    [
+      [
+        "SCN-034",
+        [
+          "DADO dos transferencias pendientes",
+          "CUANDO el operador hace GET /api/transferencias?estado=pendiente",
+          "ENTONCES la respuesta es 200 con las dos",
+        ],
+      ],
+    ]
+  );
+  assert.equal(d12({ deltas: delta(SETTLE, list), brief: BANK }).length, 0);
+  // Delivered in an earlier change: the project's specification has it.
+  assert.equal(
+    d12({
+      deltas: delta(SETTLE),
+      brief: BANK,
+      specs: [{ source: `## ADDED Requirements\n\n${list}` }],
+    }).length,
+    0
+  );
+});
+
+test("#76 / D12: another actor's list does not count; the creator receives the id", () => {
+  const clientList = req("REQ-030", "kind=functional actor=Cliente", "El sistema SHALL listar.", [
+    [
+      "SCN-035",
+      ["DADO dos transferencias", "CUANDO el cliente hace GET /api/transferencias", "ENTONCES 200"],
+    ],
+  ]);
+  assert.equal(d12({ deltas: delta(SETTLE, clientList), brief: BANK }).length, 1);
+
+  const own = req("REQ-017", "kind=functional actor=Cliente", "El sistema SHALL transferir.", [
+    [
+      "SCN-019",
+      [
+        "DADO una cuenta con 500.00 EUR",
+        "CUANDO el cliente hace POST /api/transferencias por 120.00 EUR",
+        "ENTONCES la respuesta es 201",
+      ],
+    ],
+    [
+      "SCN-032",
+      [
+        "DADO una transferencia suya",
+        "CUANDO el cliente hace GET /api/transferencias/{id}",
+        "ENTONCES la respuesta es 200",
+      ],
+    ],
+  ]);
+  assert.equal(d12({ deltas: delta(own), brief: BANK }).length, 0);
+});
+
+test("#76 / D12: an assumption that says where the id comes from; no actor, no finding", () => {
+  const teller = req(
+    "REQ-004",
+    "kind=functional actor=Operador",
+    "El sistema SHALL permitir un ingreso.",
+    [
+      [
+        "SCN-005",
+        [
+          'DADO la cuenta "ES0890000001250000000001" activa',
+          "CUANDO el operador hace POST /api/cuentas/ES0890000001250000000001/ingresos con 500.00 EUR",
+          "ENTONCES la respuesta es 201",
+        ],
+      ],
+    ]
+  );
+  assert.equal(d12({ deltas: delta(teller), brief: BANK }).length, 1, "a concrete IBAN is an id");
+  const assumptions =
+    "| A1 | El operador recibe el IBAN de /api/cuentas del propio cliente en ventanilla | REQ-004 | x | a validar |";
+  assert.equal(d12({ deltas: delta(teller), brief: BANK, assumptions }).length, 0);
+
+  const nobody = req("REQ-090", "kind=business-rule", "El sistema SHALL calcular.", [
+    ["SCN-090", ["DADO un dato", "CUANDO se hace POST /api/cosas/{id}/calculo", "ENTONCES 200"]],
+  ]);
+  assert.equal(d12({ deltas: delta(nobody), brief: BANK }).length, 0);
+});
+
+test("#76: apiCalls finds the collection before the first id; versions are not ids", () => {
+  const { apiCalls } = require("../../packages/core/src/domain/DraftChecklist");
+  assert.deepEqual(apiCalls("WHEN they POST /api/transferencias/{id}/liquidacion"), [
+    {
+      method: "POST",
+      path: "/api/transferencias/{id}/liquidacion",
+      collection: "/api/transferencias",
+    },
+  ]);
+  assert.equal(apiCalls("GET /api/v1/cuentas?x=1")[0].collection, undefined);
+  assert.equal(apiCalls("GET /api/v1/cuentas?x=1")[0].path, "/api/v1/cuentas");
+  assert.equal(apiCalls("POST /api/clientes/C-004/kyc")[0].collection, "/api/clientes");
+});

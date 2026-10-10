@@ -8,6 +8,20 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`draft --check` asks how an actor gets the ids they act on (D12, #76).**
+  In FinCore the operator could settle a SEPA transfer by its id and no
+  scenario let the operator see which transfers were pending; reservas_app and
+  credito-tienda had the same gap, and each time only running the product
+  found it. A scenario where an actor calls `…/{id}/…` (or a concrete id such
+  as an IBAN) now needs a scenario of the same actor that lists the collection
+  (`GET`) or creates in it (`POST`), in the draft or the project's
+  specification — or a row of `assumptions.md` naming the requirement and the
+  collection path that says where the id comes from. On the FinCore drafts it
+  flags the settlement (fixed in `pagos-2`) and the teller's account actions;
+  D11 stays reserved for a rule still being designed.
+
 ## [0.17.8] — 2026-10-10
 
 ### Fixed
