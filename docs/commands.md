@@ -94,6 +94,7 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 | --- | --- |
 | `specgate config set profile core\|full` | How much of this surface `--help` shows. |
 | `specgate config set language es\|pt` | Language for generated prose. `SHALL` and `GIVEN`/`WHEN`/`THEN` never translate. |
+| `specgate config set test_cmd "<cmd>"` | The tests `check` and `done` run. Written as `test_cmd:` in `harness.config.yaml`; no harness needed. |
 | `specgate config init` | Write a starter `project.yaml`. |
 | `specgate schema which \| init \| fork \| validate` | Inspect or fork the artefact graph a change follows. Ships `spec-driven` and `bdd-first`. |
 | `specgate completion bash\|zsh\|fish [--install]` | Shell completion. |

@@ -125,7 +125,7 @@ and nothing is written.
 |---|---|---|
 | No tools appear | The client was not restarted, or `npx` is not on its `PATH` | Restart; on macOS GUI apps, point `command` at the absolute path of `npx` |
 | Every writing tool refuses | The guard, working | Open a change, or set `mcpAllowContractEdits` |
-| `specgate_check` says *tests not configured* | No test command | Set `test_cmd:` in `harness.config.yaml` |
+| `specgate_check` says *tests not configured* | No test command | `specgate config set test_cmd "npm test"` |
 | An old config runs `@specgate/mcp-server` | Written before 0.13; that package was never published | Re-run `specgate mcp install` or `specgate agents init` |
 
 ---

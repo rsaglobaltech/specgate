@@ -87,6 +87,24 @@ test("a Draft from new passes the gate; delivering its template does not", () =>
         .replace("<the action under test>", "the invoice total is computed")
         .replace("<the observable outcome>", "the total is 10.01 EUR")
     );
+    // The scenario is real now; the obligation is still the sentence `new`
+    // wrote, and it states MUST, so nothing but this rule notices (#67).
+    const template = cli("done", id, "--strict", "--project-dir", dir);
+    assert.equal(template.status, 1, template.stdout + template.stderr);
+    assert.match(template.stdout + template.stderr, /requirement_template_obligation/);
+    assert.match(template.stdout + template.stderr, /spec\.md/);
+
+    const spec = path.join(dir, "spec.md");
+    fs.writeFileSync(
+      spec,
+      fs
+        .readFileSync(spec, "utf8")
+        .replace(
+          "The system MUST satisfy: Totals are rounded half-up.",
+          "The system MUST round every invoice total half-up to two decimals."
+        )
+        .replace(/^> Written by Specgate\..*$/m, "")
+    );
     const ok = cli("done", id, "--strict", "--project-dir", dir);
     assert.equal(ok.status, 0, ok.stdout + ok.stderr);
   } finally {

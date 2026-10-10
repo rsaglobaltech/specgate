@@ -183,8 +183,32 @@ export function context({ bin, sandbox, tarball, flags }) {
       return dir;
     },
 
-    /** Rewrite the <placeholder> steps `new` writes into a real scenario. */
+    /**
+     * Rewrite the obligation `new` and `req add` write into one a person would
+     * write: the gate refuses to deliver the template (#67).
+     */
+    realObligations: (dir) => {
+      const files = ["spec.md"];
+      const caps = path.join(dir, "docs/specs/capabilities");
+      if (fs.existsSync(caps)) {
+        for (const c of fs.readdirSync(caps)) files.push(`docs/specs/capabilities/${c}/spec.md`);
+      }
+      for (const rel of files) {
+        if (!exists(dir, rel)) continue;
+        const before = read(dir, rel);
+        const after = before
+          .replace(
+            /^The system MUST satisfy: (.*)\.$/gm,
+            "The system MUST make sure that $1, as observed by its users."
+          )
+          .replace(/^> Written by Specgate\. Replace this sentence.*$/gm, "");
+        if (after !== before) write(dir, rel, after);
+      }
+    },
+
+    /** Rewrite the <placeholder> steps `new` writes into a real scenario, and its obligation. */
     fillScenario: (dir, rel, steps) => {
+      t.realObligations(dir);
       write(
         dir,
         rel,

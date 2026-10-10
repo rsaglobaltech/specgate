@@ -69,8 +69,8 @@ specgate done REQ-007 --test-cmd "npm test"   # the gate, the suite,
 specgate check --test-cmd "npm test"
 ```
 
-`check` is the gate: `validate --strict`, then your tests. Put `test_cmd:` in
-`harness.config.yaml` and it is just `specgate check`. Without a test command
+`check` is the gate: `validate --strict`, then your tests. Run
+`specgate config set test_cmd "npm test"` once and it is just `specgate check`. Without a test command
 it still passes — and says it checked the specification, not the code.
 
 Every failure tells you the exact fix. An orphan `.feature` — one no

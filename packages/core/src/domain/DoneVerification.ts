@@ -114,8 +114,8 @@ export function planGateCheck(projectDir: string, testCmd?: string): DoneVerific
 export const NO_TEST_COMMAND_WARNING = Object.freeze({
   message: "No test command configured — this checked the specification, not the code.",
   fix: [
-    'Pass --test-cmd "<command>", or set test_cmd: in harness.config.yaml so',
-    "every `done --check` runs it. A requirement marked Implemented on a static",
+    'Configure it once with specgate config set test_cmd "<command>" (or pass',
+    "--test-cmd) so every `done` and `check` runs it. A requirement marked Implemented on a static",
     "check alone is a claim nothing executed.",
   ],
 });

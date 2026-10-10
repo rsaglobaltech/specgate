@@ -3,6 +3,11 @@ import * as path from "node:path";
 import { error } from "../../../lib/diagnostics";
 import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
+import {
+  HARNESS_CONFIG_FILE,
+  readHarnessConfig,
+  writeHarnessTestCmd,
+} from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 export const CONFIG_DIR = ".csda";
 export const CONFIG_FILE = "config.json";
@@ -16,7 +21,26 @@ export const KEYS: Record<string, { values: string[] | null; describe: string }>
     values: null,
     describe: "Language for generated prose. Technical terms stay in English.",
   },
+  test_cmd: {
+    values: null,
+    describe: `The command \`check\` and \`done\` run as your tests. Kept in ${HARNESS_CONFIG_FILE}.`,
+  },
 };
+
+/**
+ * `test_cmd` lives in harness.config.yaml, not here: `check`, `done` and the
+ * harness already read it there, and a second home would be two answers to
+ * "which tests does the gate run" (#68).
+ */
+const HARNESS_KEYS = new Set(["test_cmd"]);
+
+function harnessTestCmd(projectDir: string): string | null {
+  try {
+    return (readHarnessConfig(projectDir) || {}).testCmd ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export function configPath(projectDir: string) {
   return path.join(projectDir, CONFIG_DIR, CONFIG_FILE);
@@ -47,10 +71,12 @@ function usage() {
   process.stdout.write(
     "Usage:\n" +
       "  specgate config set <key> <value>\n" +
+      '  specgate config set test_cmd "npm test"\n' +
       "  specgate config get <key>\n" +
       "  specgate config list\n\n" +
       `Keys:\n${keys}\n\n` +
-      `Stored in ${CONFIG_DIR}/${CONFIG_FILE}. Commit it to share the setting.\n`
+      `Stored in ${CONFIG_DIR}/${CONFIG_FILE} (test_cmd in ${HARNESS_CONFIG_FILE}).\n` +
+      "Commit it to share the setting.\n"
   );
 }
 
@@ -77,6 +103,8 @@ export class ConfigSetCommand extends BaseCommand {
 
     if (action === "list" || (!action && !key)) {
       const config = read(projectDir);
+      const testCmd = harnessTestCmd(projectDir);
+      if (testCmd !== null) config.test_cmd = testCmd;
       io.emit({ config }, () => {
         const entries = Object.entries(config);
         if (entries.length === 0) {
@@ -99,6 +127,7 @@ export class ConfigSetCommand extends BaseCommand {
 
     if (action === "get") {
       const config = read(projectDir);
+      if (HARNESS_KEYS.has(key)) config[key] = harnessTestCmd(projectDir);
       io.emit({ config: { [key]: config[key] ?? null } }, () =>
         process.stdout.write(`  ${key} = ${config[key] ?? "(default)"}\n`)
       );
@@ -114,7 +143,8 @@ export class ConfigSetCommand extends BaseCommand {
       ]);
     }
 
-    const value = rest[0];
+    // `config set test_cmd npm test` and `… "npm test"` mean the same command.
+    const value = HARNESS_KEYS.has(key) && rest.length > 0 ? rest.join(" ") : rest[0];
     if (value === undefined) {
       io.usage(NULL_SHAPE, [
         error("config_value_required", `No value given for ${key}.`, {
@@ -131,6 +161,24 @@ export class ConfigSetCommand extends BaseCommand {
           fix: `Use one of: ${allowed.join(", ")}.`,
         }),
       ]);
+    }
+
+    if (HARNESS_KEYS.has(key)) {
+      if (value.trim() === "") {
+        io.usage(NULL_SHAPE, [
+          error("config_value_required", "test_cmd cannot be empty.", {
+            fix: 'specgate config set test_cmd "npm test"',
+          }),
+        ]);
+      }
+      const file = writeHarnessTestCmd(projectDir, value);
+      io.emit({ config: { [key]: value } }, () =>
+        process.stdout.write(
+          `  ✔  ${key} = ${value}\n     ${path.relative(process.cwd(), file) || file}\n` +
+            "     `check` and `done` now run it.\n"
+        )
+      );
+      process.exit(EXIT.OK);
     }
 
     const config = read(projectDir);

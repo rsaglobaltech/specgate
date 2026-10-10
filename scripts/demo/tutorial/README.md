@@ -22,7 +22,7 @@ today; re-run it after a release.
 | Chapter              | Commands                                                                                                                           | What the viewer learns                           |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | 0. A new project     | `mkdir`, `git init`, `npm init`, `npm pkg set scripts.test`                                                                        | It starts from nothing                           |
-| 1. Install and adopt | `npm i -D @rsaglobaltech/specgate`, `npx specgate init --no-capabilities`, `harness init` (the test command, once), `done REQ-001` | Setup is three commands                          |
+| 1. Install and adopt | `npm i -D @rsaglobaltech/specgate`, `npx specgate init --no-capabilities`, `config set test_cmd 'npm test'` (once), `done REQ-001` | Setup is three commands                          |
 | 2. A requirement     | `npx specgate new '…'`, the obligation in `vim`, the scenario with concrete values, `status`                                       | A requirement is prose + a scenario              |
 | 3. Test first        | the test naming `REQ-002 SCN-002`, `done` → **refused**: the suite is red; the code; `done` → **Implemented**                      | Naming the id is the link; nothing is "done" red |
 | 4. Before the PR     | `check`, `ci init --provider github`, `git commit`                                                                                 | The same gate runs in CI                         |

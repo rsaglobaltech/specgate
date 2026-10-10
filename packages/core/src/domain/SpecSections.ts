@@ -48,6 +48,33 @@ export function renderRequirementSection(reqId: string, title: string): string {
 }
 
 /**
+ * The lines of a requirement section that are still what `specgate new` wrote
+ * (#67). Empty once the author has replaced them.
+ *
+ * The placeholder above passes `--strict-requirements` on purpose, so nothing
+ * else in the gate notices it: `done` closed a requirement whose only
+ * obligation was "The system MUST satisfy: <its title>." The sentence is
+ * matched against the section's own title, so a real obligation that happens
+ * to start with "satisfy:" is not mistaken for it.
+ */
+export function templateObligationLines(section: string): string[] {
+  const lines = String(section || "")
+    .replace(/\r\n/g, "\n")
+    .split("\n");
+  const heading = /^#{2,4}\s+REQ-[A-Za-z0-9.]+\s+—\s+(.*)$/.exec((lines[0] || "").trim());
+  const title = heading ? heading[1].trim() : null;
+  return lines
+    .map((l) => l.trim())
+    .filter(
+      (l) =>
+        l.startsWith("> Written by Specgate. Replace this sentence") ||
+        (title !== null &&
+          (l === `The system MUST satisfy: ${title}.` ||
+            l === "The system MUST satisfy: the behaviour named above."))
+    );
+}
+
+/**
  * A requirement heading, at any level from `##` to `####`.
  *
  * Requirements are commonly nested under a section — the shipped template puts

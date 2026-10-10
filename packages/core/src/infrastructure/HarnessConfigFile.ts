@@ -372,3 +372,30 @@ function isAdvisoryProfile(projectDir, profileName): boolean {
   const profile = ((doc.profiles || {}) as Record<string, any>)[profileName];
   return Boolean(profile && profile.advisory === true);
 }
+
+/**
+ * Set `test_cmd:` in harness.config.yaml, creating the file when there is none
+ * (#68). `check` and `done` read the test command from here, and until this
+ * existed only `harness init` wrote it — a command that talks about agents and
+ * prompts to a team that does not use the harness. Every other line is kept:
+ * the first `test_cmd:` line (or the commented one `harness init` leaves when it
+ * detects nothing) is replaced, otherwise the key is appended.
+ */
+export function writeHarnessTestCmd(projectDir: string, testCmd: string): string {
+  const filePath = path.join(projectDir, HARNESS_CONFIG_FILE);
+  const quoted = /["\\]/.test(testCmd) ? `'${testCmd.replace(/'/g, "''")}'` : `"${testCmd}"`;
+  const line = `test_cmd: ${quoted}`;
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, `harness_version: 1\n${line}\n`, "utf8");
+    return filePath;
+  }
+  const lines = fs.readFileSync(filePath, "utf8").split("\n");
+  const at = lines.findIndex((l) => /^#?\s*test_cmd:/.test(l));
+  if (at >= 0) lines[at] = line;
+  else {
+    if (lines[lines.length - 1] === "") lines.pop();
+    lines.push(line, "");
+  }
+  fs.writeFileSync(filePath, lines.join("\n"), "utf8");
+  return filePath;
+}

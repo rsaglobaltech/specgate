@@ -45,7 +45,7 @@ Type "clear"
 Enter
 Type "# Que el gate corra los tests (una vez):"
 Enter
-Type "npx specgate harness init > /dev/null && grep '^test_cmd' harness.config.yaml"
+Type "npx specgate config set test_cmd 'npm test'"
 Enter
 Sleep 2500ms
 Type "npx specgate done REQ-001   # la línea base: lo de hoy pasa"

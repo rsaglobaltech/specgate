@@ -50,6 +50,7 @@ export default [
         "hand-kept"
       );
       t.ok(t.sg(dir, "req", "add", "Coupons expire"), "req add");
+      t.realObligations(dir);
       t.write(dir, "test/coupon.test.js", "// coupons\n");
       t.ok(
         t.sg(
