@@ -8,6 +8,23 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`done` refuses a requirement waiting for an answer (#72).** In the FinCore pilot, `done REQ-055` marked Implemented a requirement
+  in `Needs Clarification` with no test and no code: validation judged the row
+  by the status it had, which owes nothing, and the suite was green. `done`
+  now fails with `done_needs_clarification` before running anything, and
+  `validate --delivering` judges the requirement as delivered whatever its row
+  says — Draft, Approved or `Needs Clarification` — so TDD-1 applies, and
+  `delivering_needs_clarification` names the wait.
+- **`status` lists requirements waiting for an answer apart (#73).** A
+  `Needs Clarification` requirement was under "To do" as "a test and code". It
+  now has its own group, "Waiting for an answer", with the open question that
+  blocks it from the change's `questions.md` (`question` in `--json`).
+- **D6 reads id ranges in `assumptions.md` (#74).** A row used by
+  `REQ-004..REQ-010` (also `…`, `–`, `to`, `a`) covered none of them, and the
+  draft reported 25 values as unlisted until the ids were spelled out.
+
 ## [0.17.7] — 2026-10-10
 
 ### Fixed

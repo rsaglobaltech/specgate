@@ -9,6 +9,7 @@ const {
   requirementTitles,
   statedValues,
   actorSurfaces,
+  rowNamesId,
 } = require("../../packages/core/src/domain/DraftChecklist");
 
 const BRIEF = `---
@@ -152,6 +153,27 @@ test("D6: an invented value is caught; one from the brief or listed for that sce
   assert.ok(
     wrongRow.status.some((d) => d.code === "D6_unlisted_value" && d.message.includes('"40"'))
   );
+});
+
+test("D6: an assumption row names its ids one by one or as a range (#74)", () => {
+  // FinCore wrote `REQ-004..REQ-010` and D6 reported 25 values as unlisted.
+  for (const row of [
+    "| A1 | 40 m | REQ-100..REQ-110 |",
+    "| A1 | 40 m | REQ-100…REQ-110 |",
+    "| A1 | 40 m | REQ-100–REQ-110 |",
+    "| A1 | 40 m | REQ-100 a REQ-110 |",
+    "| A1 | 40 m | SCN-100..105 |",
+  ]) {
+    const r = checkDraft({ deltas: delta(GOOD), brief: BRIEF, assumptions: row });
+    assert.ok(
+      !r.status.some((d) => d.code === "D6_unlisted_value" && d.message.includes('"40"')),
+      row
+    );
+  }
+  assert.equal(rowNamesId("| A1 | REQ-004..REQ-010 |", "REQ-007"), true);
+  assert.equal(rowNamesId("| A1 | REQ-004..REQ-010 |", "REQ-011"), false);
+  assert.equal(rowNamesId("| A1 | REQ-004..REQ-010 |", "SCN-007"), false);
+  assert.equal(rowNamesId("| A1 | REQ-004, REQ-009 |", "REQ-009"), true);
 });
 
 test("D6 reads numbers and quoted strings, not ids or code", () => {

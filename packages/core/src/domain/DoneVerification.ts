@@ -1,3 +1,5 @@
+import { detectTraceabilityMode, parseMatrixRows, readRowFields } from "./TraceabilityFormat";
+
 /**
  * What `done --check` has to prove before it flips a row (Fase 1.1).
  *
@@ -119,3 +121,37 @@ export const NO_TEST_COMMAND_WARNING = Object.freeze({
     "check alone is a claim nothing executed.",
   ],
 });
+
+export interface DeliveryBlocker {
+  code: "done_needs_clarification";
+  message: string;
+  fix: string;
+}
+
+/**
+ * What stops a requirement from being delivered before any check runs.
+ *
+ * `done REQ-055` marked Implemented a requirement in `Needs Clarification`
+ * that no test named and no code implemented: validation judged the row by
+ * the status it had, which owes nothing, and the suite was green because
+ * nothing in it was about REQ-055. The next `check` failed TDD-1 (FinCore,
+ * #72). Validation now judges the requirement being delivered as delivered;
+ * this says why in one line, before the slowest step. A requirement no test
+ * names is left to validation's TDD-1, which reports it with everything else
+ * the gate finds.
+ */
+export function deliveryBlocker(traceContent: string, reqId: string): DeliveryBlocker | null {
+  const mode = detectTraceabilityMode(traceContent);
+  if (mode !== "rich") return null;
+  const waiting = parseMatrixRows(traceContent)
+    .map((cells) => readRowFields(cells, mode))
+    .some((r) => r.requirementId === reqId && r.status === "Needs Clarification");
+  if (!waiting) return null;
+  return {
+    code: "done_needs_clarification",
+    message: `${reqId} is waiting for an answer (Needs Clarification).`,
+    fix:
+      "Answer the question that blocks it in its change's questions.md, remove " +
+      '`status="Needs Clarification"` from its `csda:trace`, write its test, then run `done`.',
+  };
+}

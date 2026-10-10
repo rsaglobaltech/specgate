@@ -6,10 +6,12 @@ import { DiskTraceabilityRepository } from "../../../../packages/core/src/infras
 import { UpdateRequirementStatusUseCase } from "../../../../packages/core/src/application/UpdateRequirementStatusUseCase";
 import {
   planDoneVerification,
+  deliveryBlocker,
   NO_TEST_COMMAND_WARNING,
 } from "../../../../packages/core/src/domain/DoneVerification";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { spawnSync } from "node:child_process";
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { findCliRoot } from "../../../lib/project-root";
 import { isDerivedProject, writeRequirementFields } from "../../../lib/derived-writes";
@@ -154,6 +156,23 @@ export class DoneCommand extends BaseCommand {
     // generated matrix up to date before checking it, or `done --check`
     // would refuse the very test that makes the requirement deliverable.
     refreshDerivedMatrix(projectDir);
+
+    // Before the suite: a requirement waiting for an answer is refused in a
+    // second, with the reason, instead of after the slowest step (#72).
+    if (opts.check && DELIVERED_STATUSES.includes(opts.status)) {
+      const tracePath = path.join(projectDir, "docs", "specs", "traceability.md");
+      const blocker = fs.existsSync(tracePath)
+        ? deliveryBlocker(fs.readFileSync(tracePath, "utf8"), opts.reqId!)
+        : null;
+      if (blocker) {
+        io.fail(NULL_SHAPE, [
+          error(blocker.code, `not marked ${opts.status}: ${blocker.message}`, {
+            target: opts.reqId!,
+            fix: blocker.fix,
+          }),
+        ]);
+      }
+    }
 
     const harness = readHarnessConfig(projectDir) || ({} as any);
     const plan = planDoneVerification(projectDir, {
