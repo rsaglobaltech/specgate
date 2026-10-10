@@ -1,4 +1,5 @@
 <!-- csda:allow-placeholders -->
+
 # The harness
 
 ```bash
@@ -55,7 +56,7 @@ profiles:
 
 Write profiles in block form, as above: the reader is a dependency-free YAML
 subset, and an inline mapping (`local-claude: { agent: "…" }`) parses as a
-*string*, leaving the profile with no `agent`.
+_string_, leaving the profile with no `agent`.
 
 A profile may also declare `match:` and select itself, so one run gives
 different requirements different agents — and different tool allowances —
@@ -80,7 +81,7 @@ git add .gitattributes && git commit -m "merge the matrix by row"
 ```
 
 It resolves the case it exists for — two branches, two different rows — and it
-still **conflicts** when two branches set the *same* row to different values,
+still **conflicts** when two branches set the _same_ row to different values,
 because quietly discarding somebody's decision is worse than asking.
 
 **Every clone registers it once.** `.gitattributes` is committed, but
@@ -118,9 +119,9 @@ advisory reviewer in front of every retry:
 ```yaml
 # harness.config.yaml
 attempt_profiles:
-  - implementer        # attempt 1
-  - repairer           # attempt 2
-  - repairer-strong    # attempt 3, and any beyond it
+  - implementer # attempt 1
+  - repairer # attempt 2
+  - repairer-strong # attempt 3, and any beyond it
 review_profile: reviewer
 
 # .harness/profiles.yaml
@@ -147,7 +148,7 @@ code. `validate --strict` plus your test command stay the only judge, and a
 finding with the gate green does not block anything.
 
 A profile named by `review_profile` must declare `advisory: true`. Without it
-the harness refuses to start, because a reviewer whose work *was* gated and
+the harness refuses to start, because a reviewer whose work _was_ gated and
 committed is not a reviewer.
 
 Every agent is still bound to exactly one requirement: an attempt may run two
@@ -201,8 +202,8 @@ The harness assembles a throwaway `harness/base/REQ-NNN` first. Two things
 worth knowing about it:
 
 - It resolves conflicts in `docs/specs/traceability.md` by keeping the base's
-  version. Sibling branches *always* conflict there — each run ends with `csda
-  done`, editing the same table — and the integration base exists only so the
+  version. Sibling branches _always_ conflict there — each run ends with `csda
+done`, editing the same table — and the integration base exists only so the
   agent can see code. Each real `harness/REQ-NNN` branch keeps its own row.
 - A conflict in an actual source file blocks the requirement and names the
   file. That is a genuine finding: two dependencies changed the same code in
@@ -246,7 +247,7 @@ Every run writes `.harness/runs/<timestamp>.json`, and the report reads them:
 
 **Two numbers, chosen because they decide things.** "First attempt worked" says
 whether the retry ladder is buying anything or spending three times as much on
-the same mistake. "Cost per delivered requirement" divides *all* the time —
+the same mistake. "Cost per delivered requirement" divides _all_ the time —
 including the attempts that failed — by the requirements that actually landed,
 because that is what delivery costs.
 
@@ -266,9 +267,8 @@ the kind of string that carries an API key.
 
 ## When a run fails
 
-The report prints the tail of the gate output and names the command that
-failed — a gate that runs the whole suite because a filter did not apply looks
-identical to a real failure otherwise.
+The report prints the tail of the gate output and the command that failed.
+Some failures end it after one attempt: [when retrying cannot help](troubleshooting.md#when-another-attempt-cannot-help).
 
 The attempt is **committed on the branch** with a `wip(REQ-NNN): FAILED the
 gate` subject, so the agent's work is there to read instead of discarded. The

@@ -59,11 +59,26 @@ export interface ArchivedPrompt {
  * well have dropped a note in that directory.
  */
 export function parseArchivedPromptName(fileName: string): ArchivedPrompt | null {
-  const match = /^(REQ-\d+)-(.+)-attempt-(\d+)-([^.]+)\.md$/.exec(fileName);
-  if (!match) return null;
-  const attempt = Number(match[3]);
+  // Taken apart by hand: `^(REQ-\d+)-(.+)-attempt-(\d+)-([^.]+)\.md$` ran
+  // polynomially on names with many "-attempt-" (CodeQL js/polynomial-redos).
+  // Same result — the stamp runs to the last "-attempt-", as `.+` did.
+  if (!fileName.endsWith(".md")) return null;
+  const base = fileName.slice(0, -3);
+  const req = /^REQ-\d+-/.exec(base);
+  if (!req) return null;
+  const rest = base.slice(req[0].length);
+  const at = rest.lastIndexOf("-attempt-");
+  if (at < 1) return null;
+  const stamp = rest.slice(0, at);
+  const tail = rest.slice(at + "-attempt-".length);
+  const dash = tail.indexOf("-");
+  if (dash < 1) return null;
+  const digits = tail.slice(0, dash);
+  const role = tail.slice(dash + 1);
+  if (!/^\d+$/.test(digits) || role === "" || role.includes(".")) return null;
+  const attempt = Number(digits);
   if (!Number.isInteger(attempt) || attempt < 1) return null;
-  return { requirement: match[1], stamp: match[2], attempt, role: match[4], fileName };
+  return { requirement: req[0].slice(0, -1), stamp, attempt, role, fileName };
 }
 
 export interface ResumePoint {
