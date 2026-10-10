@@ -122,7 +122,7 @@ since 0.14 come from building real products with it, from brief to running app.
 | Draft checklist from a brief           |           ✅           |                         ❌                         |                       ⚠️                       |                              ❌                              |     ❌      |
 | Proves OpenSpec's "done" against tests |      ✅ `verify`       |                         ❌                         |                       ❌                       |                              ❌                              |     ❌      |
 | Vendor-neutral                         |           ✅           |                         ✅                         |                       ✅                       |                              ❌                              |     ✅      |
-| Smaller surface to learn               | ⚠️ five daily commands |                         ✅                         |                       ✅                       |                              ✅                              |     ✅      |
+| Commands to learn before the first PR  | ✅ 5 (26 more, opt-in) |                         ✅                         |                       ✅                       |                              ✅                              |     ✅      |
 
 OpenSpec is the closest tool: if you want the change loop without packs or an enforced matrix, it fits better.
 → [Full matrix, trade-offs and migration paths](docs/comparisons.md)

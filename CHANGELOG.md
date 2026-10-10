@@ -8,6 +8,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Documentation
+
+- **A 55-second vertical demo for social networks** (`scripts/demo/social/`):
+  console only, in Spanish — `new`, then `done` refused with no test and again
+  with the test failing, then implemented and `check` green. Rendered with VHS
+  from this checkout.
+- **The README comparison row** now states what a team learns before its first
+  pull request — five commands, the other 26 opt-in — instead of a warning.
+
 ### Security
 
 - **Two CodeQL findings fixed.** The parser of archived harness prompt names used
