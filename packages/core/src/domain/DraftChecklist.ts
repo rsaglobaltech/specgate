@@ -41,6 +41,11 @@ export interface DraftFiles {
   readonly idsInUse?: ReadonlyMap<string, string>;
   readonly questions?: string;
   readonly maxRequirements?: number;
+  /**
+   * The project's specification files (`spec.md`, capability specs), so D12
+   * can see a list or a create call delivered in an earlier change.
+   */
+  readonly specs?: ReadonlyArray<{ readonly source: string }>;
 }
 
 export interface DraftReport {
@@ -210,6 +215,74 @@ const QUANTITATIVE =
 /** Promises a quantity and states none. */
 export function unmeasured(text: string): boolean {
   return QUANTITATIVE.test(text) && !MEASURE.test(text);
+}
+
+// ── What D12 looks for ────────────────────────────────────────────────────────
+
+const CALL = /\b(GET|POST|PUT|PATCH|DELETE)\s+(\/[^\s,;)"'`]+)/g;
+
+/** `{id}`, or a concrete id: a segment with a digit that is not a version (`v1`). */
+function isIdSegment(segment: string): boolean {
+  if (/^\{[^}]+\}$/.test(segment)) return true;
+  return /\d/.test(segment) && segment.length >= 3 && !/^v\d+$/i.test(segment);
+}
+
+export interface ApiCall {
+  readonly method: string;
+  /** Without the query string. */
+  readonly path: string;
+  /** The path before its first id segment; undefined when it has none. */
+  readonly collection?: string;
+}
+
+/** The HTTP calls a step names: `POST /api/transferencias/{id}/liquidacion`. */
+export function apiCalls(step: string): ApiCall[] {
+  const out: ApiCall[] = [];
+  for (const m of step.matchAll(CALL)) {
+    const pathOnly = m[2].split("?")[0].replace(/[.:]+$/, "");
+    const segments = pathOnly.split("/");
+    const at = segments.findIndex((seg, i) => i > 0 && isIdSegment(seg));
+    out.push({
+      method: m[1].toUpperCase(),
+      path: pathOnly,
+      collection: at > 0 ? segments.slice(0, at).join("/") || "/" : undefined,
+    });
+  }
+  return out;
+}
+
+/** A brief actor named as a word in the text ("el operador", "the Owner"). */
+function actorNamed(text: string, actors: ReadonlyArray<string>): string | undefined {
+  const lower = text.toLowerCase();
+  return actors.find((a) =>
+    new RegExp(`(?<![\\p{L}])${escapeRegExp(a)}(?:es|s)?(?![\\p{L}])`, "u").test(lower)
+  );
+}
+
+interface ActorScenario {
+  readonly actor?: string;
+  readonly steps: ReadonlyArray<string>;
+}
+
+/** The scenarios of a specification file, each with its requirement's actor. */
+function specScenarios(source: string): ActorScenario[] {
+  const out: ActorScenario[] = [];
+  for (const r of sections(source)) {
+    let current: string[] | undefined;
+    const flush = () => {
+      if (current) out.push({ actor: r.trace.actor?.toLowerCase(), steps: current });
+    };
+    for (const line of r.text.split("\n")) {
+      if (/^#{3,6}\s+Scenario\b/i.test(line.trim())) {
+        flush();
+        current = [];
+      } else if (current && /^\s*[-*]\s+\S/.test(line)) {
+        current.push(line.replace(/^\s*[-*]\s+/, ""));
+      }
+    }
+    flush();
+  }
+  return out;
 }
 
 // ── The checklist ─────────────────────────────────────────────────────────────
@@ -498,6 +571,65 @@ export function checkDraft(files: DraftFiles): DraftReport {
               fix: `Number ${r.id}'s scenarios after the highest SCN id in features/.`,
             })
           );
+        }
+      }
+    }
+  }
+
+  // D12 — an actor who acts on an id has a way to get it.
+  // The operator could settle a SEPA transfer by its id, and no scenario
+  // let the operator find which transfers were pending: every scenario was
+  // right and the product was unusable (FinCore; reservas_app and
+  // credito-tienda had the same gap). A list (GET on the collection) or the
+  // create call (POST to it: the creator receives the id) by the same actor,
+  // in this draft or the project's specification, closes it; so does a row of
+  // assumptions.md that says where the id comes from.
+  {
+    const actors = [...surfaces.keys()];
+    const actorOf = (declared: string | undefined, step: string) =>
+      (declared || "").toLowerCase() || actorNamed(step, actors);
+    const known: ActorScenario[] = [
+      ...reqs.flatMap((r) =>
+        r.scenarios.map((s) => ({ actor: r.trace.actor?.toLowerCase(), steps: s.steps }))
+      ),
+      ...(files.specs || []).flatMap((f) => specScenarios(f.source)),
+    ];
+    const obtains = (actor: string, collection: string) =>
+      known.some((s) =>
+        s.steps.some((step) => {
+          if (actorOf(s.actor, step) !== actor) return false;
+          return apiCalls(step).some(
+            (c) => c.path === collection && (c.method === "GET" || c.method === "POST")
+          );
+        })
+      );
+    const rows = (files.assumptions || "").split("\n");
+    const reported = new Set<string>();
+    for (const r of reqs) {
+      for (const s of r.scenarios) {
+        for (const step of s.steps) {
+          const actor = actorOf(r.trace.actor, step);
+          if (!actor) continue;
+          for (const c of apiCalls(step)) {
+            if (!c.collection) continue;
+            const key = `${r.id} ${actor} ${c.collection}`;
+            if (reported.has(key) || obtains(actor, c.collection)) continue;
+            if (rows.some((row) => rowNamesId(row, r.id) && row.includes(c.collection!))) continue;
+            reported.add(key);
+            const who = r.trace.actor || actor.charAt(0).toUpperCase() + actor.slice(1);
+            status.push(
+              error(
+                "D12_unreachable_id",
+                `${s.id}: ${who} does ${c.method} ${c.path} on an id from ${c.collection}, and no scenario shows ${who} getting that id.`,
+                {
+                  file: r.file,
+                  line: s.line,
+                  target: s.id,
+                  fix: `Add a scenario where ${who} gets it (GET ${c.collection}, or the POST that creates it), or say in assumptions.md, in a row naming ${r.id} and ${c.collection}, where ${who} gets the id.`,
+                }
+              )
+            );
+          }
         }
       }
     }

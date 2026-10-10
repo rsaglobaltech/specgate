@@ -83,9 +83,9 @@ undone work.
 → [Your team's first pull request](docs/first-pr.md) · [Reviewing changes](docs/reviewing-changes.md)
 
 **From a brief, or from OpenSpec.** `specgate draft --check` holds a draft
-written from a client's brief to ten rules — scenarios per actor and surface,
+written from a client's brief to eleven rules — scenarios per actor and surface,
 sourced laws, every value in the brief or listed as an assumption, open
-questions that block. Teams on OpenSpec keep it: `specgate verify` fails while
+questions that block, ids each actor can reach. Teams on OpenSpec keep it: `specgate verify` fails while
 a change claims a scenario no test names.
 → [From a client brief](docs/from-a-brief.md) · [Already on OpenSpec](docs/openspec.md)
 
