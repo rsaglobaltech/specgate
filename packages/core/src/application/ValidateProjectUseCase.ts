@@ -177,8 +177,26 @@ export class ValidateProjectUseCase {
       // waiting on a question, and the harness refuses it until it is
       // answered. Demanding its test turned a draft that asked instead of
       // guessing into a red gate (credito-tienda, #59).
+      // The requirement being delivered is judged as delivered, whatever its row
+      // says now. Only Draft used to be promoted, so a `Needs Clarification`
+      // row — exempt below — let `done` mark it Implemented with no test and
+      // no answer; the next `check` failed TDD-1 (FinCore, #72).
+      const delivering = Boolean(opts.delivering && requirementId === opts.delivering);
+      if (delivering && status === "Needs Clarification") {
+        report.addError(
+          "delivering_needs_clarification",
+          `${requirementId} is waiting for an answer (Needs Clarification): it cannot be delivered yet.`,
+          {
+            target: requirementId,
+            fixLines: [
+              "Answer the question that blocks it (the `Answer` column of its change's questions.md),",
+              'remove `status="Needs Clarification"` from its `csda:trace`, write its test, then run `done`.',
+            ],
+          }
+        );
+      }
       const judged =
-        opts.delivering && requirementId === opts.delivering && status === "Draft"
+        delivering && !["Implemented", "Verified", "Released", "Deprecated"].includes(status)
           ? "Implemented"
           : status;
       const owesTdd =

@@ -115,6 +115,32 @@ function inText(value: string, text: string): boolean {
   return norm(text).includes(norm(value));
 }
 
+// ── Assumption rows ───────────────────────────────────────────────────────────
+
+/** `REQ-004..REQ-010`, `SCN-2…SCN-9`, `REQ-004–REQ-010`, `REQ-004 to REQ-010`, `REQ-004 a REQ-010`. */
+const ID_RANGE = /\b(REQ|SCN)-(\d+)\s*(?:\.\.\.?|…|–|—|\bto\b|\ba\b|\bal\b)\s*(?:\1-)?(\d+)\b/g;
+
+/**
+ * Whether a row of `assumptions.md` names an id, alone or inside a range.
+ *
+ * A row used by seven requirements said `REQ-004..REQ-010`, the way a person
+ * writes it; D6 only matched ids spelled out one by one and reported 25 values
+ * as unlisted until the range was expanded by hand (FinCore, #74).
+ */
+export function rowNamesId(row: string, id: string): boolean {
+  if (row.includes(id)) return true;
+  const m = /^(REQ|SCN)-(\d+)$/.exec(id);
+  if (!m) return false;
+  const n = Number(m[2]);
+  for (const r of row.matchAll(ID_RANGE)) {
+    if (r[1] !== m[1]) continue;
+    const from = Number(r[2]);
+    const to = Number(r[3]);
+    if (n >= Math.min(from, to) && n <= Math.max(from, to)) return true;
+  }
+  return false;
+}
+
 // ── Questions ─────────────────────────────────────────────────────────────────
 
 /**
@@ -151,6 +177,16 @@ function questionRows(
     });
   }
   return out;
+}
+
+/**
+ * The open questions of a `questions.md`, with the requirements each blocks.
+ * `status` uses it to say what a `Needs Clarification` requirement waits for.
+ */
+export function openQuestions(md: string): Array<{ row: string; blocks: string[] }> {
+  return questionRows(md)
+    .filter((q) => !q.answered)
+    .map((q) => ({ row: q.row, blocks: q.blocks }));
 }
 
 // ── What D4 and D5 look for ───────────────────────────────────────────────────
@@ -341,7 +377,7 @@ export function checkDraft(files: DraftFiles): DraftReport {
             if (files.specText && inText(v, files.specText)) continue;
             const listed = assumptions
               .split("\n")
-              .some((row) => inText(v, row) && (row.includes(s.id) || row.includes(r.id)));
+              .some((row) => inText(v, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id)));
             if (listed) continue;
             status.push(
               error(

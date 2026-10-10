@@ -6,7 +6,11 @@ import { readLock } from "../../../specops/lock";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
-import { requirementTitles, specNotes } from "../../../../packages/core/src/domain/DraftChecklist";
+import {
+  openQuestions,
+  requirementTitles,
+  specNotes,
+} from "../../../../packages/core/src/domain/DraftChecklist";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { refreshDerivedMatrix } from "./MatrixCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
@@ -61,6 +65,15 @@ export function parseArgs(argv: string[]): StatusOptions {
 export function summarise(projectDir: string, traceContent: string) {
   const rows = parseTraceability(traceContent);
   const items = rows.map((r) => classify(r, projectDir)).filter((x) => x !== null);
+  // A requirement waiting for an answer is not work anyone can start: listing
+  // it as "a test and code" under To do invited exactly that (FinCore, #73).
+  const questions = questionsByRequirement(projectDir);
+  for (const it of items) {
+    if (it.status === "Needs Clarification" && it.category !== "DONE") {
+      it.category = "WAITING_FOR_ANSWER";
+      it.question = questions.get(it.requirement) || null;
+    }
+  }
   const counts: Record<string, number> = {
     total: items.length,
     DONE: 0,
@@ -69,11 +82,36 @@ export function summarise(projectDir: string, traceContent: string) {
     NEEDS_TEST: 0,
     NEEDS_IMPLEMENTATION: 0,
     NEEDS_STATUS_UPDATE: 0,
+    WAITING_FOR_ANSWER: 0,
   };
   for (const it of items) counts[it.category] = (counts[it.category] || 0) + 1;
   const pending = items.length - counts.DONE;
   const orphans = detectOrphans(projectDir, items);
   return { items, counts, pending, orphans, derived: isDerivedProject(projectDir) };
+}
+
+/**
+ * Requirement → the open question that blocks it, as `Q3 (docs/specs/…/questions.md)`,
+ * from every `questions.md` under docs/specs/changes (archived ones included:
+ * a draft is archived with its questions still open).
+ */
+function questionsByRequirement(projectDir: string): Map<string, string> {
+  const found = new Map<string, string>();
+  const walk = (dir: string) => {
+    if (!fs.existsSync(dir)) return;
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (e.name === "questions.md") {
+        const rel = path.relative(projectDir, full).split(path.sep).join("/");
+        for (const q of openQuestions(fs.readFileSync(full, "utf8"))) {
+          for (const req of q.blocks) if (!found.has(req)) found.set(req, `${q.row} (${rel})`);
+        }
+      }
+    }
+  };
+  walk(path.join(projectDir, "docs", "specs", "changes"));
+  return found;
 }
 
 /** How many queue lines `status` prints before pointing at `plan` for the rest. */
@@ -94,6 +132,8 @@ export function needsOf(item: any): string {
       return "its code";
     case "NEEDS_STATUS_UPDATE":
       return "its test is in place";
+    case "WAITING_FOR_ANSWER":
+      return item.question ? `an answer to ${String(item.question).split(" ")[0]}` : "an answer";
     default:
       return "";
   }
@@ -160,6 +200,8 @@ function nextReason({ items, counts, orphans, derived }: any): string {
     return `once a test mentions ${todo.requirement} — that mention is the link; done checks first`;
   if (todo) return `write the test first, then record where it is`;
   if (counts.total === 0) return "no requirements yet";
+  if (counts.WAITING_FOR_ANSWER > 0)
+    return `${counts.WAITING_FOR_ANSWER} wait for an answer; everything else is implemented — run the gate`;
   return "everything is implemented; run the gate";
 }
 
@@ -196,6 +238,12 @@ function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []
   };
   queue("Ready to close", ["NEEDS_STATUS_UPDATE"], c.green);
   queue("To do", TODO_CATEGORIES, c.yellow);
+  queue("Waiting for an answer", ["WAITING_FOR_ANSWER"], c.dim);
+  const waiting = items.filter((it: any) => it.category === "WAITING_FOR_ANSWER" && it.question);
+  if (waiting.length > 0)
+    process.stdout.write(
+      `    ${c.dim}Questions: ${[...new Set(waiting.map((it: any) => it.question))].join(" · ")}${c.reset}\n`
+    );
 
   if (orphans.length > 0)
     process.stdout.write(
@@ -244,6 +292,7 @@ function emitJson(projectDir: string, summary: any, lock: any, notes: any[] = []
           title: titleOf(it) || null,
           category: it.category,
           needs: needsOf(it) || null,
+          ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
         })),
         nextCommand: nextCommandPlain(summary),
         status: notes,

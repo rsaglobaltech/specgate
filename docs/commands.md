@@ -22,12 +22,12 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 
 | Command | What it does |
 | --- | --- |
-| `specgate status` | Where the project stands: totals by state, orphan features, locked pack versions, and the one command to run next. |
+| `specgate status` | Where the project stands: totals by state, what is ready to close, what is to do, what waits for an answer (with the question that blocks it), orphan features, locked pack versions, and the one command to run next. |
 | `specgate plan` | Requirements that still need a test, code or a status change. |
 | `specgate new "<title>"` | **Add a requirement in one step**: a draft `## REQ-NNN` in `spec.md`, a tagged scenario of `<placeholders>` under `features/`, and its matrix row linked to it. `--feature <path>` appends to an existing file. |
 | `specgate req add \| link \| done \| list` | Manage matrix rows without hand-editing the ten-column table. |
 | `specgate req rm <REQ>` | Remove a requirement's matrix row(s) and its prose in `spec.md`. `--dry-run` previews; `--force` is required past `Draft`, because removing a delivered requirement deletes the record that it shipped. Reports any feature file left unreferenced, and says what it did **not** touch. |
-| `specgate done <REQ>` | Mark a requirement Implemented. Runs the gate first (`validate --strict`, as `check` does) and refuses to write on failure; `--no-check` skips it. `Draft`, `Approved` and `Deprecated` are written without it unless `--check` is given. `--test-cmd "<cmd>"` (or `test_cmd:` in `harness.config.yaml`) also runs the project's tests and requires them to pass. Without one, `done` says it checked the specification and not the code. |
+| `specgate done <REQ>` | Mark a requirement Implemented. Runs the gate first (`validate --strict`, as `check` does) and refuses to write on failure — also when the requirement waits for an answer (`Needs Clarification`); `--no-check` skips it. `Draft`, `Approved` and `Deprecated` are written without it unless `--check` is given. `--test-cmd "<cmd>"` (or `test_cmd:` in `harness.config.yaml`) also runs the project's tests and requires them to pass. Without one, `done` says it checked the specification and not the code. |
 | `specgate check [dir] [--test-cmd "<cmd>"]` | **The gate before a PR**: `validate --strict`, then the project's tests (`--test-cmd`, or `test_cmd:` in `harness.config.yaml`). Without a test command it passes and says it checked the specification, not the code. |
 | `specgate matrix [--check \| --migrate]` | Generate `traceability.md` from `spec.md`, scenario tags and tests instead of maintaining it. `--migrate` switches a hand-kept matrix over, only if the result is identical row for row. See [A matrix nobody edits](writing-specs.md#a-matrix-nobody-edits). |
 | `specgate fix` | Apply the repairs `validate` suggests. `--dry-run` previews. |

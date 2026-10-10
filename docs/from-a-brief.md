@@ -40,11 +40,12 @@ agent. Two files go next to it:
 
 - **`assumptions.md`** — every value the brief does not give: prices, limits,
   button labels, status codes. A row names the requirements or scenarios that
-  use it.
+  use it, one by one or as a range (`REQ-004..REQ-010`).
 - **`questions.md`** — what the brief cannot answer, and the requirements each
   question blocks. A blocked requirement carries
-  `status="Needs Clarification"` in its trace; the harness refuses it until
-  someone answers.
+  `status="Needs Clarification"` in its trace; the harness and `done` refuse
+  it until someone answers, and `status` lists it under "Waiting for an
+  answer" with the question that blocks it.
 
 ## 3. Check the draft
 
