@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.8] — 2026-10-10
+
 ### Fixed
 
 - **`done` refuses a requirement waiting for an answer (#72).** In the FinCore pilot, `done REQ-055` marked Implemented a requirement

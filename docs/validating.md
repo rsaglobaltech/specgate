@@ -31,7 +31,7 @@ jobs:
       # --strict-links is what checks the matrix against the filesystem: without
       # it a row pointing at a deleted test file still passes. Pin the version in
       # CI so a release cannot change the gate under a green branch.
-      - run: npx --yes @rsaglobaltech/specgate@0.17.7 validate . --strict
+      - run: npx --yes @rsaglobaltech/specgate@0.17.8 validate . --strict
 ```
 
 `specgate ci init` writes a fuller job for you: it sets up the project's
