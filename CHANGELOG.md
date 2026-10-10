@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.9] — 2026-10-10
+
 ### Added
 
 - **`draft --check` asks how an actor gets the ids they act on (D12, #76).**
