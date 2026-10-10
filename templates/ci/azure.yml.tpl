@@ -11,13 +11,11 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-  - task: NodeTool@0
-    inputs:
-      versionSpec: '22.x'
-    displayName: Use Node.js 22
+{{SETUP_STEPS}}
 
-  - script: npx @rsaglobaltech/specgate@{{SPECGATE_VERSION}} validate . --strict
-    displayName: Validate specs (the gate)
+  - script: |
+      {{GATE_CMD}}
+    displayName: The gate — the specification and the tests
 
   # Supply-chain gate: fails when rendered pack content no longer matches the
   # digest pinned in .specops.lock. Skipped when no packs are installed.

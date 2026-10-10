@@ -3,12 +3,16 @@
 // If your project already has a Jenkinsfile, paste the 'Spec gate' stage in.
 pipeline {
     agent {
-        docker { image 'node:22' }
+        docker { image '{{CI_IMAGE}}' }
     }
     stages {
         stage('Spec gate') {
             steps {
-                sh 'npx @rsaglobaltech/specgate@{{SPECGATE_VERSION}} validate . --strict'
+                // The specification and the project's tests, in one shell.
+                sh '''
+{{SETUP_SCRIPT}}
+                    {{GATE_CMD}}
+                '''
             }
         }
         // Supply-chain gate: fails when rendered pack content no longer

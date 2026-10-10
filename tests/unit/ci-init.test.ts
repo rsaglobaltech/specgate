@@ -146,3 +146,94 @@ test("ci init without --provider and nothing to detect still asks for one", () =
     assert.match(r.stderr, /--provider is required/);
   });
 });
+
+// ── #70: the job runs the project's tests, with the project's toolchain ──────
+// A Spring Boot project with a class deleted stayed green in CI: the job had
+// Node and `validate . --strict`, no JDK and no `mvn test`.
+
+const SPRING_POM =
+  "<project><modelVersion>4.0.0</modelVersion>" +
+  "<parent><groupId>org.springframework.boot</groupId>" +
+  "<artifactId>spring-boot-starter-parent</artifactId><version>3.3.4</version></parent>" +
+  "<artifactId>tienda</artifactId><properties><java.version>17</java.version></properties>" +
+  "</project>\n";
+
+function render(tmp, provider) {
+  const r = cli("ci", "init", "--provider", provider, "--project-dir", tmp, "--stdout");
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(!/\{\{[A-Z_]+\}\}/.test(r.stdout), "no unresolved template tokens");
+  return r.stdout;
+}
+
+test("a Maven project gets a JDK and a gate that runs its tests", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(path.join(tmp, "pom.xml"), SPRING_POM);
+    const gh = render(tmp, "github");
+    assert.match(gh, /actions\/setup-java@v4/);
+    assert.match(gh, /java-version: '17'/);
+    assert.match(gh, /cache: maven/);
+    assert.match(gh, /specgate@\S+ check \. --test-cmd 'mvn -B test'/);
+
+    const gl = render(tmp, "gitlab");
+    assert.match(gl, /image: maven:3-eclipse-temurin-17/);
+    // The JDK image has no Node: it is fetched and its checksum verified.
+    assert.match(gl, /sha256sum -c --ignore-missing SHASUMS256\.txt/);
+    assert.match(gl, /check \. --test-cmd 'mvn -B test'/);
+
+    assert.match(render(tmp, "azure"), /JavaToolInstaller@0[\s\S]*versionSpec: '17'/);
+    assert.match(render(tmp, "jenkins"), /image 'maven:3-eclipse-temurin-17'/);
+  });
+});
+
+test("a configured test_cmd is read by check, not copied into the job", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(path.join(tmp, "pom.xml"), SPRING_POM);
+    fs.writeFileSync(
+      path.join(tmp, "harness.config.yaml"),
+      'harness_version: 1\ntest_cmd: "mvn -q -B verify"\n'
+    );
+    const gh = render(tmp, "github");
+    assert.match(gh, /specgate@\S+ check \.\n/);
+    assert.doesNotMatch(gh, /--test-cmd/);
+  });
+});
+
+test("a Gradle Kotlin project gets its Java version and the Gradle cache", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(
+      path.join(tmp, "build.gradle.kts"),
+      "plugins { java }\njava { toolchain { languageVersion = JavaLanguageVersion.of(17) } }\n"
+    );
+    fs.writeFileSync(path.join(tmp, "gradlew"), "#!/bin/sh\n");
+    const gh = render(tmp, "github");
+    assert.match(gh, /java-version: '17'/);
+    assert.match(gh, /cache: gradle/);
+    assert.match(gh, /check \. --test-cmd '\.\/gradlew test'/);
+    assert.match(render(tmp, "gitlab"), /image: gradle:jdk17/);
+  });
+});
+
+test("a Node project installs its dependencies before the gate", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(
+      path.join(tmp, "package.json"),
+      JSON.stringify({ name: "shop", scripts: { test: "node --test" } })
+    );
+    fs.writeFileSync(path.join(tmp, "package-lock.json"), "{}");
+    const gh = render(tmp, "github");
+    assert.match(gh, /- run: npm ci/);
+    assert.doesNotMatch(gh, /setup-java/);
+    assert.match(gh, /check \. --test-cmd 'npm test'/);
+    assert.match(render(tmp, "gitlab"), /image: node:22[\s\S]*- npm ci/);
+  });
+});
+
+test("ci init says which tests the job runs", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(path.join(tmp, "pom.xml"), SPRING_POM);
+    const r = cli("ci", "init", "--provider", "github", "--project-dir", tmp);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /specgate check/);
+    assert.match(r.stdout, /mvn -B test/);
+  });
+});

@@ -5,6 +5,14 @@ import { renderTemplate } from "../../../../packages/core/src/domain/PackSpec";
 import { BaseCommand } from "../../../lib/command";
 
 import { findCliRoot } from "../../../lib/project-root";
+import {
+  azureSetup,
+  ciImage,
+  containerSetup,
+  describeTests,
+  githubSetup,
+  planCi,
+} from "./CiToolchain";
 
 const ROOT_DIR = findCliRoot(__dirname);
 const CI_TEMPLATES = path.join(ROOT_DIR, "templates", "ci");
@@ -90,6 +98,28 @@ export function parseArgs(argv: string[]) {
   return opts;
 }
 
+/**
+ * The job for one provider. The toolchain comes from the project — a JDK for a
+ * pom.xml, `npm ci` for a lockfile — so the gate can run the tests (#70).
+ */
+export function renderCi(providerName: string, projectDir: string): string {
+  const provider = PROVIDERS[providerName];
+  const version = packageJson.version || "latest";
+  const plan = planCi(projectDir, version);
+  const container = containerSetup(plan, projectDir);
+  return renderTemplate(fs.readFileSync(path.join(CI_TEMPLATES, provider.template), "utf8"), {
+    SPECGATE_VERSION: version,
+    GATE_CMD: plan.gateCmd,
+    SETUP_STEPS:
+      providerName === "azure" ? azureSetup(plan, projectDir) : githubSetup(plan, projectDir),
+    CI_IMAGE: ciImage(plan),
+    SETUP_SCRIPT:
+      providerName === "jenkins"
+        ? container.map((l) => `                    ${l}`).join("\n")
+        : container.map((l) => `    - ${l.includes(": ") ? JSON.stringify(l) : l}`).join("\n"),
+  });
+}
+
 export class CiInitCommand extends BaseCommand {
   public execute(): void {
     let rawArgs = this.args;
@@ -120,10 +150,8 @@ export class CiInitCommand extends BaseCommand {
       process.exit(2);
     }
 
-    const rendered = renderTemplate(
-      fs.readFileSync(path.join(CI_TEMPLATES, provider.template), "utf8"),
-      { SPECGATE_VERSION: packageJson.version || "latest" }
-    );
+    const rendered = renderCi(opts.provider, opts.projectDir);
+    const plan = planCi(opts.projectDir, packageJson.version || "latest");
 
     if (opts.stdout) {
       process.stdout.write(rendered);
@@ -141,8 +169,13 @@ export class CiInitCommand extends BaseCommand {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.writeFileSync(dest, rendered, "utf8");
     logInfo(`write ${provider.dest}`);
-    logInfo("✅ CI gate installed. The job:");
-    logInfo("  1. runs `validate . --strict` on every PR/MR (the L2 gate)");
+    logInfo("✅ CI gate installed. On every PR/MR the job:");
+    logInfo(
+      plan.testSource === "none"
+        ? "  1. runs `validate . --strict` (the specification)"
+        : "  1. runs `specgate check` — the specification, then the tests, as locally"
+    );
+    logInfo(`     ${describeTests(plan)}`);
     logInfo("  2. runs `validate --against-lock` when .specops.lock exists, so a");
     logInfo("     moved pack tag or an edited generated file fails the build");
     logInfo("  3. publishes `plan --format json` as the spec-plan artifact");

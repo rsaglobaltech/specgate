@@ -69,7 +69,7 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 | `specgate harness init` | Scaffold `harness.config.yaml` and `.harness/prompt-prefix.md`. Detects the gate from your build files; leaves the agent unset on purpose. |
 | `specgate harness run` | The plan → agent → verify → done loop, one git worktree per requirement. Never merges. |
 | `specgate harness prompt <REQ>` | Print the prompt the harness would hand an agent, before paying for tokens. |
-| `specgate ci init` | Generate the spec gate for GitHub, GitLab, Azure or Jenkins. |
+| `specgate ci init` | Generate the CI job — the gate and the project's tests — for GitHub, GitLab, Azure or Jenkins. |
 | `specgate verify [--run] [--since <ref>] [--record] [--ids] [--format github]` | **For teams on OpenSpec.** Reads `openspec/` in place and fails while an archived change claims a scenario no test names. `--since` gates only new claims; `--record` pins each verified scenario's text, so a later edit must be verified again. Action: `rsaglobaltech/specgate/actions/verify`. |
 | `specgate alm sync` | Sync requirements with Jira or Azure Boards — create, close, report drift. |
 | `specgate alm status` | The requirement ↔ issue mapping, without touching the network. |

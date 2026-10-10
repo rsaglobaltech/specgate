@@ -34,6 +34,11 @@ jobs:
       - run: npx --yes @rsaglobaltech/specgate@0.17.6 validate . --strict
 ```
 
+`specgate ci init` writes a fuller job for you: it sets up the project's
+toolchain (Temurin for Maven or Gradle, at the Java version the build declares;
+`npm ci` for Node) and runs `specgate check`, so the job fails when the tests
+do, not only when the specification does.
+
 What `validate` checks:
 
 - required directories (`features/`, `docs/specs/`),

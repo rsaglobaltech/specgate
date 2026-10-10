@@ -312,7 +312,10 @@ test("ci init announces the command it actually generates", () => {
     assert.equal(r.status, 0, r.stdout + r.stderr);
 
     const workflow = fs.readFileSync(path.join(dir, ".github/workflows/spec-gate.yml"), "utf8");
-    const generated = /validate \. (--strict\b[^\s]*)/.exec(workflow)[1];
+    // A project with tests gets `check` (#70); one without, `validate --strict`.
+    const generated = / check \./.test(workflow)
+      ? "specgate check"
+      : /validate \. (--strict\b[^\s]*)/.exec(workflow)[1];
     assert.ok(
       r.stdout.includes(generated),
       `announced something other than what it wrote (${generated}):\n${r.stdout}`

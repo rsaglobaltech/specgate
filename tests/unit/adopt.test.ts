@@ -386,3 +386,46 @@ test("adopt --monorepo leaves an already adopted module alone", () => {
     assert.match(fs.readFileSync(path.join(dir, "specops.config.yaml"), "utf8"), /- path: a/);
   });
 });
+
+// ── #69: the project's own name, not its parent's ────────────────────────────
+test("#69: a Maven project is named by its own artifactId, not its parent's", () => {
+  const { pomProjectName } = require("../../scripts/cli/commands/project/AdoptCommand");
+  const pom =
+    "<project><!-- <name>commented</name> -->\n" +
+    "  <parent><groupId>org.springframework.boot</groupId>" +
+    "<artifactId>spring-boot-starter-parent</artifactId><version>3.3.4</version></parent>\n" +
+    "  <groupId>com.demo</groupId><artifactId>tienda</artifactId>\n" +
+    "  <organization><name>ACME</name></organization>\n" +
+    "  <dependencies><dependency><artifactId>spring-boot-starter-web</artifactId>" +
+    "</dependency></dependencies>\n</project>\n";
+  assert.equal(pomProjectName(pom), "tienda");
+  assert.equal(
+    pomProjectName(pom.replace("<groupId>com.demo", "<name>Tienda online</name><groupId>com.demo")),
+    "Tienda online"
+  );
+  // A name that is only a property reference falls back to the artifactId.
+  assert.equal(
+    pomProjectName(
+      pom.replace("<groupId>com.demo", "<name>${project.artifactId}</name><groupId>com.demo")
+    ),
+    "tienda"
+  );
+});
+
+test("#69: a Gradle project is named by rootProject.name and its real build file", () => {
+  const { detectStack } = require("../../scripts/cli/commands/project/AdoptCommand");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-gradle-name-"));
+  try {
+    fs.writeFileSync(
+      path.join(dir, "build.gradle.kts"),
+      'plugins { id("org.springframework.boot") }\n'
+    );
+    fs.writeFileSync(path.join(dir, "settings.gradle.kts"), 'rootProject.name = "reservas"\n');
+    const facts = detectStack(dir);
+    assert.equal(facts.PROJECT_NAME, "reservas");
+    assert.equal(facts.detected, "build.gradle.kts");
+    assert.match(facts.STACK, /Spring Boot, Gradle/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
