@@ -8,6 +8,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Security
+
+- **Two CodeQL findings fixed.** The parser of archived harness prompt names used
+  a regular expression that ran polynomially on names repeating `-attempt-`
+  (js/polynomial-redos); it now reads the name by hand, with the same result
+  (checked against the old expression on 20 000 generated names). A no-op
+  replacement in the agent contract's checks is gone (js/identity-replacement).
+
 ### Documentation
 
 - **Two new guides.** *From a client brief* — the brief, a draft per module,

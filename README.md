@@ -20,9 +20,6 @@
 
 ## ⚡ Start
 
-> **The npm package is scoped; the binary is not.** `spec-gate` already claims the
-> unscoped name ([ADR-0024](docs/specs/adr/0024-the-tool-is-renamed-the-format-is-not.md)). You type `specgate`; `csda` still works too.
-
 ```bash
 npm i -g @rsaglobaltech/specgate   # or prefix every command with npx @rsaglobaltech/specgate@latest
 
@@ -34,11 +31,8 @@ specgate ci init                   # the gate as a CI job — GitHub, GitLab, Az
 specgate check                     # the gate, locally
 ```
 
-Requires **Node.js ≥ 22** — or none at all with the Docker image:
-
-```bash
-docker run --rm -v "$PWD:/workspace" ghcr.io/rsaglobaltech/specgate check
-```
+Requires **Node.js ≥ 22** — or none with Docker: `docker run --rm -v "$PWD:/workspace" ghcr.io/rsaglobaltech/specgate check`.
+The package is scoped, the binary is not ([ADR-0024](docs/specs/adr/0024-the-tool-is-renamed-the-format-is-not.md)).
 
 → [Getting started](docs/getting-started.md) · [Your team's first pull request](docs/first-pr.md) · [Quickstart for joiners](docs/quickstart.md)
 
@@ -65,11 +59,11 @@ Everything else — packs, changes, the harness, ALM sync — is in `specgate --
 
 Each level is useful on its own and never requires the ones above it.
 
-| Level | You get | Commands | Cost |
-| --- | --- | --- | --- |
-| **L1** | Traceable specs in your repo | `init`, `new`, `done` | ~1 hour |
-| **L2** | A PR gate enforcing spec and test coverage | `check`, `ci init` | ~1 hour |
-| **L3** | Versioned, reusable domain requirements | `specops add / sync / diff` | ~1 day |
+| Level  | You get                                          | Commands                     | Cost    |
+| ------ | ------------------------------------------------ | ---------------------------- | ------- |
+| **L1** | Traceable specs in your repo                     | `init`, `new`, `done`        | ~1 hour |
+| **L2** | A PR gate enforcing spec and test coverage       | `check`, `ci init`           | ~1 hour |
+| **L3** | Versioned, reusable domain requirements          | `specops add / sync / diff`  | ~1 day  |
 | **L4** | Agent-driven delivery, one requirement at a time | `agents init`, `harness run` | ~1 week |
 
 ## 🛠️ What it does
@@ -88,18 +82,12 @@ and writes the feature files, so a merged proposal cannot quietly become
 undone work.
 → [Your team's first pull request](docs/first-pr.md) · [Reviewing changes](docs/reviewing-changes.md)
 
-**From a client's brief.** Keep the brief in the repository and draft one
-module at a time as a change. `specgate draft --check` holds the draft to ten
-rules: a scenario per requirement and per surface each actor uses, measured
-non-functional requirements, a source for every cited law, every value either
-in the brief or listed as an assumption, every open question blocking what it
-blocks. Specs can be written in Spanish (`DADO / CUANDO / ENTONCES`).
-→ [From a client brief](docs/from-a-brief.md)
-
-**Already on OpenSpec?** Keep it. `specgate verify` reads `openspec/` in place
-and fails while an archived change claims a scenario no test names — so
-"done" means proved. As a GitHub Action and an MCP tool too.
-→ [Already on OpenSpec](docs/openspec.md)
+**From a brief, or from OpenSpec.** `specgate draft --check` holds a draft
+written from a client's brief to ten rules — scenarios per actor and surface,
+sourced laws, every value in the brief or listed as an assumption, open
+questions that block. Teams on OpenSpec keep it: `specgate verify` fails while
+a change claims a scenario no test names.
+→ [From a client brief](docs/from-a-brief.md) · [Already on OpenSpec](docs/openspec.md)
 
 **Your agent works the same loop.** `specgate agents init` gives Claude Code,
 Cursor, Copilot, Windsurf, Aider, Gemini, Cline, Codex or Antigravity the five
@@ -115,54 +103,45 @@ upgrade as intent with `specops diff --as-change`, not as a file diff.
 
 **Unattended delivery.** `specgate harness run` drives plan → agent → verify →
 done for every pending requirement, each in its own git worktree; it never
-merges. The agent is any shell command with `{prompt_file}` — no runtime or SDK.
-It does not spend attempts where retrying cannot help (quota, a failure in the
-spec, an open question), stops an agent that runs out of time, and gates on
-the build as well as the tests.
+merges. The agent is any shell command with `{prompt_file}`; it stops where retrying cannot help.
 `specgate alm sync` keeps Jira, Azure Boards or GitHub Issues in step.
 → [The harness](docs/harness.md) · [Jira, Azure Boards and GitHub Issues](docs/alm.md)
 
 **Tested as you install it.** Every release runs an end-to-end suite over every
-command, against the packed tarball, on Linux, macOS and Windows — and every
-release since 0.14 came out of building real products with it, from a client's
-brief to a running application, with each defect found logged and fixed.
+command, against the packed tarball, on Linux, macOS and Windows; releases
+since 0.14 come from building real products with it, from brief to running app.
 
 ## 🆚 How it compares
 
-| Capability | **this** | [OpenSpec](https://github.com/Fission-AI/OpenSpec) | [spec-kit](https://github.com/github/spec-kit) | [Cursor rules](https://docs.cursor.com/context/rules-for-ai) | README only |
-| --- | :-: | :-: | :-: | :-: | :-: |
-| Change lifecycle | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Versioned domain packs | ✅ | ❌ | ⚠️ | ❌ | ❌ |
-| Traceability matrix + CI gate | ✅ | ❌ | ⚠️ | ❌ | ❌ |
-| Agent JSON contract | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Draft checklist from a brief | ✅ | ❌ | ⚠️ | ❌ | ❌ |
-| Proves OpenSpec's "done" against tests | ✅ `verify` | ❌ | ❌ | ❌ | ❌ |
-| Vendor-neutral | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Smaller surface to learn | ⚠️ five daily commands | ✅ | ✅ | ✅ | ✅ |
+| Capability                             |        **this**        | [OpenSpec](https://github.com/Fission-AI/OpenSpec) | [spec-kit](https://github.com/github/spec-kit) | [Cursor rules](https://docs.cursor.com/context/rules-for-ai) | README only |
+| -------------------------------------- | :--------------------: | :------------------------------------------------: | :--------------------------------------------: | :----------------------------------------------------------: | :---------: |
+| Change lifecycle                       |           ✅           |                         ✅                         |                       ❌                       |                              ❌                              |     ❌      |
+| Versioned domain packs                 |           ✅           |                         ❌                         |                       ⚠️                       |                              ❌                              |     ❌      |
+| Traceability matrix + CI gate          |           ✅           |                         ❌                         |                       ⚠️                       |                              ❌                              |     ❌      |
+| Agent JSON contract                    |           ✅           |                         ✅                         |                       ❌                       |                              ❌                              |     ❌      |
+| Draft checklist from a brief           |           ✅           |                         ❌                         |                       ⚠️                       |                              ❌                              |     ❌      |
+| Proves OpenSpec's "done" against tests |      ✅ `verify`       |                         ❌                         |                       ❌                       |                              ❌                              |     ❌      |
+| Vendor-neutral                         |           ✅           |                         ✅                         |                       ✅                       |                              ❌                              |     ✅      |
+| Smaller surface to learn               | ⚠️ five daily commands |                         ✅                         |                       ✅                       |                              ✅                              |     ✅      |
 
-OpenSpec is the closest tool and the honest comparison: if you want the change
-loop without versioned packs or an enforced matrix, theirs is the better fit.
+OpenSpec is the closest tool: if you want the change loop without packs or an enforced matrix, it fits better.
 → [Full matrix, trade-offs and migration paths](docs/comparisons.md)
 
 ## 📚 Documentation
 
 - [Getting started](docs/getting-started.md) · [Your team's first pull request](docs/first-pr.md) · [Command reference](docs/commands.md)
-- [From a client brief](docs/from-a-brief.md) · [Already on OpenSpec](docs/openspec.md) · [The harness](docs/harness.md)
 - [How-to guides](docs/how-to.md) · [Tutorial](docs/tutorial.md) · [Supply chain](docs/supply-chain.md) · [Architecture](docs/specs/architecture.md)
 - [Case study](docs/case-studies/case-1.md) · [ADRs](docs/specs/adr/README.md) · [Docs site](https://rsaglobaltech.github.io/specgate/) · [Spec coverage report](https://rsaglobaltech.github.io/specgate/report.html)
 
 ## 🧰 Companion tools
 
-[Language server](packages/lsp-spec-driven) · [VS Code extension](packages/vscode-spec-driven) ·
-[Maven](packages/maven-plugin) and [Gradle](packages/gradle-plugin) plugins for builds
-without Node · Docker image `ghcr.io/rsaglobaltech/specgate`
+[Language server](packages/lsp-spec-driven) · [VS Code extension](packages/vscode-spec-driven) · [Maven](packages/maven-plugin) and
+[Gradle](packages/gradle-plugin) plugins for builds without Node · Docker image `ghcr.io/rsaglobaltech/specgate`
 
 ## 🤝 Contributing
 
-PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Good first contributions:
-new module templates, validator rules, additional domain packs.
-[MAINTAINERS.md](MAINTAINERS.md) says who owns what;
-[SECURITY.md](SECURITY.md) is how to report a vulnerability privately.
+PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) (good first: templates, validator rules,
+domain packs) · [MAINTAINERS.md](MAINTAINERS.md) · [SECURITY.md](SECURITY.md) for private reports.
 
 ## 📄 License
 

@@ -131,7 +131,7 @@ export function architectureSections(cfg: any): Record<string, string> {
   const shared = new Set([...invariantGates, "- [ ] Traceability row is complete."]);
   const profileChecks = (gates[profile] || gates["tactical-ddd"])
     .filter((g) => !shared.has(g))
-    .map((g) => g.replace(/^- \[ \] /, "- Before implementing: ").replace(/\.$/, "."));
+    .map((g) => g.replace(/^- \[ \] /, "- Before implementing: "));
 
   return {
     ARCHITECTURE_CHECKS: profileChecks.join("\n"),

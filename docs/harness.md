@@ -265,33 +265,10 @@ the kind of string that carries an API key.
 
 ---
 
-## When another attempt cannot help
-
-The harness retries a failed requirement with the failure in the prompt. Some
-failures no retry can fix, and it stops at the first one instead of spending
-the other attempts:
-
-- **The agent cannot run** — out of quota or rate-limited ("You've hit your
-  session limit"). Run it again once the agent is available.
-- **The gate fails only on files the agent may not edit** — a scenario title,
-  a feature file. A person fixes the specification. ("Nothing proves" a
-  scenario is not one of these: a test fixes it, so it is retried.)
-- **A requirement waiting on a question** (`Needs Clarification`) is refused
-  before the agent starts.
-
-Each attempt has a time limit (`--timeout`, 1200 s by default). When it runs
-out, the agent and everything it started are stopped — an agent that hangs
-cannot keep running in the worktree after the harness has given up on it.
-
-The gate `harness init` writes includes the build when the project has one
-(`npm test && npm run build` for an npm project with a `build` script): a
-requirement that passes its tests and breaks the build is not delivered.
-
 ## When a run fails
 
-The report prints the tail of the gate output and names the command that
-failed — a gate that runs the whole suite because a filter did not apply looks
-identical to a real failure otherwise.
+The report prints the tail of the gate output and the command that failed.
+Some failures end it after one attempt: [when retrying cannot help](troubleshooting.md#when-another-attempt-cannot-help).
 
 The attempt is **committed on the branch** with a `wip(REQ-NNN): FAILED the
 gate` subject, so the agent's work is there to read instead of discarded. The
