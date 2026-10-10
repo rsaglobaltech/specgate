@@ -14,7 +14,9 @@ export default [
         .readdirSync(path.join(dir, ".github", "workflows"))
         .map((f) => t.read(dir, `.github/workflows/${f}`))
         .join("\n");
-      t.expect(/validate \. --strict\b/.test(wf), "the workflow runs validate --strict");
+      // `check` is validate --strict plus the project's tests (#70).
+      t.expect(/specgate@\S+ check \./.test(wf), "the workflow runs check — the spec and the tests");
+      t.expect(/npm (ci|install)/.test(wf), "after installing the project's dependencies");
       t.expect(!/--strict-tdd/.test(wf), "and not the weaker --strict-tdd");
     },
   },

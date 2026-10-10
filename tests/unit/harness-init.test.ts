@@ -219,3 +219,30 @@ test("what it writes is what `harness run` reads", () => {
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+
+// ── #71: a config written by `config set` is merged, not refused ────────────
+test("#71: harness init keeps the test_cmd that config set wrote, and adds the rest", () => {
+  const { parent, projectDir } = scaffold();
+  try {
+    const set = spawnSync(process.execPath, [CLI, "config", "set", "test_cmd", "mvn -q -B test"], {
+      cwd: projectDir,
+      encoding: "utf8",
+    });
+    assert.equal(set.status, 0, set.stdout + set.stderr);
+    const r = run(projectDir);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const body = fs.readFileSync(path.join(projectDir, "harness.config.yaml"), "utf8");
+    assert.match(body, /^test_cmd: "mvn -q -B test"$/m, "the chosen test command survives");
+    assert.equal(body.match(/^test_cmd:/gm).length, 1, "and is not written twice");
+    assert.match(body, /^max_attempts: /m);
+    assert.match(body, /^prompt_prefix_file: /m);
+    assert.ok(fs.existsSync(path.join(projectDir, ".harness", "prompt-prefix.md")));
+
+    // A second run has nothing to add and changes nothing.
+    const again = run(projectDir);
+    assert.equal(again.status, 0, again.stdout + again.stderr);
+    assert.equal(fs.readFileSync(path.join(projectDir, "harness.config.yaml"), "utf8"), body);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});

@@ -2,10 +2,13 @@
 # Spec-Driven Development gate for GitLab CI. If your project already has a
 # .gitlab-ci.yml, paste the `spec-gate` job into it instead.
 spec-gate:
-  image: node:22
+  image: {{CI_IMAGE}}
   stage: test
   script:
-    - npx @rsaglobaltech/specgate@{{SPECGATE_VERSION}} validate . --strict
+{{SETUP_SCRIPT}}
+    # The gate: the specification and the project's tests.
+    - |
+      {{GATE_CMD}}
     # Supply-chain gate: fails when rendered pack content no longer matches the
     # digest pinned in .specops.lock. Skipped when no packs are installed.
     - >

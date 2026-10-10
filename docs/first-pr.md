@@ -16,9 +16,12 @@ specgate ci init     # the gate as a CI job — the provider is detected from
 git add -A && git commit -m "chore: adopt Specgate"
 ```
 
-The CI job runs `specgate validate . --strict` on every pull request — the
-same gate `specgate check` runs on your machine. Your own test job keeps
-running your tests; Specgate does not replace it.
+The CI job runs `specgate check` on every pull request — the specification,
+then your tests — after setting up what the project needs: a JDK for a
+`pom.xml` or `build.gradle`, `npm ci` for a lockfile. It is the `check` you run
+on your machine, so a green there is a green in CI. It runs the `test_cmd` you
+configured (`specgate config set test_cmd …`), or the one it detects; with
+neither, it runs `validate . --strict` alone and `ci init` says so.
 
 ---
 

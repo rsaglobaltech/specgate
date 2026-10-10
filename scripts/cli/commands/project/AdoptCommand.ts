@@ -120,6 +120,64 @@ function readIfExists(p: string): string | null {
   }
 }
 
+// The project's own coordinates sit at the top level of the POM, but the
+// first `<artifactId>` in the file is usually the `<parent>`'s — a Spring Boot
+// project was reported as `spring-boot-starter-parent` (#69). Blocks that carry
+// other `<artifactId>`s or `<name>`s are removed before matching.
+const POM_NESTED_BLOCKS = [
+  "parent",
+  "dependencies",
+  "dependencyManagement",
+  "build",
+  "profiles",
+  "reporting",
+  "organization",
+  "licenses",
+  "developers",
+  "contributors",
+  "scm",
+  "distributionManagement",
+  "repositories",
+  "pluginRepositories",
+  "issueManagement",
+  "ciManagement",
+  "mailingLists",
+  "modules",
+  "properties",
+];
+
+function stripBlocks(text: string, open: string, close: string): string {
+  let out = "";
+  let from = 0;
+  for (;;) {
+    const start = text.indexOf(open, from);
+    if (start === -1) return out + text.slice(from);
+    const end = text.indexOf(close, start + open.length);
+    if (end === -1) return out + text.slice(from);
+    out += text.slice(from, start);
+    from = end + close.length;
+  }
+}
+
+export function pomProjectName(pom: string): string | null {
+  let top = stripBlocks(pom, "<!--", "-->");
+  for (const tag of POM_NESTED_BLOCKS) top = stripBlocks(top, `<${tag}>`, `</${tag}>`);
+  const name = /<name>([^<]+)<\/name>/.exec(top)?.[1]?.trim();
+  if (name && !name.includes("${")) return name;
+  const artifactId = /<artifactId>([^<]+)<\/artifactId>/.exec(top)?.[1]?.trim();
+  return artifactId && !artifactId.includes("${") ? artifactId : null;
+}
+
+// `rootProject.name = "x"` in settings.gradle or settings.gradle.kts (#69).
+export function gradleRootProjectName(dir: string): string | null {
+  for (const f of ["settings.gradle.kts", "settings.gradle"]) {
+    const text = readIfExists(path.join(dir, f));
+    const m = text && /rootProject\.name\s*=\s*["']([^"'\n]+)["']/.exec(text);
+    if (m) return m[1].trim();
+  }
+  return null;
+}
+
 export function detectStack(dir: string) {
   const facts = {
     PROJECT_NAME: path.basename(dir),
@@ -140,10 +198,8 @@ export function detectStack(dir: string) {
     if (pom.includes("quarkus")) parts.push("Quarkus");
     if (pom.includes("hapi-fhir")) parts.push("HAPI FHIR");
     parts.push("Maven");
-    const artifactId = pom.match(/<artifactId>([^<]+)<\/artifactId>/);
-    const name = pom.match(/<name>([^<]+)<\/name>/);
-    if (name) facts.PROJECT_NAME = name[1].trim();
-    else if (artifactId) facts.PROJECT_NAME = artifactId[1].trim();
+    const projectName = pomProjectName(pom);
+    if (projectName) facts.PROJECT_NAME = projectName;
     facts.STACK = parts.join(", ");
     facts.TESTING = pom.includes("testcontainers") ? "JUnit 5, Testcontainers" : "JUnit 5";
     facts.TEST_CMD = sharedTestCommand(dir);
@@ -151,10 +207,11 @@ export function detectStack(dir: string) {
     return facts;
   }
 
-  const gradle =
-    readIfExists(path.join(dir, "build.gradle")) ||
-    readIfExists(path.join(dir, "build.gradle.kts"));
-  if (gradle !== null) {
+  const gradleFile = ["build.gradle", "build.gradle.kts"].find(
+    (f) => readIfExists(path.join(dir, f)) !== null
+  );
+  const gradle = gradleFile ? readIfExists(path.join(dir, gradleFile)) : null;
+  if (gradleFile && gradle !== null) {
     const parts = [gradle.includes("kotlin") ? "Kotlin" : "Java"];
     if (gradle.includes("spring-boot") || gradle.includes("org.springframework.boot")) {
       parts.push("Spring Boot");
@@ -162,8 +219,10 @@ export function detectStack(dir: string) {
     parts.push("Gradle");
     facts.STACK = parts.join(", ");
     facts.TESTING = "JUnit 5";
+    const rootName = gradleRootProjectName(dir);
+    if (rootName) facts.PROJECT_NAME = rootName;
     facts.TEST_CMD = sharedTestCommand(dir);
-    facts.detected = "build.gradle";
+    facts.detected = gradleFile;
     return facts;
   }
 

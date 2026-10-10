@@ -8,6 +8,29 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The CI job runs the project's tests (#70).** `ci init` wrote a job with
+  Node and `validate . --strict`, so a Spring Boot project with a class deleted
+  stayed green in CI. The job now sets up the detected toolchain — Temurin at
+  the Java version the `pom.xml` or Gradle build declares, with the Maven or
+  Gradle cache; `npm ci` for a Node lockfile; Go and Python setup — and runs
+  `specgate check`: the configured `test_cmd`, or the detected one passed as
+  `--test-cmd`. GitLab and Jenkins run in a JDK image and fetch Node from
+  nodejs.org, checked against its `SHASUMS256.txt`. With no test command the
+  job keeps `validate . --strict`, and `ci init` says it runs no tests.
+- **A Maven project is named by its own `artifactId` (#69).** The first
+  `<artifactId>` in a Spring Boot `pom.xml` is the parent's, so the project was
+  called `spring-boot-starter-parent` in `spec.md` and the harness prompt.
+  `<parent>`, dependencies, build and the other nested blocks are skipped; a
+  Gradle project is named by `rootProject.name`, and `init` names the build file
+  it read (`build.gradle.kts`).
+- **`harness init` merges a config `config set` wrote (#71).** It refused the
+  two-line `harness.config.yaml` as "already present" and asked for `--force`,
+  which would have replaced the chosen `test_cmd`. A file made only of harness
+  keys is now kept as written and the missing keys are appended; `--force`
+  still replaces it, and a file with other keys is still refused.
+
 ## [0.17.6] — 2026-10-10
 
 ### Fixed

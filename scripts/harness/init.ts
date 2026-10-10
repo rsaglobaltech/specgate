@@ -17,6 +17,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { renderTemplate } from "../../packages/core/src/domain/PackSpec";
+import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
 import { resolveProjectDir } from "../lib/project-root";
 import { agentIo, wantsJson } from "../lib/agent";
 import { error, info, warning, errorMessage } from "../lib/diagnostics";
@@ -236,6 +237,72 @@ function parseArgs(argv) {
   return opts;
 }
 
+// Keys `harness init` knows how to fill in. A file holding anything else was
+// written by hand for a purpose this command cannot see, so it is not merged.
+const MERGEABLE_KEYS = new Set([
+  "harness_version",
+  "agent",
+  "agent_profile",
+  "test_cmd",
+  "setup_cmd",
+  "max_attempts",
+  "concurrency",
+  "push",
+  "remote",
+  "pr_cmd",
+  "prompt_prefix",
+  "prompt_prefix_file",
+  "attempt_profiles",
+  "review_profile",
+  "protected_paths",
+  "allow_paths",
+  "message_report",
+  "prompt_precedents",
+  "adversary_profile",
+]);
+
+function topLevelKeys(yaml: string): string[] | null {
+  try {
+    const parsed = parseYamlLite(yaml);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return Object.keys(parsed);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * `config set test_cmd` writes a two-line harness.config.yaml (#68), and
+ * `harness init` then refused it as "already present" and asked for --force,
+ * which would have thrown the chosen test command away (#71). An existing file
+ * made only of keys this command understands is merged instead: every value
+ * already there is kept as written, and only the keys it lacks are appended.
+ * Returns null when the file cannot be merged safely.
+ */
+export function mergeHarnessConfig(
+  existing: string,
+  generated: string
+): { body: string; added: string[] } | null {
+  const have = topLevelKeys(existing);
+  const want = topLevelKeys(generated);
+  if (!have || !want || have.some((k) => !MERGEABLE_KEYS.has(k))) return null;
+  const missing = want.filter((k) => !have.includes(k));
+  if (missing.length === 0) return { body: existing, added: [] };
+  const lines = generated.split("\n");
+  const added: string[] = [];
+  for (const key of missing) {
+    const at = lines.findIndex((l) => l.startsWith(`${key}:`));
+    if (at === -1) continue;
+    added.push(lines[at]);
+    for (let i = at + 1; i < lines.length && /^\s+\S/.test(lines[i]); i++) added.push(lines[i]);
+  }
+  const base = existing.endsWith("\n") ? existing : `${existing}\n`;
+  return {
+    body: `${base}# Added by \`specgate harness init\`; the settings above were kept.\n${added.join("\n")}\n`,
+    added: missing,
+  };
+}
+
 export class InitCommand extends BaseCommand {
   public execute() {
     let argv = this.args;
@@ -258,8 +325,29 @@ export class InitCommand extends BaseCommand {
       return;
     }
 
-    const testCmd = opts.testCmd || withBuild(projectDir, detectTestCommand(projectDir));
+    const configPath = path.join(projectDir, CONFIG_FILE);
+    const existingConfig = fs.existsSync(configPath) ? fs.readFileSync(configPath, "utf8") : null;
+    let keptTestCmd: string | null = null;
+    if (existingConfig !== null && !opts.force && !opts.testCmd) {
+      try {
+        const parsed: any = parseYamlLite(existingConfig);
+        if (parsed && parsed.test_cmd !== undefined) keptTestCmd = String(parsed.test_cmd);
+      } catch {
+        keptTestCmd = null;
+      }
+    }
+    const testCmd =
+      opts.testCmd || keptTestCmd || withBuild(projectDir, detectTestCommand(projectDir));
     const outputs = harnessFiles(projectDir, testCmd);
+    let merged: string[] | null = null;
+    if (existingConfig !== null && !opts.force && !opts.stdout) {
+      const config = outputs.find((o) => o.dest === CONFIG_FILE);
+      const result = config ? mergeHarnessConfig(existingConfig, config.body) : null;
+      if (config && result) {
+        config.body = result.body;
+        merged = result.added;
+      }
+    }
 
     if (opts.stdout) {
       io.emit({ projectDir, testCmd, files: outputs.map((o) => o.dest) }, () => {
@@ -285,6 +373,7 @@ export class InitCommand extends BaseCommand {
     };
     const existing = outputs
       .filter((o) => !same(o))
+      .filter((o) => !(merged && o.dest === CONFIG_FILE))
       .map((o) => o.dest)
       .filter((dest) => fs.existsSync(path.join(projectDir, dest)));
     if (existing.length > 0 && !opts.force) {
@@ -299,6 +388,7 @@ export class InitCommand extends BaseCommand {
 
     const written = [];
     for (const out of outputs) {
+      if (merged && merged.length === 0 && out.dest === CONFIG_FILE) continue;
       const abs = path.join(projectDir, out.dest);
       fs.mkdirSync(path.dirname(abs), { recursive: true });
       fs.writeFileSync(abs, out.body, "utf8");
@@ -310,6 +400,17 @@ export class InitCommand extends BaseCommand {
     const driverProblem = installMergeDriver(projectDir);
 
     const status = [
+      ...(merged
+        ? [
+            info(
+              "harness_config_merged",
+              merged.length > 0
+                ? `${CONFIG_FILE} already existed: its settings were kept and ${merged.join(", ")} added.`
+                : `${CONFIG_FILE} already existed and has every setting; it was left as it was.`,
+              { target: CONFIG_FILE, fix: "Use --force to replace it with the generated file." }
+            ),
+          ]
+        : []),
       info("harness_agent_unset", "No agent is configured, deliberately.", {
         fix: 'Pass it explicitly: specgate harness run --req REQ-001 --agent "<cmd> < {prompt_file}"',
       }),
@@ -349,6 +450,9 @@ export class InitCommand extends BaseCommand {
       },
       () => {
         for (const file of written) process.stdout.write(`ℹ️ [INFO] write ${file}\n`);
+        for (const d of status) {
+          if (d.code === "harness_config_merged") process.stdout.write(`ℹ️ [INFO] ${d.message}\n`);
+        }
         // Warnings only reached `--json` before, so a text-mode user learned
         // that a tracked file had changed from `git status` instead of from the
         // command that changed it.
