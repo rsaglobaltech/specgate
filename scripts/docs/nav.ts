@@ -77,6 +77,11 @@ export const NAV: readonly NavSection[] = [
         label: "Reviewing changes",
         blurb: "Propose, review and archive a change to specs that already shipped.",
       },
+      {
+        slug: "from-a-brief",
+        label: "From a client brief",
+        blurb: "A brief to a reviewed draft: assumptions, open questions and the draft checklist.",
+      },
     ],
   },
   {
@@ -106,6 +111,11 @@ export const NAV: readonly NavSection[] = [
         label: "Worked example: brownfield adoption",
         blurb:
           "An illustration — invented company, constructed numbers — of the workflow end to end.",
+      },
+      {
+        slug: "openspec",
+        label: "Already on OpenSpec",
+        blurb: "Keep your OpenSpec specs; verify proves that what they call done is done.",
       },
       {
         slug: "comparisons",

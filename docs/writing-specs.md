@@ -53,6 +53,12 @@ requirement with `specgate new`.
 
 ---
 
+### Writing in Spanish
+
+Scenarios can use `DADO / CUANDO / ENTONCES / Y`; feature files are then written
+as Spanish Gherkin (`# language: es`, `Característica`, `Escenario`). Starting
+from a client's brief instead of a blank page: [From a client brief](from-a-brief.md).
+
 ## Close the loop: `status` → implement → `done`
 
 **Goal:** after a `specops sync` brings new requirements into the project, drive a human or AI agent through the implementation cycle without manually reading every `.feature` file.
@@ -222,13 +228,13 @@ default for every project `init` or `adopt` creates (`--keep-matrix` opts
 out). Every column is already said somewhere else, so `specgate matrix`
 computes it:
 
-| Column | Comes from |
-| --- | --- |
-| Requirement, Use Case | the `## REQ-NNN — title` section in `spec.md` |
-| Scenario ID, Feature file | scenarios tagged `@REQ-NNN @SCN-NNN` (`specgate new` writes them) |
-| Test artifact | test files that mention `REQ-NNN` — a comment or a test name is enough |
-| Technical artifact | other source files that mention `REQ-NNN` |
-| Status | `status=` in the section's `<!-- csda:trace … -->` comment |
+| Column                    | Comes from                                                             |
+| ------------------------- | ---------------------------------------------------------------------- |
+| Requirement, Use Case     | the `## REQ-NNN — title` section in `spec.md`                          |
+| Scenario ID, Feature file | scenarios tagged `@REQ-NNN @SCN-NNN` (`specgate new` writes them)      |
+| Test artifact             | test files that mention `REQ-NNN` — a comment or a test name is enough |
+| Technical artifact        | other source files that mention `REQ-NNN`                              |
+| Status                    | `status=` in the section's `<!-- csda:trace … -->` comment             |
 
 Anything derivation cannot see — a code path, a test that does not name its
 requirement, the DDD columns — goes in that same comment, with the grammar
@@ -265,4 +271,3 @@ generated matrix. **One limit, for now:** a domain pack writes `spec.md` and
 the matrix from its own templates, so `specgate expand` turns the project back
 to a hand-kept matrix and says so; `specgate matrix --migrate` switches it back
 once the pack's requirements have `## REQ-NNN` sections.
-

@@ -8,6 +8,16 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Documentation
+
+- **Two new guides.** *From a client brief* — the brief, a draft per module,
+  assumptions and open questions, the D1–D10 checklist, writing in Spanish, and
+  what the checklist cannot see. *Already on OpenSpec* — `verify`, scenario ids,
+  V1–V7, adopting with `--since`, the GitHub Action.
+- **The harness** documents when it does not retry, the per-attempt time limit,
+  and the build in the gate; **the README** covers drafting from a brief,
+  `verify` for OpenSpec teams and how releases are tested on real products.
+
 ## [0.17.5] — 2026-10-09
 
 ### Fixed
