@@ -33,7 +33,8 @@ specgate new "Customers download invoices as PDF" # spec section + scenario + ro
 
 1. **`spec.md`, the `## REQ-NNN` section** — replace the generated sentence
    with the obligation: what must hold, when, and how someone would observe
-   it. One requirement, one obligation.
+   it. One requirement, one obligation. `done` refuses the requirement while
+   the generated sentence is still there (`requirement_template_obligation`).
 2. **`features/<name>.feature`** — replace the three `<placeholders>` with a
    concrete Given / When / Then. Real values, not "valid data".
 3. **`docs/specs/traceability.md`** — do not touch it. It is generated.
@@ -139,10 +140,16 @@ A file the requirement points at *explicitly* is gone — a path written in its
 Restore it, or fix the path. A test linked only by mentioning the requirement
 does not produce this: delete that test and you get `[TDD-1]` instead.
 
+### `requirement_template_obligation`
+
+The requirement claims delivery while its `## REQ-NNN` section still says
+"The system MUST satisfy: <title>." with the note `new` left below it. Write
+the real obligation and delete the note. A Draft owes nothing yet.
+
 ### `check_tests_failed` / `done_tests_failed`
 
 The project's tests failed. These run only when a test command is configured
-(`--test-cmd "npm test"`, or `test_cmd:` in `harness.config.yaml`). Without
+(`--test-cmd "npm test"`, or `specgate config set test_cmd "npm test"` once). Without
 one, `check` and `done` say they checked the specification and not the code —
 read that warning as "nothing ran", not as a pass.
 

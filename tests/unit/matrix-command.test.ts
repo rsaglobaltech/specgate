@@ -220,8 +220,20 @@ test("a new adoption starts with a generated matrix, and the loop needs no req l
     assert.equal(cli("adopt", "--project-dir", dir, "--no-capabilities").status, 0);
     assert.match(fs.readFileSync(MATRIX(dir), "utf8"), /specgate:derived/);
 
-    // new → a test that names it → done --strict, and nothing else.
+    // new → the obligation and scenario written → a test that names it →
+    // done --strict, and nothing else.
     cli("new", "Totals are rounded half-up", "--project-dir", dir);
+    const spec = path.join(dir, "spec.md");
+    fs.writeFileSync(
+      spec,
+      fs
+        .readFileSync(spec, "utf8")
+        .replace(
+          "The system MUST satisfy: Totals are rounded half-up.",
+          "The system MUST round every total half-up to two decimals."
+        )
+        .replace(/^> Written by Specgate\..*$/m, "")
+    );
     const feature = path.join(dir, "features/totals-are-rounded-half-up.feature");
     fs.writeFileSync(
       feature,

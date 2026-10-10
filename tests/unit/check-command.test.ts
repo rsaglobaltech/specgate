@@ -98,6 +98,41 @@ test("check reads test_cmd from harness.config.yaml", () => {
   }
 });
 
+test("config set test_cmd configures the suite without harness init (#68)", () => {
+  const { parent, dir } = adopted();
+  try {
+    // The warning names the command that configures it, not `harness init`.
+    const before = cli("check", dir);
+    assert.match(before.stdout + before.stderr, /specgate config set test_cmd "npm test"/);
+
+    fs.writeFileSync(path.join(dir, "fail.js"), "process.exit(4);\n");
+    const set = cli("config", "set", "test_cmd", "node", "fail.js", "--project-dir", dir);
+    assert.equal(set.status, 0, set.stdout + set.stderr);
+    assert.match(
+      fs.readFileSync(path.join(dir, "harness.config.yaml"), "utf8"),
+      /^test_cmd: "node fail\.js"$/m
+    );
+
+    const get = json(cli("config", "get", "test_cmd", "--project-dir", dir, "--json"));
+    assert.equal(get.config.test_cmd, "node fail.js");
+
+    const r = cli("check", dir, "--json");
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.equal(json(r).status[0].code, "check_tests_failed");
+
+    // Setting it again replaces the line; the rest of the file is kept.
+    fs.appendFileSync(path.join(dir, "harness.config.yaml"), "max_attempts: 2\n");
+    fs.writeFileSync(path.join(dir, "ok.js"), "\n");
+    assert.equal(cli("config", "set", "test_cmd", "node ok.js", "--project-dir", dir).status, 0);
+    const yaml = fs.readFileSync(path.join(dir, "harness.config.yaml"), "utf8");
+    assert.equal((yaml.match(/test_cmd:/g) || []).length, 1, yaml);
+    assert.match(yaml, /max_attempts: 2/);
+    assert.equal(cli("check", dir).status, 0);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
 test("check is the strong gate, not a subset of it", () => {
   // A delivered requirement whose test file is gone: `--strict-tdd` alone
   // passes this, and that is what ten pages used to recommend.

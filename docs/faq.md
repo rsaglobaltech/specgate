@@ -74,8 +74,8 @@ because a wrong gate is a bug.
 
 ### `check` says it checked the specification, not the code.
 
-No test command is configured, so nothing ran your tests. Set `test_cmd:` in
-`harness.config.yaml`, or pass `--test-cmd "npm test"`. Until then a green
+No test command is configured, so nothing ran your tests. Run
+`specgate config set test_cmd "npm test"` once, or pass `--test-cmd "npm test"`. Until then a green
 `check` means the specification is consistent, nothing more.
 
 ### What does a reviewer look at?

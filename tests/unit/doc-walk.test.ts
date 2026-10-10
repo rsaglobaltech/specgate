@@ -36,9 +36,20 @@ function adopted() {
   return { parent, dir };
 }
 
-/** `new`, then the scenario filled in: everything but a test. */
+/** `new`, then the obligation and scenario filled in: everything but a test. */
 function requirement(dir: string, title: string) {
   const req = JSON.parse(cli("new", title, "--project-dir", dir, "--json").stdout).requirement;
+  const spec = path.join(dir, "spec.md");
+  fs.writeFileSync(
+    spec,
+    fs
+      .readFileSync(spec, "utf8")
+      .replace(
+        `The system MUST satisfy: ${title}.`,
+        "The system MUST return a paid invoice as a PDF."
+      )
+      .replace(/^> Written by Specgate\..*$/m, "")
+  );
   const file = path.join(dir, req.featureFile);
   fs.writeFileSync(
     file,

@@ -153,7 +153,7 @@ export class CheckCommand extends BaseCommand {
     const fixLines = detected
       ? [
           `This project's test command looks like \`${detected}\`. Configure it once:`,
-          `  specgate harness init      # writes test_cmd: "${detected}" to harness.config.yaml`,
+          `  specgate config set test_cmd "${detected}"`,
           `or pass --test-cmd "${detected}". Until then, nothing here runs your tests.`,
         ]
       : NO_TEST_COMMAND_WARNING.fix;

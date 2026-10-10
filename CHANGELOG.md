@@ -8,6 +8,21 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`done` refuses a requirement whose obligation is still the template (#67).**
+  `specgate new` writes "The system MUST satisfy: <title>." with a note to
+  replace it; the sentence states MUST, so it passed every rule and `done`
+  closed the requirement on it. A delivered requirement (or the one `done` is
+  closing) whose section still carries either line now fails
+  `validate --strict` with `requirement_template_obligation`, naming the file.
+  Draft and Needs Clarification still owe nothing.
+- **The test command is configured without the harness (#68).**
+  `specgate config set test_cmd "npm test"` (and `config get test_cmd`) writes
+  `test_cmd:` to `harness.config.yaml`, keeping every other line, or creates it.
+  `check`'s warning now names this command instead of `harness init`, whose
+  output talks about agents to teams that do not use one.
+
 ### Documentation
 
 - **A real tutorial video, from an empty directory** (`scripts/demo/tutorial/`):

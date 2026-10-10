@@ -52,6 +52,10 @@ import {
   requirementKey,
 } from "../../../../packages/core/src/domain/SpecParser";
 import { CAPABILITIES_DIR } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
+import {
+  extractRequirementSection,
+  templateObligationLines,
+} from "../../../../packages/core/src/domain/SpecSections";
 
 export class ValidateSpecsCommand extends BaseCommand {
   private io: any = null;
@@ -772,6 +776,73 @@ export class ValidateSpecsCommand extends BaseCommand {
     process.exit(1);
   }
 
+  /**
+   * A delivered requirement whose obligation is still the sentence `specgate
+   * new` wrote (#67). The placeholder states MUST so it passes the syntax rule
+   * above, which is exactly why nothing else caught it: `done` closed REQ-002
+   * on "The system MUST satisfy: El carrito suma el total." Draft rows owe
+   * nothing yet, like every other delivery rule.
+   */
+  private checkTemplateObligations(targetDir: string, delivering: string) {
+    const tracePath = path.join(targetDir, "docs/specs/traceability.md");
+    if (!fs.existsSync(tracePath)) return;
+    let rows: any[] = [];
+    try {
+      rows = parseTraceabilityRows(fs.readFileSync(tracePath, "utf8")).rows || [];
+    } catch {
+      return;
+    }
+    const owed = new Set<string>();
+    for (const row of rows) {
+      const id = String(row.requirement || "").trim();
+      if (!id) continue;
+      if (DELIVERED_STATUS.has(String(row.status || "").trim()) || id === delivering) owed.add(id);
+    }
+    if (owed.size === 0) return;
+
+    const specFiles = [path.join(targetDir, "spec.md")];
+    const capabilitiesDir = path.join(targetDir, CAPABILITIES_DIR);
+    if (fs.existsSync(capabilitiesDir)) {
+      for (const entry of fs.readdirSync(capabilitiesDir, { withFileTypes: true }).sort()) {
+        if (entry.isDirectory()) specFiles.push(path.join(capabilitiesDir, entry.name, "spec.md"));
+      }
+    }
+    const findings = [];
+    for (const file of specFiles) {
+      if (!fs.existsSync(file)) continue;
+      const source = fs.readFileSync(file, "utf8");
+      const rel = path.relative(targetDir, file).split(path.sep).join("/");
+      for (const id of [...owed].sort()) {
+        const section = extractRequirementSection(source, id);
+        if (section === null || templateObligationLines(section).length === 0) continue;
+        findings.push(
+          error(
+            "requirement_template_obligation",
+            `${id}: its obligation in ${rel} is still the sentence Specgate wrote.`,
+            {
+              target: id,
+              file: rel,
+              fix: `Replace "The system MUST satisfy: …" and the "> Written by Specgate" note under ## ${id} with the real obligation — what must hold, when, and how it is observed.`,
+            }
+          )
+        );
+      }
+    }
+    if (findings.length === 0) return;
+
+    if (this.io.json) {
+      this.io.fail({ validation: null }, findings);
+      return;
+    }
+    this.logError(`Requirements delivered on a placeholder obligation: ${findings.length}`);
+    for (const f of findings) process.stderr.write(`  ${formatDiagnostic(f)}\n`);
+    this.logFix([
+      "Write the obligation in your own words and delete the note Specgate left below it;",
+      "the gate cannot tell a placeholder MUST from a promise.",
+    ]);
+    process.exit(1);
+  }
+
   public execute(): void {
     const rawArgs = this.args[0] === "validate" ? this.args.slice(1) : this.args;
     const argv = rawArgs;
@@ -1057,6 +1128,11 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
     if (strictCoverage) {
       this.checkScenarioCoverage(targetDir, traceContent, delivering);
+    }
+    // After the links and coverage: a missing test is the bigger gap, and its
+    // fix line is the one to read first.
+    if (strictRequirements) {
+      this.checkTemplateObligations(targetDir, delivering);
     }
 
     for (const ff of featureFiles.sort()) {

@@ -11,6 +11,7 @@ import {
   requirementSections,
   appendRequirementSection,
   extractRequirementSection,
+  templateObligationLines,
 } from "../../src/domain/SpecSections";
 
 test("the generated section carries an obligation keyword", () => {
@@ -136,4 +137,23 @@ test("a TBD or empty requirement cell is not text", () => {
     const spec = `| ID | Requirement |\n|---|---|\n| REQ-005 | ${cell} |\n`;
     assert.equal(hasRequirementSection(spec, "REQ-005"), false, `'${cell}' should not count`);
   }
+});
+
+test("the generated obligation is recognised until it is replaced (#67)", () => {
+  const section = renderRequirementSection("REQ-002", "El carrito suma el total");
+  assert.equal(templateObligationLines(section).length, 2);
+
+  const rewritten = section
+    .replace(
+      "The system MUST satisfy: El carrito suma el total.",
+      "El sistema DEBE sumar precio por cantidad de cada línea."
+    )
+    .replace(/^> Written by Specgate\..*$/m, "");
+  assert.deepEqual(templateObligationLines(rewritten), []);
+});
+
+test("a real obligation that says 'satisfy:' is not the template", () => {
+  const section =
+    "## REQ-003 — Orders are valid\n\nThe system MUST satisfy: every rule in docs/rules.md.\n";
+  assert.deepEqual(templateObligationLines(section), []);
 });

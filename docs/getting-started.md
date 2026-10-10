@@ -17,11 +17,13 @@ npx @rsaglobaltech/specgate@latest check   # the gate — passes right away
 ```
 
 It passes and says *"this checked the specification, not the code"* until it
-knows how to run your tests. Tell it once, in `harness.config.yaml`:
+knows how to run your tests. Tell it once:
 
-```yaml
-test_cmd: npm test        # or ./mvnw -B verify, go test ./..., pytest
+```bash
+npx specgate config set test_cmd "npm test"   # or ./mvnw -B verify, go test ./..., pytest
 ```
+
+It writes `test_cmd:` to `harness.config.yaml`, where `check` and `done` read it.
 
 `init` sees the code (a `pom.xml`, `build.gradle`, `package.json`, `go.mod`,
 `pyproject.toml`, `Cargo.toml` or `.csproj`) and adopts the repository in place.

@@ -154,7 +154,7 @@ test("#44: after adoption, check names the test command it found and how to turn
     const c = cli(["check"], { cwd: tmp });
     assert.equal(c.status, 0, c.stdout + c.stderr);
     assert.match(c.stdout, /looks like `npm test`/);
-    assert.match(c.stdout, /specgate harness init/);
+    assert.match(c.stdout, /specgate config set test_cmd/);
 
     assert.equal(cli(["harness", "init", "--project-dir", tmp]).status, 0);
     const after = cli(["check"], { cwd: tmp });
