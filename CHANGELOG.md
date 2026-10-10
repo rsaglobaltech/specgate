@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.7] — 2026-10-10
+
 ### Fixed
 
 - **The CI job runs the project's tests (#70).** `ci init` wrote a job with
