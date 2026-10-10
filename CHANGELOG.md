@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.6] — 2026-10-10
+
 ### Fixed
 
 - **`done` refuses a requirement whose obligation is still the template (#67).**
