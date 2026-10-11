@@ -11,6 +11,7 @@ import type { Capability } from "./OnboardCommand";
 import { findCliRoot } from "../../../lib/project-root";
 
 import { detectTestCommand } from "../../../../packages/core/src/domain/TestCommand";
+import { startupTestAdvice } from "../../../harness/init";
 
 /**
  * `adopt` and `harness init` used to answer this differently on the same
@@ -594,6 +595,11 @@ export class AdoptProjectCommand extends BaseCommand {
     }
     logInfo("  3. specgate status              # what each requirement still needs");
     logInfo("  4. specgate ci init             # put the gate in CI");
+    const startup = startupTestAdvice(dir);
+    if (startup) {
+      logInfo("Keep a startup test in the suite: the gate is only as good as what the tests run.");
+      logInfo(`  ${startup}`);
+    }
     installDetectedAgents(dir, { dryRun: opts.dryRun, skip: opts.noAgents }, logInfo);
     process.exit(0);
   }

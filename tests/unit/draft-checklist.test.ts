@@ -611,14 +611,177 @@ test("#76 / D12: an assumption that says where the id comes from; no actor, no f
 
 test("#76: apiCalls finds the collection before the first id; versions are not ids", () => {
   const { apiCalls } = require("../../packages/core/src/domain/DraftChecklist");
-  assert.deepEqual(apiCalls("WHEN they POST /api/transferencias/{id}/liquidacion"), [
-    {
-      method: "POST",
-      path: "/api/transferencias/{id}/liquidacion",
-      collection: "/api/transferencias",
-    },
-  ]);
+  const [call] = apiCalls("WHEN they POST /api/transferencias/{id}/liquidacion");
+  assert.equal(call.method, "POST");
+  assert.equal(call.path, "/api/transferencias/{id}/liquidacion");
+  assert.equal(call.collection, "/api/transferencias");
+  assert.equal(call.at, 10, "where the call is written, to tell who makes it");
   assert.equal(apiCalls("GET /api/v1/cuentas?x=1")[0].collection, undefined);
   assert.equal(apiCalls("GET /api/v1/cuentas?x=1")[0].path, "/api/v1/cuentas");
   assert.equal(apiCalls("POST /api/clientes/C-004/kyc")[0].collection, "/api/clientes");
+});
+
+// ── 0.17.10: the pilots' second round (#75, #80, #81, #82) ─────────────────────
+
+const EVENTS = `---
+product: Events
+actors:
+  - { name: Organizador, surfaces: [api] }
+  - { name: Asistente, surfaces: [api] }
+---
+`;
+
+// How each actor reaches an event at all: the organizer creates it, the attendee lists them.
+const EVENT_IDS = req(
+  "REQ-002",
+  "kind=functional actor=Organizador",
+  "El sistema SHALL crear eventos.",
+  [
+    [
+      "SCN-002",
+      [
+        "DADO un organizador",
+        "CUANDO el organizador hace POST /api/eventos y el asistente hace GET /api/eventos?estado=publicado",
+        "ENTONCES 201 y 200",
+      ],
+    ],
+  ]
+);
+
+const MOVE = req(
+  "REQ-008",
+  "kind=functional actor=Organizador",
+  "El sistema SHALL permitir mover una sesión de sala.",
+  [
+    [
+      "SCN-012",
+      [
+        'DADO una sesión en "Sala A"',
+        "CUANDO el organizador hace POST /api/sesiones/{id}/sala",
+        "ENTONCES 200",
+      ],
+    ],
+  ]
+);
+
+test("#80 / D12: a list nested under its parent, with the same name, gives the id", () => {
+  assert.equal(d12({ deltas: delta(MOVE), brief: EVENTS }).length, 1);
+  const nested = req("REQ-005", "kind=functional actor=Organizador", "El sistema SHALL listar.", [
+    [
+      "SCN-018",
+      [
+        "DADO un evento",
+        "CUANDO el organizador hace GET /api/eventos/{id}/sesiones",
+        "ENTONCES 200",
+      ],
+    ],
+  ]);
+  assert.equal(d12({ deltas: delta(EVENT_IDS, MOVE, nested), brief: EVENTS }).length, 0);
+  // Under another name (an agenda) it still has to be declared.
+  const agenda = req("REQ-011", "kind=functional actor=Organizador", "El sistema SHALL mostrar.", [
+    [
+      "SCN-016",
+      ["DADO un evento", "CUANDO el organizador hace GET /api/eventos/{id}/agenda", "ENTONCES 200"],
+    ],
+  ]);
+  assert.equal(d12({ deltas: delta(EVENT_IDS, MOVE, agenda), brief: EVENTS }).length, 1);
+});
+
+test("#80 / D12: the caller is the actor the step names before the call", () => {
+  const shuttles = req(
+    "REQ-029",
+    "kind=functional actor=Organizador",
+    "El sistema SHALL definir lanzaderas.",
+    [
+      [
+        "SCN-035",
+        [
+          "DADO un evento publicado",
+          "CUANDO el organizador hace POST /api/eventos/{id}/lanzaderas y el asistente hace GET /api/eventos/{id}/lanzaderas",
+          "ENTONCES la lanzadera aparece",
+        ],
+      ],
+    ]
+  );
+  const seat = req(
+    "REQ-030",
+    "kind=functional actor=Asistente",
+    "El sistema SHALL reservar plaza.",
+    [
+      [
+        "SCN-036",
+        [
+          "DADO una lanzadera",
+          "CUANDO el asistente hace POST /api/lanzaderas/{id}/plazas",
+          "ENTONCES 201",
+        ],
+      ],
+    ]
+  );
+  assert.equal(d12({ deltas: delta(EVENT_IDS, shuttles, seat), brief: EVENTS }).length, 0);
+  // Without the attendee's list, the organizer's does not count for the attendee.
+  const onlyOrganizer = shuttles.replace(
+    " y el asistente hace GET /api/eventos/{id}/lanzaderas",
+    ""
+  );
+  assert.equal(d12({ deltas: delta(EVENT_IDS, onlyOrganizer, seat), brief: EVENTS }).length, 1);
+});
+
+test("#81: a MODIFIED requirement reads the archived assumptions; an ADDED one does not", () => {
+  const modified = [
+    { path: "specs/eventos/spec.md", source: `## MODIFIED Requirements\n\n${MOVE}` },
+  ];
+  const archivedAssumptions =
+    "| A8 | El organizador obtiene el id de /api/sesiones en su lista del evento | REQ-008 | x | a validar |";
+  assert.equal(d12({ deltas: modified, brief: EVENTS }).length, 1);
+  assert.equal(d12({ deltas: modified, brief: EVENTS, archivedAssumptions }).length, 0);
+  assert.equal(d12({ deltas: delta(MOVE), brief: EVENTS, archivedAssumptions }).length, 1);
+});
+
+test("#75 / D6: a value the requirement's own sourced obligation states needs no assumption", () => {
+  const iban = req(
+    "REQ-003",
+    "kind=business-rule",
+    "El sistema SHALL asignar un IBAN de 24 caracteres cuyo resto módulo 97 sea 1.\n\nSource: ISO 13616-1:2020 — https://www.iso.org/standard/81090.html",
+    [
+      [
+        "SCN-004",
+        [
+          "DADO una cuenta nueva",
+          "CUANDO se abre",
+          "ENTONCES su IBAN tiene 24 caracteres y su resto módulo 97 es 1",
+        ],
+      ],
+    ]
+  );
+  const d6 = (body) =>
+    checkDraft({ deltas: delta(body), brief: BRIEF }).status.filter(
+      (d) => d.code === "D6_unlisted_value"
+    );
+  assert.equal(d6(iban).length, 0);
+  assert.equal(
+    d6(iban.replace(/\n\nSource:.*$/m, "")).length,
+    3,
+    "without Source: 24, 97 and 1 are ours"
+  );
+});
+
+test("#82 / D7: a deferred answer keeps the question open", () => {
+  const {
+    openQuestions,
+    deferredAnswer,
+  } = require("../../packages/core/src/domain/DraftChecklist");
+  const q = (answer) =>
+    `| # | Pregunta | Blocks | Opciones | Answer |\n|---|---|---|---|---|\n| Q1 | ¿Constancia? | REQ-008 | Sí · no | ${answer} |\n`;
+  assert.equal(openQuestions(q("Se decidirá con el cliente antes de implementarlo")).length, 1);
+  assert.equal(openQuestions(q("TBD")).length, 1);
+  assert.equal(openQuestions(q("Sí, como anotación (propuesta, a validar)")).length, 0);
+  assert.equal(deferredAnswer("El pedido queda pendiente de pago"), false);
+  const found = checkDraft({
+    deltas: delta(MOVE),
+    brief: EVENTS,
+    questions: q("pendiente"),
+  }).status.filter((d) => d.code === "D7_floating_question");
+  assert.equal(found.length, 1);
+  assert.match(found[0].message, /puts the decision off/);
 });

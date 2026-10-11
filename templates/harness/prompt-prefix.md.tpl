@@ -50,7 +50,7 @@ from a domain pack:
 
 - The scenario for this requirement passes.
 - The gate command above is green.
-- You have not touched `features/**/*.feature` or `docs/specs/**`.
+- You have not touched `features/**/*.feature` or `docs/specs/**`.{{STARTUP_TEST_LINE}}
 
 If you cannot meet the definition of done, say precisely which part failed and
 why. A clear report of a blocked requirement is worth more than a green run

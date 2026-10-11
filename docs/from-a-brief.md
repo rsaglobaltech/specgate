@@ -60,8 +60,8 @@ specgate draft --check draft-reservas
 | D3   | each actor's surfaces have a scenario of that actor — an API call and a screen. `surfaces=web` on a requirement narrows it (a menu has no API) |
 | D4   | a non-functional requirement that promises a quantity states a number with a unit                                                              |
 | D5   | a rule that cites a law, standard or contract names its source (`Source:` and a link)                                                          |
-| D6   | every value in a scenario is in the brief, in the project's specification, or in `assumptions.md`                                              |
-| D7   | every open question blocks a requirement, and that requirement waits                                                                           |
+| D6   | every value in a scenario is in the brief, the project's specification, `assumptions.md`, or its own sourced obligation                       |
+| D7   | every open question blocks a requirement, and that requirement waits; "TBD" or "se decidirá" is not an answer                                  |
 | D8   | the draft is small enough to review (25 requirements by default)                                                                               |
 | D9   | every scenario passes the rules the harness gate will apply (titles, Given/When/Then)                                                          |
 | D10  | no requirement or scenario id another requirement already owns                                                                                 |
@@ -74,10 +74,18 @@ D12 catches what every pilot found only by running the product: each scenario
 right on its own, and an operator who can settle a transfer by its id with no
 way to see which transfers are pending. A `GET` on the collection by the same
 actor, or the `POST` that creates it, closes it — in the draft or in the
-project's specification. When the id reaches the actor outside the API (a
-customer reads their IBAN to the teller), say so in `assumptions.md`, in a row
-naming the requirement and the collection path. D11 is reserved for a rule
-still being designed.
+project's specification — and so does a list nested under its parent with the
+same name (`GET /api/eventos/{id}/sesiones` for `POST /api/sesiones/{id}/sala`).
+The caller is the actor the step names before the call, else the
+requirement's. When the id reaches the actor outside the API (a customer reads
+their IBAN to the teller), or through a list under another name (an agenda),
+say so in `assumptions.md`, in a row naming the requirement and the collection
+path. A MODIFIED requirement also counts the rows of the archived change that
+first wrote it. D11 is reserved: matching each API action with its screen
+scenario is not mechanical yet.
+
+D6 also accepts a value the requirement's own obligation states under a
+`Source:` line: "24 characters" of a cited ISO norm needs no assumption row.
 
 An answered question gets an `Answer` column, or a line below the table such as
 `Answer (Q1): free shipping from 50 €`; the requirement it blocked then drops
@@ -88,6 +96,9 @@ An answered question gets an `Answer` column, or a line below the table such as
 ```bash
 specgate change archive draft-reservas
 ```
+
+A change opened from a brief (`brief:` in `change.yaml`) is archived only when
+`draft --check` passes; `--force` archives it anyway, and says so in review.
 
 Archiving merges the requirements into `docs/specs/capabilities/`, adds their
 rows to the matrix and writes one feature file per requirement. New

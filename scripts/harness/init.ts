@@ -92,6 +92,38 @@ export function detectTestCommand(projectDir) {
  * command configured" (reservas_app, #44). One renderer, so a later
  * `harness init` finds the same bytes and reports no conflict.
  */
+/**
+ * The JVM frameworks whose real application context no unit test boots on its
+ * own. FinCore did not start for a whole module while `check` and CI were
+ * green: every test replaced the SMS sender and the clock, so none built the
+ * real context (#78). `@QuarkusTest` boots the application, so in Quarkus the
+ * line only asks to keep one test free of mocks.
+ */
+export function startupTestAdvice(projectDir: string): string | null {
+  const read = (f: string) => {
+    try {
+      return fs.readFileSync(path.join(projectDir, f), "utf8");
+    } catch {
+      return "";
+    }
+  };
+  const build = read("pom.xml") + read("build.gradle") + read("build.gradle.kts");
+  if (/spring-boot|org\.springframework\.boot/.test(build)) {
+    return (
+      "A test boots the real application context with no test doubles (`@SpringBootTest` " +
+      "without `@MockBean`, `@Primary` replacements or test profiles): a bean that only " +
+      "production wires can break startup while every other test is green."
+    );
+  }
+  if (/quarkus/.test(build)) {
+    return (
+      "At least one `@QuarkusTest` runs with no `@Mock` or `@InjectMock` replacements, so " +
+      "the application starts with the beans it ships with."
+    );
+  }
+  return null;
+}
+
 export function harnessFiles(
   projectDir: string,
   testCmd: string | null
@@ -135,6 +167,10 @@ export function harnessFiles(
     GATE_COMMAND: testCmd
       ? `${testCmd}\n   specgate validate . --strict`
       : "specgate validate . --strict",
+    STARTUP_TEST_LINE: (() => {
+      const advice = startupTestAdvice(projectDir);
+      return advice ? `\n- ${advice}` : "";
+    })(),
   };
 
   return [

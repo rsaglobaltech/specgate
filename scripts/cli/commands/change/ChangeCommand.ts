@@ -62,6 +62,7 @@ import {
 } from "../../../../packages/core/src/domain/DeclaredArtifacts";
 import { parseTraceability } from "../spec/PlanCommand";
 import { main as instructionsMain } from "../../../change/instructions";
+import { briefOf, draftReport } from "../spec/DraftCommand";
 
 /**
  * The scaffold set as the CLI hands it out: `(changeId, projectDir)`, with the
@@ -118,7 +119,7 @@ function usage() {
       `    ${c.green}--reserve <n>${c.reset}         ${c.dim}(new) Reserve n REQ ids for this change (default 3).${c.reset}\n` +
       `    ${c.green}--strict${c.reset}              ${c.dim}(validate) Treat advisory warnings as failures.${c.reset}\n` +
       `    ${c.green}--dry-run${c.reset}             ${c.dim}(archive) Print the plan, write nothing.${c.reset}\n` +
-      `    ${c.green}--force${c.reset}               ${c.dim}(archive) Archive with unchecked tasks; overwrite features.${c.reset}\n\n`
+      `    ${c.green}--force${c.reset}               ${c.dim}(archive) Archive with unchecked tasks or a draft whose checklist fails; overwrite features.${c.reset}\n\n`
   );
 }
 
@@ -886,6 +887,26 @@ function cmdArchive(opts) {
         fix: "e.g. `specgate change archive add-dynamic-pricing`",
       }),
     ]);
+  }
+
+  // A draft (a change opened from a brief) is archived only once its
+  // checklist passes: reservas_app archived one with two findings open and
+  // nothing said so (#57). `--force` archives anyway, as it does for tasks.
+  if (!opts.force && briefOf(projectDir, changeId)) {
+    const checked = draftReport(projectDir, changeId);
+    if ("report" in checked && checked.report.status.length > 0) {
+      const codes = [...new Set(checked.report.status.map((d) => d.code))].join(", ");
+      return fail(opts, nullShape, [
+        error(
+          "archive_draft_not_ready",
+          `Draft '${changeId}' has ${checked.report.status.length} open finding(s) in its checklist (${codes}).`,
+          {
+            target: changeId,
+            fix: `Run \`specgate draft --check ${changeId}\`, fix what it reports, then archive — or pass --force to archive it as it is.`,
+          }
+        ),
+      ]);
+    }
   }
 
   const repo = new DiskProjectRepository(projectDir);

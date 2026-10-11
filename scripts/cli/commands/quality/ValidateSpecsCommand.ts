@@ -40,7 +40,10 @@ const SUITE_LIES = new Set<string>([
 import { csdaTagsIn } from "../../../../packages/core/src/domain/GherkinTags";
 import { parseTraceabilityRows } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { analyseRequirementText } from "../../../../packages/core/src/domain/RequirementSyntax";
-import { isDerivedMatrix } from "../../../../packages/core/src/domain/DerivedMatrix";
+import {
+  isDerivedMatrix,
+  unreadTraceLines,
+} from "../../../../packages/core/src/domain/DerivedMatrix";
 import { derivedMatrixFor } from "../spec/MatrixCommand";
 import {
   declaredPaths,
@@ -113,6 +116,26 @@ export class ValidateSpecsCommand extends BaseCommand {
   private logFix(lines: string | string[]) {
     for (const line of Array.isArray(lines) ? lines : [lines]) {
       process.stderr.write(`💡 [FIX] ${line}\n`);
+    }
+  }
+
+  /** A `csda:trace` line outside every requirement section is read by nothing (#79). */
+  private warnUnreadTraces(targetDir: string) {
+    const files = ["spec.md"];
+    const caps = path.join(targetDir, CAPABILITIES_DIR);
+    if (fs.existsSync(caps)) {
+      for (const e of fs.readdirSync(caps, { withFileTypes: true })) {
+        if (e.isDirectory()) files.push(path.join(CAPABILITIES_DIR, e.name, "spec.md"));
+      }
+    }
+    for (const rel of files) {
+      const full = path.join(targetDir, rel);
+      if (!fs.existsSync(full)) continue;
+      for (const line of unreadTraceLines(fs.readFileSync(full, "utf8"))) {
+        this.logWarn(
+          `${rel.split(path.sep).join("/")}:${line}: this csda:trace line is not inside a requirement section, so nothing reads it — move it under its \`## REQ-NNN\` heading.`
+        );
+      }
     }
   }
 
@@ -977,6 +1000,8 @@ export class ValidateSpecsCommand extends BaseCommand {
         ]);
       }
     }
+
+    this.warnUnreadTraces(targetDir);
 
     const featuresDir = path.join(targetDir, "features");
     const featureFiles = findRecursive(featuresDir, (f) => f.endsWith(".feature"));
