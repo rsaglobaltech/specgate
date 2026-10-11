@@ -216,7 +216,7 @@ export const NAV: readonly NavSection[] = [
         slug: "case-studies/case-1",
         label: "Worked example: brownfield adoption",
         blurb:
-          "An illustration — invented company, constructed numbers — of the workflow end to end.",
+          "One existing service adopted end to end — invented company, every command and output real.",
       },
       {
         slug: "vs-openspec",

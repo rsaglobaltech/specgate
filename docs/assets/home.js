@@ -36,21 +36,39 @@
 
   // ── The hero stack leans toward the pointer ─────────────────────────────
   //
-  // A few degrees each way, through two custom properties the CSS reads.
-  // Nothing happens on touch screens or under reduced motion.
+  // A few degrees each way, eased so it glides instead of following every
+  // pixel, and back to rest when the pointer leaves. Nothing happens on touch
+  // screens or under reduced motion.
   var stack = document.querySelector(".iso__stack");
-  var art = document.querySelector(".mx__art");
+  var art = document.querySelector(".mx__art .iso");
   if (stack && art && !reduce && window.matchMedia("(hover: hover)").matches) {
+    var target = { x: 0, z: 0 };
+    var cur = { x: 0, z: 0 };
+    var raf = null;
+    var glide = function () {
+      cur.x += (target.x - cur.x) * 0.08;
+      cur.z += (target.z - cur.z) * 0.08;
+      stack.style.setProperty("--tilt-x", cur.x.toFixed(2) + "deg");
+      stack.style.setProperty("--tilt-z", cur.z.toFixed(2) + "deg");
+      if (Math.abs(target.x - cur.x) > 0.02 || Math.abs(target.z - cur.z) > 0.02) {
+        raf = requestAnimationFrame(glide);
+      } else {
+        raf = null;
+      }
+    };
+    var aim = function (x, z) {
+      target.x = x;
+      target.z = z;
+      if (!raf) raf = requestAnimationFrame(glide);
+    };
     art.addEventListener("pointermove", function (e) {
       var r = art.getBoundingClientRect();
-      var x = (e.clientX - r.left) / r.width - 0.5;
-      var y = (e.clientY - r.top) / r.height - 0.5;
-      stack.style.setProperty("--tilt-z", (x * 14).toFixed(2) + "deg");
-      stack.style.setProperty("--tilt-x", (-y * 10).toFixed(2) + "deg");
+      var px = Math.max(-0.5, Math.min(0.5, (e.clientX - r.left) / r.width - 0.5));
+      var py = Math.max(-0.5, Math.min(0.5, (e.clientY - r.top) / r.height - 0.5));
+      aim(-py * 6, px * 8);
     });
     art.addEventListener("pointerleave", function () {
-      stack.style.setProperty("--tilt-z", "0deg");
-      stack.style.setProperty("--tilt-x", "0deg");
+      aim(0, 0);
     });
   }
 

@@ -1022,6 +1022,10 @@ a:hover { text-decoration: underline; }
 .dia__wait-t { fill: var(--amber) !important; font-weight: 600; }
 .dia__box--gate rect { fill: var(--brand); stroke: var(--brand); }
 .dia__on-gate, .dia__on-gate tspan { fill: var(--on-brand) !important; }
+.dia__box--ok rect { fill: color-mix(in srgb, var(--green) 10%, var(--bg-raised)); stroke: var(--green); }
+.dia__box--no rect { fill: color-mix(in srgb, var(--red) 8%, var(--bg-raised)); stroke: var(--red); stroke-dasharray: 5 4; }
+.dia--loop .dia__h { font-family: var(--display); font-size: 15px; letter-spacing: -0.01em; }
+.dia--loop .dia__note { font-style: normal; font-family: var(--mono); font-size: 12px; }
 .dia__mono { font-family: var(--mono); fill: var(--fg); }
 .dia__h { font-size: 14px; font-weight: 700; fill: var(--fg); }
 .dia__s { font-size: 12px; fill: var(--fg-soft); }

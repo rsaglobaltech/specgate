@@ -176,4 +176,6 @@ certifies the skeleton, not the code. Phase 2 changes that.
 | `Gate passed — the specification` and *"nothing here runs your tests"* | No test command | `specgate config set test_cmd "<your command>"` |
 | A new `<slug>/` folder appeared | No build file was found, so `init` scaffolded | Run it at the repository root, where the build file is; or `adopt --var STACK=…` |
 
+Want the whole path on one page first? [A worked example: one service adopted end to end](../case-studies/case-1.md).
+
 **[Next: phase 2 — write down what you rely on →](existing-2-specify.md)**
