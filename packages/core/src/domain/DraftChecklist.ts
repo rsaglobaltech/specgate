@@ -26,6 +26,13 @@ export interface DraftFiles {
   readonly brief?: string;
   readonly assumptions?: string;
   /**
+   * `assumptions.md` of the changes already archived. A MODIFIED requirement
+   * is checked again, and the row that justified it lives in the change that
+   * first wrote it; D12 flagged EventTech's REQ-008 again until the row was
+   * copied into the new draft (#81). Only MODIFIED requirements read it.
+   */
+  readonly archivedAssumptions?: string;
+  /**
    * The project's specification as it stands — `spec.md` and the capability
    * specs. A value already there was reviewed in an earlier change; D6
    * flagged "Configuración" and "11:00" in a second draft for not being in the
@@ -157,9 +164,25 @@ export function rowNamesId(row: string, id: string): boolean {
  * row", which a Markdown table cannot hold; D7 then kept an answered question
  * open and demanded its requirement stay `Needs Clarification` (#45).
  */
+/**
+ * An answer that puts the decision off is not an answer. "Se decidirá con el
+ * cliente antes de implementarlo" filled the Answer cell, D7 took the question
+ * as answered and its requirement stopped waiting, though nobody had decided
+ * anything (HealthTech, #82). A proposal ("propuesta, a validar") is an answer;
+ * "pending", "TBD" or "will be decided" is not.
+ */
+const DEFERRED =
+  /(?<![\p{L}])(se decidir[aá]n?|por decidir|a decidir|sin decidir|pendiente de (?:decidir|decisi[oó]n|respuesta|confirmar)|to be decided|will be decided|decide later|tbd)(?![\p{L}])/iu;
+const DEFERRED_ALONE = /^(pendiente|pending|later|tbd|todo|\?+|-+)\.?$/i;
+
+export function deferredAnswer(answer: string): boolean {
+  const text = answer.replace(/\*\*/g, "").trim();
+  return DEFERRED.test(text) || DEFERRED_ALONE.test(text);
+}
+
 function questionRows(
   md: string
-): Array<{ row: string; blocks: string[]; line: number; answered: boolean }> {
+): Array<{ row: string; blocks: string[]; line: number; answered: boolean; deferred: boolean }> {
   const lines = md.replace(/\r\n/g, "\n").split("\n");
   const header = lines.findIndex((l) => /^\|.*\bBlocks\b.*\|/i.test(l));
   if (header === -1) return [];
@@ -167,18 +190,28 @@ function questionRows(
   const at = cols.indexOf("blocks");
   const answerCol = cols.findIndex((c) => c === "answer" || c === "respuesta");
   const answerLines = lines.filter((l) => /^\s*(?:[-*]\s*)?\**(answer|respuesta)\b/i.test(l));
-  const out: Array<{ row: string; blocks: string[]; line: number; answered: boolean }> = [];
+  const out: Array<{
+    row: string;
+    blocks: string[];
+    line: number;
+    answered: boolean;
+    deferred: boolean;
+  }> = [];
   for (let i = header + 2; i < lines.length && /^\|/.test(lines[i]); i += 1) {
     const cells = lines[i].split("|").map((c) => c.trim());
     const row = cells[1] || `row ${i + 1}`;
     const named = new RegExp(`(^|[^A-Za-z0-9])${escapeRegExp(row)}(?![A-Za-z0-9])`);
+    const answers = [
+      ...(answerCol > 0 && (cells[answerCol] || "").length > 0 ? [cells[answerCol]] : []),
+      ...answerLines.filter((l) => named.test(l)).map((l) => l.replace(/^[^:]*:\s*/, "")),
+    ];
+    const deferred = answers.length > 0 && answers.every(deferredAnswer);
     out.push({
       row,
       blocks: (cells[at] || "").match(/REQ-[A-Za-z0-9.]+/g) || [],
       line: i + 1,
-      answered:
-        (answerCol > 0 && (cells[answerCol] || "").length > 0) ||
-        answerLines.some((l) => named.test(l)),
+      answered: answers.length > 0 && !deferred,
+      deferred,
     });
   }
   return out;
@@ -233,6 +266,8 @@ export interface ApiCall {
   readonly path: string;
   /** The path before its first id segment; undefined when it has none. */
   readonly collection?: string;
+  /** Where in the step the call is written. */
+  readonly at: number;
 }
 
 /** The HTTP calls a step names: `POST /api/transferencias/{id}/liquidacion`. */
@@ -246,17 +281,10 @@ export function apiCalls(step: string): ApiCall[] {
       method: m[1].toUpperCase(),
       path: pathOnly,
       collection: at > 0 ? segments.slice(0, at).join("/") || "/" : undefined,
+      at: m.index ?? 0,
     });
   }
   return out;
-}
-
-/** A brief actor named as a word in the text ("el operador", "the Owner"). */
-function actorNamed(text: string, actors: ReadonlyArray<string>): string | undefined {
-  const lower = text.toLowerCase();
-  return actors.find((a) =>
-    new RegExp(`(?<![\\p{L}])${escapeRegExp(a)}(?:es|s)?(?![\\p{L}])`, "u").test(lower)
-  );
 }
 
 interface ActorScenario {
@@ -432,6 +460,8 @@ export function checkDraft(files: DraftFiles): DraftReport {
     }
   }
 
+  const archivedRows = (files.archivedAssumptions || "").split("\n");
+
   // D6 — a stated value is in the brief or listed as an assumption.
   if (!files.brief) {
     skipped.push({ rule: "D6", why: "no brief given" });
@@ -448,9 +478,14 @@ export function checkDraft(files: DraftFiles): DraftReport {
             seen.add(v);
             if (inText(v, files.brief)) continue;
             if (files.specText && inText(v, files.specText)) continue;
-            const listed = assumptions
-              .split("\n")
-              .some((row) => inText(v, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id)));
+            // A value the requirement's own obligation states, under a `Source:`
+            // line, is the cited norm's: "24 characters" and "modulo 97" of ISO
+            // 13616 had to be copied into assumptions.md (FinCore, #75).
+            if (SOURCED.test(r.text) && inText(v, r.text)) continue;
+            const rows = assumptions.split("\n").concat(r.modified ? archivedRows : []);
+            const listed = rows.some(
+              (row) => inText(v, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id))
+            );
             if (listed) continue;
             status.push(
               error(
@@ -491,7 +526,9 @@ export function checkDraft(files: DraftFiles): DraftReport {
           status.push(
             error(
               "D7_floating_question",
-              `Question ${q.row} blocks ${id}, and ${id} is not Needs Clarification.`,
+              q.deferred
+                ? `Question ${q.row} blocks ${id}; its answer puts the decision off, so it is still open, and ${id} is not Needs Clarification.`
+                : `Question ${q.row} blocks ${id}, and ${id} is not Needs Clarification.`,
               {
                 ...at(r),
                 fix: `Set status="Needs Clarification" in ${id}'s csda:trace, so it cannot be built around the question.`,
@@ -586,20 +623,43 @@ export function checkDraft(files: DraftFiles): DraftReport {
   // assumptions.md that says where the id comes from.
   {
     const actors = [...surfaces.keys()];
-    const actorOf = (declared: string | undefined, step: string) =>
-      (declared || "").toLowerCase() || actorNamed(step, actors);
+    // Who makes a call: the last actor the step names before it, else the
+    // requirement's. In EventTech one step had the organizer create a shuttle
+    // and the attendee list them; D12 credited both calls to the organizer
+    // (#80).
+    const callerOf = (declared: string | undefined, step: string, call: ApiCall) => {
+      const before = step.slice(0, call.at).toLowerCase();
+      let best: { actor: string; at: number } | undefined;
+      for (const a of actors) {
+        const re = new RegExp(`(?<![\\p{L}])${escapeRegExp(a)}(?:es|s)?(?![\\p{L}])`, "gu");
+        for (const m of before.matchAll(re)) {
+          if (!best || (m.index ?? 0) > best.at) best = { actor: a, at: m.index ?? 0 };
+        }
+      }
+      return best?.actor || (declared || "").toLowerCase() || undefined;
+    };
     const known: ActorScenario[] = [
       ...reqs.flatMap((r) =>
         r.scenarios.map((s) => ({ actor: r.trace.actor?.toLowerCase(), steps: s.steps }))
       ),
       ...(files.specs || []).flatMap((f) => specScenarios(f.source)),
     ];
+    // The list may be nested under its parent: the organizer lists
+    // `GET /api/eventos/{id}/sesiones` and moves `POST /api/sesiones/{id}/sala`.
+    // Same resource name at the end, same thing; D12 asked for an assumption
+    // row in three EventTech drafts until it read it that way (#80).
+    const lastSegment = (p: string) => p.split("/").filter(Boolean).pop() || "";
+    const lists = (path: string, collection: string) =>
+      path === collection ||
+      (lastSegment(path) === lastSegment(collection) && !isIdSegment(lastSegment(path)));
     const obtains = (actor: string, collection: string) =>
       known.some((s) =>
         s.steps.some((step) => {
-          if (actorOf(s.actor, step) !== actor) return false;
           return apiCalls(step).some(
-            (c) => c.path === collection && (c.method === "GET" || c.method === "POST")
+            (c) =>
+              callerOf(s.actor, step, c) === actor &&
+              lists(c.path, collection) &&
+              (c.method === "GET" || c.method === "POST")
           );
         })
       );
@@ -608,15 +668,18 @@ export function checkDraft(files: DraftFiles): DraftReport {
     for (const r of reqs) {
       for (const s of r.scenarios) {
         for (const step of s.steps) {
-          const actor = actorOf(r.trace.actor, step);
-          if (!actor) continue;
           for (const c of apiCalls(step)) {
-            if (!c.collection) continue;
+            const actor = callerOf(r.trace.actor, step, c);
+            if (!actor || !c.collection) continue;
             const key = `${r.id} ${actor} ${c.collection}`;
             if (reported.has(key) || obtains(actor, c.collection)) continue;
-            if (rows.some((row) => rowNamesId(row, r.id) && row.includes(c.collection!))) continue;
+            const own = r.modified ? rows.concat(archivedRows) : rows;
+            if (own.some((row) => rowNamesId(row, r.id) && row.includes(c.collection!))) continue;
             reported.add(key);
-            const who = r.trace.actor || actor.charAt(0).toUpperCase() + actor.slice(1);
+            const who =
+              r.trace.actor && r.trace.actor.toLowerCase() === actor
+                ? r.trace.actor
+                : actor.charAt(0).toUpperCase() + actor.slice(1);
             status.push(
               error(
                 "D12_unreachable_id",

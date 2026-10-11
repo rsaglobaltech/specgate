@@ -37,7 +37,8 @@ function usage(): string {
     "  D3 a scenario per surface each actor uses    D7 an open question names what it blocks\n" +
     "  D4 a non-functional requirement is measured  D8 the draft is small enough to review\n" +
     "                                                D9 every scenario passes the harness gate's rules\n" +
-    "                                                D10 no id the project already uses\n\n" +
+    "                                                D10 no id the project already uses\n" +
+    "                                                D12 an actor can get the ids it acts on\n\n" +
     "  --brief <file>   The brief the draft came from. Without it D3 and D6 cannot\n" +
     "                   run, and the report says so. Also read from `brief:` in change.yaml.\n"
   );
@@ -144,6 +145,83 @@ function projectIds(projectDir: string): Map<string, string> {
 
 const readIf = (file: string) => (fs.existsSync(file) ? fs.readFileSync(file, "utf8") : undefined);
 
+/** `assumptions.md` of every archived change, for MODIFIED requirements (#81). */
+export function archivedAssumptions(projectDir: string): string {
+  const archive = path.join(projectDir, CHANGES, "archive");
+  let dirs: string[] = [];
+  try {
+    dirs = fs.readdirSync(archive).sort();
+  } catch {
+    return "";
+  }
+  return dirs
+    .map((d) => readIf(path.join(archive, d, "assumptions.md")) || "")
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Whether a change was opened from a brief (`brief:` in change.yaml): a draft. */
+export function briefOf(projectDir: string, changeId: string): string | undefined {
+  const yaml = readIf(path.join(projectDir, CHANGES, changeId, "change.yaml")) || "";
+  const m = /^brief:\s*["']?([^"'\n]+)["']?\s*$/m.exec(yaml);
+  return m ? m[1].trim() : undefined;
+}
+
+/**
+ * The checklist on one change, as `draft --check` runs it. Shared with
+ * `change archive`, which refuses a draft that does not pass it (#57).
+ */
+export function draftReport(
+  projectDir: string,
+  changeId: string,
+  briefOption = "",
+  maxRequirements = 25
+): { report: ReturnType<typeof checkDraft> } | { failure: ReturnType<typeof error> } {
+  const changeDir = path.join(projectDir, CHANGES, changeId);
+  if (!fs.existsSync(changeDir)) {
+    return {
+      failure: error("draft_no_change", `No change '${changeId}' under ${CHANGES}/.`, {
+        fix: "specgate change list — or open one with `specgate change new <id>`.",
+      }),
+    };
+  }
+  const specs = path.join(changeDir, "specs");
+  const deltas = specFiles(specs).map((rel) => ({
+    path: path.join(CHANGES, changeId, "specs", rel).split(path.sep).join("/"),
+    source: fs.readFileSync(path.join(specs, rel), "utf8"),
+  }));
+  if (deltas.length === 0) {
+    return {
+      failure: error(
+        "draft_no_specs",
+        `Change '${changeId}' has no specs/<capability>/spec.md to check.`
+      ),
+    };
+  }
+  // The brief: --brief, else `brief: <path>` in change.yaml.
+  const briefPath = briefOption || briefOf(projectDir, changeId);
+  let brief: string | undefined;
+  if (briefPath) {
+    brief = readIf(path.resolve(projectDir, briefPath));
+    if (brief === undefined) {
+      return { failure: error("draft_no_brief", `The brief ${briefPath} does not exist.`) };
+    }
+  }
+  return {
+    report: checkDraft({
+      deltas,
+      brief,
+      assumptions: readIf(path.join(changeDir, "assumptions.md")),
+      archivedAssumptions: archivedAssumptions(projectDir),
+      specText: projectSpecText(projectDir),
+      idsInUse: projectIds(projectDir),
+      specs: projectSpecs(projectDir),
+      questions: readIf(path.join(changeDir, "questions.md")),
+      maxRequirements,
+    }),
+  };
+}
+
 export class DraftCommand extends BaseCommand {
   public execute(): void {
     const io0 = agentIo(wantsJson(this.args));
@@ -158,56 +236,12 @@ export class DraftCommand extends BaseCommand {
     const opts = o!;
     const io = agentIo(opts.json);
     const projectDir = resolveProjectDir(opts.projectDir);
-    const changeDir = path.join(projectDir, CHANGES, opts.check);
-    if (!fs.existsSync(changeDir)) {
-      io.fail({ draft: null }, [
-        error("draft_no_change", `No change '${opts.check}' under ${CHANGES}/.`, {
-          fix: "specgate change list — or open one with `specgate change new <id>`.",
-        }),
-      ]);
+    const result = draftReport(projectDir, opts.check, opts.brief, opts.maxRequirements);
+    if ("failure" in result) {
+      io.fail({ draft: null }, [result.failure]);
+      return;
     }
-
-    const specs = path.join(changeDir, "specs");
-    const deltas = specFiles(specs).map((rel) => ({
-      path: path.join(CHANGES, opts.check, "specs", rel).split(path.sep).join("/"),
-      source: fs.readFileSync(path.join(specs, rel), "utf8"),
-    }));
-    if (deltas.length === 0) {
-      io.fail({ draft: null }, [
-        error(
-          "draft_no_specs",
-          `Change '${opts.check}' has no specs/<capability>/spec.md to check.`
-        ),
-      ]);
-    }
-
-    // The brief: --brief, else `brief: <path>` in change.yaml.
-    let briefPath = opts.brief;
-    if (!briefPath) {
-      const yaml = readIf(path.join(changeDir, "change.yaml")) || "";
-      const m = /^brief:\s*["']?([^"'\n]+)["']?\s*$/m.exec(yaml);
-      if (m) briefPath = m[1].trim();
-    }
-    let brief: string | undefined;
-    if (briefPath) {
-      brief = readIf(path.resolve(projectDir, briefPath));
-      if (brief === undefined) {
-        io.fail({ draft: null }, [
-          error("draft_no_brief", `The brief ${briefPath} does not exist.`),
-        ]);
-      }
-    }
-
-    const report = checkDraft({
-      deltas,
-      brief,
-      assumptions: readIf(path.join(changeDir, "assumptions.md")),
-      specText: projectSpecText(projectDir),
-      idsInUse: projectIds(projectDir),
-      specs: projectSpecs(projectDir),
-      questions: readIf(path.join(changeDir, "questions.md")),
-      maxRequirements: opts.maxRequirements,
-    });
+    const report = result.report;
     const status = [
       ...report.status,
       ...report.skipped.map((s) =>

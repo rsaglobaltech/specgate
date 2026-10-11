@@ -8,6 +8,45 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`done REQ-a REQ-b …` closes several requirements with one run of the
+  tests (#77).** Each requirement is still validated on its own and reported
+  on its own line; one that fails is left as it was and the others close. In
+  FinCore, eight `done` were eight runs of a suite that starts Postgres.
+- **A startup test for Spring and Quarkus projects (#78).** `adopt`/`init`
+  suggest one, and the harness prompt requires it for Spring: a test that boots
+  the real context with no test doubles. FinCore did not start for a whole
+  module while every test, and CI, were green.
+- **[From a client brief to a running product](docs/new-project.md)**: the
+  step-by-step guide distilled from six pilots.
+- **`validate` warns about a `csda:trace` line no requirement section owns
+  (#79)** — above the first requirement or under another heading — since
+  nothing reads it.
+
+### Changed
+
+- **`change archive` refuses a draft whose checklist fails (#57).** A change
+  with `brief:` in `change.yaml` is checked with `draft --check` first;
+  `archive_draft_not_ready` names the findings, and `--force` archives anyway.
+  This also closes #58: a draft can no longer pass by being archived.
+
+### Fixed
+
+- **D12 reads nested lists (#80).** The organizer lists
+  `GET /api/eventos/{id}/sesiones` and moves `POST /api/sesiones/{id}/sala`: the
+  same resource, and D12 asked for an assumption row in three EventTech drafts.
+  A list whose last segment names the collection now counts, and the caller of
+  each call is the actor the step names before it.
+- **A MODIFIED requirement reads the assumptions of the change that first
+  wrote it (#81)**, in D6 and D12: EventTech's REQ-008 needed its row copied
+  into the new draft.
+- **A deferred answer is not an answer (#82).** "Se decidirá con el cliente",
+  "TBD" or "pending" in a question's `Answer` keeps it open: D7 asks for
+  `Needs Clarification` and `status` lists it as waiting.
+- **D6 accepts values the requirement's own obligation states under a
+  `Source:` line (#75)**: "24" and "97" of ISO 13616 in FinCore.
+
 ## [0.17.9] — 2026-10-10
 
 ### Added

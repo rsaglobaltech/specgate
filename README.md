@@ -87,7 +87,7 @@ written from a client's brief to eleven rules — scenarios per actor and surfac
 sourced laws, every value in the brief or listed as an assumption, open
 questions that block, ids each actor can reach. Teams on OpenSpec keep it: `specgate verify` fails while
 a change claims a scenario no test names.
-→ [From a client brief](docs/from-a-brief.md) · [Already on OpenSpec](docs/openspec.md)
+→ [A new project, step by step](docs/new-project.md) · [From a client brief](docs/from-a-brief.md) · [Already on OpenSpec](docs/openspec.md)
 
 **Your agent works the same loop.** `specgate agents init` gives Claude Code,
 Cursor, Copilot, Windsurf, Aider, Gemini, Cline, Codex or Antigravity the five

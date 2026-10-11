@@ -43,6 +43,8 @@ export const DELIVERED_STATUSES = ["Implemented", "Verified", "Released"];
 
 export interface DoneOptions {
   reqId: string | null;
+  /** Every id given: `done REQ-002 REQ-003` closes both with one run of the suite (#77). */
+  reqIds: string[];
   status: string;
   projectDir: string;
   check: boolean;
@@ -57,6 +59,7 @@ export interface DoneOptions {
 export function parseArgs(argv: string[]): DoneOptions {
   const opts: DoneOptions = {
     reqId: null,
+    reqIds: [],
     status: "Implemented",
     projectDir: ".",
     check: false,
@@ -73,8 +76,9 @@ export function parseArgs(argv: string[]): DoneOptions {
     else if (a === "--strict") {
       opts.strict = true;
       opts.check = true;
-    } else if (!opts.reqId && !a.startsWith("-")) {
-      opts.reqId = a;
+    } else if (!a.startsWith("-")) {
+      if (!opts.reqId) opts.reqId = a;
+      opts.reqIds.push(a);
     }
   }
   // A status that claims delivery runs the gate unless told not to. `done`
@@ -99,10 +103,11 @@ export class DoneCommand extends BaseCommand {
     if (this.args.includes("--help") || this.args.includes("-h")) {
       process.stdout.write(
         "Usage:\n" +
-          "  specgate done <REQ-id> [--status <Status>] [--no-check]\n" +
+          "  specgate done <REQ-id> [<REQ-id> …] [--status <Status>] [--no-check]\n" +
           '                       [--test-cmd "<command>"] [--project-dir <path>] [--json]\n\n' +
           "Marks a requirement delivered — after the gate `specgate check` runs passes\n" +
-          "for it. Nothing is written when it fails.\n\n" +
+          "for it. Nothing is written when it fails. Several ids are checked one by one\n" +
+          "and the project's tests run once for all of them.\n\n" +
           "Options:\n" +
           `  --status <Status>   Target status (default: Implemented).\n` +
           `                      One of: ${ALLOWED_STATUSES.join(", ")}\n` +
@@ -126,6 +131,7 @@ export class DoneCommand extends BaseCommand {
         }),
       ]);
     }
+    if (opts.reqIds.length > 1) return this.executeMany(opts, io);
     if (!/^REQ-\d+$/.test(opts.reqId!)) {
       io.usage(NULL_SHAPE, [
         error("req_id_malformed", `Invalid REQ-id: ${opts.reqId} (expected REQ-NNN).`, {
@@ -300,5 +306,164 @@ export class DoneCommand extends BaseCommand {
     }
 
     process.exit(EXIT.OK);
+  }
+
+  /**
+   * `done REQ-a REQ-b …`: each requirement is checked on its own, and the
+   * project's tests run once. Closing eight requirements was eight runs of a
+   * suite that starts Postgres every time (FinCore, #77). A requirement that
+   * fails its own checks is reported and left as it was; the others close.
+   */
+  private executeMany(opts: DoneOptions, io: ReturnType<typeof agentIo>): void {
+    const NULL_SHAPE = { requirements: null };
+    const bad = opts.reqIds.find((id) => !/^REQ-\d+$/.test(id));
+    if (bad) {
+      io.usage(NULL_SHAPE, [
+        error("req_id_malformed", `Invalid REQ-id: ${bad} (expected REQ-NNN).`, {
+          target: bad,
+          fix: "Use the REQ-NNN form, e.g. REQ-007.",
+        }),
+      ]);
+    }
+    let projectDir: string;
+    try {
+      projectDir = resolveProjectDir(opts.projectDir);
+    } catch (err: any) {
+      io.usage(NULL_SHAPE, [
+        error("project_not_found", err.message, {
+          fix: "Run from inside a spec-driven project, or pass --project-dir.",
+        }),
+      ]);
+      return;
+    }
+    refreshDerivedMatrix(projectDir);
+    const ids = [...new Set(opts.reqIds)];
+    const results = new Map<
+      string,
+      { ok: boolean; code?: string; message?: string; detail?: string }
+    >();
+    const harness = readHarnessConfig(projectDir) || ({} as any);
+    const testCmd = opts.testCmd || harness.testCmd;
+    const gated = opts.check && DELIVERED_STATUSES.includes(opts.status);
+    const tracePath = path.join(projectDir, "docs", "specs", "traceability.md");
+
+    for (const id of ids) {
+      if (gated && fs.existsSync(tracePath)) {
+        const blocker = deliveryBlocker(fs.readFileSync(tracePath, "utf8"), id);
+        if (blocker) {
+          results.set(id, { ok: false, code: blocker.code, message: blocker.message });
+          continue;
+        }
+      }
+      const plan = planDoneVerification(projectDir, {
+        check: opts.check,
+        strict: opts.strict,
+        reqId: id,
+        testCmd: undefined,
+      });
+      const validate = plan.steps.find((s) => s.stage === "validate");
+      if (validate) {
+        const run = spawnSync(
+          process.execPath,
+          [path.join(findCliRoot(__dirname), "bin", "specgate.js"), "validate", ...validate.argv],
+          { encoding: "utf8" }
+        );
+        if (run.status !== 0) {
+          results.set(id, {
+            ok: false,
+            code: "done_validate_failed",
+            message: "validation failed",
+            detail: `${run.stdout || ""}${run.stderr || ""}`.trim(),
+          });
+          continue;
+        }
+      }
+      results.set(id, { ok: true });
+    }
+
+    const passing = ids.filter((id) => results.get(id)!.ok);
+    let testsUnverified = false;
+    if (passing.length > 0 && opts.check) {
+      const cmd = (testCmd || "").trim();
+      if (cmd === "") {
+        testsUnverified = true;
+      } else {
+        const run = spawnSync(cmd, { cwd: projectDir, encoding: "utf8", shell: true });
+        if (run.status !== 0) {
+          const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
+          if (detail && !opts.json) process.stderr.write(`${detail}\n\n`);
+          for (const id of passing) {
+            results.set(id, {
+              ok: false,
+              code: "done_tests_failed",
+              message: "the project's tests failed",
+            });
+          }
+        }
+      }
+    }
+
+    for (const id of ids.filter((x) => results.get(x)!.ok)) {
+      const derivedRows = isDerivedProject(projectDir)
+        ? writeRequirementFields(projectDir, id, { status: opts.status })
+        : undefined;
+      const result =
+        derivedRows === undefined
+          ? new UpdateRequirementStatusUseCase(new DiskTraceabilityRepository()).execute(
+              projectDir,
+              id,
+              opts.status
+            )
+          : derivedRows === null
+            ? {
+                ok: false,
+                error: `${id} has no section in spec.md or in a capability spec.`,
+                updated: 0,
+              }
+            : { ok: true, updated: derivedRows };
+      if (!result.ok) {
+        results.set(id, {
+          ok: false,
+          code: "requirement_not_in_matrix",
+          message: result.error || `${id} not found in traceability.md`,
+        });
+      }
+    }
+
+    const failed = ids.filter((id) => !results.get(id)!.ok);
+    const doc = {
+      requirements: ids.map((id) => {
+        const r = results.get(id)!;
+        return r.ok
+          ? { id, status: opts.status, ok: true }
+          : { id, ok: false, code: r.code, message: r.message };
+      }),
+    };
+    if (opts.json) {
+      process.stdout.write(`${JSON.stringify(doc, null, 2)}\n`);
+    } else {
+      for (const id of ids) {
+        const r = results.get(id)!;
+        if (r.ok) {
+          process.stdout.write(
+            `${c.green}✔${c.reset}  ${c.bold}${id}${c.reset} → ${c.bold}${opts.status}${c.reset}\n`
+          );
+        } else {
+          if (r.detail) process.stderr.write(`${r.detail}\n\n`);
+          process.stdout.write(
+            `${c.red}✖${c.reset}  ${c.bold}${id}${c.reset} not marked ${opts.status}: ${r.message}. ${c.dim}[${r.code}]${c.reset}\n`
+          );
+        }
+      }
+      if (ids.length > 1) {
+        process.stdout.write(
+          `${c.dim}   ${ids.length - failed.length} of ${ids.length} closed; the project's tests ran ${passing.length > 0 && opts.check && !testsUnverified ? "once" : "no times"}.${c.reset}\n`
+        );
+      }
+      if (testsUnverified) {
+        process.stderr.write(`${c.yellow}⚠${c.reset}  ${NO_TEST_COMMAND_WARNING.message}\n`);
+      }
+    }
+    process.exit(failed.length > 0 ? EXIT.FAILURE : EXIT.OK);
   }
 }

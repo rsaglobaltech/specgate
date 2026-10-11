@@ -82,6 +82,11 @@ export const NAV: readonly NavSection[] = [
         label: "From a client brief",
         blurb: "A brief to a reviewed draft: assumptions, open questions and the draft checklist.",
       },
+      {
+        slug: "new-project",
+        label: "A new project, step by step",
+        blurb: "The twelve steps six pilots took, from a client's brief to a running product.",
+      },
     ],
   },
   {

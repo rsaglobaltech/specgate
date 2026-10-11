@@ -82,6 +82,33 @@ export interface DerivedRequirement {
 const SECTION_HEADING = /^(#{2,4})\s+(?:Requirement:\s*)?(REQ-[A-Za-z0-9.]+)\b\s*[—–:-]?\s*(.*)$/;
 const TRACE_LINE = /^\s*<!--\s*csda:trace\b/;
 
+/**
+ * `csda:trace` lines no requirement section owns: above the first requirement,
+ * or under a heading that is not one. Nothing reads them, so a status written
+ * there is silently ignored (#79). Line numbers are 1-based.
+ */
+export function unreadTraceLines(spec: string): number[] {
+  const lines = String(spec || "")
+    .replace(/\r\n/g, "\n")
+    .split("\n");
+  const out: number[] = [];
+  let inside = 0; // the heading level of the requirement section we are in, or 0
+  let fenced = false;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (/^\s*(```|~~~)/.test(lines[i])) fenced = !fenced;
+    if (fenced) continue;
+    const heading = /^(#{1,6})\s+\S/.exec(lines[i]);
+    if (heading) {
+      const m = SECTION_HEADING.exec(lines[i].trim());
+      if (m) inside = m[1].length;
+      else if (inside && heading[1].length <= inside) inside = 0;
+      continue;
+    }
+    if (TRACE_LINE.test(lines[i]) && !inside) out.push(i + 1);
+  }
+  return out;
+}
+
 /** Every `## REQ-NNN — title` section in `spec.md`, in document order. */
 export function requirementsIn(spec: string): DerivedRequirement[] {
   const lines = String(spec || "")
