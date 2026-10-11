@@ -132,130 +132,240 @@
   </div>
 </section>
 
-<!-- ── Lifecycle ────────────────────────────────────────────────────────── -->
-<section class="ed-band ed-band--paper" id="lifecycle">
+<!-- ── Your journey ─────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper" id="journey">
   <div class="ed-wrap">
     <div class="ed-head reveal">
-      <p class="ed-eyebrow">The lifecycle</p>
-      <h2 class="ed-h2">From a brief to a proven requirement, in ten steps.</h2>
-      <p class="ed-muted">Specify, build, prove. The order matters: nothing is
-         built before it is specified, and nothing counts as done until the gate
-         has checked it. Follow one requirement through the whole path.</p>
+      <p class="ed-eyebrow">Your journey</p>
+      <h2 class="ed-h2">Five phases, from your first command to a gate in CI.</h2>
+      <p class="ed-muted">Pick where you start. Each phase says who does the work —
+         you, your agent or the gate — what to run, what you see, and what you
+         have when it is over.</p>
     </div>
 
-    <div class="lc" data-lc>
-      <ol class="lc__phases" aria-hidden="true">
-        <li style="--span:4"><span>Specify</span></li>
-        <li style="--span:3"><span>Build</span></li>
-        <li style="--span:3"><span>Prove</span></li>
-      </ol>
-      <ol class="lc__track">
-        <li class="lc__step" data-phase-start="Specify" data-phase="specify">
-          <button class="lc__dot" type="button"><span class="lc__n">1</span><span class="lc__name">Brief</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>docs/brief.md</code></p>
-            <h3>Keep the client's words in the repository</h3>
-            <p>The brief goes in as it arrived. A short front matter names who uses
-               the product and through which surfaces — the checklist uses it to
-               ask for a scenario per actor and screen.</p>
-          </div>
-        </li>
-        <li class="lc__step" data-phase="specify">
-          <button class="lc__dot" type="button"><span class="lc__n">2</span><span class="lc__name">Draft</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>specgate change new</code></p>
-            <h3>One module at a time, as a change</h3>
-            <p>You or your agent write requirements and Gherkin scenarios for one
-               module. Small enough to review in one sitting — the checklist stops
-               at 25 requirements.</p>
-          </div>
-        </li>
-        <li class="lc__step" data-phase="specify">
-          <button class="lc__dot" type="button"><span class="lc__n">3</span><span class="lc__name">Check</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>specgate draft --check</code></p>
-            <h3>Every value comes from somewhere</h3>
-            <p>Twelve rules. A number the brief never gave is either written down
-               as an assumption or becomes a question — and the requirement it
-               blocks waits for the client instead of being guessed.</p>
-          </div>
-        </li>
-        <li class="lc__step" data-phase="specify">
-          <button class="lc__dot" type="button"><span class="lc__n">4</span><span class="lc__name">Archive</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>specgate change archive</code></p>
-            <h3>The specification lands in one step</h3>
-            <p>Requirements, one feature file each, and their rows in the
-               traceability matrix. Everything arrives as Draft, so the spec can
-               merge before any code exists.</p>
-          </div>
-        </li>
-        <li class="lc__step" data-phase-start="Build" data-phase="build">
-          <button class="lc__dot" type="button"><span class="lc__n">5</span><span class="lc__name">Next</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>specgate status</code></p>
-            <h3>What to build, in order</h3>
-            <p>What is open, ordered by what blocks what — and the single next
-               command to run. Requirements waiting for an answer are listed
-               apart, with the question that blocks them.</p>
-          </div>
-        </li>
-        <li class="lc__step" data-phase="build">
-          <button class="lc__dot" type="button"><span class="lc__n">6</span><span class="lc__name">Build</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>specgate harness run</code></p>
-            <h3>One requirement, one worktree, one agent</h3>
-            <p>The harness hands each pending requirement to your agent in its own
-               git worktree, runs the gate on the result, and stops if the gate says no.
-               A person can do the same step by hand: write the test,
-               write the code.</p>
-          </div>
-        </li>
-        <li class="lc__step" data-phase="build">
-          <button class="lc__dot" type="button"><span class="lc__n">7</span><span class="lc__name">Review</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>harness/REQ-…</code></p>
-            <h3>You review, you merge</h3>
-            <p>One branch per requirement, each with its own test. The harness
-               never merges: what to keep is a judgement, and it stays yours.</p>
-          </div>
-        </li>
-        <li class="lc__step" data-phase-start="Prove" data-phase="prove">
-          <button class="lc__dot" type="button"><span class="lc__n">8</span><span class="lc__name">Done</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>specgate done</code></p>
-            <h3>Marked only when it is true</h3>
-            <p>Runs the gate for that requirement and marks it Implemented only if it
-               passes. While it fails, it writes nothing — and what it closes, CI
-               will not reopen.</p>
-          </div>
-        </li>
-        <li class="lc__step" data-phase="prove">
-          <button class="lc__dot" type="button"><span class="lc__n">9</span><span class="lc__name">Gate</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>specgate check</code></p>
-            <h3>The whole chain, on every pull request</h3>
-            <p>The specification, the matrix, then your own tests. This is what CI runs,
-               and the last thing you run before asking for review.</p>
-          </div>
-        </li>
-        <li class="lc__step" data-phase="prove">
-          <button class="lc__dot" type="button"><span class="lc__n">10</span><span class="lc__name">Report</span></button>
-          <div class="lc__body">
-            <p class="lc__cmd"><code>specgate report</code></p>
-            <h3>One page for the product owner</h3>
-            <p>Done, pending, missing a test, waiting for an answer — per
-               requirement, generated from the same matrix the gate enforces.</p>
-          </div>
-        </li>
-      </ol>
-      <p class="lc__aside">
-        <span class="chip chip--wait">Waiting for an answer</span>
-        A requirement blocked by an open question skips steps 6–8: the harness
-        will not build it and <code>done</code> refuses it until the client
-        answers. Then it rejoins the queue at step 5.
-      </p>
+    <div class="jn" data-journey>
+      <div class="jn__switch" role="tablist" aria-label="Where you start">
+        <button type="button" role="tab" id="jn-tab-new" aria-controls="jn-new" aria-selected="true">
+          <span class="jn__switch-k">Start from scratch</span>
+          <span class="jn__switch-s">A new product, maybe a client's brief</span>
+        </button>
+        <button type="button" role="tab" id="jn-tab-old" aria-controls="jn-old" aria-selected="false">
+          <span class="jn__switch-k">Bring an existing project</span>
+          <span class="jn__switch-s">Code that already runs, tests that already pass</span>
+        </button>
+      </div>
+
+      <div class="jn__panel" role="tabpanel" id="jn-new" aria-labelledby="jn-tab-new">
+        <ol class="jn__track">
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">1</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 1 · <span>about 5 minutes</span></p>
+                <h3>Install and set up</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--gate">The gate</li></ul>
+              </header>
+              <p class="jn__what">Create the project with your own tools — <code>npm init</code>, Spring Initializr, <code>cargo new</code> — then let Specgate set itself up in place. It writes specifications, never application code.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ npx @rsaglobaltech/specgate@latest init</span>
+…write spec.md
+…write AGENTS.md
+…write docs/specs/traceability.md
+<span class="jn__c">$ specgate config set test_cmd &quot;node --test&quot;</span>
+<span class="t-yes">  ✔  test_cmd = node --test</span>
+<span class="jn__c">$ specgate check</span>
+<span class="t-yes">✔  Gate passed — the specification and `node --test`</span></code></pre>
+              <p class="jn__have"><strong>You now have</strong> a specification, an agent contract every coding agent reads, and a gate that already runs your tests.</p>
+              <a class="jn__more" href="./start/scratch-1-install.html">From scratch · phase 1, step by step →</a>
+            </div>
+          </li>
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">2</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 2 · <span>an hour per module</span></p>
+                <h3>From the brief to a checked spec</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li><li class="jn__who jn__who--gate">The gate</li></ul>
+              </header>
+              <p class="jn__what">Keep the client's brief in the repository. Your agent drafts one module as a change; <code>draft --check</code> stops on anything the brief never said. What only the client can answer becomes a question, not a guess.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate change new draft-bookings --capability bookings</span>
+<span class="t-yes">  ✔ Change draft-bookings created</span>
+<span class="jn__c">$ specgate draft --check draft-bookings --brief docs/brief.md</span>
+<span class="t-no">  ✖  D6_unlisted_value  SCN-005 states &quot;5&quot;, which is not in the brief</span>
+<span class="jn__x">list it as an assumption, or turn it into a question</span>
+<span class="t-yes">  ✔  Ready to review.</span>
+<span class="jn__c">$ specgate change archive draft-bookings</span>
+<span class="t-yes">  ✔ Archived — 3 added</span></code></pre>
+              <p class="jn__have"><strong>You now have</strong> requirements and Gherkin scenarios a person reviewed, every invented value either sourced or asked about.</p>
+              <a class="jn__more" href="./start/scratch-2-specify.html">From scratch · phase 2, step by step →</a>
+            </div>
+          </li>
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">3</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 3 · <span>per requirement</span></p>
+                <h3>Build the first requirement</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li></ul>
+              </header>
+              <p class="jn__what"><code>specgate status</code> names the single next command to run. Write the test first and name the requirement in it — that mention is the link. Build it by hand, or hand it to the harness: one branch per requirement, and it stops if the gate says no.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate status</span>
+  To do
+    REQ-002   A member books a court for one hour
+  Waiting for an answer
+    REQ-004   A member cancels a booking   an answer to Q1
+<span class="jn__c">$ node --test</span>
+<span class="t-yes">✔ REQ-002 SCN-002: booking a free court lasts one hour</span>
+<span class="jn__c">$ specgate harness run --req REQ-003</span>
+<span class="jn__x">your agent, in its own git worktree</span></code></pre>
+              <p class="jn__have"><strong>You now have</strong> code and a test that names its requirement — on a branch, waiting for your review.</p>
+              <a class="jn__more" href="./start/scratch-3-build.html">From scratch · phase 3, step by step →</a>
+            </div>
+          </li>
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">4</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 4 · <span>seconds</span></p>
+                <h3>Prove it</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--gate">The gate</li></ul>
+              </header>
+              <p class="jn__what"><code>done</code> runs the gate for that requirement and marks it Implemented only if it passes. A requirement waiting for the client cannot be closed. <code>report</code> turns it all into one page for the product owner.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate done REQ-002</span>
+<span class="t-yes">✔  REQ-002 → Implemented (1 row updated)</span>
+<span class="jn__c">$ specgate done REQ-004</span>
+<span class="t-no">✖  REQ-004 not marked Implemented: REQ-004 is waiting</span>
+   for an answer (Needs Clarification).
+<span class="jn__c">$ specgate report --out report.html</span>
+📊 Wrote report.html — 25% implemented (1/4).</code></pre>
+              <p class="jn__have"><strong>You now have</strong> a requirement marked done because a test proved it — and a page that says where the product stands.</p>
+              <a class="jn__more" href="./start/scratch-4-prove.html">From scratch · phase 4, step by step →</a>
+            </div>
+          </li>
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">5</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 5 · <span>five commands</span></p>
+                <h3>Every day</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li><li class="jn__who jn__who--gate">The gate</li></ul>
+              </header>
+              <p class="jn__what">Put the gate on every pull request — the specification, then your tests. This is what CI runs, and it is the same command you run locally. From then on the loop is <code>specgate status</code>, <code>specgate new</code>, a test that names the requirement, <code>specgate done</code>, <code>specgate check</code> — by hand, as slash commands, or as MCP tools.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci init --provider github</span>
+  write .github/workflows/spec-gate.yml
+<span class="t-yes">  ✅ CI gate installed.</span>
+<span class="jn__c">$ specgate new &quot;A member sees which courts are free on a day&quot;</span>
+<span class="t-yes">✔  REQ-005 A member sees which courts are free on a day (Draft)</span>
+<span class="jn__c">$ specgate status</span>
+  Next  specgate done REQ-005  — once a test mentions REQ-005</code></pre>
+              <p class="jn__have"><strong>You now have</strong> a gate on every pull request, and a loop small enough to remember.</p>
+              <a class="jn__more" href="./start/scratch-5-every-day.html">From scratch · phase 5, step by step →</a>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="jn__panel" role="tabpanel" id="jn-old" aria-labelledby="jn-tab-old">
+        <ol class="jn__track">
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">1</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 1 · <span>about 5 minutes</span></p>
+                <h3>Adopt, touching no code</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--gate">The gate</li></ul>
+              </header>
+              <p class="jn__what"><code>onboard</code> reads your build files and proposes the capabilities your layout already implies. <code>init</code> adopts the repository in place — specifications only, not a line of your code — and the gate runs your existing tests.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate onboard</span>
+  3. Capabilities this codebase already implies
+     · Invoices    src/invoices   (2 files)
+     · Customers   src/customers  (1 files)
+<span class="jn__c">$ specgate init</span>
+  Existing code found (package.json) — adopting this
+  repository in place. Nothing in your code is touched.
+<span class="jn__c">$ specgate check</span>
+<span class="t-yes">✔  Gate passed</span></code></pre>
+              <p class="jn__have"><strong>You now have</strong> a specification seeded from your own layout, an agent contract, and a green gate over the tests you already had.</p>
+              <a class="jn__more" href="./start/existing-1-adopt.html">Existing project · phase 1, step by step →</a>
+            </div>
+          </li>
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">2</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 2 · <span>minutes per behaviour</span></p>
+                <h3>Write down what you rely on</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li></ul>
+              </header>
+              <p class="jn__what">Don't back-fill everything. Pick one behaviour your users depend on and write it as a requirement with a real example — the numbers your code already produces.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate new &quot;An invoice total is rounded to the cent&quot;</span>
+<span class="t-yes">✔  REQ-004 An invoice total is rounded to the cent (Draft)</span>
+<span class="jn__c">$ cat features/an-invoice-total-is-rounded-to.feature</span>
+  @REQ-004 @SCN-002
+  Scenario: Three lines at 21% VAT
+    When its total is computed at 21% VAT
+    Then the total is 35.56</code></pre>
+              <p class="jn__have"><strong>You now have</strong> one behaviour written down as a requirement and a scenario anyone can read.</p>
+              <a class="jn__more" href="./start/existing-2-specify.html">Existing project · phase 2, step by step →</a>
+            </div>
+          </li>
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">3</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 3 · <span>minutes</span></p>
+                <h3>Close the first requirement</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--gate">The gate</li></ul>
+              </header>
+              <p class="jn__what"><code>done</code> refuses while nothing proves it. Name the requirement in the test you already have — that is the whole link — and run it again. It marks it Implemented only if it passes.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate done REQ-004</span>
+  [TDD-1] Test artifact is TBD but status is &#x27;Implemented&#x27;
+<span class="t-no">✖  REQ-004 not marked Implemented: validation failed.</span>
+<span class="jn__x">test(&quot;REQ-004: three lines at 21% VAT are rounded…&quot;)</span>
+<span class="jn__c">$ specgate done REQ-004</span>
+<span class="t-yes">✔  REQ-004 → Implemented (1 row updated)</span></code></pre>
+              <p class="jn__have"><strong>You now have</strong> your first requirement proved by a test that already existed.</p>
+              <a class="jn__more" href="./start/existing-3-first-requirement.html">Existing project · phase 3, step by step →</a>
+            </div>
+          </li>
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">4</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 4 · <span>one commit</span></p>
+                <h3>Put the gate in CI</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--gate">The gate</li></ul>
+              </header>
+              <p class="jn__what">Requirements still in Draft owe nothing yet, so you don't have to fix the past first. This is what CI runs on every pull request: the specification, then your tests.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci init --provider github</span>
+  write .github/workflows/spec-gate.yml
+<span class="jn__c">$ specgate check</span>
+  Strict TDD gate: passed (2 row(s) exempt — still
+  Draft, so not checked)
+<span class="t-yes">✔  Gate passed</span></code></pre>
+              <p class="jn__have"><strong>You now have</strong> a gate that protects what you have proved and ignores what you haven't written down yet.</p>
+              <a class="jn__more" href="./start/existing-4-ci.html">Existing project · phase 4, step by step →</a>
+            </div>
+          </li>
+          <li class="jn__phase reveal">
+            <div class="jn__mark" aria-hidden="true">5</div>
+            <div class="jn__card">
+              <header class="jn__head">
+                <p class="jn__n">Phase 5 · <span>one module at a time</span></p>
+                <h3>Every day</h3>
+                <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li><li class="jn__who jn__who--gate">The gate</li></ul>
+              </header>
+              <p class="jn__what">Every bug fix adds one behaviour; every new module starts as a change with <code>draft --check</code>. <code>status</code> always says the single next command to run.</p>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate status</span>
+  Requirements  4 total · 1 done · 3 pending
+  Next  specgate plan</code></pre>
+              <p class="jn__have"><strong>You now have</strong> coverage that grows with the work you were doing anyway.</p>
+              <a class="jn__more" href="./start/existing-5-every-day.html">Existing project · phase 5, step by step →</a>
+            </div>
+          </li>
+        </ol>
+      </div>
     </div>
+    <p class="jn__foot reveal">Already on OpenSpec? Keep it — <a class="ed-link" href="./openspec.html">Specgate can verify what it calls done →</a></p>
   </div>
 </section>
 
@@ -796,60 +906,6 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"</code></pre>
   </div>
 </section>
 
-<!-- ── Daily loop + adopt ───────────────────────────────────────────────── -->
-<section class="ed-band ed-band--paper" id="loop">
-  <div class="ed-wrap ed-split">
-    <div class="ed-split__head reveal">
-      <p class="ed-eyebrow">Every day</p>
-      <h2 class="ed-h2">After the first draft, five commands.</h2>
-      <p class="ed-muted">The same five whether a person or an agent is driving —
-         as commands, as slash commands, or as MCP tools. A small change skips the
-         draft entirely.</p>
-      <figure class="code" data-lang="bash">
-        <figcaption class="code__head"><span class="code__lang">On a repository you already have</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
-        <pre><code class="language-bash">npm i -g @rsaglobaltech/specgate
-specgate init        # adopts it; touches no code
-specgate ci init     # the gate in your CI
-specgate check</code></pre>
-      </figure>
-      <p class="ed-muted"><code>specgate init</code> looks before it writes: where
-         there is code it adopts the repository, where there is none it scaffolds
-         a project. <code>specgate ci init</code> detects GitHub, GitLab, Azure or
-         Jenkins and writes the job.</p>
-    </div>
-    <ol class="ed-steps">
-      <li class="reveal">
-        <span class="ed-steps__n">1</span>
-        <div><h3><code>specgate status</code></h3>
-          <p>What is open and what blocks what — the single next
-             command to run.</p></div>
-      </li>
-      <li class="reveal">
-        <span class="ed-steps__n">2</span>
-        <div><h3><code>specgate new</code></h3>
-          <p>A requirement and its tagged scenario, in one step — for the change
-             too small to need a draft.</p></div>
-      </li>
-      <li class="reveal">
-        <span class="ed-steps__n">3</span>
-        <div><h3><code>// REQ-007</code></h3>
-          <p>Write the test and the code. A test that mentions the requirement
-             <em>is</em> the link — nothing to declare.</p></div>
-      </li>
-      <li class="reveal">
-        <span class="ed-steps__n">4</span>
-        <div><h3><code>specgate done</code></h3>
-          <p>Checks first; marks it Implemented only if it passes.</p></div>
-      </li>
-      <li class="reveal">
-        <span class="ed-steps__n">5</span>
-        <div><h3><code>specgate check</code></h3>
-          <p>The whole gate, then your tests — what CI runs.</p></div>
-      </li>
-    </ol>
-  </div>
-</section>
-
 <!-- ── Status ───────────────────────────────────────────────────────────── -->
 <section class="ed-band">
   <div class="ed-wrap">
@@ -919,33 +975,46 @@ specgate check</code></pre>
 </section>
 
 <!-- ── How it compares ──────────────────────────────────────────────────── -->
-<section class="ed-band">
+<section class="ed-band" id="compare">
   <div class="ed-wrap">
     <div class="ed-head reveal">
-      <h2 class="ed-h2">How it compares.</h2>
-      <p class="ed-muted">OpenSpec is the closest tool and the one worth reading
-         first. The honest summary: it is smaller, and smaller is a feature.</p>
+      <p class="ed-eyebrow">If you know OpenSpec</p>
+      <h2 class="ed-h2">OpenSpec records what was done. Specgate proves it.</h2>
+      <p class="ed-muted">OpenSpec made the change loop popular, and it is the
+         tool to look at first. It checks the shape of your specification and
+         leaves the proof to you. Specgate is the proof.</p>
     </div>
-    <div class="table-wrap reveal">
-      <table class="compare">
-        <thead>
-          <tr><th>&nbsp;</th><th>Specgate</th><th>OpenSpec</th><th>Spec Kit</th><th>A wiki page</th></tr>
-        </thead>
-        <tbody>
-          <tr><th>Change lifecycle: propose → review → archive</th><td class="y">yes</td><td class="y">yes — their idea first</td><td class="n">no</td><td class="n">no</td></tr>
-          <tr><th>A checklist for drafts written from a brief</th><td class="y">yes</td><td class="n">no</td><td class="m">a clarify step</td><td class="n">no</td></tr>
-          <tr><th>Traceability matrix that CI enforces</th><td class="y">yes</td><td class="n">no</td><td class="m">basic</td><td class="n">no</td></tr>
-          <tr><th>Gherkin a real runner executes</th><td class="y">yes</td><td class="m">prose scenarios</td><td class="m">via templates</td><td class="n">no</td></tr>
-          <tr><th>Unattended harness with a gate</th><td class="y">yes</td><td class="n">no</td><td class="n">no</td><td class="n">no</td></tr>
-          <tr><th>Versioned, installable spec packs</th><td class="y">7 proven on the pilots, plus starter examples</td><td class="n">no</td><td class="n">no</td><td class="n">no</td></tr>
-          <tr><th>MCP server and language server</th><td class="y">both shipped</td><td class="n">no</td><td class="n">no</td><td class="n">no</td></tr>
-          <tr><th>Commands to learn for the daily loop</th><td class="m">five</td><td class="y">three</td><td class="m">a workflow</td><td class="y">none</td></tr>
-        </tbody>
-      </table>
+    <div class="vs reveal">
+      <div class="vs__row">
+        <p class="vs__q">When an agent says “done”</p>
+        <p class="vs__them"><span>OpenSpec</span>Archive asks to continue if tasks are unticked; <code>--yes</code> skips it. Verify is an AI review that “won't block archive”.</p>
+        <p class="vs__us"><span>Specgate</span><code>done</code> refuses until a test names the requirement and your suite passes.</p>
+      </div>
+      <div class="vs__row">
+        <p class="vs__q">When the draft comes from a client's brief</p>
+        <p class="vs__them"><span>OpenSpec</span>The prompt asks the agent not to invent intent. Nothing checks it.</p>
+        <p class="vs__us"><span>Specgate</span><code>draft --check</code> stops on a fee, limit or number the brief never stated.</p>
+      </div>
+      <div class="vs__row">
+        <p class="vs__q">When only the client can answer</p>
+        <p class="vs__them"><span>OpenSpec</span>The agent records an assumption and carries on.</p>
+        <p class="vs__us"><span>Specgate</span><em>Needs Clarification</em> blocks building and closing it until someone answers.</p>
+      </div>
+      <div class="vs__row">
+        <p class="vs__q">When you hand the work to an agent</p>
+        <p class="vs__them"><span>OpenSpec</span><code>/opsx:apply</code> works through the tasks in your session.</p>
+        <p class="vs__us"><span>Specgate</span><code>harness run</code>: one branch per requirement, the gate after each attempt, never merges.</p>
+      </div>
     </div>
-    <p class="ed-muted ed-note">If you want the change loop and nothing else,
-       OpenSpec is the better tool and the table says so.
-       <a class="ed-link" href="./comparisons.html">The full comparison, including where we lose →</a></p>
+    <p class="ed-muted ed-note reveal"><strong>Where OpenSpec is ahead:</strong> far more users,
+       30+ agent integrations against our 10, customisable workflows, and no
+       tests required to start. If you want the change loop and nothing else,
+       it is the better tool. Already on it? Keep it, and let
+       <code>specgate verify</code> gate what it archives.</p>
+    <p class="ed-actions reveal">
+      <a class="ed-link" href="./vs-openspec.html">Specgate or OpenSpec, in detail →</a>
+      <a class="ed-link" href="./comparisons.html">Spec Kit, Cursor rules and the rest →</a>
+    </p>
   </div>
 </section>
 

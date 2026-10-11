@@ -213,6 +213,11 @@ export const NAV: readonly NavSection[] = [
           "An illustration — invented company, constructed numbers — of the workflow end to end.",
       },
       {
+        slug: "vs-openspec",
+        label: "Specgate or OpenSpec",
+        blurb: "Where they differ, where OpenSpec is ahead, and how to use both.",
+      },
+      {
         slug: "openspec",
         label: "Already on OpenSpec",
         blurb: "Keep your OpenSpec specs; verify proves that what they call done is done.",
