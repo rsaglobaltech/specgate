@@ -119,7 +119,39 @@ test("renderIndex shows verified count", () => {
   // and broke when the page adopted the documentation site's shell, which was
   // a presentation change and not a behaviour one.
   assert.match(html, /<dt>1<\/dt><dd>passing lint<\/dd>/);
-  assert.match(html, /<dt>2<\/dt><dd>packs<\/dd>/);
+  // Neither declares a tier, so both are starters and none is proven.
+  assert.match(html, /<dt>0<\/dt><dd>proven in pilots<\/dd>/);
+  assert.match(html, /<dt>2<\/dt><dd>starter examples<\/dd>/);
+});
+
+test("a proven pack's card says so and shows what proved it; a starter says it is an example", () => {
+  const base = {
+    name: "X",
+    domain: "x",
+    version: "1.0.0",
+    language: "en",
+    project_type: "backend",
+    requirements: 1,
+    useCases: 1,
+    aggregates: 0,
+    events: 0,
+    scenarios: 1,
+    lintStatus: "pass",
+    lintMessages: [],
+  };
+  const proven = renderCard({
+    ...base,
+    id: "ledger/backend",
+    tier: "proven",
+    provenance: "Derived from the FinCore pilot: implemented and tested in Spring Boot.",
+  });
+  assert.match(proven, /Proven in a pilot/);
+  assert.match(proven, /implemented and tested in Spring Boot/);
+  const starter = renderCard({ ...base, id: "billing/backend", tier: "starter", provenance: "" });
+  assert.match(starter, /Starter example/);
+  assert.doesNotMatch(starter, /Proven/);
+  // The word that overstated the eleven starters is gone from the page.
+  assert.doesNotMatch(renderIndex([]), /[Cc]urated/);
 });
 
 test("the registry wears the same shell as the rest of the site", () => {
@@ -137,12 +169,27 @@ test("the registry wears the same shell as the rest of the site", () => {
 
 // ── scanPacks (integration with the real packs/ dir) ──────────────────────────
 
-test("scanPacks discovers all 11 curated packs", () => {
+test("scanPacks discovers the 7 proven packs, first, and the 11 starter examples", () => {
   const packs = scanPacks(PACKS_DIR);
   assert.equal(
     packs.length,
-    11,
-    `expected 11 packs, found ${packs.length}: ${packs.map((p) => p.id).join(", ")}`
+    18,
+    `expected 18 packs, found ${packs.length}: ${packs.map((p) => p.id).join(", ")}`
+  );
+  const proven = packs.filter((p) => p.tier === "proven").map((p) => p.id);
+  assert.deepEqual(proven.sort(), [
+    "appointment-booking/backend",
+    "clinical-record/backend",
+    "event-registration/backend",
+    "ledger/backend",
+    "shop-orders/backend",
+    "time-attendance/backend",
+    "transfers/backend",
+  ]);
+  // Proven first: the reader sees what they can build on before the examples.
+  assert.ok(
+    packs.slice(0, 7).every((p) => p.tier === "proven"),
+    packs.map((p) => p.id).join(", ")
   );
   const ids = packs.map((p) => p.id);
   assert.ok(ids.includes("auth/backend"));
@@ -158,7 +205,7 @@ test("scanPacks discovers all 11 curated packs", () => {
   assert.ok(ids.includes("sample-contracts/contracts"));
 });
 
-test("scanPacks marks every curated pack as verified (lintStatus=pass)", () => {
+test("scanPacks marks every shipped pack as verified (lintStatus=pass)", () => {
   const packs = scanPacks(PACKS_DIR);
   for (const p of packs) {
     assert.equal(

@@ -1,0 +1,335 @@
+# Proven pack: Derived from the bookings pilot (reservas_app): implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL.
+schema_version: "1.5.0"
+metadata:
+  name: 'Appointment booking — calendars, seats per hour and lead times'
+  version: '1.0.0'
+  language: en
+  project_type: backend
+  tier: proven
+  provenance: 'Derived from the bookings pilot (reservas_app): implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL.'
+variables:
+  required:
+    - PROJECT_NAME
+    - PROJECT_SLUG
+    - DOMAIN
+requirements:
+  - id: REQ-501
+    title: 'Several calendars per business'
+    priority: Must
+    description: '[functional] The owner creates several calendars for their business, each with its own name, services and availability.'
+    status: 'Draft'
+  - id: REQ-502
+    title: 'Seats available per hourly slot'
+    priority: Must
+    description: '[functional] For each calendar and each one-hour slot, the owner sets how many seats (people or chairs) are available. A slot with no seats set is closed: it is neither offered nor bookable.'
+    status: 'Draft'
+  - id: REQ-503
+    title: 'Free start times for a service'
+    priority: Must
+    description: '[functional] For a service and a day, the customer sees the start times at which a seat is free for the whole duration of the service, within the business''s lead time and advance limit.'
+    status: 'Draft'
+  - id: REQ-504
+    title: 'Book without an account'
+    priority: Must
+    description: '[functional] A customer books a free time giving name, email and phone, without creating an account, and receives a booking code.'
+    status: 'Draft'
+  - id: REQ-505
+    title: 'No booking above the seats, even at the same instant'
+    priority: Must
+    description: '[business-rule] A booking is refused when, in any slot it occupies, the bookings already made equal the seats available — including when two customers book the last seat at once.'
+    status: 'Draft'
+  - id: REQ-506
+    title: 'A service occupies every slot it touches'
+    priority: Must
+    description: '[business-rule] A booking counts in every hourly slot its duration touches: a 90-minute service starting at 10:30 takes a seat in the 10:00, 11:00 and 12:00 slots.'
+    status: 'Draft'
+  - id: REQ-507
+    title: 'Minimum lead time before an appointment'
+    priority: Must
+    description: '[business-rule] An online booking that starts sooner than the owner''s lead time (in hours, from now) is refused. The minimum lead time is 1 hour.'
+    status: 'Draft'
+  - id: REQ-508
+    title: 'Maximum days in advance'
+    priority: Should
+    description: '[business-rule] An online booking further ahead than the owner''s advance limit, in days, is refused.'
+    status: 'Draft'
+  - id: REQ-509
+    title: 'Cancel with the booking code'
+    priority: Must
+    description: '[functional] The customer cancels with the code they received until the lead time starts, and the slot becomes free again.'
+    status: 'Draft'
+  - id: REQ-510
+    title: 'The owner''s agenda'
+    priority: Should
+    description: '[functional] The owner sees the bookings of any day in each calendar with time, service and customer details.'
+    status: 'Draft'
+bounded_contexts:
+  - id: BC-501
+    name: 'Scheduling'
+    type: Core
+    responsibility: 'Calendars, seats per hour and bookings'
+    aggregates:
+      - Calendar
+      - Booking
+use_cases:
+  - id: UC-501
+    name: 'Create Calendar'
+    actor: 'Owner'
+    requirement: REQ-501
+    command: CreateCalendarCommand
+    aggregate: Calendar
+    emits:
+      - CalendarCreated
+  - id: UC-502
+    name: 'Set Seats'
+    actor: 'Owner'
+    requirement: REQ-502
+    command: SetSeatsCommand
+    aggregate: Calendar
+    emits:
+      - SeatsSet
+  - id: UC-503
+    name: 'Find Free Times'
+    actor: 'Customer'
+    requirement: REQ-503
+    aggregate: Calendar
+  - id: UC-504
+    name: 'Book Appointment'
+    actor: 'Customer'
+    requirement: REQ-504
+    command: BookAppointmentCommand
+    aggregate: Booking
+    emits:
+      - AppointmentBooked
+  - id: UC-505
+    name: 'Configure Booking'
+    actor: 'Owner'
+    requirement: REQ-507
+    command: ConfigureBookingCommand
+    aggregate: Calendar
+  - id: UC-506
+    name: 'Cancel Booking'
+    actor: 'Customer'
+    requirement: REQ-509
+    command: CancelBookingCommand
+    aggregate: Booking
+    emits:
+      - BookingCancelled
+  - id: UC-507
+    name: 'Read Agenda'
+    actor: 'Owner'
+    requirement: REQ-510
+    aggregate: Booking
+commands:
+  - id: CMD-501
+    name: CreateCalendarCommand
+    use_case: UC-501
+  - id: CMD-502
+    name: SetSeatsCommand
+    use_case: UC-502
+  - id: CMD-503
+    name: BookAppointmentCommand
+    use_case: UC-504
+  - id: CMD-504
+    name: ConfigureBookingCommand
+    use_case: UC-505
+  - id: CMD-505
+    name: CancelBookingCommand
+    use_case: UC-506
+aggregates:
+  - id: AGG-501
+    name: Calendar
+    bounded_context: BC-501
+    responsibilities:
+      - 'Services and seats per hourly slot'
+    invariants:
+      - 'A slot without seats is closed'
+    commands:
+      - CreateCalendarCommand
+      - SetSeatsCommand
+      - ConfigureBookingCommand
+    events:
+      - CalendarCreated
+      - SeatsSet
+  - id: AGG-502
+    name: Booking
+    bounded_context: BC-501
+    responsibilities:
+      - 'Customer, service, start time, code'
+    invariants:
+      - 'Bookings in a slot never exceed its seats'
+      - 'Lead time of at least 1 hour'
+    commands:
+      - BookAppointmentCommand
+      - CancelBookingCommand
+    events:
+      - AppointmentBooked
+      - BookingCancelled
+events:
+  - id: EVT-501
+    name: CalendarCreated
+    aggregate: Calendar
+    payload:
+      - 'calendarId: string'
+      - 'name: string'
+  - id: EVT-502
+    name: SeatsSet
+    aggregate: Calendar
+    payload:
+      - 'calendarId: string'
+      - 'weekday: string'
+      - 'from: time'
+      - 'to: time'
+      - 'seats: integer'
+  - id: EVT-503
+    name: AppointmentBooked
+    aggregate: Booking
+    payload:
+      - 'bookingCode: string'
+      - 'start: datetime'
+  - id: EVT-504
+    name: BookingCancelled
+    aggregate: Booking
+    payload:
+      - 'bookingCode: string'
+outputs:
+  files:
+    - target: docs/specs/capabilities/appointment-booking/spec.md
+      template: templates/capability.md.tpl
+business_rules:
+  - id: RUL-501
+    title: 'Capacity is checked per hourly slot, inside one transaction'
+    context: BC-501
+    description: 'The pilot serialised bookings per calendar so the last seat is taken once.'
+rules:
+  traceability:
+    target: docs/specs/traceability.md
+    include_existing_rows: true
+    default_status: Draft
+scenarios:
+  - id: SCN-501
+    requirement_id: REQ-501
+    use_case: UC-501
+    seed: true
+    target: features/appointment-booking/a_second_calendar.feature
+    template: templates/features/a_second_calendar.feature.tpl
+    feature: 'A second calendar'
+    scenario: 'A second calendar'
+    status: 'Draft'
+  - id: SCN-502
+    requirement_id: REQ-502
+    use_case: UC-502
+    seed: true
+    target: features/appointment-booking/seats_on_monday_morning.feature
+    template: templates/features/seats_on_monday_morning.feature.tpl
+    feature: 'Seats on Monday morning'
+    scenario: 'Seats on Monday morning'
+    status: 'Draft'
+  - id: SCN-503
+    requirement_id: REQ-502
+    use_case: UC-502
+    seed: true
+    target: features/appointment-booking/a_slot_without_seats_is_not_offered.feature
+    template: templates/features/a_slot_without_seats_is_not_offered.feature.tpl
+    feature: 'A slot without seats is not offered'
+    scenario: 'A slot without seats is not offered'
+    status: 'Draft'
+  - id: SCN-504
+    requirement_id: REQ-503
+    use_case: UC-503
+    seed: true
+    target: features/appointment-booking/one_seat_one_booking.feature
+    template: templates/features/one_seat_one_booking.feature.tpl
+    feature: 'One seat, one booking'
+    scenario: 'One seat, one booking'
+    status: 'Draft'
+  - id: SCN-505
+    requirement_id: REQ-504
+    use_case: UC-504
+    seed: true
+    target: features/appointment-booking/booking_a_free_time.feature
+    template: templates/features/booking_a_free_time.feature.tpl
+    feature: 'Booking a free time'
+    scenario: 'Booking a free time'
+    status: 'Draft'
+  - id: SCN-506
+    requirement_id: REQ-505
+    use_case: UC-504
+    seed: true
+    target: features/appointment-booking/the_last_seat_already_taken.feature
+    template: templates/features/the_last_seat_already_taken.feature.tpl
+    feature: 'The last seat already taken'
+    scenario: 'The last seat already taken'
+    status: 'Draft'
+  - id: SCN-507
+    requirement_id: REQ-505
+    use_case: UC-504
+    seed: true
+    target: features/appointment-booking/two_customers_at_once.feature
+    template: templates/features/two_customers_at_once.feature.tpl
+    feature: 'Two customers at once'
+    scenario: 'Two customers at once'
+    status: 'Draft'
+  - id: SCN-508
+    requirement_id: REQ-506
+    use_case: UC-504
+    seed: true
+    target: features/appointment-booking/a_long_service_with_no_room_in_its_second_slot.feature
+    template: templates/features/a_long_service_with_no_room_in_its_second_slot.feature.tpl
+    feature: 'A long service with no room in its second slot'
+    scenario: 'A long service with no room in its second slot'
+    status: 'Draft'
+  - id: SCN-509
+    requirement_id: REQ-507
+    use_case: UC-505
+    seed: true
+    target: features/appointment-booking/booking_inside_the_lead_time.feature
+    template: templates/features/booking_inside_the_lead_time.feature.tpl
+    feature: 'Booking inside the lead time'
+    scenario: 'Booking inside the lead time'
+    status: 'Draft'
+  - id: SCN-510
+    requirement_id: REQ-507
+    use_case: UC-505
+    seed: true
+    target: features/appointment-booking/a_lead_time_below_the_minimum.feature
+    template: templates/features/a_lead_time_below_the_minimum.feature.tpl
+    feature: 'A lead time below the minimum'
+    scenario: 'A lead time below the minimum'
+    status: 'Draft'
+  - id: SCN-511
+    requirement_id: REQ-508
+    use_case: UC-505
+    seed: true
+    target: features/appointment-booking/beyond_the_advance_limit.feature
+    template: templates/features/beyond_the_advance_limit.feature.tpl
+    feature: 'Beyond the advance limit'
+    scenario: 'Beyond the advance limit'
+    status: 'Draft'
+  - id: SCN-512
+    requirement_id: REQ-509
+    use_case: UC-506
+    seed: true
+    target: features/appointment-booking/cancelling_in_time.feature
+    template: templates/features/cancelling_in_time.feature.tpl
+    feature: 'Cancelling in time'
+    scenario: 'Cancelling in time'
+    status: 'Draft'
+  - id: SCN-513
+    requirement_id: REQ-509
+    use_case: UC-506
+    seed: true
+    target: features/appointment-booking/cancelling_inside_the_lead_time.feature
+    template: templates/features/cancelling_inside_the_lead_time.feature.tpl
+    feature: 'Cancelling inside the lead time'
+    scenario: 'Cancelling inside the lead time'
+    status: 'Draft'
+  - id: SCN-514
+    requirement_id: REQ-510
+    use_case: UC-507
+    seed: true
+    target: features/appointment-booking/tomorrows_agenda.feature
+    template: templates/features/tomorrows_agenda.feature.tpl
+    feature: 'Tomorrow''s agenda'
+    scenario: 'Tomorrow''s agenda'
+    status: 'Draft'

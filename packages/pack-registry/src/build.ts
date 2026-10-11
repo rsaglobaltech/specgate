@@ -70,6 +70,8 @@ export class PackRegistryBuilder {
         id: p.id,
         name: p.name,
         version: p.version,
+        tier: p.tier,
+        provenance: p.provenance,
         lintStatus: p.lintStatus,
         counts: {
           requirements: p.requirements,

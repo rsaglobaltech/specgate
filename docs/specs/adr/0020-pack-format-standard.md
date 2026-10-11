@@ -219,3 +219,23 @@ larger decision (it would reject any community pack that already uses it,
 which this migration has no evidence about either way) and stays out of
 scope here. `PACK_SCHEMA_VERSION` is unchanged: the schema itself did not
 change, only five packs' content did.
+
+**`metadata.tier` and `metadata.provenance` (2026-10-11).** The eleven packs
+in `packs/` were described as "curated domain packs" on the landing page and in
+the docs. Each is four or five generic Draft requirements; no product was ever
+built from one. Seven new packs were derived from the six pilots, where every
+requirement was implemented and tested — and a reader could not tell the two
+apart. `tier: proven | starter` says which a pack is; `provenance` says what
+proved a proven one, and `validatePackModel` refuses `proven` without it. Both
+are optional and additive: a pack that says nothing is a starter, and every
+pack written before stays valid. `PACK_SCHEMA_VERSION` moves to **1.5.0** in the
+same change; the seven proven packs declare `1.5.0`, the eleven starters keep
+`1.3.0` and were not touched.
+
+Found while building them (defect #84): the matrix row's status is derived
+from the capability's `csda:trace` line, so a pack that set `status: Needs
+Clarification` only in `pack.yaml` installed the open question as Draft. The
+proven packs write the status into the trace line of their capability
+template, and `tests/unit/proven-packs.test.ts` pins that the question is still
+open after install.
+

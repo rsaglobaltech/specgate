@@ -147,7 +147,7 @@ twenty lines in with "unknown property".
    in `scripts/domain-pack/common.ts` in the same change as the field.
 2. Only then publish packs that use it.
 
-Reverse the order and every curated pack becomes uninstallable on the released
+Reverse the order and every shipped pack becomes uninstallable on the released
 CLI. A unit test asserts that no pack in `packs/` declares a schema newer than
 the CLI supports, so getting this backwards fails CI rather than users.
 

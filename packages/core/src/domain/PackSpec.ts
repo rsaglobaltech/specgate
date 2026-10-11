@@ -33,10 +33,17 @@ function fail(message) {
  * that adds a field to `schemas/pack.schema.json`, or packs authored against
  * the new field will be rejected by a CLI that in fact understands them.
  */
-export const PACK_SCHEMA_VERSION = "1.4.0";
+export const PACK_SCHEMA_VERSION = "1.5.0";
 
 /** Project types a pack may target. Mirrors the enum in schemas/pack.schema.json. */
 export const PACK_PROJECT_TYPES = ["backend", "frontend", "mobile", "contracts"];
+
+/**
+ * How much a pack can be trusted. Mirrors the enum in schemas/pack.schema.json.
+ * `proven`: every requirement was implemented and tested by a real product.
+ * `starter`: a generic example of the format. A pack that says nothing is a starter.
+ */
+export const PACK_TIERS = ["proven", "starter"];
 
 /**
  * Numeric SemVer comparison for schema versions — `a > b`.
@@ -166,6 +173,22 @@ export function validatePackModel(pack, packRoot, templateExists: TemplateExists
     fail(
       `metadata.project_type must be one of ${PACK_PROJECT_TYPES.join(", ")}. ` +
         `Found '${metadata.project_type}'.`
+    );
+  }
+
+  // `tier` says how much to trust the pack (schema 1.5.0). A pack calling
+  // itself proven has to say what proved it: "proven" with nothing behind it is
+  // the claim the eleven starter packs used to make by being called curated.
+  if (metadata.tier !== undefined && !PACK_TIERS.includes(metadata.tier)) {
+    fail(`metadata.tier must be one of ${PACK_TIERS.join(", ")}. Found '${metadata.tier}'.`);
+  }
+  if (metadata.provenance !== undefined && typeof metadata.provenance !== "string") {
+    fail("metadata.provenance must be a string when provided.");
+  }
+  if (metadata.tier === "proven" && !String(metadata.provenance || "").trim()) {
+    fail(
+      "metadata.tier is 'proven' but metadata.provenance is empty. Say which product " +
+        "implemented and tested these requirements, or declare the pack a starter."
     );
   }
 
