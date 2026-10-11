@@ -1,0 +1,443 @@
+{
+  "schemaVersion": 1,
+  "recordedWith": {
+    "version": "0.17.10",
+    "node": "v24.x",
+    "platform": "darwin",
+    "packSource": "local"
+  },
+  "recordedAt": "2026-10-11",
+  "title": "courts — draft from a brief",
+  "cols": 88,
+  "streamsMerged": false,
+  "steps": [
+    {
+      "id": "brief",
+      "caption": "The client's brief, as it arrived. Four sentences.",
+      "cwd": "~/courts",
+      "command": "cat docs/brief.md",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1780,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "---",
+          "c": "dim",
+          "s": "out"
+        },
+        {
+          "t": "product: Court bookings for a tennis club",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "surfaces: [api]",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "actors:",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  - { name: Member, surfaces: [api] }",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "modules: [bookings]",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "---",
+          "c": "dim",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "# Brief",
+          "c": "dim",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "Members book a court for one hour. A court cannot be booked twice for",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "the same hour. Members can cancel a booking. Late cancellations may be charged.",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "check-draft",
+      "caption": "An agent drafted three requirements. The checklist finds every value nobody gave it.",
+      "cwd": "~/courts",
+      "command": "specgate draft --check draft-bookings",
+      "surface": "draft",
+      "exit": 1,
+      "typeMs": 26,
+      "holdMs": 2140,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "  specgate draft --check draft-bookings",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  3 requirement(s), 4 scenario(s)",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✖  D6_unlisted_value  SCN-002 states \"201\", which is not in the brief and not listed as an assumption for SCN-002 or REQ-002.",
+          "c": "err",
+          "s": "out"
+        },
+        {
+          "t": "     fix: List it in assumptions.md with SCN-002 (or REQ-002) in its row, or use the value the brief gives.",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✖  D6_unlisted_value  SCN-004 states \"court already booked\", which is not in the brief and not listed as an assumption for SCN-004 or REQ-003.",
+          "c": "err",
+          "s": "out"
+        },
+        {
+          "t": "     fix: List it in assumptions.md with SCN-004 (or REQ-003) in its row, or use the value the brief gives.",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✖  D6_unlisted_value  SCN-004 states \"409\", which is not in the brief and not listed as an assumption for SCN-004 or REQ-003.",
+          "c": "err",
+          "s": "out"
+        },
+        {
+          "t": "     fix: List it in assumptions.md with SCN-004 (or REQ-003) in its row, or use the value the brief gives.",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✖  D6_unlisted_value  SCN-005 states \"204\", which is not in the brief and not listed as an assumption for SCN-005 or REQ-004.",
+          "c": "err",
+          "s": "out"
+        },
+        {
+          "t": "     fix: List it in assumptions.md with SCN-005 (or REQ-004) in its row, or use the value the brief gives.",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✖  D6_unlisted_value  SCN-005 states \"5\", which is not in the brief and not listed as an assumption for SCN-005 or REQ-004.",
+          "c": "err",
+          "s": "out"
+        },
+        {
+          "t": "     fix: List it in assumptions.md with SCN-005 (or REQ-004) in its row, or use the value the brief gives.",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✖  5 finding(s) to fix before review.",
+          "c": "err",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "the-fix",
+      "caption": "The invented fee is gone from the draft. It becomes a question.",
+      "cwd": "~/courts",
+      "command": "git diff -U0 docs/specs/changes/draft-bookings/specs | grep -E '^[-+]' | grep -vE '^(---|[+]{3}) '",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1240,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "-<!-- csda:trace actor=Member kind=functional -->",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "+<!-- csda:trace actor=Member kind=functional status=\"Needs Clarification\" -->",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "-fee of 5 euros when they cancel less than 24 hours before.",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "+late cancellation the fee the club decides (Q1).",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "-- THEN the response is 204 and a fee of 5 euros is charged",
+          "c": "dim",
+          "s": "out"
+        },
+        {
+          "t": "+- THEN the response is 204 and the late-cancellation fee is charged",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "questions",
+      "caption": "What only the client can answer — and the requirement each question blocks.",
+      "cwd": "~/courts",
+      "command": "cat docs/specs/changes/draft-bookings/questions.md",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1150,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "# Open questions",
+          "c": "dim",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "| # | Question | Blocks | Options seen |",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "|---|---|---|---|",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "| Q1 | How much is a late cancellation, and how late is late? | REQ-004 | A flat fee · the full hour · nothing in the first season |",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "check-again",
+      "caption": "Every value is now in the brief or written down as an assumption.",
+      "cwd": "~/courts",
+      "command": "specgate draft --check draft-bookings",
+      "surface": "draft",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1240,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "  specgate draft --check draft-bookings",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  3 requirement(s), 4 scenario(s)",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  Ready to review.",
+          "c": "ok",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "archive",
+      "caption": "Requirements, Gherkin and the traceability matrix, written in one step.",
+      "cwd": "~/courts",
+      "command": "specgate change archive draft-bookings",
+      "surface": "change archive",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1330,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "  ✔ Archived as 2026-01-01-draft-bookings",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    specs:        3 added · 0 modified · 0 removed",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    traceability: 3 row(s) added · 0 updated · 0 removed",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    features:     3 materialised",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Now run specgate validate . --strict — it will fail until the tests exist.",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "status",
+      "caption": "The blocked requirement waits for the client. Nobody builds it by mistake.",
+      "cwd": "~/courts",
+      "command": "specgate status",
+      "surface": "status",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1960,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "  📊 Project status  courts",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Requirements  4 total · 0 done · 4 pending",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  To do",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-001   Preserve existing behaviour                   a test and code",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-002   A member books a court for one hour           a test and code",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-003   A court is never booked twice for the same …  a test and code",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Waiting for an answer",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    REQ-004   A member cancels a booking                    an answer to Q1",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Next  specgate done REQ-002  — once a test mentions REQ-002 — that mention is the link; done checks first",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    }
+  ]
+}

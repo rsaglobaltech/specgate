@@ -2,8 +2,14 @@
 
 A project usually starts as a brief: a page, a document, a few screenshots.
 This is the path from that page to requirements the gate and the harness can
-work with — the one three products were built on, from briefs as different as
-a detailed booking document and a five-line description of a credit shop.
+work with — the one the [six pilot products](projects/index.md) were built on, from briefs
+as different as a detailed booking document and a five-line description of a
+credit shop.
+
+Steps 1 to 4 below are the *Specify* phase of a requirement's life; the
+harness and the gate take it from there.
+
+<!-- csda:diagram lifecycle -->
 
 ## 1. Keep the brief in the repository
 

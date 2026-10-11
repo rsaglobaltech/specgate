@@ -29,7 +29,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import { BEATS, type Beat } from "./terminal-storyboard";
+import { STORYBOARDS, type Beat, type Storyboard } from "./terminal-storyboard";
 import { readBlock, replaceBlock } from "./blocks";
 
 const ROOT = path.resolve(__dirname, "../../..");
@@ -164,6 +164,12 @@ export const RULES: ReadonlyArray<{
   {
     id: "iso",
     apply: (s) => s.replace(/\d{4}-\d{2}-\d{2}T[\d:.-]+Z?/g, PINNED_TIME),
+  },
+  {
+    // `change archive` names its folder after today's date. Pinned like an
+    // instant, or the brief recording would churn every day.
+    id: "date",
+    apply: (s) => s.replace(/\b20\d\d-\d\d-\d\d(?=-[a-z])/g, "2026-01-01"),
   },
   {
     // Git dates are pinned, but a SHA still depends on tree content, so a
@@ -319,8 +325,25 @@ function run(cwd: string, env: NodeJS.ProcessEnv, argv: string[]): void {
   }
 }
 
+function write(file: string, content: string): void {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, content, "utf8");
+}
+
+/** The `specgate` shim every recording puts on PATH. */
+function prepareBin(scratch: string): void {
+  const bin = path.join(scratch, "bin");
+  fs.mkdirSync(bin, { recursive: true });
+  fs.mkdirSync(path.join(scratch, "tmp"), { recursive: true });
+  fs.writeFileSync(
+    path.join(bin, "specgate"),
+    `#!/usr/bin/env bash\nexec node "${path.join(ROOT, "bin", "specgate.js")}" "$@"\n`,
+    { mode: 0o755 }
+  );
+}
+
 /**
- * Build the world the beats run in.
+ * Build the world the harness beats run in.
  *
  * Nothing here is shown. It exists so that what *is* shown is worth a reader's
  * attention: putting a stub agent on PATH and copying a pack next to the work
@@ -328,14 +351,6 @@ function run(cwd: string, env: NodeJS.ProcessEnv, argv: string[]): void {
  */
 function prepare(scratch: string): void {
   const bin = path.join(scratch, "bin");
-  fs.mkdirSync(bin, { recursive: true });
-  fs.mkdirSync(path.join(scratch, "tmp"), { recursive: true });
-
-  fs.writeFileSync(
-    path.join(bin, "specgate"),
-    `#!/usr/bin/env bash\nexec node "${path.join(ROOT, "bin", "specgate.js")}" "$@"\n`,
-    { mode: 0o755 }
-  );
   // Reused, not forked: one deterministic agent, one place to fix it.
   fs.copyFileSync(
     path.join(ROOT, "scripts", "demo", "stub-agent.sh"),
@@ -363,12 +378,212 @@ function prepare(scratch: string): void {
 function projectSetup(scratch: string, env: NodeJS.ProcessEnv): void {
   const project = path.join(scratch, "smart-parking");
   fs.writeFileSync(path.join(project, "harness.config.yaml"), HARNESS_YAML, "utf8");
-  run(project, env, ["git", "init", "-q", "-b", "main", "."]);
-  run(project, env, ["git", "config", "user.name", "csda demo"]);
-  run(project, env, ["git", "config", "user.email", "demo@example.invalid"]);
+  gitInit(project, env);
   run(project, env, ["git", "add", "-A"]);
   run(project, env, ["git", "commit", "-qm", "initial: specs and the pack"]);
 }
+
+function gitInit(project: string, env: NodeJS.ProcessEnv): void {
+  run(project, env, ["git", "init", "-q", "-b", "main", "."]);
+  run(project, env, ["git", "config", "user.name", "csda demo"]);
+  run(project, env, ["git", "config", "user.email", "demo@example.invalid"]);
+}
+
+// ── The court-bookings project: the brief and gate recordings ───────────────
+
+const BRIEF_MD = `---
+product: Court bookings for a tennis club
+surfaces: [api]
+actors:
+  - { name: Member, surfaces: [api] }
+modules: [bookings]
+---
+
+# Brief
+
+Members book a court for one hour. A court cannot be booked twice for
+the same hour. Members can cancel a booking. Late cancellations may be charged.
+`;
+
+/** The draft an agent would write. REQ-004 invents a fee the brief never states. */
+function draftSpec(answered: boolean): string {
+  const cancel = answered
+    ? `<!-- csda:trace actor=Member kind=functional status="Needs Clarification" -->
+
+The system SHALL let a member cancel their own booking, and SHALL charge a
+late cancellation the fee the club decides (Q1).`
+    : `<!-- csda:trace actor=Member kind=functional -->
+
+The system SHALL let a member cancel their own booking, and SHALL charge a
+fee of 5 euros when they cancel less than 24 hours before.`;
+  const fee = answered ? "the late-cancellation fee is charged" : "a fee of 5 euros is charged";
+  return `# Delta — bookings
+
+## ADDED Requirements
+
+### Requirement: REQ-002 — A member books a court for one hour
+
+<!-- csda:trace actor=Member kind=functional -->
+
+The system SHALL let a member book a free court for one hour.
+
+> Brief: "Members book a court for one hour."
+
+#### Scenario: SCN-002 — Booking a free court
+
+- GIVEN the centre court is free on Monday evening
+- WHEN the member sends POST /api/bookings for the centre court on Monday evening
+- THEN the response is 201 and the booking lasts one hour
+
+#### Scenario: SCN-003 — A member sees their bookings
+
+- GIVEN the member booked the centre court on Monday evening
+- WHEN the member sends GET /api/bookings
+- THEN the list holds that booking
+
+### Requirement: REQ-003 — A court is never booked twice for the same hour
+
+<!-- csda:trace actor=Member kind=business-rule -->
+
+The system SHALL refuse a booking for a court and hour that is already booked.
+
+> Brief: "A court cannot be booked twice for the same hour."
+
+#### Scenario: SCN-004 — The second booking is refused
+
+- GIVEN the centre court is booked on Monday evening
+- WHEN another member sends POST /api/bookings for the centre court on Monday evening
+- THEN the response is 409 with the reason "court already booked"
+
+### Requirement: REQ-004 — A member cancels a booking
+
+${cancel}
+
+> Brief: "Members can cancel a booking. Late cancellations may be charged."
+
+#### Scenario: SCN-005 — Cancelling late is charged
+
+- GIVEN the member booked the centre court on Monday evening
+- WHEN the member sends DELETE /api/bookings/{id} on Monday morning
+- THEN the response is 204 and ${fee}
+`;
+}
+
+const ASSUMPTIONS_MD = `# Assumptions
+
+| # | Assumption | Used in | Why | Status |
+|---|---|---|---|---|
+| A1 | HTTP answers: 201 created, 204 cancelled, 409 taken, reason "court already booked" | REQ-002..REQ-004 | REST convention | confirmed |
+`;
+
+const QUESTIONS_MD = `# Open questions
+
+| # | Question | Blocks | Options seen |
+|---|---|---|---|
+| Q1 | How much is a late cancellation, and how late is late? | REQ-004 | A flat fee · the full hour · nothing in the first season |
+`;
+
+const BOOKINGS_JS = `const bookings = [];
+
+function book(member, court, slot) {
+  if (bookings.some((b) => b.court === court && b.slot === slot)) {
+    return { status: 409, reason: "court already booked" };
+  }
+  bookings.push({ member, court, slot, minutes: 60 });
+  return { status: 201, minutes: 60 };
+}
+
+module.exports = { book, list: (member) => bookings.filter((b) => b.member === member) };
+`;
+
+const BOOKINGS_TEST_JS = `const test = require("node:test");
+const assert = require("node:assert");
+const { book, list } = require("../src/bookings");
+
+test("REQ-002 SCN-002: booking a free court lasts one hour", () => {
+  assert.deepEqual(book("ana", "centre", "mon-18"), { status: 201, minutes: 60 });
+});
+
+test("REQ-002 SCN-003: a member sees their bookings", () => {
+  assert.equal(list("ana").length, 1);
+});
+`;
+
+const CHANGE_DIR = path.join("docs", "specs", "changes", "draft-bookings");
+
+/**
+ * An existing Node project, adopted, with the brief and the agent's first
+ * draft committed — where the brief recording starts.
+ */
+function courtsWithDraft(scratch: string, env: NodeJS.ProcessEnv): string {
+  const project = path.join(scratch, "courts");
+  fs.mkdirSync(path.join(project, "src"), { recursive: true });
+  fs.mkdirSync(path.join(project, "test"), { recursive: true });
+  write(
+    path.join(project, "package.json"),
+    `${JSON.stringify({ name: "courts", version: "0.1.0", scripts: { test: "node --test" } }, null, 2)}\n`
+  );
+  gitInit(project, env);
+  run(project, env, ["specgate", "init", "--no-capabilities"]);
+  run(project, env, ["specgate", "config", "set", "test_cmd", "node --test"]);
+  write(path.join(project, "docs", "brief.md"), BRIEF_MD);
+  run(project, env, ["specgate", "change", "new", "draft-bookings", "--capability", "bookings"]);
+  const yaml = path.join(project, CHANGE_DIR, "change.yaml");
+  fs.appendFileSync(yaml, "brief: docs/brief.md\n", "utf8");
+  // The tasks are the author's checklist, not the subject of this recording.
+  const tasks = path.join(project, CHANGE_DIR, "tasks.md");
+  fs.writeFileSync(tasks, fs.readFileSync(tasks, "utf8").replace(/- \[ \]/g, "- [x]"), "utf8");
+  write(path.join(project, CHANGE_DIR, "specs", "bookings", "spec.md"), draftSpec(false));
+  run(project, env, ["git", "add", "-A"]);
+  run(project, env, ["git", "commit", "-qm", "the brief and the agent's first draft"]);
+  return project;
+}
+
+/** What the author does after reading the first check: write it down, ask. */
+function answerTheChecklist(project: string): void {
+  write(path.join(project, CHANGE_DIR, "specs", "bookings", "spec.md"), draftSpec(true));
+  write(path.join(project, CHANGE_DIR, "assumptions.md"), ASSUMPTIONS_MD);
+  write(path.join(project, CHANGE_DIR, "questions.md"), QUESTIONS_MD);
+}
+
+function writeTheTest(project: string): void {
+  write(path.join(project, "src", "bookings.js"), BOOKINGS_JS);
+  write(path.join(project, "test", "bookings.test.js"), BOOKINGS_TEST_JS);
+}
+
+/**
+ * Each recording's hidden setup: once before the first beat, and before named
+ * beats. Every step here is something the page says happened ("the agent
+ * drafted", "a test that names the requirement") — done for real, off camera.
+ */
+const SETUP: Record<
+  string,
+  {
+    before: (scratch: string, env: NodeJS.ProcessEnv) => void;
+    beats: Record<string, (scratch: string, env: NodeJS.ProcessEnv) => void>;
+  }
+> = {
+  harness: {
+    before: (scratch) => prepare(scratch),
+    beats: { "harness-config": (scratch, env) => projectSetup(scratch, env) },
+  },
+  brief: {
+    before: (scratch, env) => {
+      courtsWithDraft(scratch, env);
+    },
+    beats: { "the-fix": (scratch) => answerTheChecklist(path.join(scratch, "courts")) },
+  },
+  gate: {
+    before: (scratch, env) => {
+      const project = courtsWithDraft(scratch, env);
+      answerTheChecklist(project);
+      run(project, env, ["specgate", "change", "archive", "draft-bookings"]);
+      run(project, env, ["git", "add", "-A"]);
+      run(project, env, ["git", "commit", "-qm", "the specification"]);
+    },
+    beats: { "the-test": (scratch) => writeTheTest(path.join(scratch, "courts")) },
+  },
+};
 
 function truncate(lines: Line[], maxLines: number) {
   if (lines.length <= maxLines) return { lines, truncated: false, omitted: 0 };
@@ -384,7 +599,7 @@ function displayCommand(beat: Beat): string {
     .join(" ");
 }
 
-export function recordTranscript(): Recording {
+export function recordTranscript(board: Storyboard): Recording {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "csda-term-"));
   const env = buildEnv(scratch);
   const ctx: NormaliseContext = {
@@ -397,11 +612,14 @@ export function recordTranscript(): Recording {
   };
 
   try {
-    prepare(scratch);
+    prepareBin(scratch);
+    const setup = SETUP[board.id];
+    if (!setup) throw new Error(`no setup for the "${board.id}" recording`);
+    setup.before(scratch, env);
 
     const steps: Step[] = [];
-    for (const beat of BEATS) {
-      if (beat.id === "harness-config") projectSetup(scratch, env);
+    for (const beat of board.beats) {
+      setup.beats[beat.id]?.(scratch, env);
 
       const cwd = path.join(scratch, beat.cwd);
       const argv = beat.shell
@@ -462,7 +680,7 @@ export function recordTranscript(): Recording {
         packSource: "local",
       },
       recordedAt: new Date().toISOString().slice(0, 10),
-      title: "smart-parking",
+      title: board.title,
       cols: COLS,
       streamsMerged: false,
       steps,
@@ -474,44 +692,63 @@ export function recordTranscript(): Recording {
 
 // ── Writing ──────────────────────────────────────────────────────────────────
 
-export const JSON_PATH = path.join(DOCS, "assets", "terminal-demo.json");
 export const INDEX_PATH = path.join(DOCS, "index.html");
+
+export function jsonPath(board: Storyboard): string {
+  return path.join(DOCS, "assets", board.file);
+}
 
 export function serialise(rec: Recording): string {
   return `${JSON.stringify(rec, null, 2)}\n`;
 }
 
-export function writeRecording(rec: Recording): void {
-  fs.writeFileSync(JSON_PATH, serialise(rec), "utf8");
+export function writeRecording(board: Storyboard, rec: Recording): void {
+  fs.writeFileSync(jsonPath(board), serialise(rec), "utf8");
   const index = fs.readFileSync(INDEX_PATH, "utf8");
-  fs.writeFileSync(INDEX_PATH, replaceBlock(index, "terminal", renderFallbackHtml(rec)), "utf8");
+  fs.writeFileSync(INDEX_PATH, replaceBlock(index, board.block, renderFallbackHtml(rec)), "utf8");
 }
 
 function main(): void {
   const check = process.argv.includes("--check");
-  const rec = recordTranscript();
-
-  if (!check) {
-    writeRecording(rec);
-    const bytes = Buffer.byteLength(serialise(rec));
-    process.stdout.write(
-      `recorded ${rec.steps.length} steps from v${rec.recordedWith.version} — ` +
-        `${(bytes / 1024).toFixed(1)} KB\n`
-    );
-    return;
-  }
-
+  const at = process.argv.indexOf("--only");
+  const only = at !== -1 ? process.argv[at + 1] : null;
   const problems: string[] = [];
-  const onDisk = fs.existsSync(JSON_PATH) ? fs.readFileSync(JSON_PATH, "utf8") : "";
-  // `recordedAt` is a date, not a claim about the CLI, so a capture on a later
-  // day is not staleness. Everything else must match byte for byte.
-  const strip = (s: string) => s.replace(/"recordedAt": "[^"]*"/, '"recordedAt": "-"');
-  if (strip(onDisk) !== strip(serialise(rec))) {
-    problems.push("docs/assets/terminal-demo.json is out of date — run `npm run docs:terminal`");
-  }
-  const block = readBlock(fs.readFileSync(INDEX_PATH, "utf8"), "terminal");
-  if ((block || "").trim() !== renderFallbackHtml(rec).trim()) {
-    problems.push("the fallback transcript in docs/index.html no longer matches the recording");
+
+  for (const board of STORYBOARDS) {
+    if (only && board.id !== only) continue;
+    const rec = recordTranscript(board);
+
+    // A beat that exits other than it was written for is a demo of something
+    // else: a refusal that stopped refusing, or a step that started failing.
+    for (const [i, beat] of board.beats.entries()) {
+      const expected = beat.expectExit ?? 0;
+      if (rec.steps[i].exit !== expected) {
+        problems.push(`${board.id}/${beat.id} exited ${rec.steps[i].exit}, expected ${expected}`);
+      }
+    }
+
+    if (!check) {
+      writeRecording(board, rec);
+      const bytes = Buffer.byteLength(serialise(rec));
+      process.stdout.write(
+        `recorded ${board.id}: ${rec.steps.length} steps from v${rec.recordedWith.version} — ` +
+          `${(bytes / 1024).toFixed(1)} KB\n`
+      );
+      continue;
+    }
+
+    const file = jsonPath(board);
+    const onDisk = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+    // `recordedAt` is a date, not a claim about the CLI, so a capture on a later
+    // day is not staleness. Everything else must match byte for byte.
+    const strip = (s: string) => s.replace(/"recordedAt": "[^"]*"/, '"recordedAt": "-"');
+    if (strip(onDisk) !== strip(serialise(rec))) {
+      problems.push(`docs/assets/${board.file} is out of date — run \`npm run docs:terminal\``);
+    }
+    const block = readBlock(fs.readFileSync(INDEX_PATH, "utf8"), board.block);
+    if ((block || "").trim() !== renderFallbackHtml(rec).trim()) {
+      problems.push(`the ${board.block} fallback in docs/index.html no longer matches the recording`);
+    }
   }
 
   if (problems.length > 0) {
@@ -519,7 +756,7 @@ function main(): void {
     process.exitCode = 1;
     return;
   }
-  process.stdout.write("the recording is current\n");
+  if (check) process.stdout.write("the recordings are current\n");
 }
 
 if (require.main === module) main();

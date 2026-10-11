@@ -2,6 +2,36 @@
 
 # The harness
 
+The harness delivers one requirement at a time, unattended, and stops when
+the gate says no. It sits in the middle of a requirement's life — after the
+specification is archived, before a person merges — and it never decides
+anything that is yours to decide.
+
+<!-- csda:diagram lifecycle -->
+
+## One turn, in sequence
+
+<!-- csda:diagram harness-loop -->
+
+1. **Pick.** Each pending requirement, or the one you name with `--req`. One
+   that waits for an answer (`Needs Clarification`) is refused.
+2. **Isolate.** A fresh git worktree on a branch named after it,
+   `harness/REQ-NNN`. Your checkout is never touched.
+3. **Prompt.** Its Gherkin, the project's rules and the boundaries — what the
+   agent may not edit — written to a file your agent reads.
+4. **Build.** Your agent writes code and tests in the worktree. Any CLI that
+   takes a prompt file works; the harness never talks to a model itself.
+5. **Gate.** `validate --strict`, a check that the specification and the
+   feature files were not touched, then your own test command.
+6. **Green:** the requirement is marked done and committed on its branch.
+   **Red:** the failures go into the next attempt's prompt, up to
+   `max_attempts`; after the last one the work is kept as a
+   `wip(REQ-NNN): FAILED the gate` commit and the requirement stays `Draft`.
+7. **Report.** One line per requirement, and the run recorded under
+   `.harness/runs/`. It never merges.
+
+## Set it up
+
 ```bash
 specgate harness init
 ```

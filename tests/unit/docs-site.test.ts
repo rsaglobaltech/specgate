@@ -430,18 +430,6 @@ test("the landing page routes to the documentation", () => {
 test("the landing page counts what the repository actually has", () => {
   // Every figure on that page is checkable, so it is checked.
   const html = fs.readFileSync(path.join(DOCS, "index.html"), "utf8");
-  // Count what a pack is: a directory carrying a pack.yaml.
-  const packsRoot = path.join(ROOT, "packs");
-  const packs = fs
-    .readdirSync(packsRoot)
-    .filter((domain) => fs.statSync(path.join(packsRoot, domain)).isDirectory())
-    .flatMap((domain) =>
-      fs
-        .readdirSync(path.join(packsRoot, domain))
-        .filter((type) => fs.existsSync(path.join(packsRoot, domain, type, "pack.yaml")))
-    ).length;
-  assert.ok(packs >= 10, `expected the curated packs, counted ${packs}`);
-
   const { SURFACE } = require("../../scripts/lib/surface");
   // Commands a person can reach, which is what the stat beside it claims.
   // `merge-traceability` is plumbing git invokes as a merge driver: no help
@@ -449,8 +437,49 @@ test("the landing page counts what the repository actually has", () => {
   // next to the number false.
   const userFacing = SURFACE.filter((c: any) => c.help || c.subcommands).length;
   assert.ok(html.includes(`<dt>${userFacing}</dt>`), `command count is not ${userFacing}`);
-  assert.ok(html.includes(`<dt>${packs}</dt>`), `pack count is not ${packs}`);
   assert.ok(html.includes("<dt>0</dt>"), "the zero-runtime-dependencies claim is missing");
+});
+
+test("the landing page's pilot figures are the projects page's, added up", () => {
+  // The pack count used to sit here, as "11 curated domain packs" — eleven
+  // starter examples nobody had used on a product. What the page claims now is
+  // the six pilots, and the only place their numbers are written down is the
+  // projects page. Summed from its table, so the two cannot disagree.
+  const html = fs.readFileSync(path.join(DOCS, "index.html"), "utf8");
+  const table = fs.readFileSync(path.join(DOCS, "projects", "index.md"), "utf8");
+  const rows = table
+    .split("\n")
+    .filter((line) => /^\| \[/.test(line))
+    .map((line) => line.split("|").map((c) => c.trim()));
+  assert.equal(rows.length, 6, "the projects table should list six pilots");
+  let delivered = 0;
+  let waiting = 0;
+  for (const cells of rows) {
+    const m = /^(\d+) of (\d+)$/.exec(cells[4]);
+    assert.ok(m, `unreadable requirements cell: ${cells[4]}`);
+    delivered += Number(m[1]);
+    waiting += Number(m[2]) - Number(m[1]);
+  }
+  assert.ok(html.includes(`<dt>${rows.length}</dt>`), `the pilot count is not ${rows.length}`);
+  assert.ok(html.includes(`<dt>${delivered}</dt>`), `requirements delivered is not ${delivered}`);
+  assert.ok(html.includes(`<dt>${waiting}</dt>`), `requirements waiting is not ${waiting}`);
+  for (const cells of rows) {
+    const m = /^(\d+) of (\d+)$/.exec(cells[4])!;
+    assert.ok(
+      html.includes(`<strong>${m[1]} of ${m[2]}</strong>`),
+      `the landing's card for ${cells[1]} does not say ${m[1]} of ${m[2]}`
+    );
+  }
+});
+
+test("every project page says, at the top, what kind of evidence it is", () => {
+  // The same rule case studies follow: a reader must not mistake a pilot an
+  // agent ran for a customer who chose the tool.
+  const dir = path.join(DOCS, "projects");
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".md"))) {
+    const head = fs.readFileSync(path.join(dir, file), "utf8").split("\n").slice(0, 12).join("\n");
+    assert.match(head, /agent-driven adoption, not a customer/, `${file} does not say what it is`);
+  }
 });
 
 // ── Diagrams ─────────────────────────────────────────────────────────────────

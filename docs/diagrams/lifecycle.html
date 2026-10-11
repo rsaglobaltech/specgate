@@ -1,0 +1,90 @@
+<figure class="dia dia--lifecycle">
+  <div class="dia__scroll">
+  <svg viewBox="0 0 760 350" class="dia__svg" role="img" aria-labelledby="csda-lc-t csda-lc-d">
+    <title id="csda-lc-t">The lifecycle of a requirement</title>
+    <desc id="csda-lc-d">Three phases in order. Specify: keep the brief in the repository,
+      draft a module as a change, check the draft, archive it. Build: status names the next
+      requirement, the harness or a person builds it in its own branch, a person reviews and
+      merges. Prove: done marks it Implemented only if the gate passes, check runs the whole
+      gate in CI, report shows where the product stands. A requirement that arrives waiting for
+      an answer stays out of Build until the client answers, then rejoins at status.</desc>
+
+    <defs>
+      <marker id="csda-lc-a" viewBox="0 0 10 8" refX="9" refY="4"
+              markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--fg-soft)"/>
+      </marker>
+      <marker id="csda-lc-w" viewBox="0 0 10 8" refX="9" refY="4"
+              markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 4 L0 8 Z" fill="var(--amber)"/>
+      </marker>
+    </defs>
+
+    <text x="20"  y="30" class="dia__phase">SPECIFY</text>
+    <text x="275" y="30" class="dia__phase">BUILD</text>
+    <text x="530" y="30" class="dia__phase">PROVE</text>
+
+    <g class="dia__box">
+      <rect x="20" y="44"  width="210" height="50" rx="9"/>
+      <rect x="20" y="108" width="210" height="50" rx="9"/>
+      <rect x="20" y="172" width="210" height="50" rx="9"/>
+      <rect x="20" y="236" width="210" height="50" rx="9"/>
+      <rect x="275" y="44"  width="210" height="50" rx="9"/>
+      <rect x="275" y="108" width="210" height="50" rx="9"/>
+      <rect x="275" y="172" width="210" height="50" rx="9"/>
+      <rect x="530" y="44"  width="210" height="50" rx="9"/>
+      <rect x="530" y="172" width="210" height="50" rx="9"/>
+    </g>
+    <g class="dia__box dia__box--gate">
+      <rect x="530" y="108" width="210" height="50" rx="9"/>
+    </g>
+    <g class="dia__box dia__box--wait">
+      <rect x="275" y="246" width="210" height="62" rx="9"/>
+    </g>
+
+    <g>
+      <text x="34" y="65"  class="dia__h"><tspan class="dia__step">1</tspan>  Brief</text>
+      <text x="34" y="83"  class="dia__s dia__mono">docs/brief.md</text>
+      <text x="34" y="129" class="dia__h"><tspan class="dia__step">2</tspan>  Draft one module</text>
+      <text x="34" y="147" class="dia__s dia__mono">specgate change new</text>
+      <text x="34" y="193" class="dia__h"><tspan class="dia__step">3</tspan>  Check the draft</text>
+      <text x="34" y="211" class="dia__s dia__mono">specgate draft --check</text>
+      <text x="34" y="257" class="dia__h"><tspan class="dia__step">4</tspan>  Archive — all Draft</text>
+      <text x="34" y="275" class="dia__s dia__mono">specgate change archive</text>
+
+      <text x="289" y="65"  class="dia__h"><tspan class="dia__step">5</tspan>  What is next</text>
+      <text x="289" y="83"  class="dia__s dia__mono">specgate status</text>
+      <text x="289" y="129" class="dia__h"><tspan class="dia__step">6</tspan>  Build, one branch each</text>
+      <text x="289" y="147" class="dia__s dia__mono">specgate harness run</text>
+      <text x="289" y="193" class="dia__h"><tspan class="dia__step">7</tspan>  Review and merge</text>
+      <text x="289" y="211" class="dia__s">a person, never the harness</text>
+
+      <text x="544" y="65"  class="dia__h"><tspan class="dia__step">8</tspan>  Mark it done</text>
+      <text x="544" y="83"  class="dia__s dia__mono">specgate done</text>
+      <text x="544" y="129" class="dia__h"><tspan class="dia__step">9</tspan>  The gate, in CI</text>
+      <text x="544" y="147" class="dia__s dia__mono">specgate check</text>
+      <text x="544" y="193" class="dia__h"><tspan class="dia__step">10</tspan>  Where it stands</text>
+      <text x="544" y="211" class="dia__s dia__mono">specgate report</text>
+
+      <text x="289" y="268" class="dia__s dia__wait-t">Waiting for an answer</text>
+      <text x="289" y="285" class="dia__s">a question blocks it: the harness</text>
+      <text x="289" y="300" class="dia__s">and done refuse it — answered → 5</text>
+    </g>
+
+    <g class="dia__msg">
+      <line x1="125" y1="94"  x2="125" y2="104" marker-end="url(#csda-lc-a)"/>
+      <line x1="125" y1="158" x2="125" y2="168" marker-end="url(#csda-lc-a)"/>
+      <line x1="125" y1="222" x2="125" y2="232" marker-end="url(#csda-lc-a)"/>
+      <path d="M230 252 H252 V69 H271" marker-end="url(#csda-lc-a)"/>
+      <line x1="380" y1="94"  x2="380" y2="104" marker-end="url(#csda-lc-a)"/>
+      <line x1="380" y1="158" x2="380" y2="168" marker-end="url(#csda-lc-a)"/>
+      <path d="M485 197 H507 V69 H526" marker-end="url(#csda-lc-a)"/>
+      <line x1="635" y1="94"  x2="635" y2="104" marker-end="url(#csda-lc-a)"/>
+      <line x1="635" y1="158" x2="635" y2="168" marker-end="url(#csda-lc-a)"/>
+      <path d="M230 276 H271" stroke-dasharray="5 4" style="stroke: var(--amber)" marker-end="url(#csda-lc-w)"/>
+    </g>
+
+    <text x="20" y="336" class="dia__note">Nothing is built before it is specified; nothing counts as done until the gate has checked it.</text>
+  </svg>
+  </div>
+</figure>

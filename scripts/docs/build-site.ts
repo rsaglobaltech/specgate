@@ -315,7 +315,7 @@ function pageShell(page: Page, version: string): string {
   </button>
   <nav class="top__links">
     <a href="${up}docs.html">Docs</a>
-    <a href="${up}packs/">Packs</a>
+    <a href="${up}projects/index.html">Projects</a>
     <a href="${REPO}" target="_blank" rel="noreferrer">GitHub</a>
     <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
   </nav>
