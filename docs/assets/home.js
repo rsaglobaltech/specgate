@@ -34,6 +34,74 @@
     });
   }
 
+  // ── The hero stack leans toward the pointer ─────────────────────────────
+  //
+  // A few degrees each way, through two custom properties the CSS reads.
+  // Nothing happens on touch screens or under reduced motion.
+  var stack = document.querySelector(".iso__stack");
+  var art = document.querySelector(".mx__art");
+  if (stack && art && !reduce && window.matchMedia("(hover: hover)").matches) {
+    art.addEventListener("pointermove", function (e) {
+      var r = art.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - 0.5;
+      var y = (e.clientY - r.top) / r.height - 0.5;
+      stack.style.setProperty("--tilt-z", (x * 14).toFixed(2) + "deg");
+      stack.style.setProperty("--tilt-x", (-y * 10).toFixed(2) + "deg");
+    });
+    art.addEventListener("pointerleave", function () {
+      stack.style.setProperty("--tilt-z", "0deg");
+      stack.style.setProperty("--tilt-x", "0deg");
+    });
+  }
+
+  // ── The harness board plays one run, step by step ──────────────────────
+  //
+  // Cells carry the step they appear at; one step every ~0.9 s while the board
+  // is on screen, a pause on the finished run, then again. Reduced motion, or
+  // no IntersectionObserver: the whole run is simply there.
+  document.querySelectorAll("[data-hz]").forEach(function (board) {
+    var band = board.closest(".hz");
+    var cells = Array.prototype.slice.call(board.querySelectorAll("[data-at]"));
+    if (!cells.length || reduce || !("IntersectionObserver" in window)) return;
+    var last = cells.reduce(function (m, c) {
+      return Math.max(m, +c.dataset.at);
+    }, 0);
+    var step = 0;
+    var timer = null;
+    board.classList.add("hz--live");
+    function paint() {
+      var now = null;
+      cells.forEach(function (c) {
+        var on = +c.dataset.at <= step;
+        c.classList.toggle("is-on", on);
+        if (+c.dataset.at === step) now = c.closest(".hz__row");
+      });
+      board.querySelectorAll(".hz__row").forEach(function (r) {
+        r.classList.toggle("is-now", r === now);
+      });
+      if (band) band.classList.toggle("is-done", step >= last);
+      var live = board.querySelector(".hz__live");
+      if (live) live.textContent = step >= last ? "run finished" : "running";
+    }
+    function tick() {
+      step = step >= last + 4 ? 0 : step + 1;
+      paint();
+    }
+    paint();
+    new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting && !timer) timer = setInterval(tick, 900);
+          else if (!e.isIntersecting && timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+        });
+      },
+      { threshold: 0.35 }
+    ).observe(board);
+  });
+
   // ── Journey switch ────────────────────────────────────────────────────────
   //
   // Two paths, one shown at a time. Without JavaScript both are on the page,

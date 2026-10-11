@@ -83,6 +83,13 @@
           <div class="iso__slab iso__slab--4"><div class="iso__top"><span>REQ-007</span> ✔ Implemented</div><div class="iso__front"><span>04</span> the gate</div><div class="iso__side"></div></div>
         </div>
       </div>
+      <ul class="iso__caps" aria-hidden="true">
+        <li class="iso__cap iso__cap--0"><b>Hover the layers</b> — each one is a step between a plan and a shipped requirement.</li>
+        <li class="iso__cap iso__cap--1"><b>01 · The brief.</b> Your plan or a client's email, kept as it is. Every draft is checked against its words.</li>
+        <li class="iso__cap iso__cap--2"><b>02 · The checked draft.</b> Your agent writes one module; a value the brief never gave stops it.</li>
+        <li class="iso__cap iso__cap--3"><b>03 · The tests.</b> A test that names REQ-007 is the link. Nothing to declare.</li>
+        <li class="iso__cap iso__cap--4"><b>04 · The gate.</b> Specification, matrix and your suite: Implemented only if all three pass.</li>
+      </ul>
     </div>
   </div>
 </section>
@@ -969,17 +976,68 @@ max_attempts: 1
 </section>
 
 <!-- ── The harness ──────────────────────────────────────────────────────── -->
-<section class="ed-band">
+<section class="ed-band ed-band--ink hz" id="harness" aria-labelledby="hz-h">
   <div class="ed-wrap">
-    <div class="ed-head reveal">
-      <p class="ed-eyebrow">Unattended delivery</p>
-      <h2 class="ed-h2">Hand the loop to an agent — in sequence.</h2>
+    <div class="hz__head reveal">
+      <p class="ed-eyebrow">The harness · unattended delivery</p>
+      <h2 class="ed-h2" id="hz-h">Your agent builds.<br>The gate decides. <span>You merge.</span></h2>
       <p class="ed-muted"><code>specgate harness run</code> takes each pending
          requirement in its own git worktree, hands your agent a prompt built from
          its Gherkin, runs the gate on the result, and commits only if it is
          green. It never merges — the branch is yours to merge or throw away. The
          agent is any shell command; there is no runtime or SDK.</p>
     </div>
+
+    <figure class="hz__board reveal" data-hz aria-labelledby="hz-cap">
+      <div class="hz__bar">
+        <span class="hz__dots" aria-hidden="true"></span>
+        <code>specgate harness run --agent "claude -p"</code>
+        <span class="hz__live" aria-hidden="true">running</span>
+      </div>
+      <div class="hz__grid" role="table" aria-label="One harness run, step by step">
+        <div class="hz__row hz__row--head" role="row">
+          <span role="columnheader">Requirement</span><span role="columnheader">Worktree</span><span role="columnheader">Attempts — the gate after each</span><span role="columnheader">Result</span>
+        </div>
+        <div class="hz__row" role="row">
+          <span role="cell" class="hz__req"><b>REQ-002</b> A member books a court for one hour</span>
+          <span role="cell" class="hz__c" data-at="1"><code>harness/REQ-002</code></span>
+          <span role="cell" class="hz__att"><i class="hz__c hz__ok" data-at="2">1 ✔</i></span>
+          <span role="cell" class="hz__c hz__res hz__res--ok" data-at="3">✔ committed on its branch</span>
+        </div>
+        <div class="hz__row" role="row">
+          <span role="cell" class="hz__req"><b>REQ-003</b> A court is never booked twice</span>
+          <span role="cell" class="hz__c" data-at="4"><code>harness/REQ-003</code></span>
+          <span role="cell" class="hz__att"><i class="hz__c hz__no" data-at="5">1 ✖ SCN-004</i><i class="hz__c hz__arrow" data-at="6">failures → next prompt</i><i class="hz__c hz__ok" data-at="7">2 ✔</i></span>
+          <span role="cell" class="hz__c hz__res hz__res--ok" data-at="8">✔ committed on its branch</span>
+        </div>
+        <div class="hz__row" role="row">
+          <span role="cell" class="hz__req"><b>REQ-004</b> A member cancels a booking</span>
+          <span role="cell" class="hz__c hz__muted" data-at="9">—</span>
+          <span role="cell" class="hz__att"><i class="hz__c hz__wait" data-at="9">skipped</i></span>
+          <span role="cell" class="hz__c hz__res hz__res--wait" data-at="10">⏸ waiting for an answer</span>
+        </div>
+        <div class="hz__row" role="row">
+          <span role="cell" class="hz__req"><b>REQ-005</b> A member sees which courts are free</span>
+          <span role="cell" class="hz__c" data-at="11"><code>harness/REQ-005</code></span>
+          <span role="cell" class="hz__att"><i class="hz__c hz__no" data-at="12">1 ✖</i><i class="hz__c hz__no" data-at="13">2 ✖</i><i class="hz__c hz__no" data-at="14">3 ✖</i></span>
+          <span role="cell" class="hz__c hz__res hz__res--no" data-at="15"><code>wip(REQ-005): FAILED the gate</code> · stays Draft</span>
+        </div>
+      </div>
+      <figcaption class="hz__foot" id="hz-cap"><span class="hz__c" data-at="16">4 requirements · 2 delivered · 1 waiting for the client · 1 kept as a failed attempt — <strong>nothing merged</strong>.</span> <span class="hz__note">An illustrative run of the court-bookings example.</span></figcaption>
+    </figure>
+
+    <dl class="hz__stats">
+      <div class="reveal"><dt>74 / 76</dt><dd>harness runs that passed on the first attempt — <a href="./projects/rebar-crew.html">Rebar Crew</a></dd></div>
+      <div class="reveal"><dt>17 / 18</dt><dd>first attempt on the first run, median 3½ min each — <a href="./projects/bookings.html">Bookings</a></dd></div>
+      <div class="reveal"><dt>0</dt><dd>merges by the harness. The branch is always yours.</dd></div>
+    </dl>
+
+    <ul class="hz__feats">
+      <li class="reveal"><h3>One worktree per requirement</h3><p>A branch named after it, so a bad attempt never touches your checkout.</p></li>
+      <li class="reveal"><h3>Failures become the next prompt</h3><p>The gate's findings go back to the agent, up to <code>max_attempts</code>.</p></li>
+      <li class="reveal"><h3>Questions stop it</h3><p>A requirement waiting for the client is skipped, not guessed.</p></li>
+      <li class="reveal"><h3>It says what it cost</h3><p><code>specgate harness report</code>: first-attempt rate and time per delivered requirement.</p></li>
+    </ul>
 
     <!-- csda:diagram harness-loop -->
 
@@ -994,6 +1052,7 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"</code></pre>
       <code>claude</code><code>claude-plugin</code><code>cursor</code><code>copilot</code><code>windsurf</code><code>aider</code><code>gemini</code><code>cline</code><code>codex</code><code>antigravity</code>
     </p>
     <p class="ed-actions">
+      <a class="ed-link" href="#watch">Watch a real run →</a>
       <a class="ed-link" href="./harness.html">How the harness works →</a>
       <a class="ed-link" href="./agent-setup.html">Choosing your agent →</a>
     </p>

@@ -460,7 +460,7 @@ a:hover { text-decoration: underline; }
   margin: 0 0 var(--space-6);
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(2.3rem, 1.6rem + 2.6vw, 3.6rem);
+  font-size: clamp(2rem, 1.5rem + 1.8vw, 2.8rem);
   line-height: 1;
   letter-spacing: -0.035em;
   text-wrap: balance;
@@ -477,7 +477,7 @@ a:hover { text-decoration: underline; }
   border-top: 1px solid var(--line);
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(1.55rem, 1.3rem + 0.9vw, 2rem);
+  font-size: clamp(1.35rem, 1.2rem + 0.6vw, 1.7rem);
   line-height: 1.1;
   letter-spacing: -0.025em;
   text-wrap: balance;
