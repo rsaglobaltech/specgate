@@ -180,7 +180,7 @@ test("the sidebar's Start section walks both journeys in order", () => {
   const slugs = start.entries.map((e: any) => e.slug);
   assert.equal(slugs[0], "getting-started");
   assert.deepEqual(
-    slugs.filter((s: string) => s.startsWith("start/")),
+    slugs.filter((s: string) => /^start\/(scratch|existing)-/.test(s)),
     JOURNEYS.flatMap((j: any) => PAGES.filter((p) => p.startsWith(`start/${j.id}-`))),
     "every journey page, in phase order, belongs in the Start section"
   );

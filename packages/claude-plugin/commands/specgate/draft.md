@@ -17,6 +17,8 @@ specgate draft $ARGUMENTS
 
 ## Guidance
 
+- No `docs/brief.md`: show the person what `specgate draft` prints about a brief, and stop — the brief is theirs to write (`specgate draft --new-brief` gives them one to fill in).
+- If `specgate draft` says the brief has no front matter, or that it needs fixes: follow `docs/specs/BRIEF-SETUP.md`. Write or fix only the front matter at the top of `docs/brief.md` — never a word below it — run `specgate draft` again, then **stop** and show the front matter to the person to review. Draft no module in the same turn.
 - Without a module, `specgate draft` lists the brief's modules and names the next one. Draft that one.
 - `specgate draft <module>` opens the draft and writes `DRAFTING.md` inside it. Follow it exactly: it has the reserved ids, the actors and surfaces, and every format the checklist reads.
 - Write only inside `docs/specs/changes/draft-<module>/`. Then run `specgate draft <module>` again and fix every finding until it says **Ready to review**.

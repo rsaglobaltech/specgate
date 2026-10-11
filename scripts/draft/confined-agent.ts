@@ -65,19 +65,23 @@ export function agentInvocation(
 
 export function runConfinedAgent(o: {
   projectDir: string;
+  /** Names the run (the prompt file); also the scope unless `allowed` is given. */
   changeId: string;
+  /** The paths the agent may write. Default: the change's own folder. */
+  allowed?: (relativePath: string) => boolean;
   command: string;
   prompt: string;
   /** Where the agent's own output goes: the terminal, or captured for --json. */
   showOutput: boolean;
 }): ConfinedRun {
+  const inScope = o.allowed || ((rel: string) => isInScope(rel, o.changeId));
   const before = dirtyPaths(o.projectDir);
   if (before === null) return { ok: false, problem: "no_git", wrote: [], reverted: [] };
 
   // What the person had, outside the change, before the agent touched anything.
   const saved = new Map<string, Buffer | null>();
   for (const rel of before) {
-    if (isInScope(rel, o.changeId)) continue;
+    if (inScope(rel)) continue;
     const full = path.join(o.projectDir, rel);
     saved.set(
       rel,
@@ -95,9 +99,10 @@ export function runConfinedAgent(o: {
       cwd: o.projectDir,
       encoding: "utf8",
       input: call.stdin ? o.prompt : "",
-      // The agent talks on stderr's terminal, never on stdout: in --json mode
-      // stdout is one document and nothing else.
-      stdio: ["pipe", o.showOutput ? 2 : "pipe", o.showOutput ? 2 : "pipe"],
+      // Shown, the agent talks in the same stream as the command around it, so
+      // its lines land in order. In --json mode it is captured: stdout is one
+      // document and nothing else.
+      stdio: ["pipe", o.showOutput ? 1 : "pipe", o.showOutput ? 2 : "pipe"],
     });
   } finally {
     fs.rmSync(promptFile, { force: true });
@@ -107,7 +112,7 @@ export function runConfinedAgent(o: {
   const wrote: string[] = [];
   const reverted: string[] = [];
   for (const rel of after) {
-    if (isInScope(rel, o.changeId)) {
+    if (inScope(rel)) {
       if (!before.includes(rel)) wrote.push(rel);
       continue;
     }

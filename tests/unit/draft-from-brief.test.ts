@@ -90,7 +90,7 @@ test("specgate draft with no brief says where to put one", (t) => {
   const { cli } = project(t, { brief: null });
   const r = cli("draft");
   assert.equal(r.status, 1);
-  assert.match(r.stdout + r.stderr, /Save your plan or brief as docs\/brief\.md/);
+  assert.match(r.stdout, /Save it as docs\/brief\.md, then {2}specgate draft/);
 });
 
 test("specgate draft lists the brief's modules and names the next", (t) => {
@@ -109,11 +109,12 @@ test("specgate draft lists the brief's modules and names the next", (t) => {
   );
 });
 
-test("a brief without modules gets a front matter to paste, not a guess", (t) => {
+test("a brief without front matter gets the block to paste, not a guess", (t) => {
   const { cli } = project(t, { brief: "# Plan\n\nMembers book courts.\n" });
   const r = cli("draft");
   assert.equal(r.status, 0);
-  assert.match(r.stdout, /modules: \[<first-module>, <second-module>\]/);
+  assert.match(r.stdout, /The whole block, to paste at the top and change/);
+  assert.doesNotMatch(r.stdout, /Modules\n/, "no modules are invented");
 });
 
 test("draft <module> opens the draft linked to the brief, with its guide", (t) => {
@@ -306,4 +307,190 @@ test("the draft slash command takes the module as its argument", () => {
   assert.match(body, /Do not archive/);
   // Every other tool reads the plain form.
   assert.ok(step.run.includes("specgate draft <module>"));
+});
+
+// ── Writing the brief (#95) ─────────────────────────────────────────────────
+
+const { BRIEF_TEMPLATE, checkFrontMatter, briefBody } = require("../../scripts/draft/brief-setup");
+const { actorSurfaces } = require("../../packages/core/src/domain/DraftChecklist");
+
+const NOTES = `# Lingo
+
+Lingo is an online language school. Students learn on the web or on their phone.
+`;
+
+const codesOf = (brief: string) => checkFrontMatter(brief).map((p: any) => p.code);
+
+test("no brief: what a brief is, and --new-brief to start one", (t) => {
+  const { cli } = project(t, { brief: null });
+  const r = cli("draft");
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /your own plan, a\s+client's email, meeting notes/);
+  assert.match(r.stdout, /what you don't know yet — those become questions/);
+  assert.match(r.stdout, /specgate draft --new-brief/);
+  const doc = JSON.parse(cli("draft", "--json").stdout);
+  assert.equal(doc.status[0].code, "draft_no_brief");
+});
+
+test("--new-brief writes the template, and never over a brief that exists", (t) => {
+  const { dir, cli } = project(t, { brief: null });
+  const r = cli("draft", "--new-brief");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const file = path.join(dir, "docs", "brief.md");
+  assert.equal(fs.readFileSync(file, "utf8"), BRIEF_TEMPLATE);
+  for (const section of [
+    "## What the product is",
+    "## Who uses it and how",
+    "## What each one must be able to do",
+    "## Rules and numbers you already know",
+    "## What you don't know yet",
+    "## Out of scope",
+  ]) {
+    assert.ok(BRIEF_TEMPLATE.includes(section), section);
+  }
+  fs.writeFileSync(file, NOTES);
+  const again = cli("draft", "--new-brief");
+  assert.equal(again.status, 1);
+  assert.match(again.stdout + again.stderr, /already exists — nothing was written/);
+  assert.equal(fs.readFileSync(file, "utf8"), NOTES, "the brief is untouched");
+});
+
+test("the template's placeholders are reported one field at a time", (t) => {
+  const { cli } = project(t, { brief: BRIEF_TEMPLATE });
+  const r = cli("draft");
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /needs 4 fix\(es\)/);
+  assert.match(r.stdout, /`surfaces:` still says <surface>, <surface>/);
+  // The commented examples are not actors the person declared.
+  assert.equal(actorSurfaces(BRIEF_TEMPLATE).has("teacher"), false);
+});
+
+test("a brief without front matter gets every field explained, and the agent's guide", (t) => {
+  const { dir, cli } = project(t, { brief: NOTES });
+  const r = cli("draft");
+  assert.equal(r.status, 0, r.stderr);
+  for (const field of ["product ", "surfaces ", "actors ", "modules "]) {
+    assert.match(r.stdout, new RegExp(`^  ${field}`, "m"), field);
+  }
+  assert.match(r.stdout, /Any of: api, web, mobile, desktop/);
+  assert.match(r.stdout, /25 requirements at\s+most/);
+  assert.match(r.stdout, /not a single screen/);
+  assert.match(
+    r.stdout,
+    /Propose the front matter of docs\/brief\.md: follow docs\/specs\/BRIEF-SETUP\.md/
+  );
+  assert.match(r.stdout, /specgate draft --agent "claude -p"/);
+  const guide = fs.readFileSync(path.join(dir, "docs", "specs", "BRIEF-SETUP.md"), "utf8");
+  assert.match(guide, /Change nothing below the front matter/);
+  assert.match(guide, /Never invent an actor, a surface or a module/);
+  assert.match(guide, /# check:/);
+  assert.match(guide, /Do not run `specgate draft <module>`/);
+});
+
+test("front matter problems, in plain words, each with its fix", () => {
+  const fm = (body: string) => `---\n${body}\n---\n\nThe brief.\n`;
+  assert.deepEqual(
+    codesOf(
+      fm(
+        "product: Lingo\nsurfaces: [web, tablet]\nactors:\n  - { name: Teacher, surfaces: [web, mobile] }\n  - { name: Admin }\nmodules: [courses, Live classes, courses]"
+      )
+    ).sort(),
+    [
+      "brief_actor_without_surfaces",
+      "brief_module_name",
+      "brief_module_twice",
+      "brief_surface_not_in_product",
+      "brief_unknown_surface",
+    ]
+  );
+  assert.deepEqual(codesOf(fm("surfaces: [web]")).sort(), [
+    "brief_no_actors",
+    "brief_no_modules",
+    "brief_no_product",
+  ]);
+  const fixes = checkFrontMatter(
+    fm("product: X\nactors:\n  - { name: A, surfaces: [web] }\nmodules: [Live classes]")
+  );
+  assert.match(fixes[0].fix, /live-classes/);
+  assert.deepEqual(
+    codesOf(
+      fm(
+        "product: X\nsurfaces: [api, web]\nactors:\n  - { name: A, surfaces: [web] }\nmodules: [a, b]"
+      )
+    ),
+    []
+  );
+});
+
+/** A stand-in agent proposing a front matter; with MANGLE it also rewrites the body. */
+const FM_STUB = `
+const fs = require("fs");
+const prompt = fs.readFileSync(0, "utf8");
+if (!/Change nothing below the front matter/.test(prompt)) process.exit(3);
+const body = fs.readFileSync("docs/brief.md", "utf8");
+const fm = "---\\nproduct: Lingo\\nsurfaces: [web, mobile]\\nactors:\\n  - { name: Student, surfaces: [web, mobile] }\\nmodules: [courses, lessons]\\n---\\n\\n";
+fs.writeFileSync("docs/brief.md", fm + (process.env.MANGLE ? body.replace("online", "offline") : body));
+fs.writeFileSync("stray.txt", "x\\n");
+`;
+
+function withGit(t: any, brief: string) {
+  const p = project(t, { brief });
+  git(p.dir, "init", "-q");
+  git(
+    p.dir,
+    "-c",
+    "user.email=t@t",
+    "-c",
+    "user.name=t",
+    "commit",
+    "-q",
+    "--allow-empty",
+    "-m",
+    "start"
+  );
+  const stub = path.join(p.dir, "..", `fm-${path.basename(p.dir)}.js`);
+  fs.writeFileSync(stub, FM_STUB);
+  t.after(() => fs.rmSync(stub, { force: true }));
+  const agent = (env = {}) =>
+    spawnSync(process.execPath, [CLI, "draft", "--agent", `node ${stub}`], {
+      cwd: p.dir,
+      encoding: "utf8",
+      env: { ...process.env, ...env },
+    });
+  return { ...p, agent };
+}
+
+test("--agent proposes the front matter; the body stays byte for byte, the rest is undone", (t) => {
+  const { dir, agent, cli } = withGit(t, NOTES);
+  const r = agent();
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /The agent proposed this, at the top of docs\/brief\.md/);
+  assert.match(r.stdout, /Review it — change anything — then {2}specgate draft/);
+  const after = fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8");
+  assert.equal(briefBody(after), NOTES, "the brief below the front matter is unchanged");
+  assert.equal(fs.existsSync(path.join(dir, "stray.txt")), false);
+  assert.match(cli("draft").stdout, /Next {2}specgate draft courses/);
+});
+
+test("--agent that rewrites the brief itself is undone whole", (t) => {
+  const { dir, agent } = withGit(t, NOTES);
+  const r = agent({ MANGLE: "1" });
+  assert.equal(r.status, 1);
+  assert.match(r.stdout + r.stderr, /draft_brief_body_changed/);
+  assert.equal(fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8"), NOTES);
+});
+
+test("--agent on a complete front matter does nothing", (t) => {
+  const { agent } = withGit(t, BRIEF);
+  const r = agent();
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /already there and complete/);
+});
+
+test("/specgate:draft writes only the front matter, then stops for the person", () => {
+  const body = slashCommandBody(STEPS.find((s) => s.name === "draft"));
+  assert.match(body, /follow `docs\/specs\/BRIEF-SETUP\.md`/);
+  assert.match(body, /never a word below it/);
+  assert.match(body, /\*\*stop\*\* and show the front matter to the person/);
+  assert.match(body, /specgate draft --new-brief/);
 });

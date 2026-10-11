@@ -17,7 +17,8 @@ into `spec.md`, one module at a time.
 ## 1. Keep the brief in the repository
 
 Save it as `docs/brief.md`, as the client wrote it — a plan you wrote
-yourself works the same. A short front matter names the modules to draft one
+yourself works the same. [Write the brief](write-the-brief.md) walks through it
+step by step, including letting your agent propose the front matter. A short front matter names the modules to draft one
 at a time, and who uses the product through which surfaces; the checklist asks
 for a scenario per actor and surface from it.
 

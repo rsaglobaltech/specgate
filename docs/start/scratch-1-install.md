@@ -161,4 +161,5 @@ git add -A && git commit -m "Specgate set up"
 `copilot`, `gemini`, …) installs the `/specgate:*` commands for it. See
 [Agents](../agents.md).
 
-**[Next: phase 2 — from the brief to a checked spec →](scratch-2-specify.md)**
+**Next:** have a plan or a client's brief? [Write the brief](write-the-brief.md)
+first — then **[phase 2 — from the brief to a checked spec →](scratch-2-specify.md)**

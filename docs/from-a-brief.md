@@ -14,7 +14,9 @@ harness and the gate take it from there.
 ## 1. Keep the brief in the repository
 
 Save it as `docs/brief.md`, as the client wrote it. Add a front matter that
-names who uses the product and how:
+names who uses the product and how — `specgate draft` explains every field and
+checks them, and `specgate draft --agent "claude -p"` has your agent propose
+them. Step by step: [Write the brief](start/write-the-brief.md).
 
 ```markdown
 ---

@@ -46,6 +46,58 @@ export const SCRATCH: Journey = {
   id: "scratch",
   project: S,
   steps: [
+    // Before phase 1 — writing the brief (start/write-the-brief), on a second
+    // project, "Lingo", so the court-bookings journey starts clean.
+    {
+      id: "brief-none",
+      page: "start/write-the-brief",
+      cwd: "lingo",
+      argv: sg("draft"),
+      surface: "draft",
+      maxLines: 24,
+      expectExit: 1,
+    },
+    {
+      id: "brief-new",
+      page: "start/write-the-brief",
+      cwd: "lingo-new",
+      argv: sg("draft", "--new-brief"),
+      surface: "draft",
+      maxLines: 16,
+    },
+    {
+      id: "brief-plain",
+      page: "start/write-the-brief",
+      cwd: "lingo",
+      argv: sg("draft"),
+      surface: "draft",
+      maxLines: 60,
+    },
+    {
+      id: "brief-agent",
+      page: "start/write-the-brief",
+      cwd: "lingo",
+      argv: sg("draft", "--agent", "claude -p"),
+      surface: "draft",
+      maxLines: 30,
+    },
+    {
+      id: "brief-error",
+      page: "start/write-the-brief",
+      cwd: "lingo",
+      argv: sg("draft"),
+      surface: "draft",
+      maxLines: 20,
+      expectExit: 1,
+    },
+    {
+      id: "brief-ready",
+      page: "start/write-the-brief",
+      cwd: "lingo",
+      argv: sg("draft"),
+      surface: "draft",
+      maxLines: 16,
+    },
     // 1 — Install
     {
       id: "scratch-init",

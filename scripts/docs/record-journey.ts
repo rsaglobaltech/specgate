@@ -59,6 +59,99 @@ function commit(project: string, env: NodeJS.ProcessEnv, message: string): void 
   run(project, env, ["git", "commit", "-qm", message]);
 }
 
+// ── Writing the brief: Lingo ─────────────────────────────────────────────────
+
+/** Lingo's brief as its owner wrote it: plain notes, no front matter. */
+export const LINGO_BRIEF = `# Lingo
+
+Lingo is an online language school. A teacher runs small groups of adult
+students.
+
+The teacher creates courses by level and publishes lessons with their
+material. Students follow their course on the web or on their phone, do the
+exercises of each lesson and see their progress. The teacher sees each
+student's progress and corrects written exercises.
+
+We don't know yet whether students pay per course or per month.
+`;
+
+/** What the stand-in for Claude proposes. The real agent reads the same guide. */
+const LINGO_FRONT_MATTER = `---
+product: Lingo — online lessons for a language school
+surfaces: [web, mobile]
+actors:
+  - { name: Teacher, surfaces: [web] }
+  # check: the brief says students use "the web or their phone"
+  - { name: Student, surfaces: [web, mobile] }
+modules: [courses, lessons, exercises, progress]
+---
+
+`;
+
+function lingoProject(scratch: string, name: string, env: NodeJS.ProcessEnv): string {
+  const project = path.join(scratch, name);
+  write(
+    path.join(project, "package.json"),
+    `${JSON.stringify({ name, version: "1.0.0", scripts: { test: "node --test" } }, null, 2)}\n`
+  );
+  gitInit(project, env);
+  run(project, env, ["specgate", "init", "--no-capabilities"]);
+  commit(project, env, "npm init, specgate init");
+  return project;
+}
+
+const BRIEF_HOOKS: Record<string, Hook> = {
+  "brief-none": (project, env) => {
+    lingoProject(path.dirname(project), "lingo", env);
+    lingoProject(path.dirname(project), "lingo-new", env);
+  },
+  // You: your notes, saved as they are.
+  "brief-plain": (project, env) => {
+    const lingo = path.join(path.dirname(project), "lingo");
+    write(path.join(lingo, "docs", "brief.md"), LINGO_BRIEF);
+    commit(lingo, env, "the brief");
+  },
+  // A stand-in for `claude -p` on PATH: it reads the prompt and does what
+  // BRIEF-SETUP.md asks — a front matter on top, the notes untouched.
+  "brief-agent": (project) => {
+    const scratch = path.dirname(project);
+    const fmFile = path.join(scratch, "tmp", "lingo-front-matter.md");
+    write(fmFile, LINGO_FRONT_MATTER);
+    const claude = path.join(scratch, "bin", "claude");
+    fs.writeFileSync(
+      claude,
+      [
+        "#!/usr/bin/env bash",
+        "cat > /dev/null",
+        `cat "${fmFile}" docs/brief.md > docs/brief.md.new && mv docs/brief.md.new docs/brief.md`,
+        'echo "Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to check."',
+        "",
+      ].join("\n"),
+      { mode: 0o755 }
+    );
+  },
+  // You, reviewing: a tablet, an admin, a module written as a title.
+  "brief-error": (project) => {
+    const brief = path.join(path.dirname(project), "lingo", "docs", "brief.md");
+    const text = fs
+      .readFileSync(brief, "utf8")
+      .replace(
+        "  - { name: Teacher, surfaces: [web] }",
+        "  - { name: Teacher, surfaces: [web, tablet] }\n  - { name: Admin }"
+      )
+      .replace(
+        "modules: [courses, lessons, exercises, progress]",
+        "modules: [courses, lessons, Live classes, progress]"
+      );
+    write(brief, text);
+  },
+  // You: fixed — the front matter the agent proposed, reviewed.
+  "brief-ready": (project) => {
+    const brief = path.join(path.dirname(project), "lingo", "docs", "brief.md");
+    write(brief, LINGO_FRONT_MATTER + LINGO_BRIEF);
+  },
+};
+
 // ── From scratch: court bookings ────────────────────────────────────────────
 
 const SCRATCH_SETUP: { before: Hook; steps: Record<string, Hook> } = {
@@ -72,6 +165,7 @@ const SCRATCH_SETUP: { before: Hook; steps: Record<string, Hook> } = {
     commit(project, env, "npm init");
   },
   steps: {
+    ...BRIEF_HOOKS,
     // You: the brief, as the client sent it.
     "scratch-draft-list": (project, env) => {
       write(path.join(project, "docs", "brief.md"), BRIEF_MD);

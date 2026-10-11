@@ -37,6 +37,18 @@ import { templateDelta } from "../../../../packages/core/src/domain/ChangeTempla
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
 import { runConfinedAgent } from "../../../draft/confined-agent";
+import {
+  BRIEF_SETUP_FILE,
+  BRIEF_SETUP_PASTE,
+  BRIEF_TEMPLATE,
+  briefBody,
+  briefSetupGuide,
+  briefSetupPrompt,
+  checkFrontMatter,
+  frontMatter,
+  frontMatterExplanation,
+  noBriefExplanation,
+} from "../../../draft/brief-setup";
 import { csdaTagsByScenario } from "../../../../packages/core/src/domain/GherkinTags";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 
@@ -51,6 +63,8 @@ export interface DraftOptions {
   /** Requirement ids a new draft reserves. */
   reserve: number;
   agent: string;
+  /** `--new-brief`: write docs/brief.md from the template. */
+  newBrief: boolean;
   projectDir: string;
   json: boolean;
 }
@@ -71,7 +85,9 @@ function usage(): string {
     "  specgate draft <module>              open that module's draft — or check it, once it exists\n" +
     '  specgate draft <module> --agent "claude -p"\n' +
     "                                       have your agent write it, then check it\n" +
-    "  specgate draft --check <change-id>   the checklist on any change\n\n" +
+    "  specgate draft --check <change-id>   the checklist on any change\n" +
+    "  specgate draft --new-brief           write docs/brief.md to fill in, when you have none\n" +
+    '  specgate draft --agent "claude -p"   have your agent propose the brief\'s front matter\n\n' +
     "  --brief <file>   Your plan or brief (default: docs/brief.md). Any markdown; a front\n" +
     "                   matter with modules, actors and surfaces lets the checklist do more.\n" +
     "  --reserve <n>    Requirement ids a new draft reserves (default 10, at most the --max-requirements).\n" +
@@ -99,6 +115,7 @@ export function parseArgs(argv: string[]): DraftOptions {
     maxRequirements: 25,
     reserve: DEFAULT_RESERVE,
     agent: "",
+    newBrief: false,
     projectDir: ".",
     json: wantsJson(argv),
   };
@@ -114,6 +131,7 @@ export function parseArgs(argv: string[]): DraftOptions {
     else if (a === "--max-requirements") o.maxRequirements = Number(value());
     else if (a === "--reserve") o.reserve = Number(value());
     else if (a === "--agent") o.agent = value();
+    else if (a === "--new-brief") o.newBrief = true;
     else if (a === "--project-dir") o.projectDir = value();
     else if (a === "--json") o.json = true;
     else if (a === "--help" || a === "-h") {
@@ -136,8 +154,11 @@ export function parseArgs(argv: string[]): DraftOptions {
   if (!Number.isInteger(o.reserve) || o.reserve < 1 || o.reserve > o.maxRequirements) {
     throw new Error(`--reserve needs a whole number from 1 to ${o.maxRequirements}`);
   }
-  if (o.agent && !o.module) {
-    throw new Error("--agent drafts one module: specgate draft <module> --agent <cmd>");
+  if (o.newBrief && (o.module || o.check || o.agent)) {
+    throw new Error("--new-brief only writes the brief: run it on its own");
+  }
+  if (o.agent && o.check) {
+    throw new Error("--agent drafts a module, or proposes the brief's front matter — not --check");
   }
   return o;
 }
@@ -347,6 +368,13 @@ export function draftNextCommand(s: ModuleStatus): string {
   return s.state === "ready" ? `specgate change archive ${s.change}` : `specgate draft ${s.module}`;
 }
 
+/** `docs/specs/BRIEF-SETUP.md`: the guide an agent follows to propose the front matter. */
+function writeSetupGuide(projectDir: string, brief: string): void {
+  const file = path.join(projectDir, BRIEF_SETUP_FILE);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, briefSetupGuide(brief), "utf8");
+}
+
 /** The next free SCN number, past every scenario the project or a change uses. */
 function nextScenario(projectDir: string): string {
   let max = 0;
@@ -500,32 +528,89 @@ export class DraftCommand extends BaseCommand {
   private overview(opts: DraftOptions): void {
     const io = agentIo(opts.json);
     const projectDir = resolveProjectDir(opts.projectDir);
-    const brief = this.brief(projectDir, opts)!;
-    const modules = briefModules(brief.text);
-    const states = modules.map((m) => moduleStatus(projectDir, m, brief.rel));
-    const pending = states.find((s) => s.state !== "archived");
-    const next = modules.length === 0 ? "specgate draft <module>" : nextFor(pending);
-    const product = /^product:\s*(.+)$/m.exec(/^---\n([\s\S]*?)\n---/.exec(brief.text)?.[1] || "");
+    const rel = opts.brief || DEFAULT_BRIEF;
+    const file = path.resolve(projectDir, rel);
+    if (opts.newBrief) return this.newBrief(opts, file, rel);
 
-    io.emit({ draft: { brief: brief.rel, modules: states, next } }, () => {
-      const out = process.stdout;
-      out.write(`\n  specgate draft  ·  ${brief.rel}\n\n`);
-      if (product) out.write(`  Product  ${product[1].trim()}\n\n`);
-      if (modules.length === 0) {
-        out.write(
-          `  Your brief does not list its modules yet. Add a front matter at the top of\n` +
-            `  ${brief.rel}, so the draft goes one module at a time:\n\n` +
-            "    ---\n" +
-            "    product: <your product>\n" +
-            "    surfaces: [api, web]\n" +
-            "    actors:\n" +
-            "      - { name: <Actor>, surfaces: [api, web] }\n" +
-            "    modules: [<first-module>, <second-module>]\n" +
-            "    ---\n\n" +
-            "  Or start one now:  specgate draft <module>\n\n"
-        );
+    const text = readIf(file);
+    // (a) No brief: what one is, and how to get one.
+    if (text === undefined) {
+      if (!opts.json) {
+        process.stdout.write(`\n${noBriefExplanation(rel)}\n`);
+        process.exitCode = 1;
         return;
       }
+      io.fail({ draft: null }, [
+        error("draft_no_brief", `No plan or brief at ${rel}.`, {
+          fix:
+            `Save your plan or brief as ${rel} — any markdown — then run \`specgate draft\`. ` +
+            "No plan yet: `specgate draft --new-brief` writes one to fill in. Somewhere else: --brief <file>.",
+        }),
+      ]);
+    }
+    const brief = { rel, text: text! };
+    if (opts.agent) return this.frontMatterWithAgent(opts, projectDir, brief);
+
+    // (b) No front matter: every field, explained, and the agent to propose it.
+    if (frontMatter(brief.text) === null) {
+      writeSetupGuide(projectDir, rel);
+      io.emit(
+        {
+          draft: {
+            brief: rel,
+            frontMatter: null,
+            guide: BRIEF_SETUP_FILE,
+            prompt: BRIEF_SETUP_PASTE,
+            next: 'specgate draft --agent "claude -p"',
+          },
+        },
+        () =>
+          process.stdout.write(
+            `\n  specgate draft  ·  ${rel}\n\n` +
+              frontMatterExplanation(rel) +
+              "\n  Or let your agent propose it from your brief. Paste this into Claude Code,\n" +
+              "  Cursor, Codex…:\n\n" +
+              `    ${BRIEF_SETUP_PASTE}\n\n` +
+              '  or let Specgate call it:  specgate draft --agent "claude -p"\n\n' +
+              "  Either way, review the four fields, then run  specgate draft  again.\n\n"
+          )
+      );
+      return;
+    }
+
+    // (c) A front matter with problems: each in plain words, with its fix.
+    const problems = checkFrontMatter(brief.text);
+    if (problems.length > 0) {
+      io.emit(
+        {
+          draft: { brief: rel, frontMatter: "invalid", next: `edit ${rel}, then specgate draft` },
+          status: problems.map((p) => error(p.code, p.message, { fix: p.fix })),
+        },
+        () => {
+          const out = process.stdout;
+          out.write(`\n  specgate draft  ·  ${rel}\n\n`);
+          out.write(
+            `  The front matter at the top of ${rel} needs ${problems.length} fix(es):\n\n`
+          );
+          for (const p of problems) out.write(`  ✖  ${p.message}\n     ${p.fix}\n`);
+          out.write(`\n  Next  fix them in ${rel}, then  specgate draft\n\n`);
+        }
+      );
+      process.exitCode = 1;
+      return;
+    }
+
+    // (d) Ready: the modules, where each stands, what is next.
+    const modules = briefModules(brief.text);
+    const states = modules.map((m) => moduleStatus(projectDir, m, rel));
+    const pending = states.find((s) => s.state !== "archived");
+    const next = nextFor(pending);
+    const product = /^product:\s*(.+)$/m.exec(frontMatter(brief.text) || "");
+
+    io.emit({ draft: { brief: rel, modules: states, next } }, () => {
+      const out = process.stdout;
+      out.write(`\n  specgate draft  ·  ${rel}\n\n`);
+      if (product) out.write(`  Product  ${product[1].trim()}\n\n`);
       const width = Math.max(...modules.map((m) => m.length));
       out.write("  Modules\n");
       for (const s of states) {
@@ -537,6 +622,138 @@ export class DraftCommand extends BaseCommand {
           : `\n  Every module is drafted and archived.\n  Next  ${next}  — what to build first\n\n`
       );
     });
+  }
+
+  /** `--new-brief`: the template, never over a brief that exists. */
+  private newBrief(opts: DraftOptions, file: string, rel: string): void {
+    const io = agentIo(opts.json);
+    if (fs.existsSync(file)) {
+      io.fail({ draft: null }, [
+        error("draft_brief_exists", `${rel} already exists — nothing was written.`, {
+          fix: "Edit it, then run `specgate draft`; it says what the top of the brief still needs.",
+        }),
+      ]);
+    }
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, BRIEF_TEMPLATE, "utf8");
+    io.emit({ draft: { brief: rel, written: true, next: "specgate draft" } }, () =>
+      process.stdout.write(
+        `\n  ✔ Wrote ${rel} — a brief to fill in.\n\n` +
+          "  Fill it in, in your own words:\n" +
+          "    1. The four fields at the top — product, surfaces, actors, modules.\n" +
+          "       Each has an example in the comment above it.\n" +
+          "    2. The sections below — what the product is, who uses it and how, what\n" +
+          "       each one must be able to do, the rules and numbers you already know,\n" +
+          "       what you don't know yet, and what is out of scope.\n\n" +
+          "  Have a plan or an email already? Paste it under the four fields instead\n" +
+          "  of the sections — Specgate reads it as it is.\n\n" +
+          "  Next  specgate draft  — it checks the four fields and says what is next\n\n"
+      )
+    );
+  }
+
+  /**
+   * `draft --agent` without a module: the agent proposes the front matter.
+   * It may write only the brief, and the brief below the front matter must
+   * come back byte for byte — it is the client's words, and every draft is
+   * checked against them.
+   */
+  private frontMatterWithAgent(
+    opts: DraftOptions,
+    projectDir: string,
+    brief: { rel: string; text: string }
+  ): void {
+    const io = agentIo(opts.json);
+    if (frontMatter(brief.text) !== null && checkFrontMatter(brief.text).length === 0) {
+      const first = briefModules(brief.text)[0];
+      io.emit(
+        { draft: { brief: brief.rel, frontMatter: "ok", next: `specgate draft ${first}` } },
+        () =>
+          process.stdout.write(
+            `\n  The front matter of ${brief.rel} is already there and complete — nothing for the agent to do.\n` +
+              `  Next  specgate draft ${first}\n\n`
+          )
+      );
+      return;
+    }
+    writeSetupGuide(projectDir, brief.rel);
+    const own = path
+      .relative(projectDir, path.resolve(projectDir, brief.rel))
+      .split(path.sep)
+      .join("/");
+    if (!opts.json) {
+      process.stdout.write(
+        `\n  → ${opts.agent}  is proposing the front matter of ${brief.rel}…\n\n`
+      );
+    }
+    const run = runConfinedAgent({
+      projectDir,
+      changeId: "brief",
+      allowed: (rel) => rel === own,
+      command: opts.agent,
+      prompt: briefSetupPrompt(briefSetupGuide(brief.rel)),
+      showOutput: !opts.json,
+    });
+    if (run.problem === "no_git") {
+      io.fail({ draft: null }, [
+        error("draft_agent_needs_git", "--agent needs a git repository.", {
+          fix:
+            "Git is how Specgate finds what the agent wrote and undoes anything else. Run `git init`, " +
+            `then try again — or paste this into your agent yourself: ${BRIEF_SETUP_PASTE}`,
+        }),
+      ]);
+    }
+    if (run.reverted.length > 0 && !opts.json) {
+      process.stdout.write(
+        `\n  ↺ Undone — the agent wrote outside the brief: ${run.reverted.join(", ")}\n`
+      );
+    }
+    const after = readIf(path.resolve(projectDir, brief.rel)) ?? "";
+    if (briefBody(after) !== briefBody(brief.text)) {
+      fs.writeFileSync(path.resolve(projectDir, brief.rel), brief.text, "utf8");
+      io.fail({ draft: null }, [
+        error(
+          "draft_brief_body_changed",
+          "The agent changed the brief itself, not only its front matter — undone.",
+          {
+            fix: `${brief.rel} is back as it was. Try again, or write the four fields yourself (\`specgate draft\` shows them).`,
+          }
+        ),
+      ]);
+    }
+    if (!run.ok) {
+      io.fail({ draft: null }, [
+        error("draft_agent_failed", `The agent ${run.detail}.`, {
+          fix: `Check the command runs on its own, or paste this into your agent: ${BRIEF_SETUP_PASTE}`,
+        }),
+      ]);
+    }
+    const proposed = frontMatter(after);
+    if (proposed === null) {
+      io.fail({ draft: null }, [
+        error("draft_no_front_matter", "The agent wrote no front matter.", {
+          fix: "Run `specgate draft` to see the four fields, and write them yourself.",
+        }),
+      ]);
+    }
+    const problems = checkFrontMatter(after);
+    io.emit(
+      {
+        draft: { brief: brief.rel, frontMatter: proposed, next: "specgate draft" },
+        status: problems.map((p) => error(p.code, p.message, { fix: p.fix })),
+      },
+      () => {
+        const out = process.stdout;
+        out.write(`\n  The agent proposed this, at the top of ${brief.rel}:\n\n`);
+        for (const l of ["---", ...proposed!.split("\n"), "---"]) out.write(`    ${l}\n`);
+        out.write("\n  Your brief below it is unchanged.\n");
+        if (problems.length > 0) {
+          out.write(`\n  It still needs ${problems.length} fix(es):\n`);
+          for (const p of problems) out.write(`  ✖  ${p.message}\n     ${p.fix}\n`);
+        }
+        out.write("\n  Review it — change anything — then  specgate draft\n\n");
+      }
+    );
   }
 
   // ── specgate draft <module> ─────────────────────────────────────────────────
