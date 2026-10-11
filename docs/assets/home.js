@@ -14,14 +14,24 @@
   // ── Reveal ────────────────────────────────────────────────────────────────
   var items = document.querySelectorAll(".reveal");
   if (reduce || !("IntersectionObserver" in window)) {
-    items.forEach(function (el) { el.classList.add("is-in"); });
+    items.forEach(function (el) {
+      el.classList.add("is-in");
+    });
   } else {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
-      });
-    }, { rootMargin: "0px 0px -8% 0px" });
-    items.forEach(function (el) { io.observe(el); });
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add("is-in");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { rootMargin: "0px 0px -8% 0px" }
+    );
+    items.forEach(function (el) {
+      io.observe(el);
+    });
   }
 
   // ── Lifecycle stepper ─────────────────────────────────────────────────────
@@ -58,7 +68,8 @@
       clone.classList.add("lc__body--shown");
       var n = document.createElement("p");
       n.className = "lc__of";
-      n.textContent = "Step " + (current + 1) + " of " + steps.length + " · " + steps[current].dataset.phase;
+      n.textContent =
+        "Step " + (current + 1) + " of " + steps.length + " · " + steps[current].dataset.phase;
       panel.appendChild(n);
       panel.appendChild(clone);
       root.style.setProperty("--lc-progress", current / (steps.length - 1));
@@ -72,30 +83,51 @@
 
     steps.forEach(function (li, i) {
       var btn = li.querySelector(".lc__dot");
-      btn.addEventListener("click", function () { stop(); show(i); });
+      btn.addEventListener("click", function () {
+        stop();
+        show(i);
+      });
       btn.addEventListener("keydown", function (e) {
-        if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); stop(); show(current + 1, true); }
-        if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); stop(); show(current - 1, true); }
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+          e.preventDefault();
+          stop();
+          show(current + 1, true);
+        }
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+          e.preventDefault();
+          stop();
+          show(current - 1, true);
+        }
       });
     });
-    root.addEventListener("mouseenter", function () { if (timer) stop(); });
+    root.addEventListener("mouseenter", function () {
+      if (timer) stop();
+    });
 
     show(0);
     if (reduce || !("IntersectionObserver" in window)) return;
-    var seen = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (manual) return;
-        if (e.isIntersecting && !timer) {
-          timer = setInterval(function () {
-            if (current === steps.length - 1) { clearInterval(timer); timer = null; manual = true; return; }
-            show(current + 1);
-          }, 3800);
-        } else if (!e.isIntersecting && timer) {
-          clearInterval(timer);
-          timer = null;
-        }
-      });
-    }, { threshold: 0.5 });
+    var seen = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (manual) return;
+          if (e.isIntersecting && !timer) {
+            timer = setInterval(function () {
+              if (current === steps.length - 1) {
+                clearInterval(timer);
+                timer = null;
+                manual = true;
+                return;
+              }
+              show(current + 1);
+            }, 3800);
+          } else if (!e.isIntersecting && timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
     seen.observe(root);
   });
 
@@ -116,10 +148,18 @@
       });
     }
     tabs.forEach(function (tab, i) {
-      tab.addEventListener("click", function () { select(i); });
+      tab.addEventListener("click", function () {
+        select(i);
+      });
       tab.addEventListener("keydown", function (e) {
-        if (e.key === "ArrowRight") { e.preventDefault(); select((i + 1) % tabs.length, true); }
-        if (e.key === "ArrowLeft") { e.preventDefault(); select((i - 1 + tabs.length) % tabs.length, true); }
+        if (e.key === "ArrowRight") {
+          e.preventDefault();
+          select((i + 1) % tabs.length, true);
+        }
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          select((i - 1 + tabs.length) % tabs.length, true);
+        }
       });
     });
     select(0);

@@ -2,7 +2,7 @@
 
 The order half of an online shop. Shipping costs are the merchant's decision and stay open.
 
-Installed into {{PROJECT_NAME}} from a proven Specgate pack. Derived from the credit-shop pilot (credito_tienda): implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL. The pilot's code is private; its requirements and scenarios are what this pack carries.
+Installed into {{PROJECT_NAME}} from a proven Specgate pack. Derived from the Credit shop pilot: implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL. The pilot's code is private; its requirements and scenarios are what this pack carries.
 
 ### Requirement: REQ-601 — Only the administrator manages the shop
 

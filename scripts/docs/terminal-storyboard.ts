@@ -196,7 +196,8 @@ export const BRIEF_BEATS: readonly Beat[] = [
     id: "the-fix",
     caption: "The invented fee is gone from the draft. It becomes a question.",
     cwd: "courts",
-    shell: "git diff -U0 docs/specs/changes/draft-bookings/specs | grep -E '^[-+]' | grep -vE '^(---|[+]{3}) '",
+    shell:
+      "git diff -U0 docs/specs/changes/draft-bookings/specs | grep -E '^[-+]' | grep -vE '^(---|[+]{3}) '",
     surface: null,
     maxLines: 10,
   },
@@ -268,7 +269,8 @@ export const GATE_BEATS: readonly Beat[] = [
   },
   {
     id: "done-blocked",
-    caption: "The requirement waiting for the client cannot be closed — not by you, not by an agent.",
+    caption:
+      "The requirement waiting for the client cannot be closed — not by you, not by an agent.",
     cwd: "courts",
     argv: ["specgate", "done", "REQ-004"],
     surface: "done",

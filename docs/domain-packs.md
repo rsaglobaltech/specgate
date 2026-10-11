@@ -21,9 +21,9 @@ ships as *Needs Clarification* — the question, not an invented answer.
 | `transfers/backend` | Core banking (FinCore) | Spring Boot 3.3, Java 21, PostgreSQL | 11 | 14 | — |
 | `event-registration/backend` | Event operations (EventTech) | Quarkus 3, event sourcing, PostgreSQL | 8 | 11 | — |
 | `clinical-record/backend` | Clinical cases (HealthTech) | Quarkus 3, PostgreSQL, fictitious data | 9 | 11 | drug interaction alerts |
-| `appointment-booking/backend` | Bookings (reservas_app) | TypeScript, Next.js, PostgreSQL | 10 | 14 | — |
-| `shop-orders/backend` | Credit shop (credito_tienda) | TypeScript, Next.js, PostgreSQL | 9 | 10 | shipping costs |
-| `time-attendance/backend` | Construction site (Golden State) | TypeScript, Expo + Next.js | 8 | 11 | — |
+| `appointment-booking/backend` | [Bookings](projects/bookings.md) | TypeScript, Next.js, PostgreSQL | 10 | 14 | — |
+| `shop-orders/backend` | [Credit shop](projects/credit-shop.md) | TypeScript, Next.js, PostgreSQL | 9 | 10 | shipping costs |
+| `time-attendance/backend` | [Rebar Crew](projects/rebar-crew.md) | TypeScript, Expo + Next.js | 8 | 11 | — |
 
 The pilots' code is private; the packs carry their requirements and scenarios,
 in English and with no client data, in separate id ranges (`REQ-101…REQ-708`)

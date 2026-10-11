@@ -35,9 +35,9 @@ const PROVEN: Record<string, string> = {
   "transfers/backend": "FinCore",
   "event-registration/backend": "EventTech",
   "clinical-record/backend": "HealthTech",
-  "appointment-booking/backend": "reservas_app",
-  "shop-orders/backend": "credito_tienda",
-  "time-attendance/backend": "Golden State",
+  "appointment-booking/backend": "Bookings pilot",
+  "shop-orders/backend": "Credit shop pilot",
+  "time-attendance/backend": "Rebar Crew pilot",
 };
 
 function packIds(): string[] {

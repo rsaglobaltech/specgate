@@ -1,4 +1,4 @@
-# Proven pack: Derived from the bookings pilot (reservas_app): implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL.
+# Proven pack: Derived from the Bookings pilot: implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL.
 schema_version: "1.5.0"
 metadata:
   name: 'Appointment booking — calendars, seats per hour and lead times'
@@ -6,7 +6,7 @@ metadata:
   language: en
   project_type: backend
   tier: proven
-  provenance: 'Derived from the bookings pilot (reservas_app): implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL.'
+  provenance: 'Derived from the Bookings pilot: implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL.'
 variables:
   required:
     - PROJECT_NAME

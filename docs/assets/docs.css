@@ -927,7 +927,7 @@ a:hover { text-decoration: underline; }
 .dia__box--wait rect { fill: var(--bg-raised); stroke: var(--amber); stroke-dasharray: 5 4; }
 .dia__wait-t { fill: var(--amber) !important; font-weight: 600; }
 .dia__box--gate rect { fill: var(--accent); stroke: var(--accent); }
-.dia__box--gate text { fill: var(--bg) !important; }
+.dia__on-gate, .dia__on-gate tspan { fill: var(--bg) !important; }
 .dia__mono { font-family: var(--mono); fill: var(--fg); }
 .dia__h { font-size: 14px; font-weight: 700; fill: var(--fg); }
 .dia__s { font-size: 12px; fill: var(--fg-soft); }

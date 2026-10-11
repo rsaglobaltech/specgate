@@ -92,7 +92,8 @@ export const NAV: readonly NavSection[] = [
   {
     title: "Proven on real products",
     icon: "check",
-    summary: "Six products built from real client briefs — what worked, and what Specgate got wrong.",
+    summary:
+      "Six products built from real client briefs — what worked, and what Specgate got wrong.",
     entries: [
       {
         slug: "projects/index",
@@ -221,9 +222,14 @@ export const NAV: readonly NavSection[] = [
         blurb: "Unattended delivery: plan → agent → gate → done, one worktree per requirement.",
       },
       {
+        slug: "harness-report",
+        label: "What the harness has cost",
+        blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",
+      },
+      {
         slug: "domain-packs",
         label: "Domain packs",
-        blurb: "Install a curated domain model instead of writing one from scratch.",
+        blurb: "Install requirements a pilot already proved, or package your own.",
       },
       {
         slug: "alm",

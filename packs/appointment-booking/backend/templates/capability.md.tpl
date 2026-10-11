@@ -2,7 +2,7 @@
 
 Online booking for a local business with several calendars (for example hair and beauty), staffed by a number of seats per hour.
 
-Installed into {{PROJECT_NAME}} from a proven Specgate pack. Derived from the bookings pilot (reservas_app): implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL. The pilot's code is private; its requirements and scenarios are what this pack carries.
+Installed into {{PROJECT_NAME}} from a proven Specgate pack. Derived from the Bookings pilot: implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL. The pilot's code is private; its requirements and scenarios are what this pack carries.
 
 ### Requirement: REQ-501 — Several calendars per business
 

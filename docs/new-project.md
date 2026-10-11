@@ -2,8 +2,8 @@
 
 The path six real products took, from a client's brief to a product that runs
 and a gate that holds it: a booking app, a credit shop, a core banking system,
-an event-operations platform, a clinical-case manager and the Golden State
-pilot. The same twelve steps every time. Three of them are yours and cannot be
+an event-operations platform, a clinical-case manager and a field app for a
+rebar crew. The same twelve steps every time. Three of them are yours and cannot be
 delegated: reading the brief (1), reviewing each draft (8) and using the
 product (12). The agent can run the rest.
 

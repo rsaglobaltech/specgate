@@ -2,7 +2,7 @@
 
 Clocking in and out on a jobsite in a way payroll can trust. Local labour law (meal breaks, overtime) is deliberately not in this pack.
 
-Installed into {{PROJECT_NAME}} from a proven Specgate pack. Derived from the construction-site pilot (Golden State): implemented and tested in TypeScript (Expo mobile app, Next.js API, hexagonal core). The pilot's code is private; its requirements and scenarios are what this pack carries.
+Installed into {{PROJECT_NAME}} from a proven Specgate pack. Derived from the Rebar Crew pilot: implemented and tested in TypeScript (Expo mobile app, Next.js API, hexagonal core). The pilot's code is private; its requirements and scenarios are what this pack carries.
 
 ### Requirement: REQ-701 — Clock in only inside the jobsite's geofence
 

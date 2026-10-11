@@ -747,7 +747,9 @@ function main(): void {
     }
     const block = readBlock(fs.readFileSync(INDEX_PATH, "utf8"), board.block);
     if ((block || "").trim() !== renderFallbackHtml(rec).trim()) {
-      problems.push(`the ${board.block} fallback in docs/index.html no longer matches the recording`);
+      problems.push(
+        `the ${board.block} fallback in docs/index.html no longer matches the recording`
+      );
     }
   }
 

@@ -62,7 +62,7 @@ test("there are three recordings, and the page offers each as a tab", () => {
 
 // ── Shape ────────────────────────────────────────────────────────────────────
 
-eachRecording("the recording is the shape the player knows", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("the recording is the shape the player knows", ({ rec: REC }) => {
   assert.equal(REC.schemaVersion, 1);
   assert.ok(Array.isArray(REC.steps) && REC.steps.length > 0, "no steps");
   for (const step of REC.steps) {
@@ -73,7 +73,7 @@ eachRecording("the recording is the shape the player knows", ({ board, raw: RAW,
   }
 });
 
-eachRecording("the storyboard and the recording agree, beat for beat", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("the storyboard and the recording agree, beat for beat", ({ board, rec: REC }) => {
   // Catches a beat added to the storyboard and never captured.
   assert.deepEqual(
     REC.steps.map((s) => s.id),
@@ -84,7 +84,7 @@ eachRecording("the storyboard and the recording agree, beat for beat", ({ board,
 
 // ── Staleness ────────────────────────────────────────────────────────────────
 
-eachRecording("the recording was made by the version this repository is on", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("the recording was made by the version this repository is on", ({ rec: REC }) => {
   // The primary staleness gate, and the right one: the recording is a claim
   // about a version, so the version is what has to match.
   assert.equal(
@@ -95,30 +95,36 @@ eachRecording("the recording was made by the version this repository is on", ({ 
   );
 });
 
-eachRecording("every specgate command in the recording is a command this CLI has", ({ board, raw: RAW, rec: REC }) => {
-  const labels = new Set();
-  for (const command of SURFACE) {
-    labels.add(command.name);
-    for (const sub of command.subcommands || []) labels.add(`${command.name} ${sub.name}`);
-  }
+eachRecording(
+  "every specgate command in the recording is a command this CLI has",
+  ({ rec: REC }) => {
+    const labels = new Set();
+    for (const command of SURFACE) {
+      labels.add(command.name);
+      for (const sub of command.subcommands || []) labels.add(`${command.name} ${sub.name}`);
+    }
 
-  let checked = 0;
-  for (const step of REC.steps) {
-    if (!step.surface) continue;
-    checked += 1;
+    let checked = 0;
+    for (const step of REC.steps) {
+      if (!step.surface) continue;
+      checked += 1;
+      assert.ok(
+        labels.has(step.surface),
+        `the recording runs \`specgate ${step.surface}\`, which is not in scripts/lib/surface.ts`
+      );
+      assert.ok(
+        step.command.startsWith(`specgate ${step.surface}`),
+        `${step.id}: the declared surface and the recorded command disagree`
+      );
+    }
     assert.ok(
-      labels.has(step.surface),
-      `the recording runs \`specgate ${step.surface}\`, which is not in scripts/lib/surface.ts`
-    );
-    assert.ok(
-      step.command.startsWith(`specgate ${step.surface}`),
-      `${step.id}: the declared surface and the recorded command disagree`
+      checked >= 3,
+      `only ${checked} steps exercise the CLI — the recording lost its point`
     );
   }
-  assert.ok(checked >= 3, `only ${checked} steps exercise the CLI — the recording lost its point`);
-});
+);
 
-eachRecording("every flag in the recording still exists in the source", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("every flag in the recording still exists in the source", ({ rec: REC }) => {
   // Coarse on purpose: it needs no maintenance and it catches the realistic
   // drift, which is a flag that was renamed or removed.
   const source = readAll(path.join(ROOT, "scripts")) + readAll(path.join(ROOT, "packages"));
@@ -152,12 +158,12 @@ function readAll(dir) {
 
 // ── What must not be in a committed file ─────────────────────────────────────
 
-eachRecording("the recording carries no ANSI escape", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("the recording carries no ANSI escape", ({ raw: RAW }) => {
   // eslint-disable-next-line no-control-regex -- naming the escape is the check
   assert.doesNotMatch(RAW, /\u001b\[/, "colour was captured instead of classified");
 });
 
-eachRecording("no machine leaked into the recording", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("no machine leaked into the recording", ({ raw: RAW }) => {
   const os = require("node:os");
   for (const leak of ["/Users/", "/home/", "/var/folders/", os.homedir(), os.hostname(), ROOT]) {
     if (!leak) continue;
@@ -165,7 +171,7 @@ eachRecording("no machine leaked into the recording", ({ board, raw: RAW, rec: R
   }
 });
 
-eachRecording("every timestamp in the recording is the pinned one", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("every timestamp in the recording is the pinned one", ({ raw: RAW, rec: REC }) => {
   const pinned = "2026-01-01T00-00-00-000Z";
   for (const match of RAW.match(/\d{4}-\d{2}-\d{2}T[\d:.-]+Z?/g) || []) {
     assert.equal(match, pinned, `an unpinned timestamp survived: ${match}`);
@@ -173,21 +179,21 @@ eachRecording("every timestamp in the recording is the pinned one", ({ board, ra
   assert.match(REC.recordedAt, /^\d{4}-\d{2}-\d{2}$/, "recordedAt is a date, not an instant");
 });
 
-eachRecording("no credential-shaped string reached the recording", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("no credential-shaped string reached the recording", ({ raw: RAW }) => {
   assert.doesNotMatch(
     RAW,
     /(ghp_|gho_|ghs_|github_pat_)[A-Za-z0-9_]{8,}|sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|BEGIN [A-Z ]*PRIVATE KEY/
   );
 });
 
-eachRecording("the recording is small enough to sit on a landing page", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("the recording is small enough to sit on a landing page", ({ raw: RAW }) => {
   const bytes = Buffer.byteLength(RAW);
   assert.ok(bytes < 64 * 1024, `${(bytes / 1024).toFixed(1)} KB — trim maxLines in the storyboard`);
 });
 
 // ── The recording against the page ───────────────────────────────────────────
 
-eachRecording("the no-JavaScript fallback is the recording, exactly", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("the no-JavaScript fallback is the recording, exactly", ({ board, rec: REC }) => {
   // Generated by the same function that wrote it, so drift is structurally
   // impossible. This is what stands in for re-running the CLI.
   const block = readBlock(INDEX, board.block);
@@ -199,7 +205,7 @@ eachRecording("the no-JavaScript fallback is the recording, exactly", ({ board, 
   );
 });
 
-eachRecording("the fallback contains no markup of its own", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("the fallback contains no markup of its own", ({ board }) => {
   const block = readBlock(INDEX, board.block) || "";
   const body = block.replace(/^<pre[^>]*><code>/, "").replace(/<\/code><\/pre>$/, "");
   assert.ok(!body.includes("<"), "a captured line reached the page unescaped");
@@ -213,7 +219,7 @@ test("the landing page loads the player", () => {
   }
 });
 
-eachRecording("every line class the recording uses has a colour", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("every line class the recording uses has a colour", ({ rec: REC }) => {
   const known = ["ok", "err", "warn", "info", "dim", "out"];
   const used = new Set<string>();
   for (const step of REC.steps) for (const line of step.lines) used.add(line.c);
@@ -234,7 +240,16 @@ test("the recordings prove the loop the page promises", () => {
   // The landing page names these by name. A set of recordings that skipped
   // one would be illustrating a different product.
   const surfaces = RECORDINGS.flatMap(({ rec }) => rec.steps.map((s: any) => s.surface));
-  for (const required of ["init", "plan", "harness run", "validate", "draft", "done", "check", "status"]) {
+  for (const required of [
+    "init",
+    "plan",
+    "harness run",
+    "validate",
+    "draft",
+    "done",
+    "check",
+    "status",
+  ]) {
     assert.ok(
       surfaces.includes(required),
       `the page promises \`specgate ${required}\` and no terminal runs it`
@@ -242,23 +257,30 @@ test("the recordings prove the loop the page promises", () => {
   }
 });
 
-eachRecording("every step exits the way its beat says, and the last one is green", ({ board, rec }) => {
-  // A refusal is part of the demo, so it is declared on the beat — and a beat
-  // that stopped refusing is as wrong as one that started failing.
-  const wrong = rec.steps
-    .map((s: any, i: number) => ({ id: s.id, exit: s.exit, want: board.beats[i].expectExit ?? 0 }))
-    .filter((s: any) => s.exit !== s.want)
-    .map((s: any) => `${s.id} exited ${s.exit}, expected ${s.want}`);
-  assert.deepEqual(wrong, []);
-  const last = rec.steps[rec.steps.length - 1];
-  assert.equal(last.exit, 0, "the last step of the demo failed");
-  assert.ok(
-    rec.steps.some((s: any) => s.lines.some((l: any) => l.c === "ok")),
-    "nothing in the whole recording is green"
-  );
-});
+eachRecording(
+  "every step exits the way its beat says, and the last one is green",
+  ({ board, rec }) => {
+    // A refusal is part of the demo, so it is declared on the beat — and a beat
+    // that stopped refusing is as wrong as one that started failing.
+    const wrong = rec.steps
+      .map((s: any, i: number) => ({
+        id: s.id,
+        exit: s.exit,
+        want: board.beats[i].expectExit ?? 0,
+      }))
+      .filter((s: any) => s.exit !== s.want)
+      .map((s: any) => `${s.id} exited ${s.exit}, expected ${s.want}`);
+    assert.deepEqual(wrong, []);
+    const last = rec.steps[rec.steps.length - 1];
+    assert.equal(last.exit, 0, "the last step of the demo failed");
+    assert.ok(
+      rec.steps.some((s: any) => s.lines.some((l: any) => l.c === "ok")),
+      "nothing in the whole recording is green"
+    );
+  }
+);
 
-eachRecording("pacing stays inside sane bounds", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("pacing stays inside sane bounds", ({ rec: REC }) => {
   // Guards a hand-edited JSON, which is how a recording turns into a
   // dramatisation. `pace` computes both numbers; nothing should differ from it.
   for (const step of REC.steps) {
@@ -269,7 +291,7 @@ eachRecording("pacing stays inside sane bounds", ({ board, raw: RAW, rec: REC })
   }
 });
 
-eachRecording("the whole replay is short enough that somebody watches it", ({ board, raw: RAW, rec: REC }) => {
+eachRecording("the whole replay is short enough that somebody watches it", ({ rec: REC }) => {
   const total = REC.steps.reduce((sum, s) => sum + s.holdMs + s.command.length * s.typeMs, 0);
   assert.ok(total < 90_000, `the replay runs ${Math.round(total / 1000)}s — cut a beat`);
 });

@@ -1,4 +1,4 @@
-# Proven pack: Derived from the construction-site pilot (Golden State): implemented and tested in TypeScript (Expo mobile app, Next.js API, hexagonal core).
+# Proven pack: Derived from the Rebar Crew pilot: implemented and tested in TypeScript (Expo mobile app, Next.js API, hexagonal core).
 schema_version: "1.5.0"
 metadata:
   name: 'Time and attendance — geofenced punches with an audit trail'
@@ -6,7 +6,7 @@ metadata:
   language: en
   project_type: backend
   tier: proven
-  provenance: 'Derived from the construction-site pilot (Golden State): implemented and tested in TypeScript (Expo mobile app, Next.js API, hexagonal core).'
+  provenance: 'Derived from the Rebar Crew pilot: implemented and tested in TypeScript (Expo mobile app, Next.js API, hexagonal core).'
 variables:
   required:
     - PROJECT_NAME
