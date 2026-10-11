@@ -8,8 +8,30 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.18.0] — 2026-10-11
+
 ### Added
 
+- **`specgate draft` — from a plan to requirements, one command at a time.**
+  Save your plan or a client's brief as `docs/brief.md` and run
+  `specgate draft`: with no brief it says what a brief is and what a good one
+  says, and `--new-brief` writes one to fill in; with no front matter it
+  explains each field (`product`, `surfaces`, `actors`, `modules`) with an
+  example and the block to paste; with mistakes it says each one and its fix;
+  with a valid one it lists the modules, their state and the next one.
+- **`specgate draft <module>`** opens the module as a change linked to the
+  brief, writes `DRAFTING.md` — everything your agent needs — and prints a
+  one-line prompt to paste into any agent. Run it again to check the draft
+  against the brief; it says what to fix, or that it is ready to archive.
+- **`--agent "claude -p"`** hands the work to your agent on standard input (or
+  in a file, with `{prompt_file}`), undoes anything it writes outside the
+  draft, and checks the result. Without a module, the agent proposes the
+  brief's front matter and leaves the text below it untouched.
+- **`/specgate:draft`**, installed by `agents init`, does the same from Claude
+  Code and the other agent tools.
+- **[Write the brief](docs/start/write-the-brief.md)**, a new step-by-step
+  guide; the quickstart is now two journeys of five phases, every output
+  recorded from the CLI; and [Specgate or OpenSpec](docs/vs-openspec.md).
 - **Seven proven domain packs, derived from the six pilots.** `ledger`,
   `transfers`, `event-registration`, `clinical-record`, `appointment-booking`,
   `shop-orders` and `time-attendance`: 65 requirements and 85 scenarios, each
@@ -26,10 +48,21 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Changed
 
+- `init`, `status` and `--help` point to `specgate draft` when there is a
+  brief. A draft opened from a brief needs no `tasks.md` ticked before
+  archiving: its checklist is its gate.
 - **The eleven existing packs are described as what they are: starter
   examples.** They were called "curated domain packs"; each is four or five
   generic Draft requirements and no product was built from one. The docs, the
   README and the registry now say so (and `supply-chain.md`, which said ten).
+
+### Fixed
+
+- `change archive` said the gate would fail until the tests existed; archived
+  requirements are Draft and the gate passes. It now names the next step (#92).
+- `change author --artifact specs` never told the agent about the brief, the
+  assumptions or the open questions (#93); brief to draft took four commands
+  and a hand edit (#94); nothing said what a brief's front matter is (#95).
 
 ## [0.17.10] — 2026-10-11
 
