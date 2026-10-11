@@ -1,0 +1,367 @@
+# Proven pack: Derived from the core-banking pilot (FinCore): implemented and tested in Spring Boot 3.3, Java 21 and PostgreSQL; 112 tests green.
+schema_version: "1.5.0"
+metadata:
+  name: 'Ledger — accounts, IBAN and double-entry bookkeeping'
+  version: '1.0.0'
+  language: en
+  project_type: backend
+  tier: proven
+  provenance: 'Derived from the core-banking pilot (FinCore): implemented and tested in Spring Boot 3.3, Java 21 and PostgreSQL; 112 tests green.'
+variables:
+  required:
+    - PROJECT_NAME
+    - PROJECT_SLUG
+    - DOMAIN
+requirements:
+  - id: REQ-101
+    title: 'Open an account for a customer whose KYC is verified'
+    priority: Must
+    description: '[functional] A customer with verified KYC gets a current account in euros at once, with a zero balance, status "active" and its own IBAN. A customer whose KYC is not verified gets no account.'
+    status: 'Draft'
+  - id: REQ-102
+    title: 'Every account gets a valid IBAN (ISO 13616)'
+    priority: Must
+    description: '[business-rule] Each account is assigned an IBAN built from the country code, the two ISO 13616 check digits and the domestic account number, so that the IBAN modulo 97 is 1. The pilot issued Spanish IBANs (24 characters, fictitious bank code 9000).'
+    status: 'Draft'
+  - id: REQ-103
+    title: 'Deposit cash into an active account'
+    priority: Should
+    description: '[functional] An operator deposits a positive amount in euros, with a description, into an active account. A zero or negative amount is refused.'
+    status: 'Draft'
+  - id: REQ-104
+    title: 'Double entry, balanced and immutable'
+    priority: Must
+    description: '[business-rule] Every movement of money is a journal entry whose debit postings add up to its credit postings. An unbalanced entry is refused, and an entry already posted is never updated or deleted (the pilot enforced it with a database trigger as well as in the domain).'
+    status: 'Draft'
+  - id: REQ-105
+    title: 'The balance is derived from the ledger'
+    priority: Must
+    description: '[business-rule] The balance of an account is the sum of its credit postings minus the sum of its debit postings; it is never stored separately.'
+    status: 'Draft'
+  - id: REQ-106
+    title: 'Account statement, newest first'
+    priority: Should
+    description: '[functional] The holder sees the movements of the account from newest to oldest, each with its date, description, amount and the balance it left.'
+    status: 'Draft'
+  - id: REQ-107
+    title: 'Only the holder sees an account'
+    priority: Must
+    description: '[business-rule] A customer asking for the balance, the movements or the closure of an account that is not theirs gets the same answer as for an account that does not exist, so the API does not reveal which accounts exist.'
+    status: 'Draft'
+  - id: REQ-108
+    title: 'Block and unblock an account'
+    priority: Must
+    description: '[functional] An operator blocks an active account with a reason; a blocked account accepts no movements until an operator unblocks it. Unblocking an account that is not blocked is refused.'
+    status: 'Draft'
+  - id: REQ-109
+    title: 'Close an account only at a zero balance'
+    priority: Should
+    description: '[functional] The holder closes an active account whose balance is zero; closing an account with money in it is refused.'
+    status: 'Draft'
+  - id: REQ-110
+    title: 'A customer lists their own accounts'
+    priority: Should
+    description: '[functional] A customer sees all their accounts with IBAN, type, status and balance, in the order they were opened, and never another customer''s. Found by running the pilot: after opening an account the customer had no way to read its IBAN again.'
+    status: 'Draft'
+bounded_contexts:
+  - id: BC-101
+    name: 'Accounts'
+    type: Core
+    responsibility: 'Accounts, their holder, status and IBAN'
+    aggregates:
+      - Account
+  - id: BC-102
+    name: 'Ledger'
+    type: Core
+    responsibility: 'Journal entries and their postings'
+    aggregates:
+      - JournalEntry
+use_cases:
+  - id: UC-101
+    name: 'Open Account'
+    actor: 'Customer'
+    requirement: REQ-101
+    command: OpenAccountCommand
+    aggregate: Account
+    emits:
+      - AccountOpened
+  - id: UC-102
+    name: 'Deposit Cash'
+    actor: 'Operator'
+    requirement: REQ-103
+    command: DepositCashCommand
+    aggregate: Account
+    emits:
+      - MoneyDeposited
+      - JournalEntryPosted
+  - id: UC-103
+    name: 'Post Journal Entry'
+    actor: 'System'
+    requirement: REQ-104
+    command: PostJournalEntryCommand
+    aggregate: JournalEntry
+    emits:
+      - JournalEntryPosted
+  - id: UC-104
+    name: 'Read Balance'
+    actor: 'Customer'
+    requirement: REQ-105
+    aggregate: Account
+  - id: UC-105
+    name: 'Read Statement'
+    actor: 'Customer'
+    requirement: REQ-106
+    aggregate: Account
+  - id: UC-106
+    name: 'Block Account'
+    actor: 'Operator'
+    requirement: REQ-108
+    command: BlockAccountCommand
+    aggregate: Account
+    emits:
+      - AccountBlocked
+      - AccountUnblocked
+  - id: UC-107
+    name: 'Close Account'
+    actor: 'Customer'
+    requirement: REQ-109
+    command: CloseAccountCommand
+    aggregate: Account
+    emits:
+      - AccountClosed
+  - id: UC-108
+    name: 'List My Accounts'
+    actor: 'Customer'
+    requirement: REQ-110
+    aggregate: Account
+commands:
+  - id: CMD-101
+    name: OpenAccountCommand
+    use_case: UC-101
+  - id: CMD-102
+    name: DepositCashCommand
+    use_case: UC-102
+  - id: CMD-103
+    name: PostJournalEntryCommand
+    use_case: UC-103
+  - id: CMD-104
+    name: BlockAccountCommand
+    use_case: UC-106
+  - id: CMD-105
+    name: CloseAccountCommand
+    use_case: UC-107
+aggregates:
+  - id: AGG-101
+    name: Account
+    bounded_context: BC-101
+    responsibilities:
+      - 'Holder, IBAN, status (active, blocked, closed)'
+    invariants:
+      - 'An account is opened only for a customer with verified KYC'
+      - 'A blocked or closed account accepts no movements'
+    commands:
+      - OpenAccountCommand
+      - DepositCashCommand
+      - BlockAccountCommand
+      - CloseAccountCommand
+    events:
+      - AccountBlocked
+      - AccountClosed
+      - AccountOpened
+      - AccountUnblocked
+      - JournalEntryPosted
+      - MoneyDeposited
+  - id: AGG-102
+    name: JournalEntry
+    bounded_context: BC-102
+    responsibilities:
+      - 'Balanced postings, append-only'
+    invariants:
+      - 'Debits equal credits'
+      - 'A posted entry is never changed'
+    commands:
+      - PostJournalEntryCommand
+    events:
+      - JournalEntryPosted
+events:
+  - id: EVT-101
+    name: AccountOpened
+    aggregate: Account
+    payload:
+      - 'accountId: string'
+      - 'iban: string'
+      - 'customerId: string'
+  - id: EVT-102
+    name: MoneyDeposited
+    aggregate: Account
+    payload:
+      - 'accountId: string'
+      - 'amount: decimal'
+      - 'description: string'
+  - id: EVT-103
+    name: JournalEntryPosted
+    aggregate: JournalEntry
+    payload:
+      - 'entryId: string'
+      - 'postedAt: datetime'
+  - id: EVT-104
+    name: AccountBlocked
+    aggregate: Account
+    payload:
+      - 'accountId: string'
+      - 'reason: string'
+  - id: EVT-105
+    name: AccountUnblocked
+    aggregate: Account
+    payload:
+      - 'accountId: string'
+  - id: EVT-106
+    name: AccountClosed
+    aggregate: Account
+    payload:
+      - 'accountId: string'
+outputs:
+  files:
+    - target: docs/specs/capabilities/ledger/spec.md
+      template: templates/capability.md.tpl
+business_rules:
+  - id: RUL-101
+    title: 'Money moves only through balanced journal entries'
+    context: BC-102
+    description: 'No code path updates a balance directly.'
+  - id: RUL-102
+    title: 'IBANs satisfy ISO 13616 (modulo 97 = 1)'
+    context: BC-101
+    description: 'Source: ISO 13616-1:2020.'
+rules:
+  traceability:
+    target: docs/specs/traceability.md
+    include_existing_rows: true
+    default_status: Draft
+scenarios:
+  - id: SCN-101
+    requirement_id: REQ-101
+    use_case: UC-101
+    seed: true
+    target: features/ledger/opening_an_account_through_the_api.feature
+    template: templates/features/opening_an_account_through_the_api.feature.tpl
+    feature: 'Opening an account through the API'
+    scenario: 'Opening an account through the API'
+    status: 'Draft'
+  - id: SCN-102
+    requirement_id: REQ-101
+    use_case: UC-101
+    seed: true
+    target: features/ledger/a_customer_without_verified_kyc.feature
+    template: templates/features/a_customer_without_verified_kyc.feature.tpl
+    feature: 'A customer without verified KYC'
+    scenario: 'A customer without verified KYC'
+    status: 'Draft'
+  - id: SCN-103
+    requirement_id: REQ-102
+    use_case: UC-101
+    seed: true
+    target: features/ledger/the_iban_of_the_third_account.feature
+    template: templates/features/the_iban_of_the_third_account.feature.tpl
+    feature: 'The IBAN of the third account'
+    scenario: 'The IBAN of the third account'
+    status: 'Draft'
+  - id: SCN-104
+    requirement_id: REQ-103
+    use_case: UC-102
+    seed: true
+    target: features/ledger/a_deposit_at_the_counter.feature
+    template: templates/features/a_deposit_at_the_counter.feature.tpl
+    feature: 'A deposit at the counter'
+    scenario: 'A deposit at the counter'
+    status: 'Draft'
+  - id: SCN-105
+    requirement_id: REQ-103
+    use_case: UC-102
+    seed: true
+    target: features/ledger/a_zero_amount.feature
+    template: templates/features/a_zero_amount.feature.tpl
+    feature: 'A zero amount'
+    scenario: 'A zero amount'
+    status: 'Draft'
+  - id: SCN-106
+    requirement_id: REQ-104
+    use_case: UC-103
+    seed: true
+    target: features/ledger/the_entry_of_a_deposit.feature
+    template: templates/features/the_entry_of_a_deposit.feature.tpl
+    feature: 'The entry of a deposit'
+    scenario: 'The entry of a deposit'
+    status: 'Draft'
+  - id: SCN-107
+    requirement_id: REQ-104
+    use_case: UC-103
+    seed: true
+    target: features/ledger/an_unbalanced_entry.feature
+    template: templates/features/an_unbalanced_entry.feature.tpl
+    feature: 'An unbalanced entry'
+    scenario: 'An unbalanced entry'
+    status: 'Draft'
+  - id: SCN-108
+    requirement_id: REQ-105
+    use_case: UC-104
+    seed: true
+    target: features/ledger/the_balance_after_two_deposits.feature
+    template: templates/features/the_balance_after_two_deposits.feature.tpl
+    feature: 'The balance after two deposits'
+    scenario: 'The balance after two deposits'
+    status: 'Draft'
+  - id: SCN-109
+    requirement_id: REQ-106
+    use_case: UC-105
+    seed: true
+    target: features/ledger/two_movements_the_latest_first.feature
+    template: templates/features/two_movements_the_latest_first.feature.tpl
+    feature: 'Two movements, the latest first'
+    scenario: 'Two movements, the latest first'
+    status: 'Draft'
+  - id: SCN-110
+    requirement_id: REQ-107
+    use_case: UC-104
+    seed: true
+    target: features/ledger/another_customers_account.feature
+    template: templates/features/another_customers_account.feature.tpl
+    feature: 'Another customer''s account'
+    scenario: 'Another customer''s account'
+    status: 'Draft'
+  - id: SCN-111
+    requirement_id: REQ-108
+    use_case: UC-106
+    seed: true
+    target: features/ledger/a_deposit_into_a_blocked_account.feature
+    template: templates/features/a_deposit_into_a_blocked_account.feature.tpl
+    feature: 'A deposit into a blocked account'
+    scenario: 'A deposit into a blocked account'
+    status: 'Draft'
+  - id: SCN-112
+    requirement_id: REQ-108
+    use_case: UC-106
+    seed: true
+    target: features/ledger/unblocking_and_depositing_again.feature
+    template: templates/features/unblocking_and_depositing_again.feature.tpl
+    feature: 'Unblocking and depositing again'
+    scenario: 'Unblocking and depositing again'
+    status: 'Draft'
+  - id: SCN-113
+    requirement_id: REQ-109
+    use_case: UC-107
+    seed: true
+    target: features/ledger/closing_with_money_in_the_account.feature
+    template: templates/features/closing_with_money_in_the_account.feature.tpl
+    feature: 'Closing with money in the account'
+    scenario: 'Closing with money in the account'
+    status: 'Draft'
+  - id: SCN-114
+    requirement_id: REQ-110
+    use_case: UC-108
+    seed: true
+    target: features/ledger/two_own_accounts_and_someone_elses.feature
+    template: templates/features/two_own_accounts_and_someone_elses.feature.tpl
+    feature: 'Two own accounts and someone else''s'
+    scenario: 'Two own accounts and someone else''s'
+    status: 'Draft'

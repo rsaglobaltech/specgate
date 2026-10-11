@@ -99,7 +99,7 @@ each. The MCP server ships in the package: `specgate mcp install --client claude
 **Domain knowledge as a dependency.** A pack is a versioned, schema-validated
 domain model. Install it, pin it, upgrade it deliberately — and review the
 upgrade as intent with `specops diff --as-change`, not as a file diff.
-→ [Domain packs](docs/domain-packs.md) · [Supply chain](docs/supply-chain.md)
+→ [Domain packs: 7 proven in the pilots, 11 starter examples](docs/domain-packs.md) · [Supply chain](docs/supply-chain.md)
 
 **Unattended delivery.** `specgate harness run` drives plan → agent → verify →
 done for every pending requirement, each in its own git worktree; it never

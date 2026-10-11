@@ -8,6 +8,29 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **Seven proven domain packs, derived from the six pilots.** `ledger`,
+  `transfers`, `event-registration`, `clinical-record`, `appointment-booking`,
+  `shop-orders` and `time-attendance`: 65 requirements and 85 scenarios, each
+  implemented and tested by the product it came from (Spring Boot, Quarkus and
+  TypeScript stacks). Questions a pilot could not answer ship as *Needs
+  Clarification* — drug interaction alerts, shipping costs — instead of an
+  invented answer. Separate id ranges, so a project can install all seven.
+  Install them with `specops add` into a project made by `specgate init`;
+  `init --from-pack` does not handle a requirement with two scenarios yet.
+- **`metadata.tier` and `metadata.provenance` in `pack.yaml` (schema 1.5.0).**
+  `proven` or `starter`; `pack lint` refuses a `proven` pack without a
+  provenance. The pack registry shows the tier on every card and lists proven
+  packs first.
+
+### Changed
+
+- **The eleven existing packs are described as what they are: starter
+  examples.** They were called "curated domain packs"; each is four or five
+  generic Draft requirements and no product was built from one. The docs, the
+  README and the registry now say so (and `supply-chain.md`, which said ten).
+
 ## [0.17.10] — 2026-10-11
 
 ### Added

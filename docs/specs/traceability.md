@@ -61,7 +61,7 @@ gap, not a hidden one.
 | NFR-002 | Unit coverage ≥ 80 % lines / ≥ 70 % branches | Reliability | `c8 --check-coverage` in CI. **Today: 74.8 % lines · 71.1 % branches · 80.4 % functions**, gated at 74/70/80. Branches and functions meet the target; lines does not | In Dev |
 | NFR-003 | Zero ESLint errors and zero Prettier diffs on `main` | Maintainability | CI `lint` job: `npm run typecheck && npm run lint && npm run format:check` | Verified |
 | NFR-004 | CLI emits structured JSON for agents via `--json` | Usability | `change --json` and `plan --format json` only. Whole-surface coverage is C3-02 | In Dev |
-| NFR-005 | Every shipped `pack.yaml` passes schema and lint checks in CI | Reliability | `npm run registry:build` lints all 11 packs in `packs/` and exits 1 on failure | Verified |
+| NFR-005 | Every shipped `pack.yaml` passes schema and lint checks in CI | Reliability | `npm run registry:build` lints every pack in `packs/` and exits 1 on failure | Verified |
 
 > **NFR-003 changed meaning.** It used to promise "zero ShellCheck warnings".
 > ADR-0008 removed every shell script from the CLI, so there is nothing for

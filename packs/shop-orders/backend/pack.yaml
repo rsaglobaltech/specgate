@@ -1,0 +1,290 @@
+# Proven pack: Derived from the credit-shop pilot (credito_tienda): implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL.
+schema_version: "1.5.0"
+metadata:
+  name: 'Shop orders — catalogue, cart, stock and order lifecycle'
+  version: '1.0.0'
+  language: en
+  project_type: backend
+  tier: proven
+  provenance: 'Derived from the credit-shop pilot (credito_tienda): implemented and tested in TypeScript (Next.js with a hexagonal core) on PostgreSQL.'
+variables:
+  required:
+    - PROJECT_NAME
+    - PROJECT_SLUG
+    - DOMAIN
+requirements:
+  - id: REQ-601
+    title: 'Only the administrator manages the shop'
+    priority: Must
+    description: '[business-rule] Every new account is a customer; the account whose email matches the configured administrator email is the administrator; the administration screens and API are refused to everyone else.'
+    status: 'Draft'
+  - id: REQ-602
+    title: 'The administrator manages products'
+    priority: Must
+    description: '[functional] The administrator creates, edits and withdraws products with name, description, category, price and units in stock; a withdrawn product is no longer sold.'
+    status: 'Draft'
+  - id: REQ-603
+    title: 'The public catalogue'
+    priority: Must
+    description: '[functional] Any visitor sees the products in stock by category, with their price, and searches them by name.'
+    status: 'Draft'
+  - id: REQ-604
+    title: 'The cart and its total'
+    priority: Must
+    description: '[functional] A customer adds products to their cart, changes quantities and removes them, and always sees the total.'
+    status: 'Draft'
+  - id: REQ-605
+    title: 'Never sell more than the stock'
+    priority: Must
+    description: '[business-rule] Adding to the cart, or confirming an order, with more units of a product than it has in stock is refused.'
+    status: 'Draft'
+  - id: REQ-606
+    title: 'Confirm the order'
+    priority: Must
+    description: '[functional] The customer''s cart becomes an order "pending payment" with a delivery address; the units are taken from stock and the cart is emptied. The customer sees their orders with their status.'
+    status: 'Draft'
+  - id: REQ-607
+    title: 'The administrator moves orders through their states'
+    priority: Should
+    description: '[functional] The administrator sees all orders, filtered by status, and moves them to "paid", "shipped", "delivered" or "cancelled".'
+    status: 'Draft'
+  - id: REQ-608
+    title: 'Cancelling returns the stock'
+    priority: Must
+    description: '[business-rule] The units of a cancelled order return to stock, and a delivered order cannot be cancelled.'
+    status: 'Draft'
+  - id: REQ-609
+    title: 'Shipping costs'
+    priority: Should
+    description: '[business-rule] The order adds the merchant''s shipping costs and the cart shows them before the customer confirms. The rule is the merchant''s decision: the pilot''s client chose 4.95 EUR below 50.00 EUR of products and free shipping from 50.00 EUR, which is an example, not a default.'
+    status: 'Needs Clarification'
+bounded_contexts:
+  - id: BC-601
+    name: 'Catalogue'
+    type: Supporting
+    responsibility: 'Products, categories, price and stock'
+    aggregates:
+      - Product
+  - id: BC-602
+    name: 'Ordering'
+    type: Core
+    responsibility: 'Carts and orders'
+    aggregates:
+      - Cart
+      - Order
+use_cases:
+  - id: UC-601
+    name: 'Create Product'
+    actor: 'Administrator'
+    requirement: REQ-601
+    command: CreateProductCommand
+    aggregate: Product
+    emits:
+      - ProductCreated
+  - id: UC-602
+    name: 'Browse Catalogue'
+    actor: 'Visitor'
+    requirement: REQ-603
+    aggregate: Product
+  - id: UC-603
+    name: 'Add To Cart'
+    actor: 'Customer'
+    requirement: REQ-604
+    command: AddToCartCommand
+    aggregate: Cart
+  - id: UC-604
+    name: 'Place Order'
+    actor: 'Customer'
+    requirement: REQ-606
+    command: PlaceOrderCommand
+    aggregate: Order
+    emits:
+      - OrderPlaced
+  - id: UC-605
+    name: 'Change Order Status'
+    actor: 'Administrator'
+    requirement: REQ-607
+    command: ChangeOrderStatusCommand
+    aggregate: Order
+    emits:
+      - OrderStatusChanged
+      - OrderCancelled
+commands:
+  - id: CMD-601
+    name: CreateProductCommand
+    use_case: UC-601
+  - id: CMD-602
+    name: AddToCartCommand
+    use_case: UC-603
+  - id: CMD-603
+    name: PlaceOrderCommand
+    use_case: UC-604
+  - id: CMD-604
+    name: ChangeOrderStatusCommand
+    use_case: UC-605
+aggregates:
+  - id: AGG-601
+    name: Product
+    bounded_context: BC-601
+    responsibilities:
+      - 'Name, category, price, stock'
+    invariants:
+      - 'Stock is never negative'
+    commands:
+      - CreateProductCommand
+    events:
+      - ProductCreated
+  - id: AGG-602
+    name: Cart
+    bounded_context: BC-602
+    responsibilities:
+      - 'Lines and total'
+    invariants:
+      - 'A line never exceeds the stock'
+    commands:
+      - AddToCartCommand
+  - id: AGG-603
+    name: Order
+    bounded_context: BC-602
+    responsibilities:
+      - 'Lines, address, status'
+    invariants:
+      - 'A delivered order is never cancelled'
+      - 'Cancelling returns every unit to stock'
+    commands:
+      - PlaceOrderCommand
+      - ChangeOrderStatusCommand
+    events:
+      - OrderCancelled
+      - OrderPlaced
+      - OrderStatusChanged
+events:
+  - id: EVT-601
+    name: ProductCreated
+    aggregate: Product
+    payload:
+      - 'productId: string'
+      - 'price: decimal'
+      - 'stock: integer'
+  - id: EVT-602
+    name: OrderPlaced
+    aggregate: Order
+    payload:
+      - 'orderId: string'
+      - 'total: decimal'
+  - id: EVT-603
+    name: OrderStatusChanged
+    aggregate: Order
+    payload:
+      - 'orderId: string'
+      - 'status: string'
+  - id: EVT-604
+    name: OrderCancelled
+    aggregate: Order
+    payload:
+      - 'orderId: string'
+outputs:
+  files:
+    - target: docs/specs/capabilities/shop-orders/spec.md
+      template: templates/capability.md.tpl
+business_rules:
+  - id: RUL-601
+    title: 'Stock is taken when the order is placed, and returned when it is cancelled'
+    context: BC-602
+    description: 'Both happen in the same transaction as the status change.'
+rules:
+  traceability:
+    target: docs/specs/traceability.md
+    include_existing_rows: true
+    default_status: Draft
+scenarios:
+  - id: SCN-601
+    requirement_id: REQ-601
+    use_case: UC-601
+    seed: true
+    target: features/shop-orders/a_customer_does_not_administer.feature
+    template: templates/features/a_customer_does_not_administer.feature.tpl
+    feature: 'A customer does not administer'
+    scenario: 'A customer does not administer'
+    status: 'Draft'
+  - id: SCN-602
+    requirement_id: REQ-602
+    use_case: UC-601
+    seed: true
+    target: features/shop-orders/creating_a_product.feature
+    template: templates/features/creating_a_product.feature.tpl
+    feature: 'Creating a product'
+    scenario: 'Creating a product'
+    status: 'Draft'
+  - id: SCN-603
+    requirement_id: REQ-603
+    use_case: UC-602
+    seed: true
+    target: features/shop-orders/filtering_by_category.feature
+    template: templates/features/filtering_by_category.feature.tpl
+    feature: 'Filtering by category'
+    scenario: 'Filtering by category'
+    status: 'Draft'
+  - id: SCN-604
+    requirement_id: REQ-604
+    use_case: UC-603
+    seed: true
+    target: features/shop-orders/adding_two_units.feature
+    template: templates/features/adding_two_units.feature.tpl
+    feature: 'Adding two units'
+    scenario: 'Adding two units'
+    status: 'Draft'
+  - id: SCN-605
+    requirement_id: REQ-605
+    use_case: UC-603
+    seed: true
+    target: features/shop-orders/more_than_the_stock.feature
+    template: templates/features/more_than_the_stock.feature.tpl
+    feature: 'More than the stock'
+    scenario: 'More than the stock'
+    status: 'Draft'
+  - id: SCN-606
+    requirement_id: REQ-606
+    use_case: UC-604
+    seed: true
+    target: features/shop-orders/placing_an_order.feature
+    template: templates/features/placing_an_order.feature.tpl
+    feature: 'Placing an order'
+    scenario: 'Placing an order'
+    status: 'Draft'
+  - id: SCN-607
+    requirement_id: REQ-607
+    use_case: UC-605
+    seed: true
+    target: features/shop-orders/marking_an_order_paid.feature
+    template: templates/features/marking_an_order_paid.feature.tpl
+    feature: 'Marking an order paid'
+    scenario: 'Marking an order paid'
+    status: 'Draft'
+  - id: SCN-608
+    requirement_id: REQ-608
+    use_case: UC-605
+    seed: true
+    target: features/shop-orders/the_units_come_back.feature
+    template: templates/features/the_units_come_back.feature.tpl
+    feature: 'The units come back'
+    scenario: 'The units come back'
+    status: 'Draft'
+  - id: SCN-609
+    requirement_id: REQ-608
+    use_case: UC-605
+    seed: true
+    target: features/shop-orders/a_delivered_order.feature
+    template: templates/features/a_delivered_order.feature.tpl
+    feature: 'A delivered order'
+    scenario: 'A delivered order'
+    status: 'Draft'
+  - id: SCN-610
+    requirement_id: REQ-609
+    use_case: UC-604
+    seed: true
+    target: features/shop-orders/shipping_shown_before_confirming.feature
+    template: templates/features/shipping_shown_before_confirming.feature.tpl
+    feature: 'Shipping shown before confirming'
+    scenario: 'Shipping shown before confirming'
+    status: 'Needs Clarification'

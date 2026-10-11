@@ -122,7 +122,7 @@ test("a curated pack renders its context and producer, not a column of dashes", 
   assert.deepEqual(aggregate.responsibilities, ["Invoice line items, totals, status, aging"]);
 });
 
-test("all eleven curated packs write the inline string payload spelling", () => {
+test("every shipped pack writes the inline string payload spelling", () => {
   // Issue #116 (and ADR-0020's own 2026-08-23 amendment) said one pack —
   // file-storage — used a block sequence of mappings (`payload:\n  - fileId:
   // string`, reading as an object per entry) against ten using the string

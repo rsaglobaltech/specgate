@@ -75,7 +75,7 @@ With that set, an unsigned or unverifiable pack is a hard error.
 
 **It is off by default, and that is deliberate.** Turning it on by default
 would break every project installing a pack whose tags are not signed —
-including the ten curated packs in this repository. A default that fails on
+including the eighteen packs in this repository (seven proven, eleven starter examples). A default that fails on
 correct usage teaches people to disable the check, which is worse than not
 having it. Turn it on once your organisation signs its own packs; that is when
 the check starts distinguishing anything.
