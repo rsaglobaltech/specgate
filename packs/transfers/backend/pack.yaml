@@ -1,0 +1,294 @@
+# Proven pack: Derived from the core-banking pilot (FinCore): implemented and tested in Spring Boot 3.3, Java 21 and PostgreSQL (row locks with FOR UPDATE); 112 tests green.
+schema_version: "1.5.0"
+metadata:
+  name: 'Transfers — internal and SEPA, idempotent and race-free'
+  version: '1.0.0'
+  language: en
+  project_type: backend
+  tier: proven
+  provenance: 'Derived from the core-banking pilot (FinCore): implemented and tested in Spring Boot 3.3, Java 21 and PostgreSQL (row locks with FOR UPDATE); 112 tests green.'
+variables:
+  required:
+    - PROJECT_NAME
+    - PROJECT_SLUG
+    - DOMAIN
+requirements:
+  - id: REQ-201
+    title: 'Internal transfer, all or nothing'
+    priority: Must
+    description: '[functional] A customer transfers an amount from one of their accounts to another account at the same bank at once: the debit and the credit are recorded in the same journal entry, or neither is.'
+    status: 'Draft'
+  - id: REQ-202
+    title: 'No overdraft'
+    priority: Must
+    description: '[business-rule] A transfer that would leave the source balance below zero is refused.'
+    status: 'Draft'
+  - id: REQ-203
+    title: 'Simultaneous transfers never spend the same balance'
+    priority: Must
+    description: '[business-rule] Transfers leaving the same account are processed one after another, so two simultaneous transfers can never both spend the same money.'
+    status: 'Draft'
+  - id: REQ-204
+    title: 'The destination IBAN must be valid'
+    priority: Must
+    description: '[business-rule] A transfer whose destination IBAN fails the ISO 13616 check is refused before any money moves.'
+    status: 'Draft'
+  - id: REQ-205
+    title: 'A transfer to another bank is a pending SEPA transfer'
+    priority: Must
+    description: '[functional] A transfer to an IBAN of another bank is accepted as a SEPA credit transfer: the amount leaves the source at once and the transfer stays "pending" until it is settled.'
+    status: 'Draft'
+  - id: REQ-206
+    title: 'Settle a SEPA transfer, refunding a rejection automatically'
+    priority: Must
+    description: '[functional] An operator records the settlement of a pending SEPA transfer: "accepted" completes it; "rejected" rejects it and refunds the amount to the source automatically. A settled transfer cannot be settled again.'
+    status: 'Draft'
+  - id: REQ-207
+    title: 'A repeated request does not duplicate a transfer'
+    priority: Must
+    description: '[business-rule] Two transfer requests from the same customer with the same Idempotency-Key header are one transfer: the second returns the transfer already created and moves no money.'
+    status: 'Draft'
+  - id: REQ-208
+    title: 'Daily transfer limit per account'
+    priority: Should
+    description: '[business-rule] A transfer that would take the amount sent from one account in one calendar day (in the bank''s time zone, counting transfers not rejected) over the daily limit is refused. The limit is the bank''s decision: the pilot used 10000.00 EUR.'
+    status: 'Draft'
+  - id: REQ-209
+    title: 'A customer reads their own transfers'
+    priority: Should
+    description: '[functional] The customer who ordered a transfer sees its status, amount, source, destination and description, and lists their transfers newest first; any other customer gets the answer for a transfer that does not exist.'
+    status: 'Draft'
+  - id: REQ-210
+    title: 'Operators list the SEPA transfers waiting for settlement'
+    priority: Should
+    description: '[functional] An operator lists pending SEPA transfers oldest first, with id, source, destination, amount and description. Found by running the pilot: settling needs the transfer id, and the operator had no way to obtain it.'
+    status: 'Draft'
+  - id: REQ-211
+    title: 'Every rejection has the same error body'
+    priority: Should
+    description: '[non-functional] Any rejected request is answered with the body {"error": code}, including a body that is not valid JSON or a field of the wrong type. Found by running the pilot: malformed JSON leaked the framework''s own error format.'
+    status: 'Draft'
+bounded_contexts:
+  - id: BC-201
+    name: 'Payments'
+    type: Core
+    responsibility: 'Transfers, their settlement and their limits'
+    aggregates:
+      - Transfer
+use_cases:
+  - id: UC-201
+    name: 'Transfer Money'
+    actor: 'Customer'
+    requirement: REQ-201
+    command: TransferMoneyCommand
+    aggregate: Transfer
+    emits:
+      - TransferCompleted
+      - SepaTransferRequested
+  - id: UC-202
+    name: 'Settle Transfer'
+    actor: 'Operator'
+    requirement: REQ-206
+    command: SettleTransferCommand
+    aggregate: Transfer
+    emits:
+      - TransferCompleted
+      - TransferRejected
+  - id: UC-203
+    name: 'Read Transfer'
+    actor: 'Customer'
+    requirement: REQ-209
+    aggregate: Transfer
+  - id: UC-204
+    name: 'List Pending Transfers'
+    actor: 'Operator'
+    requirement: REQ-210
+    aggregate: Transfer
+commands:
+  - id: CMD-201
+    name: TransferMoneyCommand
+    use_case: UC-201
+  - id: CMD-202
+    name: SettleTransferCommand
+    use_case: UC-202
+aggregates:
+  - id: AGG-201
+    name: Transfer
+    bounded_context: BC-201
+    responsibilities:
+      - 'Amount, source, destination, status (completed, pending, rejected)'
+    invariants:
+      - 'The source never goes below zero'
+      - 'A settled transfer is never settled again'
+      - 'One Idempotency-Key, one transfer'
+    commands:
+      - TransferMoneyCommand
+      - SettleTransferCommand
+    events:
+      - SepaTransferRequested
+      - TransferCompleted
+      - TransferRejected
+events:
+  - id: EVT-201
+    name: TransferCompleted
+    aggregate: Transfer
+    payload:
+      - 'transferId: string'
+      - 'amount: decimal'
+  - id: EVT-202
+    name: SepaTransferRequested
+    aggregate: Transfer
+    payload:
+      - 'transferId: string'
+      - 'destinationIban: string'
+  - id: EVT-203
+    name: TransferRejected
+    aggregate: Transfer
+    payload:
+      - 'transferId: string'
+      - 'reason: string'
+outputs:
+  files:
+    - target: docs/specs/capabilities/transfers/spec.md
+      template: templates/capability.md.tpl
+business_rules:
+  - id: RUL-201
+    title: 'Debits on one account are serialised'
+    context: BC-201
+    description: 'The pilot locked the source account row (SELECT … FOR UPDATE) for the duration of the transfer.'
+  - id: RUL-202
+    title: 'A rejected SEPA transfer is refunded automatically'
+    context: BC-201
+    description: 'The compensation is a new journal entry, not a deletion.'
+rules:
+  traceability:
+    target: docs/specs/traceability.md
+    include_existing_rows: true
+    default_status: Draft
+scenarios:
+  - id: SCN-201
+    requirement_id: REQ-201
+    use_case: UC-201
+    seed: true
+    target: features/transfers/a_transfer_between_two_accounts_of_the_bank.feature
+    template: templates/features/a_transfer_between_two_accounts_of_the_bank.feature.tpl
+    feature: 'A transfer between two accounts of the bank'
+    scenario: 'A transfer between two accounts of the bank'
+    status: 'Draft'
+  - id: SCN-202
+    requirement_id: REQ-201
+    use_case: UC-201
+    seed: true
+    target: features/transfers/a_blocked_destination.feature
+    template: templates/features/a_blocked_destination.feature.tpl
+    feature: 'A blocked destination'
+    scenario: 'A blocked destination'
+    status: 'Draft'
+  - id: SCN-203
+    requirement_id: REQ-202
+    use_case: UC-201
+    seed: true
+    target: features/transfers/insufficient_balance.feature
+    template: templates/features/insufficient_balance.feature.tpl
+    feature: 'Insufficient balance'
+    scenario: 'Insufficient balance'
+    status: 'Draft'
+  - id: SCN-204
+    requirement_id: REQ-203
+    use_case: UC-201
+    seed: true
+    target: features/transfers/two_transfers_at_the_same_time.feature
+    template: templates/features/two_transfers_at_the_same_time.feature.tpl
+    feature: 'Two transfers at the same time'
+    scenario: 'Two transfers at the same time'
+    status: 'Draft'
+  - id: SCN-205
+    requirement_id: REQ-204
+    use_case: UC-201
+    seed: true
+    target: features/transfers/an_iban_with_one_digit_changed.feature
+    template: templates/features/an_iban_with_one_digit_changed.feature.tpl
+    feature: 'An IBAN with one digit changed'
+    scenario: 'An IBAN with one digit changed'
+    status: 'Draft'
+  - id: SCN-206
+    requirement_id: REQ-205
+    use_case: UC-201
+    seed: true
+    target: features/transfers/an_outgoing_sepa_transfer.feature
+    template: templates/features/an_outgoing_sepa_transfer.feature.tpl
+    feature: 'An outgoing SEPA transfer'
+    scenario: 'An outgoing SEPA transfer'
+    status: 'Draft'
+  - id: SCN-207
+    requirement_id: REQ-206
+    use_case: UC-202
+    seed: true
+    target: features/transfers/a_rejected_settlement_and_its_refund.feature
+    template: templates/features/a_rejected_settlement_and_its_refund.feature.tpl
+    feature: 'A rejected settlement and its refund'
+    scenario: 'A rejected settlement and its refund'
+    status: 'Draft'
+  - id: SCN-208
+    requirement_id: REQ-206
+    use_case: UC-202
+    seed: true
+    target: features/transfers/settling_twice.feature
+    template: templates/features/settling_twice.feature.tpl
+    feature: 'Settling twice'
+    scenario: 'Settling twice'
+    status: 'Draft'
+  - id: SCN-209
+    requirement_id: REQ-207
+    use_case: UC-201
+    seed: true
+    target: features/transfers/the_same_request_sent_twice.feature
+    template: templates/features/the_same_request_sent_twice.feature.tpl
+    feature: 'The same request sent twice'
+    scenario: 'The same request sent twice'
+    status: 'Draft'
+  - id: SCN-210
+    requirement_id: REQ-208
+    use_case: UC-201
+    seed: true
+    target: features/transfers/going_over_the_limit.feature
+    template: templates/features/going_over_the_limit.feature.tpl
+    feature: 'Going over the limit'
+    scenario: 'Going over the limit'
+    status: 'Draft'
+  - id: SCN-211
+    requirement_id: REQ-208
+    use_case: UC-201
+    seed: true
+    target: features/transfers/the_next_day.feature
+    template: templates/features/the_next_day.feature.tpl
+    feature: 'The next day'
+    scenario: 'The next day'
+    status: 'Draft'
+  - id: SCN-212
+    requirement_id: REQ-209
+    use_case: UC-203
+    seed: true
+    target: features/transfers/someone_elses_transfer.feature
+    template: templates/features/someone_elses_transfer.feature.tpl
+    feature: 'Someone else''s transfer'
+    scenario: 'Someone else''s transfer'
+    status: 'Draft'
+  - id: SCN-213
+    requirement_id: REQ-210
+    use_case: UC-204
+    seed: true
+    target: features/transfers/two_pending_and_one_settled.feature
+    template: templates/features/two_pending_and_one_settled.feature.tpl
+    feature: 'Two pending and one settled'
+    scenario: 'Two pending and one settled'
+    status: 'Draft'
+  - id: SCN-214
+    requirement_id: REQ-211
+    use_case: UC-201
+    seed: true
+    target: features/transfers/an_amount_that_is_not_a_number.feature
+    template: templates/features/an_amount_that_is_not_a_number.feature.tpl
+    feature: 'An amount that is not a number'
+    scenario: 'An amount that is not a number'
+    status: 'Draft'

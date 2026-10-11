@@ -1,5 +1,10 @@
 /**
- * What the landing page's terminal shows, declared as data.
+ * What the landing page's terminals show, declared as data.
+ *
+ * Three recordings, one per question a visitor brings — "what happens to my
+ * client's brief?", "what stops a bad change?", "what if an agent does the
+ * work?" — shown as tabs over one player. Each is captured from the real CLI
+ * by `record-terminal.ts` and checked by `docs-terminal.test.ts`.
  *
  * Read by two things that must not disagree: `record-terminal.ts`, which runs
  * these commands for real and writes the recording, and `docs-terminal.test.ts`,
@@ -48,8 +53,30 @@ export interface Beat {
   readonly surface: string | null;
   /** Lines kept. Beyond this the player shows "… N more lines". */
   readonly maxLines: number;
+  /**
+   * The exit status this beat is recorded for. Absent means 0. A demo of a
+   * gate has to show it refusing, so a refusal is declared here — and the test
+   * fails if a beat exits with anything else, in either direction.
+   */
+  readonly expectExit?: number;
 }
 
+/** One recording: a tab on the landing page and a JSON file beside it. */
+export interface Storyboard {
+  /** `brief`, `gate`, `harness`. Also the tab's id. */
+  readonly id: string;
+  /** The tab's label. */
+  readonly label: string;
+  /** The terminal's title strip. */
+  readonly title: string;
+  /** Under `docs/assets/`. */
+  readonly file: string;
+  /** The `csda:<block>` sentinel in `docs/index.html` holding the fallback. */
+  readonly block: string;
+  readonly beats: readonly Beat[];
+}
+
+/** The agent harness — the original recording, kept under its original names. */
 export const BEATS: readonly Beat[] = [
   {
     id: "config",
@@ -136,5 +163,153 @@ export const BEATS: readonly Beat[] = [
     argv: ["specgate", "validate", "."],
     surface: "validate",
     maxLines: 8,
+  },
+];
+
+/**
+ * From a client's brief to a specification.
+ *
+ * The beat that matters is the first `draft --check`: the agent wrote a
+ * plausible draft and invented a fee the brief never states. The checklist
+ * finds it, the fee becomes a question for the client, and the requirement it
+ * blocks arrives as "waiting for an answer" instead of as code.
+ */
+export const BRIEF_BEATS: readonly Beat[] = [
+  {
+    id: "brief",
+    caption: "The client's brief, as it arrived. Four sentences.",
+    cwd: "courts",
+    argv: ["cat", "docs/brief.md"],
+    surface: null,
+    maxLines: 14,
+  },
+  {
+    id: "check-draft",
+    caption: "An agent drafted three requirements. The checklist finds every value nobody gave it.",
+    cwd: "courts",
+    argv: ["specgate", "draft", "--check", "draft-bookings"],
+    surface: "draft",
+    maxLines: 16,
+    expectExit: 1,
+  },
+  {
+    id: "the-fix",
+    caption: "The invented fee is gone from the draft. It becomes a question.",
+    cwd: "courts",
+    shell:
+      "git diff -U0 docs/specs/changes/draft-bookings/specs | grep -E '^[-+]' | grep -vE '^(---|[+]{3}) '",
+    surface: null,
+    maxLines: 10,
+  },
+  {
+    id: "questions",
+    caption: "What only the client can answer — and the requirement each question blocks.",
+    cwd: "courts",
+    argv: ["cat", "docs/specs/changes/draft-bookings/questions.md"],
+    surface: null,
+    maxLines: 8,
+  },
+  {
+    id: "check-again",
+    caption: "Every value is now in the brief or written down as an assumption.",
+    cwd: "courts",
+    argv: ["specgate", "draft", "--check", "draft-bookings"],
+    surface: "draft",
+    maxLines: 8,
+  },
+  {
+    id: "archive",
+    caption: "Requirements, Gherkin and the traceability matrix, written in one step.",
+    cwd: "courts",
+    argv: ["specgate", "change", "archive", "draft-bookings"],
+    surface: "change archive",
+    maxLines: 10,
+  },
+  {
+    id: "status",
+    caption: "The blocked requirement waits for the client. Nobody builds it by mistake.",
+    cwd: "courts",
+    argv: ["specgate", "status"],
+    surface: "status",
+    maxLines: 16,
+  },
+];
+
+/**
+ * The gate refusing, then accepting.
+ *
+ * Starts where the brief recording ends. Two refusals are the point: work
+ * with no test behind it, and a requirement still waiting for the client.
+ */
+export const GATE_BEATS: readonly Beat[] = [
+  {
+    id: "done-no-test",
+    caption: "Calling it done before a test exists. The gate says no and writes nothing.",
+    cwd: "courts",
+    argv: ["specgate", "done", "REQ-002"],
+    surface: "done",
+    maxLines: 8,
+    expectExit: 1,
+  },
+  {
+    id: "the-test",
+    caption: "A test that names the requirement. That mention is the whole link.",
+    cwd: "courts",
+    argv: ["cat", "test/bookings.test.js"],
+    surface: null,
+    maxLines: 14,
+  },
+  {
+    id: "done",
+    caption: "Now the scenario, the test and the suite all pass — and only then is it marked.",
+    cwd: "courts",
+    argv: ["specgate", "done", "REQ-002"],
+    surface: "done",
+    maxLines: 6,
+  },
+  {
+    id: "done-blocked",
+    caption:
+      "The requirement waiting for the client cannot be closed — not by you, not by an agent.",
+    cwd: "courts",
+    argv: ["specgate", "done", "REQ-004"],
+    surface: "done",
+    maxLines: 6,
+    expectExit: 1,
+  },
+  {
+    id: "check",
+    caption: "What CI runs on every pull request: the whole chain, then your tests.",
+    cwd: "courts",
+    argv: ["specgate", "check"],
+    surface: "check",
+    maxLines: 22,
+  },
+];
+
+export const STORYBOARDS: readonly Storyboard[] = [
+  {
+    id: "brief",
+    label: "From a brief",
+    title: "courts — draft from a brief",
+    file: "terminal-brief.json",
+    block: "terminal-brief",
+    beats: BRIEF_BEATS,
+  },
+  {
+    id: "gate",
+    label: "The gate says no",
+    title: "courts — the gate",
+    file: "terminal-gate.json",
+    block: "terminal-gate",
+    beats: GATE_BEATS,
+  },
+  {
+    id: "harness",
+    label: "Hand it to an agent",
+    title: "smart-parking",
+    file: "terminal-demo.json",
+    block: "terminal",
+    beats: BEATS,
   },
 ];

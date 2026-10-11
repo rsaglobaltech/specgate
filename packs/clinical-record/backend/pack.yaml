@@ -1,0 +1,347 @@
+# Proven pack: Derived from the clinical-cases pilot (HealthTech): implemented and tested in Quarkus 3 on PostgreSQL with fictitious data only; 23 of 24 requirements, 35 tests green.
+schema_version: "1.5.0"
+metadata:
+  name: 'Clinical record — append-only case file and access log'
+  version: '1.0.0'
+  language: en
+  project_type: backend
+  tier: proven
+  provenance: 'Derived from the clinical-cases pilot (HealthTech): implemented and tested in Quarkus 3 on PostgreSQL with fictitious data only; 23 of 24 requirements, 35 tests green.'
+variables:
+  required:
+    - PROJECT_NAME
+    - PROJECT_SLUG
+    - DOMAIN
+requirements:
+  - id: REQ-401
+    title: 'Open a clinical case'
+    priority: Must
+    description: '[functional] A physician opens a case for a patient with the reason for the visit; the physician who opens it is responsible for it and the case is "open".'
+    status: 'Draft'
+  - id: REQ-402
+    title: 'Only the care team sees the case'
+    priority: Must
+    description: '[business-rule] Only the physician responsible and the physicians they add to the care team can read or annotate a case; anyone else gets the answer for a case that does not exist.'
+    status: 'Draft'
+  - id: REQ-403
+    title: 'Every annotation is signed by its author'
+    priority: Must
+    description: '[business-rule] Symptoms, diagnoses and treatments are recorded as annotations carrying their author and time. A diagnosis carries an ICD-10 code and moves from "provisional" to "confirmed"; a code that does not have the shape of an ICD-10 code is refused (shape only — the pack does not judge the diagnosis).'
+    status: 'Draft'
+  - id: REQ-404
+    title: 'Nothing is deleted: corrections are added'
+    priority: Must
+    description: '[business-rule] No annotation of a case can be changed or deleted; a correction is a new annotation that cites the one it corrects, and both appear in the timeline with their author and time.'
+    status: 'Draft'
+  - id: REQ-405
+    title: 'Timeline and state as at any past instant'
+    priority: Must
+    description: '[functional] The care team sees the full timeline of the case in order, and the state of the case is rebuilt as it was at any past instant: diagnoses and their status, treatments, and whether it was open.'
+    status: 'Draft'
+  - id: REQ-406
+    title: 'Close the case'
+    priority: Should
+    description: '[functional] The physician responsible closes a case with a reason ("resolved", "referred" or "abandoned"); a closed case accepts no new annotation except corrections.'
+    status: 'Draft'
+  - id: REQ-407
+    title: 'Every access to clinical data is logged, immutably'
+    priority: Must
+    description: '[business-rule] Every read of a patient''s clinical data, and every denied attempt, is logged with who, which patient, which resource, the outcome and the time. The log cannot be changed or deleted, and an entry survives the rollback of the request that caused it.'
+    status: 'Draft'
+  - id: REQ-408
+    title: 'The privacy officer reviews a patient''s accesses'
+    priority: Should
+    description: '[functional] The person responsible for privacy sees the accesses to a patient''s data, newest first, finding the patient by name.'
+    status: 'Draft'
+  - id: REQ-409
+    title: 'Drug interaction alerts'
+    priority: Should
+    description: '[functional] When prescribing, the physician is warned of known interactions between the new drug and the patient''s active prescriptions, with severity and source. Open on purpose: which interaction database to license, its severity scale and who is liable for it are the client''s decisions. The pilot did not build it and this pack ships no interaction rule.'
+    status: 'Needs Clarification'
+bounded_contexts:
+  - id: BC-401
+    name: 'ClinicalCases'
+    type: Core
+    responsibility: 'Cases, their care team and their annotations'
+    aggregates:
+      - ClinicalCase
+  - id: BC-402
+    name: 'Privacy'
+    type: Supporting
+    responsibility: 'The log of every access to clinical data'
+    aggregates:
+      - AccessLog
+use_cases:
+  - id: UC-401
+    name: 'Open Case'
+    actor: 'Physician'
+    requirement: REQ-401
+    command: OpenCaseCommand
+    aggregate: ClinicalCase
+    emits:
+      - CaseOpened
+  - id: UC-402
+    name: 'Read Timeline'
+    actor: 'Physician'
+    requirement: REQ-402
+    aggregate: ClinicalCase
+    emits:
+      - ClinicalDataAccessed
+  - id: UC-403
+    name: 'Annotate Case'
+    actor: 'Physician'
+    requirement: REQ-403
+    command: AnnotateCaseCommand
+    aggregate: ClinicalCase
+    emits:
+      - SymptomRecorded
+      - DiagnosisRecorded
+      - DiagnosisConfirmed
+  - id: UC-404
+    name: 'Correct Annotation'
+    actor: 'Physician'
+    requirement: REQ-404
+    command: CorrectAnnotationCommand
+    aggregate: ClinicalCase
+    emits:
+      - AnnotationCorrected
+  - id: UC-405
+    name: 'Read State At'
+    actor: 'Physician'
+    requirement: REQ-405
+    aggregate: ClinicalCase
+  - id: UC-406
+    name: 'Close Case'
+    actor: 'Physician'
+    requirement: REQ-406
+    command: CloseCaseCommand
+    aggregate: ClinicalCase
+    emits:
+      - CaseClosed
+  - id: UC-407
+    name: 'Review Accesses'
+    actor: 'Privacy officer'
+    requirement: REQ-408
+    aggregate: AccessLog
+  - id: UC-408
+    name: 'Prescribe'
+    actor: 'Physician'
+    requirement: REQ-409
+    command: PrescribeCommand
+    aggregate: ClinicalCase
+commands:
+  - id: CMD-401
+    name: OpenCaseCommand
+    use_case: UC-401
+  - id: CMD-402
+    name: AnnotateCaseCommand
+    use_case: UC-403
+  - id: CMD-403
+    name: CorrectAnnotationCommand
+    use_case: UC-404
+  - id: CMD-404
+    name: CloseCaseCommand
+    use_case: UC-406
+  - id: CMD-405
+    name: PrescribeCommand
+    use_case: UC-408
+aggregates:
+  - id: AGG-401
+    name: ClinicalCase
+    bounded_context: BC-401
+    responsibilities:
+      - 'Patient, care team, append-only annotations'
+    invariants:
+      - 'Annotations are never changed or deleted'
+      - 'Only the care team reads or writes'
+      - 'A closed case accepts only corrections'
+    commands:
+      - OpenCaseCommand
+      - AnnotateCaseCommand
+      - CorrectAnnotationCommand
+      - CloseCaseCommand
+      - PrescribeCommand
+    events:
+      - AnnotationCorrected
+      - CaseClosed
+      - CaseOpened
+      - ClinicalDataAccessed
+      - DiagnosisConfirmed
+      - DiagnosisRecorded
+      - SymptomRecorded
+  - id: AGG-402
+    name: AccessLog
+    bounded_context: BC-402
+    responsibilities:
+      - 'Who accessed which patient''s data, and the outcome'
+    invariants:
+      - 'Entries are never changed or deleted'
+    events:
+      - ClinicalDataAccessed
+events:
+  - id: EVT-401
+    name: CaseOpened
+    aggregate: ClinicalCase
+    payload:
+      - 'caseId: string'
+      - 'patientId: string'
+      - 'responsible: string'
+  - id: EVT-402
+    name: SymptomRecorded
+    aggregate: ClinicalCase
+    payload:
+      - 'caseId: string'
+      - 'author: string'
+  - id: EVT-403
+    name: DiagnosisRecorded
+    aggregate: ClinicalCase
+    payload:
+      - 'caseId: string'
+      - 'code: string'
+      - 'author: string'
+  - id: EVT-404
+    name: DiagnosisConfirmed
+    aggregate: ClinicalCase
+    payload:
+      - 'caseId: string'
+      - 'code: string'
+      - 'author: string'
+  - id: EVT-405
+    name: AnnotationCorrected
+    aggregate: ClinicalCase
+    payload:
+      - 'caseId: string'
+      - 'corrects: string'
+      - 'author: string'
+  - id: EVT-406
+    name: CaseClosed
+    aggregate: ClinicalCase
+    payload:
+      - 'caseId: string'
+      - 'reason: string'
+  - id: EVT-407
+    name: ClinicalDataAccessed
+    aggregate: AccessLog
+    payload:
+      - 'who: string'
+      - 'patientId: string'
+      - 'resource: string'
+      - 'outcome: string'
+outputs:
+  files:
+    - target: docs/specs/capabilities/clinical-record/spec.md
+      template: templates/capability.md.tpl
+business_rules:
+  - id: RUL-401
+    title: 'Fictitious data only in development and tests'
+    context: BC-401
+    description: 'The pilot used invented patients throughout.'
+  - id: RUL-402
+    title: 'The access log is written in its own transaction'
+    context: BC-402
+    description: 'The pilot used REQUIRES_NEW so a denied request still leaves its trace.'
+rules:
+  traceability:
+    target: docs/specs/traceability.md
+    include_existing_rows: true
+    default_status: Draft
+scenarios:
+  - id: SCN-401
+    requirement_id: REQ-401
+    use_case: UC-401
+    seed: true
+    target: features/clinical-record/a_new_case.feature
+    template: templates/features/a_new_case.feature.tpl
+    feature: 'A new case'
+    scenario: 'A new case'
+    status: 'Draft'
+  - id: SCN-402
+    requirement_id: REQ-402
+    use_case: UC-402
+    seed: true
+    target: features/clinical-record/a_physician_outside_the_team.feature
+    template: templates/features/a_physician_outside_the_team.feature.tpl
+    feature: 'A physician outside the team'
+    scenario: 'A physician outside the team'
+    status: 'Draft'
+  - id: SCN-403
+    requirement_id: REQ-402
+    use_case: UC-402
+    seed: true
+    target: features/clinical-record/adding_a_colleague.feature
+    template: templates/features/adding_a_colleague.feature.tpl
+    feature: 'Adding a colleague'
+    scenario: 'Adding a colleague'
+    status: 'Draft'
+  - id: SCN-404
+    requirement_id: REQ-403
+    use_case: UC-403
+    seed: true
+    target: features/clinical-record/provisional_then_confirmed.feature
+    template: templates/features/provisional_then_confirmed.feature.tpl
+    feature: 'Provisional, then confirmed'
+    scenario: 'Provisional, then confirmed'
+    status: 'Draft'
+  - id: SCN-405
+    requirement_id: REQ-403
+    use_case: UC-403
+    seed: true
+    target: features/clinical-record/a_malformed_code.feature
+    template: templates/features/a_malformed_code.feature.tpl
+    feature: 'A malformed code'
+    scenario: 'A malformed code'
+    status: 'Draft'
+  - id: SCN-406
+    requirement_id: REQ-404
+    use_case: UC-404
+    seed: true
+    target: features/clinical-record/correcting_the_onset_of_a_symptom.feature
+    template: templates/features/correcting_the_onset_of_a_symptom.feature.tpl
+    feature: 'Correcting the onset of a symptom'
+    scenario: 'Correcting the onset of a symptom'
+    status: 'Draft'
+  - id: SCN-407
+    requirement_id: REQ-405
+    use_case: UC-405
+    seed: true
+    target: features/clinical-record/before_the_diagnosis_was_confirmed.feature
+    template: templates/features/before_the_diagnosis_was_confirmed.feature.tpl
+    feature: 'Before the diagnosis was confirmed'
+    scenario: 'Before the diagnosis was confirmed'
+    status: 'Draft'
+  - id: SCN-408
+    requirement_id: REQ-406
+    use_case: UC-406
+    seed: true
+    target: features/clinical-record/annotating_a_closed_case.feature
+    template: templates/features/annotating_a_closed_case.feature.tpl
+    feature: 'Annotating a closed case'
+    scenario: 'Annotating a closed case'
+    status: 'Draft'
+  - id: SCN-409
+    requirement_id: REQ-407
+    use_case: UC-402
+    seed: true
+    target: features/clinical-record/a_read_and_a_denied_attempt.feature
+    template: templates/features/a_read_and_a_denied_attempt.feature.tpl
+    feature: 'A read and a denied attempt'
+    scenario: 'A read and a denied attempt'
+    status: 'Draft'
+  - id: SCN-410
+    requirement_id: REQ-408
+    use_case: UC-407
+    seed: true
+    target: features/clinical-record/who_has_seen_laura.feature
+    template: templates/features/who_has_seen_laura.feature.tpl
+    feature: 'Who has seen Laura'
+    scenario: 'Who has seen Laura'
+    status: 'Draft'
+  - id: SCN-411
+    requirement_id: REQ-409
+    use_case: UC-408
+    seed: true
+    target: features/clinical-record/an_interaction_with_an_active_prescription.feature
+    template: templates/features/an_interaction_with_an_active_prescription.feature.tpl
+    feature: 'An interaction with an active prescription'
+    scenario: 'An interaction with an active prescription'
+    status: 'Needs Clarification'

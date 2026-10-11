@@ -1,0 +1,348 @@
+# Proven pack: Derived from the Rebar Crew pilot: implemented and tested in TypeScript (Expo mobile app, Next.js API, hexagonal core).
+schema_version: "1.5.0"
+metadata:
+  name: 'Time and attendance — geofenced punches with an audit trail'
+  version: '1.0.0'
+  language: en
+  project_type: backend
+  tier: proven
+  provenance: 'Derived from the Rebar Crew pilot: implemented and tested in TypeScript (Expo mobile app, Next.js API, hexagonal core).'
+variables:
+  required:
+    - PROJECT_NAME
+    - PROJECT_SLUG
+    - DOMAIN
+requirements:
+  - id: REQ-701
+    title: 'Clock in only inside the jobsite''s geofence'
+    priority: Must
+    description: '[functional] A worker clocks in only when the device''s location fix lies inside the geofence of a jobsite they are assigned to; outside it the clock-in is refused and the worker is told how far away they are.'
+    status: 'Draft'
+  - id: REQ-702
+    title: 'Clock out from anywhere, flagged outside the geofence'
+    priority: Must
+    description: '[functional] A worker can always clock out — refusing it would inflate hours — but a clock-out outside the geofence is recorded with the flag OUTSIDE_GEOFENCE for review.'
+    status: 'Draft'
+  - id: REQ-703
+    title: 'A punch is immutable and carries its evidence'
+    priority: Must
+    description: '[business-rule] A punch records worker, jobsite, type, device time, server receipt time, monotonic elapsed time, latitude, longitude and accuracy. It is never edited.'
+    status: 'Draft'
+  - id: REQ-704
+    title: 'Offline punches keep their real capture time'
+    priority: Must
+    description: '[functional] Without network a punch is stored on the device with device time and monotonic elapsed time, and synced later. The server rebuilds the capture time from the monotonic clock and flags CLOCK_TAMPERED when the device time differs from it by more than 2 minutes.'
+    status: 'Draft'
+  - id: REQ-705
+    title: 'Supervisors review flagged punches'
+    priority: Must
+    description: '[functional] A supervisor sees every flagged punch of their crews with its evidence and approves or rejects it with a reason. The decision is recorded; the punch is not edited.'
+    status: 'Draft'
+  - id: REQ-706
+    title: 'A correction is an approved adjustment, never an edit'
+    priority: Must
+    description: '[business-rule] A missed or wrong punch is corrected by an adjustment stating the corrected time and a reason, approved by someone other than its author.'
+    status: 'Draft'
+  - id: REQ-707
+    title: 'A versioned geofence per jobsite'
+    priority: Must
+    description: '[functional] An administrator sets each jobsite''s geofence as a centre and a radius (default 100 m, allowed 30 to 1000 m). Changes are versioned, so past punches are judged against the geofence in force when they happened.'
+    status: 'Draft'
+  - id: REQ-708
+    title: 'Export timesheets for payroll'
+    priority: Should
+    description: '[functional] An administrator exports approved timesheets per pay period as CSV; an unresolved flag holds back only its own row, which is reported.'
+    status: 'Draft'
+bounded_contexts:
+  - id: BC-701
+    name: 'Attendance'
+    type: Core
+    responsibility: 'Punches, reviews, adjustments and timesheets'
+    aggregates:
+      - Punch
+      - Timesheet
+  - id: BC-702
+    name: 'Jobsites'
+    type: Supporting
+    responsibility: 'Jobsites and their geofences'
+    aggregates:
+      - Jobsite
+use_cases:
+  - id: UC-701
+    name: 'Clock In'
+    actor: 'Worker'
+    requirement: REQ-701
+    command: ClockInCommand
+    aggregate: Punch
+    emits:
+      - WorkerClockedIn
+  - id: UC-702
+    name: 'Clock Out'
+    actor: 'Worker'
+    requirement: REQ-702
+    command: ClockOutCommand
+    aggregate: Punch
+    emits:
+      - WorkerClockedOut
+  - id: UC-703
+    name: 'Sync Offline Punches'
+    actor: 'Worker device'
+    requirement: REQ-704
+    command: SyncOfflinePunchesCommand
+    aggregate: Punch
+    emits:
+      - PunchSynced
+  - id: UC-704
+    name: 'Review Flagged Punch'
+    actor: 'Supervisor'
+    requirement: REQ-705
+    command: ReviewPunchCommand
+    aggregate: Punch
+    emits:
+      - PunchReviewed
+  - id: UC-705
+    name: 'Adjust Punch'
+    actor: 'Supervisor'
+    requirement: REQ-706
+    command: AdjustPunchCommand
+    aggregate: Timesheet
+    emits:
+      - PunchAdjusted
+  - id: UC-706
+    name: 'Configure Geofence'
+    actor: 'Administrator'
+    requirement: REQ-707
+    command: ConfigureGeofenceCommand
+    aggregate: Jobsite
+    emits:
+      - GeofenceChanged
+  - id: UC-707
+    name: 'Export Timesheet'
+    actor: 'Administrator'
+    requirement: REQ-708
+    aggregate: Timesheet
+    emits:
+      - TimesheetExported
+commands:
+  - id: CMD-701
+    name: ClockInCommand
+    use_case: UC-701
+  - id: CMD-702
+    name: ClockOutCommand
+    use_case: UC-702
+  - id: CMD-703
+    name: SyncOfflinePunchesCommand
+    use_case: UC-703
+  - id: CMD-704
+    name: ReviewPunchCommand
+    use_case: UC-704
+  - id: CMD-705
+    name: AdjustPunchCommand
+    use_case: UC-705
+  - id: CMD-706
+    name: ConfigureGeofenceCommand
+    use_case: UC-706
+aggregates:
+  - id: AGG-701
+    name: Punch
+    bounded_context: BC-701
+    responsibilities:
+      - 'Evidence of one clock-in or clock-out'
+    invariants:
+      - 'Never edited'
+      - 'Capture time comes from the monotonic clock'
+    commands:
+      - ClockInCommand
+      - ClockOutCommand
+      - SyncOfflinePunchesCommand
+      - ReviewPunchCommand
+    events:
+      - PunchReviewed
+      - PunchSynced
+      - WorkerClockedIn
+      - WorkerClockedOut
+  - id: AGG-702
+    name: Timesheet
+    bounded_context: BC-701
+    responsibilities:
+      - 'Hours per worker and period, with adjustments'
+    invariants:
+      - 'An adjustment is approved by someone other than its author'
+    commands:
+      - AdjustPunchCommand
+    events:
+      - PunchAdjusted
+      - TimesheetExported
+  - id: AGG-703
+    name: Jobsite
+    bounded_context: BC-702
+    responsibilities:
+      - 'Location and versioned geofence'
+    invariants:
+      - 'Radius between 30 and 1000 m'
+    commands:
+      - ConfigureGeofenceCommand
+    events:
+      - GeofenceChanged
+events:
+  - id: EVT-701
+    name: WorkerClockedIn
+    aggregate: Punch
+    payload:
+      - 'punchId: string'
+      - 'workerId: string'
+      - 'jobsiteId: string'
+  - id: EVT-702
+    name: WorkerClockedOut
+    aggregate: Punch
+    payload:
+      - 'punchId: string'
+      - 'flags: string'
+  - id: EVT-703
+    name: PunchSynced
+    aggregate: Punch
+    payload:
+      - 'punchId: string'
+      - 'captureTime: datetime'
+  - id: EVT-704
+    name: PunchReviewed
+    aggregate: Punch
+    payload:
+      - 'punchId: string'
+      - 'decision: string'
+      - 'reason: string'
+  - id: EVT-705
+    name: PunchAdjusted
+    aggregate: Timesheet
+    payload:
+      - 'adjustmentId: string'
+      - 'punchId: string'
+  - id: EVT-706
+    name: GeofenceChanged
+    aggregate: Jobsite
+    payload:
+      - 'jobsiteId: string'
+      - 'version: integer'
+  - id: EVT-707
+    name: TimesheetExported
+    aggregate: Timesheet
+    payload:
+      - 'periodId: string'
+outputs:
+  files:
+    - target: docs/specs/capabilities/time-attendance/spec.md
+      template: templates/capability.md.tpl
+business_rules:
+  - id: RUL-701
+    title: 'Location is read only at punch time'
+    context: BC-701
+    description: 'No background tracking of workers.'
+  - id: RUL-702
+    title: 'Local labour law is out of scope'
+    context: BC-701
+    description: 'Meal breaks and overtime rules depend on the jurisdiction and belong to the adopting team.'
+rules:
+  traceability:
+    target: docs/specs/traceability.md
+    include_existing_rows: true
+    default_status: Draft
+scenarios:
+  - id: SCN-701
+    requirement_id: REQ-701
+    use_case: UC-701
+    seed: true
+    target: features/time-attendance/inside_the_geofence.feature
+    template: templates/features/inside_the_geofence.feature.tpl
+    feature: 'Inside the geofence'
+    scenario: 'Inside the geofence'
+    status: 'Draft'
+  - id: SCN-702
+    requirement_id: REQ-701
+    use_case: UC-701
+    seed: true
+    target: features/time-attendance/outside_the_geofence.feature
+    template: templates/features/outside_the_geofence.feature.tpl
+    feature: 'Outside the geofence'
+    scenario: 'Outside the geofence'
+    status: 'Draft'
+  - id: SCN-703
+    requirement_id: REQ-702
+    use_case: UC-702
+    seed: true
+    target: features/time-attendance/clocking_out_2_km_away.feature
+    template: templates/features/clocking_out_2_km_away.feature.tpl
+    feature: 'Clocking out 2 km away'
+    scenario: 'Clocking out 2 km away'
+    status: 'Draft'
+  - id: SCN-704
+    requirement_id: REQ-703
+    use_case: UC-701
+    seed: true
+    target: features/time-attendance/trying_to_change_a_punch.feature
+    template: templates/features/trying_to_change_a_punch.feature.tpl
+    feature: 'Trying to change a punch'
+    scenario: 'Trying to change a punch'
+    status: 'Draft'
+  - id: SCN-705
+    requirement_id: REQ-704
+    use_case: UC-703
+    seed: true
+    target: features/time-attendance/a_tampered_device_clock.feature
+    template: templates/features/a_tampered_device_clock.feature.tpl
+    feature: 'A tampered device clock'
+    scenario: 'A tampered device clock'
+    status: 'Draft'
+  - id: SCN-706
+    requirement_id: REQ-705
+    use_case: UC-704
+    seed: true
+    target: features/time-attendance/rejecting_with_a_reason.feature
+    template: templates/features/rejecting_with_a_reason.feature.tpl
+    feature: 'Rejecting with a reason'
+    scenario: 'Rejecting with a reason'
+    status: 'Draft'
+  - id: SCN-707
+    requirement_id: REQ-706
+    use_case: UC-705
+    seed: true
+    target: features/time-attendance/an_adjustment_approved_by_another_supervisor.feature
+    template: templates/features/an_adjustment_approved_by_another_supervisor.feature.tpl
+    feature: 'An adjustment approved by another supervisor'
+    scenario: 'An adjustment approved by another supervisor'
+    status: 'Draft'
+  - id: SCN-708
+    requirement_id: REQ-706
+    use_case: UC-705
+    seed: true
+    target: features/time-attendance/the_author_cannot_approve.feature
+    template: templates/features/the_author_cannot_approve.feature.tpl
+    feature: 'The author cannot approve'
+    scenario: 'The author cannot approve'
+    status: 'Draft'
+  - id: SCN-709
+    requirement_id: REQ-707
+    use_case: UC-706
+    seed: true
+    target: features/time-attendance/a_change_does_not_rejudge_the_past.feature
+    template: templates/features/a_change_does_not_rejudge_the_past.feature.tpl
+    feature: 'A change does not rejudge the past'
+    scenario: 'A change does not rejudge the past'
+    status: 'Draft'
+  - id: SCN-710
+    requirement_id: REQ-707
+    use_case: UC-706
+    seed: true
+    target: features/time-attendance/a_radius_out_of_range.feature
+    template: templates/features/a_radius_out_of_range.feature.tpl
+    feature: 'A radius out of range'
+    scenario: 'A radius out of range'
+    status: 'Draft'
+  - id: SCN-711
+    requirement_id: REQ-708
+    use_case: UC-707
+    seed: true
+    target: features/time-attendance/one_flagged_row_held_back.feature
+    template: templates/features/one_flagged_row_held_back.feature.tpl
+    feature: 'One flagged row held back'
+    scenario: 'One flagged row held back'
+    status: 'Draft'

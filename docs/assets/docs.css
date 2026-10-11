@@ -469,7 +469,8 @@ a:hover { text-decoration: underline; }
 .prose hr { border: 0; border-top: 1px solid var(--line); margin: var(--space-12) 0; }
 /* A `---` right before a section heading drew a second rule above the h2's own. */
 .prose hr:has(+ h2) { display: none; }
-.prose img { max-width: 100%; height: auto; border-radius: var(--radius); }
+.prose img { max-width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.prose img[src*="-mobile"] { display: block; max-width: min(320px, 100%); margin-inline: auto; border-radius: 22px; }
 
 .prose :not(pre) > code {
   font-family: var(--mono);
@@ -919,6 +920,15 @@ a:hover { text-decoration: underline; }
 .dia__msg text { font-size: 12px; fill: var(--fg-soft); }
 .dia__msg .dia__ok { stroke: var(--green); }
 .dia__ok-t { fill: var(--green) !important; font-weight: 600; }
+.dia__msg .dia__no { stroke: var(--red); }
+.dia__no-t { fill: var(--red) !important; font-weight: 600; }
+.dia__small { font-size: 10.5px !important; font-weight: 500 !important; }
+.dia__step { font-weight: 700; fill: var(--accent); }
+.dia__phase { font-size: 11px; font-weight: 700; letter-spacing: .12em; fill: var(--fg-faint); }
+.dia__box--wait rect { fill: var(--bg-raised); stroke: var(--amber); stroke-dasharray: 5 4; }
+.dia__wait-t { fill: var(--amber) !important; font-weight: 600; }
+.dia__box--gate rect { fill: var(--accent); stroke: var(--accent); }
+.dia__on-gate, .dia__on-gate tspan { fill: var(--bg) !important; }
 .dia__mono { font-family: var(--mono); fill: var(--fg); }
 .dia__h { font-size: 14px; font-weight: 700; fill: var(--fg); }
 .dia__s { font-size: 12px; fill: var(--fg-soft); }

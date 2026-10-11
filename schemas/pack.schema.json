@@ -49,6 +49,19 @@
             "mobile",
             "contracts"
           ]
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "proven",
+            "starter"
+          ],
+          "description": "How much to trust the pack. `proven`: derived from a product that implemented and tested every requirement it ships. `starter`: a generic example of the format, to be rewritten. Absent means `starter`."
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the pack's requirements come from and what proved them. Required in practice for a `proven` pack; `pack lint` refuses one without it."
         }
       }
     },
@@ -391,7 +404,7 @@
             }
           },
           "payload": {
-            "description": "A field per entry, as `payload: [fileId: string]` — every curated pack writes this string spelling (issue #116; five of the eleven wrote the object form before). A block sequence of mappings, reading as an object per entry, is also accepted for a community pack that already uses it; retiring it is a separate, larger decision than migrating the curated packs that used to.",
+            "description": "A field per entry, as `payload: [fileId: string]` \u2014 every curated pack writes this string spelling (issue #116; five of the eleven wrote the object form before). A block sequence of mappings, reading as an object per entry, is also accepted for a community pack that already uses it; retiring it is a separate, larger decision than migrating the curated packs that used to.",
             "type": "array",
             "minItems": 1,
             "items": {

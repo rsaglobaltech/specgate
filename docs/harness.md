@@ -2,6 +2,25 @@
 
 # The harness
 
+The harness delivers requirements unattended and stops when the gate says no.
+It sits between an archived specification and a person who merges.
+
+<!-- csda:diagram lifecycle -->
+
+## One turn, in sequence
+
+<!-- csda:diagram harness-loop -->
+
+Each pending requirement (or the one `--req` names) gets a fresh worktree on
+`harness/REQ-NNN` and a prompt built from its Gherkin. The gate is
+`validate --strict`, an untouched specification, then your tests. Green marks
+it done on its branch; red feeds the failures into the next attempt, up to
+`max_attempts`, and after the last one the work is kept as a `wip(REQ-NNN):
+FAILED the gate` commit with the requirement still `Draft`. A requirement
+waiting for an answer is refused. Nothing is ever merged.
+
+## Set it up
+
 ```bash
 specgate harness init
 ```
@@ -226,44 +245,9 @@ need, and it is thrown away afterwards.
 
 ## What the harness has cost
 
-```bash
-specgate harness report            # everything recorded
-specgate harness report --last 5   # the five most recent runs
-```
-
-Every run writes `.harness/runs/<timestamp>.json`, and the report reads them:
-
-```
-  📈 harness report  (12 run(s))
-
-    requirements attempted    31
-    passed                    24
-    failed                     5
-    blocked                    2
-
-    first attempt worked      67%  (16 of 24 passes)
-    cost per delivered REQ    4m 12s  wall-clock, failed attempts included
-```
-
-**Two numbers, chosen because they decide things.** "First attempt worked" says
-whether the retry ladder is buying anything or spending three times as much on
-the same mistake. "Cost per delivered requirement" divides _all_ the time —
-including the attempts that failed — by the requirements that actually landed,
-because that is what delivery costs.
-
-Wall-clock, not tokens: an agent is any shell command, and only the agent knows
-what it spent. Recording a number the harness cannot observe would be worse
-than recording none.
-
-**The ledger is local.** `.harness/runs/` ignores itself, for two reasons: the
-harness refuses to start on a dirty tree, so a ledger git could see would mean
-the first run makes the second one refuse; and a file every run rewrites is a
-merge conflict waiting to happen. The agent command is never recorded — it is
-the kind of string that carries an API key.
-
----
-
----
+`specgate harness report` reads every recorded run and prints two numbers: how
+often the first attempt worked, and the wall-clock cost per delivered
+requirement. → [What the harness has cost](harness-report.md)
 
 ## When a run fails
 

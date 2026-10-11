@@ -8,6 +8,36 @@ deliberately.
 
 <!-- csda:diagram three-repos -->
 
+## Two kinds of pack in this repository
+
+**Proven packs** come from products built with Specgate from a client brief:
+every requirement was implemented and tested by that product, and the values in
+the scenarios are the ones its tests asserted. What a pilot could not answer
+ships as *Needs Clarification* — the question, not an invented answer.
+
+| Pack | From the pilot | Proven on | Reqs | Scenarios | Left open |
+|---|---|---|---|---|---|
+| `ledger/backend` | Core banking (FinCore) | Spring Boot 3.3, Java 21, PostgreSQL | 10 | 14 | — |
+| `transfers/backend` | Core banking (FinCore) | Spring Boot 3.3, Java 21, PostgreSQL | 11 | 14 | — |
+| `event-registration/backend` | Event operations (EventTech) | Quarkus 3, event sourcing, PostgreSQL | 8 | 11 | — |
+| `clinical-record/backend` | Clinical cases (HealthTech) | Quarkus 3, PostgreSQL, fictitious data | 9 | 11 | drug interaction alerts |
+| `appointment-booking/backend` | [Bookings](projects/bookings.md) | TypeScript, Next.js, PostgreSQL | 10 | 14 | — |
+| `shop-orders/backend` | [Credit shop](projects/credit-shop.md) | TypeScript, Next.js, PostgreSQL | 9 | 10 | shipping costs |
+| `time-attendance/backend` | [Rebar Crew](projects/rebar-crew.md) | TypeScript, Expo + Next.js | 8 | 11 | — |
+
+The pilots' code is private; the packs carry their requirements and scenarios,
+in English and with no client data, in separate id ranges (`REQ-101…REQ-708`)
+so one project can install all seven. Install them with `specops add` into a
+project made by `specgate init`: `init --from-pack` currently fails on a
+requirement with two scenarios (a known issue).
+
+**Starter packs** — `auth`, `billing`, `audit-log`, `notifications`,
+`feature-flags`, `multi-tenant`, `file-storage`, `search`, `reporting`,
+`webhooks`, `sample-contracts` — are examples of the format: a few generic Draft
+requirements each, and no product was built from them. `metadata.tier` says
+which a pack is (`proven` or `starter`; absent means starter), and `pack lint`
+refuses `proven` without a `metadata.provenance` saying what proved it.
+
 ---
 
 ## Author a domain pack from scratch

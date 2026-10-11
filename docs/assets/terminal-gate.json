@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "recordedWith": {
+    "version": "0.17.10",
+    "node": "v24.x",
+    "platform": "darwin",
+    "packSource": "local"
+  },
+  "recordedAt": "2026-10-11",
+  "title": "courts — the gate",
+  "cols": 88,
+  "streamsMerged": false,
+  "steps": [
+    {
+      "id": "done-no-test",
+      "caption": "Calling it done before a test exists. The gate says no and writes nothing.",
+      "cwd": "~/courts",
+      "command": "specgate done REQ-002",
+      "surface": "done",
+      "exit": 1,
+      "typeMs": 26,
+      "holdMs": 1240,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "❌ [ERROR] --strict-tdd violations detected:",
+          "c": "err",
+          "s": "err"
+        },
+        {
+          "t": "  [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-002)",
+          "c": "out",
+          "s": "err"
+        },
+        {
+          "t": "💡 [FIX] TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; once a test names one of its scenarios (SCN-NNN), each scenario needs a test that names it — or move it back to Draft in spec.md.",
+          "c": "out",
+          "s": "err"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "err"
+        },
+        {
+          "t": "✖  REQ-002 not marked Implemented: validation failed. [done_validate_failed]",
+          "c": "err",
+          "s": "err"
+        },
+        {
+          "t": "     fix: Fix what validate reports, then run `done` again.",
+          "c": "out",
+          "s": "err"
+        }
+      ]
+    },
+    {
+      "id": "the-test",
+      "caption": "A test that names the requirement. That mention is the whole link.",
+      "cwd": "~/courts",
+      "command": "cat test/bookings.test.js",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1690,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "const test = require(\"node:test\");",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "const assert = require(\"node:assert\");",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "const { book, list } = require(\"../src/bookings\");",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "test(\"REQ-002 SCN-002: booking a free court lasts one hour\", () => {",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  assert.deepEqual(book(\"ana\", \"centre\", \"mon-18\"), { status: 201, minutes: 60 });",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "});",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "test(\"REQ-002 SCN-003: a member sees their bookings\", () => {",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  assert.equal(list(\"ana\").length, 1);",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "});",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "done",
+      "caption": "Now the scenario, the test and the suite all pass — and only then is it marked.",
+      "cwd": "~/courts",
+      "command": "specgate done REQ-002",
+      "surface": "done",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 900,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "✔  REQ-002 → Implemented (1 row updated)",
+          "c": "ok",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "done-blocked",
+      "caption": "The requirement waiting for the client cannot be closed — not by you, not by an agent.",
+      "cwd": "~/courts",
+      "command": "specgate done REQ-004",
+      "surface": "done",
+      "exit": 1,
+      "typeMs": 26,
+      "holdMs": 900,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "✖  REQ-004 not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification). [done_needs_clarification]",
+          "c": "err",
+          "s": "err"
+        },
+        {
+          "t": "     fix: Answer the question that blocks it in its change's questions.md, remove `status=\"Needs Clarification\"` from its `csda:trace`, write its test, then run `done`.",
+          "c": "out",
+          "s": "err"
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "caption": "What CI runs on every pull request: the whole chain, then your tests.",
+      "cwd": "~/courts",
+      "command": "specgate check",
+      "surface": "check",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 2500,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "ℹ️ [INFO] ✅ Validation passed",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Features detected: 4",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Base SDD structure: complete",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Traceability mode: rich",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ️ [INFO] - Strict TDD gate: passed (1 row(s) exempt — still Draft, so not checked)",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "💡 [FIX] A Draft row owes nothing yet, so --strict-tdd skips it. It starts being",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "💡 [FIX] checked the moment its Status leaves Draft — `specgate done <REQ>` does that.",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "✔ REQ-002 SCN-002: booking a free court lasts one hour (12ms)",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "✔ REQ-002 SCN-003: a member sees their bookings (12ms)",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "ℹ tests 2",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ suites 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ pass 2",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ fail 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ cancelled 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ skipped 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ todo 0",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "ℹ duration_ms 1.234",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "✔  Gate passed — the specification and `node --test`",
+          "c": "ok",
+          "s": "out"
+        }
+      ]
+    }
+  ]
+}

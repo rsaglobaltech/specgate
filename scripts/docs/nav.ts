@@ -34,7 +34,7 @@ export interface NavSection {
 }
 
 /**
- * Simplification plan, phase 6: six places a reader goes, in the order they
+ * Simplification plan, phase 6: the places a reader goes, in the order they
  * need them — start, every day, the gate, existing code, reference,
  * extensions — and everything else under "Advanced". Every shipped document
  * is still in exactly one section.
@@ -86,6 +86,49 @@ export const NAV: readonly NavSection[] = [
         slug: "new-project",
         label: "A new project, step by step",
         blurb: "The twelve steps six pilots took, from a client's brief to a running product.",
+      },
+    ],
+  },
+  {
+    title: "Proven on real products",
+    icon: "check",
+    summary:
+      "Six products built from real client briefs — what worked, and what Specgate got wrong.",
+    entries: [
+      {
+        slug: "projects/index",
+        label: "All six, compared",
+        blurb: "Brief, stack, requirements and tests for each pilot, side by side.",
+      },
+      {
+        slug: "projects/rebar-crew",
+        label: "Rebar Crew — field app",
+        blurb: "Expo + Next.js: 47 of 47, after a first round that was done and unusable.",
+      },
+      {
+        slug: "projects/bookings",
+        label: "Bookings — appointments",
+        blurb: "Next.js from a detailed brief: 38 of 38 in five cycles.",
+      },
+      {
+        slug: "projects/credit-shop",
+        label: "Credit shop — e-commerce",
+        blurb: "A five-line brief became 24 requirements, nearly every value an assumption.",
+      },
+      {
+        slug: "projects/fincore",
+        label: "FinCore — core banking",
+        blurb: "Spring Boot: 59 of 60, one legal question left to the client.",
+      },
+      {
+        slug: "projects/eventtech",
+        label: "EventTech — event operations",
+        blurb: "Quarkus with event sourcing and real time: 38 of 38.",
+      },
+      {
+        slug: "projects/healthtech",
+        label: "HealthTech — clinical cases",
+        blurb: "Quarkus in a regulated domain: 23 of 24, no clinical rule invented.",
       },
     ],
   },
@@ -179,9 +222,14 @@ export const NAV: readonly NavSection[] = [
         blurb: "Unattended delivery: plan → agent → gate → done, one worktree per requirement.",
       },
       {
+        slug: "harness-report",
+        label: "What the harness has cost",
+        blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",
+      },
+      {
         slug: "domain-packs",
         label: "Domain packs",
-        blurb: "Install a curated domain model instead of writing one from scratch.",
+        blurb: "Install requirements a pilot already proved, or package your own.",
       },
       {
         slug: "alm",

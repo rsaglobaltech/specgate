@@ -21,6 +21,10 @@ export interface PackMetadata {
   version: string;
   language: string;
   project_type: string;
+  /** `proven` (from a product that implemented and tested it) or `starter`. */
+  tier: "proven" | "starter";
+  /** What proved a proven pack; empty for a starter. */
+  provenance: string;
   requirements: number;
   useCases: number;
   aggregates: number;
@@ -48,7 +52,11 @@ export class PackScanner {
         packs.push(this.buildMetadata(packsRoot, id));
       }
     }
-    return packs.sort((a, b) => a.id.localeCompare(b.id));
+    // Proven packs first: they are the ones a reader can build on as they are.
+    return packs.sort(
+      (a, b) =>
+        Number(b.tier === "proven") - Number(a.tier === "proven") || a.id.localeCompare(b.id)
+    );
   }
 
   private buildMetadata(packsRoot: string, id: string): PackMetadata {
@@ -65,6 +73,8 @@ export class PackScanner {
         version: "?",
         language: "?",
         project_type: "?",
+        tier: "starter",
+        provenance: "",
         requirements: 0,
         useCases: 0,
         aggregates: 0,
@@ -88,6 +98,10 @@ export class PackScanner {
       version: meta.version || "0.0.0",
       language: meta.language || "en",
       project_type: meta.project_type || "backend",
+      // A pack that says nothing about itself is a starter: "proven" has to be
+      // claimed, and `pack lint` refuses the claim without a provenance.
+      tier: meta.tier === "proven" ? "proven" : "starter",
+      provenance: meta.provenance || "",
       requirements: this.count(pack.requirements),
       useCases: this.count(pack.use_cases),
       aggregates: this.count(pack.aggregates),

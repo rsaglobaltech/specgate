@@ -13,6 +13,10 @@ function escape(s) {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * Taglines for the eleven starter packs, which carry no provenance of their
+ * own. A proven pack's card shows what proved it instead.
+ */
 const DOMAIN_META = {
   auth: { tagline: "Authentication, JWT, OAuth2, RBAC & MFA" },
   billing: { tagline: "Subscriptions, invoicing & payment processing" },
@@ -84,9 +88,20 @@ function monogram(domain) {
   return letters.toUpperCase();
 }
 
+/**
+ * The tier as a word. "Proven" means a product implemented and tested every
+ * requirement; "starter" means a generic example of the format, to rewrite.
+ * The eleven starters used to be called curated, which claimed the first.
+ */
+function renderTier(pack) {
+  return pack.tier === "proven"
+    ? `<span class="tier tier--proven">Proven in a pilot</span>`
+    : `<span class="tier">Starter example</span>`;
+}
+
 function renderCard(pack, version = "0.0.0") {
   const dm = DOMAIN_META[pack.domain] || { tagline: pack.description || "" };
-  const tagline = dm.tagline || pack.description || "";
+  const tagline = pack.tier === "proven" ? pack.provenance : dm.tagline || pack.description || "";
   const expandCmd = installCommand(pack, version);
 
   const lintSection =
@@ -95,7 +110,7 @@ function renderCard(pack, version = "0.0.0") {
       : "";
 
   return `
-<article class="card" data-name="${escape(shortName(pack.name).toLowerCase())}" data-id="${escape(pack.id.toLowerCase())}">
+<article class="card" data-tier="${escape(pack.tier || "starter")}" data-name="${escape(shortName(pack.name).toLowerCase())}" data-id="${escape(pack.id.toLowerCase())}">
   <div class="card__head">
     <span class="card__mono" aria-hidden="true">${escape(monogram(pack.domain))}</span>
     <div class="card__title-block">
@@ -104,6 +119,7 @@ function renderCard(pack, version = "0.0.0") {
     </div>
     ${renderBadge(pack.lintStatus)}
   </div>
+  ${renderTier(pack)}
   <p class="card__tagline">${escape(tagline)}</p>
   <div class="card__stats">
     ${renderStat("req", pack.requirements)}
@@ -129,6 +145,7 @@ function renderIndex(packs, options: any = {}) {
   const title = options.title || "Specgate domain packs";
   const generated = options.generated || new Date().toISOString();
   const passed = packs.filter((p) => p.lintStatus === "pass").length;
+  const proven = packs.filter((p) => p.tier === "proven").length;
   const totalReqs = packs.reduce((s, p) => s + p.requirements, 0);
   const totalScenarios = packs.reduce((s, p) => s + p.scenarios, 0);
 
@@ -140,7 +157,7 @@ function renderIndex(packs, options: any = {}) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escape(title)}</title>
-<meta name="description" content="Browse ${packs.length} curated domain packs for Specgate. Each pack ships requirements, use cases, DDD aggregates, events, and Gherkin scenarios.">
+<meta name="description" content="${proven} domain packs proven in real pilots and ${packs.length - proven} starter examples for Specgate: requirements, use cases, aggregates, events and Gherkin scenarios.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -203,6 +220,9 @@ function renderIndex(packs, options: any = {}) {
   .stat { display: inline-flex; gap: .3rem; }
   .stat__val { font-weight: 600; color: var(--fg); }
 
+  .tier { align-self: flex-start; font-size: .7rem; font-weight: 600; letter-spacing: .04em;
+          padding: .15rem .6rem; border-radius: 999px; border: 1px dashed var(--line-strong); color: var(--fg-faint); }
+  .tier--proven { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
   .badge { flex: none; font-size: .68rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
            padding: .2rem .55rem; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--fg-soft); }
   .badge--pass { color: var(--green); border-color: currentColor; }
@@ -259,13 +279,17 @@ function renderIndex(packs, options: any = {}) {
   <p class="registry__eyebrow">Domain knowledge as a dependency</p>
   <h1>${escape(title)}</h1>
   <p class="registry__lede">
-    Curated, versioned requirement sets — use cases, aggregates, events and
-    Gherkin scenarios — that you install like a dependency, pin by tag and
-    upgrade through a reviewable diff. <a href="../domain-packs.html">How packs work →</a>
+    Versioned requirement sets — use cases, aggregates, events and Gherkin
+    scenarios — that you install like a dependency, pin by tag and upgrade
+    through a reviewable diff. <strong>Proven</strong> packs come from products
+    built with Specgate, where every requirement was implemented and tested;
+    <strong>starter</strong> packs are generic examples of the format, to rewrite.
+    <a href="../domain-packs.html">How packs work →</a>
   </p>
 
   <dl class="stats">
-    <div><dt>${packs.length}</dt><dd>packs</dd></div>
+    <div><dt>${proven}</dt><dd>proven in pilots</dd></div>
+    <div><dt>${packs.length - proven}</dt><dd>starter examples</dd></div>
     <div><dt>${passed}</dt><dd>passing lint</dd></div>
     <div><dt>${totalReqs}</dt><dd>requirements</dd></div>
     <div><dt>${totalScenarios}</dt><dd>scenarios</dd></div>

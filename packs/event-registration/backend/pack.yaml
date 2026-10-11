@@ -1,0 +1,285 @@
+# Proven pack: Derived from the event-operations pilot (EventTech): implemented and tested in Quarkus 3 with event sourcing on PostgreSQL; 38 of 38 requirements, 71 tests green.
+schema_version: "1.5.0"
+metadata:
+  name: 'Event registration — quotas, waitlist and session seats'
+  version: '1.0.0'
+  language: en
+  project_type: backend
+  tier: proven
+  provenance: 'Derived from the event-operations pilot (EventTech): implemented and tested in Quarkus 3 with event sourcing on PostgreSQL; 38 of 38 requirements, 71 tests green.'
+variables:
+  required:
+    - PROJECT_NAME
+    - PROJECT_SLUG
+    - DOMAIN
+requirements:
+  - id: REQ-301
+    title: 'Ticket types with a quota'
+    priority: Must
+    description: '[functional] The organiser defines the ticket types of an event, each with a name and a quota greater than zero, and sees the seats left in each.'
+    status: 'Draft'
+  - id: REQ-302
+    title: 'Register for a published event'
+    priority: Must
+    description: '[functional] An attendee registers for a published event with name, email, ticket type and dietary restrictions; the registration is "confirmed" while the ticket type has quota. The same email cannot register twice for the same event, and an unpublished event cannot be registered for.'
+    status: 'Draft'
+  - id: REQ-303
+    title: 'Dietary restrictions come from a closed list'
+    priority: Should
+    description: '[business-rule] Only dietary restrictions on the organiser''s closed list are accepted. The pilot''s list: vegetarian, vegan, gluten-free, lactose-free, halal, kosher and nut allergy.'
+    status: 'Draft'
+  - id: REQ-304
+    title: 'Waitlist, promoted when someone cancels'
+    priority: Must
+    description: '[business-rule] Registering for a ticket type without quota leaves the attendee "waitlisted"; when a confirmed registration of that ticket type is cancelled, the first on its waitlist is confirmed.'
+    status: 'Draft'
+  - id: REQ-305
+    title: 'Simultaneous registrations never exceed the quota'
+    priority: Must
+    description: '[business-rule] Registrations for the same event are decided one after another, so two simultaneous registrations for the last seat confirm exactly one.'
+    status: 'Draft'
+  - id: REQ-306
+    title: 'An attendee sees their registrations'
+    priority: Should
+    description: '[functional] An attendee sees their registrations with the event, the ticket type, the status and their position on the waitlist when they are on it.'
+    status: 'Draft'
+  - id: REQ-307
+    title: 'Book a seat in a session'
+    priority: Should
+    description: '[functional] A confirmed attendee books a seat in a session of the event if its room has seats left and they hold no seat in an overlapping session.'
+    status: 'Draft'
+  - id: REQ-308
+    title: 'The organiser sees who registered'
+    priority: Should
+    description: '[functional] The organiser sees the registrations of their event with name, email, ticket type, status and dietary restrictions.'
+    status: 'Draft'
+bounded_contexts:
+  - id: BC-301
+    name: 'Registration'
+    type: Core
+    responsibility: 'Ticket types, registrations, waitlist and session seats'
+    aggregates:
+      - EventRegistration
+use_cases:
+  - id: UC-301
+    name: 'Define Ticket Type'
+    actor: 'Organiser'
+    requirement: REQ-301
+    command: DefineTicketTypeCommand
+    aggregate: EventRegistration
+    emits:
+      - TicketTypeDefined
+  - id: UC-302
+    name: 'Register Attendee'
+    actor: 'Attendee'
+    requirement: REQ-302
+    command: RegisterAttendeeCommand
+    aggregate: EventRegistration
+    emits:
+      - RegistrationConfirmed
+  - id: UC-303
+    name: 'Cancel Registration'
+    actor: 'Attendee'
+    requirement: REQ-304
+    command: CancelRegistrationCommand
+    aggregate: EventRegistration
+    emits:
+      - RegistrationCancelled
+      - RegistrationConfirmed
+  - id: UC-304
+    name: 'List My Registrations'
+    actor: 'Attendee'
+    requirement: REQ-306
+    aggregate: EventRegistration
+  - id: UC-305
+    name: 'Book Session Seat'
+    actor: 'Attendee'
+    requirement: REQ-307
+    command: BookSessionSeatCommand
+    aggregate: EventRegistration
+    emits:
+      - SessionSeatBooked
+  - id: UC-306
+    name: 'List Registrations'
+    actor: 'Organiser'
+    requirement: REQ-308
+    aggregate: EventRegistration
+commands:
+  - id: CMD-301
+    name: DefineTicketTypeCommand
+    use_case: UC-301
+  - id: CMD-302
+    name: RegisterAttendeeCommand
+    use_case: UC-302
+  - id: CMD-303
+    name: CancelRegistrationCommand
+    use_case: UC-303
+  - id: CMD-304
+    name: BookSessionSeatCommand
+    use_case: UC-305
+aggregates:
+  - id: AGG-301
+    name: EventRegistration
+    bounded_context: BC-301
+    responsibilities:
+      - 'Quota, registrations and waitlist of one event'
+    invariants:
+      - 'Confirmed registrations never exceed the quota'
+      - 'One registration per email per event'
+      - 'Waitlist order is arrival order'
+    commands:
+      - DefineTicketTypeCommand
+      - RegisterAttendeeCommand
+      - CancelRegistrationCommand
+      - BookSessionSeatCommand
+    events:
+      - RegistrationCancelled
+      - RegistrationConfirmed
+      - RegistrationWaitlisted
+      - SessionSeatBooked
+      - TicketTypeDefined
+events:
+  - id: EVT-301
+    name: TicketTypeDefined
+    aggregate: EventRegistration
+    payload:
+      - 'eventId: string'
+      - 'name: string'
+      - 'quota: integer'
+  - id: EVT-302
+    name: RegistrationConfirmed
+    aggregate: EventRegistration
+    payload:
+      - 'registrationId: string'
+      - 'ticketType: string'
+  - id: EVT-303
+    name: RegistrationWaitlisted
+    aggregate: EventRegistration
+    payload:
+      - 'registrationId: string'
+      - 'position: integer'
+  - id: EVT-304
+    name: RegistrationCancelled
+    aggregate: EventRegistration
+    payload:
+      - 'registrationId: string'
+  - id: EVT-305
+    name: SessionSeatBooked
+    aggregate: EventRegistration
+    payload:
+      - 'registrationId: string'
+      - 'sessionId: string'
+outputs:
+  files:
+    - target: docs/specs/capabilities/event-registration/spec.md
+      template: templates/capability.md.tpl
+business_rules:
+  - id: RUL-301
+    title: 'Quota and waitlist are decided in one aggregate per event'
+    context: BC-301
+    description: 'The pilot appended facts under a per-event advisory lock, so two writers cannot both take the last seat.'
+rules:
+  traceability:
+    target: docs/specs/traceability.md
+    include_existing_rows: true
+    default_status: Draft
+scenarios:
+  - id: SCN-301
+    requirement_id: REQ-301
+    use_case: UC-301
+    seed: true
+    target: features/event-registration/general_and_vip.feature
+    template: templates/features/general_and_vip.feature.tpl
+    feature: 'General and VIP'
+    scenario: 'General and VIP'
+    status: 'Draft'
+  - id: SCN-302
+    requirement_id: REQ-302
+    use_case: UC-302
+    seed: true
+    target: features/event-registration/registering_with_a_restriction.feature
+    template: templates/features/registering_with_a_restriction.feature.tpl
+    feature: 'Registering with a restriction'
+    scenario: 'Registering with a restriction'
+    status: 'Draft'
+  - id: SCN-303
+    requirement_id: REQ-302
+    use_case: UC-302
+    seed: true
+    target: features/event-registration/the_same_email_twice.feature
+    template: templates/features/the_same_email_twice.feature.tpl
+    feature: 'The same email twice'
+    scenario: 'The same email twice'
+    status: 'Draft'
+  - id: SCN-304
+    requirement_id: REQ-302
+    use_case: UC-302
+    seed: true
+    target: features/event-registration/an_unpublished_event.feature
+    template: templates/features/an_unpublished_event.feature.tpl
+    feature: 'An unpublished event'
+    scenario: 'An unpublished event'
+    status: 'Draft'
+  - id: SCN-305
+    requirement_id: REQ-303
+    use_case: UC-302
+    seed: true
+    target: features/event-registration/an_unknown_restriction.feature
+    template: templates/features/an_unknown_restriction.feature.tpl
+    feature: 'An unknown restriction'
+    scenario: 'An unknown restriction'
+    status: 'Draft'
+  - id: SCN-306
+    requirement_id: REQ-304
+    use_case: UC-303
+    seed: true
+    target: features/event-registration/vip_sold_out_and_a_cancellation.feature
+    template: templates/features/vip_sold_out_and_a_cancellation.feature.tpl
+    feature: 'VIP sold out and a cancellation'
+    scenario: 'VIP sold out and a cancellation'
+    status: 'Draft'
+  - id: SCN-307
+    requirement_id: REQ-305
+    use_case: UC-302
+    seed: true
+    target: features/event-registration/two_at_once_for_the_last_seat.feature
+    template: templates/features/two_at_once_for_the_last_seat.feature.tpl
+    feature: 'Two at once for the last seat'
+    scenario: 'Two at once for the last seat'
+    status: 'Draft'
+  - id: SCN-308
+    requirement_id: REQ-306
+    use_case: UC-304
+    seed: true
+    target: features/event-registration/confirmed_in_one_waitlisted_in_another.feature
+    template: templates/features/confirmed_in_one_waitlisted_in_another.feature.tpl
+    feature: 'Confirmed in one, waitlisted in another'
+    scenario: 'Confirmed in one, waitlisted in another'
+    status: 'Draft'
+  - id: SCN-309
+    requirement_id: REQ-307
+    use_case: UC-305
+    seed: true
+    target: features/event-registration/a_full_room.feature
+    template: templates/features/a_full_room.feature.tpl
+    feature: 'A full room'
+    scenario: 'A full room'
+    status: 'Draft'
+  - id: SCN-310
+    requirement_id: REQ-307
+    use_case: UC-305
+    seed: true
+    target: features/event-registration/two_sessions_at_the_same_time.feature
+    template: templates/features/two_sessions_at_the_same_time.feature.tpl
+    feature: 'Two sessions at the same time'
+    scenario: 'Two sessions at the same time'
+    status: 'Draft'
+  - id: SCN-311
+    requirement_id: REQ-308
+    use_case: UC-306
+    seed: true
+    target: features/event-registration/the_attendee_list.feature
+    template: templates/features/the_attendee_list.feature.tpl
+    feature: 'The attendee list'
+    scenario: 'The attendee list'
+    status: 'Draft'

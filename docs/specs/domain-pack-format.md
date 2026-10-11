@@ -68,6 +68,13 @@ increment `MINOR`. Bug fixes increment `PATCH`.
 | `version`      | string | yes      | SemVer version of this pack (independent of the schema version). |
 | `language`     | string | yes      | ISO 639-1 language code (e.g. `"en"`, `"es"`).                   |
 | `project_type` | string | yes      | `"backend"` or `"frontend"`.                                     |
+| `tier`         | string | no       | `"proven"` or `"starter"` (schema 1.5.0). Absent means starter.  |
+| `provenance`   | string | no*      | What proved the pack. *Required when `tier` is `proven`.         |
+
+`tier` says how far to trust the pack. **Proven**: derived from a product that
+implemented and tested every requirement the pack ships. **Starter**: a generic
+example of the format, to rewrite. `pack lint` refuses `tier: proven` without a
+`provenance`, so the claim always comes with what backs it.
 
 ```yaml
 metadata:

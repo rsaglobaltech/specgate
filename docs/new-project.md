@@ -2,8 +2,8 @@
 
 The path six real products took, from a client's brief to a product that runs
 and a gate that holds it: a booking app, a credit shop, a core banking system,
-an event-operations platform, a clinical-case manager and the Golden State
-pilot. The same twelve steps every time. Three of them are yours and cannot be
+an event-operations platform, a clinical-case manager and a field app for a
+rebar crew. The same twelve steps every time. Three of them are yours and cannot be
 delegated: reading the brief (1), reviewing each draft (8) and using the
 product (12). The agent can run the rest.
 
@@ -173,11 +173,11 @@ npx specgate check
 
 ## The pilots
 
-Each report says what worked, what Specgate got wrong and what was fixed:
+Each project page says what worked, what Specgate got wrong and what was fixed:
 
-- [Golden State](../mejoras/golden-app-evaluation.md) — the first product, before the draft checklist existed
-- [Bookings](../mejoras/reservas-app-piloto.md) — a detailed brief; the first draft checklist
-- [Credit shop](../mejoras/credito-tienda-piloto.md) — a five-line brief: almost every value was an assumption
-- [Core banking](../mejoras/fincore-piloto.md) — Spring Boot; Specgate on a JVM stack
-- [Event operations](../mejoras/eventtech-piloto.md) — Quarkus, event sourcing, real time; D12's first use
-- [Clinical cases](../mejoras/healthtech-piloto.md) — a regulated domain: what is not known waits for an answer
+- [Rebar Crew](projects/rebar-crew.md) — the first product, before the draft checklist existed
+- [Bookings](projects/bookings.md) — a detailed brief; the first draft checklist
+- [Credit shop](projects/credit-shop.md) — a five-line brief: almost every value was an assumption
+- [FinCore](projects/fincore.md) — Spring Boot; Specgate on a JVM stack
+- [EventTech](projects/eventtech.md) — Quarkus, event sourcing, real time; D12's first use
+- [HealthTech](projects/healthtech.md) — a regulated domain: what is not known waits for an answer

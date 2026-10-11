@@ -404,7 +404,16 @@
     var toggle = $(".term__btn--toggle", fig);
     var skip = $(".term__btn--skip", fig);
     var replay = $(".term__btn--replay", fig);
+    var speedBtn = $(".term__btn--speed", fig);
+    var progress = $(".term__progress", fig);
     if (!screen) return;
+    // Playback speed changes the pacing the recording carries, never the
+    // recording: 2× halves both numbers, and nothing is skipped.
+    var speed = 1;
+
+    function setProgress(done) {
+      if (progress) progress.style.setProperty("--p", (done / rec.steps.length) * 100 + "%");
+    }
 
     var timers = [];
     var frame = null;
@@ -512,6 +521,8 @@
     }
 
     function finish() {
+      setProgress(rec.steps.length);
+      if (speedBtn) speedBtn.hidden = true;
       fig.classList.remove("term--playing");
       fig.classList.add("term--done");
       if (toggle) toggle.hidden = true;
@@ -526,20 +537,22 @@
       }
       var step = rec.steps[index];
       index += 1;
+      setProgress(index - 1);
       setCaption(step);
       var nodes = stepNode(step);
       screen.appendChild(nodes.root);
       screen.scrollTop = screen.scrollHeight;
 
-      typeCommand(nodes, step.command, step.typeMs || 26, function () {
+      typeCommand(nodes, step.command, (step.typeMs || 26) / speed, function () {
         emitOutput(step, nodes);
+        setProgress(index);
         later(function () {
           if (paused()) {
             resume = play;
             return;
           }
           play();
-        }, step.holdMs || 1200);
+        }, (step.holdMs || 1200) / speed);
       });
     }
 
@@ -568,6 +581,13 @@
       return;
     }
 
+    if (speedBtn) {
+      speedBtn.hidden = false;
+      speedBtn.addEventListener("click", function () {
+        speed = speed === 1 ? 2 : 1;
+        speedBtn.textContent = speed + "×";
+      });
+    }
     if (toggle) {
       toggle.hidden = false;
       toggle.addEventListener("click", function () {
@@ -598,6 +618,7 @@
           toggle.textContent = "Pause";
         }
         if (skip) skip.hidden = false;
+        if (speedBtn) speedBtn.hidden = false;
         replay.hidden = true;
         play();
       });
