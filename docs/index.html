@@ -633,8 +633,32 @@ max_attempts: 1
          code is private. What they prove is the method, and each report lists
          what Specgate got wrong along the way.</p>
     </div>
+    <div class="gal reveal" aria-label="Screens from the pilots">
+      <figure class="shot">
+        <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">credit-shop · /admin/credits</span></div>
+        <img src="./assets/img/app-credit-shop-credit-review-crop.webp" width="1040" height="285" loading="lazy" style="aspect-ratio:auto"
+             alt="The Credit shop admin queue: each credit application with order, amount, instalment, income and an affordability verdict; pending ones have Approve and Reject buttons.">
+        <figcaption><strong>Credit shop</strong> — the credit queue a requirement asked for: amount, instalment, income, an affordability verdict, and a decision only on pending ones.</figcaption>
+      </figure>
+      <div class="gal__side">
+        <figure class="gal__phone">
+          <img src="./assets/img/app-bookings-confirmed-mobile.webp" width="780" height="1200" loading="lazy"
+               alt="Bookings on a phone: booking confirmed with date, time, code, the coupon applied and the discounted price.">
+          <figcaption>Bookings — confirmed, coupon applied</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="ed-muted gal__note">Real screens from the pilots, with invented data. Their interfaces are in Spanish, as their clients asked.</p>
     <div class="px">
       <a class="px__card reveal" href="./projects/rebar-crew.html">
+        <div class="px__shot px__shot--spec" aria-label="One of the Rebar Crew scenarios, in Gherkin"><pre><span class="g-k">@REQ-204 @SCN-215</span>
+<span class="g-k">Scenario:</span> a failed inspection takes
+  the forklift out of service
+  <span class="g-k">Given</span> forklift "FL-07" in service
+  <span class="g-k">When</span>  POST /api/forklifts/FL-07/
+        inspections with "brakes" failed
+  <span class="g-k">Then</span>  201, and FL-07 is
+        "OUT_OF_SERVICE"</pre></div>
         <p class="px__kind">Detailed brief · six packs</p>
         <h3>Rebar Crew</h3>
         <p class="ed-muted">A field app for a rebar crew</p>
@@ -647,6 +671,7 @@ max_attempts: 1
         <span class="px__more">Read the project →</span>
       </a>
       <a class="px__card reveal" href="./projects/bookings.html">
+        <div class="px__shot"><img src="./assets/img/app-bookings-agenda-thumb.webp" width="488" height="305" loading="lazy" alt="The Bookings owner agenda: three court bookings for the day, each with time, service, customer and contact."></div>
         <p class="px__kind">Detailed brief · screenshots</p>
         <h3>Bookings</h3>
         <p class="ed-muted">Appointments for local businesses</p>
@@ -659,6 +684,7 @@ max_attempts: 1
         <span class="px__more">Read the project →</span>
       </a>
       <a class="px__card reveal" href="./projects/credit-shop.html">
+        <div class="px__shot"><img src="./assets/img/app-credit-shop-catalog-thumb.webp" width="768" height="480" loading="lazy" alt="The Credit shop catalogue, grouped by category, each item with its price and an Add to cart button."></div>
         <p class="px__kind">Five-line brief</p>
         <h3>Credit shop</h3>
         <p class="ed-muted">Credit, an online store and a sales network</p>
@@ -671,6 +697,7 @@ max_attempts: 1
         <span class="px__more">Read the project →</span>
       </a>
       <a class="px__card reveal" href="./projects/fincore.html">
+        <div class="px__shot"><img src="./assets/img/report-fincore.webp" width="1040" height="760" loading="lazy" alt="FinCore spec coverage report: 59 of 60 requirements implemented."></div>
         <p class="px__kind">Architecture-heavy brief</p>
         <h3>FinCore</h3>
         <p class="ed-muted">Core banking</p>
@@ -683,6 +710,7 @@ max_attempts: 1
         <span class="px__more">Read the project →</span>
       </a>
       <a class="px__card reveal" href="./projects/eventtech.html">
+        <div class="px__shot"><img src="./assets/img/report-eventtech.webp" width="1040" height="760" loading="lazy" alt="EventTech spec coverage report: 38 of 38 requirements implemented."></div>
         <p class="px__kind">Architecture-heavy brief</p>
         <h3>EventTech</h3>
         <p class="ed-muted">Event operations, rebuilt from facts</p>
@@ -695,6 +723,7 @@ max_attempts: 1
         <span class="px__more">Read the project →</span>
       </a>
       <a class="px__card reveal" href="./projects/healthtech.html">
+        <div class="px__shot"><img src="./assets/img/report-healthtech.webp" width="1040" height="683" loading="lazy" alt="HealthTech spec coverage report: 23 of 24 requirements implemented, one waiting for an answer."></div>
         <p class="px__kind">Regulated domain</p>
         <h3>HealthTech</h3>
         <p class="ed-muted">Clinical cases</p>

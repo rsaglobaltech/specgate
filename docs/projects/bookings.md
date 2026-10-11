@@ -84,6 +84,10 @@ defect cost one (#56, #65).
 Requirement REQ-145 (the agenda) and REQ-220/221 (details and photos) were
 MODIFIED after a smoke test. The product reached `v0.3.0`.
 
+![The owner's agenda for one calendar: each booking with its time, service, customer and contact. Invented data; the interface is in Spanish.](../assets/img/app-bookings-agenda.webp)
+
+![A customer books a 90-minute court on the club's public page, on a phone, without an account, with a discount code.](../assets/img/app-bookings-booking-mobile.webp)
+
 ## What only running the product found
 
 Each cycle ended with the product running in production mode and a person —

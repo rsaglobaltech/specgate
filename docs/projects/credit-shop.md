@@ -79,6 +79,10 @@ nominal gives a monthly payment of 106.62 €, an APR of 12.68 % and a total of
 The answers decided: shipping is 4.95 € below 50 €, and the store finances
 the credit, with the contract accepted online. The product reached `v0.1.0`.
 
+![The shop catalogue, grouped by category, each item with its price and an "Add to cart" button — the button the first version did not have. Invented data; the interface is in Spanish.](../assets/img/app-credit-shop-catalog.webp)
+
+![The admin's credit queue: each application with order, amount, instalment, income and an affordability verdict, with Approve and Reject only on pending ones.](../assets/img/app-credit-shop-credit-review.webp)
+
 ## What only running the product found
 
 With every test green, **nobody could buy anything.**

@@ -470,6 +470,7 @@ a:hover { text-decoration: underline; }
 /* A `---` right before a section heading drew a second rule above the h2's own. */
 .prose hr:has(+ h2) { display: none; }
 .prose img { max-width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.prose img[src*="-mobile"] { display: block; max-width: min(320px, 100%); margin-inline: auto; border-radius: 22px; }
 
 .prose :not(pre) > code {
   font-family: var(--mono);
