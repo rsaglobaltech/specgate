@@ -156,6 +156,7 @@ export const SURFACE: Command[] = [
     },
     coreHelp: {
       group: "start",
+      order: 1,
       icon: "⚡",
       summary: "Start here: adopts a repo that has code, scaffolds one that does not.",
     },
@@ -272,7 +273,13 @@ export const SURFACE: Command[] = [
       group: "core",
       icon: "📝",
       summary:
-        "Check a draft change is complete enough to review: scenarios, kinds, surfaces, sources (ADR-0029).",
+        "From your plan or brief to requirements, one module at a time — each draft checked against it.",
+    },
+    coreHelp: {
+      group: "start",
+      order: 2,
+      icon: "📝",
+      summary: "From a plan: docs/brief.md → requirements, one module at a time.",
     },
     json: { key: "draft", gate: true },
     mcp: false,

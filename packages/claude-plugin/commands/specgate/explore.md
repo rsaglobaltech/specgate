@@ -16,7 +16,7 @@ specgate status --json
 
 ## Guidance
 
-- Read `spec.md` and `AI_RULES.md` first — `AI_RULES.md` is binding, not advisory.
+- Read `spec.md` and `AGENTS.md` first — `AGENTS.md` is binding, not advisory.
 - `requirements` lists each one with what it still needs; `nextCommand` names the step.
 - Do not start on a requirement until you can say which `REQ-NNN` it is.
 

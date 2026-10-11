@@ -41,9 +41,17 @@ const OLD_NAMESPACE = "csda";
 // ── Renderers, one per tool convention ────────────────────────────────────────
 
 export function slashCommandBody(step) {
+  // A step that takes an argument gets it from the host: `/specgate:draft
+  // curriculum` runs `specgate draft curriculum`, and a bare
+  // `/specgate:draft` runs `specgate draft`, which lists the modules.
+  const hint = step.argumentHint;
+  const run = hint
+    ? step.run.filter((r) => r.includes(hint)).map((r) => r.replace(hint, "$ARGUMENTS"))
+    : step.run;
   return [
     "---",
     `description: ${step.summary}`,
+    ...(hint ? [`argument-hint: ${hint}`] : []),
     "---",
     "",
     `# /${AGENT_NAMESPACE}:${step.name}`,
@@ -55,7 +63,7 @@ export function slashCommandBody(step) {
     "## Run",
     "",
     "```bash",
-    ...step.run,
+    ...run,
     "```",
     "",
     "## Guidance",

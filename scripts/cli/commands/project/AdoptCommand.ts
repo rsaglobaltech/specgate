@@ -588,10 +588,16 @@ export class AdoptProjectCommand extends BaseCommand {
     logInfo("  are real and their scenarios are linked to tests.");
     logInfo("✅ Adoption completed. Next steps:");
     logInfo("  1. specgate check               # the gate — should pass right now");
-    if (capabilities.length > 0) {
+    // Most projects start from a plan (#94): when one is in place, drafting
+    // it is the next thing to do; when the project is bare, say where it goes.
+    const hasBrief = fs.existsSync(path.join(dir, "docs", "brief.md"));
+    if (hasBrief) {
+      logInfo("  2. specgate draft               # docs/brief.md → requirements, module by module");
+    } else if (capabilities.length > 0) {
       logInfo("  2. Argue with the seeded proposals in spec.md — each one names its evidence");
     } else {
       logInfo('  2. specgate new "<behaviour>"   # one requirement you already rely on');
+      logInfo("     or, from a plan: save it as docs/brief.md, then  specgate draft");
     }
     logInfo("  3. specgate status              # what each requirement still needs");
     logInfo("  4. specgate ci init             # put the gate in CI");

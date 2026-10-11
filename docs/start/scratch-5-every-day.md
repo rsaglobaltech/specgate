@@ -85,12 +85,14 @@ $ specgate status
     REQ-004   A member cancels a booking                    an answer to Q1
     Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)
 
+  Brief  docs/brief.md · 1 of 1 module(s) drafted
+
   Next  specgate done REQ-005  — once a test mentions REQ-005 — that mention is the link; done checks first
 ```
 <!-- csda:out-scratch-status-daily:end -->
 
 **A whole new module** goes back through phase 2: a change, a draft,
-`draft --check`, archive. **A requirement that changes** goes through a change
+`specgate draft <module>`, archive. **A requirement that changes** goes through a change
 too, as `MODIFIED`, so the review sees the before and after.
 
 ## 3. When the client answers

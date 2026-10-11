@@ -88,7 +88,7 @@ $ specgate init
 ℹ️ [INFO]   3. specgate status              # what each requirement still needs
 ℹ️ [INFO]   4. specgate ci init             # put the gate in CI
 ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:
-… 1 more line
+ℹ️ [INFO]   specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)
 ```
 <!-- csda:out-existing-init:end -->
 

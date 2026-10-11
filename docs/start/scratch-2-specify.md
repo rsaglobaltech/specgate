@@ -8,17 +8,18 @@
 a checklist has read — so nothing in them is invented — and they are merged
 into `spec.md`, one module at a time.
 
-| Who | Does what in this phase |
-| --- | --- |
-| **You** | Put the brief in the repo, review the draft, decide what is an assumption and what is a question for the client |
-| **Your agent** | Writes the first draft of one module |
-| **The checklist** | `draft --check` finds what the brief does not say: missing scenarios, invented values, unmeasured requirements |
+| Who               | Does what in this phase                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **You**           | Put the brief in the repo, review the draft, decide what is an assumption and what is a question for the client          |
+| **Your agent**    | Writes the first draft of one module                                                                                     |
+| **The checklist** | `specgate draft <module>` finds what the brief does not say: missing scenarios, invented values, unmeasured requirements |
 
 ## 1. Keep the brief in the repository
 
-Save it as `docs/brief.md`, as the client wrote it. A short front matter names
-who uses the product and through which surfaces; the checklist asks for a
-scenario per actor and surface from it.
+Save it as `docs/brief.md`, as the client wrote it — a plan you wrote
+yourself works the same. A short front matter names the modules to draft one
+at a time, and who uses the product through which surfaces; the checklist asks
+for a scenario per actor and surface from it.
 
 ```markdown
 ---
@@ -35,54 +36,86 @@ Members book a court for one hour. A court cannot be booked twice for
 the same hour. Members can cancel a booking. Late cancellations may be charged.
 ```
 
-## 2. Open a change for one module
+## 2. See the modules — `specgate draft`
 
 ```bash
-specgate change new draft-bookings --capability bookings
+specgate draft
 ```
 
-<!-- csda:out-scratch-change-new:begin — generated; edit the source, not this block -->
+<!-- csda:out-scratch-draft-list:begin — generated; edit the source, not this block -->
 ```text
-$ specgate change new draft-bookings --capability bookings
-  ✔ Change draft-bookings created (lite · REQ ids REQ-002…REQ-004 reserved)
+$ specgate draft
+  specgate draft  ·  docs/brief.md
 
-    + docs/specs/changes/draft-bookings/change.yaml
-    + docs/specs/changes/draft-bookings/proposal.md
-    + docs/specs/changes/draft-bookings/tasks.md
-    + docs/specs/changes/draft-bookings/specs/bookings/spec.md
+  Product  Court bookings for a tennis club
 
-  Next: write the proposal, then the delta, then specgate change validate draft-bookings
+  Modules
+    ○ bookings  not started
+
+  Next  specgate draft bookings
 ```
-<!-- csda:out-scratch-change-new:end -->
+<!-- csda:out-scratch-draft-list:end -->
 
-A change is a folder of proposed requirements, kept apart from `spec.md` until
-it is reviewed. One module per change keeps it small enough to read in one
-sitting; `--reserve 10` reserves more ids for a bigger module.
+`specgate draft` reads the brief and says where each module stands and which
+one is next. You will run it again whenever you are unsure what comes next.
 
-## 3. Your agent drafts it
-
-Ask your agent to write the requirements and scenarios for the module, in
-`docs/specs/changes/draft-bookings/specs/bookings/spec.md`, from the brief —
-or have Specgate hand it the job, confined to the change folder:
+## 3. Open the module, and hand it to your agent
 
 ```bash
-specgate change author draft-bookings --artifact specs --agent "claude -p < {prompt_file}"
+specgate draft bookings
 ```
+
+<!-- csda:out-scratch-draft-open:begin — generated; edit the source, not this block -->
+```text
+$ specgate draft bookings
+  ✔ Draft draft-bookings opened, linked to docs/brief.md (REQ ids REQ-002…REQ-011 reserved)
+
+    + docs/specs/changes/draft-bookings/DRAFTING.md                how to write it
+    + docs/specs/changes/draft-bookings/specs/bookings/spec.md     the requirements go here
+    + docs/specs/changes/draft-bookings/change.yaml, proposal.md
+
+  Have your agent write it. Paste this into Claude Code, Cursor, Codex…:
+
+    Draft the bookings module: follow docs/specs/changes/draft-bookings/DRAFTING.md
+
+  or let Specgate call it:  specgate draft bookings --agent "claude -p"
+
+  Then run  specgate draft bookings  until it says Ready to review.
+```
+<!-- csda:out-scratch-draft-open:end -->
+
+That is the whole setup. The draft is a folder of proposed requirements, kept
+apart from `spec.md` until a person has reviewed it, and linked to the brief.
+`DRAFTING.md` inside it is the prompt: the module's scope, the reserved ids,
+every actor and surface from the front matter, and the formats the checklist
+reads. Paste the line it prints into Claude Code, Cursor, Codex or any other
+agent — or let Specgate call the agent for you:
+
+```bash
+specgate draft bookings --agent "claude -p"
+```
+
+The prompt goes to the agent on standard input (a command containing
+`{prompt_file}` gets it in a file instead). Whatever the agent writes outside
+the draft folder is undone afterwards — a file you had changed goes back to
+your version, not the last commit — and the draft is checked as soon as it
+finishes.
+In Claude Code, `specgate agents init` also gives you `/specgate:draft bookings`.
 
 The draft on this page is the one the landing page shows: three requirements,
 four scenarios — and a fee of 5 euros for a late cancellation that the client
 never mentioned.
 
-## 4. Check the draft against the brief
+## 4. Check it — the same command, again
 
 ```bash
-specgate draft --check draft-bookings --brief docs/brief.md
+specgate draft bookings
 ```
 
 <!-- csda:out-scratch-draft-check:begin — generated; edit the source, not this block -->
 ```text
-$ specgate draft --check draft-bookings --brief docs/brief.md
-  specgate draft --check draft-bookings
+$ specgate draft bookings
+  specgate draft bookings  ·  docs/brief.md
 
   3 requirement(s), 4 scenario(s)
 
@@ -97,7 +130,8 @@ $ specgate draft --check draft-bookings --brief docs/brief.md
   ✖  D6_unlisted_value  SCN-005 states "5", which is not in the brief and not listed as an assumption for SCN-005 or REQ-004.
      fix: List it in assumptions.md with SCN-005 (or REQ-004) in its row, or use the value the brief gives.
 
-  ✖  5 finding(s) to fix before review.
+  ✖  5 finding(s) to fix. Each says how; DRAFTING.md has the formats.
+  Next  fix them (or ask your agent to), then  specgate draft bookings
 ```
 <!-- csda:out-scratch-draft-check:end -->
 
@@ -111,24 +145,27 @@ a **question**. So you:
 - mark REQ-004 `status="Needs Clarification"` and write the scenario without the number.
 
 ```bash
-specgate draft --check draft-bookings --brief docs/brief.md
+specgate draft bookings
 ```
 
 <!-- csda:out-scratch-draft-check-again:begin — generated; edit the source, not this block -->
 ```text
-$ specgate draft --check draft-bookings --brief docs/brief.md
-  specgate draft --check draft-bookings
+$ specgate draft bookings
+  specgate draft bookings  ·  docs/brief.md
 
   3 requirement(s), 4 scenario(s)
 
-
   ✔  Ready to review.
+
+  Next  read it with whoever knows the business, answer what you can in
+        questions.md, then  specgate change archive draft-bookings
 ```
 <!-- csda:out-scratch-draft-check-again:end -->
 
-## 5. Archive it into the specification
+## 5. Review it, then archive it into the specification
 
-Tick the change's `tasks.md`, then:
+Read the draft with whoever knows the business, answer what you can in
+`questions.md`, then:
 
 ```bash
 specgate change archive draft-bookings
@@ -143,7 +180,7 @@ $ specgate change archive draft-bookings
     traceability: 3 row(s) added · 0 updated · 0 removed
     features:     3 materialised
 
-  Now run specgate validate . --strict — it will fail until the tests exist.
+  Next: specgate draft — the next module of the brief, or what to build first.
 ```
 <!-- csda:out-scratch-archive:end -->
 
@@ -173,6 +210,8 @@ $ specgate status
     REQ-004   A member cancels a booking                    an answer to Q1
     Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)
 
+  Brief  docs/brief.md · 1 of 1 module(s) drafted
+
   Next  specgate done REQ-002  — once a test mentions REQ-002 — that mention is the link; done checks first
 ```
 <!-- csda:out-scratch-status:end -->
@@ -180,22 +219,32 @@ $ specgate status
 REQ-004 is **waiting for an answer**: the harness will not build it and `done`
 will not close it until the client answers Q1. Nobody has to remember that.
 
+<!-- csda:note -->
+
+**By hand.** `specgate draft bookings` is `specgate change new draft-bookings
+--capability bookings`, plus `brief: docs/brief.md` in its `change.yaml`, plus
+`DRAFTING.md`; and every later run is `specgate draft --check draft-bookings`.
+Both forms keep working.
+<!-- csda:endnote -->
+
 ## You're done when…
 
-- `draft --check` says `✔  Ready to review.` and a person has read the draft.
+- `specgate draft bookings` says `✔  Ready to review.` and a person has read the draft.
 - `change archive` has merged it, and `specgate status` lists the requirements.
 - Every open question is in `questions.md`, and the requirement it blocks says so.
 
-Repeat steps 2–5 for the next module. The [brief guide](../from-a-brief.md) has
+Then `specgate draft` names the next module; repeat steps 3–5. The [brief guide](../from-a-brief.md) has
 the full checklist (D1–D12) and what each finding means.
 
 ## If something goes wrong
 
-| You see | It means | Do |
-| --- | --- | --- |
-| `D6_unlisted_value … states "5", which is not in the brief` | A value nobody asked for | Use the brief's value, list it as an assumption, or turn it into a question |
-| `draft_rule_skipped  D6 did not run: no brief given.` | No brief to compare with | Pass `--brief docs/brief.md`, or add `brief:` to the change's `change.yaml` |
-| `Change "…" still has 3 unchecked task(s). [archive_tasks_incomplete]` | `tasks.md` is not ticked | Finish the tasks, then archive |
-| `Scenario "<scenario name>" has placeholder steps, so it asserts nothing.` | A scenario was left as the template | Write what has to hold, or delete the scenario |
+| You see                                                                    | It means                                      | Do                                                                          |
+| -------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------- |
+| `D6_unlisted_value … states "5", which is not in the brief`                | A value nobody asked for                      | Use the brief's value, list it as an assumption, or turn it into a question |
+| `No plan or brief at docs/brief.md. [draft_no_brief]`                      | The brief is somewhere else, or not saved yet | Save it as `docs/brief.md`, or pass `--brief <file>`                        |
+| `Your brief does not list its modules yet.`                                | No `modules:` in the front matter             | Paste the front matter it prints, or run `specgate draft <module>` directly |
+| `The draft is still the placeholder.`                                      | Nobody has written the draft yet              | Paste the printed line into your agent, or use `--agent`                    |
+| `--agent needs a git repository. [draft_agent_needs_git]`                  | Git is how the agent's writes are confined    | `git init`, or paste the line into your agent yourself                      |
+| `Scenario "<scenario name>" has placeholder steps, so it asserts nothing.` | A scenario was left as the template           | Write what has to hold, or delete the scenario                              |
 
 **[Next: phase 3 — build the first requirement →](scratch-3-build.md)**

@@ -15,7 +15,7 @@ The details of each step live in other guides; this one is the order.
 
 A brief mixes what the system does with how to build it. Three of the six
 briefs were mostly architecture: microservices, Kafka, event stores, CQRS. The
-requirements come from the *what*; the *how* is a technical decision. Agree the
+requirements come from the _what_; the _how_ is a technical decision. Agree the
 scope before writing anything. In every pilot the agreement was to ignore the
 infrastructure but deliver what it promised: "rebuild what happened" became a
 requirement ("the agenda as it was at any date"), not a product to install.
@@ -66,15 +66,19 @@ See [From a client brief](from-a-brief.md).
 ### 5. Open the draft
 
 ```bash
-npx specgate change new draft-<module> --capability <module> --reserve 12
-echo "brief: docs/brief.md" >> docs/specs/changes/draft-<module>/change.yaml
+npx specgate draft               # the brief's modules, and the next one
+npx specgate draft <module>      # opens it, linked to the brief, with DRAFTING.md
 ```
 
-One module per draft: a reviewer reads ten requirements, not sixty.
+One module per draft: a reviewer reads ten requirements, not sixty
+(`--reserve 12` for a bigger one).
 
 ### 6. Write it
 
-The agent writes `specs/<module>/spec.md` and two files next to it:
+Tell your agent `Draft the <module> module: follow
+docs/specs/changes/draft-<module>/DRAFTING.md` — or run
+`specgate draft <module> --agent "claude -p"`. The agent writes
+`specs/<module>/spec.md` and two files next to it:
 
 - **`assumptions.md`** — every value the brief does not give, and the
   requirements that use it (ids one by one or as ranges). Compute values before
@@ -91,7 +95,7 @@ every pilot found by running the product.
 ### 7. Check it
 
 ```bash
-npx specgate draft --check draft-<module>
+npx specgate draft <module>
 ```
 
 Twelve rules, D1–D12: a scenario per requirement and per surface, values that
@@ -102,7 +106,7 @@ declare. See the table in [From a client brief](from-a-brief.md#3-check-the-draf
 
 ### 8. Review it — a person
 
-`draft --check` sees the shape, not the business. Read the requirements, the
+The checklist sees the shape, not the business. Read the requirements, the
 assumptions and the questions. Take the questions to the client and write
 each answer in the `Answer` column.
 

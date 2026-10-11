@@ -59,11 +59,6 @@ function commit(project: string, env: NodeJS.ProcessEnv, message: string): void 
   run(project, env, ["git", "commit", "-qm", message]);
 }
 
-function tickTasks(project: string): void {
-  const tasks = path.join(project, CHANGE, "tasks.md");
-  fs.writeFileSync(tasks, fs.readFileSync(tasks, "utf8").replace(/- \[ \]/g, "- [x]"), "utf8");
-}
-
 // ── From scratch: court bookings ────────────────────────────────────────────
 
 const SCRATCH_SETUP: { before: Hook; steps: Record<string, Hook> } = {
@@ -78,7 +73,7 @@ const SCRATCH_SETUP: { before: Hook; steps: Record<string, Hook> } = {
   },
   steps: {
     // You: the brief, as the client sent it.
-    "scratch-change-new": (project, env) => {
+    "scratch-draft-list": (project, env) => {
       write(path.join(project, "docs", "brief.md"), BRIEF_MD);
       commit(project, env, "the specification setup and the brief");
     },
@@ -92,7 +87,6 @@ const SCRATCH_SETUP: { before: Hook; steps: Record<string, Hook> } = {
       write(path.join(project, CHANGE, "assumptions.md"), ASSUMPTIONS_MD);
       write(path.join(project, CHANGE, "questions.md"), QUESTIONS_MD);
     },
-    "scratch-archive": (project) => tickTasks(project),
     // You or your agent: the test first, then the code.
     "scratch-node-test": (project, env) => {
       commit(project, env, "the specification");

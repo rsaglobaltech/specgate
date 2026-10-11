@@ -135,5 +135,7 @@ test("the short help is the daily loop and nothing else", () => {
   // hard to absorb. Adding a line here is a decision, so it fails a test.
   const help = cli("--help").stdout;
   const shown = [...help.matchAll(/^\s{4}\S+\s{2}(\w+)\s{2,}/gm)].map((m) => m[1]);
-  assert.deepEqual(shown, ["init", "status", "new", "check", "done"], help);
+  // `draft` joined `init` under START HERE: most projects begin from a plan,
+  // and the user, starting from one, could not find the way in (#94).
+  assert.deepEqual(shown, ["init", "draft", "status", "new", "check", "done"], help);
 });

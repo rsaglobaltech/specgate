@@ -62,7 +62,7 @@ import {
 } from "../../../../packages/core/src/domain/DeclaredArtifacts";
 import { parseTraceability } from "../spec/PlanCommand";
 import { main as instructionsMain } from "../../../change/instructions";
-import { briefOf, draftReport } from "../spec/DraftCommand";
+import { briefOf, draftReport, draftModuleOf } from "../spec/DraftCommand";
 
 /**
  * The scaffold set as the CLI hands it out: `(changeId, projectDir)`, with the
@@ -892,7 +892,8 @@ function cmdArchive(opts) {
   // A draft (a change opened from a brief) is archived only once its
   // checklist passes: reservas_app archived one with two findings open and
   // nothing said so (#57). `--force` archives anyway, as it does for tasks.
-  if (!opts.force && briefOf(projectDir, changeId)) {
+  const isDraft = Boolean(briefOf(projectDir, changeId));
+  if (!opts.force && isDraft) {
     const checked = draftReport(projectDir, changeId);
     if ("report" in checked && checked.report.status.length > 0) {
       const codes = [...new Set(checked.report.status.map((d) => d.code))].join(", ");
@@ -902,7 +903,7 @@ function cmdArchive(opts) {
           `Draft '${changeId}' has ${checked.report.status.length} open finding(s) in its checklist (${codes}).`,
           {
             target: changeId,
-            fix: `Run \`specgate draft --check ${changeId}\`, fix what it reports, then archive — or pass --force to archive it as it is.`,
+            fix: `Run \`specgate draft ${draftModuleOf(changeId)}\`, fix what it reports, then archive — or pass --force to archive it as it is.`,
           }
         ),
       ]);
@@ -911,7 +912,7 @@ function cmdArchive(opts) {
 
   const repo = new DiskProjectRepository(projectDir);
   const useCase = new ArchiveChangeUseCase(repo);
-  const plan = useCase.execute(changeId, { force: opts.force });
+  const plan = useCase.execute(changeId, { force: opts.force, draft: isDraft });
 
   if (!plan.ok) {
     return fail(opts, nullShape, plan.diagnostics);
@@ -974,7 +975,10 @@ function cmdArchive(opts) {
         `    ${c.dim}specs:${c.reset}        ${t.added} added · ${t.modified} modified · ${t.removed} removed\n` +
         `    ${c.dim}traceability:${c.reset} ${t.traceability.added} row(s) added · ${t.traceability.updated} updated · ${t.traceability.removed} removed\n` +
         `    ${c.dim}features:${c.reset}     ${plan.writes.filter((w) => w.kind === "feature").length} materialised\n\n` +
-        `  ${c.dim}Now run${c.reset} ${c.cyan}specgate validate . --strict${c.reset} ${c.dim}— it will fail until the tests exist.${c.reset}\n\n`
+        // The archived requirements are Draft: they owe nothing yet, so the
+        // gate passes. Saying it "will fail until the tests exist" was wrong
+        // (#92); what comes next is the queue, or the next module.
+        `  ${c.dim}Next:${c.reset} ${c.cyan}${isDraft ? "specgate draft" : "specgate status"}${c.reset} ${c.dim}— ${isDraft ? "the next module of the brief, or what to build first" : "what each requirement still needs"}.${c.reset}\n\n`
     );
     if (plan.warnings.length > 0) printDiagnostics(plan.warnings, process.stdout);
   });

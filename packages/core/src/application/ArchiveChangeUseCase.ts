@@ -37,7 +37,11 @@ export class ArchiveChangeUseCase {
     const config = this.repo.readConfig(changeId);
     const progress = this.repo.getTaskProgress(changeId);
 
-    if (progress.remaining > 0 && !o.force) {
+    // A draft written from a brief has no implementation tasks: its checklist
+    // (`specgate draft`) is what says it is ready, and `change archive`
+    // already refuses one that is not (#57). Asking the person to also tick
+    // boxes nobody wrote was a second gate with nothing behind it (#94).
+    if (progress.remaining > 0 && !o.force && !o.draft) {
       plan.diagnostics.push(
         error(
           "archive_tasks_incomplete",

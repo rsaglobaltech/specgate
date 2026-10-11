@@ -153,6 +153,7 @@ function usageCore() {
       `    ${c.green}specgate config set profile full${c.reset}${c.dim}         make that the default${c.reset}\n` +
       section("EXAMPLES") +
       example(`npx @rsaglobaltech/specgate@latest init`, "Existing repo or empty directory") +
+      example(`specgate draft`, "Your plan is in docs/brief.md") +
       example(`specgate status`, "Start of day") +
       example(`specgate check`, "Before a pull request") +
       "\n"
