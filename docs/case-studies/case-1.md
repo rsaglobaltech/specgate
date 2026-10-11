@@ -1,244 +1,282 @@
-# Worked Example — Smart Parking Platform: From Brownfield to Spec-Driven
+# Worked example: adopting Specgate on a service that already ships
 
-> **This is an illustration, not a customer.** "UrbanFlow" is invented, and every
-> number below — the coverage figures, the defect rate, the onboarding time — is
-> a plausible construction written to show what the workflow looks like end to
-> end. None of it was measured, and none of it should be cited as evidence that
-> the tool produces these results.
->
-> What *is* measured lives elsewhere, and it is about this repository's own
-> defects: the [evidence behind the gate](../index.html#evidence) and
-> [the article](../articles/specs-that-cannot-lie.html) both quote figures that
-> came from running the tool and reading what it printed.
->
-> If you have adopted this on a real system and are willing to be named, the
-> maintainers would far rather publish that than this.
+<!-- csda:note -->
+**An illustration, not a customer — but the commands are real.** "Quayside Supplies" and its
+`billing-service` are made up for this page. Every command below was run with
+Specgate 0.18.0 on that service, and every output is what it printed — trimmed
+with `…`, never edited. For products actually built with Specgate, see
+[the six pilots](../projects/index.md).
+<!-- csda:endnote -->
 
-**Industry:** Urban Mobility / Smart City Infrastructure
-**Team size:** 6 engineers, 1 product owner, 1 domain expert
-**Duration:** 8 weeks (Phase 1 adoption)
-**Tooling:** `create-spec-driven-app` v0.1.0-beta, Node.js 20, PostgreSQL 16, Docker
+**The service:** `billing-service` 2.4.1 — orders, invoices and customer credit,
+plain Node.js, six tests that pass, a CI job that runs `npm test`. Five rules the
+team relies on live only in the code: totals are rounded once, a shipped order
+cannot be cancelled, big orders get a capped discount, a paid order can ship, a
+customer cannot pass their credit limit.
 
----
+**The goal:** write those rules down where a test proves them, put a gate on
+every pull request, and start new work from a requirement — without stopping
+the team or rewriting anything.
 
-## 1. Background
+| Step | What happens | Commands |
+| --- | --- | --- |
+| 1 | Look before writing anything | `onboard` |
+| 2 | Adopt in place, gate green | `init`, `config set test_cmd`, `check` |
+| 3 | First behaviour, proved by the test you have | `new`, `done` |
+| 4 | The gate on every pull request | `ci init`, `status` |
+| 5 | A whole module, written down from the code | `change new`, `change validate`, `change archive`, `done` |
+| 6 | New work starts as a requirement | `new`, `harness prompt`, `report` |
 
-UrbanFlow, a mid-size mobility startup, operated a parking management SaaS that had grown
-organically over three years. The system handled vehicle entry/exit events, fee calculation,
-and operator alerts for ~40 municipal car parks. The codebase showed classic brownfield signs:
+## 1. Look before writing anything
 
-- **No formal requirements document.** Business rules lived in engineers' heads or scattered
-  Confluence pages that were months out of date.
-- **No domain model.** Entities like `ParkingSession`, `Tariff`, and `FacilityCapacity` were
-  implicit concepts encoded differently in the REST API, the database schema, and the
-  front-end state.
-- **Test coverage ≈ 23%.** A Postman collection served as the de-facto acceptance suite; it
-  ran manually before each release.
-- **Onboarding time: ~3 weeks.** New engineers spent their first sprint decoding undocumented
-  domain logic before writing their first feature.
+```text
+$ specgate onboard
+  1. What this is
+     stack:  Node.js
+     tests:  npm test
+     detected from package.json
+  …
+  3. Capabilities this codebase already implies
+     · Invoices             src/invoices  (2 files)
+     · Orders               src/orders  (2 files)
+     · Customers            src/customers  (1 files)
 
-A new regulatory requirement — mandatory real-time capacity reporting to the city API — forced
-the team to extend the system. The product owner estimated two weeks of work; the tech lead
-estimated six. The gap was a symptom of the undocumented domain.
-
----
-
-## 2. The Approach: Spec-Driven Adoption
-
-Rather than rewriting the codebase, the team used `create-spec-driven-app` to create a
-**specification overlay** — a parallel artifact space that documented what the system _should_
-do, independent of what it _currently_ does.
-
-### 2.1 Scaffolding the spec project
-
-```bash
-npx create-spec-driven-app@latest init \
-  --config smart-parking.config \
-  --out ./specs
+     A proposal, not a verdict. Merge, split or rename them.
 ```
 
-The config file captured the domain context:
+`onboard` writes nothing. It reads the build file and the folder layout, and
+names what it found and where. (It suggests `specgate adopt` next; `init` does
+the same thing and is the command the rest of the docs use.)
 
-```ini
-PROJECT_NAME="Smart Parking Platform"
-PROJECT_SLUG="smart-parking"
-PROJECT_TYPE="backend"
-DOMAIN="urban parking operations"
-STACK="Node.js 20"
-API_STYLE="REST"
-TESTING="Jest"
-DOCKER_SUPPORT="true"
+## 2. Adopt in place, gate green
+
+```text
+$ specgate init
+ℹ️ [INFO] Existing code found (package.json) — adopting this repository in place. Nothing in your code is touched.
+…
+ℹ️ [INFO] write spec.md
+ℹ️ [INFO] write features/adoption/baseline.feature
+ℹ️ [INFO] write docs/specs/traceability.md
+ℹ️ [INFO] write docs/specs/adr/README.md
+ℹ️ [INFO] write AGENTS.md
+…
+ℹ️ [INFO] - Requirements seeded: 3 proposal(s) from the layout — invoices, orders, customers
+⚠️ [WARN] This does not certify your code yet — it certifies the skeleton.
 ```
 
-The generator produced `spec.md`, a rich traceability matrix, domain model stubs, and Gherkin
-feature templates in under 30 seconds. The team spent the next two days filling in the
-domain content rather than building boilerplate.
+Five files, none of them code. Run the gate before anything else:
 
-### 2.2 Domain pack expansion
-
-The `parking-management/backend` domain pack (shipped with the tool) provided a pre-authored
-starting point for the bounded contexts, aggregates, events, and use cases relevant to the
-domain:
-
-```bash
-npx create-spec-driven-app@latest expand \
-  --pack-root ./domain-packs \
-  --pack parking-management/backend \
-  --project-dir ./specs/smart-parking \
-  --var PROJECT_NAME="Smart Parking Platform" \
-  --var PROJECT_SLUG=smart-parking \
-  --var DOMAIN="urban parking operations"
+```text
+$ specgate check
+…
+⚠  No test command configured — this checked the specification, not the code.
+   This project's test command looks like `npm test`. Configure it once:
+     specgate config set test_cmd "npm test"
+…
+✔  Gate passed — the specification
 ```
 
-The expansion injected 5 requirements, 3 bounded contexts, 4 aggregates, and 12 Gherkin
-scenarios into the spec project within seconds. The domain expert immediately recognised the
-vocabulary — `ParkingSession`, `FacilityCapacity`, `OccupancyAlert` — and confirmed the model
-was 85% accurate without any coaching.
+A green gate that says what it did not check. Tell it how to run the tests,
+once, and it runs them from then on — locally, in `done`, and in CI:
 
-### 2.3 Traceability-first development
-
-The traceability matrix (`docs/specs/traceability.md`) became the team's single source of
-truth. Each requirement (`REQ-001` through `REQ-005`) was linked to:
-
-- A Gherkin scenario (`SCN-001` through `SCN-012`)
-- The aggregate that owned the invariant
-- The command/query that implemented it
-- The Jest test that verified it
-
-The new capacity-reporting feature was modelled as `REQ-006` in the spec before a single line
-of implementation code was written. The linked Gherkin scenario was agreed with the product
-owner in a 30-minute session. Implementation began only after the scenario was marked _Accepted_.
-
----
-
-## 3. Before vs. After — Quantitative Metrics
-
-> Reminder: every figure in this table is illustrative. See the note at the top.
-
-| Metric | Before (brownfield) | After (8 weeks) | Change |
-|---|---|---|---|
-| Requirements documented | 0 | 18 (REQ-001..REQ-018) | +18 |
-| Gherkin scenarios | 0 | 27 | +27 |
-| Test coverage (lines) | 23% | 71% | +48 pp |
-| Onboarding time (est.) | ~3 weeks | ~5 days | −76% |
-| Sprint estimation accuracy | ±60% | ±20% | +40 pp |
-| Bugs in production (6-month trailing avg.) | 4.2 / sprint | 1.1 / sprint | −74% |
-| Unresolved traceability rows | — | 3 of 27 (TBD) | — |
-
-**Estimation accuracy** was measured as the ratio of actual story points delivered to estimated.
-The improvement came from engineers being able to reference the spec to identify which
-aggregates were affected by a change, rather than doing exploratory archaeology in the code.
-
----
-
-## 4. Qualitative Observations
-
-### "The domain finally has a name"
-
-> *"Before, I had to explain to every new hire what a 'session' actually meant in our system —
-> was it the HTTP session, the parking session, the billing session? The spec gives us a glossary
-> we can point to. Words have agreed meanings now."*
->
-> — Backend engineer, 2.5 years on the team
-
-The bounded-context map in `docs/specs/domain-model.md` separated `Parking Operations`
-(capacity, entry, exit) from `Billing` (fees, receipts) from `Regulatory Reporting`
-(city API integration). The third context had never been formally named before — it was called
-"the webhook thing" in backlog tickets.
-
-### BDD as a communication bridge
-
-The product owner had no prior exposure to Gherkin. After the domain expert walked through
-two scenarios in a 45-minute session, she was writing her own acceptance criteria in Given/When/Then
-format. The format's constraint — no conditionals, no implementation details — forced precision
-that prose requirements rarely achieve.
-
-### The validate gate as a quality ratchet
-
-Integrating `csda validate` into the CI pipeline created a ratchet effect:
-once a feature file was added to the traceability matrix, it could not be removed without a
-deliberate `git revert`. The team described this as "spec debt becoming visible in the same
-way technical debt becomes visible via coverage thresholds."
-
----
-
-## 5. Challenges and Mitigations
-
-### Challenge 1: Retrofitting specs onto existing code
-
-Writing specs for features that already existed felt backward. The team mitigated this by
-treating the first sprint as a "spec archaeology" sprint — they read the code, wrote the
-scenarios that the code _appeared_ to implement, then added characterisation tests to confirm
-them. This produced 14 of the 27 Gherkin scenarios.
-
-### Challenge 2: Domain expert availability
-
-The domain expert (a parking operations manager from a municipal client) was available for
-only half a day per week. The team solved this by batching questions and using the spec
-document as an async communication channel — the expert would annotate requirements directly
-in the markdown file via a shared repository.
-
-### Challenge 3: Placeholder debt
-
-After the domain pack expansion, 9 of the 27 Gherkin scenarios contained `TODO` markers.
-The `pack lint` command was added in this phase to detect TODOs automatically:
-
-```
-⚠️ [WARN] Pack contains 9 TODO placeholder(s). Replace before shipping.
+```text
+$ specgate config set test_cmd "npm test"
+  ✔  test_cmd = npm test
+     harness.config.yaml
+     `check` and `done` now run it.
+$ specgate check
+…
+ℹ pass 6
+ℹ fail 0
+✔  Gate passed — the specification and `npm test`
 ```
 
-This became part of the Definition of Done: no story could be merged if `pack lint` reported
-TODOs in scenarios linked to the story's requirement ID.
+**Argue with the proposals.** `init` seeded `REQ-002 Invoices`, `REQ-003
+Orders` and `REQ-004 Customers` in `spec.md`. Each says it is "Proposed, not
+specified" — a folder name is not a rule. Quayside deleted all three sections:
+the modules get written down properly in step 5. Deleted ids are not reused, so
+the next requirement is `REQ-005`.
 
----
+## 3. First behaviour, proved by the test you already have
 
-## 6. Return on Investment
+Pick something the team relies on and that a test already exercises:
 
-The team estimated the spec-driven adoption cost at approximately **80 engineer-hours** over
-8 weeks (scaffolding, domain modelling, writing scenarios, hooking up CI). Against this:
+```text
+$ specgate new "An invoice total is rounded to the cent"
+✔  REQ-005 An invoice total is rounded to the cent (Draft)
+   spec.md                      ## REQ-005 — rewrite the obligation
+   features/an-invoice-total-is-rounded-to.feature @SCN-002 — fill in the <placeholders>
+   docs/specs/traceability.md   row linked to the scenario
+```
 
-- The capacity-reporting feature was delivered in **9 days** vs. the tech lead's original
-  estimate of **30 days**, saving ~3 weeks of engineer time.
-- Onboarding the next junior engineer took **4.5 days** vs. the historical average of 3 weeks,
-  saving ~2 weeks.
-- The reduction in production bugs (from 4.2 to 1.1 per sprint) translated to approximately
-  **1 sprint-worth of bug-fix time** reclaimed over the following quarter.
+Rewrite the obligation in `spec.md`, and the scenario with the numbers the code
+really produces — the same ones as in `test/total.test.js`:
 
-Rough ROI at a blended rate of €600/day:
+```gherkin
+Feature: An invoice total is rounded to the cent
 
-| Cost | Hours | € |
-|---|---|---|
-| Adoption investment | 80 h | €6 000 |
-| Capacity feature saving | ~120 h | €9 000 |
-| Onboarding saving (first hire) | ~80 h | €6 000 |
-| Bug-fix time reclaimed (1 sprint) | ~80 h | €6 000 |
-| **Net gain (first quarter)** | | **+€15 000** |
+  @REQ-005 @SCN-002
+  Scenario: Three lines at 21% VAT
+    Given an invoice with lines of 3 × 0.10, 1 × 19.99 and 2 × 4.55
+    When its total is computed at 21% VAT
+    Then the total is 35.56
+```
 
----
+Now close it — and watch it refuse:
 
-## 7. What We Would Do Differently
+```text
+$ specgate done REQ-005
+❌ [ERROR] --strict-tdd violations detected:
+  [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-002)
+…
+✖  REQ-005 not marked Implemented: validation failed. [done_validate_failed]
+```
 
-1. **Start with the glossary.** The team discovered naming conflicts mid-sprint (two engineers
-   used "session" to mean different things). Starting with `docs/specs/glossary.md` would
-   have caught this in week one.
+Nothing proves it yet. The test exists; it just does not say what it proves.
+One word in its title is the whole link:
 
-2. **Run `pack lint` from day one.** The TODO warning was only added in week 5. Earlier
-   enforcement would have prevented 9 placeholder scenarios from accumulating.
+```js
+test("REQ-005: three lines at 21% VAT are rounded to the cent", () => { … });
+```
 
-3. **Scope the first pack to the core domain.** The initial expansion pulled in all five
-   requirements including `REQ-004` (overstay detection) and `REQ-005` (receipt sending),
-   which were out of scope for the first phase. Scoping to 3 requirements would have kept
-   the first sprint focused.
+```text
+$ specgate done REQ-005
+✔  REQ-005 → Implemented (1 row updated)
+```
 
----
+`done` ran the gate and the six tests before writing anything. Nobody edited
+`traceability.md`: it is generated from `spec.md`, the scenario tags and the
+tests that mention each id.
 
-## 8. Key Takeaways
+**The baseline.** `REQ-001 — Existing behaviour is preserved` stays pending
+until a test names it. Quayside added a smoke test that loads every module,
+titled `REQ-001: the service's modules load`, and closed it the same way.
 
-- **Spec-driven is not spec-first by default** — retroactively adding specs to an existing
-  system is viable and delivers measurable ROI within a single quarter.
-- **The traceability matrix is a forcing function.** Teams cannot hide undocumented behaviour
-  once every feature file must be linked to a requirement.
-- **Domain packs dramatically reduce the "blank page" problem.** The parking-management pack
-  gave the team a shared vocabulary and a structural starting point in under an hour.
-- **The validate CI gate raises the quality floor** without requiring discipline from individuals
-  — the pipeline enforces it automatically.
+## 4. The gate on every pull request
+
+```text
+$ specgate ci init --provider github
+ℹ️ [INFO] write .github/workflows/spec-gate.yml
+ℹ️ [INFO] ✅ CI gate installed. On every PR/MR the job:
+ℹ️ [INFO]   1. runs `specgate check` — the specification, then the tests, as locally
+ℹ️ [INFO]      runs your tests: `npm test` (test_cmd)
+…
+```
+
+The existing `ci.yml` stays; the gate is a second job. From here a pull request
+that breaks a proved rule, or marks something done that no test proves, fails.
+
+## 5. A whole module, written down from the code
+
+One requirement at a time works for a bug fix. For a module, open a change: it
+is reviewed as one pull request and archived into the specification in one go.
+
+```text
+$ specgate change new describe-orders --capability orders
+  ✔ Change describe-orders created (lite · REQ ids REQ-006…REQ-008 reserved)
+    + docs/specs/changes/describe-orders/change.yaml
+    + docs/specs/changes/describe-orders/proposal.md
+    + docs/specs/changes/describe-orders/tasks.md
+    + docs/specs/changes/describe-orders/specs/orders/spec.md
+```
+
+The delta is read off `src/orders` and its tests — not invented. One of the
+three requirements:
+
+```markdown
+### Requirement: REQ-007 — Large orders get a capped discount
+
+The system SHALL take 5% off an order of 500.00 or more, never more than 100.00.
+
+#### Scenario: The cap applies
+
+- GIVEN an order with a net of 2400.00
+- WHEN its discount is computed
+- THEN the discount is 100.00
+```
+
+```text
+$ specgate change validate describe-orders
+  ✔ describe-orders (1 delta(s))
+$ specgate change archive describe-orders
+  ✔ Archived as 2026-10-11-describe-orders
+    specs:        3 added · 0 modified · 0 removed
+    traceability: 3 row(s) added · 0 updated · 0 removed
+    features:     3 materialised
+```
+
+The three tests in `test/orders.test.js` get their ids in their titles, and
+one run closes all three:
+
+```text
+$ specgate done REQ-006 REQ-007 REQ-008
+✔  REQ-006 → Implemented
+✔  REQ-007 → Implemented
+✔  REQ-008 → Implemented
+   3 of 3 closed; the project's tests ran once.
+```
+
+## 6. New work starts as a requirement
+
+Finance asks for something new: a customer with an overdue invoice must not
+place an order. It goes in as a requirement first — `specgate new`, then the
+obligation ("more than 30 days past its due date") and a scenario with real
+values. It stays `Draft` until it is built, so the gate exempts it:
+
+```text
+$ specgate check
+ℹ️ [INFO] - Strict TDD gate: passed (1 row(s) exempt — still Draft, so not checked)
+✔  Gate passed — the specification and `npm test`
+```
+
+Someone builds it, by hand or with an agent. `harness prompt` shows exactly
+what an agent would be handed; `harness run --req REQ-009 --agent "claude -p < {prompt_file}"`
+builds it on its own branch and never merges. See [the harness](../harness.md).
+
+```text
+$ specgate harness prompt REQ-009
+REQ-009 (NEEDS_EVERYTHING) → branch harness/REQ-009
+# Implement REQ-009
+…
+- Scenario ID: SCN-003
+- Test artifact (write this first — TDD): TBD
+```
+
+And the product owner gets one page:
+
+```text
+$ specgate report --out report.html
+📊 Wrote report.html — 83.3% implemented (5/6).
+$ specgate status
+  Requirements  6 total · 5 done · 1 pending
+  To do
+    REQ-009   A customer with an overdue invoice cannot p…  a test and code
+  Next  specgate done REQ-009  — once a test mentions REQ-009 — that mention is the link; done checks first
+```
+
+## Every day after that
+
+- **A bug fix** adds the behaviour it fixes: `specgate new`, its scenario, the
+  regression test named after it, `specgate done`.
+- **A module someone is about to change** is written down first, as a change.
+- **New work** starts as a requirement; `status` always names the next command.
+- **Nobody back-fills everything.** The customers module (credit limit) is
+  still unwritten, and that is fine: the gate protects what is written down
+  and says plainly what it does not cover.
+
+## What to watch
+
+| What | Why it matters |
+| --- | --- |
+| The seeded proposals are guesses from folder names | Delete or rewrite them; do not mark them done. Their text still mentions `req link` — not needed, a test that names the id is the link. |
+| `spec.md` → *Context* came out as `Domain: general`, `API style: REST with DTO boundaries` | Defaults, not read from the code. Correct them; agents read this file. |
+| A green `check` with no `test_cmd` checked only the specification | It says so. Set `test_cmd` on day one. |
+| Draft rows are exempt from the gate | Right for work in progress; wrong if a requirement stays Draft forever. `status` lists them. |
+| `REQ-001` (the baseline) never closes on its own | Name it in a smoke test that loads or starts the service. |
+
+## Next
+
+- [Existing project · 1 Adopt](../start/existing-1-adopt.md) — the same path,
+  one short page per phase
+- [Writing good requirements and scenarios](../writing-specs.md)
+- [Put the gate in CI](../validating.md)

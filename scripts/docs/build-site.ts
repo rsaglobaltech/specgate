@@ -127,6 +127,16 @@ function stripTags(html: string): string {
   return out.trim();
 }
 
+/** The five entities `marked` writes, back to the characters they stand for. */
+function decodeEntities(value: string): string {
+  return value
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
 function renderMarkdown(
   source: string,
   currentSlug: string
@@ -139,9 +149,15 @@ function renderMarkdown(
 
   renderer.heading = ({ tokens, depth }: any) => {
     const text = renderer.parser.parseInline(tokens);
-    const plain = stripTags(text);
+    // `parseInline` returns HTML, so an apostrophe arrives as `&#39;`. The
+    // heading's text is escaped again where it is printed — in the contents
+    // rail and the page title — so decode it here, or "You're" reads
+    // "You&#39;re" in both.
+    const plain = decodeEntities(stripTags(text));
     if (depth === 1 && !title) title = plain;
-    const id = slugifyHeading(plain, taken);
+    // The id is still made from the encoded text: every anchor already linked
+    // keeps working.
+    const id = slugifyHeading(stripTags(text), taken);
     if (depth >= 2 && depth <= 3) headings.push({ id, text: plain, level: depth });
     return (
       `<h${depth} id="${id}">${text}` +
@@ -283,7 +299,7 @@ function pageShell(page: Page, version: string): string {
 <meta name="description" content="${escapeHtml(entry?.blurb || page.title)}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
 <meta property="og:title" content="${escapeHtml(page.title)} — Specgate">
 <meta property="og:description" content="${escapeHtml(entry?.blurb || page.title)}">
@@ -305,12 +321,12 @@ function pageShell(page: Page, version: string): string {
   <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
     <span aria-hidden="true">☰</span>
   </button>
-  <a class="top__brand" href="${up}index.html"><span aria-hidden="true">⬡</span> Specgate</a>
+  <a class="top__brand" href="${up}index.html"><span aria-hidden="true">⬡</span> specgate<span class="top__brand-sub">/docs</span></a>
   <span class="top__version">v${escapeHtml(version)}</span>
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     ${icon("search", "icon")}
-    <span class="top__search-label">Search</span>
+    <span class="top__search-label">search docs</span>
     <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
   </button>
   <nav class="top__links">
