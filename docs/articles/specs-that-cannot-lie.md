@@ -252,10 +252,19 @@ pilot, nobody outside our own repositories has used it in anger, and everything
 above is what we measured on our own work.
 
 ```bash
-npx create-spec-driven-app@latest onboard   # reads your repo, proposes capabilities, writes nothing
-npx create-spec-driven-app@latest adopt     # writes the spec skeleton, touches no source
-npx create-spec-driven-app@latest validate . --strict-tdd
+npx @rsaglobaltech/specgate@latest onboard   # reads your repo, proposes capabilities, writes nothing
+npx @rsaglobaltech/specgate@latest init      # adopts it: writes the spec skeleton, touches no source
+npx @rsaglobaltech/specgate@latest check     # the gate: validate --strict, then your tests
 ```
+
+<!-- csda:note -->
+**Since this was written.** The tool was renamed Specgate (it was
+`create-spec-driven-app`), and the gate became one command, `specgate check`:
+`validate --strict` — which includes the strict-TDD rule this article is about —
+followed by your own test suite. It has since been run on
+[six products built from client briefs](../projects/index.md), each with its
+list of what broke. The article is kept as it was argued.
+<!-- csda:endnote -->
 
 Start at the gate, not at the agent. A pull-request check that fails when a
 requirement loses its test is worth more than any amount of orchestration on top

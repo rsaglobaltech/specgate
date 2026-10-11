@@ -85,8 +85,11 @@ the check starts distinguishing anything.
 Two independent mechanisms, for two different situations.
 
 **A machine that has the pack cached already.** Packs are cached under
-`~/.cache/specgate/packs/<sha256-of-repo>/<version>/`. Setting `CSDA_OFFLINE=1`
-makes resolution use the cache and refuse to reach the network:
+`~/.cache/csda/packs/<sha256-of-repo>/<version>/` — the directory and the
+variable below kept the tool's former name, `csda`, so existing caches and CI
+settings keep working. `specops add --cache-dir <path>` points somewhere else.
+Setting `CSDA_OFFLINE=1` makes resolution use the cache and refuse to reach the
+network:
 
 ```bash
 CSDA_OFFLINE=1 specgate specops add --pack-repo <url> --pack-version v1.2.0 --pack payments
@@ -121,16 +124,23 @@ The published package has **zero runtime dependencies**. Everything in
 users.
 
 That is not the same as harmless. A compromised devDependency executes on CI
-with a publish token in scope, which is why `npm audit`, CodeQL and Dependabot
-all gate the build, and why npm releases carry
+with a publish token in scope, which is why the repository's workflows run
+`npm audit` and CodeQL, Dependabot watches the tree, and npm releases carry
 [provenance](https://docs.npmjs.com/generating-provenance-statements).
+
+<!-- csda:note -->
+**Today those workflows are switched off.** GitHub Actions are disabled on the
+`rsaglobaltech` organisation, except the one that publishes this site, so the
+checks below run when a maintainer runs them locally or enables the workflow
+for a release — see [Releases & deployment](release-process.md#how-a-release-is-done-today).
+<!-- csda:endnote -->
 
 ### SBOM
 
-A CycloneDX SBOM is generated on every push, pull request and weekly schedule,
-and retained for 90 days as the `sbom-cyclonedx` artifact — so an audit can ask
-"what was in the tree that day" without reconstructing a historical dependency
-graph.
+With its workflow enabled, a CycloneDX SBOM is generated on every push, pull
+request and weekly schedule, and retained for 90 days as the `sbom-cyclonedx`
+artifact — so an audit can ask "what was in the tree that day" without
+reconstructing a historical dependency graph. Locally:
 
 ```bash
 npm run sbom        # writes sbom.cyclonedx.json
@@ -146,7 +156,8 @@ document having few dependencies would be a poor trade.
 outside an allow-list of permissive terms. Dual licences (`MIT OR CC0-1.0`)
 pass when either side is allowed; `AND` expressions require every term.
 
-The tree today — 377 components, all permissive, no copyleft:
+The tree when this table was last counted — 377 components, all permissive, no
+copyleft. `npm run licenses` prints the current count:
 
 | Licence | Components |
 | --- | --: |

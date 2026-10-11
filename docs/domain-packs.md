@@ -132,7 +132,7 @@ specgate expand \
 To take a pack OFF the project:
 
 ```bash
-specgate specops remove parking-management/backend
+specgate specops remove backend    # the pack id .specops.lock records
 ```
 
 > `remove` drops the entry from `.specops.lock` but does **not** delete generated files — you might have hand-edited tests pointing at them. Use `git status` afterwards and clean up by hand.

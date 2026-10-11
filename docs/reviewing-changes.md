@@ -187,7 +187,7 @@ Unchecked tasks block it (`archive_tasks_incomplete`); `--force` overrides.
 Then apply:
 
 ```bash
-specgate change archive add-dynamic-pricing --yes
+specgate change archive add-dynamic-pricing
 ```
 
 ```

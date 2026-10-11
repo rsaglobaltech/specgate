@@ -7,6 +7,11 @@ plus the gate result.
 
 That is the whole contract. Everything below is detail.
 
+`specgate draft --agent` is the one place with an easier contract: a command
+without `{prompt_file}` gets the prompt on standard input, so
+`specgate draft curriculum --agent "claude -p"` just works. The harness, which
+runs unattended, always wants the placeholder.
+
 ```bash
 specgate harness run --req REQ-001 --agent "claude -p < {prompt_file}"
 ```
@@ -62,7 +67,6 @@ the ones your team uses in `.harness/profiles.yaml` and name one:
 
 ```yaml
 # .harness/profiles.yaml
-profiles_version: 1
 profiles:
   local:
     agent: "claude -p --allowedTools Read Write Edit 'Bash(npm:*)' < {prompt_file}"
@@ -228,7 +232,6 @@ adversary_profile: breaker
 
 ```yaml
 # .harness/profiles.yaml
-profiles_version: 1
 profiles:
   breaker:
     advisory: true

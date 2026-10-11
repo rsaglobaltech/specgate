@@ -14,6 +14,16 @@ handed to the harness, which builds it unattended on its own branch.
 | **The harness** (optional) | Builds pending requirements one by one, each on its own branch, and never merges |
 | **The gate** | Not yet — that is phase 4 |
 
+## Before the first one: make one scenario run
+
+The first requirement also has to wire the project: the build file's test
+dependencies, the BDD or test runner pointed at `features/`, and the folder
+layout `AGENTS.md` declares. Do that as part of the first requirement, not as
+a separate "setup" step — it is done when one scenario of that requirement
+runs for real (not skipped, not pending) under your test command. Every
+requirement after it only adds code. If you hand the first one to an agent,
+say so in the prompt: "also wire the test runner so this scenario executes".
+
 ## Option A — by hand, test first
 
 Read the requirement and its scenarios — in `spec.md` and the `.feature` file
