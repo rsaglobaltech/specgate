@@ -6,7 +6,7 @@ work with — the one the [six pilot products](projects/index.md) were built on,
 as different as a detailed booking document and a five-line description of a
 credit shop.
 
-Steps 1 to 4 below are the *Specify* phase of a requirement's life; the
+Steps 1 to 4 below are the _Specify_ phase of a requirement's life; the
 harness and the gate take it from there.
 
 <!-- csda:diagram lifecycle -->
@@ -14,7 +14,9 @@ harness and the gate take it from there.
 ## 1. Keep the brief in the repository
 
 Save it as `docs/brief.md`, as the client wrote it. Add a front matter that
-names who uses the product and how:
+names who uses the product and how — `specgate draft` explains every field and
+checks them, and `specgate draft --agent "claude -p"` has your agent propose
+them. Step by step: [Write the brief](start/write-the-brief.md).
 
 ```markdown
 ---
@@ -34,15 +36,32 @@ modules: [calendario, reservas, cupones]
 If the brief has screenshots, describe what they show below it — values that
 only appear in an image are otherwise invisible to the checklist.
 
-## 2. Draft one module as a change
+## 2. Draft one module
 
 ```bash
-specgate change new draft-reservas --capability reservas --reserve 10
-echo "brief: docs/brief.md" >> docs/specs/changes/draft-reservas/change.yaml
+specgate draft             # the brief's modules: where each stands, which is next
+specgate draft reservas    # opens draft-reservas, linked to the brief
 ```
 
-Write the delta under `specs/<capability>/spec.md` — by hand or with your
-agent. Two files go next to it:
+`specgate draft reservas` opens the draft — a change folder kept apart from
+the specification until a person reviews it — and writes `DRAFTING.md` in it:
+the module's scope, the reserved ids, a scenario per actor and surface from the
+front matter, and the formats below. That file is the prompt. Tell your agent
+`Draft the reservas module: follow docs/specs/changes/draft-reservas/DRAFTING.md`,
+or let Specgate call it:
+
+```bash
+specgate draft reservas --agent "claude -p"
+```
+
+The prompt goes to the agent on standard input, or in a file when the command
+contains `{prompt_file}`. Anything the agent writes outside the draft folder is
+undone — a file you had changed returns to your version — and the draft is
+checked when the agent finishes. In Claude Code, `/specgate:draft reservas`
+does the same from inside the session.
+
+The agent writes the delta under `specs/<module>/spec.md`, and two files go
+next to it:
 
 - **`assumptions.md`** — every value the brief does not give: prices, limits,
   button labels, status codes. A row names the requirements or scenarios that
@@ -55,9 +74,13 @@ agent. Two files go next to it:
 
 ## 3. Check the draft
 
+Run the same command again — on a draft that exists, it is the check:
+
 ```bash
-specgate draft --check draft-reservas
+specgate draft reservas
 ```
+
+(`specgate draft --check <change-id>` runs the same checklist on any change.)
 
 | Code | Asks                                                                                                                                           |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -66,7 +89,7 @@ specgate draft --check draft-reservas
 | D3   | each actor's surfaces have a scenario of that actor — an API call and a screen. `surfaces=web` on a requirement narrows it (a menu has no API) |
 | D4   | a non-functional requirement that promises a quantity states a number with a unit                                                              |
 | D5   | a rule that cites a law, standard or contract names its source (`Source:` and a link)                                                          |
-| D6   | every value in a scenario is in the brief, the project's specification, `assumptions.md`, or its own sourced obligation                       |
+| D6   | every value in a scenario is in the brief, the project's specification, `assumptions.md`, or its own sourced obligation                        |
 | D7   | every open question blocks a requirement, and that requirement waits; "TBD" or "se decidirá" is not an answer                                  |
 | D8   | the draft is small enough to review (25 requirements by default)                                                                               |
 | D9   | every scenario passes the rules the harness gate will apply (titles, Given/When/Then)                                                          |
@@ -104,7 +127,9 @@ specgate change archive draft-reservas
 ```
 
 A change opened from a brief (`brief:` in `change.yaml`) is archived only when
-`draft --check` passes; `--force` archives it anyway, and says so in review.
+its checklist passes; `--force` archives it anyway, and says so in review. A
+draft has no `tasks.md` to tick: the checklist is its gate. Then
+`specgate draft` names the next module.
 
 Archiving merges the requirements into `docs/specs/capabilities/`, adds their
 rows to the matrix and writes one feature file per requirement. New

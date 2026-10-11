@@ -98,7 +98,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 
 - GIVEN the centre court is booked on Monday evening
 - WHEN another member sends POST /api/bookings for the centre court on Monday evening
-… 72 more lines
+… 78 more lines
 ```
 <!-- csda:out-scratch-harness-prompt:end -->
 

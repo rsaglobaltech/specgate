@@ -53,6 +53,12 @@ export const NAV: readonly NavSection[] = [
           "Starting from scratch, or bringing code you already have? Both journeys at a glance.",
       },
       {
+        slug: "start/write-the-brief",
+        label: "Write the brief",
+        blurb:
+          "Your plan as docs/brief.md, the four fields on top — or let your agent propose them.",
+      },
+      {
         slug: "start/scratch-1-install",
         label: "From scratch · 1 Install",
         blurb: "Create the project with your own tools, set Specgate up, run the gate once.",

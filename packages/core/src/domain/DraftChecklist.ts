@@ -77,14 +77,29 @@ interface Req {
 
 // ── The brief's front matter ──────────────────────────────────────────────────
 
+/**
+ * The front matter, without its comments. `specgate draft --new-brief` writes
+ * one whose examples are comments (`#   - { name: Teacher, … }`); read as
+ * fields, those examples became actors the person never declared (#95).
+ */
+function frontMatterFields(brief: string): string | null {
+  const fm = /^---\n([\s\S]*?)\n---/.exec(brief.replace(/\r\n/g, "\n"));
+  if (!fm) return null;
+  return fm[1]
+    .split("\n")
+    .filter((l) => !/^\s*#/.test(l))
+    .map((l) => l.replace(/\s+#\s.*$/, ""))
+    .join("\n");
+}
+
 /** `actors: [{ name: Worker, surfaces: [mobile] }]` → Worker → [mobile]. */
 export function actorSurfaces(brief: string): Map<string, string[]> {
   const out = new Map<string, string[]>();
-  const fm = /^---\n([\s\S]*?)\n---/.exec(brief.replace(/\r\n/g, "\n"));
-  if (!fm) return out;
+  const fields = frontMatterFields(brief);
+  if (fields === null) return out;
   const re = /\{\s*name:\s*([^,}]+?)\s*,\s*surfaces:\s*\[([^\]]*)\]\s*\}/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(fm[1])) !== null) {
+  while ((m = re.exec(fields)) !== null) {
     out.set(
       m[1].trim().toLowerCase(),
       m[2]
@@ -94,6 +109,22 @@ export function actorSurfaces(brief: string): Map<string, string[]> {
     );
   }
   return out;
+}
+
+/**
+ * `modules: [bookings, coupons]`, or the same as a YAML list, → the modules a
+ * brief is drafted in, in its order. `specgate draft` walks them one by one.
+ */
+export function briefModules(brief: string): string[] {
+  const fields = frontMatterFields(brief);
+  if (fields === null) return [];
+  const inline = /^modules:\s*\[([^\]]*)\]\s*$/m.exec(fields);
+  const items = inline
+    ? inline[1].split(",")
+    : (/^modules:\s*\n((?:[ \t]+-[^\n]*\n?)+)/m.exec(fields)?.[1] || "")
+        .split("\n")
+        .map((l) => l.replace(/^\s*-\s*/, ""));
+  return items.map((s) => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
 }
 
 // ── Values a scenario states ──────────────────────────────────────────────────

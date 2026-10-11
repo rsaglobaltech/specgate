@@ -252,7 +252,10 @@ test("draft --check runs the checklist on a change, with the brief from change.y
     assert.match(green.stdout, /Ready to review/);
 
     assert.equal(cli("draft", "--check", "nope", "--json").status, 1);
-    assert.equal(cli("draft").status, 2, "--check is required");
+    // Without --check or a module, `draft` looks for the brief: none here.
+    const bare = cli("draft");
+    assert.equal(bare.status, 1, bare.stdout + bare.stderr);
+    assert.match(bare.stdout + bare.stderr, /docs\/brief\.md/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

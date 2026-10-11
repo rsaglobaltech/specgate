@@ -123,20 +123,20 @@ formato limpios, grabaciones y guías al día, 95 páginas sin huérfanas.
 
 Detalle en [`specgate-defectos.md`](specgate-defectos.md).
 
-| #   | Qué                                                                                                 | Dónde            |
-| --- | --------------------------------------------------------------------------------------------------- | ---------------- |
-| 83  | Idea: D11 reservado                                                                                 | `draft --check`  |
-| 84  | Un pack con `Needs Clarification` se instala con la fila en `Draft`: la pregunta se pierde          | packs            |
-| 85  | `status` cuenta filas, no requisitos, con varios escenarios por requisito                           | `status`         |
-| 86  | `init --from-pack` con dos escenarios por requisito duplica filas en la matriz manual               | `init`           |
-| 87  | D6 trocea fechas y horas en varios números                                                          | `draft --check`  |
-| 88  | D6 no mira el texto del requisito, solo los escenarios                                              | `draft --check`  |
-| 89  | `report` pinta `Needs Clarification` como "Test missing"                                            | `report`         |
-| 90  | `report` no muestra el título del requisito                                                         | `report`         |
-| 91  | En un proyecto recién creado, `init` lo trata como adopción y deja `REQ-001` pendiente para siempre | `init`           |
-| 92  | `change archive` dice que `validate --strict` fallará, y pasa                                       | `change archive` |
+| #      | Qué                                                                                                                                | Dónde            |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 83     | Idea: D11 reservado                                                                                                                | `draft --check`  |
+| 84     | Un pack con `Needs Clarification` se instala con la fila en `Draft`: la pregunta se pierde                                         | packs            |
+| 85     | `status` cuenta filas, no requisitos, con varios escenarios por requisito                                                          | `status`         |
+| 86     | `init --from-pack` con dos escenarios por requisito duplica filas en la matriz manual                                              | `init`           |
+| 87     | D6 trocea fechas y horas en varios números                                                                                         | `draft --check`  |
+| 88     | D6 no mira el texto del requisito, solo los escenarios                                                                             | `draft --check`  |
+| 89     | `report` pinta `Needs Clarification` como "Test missing"                                                                           | `report`         |
+| 90     | `report` no muestra el título del requisito                                                                                        | `report`         |
+| 91     | En un proyecto recién creado, `init` lo trata como adopción y deja `REQ-001` pendiente para siempre                                | `init`           |
+| ~~92~~ | ~~`change archive` dice que `validate --strict` fallará~~ — arreglado en `feat/draft-from-brief`, con #93 y #94 (`specgate draft`) | `change archive` |
 
-**Sugerencia de orden:** #91 y #92 (los ve todo usuario nuevo en el
+**Sugerencia de orden:** #91 (lo ve todo usuario nuevo en el
 quickstart), luego #89 y #90 (el informe que enseñamos en la landing), luego
 #87 y #88 (ruido y huecos de D6), y #84–#86 (packs).
 

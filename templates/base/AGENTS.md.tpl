@@ -17,6 +17,12 @@ This project uses spec-driven development with `specgate`. `spec.md`,
 Each step in detail: the `/specgate:*` commands, or
 `specgate change instructions <artifact> --json`.
 
+## From a plan or brief
+
+`specgate draft` names the next module of `docs/brief.md`; `specgate draft
+<module>` opens it and writes `DRAFTING.md` — follow it, then re-run until
+"Ready to review". Never archive a draft yourself: a person reviews it.
+
 ## Never
 
 - Edit `spec.md`, `features/`, `docs/specs/` or this file to make a test pass.

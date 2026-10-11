@@ -27,8 +27,10 @@ specgate agents init --dry-run                # list destinations, write nothing
 
 This writes the slash commands for the daily loop — `/specgate:explore` (what is
 left), `/specgate:new`, `/specgate:apply`, `/specgate:check` (the gate) and
-`/specgate:done` — plus `/specgate:propose` and `/specgate:archive` for changing
-requirements that already shipped, and `/specgate:onboard`. Then the
+`/specgate:done` — plus `/specgate:draft <module>` to turn the plan in
+`docs/brief.md` into requirements a module at a time, `/specgate:propose` and
+`/specgate:archive` for changing requirements that already shipped, and
+`/specgate:onboard`. Then the
 instruction file each tool reads — `.cursor/rules/specgate.mdc`,
 `.github/copilot-instructions.md`, `CONVENTIONS.md`, `AGENTS.md` and so on.
 

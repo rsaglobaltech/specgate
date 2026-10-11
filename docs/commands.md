@@ -1,6 +1,6 @@
 # Command reference
 
-Every command, grouped by when you reach for it. `specgate --help` shows the eight
+Every command, grouped by when you reach for it. `specgate --help` shows the six
 of the daily loop; `specgate --help --all` shows this whole surface, and
 `specgate config set profile full` makes that the default.
 
@@ -17,6 +17,11 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 | `specgate init --multi-stack <a,b,c>` | Scaffold one sibling project per stack under a single root, sharing one `spec.md` and one `features/` tree. Each stack keeps its own `AGENTS.md` and traceability matrix — the files that implement and prove a requirement differ per stack. Registers them in `specops.config.yaml`. |
 | `specgate adopt` | Install SDD on an existing repository. Never overwrites a file, never touches source. |
 | `specgate onboard` | Read an existing repository and propose the capabilities its layout implies, with the evidence for each. Writes nothing. |
+| `specgate draft` | **Starting from a plan.** Reads `docs/brief.md` (or `--brief <file>`). With no brief, says what one is; with no front matter, explains each field with an example; with a wrong one, says what to fix. Then lists the modules its front matter names, says where each stands — not started, drafting, ready to review, archived — and the one command to run next. |
+| `specgate draft --new-brief` | No plan yet: writes `docs/brief.md` to fill in — the four fields with an example each, and six short sections. Never overwrites a brief. |
+| `specgate draft --agent "<cmd>"` | Your agent proposes the brief's four fields from your text, following `docs/specs/BRIEF-SETUP.md`. It may write only the top of the brief; if your text below changes, the brief is put back. Then you review. |
+| `specgate draft <module>` | The first time, opens `draft-<module>`: a change linked to the brief, with `DRAFTING.md` — the prompt for your agent, with the reserved ids, each actor's surfaces and the formats the checklist reads. Every time after, runs the checklist on it and says what is next. `--reserve <n>` (default 10). |
+| `specgate draft <module> --agent "<cmd>"` | Hand the draft to your agent — the prompt on standard input, or in a file if the command contains `{prompt_file}` — undo whatever it writes outside the draft, then check it. Needs git. |
 
 ## Every day
 
@@ -45,7 +50,7 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 | `specgate change author <id>` | Have an agent write one artefact, confined to the change directory and gated by `change validate`. |
 | `specgate change validate` | Check the deltas. Runs inside `specgate validate` too. |
 | `specgate change archive <id>` | Merge the delta into the specs, write the matrix rows, materialise the feature files. `--dry-run` first. |
-| `specgate draft --check <id> [--brief <file>]` | Is a draft change complete enough to review? Every requirement has a scenario and a kind, each actor's surfaces (API, screen) have a scenario, non-functional requirements are measured, cited laws name a source, every value is in the brief or listed in `assumptions.md`, every open question blocks something, every scenario passes the harness gate's scenario rules. [ADR-0029](specs/adr/0029-a-brief-becomes-a-draft-change-not-a-spec.md) |
+| `specgate draft --check <id> [--brief <file>]` | The checklist on any change (what `draft <module>` runs on its own draft). Is a draft change complete enough to review? Every requirement has a scenario and a kind, each actor's surfaces (API, screen) have a scenario, non-functional requirements are measured, cited laws name a source, every value is in the brief or listed in `assumptions.md`, every open question blocks something, every scenario passes the harness gate's scenario rules. [ADR-0029](specs/adr/0029-a-brief-becomes-a-draft-change-not-a-spec.md) |
 
 → [Reviewing changes](reviewing-changes.md)
 

@@ -89,16 +89,16 @@
       "id": "check-draft",
       "caption": "An agent drafted three requirements. The checklist finds every value nobody gave it.",
       "cwd": "~/courts",
-      "command": "specgate draft --check draft-bookings",
+      "command": "specgate draft bookings",
       "surface": "draft",
       "exit": 1,
       "typeMs": 26,
-      "holdMs": 2140,
+      "holdMs": 2230,
       "truncated": false,
       "omitted": 0,
       "lines": [
         {
-          "t": "  specgate draft --check draft-bookings",
+          "t": "  specgate draft bookings  ·  docs/brief.md",
           "c": "out",
           "s": "out"
         },
@@ -173,8 +173,13 @@
           "s": "out"
         },
         {
-          "t": "  ✖  5 finding(s) to fix before review.",
+          "t": "  ✖  5 finding(s) to fix. Each says how; DRAFTING.md has the formats.",
           "c": "err",
+          "s": "out"
+        },
+        {
+          "t": "  Next  fix them (or ask your agent to), then  specgate draft bookings",
+          "c": "out",
           "s": "out"
         }
       ]
@@ -266,16 +271,16 @@
       "id": "check-again",
       "caption": "Every value is now in the brief or written down as an assumption.",
       "cwd": "~/courts",
-      "command": "specgate draft --check draft-bookings",
+      "command": "specgate draft bookings",
       "surface": "draft",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1240,
+      "holdMs": 1420,
       "truncated": false,
       "omitted": 0,
       "lines": [
         {
-          "t": "  specgate draft --check draft-bookings",
+          "t": "  specgate draft bookings  ·  docs/brief.md",
           "c": "out",
           "s": "out"
         },
@@ -295,13 +300,23 @@
           "s": "out"
         },
         {
+          "t": "  ✔  Ready to review.",
+          "c": "ok",
+          "s": "out"
+        },
+        {
           "t": "",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "  ✔  Ready to review.",
-          "c": "ok",
+          "t": "  Next  read it with whoever knows the business, answer what you can in",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "        questions.md, then  specgate change archive draft-bookings",
+          "c": "out",
           "s": "out"
         }
       ]
@@ -349,7 +364,7 @@
           "s": "out"
         },
         {
-          "t": "  Now run specgate validate . --strict — it will fail until the tests exist.",
+          "t": "  Next: specgate draft — the next module of the brief, or what to build first.",
           "c": "out",
           "s": "out"
         }
@@ -363,7 +378,7 @@
       "surface": "status",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1960,
+      "holdMs": 2140,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -424,6 +439,16 @@
         },
         {
           "t": "    Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Brief  docs/brief.md · 1 of 1 module(s) drafted",
           "c": "out",
           "s": "out"
         },

@@ -169,7 +169,7 @@ export const BEATS: readonly Beat[] = [
 /**
  * From a client's brief to a specification.
  *
- * The beat that matters is the first `draft --check`: the agent wrote a
+ * The beat that matters is the first `draft bookings`: the agent wrote a
  * plausible draft and invented a fee the brief never states. The checklist
  * finds it, the fee becomes a question for the client, and the requirement it
  * blocks arrives as "waiting for an answer" instead of as code.
@@ -187,9 +187,9 @@ export const BRIEF_BEATS: readonly Beat[] = [
     id: "check-draft",
     caption: "An agent drafted three requirements. The checklist finds every value nobody gave it.",
     cwd: "courts",
-    argv: ["specgate", "draft", "--check", "draft-bookings"],
+    argv: ["specgate", "draft", "bookings"],
     surface: "draft",
-    maxLines: 16,
+    maxLines: 18,
     expectExit: 1,
   },
   {
@@ -213,9 +213,9 @@ export const BRIEF_BEATS: readonly Beat[] = [
     id: "check-again",
     caption: "Every value is now in the brief or written down as an assumption.",
     cwd: "courts",
-    argv: ["specgate", "draft", "--check", "draft-bookings"],
+    argv: ["specgate", "draft", "bookings"],
     surface: "draft",
-    maxLines: 8,
+    maxLines: 10,
   },
   {
     id: "archive",

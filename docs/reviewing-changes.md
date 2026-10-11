@@ -120,6 +120,12 @@ specgate change author add-dynamic-pricing --artifact proposal --agent "claude -
 specgate change author add-dynamic-pricing --artifact specs   --agent-profile local-claude
 ```
 
+`{prompt_file}` is filled in by Specgate: it writes the prompt it built to a
+temporary file and puts that file's path in your command, so any agent that
+reads a file or standard input works. A draft written from the brief needs none
+of this — [`specgate draft <module> --agent "claude -p"`](start/write-the-brief.md)
+sends the prompt on standard input.
+
 This is the `spec-author` role of the multi-agent harness, and it is a separate
 loop from `specgate harness run` on purpose. That loop is built around a
 requirement — a worktree per REQ, a branch named for it, a gate of

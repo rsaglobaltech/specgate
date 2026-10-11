@@ -13,12 +13,17 @@ five short phases, one page each, with every command's real output.
 - [You cloned a spec-driven repo](quickstart.md) — Someone else set it up. Five minutes to see where the project stands and close your first requirement.
 <!-- csda:endcards -->
 
+**Starting from a plan or a client's brief?** Most projects do. Read
+[Write the brief](start/write-the-brief.md) first: your plan saved as
+`docs/brief.md`, and the four fields Specgate needs at its top — your agent can
+propose them.
+
 ## The two journeys at a glance
 
 | Phase | From scratch | An existing project |
 | --- | --- | --- |
 | 1 | [Install and set up](start/scratch-1-install.md) — `specgate init`, the test command, the first green gate | [Adopt, touching no code](start/existing-1-adopt.md) — `onboard`, `init`, the first green gate |
-| 2 | [From the brief to a checked spec](start/scratch-2-specify.md) — a draft per module, `draft --check`, archive | [Write down what you rely on](start/existing-2-specify.md) — `specgate new`, a real scenario |
+| 2 | [Write the brief](start/write-the-brief.md), then [from the brief to a checked spec](start/scratch-2-specify.md) — `specgate draft`, a module at a time, archive | [Write down what you rely on](start/existing-2-specify.md) — `specgate new`, a real scenario |
 | 3 | [Build the first requirement](start/scratch-3-build.md) — test first, by hand or with the harness | [Close the first requirement](start/existing-3-first-requirement.md) — the test you already have names it |
 | 4 | [Prove it](start/scratch-4-prove.md) — `done`, `check`, `report` | [Put the gate in CI](start/existing-4-ci.md) — `ci init`, `check` on every pull request |
 | 5 | [Every day](start/scratch-5-every-day.md) — CI and the five-command loop | [Every day](start/existing-5-every-day.md) — one module at a time |

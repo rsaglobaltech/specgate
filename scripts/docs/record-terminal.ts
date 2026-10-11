@@ -527,12 +527,9 @@ function courtsWithDraft(scratch: string, env: NodeJS.ProcessEnv): string {
   run(project, env, ["specgate", "init", "--no-capabilities"]);
   run(project, env, ["specgate", "config", "set", "test_cmd", "node --test"]);
   write(path.join(project, "docs", "brief.md"), BRIEF_MD);
-  run(project, env, ["specgate", "change", "new", "draft-bookings", "--capability", "bookings"]);
-  const yaml = path.join(project, CHANGE_DIR, "change.yaml");
-  fs.appendFileSync(yaml, "brief: docs/brief.md\n", "utf8");
-  // The tasks are the author's checklist, not the subject of this recording.
-  const tasks = path.join(project, CHANGE_DIR, "tasks.md");
-  fs.writeFileSync(tasks, fs.readFileSync(tasks, "utf8").replace(/- \[ \]/g, "- [x]"), "utf8");
+  // One command opens the draft, linked to the brief, with DRAFTING.md for
+  // the agent; what the agent then wrote is the next line.
+  run(project, env, ["specgate", "draft", "bookings"]);
   write(path.join(project, CHANGE_DIR, "specs", "bookings", "spec.md"), draftSpec(false));
   run(project, env, ["git", "add", "-A"]);
   run(project, env, ["git", "commit", "-qm", "the brief and the agent's first draft"]);

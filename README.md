@@ -82,9 +82,9 @@ and writes the feature files, so a merged proposal cannot quietly become
 undone work.
 → [Your team's first pull request](docs/first-pr.md) · [Reviewing changes](docs/reviewing-changes.md)
 
-**From a brief, or from OpenSpec.** `specgate draft --check` holds a draft
-written from a client's brief to eleven rules — scenarios per actor and surface,
-sourced laws, every value in the brief or listed as an assumption, open
+**From a brief, or from OpenSpec.** Save your plan as `docs/brief.md`, run
+`specgate draft`: module by module, it briefs your agent and holds the draft
+to eleven rules — scenarios per actor and surface, sourced laws, every value in the brief or listed as an assumption, open
 questions that block, ids each actor can reach. Teams on OpenSpec keep it: `specgate verify` fails while
 a change claims a scenario no test names.
 → [A new project, step by step](docs/new-project.md) · [From a client brief](docs/from-a-brief.md) · [Already on OpenSpec](docs/openspec.md)

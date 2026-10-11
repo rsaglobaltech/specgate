@@ -13,6 +13,7 @@ import {
 } from "../../../../packages/core/src/domain/DraftChecklist";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { refreshDerivedMatrix } from "./MatrixCommand";
+import { briefProgress, draftNextCommand } from "./DraftCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 
 const COLOR_ENABLED =
@@ -168,11 +169,22 @@ function firstReal(items: any[]): any {
   return (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category) && !isBaseline(it));
 }
 
-export function nextCommandPlain({ items, counts, orphans, derived }: any): string {
+/**
+ * The brief's next module, when nothing real is waiting to be built: a
+ * project that starts from a plan has nothing to build until it is drafted,
+ * and "add a requirement" is the wrong advice for it (#94).
+ */
+function briefFirst({ items, brief }: any): any {
+  return brief && brief.next && !firstReal(items) ? brief.next : null;
+}
+
+export function nextCommandPlain({ items, counts, orphans, derived, brief }: any): string {
   const first = (cats: string[]) => (items || []).find((it: any) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
   const ready = first(["NEEDS_STATUS_UPDATE"]);
   if (ready) return `specgate done ${ready.requirement}`;
+  const module = briefFirst({ items, brief });
+  if (module) return draftNextCommand(module);
   const todo = firstReal(items) || first(TODO_CATEGORIES);
   if (todo) {
     if (todo.category === "NEEDS_FEATURE") return `specgate plan`;
@@ -186,10 +198,15 @@ export function nextCommandPlain({ items, counts, orphans, derived }: any): stri
   return "specgate check";
 }
 
-function nextReason({ items, counts, orphans, derived }: any): string {
+function nextReason({ items, counts, orphans, derived, brief }: any): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   if ((items || []).some((it: any) => it.category === "NEEDS_STATUS_UPDATE"))
     return "its test exists; close it through the gate";
+  const module = briefFirst({ items, brief });
+  if (module)
+    return module.state === "ready"
+      ? `the ${module.module} draft is ready — review it, then archive`
+      : `turn the ${module.module} module of ${brief.brief} into requirements`;
   const todo =
     firstReal(items) || (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category));
   if (todo && todo.category === "NEEDS_FEATURE")
@@ -261,6 +278,14 @@ function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []
       process.stdout.write(`    ${c.dim}… ${notes.length - 5} more in --json${c.reset}\n`);
   }
 
+  if (summary.brief) {
+    const b = summary.brief;
+    const done = b.modules.filter((m: any) => m.state === "archived").length;
+    process.stdout.write(
+      `\n  ${c.bold}Brief${c.reset}  ${c.dim}${b.brief} · ${done} of ${b.modules.length} module(s) drafted${b.next ? ` · next: ${b.next.module}` : ""}${c.reset}\n`
+    );
+  }
+
   if (lock && lock.packs && lock.packs.length > 0) {
     process.stdout.write(`\n  ${c.bold}Packs${c.reset}  ${c.dim}(.specops.lock)${c.reset}\n`);
     for (const p of lock.packs) {
@@ -294,6 +319,17 @@ function emitJson(projectDir: string, summary: any, lock: any, notes: any[] = []
           needs: needsOf(it) || null,
           ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
         })),
+        ...(summary.brief
+          ? {
+              brief: {
+                path: summary.brief.brief,
+                modules: summary.brief.modules.map((m: any) => ({
+                  module: m.module,
+                  state: m.state,
+                })),
+              },
+            }
+          : {}),
         nextCommand: nextCommandPlain(summary),
         status: notes,
       },
@@ -331,7 +367,12 @@ export class StatusCommand extends BaseCommand {
     // A generated matrix is a cache: read it fresh.
     refreshDerivedMatrix(projectDir);
     const traceContent = fs.readFileSync(tracePath, "utf8");
-    const summary = summarise(projectDir, traceContent);
+    const summary: any = summarise(projectDir, traceContent);
+    try {
+      summary.brief = briefProgress(projectDir);
+    } catch {
+      summary.brief = null;
+    }
     let lock = null;
     try {
       lock = readLock(projectDir);

@@ -64,6 +64,7 @@ $ specgate init
 ℹ️ [INFO] ✅ Adoption completed. Next steps:
 ℹ️ [INFO]   1. specgate check               # the gate — should pass right now
 ℹ️ [INFO]   2. specgate new "<behaviour>"   # one requirement you already rely on
+ℹ️ [INFO]      or, from a plan: save it as docs/brief.md, then  specgate draft
 ℹ️ [INFO]   3. specgate status              # what each requirement still needs
 ℹ️ [INFO]   4. specgate ci init             # put the gate in CI
 ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:
@@ -160,4 +161,5 @@ git add -A && git commit -m "Specgate set up"
 `copilot`, `gemini`, …) installs the `/specgate:*` commands for it. See
 [Agents](../agents.md).
 
-**[Next: phase 2 — from the brief to a checked spec →](scratch-2-specify.md)**
+**Next:** have a plan or a client's brief? [Write the brief](write-the-brief.md)
+first — then **[phase 2 — from the brief to a checked spec →](scratch-2-specify.md)**
