@@ -86,7 +86,7 @@ specgate plan            # the same queue with every artifact spelled out
 For AI agents, swap to JSON:
 
 ```bash
-specgate plan --format json
+specgate plan --json
 ```
 
 ```json

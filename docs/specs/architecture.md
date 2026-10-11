@@ -6,8 +6,8 @@ pack and an implementation project fit together, and where in that picture
 the harness, opencode/Claude, and the human reviewer live.
 
 > Companion docs: [`tutorial.md`](../tutorial.md) is the step-by-step
-> walkthrough; [`bootstrap-prompt.md`](../bootstrap-prompt.md) is the
-> hand-off prompt for Phase 1; [`harness.md`](./harness.md),
+> walkthrough; [Build the first requirement](../start/scratch-3-build.md)
+> covers wiring the project with its first scenario; [`harness.md`](./harness.md),
 > [`specops.md`](./specops.md) and
 > [`domain-pack-format.md`](./domain-pack-format.md) drill into individual
 > subsystems.

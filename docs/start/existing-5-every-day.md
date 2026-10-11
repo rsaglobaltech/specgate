@@ -65,7 +65,7 @@ backlog of small, well-specified behaviours. See [the harness](../harness.md).
 ## Where to go next
 
 - [Write good requirements and scenarios](../writing-specs.md)
-- [Brownfield adoption, worked end to end](../how-to.md)
+- [Brownfield adoption, worked end to end](../case-studies/case-1.md)
 - [Your team's first pull request — author and reviewer](../first-pr.md)
 - [Every command](../commands.md)
 

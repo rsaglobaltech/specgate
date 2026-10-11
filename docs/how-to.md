@@ -3,9 +3,11 @@
 Task-shaped guides, each self-contained. Copy/paste should work end to end.
 
 <!-- csda:note -->
-**Node.js ≥ 22**, `git`, a shell. Every command that operates on a project
-accepts `--project-dir <path>` and also walks up from the current directory
-looking for `spec.md`, `.specops.lock` or `specops.config.yaml`.
+**Node.js ≥ 22**, `git`, a shell. Run commands from inside the project: they
+walk up from the current directory looking for `spec.md`, `.specops.lock` or
+`specops.config.yaml`. To point at another directory, most take
+`--project-dir <path>`; `check` and `validate` take it as an argument
+(`specgate check ../other-project`). Each command's `--help` says which.
 <!-- csda:endnote -->
 
 ## By task
@@ -13,6 +15,8 @@ looking for `spec.md`, `.specops.lock` or `specops.config.yaml`.
 | I want to… | Guide |
 | --- | --- |
 | Start, on a new project or an existing repo | [Getting started](getting-started.md) |
+| Start from a plan or a client's brief | [Write the brief](start/write-the-brief.md) |
+| Adopt a repository that already ships, worked end to end | [Brownfield adoption, worked example](case-studies/case-1.md) |
 | Write requirements, scenarios and matrix rows | [Writing specs](writing-specs.md) |
 | Make the gate run locally and in CI | [Validating](validating.md) |
 | Change a spec that already shipped | [Reviewing changes](reviewing-changes.md) |
@@ -36,9 +40,9 @@ Each level is useful on its own and never requires the ones above it.
 ## Longer reads
 
 <!-- csda:cards cols=3 -->
-- [Quickstart](quickstart.md) — One page, for joining a project that already uses this.
-- [Walkthrough](walkthrough.md) — The shortest complete pass, on a real public pack.
-- [Tutorial](tutorial.md) — The long-form version, with the reasoning at each step.
+- [Getting started](getting-started.md) — The shortest complete pass: two journeys of five phases, every output real.
+- [Domain packs, end to end](packs-end-to-end.md) — Install a pack, upgrade it, take it off.
+- [Tutorial](tutorial.md) — The long-form version on a pack, with the reasoning at each step.
 <!-- csda:endcards -->
 
 The tutorial is deliberately one file: it is a narrative, not a set of tasks.

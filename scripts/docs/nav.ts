@@ -295,6 +295,11 @@ export const NAV: readonly NavSection[] = [
         blurb: "Install requirements a pilot already proved, or package your own.",
       },
       {
+        slug: "packs-end-to-end",
+        label: "Domain packs, end to end",
+        blurb: "Install a pack, upgrade it to a new version, and take it off again.",
+      },
+      {
         slug: "alm",
         label: "Jira, Azure Boards, GitHub",
         blurb: "Mirror requirements onto a board without letting the board define them.",
@@ -307,11 +312,6 @@ export const NAV: readonly NavSection[] = [
     summary: "Longer reads, setups and the reasons behind the design.",
     entries: [
       {
-        slug: "walkthrough",
-        label: "Walkthrough",
-        blurb: "The whole loop end to end, in one sitting.",
-      },
-      {
         slug: "tutorial",
         label: "Tutorial: Smart Parking",
         blurb: "A complete worked example, from a blank folder to a delivered requirement.",
@@ -322,19 +322,9 @@ export const NAV: readonly NavSection[] = [
         blurb: "Claude, Aider, Cursor or a three-line wrapper — and the two things that bite.",
       },
       {
-        slug: "bootstrap-prompt",
-        label: "Bootstrap prompt",
-        blurb: "The prompt that turns an idea into a first specification.",
-      },
-      {
         slug: "how-to",
         label: "How-to guides",
         blurb: "Short answers to specific questions.",
-      },
-      {
-        slug: "deployment",
-        label: "Deployment",
-        blurb: "How specgate's own docs site, npm package and container image are published.",
       },
       {
         slug: "supply-chain",
@@ -343,8 +333,8 @@ export const NAV: readonly NavSection[] = [
       },
       {
         slug: "release-process",
-        label: "Release process",
-        blurb: "How a version is cut, and what support it gets.",
+        label: "Releases & deployment",
+        blurb: "How a version is cut and published to npm, Docker and the docs site.",
       },
       {
         slug: "articles/specs-that-cannot-lie",
