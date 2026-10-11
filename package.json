@@ -85,6 +85,8 @@
     "docs:agent-contract:check": "node dist/scripts/gen_agent_contract.js --check",
     "docs:terminal": "node dist/scripts/docs/record-terminal.js",
     "docs:terminal:check": "node dist/scripts/docs/record-terminal.js --check",
+    "docs:journey": "node dist/scripts/docs/record-journey.js",
+    "docs:journey:check": "node dist/scripts/docs/record-journey.js --check",
     "sbom": "npm sbom --sbom-format cyclonedx > sbom.cyclonedx.json",
     "licenses": "npm run sbom && node dist/scripts/license_check.js --sbom sbom.cyclonedx.json"
   },

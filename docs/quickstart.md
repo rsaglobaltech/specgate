@@ -1,8 +1,9 @@
 # Quickstart — you just cloned a spec-driven repo
 
-> 5 minutes. For a developer **joining** an existing spec-driven project — not
-> scaffolding a new one. For the full build-from-scratch walkthrough see the
-> [tutorial](tutorial.md).
+> 5 minutes. For a developer **joining** a project that already uses Specgate.
+> Setting it up yourself? Start a [new project from scratch](start/scratch-1-install.md)
+> or [adopt an existing one](start/existing-1-adopt.md) — both are on
+> [Getting started](getting-started.md).
 
 ## 0. Prerequisites
 
