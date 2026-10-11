@@ -1,6 +1,6 @@
 /**
- * The landing page's behaviour: reveal on scroll, the journey switch and the
- * recording tabs.
+ * The landing page's behaviour: reveal on scroll, the journey switch, the
+ * journey's pillars and the recording tabs.
  *
  * Every piece is an enhancement. Without JavaScript both journeys are on the
  * page one after the other, the three recordings are three transcripts, and
@@ -70,6 +70,38 @@
     });
     var start = /existing|adopt/.test(window.location.hash) ? 1 : 0;
     select(start);
+  });
+
+  // ── Journey pillars ───────────────────────────────────────────────────────
+  //
+  // On a wide screen the five phases are pillars, and the chosen one opens
+  // below them; the stylesheet hides the others' bodies. On a phone every body
+  // stays open, so the buttons only record which one was chosen.
+  var wide = window.matchMedia ? window.matchMedia("(min-width: 1000px)") : { matches: false };
+  document.querySelectorAll(".jn__track").forEach(function (track) {
+    var phases = Array.prototype.slice.call(track.querySelectorAll(".jn__phase"));
+    var current = 0;
+    function choose(i) {
+      current = i;
+      phases.forEach(function (phase, n) {
+        var on = n === i;
+        phase.classList.toggle("is-active", on);
+        var pick = phase.querySelector(".jn__pick");
+        if (pick) pick.setAttribute("aria-expanded", on || !wide.matches ? "true" : "false");
+      });
+    }
+    if (wide.addEventListener)
+      wide.addEventListener("change", function () {
+        choose(current);
+      });
+    phases.forEach(function (phase, i) {
+      var pick = phase.querySelector(".jn__pick");
+      if (pick)
+        pick.addEventListener("click", function () {
+          choose(i);
+        });
+    });
+    choose(0);
   });
 
   // ── Recording tabs ────────────────────────────────────────────────────────
