@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.17.10] — 2026-10-11
+
 ### Added
 
 - **`done REQ-a REQ-b …` closes several requirements with one run of the
