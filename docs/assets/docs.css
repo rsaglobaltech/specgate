@@ -459,12 +459,15 @@ a:hover { text-decoration: underline; }
 .prose h1 {
   margin: 0 0 var(--space-6);
   font-family: var(--display);
-  font-weight: 800;
+  font-weight: 700;
   font-size: clamp(2.3rem, 1.6rem + 2.6vw, 3.6rem);
   line-height: 1;
   letter-spacing: -0.035em;
   text-wrap: balance;
 }
+/* Code in a heading reads as a word in it, not as a block beside it. */
+.prose :is(h1, h2, h3) code { font-size: 0.72em; padding: 0.05em 0.35em; vertical-align: 0.08em; }
+
 /* A section opens with an orange tick on a hairline — the rule the whole site
  * draws under its headings, and the only ornament it allows itself. */
 .prose h2 {

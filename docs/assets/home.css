@@ -47,7 +47,7 @@
 .ed-h2 {
   margin: 0;
   font-family: var(--display);
-  font-weight: 800;
+  font-weight: 700;
   font-size: clamp(1.9rem, 1.35rem + 2vw, 2.9rem);
   line-height: 1.02;
   letter-spacing: -0.035em;
