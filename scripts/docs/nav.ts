@@ -43,12 +43,64 @@ export const NAV: readonly NavSection[] = [
   {
     title: "Start",
     icon: "rocket",
-    summary: "Ten minutes from nothing to your first requirement through the gate.",
+    summary:
+      "Two journeys of five phases — from scratch, or on code you already have — every output recorded from the CLI.",
     entries: [
       {
         slug: "getting-started",
-        label: "Quickstart — 10 minutes",
-        blurb: "Install, scaffold a project, and run the gate for the first time.",
+        label: "Start here — pick your path",
+        blurb:
+          "Starting from scratch, or bringing code you already have? Both journeys at a glance.",
+      },
+      {
+        slug: "start/scratch-1-install",
+        label: "From scratch · 1 Install",
+        blurb: "Create the project with your own tools, set Specgate up, run the gate once.",
+      },
+      {
+        slug: "start/scratch-2-specify",
+        label: "From scratch · 2 Specify",
+        blurb: "The brief becomes a draft per module, checked by `draft --check`, then archived.",
+      },
+      {
+        slug: "start/scratch-3-build",
+        label: "From scratch · 3 Build",
+        blurb: "The first requirement, test first — by hand or handed to the harness.",
+      },
+      {
+        slug: "start/scratch-4-prove",
+        label: "From scratch · 4 Prove",
+        blurb: "`done` closes it only through the gate; `check` and `report` show where it stands.",
+      },
+      {
+        slug: "start/scratch-5-every-day",
+        label: "From scratch · 5 Every day",
+        blurb: "The gate in CI and the five-command loop.",
+      },
+      {
+        slug: "start/existing-1-adopt",
+        label: "Existing project · 1 Adopt",
+        blurb: "`onboard` and `init` on a working codebase, touching no code.",
+      },
+      {
+        slug: "start/existing-2-specify",
+        label: "Existing project · 2 Specify",
+        blurb: "One behaviour you rely on, written as a requirement with a real example.",
+      },
+      {
+        slug: "start/existing-3-first-requirement",
+        label: "Existing project · 3 First requirement",
+        blurb: "The test you already have names it; `done` closes it.",
+      },
+      {
+        slug: "start/existing-4-ci",
+        label: "Existing project · 4 CI",
+        blurb: "The gate on every pull request, without fixing the past first.",
+      },
+      {
+        slug: "start/existing-5-every-day",
+        label: "Existing project · 5 Every day",
+        blurb: "One behaviour per bug fix, one module at a time.",
       },
       {
         slug: "quickstart",
@@ -159,6 +211,11 @@ export const NAV: readonly NavSection[] = [
         label: "Worked example: brownfield adoption",
         blurb:
           "An illustration — invented company, constructed numbers — of the workflow end to end.",
+      },
+      {
+        slug: "vs-openspec",
+        label: "Specgate or OpenSpec",
+        blurb: "Where they differ, where OpenSpec is ahead, and how to use both.",
       },
       {
         slug: "openspec",

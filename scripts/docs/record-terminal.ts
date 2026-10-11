@@ -279,7 +279,7 @@ export function renderFallbackHtml(rec: Recording): string {
 
 // ── Capture ──────────────────────────────────────────────────────────────────
 
-function buildEnv(scratch: string): NodeJS.ProcessEnv {
+export function buildEnv(scratch: string): NodeJS.ProcessEnv {
   const nodeDir = path.dirname(process.execPath);
   return {
     PATH: [path.join(scratch, "bin"), nodeDir, "/usr/bin", "/bin", "/usr/sbin", "/sbin"].join(":"),
@@ -318,20 +318,20 @@ test_cmd: 'node --test test/*.test.js'
 max_attempts: 1
 `;
 
-function run(cwd: string, env: NodeJS.ProcessEnv, argv: string[]): void {
+export function run(cwd: string, env: NodeJS.ProcessEnv, argv: string[]): void {
   const r = spawnSync(argv[0], argv.slice(1), { cwd, env, encoding: "utf8" });
   if (r.status !== 0) {
     throw new Error(`setup failed: ${argv.join(" ")}\n${r.stdout || ""}${r.stderr || ""}`);
   }
 }
 
-function write(file: string, content: string): void {
+export function write(file: string, content: string): void {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, content, "utf8");
 }
 
 /** The `specgate` shim every recording puts on PATH. */
-function prepareBin(scratch: string): void {
+export function prepareBin(scratch: string): void {
   const bin = path.join(scratch, "bin");
   fs.mkdirSync(bin, { recursive: true });
   fs.mkdirSync(path.join(scratch, "tmp"), { recursive: true });
@@ -383,7 +383,7 @@ function projectSetup(scratch: string, env: NodeJS.ProcessEnv): void {
   run(project, env, ["git", "commit", "-qm", "initial: specs and the pack"]);
 }
 
-function gitInit(project: string, env: NodeJS.ProcessEnv): void {
+export function gitInit(project: string, env: NodeJS.ProcessEnv): void {
   run(project, env, ["git", "init", "-q", "-b", "main", "."]);
   run(project, env, ["git", "config", "user.name", "csda demo"]);
   run(project, env, ["git", "config", "user.email", "demo@example.invalid"]);
@@ -391,7 +391,7 @@ function gitInit(project: string, env: NodeJS.ProcessEnv): void {
 
 // ── The court-bookings project: the brief and gate recordings ───────────────
 
-const BRIEF_MD = `---
+export const BRIEF_MD = `---
 product: Court bookings for a tennis club
 surfaces: [api]
 actors:
@@ -406,7 +406,7 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 `;
 
 /** The draft an agent would write. REQ-004 invents a fee the brief never states. */
-function draftSpec(answered: boolean): string {
+export function draftSpec(answered: boolean): string {
   const cancel = answered
     ? `<!-- csda:trace actor=Member kind=functional status="Needs Clarification" -->
 
@@ -469,21 +469,21 @@ ${cancel}
 `;
 }
 
-const ASSUMPTIONS_MD = `# Assumptions
+export const ASSUMPTIONS_MD = `# Assumptions
 
 | # | Assumption | Used in | Why | Status |
 |---|---|---|---|---|
 | A1 | HTTP answers: 201 created, 204 cancelled, 409 taken, reason "court already booked" | REQ-002..REQ-004 | REST convention | confirmed |
 `;
 
-const QUESTIONS_MD = `# Open questions
+export const QUESTIONS_MD = `# Open questions
 
 | # | Question | Blocks | Options seen |
 |---|---|---|---|
 | Q1 | How much is a late cancellation, and how late is late? | REQ-004 | A flat fee · the full hour · nothing in the first season |
 `;
 
-const BOOKINGS_JS = `const bookings = [];
+export const BOOKINGS_JS = `const bookings = [];
 
 function book(member, court, slot) {
   if (bookings.some((b) => b.court === court && b.slot === slot)) {
@@ -496,7 +496,7 @@ function book(member, court, slot) {
 module.exports = { book, list: (member) => bookings.filter((b) => b.member === member) };
 `;
 
-const BOOKINGS_TEST_JS = `const test = require("node:test");
+export const BOOKINGS_TEST_JS = `const test = require("node:test");
 const assert = require("node:assert");
 const { book, list } = require("../src/bookings");
 
