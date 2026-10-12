@@ -20,6 +20,33 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   no compatibility layer: a project on the old format fails `validate` with
   `old_format` and the one-line migration to run.
 
+### Fixed
+
+- **`specgate draft --agent "claude -p"` could never write** (#94): in print
+  mode Claude Code has no permission to edit, so it asked "Want to grant
+  permission…?", exited, and `draft` reported `draft_no_front_matter`. `draft`
+  now adds `--permission-mode acceptEdits` when the command brings no
+  permission flag of its own, and says so. An agent that runs and writes
+  nothing is told apart from a draft with findings, with the likely cause.
+- **After `draft <module> --agent`, the next step was lost** (#96) at the end of
+  the agent's long output. A rule now marks where Specgate takes over, the
+  brief's modules show where each stands, and the next steps are numbered —
+  review, questions, archive, then the next module or `status`.
+
+- **A second `draft <module> --agent` pass redrafted blind** (#98): the agent
+  may only edit, so it cannot run the checker, and its prompt carried the guide
+  but not the findings. It now gets the open findings, with their fixes. On a
+  real run with `claude -p`: 13 findings after the first pass, 0 after the
+  second.
+- **Under `--agent`, the agent asked for permission to run `specgate draft`**
+  (#97), which Specgate runs itself when the agent finishes. The prompt says so.
+
+### Added
+
+- **A bare `specgate` inside a project shows where it stands** — `status`, with
+  its one next command — instead of the list of every command. Outside a
+  project it is still the help.
+
 ## [0.18.0] — 2026-10-11
 
 ### Added

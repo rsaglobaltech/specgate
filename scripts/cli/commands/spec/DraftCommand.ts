@@ -36,7 +36,11 @@ import {
 import { templateDelta } from "../../../../packages/core/src/domain/ChangeTemplates";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
-import { runConfinedAgent } from "../../../draft/confined-agent";
+import {
+  NO_WRITE_HINT,
+  runConfinedAgent,
+  withWritePermission,
+} from "../../../draft/confined-agent";
 import {
   BRIEF_SETUP_FILE,
   BRIEF_SETUP_PASTE,
@@ -368,6 +372,56 @@ export function draftNextCommand(s: ModuleStatus): string {
   return s.state === "ready" ? `specgate change archive ${s.change}` : `specgate draft ${s.module}`;
 }
 
+/** Each module of the brief and where it stands, on one line: `auth ✔ ready · catalog ○ not started`. */
+function briefLine(projectDir: string, brief: string): string | null {
+  const text = readIf(path.resolve(projectDir, brief));
+  const modules = text === undefined ? [] : briefModules(text);
+  if (modules.length < 2) return null;
+  const mark: Record<ModuleState, string> = {
+    archived: "✔ archived",
+    ready: "● ready",
+    drafting: "◐ drafting",
+    "not written": "○ opened",
+    "not started": "○ not started",
+  };
+  const states = modules.map((m) => moduleStatus(projectDir, m, brief));
+  const done = states.filter((s) => s.state === "archived").length;
+  return (
+    states.map((s) => `${s.module} ${mark[s.state]}`).join(" · ") +
+    `   (${done} of ${modules.length} archived)`
+  );
+}
+
+/**
+ * A second `--agent` pass on a draft with findings: the agent cannot run the
+ * checker (it may only edit), so it gets the findings in its prompt — without
+ * them it would redraft blind and leave the same ones behind.
+ */
+function openFindings(projectDir: string, changeId: string, brief: string): string {
+  if (!fs.existsSync(path.join(projectDir, CHANGES, changeId))) return "";
+  const result = draftReport(projectDir, changeId, brief);
+  if ("failure" in result || result.report.status.length === 0) return "";
+  const lines = result.report.status.map(
+    (d: any) => `- ${d.code}: ${d.message}${d.fix ? `\n  fix: ${d.fix}` : ""}`
+  );
+  return (
+    "\n\n---\n\n## The draft already exists. Fix these findings, and only these:\n\n" +
+    lines.join("\n") +
+    "\n"
+  );
+}
+
+/** The first module of the brief, other than this one, not yet archived. */
+function nextModuleAfter(projectDir: string, brief: string, current: string): string | null {
+  const text = readIf(path.resolve(projectDir, brief));
+  if (text === undefined) return null;
+  return (
+    briefModules(text).find(
+      (m) => m !== current && moduleStatus(projectDir, m, brief).state !== "archived"
+    ) || null
+  );
+}
+
 /** `docs/specs/BRIEF-SETUP.md`: the guide an agent follows to propose the front matter. */
 function writeSetupGuide(projectDir: string, brief: string): void {
   const file = path.join(projectDir, BRIEF_SETUP_FILE);
@@ -681,16 +735,21 @@ export class DraftCommand extends BaseCommand {
       .relative(projectDir, path.resolve(projectDir, brief.rel))
       .split(path.sep)
       .join("/");
+    const agent = withWritePermission(opts.agent);
     if (!opts.json) {
       process.stdout.write(
-        `\n  → ${opts.agent}  is proposing the front matter of ${brief.rel}…\n\n`
+        `\n  → ${agent.command}  is proposing the front matter of ${brief.rel}…\n` +
+          (agent.added
+            ? `    (edit permission added: claude -p cannot write the file otherwise)\n`
+            : "") +
+          "\n"
       );
     }
     const run = runConfinedAgent({
       projectDir,
       changeId: "brief",
       allowed: (rel) => rel === own,
-      command: opts.agent,
+      command: agent.command,
       prompt: briefSetupPrompt(briefSetupGuide(brief.rel)),
       showOutput: !opts.json,
     });
@@ -732,7 +791,7 @@ export class DraftCommand extends BaseCommand {
     if (proposed === null) {
       io.fail({ draft: null }, [
         error("draft_no_front_matter", "The agent wrote no front matter.", {
-          fix: "Run `specgate draft` to see the four fields, and write them yourself.",
+          fix: `${NO_WRITE_HINT} Or run \`specgate draft\` to see the four fields, and write them yourself.`,
         }),
       ]);
     }
@@ -864,17 +923,23 @@ export class DraftCommand extends BaseCommand {
     const io = agentIo(opts.json);
     const changeId = `draft-${opts.module}`;
     const guide = readIf(path.join(projectDir, CHANGES, changeId, "DRAFTING.md")) || "";
+    const agent = withWritePermission(opts.agent);
     if (!opts.json) {
       process.stdout.write(
         `\n  ${created.length ? `✔ Draft ${changeId} opened, linked to ${brief}.\n  ` : ""}` +
-          `→ ${opts.agent}  is drafting ${opts.module}…\n\n`
+          `→ ${agent.command}  is drafting ${opts.module}…\n` +
+          (agent.added
+            ? `    (edit permission added: claude -p cannot write the draft otherwise)\n`
+            : "") +
+          "\n"
       );
     }
     const run = runConfinedAgent({
       projectDir,
       changeId,
-      command: opts.agent,
-      prompt: draftingPrompt(opts.module, changeId, guide),
+      command: agent.command,
+      prompt:
+        draftingPrompt(opts.module, changeId, guide) + openFindings(projectDir, changeId, brief),
       showOutput: !opts.json,
     });
     if (run.problem === "no_git") {
@@ -900,7 +965,7 @@ export class DraftCommand extends BaseCommand {
         }),
       ]);
     }
-    this.report(opts, projectDir, brief, run.reverted);
+    this.report(opts, projectDir, brief, run.reverted, true);
   }
 
   /** The checklist on `draft-<module>`, and what comes next. */
@@ -908,11 +973,15 @@ export class DraftCommand extends BaseCommand {
     opts: DraftOptions,
     projectDir: string,
     brief: string,
-    reverted: string[] = []
+    reverted: string[] = [],
+    afterAgent = false
   ): void {
     const io = agentIo(opts.json);
     const changeId = `draft-${opts.module}`;
     const status = moduleStatus(projectDir, opts.module, brief);
+    // The agent's own output is long and ends just above this: a rule marks
+    // where Specgate takes over again, so the next step is not lost in it (#96).
+    if (afterAgent && !opts.json) process.stdout.write(`\n  ${"─".repeat(64)}\n`);
     if (status.state === "not written") {
       io.emit(
         {
@@ -928,9 +997,11 @@ export class DraftCommand extends BaseCommand {
         () =>
           process.stdout.write(
             `\n  specgate draft ${opts.module}  ·  ${brief}\n\n` +
-              "  The draft is still the placeholder. Have your agent write it:\n\n" +
-              `    ${pasteLine(opts.module)}\n\n` +
-              `  or:  specgate draft ${opts.module} --agent "claude -p"\n\n`
+              (afterAgent
+                ? `  ✖  The agent ran, but the draft is still the placeholder.\n     ${NO_WRITE_HINT}\n\n`
+                : "  The draft is still the placeholder. Have your agent write it:\n\n" +
+                  `    ${pasteLine(opts.module)}\n\n` +
+                  `  or:  specgate draft ${opts.module} --agent "claude -p"\n\n`)
           )
       );
       process.exitCode = 1;
@@ -965,18 +1036,37 @@ export class DraftCommand extends BaseCommand {
         const out = process.stdout;
         out.write(`\n  specgate draft ${opts.module}  ·  ${brief}\n\n`);
         writeFindings(report, diags);
+        const dir = `${CHANGES.split(path.sep).join("/")}/${changeId}`;
+        const steps: string[] = [];
         if (errors === 0) {
-          out.write(
-            `${diags.length ? "\n" : ""}  ✔  Ready to review.\n\n` +
-              `  Next  read it with whoever knows the business, answer what you can in\n` +
-              `        questions.md, then  ${next}\n\n`
+          out.write(`${diags.length ? "\n" : ""}  ✔  Ready to review.\n`);
+          steps.push(
+            `Read ${dir}/specs/ with whoever knows the business`,
+            fs.existsSync(path.join(projectDir, CHANGES, changeId, "questions.md"))
+              ? `Answer what you can in ${dir}/questions.md`
+              : `Check ${dir}/assumptions.md, if the agent wrote one`,
+            next
+          );
+          const after = nextModuleAfter(projectDir, brief, opts.module);
+          steps.push(
+            after
+              ? `specgate draft ${after}   — the next module of the brief`
+              : "specgate status   — every module drafted: what to build first"
           );
         } else {
           out.write(
-            `\n  ✖  ${errors} finding(s) to fix. Each says how; DRAFTING.md has the formats.\n` +
-              `  Next  fix them (or ask your agent to), then  ${next}\n\n`
+            `\n  ✖  ${errors} finding(s) to fix. Each says how; DRAFTING.md has the formats.\n`
+          );
+          steps.push(
+            `Fix them, or ask your agent:  specgate draft ${opts.module} --agent "claude -p"`,
+            `${next}   — again, until it says Ready to review`
           );
         }
+        const progress = briefLine(projectDir, brief);
+        if (progress) out.write(`\n  Brief  ${progress}\n`);
+        out.write("\n  What now\n");
+        steps.forEach((s, i) => out.write(`    ${i + 1}. ${s}\n`));
+        out.write("\n");
       }
     );
     process.exitCode = errors === 0 ? 0 : 1;

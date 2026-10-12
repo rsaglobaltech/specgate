@@ -182,7 +182,8 @@ brief is put back and nothing is kept.
 <!-- specgate:out-brief-agent:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft --agent "claude -p"
-  → claude -p  is proposing the front matter of docs/brief.md…
+  → claude -p --permission-mode acceptEdits  is proposing the front matter of docs/brief.md…
+    (edit permission added: claude -p cannot write the file otherwise)
 
 Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to check.
 

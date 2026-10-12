@@ -369,6 +369,10 @@ export const BRIEF_SETUP_PASTE = `Propose the front matter of docs/brief.md: fol
 export function briefSetupPrompt(guide: string): string {
   return [
     `Propose the front matter of docs/brief.md, following the guide below (also saved as ${BRIEF_SETUP_FILE}).`,
+    // #97: the guide says to run `specgate draft`, which is right when it is
+    // pasted into an agent; under --agent the agent may only edit, and asked
+    // the person to approve a command Specgate was about to run anyway.
+    `Specgate runs \`specgate draft\` itself as soon as you finish and shows the person the result: do not run it, and do not ask for permission to.`,
     "",
     "---",
     "",

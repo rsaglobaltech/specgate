@@ -13,7 +13,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { briefModules } = require("../../packages/core/src/domain/DraftChecklist");
-const { agentInvocation } = require("../../scripts/draft/confined-agent");
+const { agentInvocation, withWritePermission } = require("../../scripts/draft/confined-agent");
 const { STEPS } = require("../../scripts/agents/commands");
 const { slashCommandBody } = require("../../scripts/agents/init");
 
@@ -493,4 +493,121 @@ test("/specgate:draft writes only the front matter, then stops for the person", 
   assert.match(body, /never a word below it/);
   assert.match(body, /\*\*stop\*\* and show the front matter to the person/);
   assert.match(body, /specgate draft --new-brief/);
+});
+
+// ── #94 and #96: an agent that cannot write, and what comes after ────────────
+
+function committed(dir) {
+  git(dir, "init", "-q");
+  git(
+    dir,
+    "-c",
+    "user.email=t@t",
+    "-c",
+    "user.name=t",
+    "commit",
+    "-q",
+    "--allow-empty",
+    "-m",
+    "start"
+  );
+}
+
+test("claude -p gets edit permission, unless the command brings its own", () => {
+  assert.deepEqual(withWritePermission("claude -p"), {
+    command: "claude -p --permission-mode acceptEdits",
+    added: true,
+  });
+  assert.equal(withWritePermission("claude --print < {prompt_file}").added, true);
+  for (const own of [
+    "claude -p --permission-mode acceptEdits",
+    "claude -p --allowedTools Edit Write",
+    "claude -p --dangerously-skip-permissions",
+    "claude",
+    "codex exec -",
+    "node agent.js -p",
+  ]) {
+    assert.deepEqual(withWritePermission(own), { command: own, added: false }, own);
+  }
+});
+
+test("an agent that writes nothing is told apart from a draft to fix, with the likely cause", (t) => {
+  const { dir } = project(t);
+  committed(dir);
+  const r = spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", "true"], {
+    cwd: dir,
+    encoding: "utf8",
+  });
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.match(r.stdout, /The agent ran, but the draft is still the placeholder/);
+  assert.match(r.stdout, /--permission-mode acceptEdits/);
+});
+
+test("after the agent, the next steps are numbered and the brief's progress is shown", (t) => {
+  const { dir } = project(t);
+  committed(dir);
+  const stub = path.join(dir, "..", `next-${path.basename(dir)}.js`);
+  fs.writeFileSync(stub, STUB);
+  t.after(() => fs.rmSync(stub, { force: true }));
+  const r = spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", `node ${stub}`], {
+    cwd: dir,
+    encoding: "utf8",
+    env: { ...process.env, DRAFT_TEXT: DRAFT() },
+  });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /─{20}/, "a rule separates the agent's output from Specgate's");
+  assert.match(
+    r.stdout,
+    /Brief {2}bookings ● ready · coupons ○ not started {3}\(0 of 2 archived\)/
+  );
+  assert.match(r.stdout, /What now\n {4}1\. Read docs\/specs\/changes\/draft-bookings\/specs\//);
+  assert.match(r.stdout, /3\. specgate change archive draft-bookings/);
+  assert.match(r.stdout, /4\. specgate draft coupons {3}— the next module of the brief/);
+});
+
+test("a bare specgate inside a project says where it stands; outside, the help", (t) => {
+  const { dir, cli } = project(t, { init: false });
+  fs.writeFileSync(path.join(dir, "package.json"), '{"name":"x","scripts":{"test":"node --test"}}');
+  assert.equal(cli("init", "--no-capabilities").status, 0);
+  const inside = spawnSync(process.execPath, [CLI], { cwd: dir, encoding: "utf8" });
+  assert.match(inside.stdout, /All commands: specgate --help/);
+  assert.match(inside.stdout, /Next {2}specgate draft bookings/);
+  const outside = spawnSync(process.execPath, [CLI], { cwd: os.tmpdir(), encoding: "utf8" });
+  assert.match(outside.stdout, /USAGE/);
+});
+
+test("under --agent the prompt says Specgate checks the result, so the agent does not ask to (#97)", () => {
+  const { draftingPrompt } = require("../../scripts/draft/drafting-guide");
+  const { briefSetupPrompt } = require("../../scripts/draft/brief-setup");
+  for (const prompt of [
+    draftingPrompt("bookings", "draft-bookings", "guide"),
+    briefSetupPrompt("guide"),
+  ]) {
+    assert.match(prompt, /Specgate runs `specgate draft` itself .* do not run it/);
+  }
+});
+
+test("a second --agent pass gets the draft's findings in its prompt", (t) => {
+  const { dir } = project(t);
+  committed(dir);
+  const stub = path.join(dir, "..", `pass-${path.basename(dir)}.js`);
+  fs.writeFileSync(stub, STUB);
+  t.after(() => fs.rmSync(stub, { force: true }));
+  // First pass: a draft with a value the brief never gave (a D6 finding).
+  const first = spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", `node ${stub}`], {
+    cwd: dir,
+    encoding: "utf8",
+    env: { ...process.env, DRAFT_TEXT: DRAFT(" and costs 9 euros") },
+  });
+  assert.equal(first.status, 1, first.stdout + first.stderr);
+  // Second pass: an agent that records its prompt.
+  const seen = path.join(dir, "..", `seen-${path.basename(dir)}.txt`);
+  t.after(() => fs.rmSync(seen, { force: true }));
+  spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", `cat > ${seen}`], {
+    cwd: dir,
+    encoding: "utf8",
+  });
+  const prompt = fs.readFileSync(seen, "utf8");
+  assert.match(prompt, /Fix these findings, and only these/);
+  assert.match(prompt, /D6_unlisted_value/);
 });

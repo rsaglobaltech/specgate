@@ -6,7 +6,7 @@
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-10-11",
+  "recordedAt": "2026-10-12",
   "title": "courts — draft from a brief",
   "cols": 88,
   "streamsMerged": false,
@@ -93,9 +93,9 @@
       "surface": "draft",
       "exit": 1,
       "typeMs": 26,
-      "holdMs": 2230,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 2320,
+      "truncated": true,
+      "omitted": 2,
       "lines": [
         {
           "t": "  specgate draft bookings  ·  docs/brief.md",
@@ -178,7 +178,12 @@
           "s": "out"
         },
         {
-          "t": "  Next  fix them (or ask your agent to), then  specgate draft bookings",
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  What now",
           "c": "out",
           "s": "out"
         }
@@ -275,9 +280,9 @@
       "surface": "draft",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1420,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 1600,
+      "truncated": true,
+      "omitted": 1,
       "lines": [
         {
           "t": "  specgate draft bookings  ·  docs/brief.md",
@@ -310,12 +315,22 @@
           "s": "out"
         },
         {
-          "t": "  Next  read it with whoever knows the business, answer what you can in",
+          "t": "  What now",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "        questions.md, then  specgate change archive draft-bookings",
+          "t": "    1. Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    2. Answer what you can in docs/specs/changes/draft-bookings/questions.md",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    3. specgate change archive draft-bookings",
           "c": "out",
           "s": "out"
         }

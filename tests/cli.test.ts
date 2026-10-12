@@ -19,8 +19,9 @@ function runCli(args, options = {}) {
   });
 }
 
-test("shows the core help with no args", () => {
-  const result = runCli([]);
+test("shows the core help with no args, outside a project", () => {
+  // Inside one, a bare `specgate` is `status` (#96).
+  const result = runCli([], { cwd: os.tmpdir() });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /specgate/);
   assert.doesNotMatch(

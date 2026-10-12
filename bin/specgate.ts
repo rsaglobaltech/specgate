@@ -10,6 +10,7 @@ const packageJson = require(path.join(rootDir, "package.json"));
 const VERSION: string = packageJson.version || "0.0.0";
 import { ICommand } from "../scripts/lib/command";
 import { SURFACE, helpRows, coreHelpRows, hiddenCommandCount } from "../scripts/lib/surface";
+import { findProjectRoot } from "../scripts/lib/project-root";
 
 /** Resolve a registry row's `script` segments to a path under dist/scripts. */
 function resolveScript(segments: string[]): string {
@@ -247,6 +248,14 @@ function runNodeScript(scriptPath: string, args: string[]): void {
 export class CreateSpecDrivenAppCommand implements ICommand {
   public execute(args: string[] = []): void {
     args = args.length ? args : process.argv.slice(2);
+
+    // Inside a project, a bare `specgate` answers "where am I, and what next?"
+    // — the question people have when they type it — rather than the list of
+    // every command (#96). Outside one, the help is the useful answer.
+    if (args.length === 0 && findProjectRoot(process.cwd())) {
+      process.stdout.write(`\n  ${c.dim}All commands: specgate --help${c.reset}\n`);
+      args = ["status"];
+    }
 
     if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
       usage({ all: args.includes("--all") });

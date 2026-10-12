@@ -152,6 +152,8 @@ export function draftingPrompt(module: string, changeId: string, guide: string):
     `(also saved as docs/specs/changes/${changeId}/DRAFTING.md).`,
     `Anything you write outside docs/specs/changes/${changeId}/ is undone afterwards.`,
     "When you finish, say how many requirements you wrote and list the open questions.",
+    // #97: see briefSetupPrompt.
+    `Specgate runs \`specgate draft\` itself as soon as you finish and shows the person the result: do not run it, and do not ask for permission to.`,
     "",
     "---",
     "",
