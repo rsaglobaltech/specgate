@@ -16,16 +16,23 @@ on:
       - 'README.md'
   workflow_dispatch:
 
+# Deployed with GitHub's Pages actions, not to a branch: the repository keeps
+# only `main` and `develop`, and nothing outside them holds the built site.
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: 'docs-gh-pages'
+  group: 'docs-pages'
   cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout
@@ -86,11 +93,11 @@ jobs:
             echo "Wrote CNAME for ${{ vars.SITE_CNAME }}"
           fi
 
-      - name: Deploy site to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./_site
-          force_orphan: true
-          enable_jekyll: false
+          path: ./_site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

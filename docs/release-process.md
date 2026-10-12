@@ -252,7 +252,7 @@ Write the GitHub release notes from the changelog entry, leave an empty
 ## Deployment of the site
 
 `pages.yml` is the one workflow that stays on: the repository is public, so it
-costs no minutes. It deploys to the `gh-pages` branch on every push to `main`
+costs no minutes. It deploys with GitHub's Pages actions (no `gh-pages` branch) on every push to `main`
 that touches any of `docs/**`, `packs/**`, `packages/pack-registry/**`,
 `scripts/docs/**`, `package.json`, `schemas/**`, `.github/workflows/pages.yml`
 or `README.md` — a fix to how the site renders changes no file under `docs/`.
