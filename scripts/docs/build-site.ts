@@ -26,7 +26,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { marked } from "marked";
 
-import { NAV, navEntry, neighbours } from "./nav";
+import { NAV, navEntry, neighbours, journeyOf } from "./nav";
 import { diagrams, inlineDiagrams } from "./blocks";
 import { expandComponents } from "./components";
 import { highlight } from "./highlight";
@@ -189,6 +189,9 @@ function renderMarkdown(
       .split(/\s+/);
     const language = parts[0] || "text";
     const label = parts.slice(1).join(" ");
+    // Output recorded from the CLI (`$ specgate …` first) is drawn as the
+    // terminal it came from, in the CLI's own colours.
+    if (language === "text" && /^\$ /.test(String(text))) return terminalBlock(String(text));
     return (
       `<figure class="code" data-lang="${escapeHtml(language)}">` +
       `<figcaption class="code__head">` +
@@ -221,6 +224,41 @@ function renderMarkdown(
 
 // ── The page shell ───────────────────────────────────────────────────────────
 
+/** One line of recorded output → the class that colours it, as the CLI would. */
+function termClass(line: string): string {
+  const t = line.trim();
+  if (/^\$ /.test(line)) return "prompt";
+  if (/^◆ specgate/.test(t)) return "brand";
+  if (/^(✖|❌)/.test(t)) return "err";
+  if (/^(▲|⚠)/.test(t)) return "warn";
+  if (/^(✔|✅|●)/.test(t) || /^\d+ passed/.test(t)) return "ok";
+  if (/^ℹ/.test(t)) return "info";
+  if (/^(➜|\d+\s+➜)/.test(t)) return "next";
+  if (/─{4,}$/.test(t)) return "section";
+  if (/^\+ /.test(t)) return "added";
+  if (/^(fix:|·|…|[│└↳])/.test(t) || /^\d+\s+[^➜]/.test(t)) return "dim";
+  return "out";
+}
+
+/** A recorded command and its output, as a terminal window. */
+function terminalBlock(text: string): string {
+  const lines = text.replace(/\n$/, "").split("\n");
+  const body = lines
+    .map((l) => {
+      const cls = termClass(l);
+      const html = escapeHtml(l).replace(/(█+)/g, '<span class="t-bar">$1</span>');
+      return `<span class="t-line t-${cls}">${html || " "}</span>`;
+    })
+    .join("\n");
+  return (
+    `<figure class="code code--term" data-lang="text">` +
+    `<figcaption class="code__head"><span class="term-dots" aria-hidden="true"><i></i><i></i><i></i></span>` +
+    `<span class="code__lang">Terminal</span>` +
+    `<button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button>` +
+    `</figcaption><pre><code class="language-text">${body}</code></pre></figure>\n`
+  );
+}
+
 /**
  * The sidebar, from a page that may be nested.
  *
@@ -231,10 +269,20 @@ function renderMarkdown(
 function sidebar(currentSlug: string, up: string): string {
   return NAV.map((section) => {
     const open = section.entries.some((e) => e.slug === currentSlug);
+    let group = "";
     const items = section.entries
       .map((entry) => {
         const active = entry.slug === currentSlug ? ' class="is-active" aria-current="page"' : "";
-        return `<li><a href="${up}${entry.slug}.html"${active}>${escapeHtml(entry.label)}</a></li>`;
+        // A subsection starts where the group changes: a small heading, not a link.
+        const head =
+          entry.group && entry.group !== group
+            ? `<li class="side__sub" role="presentation">${escapeHtml(entry.group)}</li>`
+            : "";
+        group = entry.group || "";
+        const step = entry.step
+          ? `<span class="side__step" aria-hidden="true">${entry.step}</span>`
+          : "";
+        return `${head}<li><a href="${up}${entry.slug}.html"${active}>${step}${escapeHtml(entry.label)}</a></li>`;
       })
       .join("");
     // `open` on the group holding the current page, so a reader always lands
@@ -260,6 +308,35 @@ function breadcrumbs(slug: string, up: string): string {
     `<li>${escapeHtml(section.title)}</li>` +
     `<li aria-current="page">${escapeHtml(entry.label)}</li>` +
     `</ol></nav>`
+  );
+}
+
+/**
+ * `① Install ── ② Specify ── ③ Build …` above a journey page: where you are,
+ * what is behind you, what comes next, and how long this step takes. Generated
+ * from the sidebar's order, so it can never disagree with it.
+ */
+function stepper(slug: string, up: string): string {
+  const steps = journeyOf(slug);
+  if (steps.length === 0) return "";
+  const current = steps.find((e) => e.slug === slug)!;
+  const items = steps
+    .map((e) => {
+      const state = e.step! < current.step! ? "is-done" : e.slug === slug ? "is-current" : "";
+      const aria = e.slug === slug ? ' aria-current="step"' : "";
+      const mark = e.step! < current.step! ? "✓" : String(e.step);
+      return (
+        `<li class="stepper__item ${state}"${aria}><a href="${up}${e.slug}.html">` +
+        `<span class="stepper__n" aria-hidden="true">${mark}</span>` +
+        `<span class="stepper__label">${escapeHtml(e.label)}</span></a></li>`
+      );
+    })
+    .join("");
+  return (
+    `<nav class="stepper" aria-label="${escapeHtml(current.group!)} — step ${current.step} of ${steps.length}">` +
+    `<p class="stepper__head"><span>${escapeHtml(current.group!)}</span>` +
+    `<span>Step ${current.step} of ${steps.length}${current.time ? ` · ${escapeHtml(current.time)}` : ""}</span></p>` +
+    `<ol class="stepper__list">${items}</ol></nav>`
   );
 }
 
@@ -345,6 +422,7 @@ function pageShell(page: Page, version: string): string {
 
   <main class="content" id="content">
     ${breadcrumbs(page.slug, up)}
+    ${stepper(page.slug, up)}
     <article class="prose">
 ${page.html}
     </article>

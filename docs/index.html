@@ -69,8 +69,10 @@
         <a class="ed-btn" href="#projects">See it on six real products</a>
       </p>
       <figure class="code ed-install" data-lang="bash">
-        <figcaption class="code__head"><span class="code__lang">From your plan</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
-        <pre><code class="language-bash">npx @rsaglobaltech/specgate@latest draft</code></pre>
+        <figcaption class="code__head"><span class="code__lang">Start in three commands</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
+        <pre><code class="language-bash">npm install -g @rsaglobaltech/specgate
+specgate init     <span class="tok tok--c"># in your project: touches no code</span>
+specgate          <span class="tok tok--c"># where you stand, and what to run next</span></code></pre>
       </figure>
     </div>
 
@@ -213,13 +215,15 @@
                 <p class="jn__what">Create the project with your own tools — <code>npm init</code>, Spring Initializr, <code>cargo new</code> — then let Specgate set itself up in place. It writes specifications, never application code.</p>
               </div>
               <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ npx @rsaglobaltech/specgate@latest init</span>
-…write spec.md
-…write AGENTS.md
-…write docs/specs/traceability.md
+    + spec.md
+    + AGENTS.md
+    + docs/specs/traceability.md
 <span class="jn__c">$ specgate config set test_cmd &quot;node --test&quot;</span>
 <span class="t-yes">  ✔  test_cmd = node --test</span>
 <span class="jn__c">$ specgate check</span>
-<span class="t-yes">✔  Gate passed — the specification and `node --test`</span></code></pre>
+<span class="t-yes">  ✔  Specification   validate --strict</span>
+<span class="t-yes">  ✔  Tests           node --test</span>
+<span class="t-yes">  ✔  Gate passed</span></code></pre>
               <div class="jn__after">
                 <p class="jn__have"><strong>You now have</strong> a specification, an agent contract every coding agent reads, and a gate that already runs your tests.</p>
                 <a class="jn__more" href="./start/scratch-1-install.html">From scratch · phase 1, step by step →</a>
@@ -238,18 +242,16 @@
                 <p class="jn__what">Save the client's brief — or your own plan — as <code>docs/brief.md</code>. <code>specgate draft</code> explains the four fields it needs on top (your agent can propose them), then names the next module; <code>specgate draft bookings</code> opens it and writes the prompt for your agent. Run it again and it stops on anything the brief never said. What only the client can answer becomes a question, not a guess.</p>
               </div>
               <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate draft</span>
-  Modules
+  Progress  ░░░░░░░░░░  0 of 2 archived
     ○ bookings  not started
-<span class="jn__c">$ specgate draft bookings</span>
-<span class="t-yes">  ✔ Draft draft-bookings opened, linked to docs/brief.md</span>
-    Draft the bookings module: follow …/DRAFTING.md
-<span class="jn__x"># paste that into your agent — or add --agent &quot;claude -p&quot;</span>
-<span class="jn__c">$ specgate draft bookings</span>
+<span class="jn__c">$ specgate draft bookings --agent &quot;claude -p&quot;</span>
 <span class="t-no">  ✖  D6_unlisted_value  SCN-005 states &quot;5&quot;, which is not in the brief</span>
 <span class="jn__x"># the fee becomes a question for the client</span>
-<span class="t-yes">  ✔  Ready to review.</span>
+<span class="jn__c">$ specgate draft bookings</span>
+<span class="t-yes">  ✔  Ready to review</span>
+   3  ➜ specgate change archive draft-bookings
 <span class="jn__c">$ specgate change archive draft-bookings</span>
-<span class="t-yes">  ✔ Archived as 2026-01-01-draft-bookings</span></code></pre>
+<span class="t-yes">  ✔  Archived as 2026-01-01-draft-bookings</span></code></pre>
               <div class="jn__after">
                 <p class="jn__have"><strong>You now have</strong> requirements and Gherkin scenarios a person reviewed, every invented value either sourced or asked about.</p>
                 <a class="jn__more" href="./start/write-the-brief.html">Write the brief, step by step →</a>
@@ -269,10 +271,10 @@
                 <p class="jn__what"><code>specgate status</code> names the single next command to run. Write the test first and name the requirement in it — that mention is the link. Build it by hand, or hand it to the harness: one branch per requirement, and it stops if the gate says no.</p>
               </div>
               <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate status</span>
-  To do
-    REQ-002   A member books a court for one hour
-  Waiting for an answer
-    REQ-004   A member cancels a booking   an answer to Q1
+  To do ──────────────────────────────
+    ○ REQ-002  A member books a court for one hour
+  Waiting for an answer ──────────────
+    ○ REQ-004  A member cancels a booking   an answer to Q1
 <span class="jn__c">$ node --test</span>
 <span class="t-yes">✔ REQ-002 SCN-002: booking a free court lasts one hour</span>
 <span class="jn__c">$ specgate harness run --req REQ-003</span>
@@ -295,12 +297,14 @@
                 <p class="jn__what"><code>done</code> runs the gate for that requirement and marks it Implemented only if it passes. A requirement waiting for the client cannot be closed. <code>report</code> turns it all into one page for the product owner.</p>
               </div>
               <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate done REQ-002</span>
-<span class="t-yes">✔  REQ-002 → Implemented (1 row updated)</span>
+<span class="t-yes">  ✔  Specification   the gate, for REQ-002</span>
+<span class="t-yes">  ✔  REQ-002 → Implemented</span>
 <span class="jn__c">$ specgate done REQ-004</span>
-<span class="t-no">✖  REQ-004 not marked Implemented: REQ-004 is waiting</span>
-   for an answer (Needs Clarification).
+<span class="t-no">  ✖  REQ-004 not marked Implemented: REQ-004 is waiting</span>
+     for an answer (Needs Clarification).
 <span class="jn__c">$ specgate report --out report.html</span>
-📊 Wrote report.html — 25% implemented (1/4).</code></pre>
+<span class="t-yes">  ✔  Wrote report.html</span>
+  █████░░░░░░░░░░░░░░░  1 of 4 implemented</code></pre>
               <div class="jn__after">
                 <p class="jn__have"><strong>You now have</strong> a requirement marked done because a test proved it — and a page that says where the product stands.</p>
                 <a class="jn__more" href="./start/scratch-4-prove.html">From scratch · phase 4, step by step →</a>
@@ -319,12 +323,13 @@
                 <p class="jn__what">Put the gate on every pull request — the specification, then your tests. This is what CI runs, and it is the same command you run locally. From then on the loop is <code>specgate status</code>, <code>specgate new</code>, a test that names the requirement, <code>specgate done</code>, <code>specgate check</code> — by hand, as slash commands, or as MCP tools.</p>
               </div>
               <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci init --provider github</span>
-  write .github/workflows/spec-gate.yml
-<span class="t-yes">  ✅ CI gate installed.</span>
+    + .github/workflows/spec-gate.yml
+<span class="t-yes">  ✔  CI gate installed</span>
 <span class="jn__c">$ specgate new &quot;A member sees which courts are free on a day&quot;</span>
-<span class="t-yes">✔  REQ-005 A member sees which courts are free on a day (Draft)</span>
-<span class="jn__c">$ specgate status</span>
-  Next  specgate done REQ-005  — once a test mentions REQ-005</code></pre>
+<span class="t-yes">  ✔  REQ-005 A member sees which courts are free on a day · Draft</span>
+<span class="jn__c">$ specgate</span>
+  ➜  specgate done REQ-005
+     once a test mentions REQ-005</code></pre>
               <div class="jn__after">
                 <p class="jn__have"><strong>You now have</strong> a gate on every pull request, and a loop small enough to remember.</p>
                 <a class="jn__more" href="./start/scratch-5-every-day.html">From scratch · phase 5, step by step →</a>
@@ -355,7 +360,7 @@
   Existing code found (package.json) — adopting this
   repository in place. Nothing in your code is touched.
 <span class="jn__c">$ specgate check</span>
-<span class="t-yes">✔  Gate passed</span></code></pre>
+<span class="t-yes">  ✔  Gate passed</span></code></pre>
               <div class="jn__after">
                 <p class="jn__have"><strong>You now have</strong> a specification seeded from your own layout, an agent contract, and a green gate over the tests you already had.</p>
                 <a class="jn__more" href="./start/existing-1-adopt.html">Existing project · phase 1, step by step →</a>
@@ -374,7 +379,7 @@
                 <p class="jn__what">Don't back-fill everything. Pick one behaviour your users depend on and write it as a requirement with a real example — the numbers your code already produces.</p>
               </div>
               <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate new &quot;An invoice total is rounded to the cent&quot;</span>
-<span class="t-yes">✔  REQ-004 An invoice total is rounded to the cent (Draft)</span>
+<span class="t-yes">  ✔  REQ-004 An invoice total is rounded to the cent · Draft</span>
 <span class="jn__c">$ cat features/an-invoice-total-is-rounded-to.feature</span>
   @REQ-004 @SCN-002
   Scenario: Three lines at 21% VAT
@@ -398,11 +403,11 @@
                 <p class="jn__what"><code>done</code> refuses while nothing proves it. Name the requirement in the test you already have — that is the whole link — and run it again. It marks it Implemented only if it passes.</p>
               </div>
               <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate done REQ-004</span>
-  [TDD-1] Test artifact is TBD but status is &#x27;Implemented&#x27;
-<span class="t-no">✖  REQ-004 not marked Implemented: validation failed.</span>
+<span class="t-no">  ✖  Specification   the gate, for REQ-004</span>
+     [TDD-1] Test artifact is TBD but status is &#x27;Implemented&#x27;
 <span class="jn__x">test(&quot;REQ-004: three lines at 21% VAT are rounded…&quot;)</span>
 <span class="jn__c">$ specgate done REQ-004</span>
-<span class="t-yes">✔  REQ-004 → Implemented (1 row updated)</span></code></pre>
+<span class="t-yes">  ✔  REQ-004 → Implemented</span></code></pre>
               <div class="jn__after">
                 <p class="jn__have"><strong>You now have</strong> your first requirement proved by a test that already existed.</p>
                 <a class="jn__more" href="./start/existing-3-first-requirement.html">Existing project · phase 3, step by step →</a>
@@ -421,11 +426,11 @@
                 <p class="jn__what">Requirements still in Draft owe nothing yet, so you don't have to fix the past first. This is what CI runs on every pull request: the specification, then your tests.</p>
               </div>
               <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci init --provider github</span>
-  write .github/workflows/spec-gate.yml
+    + .github/workflows/spec-gate.yml
 <span class="jn__c">$ specgate check</span>
-  Strict TDD gate: passed (2 row(s) exempt — still
-  Draft, so not checked)
-<span class="t-yes">✔  Gate passed</span></code></pre>
+<span class="t-yes">  ✔  Specification   validate --strict</span>
+<span class="t-yes">  ✔  Tests           npm test</span>
+<span class="t-yes">  ✔  Gate passed</span></code></pre>
               <div class="jn__after">
                 <p class="jn__have"><strong>You now have</strong> a gate that protects what you have proved and ignores what you haven't written down yet.</p>
                 <a class="jn__more" href="./start/existing-4-ci.html">Existing project · phase 4, step by step →</a>
@@ -444,8 +449,8 @@
                 <p class="jn__what">Every bug fix adds one behaviour; every new module starts with <code>specgate draft &lt;module&gt;</code>. <code>status</code> always says the single next command to run.</p>
               </div>
               <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate status</span>
-  Requirements  4 total · 1 done · 3 pending
-  Next  specgate plan</code></pre>
+  Requirements  █████░░░░░░░░░░░░░░░  1 of 4 done
+  ➜  specgate plan</code></pre>
               <div class="jn__after">
                 <p class="jn__have"><strong>You now have</strong> coverage that grows with the work you were doing anyway.</p>
                 <a class="jn__more" href="./start/existing-5-every-day.html">Existing project · phase 5, step by step →</a>

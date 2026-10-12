@@ -1,11 +1,9 @@
 # From scratch · 1 — Install and set up
 
-**From scratch:** **1 Install** → [2 Specify](scratch-2-specify.md) →
-[3 Build](scratch-3-build.md) → [4 Prove](scratch-4-prove.md) →
-[5 Every day](scratch-5-every-day.md) · about 5 minutes
-
-**Goal:** a new project with Specgate set up, knowing how to run your tests,
+<!-- specgate:goal -->
+**When you finish:** a new project with Specgate set up, knowing how to run your tests,
 and a gate that passes — before there is a single requirement.
+<!-- specgate:endgoal -->
 
 The example is the one the landing page records: court bookings for a tennis
 club, in plain Node. Your stack will differ; the commands will not.

@@ -1,58 +1,97 @@
 # Getting started
 
-**Starting from scratch, or bringing code you already have?**
+Specgate turns what a product must do into requirements, scenarios that pin
+them down, and tests that name them — and refuses to call anything done until
+the test passes. Three things to do, in order.
 
-Specgate works the same way in both cases — requirements, scenarios that
-pin them down, tests that name them, and a gate that refuses "done" until
-the test passes — but the first hour is different. Pick your path; each is
-five short phases, one page each, with every command's real output.
+## 1. Install it
+
+You need **Node.js 22 or later**, and the test runner your project already
+uses (`npm test`, `./mvnw verify`, `pytest`, `go test ./...` — Specgate runs
+it, it does not replace it).
+
+```bash
+npm install -g @rsaglobaltech/specgate     # the command is `specgate`
+specgate --help                            # or, without installing: npx @rsaglobaltech/specgate@latest --help
+```
+
+A coding agent (Claude Code, Codex, Cursor, Copilot, Aider…) is optional. Every
+step works by hand; the agent is a faster pair of hands.
+
+## 2. Pick your path
 
 <!-- specgate:cards cols=3 -->
-- [From scratch](start/scratch-1-install.md) — A new product and a client's brief. Install, turn the brief into checked requirements, build the first one, prove it, keep the loop going.
-- [An existing project](start/existing-1-adopt.md) — A codebase that already works. Adopt it without touching a line, write down one behaviour you rely on, close it with the test you already have, gate it in CI.
+- [From scratch](start/scratch-1-install.md) — A new product, maybe a client's brief. Five steps: install, turn the brief into checked requirements, build the first one, prove it, keep the loop going.
+- [An existing project](start/existing-1-adopt.md) — Code that already works. Five steps: adopt it without touching a line, write down one behaviour you rely on, close it with a test you already have, put the gate in CI.
 - [You cloned a spec-driven repo](quickstart.md) — Someone else set it up. Five minutes to see where the project stands and close your first requirement.
 <!-- specgate:endcards -->
 
-**Starting from a plan or a client's brief?** Most projects do. Read
-[Write the brief](start/write-the-brief.md) first: your plan saved as
-`docs/brief.md`, and the four fields Specgate needs at its top — your agent can
-propose them.
+Each path is **five short steps, one page each**. A bar at the top of every
+page shows where you are; every terminal on those pages is real output,
+recorded from the CLI — a check fails the build when a page and the CLI
+disagree.
 
-## The two journeys at a glance
+**Starting from a plan or a client's brief?** Most projects do: read
+[Write the brief](start/write-the-brief.md) after step 1. Your plan goes in
+`docs/brief.md` as it is, and your agent can propose the four fields Specgate
+needs at its top.
 
-| Phase | From scratch | An existing project |
+## 3. Learn the daily loop
+
+Once a project is set up, the day is five commands:
+
+<!-- specgate:steps -->
+### `specgate status` — where you stand
+
+What is left, requirement by requirement, and the one command to run next.
+`specgate` on its own does the same.
+
+### `specgate new "<what it does>"` — one more requirement
+
+Its sentence in `spec.md`, a scenario to fill in, and its row in the matrix.
+
+### A test that names it
+
+Write a test that mentions `REQ-007` — that mention is the link. Nothing to
+declare.
+
+### `specgate done REQ-007` — close it
+
+Marked `Implemented` only if the gate passes for it: the specification, the
+link and your test suite.
+
+### `specgate check` — before a pull request
+
+The whole gate. The same command runs in CI.
+<!-- specgate:endsteps -->
+
+At the foot of `status` sits **Gato**, the cat that keeps the gate. It grows as
+requirements close and falls sick when `check` is red;
+[what it means](start/scratch-5-every-day.md#gato-the-cat-that-keeps-the-gate).
+
+## The two paths side by side
+
+| Step | From scratch | An existing project |
 | --- | --- | --- |
-| 1 | [Install and set up](start/scratch-1-install.md) — `specgate init`, the test command, the first green gate | [Adopt, touching no code](start/existing-1-adopt.md) — `onboard`, `init`, the first green gate |
-| 2 | [Write the brief](start/write-the-brief.md), then [from the brief to a checked spec](start/scratch-2-specify.md) — `specgate draft`, a module at a time, archive | [Write down what you rely on](start/existing-2-specify.md) — `specgate new`, a real scenario |
-| 3 | [Build the first requirement](start/scratch-3-build.md) — test first, by hand or with the harness | [Close the first requirement](start/existing-3-first-requirement.md) — the test you already have names it |
-| 4 | [Prove it](start/scratch-4-prove.md) — `done`, `check`, `report` | [Put the gate in CI](start/existing-4-ci.md) — `ci init`, `check` on every pull request |
-| 5 | [Every day](start/scratch-5-every-day.md) — CI and the five-command loop | [Every day](start/existing-5-every-day.md) — one module at a time |
+| 1 | [Install and set up](start/scratch-1-install.md) | [Adopt, touching no code](start/existing-1-adopt.md) |
+| 2 | [Specify](start/scratch-2-specify.md) — the brief becomes a checked draft, a module at a time | [Specify](start/existing-2-specify.md) — one behaviour you rely on |
+| 3 | [Build](start/scratch-3-build.md) — test first, by hand or with the harness | [First requirement](start/existing-3-first-requirement.md) — the test you have names it |
+| 4 | [Prove](start/scratch-4-prove.md) — `done`, `check`, `report` | [CI](start/existing-4-ci.md) — the gate on every pull request |
+| 5 | [Every day](start/scratch-5-every-day.md) — CI and the loop | [Every day](start/existing-5-every-day.md) — one module at a time |
 
-Every output on those pages is recorded from the CLI by
-`npm run docs:journey`, and a check fails the build when a page and the CLI
-disagree — so what you see is what you will get.
+## Upgrading from 0.18 or earlier?
 
-## What you need
-
-- **Node.js 22 or later.** Specgate has no runtime dependencies.
-- **A test runner your project already uses** — `node --test`, `npm test`,
-  `./mvnw -B verify`, `pytest`, `go test ./...`. Specgate runs it; it does not
-  replace it.
-- **Optionally, a coding agent** — Claude Code, Codex, Cursor, Copilot, Aider
-  and others. Every step works by hand; the agent is a faster pair of hands, and
-  [the harness](harness.md) lets it build requirements unattended.
-
-```bash
-npx @rsaglobaltech/specgate@latest --help    # no install
-npm install -g @rsaglobaltech/specgate       # or install it; the binary is `specgate`
-```
+Since 0.19 everything is called `specgate`: the markers in your specs
+(`<!-- specgate:trace … -->`), the `.specgate/` folder and the `SPECGATE_*`
+variables. A project on the old `csda:` format fails `validate` with
+`old_format` and the command to migrate it, once
+([ADR-0032](specs/adr/0032-one-name-everywhere.md)).
 
 ## Already on OpenSpec?
 
 Keep writing your specs with OpenSpec. `specgate verify` reads `openspec/` in
 place, never writes to it, and fails when an archived change claims a scenario
-no test names — so what OpenSpec calls done is proved. Nothing to migrate:
-[Already on OpenSpec](openspec.md).
+no test names. Nothing to migrate: [Already on OpenSpec](openspec.md).
 
 ## Then
 

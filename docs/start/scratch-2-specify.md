@@ -1,12 +1,10 @@
 # From scratch · 2 — From the brief to a checked spec
 
-**From scratch:** [1 Install](scratch-1-install.md) → **2 Specify** →
-[3 Build](scratch-3-build.md) → [4 Prove](scratch-4-prove.md) →
-[5 Every day](scratch-5-every-day.md) · 20–60 minutes per module
-
-**Goal:** the client's brief becomes requirements and Gherkin scenarios that
+<!-- specgate:goal -->
+**When you finish:** the client's brief becomes requirements and Gherkin scenarios that
 a checklist has read — so nothing in them is invented — and they are merged
 into `spec.md`, one module at a time.
+<!-- specgate:endgoal -->
 
 | Who               | Does what in this phase                                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -106,6 +104,13 @@ The prompt goes to the agent on standard input (a command containing
 the draft folder is undone afterwards — a file you had changed goes back to
 your version, not the last commit — and the draft is checked as soon as it
 finishes.
+
+When the agent is done, a line across the screen marks where Specgate speaks
+again, and the output ends with **What now**: numbered steps, the commands
+highlighted, and where every module of the brief stands
+(`bookings ◐ drafting · coupons ○ not started`). Run `--agent` a second time
+on a draft with findings and the agent gets those findings, with their fixes,
+in its prompt — it does not redraft blind.
 In Claude Code, `specgate agents init` also gives you `/specgate:draft bookings`.
 
 The draft on this page is the one the landing page shows: three requirements,

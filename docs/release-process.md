@@ -15,9 +15,9 @@ a maintainer actually does meanwhile.
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.18.0** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled; not published since Actions were switched off |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled; newest image **0.17.10**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.19.1** is `latest` |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.19.1** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled between releases; newest image **0.19.1**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -25,11 +25,9 @@ a maintainer actually does meanwhile.
 | `specgate-vscode` | VS Code Marketplace | none yet | C7-07 |
 | `@specgate/lsp-server` | npm | none yet | C7-08, blocked on C6-03 |
 
-The two `@rsaglobaltech/specgate` rows are the same coordinate in two
-registries, and that is deliberate: one name to document, one name to type.
-Public npm is the default resolution; a consumer who routes the scope with
-`@rsaglobaltech:registry=https://npm.pkg.github.com` gets the GitHub Packages
-copy instead.
+The two `@rsaglobaltech/specgate` rows are one coordinate in two registries, on
+purpose. Public npm is the default; routing the scope with
+`@rsaglobaltech:registry=https://npm.pkg.github.com` gets the GitHub copy.
 
 ## The Specgate rename — done, and what it left behind
 
@@ -160,17 +158,17 @@ the CLI supports, so getting this backwards fails CI rather than users.
 ## How a release is done today
 
 With Actions switched off, nothing above runs by itself, so the maintainer
-runs the gate and switches on exactly one workflow for exactly one tag. This
-is how 0.18.0 shipped:
+runs the gate and switches on the publish workflows for exactly one tag. This
+is how 0.19.1 shipped:
 
 1. **Run everything the workflows would**, on the release branch:
 
    ```bash
    npm run build && npm run test:all       # the gate publish-npm.yml runs
-   npm run test:unit && npm test
    npm run lint && npm run format:check
    npm run docs:terminal:check && npm run docs:journey:check
    npm run pack:dry-run
+   node e2e/run.mjs                        # the E2E the npm workflow gates on
    ```
 
 2. **Changelog, version, recordings** — steps 1–3 of
@@ -179,10 +177,12 @@ is how 0.18.0 shipped:
 3. **`develop`, then `main`** — merge into `develop`, open the
    `develop → main` pull request, then fast-forward `main` to that exact
    commit with `git push origin "${R}:refs/heads/main"`.
-4. **Publish** — enable the npm workflow, tag, push the tag:
+4. **Publish** — enable the publish workflows, tag, push the tag. All three
+   (`publish-npm.yml`, `publish-github-packages.yml`, `publish-docker.yml`)
+   trigger on the same `v*` tag:
 
    ```bash
-   gh workflow enable publish-npm.yml -R rsaglobaltech/specgate
+   for f in publish-npm publish-github-packages publish-docker; do gh workflow enable $f.yml; done
    git tag -a vX.Y.Z <release-sha> -m "vX.Y.Z"
    git push origin vX.Y.Z
    ```
@@ -194,13 +194,13 @@ is how 0.18.0 shipped:
    ```bash
    npm view @rsaglobaltech/specgate dist-tags     # latest: X.Y.Z
    npx @rsaglobaltech/specgate@X.Y.Z --version
-   gh workflow disable publish-npm.yml -R rsaglobaltech/specgate
+   for f in publish-npm publish-github-packages publish-docker; do gh workflow disable $f.yml; done
    ```
 
-6. **Release notes** — `gh release create vX.Y.Z --notes-file <changelog entry>`.
+   Only npm gates on the E2E (Windows included): 0.19.0 failed it after the
+   other two published, so it shipped as 0.19.1 — a published tag is never rebuilt.
 
-The Docker image and the GitHub Packages copy are not published this way: their
-workflows stay off — see [What gets published](#what-gets-published).
+6. **Release notes** — `gh release create vX.Y.Z --notes-file <changelog entry>`.
 
 ## Pre-releases
 

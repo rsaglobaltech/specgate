@@ -1,12 +1,10 @@
 # Existing project · 2 — Write down what you rely on
 
-**Existing project:** [1 Adopt](existing-1-adopt.md) → **2 Specify** →
-[3 First requirement](existing-3-first-requirement.md) → [4 CI](existing-4-ci.md) →
-[5 Every day](existing-5-every-day.md) · 10 minutes
-
-**Goal:** one behaviour the business already depends on, written as a real
+<!-- specgate:goal -->
+**When you finish:** one behaviour the business already depends on, written as a real
 requirement with a scenario that states a concrete example — the first thing
 the gate can actually hold the code to.
+<!-- specgate:endgoal -->
 
 | Who | Does what in this phase |
 | --- | --- |

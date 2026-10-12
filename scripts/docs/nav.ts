@@ -22,6 +22,16 @@ export interface NavEntry {
   readonly blurb: string;
   /** Optional key into `icons.ts`. Decoration: an unknown name renders nothing. */
   readonly icon?: string;
+  /**
+   * A subsection inside the section: the sidebar draws it as a small heading,
+   * and Previous/Next stay inside it — the last phase of one journey does not
+   * lead into the first phase of the other.
+   */
+  readonly group?: string;
+  /** Its number in a journey; pages that have one get the step indicator. */
+  readonly step?: number;
+  /** How long the step takes, shown in the step indicator. */
+  readonly time?: string;
 }
 
 export interface NavSection {
@@ -48,70 +58,102 @@ export const NAV: readonly NavSection[] = [
     entries: [
       {
         slug: "getting-started",
-        label: "Start here — pick your path",
+        group: "Begin",
+        label: "Pick your path",
         blurb:
           "Starting from scratch, or bringing code you already have? Both journeys at a glance.",
       },
       {
+        slug: "quickstart",
+        group: "Begin",
+        label: "You cloned a spec-driven repo",
+        blurb: "Someone handed you a spec-driven repository. Start here instead.",
+      },
+      {
+        slug: "start/scratch-1-install",
+        group: "From scratch",
+        step: 1,
+        time: "5 min",
+        label: "Install and set up",
+        blurb: "Create the project with your own tools, set Specgate up, run the gate once.",
+      },
+      {
         slug: "start/write-the-brief",
+        group: "From scratch",
         label: "Write the brief",
         blurb:
           "Your plan as docs/brief.md, the four fields on top — or let your agent propose them.",
       },
       {
-        slug: "start/scratch-1-install",
-        label: "From scratch · 1 Install",
-        blurb: "Create the project with your own tools, set Specgate up, run the gate once.",
-      },
-      {
         slug: "start/scratch-2-specify",
-        label: "From scratch · 2 Specify",
+        group: "From scratch",
+        step: 2,
+        time: "20–60 min a module",
+        label: "Specify",
         blurb: "The brief becomes a draft per module, checked by `draft --check`, then archived.",
       },
       {
         slug: "start/scratch-3-build",
-        label: "From scratch · 3 Build",
+        group: "From scratch",
+        step: 3,
+        time: "as long as the code",
+        label: "Build",
         blurb: "The first requirement, test first — by hand or handed to the harness.",
       },
       {
         slug: "start/scratch-4-prove",
-        label: "From scratch · 4 Prove",
+        group: "From scratch",
+        step: 4,
+        time: "2 min",
+        label: "Prove",
         blurb: "`done` closes it only through the gate; `check` and `report` show where it stands.",
       },
       {
         slug: "start/scratch-5-every-day",
-        label: "From scratch · 5 Every day",
-        blurb: "The gate in CI and the five-command loop.",
+        group: "From scratch",
+        step: 5,
+        time: "10 min, once",
+        label: "Every day",
+        blurb: "The gate in CI, the five-command loop, and Gato.",
       },
       {
         slug: "start/existing-1-adopt",
-        label: "Existing project · 1 Adopt",
+        group: "Existing project",
+        step: 1,
+        time: "5 min",
+        label: "Adopt",
         blurb: "`onboard` and `init` on a working codebase, touching no code.",
       },
       {
         slug: "start/existing-2-specify",
-        label: "Existing project · 2 Specify",
+        group: "Existing project",
+        step: 2,
+        time: "10 min",
+        label: "Specify",
         blurb: "One behaviour you rely on, written as a requirement with a real example.",
       },
       {
         slug: "start/existing-3-first-requirement",
-        label: "Existing project · 3 First requirement",
+        group: "Existing project",
+        step: 3,
+        time: "5 min",
+        label: "First requirement",
         blurb: "The test you already have names it; `done` closes it.",
       },
       {
         slug: "start/existing-4-ci",
-        label: "Existing project · 4 CI",
+        group: "Existing project",
+        step: 4,
+        time: "10 min",
+        label: "CI",
         blurb: "The gate on every pull request, without fixing the past first.",
       },
       {
         slug: "start/existing-5-every-day",
-        label: "Existing project · 5 Every day",
+        group: "Existing project",
+        step: 5,
+        label: "Every day",
         blurb: "One behaviour per bug fix, one module at a time.",
-      },
-      {
-        slug: "quickstart",
-        label: "You cloned a repo",
-        blurb: "Someone handed you a spec-driven repository. Start here instead.",
       },
     ],
   },
@@ -359,10 +401,23 @@ export function navEntry(slug: string): NavEntry | null {
   return null;
 }
 
-/** What comes before and after this page, for the footer links. */
+/**
+ * What comes before and after this page, for the footer links. A page in a
+ * group stays inside it: Next on a journey's last phase is nothing, not the
+ * other journey's first.
+ */
 export function neighbours(slug: string): { prev: NavEntry | null; next: NavEntry | null } {
   const all = NAV.flatMap((section) => section.entries);
-  const at = all.findIndex((entry) => entry.slug === slug);
-  if (at === -1) return { prev: null, next: null };
-  return { prev: all[at - 1] ?? null, next: all[at + 1] ?? null };
+  const entry = all.find((e) => e.slug === slug);
+  if (!entry) return { prev: null, next: null };
+  const scope = entry.group ? all.filter((e) => e.group === entry.group) : all;
+  const at = scope.indexOf(entry);
+  return { prev: scope[at - 1] ?? null, next: scope[at + 1] ?? null };
+}
+
+/** The numbered steps of the journey this page belongs to, or [] when it is in none. */
+export function journeyOf(slug: string): NavEntry[] {
+  const entry = navEntry(slug);
+  if (!entry || !entry.group || !entry.step) return [];
+  return NAV.flatMap((s) => s.entries).filter((e) => e.group === entry.group && e.step);
 }

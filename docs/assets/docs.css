@@ -1105,3 +1105,133 @@ a:hover { text-decoration: underline; }
  * `--from-pack` split as `--` / `from-pack` reads as two things. The table
  * scrolls sideways before a flag is cut. */
 .table-wrap :not(pre) > code { overflow-wrap: normal; }
+
+/* ── Subsections in the sidebar ─────────────────────────────────────────────
+ * "From scratch", "Existing project": a small heading inside a section, and
+ * the phase number in a circle beside each step. */
+.side li.side__sub {
+  margin: var(--space-3) 0 var(--space-1) var(--space-2);
+  padding-left: var(--space-3);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.side li.side__sub:first-child { margin-top: var(--space-1); }
+.side__step {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: var(--space-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  vertical-align: 0.05em;
+}
+.side li a.is-active .side__step { border-color: var(--accent); background: var(--accent); color: var(--bg-raised); }
+
+/* ── The step indicator above a journey page ──────────────────────────────── */
+.stepper {
+  margin: 0 0 var(--space-6);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+}
+.stepper__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.stepper__head span:first-child { color: var(--accent); font-weight: 600; }
+.stepper__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+.stepper__item a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  color: var(--fg-soft);
+  font-size: var(--text-sm);
+  line-height: 1.25;
+  text-decoration: none;
+}
+.stepper__item a:hover { background: var(--bg-soft); color: var(--fg); }
+.stepper__n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.stepper__item.is-done .stepper__n { border-color: var(--green); background: var(--green); color: var(--bg-raised); }
+.stepper__item.is-current a { color: var(--fg); font-weight: 600; background: var(--accent-soft); }
+.stepper__item.is-current .stepper__n { border-color: var(--accent); background: var(--accent); color: var(--bg-raised); }
+.stepper a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Recorded CLI output, drawn as the terminal it came from ───────────────
+ * Dark in both themes on purpose: it is a terminal. Colours are the CLI's own
+ * (scripts/lib/ui.ts), so the page looks like what you will see. */
+.code--term {
+  --term-bg: #15131f;
+  --term-edge: #2a2740;
+  --term-fg: #e6e3f5;
+  border-color: var(--term-edge);
+  background: var(--term-bg);
+}
+.code--term .code__head {
+  background: #1d1a2b;
+  border-bottom-color: var(--term-edge);
+  color: #8b88a6;
+}
+.code--term .code__lang { color: #8b88a6; }
+.code--term .code__copy { color: #b9b6cc; }
+.term-dots { display: inline-flex; gap: 6px; margin-right: var(--space-2); }
+.term-dots i { width: 10px; height: 10px; border-radius: 50%; background: #3a3651; }
+.term-dots i:first-child { background: #f87171; }
+.term-dots i:nth-child(2) { background: #fbbf24; }
+.term-dots i:nth-child(3) { background: #4ade80; }
+.code--term pre { background: var(--term-bg); color: var(--term-fg); }
+.code--term .t-prompt { color: #8b88a6; }
+.code--term .t-brand { color: #a78bfa; font-weight: 600; }
+.code--term .t-err { color: #f87171; }
+.code--term .t-warn { color: #fbbf24; }
+.code--term .t-ok { color: #4ade80; }
+.code--term .t-info { color: #60a5fa; }
+.code--term .t-next { color: #5ecde4; font-weight: 600; }
+.code--term .t-section { color: #cfcbe3; font-weight: 600; }
+.code--term .t-added { color: #86efac; }
+.code--term .t-dim { color: #9a97b2; }
+.code--term .t-bar { color: #a78bfa; }
+
+/* ── "In this phase": what the page gets you, before the steps ──────────── */
+.callout--goal {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+}

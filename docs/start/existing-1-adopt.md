@@ -1,11 +1,9 @@
 # Existing project · 1 — Adopt, touching no code
 
-**Existing project:** **1 Adopt** → [2 Specify](existing-2-specify.md) →
-[3 First requirement](existing-3-first-requirement.md) → [4 CI](existing-4-ci.md) →
-[5 Every day](existing-5-every-day.md) · about 5 minutes
-
-**Goal:** Specgate set up on a codebase that already works, without changing
+<!-- specgate:goal -->
+**When you finish:** Specgate set up on a codebase that already works, without changing
 a line of it, and a gate that passes with your existing tests.
+<!-- specgate:endgoal -->
 
 The example is a small Node invoicing service with two modules
 (`src/invoices`, `src/customers`) and its own tests. Maven, Gradle, Go,

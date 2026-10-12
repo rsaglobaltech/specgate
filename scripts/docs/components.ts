@@ -52,6 +52,7 @@ const CALLOUTS: Record<string, { label: string; icon: string }> = {
   tip: { label: "Tip", icon: "spark" },
   warning: { label: "Warning", icon: "shield" },
   danger: { label: "Careful", icon: "shield" },
+  goal: { label: "In this phase", icon: "rocket" },
 };
 
 function escapeAttr(value: string): string {
@@ -184,6 +185,11 @@ function hash(s: string): number {
 
 // ── steps ────────────────────────────────────────────────────────────────────
 
+/** A step's heading: escaped, with `code` spans kept — a step is often a command. */
+function stepTitle(raw: string): string {
+  return escapeAttr(raw.trim()).replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
 /** Each `### Heading` inside the block becomes a numbered step. */
 function steps(inner: string, slug: string, renderInline: RenderInline): string {
   const chunks = inner.split(/^###\s+(.+)$/gm);
@@ -197,7 +203,7 @@ function steps(inner: string, slug: string, renderInline: RenderInline): string 
     items.push(
       `<li class="steps__step">` +
         `<span class="steps__n" aria-hidden="true">${n}</span>` +
-        `<div class="steps__body"><h3 class="steps__title">${chunks[i].trim()}</h3>` +
+        `<div class="steps__body"><h3 class="steps__title">${stepTitle(chunks[i])}</h3>` +
         `${renderInline(chunks[i + 1])}</div></li>`
     );
   }
