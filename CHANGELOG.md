@@ -33,6 +33,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   brief's modules show where each stands, and the next steps are numbered —
   review, questions, archive, then the next module or `status`.
 
+- **A second `draft <module> --agent` pass redrafted blind** (#98): the agent
+  may only edit, so it cannot run the checker, and its prompt carried the guide
+  but not the findings. It now gets the open findings, with their fixes. On a
+  real run with `claude -p`: 13 findings after the first pass, 0 after the
+  second.
+- **Under `--agent`, the agent asked for permission to run `specgate draft`**
+  (#97), which Specgate runs itself when the agent finishes. The prompt says so.
+
 ### Added
 
 - **A bare `specgate` inside a project shows where it stands** — `status`, with

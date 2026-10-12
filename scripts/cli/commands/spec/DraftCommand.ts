@@ -392,6 +392,25 @@ function briefLine(projectDir: string, brief: string): string | null {
   );
 }
 
+/**
+ * A second `--agent` pass on a draft with findings: the agent cannot run the
+ * checker (it may only edit), so it gets the findings in its prompt — without
+ * them it would redraft blind and leave the same ones behind.
+ */
+function openFindings(projectDir: string, changeId: string, brief: string): string {
+  if (!fs.existsSync(path.join(projectDir, CHANGES, changeId))) return "";
+  const result = draftReport(projectDir, changeId, brief);
+  if ("failure" in result || result.report.status.length === 0) return "";
+  const lines = result.report.status.map(
+    (d: any) => `- ${d.code}: ${d.message}${d.fix ? `\n  fix: ${d.fix}` : ""}`
+  );
+  return (
+    "\n\n---\n\n## The draft already exists. Fix these findings, and only these:\n\n" +
+    lines.join("\n") +
+    "\n"
+  );
+}
+
 /** The first module of the brief, other than this one, not yet archived. */
 function nextModuleAfter(projectDir: string, brief: string, current: string): string | null {
   const text = readIf(path.resolve(projectDir, brief));
@@ -919,7 +938,8 @@ export class DraftCommand extends BaseCommand {
       projectDir,
       changeId,
       command: agent.command,
-      prompt: draftingPrompt(opts.module, changeId, guide),
+      prompt:
+        draftingPrompt(opts.module, changeId, guide) + openFindings(projectDir, changeId, brief),
       showOutput: !opts.json,
     });
     if (run.problem === "no_git") {

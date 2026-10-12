@@ -575,3 +575,39 @@ test("a bare specgate inside a project says where it stands; outside, the help",
   const outside = spawnSync(process.execPath, [CLI], { cwd: os.tmpdir(), encoding: "utf8" });
   assert.match(outside.stdout, /USAGE/);
 });
+
+test("under --agent the prompt says Specgate checks the result, so the agent does not ask to (#97)", () => {
+  const { draftingPrompt } = require("../../scripts/draft/drafting-guide");
+  const { briefSetupPrompt } = require("../../scripts/draft/brief-setup");
+  for (const prompt of [
+    draftingPrompt("bookings", "draft-bookings", "guide"),
+    briefSetupPrompt("guide"),
+  ]) {
+    assert.match(prompt, /Specgate runs `specgate draft` itself .* do not run it/);
+  }
+});
+
+test("a second --agent pass gets the draft's findings in its prompt", (t) => {
+  const { dir } = project(t);
+  committed(dir);
+  const stub = path.join(dir, "..", `pass-${path.basename(dir)}.js`);
+  fs.writeFileSync(stub, STUB);
+  t.after(() => fs.rmSync(stub, { force: true }));
+  // First pass: a draft with a value the brief never gave (a D6 finding).
+  const first = spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", `node ${stub}`], {
+    cwd: dir,
+    encoding: "utf8",
+    env: { ...process.env, DRAFT_TEXT: DRAFT(" and costs 9 euros") },
+  });
+  assert.equal(first.status, 1, first.stdout + first.stderr);
+  // Second pass: an agent that records its prompt.
+  const seen = path.join(dir, "..", `seen-${path.basename(dir)}.txt`);
+  t.after(() => fs.rmSync(seen, { force: true }));
+  spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", `cat > ${seen}`], {
+    cwd: dir,
+    encoding: "utf8",
+  });
+  const prompt = fs.readFileSync(seen, "utf8");
+  assert.match(prompt, /Fix these findings, and only these/);
+  assert.match(prompt, /D6_unlisted_value/);
+});
