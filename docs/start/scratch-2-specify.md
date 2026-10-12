@@ -132,7 +132,10 @@ $ specgate draft bookings
      fix: List it in assumptions.md with SCN-005 (or REQ-004) in its row, or use the value the brief gives.
 
   ✖  5 finding(s) to fix. Each says how; DRAFTING.md has the formats.
-  Next  fix them (or ask your agent to), then  specgate draft bookings
+
+  What now
+    1. Fix them, or ask your agent:  specgate draft bookings --agent "claude -p"
+    2. specgate draft bookings   — again, until it says Ready to review
 ```
 <!-- specgate:out-scratch-draft-check:end -->
 
@@ -158,8 +161,11 @@ $ specgate draft bookings
 
   ✔  Ready to review.
 
-  Next  read it with whoever knows the business, answer what you can in
-        questions.md, then  specgate change archive draft-bookings
+  What now
+    1. Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
+    2. Answer what you can in docs/specs/changes/draft-bookings/questions.md
+    3. specgate change archive draft-bookings
+    4. specgate status   — every module drafted: what to build first
 ```
 <!-- specgate:out-scratch-draft-check-again:end -->
 

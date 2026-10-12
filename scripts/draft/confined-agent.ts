@@ -63,6 +63,27 @@ export function agentInvocation(
     : { command, stdin: true };
 }
 
+/**
+ * `claude -p` cannot write a file without permission, and in print mode there
+ * is nobody to grant it: it answers "Want to grant permission…?" and exits, and
+ * the draft comes back empty (#94). Specgate already undoes every write outside
+ * the draft, so edit permission is safe to give — it is added when the command
+ * carries no permission flag of its own.
+ */
+export function withWritePermission(command: string): { command: string; added: boolean } {
+  const isClaudePrint = /^\s*claude\b/.test(command) && /(^|\s)(-p|--print)(\s|$)/.test(command);
+  const hasOwn =
+    /--permission-mode|--allowedTools|--allowed-tools|--dangerously-skip-permissions/.test(command);
+  return isClaudePrint && !hasOwn
+    ? { command: `${command} --permission-mode acceptEdits`, added: true }
+    : { command, added: false };
+}
+
+/** The fix to suggest when an agent ran and wrote nothing (#94). */
+export const NO_WRITE_HINT =
+  "If the agent asked for permission to write, it had none: give it edit permission " +
+  '(Claude Code: --agent "claude -p --permission-mode acceptEdits"; others: their auto-approve flag).';
+
 export function runConfinedAgent(o: {
   projectDir: string;
   /** Names the run (the prompt file); also the scope unless `allowed` is given. */

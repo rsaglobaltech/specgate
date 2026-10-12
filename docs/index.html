@@ -578,7 +578,9 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
      fix: List it in assumptions.md with SCN-005 (or REQ-004) in its row, or use the value the brief gives.
 
   ✖  5 finding(s) to fix. Each says how; DRAFTING.md has the formats.
-  Next  fix them (or ask your agent to), then  specgate draft bookings
+
+  What now
+… 2 more lines
 
 ~/courts $ git diff -U0 docs/specs/changes/draft-bookings/specs | grep -E '^[-+]' | grep -vE '^(---|[+]{3}) '
 -&lt;!-- specgate:trace actor=Member kind=functional --&gt;
@@ -602,8 +604,11 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 
   ✔  Ready to review.
 
-  Next  read it with whoever knows the business, answer what you can in
-        questions.md, then  specgate change archive draft-bookings
+  What now
+    1. Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
+    2. Answer what you can in docs/specs/changes/draft-bookings/questions.md
+    3. specgate change archive draft-bookings
+… 1 more lines
 
 ~/courts $ specgate change archive draft-bookings
   ✔ Archived as 2026-01-01-draft-bookings

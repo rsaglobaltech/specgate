@@ -9,8 +9,13 @@ That is the whole contract. Everything below is detail.
 
 `specgate draft --agent` is the one place with an easier contract: a command
 without `{prompt_file}` gets the prompt on standard input, so
-`specgate draft curriculum --agent "claude -p"` just works. The harness, which
-runs unattended, always wants the placeholder.
+`specgate draft curriculum --agent "claude -p"` just works. In print mode
+Claude Code cannot write a file without permission, so `draft` adds
+`--permission-mode acceptEdits` when the command carries no permission flag of
+its own — and says so. That is safe there because Specgate undoes every write
+outside the draft. Other agents need their own auto-approve flag; if one runs
+and writes nothing, `draft` says that is the likely cause. The harness, which
+runs unattended, always wants the placeholder and its own allowances (below).
 
 ```bash
 specgate harness run --req REQ-001 --agent "claude -p < {prompt_file}"
