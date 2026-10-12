@@ -509,10 +509,10 @@ export class InitCommand extends BaseCommand {
                 `validate . --strict${testCmd ? ` + ${testCmd}` : ui.muted(" (no test command detected)")}`,
                 8
               )
-              .replace(/^  /, "     ") +
+              .replace(/^ {2}/, "     ") +
             ui
               .kv("agent", ui.muted("not set — that is your choice and your credentials"), 8)
-              .replace(/^  /, "     ") +
+              .replace(/^ {2}/, "     ") +
             ui.steps("Next", [
               "Read .harness/prompt-prefix.md and make it sound like your team",
               ["specgate harness prompt REQ-001", "see it before paying for it"],

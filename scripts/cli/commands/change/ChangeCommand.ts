@@ -982,21 +982,21 @@ function cmdArchive(opts) {
         "\n" +
         ui
           .kv("Specs", `${t.added} added · ${t.modified} modified · ${t.removed} removed`, 14)
-          .replace(/^  /, "    ") +
+          .replace(/^ {2}/, "    ") +
         ui
           .kv(
             "Traceability",
             `${t.traceability.added} row(s) added · ${t.traceability.updated} updated · ${t.traceability.removed} removed`,
             14
           )
-          .replace(/^  /, "    ") +
+          .replace(/^ {2}/, "    ") +
         ui
           .kv(
             "Features",
             `${plan.writes.filter((w) => w.kind === "feature").length} materialised`,
             14
           )
-          .replace(/^  /, "    ") +
+          .replace(/^ {2}/, "    ") +
         // The archived requirements are Draft: they owe nothing yet, so the
         // gate passes. Saying it "will fail until the tests exist" was wrong
         // (#92); what comes next is the queue, or the next module.

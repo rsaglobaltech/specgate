@@ -631,7 +631,7 @@ test("a passing requirement prints no failure block", () => {
     { requirement: "REQ-001", result: "pass", attempts: 1, branch: "harness/REQ-001" },
   ]);
   assert.doesNotMatch(out, /keep-worktrees/);
-  assert.match(out, /✔  REQ-001\s+pass/);
+  assert.match(out, /✔ {2}REQ-001\s+pass/);
 });
 
 test("a single-line error prints without an empty tail or a dangling hint", () => {

@@ -63,8 +63,8 @@ test("doctor passes on a healthy project", () => {
   withProject((dir) => {
     const r = cli("doctor", "--project-dir", dir);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /✔  Node\.js/);
-    assert.match(r.stdout, /✔  SDD structure/);
+    assert.match(r.stdout, /✔ {2}Node\.js/);
+    assert.match(r.stdout, /✔ {2}SDD structure/);
     assert.match(r.stdout, /0 error\(s\)/);
   });
 });
