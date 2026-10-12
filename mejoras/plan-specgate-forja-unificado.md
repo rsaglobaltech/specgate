@@ -13,18 +13,22 @@ Reglas que siguen vigentes: sin GitHub Actions (verificar en local); PRs a
 
 - [x] Specgate: `arch_cmd` en `check`, `done` y el harness (ADR-0028, puntos 1–2):
       no estaba implementado, y la fase A lo necesita
-- [ ] `specgate init` en carpeta vacía ofrece "generar el proyecto con forja"
+- [x] `specgate init` en carpeta vacía ofrece "generar el proyecto con forja"
       (`npx @rsaglobaltech/forja@<pin> init`) y adopta el resultado; el
-      esqueleto propio se queda para stacks que forja no cubre
-- [ ] `specgate add usecase|entity|port` delega en `forja add` si hay
-      `forja.config.json`; si no, dice qué falta
-- [ ] forja: `forja doctor --arch` (solo la regla de imports del core, código
-      de salida) y el proyecto generado fija `arch_cmd` (Node: `forja doctor
-      --arch`; Java: el test de ArchUnit)
+      esqueleto propio se queda para stacks que forja no cubre — `init --forja`
+      y la pregunta interactiva; `SPECGATE_FORJA_CMD` para un forja local
+- [x] `specgate add usecase|entity|port` delega en `forja add` si hay
+      `forja.config.json`; si no, dice qué falta (`add_needs_forja`)
+- [x] forja: el proyecto generado trae `npm run arch` (Node: script sin
+      dependencias con la regla del core; Java: solo el test de ArchUnit) y la
+      instalación fija `arch_cmd` (forja #10). Sin `forja doctor --arch`: así
+      el proyecto no depende de forja en runtime
 - [ ] `specgate` a secas y `status` muestran también el siguiente paso de forja
       (p. ej. "añade el caso de uso: specgate add usecase …")
-- [ ] Tests con un forja falso; comprobación de release con el forja real en
-      una carpeta vacía (node, spring, quarkus)
+- [x] Tests con un forja falso (unitarios + journey E2E); probado con el forja
+      real en una carpeta vacía (node)
+- [ ] Publicar: forja 1.0 en npm y Specgate 0.20 (el pin `@1` no resuelve hasta
+      entonces; `arch_cmd` necesita 0.20 en los proyectos generados)
 - [ ] Un solo sitio: la documentación de forja como sección "Start a new
       project" del sitio de Specgate; el sitio de forja apunta allí
 

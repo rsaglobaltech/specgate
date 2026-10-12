@@ -137,5 +137,7 @@ test("the short help is the daily loop and nothing else", () => {
   const shown = [...help.matchAll(/^\s{4}\S+\s{2}(\w+)\s{2,}/gm)].map((m) => m[1]);
   // `draft` joined `init` under START HERE: most projects begin from a plan,
   // and the user, starting from one, could not find the way in (#94).
-  assert.deepEqual(shown, ["init", "draft", "status", "new", "check", "done"], help);
+  // `add` joined the daily loop with ADR-0033: Specgate is the front door to
+  // forja, and adding a use case is a daily step in a forja project.
+  assert.deepEqual(shown, ["init", "draft", "status", "new", "add", "check", "done"], help);
 });

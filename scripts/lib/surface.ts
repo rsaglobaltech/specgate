@@ -393,6 +393,26 @@ export const SURFACE: Command[] = [
     json: { key: "requirement", gate: false, args: "<title>" },
   },
   {
+    // ADR-0033: the generator behind the one front door. `forja add usecase`
+    // runs `specgate new`, so the contract can change through it.
+    name: "add",
+    editsContract: true,
+    // forja comes through npx and has prompts of its own: not an MCP tool yet.
+    mcp: false,
+    script: ["add.js"],
+    help: {
+      group: "core",
+      icon: "🧩",
+      summary: "In a forja project: a use case, entity or port, with its test and wiring.",
+    },
+    coreHelp: {
+      group: "daily",
+      order: 4,
+      icon: "🧩",
+      summary: "Add a use case where the architecture expects it (forja projects).",
+    },
+  },
+  {
     name: "req",
     script: ["req.js"],
     subcommands: [
