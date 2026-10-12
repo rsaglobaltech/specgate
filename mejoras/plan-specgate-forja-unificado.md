@@ -23,8 +23,10 @@ Reglas que siguen vigentes: sin GitHub Actions (verificar en local); PRs a
       dependencias con la regla del core; Java: solo el test de ArchUnit) y la
       instalación fija `arch_cmd` (forja #10). Sin `forja doctor --arch`: así
       el proyecto no depende de forja en runtime
-- [ ] `specgate` a secas y `status` muestran también el siguiente paso de forja
-      (p. ej. "añade el caso de uso: specgate add usecase …")
+- [x] `specgate` a secas y `status` muestran también el siguiente paso de forja
+      (p. ej. "añade el caso de uso: specgate add usecase …") — en un proyecto
+      forja, el siguiente requisito sin código sugiere
+      `specgate add usecase <module>/<Name> --req REQ-xxx`
 - [x] Tests con un forja falso (unitarios + journey E2E); probado con el forja
       real en una carpeta vacía (node)
 - [ ] Publicar: forja 1.0 en npm y Specgate 0.20 (el pin `@1` no resuelve hasta
