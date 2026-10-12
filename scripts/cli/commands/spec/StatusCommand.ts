@@ -18,6 +18,8 @@ import { isDerivedProject } from "../../../lib/derived-writes";
 
 import { c, sym } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
+import { miniPet, petEnabled } from "../../../pet/pet";
+import { petFor } from "./PetCommand";
 
 export interface StatusOptions {
   projectDir: string;
@@ -189,7 +191,7 @@ export function nextCommandPlain({ items, counts, orphans, derived, brief }: any
   return "specgate check";
 }
 
-function nextReason({ items, counts, orphans, derived, brief }: any): string {
+export function nextReason({ items, counts, orphans, derived, brief }: any): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   if ((items || []).some((it: any) => it.category === "NEEDS_STATUS_UPDATE"))
     return "its test exists; close it through the gate";
@@ -288,6 +290,15 @@ function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []
   }
 
   out(ui.next(nextCommandPlain(summary), nextReason(summary)));
+  // The cat, at the foot of the dashboard: a terminal only — never in a log, a
+  // pipe or CI, where it would be noise — and gone with `config set pet off`.
+  const showPet =
+    process.env.SPECGATE_PET === "1" ||
+    (!!process.stdout.isTTY && !process.env.CI && process.env.SPECGATE_NESTED !== "1");
+  if (showPet && petEnabled(projectDir)) {
+    const view = petFor(projectDir, summary);
+    if (view) out(miniPet(view));
+  }
   // A bare `specgate` shows this screen: say where the rest of the tool is.
   if (process.env.SPECGATE_BARE === "1") out(`  ${ui.muted("All commands: specgate --help")}\n\n`);
 }

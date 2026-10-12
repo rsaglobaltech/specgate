@@ -65,6 +65,7 @@ not run reports an `error` about itself.
 | `specgate check [dir] --json` | `check` | yes |
 | `specgate draft --json` | `draft` | yes |
 | `specgate verify --json` | `verify` | yes |
+| `specgate pet --json` | `pet` | no |
 | `specgate matrix --json` | `matrix` | yes |
 | `specgate validate <dir> --json` | `validation` | yes |
 | `specgate plan --json` | `plan` | no |

@@ -61,6 +61,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **Gato, the cat that keeps the gate** (`specgate pet`). A terminal pet whose
+  state is the project's: it grows from an egg to a crowned legend as
+  requirements close, falls sick on a red `check`, worries over unanswered
+  questions, sleeps when the gate has not run for a week, and keeps a streak of
+  green days. Whatever it says ends with the command `status` gives. A small
+  version sits at the foot of `status` on a terminal — never in a pipe, a log
+  or CI — and `specgate config set pet off` hides it.
+
 - **A bare `specgate` inside a project shows where it stands** — `status`, with
   its one next command — instead of the list of every command. Outside a
   project it is still the help.

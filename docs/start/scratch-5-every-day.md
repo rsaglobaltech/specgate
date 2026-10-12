@@ -112,6 +112,24 @@ its scenario with the real value, remove `status="Needs Clarification"` from
 its `specgate:trace`, and it rejoins the queue: `status` lists it, the harness
 builds it, `done` closes it.
 
+## Gato, the cat that keeps the gate
+
+At the foot of `status`, on your terminal, sits Gato. You don't feed it by hand:
+its state is the project's.
+
+| Gato | Comes from | You look after it with |
+| --- | --- | --- |
+| Grows: egg, kitten, cat, crowned legend | the share of requirements closed | `specgate done` |
+| Healthy, or sick | how the last `specgate check` ended | a green gate |
+| Worried | requirements waiting for an answer | answering `questions.md` |
+| Asleep | no `check` for a week | running `check` |
+| 🔥 streak | days in a row the gate ended green | keeping it green |
+
+Whatever it says ends with the same command `status` gives you. `specgate pet`
+shows the whole cat and its four needs. It never appears in a pipe, a log or
+CI, and `specgate config set pet off` puts it away. The streak lives in
+`.specgate/pet.json`, which git ignores: the cat is yours, not the team's.
+
 ## You're done when…
 
 - `.github/workflows/spec-gate.yml` (or your provider's file) is committed.

@@ -64,6 +64,7 @@ export const c = {
   warn: tone([251, 191, 36], 214, 33), // amber
   note: tone([96, 165, 250], 75, 34), // blue
   muted: tone([148, 163, 184], 247, 90), // slate — secondary text
+  pink: tone([244, 143, 177], 211, 95), // the pet's blush and mouth
   red: tone([248, 113, 113], 203, 31),
   green: tone([74, 222, 128], 78, 32),
   yellow: tone([251, 191, 36], 214, 33),
