@@ -8,6 +8,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.19.1] — 2026-10-12
+
+### Fixed
+
+- **On Windows, output to a log or a pipe printed ASCII symbols** (`v` for `✔`),
+  as if it were an old console window. Only a console window gets ASCII now;
+  a CI log is Unicode text like everywhere else. 0.19.0 was not published to
+  npm because its Windows E2E caught this.
+
 ## [0.19.0] — 2026-10-12
 
 ### Changed — breaking

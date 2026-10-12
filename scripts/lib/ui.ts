@@ -35,7 +35,10 @@ export const COLOR = colorLevel();
 /** Plain symbols where the terminal may not draw Unicode: old Windows consoles, or by request. */
 export const ASCII =
   env.SPECGATE_ASCII === "1" ||
-  (process.platform === "win32" && !env.WT_SESSION && !env.TERM_PROGRAM);
+  // Only an old console window draws them badly. Output to a pipe, a file or a
+  // CI log is text, and Unicode text: CI on Windows has no WT_SESSION, and
+  // printing `v` for `✔` there failed the E2E for 0.19.0.
+  (process.platform === "win32" && !!process.stdout.isTTY && !env.WT_SESSION && !env.TERM_PROGRAM);
 
 const esc = (code: string) => (COLOR ? `\x1b[${code}m` : "");
 
