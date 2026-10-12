@@ -178,6 +178,95 @@ specgate          <span class="tok tok--c"># where you stand, and what to run ne
   </div>
 </section>
 
+<!-- ── Where it fits ────────────────────────────────────────────────────── -->
+<section class="ed-band" id="loop">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <p class="ed-eyebrow">Where it fits</p>
+      <h2 class="ed-h2">The DevOps loop, and the half we own.</h2>
+      <p class="ed-muted lp__lede">Specgate covers the Dev side, from plan to release: what to build,
+         and when it is done. Its sister tool, <a class="ed-link" href="https://rsaglobaltech.github.io/forja/" target="_blank" rel="noreferrer">forja</a>,
+         builds the project that code lands in. Running and watching production stays with your platform;
+         what it learns comes back as a requirement.</p>
+    </div>
+    <figure class="lp" role="img" aria-label="The DevOps loop. Plan, code, test and release are covered by Specgate, build by forja, deploy partly by forja's Dockerfiles; operate and monitor are left to your platform.">
+      <svg class="lp__svg" viewBox="0 0 1000 440" aria-hidden="true">
+        <path class="lp__cross" d="M396 114 L604 326 M396 326 L604 114"/>
+        <circle class="lp__seg lp__seg--sg" cx="290" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-76"/><circle class="lp__seg lp__seg--sg" cx="290" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-51"/><circle class="lp__seg lp__seg--fj" cx="290" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-26"/><circle class="lp__seg lp__seg--sg" cx="290" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-1"/><circle class="lp__seg lp__seg--sg" cx="710" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-51"/><circle class="lp__seg lp__seg--part" cx="710" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-76"/><circle class="lp__seg lp__seg--out" cx="710" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-1"/><circle class="lp__seg lp__seg--out" cx="710" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-26"/>
+        <text class="lp__label lp__label--sg" x="424" y="80">PLAN</text><text class="lp__label lp__label--sg" x="156" y="80">CODE</text><text class="lp__label lp__label--fj" x="156" y="372">BUILD</text><text class="lp__label lp__label--sg" x="424" y="372">TEST</text><text class="lp__label lp__label--sg" x="576" y="80">RELEASE</text><text class="lp__label lp__label--part" x="844" y="80">DEPLOY</text><text class="lp__label lp__label--out" x="844" y="372">OPERATE</text><text class="lp__label lp__label--out" x="576" y="372">MONITOR</text>
+        <text class="lp__core" x="290" y="228">Dev</text>
+        <text class="lp__sub" x="290" y="258">Specgate · forja</text>
+        <text class="lp__core lp__core--ops" x="710" y="228">Ops</text>
+        <text class="lp__sub" x="710" y="258">your platform</text>
+      </svg>
+      <figcaption class="lp__key">
+        <span class="lp__k lp__k--sg">Specgate</span>
+        <span class="lp__k lp__k--fj">forja</span>
+        <span class="lp__k lp__k--part">Partly covered</span>
+        <span class="lp__k lp__k--out">Your platform</span>
+      </figcaption>
+    </figure>
+    <ol class="lp__stages">
+      <li class="lp__stage lp__stage--sg reveal">
+        <span class="lp__chip">Specgate</span>
+        <h3>Plan</h3>
+        <p class="lp__who">Specgate</p>
+        <p>The brief becomes requirements with scenarios. What the brief never said becomes a question, not a guess.</p>
+        <code>specgate draft &lt;module&gt;</code>
+      </li>
+      <li class="lp__stage lp__stage--sg reveal">
+        <span class="lp__chip">Specgate + forja</span>
+        <h3>Code</h3>
+        <p class="lp__who">Specgate harness · forja</p>
+        <p>forja writes each use case where the architecture expects it; the harness gives an agent one requirement per worktree.</p>
+        <code>forja add usecase · specgate harness run</code>
+      </li>
+      <li class="lp__stage lp__stage--fj reveal">
+        <span class="lp__chip">forja</span>
+        <h3>Build</h3>
+        <p class="lp__who">forja</p>
+        <p>A project that builds and boots on the first run: Node monorepo or a Spring Boot / Quarkus API.</p>
+        <code>forja init</code>
+      </li>
+      <li class="lp__stage lp__stage--sg reveal">
+        <span class="lp__chip">Specgate</span>
+        <h3>Test</h3>
+        <p class="lp__who">Specgate · forja</p>
+        <p>Tests from the first commit. A requirement is done only when a test names it and the suite passes.</p>
+        <code>specgate done REQ-007</code>
+      </li>
+      <li class="lp__stage lp__stage--sg reveal">
+        <span class="lp__chip">Specgate</span>
+        <h3>Release</h3>
+        <p class="lp__who">Specgate</p>
+        <p>The same gate before every merge, and a page that says where the product stands.</p>
+        <code>specgate check · report</code>
+      </li>
+      <li class="lp__stage lp__stage--part reveal">
+        <span class="lp__chip">Partly</span>
+        <h3>Deploy</h3>
+        <p class="lp__who">forja</p>
+        <p>Production Dockerfiles for the Java API and the web app. Shipping them is your platform's job.</p>
+        <code>forja init --extras docker</code>
+      </li>
+      <li class="lp__stage lp__stage--out reveal">
+        <span class="lp__chip">Your tools</span>
+        <h3>Operate</h3>
+        <p class="lp__who">Your platform</p>
+        <p>Running it: hosting, scaling, incidents. Neither tool does this, and neither pretends to.</p>
+        <code>—</code>
+      </li>
+      <li class="lp__stage lp__stage--out reveal">
+        <span class="lp__chip">Your tools</span>
+        <h3>Monitor</h3>
+        <p class="lp__who">Your platform</p>
+        <p>Metrics and user feedback. What they reveal comes back as a new requirement, and the loop starts again.</p>
+        <code>specgate new "…"</code>
+      </li>
+    </ol>
+  </div>
+</section>
+
 <!-- ── Your journey ─────────────────────────────────────────────────────── -->
 <section class="ed-band" id="journey">
   <div class="ed-wrap">
