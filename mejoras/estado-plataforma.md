@@ -2,8 +2,8 @@
 
 **Fecha:** 2026-10-12 (tarde) · **Versión publicada:** `0.19.1` (npm
 `@rsaglobaltech/specgate` `latest`, GitHub Packages y `ghcr.io/rsaglobaltech/specgate`)
-· **`main` = `develop` = `06a9c05`** · ramas del repo: solo `main`, `develop` y
-`gh-pages` (la fuente de GitHub Pages: no borrarla)
+· **`main` = `develop` = `06a9c05`** · ramas del repo: solo `main` y `develop`
+(la web se despliega con las acciones de GitHub Pages desde #345; no hay `gh-pages`)
 
 Foto de dónde está todo: Specgate (producto, web, documentación) y agentkit (la
 herramienta privada para el trabajo). Para el backlog vivo,
@@ -24,6 +24,7 @@ herramienta privada para el trabajo). Para el backlog vivo,
 | #338 | **Gato**, la mascota de terminal (`specgate pet`; cara al pie de `status` en TTY; `config set pet off`). Estado en `.specgate/pet.json`, ignorado por git. |
 | #339–#341 | Releases. 0.19.0 no llegó a npm (el E2E de Windows falló por símbolos ASCII en logs de CI); arreglado en **0.19.1**, publicada en los tres registros. |
 | #342 | **Docs de inicio** rediseñados: subsecciones en la barra lateral, indicador de pasos generado, tarjeta "In this phase", salida de terminal en color, Getting started reescrito, landing con tres comandos que funcionan en una carpeta vacía. |
+| #345 | La web se despliega con `actions/deploy-pages` (fuente de Pages: GitHub Actions); `gh-pages` borrada. |
 | #343 | El botón **Copy** de la web no copiaba nada (buscaba el código dentro de su propia cabecera). Verificado en Chrome real contra la web publicada. |
 
 **Pilotos migrados** al formato `specgate:` con 0.19.1 (`validate --strict` y
