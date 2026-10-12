@@ -1,7 +1,9 @@
 # Estado de la plataforma Specgate
 
-**Fecha:** 2026-10-12 · **Versión publicada:** `0.18.0` (npm
-`@rsaglobaltech/specgate`, `latest`) · **`main` = `develop` = `ccf93e9`**
+**Fecha:** 2026-10-12 (tarde) · **Versión publicada:** `0.19.1` (npm
+`@rsaglobaltech/specgate` `latest`, GitHub Packages y `ghcr.io/rsaglobaltech/specgate`)
+· **`main` = `develop` = `06a9c05`** · ramas del repo: solo `main`, `develop` y
+`gh-pages` (la fuente de GitHub Pages: no borrarla)
 
 Foto de dónde está todo: Specgate (producto, web, documentación) y agentkit (la
 herramienta privada para el trabajo). Para el backlog vivo,
@@ -10,11 +12,48 @@ herramienta privada para el trabajo). Para el backlog vivo,
 
 ---
 
+## 0. Lo hecho el 2026-10-12 — 0.19.1, y dónde lo dejamos
+
+**El usuario está probando la herramienta; espera su opinión antes de seguir.**
+
+| PR | Qué |
+| --- | --- |
+| #335 | **Un solo nombre** (ADR-0032): `csda` → `specgate` en todo, también el formato en disco (`specgate:trace`, `.specgate/`, `SPECGATE_*`, `specgate_change_version`), sin capa de compatibilidad. `validate` rechaza el formato viejo con `old_format` y el comando de migración. |
+| #336 | `draft --agent "claude -p"` añade `--permission-mode acceptEdits` (#103); cierre con raya, progreso del brief y pasos "What now" (#105); el prompt no pide ejecutar `draft` (#106); la segunda pasada recibe los hallazgos (#107). `specgate` sin argumentos = `status`. |
+| #337 | **Nuevo aspecto del CLI**: `scripts/lib/ui.ts` (paleta, símbolos, cabecera `◆ specgate · …`, bloque Next, barras, tablas). Todos los comandos del día a día y el harness. Sin dependencias nuevas. |
+| #338 | **Gato**, la mascota de terminal (`specgate pet`; cara al pie de `status` en TTY; `config set pet off`). Estado en `.specgate/pet.json`, ignorado por git. |
+| #339–#341 | Releases. 0.19.0 no llegó a npm (el E2E de Windows falló por símbolos ASCII en logs de CI); arreglado en **0.19.1**, publicada en los tres registros. |
+| #342 | **Docs de inicio** rediseñados: subsecciones en la barra lateral, indicador de pasos generado, tarjeta "In this phase", salida de terminal en color, Getting started reescrito, landing con tres comandos que funcionan en una carpeta vacía. |
+| #343 | El botón **Copy** de la web no copiaba nada (buscaba el código dentro de su propia cabecera). Verificado en Chrome real contra la web publicada. |
+
+**Pilotos migrados** al formato `specgate:` con 0.19.1 (`validate --strict` y
+`check` en verde): fincore, eventtech, healthtech, golden_app, reservas_app,
+credito_tienda, agentkit (devDependency a `^0.19.1` y driver de merge
+`specgate-matrix` donde hacía falta). hie-his-platform: commit local. **Sin
+migrar a propósito:** insurance-ai-platform y specstorm-platform (tienen cambios
+sin commitear del usuario).
+
+**Pendiente, cuando el usuario vuelva:**
+
+1. Su opinión tras usar 0.19.1 (CLI nuevo, Gato, docs).
+2. Si el Copy le sigue fallando tras ⌘⇧R: probar en Safari. Propuesta hecha y
+   no aceptada aún: versionar `docs.js`/`docs.css` con un hash en la URL para
+   que un despliegue no deje la versión vieja en caché 10 minutos.
+3. Comandos sin rediseño a fondo (usan la paleta, sin cabecera ni Next):
+   `pack *`, `specops *`, `alm`, `config`, `studio`, `onboard`.
+4. Los defectos de §7 siguen abiertos; #103–#107 están cerrados.
+
+Las ramas borradas hoy (SHA de cada una) están en
+`~/sandbox/specgate-ramas-borradas-2026-10-12.tsv`.
+
+---
+
 ## 1. Resumen
 
-1. **Producto:** CLI `specgate` 0.18.0, sin dependencias en tiempo de ejecución,
-   licencia MIT, repositorio público `rsaglobaltech/specgate`. Novedad de la
-   0.18: **`specgate draft`**, de un plan o ficha a requisitos, guiado.
+1. **Producto:** CLI `specgate` 0.19.1, sin dependencias en tiempo de ejecución,
+   licencia MIT, repositorio público `rsaglobaltech/specgate`. Novedades de la
+   0.19: un solo nombre, el nuevo aspecto del CLI y Gato (§0); de la 0.18,
+   **`specgate draft`**, de un plan o ficha a requisitos, guiado.
 2. **Probado en seis productos** construidos por un agente desde fichas de
    cliente reales: 229 requisitos entregados, 2 esperando respuesta a propósito.
 3. **Web publicada** en <https://rsaglobaltech.github.io/specgate/> con el
@@ -123,10 +162,12 @@ contraste comprobado, sin animaciones con "reducir movimiento".
 - **GitHub Actions desactivadas** en `rsaglobaltech` desde 2026-10-11 por
   cuota (lista en `~/sandbox/workflows-desactivados.tsv`). **Excepción:**
   `pages.yml` de specgate, siempre activo (repo público).
-- **Release a npm:** reactivar `publish-npm.yml`, etiqueta `vX.Y.Z` sobre
-  `main`, esperar (E2E en tres sistemas + `test:all`, ~4 min), volver a
-  desactivarlo, notas de release desde el changelog. Así salió la 0.18.0.
-  Detalle en `docs/release-process.md` ("Releases & deployment").
+- **Release:** reactivar los tres workflows de publicación (`publish-npm`,
+  `publish-github-packages`, `publish-docker`), etiqueta `vX.Y.Z` sobre `main`,
+  esperar, volver a desactivarlos, notas de release desde el changelog. Así salió
+  la 0.19.1. Correr antes `node e2e/run.mjs` en local. Si la imagen de Docker se
+  cuelga en "Build and push", relanzarla con `gh workflow run publish-docker.yml
+  --ref vX.Y.Z`. Detalle en `docs/release-process.md`.
 - **Sin CI, se verifica en local** antes de cada merge, y se dice en el PR:
 
 ```bash
@@ -136,16 +177,16 @@ npm run docs:terminal:check && npm run docs:journey:check
 node dist/scripts/docs/build-site.js   # escribe _site/; borrarlo después
 ```
 
-Última verificación (2026-10-11, rediseño Monolith): 1417/1417 unitarios,
-66/66 CLI, lint y formato limpios, grabaciones y guías al día, 94 páginas sin
-huérfanas.
+Última verificación (2026-10-12, #343): `test:all` en verde (unitarios, core,
+22 escenarios BDD, MCP, VS Code, LSP, registro, snapshots), lint y formato
+limpios, grabaciones y guías al día; E2E completo 34/34 en la release 0.19.1.
 
 ---
 
 ## 7. Defectos abiertos de Specgate
 
 Detalle en [`specgate-defectos.md`](specgate-defectos.md). Cerrados en 0.18.0:
-#92–#95.
+#92–#95; en 0.19.x: #103–#107 (`draft --agent`, el nombre `csda`).
 
 | #   | Qué                                                                                                 | Dónde           |
 | --- | --------------------------------------------------------------------------------------------------- | --------------- |

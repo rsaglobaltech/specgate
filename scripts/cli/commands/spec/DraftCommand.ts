@@ -1011,7 +1011,7 @@ export class DraftCommand extends BaseCommand {
     const changeId = `draft-${opts.module}`;
     const status = moduleStatus(projectDir, opts.module, brief);
     // The agent's own output is long and ends just above this: a rule marks
-    // where Specgate takes over again, so the next step is not lost in it (#96).
+    // where Specgate takes over again, so the next step is not lost in it (#105).
     if (afterAgent && !opts.json) process.stdout.write(ui.rule());
     if (status.state === "not written") {
       io.emit(
