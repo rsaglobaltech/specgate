@@ -185,6 +185,16 @@ of. It may write **only the top of `docs/brief.md`**. Anything else it writes is
 undone, and if one character of your text below the fields changes, the whole
 brief is put back and nothing is kept.
 
+<!-- specgate:tip -->
+**Claude Code needs permission to write, and Specgate gives it.** In print mode
+(`claude -p`) Claude Code cannot edit a file without asking, and there is
+nobody to answer. So `draft` adds `--permission-mode acceptEdits` when your
+command brings no permission flag of its own, and says so on the next line.
+That is safe here: anything written outside the brief is undone. Another agent
+needs its own auto-approve flag; if it runs and writes nothing, `draft` tells
+you that is the likely cause.
+<!-- specgate:endtip -->
+
 <!-- specgate:out-brief-agent:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft --agent "claude -p"

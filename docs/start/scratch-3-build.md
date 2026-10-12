@@ -1,12 +1,10 @@
 # From scratch · 3 — Build the first requirement
 
-**From scratch:** [1 Install](scratch-1-install.md) → [2 Specify](scratch-2-specify.md) →
-**3 Build** → [4 Prove](scratch-4-prove.md) →
-[5 Every day](scratch-5-every-day.md) · as long as the code takes
-
-**Goal:** REQ-002 — *a member books a court for one hour* — implemented, with a
+<!-- specgate:goal -->
+**When you finish:** REQ-002 — *a member books a court for one hour* — implemented, with a
 test that names it. Two ways: by hand (or with your agent in the chat), or
 handed to the harness, which builds it unattended on its own branch.
+<!-- specgate:endgoal -->
 
 | Who | Does what in this phase |
 | --- | --- |

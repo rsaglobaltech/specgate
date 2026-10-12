@@ -1,12 +1,10 @@
 # Existing project · 5 — Every day
 
-**Existing project:** [1 Adopt](existing-1-adopt.md) → [2 Specify](existing-2-specify.md) →
-[3 First requirement](existing-3-first-requirement.md) → [4 CI](existing-4-ci.md) →
-**5 Every day**
-
-**Goal:** the specification grows with the work you were doing anyway — one
+<!-- specgate:goal -->
+**When you finish:** the specification grows with the work you were doing anyway — one
 behaviour per bug fix, one module per quarter — instead of as a project of
 its own.
+<!-- specgate:endgoal -->
 
 | Who | Does what |
 | --- | --- |
@@ -37,6 +35,12 @@ $ specgate status
      REQ-002's feature file is missing — plan shows which
 ```
 <!-- specgate:out-existing-status-daily:end -->
+
+`specgate` on its own does the same. On your terminal, `status` ends with
+**Gato**, the cat that keeps the gate: it grows as requirements close, falls
+sick when `check` is red, and repeats the next command —
+[what it means](scratch-5-every-day.md#gato-the-cat-that-keeps-the-gate).
+`specgate config set pet off` puts it away.
 
 ## The loop
 

@@ -1,12 +1,10 @@
 # Existing project · 4 — Put the gate in CI
 
-**Existing project:** [1 Adopt](existing-1-adopt.md) → [2 Specify](existing-2-specify.md) →
-[3 First requirement](existing-3-first-requirement.md) → **4 CI** →
-[5 Every day](existing-5-every-day.md) · 10 minutes
-
-**Goal:** every pull request runs the gate, so a requirement marked done can
+<!-- specgate:goal -->
+**When you finish:** every pull request runs the gate, so a requirement marked done can
 never again sit on red code — and adopting it does not ask you to fix the
 past first.
+<!-- specgate:endgoal -->
 
 | Who | Does what in this phase |
 | --- | --- |

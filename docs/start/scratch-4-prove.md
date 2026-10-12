@@ -1,12 +1,10 @@
 # From scratch · 4 — Prove it
 
-**From scratch:** [1 Install](scratch-1-install.md) → [2 Specify](scratch-2-specify.md) →
-[3 Build](scratch-3-build.md) → **4 Prove** →
-[5 Every day](scratch-5-every-day.md) · 2 minutes
-
-**Goal:** REQ-002 marked `Implemented` — which Specgate only does after the
+<!-- specgate:goal -->
+**When you finish:** REQ-002 marked `Implemented` — which Specgate only does after the
 gate has checked it — the whole gate green, and a page that tells anyone
 where the product stands.
+<!-- specgate:endgoal -->
 
 | Who | Does what in this phase |
 | --- | --- |

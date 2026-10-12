@@ -1,11 +1,9 @@
 # Existing project · 3 — Close the first requirement
 
-**Existing project:** [1 Adopt](existing-1-adopt.md) → [2 Specify](existing-2-specify.md) →
-**3 First requirement** → [4 CI](existing-4-ci.md) →
-[5 Every day](existing-5-every-day.md) · 5 minutes
-
-**Goal:** REQ-004 marked `Implemented` — proved by a test you already had,
+<!-- specgate:goal -->
+**When you finish:** REQ-004 marked `Implemented` — proved by a test you already had,
 now naming it.
+<!-- specgate:endgoal -->
 
 | Who | Does what in this phase |
 | --- | --- |

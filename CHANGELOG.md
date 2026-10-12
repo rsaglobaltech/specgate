@@ -8,6 +8,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **The Start section of the documentation reads as two journeys, not a list.**
+  The sidebar has real subsections (Begin · From scratch · Existing project)
+  with numbered steps; every journey page opens with a step indicator — where
+  you are, what is behind you, how long this step takes — and an "In this
+  phase" card; Previous/Next stay inside the journey. Recorded CLI output is
+  drawn as a terminal in the CLI's own colours. Getting started is three
+  things in order: install, pick your path, learn the daily loop. The landing
+  page starts with three commands that work in an empty folder, and its
+  journey snippets show 0.19's output.
+
 ## [0.19.1] — 2026-10-12
 
 ### Fixed

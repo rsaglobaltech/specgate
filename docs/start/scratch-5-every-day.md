@@ -1,11 +1,9 @@
 # From scratch · 5 — Every day
 
-**From scratch:** [1 Install](scratch-1-install.md) → [2 Specify](scratch-2-specify.md) →
-[3 Build](scratch-3-build.md) → [4 Prove](scratch-4-prove.md) →
-**5 Every day** · 10 minutes, once
-
-**Goal:** the gate on every pull request, and a daily loop short enough to
+<!-- specgate:goal -->
+**When you finish:** the gate on every pull request, and a daily loop short enough to
 remember — five commands, none of which asks you to edit a matrix.
+<!-- specgate:endgoal -->
 
 | Who | Does what in this phase |
 | --- | --- |
@@ -44,6 +42,13 @@ next pull request, a requirement marked done with a red test fails the build.
 ```
 specgate status  →  specgate new  →  a test that names the REQ  →  specgate done  →  specgate check
 ```
+
+<!-- specgate:tip -->
+**Lost? Type `specgate` on its own.** Inside a project it shows `status`:
+where everything stands, and the one command to run next. Every command
+ends the same way — a **Next** block with the command alone on its line, so
+you can copy it.
+<!-- specgate:endtip -->
 
 **A new requirement** that came up in a conversation, not in a brief:
 
