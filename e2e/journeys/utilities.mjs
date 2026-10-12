@@ -42,6 +42,24 @@ export default [
     },
   },
   {
+    name: "pet hatches from the first closed requirement and falls sick on a red gate",
+    covers: ["pet"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      const egg = t.json(t.sg(dir, "pet", "--json")).pet;
+      t.expect(egg.stage === "egg", "nothing closed yet: an egg");
+      t.expect(egg.next === "specgate check", "a cat that never saw the gate asks for check");
+      t.sg(dir, "check");
+      const after = t.json(t.sg(dir, "pet", "--json")).pet;
+      t.expect(after.health !== null, "check tells the cat how the gate ended");
+      t.expect(
+        fs.readFileSync(path.join(dir, ".specgate", ".gitignore"), "utf8").includes("pet.json"),
+        "the cat's state stays out of git"
+      );
+    },
+  },
+  {
     name: "fix repairs an orphan feature in a hand-kept matrix, and has nothing to do in a generated one",
     covers: ["fix"],
     run(dir, t) {

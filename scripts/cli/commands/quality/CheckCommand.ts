@@ -15,6 +15,7 @@ import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
+import { recordCheck } from "../../../pet/pet";
 
 const NULL_SHAPE = { check: null };
 
@@ -146,6 +147,7 @@ export class CheckCommand extends BaseCommand {
       }
       if (run.status === 0) continue;
 
+      recordCheck(projectDir, false);
       io.fail(NULL_SHAPE, [
         step.stage === "validate"
           ? error("check_validate_failed", "The gate failed: validate --strict.", {
@@ -175,6 +177,7 @@ export class CheckCommand extends BaseCommand {
           }),
         ]
       : [];
+    recordCheck(projectDir, true);
     io.emit(
       {
         check: {

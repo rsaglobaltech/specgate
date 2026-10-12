@@ -295,6 +295,17 @@ export const SURFACE: Command[] = [
     json: { key: "verify", gate: true },
   },
   {
+    name: "pet",
+    script: ["pet.js"],
+    help: {
+      group: "dx",
+      icon: "🐈",
+      summary: "Gato, the cat that keeps the gate: the project's health as a pet.",
+    },
+    json: { key: "pet", gate: false },
+    mcp: false,
+  },
+  {
     name: "matrix",
     editsContract: true,
     script: ["matrix.js"],
