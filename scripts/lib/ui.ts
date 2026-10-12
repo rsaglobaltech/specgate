@@ -166,7 +166,8 @@ export const warn = (msg: string) => `  ${c.warn}${sym.warn}${c.reset}  ${msg}\n
 export const info = (msg: string) => `  ${c.note}${sym.info}${c.reset}  ${msg}\n`;
 
 /** The way out of a finding, under it: `     fix: …`. */
-export const fix = (msg: string) => `     ${c.muted}fix:${c.reset} ${msg}\n`;
+export const fix = (msg: string) =>
+  `     ${c.muted}fix:${c.reset} ${String(msg).split("\n").join("\n          ")}\n`;
 
 /** A command, as it is drawn everywhere: accent colour, nothing else. */
 export const cmd = (command: string) => `${c.accent}${command}${c.reset}`;

@@ -20,6 +20,7 @@ import {
 } from "../../../../packages/core/src/domain/RequirementRemoval";
 
 import { c } from "../../../lib/ui";
+import * as ui from "../../../lib/ui";
 
 export const COL: Record<string, number> = {
   requirement: 1,
@@ -203,27 +204,25 @@ function cmdList(tracePath: string, io?: any) {
 
   if (reqs.length === 0) {
     process.stdout.write(
-      `\n  ${c.dim}No requirements yet. Add one: specgate req add "…"${c.reset}\n\n`
+      ui.header("req") + ui.info("No requirements yet.") + ui.next('specgate req add "<title>"')
     );
     return 0;
   }
-  process.stdout.write(
-    `\n  ${c.bold}📝 Requirements${c.reset} ${c.dim}(${reqs.length})${c.reset}\n\n`
-  );
+  process.stdout.write(ui.header("req", `${reqs.length} requirement(s)`));
   for (const r of reqs) {
     const meaningful = (v: any) => meaningfulCell(v) !== null;
     process.stdout.write(
-      `    ${c.cyan}${(r.requirement || "").padEnd(9)}${c.reset} ${c.dim}${r.scenarioId || ""}${c.reset}  ${statusColor(r.status)}${r.status || "Draft"}${c.reset}\n`
+      `    ${c.cyan}${ui.pad(r.requirement || "", 9)}${c.reset} ${ui.muted(ui.pad(r.scenarioId || "", 8))}  ${statusColor(r.status)}${r.status || "Draft"}${c.reset}\n`
     );
     if (meaningful(r.featureFile))
-      process.stdout.write(`      ${c.dim}feature: ${r.featureFile}${c.reset}\n`);
+      process.stdout.write(`      ${ui.muted(`feature  ${r.featureFile}`)}\n`);
     if (meaningful(r.testArtifact))
-      process.stdout.write(`      ${c.dim}test:    ${r.testArtifact}${c.reset}\n`);
+      process.stdout.write(`      ${ui.muted(`test     ${r.testArtifact}`)}\n`);
     if (meaningful(r.technicalArtifact))
-      process.stdout.write(`      ${c.dim}code:    ${r.technicalArtifact}${c.reset}\n`);
+      process.stdout.write(`      ${ui.muted(`code     ${r.technicalArtifact}`)}\n`);
   }
   process.stdout.write(
-    `\n  ${c.dim}Next: specgate req link <REQ> --test … · specgate req done <REQ>${c.reset}\n\n`
+    ui.next("specgate req link <REQ> --test <path>", "then specgate done <REQ>")
   );
   return 0;
 }
@@ -320,11 +319,18 @@ export class ReqCommand extends BaseCommand {
       }
 
       process.stdout.write(
-        `${c.green}✔${c.reset}  Added ${c.bold}${result.reqId}${c.reset} ${c.dim}(${result.scenarioId}, status ${status || "Draft"})${c.reset}\n` +
+        ui.header("req add", result.reqId) +
+          ui.ok(
+            `Added ${c.bold}${result.reqId}${c.reset} ${ui.muted(`(${result.scenarioId}, status ${status || "Draft"})`)}`
+          ) +
           (wroteSection
-            ? `   ${c.dim}spec.md: added a draft \`## ${result.reqId}\` section — rewrite the obligation${c.reset}\n`
+            ? ui.fileLine(
+                "changed",
+                "spec.md",
+                `draft ## ${result.reqId} section — rewrite the obligation`
+              )
             : "") +
-          `   ${c.dim}Next: specgate req link ${result.reqId} --feature <path> --test <path>${c.reset}\n`
+          ui.next(`specgate req link ${result.reqId} --feature <path> --test <path>`)
       );
       process.exit(0);
     }
@@ -451,9 +457,7 @@ export class ReqCommand extends BaseCommand {
       const set = Object.keys(fields)
         .map((k) => `${k}=${fields[k]}`)
         .join(", ");
-      process.stdout.write(
-        `${c.green}✔${c.reset}  ${c.bold}${reqId}${c.reset} ${c.dim}updated: ${set}${c.reset}\n`
-      );
+      process.stdout.write(ui.ok(`${c.bold}${reqId}${c.reset} ${ui.muted(`updated: ${set}`)}`));
       process.exit(0);
     }
 

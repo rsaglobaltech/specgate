@@ -91,7 +91,11 @@ specgate report --out report.html
 <!-- specgate:out-scratch-report:begin — generated; edit the source, not this block -->
 ```text
 $ specgate report --out report.html
-📊 Wrote report.html — 25% implemented (1/4).
+  ◆ specgate · report
+
+  ✔  Wrote report.html
+
+  █████░░░░░░░░░░░░░░░  1 of 4 implemented   25%
 ```
 <!-- specgate:out-scratch-report:end -->
 

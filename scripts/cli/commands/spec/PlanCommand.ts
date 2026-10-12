@@ -19,6 +19,7 @@ import { analyseGherkinSource } from "../../../../packages/core/src/domain/Gherk
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
 
 import { c } from "../../../lib/ui";
+import * as ui from "../../../lib/ui";
 
 export interface PlanOptions {
   projectDir: string;
@@ -307,50 +308,54 @@ function emitText(items: PlanItem[], orphans: string[]): void {
   // contradicted itself two lines apart. A report that does that is not read
   // twice.
   const groups: Array<[string, string, string]> = [
-    ["NEEDS_EVERYTHING", "Needs Test + Code", c.red],
-    ["NEEDS_FEATURE", "Needs Feature File", c.red],
-    ["NEEDS_TEST", "Needs Test Artifact (TDD)", c.yellow],
-    ["NEEDS_IMPLEMENTATION", "Needs Implementation", c.cyan],
-    ["NEEDS_STATUS_UPDATE", "Ready to close (its declared test and code exist)", c.green],
-    ["DONE", "Done", c.dim],
+    ["NEEDS_EVERYTHING", "Needs Test + Code", c.bad],
+    ["NEEDS_FEATURE", "Needs Feature File", c.bad],
+    ["NEEDS_TEST", "Needs Test Artifact (TDD)", c.warn],
+    ["NEEDS_IMPLEMENTATION", "Needs Implementation", c.accent],
+    ["NEEDS_STATUS_UPDATE", "Ready to close (its declared test and code exist)", c.ok],
+    ["DONE", "Done", c.muted],
   ];
+
+  const done = (buckets.DONE || []).length;
+  process.stdout.write(ui.header("plan"));
+  process.stdout.write(
+    `  ${c.bold}Requirements${c.reset}  ${ui.progress(done, items.length, "done")}\n`
+  );
+
+  // One line per artefact, `✔` when it is on disk and `○` when it is only declared.
+  const artefact = (label: string, file: string, exists: boolean) =>
+    process.stdout.write(
+      `      ${exists ? ui.state("done") : ui.state("todo")} ${ui.muted(ui.pad(label, 8))}${exists ? file : ui.muted(file)}\n`
+    );
 
   for (const [key, header, color] of groups) {
     const list = buckets[key] || [];
     if (list.length === 0) continue;
-    process.stdout.write(`\n  ${c.bold}${header}${c.reset}\n`);
+    process.stdout.write("\n" + ui.section(header));
     for (const it of list) {
-      const req = it.requirement.padEnd(9);
-      const scn = it.scenario_id ? ` ${c.dim}${it.scenario_id}${c.reset}` : "";
+      const req = ui.pad(it.requirement, 9);
+      const scn = it.scenario_id ? ` ${ui.muted(it.scenario_id)}` : "";
       const blocked =
         it.blocked_by && it.blocked_by.length > 0
-          ? ` ${c.yellow}⛔ blocked by ${it.blocked_by.join(", ")}${c.reset}`
+          ? `  ${c.warn}${ui.sym.warn} blocked by ${it.blocked_by.join(", ")}${c.reset}`
           : "";
       process.stdout.write(`    ${color}${req}${c.reset}${scn}${blocked}\n`);
       if (it.category === "DONE") continue;
-      if (it.feature_file) {
-        const mark = it.feature_exists ? "✓" : "·";
-        process.stdout.write(`      ${c.dim}${mark} feature: ${it.feature_file}${c.reset}\n`);
-      }
-      if (RequirementPlan.isMeaningful(it.test_artifact)) {
-        const mark = it.test_exists ? "✓" : "·";
-        process.stdout.write(`      ${c.dim}${mark} test:    ${it.test_artifact}${c.reset}\n`);
-      }
-      if (RequirementPlan.isMeaningful(it.technical_artifact)) {
-        const mark = it.technical_exists ? "✓" : "·";
-        process.stdout.write(`      ${c.dim}${mark} code:    ${it.technical_artifact}${c.reset}\n`);
-      }
+      if (it.feature_file) artefact("feature", it.feature_file, !!it.feature_exists);
+      if (RequirementPlan.isMeaningful(it.test_artifact))
+        artefact("test", it.test_artifact, !!it.test_exists);
+      if (RequirementPlan.isMeaningful(it.technical_artifact))
+        artefact("code", it.technical_artifact, !!it.technical_exists);
     }
   }
 
   if (orphans && orphans.length > 0) {
-    process.stdout.write(
-      `\n  ${c.bold}${c.red}⚠️  Orphan feature files (on disk, not in traceability.md)${c.reset}\n`
-    );
-    for (const f of orphans) process.stdout.write(`    ${c.red}·${c.reset} ${f}\n`);
-    process.stdout.write(
-      `\n  ${c.dim}Either add a row to docs/specs/traceability.md or delete the file.${c.reset}\n`
-    );
+    process.stdout.write("\n" + ui.section("Orphan feature files"));
+    process.stdout.write(`    ${ui.muted("On disk, not in traceability.md")}\n`);
+    for (const f of orphans) process.stdout.write(ui.fileLine("removed", f));
+    process.stdout.write(ui.next("specgate fix", "adds a row for each — or delete the file"));
+  } else {
+    process.stdout.write("\n");
   }
 }
 

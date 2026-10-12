@@ -169,6 +169,7 @@ export class CiInitCommand extends BaseCommand {
 
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.writeFileSync(dest, rendered, "utf8");
+    process.stdout.write(ui.header("ci init", opts.provider));
     logInfo(`write ${provider.dest}`);
     logInfo("✅ CI gate installed. On every PR/MR the job:");
     logInfo(

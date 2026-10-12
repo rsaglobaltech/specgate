@@ -762,22 +762,22 @@ TESTING: node:test
   ℹ  Domain pack expansion completed.
 
 ~/smart-parking $ specgate plan
-  Needs Test + Code
+  ◆ specgate · plan
+
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 5 done
+
+  Needs Test + Code ──────────────────────────────────────
     REQ-002   SCN-001
-      ✓ feature: `features/multi-tenant/provisioning_a_tenant_emits_tenantprovisioned.feature`
+      ✔ feature `features/multi-tenant/provisioning_a_tenant_emits_tenantprovisioned.feature`
     REQ-001   SCN-002
-      ✓ feature: `features/multi-tenant/cross_tenant_read_attempts_are_rejected.feature`
+      ✔ feature `features/multi-tenant/cross_tenant_read_attempts_are_rejected.feature`
     REQ-003   SCN-003
-      ✓ feature: `features/multi-tenant/exceeding_a_quota_emits_quotaexceeded.feature`
+      ✔ feature `features/multi-tenant/exceeding_a_quota_emits_quotaexceeded.feature`
 
-  Needs Feature File
+  Needs Feature File ─────────────────────────────────────
     REQ-004   -
-      · feature: -
-
-  Needs Test Artifact (TDD)
-    REQ-000   SCN-000
-      ✓ feature: `features/core/health.feature`
-… 1 more lines
+      ○ feature -
+… 5 more lines
 
 ~/smart-parking $ cat harness.config.yaml
 harness_version: 1
@@ -786,15 +786,19 @@ test_cmd: 'node --test test/*.test.js'
 max_attempts: 1
 
 ~/smart-parking $ specgate harness run --req REQ-000
-ℹ️  [harness] Processing 1 requirement(s) from base HEAD.
-ℹ️  [harness] REQ-000: attempt 1/1
+  ◆ specgate · harness run   1 requirement(s) from HEAD
 
-── harness report ──
-  ✅ REQ-000  pass (1 attempt)  → harness/REQ-000
+  ◇  REQ-000   attempt 1/1
 
-  1 passed · 0 failed · 0 skipped
-  Review and merge the harness/* branches you trust.
-ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`
+  Harness report ─────────────────────────────────────────
+  ✔  REQ-000   pass    1 attempt   → harness/REQ-000
+
+  ████████████████████  1 of 1 passed   1 passed · 0 failed · 0 skipped
+  Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — specgate harness report sums them up
+
+  Next ───────────────────────────────────────────────────
+  ➜  git diff HEAD...harness/REQ-000
+     review and merge the harness/* branches you trust
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
  .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 100 ++++++++++++++++++++++++

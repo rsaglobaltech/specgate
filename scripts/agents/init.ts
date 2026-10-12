@@ -20,6 +20,7 @@ import { agentIo, wantsJson, EXIT } from "../lib/agent";
 import { STEPS, PROJECT_RULES } from "./commands";
 
 import { c } from "../lib/ui";
+import * as ui from "../lib/ui";
 
 /**
  * The name every generated agent file uses: `/specgate:apply`,
@@ -532,22 +533,21 @@ export function main(argv) {
     },
     () => {
       const verb = opts.dryRun ? "would write" : "wrote";
-      process.stdout.write(
-        `\n  ${c.bold}agents init${c.reset} ${c.dim}(${opts.tools.join(", ")})${c.reset}\n\n`
-      );
+      process.stdout.write(ui.header("agents init", opts.tools.join(", ")));
       for (const w of written) {
-        process.stdout.write(`    ${c.green}+${c.reset} ${w.path} ${c.dim}${verb}${c.reset}\n`);
+        process.stdout.write(ui.fileLine("added", w.path, opts.dryRun ? verb : ""));
       }
       for (const s of skipped) {
-        process.stdout.write(`    ${c.dim}· ${s.path} — exists, skipped${c.reset}\n`);
+        process.stdout.write(`    ${ui.muted(`= ${s.path}   exists, skipped`)}\n`);
       }
       if (skipped.length > 0) {
-        process.stdout.write(
-          `\n  ${c.dim}Pass --force to overwrite the skipped files.${c.reset}\n`
-        );
+        process.stdout.write(`\n  ${ui.muted("Pass --force to overwrite the skipped files.")}\n`);
       }
       process.stdout.write(
-        `\n  ${c.dim}Next: open your agent and run ${c.reset}/${AGENT_NAMESPACE}:explore${c.dim} (or read AGENTS.md).${c.reset}\n\n`
+        "\n" +
+          ui.section("Next") +
+          `  ${c.cyan}${ui.sym.next}${c.reset}  Open your agent and run ${ui.cmd(`/${AGENT_NAMESPACE}:explore`)}\n` +
+          `     ${ui.muted("or read AGENTS.md")}\n\n`
       );
     }
   );

@@ -1461,7 +1461,7 @@ test("doctor reports a project that has outgrown its declared profile", () => {
   const { projectDir: dir } = initRuntimeProject(['ARCHITECTURE="minimal"']);
 
   const clean = runCli(["doctor", "--project-dir", dir]);
-  assert.match(clean.stdout, /architecture: minimal — matches/);
+  assert.match(clean.stdout, /architecture\s+minimal — matches/);
 
   // The matrix is the signal, not the domain documents: those ship with
   // placeholder rows, so "the file has content" is true from the first minute.

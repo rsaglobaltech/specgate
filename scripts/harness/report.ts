@@ -45,6 +45,7 @@ export { HarnessReportSummary } from "../../packages/core/src/domain/HarnessRepo
 export const FALSE_FAILURES_FILE = ".harness/false-failures.jsonl";
 
 import { c } from "../lib/ui";
+import * as ui from "../lib/ui";
 
 /** Parsed command-line options for this command. */
 export interface HarnessReportOptions {
@@ -173,11 +174,12 @@ function render(summary: HarnessReportSummary): void {
   const label = (text: string) => text.padEnd(26);
   const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%`);
   process.stdout.write(
-    `\n  ${c.bold}📈 harness report${c.reset}  ${c.dim}(${summary.runs} run(s))${c.reset}\n\n` +
+    ui.header("harness report", `${summary.runs} run(s)`) +
+      `  ${ui.progress(summary.passed, summary.requirementsAttempted, "requirements passed")}\n\n` +
       `    ${label("requirements attempted")}${summary.requirementsAttempted}\n` +
-      `    ${c.green}${label("passed")}${c.reset}${summary.passed}\n` +
-      `    ${label("failed")}${summary.failed}\n` +
-      `    ${label("blocked")}${summary.blocked}\n\n` +
+      `    ${c.ok}${label("passed")}${c.reset}${summary.passed}\n` +
+      `    ${c.bad}${label("failed")}${c.reset}${summary.failed}\n` +
+      `    ${c.warn}${label("blocked")}${c.reset}${summary.blocked}\n\n` +
       `    ${c.bold}${label("first attempt worked")}${c.reset}${pct(summary.firstAttemptRate)}` +
       `  ${c.dim}(${summary.firstAttemptPasses} of ${summary.passed} passes)${c.reset}\n` +
       `    ${c.bold}${label("cost per delivered REQ")}${c.reset}` +
@@ -200,10 +202,10 @@ function render(summary: HarnessReportSummary): void {
     // from every attempt, not from each requirement's final result: one that
     // passed on attempt 3 still failed twice, and those two are the interesting
     // ones.
-    process.stdout.write(`\n  ${c.dim}where attempts ended${c.reset}\n`);
+    process.stdout.write("\n" + ui.section("Where attempts ended"));
     for (const s of summary.stages) {
       const label = STAGE_LABELS[s.stage] || s.stage;
-      const mark = s.stage === "pass" ? c.green : c.yellow;
+      const mark = s.stage === "pass" ? c.ok : c.warn;
       process.stdout.write(
         `    ${mark}${String(s.count).padStart(4)}${c.reset}  ${label} ${c.dim}[${s.stage}]${c.reset}\n`
       );
@@ -211,7 +213,7 @@ function render(summary: HarnessReportSummary): void {
   }
 
   if (summary.exhausted.length > 0) {
-    process.stdout.write(`\n  ${c.dim}spent every attempt and delivered nothing${c.reset}\n`);
+    process.stdout.write("\n" + ui.section("Spent every attempt, delivered nothing"));
     for (const r of summary.exhausted.slice(0, 5)) {
       process.stdout.write(
         `    ${c.yellow}${r.requirement.padEnd(10)}${c.reset} ${human(r.durationMs).padStart(8)}` +
@@ -224,7 +226,9 @@ function render(summary: HarnessReportSummary): void {
     const first = summary.timeline[0].startedAt.slice(0, 10);
     const last = summary.timeline[summary.timeline.length - 1].startedAt.slice(0, 10);
     process.stdout.write(
-      `\n  ${c.dim}runs over time${c.reset}\n    ${sparkline(summary.timeline)}` +
+      "\n" +
+        ui.section("Runs over time") +
+        `    ${c.brand}${sparkline(summary.timeline)}${c.reset}` +
         `  ${c.dim}${first} → ${last}${c.reset}\n`
     );
   }
@@ -242,9 +246,9 @@ function render(summary: HarnessReportSummary): void {
   }
 
   if (summary.worst.length > 0) {
-    process.stdout.write(`\n  ${c.dim}slowest${c.reset}\n`);
+    process.stdout.write("\n" + ui.section("Slowest"));
     for (const r of summary.worst) {
-      const mark = r.result === "pass" ? c.green : c.yellow;
+      const mark = r.result === "pass" ? c.ok : c.warn;
       process.stdout.write(
         `    ${mark}${r.requirement.padEnd(10)}${c.reset} ${human(r.durationMs).padStart(8)}` +
           `  ${c.dim}${r.attempts} attempt(s), ${r.result}${c.reset}\n`
@@ -296,7 +300,9 @@ export function main(argv: string[]): void {
   if (runs.length === 0) {
     io.emit({ report: summarise([], []), status: [] }, () => {
       process.stdout.write(
-        `\n  ${c.dim}No runs recorded yet. \`specgate harness run\` writes one per run.${c.reset}\n\n`
+        ui.header("harness report") +
+          ui.info("No runs recorded yet — each harness run writes one.") +
+          ui.next("specgate harness run --dry-run", "see what it would do first")
       );
     });
     process.exit(EXIT.OK);

@@ -18,6 +18,7 @@ import { readDerivationSources } from "../../../../packages/core/src/infrastruct
 import { appendRequirementSection } from "../../../../packages/core/src/domain/SpecSections";
 
 import { c } from "../../../lib/ui";
+import * as ui from "../../../lib/ui";
 
 const NULL_SHAPE = { matrix: null };
 const MATRIX = path.join("docs", "specs", "traceability.md");
@@ -181,8 +182,12 @@ export class MatrixCommand extends BaseCommand {
         },
         () =>
           process.stdout.write(
-            `\n  ${c.dim}This project keeps its matrix by hand.${c.reset}\n` +
-              `  ${c.green}specgate matrix --migrate${c.reset}${c.dim} generates it from spec.md, features and tests instead.${c.reset}\n\n`
+            ui.header("matrix") +
+              ui.info("This project keeps its matrix by hand.") +
+              ui.next(
+                "specgate matrix --migrate",
+                "generates it from spec.md, features and tests instead"
+              )
           )
       );
       return;
@@ -194,14 +199,14 @@ export class MatrixCommand extends BaseCommand {
     if (argv.includes("--check")) {
       if (!stale) {
         io.emit({ matrix: { projectDir, derived: true, stale: false } }, () =>
-          process.stdout.write(`${c.green}✔${c.reset}  The matrix matches its sources.\n`)
+          process.stdout.write(ui.ok("The matrix matches its sources."))
         );
         return;
       }
       const d = diffRows(rowsOf(next), rowsOf(existing || ""));
       if (!io.json) {
-        for (const k of d.missing) process.stderr.write(`  ${c.green}+ ${k}${c.reset}\n`);
-        for (const k of d.extra) process.stderr.write(`  ${c.red}- ${k}${c.reset}\n`);
+        for (const k of d.missing) process.stderr.write(ui.fileLine("added", k));
+        for (const k of d.extra) process.stderr.write(ui.fileLine("removed", k));
       }
       io.fail(NULL_SHAPE, [
         error("matrix_stale", "docs/specs/traceability.md no longer matches its sources.", {
@@ -215,9 +220,13 @@ export class MatrixCommand extends BaseCommand {
     const rows = rowsOf(next).length;
     io.emit({ matrix: { projectDir, derived: true, written: stale && !dryRun, rows } }, () =>
       process.stdout.write(
-        stale
-          ? `${c.green}✔${c.reset}  ${dryRun ? "Would regenerate" : "Regenerated"} docs/specs/traceability.md ${c.dim}(${rows} rows)${c.reset}\n`
-          : `${c.green}✔${c.reset}  The matrix is up to date ${c.dim}(${rows} rows)${c.reset}\n`
+        ui.header("matrix") +
+          (stale
+            ? ui.ok(
+                `${dryRun ? "Would regenerate" : "Regenerated"} docs/specs/traceability.md ${ui.muted(`(${rows} rows)`)}`
+              )
+            : ui.ok(`The matrix is up to date ${ui.muted(`(${rows} rows)`)}`)) +
+          "\n"
       )
     );
   }
@@ -300,9 +309,15 @@ export class MatrixCommand extends BaseCommand {
       },
       () =>
         process.stdout.write(
-          `${c.green}✔${c.reset}  ${dryRun ? "Would migrate" : "Migrated"} ${byReq.size} requirement(s), ${derived.length} row(s) — identical row for row.\n` +
-            `   ${c.dim}spec.md now owns status and explicit links (specgate:trace); the matrix is generated.${c.reset}\n` +
-            `   ${c.dim}Next: commit both files. From now on: specgate new · specgate done · specgate check.${c.reset}\n`
+          ui.header("matrix --migrate") +
+            ui.ok(
+              `${dryRun ? "Would migrate" : "Migrated"} ${byReq.size} requirement(s), ${derived.length} row(s) — identical row for row.`
+            ) +
+            `     ${ui.muted("spec.md now owns status and explicit links (specgate:trace); the matrix is generated.")}\n` +
+            ui.next(
+              "specgate check",
+              "commit both files — from now on: specgate new · specgate done · specgate check"
+            )
         )
     );
   }

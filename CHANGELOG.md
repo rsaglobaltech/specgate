@@ -48,7 +48,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   command alone on a line so it copies clean. `status` and `draft` show progress
   bars; findings read `✖ message` with `fix:` under them; `check` and `done`
   draw one line per stage and print what `validate` and the tests said only
-  when they fail. One palette (`scripts/lib/ui.ts`) replaces twenty copies:
+  when they fail. The harness draws one aligned line per attempt and
+  requirement, a report with a progress bar, and the branch to review as its
+  next step; `harness report` and `harness init` follow the same shapes. One palette (`scripts/lib/ui.ts`) replaces twenty copies:
   truecolor where the terminal has it, 256 or 16 colours where not, none under
   `NO_COLOR` or off a terminal, `FORCE_COLOR` honoured. Symbols are one column
   wide; `SPECGATE_ASCII=1` swaps them for ASCII. Help icons are emoji that

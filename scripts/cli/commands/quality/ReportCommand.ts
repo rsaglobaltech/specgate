@@ -14,6 +14,7 @@ import {
   compareDeclaredValues,
 } from "../../../../packages/core/src";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
+import * as ui from "../../../lib/ui";
 
 const HISTORY_REL = "reports/spec-coverage-history.jsonl";
 const DONE_CATEGORY = "DONE";
@@ -562,8 +563,11 @@ export class ReportCommand extends BaseCommand {
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
       fs.writeFileSync(outPath, output);
       process.stdout.write(
-        `📊 Wrote ${path.relative(projectDir, outPath) || outPath} — ` +
-          `${report.implementedPct}% implemented (${report.implemented}/${report.total}).\n`
+        ui.header("report") +
+          ui.ok(`Wrote ${ui.bold(path.relative(projectDir, outPath) || outPath)}`) +
+          `\n  ${ui.progress(report.implemented, report.total, "implemented")}` +
+          ui.muted(`   ${report.implementedPct}%`) +
+          "\n\n"
       );
     }
     process.exit(0);

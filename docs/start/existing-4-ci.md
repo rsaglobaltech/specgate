@@ -22,6 +22,8 @@ specgate ci init --provider github
 <!-- specgate:out-existing-ci:begin — generated; edit the source, not this block -->
 ```text
 $ specgate ci init --provider github
+  ◆ specgate · ci init   github
+
     + .github/workflows/spec-gate.yml
 
   ✔  CI gate installed. On every PR/MR the job:
