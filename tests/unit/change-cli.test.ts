@@ -22,7 +22,7 @@ const ROOT_DIR = require("node:path").resolve(
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
 function mkProject() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "csda-change-cli-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-change-cli-"));
   fs.writeFileSync(path.join(root, "spec.md"), "# Spec\n", "utf8");
   fs.mkdirSync(path.join(root, "docs", "specs"), { recursive: true });
   fs.writeFileSync(
@@ -69,7 +69,7 @@ El sistema SHALL aplicar un recargo del 20 %.
 - WHEN se calcula la tarifa
 - THEN el importe incluye un recargo del 20 %
 
-<!-- csda:trace uc=UC-007 feature=features/billing/dynamic.feature -->
+<!-- specgate:trace uc=UC-007 feature=features/billing/dynamic.feature -->
 `;
 
 // ── new ───────────────────────────────────────────────────────────────────────
@@ -348,7 +348,7 @@ test("#46/#47: a draft with no feature= and no .feature files gets one per requi
 
 ### Requirement: REQ-143 — No se reserva por encima de los puestos
 
-<!-- csda:trace kind=business-rule -->
+<!-- specgate:trace kind=business-rule -->
 
 El sistema SHALL rechazar una reserva cuando los puestos están llenos.
 
@@ -389,7 +389,7 @@ test("#53: a MODIFIED requirement's feature file gains the scenarios the change 
   try {
     const spec = (scenarios) => `### Requirement: REQ-145 — Agenda del propietario
 
-<!-- csda:trace feature=features/reservas/REQ-145.feature actor=Propietario kind=functional -->
+<!-- specgate:trace feature=features/reservas/REQ-145.feature actor=Propietario kind=functional -->
 
 El sistema SHALL mostrar al propietario las reservas de un día.
 

@@ -19,11 +19,11 @@
  * | Scenario ID, Feature file | scenarios tagged `@REQ-NNN` (their `@SCN-…`), one row each |
  * | Test artifact | test files that mention `REQ-NNN` |
  * | Technical artifact | other source files that mention `REQ-NNN` |
- * | Status | `status=` in the section's `csda:trace` comment — the one owner |
+ * | Status | `status=` in the section's `specgate:trace` comment — the one owner |
  * | anything | an explicit key in that comment wins over what is derived |
  *
  * The comment is the grammar capability specs already use
- * (`<!-- csda:trace status=Implemented test=test/totals.test.js -->`), so
+ * (`<!-- specgate:trace status=Implemented test=test/totals.test.js -->`), so
  * `TraceabilityMatrix.traceRow` turns it into a row exactly as it does there.
  *
  * ## Why the file is still written
@@ -37,7 +37,7 @@
 import { TraceabilityMatrix } from "./TraceabilityMatrix";
 import { buildTraceabilityMarkdown, parseTraceabilityRows } from "./TraceabilityFormat";
 import { parseSpec, parseTraceComment } from "./SpecParser";
-import { csdaTagsByScenario } from "./GherkinTags";
+import { specgateTagsByScenario } from "./GherkinTags";
 
 /** First line of a derived matrix. Its presence is what makes a project derived. */
 export const DERIVED_MARKER =
@@ -59,7 +59,7 @@ export interface DerivationSources {
   readonly tests: ReadonlyArray<SourceFile>;
   /**
    * `docs/specs/capabilities/<cap>/spec.md`, where `change archive` writes
-   * requirements. Their `csda:trace` already maps to a row (`traceRow`); a
+   * requirements. Their `specgate:trace` already maps to a row (`traceRow`); a
    * derived matrix that ignored them would drop every archived change.
    */
   readonly capabilities?: ReadonlyArray<SourceFile>;
@@ -80,10 +80,10 @@ export interface DerivedRequirement {
 // `## REQ-002 — title` in spec.md, or `### Requirement: REQ-002 — title` in a
 // capability spec, where `change archive` writes.
 const SECTION_HEADING = /^(#{2,4})\s+(?:Requirement:\s*)?(REQ-[A-Za-z0-9.]+)\b\s*[—–:-]?\s*(.*)$/;
-const TRACE_LINE = /^\s*<!--\s*csda:trace\b/;
+const TRACE_LINE = /^\s*<!--\s*specgate:trace\b/;
 
 /**
- * `csda:trace` lines no requirement section owns: above the first requirement,
+ * `specgate:trace` lines no requirement section owns: above the first requirement,
  * or under a heading that is not one. Nothing reads them, so a status written
  * there is silently ignored (#79). Line numbers are 1-based.
  */
@@ -145,7 +145,7 @@ function taggedScenarios(
 ): Array<{ scn: string; feature: string }> {
   const out: Array<{ scn: string; feature: string }> = [];
   for (const f of [...features].sort((a, b) => a.path.localeCompare(b.path))) {
-    for (const tags of Object.values(csdaTagsByScenario(f.source))) {
+    for (const tags of Object.values(specgateTagsByScenario(f.source))) {
       if (!tags.includes(`@${id}`)) continue;
       const scn = tags.find((t) => t.startsWith("@SCN-"));
       out.push({ scn: scn ? scn.slice(1) : "-", feature: f.path });
@@ -287,7 +287,7 @@ export function renderDerivedMatrix(rows: any[], projectName?: string): string {
 // ── Writing the one owner ────────────────────────────────────────────────────
 
 /**
- * `spec.md` with `fields` set in `reqId`'s `csda:trace` comment.
+ * `spec.md` with `fields` set in `reqId`'s `specgate:trace` comment.
  *
  * The comment is created right under the heading when the section has none.
  * A value of `""` removes the key. Returns `null` when the section is absent.
@@ -366,7 +366,7 @@ export function renderTraceComment(trace: Record<string, string>): string | null
     if (!/[\s"']/.test(v)) return `${k}=${v}`;
     return v.includes("'") ? `${k}="${v}"` : `${k}='${v}'`;
   });
-  return `<!-- csda:trace ${parts.join(" ")} -->`;
+  return `<!-- specgate:trace ${parts.join(" ")} -->`;
 }
 
 // ── Comparing, for --check and for migration ─────────────────────────────────
@@ -415,13 +415,13 @@ export function rowsOf(matrixContent: string): any[] {
 }
 
 /**
- * The `csda:trace` fields a requirement needs so that derivation reproduces
+ * The `specgate:trace` fields a requirement needs so that derivation reproduces
  * `rows` — or the reason it cannot.
  *
  * Only what derivation would get wrong is written: a matrix whose tags and
  * test names already carry the links migrates to nothing but status lines.
  */
-/** Can this value be stored in a `csda:trace` comment and read back intact? */
+/** Can this value be stored in a `specgate:trace` comment and read back intact? */
 export function traceValueWritable(v: string): boolean {
   return !(v.includes("'") && v.includes('"')) && !v.includes("-->");
 }

@@ -48,7 +48,7 @@ command -v node >/dev/null 2>&1 || die "node not found"
 command -v git  >/dev/null 2>&1 || die "git not found"
 [ "$REAL_AGENT" -eq 0 ] || command -v opencode >/dev/null 2>&1 || die "--real-agent requires opencode on PATH"
 
-# ── 1. Build the CLI, expose a `csda` wrapper pointing at this checkout ───────
+# ── 1. Build the CLI, expose a `specgate` wrapper pointing at this checkout ───────
 step "Building the CLI from $REPO_ROOT"
 ( cd "$REPO_ROOT" && npm run build >/dev/null )
 
@@ -57,18 +57,18 @@ trap 'rm -rf "$SCRATCH"' EXIT
 
 WRAPPER_DIR="$SCRATCH/bin"
 mkdir -p "$WRAPPER_DIR"
-cat > "$WRAPPER_DIR/csda" <<EOF
+cat > "$WRAPPER_DIR/specgate" <<EOF
 #!/usr/bin/env bash
 exec node "$REPO_ROOT/bin/specgate.js" "\$@"
 EOF
-chmod +x "$WRAPPER_DIR/csda"
+chmod +x "$WRAPPER_DIR/specgate"
 
 # Stub agent on PATH so harness.config.yaml can reference it by absolute path.
 STUB_AGENT_SRC="$DEMO_DIR/stub-agent.sh"
 [ -x "$STUB_AGENT_SRC" ] || chmod +x "$STUB_AGENT_SRC"
-cp "$STUB_AGENT_SRC" "$WRAPPER_DIR/csda-stub-agent"
-chmod +x "$WRAPPER_DIR/csda-stub-agent"
-STUB_AGENT="$WRAPPER_DIR/csda-stub-agent"
+cp "$STUB_AGENT_SRC" "$WRAPPER_DIR/specgate-stub-agent"
+chmod +x "$WRAPPER_DIR/specgate-stub-agent"
+STUB_AGENT="$WRAPPER_DIR/specgate-stub-agent"
 
 if [ "$REAL_AGENT" -eq 1 ]; then
   AGENT_CMD='opencode run "$(cat {prompt_file})"'
@@ -94,10 +94,10 @@ EOF
 chmod +x "$WRAPPER_DIR/demo-write-harness-config"
 
 export PATH="$WRAPPER_DIR:$PATH"
-export CSDA_PACK_REPO="https://github.com/rsaglobaltech/parking-management-specops.git"
-export CSDA_PACK_V1="v0.1.0"
-export CSDA_PACK_ID="backend"
-export CSDA_CACHE_DIR="$SCRATCH/cache"
+export SPECGATE_PACK_REPO="https://github.com/rsaglobaltech/parking-management-specops.git"
+export SPECGATE_PACK_V1="v0.1.0"
+export SPECGATE_PACK_ID="backend"
+export SPECGATE_CACHE_DIR="$SCRATCH/cache"
 
 # ── 2. Warm the pack cache so the recording does not wait on git clone ───────
 step "Warming the pack cache (one-time clone of the real demo pack)"
@@ -106,10 +106,10 @@ WARM=$(mktemp -d)
   printf 'PROJECT_NAME="W"\nPROJECT_SLUG="w"\nPROJECT_TYPE="backend"\nDOMAIN="d"\nSTACK="s"\nAPI_STYLE="a"\nTESTING="t"\n' > w.config && \
   specgate init --config ./w.config --out . --no-git >/dev/null 2>&1 && \
   cd w && \
-  specgate specops add --pack-repo "$CSDA_PACK_REPO" --pack-version "$CSDA_PACK_V1" --pack "$CSDA_PACK_ID" \
-    --cache-dir "$CSDA_CACHE_DIR" --var PROJECT_NAME=W --var PROJECT_SLUG=w --var DOMAIN=d >/dev/null )
+  specgate specops add --pack-repo "$SPECGATE_PACK_REPO" --pack-version "$SPECGATE_PACK_V1" --pack "$SPECGATE_PACK_ID" \
+    --cache-dir "$SPECGATE_CACHE_DIR" --var PROJECT_NAME=W --var PROJECT_SLUG=w --var DOMAIN=d >/dev/null )
 rm -rf "$WARM"
-printf '  cache: %s\n' "$CSDA_CACHE_DIR"
+printf '  cache: %s\n' "$SPECGATE_CACHE_DIR"
 
 # ── 3. Record the demo with VHS ──────────────────────────────────────────────
 step "Recording the 1080p demo with VHS"

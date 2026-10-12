@@ -5,10 +5,10 @@ import { resolveProjectDir } from "../../../lib/project-root";
 import { error, warning, info, errorMessage } from "../../../lib/diagnostics";
 import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
 import { threeWayMerge } from "../../../../packages/core/src/infrastructure/GitMergeDriver";
-import { TOOLS, ALL_TOOLS, renamedPaths, AGENT_NAMESPACE } from "../../../agents/init";
+import { TOOLS, ALL_TOOLS, renamedPaths } from "../../../agents/init";
 import { BaseCommand } from "../../../lib/command";
 
-export const BASELINE_DIR = path.join(".csda", "baseline");
+export const BASELINE_DIR = path.join(".specgate", "baseline");
 
 const COLOR =
   process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
@@ -132,11 +132,11 @@ export function updateFile(
 }
 
 /**
- * Move files generated under the old `csda` name to their `specgate` path,
+ * Move files generated under a renamed command's old path to the new one,
  * with their baseline, before anything is merged.
  *
  * Without this, `generatedFiles` looks only at the new paths, finds nothing,
- * and the team's edited `.claude/commands/csda/apply.md` is stranded: never
+ * and the team's edited `.claude/commands/specgate/verify.md` is stranded: never
  * updated again, and shadowed by a fresh copy if `agents init` runs. Moving
  * the baseline with it means the three-way merge that follows still knows
  * which lines are the team's.
@@ -168,28 +168,16 @@ export function migrateRenamedFiles(projectDir: string, opts: UpdateOptions): Up
         fs.mkdirSync(path.dirname(newBase), { recursive: true });
         fs.renameSync(oldBase, newBase);
       } else {
-        // `agents init` before 0.10 wrote no baseline, so there is nothing to
-        // tell the team's lines from the generated ones — and adopting the
-        // file as-is would keep every `/csda:` in it. What that version
-        // generated is today's file under the old name: close enough to be a
-        // base, and where it is not, the merge reports a conflict rather than
-        // choosing.
+        // No baseline: today's generated file is the closest base, and where
+        // it is not, the merge reports a conflict rather than choosing.
         const current = allGenerated().find((g) => g.path === newRel);
-        if (current) writeBaseline(projectDir, newRel, asOldNamespace(current.contents));
+        if (current) writeBaseline(projectDir, newRel, current.contents);
       }
       removeIfEmpty(path.dirname(oldAbs), projectDir);
     }
     results.push({ path: newRel, outcome: "renamed", note: `was ${oldRel}` });
   }
   return results;
-}
-
-function asOldNamespace(contents: string): string {
-  return contents
-    .split(`/${AGENT_NAMESPACE}:`)
-    .join("/csda:")
-    .split(`# ${AGENT_NAMESPACE} — `)
-    .join("# csda — ");
 }
 
 function removeIfEmpty(dir: string, stopAt: string) {
@@ -213,7 +201,7 @@ function usage() {
     `\n  ${c.bold}${c.cyan}🔄 update${c.reset}  ${c.dim}— refresh generated files, keeping your edits${c.reset}\n\n` +
       "  USAGE\n    specgate update [--project-dir <path>] [--dry-run] [--json]\n\n" +
       "  Three-way merges the files `agents init` generates against the baseline\n" +
-      "  recorded in .csda/baseline/. Local edits win; upstream changes land;\n" +
+      "  recorded in .specgate/baseline/. Local edits win; upstream changes land;\n" +
       "  conflicts are marked in the file and reported, never resolved silently.\n\n" +
       "  Only files the project already has are touched. Adding a tool is\n" +
       "  `specgate agents init --tool <name>`.\n\n"
@@ -340,7 +328,7 @@ export class UpdateCommand extends BaseCommand {
       r.note
         ? warning("rename_conflict", `${r.path}: ${r.note}.`, {
             file: r.path,
-            fix: "Move any edits you want to keep into the specgate file, then delete the csda one.",
+            fix: "Move any edits you want to keep into the new file, then delete the old one.",
           })
         : warning(
             "update_conflict",

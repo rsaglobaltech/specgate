@@ -11,13 +11,13 @@
  * spec, because a team with Cucumber already writes the `.feature` first and
  * the spec afterwards to explain it.
  *
- * A project overrides either by forking it into `.csda/schemas/<name>/schema.yaml`.
+ * A project overrides either by forking it into `.specgate/schemas/<name>/schema.yaml`.
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-export const SCHEMA_DIR = path.join(".csda", "schemas");
+export const SCHEMA_DIR = path.join(".specgate", "schemas");
 export const SCHEMA_FILE = "schema.yaml";
 
 export const BUILT_IN = {

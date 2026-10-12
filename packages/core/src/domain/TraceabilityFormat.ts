@@ -107,12 +107,12 @@ export function parseTraceabilityRows(existingContent) {
  *
  * So it goes on its own line beneath the table. Lines that do not start with
  * `|` are already ignored by the row parser, which makes the round trip safe by
- * construction rather than by care. `csda:trace` is the extension point this
+ * construction rather than by care. `specgate:trace` is the extension point this
  * repository already uses for exactly this kind of declaration.
  *
- *     <!-- csda:trace REQ-002 depends=REQ-001 -->
+ *     <!-- specgate:trace REQ-002 depends=REQ-001 -->
  */
-const RE_TRACE_LINE = /^\s*<!--\s*csda:trace\s+(REQ-[A-Za-z0-9.]+)\s+(.+?)\s*-->\s*$/;
+const RE_TRACE_LINE = /^\s*<!--\s*specgate:trace\s+(REQ-[A-Za-z0-9.]+)\s+(.+?)\s*-->\s*$/;
 
 /**
  * Every `key=value` a matrix trace line carries, per requirement.
@@ -199,7 +199,7 @@ export function renderMatrixTraceLines(
     const deps = (entry.dependsOn || []).filter(Boolean);
     if (deps.length > 0) parts.push(`depends=${deps.join(",")}`);
     if (entry.context) parts.push(`context=${entry.context}`);
-    if (parts.length > 0) lines.push(`<!-- csda:trace ${id} ${parts.join(" ")} -->`);
+    if (parts.length > 0) lines.push(`<!-- specgate:trace ${id} ${parts.join(" ")} -->`);
   }
   return lines.length > 0 ? ["", ...lines] : [];
 }

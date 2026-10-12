@@ -158,7 +158,7 @@ The delta format is deliberately the same, so the specs come across as-is.
 4. `specgate change validate` — the `ADDED`/`MODIFIED`/`REMOVED` grammar is
    compatible; what it will flag is missing RFC-2119 keywords and scenario
    steps that are prose rather than `- GIVEN` bullets.
-5. Optionally add `<!-- csda:trace uc=… cmd=… -->` comments where you want
+5. Optionally add `<!-- specgate:trace uc=… cmd=… -->` comments where you want
    requirements to reach the traceability matrix. Without them a requirement
    still archives, with `-` in those columns.
 

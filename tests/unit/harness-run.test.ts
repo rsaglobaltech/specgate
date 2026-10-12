@@ -600,7 +600,7 @@ test("a failing requirement shows the gate output, not just its first line", () 
       branch: "harness/REQ-002",
       error:
         "Gate failed at: test command\n\n" +
-        "> csda-studio-app@0.1.0 test:e2e\n" +
+        "> specgate-studio-app@0.1.0 test:e2e\n" +
         "AssertionError: expected 'Required field id missing' to equal ''\n" +
         "    at World.<anonymous> (features/step_definitions/validate_schema.steps.ts:31:12)\n" +
         "1 scenario (1 failed)\n",
@@ -1944,8 +1944,8 @@ function projectWithAPrecedent(context = "Billing") {
       "| REQ-000 | SCN-000 | `features/a.feature` | - | - | - | - | `src/Ledger.java` | `test/LedgerTest.java` | Verified |",
       "| REQ-001 | SCN-001 | `features/b.feature` | - | - | - | - | TBD | TBD | Draft |",
       "",
-      `<!-- csda:trace REQ-000 context=${context} -->`,
-      "<!-- csda:trace REQ-001 context=Billing -->",
+      `<!-- specgate:trace REQ-000 context=${context} -->`,
+      "<!-- specgate:trace REQ-001 context=Billing -->",
       "",
     ].join("\n"),
     "utf8"
@@ -2197,7 +2197,7 @@ test("#50: an agent out of quota fails the requirement after one attempt, not th
 
 test("#62: harness init gates on the build when package.json has one", () => {
   const { withBuild } = require("../../scripts/harness/init");
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-build-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-build-"));
   try {
     fs.writeFileSync(
       path.join(dir, "package.json"),
@@ -2224,7 +2224,7 @@ test(
     // shell-spawned agent that ignores SIGTERM outlived spawnSync's timeout as an
     // orphan, still running in the worktree. The whole process group is now killed.
     const { parent, projectDir } = greenableProject();
-    const marker = `csda-hang-${process.pid}-${Date.now()}`;
+    const marker = `specgate-hang-${process.pid}-${Date.now()}`;
     const script = path.join(parent, "hang.js");
     fs.writeFileSync(
       script,

@@ -46,7 +46,7 @@ loop, and the seven names published before the rest were generated:
 **Tools that write the specification are guarded.** An agent may not rewrite
 the spec it is measured against, so `specgate_new`, `mark_requirement_done`
 and the other writers refuse unless a change is open (`specgate change new
-<id>`) or the team allows it in `.csda/config.json`:
+<id>`) or the team allows it in `.specgate/config.json`:
 
 ```json
 { "mcpAllowContractEdits": true }
@@ -64,7 +64,7 @@ Restart the client; the tools appear in the model's tool list as `spec-driven.*`
 running *before* the session can end rather than after it in CI.
 
 ```bash
-specgate agents init --tool claude-plugin --project-dir ./csda-plugin
+specgate agents init --tool claude-plugin --project-dir ./specgate-plugin
 ```
 
 That writes a complete plugin: `.claude-plugin/plugin.json`, the six commands
@@ -146,10 +146,10 @@ is the whole reason the Docker image and the Maven and Gradle plugins exist.
 > **Image name across the rename.** The examples below name
 > `ghcr.io/rsaglobaltech/specgate:<version>`, which is where every tag cut from
 > 0.8.0 on lands. Tags published before the rename live at
-> `ghcr.io/rsaglobaltech/csda:<version>` and keep working — a published tag is
+> `ghcr.io/rsaglobaltech/specgate:<version>` and keep working — a published tag is
 > never rebuilt in place, so nothing was republished under the new name
 > retroactively. They are the same tool, but only the `specgate` images carry a
-> `specgate` binary: an image tagged `csda:0.2.1` answers to `csda` and
+> `specgate` binary: an image tagged `specgate:0.2.1` answers to `specgate` and
 > `create-spec-driven-app`, so pin the image and the command name together.
 
 **Docker.** Mount the workspace and run the gate:
@@ -188,7 +188,7 @@ phase instead of adding a container:
 ```xml
 <plugin>
   <groupId>com.rsaglobaltech</groupId>
-  <artifactId>csda-maven-plugin</artifactId>
+  <artifactId>specgate-maven-plugin</artifactId>
   <executions>
     <execution>
       <goals><goal>validate</goal></goals>

@@ -1,4 +1,4 @@
-package com.rsaglobaltech.csda.gradle;
+package com.rsaglobaltech.specgate.gradle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -17,13 +17,13 @@ import org.junit.jupiter.api.Test;
  * tested directly — no Gradle runtime needed. Mirrors the Maven plugin's
  * launcher so the two build tools resolve the CLI identically.
  */
-class CsdaLauncherTest {
+class SpecgateLauncherTest {
 
     private static final File CWD = new File(".").getAbsoluteFile();
 
     @Test
     void npxCommandPinsTheRequestedVersionAndAppendsArgs() {
-        List<String> cmd = CsdaLauncher.buildCommand(
+        List<String> cmd = SpecgateLauncher.buildCommand(
                 "npx", "0.1.4", "ghcr.io/rsaglobaltech/specgate", CWD,
                 Arrays.asList("validate", ".", "--strict"));
 
@@ -37,7 +37,7 @@ class CsdaLauncherTest {
 
     @Test
     void dockerLatestOmitsTheTagAndMountsTheProjectDir() {
-        List<String> cmd = CsdaLauncher.buildCommand(
+        List<String> cmd = SpecgateLauncher.buildCommand(
                 "docker", "latest", "ghcr.io/rsaglobaltech/specgate", CWD,
                 Arrays.asList("doctor"));
 
@@ -52,18 +52,18 @@ class CsdaLauncherTest {
 
     @Test
     void dockerPinnedVersionAppendsTheTagToTheImage() {
-        List<String> cmd = CsdaLauncher.buildCommand(
-                "docker", "0.1.4", "registry.internal/csda", CWD,
+        List<String> cmd = SpecgateLauncher.buildCommand(
+                "docker", "0.1.4", "registry.internal/specgate", CWD,
                 Arrays.asList("validate", "."));
 
-        assertTrue(cmd.contains("registry.internal/csda:0.1.4"));
+        assertTrue(cmd.contains("registry.internal/specgate:0.1.4"));
     }
 
     @Test
     void unknownLauncherIsRejected() {
         GradleException ex = assertThrows(GradleException.class, () ->
-                CsdaLauncher.buildCommand(
+                SpecgateLauncher.buildCommand(
                         "podman", "latest", "img", CWD, Arrays.asList("doctor")));
-        assertTrue(ex.getMessage().contains("Unknown csda.launcher"));
+        assertTrue(ex.getMessage().contains("Unknown specgate.launcher"));
     }
 }

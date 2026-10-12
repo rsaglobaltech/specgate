@@ -156,7 +156,7 @@ El sistema SHALL emitir un informe de liquidación cada noche.
 - WHEN llega la medianoche
 - THEN se emite el informe
 
-<!-- csda:trace uc=UC-020 cmd=EmitSettlementCommand agg=Billing evt=SettlementEmitted feature=features/billing/settlement.feature -->
+<!-- specgate:trace uc=UC-020 cmd=EmitSettlementCommand agg=Billing evt=SettlementEmitted feature=features/billing/settlement.feature -->
 `;
 
 test("a delta becomes a pack fragment carrying the DDD coordinates", () => {
@@ -200,13 +200,13 @@ test(
   "contribute stages a branch in a clone and pushes nothing",
   { skip: !GIT_AVAILABLE && "git not available" },
   () => {
-    const upstream = fs.mkdtempSync(path.join(os.tmpdir(), "csda-upstream-"));
+    const upstream = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-upstream-"));
     let clone;
     try {
       git(["init", "-q", "--bare", "."], upstream);
 
       // Seed the bare repo with one commit through a scratch working copy.
-      const seed = fs.mkdtempSync(path.join(os.tmpdir(), "csda-seed-"));
+      const seed = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-seed-"));
       git(["clone", "-q", upstream, seed], undefined);
       fs.writeFileSync(path.join(seed, "pack.yaml"), 'schema_version: "1.1.0"\n', "utf8");
       git(["add", "-A"], seed);
@@ -258,10 +258,10 @@ function mkPackWithChanges(root, packId) {
 
 test("a pack's changes land as proposals, and its archive never does", () => {
   const packRoot = mkPackWithChanges(
-    fs.mkdtempSync(path.join(os.tmpdir(), "csda-pk-")),
+    fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pk-")),
     "p/backend"
   );
-  const project = fs.mkdtempSync(path.join(os.tmpdir(), "csda-pj-"));
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pj-"));
   try {
     const { deposited, skipped } = depositPackChanges(project, packRoot, "p/backend");
     assert.deepEqual(deposited, ["adopt-pricing"]);
@@ -283,10 +283,10 @@ test("a pack's changes land as proposals, and its archive never does", () => {
 
 test("a pack never overwrites a local change with the same id", () => {
   const packRoot = mkPackWithChanges(
-    fs.mkdtempSync(path.join(os.tmpdir(), "csda-pk-")),
+    fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pk-")),
     "p/backend"
   );
-  const project = fs.mkdtempSync(path.join(os.tmpdir(), "csda-pj-"));
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pj-"));
   try {
     const mine = path.join(project, "docs/specs/changes/adopt-pricing");
     fs.mkdirSync(mine, { recursive: true });
@@ -303,10 +303,10 @@ test("a pack never overwrites a local change with the same id", () => {
 
 test("dryRun deposits nothing", () => {
   const packRoot = mkPackWithChanges(
-    fs.mkdtempSync(path.join(os.tmpdir(), "csda-pk-")),
+    fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pk-")),
     "p/backend"
   );
-  const project = fs.mkdtempSync(path.join(os.tmpdir(), "csda-pj-"));
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pj-"));
   try {
     const { deposited } = depositPackChanges(project, packRoot, "p/backend", { dryRun: true });
     assert.deepEqual(deposited, ["adopt-pricing"]);
@@ -370,9 +370,9 @@ test(
   "diff --as-change derives a reviewable change from a real two-tag pack repo",
   { skip: !GIT_AVAILABLE && "git not available" },
   () => {
-    const packRepo = fs.mkdtempSync(path.join(os.tmpdir(), "csda-packrepo-"));
-    const project = fs.mkdtempSync(path.join(os.tmpdir(), "csda-project-"));
-    const cache = fs.mkdtempSync(path.join(os.tmpdir(), "csda-cache-"));
+    const packRepo = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-packrepo-"));
+    const project = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-project-"));
+    const cache = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-cache-"));
     try {
       // A pack repository with two tagged versions.
       git(["init", "-q", "."], packRepo);

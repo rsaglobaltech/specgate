@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders -->
+<!-- specgate:allow-placeholders -->
 # ¿Sustituir `traceability.md`? Qué hay en el mercado y qué encaja aquí
 
 > **Creado:** 2026-08-21

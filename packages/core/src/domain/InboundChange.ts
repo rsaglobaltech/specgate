@@ -127,7 +127,7 @@ function renderDelta(issue: InboundIssue, reqId: string, scenarioId: string): st
     "     would defeat the only check this tool can make. `change validate`",
     "     stays red until they say something real. -->",
     "",
-    `<!-- csda:trace origin=alm:${issue.key} -->`,
+    `<!-- specgate:trace origin=alm:${issue.key} -->`,
     "",
   ].join("\n");
 }

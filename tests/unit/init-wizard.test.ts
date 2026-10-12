@@ -30,7 +30,7 @@ function cli(...args) {
 }
 
 function withTmp(fn) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-wizard-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-wizard-"));
   try {
     return fn(tmp);
   } finally {

@@ -37,7 +37,7 @@ instruction file each tool reads — `.cursor/rules/specgate.mdc`,
 Existing files are never overwritten without `--force`.
 
 **Upgrading from 0.9 or earlier?** Those versions wrote the commands as
-`/csda:*` (`.claude/commands/csda/`, `.cursor/rules/csda.mdc`, …). Run
+`/specgate:*` (`.claude/commands/specgate/`, `.cursor/rules/specgate.mdc`, …). Run
 `specgate update`: it moves each file to its `specgate` name and merges the new
 text in, keeping your edits. If both names exist it touches neither and tells
 you which to keep.

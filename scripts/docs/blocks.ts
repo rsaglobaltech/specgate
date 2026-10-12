@@ -24,11 +24,11 @@ import * as path from "node:path";
 export const DIAGRAM_DIR = "diagrams";
 
 export function beginMarker(name: string): string {
-  return `<!-- csda:${name}:begin — generated; edit the source, not this block -->`;
+  return `<!-- specgate:${name}:begin — generated; edit the source, not this block -->`;
 }
 
 export function endMarker(name: string): string {
-  return `<!-- csda:${name}:end -->`;
+  return `<!-- specgate:${name}:end -->`;
 }
 
 /**
@@ -78,7 +78,7 @@ export function diagrams(docsDir: string): Map<string, string> {
 }
 
 /**
- * Markdown with `<!-- csda:diagram NAME -->` replaced by the diagram itself.
+ * Markdown with `<!-- specgate:diagram NAME -->` replaced by the diagram itself.
  *
  * Inline rather than `<img src>` on purpose: these diagrams are coloured with
  * the site's tokens, and a var does not cross into an externally loaded SVG. An
@@ -87,7 +87,7 @@ export function diagrams(docsDir: string): Map<string, string> {
  * around it.
  */
 export function inlineDiagrams(source: string, available: Map<string, string>): string {
-  return source.replace(/<!--\s*csda:diagram\s+([a-z0-9-]+)\s*-->/g, (_match, name: string) => {
+  return source.replace(/<!--\s*specgate:diagram\s+([a-z0-9-]+)\s*-->/g, (_match, name: string) => {
     const svg = available.get(name);
     if (!svg) {
       throw new Error(`no diagram named "${name}" in docs/${DIAGRAM_DIR}/`);

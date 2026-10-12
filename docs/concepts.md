@@ -13,13 +13,13 @@ A requirement lives in `spec.md` (or in a capability spec under
 ```markdown
 ## REQ-007 — Customers download invoices as PDF
 
-<!-- csda:trace status=Implemented -->
+<!-- specgate:trace status=Implemented -->
 
 A customer with a paid invoice MUST be able to download it as a PDF from the
 invoice page, within two seconds, with the invoice number in the file name.
 ```
 
-The prose is for people. The `csda:trace` comment is for the tool — it holds
+The prose is for people. The `specgate:trace` comment is for the tool — it holds
 the status, and any link the tool cannot infer. `specgate new` writes the
 section with a draft sentence for you to rewrite; `specgate done` adds the
 comment when it records a status.
@@ -64,14 +64,14 @@ delete it and the requirement loses its test — which the gate then reports.
 feature file, test, code, status. Every column is already said somewhere else,
 so it is **computed** from those sources:
 
-<!-- csda:diagram traceability-chain -->
+<!-- specgate:diagram traceability-chain -->
 
 | Column | Comes from |
 |---|---|
 | Requirement, title | the `## REQ-NNN` sections in `spec.md` and capability specs |
 | Scenario, feature file | `@REQ-NNN @SCN-NNN` tags in `features/**/*.feature` |
 | Test, code | files that mention `REQ-NNN` |
-| Status | the `csda:trace` comment, written by `specgate done` |
+| Status | the `specgate:trace` comment, written by `specgate done` |
 
 `specgate check` and `specgate done` regenerate it before they judge.
 `specgate validate` — what CI runs — fails with `matrix_stale` when the

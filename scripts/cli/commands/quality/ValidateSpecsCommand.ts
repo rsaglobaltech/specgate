@@ -37,7 +37,7 @@ const SUITE_LIES = new Set<string>([
   QUALITY_CODES.KEYWORD_CASE,
   QUALITY_CODES.OUTLINE_WITHOUT_EXAMPLES,
 ]);
-import { csdaTagsIn } from "../../../../packages/core/src/domain/GherkinTags";
+import { specgateTagsIn } from "../../../../packages/core/src/domain/GherkinTags";
 import { parseTraceabilityRows } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { analyseRequirementText } from "../../../../packages/core/src/domain/RequirementSyntax";
 import {
@@ -119,7 +119,45 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
   }
 
-  /** A `csda:trace` line outside every requirement section is read by nothing (#79). */
+  /**
+   * A project written before 0.19 marks its specs with the tool's first name.
+   * Specgate no longer reads those markers (ADR-0032), so the matrix would lose
+   * every trace without a word — say it, and how to migrate.
+   */
+  private failOnOldFormat(targetDir: string) {
+    const OLD = "csda";
+    // A marker starts its line; prose that quotes one (an ADR, say) does not.
+    const marker = new RegExp(`^\\s*(<!--|#)\\s*${OLD}:`, "m");
+    const roots = ["spec.md", "docs/specs", "features"].map((r) => path.join(targetDir, r));
+    const files: string[] = [];
+    const walk = (p: string) => {
+      if (!fs.existsSync(p)) return;
+      if (fs.statSync(p).isDirectory()) {
+        for (const e of fs.readdirSync(p)) walk(path.join(p, e));
+      } else if (/\.(md|feature)$/.test(p)) files.push(p);
+    };
+    roots.forEach(walk);
+    const marked = files.filter((f) => marker.test(fs.readFileSync(f, "utf8")));
+    const oldDir = fs.existsSync(path.join(targetDir, `.${OLD}`));
+    if (marked.length === 0 && !oldDir) return;
+    const where = [
+      ...(oldDir ? [`.${OLD}/`] : []),
+      ...marked.slice(0, 5).map((f) => path.relative(targetDir, f)),
+      ...(marked.length > 5 ? [`… and ${marked.length - 5} more`] : []),
+    ];
+    this.fail(
+      "old_format",
+      `This project uses Specgate's old format (\`${OLD}:\` markers), which is no longer read: ${where.join(", ")}`,
+      1,
+      [
+        "Migrate it once (ADR-0032), then run validate again:",
+        `  git grep -lI ${OLD} | xargs perl -pi -e 's/${OLD.toUpperCase()}_/SPECGATE_/g; s/${OLD}/specgate/g'`,
+        `  [ -d .${OLD} ] && git mv .${OLD} .specgate`,
+      ]
+    );
+  }
+
+  /** A `specgate:trace` line outside every requirement section is read by nothing (#79). */
   private warnUnreadTraces(targetDir: string) {
     const files = ["spec.md"];
     const caps = path.join(targetDir, CAPABILITIES_DIR);
@@ -133,7 +171,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       if (!fs.existsSync(full)) continue;
       for (const line of unreadTraceLines(fs.readFileSync(full, "utf8"))) {
         this.logWarn(
-          `${rel.split(path.sep).join("/")}:${line}: this csda:trace line is not inside a requirement section, so nothing reads it — move it under its \`## REQ-NNN\` heading.`
+          `${rel.split(path.sep).join("/")}:${line}: this specgate:trace line is not inside a requirement section, so nothing reads it — move it under its \`## REQ-NNN\` heading.`
         );
       }
     }
@@ -426,7 +464,7 @@ export class ValidateSpecsCommand extends BaseCommand {
 
       let tags: string[] = [];
       try {
-        tags = csdaTagsIn(fs.readFileSync(file, "utf8"));
+        tags = specgateTagsIn(fs.readFileSync(file, "utf8"));
       } catch {
         continue;
       }
@@ -1001,6 +1039,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       }
     }
 
+    this.failOnOldFormat(targetDir);
     this.warnUnreadTraces(targetDir);
 
     const featuresDir = path.join(targetDir, "features");
@@ -1276,7 +1315,7 @@ export class ValidateSpecsCommand extends BaseCommand {
           error("requirement_cycle", `Requirements depend on each other in a cycle: ${loop}`, {
             target: cycle[0],
             fix:
-              `Remove one \`depends=\` from the csda:trace comment of one of them — ` +
+              `Remove one \`depends=\` from the specgate:trace comment of one of them — ` +
               `${cycle.join(", ")} cannot all come after each other.`,
           })
         );
@@ -1289,7 +1328,7 @@ export class ValidateSpecsCommand extends BaseCommand {
             `${requirement} declares depends=${dependency}, which is not a requirement in this project.`,
             {
               target: requirement,
-              fix: `Correct the id in ${requirement}'s csda:trace comment, or add a traceability row for ${dependency}.`,
+              fix: `Correct the id in ${requirement}'s specgate:trace comment, or add a traceability row for ${dependency}.`,
             }
           )
         );
@@ -1299,7 +1338,7 @@ export class ValidateSpecsCommand extends BaseCommand {
         graphProblems.push(
           error("self_dependency", `${requirement} declares that it depends on itself.`, {
             target: requirement,
-            fix: `Remove \`depends=${requirement}\` from its csda:trace comment.`,
+            fix: `Remove \`depends=${requirement}\` from its specgate:trace comment.`,
           })
         );
       }

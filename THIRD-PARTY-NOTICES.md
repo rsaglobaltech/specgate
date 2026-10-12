@@ -2,7 +2,7 @@
 
 Code and data from other projects that ships **inside** this repository rather
 than arriving as a dependency. Dependencies are covered by
-`csda license-check`, which reads the SBOM; this file exists for the things an
+`specgate license-check`, which reads the SBOM; this file exists for the things an
 SBOM cannot see because they were copied in.
 
 ---

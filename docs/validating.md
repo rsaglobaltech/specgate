@@ -217,16 +217,16 @@ in it.
 Annotate the value on both sides, and `specgate report` compares them:
 
 ```markdown
-<!-- csda:trace uc=Login value_session_timeout=15m -->
+<!-- specgate:trace uc=Login value_session_timeout=15m -->
 ```
 
 ```ts
-// csda:value session_timeout=15m
+// specgate:value session_timeout=15m
 ```
 
-`csda:value` is a plain literal string found by scanning line by line, so it
+`specgate:value` is a plain literal string found by scanning line by line, so it
 reads the same behind `//`, `#`, `--`, or no comment marker at all — the same
-reason `csda:trace` works in any markdown file. Comparison is exact string
+reason `specgate:trace` works in any markdown file. Comparison is exact string
 equality between two things a human or an agent wrote on purpose.
 
 Each identifier lands in one of four states: **matched**, **diverging**,

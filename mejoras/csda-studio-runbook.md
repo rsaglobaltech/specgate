@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this file documents the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # CsdaStudioApp dogfood — full runbook
 
 > Local-only runbook. **No subir a GitHub.** Recoge cada fase con las

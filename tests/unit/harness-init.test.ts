@@ -25,7 +25,7 @@ const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 const { detectTestCommand } = require("../../scripts/harness/init");
 
 function scaffold() {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-hinit-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-hinit-"));
   const r = spawnSync(process.execPath, [CLI, "init", "--yes", "--out", parent, "--no-git"], {
     encoding: "utf8",
   });
@@ -84,7 +84,7 @@ test("warns when no test command was detected, and says why that is safe", () =>
 });
 
 test("detects the gate from the build file that is present", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-detect-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-detect-"));
   try {
     assert.equal(detectTestCommand(dir), null);
 

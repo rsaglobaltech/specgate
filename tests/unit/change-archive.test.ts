@@ -48,12 +48,12 @@ El sistema SHALL aplicar un recargo del 20 %.
 - WHEN se calcula la tarifa
 - THEN el importe incluye un recargo del 20 %
 
-<!-- csda:trace uc=UC-007 cmd=CMD-011 feature=features/billing/dynamic_pricing.feature -->
+<!-- specgate:trace uc=UC-007 cmd=CMD-011 feature=features/billing/dynamic_pricing.feature -->
 `;
 
 function mkProject(opts?) {
   const o = opts || {};
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "csda-change-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-change-"));
   const write = (rel, contents) => {
     const full = path.join(root, rel);
     fs.mkdirSync(path.dirname(full), { recursive: true });
@@ -73,7 +73,7 @@ function mkProject(opts?) {
     );
     write(
       `docs/specs/changes/${id}/change.yaml`,
-      `csda_change_version: 1\nschema: spec-driven\ncreated: 2026-08-15\nrigor: lite\nskip_specs: ${o.skipSpecs === true}\nretire_capabilities: ${o.retire === true}\n`
+      `specgate_change_version: 1\nschema: spec-driven\ncreated: 2026-08-15\nrigor: lite\nskip_specs: ${o.skipSpecs === true}\nretire_capabilities: ${o.retire === true}\n`
     );
     if (o.delta !== false)
       write(`docs/specs/changes/${id}/specs/pricing/spec.md`, o.delta || DELTA);
@@ -404,7 +404,7 @@ test("an upsert never downgrades an Implemented requirement back to Draft", () =
   assert.match(markdown, /SvcTest/, "the test artifact must survive too");
 });
 
-test("an explicit status in csda:trace does win", () => {
+test("an explicit status in specgate:trace does win", () => {
   const existing = `| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |
 |---|---|---|---|---|---|---|---|---|---|
 | REQ-001 | SCN-001a | \`a\` | - | - | - | - | - | TBD | Draft |

@@ -31,9 +31,9 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/specgate
-          # `csda` images published before the rename stay where they are and keep
-          # working — a published tag is never rebuilt in place (see the Docker
-          # note in docs/release-process.md). New tags land under `specgate`.
+          # Images published under the old name stay where they are — a published
+          # tag is never rebuilt in place (see the Docker note in
+          # docs/release-process.md). New tags land under `specgate`.
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}

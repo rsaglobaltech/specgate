@@ -161,13 +161,13 @@ function usageCore() {
 }
 
 /**
- * `core` unless the project says otherwise. Read from .csda/config.json so a
+ * `core` unless the project says otherwise. Read from .specgate/config.json so a
  * team that lives in the full surface is not re-narrowed on every invocation.
  */
 function helpProfile(): string {
-  if (process.env.CSDA_PROFILE) return process.env.CSDA_PROFILE;
+  if (process.env.SPECGATE_PROFILE) return process.env.SPECGATE_PROFILE;
   try {
-    const raw = fs.readFileSync(path.join(process.cwd(), ".csda", "config.json"), "utf8");
+    const raw = fs.readFileSync(path.join(process.cwd(), ".specgate", "config.json"), "utf8");
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed.profile === "string") return parsed.profile;
   } catch {

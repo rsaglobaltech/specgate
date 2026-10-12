@@ -24,11 +24,11 @@
  * Two halves, and only one of them is committed:
  *
  *   1. `.gitattributes`, in the repository:
- *          docs/specs/traceability.md merge=csda-matrix
+ *          docs/specs/traceability.md merge=specgate-matrix
  *
  *   2. git config, which is **local to each clone**:
- *          git config merge.csda-matrix.name "csda traceability matrix merge"
- *          git config merge.csda-matrix.driver "node <path>/merge-traceability.js %O %A %B"
+ *          git config merge.specgate-matrix.name "specgate traceability matrix merge"
+ *          git config merge.specgate-matrix.driver "node <path>/merge-traceability.js %O %A %B"
  *
  * `specgate harness init` writes both. A fresh clone has only the first, and git
  * then falls back to its built-in line merge — the conflict you would have had

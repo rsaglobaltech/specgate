@@ -5,10 +5,10 @@
     "provider": "github",
     "base_url": "https://ghe.acme.example/api/v3/",
     "repo": "acme/widgets",
-    "token_env": "CSDA_CONFORMANCE_TOKEN"
+    "token_env": "SPECGATE_CONFORMANCE_TOKEN"
   },
   "env": {
-    "CSDA_CONFORMANCE_TOKEN": "tok"
+    "SPECGATE_CONFORMANCE_TOKEN": "tok"
   },
   "routes": [
     {

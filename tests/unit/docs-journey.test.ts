@@ -78,7 +78,7 @@ test("every step's output block is on its page and filled in", () => {
 test("no page carries an output block the recorder no longer writes", () => {
   const known = new Set(STEPS.map((s: any) => blockName(s)));
   for (const page of PAGES) {
-    for (const m of read(page).matchAll(/<!-- csda:(out-[a-z0-9-]+):begin/g)) {
+    for (const m of read(page).matchAll(/<!-- specgate:(out-[a-z0-9-]+):begin/g)) {
       assert.ok(known.has(m[1]), `${page}.md: ${m[1]} is not a step of any journey`);
     }
   }

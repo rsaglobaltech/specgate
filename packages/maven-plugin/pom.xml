@@ -5,14 +5,14 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.rsaglobaltech</groupId>
-  <artifactId>csda-maven-plugin</artifactId>
+  <artifactId>specgate-maven-plugin</artifactId>
   <version>0.1.4</version>
   <packaging>maven-plugin</packaging>
 
-  <name>csda-maven-plugin</name>
+  <name>specgate-maven-plugin</name>
   <description>
-    Run the create-spec-driven-app (csda) spec gate from Maven, so Java teams
-    need no local Node.js: mvn csda:validate / csda:plan / csda:doctor.
+    Run the create-spec-driven-app (specgate) spec gate from Maven, so Java teams
+    need no local Node.js: mvn specgate:validate / specgate:plan / specgate:doctor.
     Resolves the CLI through npx when Node is available, or through the
     official Docker image otherwise.
   </description>
@@ -52,7 +52,7 @@
         <artifactId>maven-plugin-plugin</artifactId>
         <version>3.16.0</version>
         <configuration>
-          <goalPrefix>csda</goalPrefix>
+          <goalPrefix>specgate</goalPrefix>
         </configuration>
       </plugin>
     </plugins>

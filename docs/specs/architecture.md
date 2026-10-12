@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this file documents the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # 🏛️ Architecture — the full spec-driven delivery flow
 
 This page is the **single source of truth** for how the tool, the domain

@@ -271,9 +271,9 @@ test("a trace line merges field by field: the pack's model changes arrive, the p
   const doc = (trace) =>
     `# Capability\n\n### Requirement: REQ-102 — Fast punch\n\n${trace}\n**Obligation (MUST).** Fast punch.\n`;
   // The baseline an older `add` recorded: the template, before trace fields.
-  const base = doc("<!-- csda:trace kind=functional -->");
-  const local = doc("<!-- csda:trace status=Implemented uc=UC-101 kind=functional -->");
-  const incoming = doc("<!-- csda:trace uc=UC-101 depends=REQ-101 kind=functional -->");
+  const base = doc("<!-- specgate:trace kind=functional -->");
+  const local = doc("<!-- specgate:trace status=Implemented uc=UC-101 kind=functional -->");
+  const incoming = doc("<!-- specgate:trace uc=UC-101 depends=REQ-101 kind=functional -->");
   const d = reconcileTraced(base, local, incoming, {}, merge);
   assert.equal(d.outcome, "merged", "sync used to answer 'kept' and drop the dependency");
   assert.match(d.write, /status=Implemented/);
@@ -314,7 +314,7 @@ test("specops sync brings a pack's new depends_on into a generated matrix withou
     fs.writeFileSync(path.join(packDir, "pack.yaml"), pack);
     fs.writeFileSync(
       path.join(packDir, "templates", "capability.md.tpl"),
-      "# Capability — Gold\n\n### Requirement: REQ-101 — Clock in inside the geofence\n\n<!-- csda:trace kind=functional -->\nA worker MUST clock in only inside the geofence.\n\n### Requirement: REQ-102 — A punch is confirmed within 2 seconds\n\n<!-- csda:trace kind=non-functional -->\nA punch MUST be confirmed in under 2 seconds.\n"
+      "# Capability — Gold\n\n### Requirement: REQ-101 — Clock in inside the geofence\n\n<!-- specgate:trace kind=functional -->\nA worker MUST clock in only inside the geofence.\n\n### Requirement: REQ-102 — A punch is confirmed within 2 seconds\n\n<!-- specgate:trace kind=non-functional -->\nA punch MUST be confirmed in under 2 seconds.\n"
     );
     fs.writeFileSync(
       path.join(packDir, "templates", "fast.feature.tpl"),
@@ -447,7 +447,7 @@ test("a scenario added to a delivered requirement is pending until a test names 
     path: `features/${scn}.feature`,
     source: `Feature: F\n\n  @REQ-101 @${scn}\n  Scenario: ${title}\n    Given a\n    When b\n    Then c\n`,
   });
-  const spec = "## REQ-101 — Clock in\n\n<!-- csda:trace status=Implemented -->\n\nText.\n";
+  const spec = "## REQ-101 — Clock in\n\n<!-- specgate:trace status=Implemented -->\n\nText.\n";
   const features = [feature("SCN-101", "Domain"), feature("SCN-115", "API")];
 
   // The tests name the scenario they prove: the new one has no test.

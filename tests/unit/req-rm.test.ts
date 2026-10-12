@@ -26,7 +26,7 @@ function cli(...args) {
 }
 
 function scaffold() {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-rm-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-rm-"));
   const r = cli("init", "--yes", "--out", parent, "--no-git");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   return { parent, dir: path.join(parent, "my-spec-driven-app") };

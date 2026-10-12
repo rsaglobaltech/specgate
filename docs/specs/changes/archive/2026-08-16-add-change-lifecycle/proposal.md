@@ -13,7 +13,7 @@ In scope:
 
 - A change folder: proposal, design, tasks, delta specs, proposed features.
 - Delta specs with ADDED / MODIFIED / REMOVED sections.
-- `csda change new | list | show | status | validate | archive`.
+- `specgate change new | list | show | status | validate | archive`.
 - An archive that merges deltas into capability specs, upserts the
   traceability matrix and materialises the proposed `.feature` files.
 

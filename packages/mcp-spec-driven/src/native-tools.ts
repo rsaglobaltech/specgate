@@ -21,7 +21,7 @@ export interface ITool {
   readonly name: string;
   readonly description: string;
   readonly inputSchema: Record<string, unknown>;
-  readonly csda?: string;
+  readonly specgate?: string;
   handler(args: Record<string, unknown>): unknown;
 }
 
@@ -49,11 +49,11 @@ export function hasOpenChange(projectDir: string): boolean {
  * If the agent could send `allowContractEdits: true` with the call, the guard
  * would protect nothing — it would be one more sentence for the agent to
  * ignore, which is what this guard exists to replace. A person puts this in
- * `.csda/config.json`, and it is visible in the repository afterwards.
+ * `.specgate/config.json`, and it is visible in the repository afterwards.
  */
 export function contractEditsAllowed(projectDir: string): boolean {
   try {
-    const raw = fs.readFileSync(path.join(projectDir, ".csda", "config.json"), "utf8");
+    const raw = fs.readFileSync(path.join(projectDir, ".specgate", "config.json"), "utf8");
     return JSON.parse(raw).mcpAllowContractEdits === true;
   } catch {
     return false;
@@ -67,7 +67,7 @@ export function assertContractEditable(toolName: string, projectDir: string): vo
     toolName +
       " writes files the specification contract protects, and no change is open." +
       " Open one first: specgate change new <id>." +
-      ' To allow it permanently, set "mcpAllowContractEdits": true in .csda/config.json.'
+      ' To allow it permanently, set "mcpAllowContractEdits": true in .specgate/config.json.'
   );
 }
 

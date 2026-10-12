@@ -1,6 +1,6 @@
 "use strict";
 
-// csda:allow-placeholders — these tests feed the scanner {{VAR}} tokens on purpose.
+// specgate:allow-placeholders — these tests feed the scanner {{VAR}} tokens on purpose.
 
 /**
  * The unresolved-placeholder scan, which `validate` and `doctor` share.
@@ -61,7 +61,7 @@ test("a .tpl file is unrendered by definition, not defective", () => {
 
 test("an explicit marker exempts documentation that quotes the syntax", () => {
   const dir = withTree({
-    "docs/how-to.md": "<!-- csda:allow-placeholders -->\nUse {{PROJECT_NAME}} in templates.\n",
+    "docs/how-to.md": "<!-- specgate:allow-placeholders -->\nUse {{PROJECT_NAME}} in templates.\n",
     "docs/other.md": "Someone left a real {{PROJECT_NAME}} here.\n",
   });
   // Exemption is declared, never inferred.
@@ -70,9 +70,9 @@ test("an explicit marker exempts documentation that quotes the syntax", () => {
 });
 
 test("the marker works in any comment syntax", () => {
-  assert.equal(isExempt("a.md", "<!-- csda:allow-placeholders -->\n{{X}}"), true);
-  assert.equal(isExempt("a.ts", "// csda:allow-placeholders\n{{X}}"), true);
-  assert.equal(isExempt("a.yaml", "# csda:allow-placeholders\n{{X}}"), true);
+  assert.equal(isExempt("a.md", "<!-- specgate:allow-placeholders -->\n{{X}}"), true);
+  assert.equal(isExempt("a.ts", "// specgate:allow-placeholders\n{{X}}"), true);
+  assert.equal(isExempt("a.yaml", "# specgate:allow-placeholders\n{{X}}"), true);
   assert.equal(isExempt("a.md", "{{X}}"), false);
 });
 
@@ -104,7 +104,7 @@ test("generated report output is not scanned", () => {
 // The project's own ignore file already states what is not source.
 
 function repoWithIgnored(ignoreLine, files) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-ignored-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ignored-"));
   spawnSync("git", ["-C", dir, "init", "--quiet"], { encoding: "utf8" });
   fs.writeFileSync(path.join(dir, ".gitignore"), `${ignoreLine}\n`, "utf8");
   for (const [rel, body] of Object.entries(files)) {
@@ -163,7 +163,7 @@ test("a gitignored file nested inside a tracked directory is skipped too", () =>
 
 test("a directory that is not a git repository still scans", () => {
   // No git, no repository, or a git that errors must not disable the check.
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-nogit-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-nogit-"));
   try {
     fs.writeFileSync(path.join(dir, "spec.md"), "{{PROJECT_NAME}}\n", "utf8");
     const findings = findUnresolvedPlaceholders(dir);

@@ -80,7 +80,7 @@ export function materialiseChange(projectDir, entry, targetVersion, derived, t: 
     {
       file: path.join(changeDir, "change.yaml"),
       contents:
-        `csda_change_version: 1\n` +
+        `specgate_change_version: 1\n` +
         `schema: spec-driven\n` +
         `created: ${new Date().toISOString().slice(0, 10)}\n` +
         `rigor: lite\n` +

@@ -551,7 +551,7 @@ export function renderTraceability(
     fs.readFileSync(traceTarget, "utf8").includes("<!-- specgate:derived")
   ) {
     // A generated matrix stays generated. Each requirement's use case,
-    // command, aggregate, event and context go into the csda:trace comment of
+    // command, aggregate, event and context go into the specgate:trace comment of
     // its section — the capability spec the pack wrote, or a new section in
     // spec.md carrying the pack's own prose — and the matrix is regenerated,
     // one row per tagged scenario. Writing rows here instead turned the
@@ -695,7 +695,7 @@ export function updateLockfile(
 ) {
   if (!remote) return;
   const existing = readLock(projectDir) || newLock(PACKAGE_VERSION);
-  existing.csda_version = PACKAGE_VERSION;
+  existing.specgate_version = PACKAGE_VERSION;
   const updated = upsertPackEntry(existing, {
     repo: remote.repo,
     version: remote.version,

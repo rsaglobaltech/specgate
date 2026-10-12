@@ -85,7 +85,7 @@ test("the Docker image is built on the floor", () => {
 });
 
 test("the CI templates handed to users do not pin an unsupported Node", () => {
-  // These generate a pipeline that runs csda, so anything below the floor
+  // These generate a pipeline that runs specgate, so anything below the floor
   // produces a gate that cannot start.
   const dir = path.join(ROOT_DIR, "templates");
   const walk = (d) => {

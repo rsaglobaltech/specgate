@@ -35,9 +35,9 @@ function project(options: { change?: string; allow?: boolean } = {}) {
     fs.mkdirSync(path.join(dir, "docs", "specs", "changes", options.change), { recursive: true });
   }
   if (options.allow) {
-    fs.mkdirSync(path.join(dir, ".csda"), { recursive: true });
+    fs.mkdirSync(path.join(dir, ".specgate"), { recursive: true });
     fs.writeFileSync(
-      path.join(dir, ".csda", "config.json"),
+      path.join(dir, ".specgate", "config.json"),
       JSON.stringify({ mcpAllowContractEdits: true }),
       "utf8"
     );
@@ -97,8 +97,8 @@ test("a malformed config is not permission", () => {
   // from a parse error and treating it as consent is how a guard becomes
   // decoration.
   const dir = project();
-  fs.mkdirSync(path.join(dir, ".csda"), { recursive: true });
-  fs.writeFileSync(path.join(dir, ".csda", "config.json"), "{ not json", "utf8");
+  fs.mkdirSync(path.join(dir, ".specgate"), { recursive: true });
+  fs.writeFileSync(path.join(dir, ".specgate", "config.json"), "{ not json", "utf8");
   try {
     assert.equal(contractEditsAllowed(dir), false);
   } finally {
@@ -108,10 +108,10 @@ test("a malformed config is not permission", () => {
 
 test("any value other than true is not permission", () => {
   const dir = project();
-  fs.mkdirSync(path.join(dir, ".csda"), { recursive: true });
+  fs.mkdirSync(path.join(dir, ".specgate"), { recursive: true });
   for (const value of ["true", 1, "yes", null]) {
     fs.writeFileSync(
-      path.join(dir, ".csda", "config.json"),
+      path.join(dir, ".specgate", "config.json"),
       JSON.stringify({ mcpAllowContractEdits: value }),
       "utf8"
     );
@@ -162,7 +162,7 @@ test("the tools that write the contract are guarded, and the change cycle is not
     assert.equal(TOOLS[name] && TOOLS[name].editsContract, true, `${name} is not guarded`);
   }
   for (const name of Object.keys(TOOLS)) {
-    if (!name.startsWith("csda_change_")) continue;
+    if (!name.startsWith("specgate_change_")) continue;
     assert.notEqual(TOOLS[name].editsContract, true, `${name} must stay usable`);
   }
 });
@@ -177,7 +177,7 @@ test("append-only tools are not guarded either", () => {
 test("read-only tools are never guarded", () => {
   // A guard on a reading tool would be a bug that only shows up as an agent
   // mysteriously unable to look at anything.
-  for (const name of ["specgate_status", "csda_plan", "validate_project", "read_spec"]) {
+  for (const name of ["specgate_status", "specgate_plan", "validate_project", "read_spec"]) {
     const tool = TOOLS[name];
     if (!tool) continue;
     assert.notEqual(tool.editsContract, true, `${name} is read-only and must not be guarded`);

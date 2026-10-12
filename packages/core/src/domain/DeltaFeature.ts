@@ -55,7 +55,7 @@ export function renderDeltaFeature(
 }
 
 const REQUIREMENT = /^###\s+Requirement:\s*(REQ-[A-Za-z0-9.]+)/;
-const TRACE = /^<!--\s*csda:trace\b(.*?)-->\s*$/;
+const TRACE = /^<!--\s*specgate:trace\b(.*?)-->\s*$/;
 
 /**
  * Give every requirement that has scenarios but names no feature file the
@@ -88,9 +88,9 @@ export function withDefaultFeaturePaths(source: string, capability: string): str
     if (!b.scenarios) continue;
     const feature = `feature=features/${capability}/${b.id}.feature`;
     if (b.trace === -1) {
-      inserts.push({ at: b.heading + 1, line: `\n<!-- csda:trace ${feature} -->` });
+      inserts.push({ at: b.heading + 1, line: `\n<!-- specgate:trace ${feature} -->` });
     } else if (!/\bfeature=/.test(lines[b.trace])) {
-      lines[b.trace] = lines[b.trace].replace(/csda:trace\s*/, `csda:trace ${feature} `);
+      lines[b.trace] = lines[b.trace].replace(/specgate:trace\s*/, `specgate:trace ${feature} `);
     }
   }
   for (const ins of inserts.sort((a, b) => b.at - a.at)) lines.splice(ins.at, 0, ins.line);

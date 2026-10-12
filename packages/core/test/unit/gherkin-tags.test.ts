@@ -13,9 +13,9 @@ import { test } from "node:test";
 import * as assert from "node:assert/strict";
 
 import {
-  csdaTagsByScenario,
-  csdaTagsIn,
-  isCsdaTag,
+  specgateTagsByScenario,
+  specgateTagsIn,
+  isSpecgateTag,
   parseTagLine,
   tagScenario,
 } from "../../src/domain/GherkinTags";
@@ -60,7 +60,7 @@ test("a scenario that is not there leaves the file untouched", () => {
   // Not an error here — the caller compares and reports. Silently tagging the
   // wrong scenario would be worse than doing nothing.
   assert.equal(tagScenario(FEATURE, "No such scenario", ["@SCN-000"]), FEATURE);
-  assert.deepEqual(csdaTagsIn(tagScenario(FEATURE, "No such scenario", ["@SCN-000"])), []);
+  assert.deepEqual(specgateTagsIn(tagScenario(FEATURE, "No such scenario", ["@SCN-000"])), []);
 });
 
 test("only a scenario heading takes the tag, not the Feature line", () => {
@@ -84,10 +84,10 @@ test("reading back gives the scenario its tags, ours only", () => {
     "API reports service as healthy",
     []
   );
-  assert.deepEqual(csdaTagsByScenario(tagged), {
+  assert.deepEqual(specgateTagsByScenario(tagged), {
     "API reports service as healthy": ["@REQ-000", "@SCN-000"],
   });
-  assert.deepEqual(csdaTagsIn(tagged), ["@REQ-000", "@SCN-000"]);
+  assert.deepEqual(specgateTagsIn(tagged), ["@REQ-000", "@SCN-000"]);
 });
 
 test("a project's own tags are not mistaken for ours", () => {
@@ -101,11 +101,11 @@ test("a project's own tags are not mistaken for ours", () => {
     "    Given x",
     "",
   ].join("\n");
-  assert.deepEqual(csdaTagsIn(withTag), []);
-  assert.deepEqual(csdaTagsByScenario(withTag), {});
-  assert.equal(isCsdaTag("@slow"), false);
-  assert.equal(isCsdaTag("@REQ-001"), true);
-  assert.equal(isCsdaTag("@SCN-014a"), true);
+  assert.deepEqual(specgateTagsIn(withTag), []);
+  assert.deepEqual(specgateTagsByScenario(withTag), {});
+  assert.equal(isSpecgateTag("@slow"), false);
+  assert.equal(isSpecgateTag("@REQ-001"), true);
+  assert.equal(isSpecgateTag("@SCN-014a"), true);
 });
 
 test("a tag line is all tags, or it is not a tag line", () => {

@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this file documents the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # 🚗 End-to-end tutorial — building **Smart Parking**
 
 A friendly, step-by-step walk through **every** command in
@@ -90,7 +90,7 @@ folder. After that, you `cd` into it and stay there.
 
 - **Node.js ≥ 22** and **git** on your `PATH`.
 - Network access the first time you run `specops add` — it clones the pack
-  repo into a per-user cache (`~/.cache/csda/packs/…`). After that it is
+  repo into a per-user cache (`~/.cache/specgate/packs/…`). After that it is
   offline.
 
 Optionally install the CLI globally so `specgate` works everywhere:

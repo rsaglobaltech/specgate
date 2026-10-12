@@ -29,7 +29,7 @@ ${subCases}
     esac
   fi
 }
-complete -F _specgate specgate csda create-spec-driven-app
+complete -F _specgate specgate create-spec-driven-app
 `;
 }
 
@@ -38,7 +38,7 @@ export function zshScript() {
   const subCases = Object.entries(SUBCOMMANDS)
     .map(([cmd, subs]) => `        ${cmd}) compadd ${subs.join(" ")} ;;`)
     .join("\n");
-  return `#compdef specgate csda create-spec-driven-app
+  return `#compdef specgate create-spec-driven-app
 # specgate zsh completion
 _specgate() {
   if (( CURRENT == 2 )); then
@@ -51,7 +51,7 @@ ${subCases}
     esac
   fi
 }
-compdef _specgate specgate csda create-spec-driven-app
+compdef _specgate specgate create-spec-driven-app
 `;
 }
 
@@ -60,13 +60,13 @@ export function fishScript() {
     "# specgate fish completion",
     "# Only complete the first word when no subcommand has been given yet.",
     `complete -c specgate -n __fish_use_subcommand -a "${COMMANDS.join(" ")}"`,
-    `complete -c csda -n __fish_use_subcommand -a "${COMMANDS.join(" ")}"`,
+    `complete -c specgate -n __fish_use_subcommand -a "${COMMANDS.join(" ")}"`,
     `complete -c create-spec-driven-app -n __fish_use_subcommand -a "${COMMANDS.join(" ")}"`,
   ];
   for (const [cmd, subs] of Object.entries(SUBCOMMANDS)) {
     lines.push(
       `complete -c specgate -n "__fish_seen_subcommand_from ${cmd}" -a "${subs.join(" ")}"`,
-      `complete -c csda -n "__fish_seen_subcommand_from ${cmd}" -a "${subs.join(" ")}"`,
+      `complete -c specgate -n "__fish_seen_subcommand_from ${cmd}" -a "${subs.join(" ")}"`,
       `complete -c create-spec-driven-app -n "__fish_seen_subcommand_from ${cmd}" -a "${subs.join(" ")}"`
     );
   }
@@ -82,19 +82,19 @@ export const GENERATORS: Record<string, () => string> = {
 export function installTarget(shell: string) {
   const home = os.homedir();
   if (shell === "fish") {
-    return { file: path.join(home, ".config/fish/completions/csda.fish"), autoloaded: true };
+    return { file: path.join(home, ".config/fish/completions/specgate.fish"), autoloaded: true };
   }
   if (shell === "zsh") {
     return {
-      file: path.join(home, ".zsh/completions/_csda"),
+      file: path.join(home, ".zsh/completions/_specgate"),
       autoloaded: false,
       hint: "Add to ~/.zshrc:  fpath=(~/.zsh/completions $fpath) && autoload -Uz compinit && compinit",
     };
   }
   return {
-    file: path.join(home, ".csda-completion.bash"),
+    file: path.join(home, ".specgate-completion.bash"),
     autoloaded: false,
-    hint: "Add to ~/.bashrc:  source ~/.csda-completion.bash",
+    hint: "Add to ~/.bashrc:  source ~/.specgate-completion.bash",
   };
 }
 
@@ -102,7 +102,7 @@ function usage() {
   process.stderr.write(
     "Usage: specgate completion <bash|zsh|fish> [--install]\n\n" +
       "  specgate completion fish --install     write it where fish already looks\n" +
-      "  specgate completion zsh > ~/.csda-completion.zsh\n" +
+      "  specgate completion zsh > ~/.specgate-completion.zsh\n" +
       "  specgate completion bash >> ~/.bashrc\n"
   );
 }

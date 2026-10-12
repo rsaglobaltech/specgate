@@ -38,7 +38,7 @@ npx @rsaglobaltech/specgate@latest init
 folder, and touches no code. It writes the specification (`spec.md`), the
 agent contract (`AGENTS.md`), the traceability matrix and a baseline scenario:
 
-<!-- csda:out-scratch-init:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-init:begin — generated; edit the source, not this block -->
 ```text
 $ specgate init
 ℹ️ [INFO] Existing code found (package.json) — adopting this repository in place. Nothing in your code is touched.
@@ -70,7 +70,7 @@ $ specgate init
 ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:
 ℹ️ [INFO]   specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)
 ```
-<!-- csda:out-scratch-init:end -->
+<!-- specgate:out-scratch-init:end -->
 
 Two words in that output are written for existing code, because to `init` a
 folder with a `package.json` *is* existing code: "adopting", and `REQ-001 —
@@ -78,13 +78,13 @@ Existing behaviour is preserved`. On a brand-new project that requirement holds
 trivially. Leave it as it is; once the app exists, a test that it starts —
 naming `REQ-001` — closes it like any other.
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **Did it create a sub-folder instead?** In a folder with no build file at all,
 `init` scaffolds a separate project (`<slug>/` with `spec.md`, `docs/`, CI and
 container files) from a short wizard. Create your project first, as above, and
 run `init` inside it — or use `init --new` on purpose when you want the full
 scaffold.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 ## 3. Tell it how to run your tests — once
 
@@ -92,14 +92,14 @@ scaffold.
 specgate config set test_cmd "node --test"
 ```
 
-<!-- csda:out-scratch-test-cmd:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-test-cmd:begin — generated; edit the source, not this block -->
 ```text
 $ specgate config set test_cmd "node --test"
   ✔  test_cmd = node --test
      harness.config.yaml
      `check` and `done` now run it.
 ```
-<!-- csda:out-scratch-test-cmd:end -->
+<!-- specgate:out-scratch-test-cmd:end -->
 
 From now on `check` and `done` run your suite as part of the gate. Use your
 stack's own command: `npm test`, `./mvnw -B verify`, `pytest`, `go test ./...`.
@@ -110,7 +110,7 @@ stack's own command: `npm test`, `./mvnw -B verify`, `pytest`, `go test ./...`.
 specgate check
 ```
 
-<!-- csda:out-scratch-check:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-check:begin — generated; edit the source, not this block -->
 ```text
 $ specgate check
 ℹ️ [INFO] ✅ Validation passed
@@ -135,7 +135,7 @@ $ specgate check
 
 ✔  Gate passed — the specification and `node --test`
 ```
-<!-- csda:out-scratch-check:end -->
+<!-- specgate:out-scratch-check:end -->
 
 Green, with an honest warning: there is nothing to certify yet. The warning
 goes away in the next phase, when the brief becomes requirements.

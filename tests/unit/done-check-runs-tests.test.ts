@@ -41,7 +41,7 @@ const FEATURE = `Feature: Health
  * `opts.testPasses` decides whether the suite is red or green.
  */
 function project(opts: any = {}) {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-done-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-done-"));
   const r = cli("init", "--yes", "--out", parent, "--no-git", "--no-sample-req");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const dir = path.join(parent, "my-spec-driven-app");

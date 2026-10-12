@@ -22,7 +22,7 @@ const graphOf = (ids: string[], declared: Record<string, string[]>) =>
   RequirementGraph.fromDependencies(ids, declared);
 
 function withCapability(spec: string, fn: (dir: string) => void) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-graph-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-graph-"));
   try {
     const capDir = path.join(dir, "docs", "specs", "capabilities", "billing");
     fs.mkdirSync(capDir, { recursive: true });
@@ -42,7 +42,7 @@ function requirement(id: string, trace = "") {
     "- GIVEN a thing",
     "- WHEN it happens",
     "- THEN it works",
-    trace ? `<!-- csda:trace ${trace} -->` : "",
+    trace ? `<!-- specgate:trace ${trace} -->` : "",
     "",
   ].join("\n");
 }
@@ -62,7 +62,7 @@ test("splitDependencies accepts commas, spaces and semicolons, and de-duplicates
   assert.deepEqual(splitDependencies(""), []);
 });
 
-test("a requirement declares what it builds on inside its csda:trace comment", () => {
+test("a requirement declares what it builds on inside its specgate:trace comment", () => {
   withCapability(
     spec(
       requirement("REQ-001", "uc=UC-001 feature=features/a.feature"),
@@ -81,7 +81,7 @@ test("a project that declares nothing produces an empty graph", () => {
 });
 
 test("a project with no capabilities directory is not an error", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-graph-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-graph-"));
   try {
     assert.deepEqual(readDeclaredDependencies(dir), {});
   } finally {

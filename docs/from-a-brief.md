@@ -9,7 +9,7 @@ credit shop.
 Steps 1 to 4 below are the _Specify_ phase of a requirement's life; the
 harness and the gate take it from there.
 
-<!-- csda:diagram lifecycle -->
+<!-- specgate:diagram lifecycle -->
 
 ## 1. Keep the brief in the repository
 

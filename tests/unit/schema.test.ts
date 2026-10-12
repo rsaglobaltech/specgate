@@ -128,7 +128,7 @@ test("a project fork shadows the built-in of the same name", () => {
     assert.equal(cli("schema", "fork", "bdd-first", "bdd-first", "--project-dir", dir).status, 0);
     const found = resolveSchema(dir, "bdd-first");
     assert.equal(found.source, "project", "the fork wins once it exists");
-    assert.match(found.path, /\.csda[\\/]schemas/);
+    assert.match(found.path, /\.specgate[\\/]schemas/);
   });
 });
 

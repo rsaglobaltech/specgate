@@ -188,18 +188,18 @@ test("offline mode fails a cache miss with the bundle remedy", { skip: skipReaso
   }
 });
 
-test("CSDA_OFFLINE env var activates offline mode", { skip: skipReason }, () => {
+test("SPECGATE_OFFLINE env var activates offline mode", { skip: skipReason }, () => {
   const cache = fs.mkdtempSync(path.join(os.tmpdir(), "specops-cache-"));
-  const prev = process.env.CSDA_OFFLINE;
-  process.env.CSDA_OFFLINE = "1";
+  const prev = process.env.SPECGATE_OFFLINE;
+  process.env.SPECGATE_OFFLINE = "1";
   try {
     assert.throws(
       () => resolveRemotePack({ repo: SOURCE_REPO, version: TAG, cacheDir: cache }),
       /Offline mode/
     );
   } finally {
-    if (prev === undefined) delete process.env.CSDA_OFFLINE;
-    else process.env.CSDA_OFFLINE = prev;
+    if (prev === undefined) delete process.env.SPECGATE_OFFLINE;
+    else process.env.SPECGATE_OFFLINE = prev;
     fs.rmSync(cache, { recursive: true, force: true });
   }
 });

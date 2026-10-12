@@ -52,7 +52,7 @@ Run it, watch it fail, write `src/bookings.js` until it passes:
 node --test
 ```
 
-<!-- csda:out-scratch-node-test:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-node-test:begin — generated; edit the source, not this block -->
 ```text
 $ node --test
 ✔ REQ-002 SCN-002: booking a free court lasts one hour (12ms)
@@ -66,7 +66,7 @@ $ node --test
 ℹ todo 0
 ℹ duration_ms 1.234
 ```
-<!-- csda:out-scratch-node-test:end -->
+<!-- specgate:out-scratch-node-test:end -->
 
 Any language works the same way: `// REQ-002` in a JUnit test, a pytest
 docstring, a Go test name. The gate looks for the id, not for a framework.
@@ -85,7 +85,7 @@ See exactly what your agent will be told, before it runs:
 specgate harness prompt REQ-003
 ```
 
-<!-- csda:out-scratch-harness-prompt:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-harness-prompt:begin — generated; edit the source, not this block -->
 ```text
 $ specgate harness prompt REQ-003
 ℹ️  [harness] Dry run — 1 requirement(s) would be processed:
@@ -110,7 +110,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 - WHEN another member sends POST /api/bookings for the centre court on Monday evening
 … 78 more lines
 ```
-<!-- csda:out-scratch-harness-prompt:end -->
+<!-- specgate:out-scratch-harness-prompt:end -->
 
 Then run it with your agent's command line — `{prompt_file}` is replaced with
 the prompt above:

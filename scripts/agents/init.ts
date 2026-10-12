@@ -31,12 +31,9 @@ const c = {
 
 /**
  * The name every generated agent file uses: `/specgate:apply`,
- * `.cursor/rules/specgate.mdc`. It was `csda`, the tool's old name, so a team
- * typed one name in the terminal and another in their agent. `specgate update`
- * moves files generated under the old name (`RENAMED_PATHS`).
+ * `.cursor/rules/specgate.mdc` — the same name people type in the terminal.
  */
 export const AGENT_NAMESPACE = "specgate";
-const OLD_NAMESPACE = "csda";
 
 // ── Renderers, one per tool convention ────────────────────────────────────────
 
@@ -346,10 +343,10 @@ export const TOOLS = {
 export const ALL_TOOLS = Object.keys(TOOLS);
 
 /**
- * Where each generated file lived under the old `csda` name, and where it
- * lives now. `specgate update` moves them — file and baseline — before it
- * merges, so a team's edits survive the rename instead of being stranded in a
- * file nothing updates any more.
+ * Slash commands renamed after they shipped, as [old path, new path].
+ * `specgate update` moves them — file and baseline — before it merges, so a
+ * team's edits survive the rename instead of being stranded in a file nothing
+ * updates any more.
  */
 export function renamedPaths(): Array<[string, string]> {
   const pairs: Array<[string, string]> = [];
@@ -357,29 +354,12 @@ export function renamedPaths(): Array<[string, string]> {
   for (const tool of ALL_TOOLS) {
     for (const file of TOOLS[tool].files()) {
       const parts = file.path.split(path.sep);
-      const old = parts
-        .map((p) =>
-          p === AGENT_NAMESPACE
-            ? OLD_NAMESPACE
-            : p.startsWith(`${AGENT_NAMESPACE}.`)
-              ? OLD_NAMESPACE + p.slice(AGENT_NAMESPACE.length)
-              : p
-        )
-        .join(path.sep);
-      if (old !== file.path && !seen.has(old)) {
-        seen.add(old);
-        pairs.push([old, file.path]);
-      }
-      // A slash command renamed since: its file moves too, from either
-      // namespace — `csda/verify.md` and `specgate/verify.md` → `specgate/check.md`.
       for (const [was, now] of RENAMED_COMMANDS) {
         if (parts[parts.length - 1] !== `${now}.md`) continue;
-        for (const base of [file.path, old]) {
-          const before = path.join(path.dirname(base), `${was}.md`);
-          if (!seen.has(before)) {
-            seen.add(before);
-            pairs.push([before, file.path]);
-          }
+        const before = path.join(path.dirname(file.path), `${was}.md`);
+        if (!seen.has(before)) {
+          seen.add(before);
+          pairs.push([before, file.path]);
         }
       }
     }

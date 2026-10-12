@@ -1,4 +1,4 @@
-package com.rsaglobaltech.csda.gradle;
+package com.rsaglobaltech.specgate.gradle;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,23 +9,23 @@ import java.util.List;
 import org.gradle.api.GradleException;
 
 /**
- * Shared launcher for every csda task. Resolves the specgate
+ * Shared launcher for every specgate task. Resolves the specgate
  * CLI without requiring the developer to manage a Node.js toolchain:
  *
  * <ul>
- *   <li>{@code -Pcsda.launcher=npx} — run through npx (needs Node &ge; 20)</li>
- *   <li>{@code -Pcsda.launcher=docker} — run the official image with the
+ *   <li>{@code -Pspecgate.launcher=npx} — run through npx (needs Node &ge; 20)</li>
+ *   <li>{@code -Pspecgate.launcher=docker} — run the official image with the
  *       project directory mounted at /workspace</li>
- *   <li>{@code -Pcsda.launcher=auto} (default) — npx when available,
+ *   <li>{@code -Pspecgate.launcher=auto} (default) — npx when available,
  *       docker otherwise</li>
  * </ul>
  *
- * <p>Mirrors the launcher in {@code csda-maven-plugin} so both build tools
+ * <p>Mirrors the launcher in {@code specgate-maven-plugin} so both build tools
  * resolve the CLI identically.</p>
  */
-final class CsdaLauncher {
+final class SpecgateLauncher {
 
-    private CsdaLauncher() {
+    private SpecgateLauncher() {
     }
 
     /**
@@ -36,7 +36,7 @@ final class CsdaLauncher {
     static void run(String launcher, String cliVersion, String dockerImage,
                     File projectDir, List<String> cliArgs) {
         List<String> command = buildCommand(launcher, cliVersion, dockerImage, projectDir, cliArgs);
-        System.out.println("csda> " + String.join(" ", command));
+        System.out.println("specgate> " + String.join(" ", command));
         try {
             Process process = new ProcessBuilder(command)
                     .directory(projectDir)
@@ -46,7 +46,7 @@ final class CsdaLauncher {
             if (exit != 0) {
                 throw new GradleException(
                         "specgate exited " + exit + " — the spec gate failed. "
-                                + "Run `gradle csdaDoctor` for a diagnosis with fixes.");
+                                + "Run `gradle specgateDoctor` for a diagnosis with fixes.");
             }
         } catch (IOException e) {
             throw new GradleException(
@@ -68,7 +68,7 @@ final class CsdaLauncher {
             } else {
                 throw new GradleException(
                         "Neither npx nor docker found on PATH. Install Node.js >= 20 or Docker, "
-                                + "or set -Pcsda.launcher=npx|docker explicitly.");
+                                + "or set -Pspecgate.launcher=npx|docker explicitly.");
             }
         }
 
@@ -92,7 +92,7 @@ final class CsdaLauncher {
                 break;
             default:
                 throw new GradleException(
-                        "Unknown csda.launcher: " + mode + " (expected auto, npx, or docker)");
+                        "Unknown specgate.launcher: " + mode + " (expected auto, npx, or docker)");
         }
         cmd.addAll(cliArgs);
         return cmd;

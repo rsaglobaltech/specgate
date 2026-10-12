@@ -5,12 +5,12 @@
     "provider": "jira",
     "base_url": "https://acme.atlassian.net/",
     "project_key": "HIE",
-    "token_env": "CSDA_CONFORMANCE_TOKEN",
-    "user_env": "CSDA_CONFORMANCE_USER"
+    "token_env": "SPECGATE_CONFORMANCE_TOKEN",
+    "user_env": "SPECGATE_CONFORMANCE_USER"
   },
   "env": {
-    "CSDA_CONFORMANCE_TOKEN": "tok",
-    "CSDA_CONFORMANCE_USER": "user@example.com"
+    "SPECGATE_CONFORMANCE_TOKEN": "tok",
+    "SPECGATE_CONFORMANCE_USER": "user@example.com"
   },
   "routes": [
     {

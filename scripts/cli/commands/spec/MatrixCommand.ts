@@ -42,7 +42,7 @@ function usage(): void {
     requirement, title   ## REQ-NNN — title in spec.md
     scenario, feature    scenarios tagged @REQ-NNN @SCN-NNN
     test                 test files that mention REQ-NNN
-    status, overrides    <!-- csda:trace status=… --> in the requirement's section
+    status, overrides    <!-- specgate:trace status=… --> in the requirement's section
 
   specgate matrix            regenerate docs/specs/traceability.md
   specgate matrix --check    exit 1 if the file no longer matches its sources
@@ -105,7 +105,7 @@ function planMigration(projectDir: string, original: any[]) {
     const req = requirementsIn(spec).find((r) => r.id === id);
     if (!req) {
       // spec.md states it in a table row (the §8 convention), which carries
-      // no csda:trace comment to hold status and links.
+      // no specgate:trace comment to hold status and links.
       blocked.push(`${id}: stated in a table in spec.md, not a \`## ${id}\` section`);
       continue;
     }
@@ -310,7 +310,7 @@ export class MatrixCommand extends BaseCommand {
       () =>
         process.stdout.write(
           `${c.green}✔${c.reset}  ${dryRun ? "Would migrate" : "Migrated"} ${byReq.size} requirement(s), ${derived.length} row(s) — identical row for row.\n` +
-            `   ${c.dim}spec.md now owns status and explicit links (csda:trace); the matrix is generated.${c.reset}\n` +
+            `   ${c.dim}spec.md now owns status and explicit links (specgate:trace); the matrix is generated.${c.reset}\n` +
             `   ${c.dim}Next: commit both files. From now on: specgate new · specgate done · specgate check.${c.reset}\n`
         )
     );

@@ -85,7 +85,7 @@ what no tool can judge:
 | The `## REQ-NNN` section in `spec.md` | Is it one obligation? Could two people test it and agree? Is it what the ticket asked for? |
 | The scenario | Do Given / When / Then describe *this* behaviour with real values, or a generic happy path? Is the interesting edge case missing? |
 | The test that mentions `REQ-NNN` | Does it assert what the scenario's *Then* says — or only that nothing throws? A test that mentions the ID and checks nothing passes the gate. |
-| The status change | `csda:trace … status=Implemented` in `spec.md`. Only on a requirement whose code is in this PR. |
+| The status change | `specgate:trace … status=Implemented` in `spec.md`. Only on a requirement whose code is in this PR. |
 
 Skip `docs/specs/traceability.md`. It is generated from the files above, and
 CI fails when it is out of date, so a diff there is a consequence, not a
@@ -139,7 +139,7 @@ status back to Draft in `spec.md`.
 ```
 
 A file the requirement points at *explicitly* is gone — a path written in its
-`csda:trace` comment (`test='…'`, `artifact='…'`), or in a hand-kept matrix.
+`specgate:trace` comment (`test='…'`, `artifact='…'`), or in a hand-kept matrix.
 Restore it, or fix the path. A test linked only by mentioning the requirement
 does not produce this: delete that test and you get `[TDD-1]` instead.
 

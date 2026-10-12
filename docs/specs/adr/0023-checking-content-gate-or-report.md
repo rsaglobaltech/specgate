@@ -6,7 +6,7 @@ Accepted — 2026-08-26
 
 ## Context
 
-Every check `csda validate` performed until now read the paperwork, not the
+Every check `specgate validate` performed until now read the paperwork, not the
 work. Structure, traceability coverage, legal statuses, Gherkin parseability
 and — under `--strict-tdd` — three rules over the matrix. All of them answer
 "are these documents internally consistent?". None answers "does the code do
@@ -61,9 +61,9 @@ immediately, and the same reasoning already existed in the codebase:
 certainty, for the same reason.
 
 **3. Where the rule is not decidable, ship a report, not a gate — and say so
-in the flag's absence.** Declared-value drift (`csda:trace value_<id>=…`
-against `csda:value <id>=…`) is **not** `--strict-values`. It is a section of
-`csda report` and three additive fields in `--record` history. It classifies
+in the flag's absence.** Declared-value drift (`specgate:trace value_<id>=…`
+against `specgate:value <id>=…`) is **not** `--strict-values`. It is a section of
+`specgate report` and three additive fields in `--record` history. It classifies
 into `matched` / `diverging` / `spec_only` / `code_only` and never decides
 pass or fail.
 
@@ -94,7 +94,7 @@ equality: `15m` and `900000` are different strings, and interpreting units
 would be the H13 mistake with a stopwatch.
 
 **5. A finding a user cannot act on is half a feature.** Value drift ships with
-its resolution path: `csda change new <id> --from-value-drift REQ-ID:value_id`
+its resolution path: `specgate change new <id> --from-value-drift REQ-ID:value_id`
 seeds a `## MODIFIED Requirements` delta with the structured `value_<id>`
 rewritten to the code's value — and the prose left alone under an explicit
 `TODO:`, because rewriting a human's sentence is guessing how it should sound.
@@ -105,7 +105,7 @@ The other two routes needed no new command and got none.
 - The gate can now fail for reasons that are about content, and every such
   reason is opt-in. Adoption cost stays at zero for existing projects: nothing
   that passed `validate` before fails it now.
-- **`csda validate` has four opt-in gates, not one.** They are documented
+- **`specgate validate` has four opt-in gates, not one.** They are documented
   together in [validating.md](../../validating.md), and the user-facing
   command tables list all four. `--strict-scenarios` shipped in 0.7.0 and was
   documented nowhere for three days — a gate users cannot find is a gate that

@@ -73,7 +73,7 @@ test("every language declares the same phrases", () => {
 });
 
 test("KEYWORDS names what must never be translated", () => {
-  for (const keyword of ["SHALL", "GIVEN", "WHEN", "THEN", "csda:trace"]) {
+  for (const keyword of ["SHALL", "GIVEN", "WHEN", "THEN", "specgate:trace"]) {
     assert.ok(KEYWORDS.includes(keyword), `${keyword} should be protected`);
   }
 });
@@ -81,10 +81,10 @@ test("KEYWORDS names what must never be translated", () => {
 test("a regional tag falls back to its base language, not to English", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "language-tag-"));
   try {
-    fs.mkdirSync(path.join(dir, ".csda"), { recursive: true });
+    fs.mkdirSync(path.join(dir, ".specgate"), { recursive: true });
     const write = (language) =>
       fs.writeFileSync(
-        path.join(dir, ".csda", "config.json"),
+        path.join(dir, ".specgate", "config.json"),
         JSON.stringify({ language }),
         "utf8"
       );
@@ -127,7 +127,7 @@ test("a Spanish project gets Spanish prose and English grammar", () => {
     assert.match(template, /- GIVEN /);
     assert.match(template, /- WHEN /);
     assert.match(template, /- THEN /);
-    assert.match(template, /csda:trace/);
+    assert.match(template, /specgate:trace/);
   });
 });
 

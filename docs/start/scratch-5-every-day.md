@@ -19,7 +19,7 @@ remember — five commands, none of which asks you to edit a matrix.
 specgate ci init --provider github
 ```
 
-<!-- csda:out-scratch-ci:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-ci:begin — generated; edit the source, not this block -->
 ```text
 $ specgate ci init --provider github
 ℹ️ [INFO] write .github/workflows/spec-gate.yml
@@ -31,7 +31,7 @@ $ specgate ci init --provider github
 ℹ️ [INFO]   3. publishes `plan --format json` as the spec-plan artifact
 ℹ️ [INFO] Commit the file and open a PR to see the gate in action.
 ```
-<!-- csda:out-scratch-ci:end -->
+<!-- specgate:out-scratch-ci:end -->
 
 `gitlab`, `azure` and `jenkins` work the same way. Commit the file; from the
 next pull request, a requirement marked done with a red test fails the build.
@@ -48,7 +48,7 @@ specgate status  →  specgate new  →  a test that names the REQ  →  specgat
 specgate new "A member sees which courts are free on a day"
 ```
 
-<!-- csda:out-scratch-new:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-new:begin — generated; edit the source, not this block -->
 ```text
 $ specgate new "A member sees which courts are free on a day"
 ✔  REQ-005 A member sees which courts are free on a day (Draft)
@@ -58,7 +58,7 @@ $ specgate new "A member sees which courts are free on a day"
 
    Next: write a test that mentions REQ-005 — that is the link — then specgate check
 ```
-<!-- csda:out-scratch-new:end -->
+<!-- specgate:out-scratch-new:end -->
 
 Rewrite its sentence in `spec.md` and the `<placeholders>` in its scenario;
 while it is `Draft` the gate leaves them alone, and `done` refuses any left.
@@ -69,7 +69,7 @@ while it is `Draft` the gate leaves them alone, and `done` refuses any left.
 specgate status
 ```
 
-<!-- csda:out-scratch-status-daily:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-status-daily:begin — generated; edit the source, not this block -->
 ```text
 $ specgate status
   📊 Project status  court-bookings
@@ -89,7 +89,7 @@ $ specgate status
 
   Next  specgate done REQ-005  — once a test mentions REQ-005 — that mention is the link; done checks first
 ```
-<!-- csda:out-scratch-status-daily:end -->
+<!-- specgate:out-scratch-status-daily:end -->
 
 **A whole new module** goes back through phase 2: a change, a draft,
 `specgate draft <module>`, archive. **A requirement that changes** goes through a change
@@ -99,7 +99,7 @@ too, as `MODIFIED`, so the review sees the before and after.
 
 Write the answer into the change's `questions.md`, update the requirement and
 its scenario with the real value, remove `status="Needs Clarification"` from
-its `csda:trace`, and it rejoins the queue: `status` lists it, the harness
+its `specgate:trace`, and it rejoins the queue: `status` lists it, the harness
 builds it, `done` closes it.
 
 ## You're done when…

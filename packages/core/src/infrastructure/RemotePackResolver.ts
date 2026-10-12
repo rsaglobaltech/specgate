@@ -6,7 +6,7 @@
  *     → { packRoot: <local-dir>, commit: <sha>, version: <ref-as-provided> }
  *
  * Caching:
- *   ~/.cache/csda/packs/<repo-hash>/<version>/
+ *   ~/.cache/specgate/packs/<repo-hash>/<version>/
  *   The cache key is sha256(repo) so different repos with the same tag
  *   never collide. `cacheDir` can be overridden (used by tests).
  *
@@ -21,7 +21,7 @@ import * as path from "node:path";
 import * as crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 
-export const DEFAULT_CACHE_DIR = path.join(os.homedir(), ".cache", "csda", "packs");
+export const DEFAULT_CACHE_DIR = path.join(os.homedir(), ".cache", "specgate", "packs");
 const GIT_TIMEOUT_MS = 60_000;
 
 export function repoHash(repo) {
@@ -59,10 +59,10 @@ export function gitAvailable() {
   return result.status === 0;
 }
 
-/** Offline mode: opt-in via option or the CSDA_OFFLINE env var (CI-friendly). */
+/** Offline mode: opt-in via option or the SPECGATE_OFFLINE env var (CI-friendly). */
 function isOffline(opts) {
   if (typeof opts.offline === "boolean") return opts.offline;
-  const env = process.env.CSDA_OFFLINE;
+  const env = process.env.SPECGATE_OFFLINE;
   return env === "1" || env === "true";
 }
 
@@ -134,7 +134,7 @@ export function createPackBundle(options) {
   if (!opts.out) throw new Error("createPackBundle: 'out' is required");
   if (!gitAvailable()) throw new Error("createPackBundle: 'git' is not available on PATH");
 
-  const tmpRoot = opts.tmpDir || fs.mkdtempSync(path.join(os.tmpdir(), "csda-bundle-"));
+  const tmpRoot = opts.tmpDir || fs.mkdtempSync(path.join(os.tmpdir(), "specgate-bundle-"));
   const mirrorDir = path.join(tmpRoot, "mirror.git");
   try {
     // A mirror clone carries every branch and tag — bundles from shallow

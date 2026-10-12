@@ -1,8 +1,8 @@
 # VHS-Tape — Spec-driven Liefer-Loop auf Deutsch, Java + Spring.
 #
 # Rendern mit:  bash scripts/demo/de/build-video.sh --real-agent
-# build-video.sh setzt `csda` (npx create-spec-driven-app@0.1.3) auf den
-# PATH, wärmt den Pack- und Maven-Cache vor und exportiert die CSDA_*
+# build-video.sh setzt `specgate` (npx create-spec-driven-app@0.1.3) auf den
+# PATH, wärmt den Pack- und Maven-Cache vor und exportiert die SPECGATE_*
 # Variablen, die dieses Tape liest. Der Platzhalter %%HARNESS_SLEEP%% wird
 # durch das Skript ersetzt (kürzere Wartezeit beim Stub, längere bei
 # --real-agent / opencode).
@@ -10,7 +10,7 @@
 Output scripts/demo/de/out/demo.mp4
 Output scripts/demo/de/out/demo.gif
 
-Require csda
+Require specgate
 
 Set Shell bash
 Set FontSize 22
@@ -61,8 +61,8 @@ Sleep 700ms
 # ════════════════════════════════════════════════════════════════════════════
 Type "# Schritt 2: Domain-Pack einbinden — wie `npm install`, aber für Specs." Enter
 Sleep 2s
-Type "specgate specops add --pack-repo $CSDA_PACK_REPO --pack-version $CSDA_PACK_V1 \" Enter
-Type "  --pack $CSDA_PACK_ID --cache-dir $CSDA_CACHE_DIR \" Enter
+Type "specgate specops add --pack-repo $SPECGATE_PACK_REPO --pack-version $SPECGATE_PACK_V1 \" Enter
+Type "  --pack $SPECGATE_PACK_ID --cache-dir $SPECGATE_CACHE_DIR \" Enter
 Type "  --var PROJECT_NAME='Smart Parking' --var PROJECT_SLUG=smart-parking --var DOMAIN='parking operations'" Enter
 Sleep 4s
 Type "clear" Enter
@@ -174,7 +174,7 @@ Type "# Schritt 10: specops diff zeigt, ob das Projekt mit dem Pack synchron ist
 Sleep 2s
 Type "git switch main -q" Enter
 Sleep 1s
-Type "specgate specops diff --cache-dir $CSDA_CACHE_DIR | tail -6" Enter
+Type "specgate specops diff --cache-dir $SPECGATE_CACHE_DIR | tail -6" Enter
 Sleep 5s
 Type "clear" Enter
 Sleep 600ms
@@ -184,7 +184,7 @@ Sleep 600ms
 # ════════════════════════════════════════════════════════════════════════════
 Type "# Schritt 11: pack lint --graph rendert den REQ → UC → CMD/AGG/EVT Graph." Enter
 Sleep 2s
-Type "specgate pack lint --pack-root $CSDA_GRAPH_PACK_ROOT --pack $CSDA_PACK_ID --graph | head -16" Enter
+Type "specgate pack lint --pack-root $SPECGATE_GRAPH_PACK_ROOT --pack $SPECGATE_PACK_ID --graph | head -16" Enter
 Sleep 6s
 Type "clear" Enter
 Sleep 600ms

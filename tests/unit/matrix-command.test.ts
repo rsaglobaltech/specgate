@@ -69,7 +69,7 @@ test("migrate turns a hand-kept matrix into a generated one, row for row", () =>
     assert.deepEqual(rows(after).map(norm), rows(before).map(norm));
 
     const spec = fs.readFileSync(path.join(dir, "spec.md"), "utf8");
-    assert.match(spec, /csda:trace status=Implemented artifact=lib\/orders\.js/);
+    assert.match(spec, /specgate:trace status=Implemented artifact=lib\/orders\.js/);
     assert.doesNotMatch(
       spec,
       /test=test\/cancel/,
@@ -161,7 +161,10 @@ test("done writes the status into spec.md, where regeneration reads it", () => {
       cli("done", "REQ-002", "--status", "Verified", "--no-check", "--project-dir", dir).status,
       0
     );
-    assert.match(fs.readFileSync(path.join(dir, "spec.md"), "utf8"), /csda:trace status=Verified/);
+    assert.match(
+      fs.readFileSync(path.join(dir, "spec.md"), "utf8"),
+      /specgate:trace status=Verified/
+    );
     assert.match(row(dir, "REQ-002"), /\| Verified \|$/);
     assert.equal(cli("matrix", "--check", "--project-dir", dir).status, 0, "nothing left stale");
   } finally {

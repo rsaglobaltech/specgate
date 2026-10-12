@@ -21,20 +21,20 @@
  * ## The vocabulary
  *
  * ```markdown
- * <!-- csda:cards cols=2 -->
+ * <!-- specgate:cards cols=2 -->
  * - [Getting started](./getting-started.md) — Install and run the gate.
- * <!-- csda:endcards -->
+ * <!-- specgate:endcards -->
  *
- * <!-- csda:tabs -->
- * <!-- csda:tab npm -->      …markdown…
- * <!-- csda:tab Docker -->   …markdown…
- * <!-- csda:endtabs -->
+ * <!-- specgate:tabs -->
+ * <!-- specgate:tab npm -->      …markdown…
+ * <!-- specgate:tab Docker -->   …markdown…
+ * <!-- specgate:endtabs -->
  *
- * <!-- csda:steps -->
+ * <!-- specgate:steps -->
  * ### Install          ← each h3 becomes a numbered step
- * <!-- csda:endsteps -->
+ * <!-- specgate:endsteps -->
  *
- * <!-- csda:note -->  …  <!-- csda:endnote -->   also: warning, tip, danger
+ * <!-- specgate:note -->  …  <!-- specgate:endnote -->   also: warning, tip, danger
  * ```
  */
 
@@ -62,12 +62,12 @@ function fail(slug: string, message: string): never {
   throw new ComponentError(`${slug}.md: ${message}`);
 }
 
-/** `<!-- csda:name arg=value -->` → the raw attribute string, or null. */
+/** `<!-- specgate:name arg=value -->` → the raw attribute string, or null. */
 function openTag(name: string): RegExp {
-  return new RegExp(`<!--\\s*csda:${name}([^>]*?)-->`, "i");
+  return new RegExp(`<!--\\s*specgate:${name}([^>]*?)-->`, "i");
 }
 function closeTag(name: string): RegExp {
-  return new RegExp(`<!--\\s*csda:end${name}\\s*-->`, "i");
+  return new RegExp(`<!--\\s*specgate:end${name}\\s*-->`, "i");
 }
 
 function attr(raw: string, key: string): string | undefined {
@@ -76,7 +76,7 @@ function attr(raw: string, key: string): string | undefined {
 }
 
 /**
- * Replace every `csda:NAME … csda:endNAME` region, innermost content passed to
+ * Replace every `specgate:NAME … specgate:endNAME` region, innermost content passed to
  * `body`. Scans left to right so two blocks of the same kind on one page work.
  */
 function replaceRegions(
@@ -96,7 +96,7 @@ function replaceRegions(
     const afterOpen = start + open[0].length;
     const close = closeTag(name).exec(rest.slice(afterOpen));
     if (!close) {
-      fail(slug, `<!-- csda:${name} --> is never closed with <!-- csda:end${name} -->`);
+      fail(slug, `<!-- specgate:${name} --> is never closed with <!-- specgate:end${name} -->`);
     }
 
     const inner = rest.slice(afterOpen, afterOpen + close.index);
@@ -118,7 +118,7 @@ function cards(inner: string, args: string, slug: string, href: RewriteHref): st
   const cols = attr(args, "cols") || "2";
   const items = [...inner.matchAll(/^\s*[-*]\s+\[([^\]]+)\]\(([^)]+)\)\s*(?:[—–-]\s*(.*))?$/gm)];
   if (items.length === 0) {
-    fail(slug, "csda:cards contains no `- [Label](href) — description` items");
+    fail(slug, "specgate:cards contains no `- [Label](href) — description` items");
   }
 
   const cells = items
@@ -142,12 +142,12 @@ function cards(inner: string, args: string, slug: string, href: RewriteHref): st
 // ── tabs ─────────────────────────────────────────────────────────────────────
 
 function tabs(inner: string, slug: string, renderInline: RenderInline): string {
-  const parts = inner.split(/<!--\s*csda:tab\s+([^>]*?)-->/i);
+  const parts = inner.split(/<!--\s*specgate:tab\s+([^>]*?)-->/i);
   // split() yields [before, title, body, title, body…]; `before` must be blank.
   if (parts[0].trim() !== "") {
-    fail(slug, "content inside csda:tabs before the first <!-- csda:tab NAME -->");
+    fail(slug, "content inside specgate:tabs before the first <!-- specgate:tab NAME -->");
   }
-  if (parts.length < 3) fail(slug, "csda:tabs needs at least one <!-- csda:tab NAME -->");
+  if (parts.length < 3) fail(slug, "specgate:tabs needs at least one <!-- specgate:tab NAME -->");
 
   const id = `t${Math.abs(hash(inner)).toString(36)}`;
   const heads: string[] = [];
@@ -187,8 +187,8 @@ function hash(s: string): number {
 /** Each `### Heading` inside the block becomes a numbered step. */
 function steps(inner: string, slug: string, renderInline: RenderInline): string {
   const chunks = inner.split(/^###\s+(.+)$/gm);
-  if (chunks[0].trim() !== "") fail(slug, "content inside csda:steps before the first `### `");
-  if (chunks.length < 3) fail(slug, "csda:steps needs at least one `### ` heading");
+  if (chunks[0].trim() !== "") fail(slug, "content inside specgate:steps before the first `### `");
+  if (chunks.length < 3) fail(slug, "specgate:steps needs at least one `### ` heading");
 
   let n = 0;
   const items: string[] = [];
@@ -241,10 +241,10 @@ export function expandComponents(
   }
 
   // A stray closer means someone deleted the opener and left the pair broken.
-  const orphan = /<!--\s*csda:end(cards|tabs|steps|note|tip|warning|danger)\s*-->/i.exec(out);
-  if (orphan) fail(slug, `<!-- csda:${orphan[1]} --> closer with no opener`);
-  const strayTab = /<!--\s*csda:tab\s/i.exec(out);
-  if (strayTab) fail(slug, "<!-- csda:tab NAME --> outside a csda:tabs block");
+  const orphan = /<!--\s*specgate:end(cards|tabs|steps|note|tip|warning|danger)\s*-->/i.exec(out);
+  if (orphan) fail(slug, `<!-- specgate:${orphan[1]} --> closer with no opener`);
+  const strayTab = /<!--\s*specgate:tab\s/i.exec(out);
+  if (strayTab) fail(slug, "<!-- specgate:tab NAME --> outside a specgate:tabs block");
 
   return out;
 }

@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders -->
+<!-- specgate:allow-placeholders -->
 # E1 · H13 medido: el esquema de pack y la autoridad que no ejerce
 
 > **Creado:** 2026-08-23 · **Tarea:** `E1` de

@@ -28,7 +28,7 @@ export const providerIds = (): string[] => PROVIDERS.map((p) => p.id);
 // So: `jira`, `azure` and `github` are core — maintained here, exercised by the
 // conformance kit in CI. Anything else is resolved by package name:
 //
-//     provider: npm:csda-alm-youtrack
+//     provider: npm:specgate-alm-youtrack
 //
 // **This runs third-party code, and that code is handed your ALM credential**,
 // because a connector cannot talk to a board without one. The trust model is

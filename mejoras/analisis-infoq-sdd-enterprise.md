@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — cita la sintaxis {{VAR}} de los packs. -->
+<!-- specgate:allow-placeholders — cita la sintaxis {{VAR}} de los packs. -->
 # Análisis — «Spec-Driven Development for Enterprise Scale» (InfoQ)
 
 > **Fuente:** https://www.infoq.com/articles/enterprise-spec-driven-development/

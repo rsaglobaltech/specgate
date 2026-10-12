@@ -67,7 +67,7 @@ are better run from a terminal. The ones an agent uses every day:
 Seven of those names — `read_spec`, `list_requirements`,
 `update_traceability`, `lint_pack`, `validate_project`, `plan`,
 `mark_requirement_done` — were published before the rest were generated, and
-keep resolving. The old `csda_*` names resolve too.
+keep resolving. The old `specgate_*` names resolve too.
 
 Every tool answers with the command's JSON document: a payload plus `status`,
 a list of diagnostics with a stable `code` and a `fix`. Branch on `code`, never
@@ -93,7 +93,7 @@ purpose, and it leaves a reviewable trail.
 
 When the team wants the agent to drive the daily loop directly, allow it in
 the repository, where the decision is reviewed like any other — in
-`.csda/config.json`:
+`.specgate/config.json`:
 
 ```json
 { "mcpAllowContractEdits": true }

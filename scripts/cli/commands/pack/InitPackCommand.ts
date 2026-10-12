@@ -1,4 +1,4 @@
-// csda:allow-placeholders — this command *writes* the {{VAR}} tokens a pack
+// specgate:allow-placeholders — this command *writes* the {{VAR}} tokens a pack
 // template carries; they are its output, not an unrendered project.
 //
 // The marker was on `scripts/init_pack.ts` and was lost when the clean

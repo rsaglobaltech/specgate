@@ -84,7 +84,7 @@ const FEATURE_TPL = `Feature: Parking Capacity
 /** Write a pack tree under a fresh root and return the root. */
 function mkPackRoot(packYaml, opts?) {
   const o = opts || {};
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "csda-pack-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pack-"));
   const packDir = path.join(root, PACK_ID);
   fs.mkdirSync(packDir, { recursive: true });
   fs.writeFileSync(path.join(packDir, "pack.yaml"), packYaml, "utf8");
@@ -292,7 +292,7 @@ test("changeIdFor is stable and kebab-cased", () => {
 test("materialiseChange writes a complete, reviewable change folder", () => {
   const before = mkPackRoot(pack({ requirements: REQ_001, scenarios: SCN_001 }));
   const after = mkPackRoot(pack({ requirements: `${REQ_001}\n${REQ_002}`, scenarios: SCN_001 }));
-  const project = fs.mkdtempSync(path.join(os.tmpdir(), "csda-proj-"));
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-proj-"));
   try {
     const derived = deriveDelta(before, after, PACK_ID);
     const entry = {
@@ -329,7 +329,7 @@ test("materialiseChange writes a complete, reviewable change folder", () => {
 test("materialiseChange with dryRun writes nothing", () => {
   const before = mkPackRoot(pack({ requirements: REQ_001, scenarios: SCN_001 }));
   const after = mkPackRoot(pack({ requirements: `${REQ_001}\n${REQ_002}`, scenarios: SCN_001 }));
-  const project = fs.mkdtempSync(path.join(os.tmpdir(), "csda-proj-"));
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-proj-"));
   try {
     const derived = deriveDelta(before, after, PACK_ID);
     const entry = { repo: "https://x/y.git", pack_id: PACK_ID, version: "v0.1.0" };

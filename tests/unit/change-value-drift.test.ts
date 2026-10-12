@@ -29,7 +29,7 @@ const RICH_HEADER =
 const RICH_SEP = "|---|---|---|---|---|---|---|---|---|---|";
 
 function mkProject() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "csda-value-drift-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-value-drift-"));
   fs.writeFileSync(path.join(root, "spec.md"), "# Spec\n", "utf8");
   fs.mkdirSync(path.join(root, "docs", "specs"), { recursive: true });
   fs.writeFileSync(
@@ -70,7 +70,7 @@ const AUTH_SPEC = [
   "## Requirements",
   "### Requirement: REQ-200 — Session expiry",
   "The system SHALL expire the session after 15 minutes of inactivity.",
-  "<!-- csda:trace uc=Login value_session_timeout=15m -->",
+  "<!-- specgate:trace uc=Login value_session_timeout=15m -->",
   "#### Scenario: SCN-200a — Expires",
   "- GIVEN a session idle for 15 minutes",
   "- WHEN the user tries to use it",
@@ -81,7 +81,7 @@ test("generates a MODIFIED delta proposing the spec take the code's value", () =
   const root = mkProject();
   try {
     writeCapabilitySpec(root, "auth", AUTH_SPEC);
-    writeCode(root, "src/auth.ts", "// csda:value session_timeout=30m\n");
+    writeCode(root, "src/auth.ts", "// specgate:value session_timeout=30m\n");
     addMatrixRow(root, "| REQ-200 | SCN-200a | - | - | - | - | - | `src/auth.ts` | TBD | In Dev |");
 
     const r = run(root, [
@@ -110,7 +110,7 @@ test("the generated delta passes specgate change validate", () => {
   const root = mkProject();
   try {
     writeCapabilitySpec(root, "auth", AUTH_SPEC);
-    writeCode(root, "src/auth.ts", "// csda:value session_timeout=30m\n");
+    writeCode(root, "src/auth.ts", "// specgate:value session_timeout=30m\n");
     addMatrixRow(root, "| REQ-200 | SCN-200a | - | - | - | - | - | `src/auth.ts` | TBD | In Dev |");
 
     const created = run(root, [
@@ -174,7 +174,7 @@ test("a value_ id the spec never declared fails cleanly", () => {
   }
 });
 
-test("no matching csda:value marker in the declared code file fails cleanly", () => {
+test("no matching specgate:value marker in the declared code file fails cleanly", () => {
   const root = mkProject();
   try {
     writeCapabilitySpec(root, "auth", AUTH_SPEC);
@@ -193,7 +193,7 @@ test("already matching values report nothing to propose, instead of a no-op chan
   const root = mkProject();
   try {
     writeCapabilitySpec(root, "auth", AUTH_SPEC);
-    writeCode(root, "src/auth.ts", "// csda:value session_timeout=15m\n");
+    writeCode(root, "src/auth.ts", "// specgate:value session_timeout=15m\n");
     addMatrixRow(root, "| REQ-200 | SCN-200a | - | - | - | - | - | `src/auth.ts` | TBD | In Dev |");
 
     const r = run(root, ["change", "new", "x", "--from-value-drift", "REQ-200:session_timeout"]);

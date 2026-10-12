@@ -33,12 +33,12 @@ test("a bare 'value_' with nothing after the prefix is not a valid id", () => {
   assert.deepEqual(declaredSpecValues({ value_: "15m" }), []);
 });
 
-test("csda:value is found regardless of comment syntax, because it is not parsed as one", () => {
+test("specgate:value is found regardless of comment syntax, because it is not parsed as one", () => {
   const source = [
-    "// csda:value session_timeout=15m",
+    "// specgate:value session_timeout=15m",
     "const SESSION_TIMEOUT = '15m';",
-    "# csda:value max_attempts=5",
-    "-- csda:value lockout_minutes=60",
+    "# specgate:value max_attempts=5",
+    "-- specgate:value lockout_minutes=60",
     "not a marker at all",
   ].join("\n");
   assert.deepEqual(declaredCodeValues(source), [
@@ -95,7 +95,7 @@ test("spec_only: the spec declares a value with no matching code marker", () => 
   ]);
 });
 
-test("code_only: a csda:value marker with no matching spec declaration", () => {
+test("code_only: a specgate:value marker with no matching spec declaration", () => {
   const result = compareDeclaredValues(
     [],
     [{ id: "retry_backoff", value: "2s", line: 5, file: "src/retry.ts" }]

@@ -49,7 +49,7 @@ import {
   frontMatterExplanation,
   noBriefExplanation,
 } from "../../../draft/brief-setup";
-import { csdaTagsByScenario } from "../../../../packages/core/src/domain/GherkinTags";
+import { specgateTagsByScenario } from "../../../../packages/core/src/domain/GherkinTags";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 
 const CHANGES = path.join("docs", "specs", "changes");
@@ -213,7 +213,7 @@ function projectIds(projectDir: string): Map<string, string> {
       owners.set(id, id);
     }
     for (const f of sources.features || []) {
-      for (const tags of Object.values(csdaTagsByScenario(f.source))) {
+      for (const tags of Object.values(specgateTagsByScenario(f.source))) {
         const req = tags.find((t) => /^@REQ-/.test(t));
         for (const t of tags.filter((x) => /^@SCN-/.test(x))) {
           if (req) owners.set(t.slice(1), req.slice(1));

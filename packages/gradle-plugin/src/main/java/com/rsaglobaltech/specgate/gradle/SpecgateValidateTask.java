@@ -1,4 +1,4 @@
-package com.rsaglobaltech.csda.gradle;
+package com.rsaglobaltech.specgate.gradle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,13 +10,13 @@ import org.gradle.api.tasks.options.Option;
 import org.gradle.api.tasks.UntrackedTask;
 
 /**
- * {@code gradle csdaValidate} — run the Spec-Driven Development gate.
+ * {@code gradle specgateValidate} — run the Spec-Driven Development gate.
  * Fails the build when a requirement lacks its feature file, its test
  * artifact, or its traceability row. Wired into {@code check} by the plugin
  * so it also runs on {@code gradle check}/{@code build}.
  */
-@UntrackedTask(because = "runs the csda spec gate on every invocation; skipping it on an up-to-date check would let a broken spec tree pass")
-public abstract class CsdaValidateTask extends CsdaTask {
+@UntrackedTask(because = "runs the specgate spec gate on every invocation; skipping it on an up-to-date check would let a broken spec tree pass")
+public abstract class SpecgateValidateTask extends SpecgateTask {
 
     /**
      * Run the gate, {@code validate --strict} — the same gate

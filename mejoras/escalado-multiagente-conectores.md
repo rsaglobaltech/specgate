@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders -->
+<!-- specgate:allow-placeholders -->
 # Escalado — harness multiagente, conectores ALM y csda como plugin de hosts
 
 > **Creado:** 2026-08-20
@@ -674,7 +674,7 @@ leen el Status como **penúltima celda**. Con una columna más escribirían el
 estado en la casilla equivocada, en silencio. E1-* es 1.1, la release que debe
 probar G1; ahí no cabe una rotura de formato.
 
-Así que gana la convención que el repo ya tiene: `<!-- csda:trace ... depends=REQ-001 -->`.
+Así que gana la convención que el repo ya tiene: `<!-- specgate:trace ... depends=REQ-001 -->`.
 El parser acepta claves arbitrarias, así que `depends=` salió gratis, y encaja
 con el modelo que este repo aplica en todo lo demás — **el requisito declara, la
 matriz refleja** (`change archive` ya lee ese comentario para escribir la fila).
@@ -1122,7 +1122,7 @@ modelo.
 **Para cuando se aborde P1**, la revisión deja escrita la decisión que hay que
 tomar antes de escribir código: de dónde sale el identificador supra-repo. La
 opción que encaja con lo que este repositorio ya cree es que **el requisito lo
-declare** —`<!-- csda:trace implements=acme/billing#REQ-014 -->`— porque
+declare** —`<!-- specgate:trace implements=acme/billing#REQ-014 -->`— porque
 `csda:trace` ya es el punto de extensión, ya acepta claves arbitrarias y ya lo
 usa `depends=`. Merece ADR propio.
 

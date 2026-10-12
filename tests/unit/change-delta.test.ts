@@ -74,7 +74,7 @@ test("requirementKey falls back to a slug when there is no id", () => {
 
 test("parseTraceComment reads keys, quoted values included", () => {
   const trace = parseTraceComment(
-    '<!-- csda:trace uc=UC-007 cmd=CMD-011 feature=features/billing/x.feature note="two words" -->'
+    '<!-- specgate:trace uc=UC-007 cmd=CMD-011 feature=features/billing/x.feature note="two words" -->'
   );
   assert.equal(trace.uc, "UC-007");
   assert.equal(trace.feature, "features/billing/x.feature");
@@ -93,7 +93,7 @@ El sistema SHALL aplicar un recargo.
 - GIVEN una sesión a las 18:00
 - THEN el importe incluye recargo
 
-<!-- csda:trace uc=UC-007 feature=features/billing/dynamic.feature -->
+<!-- specgate:trace uc=UC-007 feature=features/billing/dynamic.feature -->
 `);
   assert.equal(delta.added.length, 1);
   assert.equal(delta.added[0].trace.uc, "UC-007");

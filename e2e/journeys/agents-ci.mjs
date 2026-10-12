@@ -64,15 +64,15 @@ export default [
         }
       );
       t.expect(old.status === 0, "0.9.0 agents init (needs the network)", old);
-      t.expect(t.exists(dir, ".claude/commands/csda/apply.md"), "0.9.0 wrote csda paths");
-      fs.appendFileSync(path.join(dir, ".claude/commands/csda/apply.md"), "\nOUR TEAM RULE\n");
+      t.expect(t.exists(dir, ".claude/commands/specgate/apply.md"), "0.9.0 wrote specgate paths");
+      fs.appendFileSync(path.join(dir, ".claude/commands/specgate/apply.md"), "\nOUR TEAM RULE\n");
       t.write(dir, "README.md", "# Our project\n");
 
       t.ok(t.sg(dir, "update"), "update");
-      t.expect(!t.exists(dir, ".claude/commands/csda"), "old directory removed");
+      t.expect(!t.exists(dir, ".claude/commands/specgate"), "old directory removed");
       const moved = t.read(dir, ".claude/commands/specgate/apply.md");
       t.expect(moved.includes("OUR TEAM RULE"), "the team's edit survived");
-      t.expect(!/\/csda:/.test(moved), "no /csda: left");
+      t.expect(!/\/specgate:/.test(moved), "no /specgate: left");
       t.expect(t.read(dir, "README.md") === "# Our project\n", "the project README is untouched");
       const again = t.json(t.sg(dir, "update", "--json"));
       t.expect(

@@ -65,7 +65,7 @@ const fs = __importStar(require("node:fs"));
 const os = __importStar(require("node:os"));
 const path = __importStar(require("node:path"));
 const node_child_process_1 = require("node:child_process");
-const MARKER_DIR = path.join(os.tmpdir(), "csda-gate-hook");
+const MARKER_DIR = path.join(os.tmpdir(), "specgate-gate-hook");
 /**
  * Has this prompt already been blocked once?
  *

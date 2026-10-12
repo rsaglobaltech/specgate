@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this guide quotes the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this guide quotes the {{VAR}} template syntax. -->
 
 # Domain packs
 
@@ -6,7 +6,7 @@ Reusable, versioned domain knowledge. A pack is to a spec tree what a
 dependency is to code: you install it, you pin it, and you upgrade it
 deliberately.
 
-<!-- csda:diagram three-repos -->
+<!-- specgate:diagram three-repos -->
 
 ## Two kinds of pack in this repository
 
@@ -285,7 +285,7 @@ Plain `sync` (no `--pack` / `--pack-version`) re-expands every pack in the lockf
 
 What `sync` does with the files a pack shares with the project:
 
-- **Requirement trace lines** (`<!-- csda:trace … -->`) merge field by field. A field the pack changed — a new `depends`, a renamed use case — takes the pack's value; the fields the project wrote (`status` from `done`, links) stay.
+- **Requirement trace lines** (`<!-- specgate:trace … -->`) merge field by field. A field the pack changed — a new `depends`, a renamed use case — takes the pack's value; the fields the project wrote (`status` from `done`, links) stay.
 - **A generated matrix** (`specgate:derived`) is regenerated once every pack is synced, never merged.
 - **The domain catalogs** (`aggregates.md`, `events.md`, `commands.md`, `use-cases.md`, `domain-model.md`) hold every installed pack's rows: a pack replaces the rows with its ids and leaves the others. Change a catalog row in the pack, not in the project — the pack's next sync rewrites it.
 

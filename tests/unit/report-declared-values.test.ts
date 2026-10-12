@@ -6,7 +6,7 @@
  * `packages/core/test/unit/value-annotations.test.ts` pins the pure compare
  * logic. This is the I/O wiring: read a capability spec's `value_<id>=`
  * trace keys, find the file(s) its matrix row already declares, read those
- * files for `csda:value <id>=` markers, and aggregate — as a report section,
+ * files for `specgate:value <id>=` markers, and aggregate — as a report section,
  * never as a gate. `validate` is untouched by this feature on purpose.
  */
 
@@ -88,10 +88,10 @@ test("a requirement with no value_ key contributes nothing", () => {
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL authenticate users.",
-        "<!-- csda:trace uc=Login -->",
+        "<!-- specgate:trace uc=Login -->",
       ].join("\n")
     );
-    writeCode(dir, "src/a.ts", "// csda:value session_timeout=15m\n");
+    writeCode(dir, "src/a.ts", "// specgate:value session_timeout=15m\n");
     const dv = buildReport(dir).declaredValues;
     assert.equal(dv.total, 0);
     assert.equal(dv.items.length, 0);
@@ -111,10 +111,10 @@ test("matched — same id, same literal, on the file the matrix already declares
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL expire the session after 15 minutes.",
-        "<!-- csda:trace uc=Login value_session_timeout=15m -->",
+        "<!-- specgate:trace uc=Login value_session_timeout=15m -->",
       ].join("\n")
     );
-    writeCode(dir, "src/a.ts", "// csda:value session_timeout=15m\nconst X = '15m';\n");
+    writeCode(dir, "src/a.ts", "// specgate:value session_timeout=15m\nconst X = '15m';\n");
     const dv = buildReport(dir).declaredValues;
     assert.equal(dv.total, 1);
     assert.equal(dv.matched, 1);
@@ -146,10 +146,10 @@ test("diverging — same id, different literal, no unit interpretation", () => {
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL expire the session after 15 minutes.",
-        "<!-- csda:trace value_session_timeout=15m -->",
+        "<!-- specgate:trace value_session_timeout=15m -->",
       ].join("\n")
     );
-    writeCode(dir, "src/a.ts", "// csda:value session_timeout=30m\n");
+    writeCode(dir, "src/a.ts", "// specgate:value session_timeout=30m\n");
     const dv = buildReport(dir).declaredValues;
     assert.equal(dv.diverging, 1);
     assert.equal(dv.matched, 0);
@@ -170,7 +170,7 @@ test("spec_only — the declared file exists but carries no matching marker", ()
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL expire the session after 15 minutes.",
-        "<!-- csda:trace value_session_timeout=15m -->",
+        "<!-- specgate:trace value_session_timeout=15m -->",
       ].join("\n")
     );
     writeCode(dir, "src/a.ts", "const X = '15m'; // no marker\n");
@@ -194,13 +194,13 @@ test("code_only — a marker for an id the spec never declared, on the same file
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL expire the session after 15 minutes.",
-        "<!-- csda:trace value_session_timeout=15m -->",
+        "<!-- specgate:trace value_session_timeout=15m -->",
       ].join("\n")
     );
     writeCode(
       dir,
       "src/a.ts",
-      "// csda:value session_timeout=15m\n// csda:value retry_backoff=2s\n"
+      "// specgate:value session_timeout=15m\n// specgate:value retry_backoff=2s\n"
     );
     const dv = buildReport(dir).declaredValues;
     assert.equal(dv.matched, 1);
@@ -224,10 +224,10 @@ test("a requirement's test_artifact is scanned too, not only technical_artifact"
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL expire the session after 15 minutes.",
-        "<!-- csda:trace value_session_timeout=15m -->",
+        "<!-- specgate:trace value_session_timeout=15m -->",
       ].join("\n")
     );
-    writeCode(dir, "test/a.spec.ts", "// csda:value session_timeout=15m\n");
+    writeCode(dir, "test/a.spec.ts", "// specgate:value session_timeout=15m\n");
     const dv = buildReport(dir).declaredValues;
     assert.equal(dv.matched, 1);
     assert.equal(dv.items[0].codeFile, "test/a.spec.ts");
@@ -247,7 +247,7 @@ test("a requirement with no matrix row is skipped, not crashed on", () => {
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL expire the session after 15 minutes.",
-        "<!-- csda:trace value_session_timeout=15m -->",
+        "<!-- specgate:trace value_session_timeout=15m -->",
       ].join("\n")
     );
     const dv = buildReport(dir).declaredValues;
@@ -277,10 +277,10 @@ test("HTML shows the section and a tile only when something was declared", () =>
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL expire the session after 15 minutes.",
-        "<!-- csda:trace value_session_timeout=15m -->",
+        "<!-- specgate:trace value_session_timeout=15m -->",
       ].join("\n")
     );
-    writeCode(withValues, "src/a.ts", "// csda:value session_timeout=30m\n");
+    writeCode(withValues, "src/a.ts", "// specgate:value session_timeout=30m\n");
     const html = renderHtml(buildReport(withValues), { generatedAt: new Date(), history: [] });
     assert.match(html, /Declared values/);
     assert.match(html, /Value drift/);
@@ -301,10 +301,10 @@ test("buildDeclaredValues is exported directly, for callers that already have it
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL expire the session after 15 minutes.",
-        "<!-- csda:trace value_session_timeout=15m -->",
+        "<!-- specgate:trace value_session_timeout=15m -->",
       ].join("\n")
     );
-    writeCode(dir, "src/a.ts", "// csda:value session_timeout=15m\n");
+    writeCode(dir, "src/a.ts", "// specgate:value session_timeout=15m\n");
     const report = buildReport(dir);
     const recomputed = buildDeclaredValues(dir, report.requirements);
     assert.deepEqual(recomputed, report.declaredValues);
@@ -346,10 +346,10 @@ test("--record appends valuesTotal/valuesMatched/valuesDiverging additively", ()
         "## Requirements",
         "### Requirement: REQ-001 — Login",
         "The system SHALL expire the session after 15 minutes.",
-        "<!-- csda:trace value_session_timeout=15m -->",
+        "<!-- specgate:trace value_session_timeout=15m -->",
       ].join("\n")
     );
-    writeCode(dir, "src/a.ts", "// csda:value session_timeout=15m\n");
+    writeCode(dir, "src/a.ts", "// specgate:value session_timeout=15m\n");
 
     // A history line written before this feature existed — no values fields
     // at all — has to survive being read alongside a new-format line.

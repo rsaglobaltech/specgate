@@ -1,12 +1,12 @@
 # Worked example: adopting Specgate on a service that already ships
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **An illustration, not a customer — but the commands are real.** "Quayside Supplies" and its
 `billing-service` are made up for this page. Every command below was run with
 Specgate 0.18.0 on that service, and every output is what it printed — trimmed
 with `…`, never edited. For products actually built with Specgate, see
 [the six pilots](../projects/index.md).
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 **The service:** `billing-service` 2.4.1 — orders, invoices and customer credit,
 plain Node.js, six tests that pass, a CI job that runs `npm test`. Five rules the

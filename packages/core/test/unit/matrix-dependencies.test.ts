@@ -34,7 +34,7 @@ const row = (requirement: string, extra: any = {}) => ({
 
 test("a matrix with no dependencies gains no annotation", () => {
   const md = buildTraceabilityMarkdown([row("REQ-001")], "rich");
-  assert.doesNotMatch(md, /csda:trace/);
+  assert.doesNotMatch(md, /specgate:trace/);
   assert.deepEqual(parseMatrixDependencies(md), {});
 });
 
@@ -43,7 +43,7 @@ test("a declared dependency is written beneath the table and read back", () => {
     [row("REQ-001"), row("REQ-002", { dependsOn: ["REQ-001"] })],
     "rich"
   );
-  assert.match(md, /<!-- csda:trace REQ-002 depends=REQ-001 -->/);
+  assert.match(md, /<!-- specgate:trace REQ-002 depends=REQ-001 -->/);
   assert.deepEqual(parseMatrixDependencies(md), { "REQ-002": ["REQ-001"] });
 });
 
@@ -79,16 +79,16 @@ test("the rows still parse — the annotation is not mistaken for one", () => {
 test("several dependencies read back in order, and blank ones are dropped", () => {
   assert.deepEqual(renderMatrixTraceLines({ "REQ-003": { dependsOn: ["REQ-001", "REQ-002"] } }), [
     "",
-    "<!-- csda:trace REQ-003 depends=REQ-001,REQ-002 -->",
+    "<!-- specgate:trace REQ-003 depends=REQ-001,REQ-002 -->",
   ]);
   assert.deepEqual(renderMatrixTraceLines({ "REQ-003": { dependsOn: [] } }), []);
   assert.deepEqual(
-    parseMatrixDependencies("<!-- csda:trace REQ-003 depends=REQ-001, REQ-002 -->"),
+    parseMatrixDependencies("<!-- specgate:trace REQ-003 depends=REQ-001, REQ-002 -->"),
     { "REQ-003": ["REQ-001", "REQ-002"] }
   );
 });
 
 test("a comment that is not one of ours is left alone", () => {
   assert.deepEqual(parseMatrixDependencies("<!-- a note from a person -->"), {});
-  assert.deepEqual(parseMatrixDependencies("<!-- csda:trace uc=UC-001 -->"), {});
+  assert.deepEqual(parseMatrixDependencies("<!-- specgate:trace uc=UC-001 -->"), {});
 });

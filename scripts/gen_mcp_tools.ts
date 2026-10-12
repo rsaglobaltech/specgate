@@ -49,7 +49,7 @@ export interface ITool {
   readonly name: string;
   readonly description: string;
   readonly inputSchema: Record<string, unknown>;
-  readonly csda?: string;
+  readonly specgate?: string;
   handler(args: Record<string, unknown>): unknown;
 }
 
@@ -115,7 +115,7 @@ export class GenericCliTool implements ITool {
   constructor(
     public readonly name: string,
     public readonly description: string,
-    public readonly csda: string,
+    public readonly specgate: string,
     public readonly inputSchema: Record<string, unknown>,
     /**
      * How this command takes the project directory. \`validate\` takes it as a
@@ -144,7 +144,7 @@ export class GenericCliTool implements ITool {
     // leaves a reviewable trail.
     if (this.editsContract) assertContractEditable(this.name, dir);
 
-    const argv = this.csda.split(" ");
+    const argv = this.specgate.split(" ");
     
     if (this.dirStyle === "positional") argv.push(dir);
     else argv.push("--project-dir", dir);
@@ -249,7 +249,7 @@ for (const command of SURFACE) {
 //
 // #138 generated the whole registry from the command surface and, in doing so,
 // deleted `read_spec`, `list_requirements` and `update_traceability` and renamed
-// the other four to `csda_*` (now `specgate_*`). An MCP tool id lives in someone else's agent
+// the other four to `specgate_*` (now `specgate_*`). An MCP tool id lives in someone else's agent
 // config: the seven published names have to keep resolving, so they are
 // registered here as well as the generated ids. Both spellings reach the same
 // handler, and the tools that read files come from `native-tools.ts` — which is

@@ -34,7 +34,7 @@ El sistema SHALL aplicar un recargo del 20 % en hora punta.
 - WHEN se calcula la tarifa
 - THEN el importe incluye un recargo del 20 %
 
-<!-- csda:trace uc=UC-007 cmd=CMD-011 agg=AGG-Pricing evt=EVT-PriceApplied
+<!-- specgate:trace uc=UC-007 cmd=CMD-011 agg=AGG-Pricing evt=EVT-PriceApplied
      feature=features/billing/dynamic_pricing.feature -->
 
 ## MODIFIED Requirements
@@ -52,7 +52,7 @@ Two extensions over the plain markdown form, both **optional**:
 
 - **`REQ-NNN` / `SCN-NNN` ids** in the heading. Without them, identity falls
   back to a slug of the requirement name, so a pure-markdown delta round-trips.
-- **The `csda:trace` comment**, which carries the DDD coordinates and the
+- **The `specgate:trace` comment**, which carries the DDD coordinates and the
   feature path. It is the bridge to the traceability matrix — the one thing a
   documentation-only tool cannot do.
 
@@ -65,7 +65,7 @@ Two extensions over the plain markdown form, both **optional**:
   silently keep scenarios the author deliberately deleted. Replacement makes the
   delta the complete statement of the requirement's new form; the old version
   stays recoverable in the archive and in git.
-- **The trace comment is a comment.** A delta with no `csda:trace` is still
+- **The trace comment is a comment.** A delta with no `specgate:trace` is still
   valid; it just archives with `-` in the DDD columns. Trace data must never be
   the price of entry, or brownfield adoption stalls on the first requirement.
 - **The id prefix list is closed.** `REQ|SCN|UC|CMD|QRY|AGG|EVT` only. A

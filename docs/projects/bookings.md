@@ -1,8 +1,8 @@
 # Bookings — appointments for local businesses
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **A real client brief, built by an agent with Specgate.** The brief came from a real client; the product was built end to end by a coding agent (Claude) driving Specgate, with business decisions delegated to it and written down as assumptions. It is not a customer deployment, and the code repository is private.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 This is agent-driven adoption, not a customer story. It was the first product
 to go through `specgate draft --check`, and it ran in five cycles, each one a
@@ -31,7 +31,7 @@ copied from another product, and the integration section was empty.
 The brief went into `docs/brief.md` unchanged, with a front matter naming the
 actors and their surfaces, and a description of what each screenshot shows.
 
-<!-- csda:steps -->
+<!-- specgate:steps -->
 ### Draft the first module as a change
 
 ```bash
@@ -61,7 +61,7 @@ specgate harness run                # one requirement, one PR to develop
 
 Four more cycles, each a draft, a check, an archive and a harness run: the
 owner's panel, coupons, feedback after the visit, and the public page.
-<!-- csda:endsteps -->
+<!-- specgate:endsteps -->
 
 The first harness run built 18 of 18 requirements, 17 on the first attempt.
 The agent took 99–378 seconds per requirement (median 210). Every later cycle

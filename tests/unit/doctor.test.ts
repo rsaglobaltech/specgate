@@ -1,4 +1,4 @@
-// csda:allow-placeholders — this file emits or asserts on {{VAR}} template syntax.
+// specgate:allow-placeholders — this file emits or asserts on {{VAR}} template syntax.
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -51,7 +51,7 @@ function makeHealthyProject(tmp) {
 }
 
 function withProject(fn) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-doctor-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-doctor-"));
   try {
     return fn(makeHealthyProject(tmp), tmp);
   } finally {
@@ -113,7 +113,7 @@ test("doctor warns on spec/matrix requirement drift in both directions", () => {
 });
 
 test("doctor on a non-spec-driven directory points to adopt/init", () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-doctor-bare-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-doctor-bare-"));
   try {
     const r = cli("doctor", "--project-dir", tmp);
     assert.equal(r.status, 1);
@@ -139,7 +139,7 @@ test("doctor flags a corrupt .specops.lock", () => {
 // `init` seeds REQ-000 with a health scenario; a pack installed afterwards
 // brings its own requirements, often including its own health one. The two sit
 // side by side because `include_existing_rows` carries the old row forward.
-// csda-studio-app hit exactly this: REQ-000 and the pack's REQ-015 both
+// specgate-studio-app hit exactly this: REQ-000 and the pack's REQ-015 both
 // describing deployment health.
 
 /**
@@ -232,7 +232,7 @@ function shippedCodeDirs(): string[] {
 }
 
 function installLayout(relative) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "csda-layout-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-layout-"));
   const pkgDir = path.join(root, ...relative.split("/"));
   fs.mkdirSync(pkgDir, { recursive: true });
   fs.writeFileSync(
@@ -264,7 +264,7 @@ for (const [relative, expected] of LAYOUTS) {
       });
       const out = r.stdout + r.stderr;
       // The tool is called specgate. `doctor` was still labelling its own line
-      // `csda`, which a cold evaluator read as the tool not knowing its own name.
+      // `specgate`, which a cold evaluator read as the tool not knowing its own name.
       assert.match(out, /specgate: v9\.9\.9/, "the version it is actually running");
       assert.ok(out.includes(expected), `expected "${expected}" in:\n${out.slice(0, 300)}`);
     } finally {

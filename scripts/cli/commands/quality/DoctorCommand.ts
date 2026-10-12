@@ -352,7 +352,7 @@ export class DoctorCommand extends BaseCommand {
   /**
    * `.gitattributes` is committed; the merge driver it names is not.
    *
-   * `merge.csda-matrix.driver` lives in each clone's git config, so a project
+   * `merge.specgate-matrix.driver` lives in each clone's git config, so a project
    * that set it up still merges by lines on every other machine and in CI —
    * and the symptom is a conflict in `traceability.md` during a merge, which is
    * a long way from the cause. Warn, never fail: without the driver git falls
@@ -391,7 +391,7 @@ export class DoctorCommand extends BaseCommand {
 
     this.warn(
       "merge driver",
-      ".gitattributes routes traceability.md to the csda merge driver, but this clone has not registered it",
+      ".gitattributes routes traceability.md to the specgate merge driver, but this clone has not registered it",
       "Run `specgate harness init --project-dir .` here. Until then git merges the matrix by lines, so two parallel harness branches collide on adjacent rows."
     );
   }

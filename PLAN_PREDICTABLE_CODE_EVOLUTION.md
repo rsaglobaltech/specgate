@@ -1,9 +1,9 @@
-# De la puerta al verificador — qué le falta a CSDA para comprobar el código, y no solo el papeleo
+# De la puerta al verificador — qué le falta a Specgate para comprobar el código, y no solo el papeleo
 
-> **Reescrito el 2026-08-25.** La versión anterior de este fichero comparaba CSDA con
+> **Reescrito el 2026-08-25.** La versión anterior de este fichero comparaba Specgate con
 > [Predictable Code](https://code.predictablemachines.com) sobre una tabla de 21
 > huecos. Nueve de esos huecos no los reclama nadie: eran ideas nuestras con etiqueta
-> de «vamos por detrás». Y la columna de lo que CSDA ya tiene también inflaba. Esta
+> de «vamos por detrás». Y la columna de lo que Specgate ya tiene también inflaba. Esta
 > versión mantiene el hallazgo real —que es uno y es grande— y tira el resto.
 
 ---
@@ -14,7 +14,7 @@
 |---|---|
 | **Qué se leyó del rival** | Su página pública, `code.predictablemachines.com`, el 2026-08-25. Nada más |
 | **Qué NO se hizo** | Nadie de aquí ha usado Predictable Code. Está en *private beta*: no hay CLI que ejecutar, ni lenguajes publicados, ni precio |
-| **Qué se midió de CSDA** | El árbol de este repositorio en `main`, v0.7.0. Cada afirmación de §3 lleva `fichero:línea` |
+| **Qué se midió de Specgate** | El árbol de este repositorio en `main`, v0.7.0. Cada afirmación de §3 lleva `fichero:línea` |
 
 **Regla para mantener este documento:** toda fila de §2 lleva **cita textual** de la
 página del rival; toda fila de §3 lleva **`fichero:línea`** de este repo. No hay
@@ -50,7 +50,7 @@ huecos de veintiuno. Ver §7: no se tiran, se reetiquetan.
 
 ---
 
-## 3. Lo que CSDA tiene — medido, no recordado
+## 3. Lo que Specgate tiene — medido, no recordado
 
 Solo las filas donde la versión anterior se pasaba de frenada. El resto de su tabla
 —packs, change lifecycle, ALM sync, harness, multi-CI, arquitectura hexagonal— es
@@ -60,10 +60,10 @@ correcto.
 |---|---|---|---|
 | Mutation testing | ✅ | Piloto sobre **dos** ficheros, `testRunner: "command"`, `coverageAnalysis: "off"`, `thresholds.break: 0`. Es una línea base registrada, **no una puerta** | `stryker.config.mjs:32-33` |
 | Property-based testing | ✅ fast-check para invariants | **Un** fichero de test | `tests/unit/property-based.test.ts:12` |
-| HTML Report / Studio | «`csda report` + `csda studio` live dashboard» | `report` **escribe** un HTML autocontenido en `reports/`. `studio` es un **servidor HTTP** (puerto 4173) que no escribe nada, renderiza en memoria y **carga Mermaid desde `cdn.jsdelivr.net`** | `ReportCommand.ts:148,398` · `StudioCommand.ts:135,170-179` |
+| HTML Report / Studio | «`specgate report` + `specgate studio` live dashboard» | `report` **escribe** un HTML autocontenido en `reports/`. `studio` es un **servidor HTTP** (puerto 4173) que no escribe nada, renderiza en memoria y **carga Mermaid desde `cdn.jsdelivr.net`** | `ReportCommand.ts:148,398` · `StudioCommand.ts:135,170-179` |
 | MCP Server | «`read_spec`, `list_requirements`, `validate_project`, etc.» | Siete tools exactos: `read_spec`, `list_requirements`, `update_traceability`, `lint_pack`, `validate_project`, `plan`, `mark_requirement_done`. JSON-RPC escrito a mano, sin el SDK de MCP | `packages/mcp-spec-driven/src/tools.ts:382-390` · `server.ts:10-19` |
 | LSP Server | «Diagnostics para traceability y pack.yaml» | Cuatro códigos —`STATUS`, `DUP-SCN`, `TDD-1`, `TDD-2`— **solo** sobre `traceability.md` en formato rich; se rinde si falta la cabecera. Sin diagnósticos de Gherkin, sin completions, sin hover, sin code actions | `packages/lsp-spec-driven/src/diagnostics.ts:81,103-131` |
-| `csda validate` | «Quality Gates» | `--strict-tdd` = **tres** reglas, todas sobre la matriz. `--strict-scenarios` = ocho reglas de Gherkin. `--against-lock` **requiere red** (re-resuelve packs remotos) y degrada a aviso con matriz legacy | `ValidateProjectUseCase.ts:126,133,144` · `GherkinQuality.ts:70-78` · `CheckAgainstLockUseCase.ts:36,43` |
+| `specgate validate` | «Quality Gates» | `--strict-tdd` = **tres** reglas, todas sobre la matriz. `--strict-scenarios` = ocho reglas de Gherkin. `--against-lock` **requiere red** (re-resuelve packs remotos) y degrada a aviso con matriz legacy | `ValidateProjectUseCase.ts:126,133,144` · `GherkinQuality.ts:70-78` · `CheckAgainstLockUseCase.ts:36,43` |
 | Zero runtime dependencies | ✅ | Cierto, y **estructural**: el `package.json` raíz no tiene siquiera la clave `dependencies`. `YamlLite.ts` está escrito a mano por eso. Matiz: los paquetes MCP y VS Code, que se publican aparte, sí traen `js-yaml`/`ajv` | `package.json` · `packages/core/src/domain/YamlLite.ts` |
 
 **El agujero air-gapped que ya existe:** `studio` pide Mermaid a un CDN. El argumento
@@ -74,7 +74,7 @@ ninguna dependencia nueva.
 
 ## 4. El hueco real, y es uno
 
-> **`csda validate` comprueba que el papeleo es coherente consigo mismo. No comprueba
+> **`specgate validate` comprueba que el papeleo es coherente consigo mismo. No comprueba
 > que el código haga lo que la spec dice.**
 
 Ese es el techo del producto, y la versión anterior lo nombró bien (era su hueco 3).
@@ -85,9 +85,9 @@ ese mismo hueco visto desde otro lado. La evidencia, medida:
 |---|---|
 | `--strict-tdd` son tres reglas, y las tres leen la **matriz**: artefacto de test en `TBD` con estado post-Draft; fila rich sin Scenario ID con estado no-Draft; `REQ-\d+` en `spec.md` sin fila | `ValidateProjectUseCase.ts:126,133,144` |
 | **No existe ningún parser de código fuente en el repo.** Cero apariciones de tree-sitter, `ts.createSourceFile`, babel, acorn, esprima, swc u oxc en `bin/`, `scripts/`, `packages/`, `templates/`, `schemas/` | grep repo-wide |
-| `csda onboard` propone capabilities a partir de **nombres de directorio y conteo de ficheros**. Nunca abre uno | `OnboardCommand.ts:111` (`countFiles`, cuenta y no lee) · `:141` (`proposeCapabilities`) |
-| `csda adopt` solo lee manifiestos de build (`pom.xml`, `build.gradle`, `package.json`) y por regex | `AdoptCommand.ts:76-123` |
-| `csda fix` arregla exactamente dos cosas, **añadiendo filas a `traceability.md`**: features huérfanos y REQ-ids sin fila. No toca código, ni features, ni estados | `FixCommand.ts:47-72,188` |
+| `specgate onboard` propone capabilities a partir de **nombres de directorio y conteo de ficheros**. Nunca abre uno | `OnboardCommand.ts:111` (`countFiles`, cuenta y no lee) · `:141` (`proposeCapabilities`) |
+| `specgate adopt` solo lee manifiestos de build (`pom.xml`, `build.gradle`, `package.json`) y por regex | `AdoptCommand.ts:76-123` |
+| `specgate fix` arregla exactamente dos cosas, **añadiendo filas a `traceability.md`**: features huérfanos y REQ-ids sin fila. No toca código, ni features, ni estados | `FixCommand.ts:47-72,188` |
 | `DeclaredArtifacts` compara declaraciones de la matriz contra el diff de git — comprueba que un fichero **se tocó**, no qué dice | `DeclaredArtifacts.ts:49,65,85` |
 
 Todo lo demás de este documento sirve a cerrar esa frase, o sobra.
@@ -105,7 +105,7 @@ anterior es precisamente por qué allí todo era un hueco a cerrar.
 | **Reportes de compliance SOC 2 / HIPAA / PCI-DSS** | El rival no los reclama; eran nuestros. Y ADR-0020 ya costó la lección: declaró el JSON Schema «única autoridad» sin que nadie lo aplicara, y diez de once packs lo fallaban mientras los once pasaban `pack lint --strict`. Se cerró rebajando la afirmación al hecho (`E1`, opción B). Firmar un informe HIPAA sobre verificación estructural es el mismo error con consecuencias legales |
 | **Lean 4** (PC-1) | No hay ruta desde aquí. Se nombra como horizonte en §8, nunca como fase con fecha |
 | **La inferencia con LLM como puerta de entrada** (PC-4, tal cual) | ADR-0014 ya decidió lo contrario para `pack infer`: *«Heuristic, not LLM, for v1. Deterministic output is testable, reviewable in a git diff, works offline, has no vendor dependency, and is instant.»* Si se revierte, se revierte con un ADR que lo enmiende — no de tapadillo dentro de una fase |
-| **Un visor nuevo** | ADR-0019 decidió el 2026-08-16 que `csda studio` **es** la superficie de studio, y cerró —no aplazó— la Fase 4 de `visual-pack-authoring-todo.md`. Lo que falta de P2 son ~6 líneas de workflow para publicarlo, no una UI nueva |
+| **Un visor nuevo** | ADR-0019 decidió el 2026-08-16 que `specgate studio` **es** la superficie de studio, y cerró —no aplazó— la Fase 4 de `visual-pack-authoring-todo.md`. Lo que falta de P2 son ~6 líneas de workflow para publicarlo, no una UI nueva |
 
 ---
 
@@ -117,7 +117,7 @@ nuevo**. Ninguna admite ignorarla en silencio, que es lo que hacía el documento
 | Decisión | Qué decía | Contra qué chocaba | Salida |
 |---|---|---|---|
 | **ADR-0014** (2026-05-14) | `pack infer` es heurístico y determinista; `--llm` diferido explícitamente | Fase 1.2 «AI-Assisted Spec Enrichment» | Respetar en v1. La inferencia arranca determinista; el LLM, si llega, entra por ADR |
-| **ADR-0019** (2026-08-16) | `csda studio` es *la* superficie de studio | Hueco 18 «Local Spec Viewer» y Fase 3.3 | Respetar. Lo que se construya se construye **dentro** de `studio` |
+| **ADR-0019** (2026-08-16) | `specgate studio` es *la* superficie de studio | Hueco 18 «Local Spec Viewer» y Fase 3.3 | Respetar. Lo que se construya se construye **dentro** de `studio` |
 | **ADR-0022** (2026-08-21) | *«Los patrones son opcionales; los principios no.»* Y: prosa que ninguna máquina verifica igual la obedece todo agente | Fase 1.2 y Fase 2.2, ambas capas de LLM cuyo veredicto nadie comprueba | Respetar. Un resultado no determinista no puede marcarse `verified` |
 | **ADR-0020 + `E1`** (2026-08-23) | El esquema describe el formato que existe; nada afirma autoridad que no ejerce | Fase 4 entera (proofs, sellado, compliance) | Respetar. Es la regla que §5 aplica |
 | **§13 del plan de cierre** | Watch mode aparcado, con motivo | Hueco 12 y Fase 2.5 | Sigue aparcado hasta que haya algo que observar |
@@ -156,14 +156,14 @@ vende— exige **ejecutar el código del usuario**: importar su función,
 generarle inputs, encontrar el que rompe una propiedad. Medido contra lo que
 esta sesión ya construyó, eso no es una extensión, es otra categoría:
 
-- Rompe la propiedad que sostuvo `csda:trace`/`csda:value` toda la sesión —
+- Rompe la propiedad que sostuvo `specgate:trace`/`specgate:value` toda la sesión —
   funcionan igual en cualquier lenguaje porque **nunca ejecutan nada**, solo
   leen texto. Ejecutar código solo es posible en el único runtime que el CLI
   ya tiene, JS/TS — deja de ser agnóstico al lenguaje.
 - Necesita cargar y llamar módulos del proyecto del usuario desde el CLI:
   superficie de confianza nueva, no comparable a leer un fichero.
 - Necesita un contrato de anotación nuevo (qué función probar, qué propiedad
-  cumplir) — no una extensión de `csda:trace`, un formato distinto.
+  cumplir) — no una extensión de `specgate:trace`, un formato distinto.
 
 **Decisión: aparcado, no descartado.** Pertenece a la fila de Z3/SMT/Lean 4 —
 horizonte a costear y decidir con diseño explícito cuando llegue el momento,
@@ -200,7 +200,7 @@ columnas. **No se puede**, y no es opinión:
 - `TraceabilityFormat.ts:38` reconoce una fila rich por `cells.length === 10`.
 - La nota de `:92-107` documenta que una columna 11 rompe el parser.
 - **Y por eso** `depends=` y `context=` ya viajan fuera de la tabla, en líneas
-  `<!-- csda:trace REQ-002 depends=… context=… -->`, con parser propio en `:108-198`.
+  `<!-- specgate:trace REQ-002 depends=… context=… -->`, con parser propio en `:108-198`.
 
 El punto de extensión existe, está probado y lo usan `B1` y `D1`. Todo campo nuevo va
 ahí. Coste de intentar lo otro, para que quede escrito: parser, serializador, el
@@ -218,7 +218,7 @@ driver de merge por filas del harness en paralelo
 Un «contrato formal» en el raíz nace en cinco regex que ya divergen. En el de
 capabilities, toca un parser con invariante de punto fijo y un conjunto cerrado de
 prefijos. **Decisión: el contrato formal vive en el capability spec**, que es el único
-que tiene gramática, y se expresa como campos del `csda:trace` que ese parser ya lee
+que tiene gramática, y se expresa como campos del `specgate:trace` que ese parser ya lee
 (`parseTraceComment`, `SpecParser.ts:96`) antes que como secciones nuevas.
 
 ### 8.4 · Las dependencias hay que costearlas, no listarlas en riesgos
@@ -247,7 +247,7 @@ Dos comprobaciones se nombraron aquí. La primera está hecha; la segunda sigue 
 diseñar.
 
 **Hecha (2026-08-25): el vínculo declarado sigue apuntando a algo que existe.**
-`csda validate --strict-links` lee las columnas Feature file / Technical artifact /
+`specgate validate --strict-links` lee las columnas Feature file / Technical artifact /
 Test artifact de la matriz y falla si una ruta declarada ya no existe en disco.
 Reutiliza `declaredPaths`/`looksLikePath`, ya escritos para `DeclaredArtifacts`
 (A2) — ninguna dependencia nueva, nada de AST.
@@ -270,7 +270,7 @@ Tanda 1, la que cerró H14, H15 y H16.
 > **Estado: implementado.** `packages/core/src/domain/ValueAnnotations.ts`
 > (dominio, puro, 12 tests) + `buildDeclaredValues` en
 > `scripts/cli/commands/quality/ReportCommand.ts` (I/O, 12 tests). Sin flag
-> nuevo en `validate` — `csda report` gana la sección, `--record` gana tres
+> nuevo en `validate` — `specgate report` gana la sección, `--record` gana tres
 > campos aditivos en el historial, `sparkline()` gana una segunda serie
 > punteada cuando todo el historial la tiene. Medido contra este propio repo:
 > con cero anotaciones, `declaredValues` es todo cero y la sección no
@@ -306,7 +306,7 @@ con el tamaño del proyecto, por dos razones distintas.
 par de anotaciones explícitas se queda igual que en la versión anterior de este
 diseño: sigue siendo la única forma honesta de comparar un valor sin AST y sin
 heurística de nombres. Lo que cambia es que deja de ser un gate que falla el
-commit y pasa a ser una sección de `csda report` — un mapa de deriva agregado,
+commit y pasa a ser una sección de `specgate report` — un mapa de deriva agregado,
 no un veredicto binario por valor. Un proyecto grande con cobertura parcial de
 anotaciones ve su mapa parcial y prioriza; no falla en bloque por no haberlo
 anotado todo. Es el mismo principio que ya rige `report`: `needsTest` y
@@ -317,7 +317,7 @@ Predictable Code vende *"proof en tiempo real"* — una afirmación sin evidenci
 externa, en beta privada, sin dato de cómo se comporta a escala. Un mapa de
 deriva agregado con tendencia en el tiempo, sobre algo que ya construimos
 (`report --record`, el historial JSONL, el sparkline), es una promesa que sí
-podemos sostener y que además encaja con lo que CSDA ya es — multi-proyecto,
+podemos sostener y que además encaja con lo que Specgate ya es — multi-proyecto,
 packs, auditoría como markdown legible, no como teatro criptográfico. No
 igualamos su frase; ofrecemos una honesta y verificable en su lugar.
 
@@ -328,19 +328,19 @@ pieza y por qué, y es la razón de que no hiciera falta tocarlas.
 #### La decisión: anotación explícita a ambos lados, comparada por igualdad literal
 
 Ni AST ni heurística de nombres. Dos anotaciones, mismo identificador, texto
-literal comparado por igualdad — el mismo trato que `csda:trace` ya da a
+literal comparado por igualdad — el mismo trato que `specgate:trace` ya da a
 `depends=` y `context=`: explícito, determinista, y la herramienta no
 interpreta nada, solo compara lo que un humano (o un agente) ya escribió dos
 veces a propósito.
 
-**Lado spec — dentro del `csda:trace` que el requisito ya lleva:**
+**Lado spec — dentro del `specgate:trace` que el requisito ya lleva:**
 
 ```markdown
 ### Requirement: REQ-AUTH-002 — Token expiry
 
 El sistema SHALL expirar el token de sesión a los 15 minutos de inactividad.
 
-<!-- csda:trace uc=Login value_session_timeout=15m -->
+<!-- specgate:trace uc=Login value_session_timeout=15m -->
 ```
 
 Sin campo nuevo en el parser: `parseTraceComment` (`SpecParser.ts:96`) ya acepta
@@ -351,14 +351,14 @@ el prefijo `value_` declara un valor comprobable; lo que sigue al prefijo
 **Lado código — un marcador de una línea, en el lenguaje que sea:**
 
 ```ts
-// csda:value session_timeout=15m
+// specgate:value session_timeout=15m
 const SESSION_TIMEOUT = "15m";
 ```
 
 No es un comentario reconocido por lenguaje — es una cadena literal buscada en
-el texto del fichero, igual que `csda:trace` es una cadena literal buscada en
+el texto del fichero, igual que `specgate:trace` es una cadena literal buscada en
 markdown. Funciona idéntico en `.ts`, `.py`, `.java`, `.go` sin saber nada de
-ninguno, porque no analiza sintaxis: solo busca la frase `csda:value clave=valor`
+ninguno, porque no analiza sintaxis: solo busca la frase `specgate:value clave=valor`
 en cualquier línea. Esto es lo que de verdad resuelve la pregunta multi-lenguaje
 que el documento original creía necesitar tree-sitter para responder — el precio
 es que alguien tiene que escribirlo, dos veces, a propósito.
@@ -381,7 +381,7 @@ las dos anotaciones, no de la herramienta.
 | Pieza | Capa | Fichero (nuevo o existente) | Por qué esa capa |
 |---|---|---|---|
 | Extraer `value_*` de un `TraceComment` ya parseado | Dominio, puro | `packages/core/src/domain/ValueAnnotations.ts` (nuevo) — función `declaredSpecValues(trace)` | Recibe un objeto ya en memoria, no toca disco |
-| Parsear `csda:value clave=valor` de un texto de código | Dominio, puro | mismo fichero — función `declaredCodeValues(source: string)` | Recibe una cadena ya en memoria — la misma disciplina que `Gherkin.ts` o `GherkinQuality.ts` con el texto de un `.feature` |
+| Parsear `specgate:value clave=valor` de un texto de código | Dominio, puro | mismo fichero — función `declaredCodeValues(source: string)` | Recibe una cadena ya en memoria — la misma disciplina que `Gherkin.ts` o `GherkinQuality.ts` con el texto de un `.feature` |
 | Comparar ambos mapas y producir el modelo de comparación (no un `Diagnostic[]` — ver superficie, abajo) | Dominio, puro | mismo fichero — función `compareDeclaredValues(specValues, codeValues, opts)` | Solo estructuras de datos entrando y saliendo; sin `fs`, sin `path` |
 | Leer el capability spec, la matriz y los ficheros de código; llamar a las tres funciones de arriba; agregar al modelo del reporte; opcionalmente anexar al historial | Comando (I/O) | `scripts/cli/commands/quality/ReportCommand.ts`, dentro de `buildReport()` (`:10`, el modelo que devuelve empieza en `:29`) | Es donde ya vive toda la agregación de `report` — `readSpecops` (`:44`) es el mismo patrón: leer del disco, devolver un bloque del modelo |
 
@@ -394,7 +394,7 @@ no por vigilancia.
 
 #### Superficie — reporte, no gate
 
-**Sin flag nuevo en `validate`.** Nada falla el commit por esto. `csda report`
+**Sin flag nuevo en `validate`.** Nada falla el commit por esto. `specgate report`
 agrega una sección nueva al modelo que ya devuelve `buildReport()`
 (`ReportCommand.ts:29`):
 
@@ -403,8 +403,8 @@ declaredValues: {
   total: number,       // pares con el mismo identificador en ambos lados
   matched: number,
   diverging: number,
-  specOnly: number,    // declarado en la spec, sin csda:value en el código
-  codeOnly: number,    // csda:value en el código, sin value_ en ningún requisito
+  specOnly: number,    // declarado en la spec, sin specgate:value en el código
+  codeOnly: number,    // specgate:value en el código, sin value_ en ningún requisito
   items: Array<{
     id: string, requirement: string,
     specValue: string, specFile: string, specLine: number,
@@ -427,7 +427,7 @@ declaredValues: {
   campos se sigue leyendo, `readHistory` (`:73`) ya descarta líneas que no
   parseen sin perder el resto. `sparkline()` (`:120`) gana una segunda serie
   con el mismo mecanismo que ya traza `implementedPct`.
-- **`csda doctor` como advisory, sin gate — extensión natural, no parte de
+- **`specgate doctor` como advisory, sin gate — extensión natural, no parte de
   este diseño.** Igual que `--strict-scenarios` también aparece en `doctor`
   como aviso (`DoctorCommand.ts`), un `diverging` podría listarse ahí. Se deja
   como costura abierta, no como trabajo de esta fase.
@@ -444,9 +444,9 @@ propósito, sin moverlo por cambiar de gate a reporte.
 **Tampoco bloquea nada, y es a propósito — no un downgrade.** La versión
 gate habría podido fallar un commit por una anotación de menos en un proyecto
 grande, que es precisamente el escenario que motivó la corrección. Depende de
-adopción: nadie escribe `csda:value` por scaffolding automático todavía, así
+adopción: nadie escribe `specgate:value` por scaffolding automático todavía, así
 que el siguiente paso real es anotar un requisito de verdad — de este propio
-repo o de `csda-studio-app` (§3.5 de `mejoras/README.md`) — y ver la sección
+repo o de `specgate-studio-app` (§3.5 de `mejoras/README.md`) — y ver la sección
 aparecer con datos reales, no sintéticos. Los 24 tests nuevos (12 dominio + 12
 comando) cubren la lógica; ninguno sustituye a esa primera anotación real,
 la misma disciplina que ya midió y corrigió `--strict-links`.
@@ -481,23 +481,23 @@ propone el trabajo.
 
 §8.6 detecta que un valor diverge; no hacía nada con ese hallazgo. §7 nombraba
 tres rutas de resolución (arreglar código / actualizar spec / retirar el
-requisito) como «alto valor, barato» porque `csda change` y
+requisito) como «alto valor, barato» porque `specgate change` y
 `ArchiveChangeUseCase` ya existen. Medido antes de construir nada: **dos de
 las tres rutas no necesitaban herramienta nueva.**
 
-- **Ruta 1 — arreglar el código.** `csda report` ya da `codeFile:codeLine`
+- **Ruta 1 — arreglar el código.** `specgate report` ya da `codeFile:codeLine`
   para cada `diverging` (§8.6). Abrir el fichero y arreglarlo no necesita un
   comando nuevo.
-- **Ruta 3 — retirar el requisito.** Ya es `csda change new <id> --capability
+- **Ruta 3 — retirar el requisito.** Ya es `specgate change new <id> --capability
   <cap>` con una sección `## REMOVED Requirements` escrita a mano — el
   mecanismo de retiro no distingue por qué se retira un requisito.
 - **Ruta 2 — actualizar la spec.** Esta sí es pegamento real: encontrar el
   requisito, encontrar el valor del código, escribir el delta. **Hecha.**
 
-### `csda change new <id> --from-value-drift REQ-ID:value_id`
+### `specgate change new <id> --from-value-drift REQ-ID:value_id`
 
 ```bash
-$ csda change new fix-timeout --from-value-drift REQ-200:session_timeout
+$ specgate change new fix-timeout --from-value-drift REQ-200:session_timeout
   ✔ Change fix-timeout created (lite · REQ ids REQ-201…REQ-203 reserved)
     + docs/specs/changes/fix-timeout/specs/auth/spec.md
 ```
@@ -508,7 +508,7 @@ la reutiliza sin reescribirla) — MODIFIED reemplaza el nodo entero
 (`DeltaSpec.ts` `apply`), así que hace falta el requisito completo, no un
 fragmento. Dos cambios sobre la copia:
 
-1. **`value_<id>` en el `csda:trace` se reescribe al valor del código.** Es un
+1. **`value_<id>` en el `specgate:trace` se reescribe al valor del código.** Es un
    campo estructurado — reescribirlo es exacto, no una interpretación.
 2. **La prosa NO se reescribe.** «expira a los 15 minutos» no se convierte en
    «a los 30» automáticamente — eso sería adivinar cómo debería sonar la
@@ -528,7 +528,7 @@ lector, no dos que puedan divergir).
 existe a propósito: si el valor ya coincide, no hay nada que proponer, y
 crear un cambio vacío sería peor que negarse.
 
-**Medido, no solo probado con fixtures:** generado, pasado por `csda change
+**Medido, no solo probado con fixtures:** generado, pasado por `specgate change
 validate` de verdad, y comprobado que el delta resultante lo acepta el
 parser real (`parseDelta`), no solo que el texto «se parece» a uno válido.
 14 tests nuevos (5 dominio puro + 9 wiring de CLI).

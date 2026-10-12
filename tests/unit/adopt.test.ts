@@ -20,7 +20,7 @@ function cli(args, options = {}) {
 }
 
 function withTmp(fn) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-adopt-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-adopt-"));
   try {
     return fn(tmp);
   } finally {
@@ -414,7 +414,7 @@ test("#69: a Maven project is named by its own artifactId, not its parent's", ()
 
 test("#69: a Gradle project is named by rootProject.name and its real build file", () => {
   const { detectStack } = require("../../scripts/cli/commands/project/AdoptCommand");
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-gradle-name-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-gradle-name-"));
   try {
     fs.writeFileSync(
       path.join(dir, "build.gradle.kts"),

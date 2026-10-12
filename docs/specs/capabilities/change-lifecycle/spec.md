@@ -47,7 +47,7 @@ menos un escenario, porque sin escenario "hecho" no está definido.
 
 El sistema SHALL, al archivar un cambio, fusionar sus deltas en la spec de la
 capability, insertar o actualizar las filas correspondientes de
-`docs/specs/traceability.md` a partir de los comentarios `csda:trace`, y copiar
+`docs/specs/traceability.md` a partir de los comentarios `specgate:trace`, y copiar
 los ficheros `.feature` propuestos al árbol `features/` del proyecto.
 
 #### Scenario: SCN-103a — Archivado completo

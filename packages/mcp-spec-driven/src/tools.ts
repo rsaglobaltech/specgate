@@ -15,7 +15,7 @@ export interface ITool {
   readonly name: string;
   readonly description: string;
   readonly inputSchema: Record<string, unknown>;
-  readonly csda?: string;
+  readonly specgate?: string;
   handler(args: Record<string, unknown>): unknown;
 }
 
@@ -83,7 +83,7 @@ export class GenericCliTool implements ITool {
   constructor(
     public readonly name: string,
     public readonly description: string,
-    public readonly csda: string,
+    public readonly specgate: string,
     public readonly inputSchema: Record<string, unknown>,
     /**
      * How this command takes the project directory. `validate` takes it as a
@@ -112,7 +112,7 @@ export class GenericCliTool implements ITool {
     // leaves a reviewable trail.
     if (this.editsContract) assertContractEditable(this.name, dir);
 
-    const argv = this.csda.split(" ");
+    const argv = this.specgate.split(" ");
 
     if (this.dirStyle === "positional") argv.push(dir);
     else argv.push("--project-dir", dir);

@@ -24,7 +24,7 @@ confirmed within 2 seconds. Meal periods follow California Labor Code §512.
 `;
 
 const req = (id, trace, body, scenarios) =>
-  `### Requirement: ${id} — ${id} title\n\n<!-- csda:trace ${trace} -->\n\n${body}\n\n` +
+  `### Requirement: ${id} — ${id} title\n\n<!-- specgate:trace ${trace} -->\n\n${body}\n\n` +
   scenarios
     .map(
       ([sid, steps]) =>
@@ -279,9 +279,9 @@ test("D4 flags a promised quantity with no number, not a qualitative constraint"
       {
         path: "spec.md",
         source:
-          "## REQ-011 — Fast punch\n\n<!-- csda:trace kind=non-functional -->\n\nPunches SHALL be fast.\n\n" +
-          "## REQ-012 — Meal\n\n<!-- csda:trace kind=business-rule -->\n\nMeal periods follow Labor Code §512.\n\n" +
-          "## REQ-013 — Offline\n\n<!-- csda:trace kind=non-functional -->\n\nLessons work offline.\n",
+          "## REQ-011 — Fast punch\n\n<!-- specgate:trace kind=non-functional -->\n\nPunches SHALL be fast.\n\n" +
+          "## REQ-012 — Meal\n\n<!-- specgate:trace kind=business-rule -->\n\nMeal periods follow Labor Code §512.\n\n" +
+          "## REQ-013 — Offline\n\n<!-- specgate:trace kind=non-functional -->\n\nLessons work offline.\n",
       },
     ],
     []
@@ -351,7 +351,7 @@ test("#45: an answered question no longer holds its requirement", () => {
 
 test("#49 / D9: a scenario the harness gate would refuse fails the draft, in either language", () => {
   const titled = (title, steps) =>
-    `## ADDED Requirements\n\n### Requirement: REQ-113 — Sin puestos no hay reserva\n\n<!-- csda:trace kind=business-rule -->\n\nEl sistema SHALL cerrar la franja.\n\n#### Scenario: SCN-115 — ${title}\n\n${steps.map((s) => `- ${s}`).join("\n")}\n`;
+    `## ADDED Requirements\n\n### Requirement: REQ-113 — Sin puestos no hay reserva\n\n<!-- specgate:trace kind=business-rule -->\n\nEl sistema SHALL cerrar la franja.\n\n#### Scenario: SCN-115 — ${title}\n\n${steps.map((s) => `- ${s}`).join("\n")}\n`;
   const es = [
     "DADO un calendario sin puestos",
     "CUANDO un cliente consulta los huecos",

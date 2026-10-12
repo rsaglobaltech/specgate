@@ -44,34 +44,34 @@ command -v mvn  >/dev/null 2>&1 || die "mvn not found — install Maven"
 [ "$REAL_AGENT" -eq 0 ] || command -v opencode >/dev/null 2>&1 || die "--real-agent requires opencode on PATH"
 
 # Default to the LOCAL CLI from this checkout (so PR work is visible).
-# Override with CSDA_CLI_PKG to record against a published version, e.g.
-#   CSDA_CLI_PKG=create-spec-driven-app@0.1.4 bash scripts/demo/de/build-video.sh ...
+# Override with SPECGATE_CLI_PKG to record against a published version, e.g.
+#   SPECGATE_CLI_PKG=create-spec-driven-app@0.1.4 bash scripts/demo/de/build-video.sh ...
 SCRATCH="$(mktemp -d)"
 trap 'rm -rf "$SCRATCH"' EXIT
 
 WRAPPER_DIR="$SCRATCH/bin"
 mkdir -p "$WRAPPER_DIR"
 
-if [ -n "${CSDA_CLI_PKG:-}" ]; then
-  step "CLI: npx $CSDA_CLI_PKG"
-  cat > "$WRAPPER_DIR/csda" <<EOF
+if [ -n "${SPECGATE_CLI_PKG:-}" ]; then
+  step "CLI: npx $SPECGATE_CLI_PKG"
+  cat > "$WRAPPER_DIR/specgate" <<EOF
 #!/usr/bin/env bash
-exec npx --yes $CSDA_CLI_PKG "\$@"
+exec npx --yes $SPECGATE_CLI_PKG "\$@"
 EOF
 else
   step "CLI: local build from $REPO_ROOT"
   ( cd "$REPO_ROOT" && npm run build >/dev/null )
-  cat > "$WRAPPER_DIR/csda" <<EOF
+  cat > "$WRAPPER_DIR/specgate" <<EOF
 #!/usr/bin/env bash
 exec node "$REPO_ROOT/bin/specgate.js" "\$@"
 EOF
 fi
-chmod +x "$WRAPPER_DIR/csda"
+chmod +x "$WRAPPER_DIR/specgate"
 
 # Stub agent on PATH (deterministic fallback when --real-agent is off).
-cp "$DEMO_DIR/stub-agent.sh" "$WRAPPER_DIR/csda-stub-agent"
-chmod +x "$WRAPPER_DIR/csda-stub-agent"
-STUB_AGENT="$WRAPPER_DIR/csda-stub-agent"
+cp "$DEMO_DIR/stub-agent.sh" "$WRAPPER_DIR/specgate-stub-agent"
+chmod +x "$WRAPPER_DIR/specgate-stub-agent"
+STUB_AGENT="$WRAPPER_DIR/specgate-stub-agent"
 
 if [ "$REAL_AGENT" -eq 1 ]; then
   AGENT_CMD='opencode run "$(cat {prompt_file})"'
@@ -124,10 +124,10 @@ EOF
 chmod +x "$WRAPPER_DIR/demo-write-harness-config"
 
 export PATH="$WRAPPER_DIR:$PATH"
-export CSDA_PACK_REPO="https://github.com/rsaglobaltech/parking-management-specops.git"
-export CSDA_PACK_V1="v0.1.0"
-export CSDA_PACK_ID="backend"
-export CSDA_CACHE_DIR="$SCRATCH/cache"
+export SPECGATE_PACK_REPO="https://github.com/rsaglobaltech/parking-management-specops.git"
+export SPECGATE_PACK_V1="v0.1.0"
+export SPECGATE_PACK_ID="backend"
+export SPECGATE_CACHE_DIR="$SCRATCH/cache"
 
 # ── Warm npx cache + pack cache ──────────────────────────────────────────────
 step "Warming npx and pack caches (one-time clones)"
@@ -136,13 +136,13 @@ WARM=$(mktemp -d)
   printf 'PROJECT_NAME="W"\nPROJECT_SLUG="w"\nPROJECT_TYPE="backend"\nDOMAIN="d"\nSTACK="s"\nAPI_STYLE="a"\nTESTING="t"\n' > w.config && \
   specgate init --config ./w.config --out . --no-git >/dev/null 2>&1 && \
   cd w && \
-  specgate specops add --pack-repo "$CSDA_PACK_REPO" --pack-version "$CSDA_PACK_V1" --pack "$CSDA_PACK_ID" \
-    --cache-dir "$CSDA_CACHE_DIR" --var PROJECT_NAME=W --var PROJECT_SLUG=w --var DOMAIN=d >/dev/null )
+  specgate specops add --pack-repo "$SPECGATE_PACK_REPO" --pack-version "$SPECGATE_PACK_V1" --pack "$SPECGATE_PACK_ID" \
+    --cache-dir "$SPECGATE_CACHE_DIR" --var PROJECT_NAME=W --var PROJECT_SLUG=w --var DOMAIN=d >/dev/null )
 
 # Find the cached pack dir so the tape can run `pack lint --graph` against it.
-CACHED_PACK_ROOT=$(find "$CSDA_CACHE_DIR" -name pack.yaml -path "*/backend/pack.yaml" | head -n1 | xargs -I{} dirname {} | xargs -I{} dirname {})
-[ -n "$CACHED_PACK_ROOT" ] || die "could not locate cached pack root under $CSDA_CACHE_DIR"
-export CSDA_GRAPH_PACK_ROOT="$CACHED_PACK_ROOT"
+CACHED_PACK_ROOT=$(find "$SPECGATE_CACHE_DIR" -name pack.yaml -path "*/backend/pack.yaml" | head -n1 | xargs -I{} dirname {} | xargs -I{} dirname {})
+[ -n "$CACHED_PACK_ROOT" ] || die "could not locate cached pack root under $SPECGATE_CACHE_DIR"
+export SPECGATE_GRAPH_PACK_ROOT="$CACHED_PACK_ROOT"
 printf '  pack cache  : %s\n' "$CACHED_PACK_ROOT"
 
 # ── Warm Maven cache so `mvn -o test` works offline during the recording ─────

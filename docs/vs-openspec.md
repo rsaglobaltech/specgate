@@ -5,10 +5,10 @@ work with coding agents popular, and it deserves to be the first tool you look
 at. Specgate exists for one reason OpenSpec leaves to you on purpose: **proving
 that what an agent calls done is done.**
 
-<!-- csda:note -->
+<!-- specgate:note -->
 Checked against OpenSpec v1.14.1 (October 2026), its documentation and its
 source. If something here is out of date, open an issue and we will fix it.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 ## The short answer
 

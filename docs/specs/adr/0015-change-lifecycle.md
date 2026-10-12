@@ -40,7 +40,7 @@ docs/specs/
 └── changes/archive/YYYY-MM-DD-<change-id>/ ← history, full context preserved
 ```
 
-Six commands: `csda change new | list | show | status | validate | archive`.
+Six commands: `specgate change new | list | show | status | validate | archive`.
 
 **Location: under `docs/specs/`, not a top-level `openspec/`-style directory.**
 The change lifecycle is part of the specification, and the specification
@@ -97,7 +97,7 @@ convention.
   over code.
 - Brownfield adoption no longer requires a pack or a generated project: any
   repo with `docs/specs/` can take a change.
-- The archive produces a queue item — `csda plan` lists the new REQ
+- The archive produces a queue item — `specgate plan` lists the new REQ
   immediately — which the harness can pick up without further glue.
 
 ### Negative / trade-offs

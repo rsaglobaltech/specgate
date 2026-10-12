@@ -10,7 +10,7 @@
  * entry that is half there:
  *
  * ```
- * fatal: failed to read .git/worktrees/csda-harness-REQ-000-b300c79f/commondir:
+ * fatal: failed to read .git/worktrees/specgate-harness-REQ-000-b300c79f/commondir:
  *        Undefined error: 0
  * ```
  *
@@ -53,7 +53,7 @@ interface LockInfo {
 }
 
 function lockDir(projectDir: string): string {
-  return path.join(projectDir, ".git", "csda-worktree.lock");
+  return path.join(projectDir, ".git", "specgate-worktree.lock");
 }
 
 function readInfo(dir: string): LockInfo | null {

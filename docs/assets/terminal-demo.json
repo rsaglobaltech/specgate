@@ -285,7 +285,7 @@
           "s": "out"
         },
         {
-          "t": "agent: 'csda-stub-agent {prompt_file}'",
+          "t": "agent: 'specgate-stub-agent {prompt_file}'",
           "c": "out",
           "s": "out"
         },

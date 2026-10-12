@@ -9,7 +9,7 @@ import {
   writeHarnessTestCmd,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
-export const CONFIG_DIR = ".csda";
+export const CONFIG_DIR = ".specgate";
 export const CONFIG_FILE = "config.json";
 
 export const KEYS: Record<string, { values: string[] | null; describe: string }> = {

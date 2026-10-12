@@ -43,7 +43,7 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 specgate draft
 ```
 
-<!-- csda:out-scratch-draft-list:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-draft-list:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
   specgate draft  ·  docs/brief.md
@@ -55,7 +55,7 @@ $ specgate draft
 
   Next  specgate draft bookings
 ```
-<!-- csda:out-scratch-draft-list:end -->
+<!-- specgate:out-scratch-draft-list:end -->
 
 `specgate draft` reads the brief and says where each module stands and which
 one is next. You will run it again whenever you are unsure what comes next.
@@ -66,7 +66,7 @@ one is next. You will run it again whenever you are unsure what comes next.
 specgate draft bookings
 ```
 
-<!-- csda:out-scratch-draft-open:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-draft-open:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft bookings
   ✔ Draft draft-bookings opened, linked to docs/brief.md (REQ ids REQ-002…REQ-011 reserved)
@@ -83,7 +83,7 @@ $ specgate draft bookings
 
   Then run  specgate draft bookings  until it says Ready to review.
 ```
-<!-- csda:out-scratch-draft-open:end -->
+<!-- specgate:out-scratch-draft-open:end -->
 
 That is the whole setup. The draft is a folder of proposed requirements, kept
 apart from `spec.md` until a person has reviewed it, and linked to the brief.
@@ -113,7 +113,7 @@ never mentioned.
 specgate draft bookings
 ```
 
-<!-- csda:out-scratch-draft-check:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-draft-check:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft bookings
   specgate draft bookings  ·  docs/brief.md
@@ -134,7 +134,7 @@ $ specgate draft bookings
   ✖  5 finding(s) to fix. Each says how; DRAFTING.md has the formats.
   Next  fix them (or ask your agent to), then  specgate draft bookings
 ```
-<!-- csda:out-scratch-draft-check:end -->
+<!-- specgate:out-scratch-draft-check:end -->
 
 Every value a scenario states must be in the brief or written down as an
 assumption. Here the HTTP codes are a reasonable convention — an
@@ -149,7 +149,7 @@ a **question**. So you:
 specgate draft bookings
 ```
 
-<!-- csda:out-scratch-draft-check-again:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-draft-check-again:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft bookings
   specgate draft bookings  ·  docs/brief.md
@@ -161,7 +161,7 @@ $ specgate draft bookings
   Next  read it with whoever knows the business, answer what you can in
         questions.md, then  specgate change archive draft-bookings
 ```
-<!-- csda:out-scratch-draft-check-again:end -->
+<!-- specgate:out-scratch-draft-check-again:end -->
 
 ## 5. Review it, then archive it into the specification
 
@@ -172,7 +172,7 @@ Read the draft with whoever knows the business, answer what you can in
 specgate change archive draft-bookings
 ```
 
-<!-- csda:out-scratch-archive:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-archive:begin — generated; edit the source, not this block -->
 ```text
 $ specgate change archive draft-bookings
   ✔ Archived as 2026-01-01-draft-bookings
@@ -183,7 +183,7 @@ $ specgate change archive draft-bookings
 
   Next: specgate draft — the next module of the brief, or what to build first.
 ```
-<!-- csda:out-scratch-archive:end -->
+<!-- specgate:out-scratch-archive:end -->
 
 The requirements are now in the specification as `Draft`: written down,
 not yet owed. A Draft requirement costs the gate nothing until someone starts
@@ -195,7 +195,7 @@ closing it.
 specgate status
 ```
 
-<!-- csda:out-scratch-status:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-status:begin — generated; edit the source, not this block -->
 ```text
 $ specgate status
   📊 Project status  court-bookings
@@ -215,18 +215,18 @@ $ specgate status
 
   Next  specgate done REQ-002  — once a test mentions REQ-002 — that mention is the link; done checks first
 ```
-<!-- csda:out-scratch-status:end -->
+<!-- specgate:out-scratch-status:end -->
 
 REQ-004 is **waiting for an answer**: the harness will not build it and `done`
 will not close it until the client answers Q1. Nobody has to remember that.
 
-<!-- csda:note -->
+<!-- specgate:note -->
 
 **By hand.** `specgate draft bookings` is `specgate change new draft-bookings
 --capability bookings`, plus `brief: docs/brief.md` in its `change.yaml`, plus
 `DRAFTING.md`; and every later run is `specgate draft --check draft-bookings`.
 Both forms keep working.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 ## You're done when…
 

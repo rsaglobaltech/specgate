@@ -30,7 +30,7 @@ function cli(...args) {
 }
 
 function scaffoldMobile() {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-mobile-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-mobile-"));
   const config = path.join(parent, "project.yaml");
   fs.writeFileSync(
     config,
@@ -103,7 +103,7 @@ test("a mobile project declares no datastore, so no DATABASE_ variables leak in"
 });
 
 test("an unknown project type is rejected, naming the ones that exist", () => {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-badtype-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-badtype-"));
   try {
     const config = path.join(parent, "project.yaml");
     // Every other required variable present, so the type check is what fires
@@ -133,7 +133,7 @@ test("an unknown project type is rejected, naming the ones that exist", () => {
 });
 
 test("`pack init --type mobile` produces a pack that lints", () => {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-mobilepack-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-mobilepack-"));
   try {
     const init = cli(
       "pack",

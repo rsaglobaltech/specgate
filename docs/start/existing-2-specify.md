@@ -20,7 +20,7 @@ the gate can actually hold the code to.
 specgate status
 ```
 
-<!-- csda:out-existing-status:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-status:begin — generated; edit the source, not this block -->
 ```text
 $ specgate status
   📊 Project status  invoicing
@@ -34,7 +34,7 @@ $ specgate status
 
   Next  specgate plan  — REQ-002's feature file is missing — plan shows which
 ```
-<!-- csda:out-existing-status:end -->
+<!-- specgate:out-existing-status:end -->
 
 `REQ-002 Invoices` and `REQ-003 Customers` are the capabilities `onboard`
 proposed: placeholders for whole modules, still `Draft`. They owe nothing, so
@@ -49,7 +49,7 @@ invoice total is rounded to the cent*.
 specgate new "An invoice total is rounded to the cent"
 ```
 
-<!-- csda:out-existing-new:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-new:begin — generated; edit the source, not this block -->
 ```text
 $ specgate new "An invoice total is rounded to the cent"
 ✔  REQ-004 An invoice total is rounded to the cent (Draft)
@@ -59,7 +59,7 @@ $ specgate new "An invoice total is rounded to the cent"
 
    Next: write a test that mentions REQ-004 — that is the link — then specgate check
 ```
-<!-- csda:out-existing-new:end -->
+<!-- specgate:out-existing-new:end -->
 
 ## 3. Replace what `new` wrote with the real thing
 
@@ -69,7 +69,7 @@ $ specgate new "An invoice total is rounded to the cent"
 ```markdown
 ## REQ-004 — An invoice total is rounded to the cent
 
-<!-- csda:trace kind=business-rule -->
+<!-- specgate:trace kind=business-rule -->
 
 The system SHALL round an invoice total, VAT included, to the cent.
 ```
@@ -77,7 +77,7 @@ The system SHALL round an invoice total, VAT included, to the cent.
 And the scenario, with a real example — the numbers your existing test already
 uses are a good start:
 
-<!-- csda:out-existing-feature:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-feature:begin — generated; edit the source, not this block -->
 ```text
 $ cat features/an-invoice-total-is-rounded-to.feature
 Feature: An invoice total is rounded to the cent
@@ -88,7 +88,7 @@ Feature: An invoice total is rounded to the cent
     When its total is computed at 21% VAT
     Then the total is 35.56
 ```
-<!-- csda:out-existing-feature:end -->
+<!-- specgate:out-existing-feature:end -->
 
 A scenario with numbers is a claim someone can check. "Totals are correct" is
 not.

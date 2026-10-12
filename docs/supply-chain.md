@@ -85,14 +85,14 @@ the check starts distinguishing anything.
 Two independent mechanisms, for two different situations.
 
 **A machine that has the pack cached already.** Packs are cached under
-`~/.cache/csda/packs/<sha256-of-repo>/<version>/` — the directory and the
-variable below kept the tool's former name, `csda`, so existing caches and CI
+`~/.cache/specgate/packs/<sha256-of-repo>/<version>/` — the directory and the
+variable below kept the tool's former name, `specgate`, so existing caches and CI
 settings keep working. `specops add --cache-dir <path>` points somewhere else.
-Setting `CSDA_OFFLINE=1` makes resolution use the cache and refuse to reach the
+Setting `SPECGATE_OFFLINE=1` makes resolution use the cache and refuse to reach the
 network:
 
 ```bash
-CSDA_OFFLINE=1 specgate specops add --pack-repo <url> --pack-version v1.2.0 --pack payments
+SPECGATE_OFFLINE=1 specgate specops add --pack-repo <url> --pack-version v1.2.0 --pack payments
 ```
 
 A cache miss is an error naming the exact directory it looked in, rather than a
@@ -128,12 +128,12 @@ with a publish token in scope, which is why the repository's workflows run
 `npm audit` and CodeQL, Dependabot watches the tree, and npm releases carry
 [provenance](https://docs.npmjs.com/generating-provenance-statements).
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **Today those workflows are switched off.** GitHub Actions are disabled on the
 `rsaglobaltech` organisation, except the one that publishes this site, so the
 checks below run when a maintainer runs them locally or enables the workflow
 for a release — see [Releases & deployment](release-process.md#how-a-release-is-done-today).
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 ### SBOM
 

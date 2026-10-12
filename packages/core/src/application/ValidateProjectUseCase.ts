@@ -190,7 +190,7 @@ export class ValidateProjectUseCase {
             target: requirementId,
             fixLines: [
               "Answer the question that blocks it (the `Answer` column of its change's questions.md),",
-              'remove `status="Needs Clarification"` from its `csda:trace`, write its test, then run `done`.',
+              'remove `status="Needs Clarification"` from its `specgate:trace`, write its test, then run `done`.',
             ],
           }
         );

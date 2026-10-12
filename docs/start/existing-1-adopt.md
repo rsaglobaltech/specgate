@@ -24,7 +24,7 @@ cd your-existing-repo
 npx @rsaglobaltech/specgate@latest onboard
 ```
 
-<!-- csda:out-existing-onboard:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-onboard:begin — generated; edit the source, not this block -->
 ```text
 $ specgate onboard
   🧭 onboarding  ~/invoicing
@@ -46,7 +46,7 @@ $ specgate onboard
   Next
      specgate adopt
 ```
-<!-- csda:out-existing-onboard:end -->
+<!-- specgate:out-existing-onboard:end -->
 
 `onboard` writes nothing. It names the stack and test command it found, and
 the capabilities your layout already implies — a proposal to argue with, not
@@ -58,7 +58,7 @@ a verdict.
 specgate init
 ```
 
-<!-- csda:out-existing-init:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-init:begin — generated; edit the source, not this block -->
 ```text
 $ specgate init
 ℹ️ [INFO] Existing code found (package.json) — adopting this repository in place. Nothing in your code is touched.
@@ -90,7 +90,7 @@ $ specgate init
 ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:
 ℹ️ [INFO]   specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)
 ```
-<!-- csda:out-existing-init:end -->
+<!-- specgate:out-existing-init:end -->
 
 `init` (the same as `adopt` on a repository with code) writes `spec.md`,
 `AGENTS.md`, a baseline scenario and the generated traceability matrix — and
@@ -104,14 +104,14 @@ each `Draft`, so nothing claims to be specified or verified.
 specgate config set test_cmd "node --test"
 ```
 
-<!-- csda:out-existing-test-cmd:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-test-cmd:begin — generated; edit the source, not this block -->
 ```text
 $ specgate config set test_cmd "node --test"
   ✔  test_cmd = node --test
      harness.config.yaml
      `check` and `done` now run it.
 ```
-<!-- csda:out-existing-test-cmd:end -->
+<!-- specgate:out-existing-test-cmd:end -->
 
 ## 4. Run the gate
 
@@ -119,7 +119,7 @@ $ specgate config set test_cmd "node --test"
 specgate check
 ```
 
-<!-- csda:out-existing-check:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-check:begin — generated; edit the source, not this block -->
 ```text
 $ specgate check
 ℹ️ [INFO] ✅ Validation passed
@@ -148,7 +148,7 @@ $ specgate check
 
 ✔  Gate passed — the specification and `node --test`
 ```
-<!-- csda:out-existing-check:end -->
+<!-- specgate:out-existing-check:end -->
 
 Green, with your own tests in it — and a warning that is honest: so far this
 certifies the skeleton, not the code. Phase 2 changes that.

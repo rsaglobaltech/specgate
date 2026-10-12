@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this file documents the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # 🛰️ CsdaStudioApp dogfood — agent handoff
 
 > **If you are an AI agent picking this up cold, read this file first,

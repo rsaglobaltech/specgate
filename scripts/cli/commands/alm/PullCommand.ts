@@ -171,7 +171,7 @@ export async function main(argv: string[]): Promise<void> {
       fs.writeFileSync(
         path.join(dir, "change.yaml"),
         [
-          "csda_change_version: 1",
+          "specgate_change_version: 1",
           "schema: spec-driven",
           `created: ${new Date().toISOString().slice(0, 10)}`,
           "rigor: lite",

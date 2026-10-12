@@ -30,7 +30,7 @@ const { NAV, navEntry, navSlugs, neighbours } = require("../../scripts/docs/nav"
 
 /** Build the site once; every test reads the same output. */
 function site() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-site-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-site-"));
   const result = buildSite(dir);
   return { dir, ...result };
 }
@@ -497,7 +497,7 @@ test("no page ships a mermaid block, because nothing on this site renders one", 
     offenders,
     [],
     `Replace the block with a diagram in docs/diagrams/ and a\n` +
-      `  <!-- csda:diagram NAME --> marker:\n  ${offenders.join("\n  ")}`
+      `  <!-- specgate:diagram NAME --> marker:\n  ${offenders.join("\n  ")}`
   );
 });
 
@@ -512,7 +512,7 @@ test("every diagram the pages ask for exists, and every diagram is asked for", (
     fs.readFileSync(path.join(DOCS, "index.html"), "utf8"),
   ];
   for (const source of sources) {
-    for (const m of source.matchAll(/<!--\s*csda:diagram\s+([a-z0-9-]+)\s*-->/g))
+    for (const m of source.matchAll(/<!--\s*specgate:diagram\s+([a-z0-9-]+)\s*-->/g))
       requested.add(m[1]);
   }
 
@@ -569,8 +569,8 @@ test("a diagram's colours come from the token system", () => {
   assert.deepEqual(offenders, [], `use var(--…) instead:\n  ${offenders.join("\n  ")}`);
 });
 
-test("every csda command the landing page names is a command the CLI has", () => {
-  // Written after the page claimed `csda sbom` and `csda license check`, neither
+test("every specgate command the landing page names is a command the CLI has", () => {
+  // Written after the page claimed `specgate sbom` and `specgate license check`, neither
   // of which exists — the SBOM is an npm script and a CI job. A landing page
   // that invents commands is worse than one that says less.
   const { SURFACE } = require("../../scripts/lib/surface");
@@ -582,7 +582,7 @@ test("every csda command the landing page names is a command the CLI has", () =>
 
   const html = fs.readFileSync(path.join(DOCS, "index.html"), "utf8");
   const invented = new Set();
-  for (const m of html.matchAll(/<code[^>]*>csda ([a-z][a-z0-9 -]*)/g)) {
+  for (const m of html.matchAll(/<code[^>]*>specgate ([a-z][a-z0-9 -]*)/g)) {
     const words = m[1].trim().split(/\s+/);
     // Longest match wins: `harness run --req` is `harness run`.
     const named = known.has(`${words[0]} ${words[1]}`) ? `${words[0]} ${words[1]}` : words[0];

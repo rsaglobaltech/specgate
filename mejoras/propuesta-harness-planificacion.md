@@ -372,7 +372,7 @@ cuando lo pruebas.
 Va en su propia línea bajo la tabla:
 
 ```
-<!-- csda:trace REQ-002 depends=REQ-001 -->
+<!-- specgate:trace REQ-002 depends=REQ-001 -->
 ```
 
 Las líneas que no empiezan por `|` ya las ignora el parser de filas, así que la
@@ -727,7 +727,7 @@ junto a la matriz, reutilizando la línea `csda:trace` que `B1` acababa de
 introducir:
 
 ```
-<!-- csda:trace REQ-002 depends=REQ-001 context=Payments -->
+<!-- specgate:trace REQ-002 depends=REQ-001 context=Payments -->
 ```
 
 Por **nombre**, no por id: `Payments` es lo que una persona escribe en `match:`;

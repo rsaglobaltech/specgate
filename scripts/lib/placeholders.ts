@@ -1,4 +1,4 @@
-// csda:allow-placeholders — this module is the {{VAR}} scanner itself.
+// specgate:allow-placeholders — this module is the {{VAR}} scanner itself.
 
 /**
  * The one unresolved-placeholder scan.
@@ -18,10 +18,10 @@ export const PLACEHOLDER_RE = /\{\{[A-Z_][A-Z0-9_]*\}\}/;
 
 /**
  * Syntax-neutral on purpose: put it in whatever comment form the file uses —
- * `<!-- csda:allow-placeholders -->` in markdown, `// csda:allow-placeholders`
- * in code. Same convention as the `csda:trace` marker.
+ * `<!-- specgate:allow-placeholders -->` in markdown, `// specgate:allow-placeholders`
+ * in code. Same convention as the `specgate:trace` marker.
  */
-export const PLACEHOLDER_ALLOW_RE = /csda:allow-placeholders/;
+export const PLACEHOLDER_ALLOW_RE = /specgate:allow-placeholders/;
 
 /**
  * Never scanned: dependency trees and build output are not the project's specs,

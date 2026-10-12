@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this file documents the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # 🎨 CsdaStudioApp — product brief
 
 > **Status:** seed brief, _not_ a pack. This document is the input you hand

@@ -4,7 +4,7 @@
  * A Spanish team writing Spanish specs should not have `Added` and `Retired`
  * appear in the middle of them — but they must not have `SHALL` translated
  * either. The grammar is not prose: `SHALL`, `GIVEN`/`WHEN`/`THEN`,
- * `## ADDED Requirements`, `REQ-NNN` and `csda:trace` are what the validator
+ * `## ADDED Requirements`, `REQ-NNN` and `specgate:trace` are what the validator
  * parses. Translating any of them breaks the file.
  *
  * So the split is explicit. Only the sentences a human reads are translated;
@@ -32,7 +32,7 @@ export const KEYWORDS = Object.freeze([
   "REMOVED Requirements",
   "Requirement:",
   "Scenario:",
-  "csda:trace",
+  "specgate:trace",
 ]);
 
 export const PHRASES = {

@@ -25,7 +25,7 @@
       var next = current === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
       try {
-        localStorage.setItem("csda-theme", next);
+        localStorage.setItem("specgate-theme", next);
       } catch (e) {
         /* private browsing: the toggle still works for this page */
       }
@@ -79,7 +79,7 @@
   // again on the next page. The group holding the current page is forced open
   // by the generator, so the remembered state never hides where you are.
   $$(".side__group").forEach(function (group) {
-    var key = "csda-nav:" + (group.getAttribute("data-group") || "");
+    var key = "specgate-nav:" + (group.getAttribute("data-group") || "");
     if (!group.hasAttribute("open")) {
       try {
         if (localStorage.getItem(key) === "open") group.open = true;

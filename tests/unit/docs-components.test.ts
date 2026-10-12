@@ -26,10 +26,10 @@ const expand = (source: string, slug = "page") => expandComponents(source, slug,
 test("a list of links becomes a grid of cards", () => {
   const html = expand(
     [
-      "<!-- csda:cards cols=3 -->",
+      "<!-- specgate:cards cols=3 -->",
       "- [Quickstart](./quickstart.md) — One page.",
       "- [Harness](./harness.md) — Drive an agent.",
-      "<!-- csda:endcards -->",
+      "<!-- specgate:endcards -->",
     ].join("\n")
   );
 
@@ -44,9 +44,9 @@ test("card links go through the site's rewriter, never to raw markdown", () => {
   // skipped the rewriter would be the one place that did.
   const html = expand(
     [
-      "<!-- csda:cards -->",
+      "<!-- specgate:cards -->",
       "- [Harness](./harness.md) — Drive an agent.",
-      "<!-- csda:endcards -->",
+      "<!-- specgate:endcards -->",
     ].join("\n")
   );
   assert.match(html, /href="\.\/harness\.html"/);
@@ -55,7 +55,9 @@ test("card links go through the site's rewriter, never to raw markdown", () => {
 
 test("a description is optional", () => {
   const html = expand(
-    ["<!-- csda:cards -->", "- [Harness](./harness.md)", "<!-- csda:endcards -->"].join("\n")
+    ["<!-- specgate:cards -->", "- [Harness](./harness.md)", "<!-- specgate:endcards -->"].join(
+      "\n"
+    )
   );
   assert.match(html, /card__title">Harness</);
   assert.doesNotMatch(html, /card__body/);
@@ -66,12 +68,12 @@ test("a description is optional", () => {
 test("tabs render one panel visible and the rest hidden", () => {
   const html = expand(
     [
-      "<!-- csda:tabs -->",
-      "<!-- csda:tab npm -->",
+      "<!-- specgate:tabs -->",
+      "<!-- specgate:tab npm -->",
       "install with npm",
-      "<!-- csda:tab Docker -->",
+      "<!-- specgate:tab Docker -->",
       "install with docker",
-      "<!-- csda:endtabs -->",
+      "<!-- specgate:endtabs -->",
     ].join("\n")
   );
 
@@ -85,7 +87,9 @@ test("tabs render one panel visible and the rest hidden", () => {
 
 test("every tab panel is labelled by its own tab", () => {
   const html = expand(
-    ["<!-- csda:tabs -->", "<!-- csda:tab One -->", "a", "<!-- csda:endtabs -->"].join("\n")
+    ["<!-- specgate:tabs -->", "<!-- specgate:tab One -->", "a", "<!-- specgate:endtabs -->"].join(
+      "\n"
+    )
   );
   const tab = /id="([^"]+)" aria-controls="([^"]+)"/.exec(html);
   assert.ok(tab, "tab is missing its id/aria-controls pair");
@@ -97,12 +101,12 @@ test("every tab panel is labelled by its own tab", () => {
 test("steps are numbered from their headings", () => {
   const html = expand(
     [
-      "<!-- csda:steps -->",
+      "<!-- specgate:steps -->",
       "### Install",
       "run it",
       "### Verify",
       "check it",
-      "<!-- csda:endsteps -->",
+      "<!-- specgate:endsteps -->",
     ].join("\n")
   );
 
@@ -121,7 +125,7 @@ test("each callout kind carries its own label", () => {
     ["warning", "Warning"],
     ["danger", "Careful"],
   ]) {
-    const html = expand(`<!-- csda:${kind} -->\nbody\n<!-- csda:end${kind} -->`);
+    const html = expand(`<!-- specgate:${kind} -->\nbody\n<!-- specgate:end${kind} -->`);
     assert.match(html, new RegExp(`callout--${kind}`));
     assert.match(html, new RegExp(`>${label}</p>`));
     assert.match(html, /role="note"/);
@@ -132,7 +136,7 @@ test("each callout kind carries its own label", () => {
 
 test("an unclosed directive fails the build rather than eating the rest", () => {
   assert.throws(
-    () => expand("<!-- csda:cards -->\n- [A](./a.md) — x", "guide"),
+    () => expand("<!-- specgate:cards -->\n- [A](./a.md) — x", "guide"),
     (error: Error) => {
       assert.ok(error instanceof ComponentError);
       assert.match(error.message, /guide\.md/, "the message names the page to fix");
@@ -143,22 +147,22 @@ test("an unclosed directive fails the build rather than eating the rest", () => 
 });
 
 test("a closer with no opener fails too", () => {
-  assert.throws(() => expand("text\n<!-- csda:endsteps -->", "guide"), ComponentError);
+  assert.throws(() => expand("text\n<!-- specgate:endsteps -->", "guide"), ComponentError);
 });
 
 test("a tab outside a tabs block fails", () => {
-  assert.throws(() => expand("<!-- csda:tab One -->\nbody", "guide"), ComponentError);
+  assert.throws(() => expand("<!-- specgate:tab One -->\nbody", "guide"), ComponentError);
 });
 
 test("cards with no items fail rather than rendering an empty grid", () => {
   assert.throws(
-    () => expand("<!-- csda:cards -->\njust prose\n<!-- csda:endcards -->"),
+    () => expand("<!-- specgate:cards -->\njust prose\n<!-- specgate:endcards -->"),
     ComponentError
   );
 });
 
 test("two blocks of the same kind on one page both expand", () => {
-  const one = "<!-- csda:note -->\nfirst\n<!-- csda:endnote -->";
+  const one = "<!-- specgate:note -->\nfirst\n<!-- specgate:endnote -->";
   const html = expand(`${one}\n\ntext\n\n${one}`);
   assert.equal((html.match(/class="callout callout--note"/g) || []).length, 2);
 });

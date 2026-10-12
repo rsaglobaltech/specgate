@@ -86,7 +86,7 @@ function withEnv(env: Record<string, string>, fn: () => Promise<void> | void) {
 
 /** Write a config object to a throwaway project root and hand back the path. */
 function withConfigDir(cfg: Record<string, any>, fn: (dir: string) => void) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-alm-conf-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-alm-conf-"));
   try {
     const yaml = Object.entries(cfg)
       .map(([k, v]) => `${k}: ${v}`)
@@ -247,7 +247,7 @@ test("the documented config table matches what the providers declare", () => {
   // move and the doc does not. This reads the table back out of
   // docs/automation.md and compares it to the source.
   const doc = fs.readFileSync(path.resolve(__dirname, "../../../docs/alm.md"), "utf8");
-  const marker = "<!-- csda:alm-provider-table";
+  const marker = "<!-- specgate:alm-provider-table";
   assert.ok(doc.includes(marker), "the provider table lost its marker comment");
 
   const table = doc.slice(doc.indexOf(marker)).split("\n\n")[1];

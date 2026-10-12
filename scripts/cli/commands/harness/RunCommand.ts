@@ -547,7 +547,7 @@ function runAdversarialProbe(
 
   const promptFile = path.join(
     os.tmpdir(),
-    `csda-probe-${req.requirement}-${crypto.randomBytes(4).toString("hex")}.md`
+    `specgate-probe-${req.requirement}-${crypto.randomBytes(4).toString("hex")}.md`
   );
 
   try {
@@ -883,7 +883,7 @@ function attemptRequirement(req, ctx) {
         });
         const promptFile = path.join(
           os.tmpdir(),
-          `csda-harness-prompt-${req.requirement}-${crypto.randomBytes(4).toString("hex")}.md`
+          `specgate-harness-prompt-${req.requirement}-${crypto.randomBytes(4).toString("hex")}.md`
         );
         fs.writeFileSync(promptFile, prompt, "utf8");
         archivePrompt(worktreeDir, req.requirement, attempt, step, prompt);
@@ -1320,7 +1320,7 @@ function deriveBase(projectDir, reqId, deps, passed, ctx) {
 
   const worktree = path.join(
     os.tmpdir(),
-    `csda-harness-base-${reqId}-${crypto.randomBytes(4).toString("hex")}`
+    `specgate-harness-base-${reqId}-${crypto.randomBytes(4).toString("hex")}`
   );
   const add = git(projectDir, ["worktree", "add", worktree, integration]);
   if (add.status !== 0) {
@@ -1619,7 +1619,7 @@ function processRequirement(req, ctx) {
   }
   const worktreeDir = path.join(
     os.tmpdir(),
-    `csda-harness-${req.requirement}-${crypto.randomBytes(4).toString("hex")}`
+    `specgate-harness-${req.requirement}-${crypto.randomBytes(4).toString("hex")}`
   );
 
   // Three ways to meet an existing branch, and until C3 there were only two:
@@ -1960,7 +1960,7 @@ function runWorkers(runnable, byId, ctx, concurrency) {
           continue;
         }
         const child = spawn(process.execPath, [WORKER_ENTRY, ...workerArgs(id, ctx)], {
-          env: { ...process.env, CSDA_HARNESS_WORKER: "1" },
+          env: { ...process.env, SPECGATE_HARNESS_WORKER: "1" },
         });
 
         let stdout = "";
@@ -2322,7 +2322,7 @@ export class RunCommand extends BaseCommand {
       // requirement, which is harmless in series and a race in parallel:
       // `git worktree prune` running while a sibling is inside
       // `git worktree add` can remove the record of the worktree being created.
-      if (!process.env.CSDA_HARNESS_WORKER) {
+      if (!process.env.SPECGATE_HARNESS_WORKER) {
         git(projectDir, ["worktree", "prune"]);
       }
 
@@ -2353,7 +2353,7 @@ export class RunCommand extends BaseCommand {
       // slice of that run, and its own record would be a second copy of the
       // same requirement — `harness report` reads every file in the directory,
       // so duplicates land straight in "cost per delivered REQ".
-      const recordPath = process.env.CSDA_HARNESS_WORKER
+      const recordPath = process.env.SPECGATE_HARNESS_WORKER
         ? null
         : writeRunRecord(projectDir, {
             schemaVersion: 1,
