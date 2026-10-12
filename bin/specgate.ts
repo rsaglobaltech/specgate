@@ -242,7 +242,7 @@ export class CreateSpecDrivenAppCommand implements ICommand {
 
     // Inside a project, a bare `specgate` answers "where am I, and what next?"
     // — the question people have when they type it — rather than the list of
-    // every command (#96). Outside one, the help is the useful answer.
+    // every command (#105). Outside one, the help is the useful answer.
     if (args.length === 0 && findProjectRoot(process.cwd())) {
       process.env.SPECGATE_BARE = "1";
       args = ["status"];

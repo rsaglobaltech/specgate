@@ -495,7 +495,7 @@ test("/specgate:draft writes only the front matter, then stops for the person", 
   assert.match(body, /specgate draft --new-brief/);
 });
 
-// ── #94 and #96: an agent that cannot write, and what comes after ────────────
+// ── #103 and #105: an agent that cannot write, and what comes after ────────────
 
 function committed(dir) {
   git(dir, "init", "-q");
@@ -576,7 +576,7 @@ test("a bare specgate inside a project says where it stands; outside, the help",
   assert.match(outside.stdout, /Usage/);
 });
 
-test("under --agent the prompt says Specgate checks the result, so the agent does not ask to (#97)", () => {
+test("under --agent the prompt says Specgate checks the result, so the agent does not ask to (#106)", () => {
   const { draftingPrompt } = require("../../scripts/draft/drafting-guide");
   const { briefSetupPrompt } = require("../../scripts/draft/brief-setup");
   for (const prompt of [
