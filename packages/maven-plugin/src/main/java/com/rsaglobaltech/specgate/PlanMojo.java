@@ -1,4 +1,4 @@
-package com.rsaglobaltech.csda;
+package com.rsaglobaltech.specgate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,14 +7,14 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 /**
- * {@code mvn csda:plan} — list requirements that still need a test, code,
- * or a status update. Use {@code -Dcsda.format=json} for machine output.
+ * {@code mvn specgate:plan} — list requirements that still need a test, code,
+ * or a status update. Use {@code -Dspecgate.format=json} for machine output.
  */
 @Mojo(name = "plan", threadSafe = true)
-public class PlanMojo extends AbstractCsdaMojo {
+public class PlanMojo extends AbstractSpecgateMojo {
 
     /** Output format: text (human) or json (agents/CI). */
-    @Parameter(property = "csda.format", defaultValue = "text")
+    @Parameter(property = "specgate.format", defaultValue = "text")
     private String format;
 
     @Override

@@ -71,7 +71,7 @@ test("the delta records where the requirement came from", () => {
   // Provenance in the trace comment, which is the extension point this repo
   // already uses — and which `change archive` carries through.
   const plan = planInboundChange(issue, "REQ-014", "SCN-014");
-  assert.match(plan.delta, /<!-- csda:trace origin=alm:ACME-42 -->/);
+  assert.match(plan.delta, /<!-- specgate:trace origin=alm:ACME-42 -->/);
 });
 
 test("the delta is an ADDED section the delta parser understands", () => {

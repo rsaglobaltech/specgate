@@ -84,7 +84,7 @@ ${t.systemShall(t.observableBehaviour)}
 - WHEN ${t.action}
 - THEN ${t.outcome}
 
-<!-- csda:trace uc=UC-000 feature=features/<area>/<name>.feature -->
+<!-- specgate:trace uc=UC-000 feature=features/<area>/<name>.feature -->
 `;
 }
 

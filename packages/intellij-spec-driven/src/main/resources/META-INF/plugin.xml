@@ -5,7 +5,7 @@
 
   <description><![CDATA[
     Inline diagnostics for spec-driven projects' <code>traceability.md</code> —
-    the same rules as <code>csda validate --strict-tdd</code>, surfaced as you type.
+    the same rules as <code>specgate validate --strict-tdd</code>, surfaced as you type.
     Powered by the shared <code>@specgate/lsp-server</code> via LSP4IJ, so the
     checks are never reimplemented per IDE.
   ]]></description>

@@ -30,13 +30,13 @@
  */
 
 /** `@REQ-001`, `@SCN-014a` — ours. Anything else on the line belongs to the project. */
-const CSDA_TAG = /^@(REQ|SCN)-[A-Za-z0-9.]+$/;
+const SPECGATE_TAG = /^@(REQ|SCN)-[A-Za-z0-9.]+$/;
 
 /** A scenario heading in any dialect, captured with its indentation. */
 const SCENARIO_LINE = /^(\s*)([^\s:][^:]*):\s*(.*)$/;
 
-export function isCsdaTag(tag: string): boolean {
-  return CSDA_TAG.test(tag.trim());
+export function isSpecgateTag(tag: string): boolean {
+  return SPECGATE_TAG.test(tag.trim());
 }
 
 /** The tags on a line, or `null` when the line is not a tag line. */
@@ -91,8 +91,8 @@ export function tagScenario(source: string, scenarioName: string, tags: readonly
   return lines.join("\n");
 }
 
-/** The csda tags a scenario carries, by scenario name. */
-export function csdaTagsByScenario(source: string): Record<string, string[]> {
+/** The specgate tags a scenario carries, by scenario name. */
+export function specgateTagsByScenario(source: string): Record<string, string[]> {
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   const found: Record<string, string[]> = {};
 
@@ -101,18 +101,18 @@ export function csdaTagsByScenario(source: string): Record<string, string[]> {
     if (!match) continue;
     const tags = i > 0 ? parseTagLine(lines[i - 1]) : null;
     if (!tags) continue;
-    const ours = tags.filter(isCsdaTag);
+    const ours = tags.filter(isSpecgateTag);
     if (ours.length > 0) found[match[3].trim()] = ours;
   }
   return found;
 }
 
-/** Every csda tag in a file, whatever it is attached to. */
-export function csdaTagsIn(source: string): string[] {
+/** Every specgate tag in a file, whatever it is attached to. */
+export function specgateTagsIn(source: string): string[] {
   const found = new Set<string>();
   for (const line of source.replace(/\r\n/g, "\n").split("\n")) {
     for (const tag of parseTagLine(line) || []) {
-      if (isCsdaTag(tag)) found.add(tag);
+      if (isSpecgateTag(tag)) found.add(tag);
     }
   }
   return [...found].sort();

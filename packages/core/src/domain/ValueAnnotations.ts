@@ -16,11 +16,11 @@
  * The comparison is exact string equality between two things a human (or an
  * agent) wrote on purpose:
  *
- *   spec:  `<!-- csda:trace uc=Login value_session_timeout=15m -->`
- *   code:  `// csda:value session_timeout=15m`
+ *   spec:  `<!-- specgate:trace uc=Login value_session_timeout=15m -->`
+ *   code:  `// specgate:value session_timeout=15m`
  *
- * `csda:value` is a plain literal string, not a language-specific comment
- * form — the same reason `csda:trace` works identically in every markdown
+ * `specgate:value` is a plain literal string, not a language-specific comment
+ * form — the same reason `specgate:trace` works identically in every markdown
  * file without knowing anything about markdown grammar. It is found by
  * scanning line by line, so it reads the same inside `//`, `#`, `--`, or no
  * comment marker at all. Interpreting units (`15m` vs `900000`) is exactly
@@ -43,7 +43,7 @@ export interface SpecValueEntry {
   readonly value: string;
 }
 
-/** A value the *code* declares, from a `csda:value <id>=<literal>` line. */
+/** A value the *code* declares, from a `specgate:value <id>=<literal>` line. */
 export interface CodeValueEntry {
   readonly id: string;
   readonly value: string;
@@ -65,7 +65,7 @@ export interface ValueComparison {
 const VALUE_PREFIX = "value_";
 
 /**
- * Every `value_<id>=<literal>` key in an already-parsed `csda:trace` comment.
+ * Every `value_<id>=<literal>` key in an already-parsed `specgate:trace` comment.
  *
  * `SpecParser.parseTraceComment` already accepts any `[a-z_]+` key — this
  * reads the convention out of the flat object it returns. No parser change,
@@ -85,16 +85,16 @@ export function declaredSpecValues(
 }
 
 /**
- * Every `csda:value <id>=<literal>` marker in a source file's text.
+ * Every `specgate:value <id>=<literal>` marker in a source file's text.
  *
  * Line-oriented, not language-aware — the marker is found by scanning text,
  * not by parsing whatever comment syntax the file uses. `id` is restricted to
- * `[a-z_]+`, the same identifier space `csda:trace` keys use, so a name is
+ * `[a-z_]+`, the same identifier space `specgate:trace` keys use, so a name is
  * either checkable on both sides or on neither.
  */
 export function declaredCodeValues(source: string): CodeValueEntry[] {
   const out: CodeValueEntry[] = [];
-  const re = /csda:value\s+([a-z_]+)\s*=\s*(\S+)/i;
+  const re = /specgate:value\s+([a-z_]+)\s*=\s*(\S+)/i;
   const lines = String(source || "").split(/\r?\n/);
   for (let i = 0; i < lines.length; i++) {
     const m = re.exec(lines[i]);

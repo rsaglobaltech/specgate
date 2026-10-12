@@ -31,14 +31,14 @@ specgate init --config smart-parking.yaml --no-sample-req
 cd smart-parking
 ```
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **Adding a pack to a project `init` adopted.** In a repository that already
 has code, `init` adopts it and seeds `REQ-001 — Existing behaviour is
 preserved`. A pack whose ids start at `REQ-001` collides with it, and the gate
 then reports the adoption baseline as an orphan feature. Pick a pack whose ids
 do not overlap — the [proven packs](domain-packs.md) each use their own
 range — or scaffold as above.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 ## 2. Install the pack, pinned to a version
 

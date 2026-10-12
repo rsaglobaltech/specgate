@@ -152,6 +152,6 @@ export function deliveryBlocker(traceContent: string, reqId: string): DeliveryBl
     message: `${reqId} is waiting for an answer (Needs Clarification).`,
     fix:
       "Answer the question that blocks it in its change's questions.md, remove " +
-      '`status="Needs Clarification"` from its `csda:trace`, write its test, then run `done`.',
+      '`status="Needs Clarification"` from its `specgate:trace`, write its test, then run `done`.',
   };
 }

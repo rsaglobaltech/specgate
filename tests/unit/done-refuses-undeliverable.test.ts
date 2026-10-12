@@ -45,7 +45,7 @@ function project(needsClarification) {
       .replace(
         "The system MUST satisfy: Totals are rounded half-up.",
         "The system MUST round every invoice total half-up to two decimals." +
-          (needsClarification ? '\n\n<!-- csda:trace status="Needs Clarification" -->' : "")
+          (needsClarification ? '\n\n<!-- specgate:trace status="Needs Clarification" -->' : "")
       )
       .replace(/^> Written by Specgate\..*$/m, "")
   );

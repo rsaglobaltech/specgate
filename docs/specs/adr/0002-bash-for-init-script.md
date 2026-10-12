@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this file documents the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # ADR-0002: Use Bash for the project initialisation script (superseded by ADR-0006)
 
 **Date:** 2024-01-15  

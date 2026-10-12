@@ -1,4 +1,4 @@
-package com.rsaglobaltech.csda;
+package com.rsaglobaltech.specgate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -6,11 +6,11 @@ import java.util.List;
 import org.apache.maven.plugins.annotations.Mojo;
 
 /**
- * {@code mvn csda:doctor} — full project/environment diagnosis; every
+ * {@code mvn specgate:doctor} — full project/environment diagnosis; every
  * finding is reported with a concrete fix.
  */
 @Mojo(name = "doctor", threadSafe = true)
-public class DoctorMojo extends AbstractCsdaMojo {
+public class DoctorMojo extends AbstractSpecgateMojo {
 
     @Override
     protected List<String> cliArgs() {

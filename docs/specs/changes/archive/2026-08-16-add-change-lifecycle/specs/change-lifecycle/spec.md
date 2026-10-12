@@ -16,7 +16,7 @@ deltas de especificación que el cambio introduce.
 #### Scenario: SCN-100a — Crear un cambio
 
 - GIVEN un proyecto spec-driven sin cambios activos
-- WHEN el usuario ejecuta `csda change new add-dynamic-pricing`
+- WHEN el usuario ejecuta `specgate change new add-dynamic-pricing`
 - THEN se crea el directorio del cambio con `proposal.md`, `tasks.md` y `change.yaml`
 - AND se reserva un rango de identificadores REQ que ningún otro cambio puede usar
 
@@ -28,7 +28,7 @@ SHALL rechazar cualquier otra sección de operación con un diagnóstico acciona
 #### Scenario: SCN-101a — Sección desconocida
 
 - GIVEN un delta con una sección `## CHANGED Requirements`
-- WHEN el usuario ejecuta `csda change validate`
+- WHEN el usuario ejecuta `specgate change validate`
 - THEN la validación falla con el código `delta_unknown_section`
 - AND el diagnóstico enumera las secciones válidas
 
@@ -40,24 +40,24 @@ menos un escenario, porque sin escenario "hecho" no está definido.
 #### Scenario: SCN-102a — Requisito sin escenario
 
 - GIVEN un delta cuyo requisito no declara ningún escenario
-- WHEN el usuario ejecuta `csda change validate`
+- WHEN el usuario ejecuta `specgate change validate`
 - THEN la validación falla con el código `requirement_without_scenario`
 
 ### Requirement: REQ-103 — Archivar arma el gate, no solo mueve markdown
 
 El sistema SHALL, al archivar un cambio, fusionar sus deltas en la spec de la
 capability, insertar o actualizar las filas correspondientes de
-`docs/specs/traceability.md` a partir de los comentarios `csda:trace`, y copiar
+`docs/specs/traceability.md` a partir de los comentarios `specgate:trace`, y copiar
 los ficheros `.feature` propuestos al árbol `features/` del proyecto.
 
 #### Scenario: SCN-103a — Archivado completo
 
 - GIVEN un cambio válido con un delta y un `.feature` propuesto
-- WHEN el usuario ejecuta `csda change archive <id>`
+- WHEN el usuario ejecuta `specgate change archive <id>`
 - THEN la spec de la capability contiene el requisito
 - AND la matriz de trazabilidad contiene su fila
 - AND el `.feature` existe bajo `features/`
-- AND `csda plan` lista el requisito como pendiente de test e implementación
+- AND `specgate plan` lista el requisito como pendiente de test e implementación
 
 ### Requirement: REQ-104 — El archivado es transaccional
 
@@ -92,6 +92,6 @@ activos" y SHALL NOT fallar por ello en ningún comando.
 #### Scenario: SCN-106a — Proyecto anterior al ciclo de cambio
 
 - GIVEN un proyecto generado antes de esta funcionalidad
-- WHEN el usuario ejecuta `csda validate .` o `csda change list`
+- WHEN el usuario ejecuta `specgate validate .` o `specgate change list`
 - THEN el comando termina con éxito
 - AND informa de que no hay cambios activos

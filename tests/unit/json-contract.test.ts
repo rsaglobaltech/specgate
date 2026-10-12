@@ -76,7 +76,7 @@ let projectDir = null;
 
 function scaffold() {
   if (projectDir) return projectDir;
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-json-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-json-"));
   const r = spawnSync(process.execPath, [CLI_PATH, "init", "--yes", "--out", tmp, "--no-git"], {
     encoding: "utf8",
   });
@@ -110,7 +110,7 @@ function allKeys(value, out = []) {
 for (const args of JSON_COMMANDS) {
   const label = args.join(" ");
 
-  test(`csda ${label} --json emits one parseable JSON document on stdout`, () => {
+  test(`specgate ${label} --json emits one parseable JSON document on stdout`, () => {
     const r = run(args);
     assert.ok(r.stdout.trim().length > 0, `no stdout (stderr: ${r.stderr})`);
     assert.doesNotThrow(
@@ -119,7 +119,7 @@ for (const args of JSON_COMMANDS) {
     );
   });
 
-  test(`csda ${label} --json uses camelCase keys throughout (ADR-0017 §4)`, () => {
+  test(`specgate ${label} --json uses camelCase keys throughout (ADR-0017 §4)`, () => {
     const doc = JSON.parse(run(args).stdout);
     // SCREAMING_SNAKE keys are category *values* used as map keys — `summary`
     // and `byCategory` are keyed by the enum, not by a field name. The rule is
@@ -134,7 +134,7 @@ for (const args of JSON_COMMANDS) {
     );
   });
 
-  test(`csda ${label} --json carries a status array`, () => {
+  test(`specgate ${label} --json carries a status array`, () => {
     // The envelope is what lets a consumer treat every command alike.
     const doc = JSON.parse(run(args).stdout);
     assert.ok(Array.isArray(doc.status), "missing or non-array `status`");
@@ -142,7 +142,7 @@ for (const args of JSON_COMMANDS) {
 }
 
 for (const { label, args } of CONTEXTUAL) {
-  test(`csda ${label} --json emits camelCase and a status array`, () => {
+  test(`specgate ${label} --json emits camelCase and a status array`, () => {
     const r = spawnSync(process.execPath, [CLI_PATH, ...args, "--json"], {
       cwd: scaffold(),
       encoding: "utf8",

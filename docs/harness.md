@@ -1,15 +1,15 @@
-<!-- csda:allow-placeholders -->
+<!-- specgate:allow-placeholders -->
 
 # The harness
 
 The harness delivers requirements unattended and stops when the gate says no.
 It sits between an archived specification and a person who merges.
 
-<!-- csda:diagram lifecycle -->
+<!-- specgate:diagram lifecycle -->
 
 ## One turn, in sequence
 
-<!-- csda:diagram harness-loop -->
+<!-- specgate:diagram harness-loop -->
 
 Each pending requirement (or the one `--req` names) gets a fresh worktree on
 `harness/REQ-NNN` and a prompt built from its Gherkin. The gate is
@@ -104,7 +104,7 @@ still **conflicts** when two branches set the _same_ row to different values,
 because quietly discarding somebody's decision is worse than asking.
 
 **Every clone registers it once.** `.gitattributes` is committed, but
-`merge.csda-matrix.driver` is local git config that nothing can commit, so a
+`merge.specgate-matrix.driver` is local git config that nothing can commit, so a
 fresh checkout and every CI job needs `specgate harness init` too. Until then git
 falls back to its built-in merge — the conflict the project had before, never a
 silently wrong result — and `specgate doctor` reports the gap rather than leaving it
@@ -126,7 +126,7 @@ markers around that one row:
 Keep exactly one of the two lines and delete the three marker lines. **Never
 keep both:** a duplicated requirement is the one corruption this file must not
 have — it is also what a naive `merge=union` produces, which is why that is not
-what csda configures. Then run `specgate validate .`, which checks the statuses are
+what specgate configures. Then run `specgate validate .`, which checks the statuses are
 legal and that no scenario id repeats.
 
 ## Change agent between attempts
@@ -184,7 +184,7 @@ specgate harness run --concurrency 4
 
 **Only requirements that do not depend on each other ever run together.** The
 harness reads the dependency graph — the `depends=` keys in each requirement's
-`csda:trace` comment — and processes the queue in levels: everything in a level
+`specgate:trace` comment — and processes the queue in levels: everything in a level
 is independent, so it can go out to the pool at once; the next level waits.
 
 **A failure blocks what waits on it; it does not fail it.** Before dependencies
@@ -221,7 +221,7 @@ The harness assembles a throwaway `harness/base/REQ-NNN` first. Two things
 worth knowing about it:
 
 - It resolves conflicts in `docs/specs/traceability.md` by keeping the base's
-  version. Sibling branches _always_ conflict there — each run ends with `csda
+  version. Sibling branches _always_ conflict there — each run ends with `specgate
 done`, editing the same table — and the integration base exists only so the
   agent can see code. Each real `harness/REQ-NNN` branch keeps its own row.
 - A conflict in an actual source file blocks the requirement and names the

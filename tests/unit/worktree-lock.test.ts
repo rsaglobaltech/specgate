@@ -57,7 +57,7 @@ test("the lock is released even when the work throws", () => {
       });
     }, /boom/);
     assert.equal(
-      fs.existsSync(path.join(dir, ".git", "csda-worktree.lock")),
+      fs.existsSync(path.join(dir, ".git", "specgate-worktree.lock")),
       false,
       "the lock outlived the failure"
     );
@@ -70,7 +70,7 @@ test("a lock held by a process that no longer exists is broken, not waited on", 
   // Otherwise a machine that was rebooted mid-run refuses to start for two
   // minutes and nothing says why.
   const dir = repo();
-  const lock = path.join(dir, ".git", "csda-worktree.lock");
+  const lock = path.join(dir, ".git", "specgate-worktree.lock");
   fs.mkdirSync(lock, { recursive: true });
   // A pid that cannot be running: 2^22 is above every platform's pid_max.
   fs.writeFileSync(

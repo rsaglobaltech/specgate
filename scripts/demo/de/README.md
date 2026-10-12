@@ -29,7 +29,7 @@ einen `SmartParkingApplication`, einen `HealthController`, einen
 `junit-platform.properties`, die Cucumber auf die `.feature`-Datei aus dem
 Pack zeigt — `mvn test` führt das Gherkin-Szenario also **wirklich aus**.
 
-> **Why does the demo seed `pom.xml`?** CSDA ist bewusst stack-agnostisch
+> **Why does the demo seed `pom.xml`?** Specgate ist bewusst stack-agnostisch
 > und bringt kein Build-System mit. In einem echten Projekt käme dieses
 > `pom.xml` von Spring Initializr oder einem Team-Archetype. Im Demo
 > seedet `build-video.sh` es als reines Demo-Plumbing, damit `mvn test`
@@ -64,9 +64,9 @@ damit dein laufender PR sichtbar ist. Für die Kollegen-Aufnahme nimm die
 gerade veröffentlichte Version:
 
 ```bash
-CSDA_CLI_PKG=create-spec-driven-app@0.1.4 bash scripts/demo/de/build-video.sh --real-agent
+SPECGATE_CLI_PKG=create-spec-driven-app@0.1.4 bash scripts/demo/de/build-video.sh --real-agent
 # oder die jeweils neueste:
-CSDA_CLI_PKG=create-spec-driven-app@latest bash scripts/demo/de/build-video.sh --real-agent
+SPECGATE_CLI_PKG=create-spec-driven-app@latest bash scripts/demo/de/build-video.sh --real-agent
 ```
 
 ## Zwei Agent-Modi

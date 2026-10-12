@@ -83,7 +83,7 @@ test("the slowest list is ordered and capped", () => {
 });
 
 test("readRuns takes the newest first and honours --last", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-ledger-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ledger-"));
   try {
     const runsDir = path.join(dir, RUNS_DIR);
     fs.mkdirSync(runsDir, { recursive: true });
@@ -110,7 +110,7 @@ test("readRuns takes the newest first and honours --last", () => {
 test("a half-written record does not take the report down", () => {
   // The ledger is written by a process that can be killed mid-write. A
   // read-only report has no business failing over that.
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-ledger-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ledger-"));
   try {
     const runsDir = path.join(dir, RUNS_DIR);
     fs.mkdirSync(runsDir, { recursive: true });
@@ -127,7 +127,7 @@ test("a half-written record does not take the report down", () => {
 });
 
 test("a project with no ledger reads as empty, not as an error", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-ledger-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ledger-"));
   try {
     assert.deepEqual(readRuns(dir, null), []);
   } finally {

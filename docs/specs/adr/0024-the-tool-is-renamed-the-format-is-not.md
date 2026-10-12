@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted — 2026-08-26
+Accepted — 2026-08-26. The on-disk format decision is superseded by
+[ADR-0032](0032-one-name-everywhere.md) (2026-10-12): the format is renamed too.
 
 ## Context
 

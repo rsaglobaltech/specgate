@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders -->
+<!-- specgate:allow-placeholders -->
 # Colisiones en `traceability.md` con el harness en paralelo
 
 > **Creado:** 2026-08-21

@@ -1,4 +1,4 @@
-package com.rsaglobaltech.csda.gradle;
+package com.rsaglobaltech.specgate.gradle;
 
 import java.io.File;
 import java.util.List;
@@ -10,13 +10,13 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.UntrackedTask;
 
 /**
- * Base for every csda task. Holds the launcher-resolution knobs shared by
- * {@code csdaValidate}, {@code csdaPlan} and {@code csdaDoctor}; conventions
- * are seeded by {@link CsdaPlugin} from the {@code csda { }} extension and
- * {@code -Pcsda.*} project properties.
+ * Base for every specgate task. Holds the launcher-resolution knobs shared by
+ * {@code specgateValidate}, {@code specgatePlan} and {@code specgateDoctor}; conventions
+ * are seeded by {@link SpecgatePlugin} from the {@code specgate { }} extension and
+ * {@code -Pspecgate.*} project properties.
  */
-@UntrackedTask(because = "delegates to the csda CLI, which reads the whole spec tree and writes only to the console")
-public abstract class CsdaTask extends DefaultTask {
+@UntrackedTask(because = "delegates to the specgate CLI, which reads the whole spec tree and writes only to the console")
+public abstract class SpecgateTask extends DefaultTask {
 
     /** CLI version to run (npx tag or docker tag). */
     @Input
@@ -38,7 +38,7 @@ public abstract class CsdaTask extends DefaultTask {
     protected abstract List<String> cliArgs();
 
     protected void runCli() {
-        CsdaLauncher.run(
+        SpecgateLauncher.run(
                 getLauncher().get(),
                 getCliVersion().get(),
                 getDockerImage().get(),

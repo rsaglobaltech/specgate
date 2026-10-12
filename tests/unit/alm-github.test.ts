@@ -15,7 +15,7 @@ const CONFIG = {
   alm_version: 1,
   provider: "github",
   repo: "acme/widgets",
-  token_env: "CSDA_GH_TEST_TOKEN",
+  token_env: "SPECGATE_GH_TEST_TOKEN",
 };
 
 /** Replays one response for every request, and records what was asked. */
@@ -40,11 +40,11 @@ function fakeFetch(json: unknown) {
 }
 
 function withToken<T>(fn: () => T): T {
-  process.env.CSDA_GH_TEST_TOKEN = "tok";
+  process.env.SPECGATE_GH_TEST_TOKEN = "tok";
   try {
     return fn();
   } finally {
-    delete process.env.CSDA_GH_TEST_TOKEN;
+    delete process.env.SPECGATE_GH_TEST_TOKEN;
   }
 }
 
@@ -172,7 +172,7 @@ const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
 /** A project with one open requirement and a github ALM config. */
 function withGithubProject(config: string, fn: (dir: string) => void) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-alm-gh-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-alm-gh-"));
   try {
     fs.mkdirSync(path.join(dir, "docs", "specs"), { recursive: true });
     fs.writeFileSync(
@@ -198,7 +198,7 @@ const GH_CONFIG = [
   "alm_version: 1",
   "provider: github",
   "repo: acme/widgets",
-  "token_env: CSDA_GH_E2E",
+  "token_env: SPECGATE_GH_E2E",
   "",
 ].join("\n");
 
@@ -210,7 +210,7 @@ test("specgate alm sync reaches the github provider and plans without touching t
       {
         encoding: "utf8",
         cwd: ROOT_DIR,
-        env: { ...process.env, CSDA_GH_E2E: "tok" },
+        env: { ...process.env, SPECGATE_GH_E2E: "tok" },
       }
     );
     assert.equal(r.status, 0, r.stderr);
@@ -231,7 +231,7 @@ test("a github config that names project_key is told which provider reads it", (
       {
         encoding: "utf8",
         cwd: ROOT_DIR,
-        env: { ...process.env, CSDA_GH_E2E: "tok" },
+        env: { ...process.env, SPECGATE_GH_E2E: "tok" },
       }
     );
     const output = r.stdout + r.stderr;
@@ -241,7 +241,9 @@ test("a github config that names project_key is told which provider reads it", (
 });
 
 test("a github config missing repo fails before any request, naming the key", () => {
-  const missing = ["alm_version: 1", "provider: github", "token_env: CSDA_GH_E2E", ""].join("\n");
+  const missing = ["alm_version: 1", "provider: github", "token_env: SPECGATE_GH_E2E", ""].join(
+    "\n"
+  );
   withGithubProject(missing, (dir) => {
     const r = spawnSync(
       process.execPath,
@@ -249,7 +251,7 @@ test("a github config missing repo fails before any request, naming the key", ()
       {
         encoding: "utf8",
         cwd: ROOT_DIR,
-        env: { ...process.env, CSDA_GH_E2E: "tok" },
+        env: { ...process.env, SPECGATE_GH_E2E: "tok" },
       }
     );
     assert.notEqual(r.status, 0);

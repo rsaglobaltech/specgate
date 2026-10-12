@@ -93,13 +93,13 @@ test("newestProjectIn returns null rather than guessing", () => {
 // `init` seeds REQ-000 with a health scenario so a new project has one worked
 // example. When a pack follows, the pack brings its own requirements — often
 // its own health one — and `include_existing_rows` carries REQ-000 forward
-// beside them. csda-studio-app ended up with REQ-000 and the pack's REQ-015
+// beside them. specgate-studio-app ended up with REQ-000 and the pack's REQ-015
 // both describing deployment health.
 
 const FIXTURE_PACKS = path.resolve(ROOT_DIR, "tests/fixtures/domain-packs");
 
 function scaffold(...extra) {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-sample-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-sample-"));
   const r = cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", ...extra);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   return { parent, dir: path.join(parent, fs.readdirSync(parent)[0]) };

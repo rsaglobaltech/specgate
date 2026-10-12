@@ -170,7 +170,7 @@ function renderIndex(packs, options: any = {}) {
   // Same pre-paint theme read as the rest of the site, so following a link here
   // does not flip from light to dark.
   (function () {
-    var t = localStorage.getItem("csda-theme");
+    var t = localStorage.getItem("specgate-theme");
     if (t) document.documentElement.setAttribute("data-theme", t);
   })();
 </script>

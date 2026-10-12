@@ -231,10 +231,14 @@ function resolveValueDriftDelta(
   if (!specValue) {
     return {
       diagnostics: [
-        error("value_drift_id_not_declared", `declares no value_${valueId} in its csda:trace.`, {
-          target: reqId,
-          fix: `Add value_${valueId}=<literal> to its csda:trace, or check the id.`,
-        }),
+        error(
+          "value_drift_id_not_declared",
+          `declares no value_${valueId} in its specgate:trace.`,
+          {
+            target: reqId,
+            fix: `Add value_${valueId}=<literal> to its specgate:trace, or check the id.`,
+          }
+        ),
       ],
     };
   }
@@ -271,7 +275,7 @@ function resolveValueDriftDelta(
       diagnostics: [
         error(
           "value_drift_no_code_value",
-          `No \`csda:value ${valueId}=\` marker found in ${reqId}'s declared Technical/Test artifact.`,
+          `No \`specgate:value ${valueId}=\` marker found in ${reqId}'s declared Technical/Test artifact.`,
           {
             target: reqId,
             fix: "Either the marker is missing, or the declared file doesn't exist yet — see `specgate report` / --strict-links.",
@@ -668,7 +672,10 @@ function cmdAuthor(opts) {
     );
   }
 
-  const promptFile = path.join(os.tmpdir(), `csda-author-${changeId}-${artifact}-${Date.now()}.md`);
+  const promptFile = path.join(
+    os.tmpdir(),
+    `specgate-author-${changeId}-${artifact}-${Date.now()}.md`
+  );
   fs.writeFileSync(promptFile, prompt, "utf8");
   try {
     const command = agentCommand.split("{prompt_file}").join(promptFile);

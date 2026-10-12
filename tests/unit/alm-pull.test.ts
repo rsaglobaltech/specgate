@@ -20,7 +20,7 @@ const CLI_DIR = path.join(ROOT_DIR, "dist", "scripts", "alm", "cli.js");
 
 /** A project with an alm.config.yaml pointing at github. */
 function withProject(fn: (dir: string) => void) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-pull-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pull-"));
   try {
     fs.mkdirSync(path.join(dir, "docs", "specs"), { recursive: true });
     fs.writeFileSync(
@@ -46,7 +46,7 @@ const GH_CONFIG = [
   "alm_version: 1",
   "provider: github",
   "repo: acme/widgets",
-  "token_env: CSDA_PULL_TOK",
+  "token_env: SPECGATE_PULL_TOK",
   "",
 ].join("\n");
 
@@ -80,7 +80,7 @@ function runPull(dir: string, issues: unknown[], extra: string[] = []) {
     [shim, issuesFile, CLI_DIR, "pull", "--project-dir", dir, ...extra],
     {
       encoding: "utf8",
-      env: { ...process.env, CSDA_PULL_TOK: "tok" },
+      env: { ...process.env, SPECGATE_PULL_TOK: "tok" },
     }
   );
 }
@@ -180,7 +180,7 @@ test("a provider that cannot search says so instead of failing mid-run", () => {
         "provider: azure",
         "base_url: https://dev.azure.com/acme",
         "project_key: P",
-        "token_env: CSDA_PULL_TOK",
+        "token_env: SPECGATE_PULL_TOK",
         "",
       ].join("\n"),
       "utf8"

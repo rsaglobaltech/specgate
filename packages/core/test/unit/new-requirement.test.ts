@@ -7,7 +7,7 @@ import * as assert from "node:assert/strict";
 
 import { featureWithScenario, scenarioBlock, slugFor } from "../../src/domain/NewRequirement";
 import { analyseGherkinSource } from "../../src/domain/GherkinQuality";
-import { csdaTagsIn } from "../../src/domain/GherkinTags";
+import { specgateTagsIn } from "../../src/domain/GherkinTags";
 
 test("a slug is the first six words, lowercased and ascii", () => {
   assert.equal(slugFor("Totals are rounded half-up"), "totals-are-rounded-half-up");
@@ -18,7 +18,7 @@ test("a slug is the first six words, lowercased and ascii", () => {
 
 test("the scenario carries the tags validate ties to the matrix row", () => {
   const source = featureWithScenario(null, "Totals", scenarioBlock("REQ-007", "SCN-007", "Totals"));
-  const tags = csdaTagsIn(source);
+  const tags = specgateTagsIn(source);
   assert.ok(JSON.stringify(tags).includes("REQ-007"), JSON.stringify(tags));
   assert.ok(JSON.stringify(tags).includes("SCN-007"), JSON.stringify(tags));
 });

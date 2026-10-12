@@ -7,7 +7,7 @@ Accepted — 2026-08-21
 ## Context
 
 Every project this tool scaffolds is handed the tactical vocabulary of
-Domain-Driven Design. `csda init` writes `domain-model.md`, `use-cases.md`,
+Domain-Driven Design. `specgate init` writes `domain-model.md`, `use-cases.md`,
 `commands.md`, `aggregates.md`, `events.md` and `status-model.md` whatever the
 project is, and the generated `AI_RULES.md` tells the agent, before it writes a
 line, that *every scenario maps to a use case, every use case to a command or
@@ -21,7 +21,7 @@ complexity, manufactured by the scaffolder.
 
 The uncomfortable part is that **the tool never actually required any of it.**
 Measured: delete all five domain documents from a generated project and
-`csda validate` passes. The gate asks for stable requirement ids, an executable
+`specgate validate` passes. The gate asks for stable requirement ids, an executable
 scenario per requirement, a complete traceability matrix, legal statuses and —
 under `--strict-tdd` — a test declared before work starts. Not one of those
 mentions an aggregate. `use-cases.md` and `events.md` are checked only *if they

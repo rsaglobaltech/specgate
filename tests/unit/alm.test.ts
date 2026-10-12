@@ -49,7 +49,7 @@ function makeProject(tmp) {
 }
 
 function withProject(fn) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-alm-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-alm-"));
   try {
     return fn(makeProject(tmp), tmp);
   } finally {

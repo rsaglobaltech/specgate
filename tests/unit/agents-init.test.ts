@@ -201,7 +201,7 @@ test("antigravity's MCP config is the same server Claude Code is given", () => {
   const config = TOOLS.antigravity.files().find((f: any) => f.path.endsWith("mcp_config.json"));
   const parsed = JSON.parse(config.contents);
 
-  assert.ok(parsed.mcpServers["spec-driven"], "the csda server must be declared");
+  assert.ok(parsed.mcpServers["spec-driven"], "the specgate server must be declared");
   assert.equal(parsed.mcpServers["spec-driven"].command, "npx");
 
   const plugin = TOOLS["claude-plugin"].files().find((f: any) => f.path.endsWith(".mcp.json"));
@@ -233,11 +233,6 @@ test("update moves /specgate:verify to /specgate:check, keeping the team's edits
   assert.ok(
     pairs.includes(
       `${path.join(".claude", "commands", "specgate", "verify.md")} -> ${path.join(".claude", "commands", "specgate", "check.md")}`
-    )
-  );
-  assert.ok(
-    pairs.includes(
-      `${path.join(".claude", "commands", "csda", "verify.md")} -> ${path.join(".claude", "commands", "specgate", "check.md")}`
     )
   );
 

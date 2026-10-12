@@ -36,7 +36,7 @@ artifacts:
     requires: [specs, design]
 ```
 
-`csda change status` reports each artefact as `done` · `ready` · `blocked` ·
+`specgate change status` reports each artefact as `done` · `ready` · `blocked` ·
 `skipped`, in dependency order, and lists `nextSteps`. Nothing refuses to run
 because an artefact is missing.
 
@@ -49,7 +49,7 @@ satisfies its dependents without existing:
   one anyway.
 
 For this phase the `spec-driven` graph above is built in. Making it
-configurable per schema (`csda schema init | fork | validate | which`) is F3;
+configurable per schema (`specgate schema init | fork | validate | which`) is F3;
 this ADR fixes the *model* so that work is a change of source, not of concept.
 
 ## Rationale
@@ -103,7 +103,7 @@ this ADR fixes the *model* so that work is a change of source, not of concept.
 
 ## Follow-ups
 
-- F3: `.csda/schemas/<name>/schema.yaml`, `csda schema init | fork | validate |
+- F3: `.specgate/schemas/<name>/schema.yaml`, `specgate schema init | fork | validate |
   which`, and a built-in `bdd-first` graph (`proposal → feature → spec → tasks`)
   for teams who want the executable scenario to lead.
 

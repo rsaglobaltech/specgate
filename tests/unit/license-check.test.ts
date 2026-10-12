@@ -27,7 +27,7 @@ function bomWith(components) {
 }
 
 function runOn(bom, ...extra) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-lic-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-lic-"));
   const file = path.join(tmp, "sbom.json");
   fs.writeFileSync(file, JSON.stringify(bom), "utf8");
   try {

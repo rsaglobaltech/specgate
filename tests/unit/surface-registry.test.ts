@@ -213,15 +213,15 @@ test("every MCP tool that fronts a command fronts one that exists", () => {
 
   const unknown: string[] = [];
   for (const [tool, spec] of Object.entries(TOOLS) as [string, any][]) {
-    if (!spec.csda) continue;
-    const [command, sub] = spec.csda.split(" ");
+    if (!spec.specgate) continue;
+    const [command, sub] = spec.specgate.split(" ");
     if (!commandNames().includes(command) || (sub && !(subs[command] || []).includes(sub))) {
-      unknown.push(`${tool} → specgate ${spec.csda}`);
+      unknown.push(`${tool} → specgate ${spec.specgate}`);
     }
     assert.equal(
       declared[tool],
-      spec.csda,
-      `${tool} fronts '${spec.csda}' but the registry says '${declared[tool]}'`
+      spec.specgate,
+      `${tool} fronts '${spec.specgate}' but the registry says '${declared[tool]}'`
     );
   }
   assert.deepEqual(

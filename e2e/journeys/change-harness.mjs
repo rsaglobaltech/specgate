@@ -30,7 +30,7 @@ function writeChange(dir, t, id, capability, reqId, featureRel) {
       "- WHEN a 10% coupon is applied",
       "- THEN the total is 45 EUR",
       "",
-      featureRel ? `<!-- csda:trace uc=UC-100 feature=${featureRel} -->` : "",
+      featureRel ? `<!-- specgate:trace uc=UC-100 feature=${featureRel} -->` : "",
       "",
     ].join("\n")
   );

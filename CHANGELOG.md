@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — release notes quote the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — release notes quote the {{VAR}} template syntax. -->
 # Changelog
 
 Notable changes, newest first. Follows [Keep a Changelog](https://keepachangelog.com/)
@@ -7,6 +7,18 @@ and [Semantic Versioning](https://semver.org/).
 The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
+
+### Changed — breaking
+
+- **One name everywhere: `csda` is gone** ([ADR-0032](docs/specs/adr/0032-one-name-everywhere.md)).
+  The on-disk format, kept under the tool's first name by ADR-0024, is now
+  `specgate` too: `<!-- specgate:trace … -->`, `specgate:value`,
+  `specgate:allow-placeholders`, `.specgate/`, `SPECGATE_*` environment
+  variables, `specgate_change_version` in `change.yaml`, the `specgate-matrix`
+  merge driver, and the Maven/Gradle coordinates `com.rsaglobaltech.specgate`.
+  The `csda` binary alias and the `csda_*` MCP tool names are removed. There is
+  no compatibility layer: a project on the old format fails `validate` with
+  `old_format` and the one-line migration to run.
 
 ## [0.18.0] — 2026-10-11
 

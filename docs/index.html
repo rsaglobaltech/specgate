@@ -22,7 +22,7 @@
 <link rel="stylesheet" href="./assets/terminal.css">
 <script>
   (function () {
-    var t = localStorage.getItem("csda-theme");
+    var t = localStorage.getItem("specgate-theme");
     if (t) document.documentElement.setAttribute("data-theme", t);
     document.documentElement.classList.add("js");
   })();
@@ -546,7 +546,7 @@
           <div class="term__progress" aria-hidden="true"></div>
           <div class="term__screen" aria-hidden="true"></div>
           <p class="term__caption" aria-hidden="true"></p>
-<!-- csda:terminal-brief:begin — generated; edit the source, not this block -->
+<!-- specgate:terminal-brief:begin — generated; edit the source, not this block -->
 <pre class="term__transcript"><code>~/courts $ cat docs/brief.md
 ---
 product: Court bookings for a tennis club
@@ -581,8 +581,8 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
   Next  fix them (or ask your agent to), then  specgate draft bookings
 
 ~/courts $ git diff -U0 docs/specs/changes/draft-bookings/specs | grep -E '^[-+]' | grep -vE '^(---|[+]{3}) '
--&lt;!-- csda:trace actor=Member kind=functional --&gt;
-+&lt;!-- csda:trace actor=Member kind=functional status=&quot;Needs Clarification&quot; --&gt;
+-&lt;!-- specgate:trace actor=Member kind=functional --&gt;
++&lt;!-- specgate:trace actor=Member kind=functional status=&quot;Needs Clarification&quot; --&gt;
 -fee of 5 euros when they cancel less than 24 hours before.
 +late cancellation the fee the club decides (Q1).
 -- THEN the response is 204 and a fee of 5 euros is charged
@@ -632,7 +632,7 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 
   Next  specgate done REQ-002  — once a test mentions REQ-002 — that mention is the link; done checks first
 </code></pre>
-<!-- csda:terminal-brief:end -->
+<!-- specgate:terminal-brief:end -->
         </figure>
       </div>
 
@@ -652,7 +652,7 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
           <div class="term__progress" aria-hidden="true"></div>
           <div class="term__screen" aria-hidden="true"></div>
           <p class="term__caption" aria-hidden="true"></p>
-<!-- csda:terminal-gate:begin — generated; edit the source, not this block -->
+<!-- specgate:terminal-gate:begin — generated; edit the source, not this block -->
 <pre class="term__transcript"><code>~/courts $ specgate done REQ-002
 ❌ [ERROR] --strict-tdd violations detected:
   [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-002)
@@ -679,7 +679,7 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
 
 ~/courts $ specgate done REQ-004
 ✖  REQ-004 not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification). [done_needs_clarification]
-     fix: Answer the question that blocks it in its change's questions.md, remove `status=&quot;Needs Clarification&quot;` from its `csda:trace`, write its test, then run `done`.
+     fix: Answer the question that blocks it in its change's questions.md, remove `status=&quot;Needs Clarification&quot;` from its `specgate:trace`, write its test, then run `done`.
 
 ~/courts $ specgate check
 ℹ️ [INFO] ✅ Validation passed
@@ -703,7 +703,7 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
 
 ✔  Gate passed — the specification and `node --test`
 </code></pre>
-<!-- csda:terminal-gate:end -->
+<!-- specgate:terminal-gate:end -->
         </figure>
       </div>
 
@@ -723,7 +723,7 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
           <div class="term__progress" aria-hidden="true"></div>
           <div class="term__screen" aria-hidden="true"></div>
           <p class="term__caption" aria-hidden="true"></p>
-<!-- csda:terminal:begin — generated; edit the source, not this block -->
+<!-- specgate:terminal:begin — generated; edit the source, not this block -->
 <pre class="term__transcript"><code>~ $ cat smart-parking.yaml
 PROJECT_NAME: Smart Parking
 PROJECT_SLUG: smart-parking
@@ -775,7 +775,7 @@ TESTING: node:test
 
 ~/smart-parking $ cat harness.config.yaml
 harness_version: 1
-agent: 'csda-stub-agent {prompt_file}'
+agent: 'specgate-stub-agent {prompt_file}'
 test_cmd: 'node --test test/*.test.js'
 max_attempts: 1
 
@@ -815,7 +815,7 @@ max_attempts: 1
 ℹ️ [INFO] - Base SDD structure: complete
 ℹ️ [INFO] - Traceability mode: rich
 </code></pre>
-<!-- csda:terminal:end -->
+<!-- specgate:terminal:end -->
         </figure>
       </div>
     </div>
@@ -1038,7 +1038,7 @@ max_attempts: 1
       <li class="reveal"><h3>It says what it cost</h3><p><code>specgate harness report</code>: first-attempt rate and time per delivered requirement.</p></li>
     </ul>
 
-    <!-- csda:diagram harness-loop -->
+    <!-- specgate:diagram harness-loop -->
 
     <figure class="code ed-agents" data-lang="bash">
       <figcaption class="code__head"><span class="code__lang">Any agent CLI</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>

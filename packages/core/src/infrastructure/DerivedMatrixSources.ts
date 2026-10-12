@@ -8,7 +8,7 @@ import type { DerivationSources, SourceFile } from "../domain/DerivedMatrix";
  *
  * Test files are found by convention, not configuration — the conventions of
  * the stacks `adopt` detects. A team whose tests live elsewhere states the
- * link explicitly (`test=` in the requirement's `csda:trace`), which is what
+ * link explicitly (`test=` in the requirement's `specgate:trace`), which is what
  * the gate already accepts.
  */
 
@@ -28,7 +28,7 @@ const SKIP_DIRS = new Set([
   ".gradle",
   ".idea",
   ".vscode",
-  ".csda",
+  ".specgate",
   ".specgate",
   ".harness",
   "features",

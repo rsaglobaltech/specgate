@@ -5,14 +5,15 @@ import { onlyTraceStatusChanged } from "../../src/domain/WriteScope";
 
 const diff = (before: string, after: string) =>
   `diff --git a/x b/x\n--- a/x\n+++ b/x\n@@ -31 +31 @@\n-${before}\n+${after}\n`;
-const TRACE = "<!-- csda:trace feature=features/feedback/REQ-212.feature kind=business-rule -->";
+const TRACE =
+  "<!-- specgate:trace feature=features/feedback/REQ-212.feature kind=business-rule -->";
 
 test("#56: adding the status done writes is not a contract edit", () => {
   assert.equal(
     onlyTraceStatusChanged(
       diff(
         TRACE,
-        "<!-- csda:trace status=Implemented feature=features/feedback/REQ-212.feature kind=business-rule -->"
+        "<!-- specgate:trace status=Implemented feature=features/feedback/REQ-212.feature kind=business-rule -->"
       )
     ),
     true
@@ -24,7 +25,7 @@ test("any other change to the trace, or to the text, still is", () => {
     onlyTraceStatusChanged(
       diff(
         TRACE,
-        "<!-- csda:trace status=Implemented feature=features/other.feature kind=business-rule -->"
+        "<!-- specgate:trace status=Implemented feature=features/other.feature kind=business-rule -->"
       )
     ),
     false
@@ -40,8 +41,8 @@ test("#65: done also reorders the attributes; still a status-only change", () =>
   assert.equal(
     onlyTraceStatusChanged(
       diff(
-        "<!-- csda:trace actor=Propietario feature=features/escaparate/REQ-220.feature kind=functional -->",
-        "<!-- csda:trace status=Implemented feature=features/escaparate/REQ-220.feature actor=Propietario kind=functional -->"
+        "<!-- specgate:trace actor=Propietario feature=features/escaparate/REQ-220.feature kind=functional -->",
+        "<!-- specgate:trace status=Implemented feature=features/escaparate/REQ-220.feature actor=Propietario kind=functional -->"
       )
     ),
     true
@@ -49,8 +50,8 @@ test("#65: done also reorders the attributes; still a status-only change", () =>
   assert.equal(
     onlyTraceStatusChanged(
       diff(
-        '<!-- csda:trace actor=Cliente status="Needs Clarification" kind=functional -->',
-        "<!-- csda:trace kind=functional actor=Cliente -->"
+        '<!-- specgate:trace actor=Cliente status="Needs Clarification" kind=functional -->',
+        "<!-- specgate:trace kind=functional actor=Cliente -->"
       )
     ),
     true,

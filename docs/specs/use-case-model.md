@@ -23,12 +23,12 @@ migrates files.
 ## 2. Requirement kinds
 
 A requirement keeps its `## REQ-NNN — title` section in `spec.md` or a
-capability spec. Its `csda:trace` comment gains `kind`:
+capability spec. Its `specgate:trace` comment gains `kind`:
 
 ```markdown
 ## REQ-011 — Card authorisation answers within 2 seconds
 
-<!-- csda:trace kind=non-functional -->
+<!-- specgate:trace kind=non-functional -->
 ```
 
 | `kind` | Default | Enters a use case as | Owes when delivered |
@@ -47,7 +47,7 @@ One file per use case: `docs/specs/use-cases/UC-NNN-<slug>.md`.
 ```markdown
 # UC-012 — Checkout
 
-<!-- csda:uc realises=REQ-003,REQ-004,REQ-007,REQ-009,REQ-011 actor="Customer"
+<!-- specgate:uc realises=REQ-003,REQ-004,REQ-007,REQ-009,REQ-011 actor="Customer"
      include=UC-002 significant=true bpmn=processes/sales.bpmn#Task_Checkout -->
 
 ## Preconditions
@@ -68,7 +68,7 @@ One file per use case: `docs/specs/use-cases/UC-NNN-<slug>.md`.
 - Order, Payment, Stock          <!-- tactical-ddd only -->
 ```
 
-| Field (in `csda:uc`) | Required | Meaning |
+| Field (in `specgate:uc`) | Required | Meaning |
 |---|---|---|
 | `realises` | yes | Requirement ids this use case satisfies. **The N:M relation lives here, and only here.** |
 | `actor` | yes | Who starts it |
@@ -120,8 +120,8 @@ Everything is derived; nothing below is edited by hand.
 
 | Edge | From |
 |---|---|
-| use case **realises** requirement | `csda:uc realises=` |
-| use case **includes / extends** use case | `csda:uc include= / extend=` |
+| use case **realises** requirement | `specgate:uc realises=` |
+| use case **includes / extends** use case | `specgate:uc include= / extend=` |
 | scenario **walks** use-case path | scenario tags |
 | scenario **exercises** requirement | `@REQ-NNN` on the scenario, or through its use case |
 | test **proves** scenario | mention |

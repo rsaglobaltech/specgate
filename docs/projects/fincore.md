@@ -1,8 +1,8 @@
 # FinCore — core banking on Spring Boot
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **A real client brief, built by an agent with Specgate.** The brief came from a real client; the product was built end to end by a coding agent (Claude) driving Specgate, with business decisions delegated to it and written down as assumptions. It is not a customer deployment, and the code repository is private.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 This is agent-driven adoption, not a customer story. It was the first pilot
 outside Node, and it was kept as a step-by-step log so the tool could be
@@ -30,7 +30,7 @@ per module, API only.
 
 ## How Specgate was used
 
-<!-- csda:steps -->
+<!-- specgate:steps -->
 ### Adopt once
 
 ```bash
@@ -62,7 +62,7 @@ specgate change archive draft-cuentas
 specgate done REQ-002                    # refuses unless a test names it and the suite is green
 specgate check                           # before each push; CI runs the same
 ```
-<!-- csda:endsteps -->
+<!-- specgate:endsteps -->
 
 Seven drafts and two follow-up changes (`cuentas-2`, `pagos-2`). No harness
 here: each requirement was implemented, tested and closed with `done`.

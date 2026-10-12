@@ -13,12 +13,12 @@ export class Lockfile {
 
   public constructor(
     public specops_version: number,
-    public csda_version: string,
+    public specgate_version: string,
     public packs: PackEntry[]
   ) {}
 
-  public static createEmpty(csdaVersion: string = "0.0.0"): Lockfile {
-    return new Lockfile(Lockfile.CURRENT_SCHEMA_VERSION, csdaVersion, []);
+  public static createEmpty(specgateVersion: string = "0.0.0"): Lockfile {
+    return new Lockfile(Lockfile.CURRENT_SCHEMA_VERSION, specgateVersion, []);
   }
 
   public static parse(raw: string): Lockfile {
@@ -45,7 +45,7 @@ export class Lockfile {
     const packs = Array.isArray(parsed.packs) ? parsed.packs : [];
     return new Lockfile(
       declared || Lockfile.CURRENT_SCHEMA_VERSION,
-      parsed.csda_version || "0.0.0",
+      parsed.specgate_version || "0.0.0",
       packs
     );
   }
@@ -71,7 +71,7 @@ export class Lockfile {
   public toJSON(): any {
     return {
       specops_version: this.specops_version,
-      csda_version: this.csda_version,
+      specgate_version: this.specgate_version,
       packs: this.packs,
     };
   }

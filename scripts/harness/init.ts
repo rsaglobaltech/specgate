@@ -514,7 +514,7 @@ export class InitCommand extends BaseCommand {
 // ── the traceability merge driver ────────────────────────────────────────────
 
 /** What `.gitattributes` must say for git to route the matrix to our driver. */
-export const MERGE_DRIVER_NAME = "csda-matrix";
+export const MERGE_DRIVER_NAME = "specgate-matrix";
 export const GITATTRIBUTES_LINE = `docs/specs/traceability.md merge=${MERGE_DRIVER_NAME}`;
 
 /**
@@ -530,7 +530,7 @@ export const GITATTRIBUTES_LINE = `docs/specs/traceability.md merge=${MERGE_DRIV
  *
  *   - `.gitattributes` routes the file. It is part of the repository, so every
  *     clone gets it.
- *   - `merge.csda-matrix.driver` is **local git config**, which nothing can
+ *   - `merge.specgate-matrix.driver` is **local git config**, which nothing can
  *     commit. Each clone and each CI job registers it, and that is why
  *     `specgate doctor` checks for the gap.
  *
@@ -567,7 +567,7 @@ export function installMergeDriver(projectDir: string) {
   //
   // It used to be `node "/Users/someone/.../merge-traceability.js"` — the path
   // of whichever checkout ran `harness init` — while `.gitattributes` said
-  // `merge=csda-matrix` and was committed. A cold evaluator found the pair: a
+  // `merge=specgate-matrix` and was committed. A cold evaluator found the pair: a
   // shared rule pointing at a directory that exists on one laptop.
   //
   // A project that has specgate in its own `node_modules` can be addressed
@@ -598,7 +598,7 @@ export function installMergeDriver(projectDir: string) {
   //   neither `name` nor `driver` set  → falls back to the built-in merge.
   //                                      A fresh clone is here, and it is fine.
   //   `name` set, `driver` missing     → `fatal: custom merge driver
-  //                                      csda-matrix lacks command line`. The
+  //                                      specgate-matrix lacks command line`. The
   //                                      file cannot be merged AT ALL — worse
   //                                      than the conflict this feature exists
   //                                      to remove.
@@ -626,7 +626,7 @@ export function installMergeDriver(projectDir: string) {
     );
   }
 
-  gitConfig(`merge.${MERGE_DRIVER_NAME}.name`, "csda traceability matrix merge");
+  gitConfig(`merge.${MERGE_DRIVER_NAME}.name`, "specgate traceability matrix merge");
 
   if (!driverIsPortable) {
     return warning(

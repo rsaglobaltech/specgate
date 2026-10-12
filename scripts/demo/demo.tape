@@ -1,14 +1,14 @@
 # VHS tape — the day-to-day spec-driven loop, with the harness as the star.
 #
 # Render with: bash scripts/demo/build-video.sh
-# build-video.sh exposes `csda`, drops in a deterministic stub agent (or
+# build-video.sh exposes `specgate`, drops in a deterministic stub agent (or
 # wires opencode with --real-agent), pre-warms the pack cache, and exports
-# the CSDA_* env vars this tape reads.
+# the SPECGATE_* env vars this tape reads.
 
 Output scripts/demo/out/demo.mp4
 Output scripts/demo/out/demo.gif
 
-Require csda
+Require specgate
 
 Set Shell bash
 Set FontSize 22
@@ -56,8 +56,8 @@ Sleep 800ms
 
 Type "# 2. Pull in a versioned domain pack — the npm-install of spec-driven dev." Enter
 Sleep 2s
-Type "specgate specops add --pack-repo $CSDA_PACK_REPO --pack-version $CSDA_PACK_V1 \" Enter
-Type "  --pack $CSDA_PACK_ID --cache-dir $CSDA_CACHE_DIR \" Enter
+Type "specgate specops add --pack-repo $SPECGATE_PACK_REPO --pack-version $SPECGATE_PACK_V1 \" Enter
+Type "  --pack $SPECGATE_PACK_ID --cache-dir $SPECGATE_CACHE_DIR \" Enter
 Type "  --var PROJECT_NAME='Smart Parking' --var PROJECT_SLUG=smart-parking --var DOMAIN='parking operations'" Enter
 Sleep 4s
 Type "clear" Enter

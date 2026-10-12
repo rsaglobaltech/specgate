@@ -55,7 +55,7 @@ export function buildReport(projectDir: string) {
 
 /**
  * The declared-value drift model (§8.6): for every capability-spec
- * requirement that declares a `value_<id>=` in its `csda:trace`, read the
+ * requirement that declares a `value_<id>=` in its `specgate:trace`, read the
  * code file(s) its matrix row already points at (the same Technical/Test
  * artifact `--strict-links` checks exist) and compare.
  *
@@ -302,7 +302,7 @@ export function renderHtml(report: any, opts: any) {
     : "";
 
   // §8.6 — declared-value drift. Only rendered when there is something
-  // annotated at all: a project with no `value_*`/`csda:value` pair has
+  // annotated at all: a project with no `value_*`/`specgate:value` pair has
   // nothing to show, the same restraint `orphanBlock` already applies.
   const dv = report.declaredValues || { total: 0, specOnly: 0, codeOnly: 0, items: [] };
   const dvSeen = dv.total + dv.specOnly + dv.codeOnly;

@@ -66,7 +66,7 @@ for (const id of IDS) {
   });
 
   test(`pack ${id} installs into a scaffolded project`, () => {
-    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-packs-"));
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-packs-"));
     try {
       const init = spawnSync(
         process.execPath,
@@ -194,7 +194,7 @@ test("no shipped pack uses `rules` for domain rules", () => {
 // REQ-001. This walks the whole path: pack → expand → matrix → plan → harness.
 
 test("a pack's depends_on reaches plan and stacks the harness branch", () => {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-dependson-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-dependson-"));
   try {
     // A curated pack with one dependency added. Using a real pack rather than a
     // fixture keeps this honest about the shape packs actually have.
@@ -256,7 +256,7 @@ test("a pack's depends_on reaches plan and stacks the harness branch", () => {
     const matrix = fs.readFileSync(path.join(projectDir, "docs/specs/traceability.md"), "utf8");
     // The key, not the whole line: a trace line carries several keys (D1 added
     // `context=`), and pinning the exact text would break every time one grew.
-    assert.match(matrix, /<!-- csda:trace REQ-002 [^>]*depends=REQ-001\b/, matrix.slice(-400));
+    assert.match(matrix, /<!-- specgate:trace REQ-002 [^>]*depends=REQ-001\b/, matrix.slice(-400));
 
     // `plan` reads it, and orders REQ-002 behind REQ-001.
     const planned = spawnSync(
@@ -327,7 +327,7 @@ test("a pack's depends_on reaches plan and stacks the harness branch", () => {
 // resolves for all twenty-seven, so `expand` derives it and writes it.
 
 test("a requirement's bounded context is derived and matched to a profile", () => {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-profilematch-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-profilematch-"));
   try {
     const init = spawnSync(
       process.execPath,
@@ -362,8 +362,8 @@ test("a requirement's bounded context is derived and matched to a profile", () =
     // Derived from the pack model and written by name — `Invoicing`, not
     // `BC-001`: the name is what a person writes in `match:`.
     const matrix = fs.readFileSync(path.join(projectDir, "docs/specs/traceability.md"), "utf8");
-    assert.match(matrix, /<!-- csda:trace REQ-001 context=Invoicing -->/, matrix.slice(-400));
-    assert.match(matrix, /<!-- csda:trace REQ-002 context=Payments -->/);
+    assert.match(matrix, /<!-- specgate:trace REQ-001 context=Invoicing -->/, matrix.slice(-400));
+    assert.match(matrix, /<!-- specgate:trace REQ-002 context=Payments -->/);
 
     fs.mkdirSync(path.join(projectDir, ".harness"), { recursive: true });
     fs.writeFileSync(
@@ -427,7 +427,7 @@ test("a requirement's bounded context is derived and matched to a profile", () =
 test("expand tags every scenario it generates, and repeating it does not duplicate", () => {
   // Nobody writes these by hand, and `expand` runs more than once against the
   // same project — a step that duplicates on every run is one people avoid.
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-tags-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-tags-"));
   try {
     const init = spawnSync(
       process.execPath,

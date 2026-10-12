@@ -13,7 +13,7 @@ import { refreshDerivedMatrix } from "../cli/commands/spec/MatrixCommand";
  *
  * On a project whose matrix is generated, a command that edited a row would
  * see its edit overwritten by the next regeneration. Status and explicit links
- * go into the requirement's `csda:trace` comment in `spec.md` — their one
+ * go into the requirement's `specgate:trace` comment in `spec.md` — their one
  * owner — and the matrix is regenerated from there.
  */
 

@@ -371,7 +371,7 @@ follows it and records the result beside the matrix, by name rather than by
 id:
 
 ```
-<!-- csda:trace REQ-002 depends=REQ-001 context=Payments -->
+<!-- specgate:trace REQ-002 depends=REQ-001 context=Payments -->
 ```
 
 `Payments` is what a person writes in `match:`; `BC-002` is an identifier

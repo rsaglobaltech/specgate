@@ -1,8 +1,8 @@
 # Proven on real products
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **A real client brief, built by an agent with Specgate.** The brief came from a real client; the product was built end to end by a coding agent (Claude) driving Specgate, with business decisions delegated to it and written down as assumptions. It is not a customer deployment, and the code repository is private.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 These six pilots are agent-driven adoption, not a customer story. Each one
 started from a brief a real client wrote — vague, detailed, heavy on
@@ -14,14 +14,14 @@ choosing Specgate and using it on their own. That reading is still to come.
 Every page lists what Specgate got wrong during the pilot and the release
 that fixed it. Most of the tool's rules exist because a pilot needed them.
 
-<!-- csda:cards cols=2 -->
+<!-- specgate:cards cols=2 -->
 - [Rebar Crew](rebar-crew.md) — A field app for a rebar crew: 47 of 47 requirements and 599 tests, after a first round that was done and unusable.
 - [Bookings](bookings.md) — Appointments for local businesses: 38 of 38 requirements in five cycles, each closed by using the product.
 - [Credit shop](credit-shop.md) — A five-line brief became 24 requirements; every test green, and nobody could buy until the smoke test.
 - [FinCore](fincore.md) — Core banking on Spring Boot: 59 of 60, with GDPR against AML retention left to the client.
 - [EventTech](eventtech.md) — Event operations on Quarkus: 38 of 38, the event rebuilt at any time from its facts.
 - [HealthTech](healthtech.md) — Clinical cases on Quarkus: 23 of 24; drug interactions wait for an answer instead of a guess.
-<!-- csda:endcards -->
+<!-- specgate:endcards -->
 
 ## Side by side
 

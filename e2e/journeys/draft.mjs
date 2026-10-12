@@ -12,7 +12,7 @@ const DELTA = `## ADDED Requirements
 
 ### Requirement: REQ-101 — Clock in inside the geofence
 
-<!-- csda:trace kind=functional actor=Worker -->
+<!-- specgate:trace kind=functional actor=Worker -->
 
 The system SHALL accept a clock in inside the geofence.
 

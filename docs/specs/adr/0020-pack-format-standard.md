@@ -18,7 +18,7 @@ each other, and nothing in the build compared them.
 
 The consequences were not theoretical. **Every curated pack failed to install**,
 with the same error — `outputs.files must contain at least one file
-definition`. `csda pack init` generated packs in the same unusable shape, so
+definition`. `specgate pack init` generated packs in the same unusable shape, so
 the authoring command produced something the installing command refused. And
 `pack lint` reported all of them as clean, because it validated cross-
 references between requirements and use cases but never the structure the
@@ -190,7 +190,7 @@ agent already paid for.
 It reaches the project through the matrix, on its own line beneath the table:
 
 ```
-<!-- csda:trace REQ-002 depends=REQ-001 -->
+<!-- specgate:trace REQ-002 depends=REQ-001 -->
 ```
 
 Not inside a cell. The row parser splits on `|` and requires exactly ten cells,
@@ -233,7 +233,7 @@ same change; the seven proven packs declare `1.5.0`, the eleven starters keep
 `1.3.0` and were not touched.
 
 Found while building them (defect #84): the matrix row's status is derived
-from the capability's `csda:trace` line, so a pack that set `status: Needs
+from the capability's `specgate:trace` line, so a pack that set `status: Needs
 Clarification` only in `pack.yaml` installed the open question as Draft. The
 proven packs write the status into the trace line of their capability
 template, and `tests/unit/proven-packs.test.ts` pins that the question is still

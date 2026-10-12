@@ -27,7 +27,7 @@ function cli(...args) {
 }
 
 function adopted() {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-prose-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-prose-"));
   const dir = path.join(parent, "app");
   fs.mkdirSync(path.join(dir, "lib/router"), { recursive: true });
   fs.writeFileSync(
@@ -117,7 +117,7 @@ test("a requirement with no prose anywhere is warned about, not failed", () => {
 test("a freshly generated project passes its own gates", () => {
   // H20 was exactly this, and adding TDD-4 reintroduced it once before the
   // shipped template gained a REQ-000 section.
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-fresh-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-fresh-"));
   try {
     const r = cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix");
     assert.equal(r.status, 0, r.stdout + r.stderr);

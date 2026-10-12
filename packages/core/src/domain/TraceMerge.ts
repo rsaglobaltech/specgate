@@ -1,5 +1,5 @@
 /**
- * Reconciling a file that carries `csda:trace` comments.
+ * Reconciling a file that carries `specgate:trace` comments.
  *
  * A trace comment is one line holding fields with two owners: the pack writes
  * the model links (`uc`, `cmd`, `agg`, `evt`, `context`, `depends`, `kind`),
@@ -30,8 +30,8 @@ import {
 type Fields = Record<string, string>;
 
 const HEADING = /^#{1,6}\s+(?:Requirement:\s*)?(REQ-[A-Za-z0-9.]+)?/;
-const TRACE = /<!--\s*csda:trace\b.*?-->/;
-const MASK = "<!-- csda:trace -->";
+const TRACE = /<!--\s*specgate:trace\b.*?-->/;
+const MASK = "<!-- specgate:trace -->";
 
 /** The fields a pack writes into a trace comment; the rest belong to the project. */
 export const PACK_TRACE_KEYS: ReadonlySet<string> = new Set([
@@ -147,7 +147,7 @@ function rehydrate(
 }
 
 /**
- * `reconcile`, with `csda:trace` lines merged field by field. Files without
+ * `reconcile`, with `specgate:trace` lines merged field by field. Files without
  * trace comments, `--force`, and genuine text conflicts take the plain path.
  */
 export function reconcileTraced(

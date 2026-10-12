@@ -295,7 +295,7 @@ const EXISTING_SETUP: { before: Hook; steps: Record<string, Hook> } = {
           .replace(
             /(## REQ-004[^\n]*\n)([\s\S]*?)(?=\n## |\n---|$)/,
             (_m, head) =>
-              `${head}\n<!-- csda:trace kind=business-rule -->\n\nThe system SHALL round an invoice total, VAT included, to the cent.\n`
+              `${head}\n<!-- specgate:trace kind=business-rule -->\n\nThe system SHALL round an invoice total, VAT included, to the cent.\n`
           ),
         "utf8"
       );
@@ -328,7 +328,7 @@ export function renderBlock(step: JourneyStep, lines: string[], omitted: number)
 }
 
 export function recordJourney(journey: Journey, keep = false): Output[] {
-  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "csda-journey-"));
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-journey-"));
   const env = buildEnv(scratch);
   const ctx: NormaliseContext = {
     scratch: [...new Set([fs.realpathSync(scratch), scratch])].sort((a, b) => b.length - a.length),

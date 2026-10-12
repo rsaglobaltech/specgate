@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this file documents the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # Plan de cierre — de `create-spec-driven-app` a herramienta enterprise
 
 > **Creado:** 2026-08-16

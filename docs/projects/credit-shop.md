@@ -1,8 +1,8 @@
 # Credit shop — an online store with credit and a sales network
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **A real client brief, built by an agent with Specgate.** The brief came from a real client; the product was built end to end by a coding agent (Claude) driving Specgate, with business decisions delegated to it and written down as assumptions. It is not a customer deployment, and the code repository is private.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 This is agent-driven adoption, not a customer story. It is the opposite of
 [Bookings](bookings.md): a brief with almost nothing in it, where the draft
@@ -25,7 +25,7 @@ Not one price, limit, rule or screen.
 
 ## How Specgate was used
 
-<!-- csda:steps -->
+<!-- specgate:steps -->
 ### One draft per module
 
 ```bash
@@ -54,7 +54,7 @@ specgate harness run
 
 The answers went in as a change named `respuestas`, with REQ-008 and REQ-016
 MODIFIED. Then the harness built them.
-<!-- csda:endsteps -->
+<!-- specgate:endsteps -->
 
 The harness built 20 of 20 buildable requirements, 15 on the first attempt.
 It refused the two blocked ones in about a second, without calling the agent:

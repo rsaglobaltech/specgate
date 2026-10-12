@@ -161,7 +161,7 @@
           "s": "err"
         },
         {
-          "t": "     fix: Answer the question that blocks it in its change's questions.md, remove `status=\"Needs Clarification\"` from its `csda:trace`, write its test, then run `done`.",
+          "t": "     fix: Answer the question that blocks it in its change's questions.md, remove `status=\"Needs Clarification\"` from its `specgate:trace`, write its test, then run `done`.",
           "c": "out",
           "s": "err"
         }

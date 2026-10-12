@@ -7,11 +7,11 @@ pin them down, tests that name them, and a gate that refuses "done" until
 the test passes — but the first hour is different. Pick your path; each is
 five short phases, one page each, with every command's real output.
 
-<!-- csda:cards cols=3 -->
+<!-- specgate:cards cols=3 -->
 - [From scratch](start/scratch-1-install.md) — A new product and a client's brief. Install, turn the brief into checked requirements, build the first one, prove it, keep the loop going.
 - [An existing project](start/existing-1-adopt.md) — A codebase that already works. Adopt it without touching a line, write down one behaviour you rely on, close it with the test you already have, gate it in CI.
 - [You cloned a spec-driven repo](quickstart.md) — Someone else set it up. Five minutes to see where the project stands and close your first requirement.
-<!-- csda:endcards -->
+<!-- specgate:endcards -->
 
 **Starting from a plan or a client's brief?** Most projects do. Read
 [Write the brief](start/write-the-brief.md) first: your plan saved as

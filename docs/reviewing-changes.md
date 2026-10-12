@@ -72,7 +72,7 @@ configured threshold.
 - WHEN a vehicle enters
 - THEN the peak tariff is applied
 
-<!-- csda:trace uc=UC-007 cmd=CMD-011 agg=AGG-Pricing evt=EVT-PriceApplied
+<!-- specgate:trace uc=UC-007 cmd=CMD-011 agg=AGG-Pricing evt=EVT-PriceApplied
      feature=features/pricing/dynamic_pricing.feature -->
 ```
 
@@ -88,14 +88,14 @@ Two things the validator is strict about:
   otherwise you get `no_rfc2119_keyword`. A requirement that states no
   obligation is not a requirement.
 
-The `csda:trace` comment is optional — it is the bridge to the DDD matrix.
+The `specgate:trace` comment is optional — it is the bridge to the DDD matrix.
 Without it the requirement still archives, with `-` in those columns.
 
 **`depends=` says what a requirement builds on.** One more key in the same
 comment, and the only one `plan` and the harness read rather than the matrix:
 
 ```markdown
-<!-- csda:trace uc=UC-008 feature=features/pricing/refunds.feature
+<!-- specgate:trace uc=UC-008 feature=features/pricing/refunds.feature
      depends=REQ-014 -->
 ```
 

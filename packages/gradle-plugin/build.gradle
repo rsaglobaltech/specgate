@@ -27,10 +27,10 @@ test {
 
 gradlePlugin {
     plugins {
-        csda {
-            id = 'com.rsaglobaltech.csda'
-            implementationClass = 'com.rsaglobaltech.csda.gradle.CsdaPlugin'
-            displayName = 'csda spec gate'
+        specgate {
+            id = 'com.rsaglobaltech.specgate'
+            implementationClass = 'com.rsaglobaltech.specgate.gradle.SpecgatePlugin'
+            displayName = 'specgate spec gate'
             description = 'Run the create-spec-driven-app spec gate from Gradle — no local Node.js required.'
         }
     }

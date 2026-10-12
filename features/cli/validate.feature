@@ -1,4 +1,4 @@
-# csda:allow-placeholders — this scenario feeds the validator a placeholder on purpose.
+# specgate:allow-placeholders — this scenario feeds the validator a placeholder on purpose.
 Feature: validate command
   As a developer
   I want to validate my spec tree against quality gates

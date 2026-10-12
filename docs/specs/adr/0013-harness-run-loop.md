@@ -28,7 +28,7 @@ that agent edits and a `specops sync` cannot silently corrupt a checkout.
 
 ## Decision
 
-Ship `csda harness run`. For each pending requirement from
+Ship `specgate harness run`. For each pending requirement from
 `plan --format json`, in an isolated `git worktree` on a fresh
 `harness/REQ-NNN` branch:
 

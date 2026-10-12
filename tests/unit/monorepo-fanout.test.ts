@@ -62,7 +62,7 @@ function makeSubProject(root, rel) {
 }
 
 function withMonorepo(fn) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-fanout-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-fanout-"));
   try {
     makeSubProject(tmp, path.join("services", "fhir-server"));
     makeSubProject(tmp, path.join("services", "mpi"));
@@ -103,7 +103,7 @@ for (const command of ["plan", "status", "report"]) {
   });
 
   test(`${command}: a project without projects: still runs as a single project`, () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-fanout-solo-"));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-fanout-solo-"));
     try {
       const dir = makeSubProject(tmp, "solo");
       fs.writeFileSync(path.join(dir, "specops.config.yaml"), "specops_version: 1\n", "utf8");

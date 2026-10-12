@@ -28,7 +28,7 @@ function cli(...args) {
 }
 
 test("--strict means every strict check, so a rotted link cannot pass it", () => {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-gate-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-gate-"));
   try {
     assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix").status, 0);
     const dir = path.join(parent, "my-spec-driven-app");
@@ -70,7 +70,7 @@ test("nothing tells a user to run a weaker gate than --strict", () => {
 });
 
 test("a freshly generated project passes --strict", () => {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-gate-fresh-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-gate-fresh-"));
   try {
     assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix").status, 0);
     const r = cli("validate", path.join(parent, "my-spec-driven-app"), "--strict");
@@ -94,7 +94,7 @@ test("a brownfield link to a pre-existing test does not force a source edit", ()
   // somebody's existing test — the one thing `adopt` promises never to make
   // you do. A gate that contradicts the product's headline promise is a reason
   // to stop using the product.
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-brown-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-brown-"));
   const dir = path.join(parent, "app");
   try {
     fs.mkdirSync(path.join(dir, "src/main/java"), { recursive: true });
@@ -148,7 +148,7 @@ test("a brownfield link to a pre-existing test does not force a source edit", ()
 
 test("once a project uses the convention, the check holds every row to it", () => {
   // Calibration, not abdication: the skipped scenario is still caught.
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-conv-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-conv-"));
   try {
     assert.equal(
       cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status,
@@ -188,7 +188,7 @@ test("adopting the naming convention on one test does not turn other rows red", 
   // Measured: adding `// Covers REQ-009` to one test file turned three
   // unrelated rows red at once. Doing the correct thing produced a punishment,
   // which teaches people not to do the correct thing.
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-cliff-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-cliff-"));
   try {
     assert.equal(
       cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status,
@@ -228,7 +228,7 @@ test("adopting the naming convention on one test does not turn other rows red", 
 
 test("a scenario skipped in a file whose others are named is still caught", () => {
   // The calibration is per feature file, so #168's case survives it.
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-skip-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-skip-"));
   try {
     assert.equal(
       cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-sample-req").status,
@@ -265,9 +265,9 @@ test("a scenario skipped in a file whose others are named is still caught", () =
 
 test("the merge driver git registers is portable, not a path on one machine", () => {
   // It used to write `node "/Users/someone/.../merge-traceability.js"` into
-  // .git/config while committing `merge=csda-matrix` to .gitattributes — a
+  // .git/config while committing `merge=specgate-matrix` to .gitattributes — a
   // shared rule pointing at a directory that exists on one laptop.
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-driver-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-driver-"));
   const dir = path.join(parent, "app");
   try {
     fs.mkdirSync(path.join(dir, "src"), { recursive: true });
@@ -284,7 +284,7 @@ test("the merge driver git registers is portable, not a path on one machine", ()
     const init = cli("harness", "init", "--project-dir", dir);
     assert.equal(init.status, 0, init.stdout + init.stderr);
 
-    const driver = spawnSync("git", ["config", "--get", "merge.csda-matrix.driver"], {
+    const driver = spawnSync("git", ["config", "--get", "merge.specgate-matrix.driver"], {
       cwd: dir,
       encoding: "utf8",
     }).stdout.trim();
@@ -304,7 +304,7 @@ test("the merge driver git registers is portable, not a path on one machine", ()
 });
 
 test("ci init announces the command it actually generates", () => {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-ciann-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ciann-"));
   try {
     assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix").status, 0);
     const dir = path.join(parent, "my-spec-driven-app");

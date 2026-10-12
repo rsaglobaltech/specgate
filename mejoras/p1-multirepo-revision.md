@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders -->
+<!-- specgate:allow-placeholders -->
 # P1 (multi-repositorio), revisado con el puerto ALM ya hecho
 
 > **Creado:** 2026-08-21 · **Tarea:** `E2-05` de
@@ -150,7 +150,7 @@ la tercera es la que encaja con lo que este repositorio ya cree:
 |---|---|
 | El issue del ALM | Barato, y **rompe ADR-0021**: el tablero pasaría a definir requisitos |
 | Un id global nuevo (`ORG-REQ-001`) | Rotura de formato en la matriz — el mismo hecho que en `E1-01` descartó una columna 11 |
-| **Un requisito federado que declara a quién implementa** | `<!-- csda:trace implements=acme/billing#REQ-014 -->`. El comentario `csda:trace` ya es el punto de extensión, ya acepta claves arbitrarias, y ya lo usa `depends=` para el grafo. **El requisito declara, la matriz refleja** — la regla que este repositorio aplica en todo lo demás |
+| **Un requisito federado que declara a quién implementa** | `<!-- specgate:trace implements=acme/billing#REQ-014 -->`. El comentario `csda:trace` ya es el punto de extensión, ya acepta claves arbitrarias, y ya lo usa `depends=` para el grafo. **El requisito declara, la matriz refleja** — la regla que este repositorio aplica en todo lo demás |
 
 La tercera no necesita formato nuevo ni identificador nuevo: necesita decidir
 que un requisito puede apuntar a otro de otro repositorio, y que la vista

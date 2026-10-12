@@ -42,7 +42,7 @@ const DRAFT = (extra = "") => `# Delta — bookings
 
 ### Requirement: REQ-002 — A member books a court for one hour
 
-<!-- csda:trace actor=Member kind=functional -->
+<!-- specgate:trace actor=Member kind=functional -->
 
 The system SHALL let a member book a free court for one hour.
 

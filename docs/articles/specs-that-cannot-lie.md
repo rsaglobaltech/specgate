@@ -1,9 +1,9 @@
-<!-- csda:allow-placeholders — the article quotes the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — the article quotes the {{VAR}} template syntax. -->
 <!--
   FOR PUBLICATION ON MEDIUM.
 
   Medium does not render Mermaid. Two options per diagram:
-    The two `<!-- csda:diagram … -->` markers are replaced with inline SVG when
+    The two `<!-- specgate:diagram … -->` markers are replaced with inline SVG when
     the site is built (see docs/diagrams/). For Medium, screenshot them
     from the published page, or link to the section on the docs site.
 
@@ -61,7 +61,7 @@ proves it.
 
 The join is a ten-column traceability matrix, one row per requirement:
 
-<!-- csda:diagram traceability-chain -->
+<!-- specgate:diagram traceability-chain -->
 
 Read left to right, a row is a sentence: *this requirement is demonstrated by
 this scenario, in this feature file, realised by this use case, which dispatches
@@ -93,7 +93,7 @@ We pointed it at a real project: a spec viewer, fifteen requirements, all
 supplied by a domain pack. Claude as the agent. First requirement: load a
 `pack.yaml` from disk and show its contents.
 
-<!-- csda:diagram harness-loop -->
+<!-- specgate:diagram harness-loop -->
 
 Attempt one timed out. Attempt two passed.
 
@@ -257,14 +257,14 @@ npx @rsaglobaltech/specgate@latest init      # adopts it: writes the spec skelet
 npx @rsaglobaltech/specgate@latest check     # the gate: validate --strict, then your tests
 ```
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **Since this was written.** The tool was renamed Specgate (it was
 `create-spec-driven-app`), and the gate became one command, `specgate check`:
 `validate --strict` — which includes the strict-TDD rule this article is about —
 followed by your own test suite. It has since been run on
 [six products built from client briefs](../projects/index.md), each with its
 list of what broke. The article is kept as it was argued.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 Start at the gate, not at the agent. A pull-request check that fails when a
 requirement loses its test is worth more than any amount of orchestration on top

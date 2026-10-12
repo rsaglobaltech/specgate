@@ -6,7 +6,7 @@ Accepted — 2026-08-20
 
 ## Context
 
-`csda alm sync` reconciles the traceability matrix with Jira or Azure Boards,
+`specgate alm sync` reconciles the traceability matrix with Jira or Azure Boards,
 and ADR-0015's change lifecycle governs how a spec that already shipped is
 modified. Nothing until now said how the two relate, and the question is not
 academic: the first thing any team asks for after seeing `alm sync` is the

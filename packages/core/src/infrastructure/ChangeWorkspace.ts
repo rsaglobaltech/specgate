@@ -31,7 +31,7 @@ export const CHANGE_CONFIG_FILE = "change.yaml";
 export const CHANGE_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export const DEFAULT_CONFIG = Object.freeze({
-  csda_change_version: 1,
+  specgate_change_version: 1,
   schema: "spec-driven",
   rigor: "lite",
   skip_specs: false,
@@ -140,7 +140,7 @@ export function readConfig(projectDir, changeId) {
 
 export function renderConfig(cfg) {
   const lines = [
-    `csda_change_version: ${cfg.csda_change_version || 1}`,
+    `specgate_change_version: ${cfg.specgate_change_version || 1}`,
     `schema: ${cfg.schema || "spec-driven"}`,
     `created: ${cfg.created}`,
     `rigor: ${cfg.rigor || "lite"}`,

@@ -114,7 +114,7 @@ Cursor, Aider) can drive the same loop natively.
 
 ## Follow-ups
 
-- `csda watch` mode that re-runs `plan` on every save.
+- `specgate watch` mode that re-runs `plan` on every save.
 - A `done --auto` mode that runs the project's test command for the
   specific REQ and bumps the status only on green.
 - A future `specops` command (`specops add`/`specops remove`) that

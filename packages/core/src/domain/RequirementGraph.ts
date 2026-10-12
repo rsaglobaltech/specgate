@@ -8,10 +8,10 @@
  * defect H12 of the closure plan, and the false failure recorded as H9 was the
  * same gap seen from the other side.
  *
- * A requirement declares what it builds on inside the `csda:trace` comment it
+ * A requirement declares what it builds on inside the `specgate:trace` comment it
  * already carries:
  *
- *   <!-- csda:trace uc=UC-002 feature=features/auth/scopes.feature
+ *   <!-- specgate:trace uc=UC-002 feature=features/auth/scopes.feature
  *        depends=REQ-001 -->
  *
  * That comment is the repository's existing way of attaching machine-readable

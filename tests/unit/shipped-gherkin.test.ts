@@ -1,4 +1,4 @@
-// csda:allow-placeholders — this file quotes the {{VAR}} template syntax.
+// specgate:allow-placeholders — this file quotes the {{VAR}} template syntax.
 /**
  * Every Gherkin file this repository ships, parsed by Cucumber's own parser.
  *

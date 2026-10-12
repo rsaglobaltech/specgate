@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# csda:allow-placeholders — the brief is written with {{VAR}} tokens and filled in below.
+# specgate:allow-placeholders — the brief is written with {{VAR}} tokens and filled in below.
 #
 # Build a sandbox in which an agent meets this tool for the first time.
 #

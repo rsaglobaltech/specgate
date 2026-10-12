@@ -57,7 +57,7 @@ function run(args: string[], cwd?: string) {
 }
 
 function scaffold(withSample = false): { parent: string; projectDir: string } {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-proven-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-proven-"));
   const init = run([
     "init",
     "--yes",

@@ -29,7 +29,7 @@ export const NOT_DOMAIN = new Set([
   ".vscode",
   ".next",
   ".gradle",
-  ".csda",
+  ".specgate",
   ".specops",
   "test",
   "tests",

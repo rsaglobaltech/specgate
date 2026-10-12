@@ -48,7 +48,7 @@ export interface GateDecision {
   message: string;
 }
 
-const MARKER_DIR = path.join(os.tmpdir(), "csda-gate-hook");
+const MARKER_DIR = path.join(os.tmpdir(), "specgate-gate-hook");
 
 /**
  * Has this prompt already been blocked once?

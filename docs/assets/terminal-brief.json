@@ -197,12 +197,12 @@
       "omitted": 0,
       "lines": [
         {
-          "t": "-<!-- csda:trace actor=Member kind=functional -->",
+          "t": "-<!-- specgate:trace actor=Member kind=functional -->",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "+<!-- csda:trace actor=Member kind=functional status=\"Needs Clarification\" -->",
+          "t": "+<!-- specgate:trace actor=Member kind=functional status=\"Needs Clarification\" -->",
           "c": "out",
           "s": "out"
         },

@@ -26,7 +26,7 @@ Ask Specgate what it expects:
 specgate draft
 ```
 
-<!-- csda:out-brief-none:begin — generated; edit the source, not this block -->
+<!-- specgate:out-brief-none:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
   No brief yet. Specgate drafts your specification from a brief: docs/brief.md.
@@ -46,7 +46,7 @@ $ specgate draft
   Already have one?  Save it as docs/brief.md, then  specgate draft
   Starting fresh?    specgate draft --new-brief   writes one to fill in
 ```
-<!-- csda:out-brief-none:end -->
+<!-- specgate:out-brief-none:end -->
 
 ### No plan yet?
 
@@ -57,7 +57,7 @@ with an example in a comment, and six short sections.
 specgate draft --new-brief
 ```
 
-<!-- csda:out-brief-new:begin — generated; edit the source, not this block -->
+<!-- specgate:out-brief-new:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft --new-brief
   ✔ Wrote docs/brief.md — a brief to fill in.
@@ -74,7 +74,7 @@ $ specgate draft --new-brief
 
   Next  specgate draft  — it checks the four fields and says what is next
 ```
-<!-- csda:out-brief-new:end -->
+<!-- specgate:out-brief-new:end -->
 
 The sections ask, in this order: what the product is · who uses it and how ·
 what each one must be able to do · the rules and numbers you already know
@@ -98,7 +98,7 @@ exercises of each lesson and see their progress. …
 
 `specgate draft` explains each field, with an example, and the block to paste:
 
-<!-- csda:out-brief-plain:begin — generated; edit the source, not this block -->
+<!-- specgate:out-brief-plain:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
   specgate draft  ·  docs/brief.md
@@ -147,7 +147,7 @@ $ specgate draft
 
   Either way, review the four fields, then run  specgate draft  again.
 ```
-<!-- csda:out-brief-plain:end -->
+<!-- specgate:out-brief-plain:end -->
 
 Why each one matters:
 
@@ -179,7 +179,7 @@ of. It may write **only the top of `docs/brief.md`**. Anything else it writes is
 undone, and if one character of your text below the fields changes, the whole
 brief is put back and nothing is kept.
 
-<!-- csda:out-brief-agent:begin — generated; edit the source, not this block -->
+<!-- specgate:out-brief-agent:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft --agent "claude -p"
   → claude -p  is proposing the front matter of docs/brief.md…
@@ -202,7 +202,7 @@ Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to c
 
   Review it — change anything — then  specgate draft
 ```
-<!-- csda:out-brief-agent:end -->
+<!-- specgate:out-brief-agent:end -->
 
 (The recording uses a stand-in for Claude that writes the front matter above.)
 In Claude Code, `/specgate:draft` does the same from inside the session and
@@ -217,7 +217,7 @@ check them — say you added a tablet, an admin, and a module written as a title
 specgate draft
 ```
 
-<!-- csda:out-brief-error:begin — generated; edit the source, not this block -->
+<!-- specgate:out-brief-error:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
   specgate draft  ·  docs/brief.md
@@ -233,12 +233,12 @@ $ specgate draft
 
   Next  fix them in docs/brief.md, then  specgate draft
 ```
-<!-- csda:out-brief-error:end -->
+<!-- specgate:out-brief-error:end -->
 
 Each problem says how to fix it. Fixed, `specgate draft` lists the modules and
 names the first one:
 
-<!-- csda:out-brief-ready:begin — generated; edit the source, not this block -->
+<!-- specgate:out-brief-ready:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
   specgate draft  ·  docs/brief.md
@@ -253,7 +253,7 @@ $ specgate draft
 
   Next  specgate draft courses
 ```
-<!-- csda:out-brief-ready:end -->
+<!-- specgate:out-brief-ready:end -->
 
 ## You're done when…
 

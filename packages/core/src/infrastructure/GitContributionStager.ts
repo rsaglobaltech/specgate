@@ -27,7 +27,7 @@ function git(args, cwd) {
  * machine — the caller is handed a branch and the command that would publish it.
  */
 export function stageContribution(repo, version, branch, files, outDir) {
-  const dir = outDir || fs.mkdtempSync(path.join(os.tmpdir(), "csda-contribute-"));
+  const dir = outDir || fs.mkdtempSync(path.join(os.tmpdir(), "specgate-contribute-"));
   fs.mkdirSync(dir, { recursive: true });
 
   // See `GitSafety`: `--` stops git reading a leading `-` as an option, and the
@@ -54,9 +54,9 @@ export function stageContribution(repo, version, branch, files, outDir) {
   git(
     [
       "-c",
-      "user.name=csda",
+      "user.name=specgate",
       "-c",
-      "user.email=csda@localhost",
+      "user.email=specgate@localhost",
       "commit",
       "--quiet",
       "-m",

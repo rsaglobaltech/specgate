@@ -149,7 +149,7 @@ export const RULES: ReadonlyArray<{
   },
   {
     id: "tmp",
-    apply: (s) => s.replace(/\/var\/folders\/\S+/g, "/tmp/csda-demo"),
+    apply: (s) => s.replace(/\/var\/folders\/\S+/g, "/tmp/specgate-demo"),
   },
   {
     // A path built by string concatenation would have escaped `scratch`.
@@ -294,8 +294,8 @@ export function buildEnv(scratch: string): NodeJS.ProcessEnv {
     CI: "1",
     GIT_CONFIG_GLOBAL: "/dev/null",
     GIT_CONFIG_SYSTEM: "/dev/null",
-    GIT_AUTHOR_NAME: "csda demo",
-    GIT_COMMITTER_NAME: "csda demo",
+    GIT_AUTHOR_NAME: "specgate demo",
+    GIT_COMMITTER_NAME: "specgate demo",
     GIT_AUTHOR_EMAIL: "demo@example.invalid",
     GIT_COMMITTER_EMAIL: "demo@example.invalid",
     GIT_AUTHOR_DATE: "2026-01-01T00:00:00+0000",
@@ -313,7 +313,7 @@ TESTING: node:test
 `;
 
 const HARNESS_YAML = `harness_version: 1
-agent: 'csda-stub-agent {prompt_file}'
+agent: 'specgate-stub-agent {prompt_file}'
 test_cmd: 'node --test test/*.test.js'
 max_attempts: 1
 `;
@@ -354,9 +354,9 @@ function prepare(scratch: string): void {
   // Reused, not forked: one deterministic agent, one place to fix it.
   fs.copyFileSync(
     path.join(ROOT, "scripts", "demo", "stub-agent.sh"),
-    path.join(bin, "csda-stub-agent")
+    path.join(bin, "specgate-stub-agent")
   );
-  fs.chmodSync(path.join(bin, "csda-stub-agent"), 0o755);
+  fs.chmodSync(path.join(bin, "specgate-stub-agent"), 0o755);
 
   // A local pack rather than a clone: a recording CI can reproduce cannot
   // depend on the network, and `--pack-root` is a documented way to work.
@@ -385,7 +385,7 @@ function projectSetup(scratch: string, env: NodeJS.ProcessEnv): void {
 
 export function gitInit(project: string, env: NodeJS.ProcessEnv): void {
   run(project, env, ["git", "init", "-q", "-b", "main", "."]);
-  run(project, env, ["git", "config", "user.name", "csda demo"]);
+  run(project, env, ["git", "config", "user.name", "specgate demo"]);
   run(project, env, ["git", "config", "user.email", "demo@example.invalid"]);
 }
 
@@ -408,11 +408,11 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 /** The draft an agent would write. REQ-004 invents a fee the brief never states. */
 export function draftSpec(answered: boolean): string {
   const cancel = answered
-    ? `<!-- csda:trace actor=Member kind=functional status="Needs Clarification" -->
+    ? `<!-- specgate:trace actor=Member kind=functional status="Needs Clarification" -->
 
 The system SHALL let a member cancel their own booking, and SHALL charge a
 late cancellation the fee the club decides (Q1).`
-    : `<!-- csda:trace actor=Member kind=functional -->
+    : `<!-- specgate:trace actor=Member kind=functional -->
 
 The system SHALL let a member cancel their own booking, and SHALL charge a
 fee of 5 euros when they cancel less than 24 hours before.`;
@@ -423,7 +423,7 @@ fee of 5 euros when they cancel less than 24 hours before.`;
 
 ### Requirement: REQ-002 — A member books a court for one hour
 
-<!-- csda:trace actor=Member kind=functional -->
+<!-- specgate:trace actor=Member kind=functional -->
 
 The system SHALL let a member book a free court for one hour.
 
@@ -443,7 +443,7 @@ The system SHALL let a member book a free court for one hour.
 
 ### Requirement: REQ-003 — A court is never booked twice for the same hour
 
-<!-- csda:trace actor=Member kind=business-rule -->
+<!-- specgate:trace actor=Member kind=business-rule -->
 
 The system SHALL refuse a booking for a court and hour that is already booked.
 
@@ -597,7 +597,7 @@ function displayCommand(beat: Beat): string {
 }
 
 export function recordTranscript(board: Storyboard): Recording {
-  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "csda-term-"));
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-term-"));
   const env = buildEnv(scratch);
   const ctx: NormaliseContext = {
     // Longest first, so a prefix never shadows the path it is a prefix of.

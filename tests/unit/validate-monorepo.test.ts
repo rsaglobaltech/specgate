@@ -50,7 +50,7 @@ function makeSubProject(root, rel) {
 }
 
 function withMonorepo(fn) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-mono-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-mono-"));
   try {
     makeSubProject(tmp, path.join("services", "fhir-server"));
     makeSubProject(tmp, path.join("services", "mpi"));
@@ -119,7 +119,7 @@ test("a missing project directory is reported with a fix, others still run", () 
 });
 
 test("a project without projects: list still validates as a single project", () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-single-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-single-"));
   try {
     const dir = makeSubProject(tmp, "solo");
     // specops.config.yaml with packs but no projects → normal validation.

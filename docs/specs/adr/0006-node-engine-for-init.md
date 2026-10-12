@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this file documents the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # ADR-0006: Node.js Engine for `init` (supersedes ADR-0002)
 
 **Date:** 2026-05-12

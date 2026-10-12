@@ -113,7 +113,7 @@ each answer in the `Answer` column.
 A question that is not yours to answer stays open:
 
 ```markdown
-<!-- csda:trace actor=Operator kind=functional status="Needs Clarification" -->
+<!-- specgate:trace actor=Operator kind=functional status="Needs Clarification" -->
 ```
 
 The requirement then waits: `status` lists it under "Waiting for an answer",

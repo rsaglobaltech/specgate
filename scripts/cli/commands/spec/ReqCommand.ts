@@ -436,7 +436,7 @@ export class ReqCommand extends BaseCommand {
         process.exit(2);
       }
 
-      // Derived project: the link goes into the requirement's csda:trace in
+      // Derived project: the link goes into the requirement's specgate:trace in
       // spec.md, or the next regeneration would drop it.
       const derivedRows = isDerivedProject(resolvedDir)
         ? writeRequirementFields(resolvedDir, reqId, fields)

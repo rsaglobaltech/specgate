@@ -172,14 +172,14 @@ test("every command the CLI dispatches is documented somewhere", () => {
     .map((rel) => fs.readFileSync(path.join(ROOT_DIR, rel), "utf8"))
     .join("\n");
 
-  // Every spelling counts: the guides lead with `specgate`, and the aliases
-  // `csda` and `create-spec-driven-app` still appear in bootstrap lines and in
-  // records of how a command used to be invoked.
+  // Every spelling counts: the guides lead with `specgate`, and the alias
+  // `create-spec-driven-app` still appears in bootstrap lines and in records of
+  // how a command used to be invoked.
   const undocumented = dispatched.filter(
     (cmd) =>
-      !new RegExp(
-        `\\b(specgate(@[\\w.-]+)?|csda|create-spec-driven-app(@[\\w.-]+)?) ${cmd}\\b`
-      ).test(docs)
+      !new RegExp(`\\b(specgate(@[\\w.-]+)?|create-spec-driven-app(@[\\w.-]+)?) ${cmd}\\b`).test(
+        docs
+      )
   );
   assert.deepEqual(
     undocumented,
@@ -191,17 +191,16 @@ test("every command the CLI dispatches is documented somewhere", () => {
 /**
  * Guard: one name for the command in user-facing text.
  *
- * The CLI ships three binaries — `specgate` and the `csda` and
- * `create-spec-driven-app` aliases, kept for the whole 0.x line by ADR-0024.
+ * The CLI ships two binaries — `specgate` and the `create-spec-driven-app`
+ * alias. (The tool's first name, and its alias, went with ADR-0032.)
  * Aliases exist so an old invocation keeps working, not so documentation can
  * pick whichever it likes: for a while the docs and the help strings used them
  * interchangeably and the same command appeared under two names depending on
  * which page you landed on.
  *
- * `specgate` is the one to type. `csda` remains a working alias and a frozen
- * *format* prefix (`csda:trace`, `.csda/`, `CSDA_*`) — that is why this only
- * matches an alias followed by a real sub-command, and never `csda:`, `.csda`
- * or `csda_`. `create-spec-driven-app` stays in npm links and in file paths.
+ * `specgate` is the one to type. `create-spec-driven-app` stays in npm links
+ * and in file paths, so this only matches the alias followed by a real
+ * sub-command.
  */
 test("user-facing text invokes the CLI as `specgate`, not by an alias", () => {
   const SUBCOMMANDS = [
@@ -231,12 +230,9 @@ test("user-facing text invokes the CLI as `specgate`, not by an alias", () => {
     "expand",
   ];
   // Not preceded by `npx `, by a path separator, or by `@` — those are the
-  // package, not the command. `csda` additionally must not be preceded by `:`
-  // or `_` and not followed by them either, so the frozen on-disk format
-  // (`csda:trace`, `.csda/`, `csda_version`) is never mistaken for an
-  // invocation.
+  // package, not the command.
   const bareInvocation = new RegExp(
-    `(?<!npx )(?<![\\w/@.:-])(?:create-spec-driven-app|csda) (?:${SUBCOMMANDS.join("|")})\\b`
+    `(?<!npx )(?<![\\w/@.:-])(?:create-spec-driven-app) (?:${SUBCOMMANDS.join("|")})\\b`
   );
 
   const collect = (dir: string, exts: string[], skip: RegExp) => {

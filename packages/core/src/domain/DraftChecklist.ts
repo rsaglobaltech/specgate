@@ -393,7 +393,7 @@ export function checkDraft(files: DraftFiles): DraftReport {
       status.push(
         error("D2_no_kind", `${r.id} has no kind (functional, non-functional or business-rule).`, {
           ...at(r),
-          fix: `Add <!-- csda:trace kind=functional --> (or non-functional, business-rule) under its heading.`,
+          fix: `Add <!-- specgate:trace kind=functional --> (or non-functional, business-rule) under its heading.`,
         })
       );
     }
@@ -562,7 +562,7 @@ export function checkDraft(files: DraftFiles): DraftReport {
                 : `Question ${q.row} blocks ${id}, and ${id} is not Needs Clarification.`,
               {
                 ...at(r),
-                fix: `Set status="Needs Clarification" in ${id}'s csda:trace, so it cannot be built around the question.`,
+                fix: `Set status="Needs Clarification" in ${id}'s specgate:trace, so it cannot be built around the question.`,
               }
             )
           );
@@ -754,7 +754,7 @@ export function checkDraft(files: DraftFiles): DraftReport {
 // ── The same rules on a hand-written specification ─────────────────────────────
 
 const SECTION = /^(#{2,4})\s+(?:Requirement:\s*)?(REQ-[A-Za-z0-9.]+)\b\s*[—–:-]?\s*(.*)$/;
-const TRACE = /<!--\s*csda:trace\b(.*?)-->/;
+const TRACE = /<!--\s*specgate:trace\b(.*?)-->/;
 
 /** Each requirement section of `spec.md` or a capability spec: id, line, text, trace. */
 function sections(source: string) {

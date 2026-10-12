@@ -25,7 +25,7 @@ const SPEC = [
   "",
   "## REQ-003 — Orders can be cancelled",
   "",
-  "<!-- csda:trace status=Implemented artifact=lib/orders.js -->",
+  "<!-- specgate:trace status=Implemented artifact=lib/orders.js -->",
   "",
   "The system MUST let a customer cancel an unshipped order.",
   "",
@@ -61,7 +61,7 @@ const sources = (over: any = {}) => ({
   ...over,
 });
 
-test("requirements come from spec.md sections, with their csda:trace", () => {
+test("requirements come from spec.md sections, with their specgate:trace", () => {
   const reqs = requirementsIn(SPEC);
   assert.deepEqual(
     reqs.map((r) => r.id),
@@ -84,7 +84,7 @@ test("one row per tagged scenario, the test found by mentioning the id", () => {
   assert.equal(req2[0].status, "Draft");
 });
 
-test("an explicit csda:trace key wins over what is derived", () => {
+test("an explicit specgate:trace key wins over what is derived", () => {
   const rows = deriveRows(sources());
   const req3 = rows.find((r) => r.requirement === "REQ-003");
   assert.equal(req3.status, "Implemented");
@@ -97,15 +97,15 @@ test("setTraceFields creates, updates in a stable order, and removes", () => {
   const created = setTraceFields(SPEC, "REQ-002", { test: "t.js", status: "Implemented" })!;
   assert.match(
     created,
-    /## REQ-002 — Totals are rounded half-up\n\n<!-- csda:trace status=Implemented test=t.js -->/
+    /## REQ-002 — Totals are rounded half-up\n\n<!-- specgate:trace status=Implemented test=t.js -->/
   );
 
   const updated = setTraceFields(created, "REQ-002", { status: "Verified" })!;
-  assert.match(updated, /<!-- csda:trace status=Verified test=t.js -->/);
-  assert.equal((updated.match(/csda:trace/g) || []).length, 2, "one comment per section");
+  assert.match(updated, /<!-- specgate:trace status=Verified test=t.js -->/);
+  assert.equal((updated.match(/specgate:trace/g) || []).length, 2, "one comment per section");
 
   const removed = setTraceFields(updated, "REQ-002", { status: "", test: "" })!;
-  assert.equal((removed.match(/csda:trace/g) || []).length, 1);
+  assert.equal((removed.match(/specgate:trace/g) || []).length, 1);
 
   assert.equal(setTraceFields(SPEC, "REQ-999", { status: "x" }), null);
 });
@@ -168,7 +168,7 @@ test("requirements archived into capability specs are rows too", () => {
       "",
       "### Requirement: REQ-100 — Invoices carry VAT",
       "",
-      "<!-- csda:trace scn=SCN-100 feature=features/billing.feature status=Implemented -->",
+      "<!-- specgate:trace scn=SCN-100 feature=features/billing.feature status=Implemented -->",
       "",
       "The system SHALL add VAT to every invoice.",
       "",

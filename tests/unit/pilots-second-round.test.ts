@@ -142,7 +142,7 @@ test("#57: change archive refuses a draft whose checklist fails; --force archive
     fs.writeFileSync(
       path.join(changeDir, "specs/cart/spec.md"),
       "# Delta — cart\n\n## ADDED Requirements\n\n### Requirement: REQ-010 — Add to cart\n\n" +
-        "<!-- csda:trace actor=Customer kind=functional -->\n\nThe system SHALL add a product to the cart.\n\n" +
+        "<!-- specgate:trace actor=Customer kind=functional -->\n\nThe system SHALL add a product to the cart.\n\n" +
         "#### Scenario: SCN-010 — A bike in the cart\n\n" +
         '- GIVEN a product "Bike" priced 199 EUR\n' +
         "- WHEN the customer does POST /api/cart with it\n" +
@@ -199,9 +199,9 @@ test("#79: a trace line no requirement section owns is found; one under its head
     requirementsIn,
   } = require("../../packages/core/src/domain/DerivedMatrix");
   const spec =
-    "# App\n\n<!-- csda:trace status=Implemented -->\n\n## REQ-002 — Totals\n" +
-    '<!-- csda:trace status="Needs Clarification" -->\n\nThe system MUST round.\n\n' +
-    "## Notes\n\n<!-- csda:trace kind=functional -->\n\n```md\n<!-- csda:trace in a fence -->\n```\n";
+    "# App\n\n<!-- specgate:trace status=Implemented -->\n\n## REQ-002 — Totals\n" +
+    '<!-- specgate:trace status="Needs Clarification" -->\n\nThe system MUST round.\n\n' +
+    "## Notes\n\n<!-- specgate:trace kind=functional -->\n\n```md\n<!-- specgate:trace in a fence -->\n```\n";
   assert.deepEqual(unreadTraceLines(spec), [3, 12]);
   assert.equal(requirementsIn(spec)[0].trace.status, "Needs Clarification");
 });

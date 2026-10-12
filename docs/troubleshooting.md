@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — this guide quotes the {{VAR}} template syntax. -->
+<!-- specgate:allow-placeholders — this guide quotes the {{VAR}} template syntax. -->
 
 # Troubleshooting
 

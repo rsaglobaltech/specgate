@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// csda:allow-placeholders — the templates it hands out contain {{VAR}} tokens.
+// specgate:allow-placeholders — the templates it hands out contain {{VAR}} tokens.
 
 /**
  * `change instructions <artifact>` — everything needed to write one artefact.
@@ -42,7 +42,7 @@ export const DELTA_RULES = [
   "Every requirement body must state an obligation with SHALL, MUST, SHOULD or MAY, or validation reports `no_rfc2119_keyword`.",
   "Scenario steps are plain `- GIVEN` / `- WHEN` / `- THEN` bullets. `- **GIVEN**` fails with `scenario_not_gherkin`: the keyword has to start the line.",
   "Every requirement needs at least one scenario.",
-  "The optional `<!-- csda:trace uc=… cmd=… agg=… evt=… feature=… -->` comment is the bridge to the DDD matrix. Without it the requirement still archives, with `-` in those columns.",
+  "The optional `<!-- specgate:trace uc=… cmd=… agg=… evt=… feature=… -->` comment is the bridge to the DDD matrix. Without it the requirement still archives, with `-` in those columns.",
 ];
 
 const PROPOSAL_RULES = [

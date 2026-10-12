@@ -27,7 +27,7 @@ function cli(...args) {
 }
 
 function repo(files: Record<string, string>) {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-poly-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-poly-"));
   const dir = path.join(parent, "app");
   fs.mkdirSync(path.join(dir, "src"), { recursive: true });
   fs.writeFileSync(path.join(dir, "src/a.txt"), "x\n");

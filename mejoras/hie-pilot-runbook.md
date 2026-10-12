@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders — quotes the {{VAR}} a pack uses for its stack. -->
+<!-- specgate:allow-placeholders — quotes the {{VAR}} a pack uses for its stack. -->
 # 🏥 Piloto HIE — runbook
 
 > **Reconstruido el 2026-08-17 leyendo los dos repos.** El runbook original era

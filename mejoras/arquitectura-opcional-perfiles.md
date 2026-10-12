@@ -1,4 +1,4 @@
-<!-- csda:allow-placeholders -->
+<!-- specgate:allow-placeholders -->
 # DDD, hexagonal y CQRS: de obligatorios a opcionales, sin aflojar la puerta
 
 > **Creado:** 2026-08-21

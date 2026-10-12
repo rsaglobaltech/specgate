@@ -105,7 +105,7 @@ export function traceComment(scenario, origin?) {
     if (scenario.target) parts.push(`feature=${scenario.target}`);
   }
   if (origin) parts.push(`origin=${origin}`);
-  return parts.length > 0 ? `<!-- csda:trace ${parts.join(" ")} -->` : null;
+  return parts.length > 0 ? `<!-- specgate:trace ${parts.join(" ")} -->` : null;
 }
 
 export function renderRequirementBlock(

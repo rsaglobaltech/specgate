@@ -1,4 +1,4 @@
-package com.rsaglobaltech.csda;
+package com.rsaglobaltech.specgate;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,33 +12,33 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 
 /**
- * Shared launcher for every csda goal. Resolves the specgate
+ * Shared launcher for every specgate goal. Resolves the specgate
  * CLI without requiring the developer to manage a Node.js toolchain:
  *
  * <ul>
- *   <li>{@code -Dcsda.launcher=npx} — run through npx (needs Node &ge; 20)</li>
- *   <li>{@code -Dcsda.launcher=docker} — run the official image with the
+ *   <li>{@code -Dspecgate.launcher=npx} — run through npx (needs Node &ge; 20)</li>
+ *   <li>{@code -Dspecgate.launcher=docker} — run the official image with the
  *       project directory mounted at /workspace</li>
- *   <li>{@code -Dcsda.launcher=auto} (default) — npx when available,
+ *   <li>{@code -Dspecgate.launcher=auto} (default) — npx when available,
  *       docker otherwise</li>
  * </ul>
  */
-public abstract class AbstractCsdaMojo extends AbstractMojo {
+public abstract class AbstractSpecgateMojo extends AbstractMojo {
 
     /** CLI version to run (npx tag or docker tag). */
-    @Parameter(property = "csda.version", defaultValue = "latest")
+    @Parameter(property = "specgate.version", defaultValue = "latest")
     protected String cliVersion;
 
     /** How to launch the CLI: auto | npx | docker. */
-    @Parameter(property = "csda.launcher", defaultValue = "auto")
+    @Parameter(property = "specgate.launcher", defaultValue = "auto")
     protected String launcher;
 
     /** Docker image used by the docker launcher. */
-    @Parameter(property = "csda.dockerImage", defaultValue = "ghcr.io/rsaglobaltech/specgate")
+    @Parameter(property = "specgate.dockerImage", defaultValue = "ghcr.io/rsaglobaltech/specgate")
     protected String dockerImage;
 
     /** Directory the CLI operates on (the repo root for multi-module builds). */
-    @Parameter(property = "csda.projectDir", defaultValue = "${project.basedir}")
+    @Parameter(property = "specgate.projectDir", defaultValue = "${project.basedir}")
     protected File projectDir;
 
     /** Arguments for the concrete goal, e.g. ["validate", ".", "--strict"]. */
@@ -47,7 +47,7 @@ public abstract class AbstractCsdaMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         List<String> command = buildCommand();
-        getLog().info("csda> " + String.join(" ", command));
+        getLog().info("specgate> " + String.join(" ", command));
         try {
             Process process = new ProcessBuilder(command)
                     .directory(projectDir)
@@ -57,7 +57,7 @@ public abstract class AbstractCsdaMojo extends AbstractMojo {
             if (exit != 0) {
                 throw new MojoFailureException(
                         "specgate exited " + exit + " — the spec gate failed. "
-                                + "Run `mvn csda:doctor` for a diagnosis with fixes.");
+                                + "Run `mvn specgate:doctor` for a diagnosis with fixes.");
             }
         } catch (IOException e) {
             throw new MojoExecutionException(
@@ -78,7 +78,7 @@ public abstract class AbstractCsdaMojo extends AbstractMojo {
             } else {
                 throw new MojoExecutionException(
                         "Neither npx nor docker found on PATH. Install Node.js >= 20 or Docker, "
-                                + "or set -Dcsda.launcher=npx|docker explicitly.");
+                                + "or set -Dspecgate.launcher=npx|docker explicitly.");
             }
         }
 
@@ -102,7 +102,7 @@ public abstract class AbstractCsdaMojo extends AbstractMojo {
                 break;
             default:
                 throw new MojoExecutionException(
-                        "Unknown csda.launcher: " + mode + " (expected auto, npx, or docker)");
+                        "Unknown specgate.launcher: " + mode + " (expected auto, npx, or docker)");
         }
         cmd.addAll(cliArgs());
         return cmd;

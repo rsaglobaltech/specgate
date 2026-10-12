@@ -1,4 +1,4 @@
-package com.rsaglobaltech.csda.gradle;
+package com.rsaglobaltech.specgate.gradle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,12 +10,12 @@ import org.gradle.api.tasks.options.Option;
 import org.gradle.api.tasks.UntrackedTask;
 
 /**
- * {@code gradle csdaPlan} — list requirements that still need a test, code,
- * or a status update. Use {@code --format=json} (or {@code -Pcsda.format=json})
+ * {@code gradle specgatePlan} — list requirements that still need a test, code,
+ * or a status update. Use {@code --format=json} (or {@code -Pspecgate.format=json})
  * for machine output.
  */
 @UntrackedTask(because = "reports the current state of the spec tree, which must be recomputed on every invocation")
-public abstract class CsdaPlanTask extends CsdaTask {
+public abstract class SpecgatePlanTask extends SpecgateTask {
 
     /** Output format: text (human) or json (agents/CI). */
     @Input

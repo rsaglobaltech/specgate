@@ -26,7 +26,7 @@ function cli(...args) {
 }
 
 function withTree(stacks, fn) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-multistack-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-multistack-"));
   try {
     const r = cli("init", "--yes", "--out", tmp, "--multi-stack", stacks, "--no-git");
     assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -132,7 +132,7 @@ test("a copied shared spec that drifts fails the gate", () => {
 });
 
 test("an unusable stack list is a usage error that writes nothing", () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-multistack-bad-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-multistack-bad-"));
   try {
     for (const bad of ["spring", "../etc,spring", "spring,spring", ""]) {
       const r = cli("init", "--yes", "--out", tmp, "--multi-stack", bad, "--no-git");

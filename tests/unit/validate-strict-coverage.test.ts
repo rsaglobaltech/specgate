@@ -39,7 +39,7 @@ const FEATURE = `Feature: Invoice totals
 `;
 
 function project(testFileBody, status = "Implemented") {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-coverage-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-coverage-"));
   const r = cli("init", "--yes", "--out", parent, "--no-git", "--no-sample-req");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const dir = path.join(parent, "my-spec-driven-app");
@@ -132,7 +132,7 @@ test("a row whose test artifact names nothing about it is reported, not failed",
   // PetValidatorTests.java as its proof, with every gate green. The row has no
   // scenario, so the per-scenario check has nothing to match — which is why
   // seeded rows lie most easily.
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-lie-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-lie-"));
   try {
     const r = cli("init", "--yes", "--out", parent, "--no-git", "--no-sample-req");
     assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -178,7 +178,7 @@ test("a row whose test artifact names nothing about it is reported, not failed",
 });
 
 test("naming the requirement in the test is evidence enough", () => {
-  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "csda-lie-ok-"));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-lie-ok-"));
   try {
     cli("init", "--yes", "--out", parent, "--no-git", "--no-sample-req");
     const dir = path.join(parent, "my-spec-driven-app");

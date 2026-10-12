@@ -56,7 +56,7 @@ export default [
         "new over MCP is refused until the team allows contract edits",
         guarded
       );
-      t.write(dir, ".csda/config.json", JSON.stringify({ mcpAllowContractEdits: true }));
+      t.write(dir, ".specgate/config.json", JSON.stringify({ mcpAllowContractEdits: true }));
 
       // Start what the config starts — from the installed package — and talk to it.
       const input = [
@@ -72,7 +72,7 @@ export default [
           jsonrpc: "2.0",
           id: 4,
           method: "tools/call",
-          params: { name: "csda_status", arguments: { projectDir: dir } },
+          params: { name: "specgate_status", arguments: { projectDir: dir } },
         },
         // The daily loop, from an MCP-only client: `new` and `check` were not
         // tools at all, and `done` never said it needs a requirement.
@@ -113,13 +113,13 @@ export default [
       );
       const names = byId[2].result.tools.map((x) => x.name);
       t.expect(
-        names.includes("specgate_status") && !names.some((n) => n.startsWith("csda_")),
+        names.includes("specgate_status") && !names.some((n) => n.startsWith("specgate_")),
         "tools are specgate_*",
         r
       );
       const status = JSON.parse(byId[3].result.content[0].text);
       t.expect(status.schemaVersion === 1, "a tool call runs the CLI and returns its JSON", r);
-      t.expect(byId[4] && !byId[4].error, "an old csda_* name still resolves", r);
+      t.expect(byId[4] && !byId[4].error, "an old specgate_* name still resolves", r);
 
       const tool = (n) => byId[2].result.tools.find((x) => x.name === n);
       t.expect(

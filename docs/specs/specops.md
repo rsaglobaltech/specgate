@@ -69,7 +69,7 @@ lockfile to the project root:
 ```json
 {
   "specops_version": 1,
-  "csda_version": "0.1.0-beta.4",
+  "specgate_version": "0.1.0-beta.4",
   "packs": [
     {
       "repo": "https://github.com/rsaglobaltech/parking-management-specops.git",

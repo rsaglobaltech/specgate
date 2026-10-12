@@ -20,7 +20,7 @@ function cli(...args) {
 }
 
 function withTmp(fn) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-ci-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ci-"));
   try {
     return fn(tmp);
   } finally {

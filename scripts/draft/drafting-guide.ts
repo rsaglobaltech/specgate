@@ -82,7 +82,7 @@ export function draftingGuide(i: DraftingGuideInput): string {
     "",
     `### Requirement: ${i.reqRange[0]} — <a short name>`,
     "",
-    `<!-- csda:trace actor=${actor} kind=functional -->`,
+    `<!-- specgate:trace actor=${actor} kind=functional -->`,
     "",
     "The system SHALL <what it does, observably>.",
     "",

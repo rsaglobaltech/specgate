@@ -21,7 +21,7 @@ const { getProvider, providerIds, isCommunityProvider } = require("../../scripts
 
 /** A project with `node_modules/<name>` containing the given module source. */
 function withPackage(name: string, source: string, fn: (dir: string) => void) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "csda-community-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-community-"));
   try {
     const pkgDir = path.join(dir, "node_modules", ...name.split("/"));
     fs.mkdirSync(pkgDir, { recursive: true });
@@ -63,13 +63,13 @@ test("a core provider needs no project directory", () => {
 });
 
 test("a community provider is loaded from the project's node_modules", () => {
-  withPackage("csda-alm-youtrack", VALID_PROVIDER, (dir) => {
-    const provider = getProvider("npm:csda-alm-youtrack", dir);
+  withPackage("specgate-alm-youtrack", VALID_PROVIDER, (dir) => {
+    const provider = getProvider("npm:specgate-alm-youtrack", dir);
     assert.equal(provider.id, "youtrack");
     assert.equal(provider.label, "YouTrack (community)");
     assert.deepEqual([...provider.config.required], ["base_url", "token_env"]);
     // It is a provider like any other: the same factory, the same contract.
-    const client = provider.create({ provider: "npm:csda-alm-youtrack" } as any);
+    const client = provider.create({ provider: "npm:specgate-alm-youtrack" } as any);
     assert.equal(typeof client.createIssue, "function");
   });
 });
@@ -77,7 +77,7 @@ test("a community provider is loaded from the project's node_modules", () => {
 test("a package name that is a path is refused", () => {
   // The guard that matters: without it, a committed config file could make the
   // CLI require any file on the disk.
-  withPackage("csda-alm-youtrack", VALID_PROVIDER, (dir) => {
+  withPackage("specgate-alm-youtrack", VALID_PROVIDER, (dir) => {
     for (const bad of [
       "npm:../../../etc/passwd",
       "npm:/absolute/path",
@@ -97,14 +97,14 @@ test("a package name that is a path is refused", () => {
 test("a package that is not installed is never installed automatically", () => {
   // Installing on demand would turn editing a config file into running new
   // code. It stays a dependency decision, made deliberately and reviewed.
-  withPackage("csda-alm-youtrack", VALID_PROVIDER, (dir) => {
+  withPackage("specgate-alm-youtrack", VALID_PROVIDER, (dir) => {
     assert.throws(
-      () => getProvider("npm:csda-alm-nowhere", dir),
+      () => getProvider("npm:specgate-alm-nowhere", dir),
       /is not installed in this project/
     );
-    assert.throws(() => getProvider("npm:csda-alm-nowhere", dir), /npm install --save-dev/);
+    assert.throws(() => getProvider("npm:specgate-alm-nowhere", dir), /npm install --save-dev/);
     assert.equal(
-      fs.existsSync(path.join(dir, "node_modules", "csda-alm-nowhere")),
+      fs.existsSync(path.join(dir, "node_modules", "specgate-alm-nowhere")),
       false,
       "nothing may be fetched as a side effect of resolving a provider"
     );
@@ -134,17 +134,17 @@ test("a provider whose declaration lies about itself is refused", () => {
       create: () => ({}),
     };
   `;
-  withPackage("csda-alm-liar", LIAR, (dir) => {
+  withPackage("specgate-alm-liar", LIAR, (dir) => {
     assert.throws(
-      () => getProvider("npm:csda-alm-liar", dir),
+      () => getProvider("npm:specgate-alm-liar", dir),
       /capability 'close' is not declared/
     );
   });
 });
 
 test("a scoped package name is accepted", () => {
-  withPackage("@acme/csda-alm-youtrack", VALID_PROVIDER, (dir) => {
-    assert.equal(getProvider("npm:@acme/csda-alm-youtrack", dir).id, "youtrack");
+  withPackage("@acme/specgate-alm-youtrack", VALID_PROVIDER, (dir) => {
+    assert.equal(getProvider("npm:@acme/specgate-alm-youtrack", dir).id, "youtrack");
   });
 });
 

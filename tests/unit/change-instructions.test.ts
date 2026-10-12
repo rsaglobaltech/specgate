@@ -1,6 +1,6 @@
 "use strict";
 
-// csda:allow-placeholders — the templates under test carry {{VAR}} tokens.
+// specgate:allow-placeholders — the templates under test carry {{VAR}} tokens.
 
 /**
  * `change instructions` — the single context engine.

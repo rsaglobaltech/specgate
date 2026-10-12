@@ -39,7 +39,7 @@ a remote pack is used.
 | `--cache-dir <path>`        | Override the default cache root (used by tests) |
 
 Mutually exclusive with `--pack-root`. The CLI clones into
-`~/.cache/csda/packs/<sha256(repo)[:16]>/<sanitised-version>/`, resolves the
+`~/.cache/specgate/packs/<sha256(repo)[:16]>/<sanitised-version>/`, resolves the
 local path, and proceeds with the existing expand pipeline.
 
 ### `.specops.lock` format
@@ -49,7 +49,7 @@ JSON, written to the project root after a successful (non–dry-run) expand:
 ```json
 {
   "specops_version": 1,
-  "csda_version": "0.1.0-beta.4",
+  "specgate_version": "0.1.0-beta.4",
   "packs": [
     {
       "repo":        "https://github.com/rsaglobaltech/parking-management-specops.git",

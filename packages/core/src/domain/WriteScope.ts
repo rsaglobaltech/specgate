@@ -176,7 +176,7 @@ export function parseGitStatus(porcelain: string): WriteScopeChanges {
 const isTraceLine = (line: string) => {
   const t = line.trim();
   return (
-    t.startsWith("<!--") && t.endsWith("-->") && t.slice(4).trimStart().startsWith("csda:trace")
+    t.startsWith("<!--") && t.endsWith("-->") && t.slice(4).trimStart().startsWith("specgate:trace")
   );
 };
 /**
@@ -188,7 +188,7 @@ const isTraceLine = (line: string) => {
  */
 const attributesWithoutStatus = (line: string): string => {
   const t = line.trim();
-  const body = t.slice(t.indexOf("csda:trace") + "csda:trace".length, t.lastIndexOf("-->"));
+  const body = t.slice(t.indexOf("specgate:trace") + "specgate:trace".length, t.lastIndexOf("-->"));
   const tokens: string[] = [];
   let current = "";
   let quote = "";
@@ -215,7 +215,7 @@ const attributesWithoutStatus = (line: string): string => {
 
 /**
  * Whether a unified diff (`git diff -U0`) changes nothing but the `status=` of
- * `csda:trace` lines — exactly what `specgate done` writes.
+ * `specgate:trace` lines — exactly what `specgate done` writes.
  *
  * The harness prompt tells the agent to close its requirement with `done`, and
  * `done` records the status in the capability spec. Write-scope then rejected

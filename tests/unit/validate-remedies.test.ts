@@ -1,4 +1,4 @@
-// csda:allow-placeholders — this file emits or asserts on {{VAR}} template syntax.
+// specgate:allow-placeholders — this file emits or asserts on {{VAR}} template syntax.
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -53,7 +53,7 @@ function makeValidProject(tmp) {
 }
 
 function withProject(fn) {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-remedy-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-remedy-"));
   try {
     return fn(makeValidProject(tmp), tmp);
   } finally {

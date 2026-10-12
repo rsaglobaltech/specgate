@@ -29,7 +29,7 @@ user_env: JIRA_USER       # jira only: env var holding the account email
 
 Which keys a provider reads is the provider's own declaration, and they differ:
 
-<!-- csda:alm-provider-table — checked by tests/unit/alm-conformance.test.ts -->
+<!-- specgate:alm-provider-table — checked by tests/unit/alm-conformance.test.ts -->
 
 | Provider | Required | Optional |
 | --- | --- | --- |
@@ -74,11 +74,11 @@ package name:
 
 ```yaml
 # alm.config.yaml
-provider: npm:csda-alm-youtrack
+provider: npm:specgate-alm-youtrack
 ```
 
 ```bash
-npm install --save-dev csda-alm-youtrack   # you install it; specgate never does
+npm install --save-dev specgate-alm-youtrack   # you install it; specgate never does
 ```
 
 The split is not a preference. Every connector is somebody else's API, changing

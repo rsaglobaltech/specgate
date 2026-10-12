@@ -1,4 +1,4 @@
-# ADR-0019 — One studio surface: `csda studio`, not a standalone app
+# ADR-0019 — One studio surface: `specgate studio`, not a standalone app
 
 ## Status
 
@@ -15,12 +15,12 @@ they were written on branches that forked from the same commit.
    CLI front-end via the VS Code extension webview, not a standalone app"*. Its
    gate conditions were: pack format stable, DDD opt-in shipped, `pack infer`
    shipped, explicit stakeholder buy-in.
-2. **`mejoras/csda-studio-brief.md` + `csda-studio-handoff.md`.** Building
+2. **`mejoras/specgate-studio-brief.md` + `specgate-studio-handoff.md`.** Building
    exactly what Phase 4 forbade — a standalone Vite/React SPA in its own repo,
    with 15 requirements, as a dogfood experiment. Pack authored and tagged
    `v0.1.0`; the app itself is unimplemented and the handoff has been idle
    since 2026-05-15.
-3. **`csda studio`** (recovered in C0-11). A subcommand that serves a
+3. **`specgate studio`** (recovered in C0-11). A subcommand that serves a
    read-only HTML view of the spec tree from a local port, plus `--json`. No
    build step, no dependencies, ~300 lines.
 
@@ -30,11 +30,11 @@ pack format is stable behind a JSON Schema). "DDD opt-in shipped" and
 
 ## Decision
 
-**`csda studio` is the studio surface.** It ships, it is the one we maintain,
+**`specgate studio` is the studio surface.** It ships, it is the one we maintain,
 and it is where visualisation features land.
 
-**The standalone SPA (`csda-studio-app`) stays a dogfood experiment and is
-explicitly not a product.** Its purpose is to prove that the CSDA flow can
+**The standalone SPA (`specgate-studio-app`) stays a dogfood experiment and is
+explicitly not a product.** Its purpose is to prove that the Specgate flow can
 deliver a real application end-to-end — pack → `specops add` → bootstrap →
 `harness run` per requirement. That purpose is served whether or not anyone
 ever uses the resulting app. It keeps its own repo and its own lifecycle, and
@@ -51,7 +51,7 @@ editor, over SSH, and in CI.
 **Positive:**
 
 - One answer to "how do I look at this?", available wherever the CLI is.
-- `csda studio --json` is the same data the future agent contract (C3-02)
+- `specgate studio --json` is the same data the future agent contract (C3-02)
   needs, so the view and the machine surface do not diverge.
 - The VS Code extension keeps its pack graph webview, which solves a different
   problem — authoring a `pack.yaml` — and is not a spec-tree viewer.
@@ -61,10 +61,10 @@ editor, over SSH, and in CI.
 - A served HTML page cannot be as rich as a full SPA. Accepted: the cost of a
   second build pipeline, a second dependency tree and a second release train is
   not worth the polish, and the SPA was never funded as a product.
-- `csda studio` is read-only. Editing a pack through a UI remains out of scope;
-  `csda req` covers the mutation people actually asked for, from the terminal.
-- The dogfood experiment's own requirements (REQ-001..015 in `csda-studio-app`)
-  overlap with what `csda studio` does. That duplication is deliberate — the
+- `specgate studio` is read-only. Editing a pack through a UI remains out of scope;
+  `specgate req` covers the mutation people actually asked for, from the terminal.
+- The dogfood experiment's own requirements (REQ-001..015 in `specgate-studio-app`)
+  overlap with what `specgate studio` does. That duplication is deliberate — the
   point of the exercise is the process, not the artefact.
 
 ## Rejected alternatives
@@ -82,6 +82,6 @@ editor, over SSH, and in CI.
 ## References
 
 - `mejoras/visual-pack-authoring-todo.md` — Phase 4, closed by this ADR. _(Document removed 2026-08-16; it is in git history.)_
-- `mejoras/csda-studio-brief.md`, `mejoras/csda-studio-handoff.md`
+- `mejoras/specgate-studio-brief.md`, `mejoras/specgate-studio-handoff.md`
 - `scripts/studio.ts`
 - `mejoras/plan-cierre-enterprise.md` — C1-07 (this decision), C8-01 (the experiment)

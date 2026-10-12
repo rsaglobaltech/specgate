@@ -42,7 +42,7 @@ function git(args, opts = {}) {
 // ── computePackDigest ─────────────────────────────────────────────────────────
 
 test("computePackDigest is deterministic and content-sensitive", () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-digest-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-digest-"));
   try {
     fs.mkdirSync(path.join(tmp, "sub"));
     fs.writeFileSync(path.join(tmp, "a.txt"), "alpha", "utf8");
@@ -61,7 +61,7 @@ test("computePackDigest is deterministic and content-sensitive", () => {
 });
 
 test("computePackDigest ignores .git internals", () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-digest-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-digest-"));
   try {
     fs.writeFileSync(path.join(tmp, "a.txt"), "alpha", "utf8");
     const before = computePackDigest(tmp);
@@ -94,7 +94,7 @@ test("assertDigestUnchanged throws on a content change behind the same version",
 // ── readSecurityPolicy ────────────────────────────────────────────────────────
 
 test("readSecurityPolicy reads require_signed_packs from specops.config.yaml", () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-policy-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-policy-"));
   try {
     assert.equal(readSecurityPolicy(tmp).requireSignedPacks, false);
     fs.writeFileSync(
@@ -111,7 +111,7 @@ test("readSecurityPolicy reads require_signed_packs from specops.config.yaml", (
 // ── verifyTagSignature ────────────────────────────────────────────────────────
 
 test("verifyTagSignature reports unsigned tags as unverified", { skip: skipReason }, () => {
-  const src = fs.mkdtempSync(path.join(os.tmpdir(), "csda-sig-"));
+  const src = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-sig-"));
   try {
     git(["init", "--quiet", "--initial-branch=main", src]);
     git(["config", "user.email", "t@example.com"], { cwd: src });
@@ -133,7 +133,7 @@ test("verifyTagSignature reports unsigned tags as unverified", { skip: skipReaso
 // ── End-to-end: digest in lock + poisoned-cache detection ─────────────────────
 
 function makePackRepo() {
-  const src = fs.mkdtempSync(path.join(os.tmpdir(), "csda-packrepo-"));
+  const src = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-packrepo-"));
   fs.cpSync(FIXTURE_PACK, path.join(src, "parking-management"), { recursive: true });
   git(["init", "--quiet", "--initial-branch=main", src]);
   git(["config", "user.email", "t@example.com"], { cwd: src });
@@ -151,7 +151,7 @@ test(
   { skip: skipReason },
   () => {
     const repo = makePackRepo();
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-verify-e2e-"));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-verify-e2e-"));
     const cache = path.join(tmp, "cache");
     const projectDir = path.join(tmp, "project");
     fs.mkdirSync(projectDir, { recursive: true });
@@ -213,7 +213,7 @@ test(
 
 test("require_signed_packs blocks an unsigned pack with a remedy", { skip: skipReason }, () => {
   const repo = makePackRepo();
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "csda-signed-e2e-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-signed-e2e-"));
   const projectDir = path.join(tmp, "project");
   fs.mkdirSync(projectDir, { recursive: true });
   fs.writeFileSync(

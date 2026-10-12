@@ -6,7 +6,6 @@
   "type": "commonjs",
   "bin": {
     "specgate": "bin/specgate.js",
-    "csda": "bin/specgate.js",
     "create-spec-driven-app": "bin/specgate.js"
   },
   "files": [

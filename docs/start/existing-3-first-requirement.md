@@ -18,7 +18,7 @@ now naming it.
 specgate done REQ-004
 ```
 
-<!-- csda:out-existing-done-refused:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-done-refused:begin — generated; edit the source, not this block -->
 ```text
 $ specgate done REQ-004
 ❌ [ERROR] --strict-tdd violations detected:
@@ -28,7 +28,7 @@ $ specgate done REQ-004
 ✖  REQ-004 not marked Implemented: validation failed. [done_validate_failed]
      fix: Fix what validate reports, then run `done` again.
 ```
-<!-- csda:out-existing-done-refused:end -->
+<!-- specgate:out-existing-done-refused:end -->
 
 The code is there and a test exists, but nothing connects the requirement to
 it. Specgate does not guess which test proves what; a test proves a
@@ -38,7 +38,7 @@ requirement by naming it.
 
 One edit — the id in the test's name (a comment works too):
 
-<!-- csda:out-existing-test:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-test:begin — generated; edit the source, not this block -->
 ```text
 $ cat test/total.test.js
 const test = require("node:test");
@@ -54,7 +54,7 @@ test("REQ-004: three lines at 21% VAT are rounded to the cent", () => {
   assert.equal(total(lines, 0.21), 35.56);
 });
 ```
-<!-- csda:out-existing-test:end -->
+<!-- specgate:out-existing-test:end -->
 
 That mention is the link. The traceability matrix is regenerated from
 `spec.md`, the scenario tags and the files that mention each id; nobody edits
@@ -66,12 +66,12 @@ it by hand, and there is nothing to register.
 specgate done REQ-004
 ```
 
-<!-- csda:out-existing-done:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-done:begin — generated; edit the source, not this block -->
 ```text
 $ specgate done REQ-004
 ✔  REQ-004 → Implemented (1 row updated)
 ```
-<!-- csda:out-existing-done:end -->
+<!-- specgate:out-existing-done:end -->
 
 `done` ran the gate for REQ-004 and your whole suite before writing
 `Implemented`. From now on, if someone breaks the rounding, `specgate check`

@@ -19,7 +19,7 @@ past first.
 specgate ci init --provider github
 ```
 
-<!-- csda:out-existing-ci:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-ci:begin — generated; edit the source, not this block -->
 ```text
 $ specgate ci init --provider github
 ℹ️ [INFO] write .github/workflows/spec-gate.yml
@@ -31,7 +31,7 @@ $ specgate ci init --provider github
 ℹ️ [INFO]   3. publishes `plan --format json` as the spec-plan artifact
 ℹ️ [INFO] Commit the file and open a PR to see the gate in action.
 ```
-<!-- csda:out-existing-ci:end -->
+<!-- specgate:out-existing-ci:end -->
 
 `gitlab`, `azure` and `jenkins` work the same way. If you already have a
 workflow, `--stdout` prints the job to paste into it instead.
@@ -42,7 +42,7 @@ workflow, `--stdout` prints the job to paste into it instead.
 specgate check
 ```
 
-<!-- csda:out-existing-check-green:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-check-green:begin — generated; edit the source, not this block -->
 ```text
 $ specgate check
 ℹ️ [INFO] ✅ Validation passed
@@ -66,7 +66,7 @@ $ specgate check
 
 ✔  Gate passed — the specification and `node --test`
 ```
-<!-- csda:out-existing-check-green:end -->
+<!-- specgate:out-existing-check-green:end -->
 
 Note what makes this safe on old code: requirements still in `Draft` — the
 adoption's proposals, anything not described yet — are **exempt**, and the

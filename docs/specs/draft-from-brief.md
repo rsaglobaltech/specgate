@@ -97,7 +97,7 @@ harness gate). On a hand-written project, D1–D5 are a report in `status` and
 | Code | Rule | How it is decided |
 |---|---|---|
 | `D1_no_scenario` | Every requirement has a scenario | a feature file tagged `@REQ-NNN` |
-| `D2_no_kind` | Every requirement has a kind | `kind=` in its `csda:trace` |
+| `D2_no_kind` | Every requirement has a kind | `kind=` in its `specgate:trace` |
 | `D3_surface_missing` | Every use case a person drives has a scenario per surface its actor uses | `surfaces=web` in the requirement's trace narrows its actor's surfaces (a menu has no API). A scenario counts for the actor it names, or for any actor when it names none — another actor's screen does not count. `api`: a step matching `(GET\|POST\|PUT\|PATCH\|DELETE) /`; a screen: a step naming a control (`taps`, `opens`, `sees`, `toca`, `abre`) |
 | `D4_unmeasured_nfr` | A non-functional requirement that promises a quantity states it | it uses a quantity word (fast, latency, scalable, availability, load…) and no number followed by a unit (`ms`, `s`, `%`, `MB`, `px`, `req/s`…) in its text or scenarios. Qualitative constraints (offline, privacy, devices) are not quantities: flagging them was 4 false positives out of 4 on the Golden State packs. "Responsive" names a layout, not a response time (reservas_app) |
 | `D5_unsourced_rule` | A business rule that mentions a law, code, standard or contract names its source | a mention (`Code §`, `ACI`, `OSHA`, `GDPR`, `CBA`, `contract`…) and no link or `Source:` line |

@@ -123,7 +123,7 @@ test("expands domain pack in dry-run mode", () => {
  * the plain `validate` these tests already ran was green throughout.
  */
 test("a generated project passes every gate it ships with", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-fresh-gates-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-fresh-gates-"));
   try {
     const init = runCli(["init", "--yes", "--out", tempRoot, "--no-git", "--keep-matrix"]);
     assert.equal(init.status, 0, init.stdout + init.stderr);
@@ -156,7 +156,7 @@ test("a generated project passes every gate it ships with", () => {
  * Following the tool's own advice did nothing.
  */
 test("req --help prints usage instead of nothing", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-req-help-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-req-help-"));
   try {
     const init = runCli(["init", "--yes", "--out", tempRoot, "--no-git", "--keep-matrix"]);
     assert.equal(init.status, 0, init.stdout + init.stderr);
@@ -176,7 +176,7 @@ test("req --help prints usage instead of nothing", () => {
 });
 
 test("req done marks the requirement Implemented, not a silent no-op", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-req-done-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-req-done-"));
   try {
     const init = runCli(["init", "--yes", "--out", tempRoot, "--no-git", "--keep-matrix"]);
     assert.equal(init.status, 0, init.stdout + init.stderr);
@@ -200,7 +200,7 @@ test("req done marks the requirement Implemented, not a silent no-op", () => {
 });
 
 test("can init and validate a generated project end-to-end", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-e2e-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-e2e-"));
   const slug = `spec-driven-${Date.now()}`;
   const configPath = path.join(tempRoot, "project.config");
   const projectDir = path.join(tempRoot, slug);
@@ -248,7 +248,7 @@ test("can init and validate a generated project end-to-end", () => {
 });
 
 test("can init, expand, and validate a generated project end-to-end", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-expand-e2e-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-expand-e2e-"));
   const slug = `parking-spec-driven-${Date.now()}`;
   const configPath = path.join(tempRoot, "project.config");
   const projectDir = path.join(tempRoot, slug);
@@ -378,7 +378,7 @@ test(
   "expand --pack-repo clones a remote pack and writes .specops.lock",
   { skip: !hasGit() },
   () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-specops-e2e-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-specops-e2e-"));
     const remoteRepo = path.join(tempRoot, "remote-pack");
     const cacheDir = path.join(tempRoot, "cache");
     const projectDir = path.join(tempRoot, "project");
@@ -499,7 +499,7 @@ function makeFixtureRemoteRepo(tempRoot) {
 }
 
 test("specops sync preserves local edits instead of overwriting them", { skip: !hasGit() }, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-specops-sync-keep-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-specops-sync-keep-"));
   const remoteRepo = makeFixtureRemoteRepo(tempRoot);
   const cacheDir = path.join(tempRoot, "cache");
   const projectDir = path.join(tempRoot, "project");
@@ -559,7 +559,7 @@ test("specops sync preserves local edits instead of overwriting them", { skip: !
 });
 
 test("specops sync errors when .specops.lock is missing", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-specops-nolock-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-specops-nolock-"));
   fs.mkdirSync(tempRoot, { recursive: true });
   const result = runCli(["specops", "sync", "--project-dir", tempRoot]);
   assert.notEqual(result.status, 0);
@@ -574,7 +574,7 @@ test("specops with unknown sub-command exits non-zero", () => {
 });
 
 test("plan --format json returns a stable, parseable structure", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-plan-json-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-plan-json-"));
   const slug = `plan-json-${Date.now()}`;
   const configPath = path.join(tempRoot, "project.config");
   const projectDir = path.join(tempRoot, slug);
@@ -614,7 +614,7 @@ test("plan --format json returns a stable, parseable structure", () => {
 });
 
 test("plan rejects an invalid --format", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-plan-bad-format-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-plan-bad-format-"));
   fs.mkdirSync(path.join(tempRoot, "docs", "specs"), { recursive: true });
   fs.writeFileSync(path.join(tempRoot, "docs", "specs", "traceability.md"), "# x\n", "utf8");
   const result = runCli(["plan", "--project-dir", tempRoot, "--format", "yaml"]);
@@ -624,7 +624,7 @@ test("plan rejects an invalid --format", () => {
 });
 
 test("done refuses an invalid REQ-id", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-done-bad-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-done-bad-"));
   fs.mkdirSync(path.join(tempRoot, "docs", "specs"), { recursive: true });
   fs.writeFileSync(path.join(tempRoot, "docs", "specs", "traceability.md"), "# x\n", "utf8");
   const result = runCli(["done", "not-a-req", "--project-dir", tempRoot]);
@@ -653,10 +653,10 @@ test("specops add requires --pack-version when --pack-repo is used", () => {
 });
 
 test("specops remove exits non-zero when pack-id is not in lockfile", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-remove-missing-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-remove-missing-"));
   fs.writeFileSync(
     path.join(tempRoot, ".specops.lock"),
-    JSON.stringify({ specops_version: 1, csda_version: "0.0.0", packs: [] })
+    JSON.stringify({ specops_version: 1, specgate_version: "0.0.0", packs: [] })
   );
   const result = runCli(["specops", "remove", "ghost/pack", "--project-dir", tempRoot]);
   assert.notEqual(result.status, 0);
@@ -760,7 +760,7 @@ function makeHarnessProject(tempRoot, extraReqs: string[] = []) {
 }
 
 test("harness run --dry-run prints prompts without touching git", { skip: !hasGit() }, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-dry-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-dry-"));
   const projectDir = makeHarnessProject(tempRoot);
 
   const result = runCli(["harness", "run", "--project-dir", projectDir, "--dry-run"]);
@@ -778,7 +778,7 @@ test("harness run --dry-run prints prompts without touching git", { skip: !hasGi
 });
 
 test("harness run errors when no agent is configured", { skip: !hasGit() }, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-noagent-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-noagent-"));
   const projectDir = makeHarnessProject(tempRoot);
 
   const result = runCli(["harness", "run", "--project-dir", projectDir]);
@@ -789,7 +789,7 @@ test("harness run errors when no agent is configured", { skip: !hasGit() }, () =
 });
 
 test("harness run refuses a dirty working tree", { skip: !hasGit() }, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-dirty-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-dirty-"));
   const projectDir = makeHarnessProject(tempRoot);
   fs.writeFileSync(path.join(projectDir, "uncommitted.txt"), "wip\n", "utf8");
 
@@ -811,7 +811,7 @@ test(
   "harness run drives a requirement to pass: worktree, gate, done, commit",
   { skip: !hasGit() },
   () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-pass-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-pass-"));
     const projectDir = makeHarnessProject(tempRoot);
 
     // Agent: drop a file proving it ran, then consume the prompt file.
@@ -873,7 +873,7 @@ test(
 );
 
 test("harness run skips an existing branch unless --force", { skip: !hasGit() }, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-skip-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-skip-"));
   const projectDir = makeHarnessProject(tempRoot);
   gitInTest(["branch", "harness/REQ-001"], { cwd: projectDir });
 
@@ -901,7 +901,7 @@ test(
     // of its entry-point file: the worker started the module that *defines* the
     // command rather than the one that *runs* it, loaded, did nothing and
     // exited 0 — which the parent reported as "Worker produced no report".
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-par-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-par-"));
     const projectDir = makeHarnessProject(tempRoot, ["REQ-002"]);
 
     const result = runCli([
@@ -935,7 +935,7 @@ test("a parallel run records itself once, not once per worker", { skip: !hasGit(
   // `harness report` reads every file in .harness/runs, so a worker writing
   // its own record counts the same requirement twice and inflates both
   // "requirements attempted" and "cost per delivered REQ".
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-rec-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-rec-"));
   const projectDir = makeHarnessProject(tempRoot, ["REQ-002"]);
 
   const result = runCli([
@@ -973,7 +973,7 @@ test("a reviewer advises the next step and can never reach the gate", { skip: !h
   // reviewer and then implements again with its findings. The reviewer here
   // deliberately misbehaves — it writes a file — because "advisory" has to be
   // enforced, not trusted.
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-roles-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-roles-"));
   const projectDir = makeHarnessProject(tempRoot);
   const marker = path.join(tempRoot, "attempts.txt");
 
@@ -1064,7 +1064,7 @@ test("a reviewer advises the next step and can never reach the gate", { skip: !h
 });
 
 test("a review profile must declare itself advisory", { skip: !hasGit() }, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-adv-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-adv-"));
   const projectDir = makeHarnessProject(tempRoot);
   fs.mkdirSync(path.join(projectDir, ".harness"), { recursive: true });
   fs.writeFileSync(
@@ -1092,18 +1092,18 @@ test(
     // The domain merge is unit-tested; this asserts git actually routes the
     // file to it. Without the .gitattributes line, or without the local config,
     // git uses its line merge and these two branches conflict.
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-merge-drv-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-merge-drv-"));
     const projectDir = makeHarnessProject(tempRoot, ["REQ-002"]);
 
     const init = runCli(["harness", "init", "--project-dir", projectDir]);
     assert.equal(init.status, 0, init.stderr);
 
     const attributes = fs.readFileSync(path.join(projectDir, ".gitattributes"), "utf8");
-    assert.match(attributes, /docs\/specs\/traceability\.md merge=csda-matrix/);
+    assert.match(attributes, /docs\/specs\/traceability\.md merge=specgate-matrix/);
 
     const driver = spawnSync(
       "git",
-      ["-C", projectDir, "config", "--get", "merge.csda-matrix.driver"],
+      ["-C", projectDir, "config", "--get", "merge.specgate-matrix.driver"],
       { encoding: "utf8" }
     );
     assert.equal(driver.status, 0, "harness init should register the driver locally");
@@ -1166,18 +1166,18 @@ test(
   () => {
     // Git has three states for a driver named in .gitattributes, and the middle
     // one is a trap: with `name` set but no `driver` command it answers
-    // "fatal: custom merge driver csda-matrix lacks command line" and the file
+    // "fatal: custom merge driver specgate-matrix lacks command line" and the file
     // cannot be merged at all — strictly worse than the conflict the driver
     // exists to remove. Unregistered is merely unhelped; half-registered is
     // broken, so they cannot share a severity.
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-drv-states-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-drv-states-"));
     const projectDir = path.join(tempRoot, "p");
     fs.mkdirSync(projectDir, { recursive: true });
     gitInitForTest(projectDir);
     fs.writeFileSync(path.join(projectDir, "spec.md"), "# Spec\n", "utf8");
     fs.writeFileSync(
       path.join(projectDir, ".gitattributes"),
-      "docs/specs/traceability.md merge=csda-matrix\n",
+      "docs/specs/traceability.md merge=specgate-matrix\n",
       "utf8"
     );
 
@@ -1186,14 +1186,14 @@ test(
 
     assert.match(line(doctor().stdout), /⚠️|has not registered it/, "neither key set: a warning");
 
-    gitInTest(["config", "merge.csda-matrix.name", "csda"], { cwd: projectDir });
+    gitInTest(["config", "merge.specgate-matrix.name", "specgate"], { cwd: projectDir });
     assert.match(
       line(doctor().stdout),
       /refuse to merge/,
       "name without driver must be reported as broken, not as unhelped"
     );
 
-    gitInTest(["config", "merge.csda-matrix.driver", "node x %O %A %B"], { cwd: projectDir });
+    gitInTest(["config", "merge.specgate-matrix.driver", "node x %O %A %B"], { cwd: projectDir });
     assert.match(line(doctor().stdout), /merges row by row/, "both set: healthy");
 
     fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -1204,7 +1204,7 @@ test(
 
 /** A project with one change ready to be authored, committed and clean. */
 function makeAuthorProject() {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-author-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-author-"));
   const projectDir = path.join(tempRoot, "project");
   fs.mkdirSync(path.join(projectDir, "features"), { recursive: true });
   fs.mkdirSync(path.join(projectDir, "docs", "specs", "adr"), { recursive: true });
@@ -1431,7 +1431,7 @@ test("the declared profile is recorded where the agent reads it", () => {
 });
 
 test("an unknown architecture profile is refused with the supported list", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-arch-bad-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-arch-bad-"));
   const configPath = path.join(tempRoot, "project.config");
   fs.writeFileSync(
     configPath,
@@ -1574,7 +1574,7 @@ test("pack infer requires --from", () => {
 });
 
 test("pack infer exits non-zero on a feature file with no scenarios", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-infer-empty-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-infer-empty-"));
   const featurePath = path.join(tempRoot, "empty.feature");
   fs.writeFileSync(featurePath, "Feature: Nothing here\n", "utf8");
   const result = runCli(["pack", "infer", "--from", featurePath]);
@@ -1586,7 +1586,7 @@ test("pack infer exits non-zero on a feature file with no scenarios", () => {
 // ── init: YAML config format ─────────────────────────────────────────────
 
 test("init accepts a YAML config and produces a valid project", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-init-yaml-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-init-yaml-"));
   const slug = `yaml-cfg-${Date.now()}`;
   const configPath = path.join(tempRoot, "project.yaml");
   const projectDir = path.join(tempRoot, slug);
@@ -1628,7 +1628,7 @@ test("init accepts a YAML config and produces a valid project", () => {
 });
 
 test("init rejects a YAML config that is a sequence, not a mapping", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-init-yaml-bad-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-init-yaml-bad-"));
   const configPath = path.join(tempRoot, "bad.yml");
   fs.writeFileSync(configPath, "- one\n- two\n", "utf8");
   const result = runCli([
@@ -1646,7 +1646,7 @@ test("init rejects a YAML config that is a sequence, not a mapping", () => {
 });
 
 test("harness prompt REQ-NNN prints the prompt without touching git", { skip: !hasGit() }, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-prompt-cli-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-prompt-cli-"));
   const projectDir = makeHarnessProject(tempRoot);
   const result = runCli(["harness", "prompt", "REQ-001", "--project-dir", projectDir]);
   assert.equal(result.status, 0, result.stderr);
@@ -1666,7 +1666,7 @@ test("harness prompt rejects a malformed REQ id", () => {
 });
 
 test("harness prompt prepends prompt_prefix from harness.config.yaml", { skip: !hasGit() }, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-prefix-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-prefix-"));
   const projectDir = makeHarnessProject(tempRoot);
   fs.writeFileSync(
     path.join(projectDir, "harness.config.yaml"),
@@ -1684,7 +1684,7 @@ test("harness prompt prepends prompt_prefix from harness.config.yaml", { skip: !
 });
 
 test("harness run --push --pr-cmd publishes green branches (CI mode)", { skip: !hasGit() }, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-harness-ci-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-ci-"));
   const projectDir = makeHarnessProject(tempRoot);
 
   // Local bare repo standing in for the enterprise remote.
@@ -1745,7 +1745,7 @@ const RUNTIME_BASE_CONFIG = [
 
 /** Generate a project from an inline config and return its directory. */
 function initRuntimeProject(extraLines) {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-runtime-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-runtime-"));
   const configPath = path.join(tempRoot, "project.config");
   fs.writeFileSync(configPath, [...RUNTIME_BASE_CONFIG, ...extraLines].join("\n") + "\n", "utf8");
   const result = runCli([
@@ -1812,7 +1812,7 @@ test("DOCKER_SUPPORT=false leaves no orphaned Docker or devcontainer artifacts",
 });
 
 test("DEVCONTAINER_SUPPORT=true without DOCKER_SUPPORT is rejected", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-runtime-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-runtime-"));
   const configPath = path.join(tempRoot, "project.config");
   fs.writeFileSync(
     configPath,
@@ -1835,7 +1835,7 @@ test("DEVCONTAINER_SUPPORT=true without DOCKER_SUPPORT is rejected", () => {
 });
 
 test("an unsupported DATABASE_ENGINE is rejected with the supported list", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-runtime-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-runtime-"));
   const configPath = path.join(tempRoot, "project.config");
   fs.writeFileSync(
     configPath,
@@ -1914,7 +1914,7 @@ test("DATASTORE=none is accepted explicitly on a backend too", () => {
 });
 
 test("an unsupported DATASTORE is rejected with the allowed list", () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "csda-datastore-"));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-datastore-"));
   const configPath = path.join(tempRoot, "project.config");
   fs.writeFileSync(configPath, [...RUNTIME_BASE_CONFIG, 'DATASTORE="mongo"'].join("\n"), "utf8");
   const result = runCli([

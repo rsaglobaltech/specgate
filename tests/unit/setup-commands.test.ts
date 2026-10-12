@@ -33,7 +33,7 @@ test("completion COMMANDS lists the user-facing commands", () => {
 
 test("bash completion script names the commands and registers the function", () => {
   const s = bashScript();
-  assert.match(s, /complete -F _specgate specgate csda create-spec-driven-app/);
+  assert.match(s, /complete -F _specgate specgate create-spec-driven-app/);
   assert.match(s, /status/);
   // sub-command case arms are present
   for (const sub of SUBCOMMANDS.req) assert.match(s, new RegExp(sub));
@@ -41,8 +41,8 @@ test("bash completion script names the commands and registers the function", () 
 
 test("zsh completion script is compdef-tagged and registers the function", () => {
   const s = zshScript();
-  assert.match(s, /#compdef specgate csda/);
-  assert.match(s, /compdef _specgate specgate csda create-spec-driven-app/);
+  assert.match(s, /#compdef specgate create-spec-driven-app/);
+  assert.match(s, /compdef _specgate specgate create-spec-driven-app/);
   assert.match(s, /doctor/);
 });
 

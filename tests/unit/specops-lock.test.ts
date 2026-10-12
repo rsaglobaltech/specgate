@@ -51,7 +51,7 @@ test("readLock throws when root is not an object", () => {
 test("newLock produces a valid empty lock", () => {
   const lock = newLock("0.1.0");
   assert.equal(lock.specops_version, SPECOPS_SCHEMA_VERSION);
-  assert.equal(lock.csda_version, "0.1.0");
+  assert.equal(lock.specgate_version, "0.1.0");
   assert.deepEqual(lock.packs, []);
 });
 

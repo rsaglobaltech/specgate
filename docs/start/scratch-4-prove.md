@@ -20,12 +20,12 @@ where the product stands.
 specgate done REQ-002
 ```
 
-<!-- csda:out-scratch-done:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-done:begin — generated; edit the source, not this block -->
 ```text
 $ specgate done REQ-002
 ✔  REQ-002 → Implemented (1 row updated)
 ```
-<!-- csda:out-scratch-done:end -->
+<!-- specgate:out-scratch-done:end -->
 
 Before writing `Implemented`, `done` ran the gate for REQ-002 and your test
 command. A missing test, a `<placeholder>` left in a scenario or a red suite,
@@ -39,13 +39,13 @@ REQ-004 is waiting for the client's answer about the late-cancellation fee:
 specgate done REQ-004
 ```
 
-<!-- csda:out-scratch-done-blocked:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-done-blocked:begin — generated; edit the source, not this block -->
 ```text
 $ specgate done REQ-004
 ✖  REQ-004 not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification). [done_needs_clarification]
-     fix: Answer the question that blocks it in its change's questions.md, remove `status="Needs Clarification"` from its `csda:trace`, write its test, then run `done`.
+     fix: Answer the question that blocks it in its change's questions.md, remove `status="Needs Clarification"` from its `specgate:trace`, write its test, then run `done`.
 ```
-<!-- csda:out-scratch-done-blocked:end -->
+<!-- specgate:out-scratch-done-blocked:end -->
 
 That refusal is the point. An agent asked to "finish the bookings module"
 cannot close it by inventing the fee; the question stays open until a person
@@ -57,7 +57,7 @@ answers it.
 specgate check
 ```
 
-<!-- csda:out-scratch-check-green:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-check-green:begin — generated; edit the source, not this block -->
 ```text
 $ specgate check
 ℹ️ [INFO] ✅ Validation passed
@@ -81,7 +81,7 @@ $ specgate check
 
 ✔  Gate passed — the specification and `node --test`
 ```
-<!-- csda:out-scratch-check-green:end -->
+<!-- specgate:out-scratch-check-green:end -->
 
 `check` is `validate --strict` and then your tests. Requirements still in
 `Draft` owe nothing and are counted as exempt, so a pass never hides its own
@@ -93,12 +93,12 @@ scope.
 specgate report --out report.html
 ```
 
-<!-- csda:out-scratch-report:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-report:begin — generated; edit the source, not this block -->
 ```text
 $ specgate report --out report.html
 📊 Wrote report.html — 25% implemented (1/4).
 ```
-<!-- csda:out-scratch-report:end -->
+<!-- specgate:out-scratch-report:end -->
 
 One self-contained HTML page: what is done, what is pending, what is missing
 a test, and what is waiting for an answer — readable without the repository.

@@ -309,7 +309,7 @@ function pageShell(page: Page, version: string): string {
 <script>
   // Applied before paint so the page never flashes the wrong theme.
   (function () {
-    var t = localStorage.getItem("csda-theme");
+    var t = localStorage.getItem("specgate-theme");
     if (t) document.documentElement.setAttribute("data-theme", t);
   })();
 </script>
@@ -403,7 +403,7 @@ function markdownFiles(dir: string, prefix = ""): string[] {
 /**
  * The hand-written parts of the site, copied across.
  *
- * `index.html` gets one transformation on the way: its `csda:diagram` markers
+ * `index.html` gets one transformation on the way: its `specgate:diagram` markers
  * are resolved, the same way a markdown page's are. The diagram is a source
  * file in the repository and the marker is one line, so there is nothing to go
  * stale between them — unlike the terminal recording, which needs the CLI to
@@ -544,7 +544,7 @@ export function buildSite(outDir: string): { pages: number; orphans: string[] } 
     const source = fs.readFileSync(path.join(DOCS, `${slug}.md`), "utf8");
     // The marker is ours and means nothing to a reader.
     const cleaned = inlineDiagrams(
-      source.replace(/^<!--\s*csda:allow-placeholders[^>]*-->\s*\n?/gm, ""),
+      source.replace(/^<!--\s*specgate:allow-placeholders[^>]*-->\s*\n?/gm, ""),
       available
     );
     // Components expand before `marked` sees the source, and are handed the

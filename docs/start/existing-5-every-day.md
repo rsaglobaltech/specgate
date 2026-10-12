@@ -20,7 +20,7 @@ its own.
 specgate status
 ```
 
-<!-- csda:out-existing-status-daily:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-status-daily:begin — generated; edit the source, not this block -->
 ```text
 $ specgate status
   📊 Project status  invoicing
@@ -34,7 +34,7 @@ $ specgate status
 
   Next  specgate plan  — REQ-002's feature file is missing — plan shows which
 ```
-<!-- csda:out-existing-status-daily:end -->
+<!-- specgate:out-existing-status-daily:end -->
 
 ## The loop
 

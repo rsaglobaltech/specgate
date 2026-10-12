@@ -3,13 +3,13 @@
 How a version of Specgate is cut and published — to npm, to the container
 registry and to this documentation site — and what support it gets.
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **GitHub Actions are switched off on the `rsaglobaltech` organisation**, to
 save the free-minutes quota — every workflow except `pages.yml`, which
 publishes this site. The process below describes what the workflows do when
 they run; [How a release is done today](#how-a-release-is-done-today) is what
 a maintainer actually does meanwhile.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 ## What gets published
 
@@ -40,9 +40,11 @@ package is deprecated, not unpublished — every version stays installable, so a
 pinned dependency keeps resolving with a warning. The unscoped name `specgate`
 is unavailable: npm compares names without punctuation, so it collides with
 `spec-gate` and the registry answers `403`, which reads like a token problem and
-is not one. Docker images moved to `ghcr.io/<owner>/specgate`; tags published as
-`csda` are never rebuilt. The `csda` binary alias, the `~/.cache/csda/` pack
-cache and `CSDA_OFFLINE` keep the old name on purpose, so existing setups work.
+is not one. Docker images moved to `ghcr.io/<owner>/specgate`; tags published
+under the old image name are never rebuilt. Since
+[ADR-0032](specs/adr/0032-one-name-everywhere.md) nothing else keeps the old
+name: no binary alias, and the on-disk format, cache and environment variables
+are all `specgate`.
 
 ## Versioning
 

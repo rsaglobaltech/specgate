@@ -1,8 +1,8 @@
 # Rebar Crew — a field app for a rebar crew
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **A real client brief, built by an agent with Specgate.** The brief came from a real client; the product was built end to end by a coding agent (Claude) driving Specgate, with business decisions delegated to it and written down as assumptions. It is not a customer deployment, and the code repository is private.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 This is agent-driven adoption, not a customer story. It was the first pilot,
 run before `specgate draft` existed, and most of what Specgate is today was
@@ -32,7 +32,7 @@ tagged functional, non-functional or business rule. The product installed
 them like dependencies, pinned to a tag, and the agent built them one
 requirement per pull request.
 
-<!-- csda:steps -->
+<!-- specgate:steps -->
 ### Install the packs on a fresh skeleton
 
 ```bash
@@ -57,7 +57,7 @@ specgate validate --against-lock            # the packs have not drifted
 
 Packs v0.2.0 added 52 API and screen scenarios. `specops sync` brought them
 in, 30 delivered requirements reopened, and the harness ran again.
-<!-- csda:endsteps -->
+<!-- specgate:endsteps -->
 
 The harness made 76 requirement runs; 74 passed on the first attempt. The
 other two failed because of Specgate, not the code (#35 and #37 below). The

@@ -11,7 +11,7 @@
  * apply a delta to a spec without a second, subtly different parser.
  *
  * Grammar (a superset of the OpenSpec markdown form — the `REQ-NNN` id and the
- * `csda:trace` comment are ours, and both are optional):
+ * `specgate:trace` comment are ours, and both are optional):
  *
  *   # <title>
  *   ## Purpose
@@ -23,7 +23,7 @@
  *   - GIVEN una sesión iniciada a las 18:00
  *   - WHEN se calcula la tarifa
  *   - THEN el importe incluye un recargo del 20 %
- *   <!-- csda:trace uc=UC-007 cmd=CMD-011 feature=features/billing/x.feature -->
+ *   <!-- specgate:trace uc=UC-007 cmd=CMD-011 feature=features/billing/x.feature -->
  */
 
 /**
@@ -43,7 +43,7 @@ const RE_H1 = /^#[ \t]+([^ \t].*)?$/;
 const RE_H2 = /^##[ \t]+([^ \t].*)?$/;
 const RE_REQUIREMENT = /^###[ \t]+Requirement:[ \t]*([^ \t].*)?$/;
 const RE_SCENARIO = /^####[ \t]+Scenario:[ \t]*([^ \t].*)?$/;
-const RE_TRACE_OPEN = /^\s*<!--\s*csda:trace\b/;
+const RE_TRACE_OPEN = /^\s*<!--\s*specgate:trace\b/;
 const RE_STEP = /^[ \t]*[-*][ \t]+([^ \t].*)?$/;
 
 // `REQ-014 — Dynamic peak pricing` → ["REQ-014", "Dynamic peak pricing"].
@@ -101,7 +101,7 @@ export function parseTraceComment(raw: string): TraceComment {
   // is what CodeQL reads as a hand-rolled HTML tag filter (`js/bad-tag-filter`),
   // and it is right that a regex is the wrong tool for finding the end of a
   // comment. `trim()` then does what the anchored whitespace was for.
-  let body = raw.replace(/^[ \t]*<!--[ \t]*csda:trace\b/, "").trim();
+  let body = raw.replace(/^[ \t]*<!--[ \t]*specgate:trace\b/, "").trim();
   if (body.endsWith("-->")) body = body.slice(0, -3).trim();
   // `\b` so the scan cannot restart inside a run of letters, `[ \t]*` on both
   // sides of `=`, and an unquoted value that cannot contain a space. Without
@@ -231,7 +231,7 @@ export function parseMarkdown(source: string): DocumentNode {
     const line = lines[i];
     const lineNo = i + 1;
 
-    // A multi-line `<!-- csda:trace ... -->` comment attaches to the requirement
+    // A multi-line `<!-- specgate:trace ... -->` comment attaches to the requirement
     // it sits under, wherever inside it appears.
     if (traceBuffer !== null) {
       traceBuffer.push(line);
@@ -433,7 +433,7 @@ function renderTrace(trace) {
     const v = String(trace[k]);
     return /\s/.test(v) ? `${k}="${v}"` : `${k}=${v}`;
   });
-  return `<!-- csda:trace ${parts.join(" ")} -->`;
+  return `<!-- specgate:trace ${parts.join(" ")} -->`;
 }
 
 export function renderRequirement(req) {

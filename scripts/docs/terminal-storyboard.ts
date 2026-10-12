@@ -71,7 +71,7 @@ export interface Storyboard {
   readonly title: string;
   /** Under `docs/assets/`. */
   readonly file: string;
-  /** The `csda:<block>` sentinel in `docs/index.html` holding the fallback. */
+  /** The `specgate:<block>` sentinel in `docs/index.html` holding the fallback. */
   readonly block: string;
   readonly beats: readonly Beat[];
 }

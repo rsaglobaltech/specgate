@@ -234,7 +234,7 @@ computes it:
 | Scenario ID, Feature file | scenarios tagged `@REQ-NNN @SCN-NNN` (`specgate new` writes them)      |
 | Test artifact             | test files that mention `REQ-NNN` — a comment or a test name is enough |
 | Technical artifact        | other source files that mention `REQ-NNN`                              |
-| Status                    | `status=` in the section's `<!-- csda:trace … -->` comment             |
+| Status                    | `status=` in the section's `<!-- specgate:trace … -->` comment             |
 
 Anything derivation cannot see — a code path, a test that does not name its
 requirement, the DDD columns — goes in that same comment, with the grammar
@@ -243,7 +243,7 @@ capability specs already use:
 ```markdown
 ## REQ-003 — Orders can be cancelled
 
-<!-- csda:trace status=Implemented artifact=lib/orders.js -->
+<!-- specgate:trace status=Implemented artifact=lib/orders.js -->
 ```
 
 **Switching a project created before this:**

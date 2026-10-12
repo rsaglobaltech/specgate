@@ -1,8 +1,8 @@
 # EventTech — corporate event operations on Quarkus
 
-<!-- csda:note -->
+<!-- specgate:note -->
 **A real client brief, built by an agent with Specgate.** The brief came from a real client; the product was built end to end by a coding agent (Claude) driving Specgate, with business decisions delegated to it and written down as assumptions. It is not a customer deployment, and the code repository is private.
-<!-- csda:endnote -->
+<!-- specgate:endnote -->
 
 This is agent-driven adoption, not a customer story. It was the first pilot
 on Quarkus, and the first to use rule D12 the day it shipped.
@@ -29,7 +29,7 @@ reports.
 
 ## How Specgate was used
 
-<!-- csda:steps -->
+<!-- specgate:steps -->
 ### Adopt once
 
 ```bash
@@ -56,7 +56,7 @@ specgate change archive draft-eventos
 specgate done REQ-047
 specgate check
 ```
-<!-- csda:endsteps -->
+<!-- specgate:endsteps -->
 
 Five drafts, one per module, and one follow-up change (`informes-2`).
 `@QuarkusTest` starts the whole application, so the lesson from FinCore —

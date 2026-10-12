@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import { renderDeltaFeature, withDefaultFeaturePaths } from "../domain/DeltaFeature";
-import { csdaTagsIn } from "../domain/GherkinTags";
+import { specgateTagsIn } from "../domain/GherkinTags";
 import { IProjectRepository } from "./ports/IProjectRepository";
 import { ArchivePlan } from "../domain/ArchivePlan";
 import { DeltaSpec } from "../domain/DeltaSpec";
@@ -184,7 +184,7 @@ export class ArchiveChangeUseCase {
         // gate, silently (reservas_app, #53). Rewritten when everything in it
         // belongs to the delta; otherwise the scenarios still missing are named.
         if (!modified || bringsFeatures) continue;
-        const inFile = csdaTagsIn(existing).filter((t) => /^@SCN-/.test(t));
+        const inFile = specgateTagsIn(existing).filter((t) => /^@SCN-/.test(t));
         const inDelta = (req.scenarios || [])
           .map((sc: any) => (sc.id ? `@${sc.id}` : null))
           .filter(Boolean) as string[];
