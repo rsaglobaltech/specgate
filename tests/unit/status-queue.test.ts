@@ -42,7 +42,7 @@ test("status names each requirement and what it still needs", () => {
     const out = cli("status", "--project-dir", dir).stdout;
     assert.match(out, /REQ-002\s+Totals are rounded half-up\s+a test and code/);
     assert.match(out, /To do/);
-    assert.doesNotMatch(out, /Next\s+specgate plan/, "status must not send you to plan");
+    assert.doesNotMatch(out, /➜\s+specgate plan/, "status must not send you to plan");
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }
@@ -58,7 +58,7 @@ test("a requirement whose test exists is next, by id, through the gate", () => {
 
     const out = cli("status", "--project-dir", dir).stdout;
     assert.match(out, /Ready to close/);
-    assert.match(out, /Next\s+specgate done REQ-002/);
+    assert.match(out, /➜\s+specgate done REQ-002/);
 
     const doc = JSON.parse(cli("status", "--project-dir", dir, "--json").stdout);
     assert.equal(doc.nextCommand, "specgate done REQ-002");

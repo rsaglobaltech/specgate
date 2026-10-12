@@ -24,6 +24,7 @@
 import { runWithDeadline } from "../../../lib/run-with-deadline";
 import { derivedMatrixFor, refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
+import * as ui from "../../../lib/ui";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -118,14 +119,29 @@ export function setJsonMode(on) {
   jsonMode = Boolean(on);
 }
 
+/**
+ * A progress line. `REQ-001: attempt 1/3` is drawn with the requirement in its
+ * own column, so a run over many requirements reads down one edge; a line that
+ * starts with spaces continues the one above it.
+ */
+function progressLine(mark: string, msg: string): string {
+  const m = /^([A-Z][A-Z0-9]*-[\w.-]+): (.*)$/s.exec(msg);
+  if (m) return `  ${mark}  ${ui.c.accent}${ui.pad(m[1], 9)}${ui.c.reset} ${m[2]}\n`;
+  if (/^\s{2,}/.test(msg)) return `     ${ui.pad("", 9)} ${ui.muted(msg.trim())}\n`;
+  return `  ${mark}  ${msg}\n`;
+}
 function info(msg) {
-  (jsonMode ? process.stderr : process.stdout).write(`ℹ️  [harness] ${msg}\n`);
+  (jsonMode ? process.stderr : process.stdout).write(
+    progressLine(`${ui.c.brand}${ui.ASCII ? "*" : "◇"}${ui.c.reset}`, msg)
+  );
 }
 function warn(msg) {
-  (jsonMode ? process.stderr : process.stdout).write(`⚠️  [harness] ${msg}\n`);
+  (jsonMode ? process.stderr : process.stdout).write(
+    progressLine(`${ui.c.warn}${ui.sym.warn}${ui.c.reset}`, msg)
+  );
 }
 export function error(msg) {
-  process.stderr.write(`❌ [harness] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 
 function usage() {
@@ -1809,7 +1825,7 @@ export function publishBranch(projectDir, branch, req, settings) {
  */
 const FAILURE_TAIL_LINES = 20;
 
-export function printReport(results, format) {
+export function printReport(results, format, recorded?: string) {
   if (format === "json") {
     const summary = results.reduce((acc, r) => {
       acc[r.result] = (acc[r.result] || 0) + 1;
@@ -1821,22 +1837,26 @@ export function printReport(results, format) {
     return;
   }
 
-  process.stdout.write("\n── harness report ──\n");
+  const MARK = {
+    pass: `${ui.c.ok}${ui.sym.ok}${ui.c.reset}`,
+    fail: `${ui.c.bad}${ui.sym.fail}${ui.c.reset}`,
+    blocked: `${ui.c.warn}${ui.sym.warn}${ui.c.reset}`,
+    skipped: `${ui.c.muted}${ui.sym.empty}${ui.c.reset}`,
+  };
+  const COLOR = { pass: ui.c.ok, fail: ui.c.bad, blocked: ui.c.warn, skipped: ui.c.muted };
+  const idWidth = Math.max(9, ...results.map((r) => String(r.requirement).length));
+  process.stdout.write("\n" + ui.section("Harness report"));
   for (const r of results) {
-    const icon =
-      r.result === "pass"
-        ? "✅"
-        : r.result === "skipped"
-          ? "⏭️ "
-          : r.result === "blocked"
-            ? "⛔"
-            : "❌";
     process.stdout.write(
-      `  ${icon} ${r.requirement}  ${r.result} (${r.attempts} attempt${r.attempts === 1 ? "" : "s"})  → ${r.branch}\n`
+      `  ${MARK[r.result] || MARK.fail}  ${ui.c.bold}${ui.pad(String(r.requirement), idWidth)}${ui.c.reset} ` +
+        `${COLOR[r.result] || ""}${ui.pad(r.result, 8)}${ui.c.reset}` +
+        ui.muted(`${r.attempts} attempt${r.attempts === 1 ? "" : "s"}`) +
+        `   ${ui.c.accent}${ui.sym.arrow} ${r.branch}${ui.c.reset}\n`
     );
+    const sub = (t: string) => process.stdout.write(`       ${t}\n`);
     if (r.result === "blocked") {
       // Nothing ran, so there is no gate output to show — only the reason.
-      process.stdout.write(`       ${r.error}\n`);
+      sub(r.error);
       continue;
     }
     if (r.result !== "pass" && r.error) {
@@ -1851,24 +1871,26 @@ export function printReport(results, format) {
         .slice(1)
         .filter((l) => l.trim() !== "")
         .slice(-FAILURE_TAIL_LINES);
-      process.stdout.write(`       ${head}\n`);
-      for (const line of tail) process.stdout.write(`       │ ${line}\n`);
+      sub(head);
+      for (const line of tail) sub(`${ui.muted(ui.sym.pipe)} ${line}`);
       if (tail.length > 0) {
-        process.stdout.write("       └ full output: --format json · reproduce: --keep-worktrees\n");
+        sub(ui.muted(`${ui.sym.corner} full output: --format json · reproduce: --keep-worktrees`));
       }
       if (r.workPreserved) {
-        process.stdout.write(`       ↳ the attempt is committed on ${r.branch} — review it\n`);
+        sub(ui.muted(`↳ the attempt is committed on ${r.branch} — review it`));
       } else if (r.result === "fail") {
-        process.stdout.write("       ↳ the agent produced no files\n");
+        sub(ui.muted("↳ the agent produced no files"));
       }
     }
     if (r.pushed) {
-      process.stdout.write(
-        `       pushed${r.prCreated ? ` · PR created${r.prOutput ? `: ${r.prOutput}` : ""}` : ""}\n`
+      sub(
+        ui.muted(
+          `pushed${r.prCreated ? ` · PR created${r.prOutput ? `: ${r.prOutput}` : ""}` : ""}`
+        )
       );
     }
     if (r.publishError) {
-      process.stdout.write(`       publish issue: ${String(r.publishError).split("\n")[0]}\n`);
+      sub(`${ui.c.warn}publish issue:${ui.c.reset} ${String(r.publishError).split("\n")[0]}`);
     }
   }
   const pass = results.filter((r) => r.result === "pass").length;
@@ -1879,9 +1901,26 @@ export function printReport(results, format) {
   // used to produce N failures and N wasted agent invocations, which said
   // nothing about the N-1 requirements that were never attempted.
   const blockedNote = blocked > 0 ? ` · ${blocked} blocked` : "";
-  process.stdout.write(`\n  ${pass} passed · ${fail} failed · ${skip} skipped${blockedNote}\n`);
+  process.stdout.write(
+    `\n  ${ui.progress(pass, results.length, "passed")}` +
+      ui.muted(`   ${pass} passed · ${fail} failed · ${skip} skipped${blockedNote}`) +
+      "\n"
+  );
+  if (recorded) {
+    process.stdout.write(
+      `  ${ui.muted(`Run recorded in ${recorded} — specgate harness report sums them up`)}\n`
+    );
+  }
   if (pass > 0) {
-    process.stdout.write(`  Review and merge the harness/* branches you trust.\n`);
+    const first = results.find((r) => r.result === "pass");
+    process.stdout.write(
+      ui.next(
+        `git diff HEAD...${first.branch}`,
+        "review and merge the harness/* branches you trust"
+      )
+    );
+  } else {
+    process.stdout.write("\n");
   }
 }
 
@@ -2276,14 +2315,20 @@ export class RunCommand extends BaseCommand {
       }
 
       if (pending.length === 0) {
-        info("No pending requirements. Nothing to do.");
+        if (jsonMode) info("No pending requirements. Nothing to do.");
+        else
+          process.stdout.write(
+            ui.header("harness run") + ui.ok("No pending requirements. Nothing to do.") + "\n"
+          );
         process.exit(0);
       }
 
       const hintByReq = new Map((plan.next_steps || []).map((s) => [s.requirement, s.hint]));
 
       if (args.dryRun) {
-        info(`Dry run — ${pending.length} requirement(s) would be processed:`);
+        process.stdout.write(
+          ui.header("harness run", `dry run · ${pending.length} requirement(s) would be processed`)
+        );
         for (const req of pending) {
           const prompt = buildPrompt(req, projectDir, {
             promptPrefix: settings.promptPrefix,
@@ -2291,7 +2336,11 @@ export class RunCommand extends BaseCommand {
             withPrecedents: settings.promptPrecedents === true,
           });
           process.stdout.write(
-            `\n${"═".repeat(72)}\n${req.requirement} (${req.category}) → branch harness/${req.requirement}\n${"═".repeat(72)}\n`
+            "\n" +
+              ui.section(
+                `${req.requirement} · ${req.category} → branch harness/${req.requirement}`
+              ) +
+              "\n"
           );
           process.stdout.write(prompt + "\n");
         }
@@ -2316,7 +2365,16 @@ export class RunCommand extends BaseCommand {
       const baseRef = args.baseBranch || "HEAD";
       const concurrencyNote =
         settings.concurrency > 1 ? `, up to ${settings.concurrency} at a time` : "";
-      info(`Processing ${pending.length} requirement(s) from base ${baseRef}${concurrencyNote}.`);
+      if (jsonMode || process.env.SPECGATE_HARNESS_WORKER) {
+        info(`Processing ${pending.length} requirement(s) from base ${baseRef}${concurrencyNote}.`);
+      } else {
+        process.stdout.write(
+          ui.header(
+            "harness run",
+            `${pending.length} requirement(s) from ${baseRef}${concurrencyNote}`
+          )
+        );
+      }
 
       // One prune, in the parent, before anything is created. It used to run per
       // requirement, which is harmless in series and a race in parallel:
@@ -2371,12 +2429,11 @@ export class RunCommand extends BaseCommand {
             results,
           });
 
-      printReport(results, args.format);
-      if (recordPath && args.format !== "json") {
-        info(
-          `Run recorded in ${path.relative(projectDir, recordPath)} — \`specgate harness report\``
-        );
-      }
+      printReport(
+        results,
+        args.format,
+        recordPath ? path.relative(projectDir, recordPath) : undefined
+      );
 
       // A blocked requirement was never attempted, so it is not a pass — but it
       // is also not evidence that anything is broken beyond the failure that

@@ -15,17 +15,7 @@ import { RemovePackUseCase } from "../../packages/core/src/application/RemovePac
 import { Lockfile } from "../../packages/core/src/domain/Lockfile";
 import { BaseCommand } from "../lib/command";
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  red: COLOR_ENABLED ? "\x1b[31m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-  cyan: COLOR_ENABLED ? "\x1b[36m" : "",
-};
+import { c } from "../lib/ui";
 
 /** Parsed command-line options for this command. */
 export interface SpecopsRemoveOptions {

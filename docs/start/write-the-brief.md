@@ -29,6 +29,8 @@ specgate draft
 <!-- specgate:out-brief-none:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
+  ◆ specgate · draft
+
   No brief yet. Specgate drafts your specification from a brief: docs/brief.md.
 
   A brief is whatever says what the product must do — your own plan, a
@@ -60,7 +62,9 @@ specgate draft --new-brief
 <!-- specgate:out-brief-new:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft --new-brief
-  ✔ Wrote docs/brief.md — a brief to fill in.
+  ◆ specgate · draft --new-brief
+
+  ✔  Wrote docs/brief.md — a brief to fill in.
 
   Fill it in, in your own words:
     1. The four fields at the top — product, surfaces, actors, modules.
@@ -72,7 +76,9 @@ $ specgate draft --new-brief
   Have a plan or an email already? Paste it under the four fields instead
   of the sections — Specgate reads it as it is.
 
-  Next  specgate draft  — it checks the four fields and says what is next
+  Next ───────────────────────────────────────────────────
+  ➜  specgate draft
+… 1 more line
 ```
 <!-- specgate:out-brief-new:end -->
 
@@ -101,7 +107,7 @@ exercises of each lesson and see their progress. …
 <!-- specgate:out-brief-plain:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
-  specgate draft  ·  docs/brief.md
+  ◆ specgate · draft   docs/brief.md
 
   Your brief has no front matter yet: four fields at the very top of docs/brief.md
   that tell Specgate what to draft, and what to check each draft against.
@@ -138,14 +144,14 @@ $ specgate draft
     modules: [courses, lessons, exercises, progress]
     ---
 
-  Or let your agent propose it from your brief. Paste this into Claude Code,
-  Cursor, Codex…:
+  Or let your agent propose it ───────────────────────────
+  Paste this into Claude Code, Cursor, Codex…
 
     Propose the front matter of docs/brief.md: follow docs/specs/BRIEF-SETUP.md
 
-  or let Specgate call it:  specgate draft --agent "claude -p"
-
-  Either way, review the four fields, then run  specgate draft  again.
+  Next ───────────────────────────────────────────────────
+  ➜  specgate draft --agent "claude -p"
+     Specgate calls your agent for you — then review the four fields and run specgate draft again
 ```
 <!-- specgate:out-brief-plain:end -->
 
@@ -182,26 +188,32 @@ brief is put back and nothing is kept.
 <!-- specgate:out-brief-agent:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft --agent "claude -p"
-  → claude -p --permission-mode acceptEdits  is proposing the front matter of docs/brief.md…
-    (edit permission added: claude -p cannot write the file otherwise)
+  ◆ specgate · draft --agent   docs/brief.md
+
+  ➜  claude -p --permission-mode acceptEdits  is proposing the front matter of docs/brief.md…
+     edit permission added: claude -p cannot write files otherwise
 
 Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to check.
 
-  The agent proposed this, at the top of docs/brief.md:
+  ────────────────────────────────────────────────────────────────────────────
 
-    ---
-    product: Lingo — online lessons for a language school
-    surfaces: [web, mobile]
-    actors:
-      - { name: Teacher, surfaces: [web] }
-      # check: the brief says students use "the web or their phone"
-      - { name: Student, surfaces: [web, mobile] }
-    modules: [courses, lessons, exercises, progress]
-    ---
+  ✔  The agent proposed this, at the top of docs/brief.md:
 
-  Your brief below it is unchanged.
+    │ ---
+    │ product: Lingo — online lessons for a language school
+    │ surfaces: [web, mobile]
+    │ actors:
+    │   - { name: Teacher, surfaces: [web] }
+    │   # check: the brief says students use "the web or their phone"
+    │   - { name: Student, surfaces: [web, mobile] }
+    │ modules: [courses, lessons, exercises, progress]
+    │ ---
 
-  Review it — change anything — then  specgate draft
+  ℹ  Your brief below it is unchanged.
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate draft
+     review it — change anything — then run it
 ```
 <!-- specgate:out-brief-agent:end -->
 
@@ -221,18 +233,20 @@ specgate draft
 <!-- specgate:out-brief-error:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
-  specgate draft  ·  docs/brief.md
+  ◆ specgate · draft   docs/brief.md
 
   The front matter at the top of docs/brief.md needs 3 fix(es):
 
   ✖  Teacher uses "tablet", which Specgate cannot check.
-     Use api, web, mobile, desktop. A tablet or a kiosk is `web` or `mobile`.
+     fix: Use api, web, mobile, desktop. A tablet or a kiosk is `web` or `mobile`.
   ✖  Admin has no surfaces.
-     Write it as `- { name: Admin, surfaces: [web] }`, with every place Admin uses.
+     fix: Write it as `- { name: Admin, surfaces: [web] }`, with every place Admin uses.
   ✖  The module "Live classes" has spaces, capitals or symbols.
-     Write it as live-classes — it becomes a folder and a command: specgate draft live-classes.
+     fix: Write it as live-classes — it becomes a folder and a command: specgate draft live-classes.
 
-  Next  fix them in docs/brief.md, then  specgate draft
+  Next ───────────────────────────────────────────────────
+  ➜  specgate draft
+     once they are fixed in docs/brief.md
 ```
 <!-- specgate:out-brief-error:end -->
 
@@ -242,17 +256,19 @@ names the first one:
 <!-- specgate:out-brief-ready:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
-  specgate draft  ·  docs/brief.md
+  ◆ specgate · draft   docs/brief.md
 
-  Product  Lingo — online lessons for a language school
+  Product   Lingo — online lessons for a language school
+  Progress  ░░░░░░░░░░░░░░░░░░░░  0 of 4 archived
 
-  Modules
+  Modules ────────────────────────────────────────────────
     ○ courses    not started
     ○ lessons    not started
     ○ exercises  not started
     ○ progress   not started
 
-  Next  specgate draft courses
+  Next ───────────────────────────────────────────────────
+  ➜  specgate draft courses
 ```
 <!-- specgate:out-brief-ready:end -->
 

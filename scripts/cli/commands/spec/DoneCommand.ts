@@ -17,17 +17,8 @@ import { findCliRoot } from "../../../lib/project-root";
 import { isDerivedProject, writeRequirementFields } from "../../../lib/derived-writes";
 import { refreshDerivedMatrix } from "./MatrixCommand";
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  red: COLOR_ENABLED ? "\x1b[31m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-  cyan: COLOR_ENABLED ? "\x1b[36m" : "",
-};
+import { c } from "../../../lib/ui";
+import * as ui from "../../../lib/ui";
 
 export const ALLOWED_STATUSES = [
   "Draft",
@@ -188,8 +179,9 @@ export class DoneCommand extends BaseCommand {
       testCmd: opts.testCmd || harness.testCmd,
     });
 
+    if (!opts.json) process.stdout.write(ui.header(`done ${opts.reqId}`, opts.status));
     for (const step of plan.steps) {
-      const run =
+      const exec = () =>
         step.stage === "validate"
           ? spawnSync(
               process.execPath,
@@ -206,13 +198,18 @@ export class DoneCommand extends BaseCommand {
               encoding: "utf8",
               shell: true,
             });
+      const label =
+        step.stage === "validate"
+          ? `Specification   ${ui.muted(`the gate, for ${opts.reqId}`)}`
+          : `Tests           ${ui.muted(step.argv[0])}`;
+      const run = opts.json ? exec() : ui.task(label, exec, (r) => ({ ok: r.status === 0 }));
 
       if (run.status === 0) continue;
 
       // The output is the evidence, and it goes out *before* the diagnostic:
       // `io.fail` never returns, so anything written after it is dead code.
       const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
-      if (detail && !opts.json) process.stderr.write(`${detail}\n\n`);
+      if (detail && !opts.json) process.stderr.write("\n" + indent(detail) + "\n\n");
 
       // Over JSON (and so over MCP) the reason has to travel in the document:
       // the agent got `done_validate_failed` and nothing it could act on.
@@ -291,7 +288,14 @@ export class DoneCommand extends BaseCommand {
     const updated = result.updated;
     io.emit({ requirement: { id: opts.reqId, status: opts.status, rowsUpdated: updated } }, () =>
       process.stdout.write(
-        `${c.green}✔${c.reset}  ${c.bold}${opts.reqId}${c.reset} → ${c.bold}${opts.status}${c.reset} ${c.dim}(${updated} row${updated > 1 ? "s" : ""} updated)${c.reset}\n`
+        "\n" +
+          ui.ok(
+            `${c.bold}${opts.reqId}${c.reset} ${ui.sym.arrow} ${c.ok}${c.bold}${opts.status}${c.reset} ` +
+              ui.muted(`(${updated} row${updated > 1 ? "s" : ""} updated)`)
+          ) +
+          (plan.testsUnverified
+            ? ""
+            : ui.next("specgate status", "what is left, and the next requirement"))
       )
     );
 
@@ -299,10 +303,11 @@ export class DoneCommand extends BaseCommand {
     // `Implemented` into the record other people read. A project nothing ran is
     // not a project that passed.
     if (plan.testsUnverified && !opts.json) {
-      process.stderr.write(`${c.yellow}⚠${c.reset}  ${NO_TEST_COMMAND_WARNING.message}\n`);
+      process.stderr.write("\n" + ui.warn(NO_TEST_COMMAND_WARNING.message));
       for (const line of NO_TEST_COMMAND_WARNING.fix) {
-        process.stderr.write(`   ${c.dim}${line}${c.reset}\n`);
+        process.stderr.write(`     ${ui.muted(line)}\n`);
       }
+      process.stderr.write("\n");
     }
 
     process.exit(EXIT.OK);
@@ -391,7 +396,7 @@ export class DoneCommand extends BaseCommand {
         const run = spawnSync(cmd, { cwd: projectDir, encoding: "utf8", shell: true });
         if (run.status !== 0) {
           const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
-          if (detail && !opts.json) process.stderr.write(`${detail}\n\n`);
+          if (detail && !opts.json) process.stderr.write(indent(detail) + "\n\n");
           for (const id of passing) {
             results.set(id, {
               ok: false,
@@ -442,28 +447,44 @@ export class DoneCommand extends BaseCommand {
     if (opts.json) {
       process.stdout.write(`${JSON.stringify(doc, null, 2)}\n`);
     } else {
+      process.stdout.write(ui.header(`done ${ids.join(" ")}`, opts.status));
       for (const id of ids) {
         const r = results.get(id)!;
         if (r.ok) {
           process.stdout.write(
-            `${c.green}✔${c.reset}  ${c.bold}${id}${c.reset} → ${c.bold}${opts.status}${c.reset}\n`
+            ui.ok(
+              `${c.bold}${id}${c.reset} ${ui.sym.arrow} ${c.ok}${c.bold}${opts.status}${c.reset}`
+            )
           );
         } else {
-          if (r.detail) process.stderr.write(`${r.detail}\n\n`);
+          if (r.detail) process.stderr.write(indent(r.detail) + "\n\n");
           process.stdout.write(
-            `${c.red}✖${c.reset}  ${c.bold}${id}${c.reset} not marked ${opts.status}: ${r.message}. ${c.dim}[${r.code}]${c.reset}\n`
+            ui.fail(
+              `${c.bold}${id}${c.reset} not marked ${opts.status}: ${r.message}. ${ui.muted(`[${r.code}]`)}`
+            )
           );
         }
       }
       if (ids.length > 1) {
         process.stdout.write(
-          `${c.dim}   ${ids.length - failed.length} of ${ids.length} closed; the project's tests ran ${passing.length > 0 && opts.check && !testsUnverified ? "once" : "no times"}.${c.reset}\n`
+          `\n  ${ui.progress(ids.length - failed.length, ids.length, "closed")}` +
+            ui.muted(
+              `   the project's tests ran ${passing.length > 0 && opts.check && !testsUnverified ? "once" : "no times"}`
+            ) +
+            "\n"
         );
       }
-      if (testsUnverified) {
-        process.stderr.write(`${c.yellow}⚠${c.reset}  ${NO_TEST_COMMAND_WARNING.message}\n`);
-      }
+      if (testsUnverified) process.stderr.write("\n" + ui.warn(NO_TEST_COMMAND_WARNING.message));
+      process.stdout.write(failed.length === 0 ? ui.next("specgate status") : "\n");
     }
     process.exit(failed.length > 0 ? EXIT.FAILURE : EXIT.OK);
   }
+}
+
+/** A command's own output, set in under ours so it reads as quoted evidence. */
+function indent(text: string): string {
+  return text
+    .split("\n")
+    .map((l) => `     ${l}`)
+    .join("\n");
 }

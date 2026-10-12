@@ -412,8 +412,8 @@ test("a requirement's bounded context is derived and matched to a profile", () =
     const out = run.stdout + run.stderr;
 
     // The whole point: different requirements, different profiles, in one run.
-    assert.match(out, /REQ-001: profile 'everything-else' matched/, out);
-    assert.match(out, /REQ-002: profile 'payments' matched/, out);
+    assert.match(out, /REQ-001\s+profile 'everything-else' matched/, out);
+    assert.match(out, /REQ-002\s+profile 'payments' matched/, out);
 
     // And it works with no `harness.config.yaml` at all — the rules live in
     // profiles.yaml, and reaching them through the config reader made them

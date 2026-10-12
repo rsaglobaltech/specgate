@@ -1,4 +1,5 @@
 import "./blocking-stdio";
+import { c, sym } from "./ui";
 export interface ICommand {
   execute(args?: string[]): Promise<void> | void;
 }
@@ -13,10 +14,10 @@ export abstract class BaseCommand implements ICommand {
   public abstract execute(): Promise<void> | void;
 
   protected error(msg: string): void {
-    process.stderr.write(`\x1b[31m✖\x1b[0m  ${msg}\n`);
+    process.stderr.write(`  ${c.bad}${sym.fail}${c.reset}  ${msg}\n`);
   }
 
   protected info(msg: string): void {
-    process.stdout.write(`\x1b[36mℹ\x1b[0m  ${msg}\n`);
+    process.stdout.write(`  ${c.note}${sym.info}${c.reset}  ${msg}\n`);
   }
 }

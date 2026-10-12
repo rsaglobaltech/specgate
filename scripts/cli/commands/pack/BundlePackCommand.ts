@@ -1,11 +1,12 @@
 import { createPackBundle } from "../../../../packages/core/src/infrastructure/RemotePackResolver";
 import { BaseCommand } from "../../../lib/command";
+import * as ui from "../../../lib/ui";
 
 function logInfo(msg: string) {
-  process.stdout.write(`ℹ️ [INFO] ${msg}\n`);
+  process.stdout.write(ui.logLine(msg));
 }
 function logError(msg: string) {
-  process.stderr.write(`❌ [ERROR] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 
 function usage() {

@@ -32,16 +32,7 @@ import {
 } from "../../../../packages/core/src/domain/PackContribution";
 import { stageContribution } from "../../../../packages/core/src/infrastructure/GitContributionStager";
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-  cyan: COLOR_ENABLED ? "\x1b[36m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-};
+import { c } from "../../../lib/ui";
 
 /** Parsed command-line options for this command. */
 export interface ContributeOptions {

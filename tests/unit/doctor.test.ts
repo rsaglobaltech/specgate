@@ -63,8 +63,8 @@ test("doctor passes on a healthy project", () => {
   withProject((dir) => {
     const r = cli("doctor", "--project-dir", dir);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /✅ Node\.js/);
-    assert.match(r.stdout, /✅ SDD structure/);
+    assert.match(r.stdout, /✔  Node\.js/);
+    assert.match(r.stdout, /✔  SDD structure/);
     assert.match(r.stdout, /0 error\(s\)/);
   });
 });
@@ -88,12 +88,12 @@ test("doctor reports ALL problems at once, each with a fix", () => {
     const r = cli("doctor", "--project-dir", dir);
     assert.equal(r.status, 1);
     // All three reported in a single run (validate would stop at the first).
-    assert.match(r.stdout, /orphan feature: features\/orphan\.feature/);
-    assert.match(r.stdout, /dangling matrix row: .*features\/gone\.feature/);
-    assert.match(r.stdout, /placeholders: unresolved .* in AI_RULES\.md/);
+    assert.match(r.stdout, /orphan feature\s+features\/orphan\.feature/);
+    assert.match(r.stdout, /dangling matrix row\s+.*features\/gone\.feature/);
+    assert.match(r.stdout, /placeholders\s+unresolved .* in AI_RULES\.md/);
     // Every error line is followed by a fix.
-    const errorCount = (r.stdout.match(/❌ /g) || []).length - 1; // minus summary line
-    const fixCount = (r.stdout.match(/💡 Fix:/g) || []).length;
+    const errorCount = (r.stdout.match(/✖ /g) || []).length;
+    const fixCount = (r.stdout.match(/fix:/g) || []).length;
     assert.ok(fixCount >= errorCount, `expected >= ${errorCount} fixes, got ${fixCount}`);
   });
 });
@@ -130,7 +130,7 @@ test("doctor flags a corrupt .specops.lock", () => {
     const r = cli("doctor", "--project-dir", dir);
     assert.equal(r.status, 1);
     assert.match(r.stdout, /\.specops\.lock is not valid JSON/);
-    assert.match(r.stdout, /💡 Fix: Restore it from git history/);
+    assert.match(r.stdout, /fix: Restore it from git history/);
   });
 });
 
@@ -265,7 +265,7 @@ for (const [relative, expected] of LAYOUTS) {
       const out = r.stdout + r.stderr;
       // The tool is called specgate. `doctor` was still labelling its own line
       // `specgate`, which a cold evaluator read as the tool not knowing its own name.
-      assert.match(out, /specgate: v9\.9\.9/, "the version it is actually running");
+      assert.match(out, /specgate\s+v9\.9\.9/, "the version it is actually running");
       assert.ok(out.includes(expected), `expected "${expected}" in:\n${out.slice(0, 300)}`);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });

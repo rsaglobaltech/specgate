@@ -217,9 +217,9 @@ specgate validate . --strict-tdd
 ```
 
 ```
-❌ [ERROR] --strict-tdd violations detected:
+  ✖  --strict-tdd violations detected:
   [TDD-1] Test artifact is TBD but status is 'In Dev' (scenario: SCN-014)
-💡 [FIX] TDD-1: write the test first, then set its path in the row's 'Test artifact' column (or move the status back to Draft).
+     TDD-1: write the test first, then set its path in the row's 'Test artifact' column (or move the status back to Draft).
 ```
 
 That is the whole point: a merged proposal cannot quietly become undone work.

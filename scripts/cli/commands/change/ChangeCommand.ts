@@ -75,17 +75,8 @@ export const TEMPLATES = {
     templateDelta("<capability>", "REQ-NNN", phrases(projectDir)),
 };
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-  cyan: COLOR_ENABLED ? "\x1b[36m" : "",
-  red: COLOR_ENABLED ? "\x1b[31m" : "",
-};
+import { c } from "../../../lib/ui";
+import * as ui from "../../../lib/ui";
 
 // The artefact graph. Dependencies are enablers, not gates: `requires` says
 // what makes an artefact *possible*, never what the author must do next.
@@ -397,11 +388,17 @@ function cmdNew(opts) {
     },
     () => {
       process.stdout.write(
-        `\n  ${c.green}✔${c.reset} Change ${c.bold}${changeId}${c.reset} created ` +
-          `${c.dim}(${config.rigor} · REQ ids ${reqRange[0]}…${reqRange[1]} reserved)${c.reset}\n\n` +
-          created.map((f) => `    ${c.dim}+${c.reset} ${f}\n`).join("") +
-          `\n  ${c.dim}Next:${c.reset} write the proposal, then the delta, then ` +
-          `${c.cyan}specgate change validate ${changeId}${c.reset}\n\n`
+        ui.header("change new", changeId) +
+          ui.ok(
+            `Change ${c.bold}${changeId}${c.reset} created ` +
+              ui.muted(`· ${config.rigor} · REQ ids ${reqRange[0]}…${reqRange[1]} reserved`)
+          ) +
+          "\n" +
+          created.map((f) => ui.fileLine("added", f)).join("") +
+          ui.next(
+            `specgate change validate ${changeId}`,
+            "after you write the proposal, then the delta"
+          )
       );
     }
   );
@@ -428,23 +425,20 @@ function cmdList(opts) {
 
   emit(opts, { changes, archived: listArchivedIds(projectDir).length }, () => {
     if (changes.length === 0) {
-      process.stdout.write(`\n  ${c.dim}No active changes.${c.reset}\n\n`);
+      process.stdout.write(ui.header("change list") + ui.info("No active changes.") + "\n");
       return;
     }
-    process.stdout.write(`\n  ${c.bold}Active changes${c.reset}\n\n`);
-    for (const ch of changes) {
-      const mark =
-        ch.status === "complete"
-          ? `${c.green}●${c.reset}`
-          : ch.status === "in-progress"
-            ? `${c.yellow}◐${c.reset}`
-            : `${c.dim}○${c.reset}`;
-      process.stdout.write(
-        `    ${mark} ${c.bold}${ch.id}${c.reset}  ` +
-          `${c.dim}${ch.completedTasks}/${ch.totalTasks} tasks · ${ch.deltaCount} delta(s) · ${ch.rigor}${c.reset}\n`
-      );
-    }
-    process.stdout.write("\n");
+    process.stdout.write(ui.header("change list") + ui.section("Active changes"));
+    process.stdout.write(
+      ui.table(
+        changes.map((ch) => [
+          `${ui.state(ch.status === "complete" ? "ready" : ch.status === "in-progress" ? "doing" : "todo")} ${c.bold}${ch.id}${c.reset}`,
+          ui.muted(`${ch.completedTasks}/${ch.totalTasks} tasks`),
+          ui.muted(`${ch.deltaCount} delta(s)`),
+          ui.muted(ch.rigor),
+        ])
+      ) + "\n"
+    );
   });
 }
 
@@ -494,20 +488,22 @@ function cmdShow(opts) {
       },
     },
     () => {
-      process.stdout.write(`\n  ${c.bold}${titleMatch ? titleMatch[1] : changeId}${c.reset}\n\n`);
+      process.stdout.write(
+        ui.header("change show", changeId) +
+          `  ${c.bold}${titleMatch ? titleMatch[1] : changeId}${c.reset}\n\n`
+      );
       if (deltas.length === 0) {
-        process.stdout.write(`    ${c.dim}No delta specs.${c.reset}\n\n`);
+        process.stdout.write(`    ${ui.muted("No delta specs.")}\n\n`);
       }
       for (const d of deltas) {
-        process.stdout.write(
-          `    ${c.cyan}${d.capability}${c.reset} ${c.dim}(${d.file})${c.reset}\n`
-        );
-        for (const r of d.added) process.stdout.write(`      ${c.green}+${c.reset} ${r}\n`);
-        for (const r of d.modified) process.stdout.write(`      ${c.yellow}~${c.reset} ${r}\n`);
-        for (const r of d.removed) process.stdout.write(`      ${c.red}-${c.reset} ${r}\n`);
+        process.stdout.write(`  ${c.accent}${d.capability}${c.reset}  ${ui.muted(d.file)}\n`);
+        for (const r of d.added) process.stdout.write(ui.fileLine("added", r));
+        for (const r of d.modified) process.stdout.write(ui.fileLine("changed", r));
+        for (const r of d.removed) process.stdout.write(ui.fileLine("removed", r));
+        process.stdout.write("\n");
       }
       process.stdout.write(
-        `\n    ${c.dim}${progress.complete}/${progress.total} tasks complete${c.reset}\n\n`
+        `  ${c.bold}Tasks${c.reset}  ${ui.progress(progress.complete, progress.total, "complete")}\n\n`
       );
     }
   );
@@ -527,7 +523,7 @@ function cmdStatus(opts) {
         ids.length === 0 ? "No active changes." : "Several active changes — name the one you mean.",
     };
     return emit(opts, payload, () => {
-      process.stdout.write(`\n  ${c.dim}${payload.message}${c.reset}\n\n`);
+      process.stdout.write(ui.header("change status") + ui.info(payload.message) + "\n");
     });
   }
 
@@ -566,24 +562,30 @@ function cmdStatus(opts) {
       nextSteps,
     },
     () => {
-      process.stdout.write(
-        `\n  ${c.bold}${changeId}${c.reset} ${c.dim}(${config.schema})${c.reset}\n\n`
-      );
+      process.stdout.write(ui.header("change status", `${changeId} · ${config.schema}`));
       const mark = {
-        done: `${c.green}✔${c.reset}`,
-        ready: `${c.yellow}▶${c.reset}`,
-        blocked: `${c.dim}·${c.reset}`,
-        skipped: `${c.dim}—${c.reset}`,
+        done: ui.state("done"),
+        ready: ui.state("doing"),
+        blocked: ui.state("todo"),
+        skipped: ui.muted("—"),
       };
-      for (const a of artifacts) {
-        const deps = a.missingDeps ? ` ${c.dim}(needs ${a.missingDeps.join(", ")})${c.reset}` : "";
-        process.stdout.write(
-          `    ${mark[a.status]} ${a.id.padEnd(10)} ${c.dim}${a.outputPath}${c.reset}${deps}\n`
-        );
-      }
-      process.stdout.write(`\n  ${c.bold}Next${c.reset}\n`);
-      for (const step of nextSteps) process.stdout.write(`    ${c.cyan}→${c.reset} ${step}\n`);
-      process.stdout.write("\n");
+      process.stdout.write(
+        ui.table(
+          artifacts.map((a) => [
+            `${mark[a.status]} ${a.id}`,
+            ui.muted(a.outputPath) +
+              (a.missingDeps ? ui.muted(`  (needs ${a.missingDeps.join(", ")})`) : ""),
+          ])
+        )
+      );
+      process.stdout.write(
+        ui.steps(
+          "Next",
+          nextSteps.map((st) =>
+            String(st).replace(/`(specgate [^`]+)`/, (_m, cmd) => `${ui.cmd(cmd)}`)
+          )
+        )
+      );
     }
   );
 }
@@ -757,17 +759,16 @@ function cmdAuthor(opts) {
     { change: changeId, artifact, wrote: allowed, reverted: strayed, status: diagnostics },
     () => {
       process.stdout.write(
-        `\n  ${c.bold}${changeId}${c.reset} — ${artifact} written by the agent\n\n`
+        ui.rule() +
+          "\n" +
+          ui.ok(`${c.bold}${changeId}${c.reset} — ${artifact} written by the agent`) +
+          "\n"
       );
-      for (const f of allowed) process.stdout.write(`    ${c.green}+${c.reset} ${f}\n`);
+      for (const f of allowed) process.stdout.write(ui.fileLine("added", f));
       for (const f of strayed)
-        process.stdout.write(
-          `    ${c.yellow}~${c.reset} ${f} ${c.dim}(out of scope, reverted)${c.reset}\n`
-        );
+        process.stdout.write(ui.fileLine("changed", f, "out of scope, reverted"));
       if (diagnostics.length > 0) printDiagnostics(diagnostics);
-      process.stdout.write(
-        `\n  Next: read it, then ${c.cyan}specgate change validate ${changeId}${c.reset}\n\n`
-      );
+      process.stdout.write(ui.next(`specgate change validate ${changeId}`, "read it first"));
     }
   );
 }
@@ -863,14 +864,14 @@ function cmdValidate(opts) {
   if (opts.json) {
     process.stdout.write(`${JSON.stringify({ ...payload, status: [] }, null, 2)}\n`);
   } else if (items.length === 0) {
-    process.stdout.write(`\n  ${c.dim}No active changes to validate.${c.reset}\n\n`);
+    process.stdout.write(
+      ui.header("change validate") + ui.info("No active changes to validate.") + "\n"
+    );
   } else {
-    process.stdout.write("\n");
+    process.stdout.write(ui.header("change validate"));
     for (const item of items) {
-      const mark = item.valid ? `${c.green}✔${c.reset}` : `${c.red}✖${c.reset}`;
-      process.stdout.write(
-        `  ${mark} ${c.bold}${item.id}${c.reset} ${c.dim}(${item.deltaCount} delta(s))${c.reset}\n`
-      );
+      const line = `${c.bold}${item.id}${c.reset} ${ui.muted(`(${item.deltaCount} delta(s))`)}`;
+      process.stdout.write(item.valid ? ui.ok(line) : ui.fail(line));
       if (item.issues.length > 0) {
         printDiagnostics(item.issues, process.stdout);
       }
@@ -940,17 +941,15 @@ function cmdArchive(opts) {
   if (opts.dryRun) {
     return emit(opts, { archive: { ...summary, dryRun: true } }, () => {
       process.stdout.write(
-        `\n  ${c.bold}Archive plan${c.reset} ${c.dim}(dry run — nothing written)${c.reset}\n\n`
+        ui.header("change archive", `${changeId} · dry run, nothing written`) +
+          ui.section("Archive plan")
       );
-      for (const w of summary.writes) {
-        process.stdout.write(`    ${c.green}~${c.reset} ${w.file} ${c.dim}(${w.kind})${c.reset}\n`);
-      }
-      for (const d of summary.deletes) {
-        process.stdout.write(`    ${c.red}-${c.reset} ${d.file} ${c.dim}(${d.reason})${c.reset}\n`);
-      }
+      for (const w of summary.writes) process.stdout.write(ui.fileLine("changed", w.file, w.kind));
+      for (const d of summary.deletes)
+        process.stdout.write(ui.fileLine("removed", d.file, d.reason));
       if (plan.move) {
         process.stdout.write(
-          `    ${c.cyan}→${c.reset} ${rel(plan.move.from)} ${c.dim}moves to${c.reset} ${rel(plan.move.to)}\n`
+          `    ${c.accent}${ui.sym.arrow}${c.reset} ${rel(plan.move.from)} ${ui.muted("moves to")} ${rel(plan.move.to)}\n`
         );
       }
       if (plan.warnings.length > 0) {
@@ -978,14 +977,35 @@ function cmdArchive(opts) {
   emit(opts, { archive: summary }, () => {
     const t = plan.totals;
     process.stdout.write(
-      `\n  ${c.green}✔${c.reset} Archived as ${c.bold}${archivedAs}${c.reset}\n\n` +
-        `    ${c.dim}specs:${c.reset}        ${t.added} added · ${t.modified} modified · ${t.removed} removed\n` +
-        `    ${c.dim}traceability:${c.reset} ${t.traceability.added} row(s) added · ${t.traceability.updated} updated · ${t.traceability.removed} removed\n` +
-        `    ${c.dim}features:${c.reset}     ${plan.writes.filter((w) => w.kind === "feature").length} materialised\n\n` +
+      ui.header("change archive", changeId) +
+        ui.ok(`Archived as ${c.bold}${archivedAs}${c.reset}`) +
+        "\n" +
+        ui
+          .kv("Specs", `${t.added} added · ${t.modified} modified · ${t.removed} removed`, 14)
+          .replace(/^  /, "    ") +
+        ui
+          .kv(
+            "Traceability",
+            `${t.traceability.added} row(s) added · ${t.traceability.updated} updated · ${t.traceability.removed} removed`,
+            14
+          )
+          .replace(/^  /, "    ") +
+        ui
+          .kv(
+            "Features",
+            `${plan.writes.filter((w) => w.kind === "feature").length} materialised`,
+            14
+          )
+          .replace(/^  /, "    ") +
         // The archived requirements are Draft: they owe nothing yet, so the
         // gate passes. Saying it "will fail until the tests exist" was wrong
         // (#92); what comes next is the queue, or the next module.
-        `  ${c.dim}Next:${c.reset} ${c.cyan}${isDraft ? "specgate draft" : "specgate status"}${c.reset} ${c.dim}— ${isDraft ? "the next module of the brief, or what to build first" : "what each requirement still needs"}.${c.reset}\n\n`
+        ui.next(
+          isDraft ? "specgate draft" : "specgate status",
+          isDraft
+            ? "the next module of the brief, or what to build first"
+            : "what each requirement still needs"
+        )
     );
     if (plan.warnings.length > 0) printDiagnostics(plan.warnings, process.stdout);
   });

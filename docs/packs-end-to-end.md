@@ -53,11 +53,11 @@ specgate specops add \
 ```
 
 ```text
-ℹ️ [INFO] Resolving remote pack https://github.com/rsaglobaltech/parking-management-specops.git@v0.1.0…
-ℹ️ [INFO] Wrote …/smart-parking/.specops.lock
-ℹ️ [INFO] Recorded baseline for 13 file(s) under .specops/baseline/backend
-ℹ️ [INFO] Generated 5 scenario file(s).
-ℹ️ [INFO] Domain pack expansion completed.
+  ℹ  Resolving remote pack https://github.com/rsaglobaltech/parking-management-specops.git@v0.1.0…
+  ℹ  Wrote …/smart-parking/.specops.lock
+  ℹ  Recorded baseline for 13 file(s) under .specops/baseline/backend
+  ℹ  Generated 5 scenario file(s).
+  ℹ  Domain pack expansion completed.
 ```
 
 `add` clones the tag once into the pack cache, writes the requirements and
@@ -130,11 +130,11 @@ specgate specops sync --pack-version v0.2.0 \
 ```
 
 ```text
-ℹ️ [INFO] Syncing backend @ v0.2.0 (was v0.1.0)
+  ℹ  Syncing backend @ v0.2.0 (was v0.1.0)
 
 ── backend @ v0.2.0 ──
   1 added · 6 unchanged · 6 updated
-ℹ️ [INFO] Sync completed for 1 pack(s) with no conflicts.
+  ℹ  Sync completed for 1 pack(s) with no conflicts.
 ```
 
 `sync` is a three-way merge against the baseline `add` recorded: a file you

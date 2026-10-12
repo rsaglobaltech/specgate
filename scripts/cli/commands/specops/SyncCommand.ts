@@ -47,18 +47,19 @@ import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { resolveRemotePack } from "../../../../packages/core/src/infrastructure/RemotePackResolver";
 import { depositPackChanges } from "../../../../packages/core/src/infrastructure/PackChangeDeposit";
+import * as ui from "../../../lib/ui";
 
 // Three levels up from dist/scripts/cli/commands/specops is dist/scripts.
 const EXPAND_SCRIPT = path.join(__dirname, "..", "..", "..", "expand_domain_pack.js");
 
 function info(msg) {
-  process.stdout.write(`ℹ️ [INFO] ${msg}\n`);
+  process.stdout.write(ui.logLine(msg));
 }
 function warn(msg) {
-  process.stdout.write(`⚠️  [WARN] ${msg}\n`);
+  process.stdout.write(ui.warn(msg));
 }
 function error(msg) {
-  process.stderr.write(`❌ [ERROR] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 
 function usage() {

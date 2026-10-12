@@ -562,9 +562,9 @@ Members book a court for one hour. A court cannot be booked twice for
 the same hour. Members can cancel a booking. Late cancellations may be charged.
 
 ~/courts $ specgate draft bookings
-  specgate draft bookings  ·  docs/brief.md
+  ◆ specgate · draft bookings   docs/brief.md
 
-  3 requirement(s), 4 scenario(s)
+  3 requirement(s) · 4 scenario(s)
 
   ✖  D6_unlisted_value  SCN-002 states &quot;201&quot;, which is not in the brief and not listed as an assumption for SCN-002 or REQ-002.
      fix: List it in assumptions.md with SCN-002 (or REQ-002) in its row, or use the value the brief gives.
@@ -577,9 +577,9 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
   ✖  D6_unlisted_value  SCN-005 states &quot;5&quot;, which is not in the brief and not listed as an assumption for SCN-005 or REQ-004.
      fix: List it in assumptions.md with SCN-005 (or REQ-004) in its row, or use the value the brief gives.
 
-  ✖  5 finding(s) to fix. Each says how; DRAFTING.md has the formats.
+  ✖  5 finding(s) to fix — each says how; DRAFTING.md has the formats
 
-  What now
+  What now ───────────────────────────────────────────────
 … 2 more lines
 
 ~/courts $ git diff -U0 docs/specs/changes/draft-bookings/specs | grep -E '^[-+]' | grep -vE '^(---|[+]{3}) '
@@ -598,44 +598,49 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 | Q1 | How much is a late cancellation, and how late is late? | REQ-004 | A flat fee · the full hour · nothing in the first season |
 
 ~/courts $ specgate draft bookings
-  specgate draft bookings  ·  docs/brief.md
+  ◆ specgate · draft bookings   docs/brief.md
 
-  3 requirement(s), 4 scenario(s)
+  3 requirement(s) · 4 scenario(s)
 
-  ✔  Ready to review.
+  ✔  Ready to review
 
-  What now
-    1. Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
-    2. Answer what you can in docs/specs/changes/draft-bookings/questions.md
-    3. specgate change archive draft-bookings
+  What now ───────────────────────────────────────────────
+   1  Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
+   2  Answer what you can in docs/specs/changes/draft-bookings/questions.md
+   3  ➜ specgate change archive draft-bookings
 … 1 more lines
 
 ~/courts $ specgate change archive draft-bookings
-  ✔ Archived as 2026-01-01-draft-bookings
+  ◆ specgate · change archive   draft-bookings
 
-    specs:        3 added · 0 modified · 0 removed
-    traceability: 3 row(s) added · 0 updated · 0 removed
-    features:     3 materialised
+  ✔  Archived as 2026-01-01-draft-bookings
 
-  Next: specgate draft — the next module of the brief, or what to build first.
+    Specs         3 added · 0 modified · 0 removed
+    Traceability  3 row(s) added · 0 updated · 0 removed
+    Features      3 materialised
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate draft
+… 1 more lines
 
 ~/courts $ specgate status
-  📊 Project status  courts
+  ◆ specgate · status   courts
 
-  Requirements  4 total · 0 done · 4 pending
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 4 done
 
-  To do
-    REQ-001   Preserve existing behaviour                   a test and code
-    REQ-002   A member books a court for one hour           a test and code
-    REQ-003   A court is never booked twice for the same …  a test and code
+  To do ──────────────────────────────────────────────────
+    ○ REQ-001  Preserve existing behaviour                   a test and code
+    ○ REQ-002  A member books a court for one hour           a test and code
+    ○ REQ-003  A court is never booked twice for the same …  a test and code
 
-  Waiting for an answer
-    REQ-004   A member cancels a booking                    an answer to Q1
+  Waiting for an answer ──────────────────────────────────
+    ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)
 
-  Brief  docs/brief.md · 1 of 1 module(s) drafted
+  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 
-  Next  specgate done REQ-002  — once a test mentions REQ-002 — that mention is the link; done checks first
+  Next ───────────────────────────────────────────────────
+… 2 more lines
 </code></pre>
 <!-- specgate:terminal-brief:end -->
         </figure>
@@ -659,12 +664,15 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
           <p class="term__caption" aria-hidden="true"></p>
 <!-- specgate:terminal-gate:begin — generated; edit the source, not this block -->
 <pre class="term__transcript"><code>~/courts $ specgate done REQ-002
-❌ [ERROR] --strict-tdd violations detected:
-  [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-002)
-💡 [FIX] TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; once a test names one of its scenarios (SCN-NNN), each scenario needs a test that names it — or move it back to Draft in spec.md.
+  ◆ specgate · done REQ-002   Implemented
 
-✖  REQ-002 not marked Implemented: validation failed. [done_validate_failed]
-     fix: Fix what validate reports, then run `done` again.
+  ✖  Specification   the gate, for REQ-002
+
+
+     ◆ specgate · validate   courts
+
+       ✖  --strict-tdd violations detected:
+… 5 more lines
 
 ~/courts $ cat test/bookings.test.js
 const test = require(&quot;node:test&quot;);
@@ -680,33 +688,25 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
 });
 
 ~/courts $ specgate done REQ-002
-✔  REQ-002 → Implemented (1 row updated)
+  ◆ specgate · done REQ-002   Implemented
+
+  ✔  Specification   the gate, for REQ-002
+  ✔  Tests           node --test
+
+  ✔  REQ-002 → Implemented (1 row updated)
+… 4 more lines
 
 ~/courts $ specgate done REQ-004
-✖  REQ-004 not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification). [done_needs_clarification]
+  ✖  REQ-004  not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification).  [done_needs_clarification]
      fix: Answer the question that blocks it in its change's questions.md, remove `status=&quot;Needs Clarification&quot;` from its `specgate:trace`, write its test, then run `done`.
 
 ~/courts $ specgate check
-ℹ️ [INFO] ✅ Validation passed
-ℹ️ [INFO] - Features detected: 4
-ℹ️ [INFO] - Base SDD structure: complete
-ℹ️ [INFO] - Traceability mode: rich
-ℹ️ [INFO] - Strict TDD gate: passed (1 row(s) exempt — still Draft, so not checked)
-💡 [FIX] A Draft row owes nothing yet, so --strict-tdd skips it. It starts being
-💡 [FIX] checked the moment its Status leaves Draft — `specgate done &lt;REQ&gt;` does that.
+  ◆ specgate · check   courts
 
-✔ REQ-002 SCN-002: booking a free court lasts one hour (12ms)
-✔ REQ-002 SCN-003: a member sees their bookings (12ms)
-ℹ tests 2
-ℹ suites 0
-ℹ pass 2
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 1.234
+  ✔  Specification   validate --strict
+  ✔  Tests           node --test
 
-✔  Gate passed — the specification and `node --test`
+  ✔  Gate passed — the specification and `node --test`
 </code></pre>
 <!-- specgate:terminal-gate:end -->
         </figure>
@@ -739,44 +739,45 @@ API_STYLE: REST with DTO boundaries
 TESTING: node:test
 
 ~ $ specgate init --config ./smart-parking.yaml --out . --no-git
-ℹ️ [INFO] 🧩 Rendering base template
-ℹ️ [INFO] 🛠️ Applying project type template: backend
-ℹ️ [INFO] 🧩 No optional modules selected. Generating base + project-type features only.
-ℹ️ [INFO] 📋 Summary
-ℹ️ [INFO] - Project: Smart Parking
-ℹ️ [INFO] - Slug: smart-parking
-ℹ️ [INFO] - Type: backend
-ℹ️ [INFO] - Domain: parking operations
-ℹ️ [INFO] - Output: ~/smart-parking
-ℹ️ [INFO] - Dry-run: false
-ℹ️ [INFO] - Git: skipped
-ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:
-ℹ️ [INFO]   specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)
-ℹ️ [INFO] ✅ Generation completed
+  ◆ specgate · init
+
+  ℹ  🧩 Rendering base template
+  ℹ  🛠️ Applying project type template: backend
+  ℹ  🧩 No optional modules selected. Generating base + project-type features only.
+
+  Summary ────────────────────────────────────────────────
+    · Project: Smart Parking
+    · Slug: smart-parking
+    · Type: backend
+    · Domain: parking operations
+    · Output: ~/smart-parking
+    · Dry-run: false
+    · Git: skipped
+… 4 more lines
 
 ~/smart-parking $ specgate specops add --pack-root ~/packs --pack multi-tenant/backend --var &quot;PROJECT_NAME=Smart Parking&quot; --var PROJECT_SLUG=smart-parking --var &quot;DOMAIN=parking operations&quot;
 ℹ  Adding multi-tenant/backend to ~/smart-parking
-ℹ️ [INFO] Using pack: ~/packs/multi-tenant/backend/pack.yaml
-ℹ️ [INFO] Generated 3 scenario file(s).
-ℹ️ [INFO] Domain pack expansion completed.
+  ℹ  Using pack: ~/packs/multi-tenant/backend/pack.yaml
+  ℹ  Generated 3 scenario file(s).
+  ℹ  Domain pack expansion completed.
 
 ~/smart-parking $ specgate plan
-  Needs Test + Code
+  ◆ specgate · plan
+
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 5 done
+
+  Needs Test + Code ──────────────────────────────────────
     REQ-002   SCN-001
-      ✓ feature: `features/multi-tenant/provisioning_a_tenant_emits_tenantprovisioned.feature`
+      ✔ feature `features/multi-tenant/provisioning_a_tenant_emits_tenantprovisioned.feature`
     REQ-001   SCN-002
-      ✓ feature: `features/multi-tenant/cross_tenant_read_attempts_are_rejected.feature`
+      ✔ feature `features/multi-tenant/cross_tenant_read_attempts_are_rejected.feature`
     REQ-003   SCN-003
-      ✓ feature: `features/multi-tenant/exceeding_a_quota_emits_quotaexceeded.feature`
+      ✔ feature `features/multi-tenant/exceeding_a_quota_emits_quotaexceeded.feature`
 
-  Needs Feature File
+  Needs Feature File ─────────────────────────────────────
     REQ-004   -
-      · feature: -
-
-  Needs Test Artifact (TDD)
-    REQ-000   SCN-000
-      ✓ feature: `features/core/health.feature`
-… 1 more lines
+      ○ feature -
+… 5 more lines
 
 ~/smart-parking $ cat harness.config.yaml
 harness_version: 1
@@ -785,15 +786,19 @@ test_cmd: 'node --test test/*.test.js'
 max_attempts: 1
 
 ~/smart-parking $ specgate harness run --req REQ-000
-ℹ️  [harness] Processing 1 requirement(s) from base HEAD.
-ℹ️  [harness] REQ-000: attempt 1/1
+  ◆ specgate · harness run   1 requirement(s) from HEAD
 
-── harness report ──
-  ✅ REQ-000  pass (1 attempt)  → harness/REQ-000
+  ◇  REQ-000   attempt 1/1
 
-  1 passed · 0 failed · 0 skipped
-  Review and merge the harness/* branches you trust.
-ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`
+  Harness report ─────────────────────────────────────────
+  ✔  REQ-000   pass    1 attempt   → harness/REQ-000
+
+  ████████████████████  1 of 1 passed   1 passed · 0 failed · 0 skipped
+  Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — specgate harness report sums them up
+
+  Next ───────────────────────────────────────────────────
+  ➜  git diff HEAD...harness/REQ-000
+     review and merge the harness/* branches you trust
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
  .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 100 ++++++++++++++++++++++++
@@ -815,10 +820,12 @@ max_attempts: 1
 ℹ duration_ms 1.234
 
 ~/smart-parking $ specgate validate .
-ℹ️ [INFO] ✅ Validation passed
-ℹ️ [INFO] - Features detected: 4
-ℹ️ [INFO] - Base SDD structure: complete
-ℹ️ [INFO] - Traceability mode: rich
+  ◆ specgate · validate   smart-parking
+
+  ✔  Validation passed
+     · Features detected: 4
+     · Base SDD structure: complete
+     · Traceability mode: rich
 </code></pre>
 <!-- specgate:terminal:end -->
         </figure>

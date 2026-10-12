@@ -12,17 +12,8 @@ import { BaseCommand } from "../../../lib/command";
 
 const NULL_SHAPE = { projectDir: null, actions: [], applied: false, dryRun: false };
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  red: COLOR_ENABLED ? "\x1b[31m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-  cyan: COLOR_ENABLED ? "\x1b[36m" : "",
-};
+import { c } from "../../../lib/ui";
+import * as ui from "../../../lib/ui";
 
 function usage() {
   process.stdout.write(
@@ -151,8 +142,12 @@ export class FixCommand extends BaseCommand {
         },
         () =>
           process.stdout.write(
-            `${regenerated ? "↻ Regenerated docs/specs/traceability.md. " : ""}` +
-              "The matrix is generated: tag an orphan scenario @REQ-NNN, or add it with `specgate new`.\n"
+            ui.header("fix") +
+              (regenerated ? `  ${ui.muted("↻  Regenerated docs/specs/traceability.md")}\n` : "") +
+              ui.info(
+                "The matrix is generated: tag an orphan scenario @REQ-NNN, or add it as a requirement."
+              ) +
+              ui.next('specgate new "<what it does>"')
           )
       );
       return;
@@ -164,23 +159,21 @@ export class FixCommand extends BaseCommand {
     if (actions.length === 0) {
       io.emit({ ...base, applied: false }, () =>
         process.stdout.write(
-          `${c.green}✔${c.reset}  Nothing to fix — the matrix is already consistent.\n`
+          ui.header("fix") + ui.ok("Nothing to fix — the matrix is already consistent.") + "\n"
         )
       );
       process.exit(0);
     }
 
     if (!io.json) {
-      process.stdout.write(
-        `\n  ${c.bold}Planned fixes${c.reset} ${c.dim}(${actions.length})${c.reset}\n`
-      );
-      for (const a of actions) process.stdout.write(`    ${c.green}${a}${c.reset}\n`);
+      process.stdout.write(ui.header("fix") + ui.section(`Planned fixes (${actions.length})`));
+      for (const a of actions) process.stdout.write(`    ${c.ok}${ui.sym.added}${c.reset} ${a}\n`);
       process.stdout.write("\n");
     }
 
     if (opts.dryRun) {
       io.emit({ ...base, applied: false }, () =>
-        process.stdout.write(`${c.dim}--dry-run: no changes written.${c.reset}\n`)
+        process.stdout.write(ui.info("Dry run — no changes written.") + "\n")
       );
       process.exit(0);
     }
@@ -196,7 +189,8 @@ export class FixCommand extends BaseCommand {
       }
       if (!process.stdin.isTTY || !process.stdout.isTTY) {
         process.stderr.write(
-          `${c.red}✖${c.reset}  Refusing to write without confirmation. Re-run with --yes (or --dry-run to preview).\n`
+          ui.fail("Refusing to write without confirmation.") +
+            ui.fix("Re-run with --yes, or --dry-run to preview.")
         );
         process.exit(2);
       }
@@ -206,7 +200,7 @@ export class FixCommand extends BaseCommand {
         .toLowerCase();
       rl.close();
       if (answer !== "y" && answer !== "yes") {
-        process.stdout.write(`${c.dim}Aborted; no changes written.${c.reset}\n`);
+        process.stdout.write(ui.info("Aborted — no changes written.") + "\n");
         process.exit(1);
       }
     }
@@ -214,8 +208,8 @@ export class FixCommand extends BaseCommand {
     fs.writeFileSync(tracePath, content, "utf8");
     io.emit({ ...base, applied: true }, () =>
       process.stdout.write(
-        `${c.green}✔${c.reset}  Applied ${actions.length} fix(es) to docs/specs/traceability.md\n` +
-          `   ${c.dim}Next: replace the TODO cells, then \`specgate validate --strict\`.${c.reset}\n`
+        ui.ok(`Applied ${actions.length} fix(es) to docs/specs/traceability.md`) +
+          ui.next("specgate check", "after you replace the TODO cells")
       )
     );
     process.exit(0);

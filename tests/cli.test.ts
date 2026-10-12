@@ -31,7 +31,7 @@ test("shows the core help with no args, outside a project", () => {
   );
   assert.match(result.stdout, /\bUSAGE\b/i);
   // Eight commands, not twenty-one. The rest are one flag away.
-  assert.match(result.stdout, /START HERE/);
+  assert.match(result.stdout, /Start here/);
   assert.match(result.stdout, /specgate --help --all/);
   assert.doesNotMatch(result.stdout, /expand --pack-root/);
 });
@@ -40,10 +40,10 @@ test("--help --all shows the whole surface", () => {
   const result = runCli(["--help", "--all"]);
   assert.equal(result.status, 0);
   assert.match(result.stdout, /expand --pack-root/);
-  assert.match(result.stdout, /PACK COMMANDS/);
-  assert.match(result.stdout, /SPECOPS COMMANDS/);
+  assert.match(result.stdout, /^  Packs ─/m);
+  assert.match(result.stdout, /^  SpecOps ─/m);
   assert.ok(
-    result.stdout.split("\n").length > runCli([]).stdout.split("\n").length,
+    result.stdout.split("\n").length > runCli([], { cwd: os.tmpdir() }).stdout.split("\n").length,
     "the full help should be longer than the core one"
   );
 });
@@ -1461,7 +1461,7 @@ test("doctor reports a project that has outgrown its declared profile", () => {
   const { projectDir: dir } = initRuntimeProject(['ARCHITECTURE="minimal"']);
 
   const clean = runCli(["doctor", "--project-dir", dir]);
-  assert.match(clean.stdout, /architecture: minimal — matches/);
+  assert.match(clean.stdout, /architecture\s+minimal — matches/);
 
   // The matrix is the signal, not the domain documents: those ship with
   // placeholder rows, so "the file has content" is true from the first minute.

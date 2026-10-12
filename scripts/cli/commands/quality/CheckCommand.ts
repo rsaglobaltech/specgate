@@ -13,15 +13,8 @@ import {
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-};
+import { c } from "../../../lib/ui";
+import * as ui from "../../../lib/ui";
 
 const NULL_SHAPE = { check: null };
 
@@ -110,10 +103,11 @@ export class CheckCommand extends BaseCommand {
     // A generated matrix is a cache of spec.md, the tags and the tests: bring
     // it up to date before the gate reads it, so nobody runs `matrix` by hand.
     // `validate` on its own — what CI runs — still fails when it is stale.
+    if (!json) process.stdout.write(ui.header("check", path.basename(projectDir)));
     const refreshed = refreshDerivedMatrix(projectDir);
     if (refreshed && !json) {
       process.stdout.write(
-        `${c.dim}↻ docs/specs/traceability.md regenerated from its sources${c.reset}\n`
+        `  ${ui.muted("↻  docs/specs/traceability.md regenerated from its sources")}\n`
       );
     }
 
@@ -122,7 +116,7 @@ export class CheckCommand extends BaseCommand {
     const plan = planGateCheck(projectDir, testCmd);
 
     for (const step of plan.steps) {
-      const run =
+      const exec = () =>
         step.stage === "validate"
           ? spawnSync(
               process.execPath,
@@ -130,9 +124,26 @@ export class CheckCommand extends BaseCommand {
               { encoding: "utf8" }
             )
           : spawnSync(step.argv[0], { cwd: projectDir, encoding: "utf8", shell: true });
+      // One line per stage, replaced by how it ended. What a stage printed is
+      // shown only when it failed: on a pass it was a screen of noise between
+      // the person and the verdict.
+      const label =
+        step.stage === "validate"
+          ? `Specification   ${ui.muted("validate --strict")}`
+          : `Tests           ${ui.muted(step.argv[0])}`;
+      const run = json ? exec() : ui.task(label, exec, (r) => ({ ok: r.status === 0 }));
 
       const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
-      if (!json && detail) process.stdout.write(`${detail}\n\n`);
+      if (!json && detail && run.status !== 0) {
+        process.stdout.write(
+          "\n" +
+            detail
+              .split("\n")
+              .map((l) => `     ${l}`)
+              .join("\n") +
+            "\n\n"
+        );
+      }
       if (run.status === 0) continue;
 
       io.fail(NULL_SHAPE, [
@@ -176,13 +187,14 @@ export class CheckCommand extends BaseCommand {
       () => {
         if (plan.testsUnverified) {
           process.stdout.write(
-            `${c.yellow}⚠${c.reset}  ${NO_TEST_COMMAND_WARNING.message}\n` +
-              fixLines.map((l) => `   ${c.dim}${l}${c.reset}\n`).join("") +
-              `\n${c.green}✔${c.reset}  ${c.bold}Gate passed${c.reset} ${c.dim}— the specification${c.reset}\n`
+            ui.warn(`Tests           ${ui.muted("not configured")}`) +
+              `\n  ${c.warn}${NO_TEST_COMMAND_WARNING.message}${c.reset}\n` +
+              fixLines.map((l) => `  ${ui.muted(l)}\n`).join("") +
+              `\n  ${c.ok}${ui.sym.ok}  ${c.bold}Gate passed${c.reset} ${ui.muted("— the specification")}\n\n`
           );
         } else {
           process.stdout.write(
-            `${c.green}✔${c.reset}  ${c.bold}Gate passed${c.reset} ${c.dim}— the specification and \`${testCmd}\`${c.reset}\n`
+            `\n  ${c.ok}${ui.sym.ok}  ${c.bold}Gate passed${c.reset} ${ui.muted(`— the specification and \`${testCmd}\``)}\n\n`
           );
         }
       }

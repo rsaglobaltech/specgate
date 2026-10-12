@@ -61,34 +61,35 @@ specgate init
 <!-- specgate:out-existing-init:begin — generated; edit the source, not this block -->
 ```text
 $ specgate init
-ℹ️ [INFO] Existing code found (package.json) — adopting this repository in place. Nothing in your code is touched.
-ℹ️ [INFO] To scaffold a separate new project instead: specgate init --new
-ℹ️ [INFO] 🔍 Stack detection: package.json
-ℹ️ [INFO] - Project: invoicing
-ℹ️ [INFO] - Stack: Node.js
-ℹ️ [INFO] - Test command: npm test
-ℹ️ [INFO] write spec.md
-ℹ️ [INFO] write features/adoption/baseline.feature
-ℹ️ [INFO] write docs/specs/traceability.md
-ℹ️ [INFO] write docs/specs/adr/README.md
-ℹ️ [INFO] write AGENTS.md
-ℹ️ [INFO] write README.md (was missing)
-ℹ️ [INFO] - Traceability: generated from spec.md, tags and tests (`specgate matrix`)
-ℹ️ [INFO] 📋 Summary
-ℹ️ [INFO] - Files written: 6
-ℹ️ [INFO] - Files skipped (already present): 0
-ℹ️ [INFO] - Requirements seeded: 2 proposal(s) from the layout — invoices, customers
-⚠️ [WARN] This does not certify your code yet — it certifies the skeleton.
-ℹ️ [INFO]   A green `validate` right now means the structure is in place, not that any
-ℹ️ [INFO]   behaviour is covered. It starts meaning something when the requirements below
-ℹ️ [INFO]   are real and their scenarios are linked to tests.
-ℹ️ [INFO] ✅ Adoption completed. Next steps:
-ℹ️ [INFO]   1. specgate check               # the gate — should pass right now
-ℹ️ [INFO]   2. Argue with the seeded proposals in spec.md — each one names its evidence
-ℹ️ [INFO]   3. specgate status              # what each requirement still needs
-ℹ️ [INFO]   4. specgate ci init             # put the gate in CI
-ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:
-ℹ️ [INFO]   specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)
+  ◆ specgate · init
+
+  ℹ  Existing code found (package.json) — adopting this repository in place. Nothing in your code is touched.
+  ℹ  To scaffold a separate new project instead: specgate init --new
+
+  Stack detection: package.json ──────────────────────────
+    · Project: invoicing
+    · Stack: Node.js
+    · Test command: npm test
+    + spec.md
+    + features/adoption/baseline.feature
+    + docs/specs/traceability.md
+    + docs/specs/adr/README.md
+    + AGENTS.md
+    + README.md   was missing
+    · Traceability: generated from spec.md, tags and tests (`specgate matrix`)
+
+  Summary ────────────────────────────────────────────────
+    · Files written: 6
+    · Files skipped (already present): 0
+    · Requirements seeded: 2 proposal(s) from the layout — invoices, customers
+  ▲  This does not certify your code yet — it certifies the skeleton.
+     A green `validate` right now means the structure is in place, not that any
+     behaviour is covered. It starts meaning something when the requirements below
+     are real and their scenarios are linked to tests.
+
+  ✔  Adoption completed
+
+… 7 more lines
 ```
 <!-- specgate:out-existing-init:end -->
 
@@ -122,31 +123,12 @@ specgate check
 <!-- specgate:out-existing-check:begin — generated; edit the source, not this block -->
 ```text
 $ specgate check
-ℹ️ [INFO] ✅ Validation passed
-ℹ️ [INFO] - Features detected: 1
-ℹ️ [INFO] - Base SDD structure: complete
-ℹ️ [INFO] - Traceability mode: rich
-ℹ️ [INFO] - Strict TDD gate: passed (2 row(s) exempt — still Draft, so not checked)
-⚠️ [WARN] Adoption never retro-filled — the only scenario is the adoption baseline.
-💡 [FIX] A Draft row owes nothing yet, so --strict-tdd skips it. It starts being
-💡 [FIX] checked the moment its Status leaves Draft — `specgate done <REQ>` does that.
-💡 [FIX] This passes, but it certifies the skeleton, not the code.
-💡 [FIX]   specgate onboard                     # what this codebase already implies
-💡 [FIX]   specgate new "<behaviour>"            # one requirement you already rely on
-💡 [FIX]   # then a test that mentions REQ-NNN, and: specgate done REQ-NNN
+  ◆ specgate · check   invoicing
 
-✔ numbers run per year (12ms)
-✔ three lines at 21% VAT are rounded to the cent (12ms)
-ℹ tests 2
-ℹ suites 0
-ℹ pass 2
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 1.234
+  ✔  Specification   validate --strict
+  ✔  Tests           node --test
 
-✔  Gate passed — the specification and `node --test`
+  ✔  Gate passed — the specification and `node --test`
 ```
 <!-- specgate:out-existing-check:end -->
 

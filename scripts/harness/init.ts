@@ -26,6 +26,7 @@ import {
   detectTestCommand as detectSharedTestCommand,
   hasGherkinRunner as detectGherkinRunner,
 } from "../../packages/core/src/domain/TestCommand";
+import * as ui from "../lib/ui";
 
 const ROOT_DIR = path.resolve(__dirname, "..", "..", "..");
 const TEMPLATES = path.join(ROOT_DIR, "templates", "harness");
@@ -485,26 +486,38 @@ export class InitCommand extends BaseCommand {
         status,
       },
       () => {
-        for (const file of written) process.stdout.write(`ℹ️ [INFO] write ${file}\n`);
+        const out = process.stdout;
+        out.write(ui.header("harness init"));
+        for (const file of written) out.write(ui.fileLine("added", file));
         for (const d of status) {
-          if (d.code === "harness_config_merged") process.stdout.write(`ℹ️ [INFO] ${d.message}\n`);
+          if (d.code === "harness_config_merged") out.write(ui.info(d.message));
         }
         // Warnings only reached `--json` before, so a text-mode user learned
         // that a tracked file had changed from `git status` instead of from the
         // command that changed it.
         for (const d of status) {
           if (d.severity !== "warning") continue;
-          process.stderr.write(`⚠️ [WARN] ${d.message}\n`);
-          if (d.fix) process.stderr.write(`💡 [FIX] ${d.fix}\n`);
+          process.stderr.write(ui.warn(d.message));
+          if (d.fix) process.stderr.write(ui.fix(d.fix));
         }
-        process.stdout.write(
-          "ℹ️ [INFO] ✅ Harness configured.\n" +
-            `ℹ️ [INFO]   gate: validate . --strict${testCmd ? ` + ${testCmd}` : " (no test command detected)"}\n` +
-            "ℹ️ [INFO]   agent: not set — that is your choice and your credentials.\n" +
-            "ℹ️ [INFO] Next:\n" +
-            "ℹ️ [INFO]   1. Read .harness/prompt-prefix.md and make it sound like your team.\n" +
-            "ℹ️ [INFO]   2. specgate harness prompt REQ-001        — see it before paying for it\n" +
-            'ℹ️ [INFO]   3. specgate harness run --req REQ-001 --agent "<cmd> < {prompt_file}"\n'
+        out.write(
+          "\n" +
+            ui.ok(ui.bold("Harness configured")) +
+            ui
+              .kv(
+                "gate",
+                `validate . --strict${testCmd ? ` + ${testCmd}` : ui.muted(" (no test command detected)")}`,
+                8
+              )
+              .replace(/^  /, "     ") +
+            ui
+              .kv("agent", ui.muted("not set — that is your choice and your credentials"), 8)
+              .replace(/^  /, "     ") +
+            ui.steps("Next", [
+              "Read .harness/prompt-prefix.md and make it sound like your team",
+              ["specgate harness prompt REQ-001", "see it before paying for it"],
+              'specgate harness run --req REQ-001 --agent "<cmd> < {prompt_file}"',
+            ])
         );
       }
     );

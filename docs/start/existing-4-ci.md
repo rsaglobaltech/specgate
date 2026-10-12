@@ -22,14 +22,17 @@ specgate ci init --provider github
 <!-- specgate:out-existing-ci:begin — generated; edit the source, not this block -->
 ```text
 $ specgate ci init --provider github
-ℹ️ [INFO] write .github/workflows/spec-gate.yml
-ℹ️ [INFO] ✅ CI gate installed. On every PR/MR the job:
-ℹ️ [INFO]   1. runs `specgate check` — the specification, then the tests, as locally
-ℹ️ [INFO]      runs your tests: `node --test` (test_cmd)
-ℹ️ [INFO]   2. runs `validate --against-lock` when .specops.lock exists, so a
-ℹ️ [INFO]      moved pack tag or an edited generated file fails the build
-ℹ️ [INFO]   3. publishes `plan --format json` as the spec-plan artifact
-ℹ️ [INFO] Commit the file and open a PR to see the gate in action.
+  ◆ specgate · ci init   github
+
+    + .github/workflows/spec-gate.yml
+
+  ✔  CI gate installed. On every PR/MR the job:
+   1  runs `specgate check` — the specification, then the tests, as locally
+     runs your tests: `node --test` (test_cmd)
+   2  runs `validate --against-lock` when .specops.lock exists, so a
+     moved pack tag or an edited generated file fails the build
+   3  publishes `plan --format json` as the spec-plan artifact
+  ℹ  Commit the file and open a PR to see the gate in action.
 ```
 <!-- specgate:out-existing-ci:end -->
 
@@ -45,26 +48,12 @@ specgate check
 <!-- specgate:out-existing-check-green:begin — generated; edit the source, not this block -->
 ```text
 $ specgate check
-ℹ️ [INFO] ✅ Validation passed
-ℹ️ [INFO] - Features detected: 2
-ℹ️ [INFO] - Base SDD structure: complete
-ℹ️ [INFO] - Traceability mode: rich
-ℹ️ [INFO] - Strict TDD gate: passed (2 row(s) exempt — still Draft, so not checked)
-💡 [FIX] A Draft row owes nothing yet, so --strict-tdd skips it. It starts being
-💡 [FIX] checked the moment its Status leaves Draft — `specgate done <REQ>` does that.
+  ◆ specgate · check   invoicing
 
-✔ numbers run per year (12ms)
-✔ REQ-004: three lines at 21% VAT are rounded to the cent (12ms)
-ℹ tests 2
-ℹ suites 0
-ℹ pass 2
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 1.234
+  ✔  Specification   validate --strict
+  ✔  Tests           node --test
 
-✔  Gate passed — the specification and `node --test`
+  ✔  Gate passed — the specification and `node --test`
 ```
 <!-- specgate:out-existing-check-green:end -->
 

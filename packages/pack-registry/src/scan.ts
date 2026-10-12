@@ -132,8 +132,12 @@ export class PackScanner {
     const errors: string[] = [];
     const warnings: string[] = [];
     for (const line of combined.split("\n")) {
-      if (line.includes("[ERROR]")) errors.push(line.replace(/^.*\[ERROR\]\s*/, "").trim());
-      else if (line.includes("[WARN]")) warnings.push(line.replace(/^.*\[WARN\]\s*/, "").trim());
+      // `✖`/`▲` lead the line since the CLI's 0.19 look; `[ERROR]`/`[WARN]` before it.
+      const t = line.trim();
+      if (t.startsWith("✖") || line.includes("[ERROR]"))
+        errors.push(t.replace(/^(?:.*\[ERROR\]|✖)\s*/, "").trim());
+      else if (t.startsWith("▲") || line.includes("[WARN]"))
+        warnings.push(t.replace(/^(?:.*\[WARN\]|▲)\s*/, "").trim());
     }
     let status: "pass" | "warn" | "fail";
     if (errors.length > 0) status = "fail";

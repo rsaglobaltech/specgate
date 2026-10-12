@@ -2,9 +2,10 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
 import { parseGherkin } from "../../../../packages/core/src/domain/Gherkin";
+import * as ui from "../../../lib/ui";
 
 function logError(msg: string) {
-  process.stderr.write(`❌ [ERROR] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 
 export interface InferPackOptions {

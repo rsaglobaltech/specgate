@@ -48,19 +48,21 @@ export class TraceabilityManager {
     for (const raw of combined.split("\n")) {
       const line = raw.trim();
       if (!line) continue;
-      if (line.includes("[ERROR]") || line.includes("❌")) {
+      // The CLI's markers since 0.19 (`✖`, `▲`, `✔` at the start of the
+      // line), and before it (`❌ [ERROR]`, `⚠️ [WARN]`, `ℹ️ [INFO] ✅`).
+      if (line.includes("[ERROR]") || line.includes("❌") || line.startsWith("✖")) {
         diagnostics.push({
-          message: line.replace(/^.*(?:\[ERROR\]|❌)\s*/, "").trim(),
+          message: line.replace(/^.*?(?:\[ERROR\]|❌|✖)\s*/, "").trim(),
           severity: "error",
         });
-      } else if (line.includes("[WARN]") || line.includes("⚠️")) {
+      } else if (line.includes("[WARN]") || line.includes("⚠️") || line.startsWith("▲")) {
         diagnostics.push({
-          message: line.replace(/^.*(?:\[WARN\]|⚠️)\s*/, "").trim(),
+          message: line.replace(/^.*?(?:\[WARN\]|⚠️|▲)\s*/, "").trim(),
           severity: "warning",
         });
-      } else if (line.includes("[INFO]") && line.includes("✅")) {
+      } else if ((line.includes("[INFO]") && line.includes("✅")) || line.startsWith("✔")) {
         diagnostics.push({
-          message: line.replace(/^.*(?:\[INFO\]|ℹ️)\s*/, "").trim(),
+          message: line.replace(/^.*?(?:\[INFO\]\s*✅|ℹ️|✔)\s*/, "").trim(),
           severity: "info",
         });
       }

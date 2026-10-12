@@ -18,6 +18,7 @@ import {
   paths,
   parseTasks,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
+import * as ui from "../../../lib/ui";
 
 const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
@@ -629,7 +630,9 @@ export class DoctorCommand extends BaseCommand {
       dir = projectDir || ".";
     }
 
-    if (!io.json) process.stdout.write(`\n🩺 Doctor report for: ${dir}\n\n`);
+    if (!io.json) {
+      process.stdout.write(ui.header("doctor", path.basename(path.resolve(dir))));
+    }
 
     if (!fs.existsSync(path.join(dir, "spec.md"))) {
       this.recordError(
@@ -677,15 +680,32 @@ export class DoctorCommand extends BaseCommand {
       process.exit(errors === 0 ? EXIT.OK : EXIT.FAILURE);
     }
 
-    const icons = { ok: "✅", warn: "⚠️", error: "❌" };
+    const mark = {
+      ok: ui.state("done"),
+      warn: `${ui.c.warn}${ui.sym.warn}${ui.c.reset}`,
+      error: `${ui.c.bad}${ui.sym.fail}${ui.c.reset}`,
+    };
+    const width = Math.max(...this.findings.map((f) => String(f.check).length));
     for (const f of this.findings) {
-      process.stdout.write(`${icons[f.level]} ${f.check}: ${f.detail}\n`);
-      if (f.fix) process.stdout.write(`   💡 Fix: ${f.fix}\n`);
+      // A detail may carry a second line (where specgate is installed): it
+      // continues under the first, in the detail column.
+      const [first, ...rest] = String(f.detail).split("\n");
+      process.stdout.write(
+        `  ${mark[f.level]}  ${ui.pad(String(f.check), width)}  ${f.level === "ok" ? ui.muted(first) : first}\n`
+      );
+      for (const line of rest)
+        process.stdout.write(`     ${" ".repeat(width)}  ${ui.muted(line.trim())}\n`);
+      if (f.fix) process.stdout.write(`     ${" ".repeat(width)}  ${ui.muted("fix:")} ${f.fix}\n`);
     }
 
+    const passed = this.findings.length - errors - warns;
     process.stdout.write(
-      `\n${errors === 0 ? "✅" : "❌"} ${errors} error(s), ${warns} warning(s), ` +
-        `${this.findings.length - errors - warns} check(s) passed\n`
+      `\n  ${ui.progress(passed, this.findings.length, "checks passed")}` +
+        ui.muted(`   ${errors} error(s) · ${warns} warning(s)`) +
+        "\n" +
+        (errors === 0
+          ? ui.next("specgate status", "what is left, and the command to run next")
+          : "\n")
     );
     process.exit(errors === 0 ? EXIT.OK : EXIT.FAILURE);
   }

@@ -46,14 +46,16 @@ specgate draft
 <!-- specgate:out-scratch-draft-list:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft
-  specgate draft  ·  docs/brief.md
+  ◆ specgate · draft   docs/brief.md
 
-  Product  Court bookings for a tennis club
+  Product   Court bookings for a tennis club
+  Progress  ░░░░░░░░░░░░░░░░░░░░  0 of 1 archived
 
-  Modules
+  Modules ────────────────────────────────────────────────
     ○ bookings  not started
 
-  Next  specgate draft bookings
+  Next ───────────────────────────────────────────────────
+  ➜  specgate draft bookings
 ```
 <!-- specgate:out-scratch-draft-list:end -->
 
@@ -69,19 +71,22 @@ specgate draft bookings
 <!-- specgate:out-scratch-draft-open:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft bookings
-  ✔ Draft draft-bookings opened, linked to docs/brief.md (REQ ids REQ-002…REQ-011 reserved)
+  ◆ specgate · draft bookings   docs/brief.md
+
+  ✔  Draft draft-bookings opened · REQ ids REQ-002…REQ-011 reserved
 
     + docs/specs/changes/draft-bookings/DRAFTING.md                how to write it
     + docs/specs/changes/draft-bookings/specs/bookings/spec.md     the requirements go here
     + docs/specs/changes/draft-bookings/change.yaml, proposal.md
 
-  Have your agent write it. Paste this into Claude Code, Cursor, Codex…:
+  Have your agent write it ───────────────────────────────
+  Paste this into Claude Code, Cursor, Codex…
 
     Draft the bookings module: follow docs/specs/changes/draft-bookings/DRAFTING.md
 
-  or let Specgate call it:  specgate draft bookings --agent "claude -p"
-
-  Then run  specgate draft bookings  until it says Ready to review.
+  Next ───────────────────────────────────────────────────
+  ➜  specgate draft bookings --agent "claude -p"
+     or let Specgate call it — then run specgate draft bookings until it says Ready to review
 ```
 <!-- specgate:out-scratch-draft-open:end -->
 
@@ -116,9 +121,9 @@ specgate draft bookings
 <!-- specgate:out-scratch-draft-check:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft bookings
-  specgate draft bookings  ·  docs/brief.md
+  ◆ specgate · draft bookings   docs/brief.md
 
-  3 requirement(s), 4 scenario(s)
+  3 requirement(s) · 4 scenario(s)
 
   ✖  D6_unlisted_value  SCN-002 states "201", which is not in the brief and not listed as an assumption for SCN-002 or REQ-002.
      fix: List it in assumptions.md with SCN-002 (or REQ-002) in its row, or use the value the brief gives.
@@ -131,11 +136,11 @@ $ specgate draft bookings
   ✖  D6_unlisted_value  SCN-005 states "5", which is not in the brief and not listed as an assumption for SCN-005 or REQ-004.
      fix: List it in assumptions.md with SCN-005 (or REQ-004) in its row, or use the value the brief gives.
 
-  ✖  5 finding(s) to fix. Each says how; DRAFTING.md has the formats.
+  ✖  5 finding(s) to fix — each says how; DRAFTING.md has the formats
 
-  What now
-    1. Fix them, or ask your agent:  specgate draft bookings --agent "claude -p"
-    2. specgate draft bookings   — again, until it says Ready to review
+  What now ───────────────────────────────────────────────
+   1  ➜ specgate draft bookings --agent "claude -p"   your agent fixes them — or fix them yourself
+   2  ➜ specgate draft bookings   again, until it says Ready to review
 ```
 <!-- specgate:out-scratch-draft-check:end -->
 
@@ -155,17 +160,17 @@ specgate draft bookings
 <!-- specgate:out-scratch-draft-check-again:begin — generated; edit the source, not this block -->
 ```text
 $ specgate draft bookings
-  specgate draft bookings  ·  docs/brief.md
+  ◆ specgate · draft bookings   docs/brief.md
 
-  3 requirement(s), 4 scenario(s)
+  3 requirement(s) · 4 scenario(s)
 
-  ✔  Ready to review.
+  ✔  Ready to review
 
-  What now
-    1. Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
-    2. Answer what you can in docs/specs/changes/draft-bookings/questions.md
-    3. specgate change archive draft-bookings
-    4. specgate status   — every module drafted: what to build first
+  What now ───────────────────────────────────────────────
+   1  Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
+   2  Answer what you can in docs/specs/changes/draft-bookings/questions.md
+   3  ➜ specgate change archive draft-bookings
+   4  ➜ specgate status   every module drafted: what to build first
 ```
 <!-- specgate:out-scratch-draft-check-again:end -->
 
@@ -181,13 +186,17 @@ specgate change archive draft-bookings
 <!-- specgate:out-scratch-archive:begin — generated; edit the source, not this block -->
 ```text
 $ specgate change archive draft-bookings
-  ✔ Archived as 2026-01-01-draft-bookings
+  ◆ specgate · change archive   draft-bookings
 
-    specs:        3 added · 0 modified · 0 removed
-    traceability: 3 row(s) added · 0 updated · 0 removed
-    features:     3 materialised
+  ✔  Archived as 2026-01-01-draft-bookings
 
-  Next: specgate draft — the next module of the brief, or what to build first.
+    Specs         3 added · 0 modified · 0 removed
+    Traceability  3 row(s) added · 0 updated · 0 removed
+    Features      3 materialised
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate draft
+     the next module of the brief, or what to build first
 ```
 <!-- specgate:out-scratch-archive:end -->
 
@@ -204,22 +213,24 @@ specgate status
 <!-- specgate:out-scratch-status:begin — generated; edit the source, not this block -->
 ```text
 $ specgate status
-  📊 Project status  court-bookings
+  ◆ specgate · status   court-bookings
 
-  Requirements  4 total · 0 done · 4 pending
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 4 done
 
-  To do
-    REQ-001   Preserve existing behaviour                   a test and code
-    REQ-002   A member books a court for one hour           a test and code
-    REQ-003   A court is never booked twice for the same …  a test and code
+  To do ──────────────────────────────────────────────────
+    ○ REQ-001  Preserve existing behaviour                   a test and code
+    ○ REQ-002  A member books a court for one hour           a test and code
+    ○ REQ-003  A court is never booked twice for the same …  a test and code
 
-  Waiting for an answer
-    REQ-004   A member cancels a booking                    an answer to Q1
+  Waiting for an answer ──────────────────────────────────
+    ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)
 
-  Brief  docs/brief.md · 1 of 1 module(s) drafted
+  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 
-  Next  specgate done REQ-002  — once a test mentions REQ-002 — that mention is the link; done checks first
+  Next ───────────────────────────────────────────────────
+  ➜  specgate done REQ-002
+     once a test mentions REQ-002 — that mention is the link; done checks first
 ```
 <!-- specgate:out-scratch-status:end -->
 

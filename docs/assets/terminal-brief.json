@@ -98,7 +98,7 @@
       "omitted": 2,
       "lines": [
         {
-          "t": "  specgate draft bookings  ·  docs/brief.md",
+          "t": "  ◆ specgate · draft bookings   docs/brief.md",
           "c": "out",
           "s": "out"
         },
@@ -108,7 +108,7 @@
           "s": "out"
         },
         {
-          "t": "  3 requirement(s), 4 scenario(s)",
+          "t": "  3 requirement(s) · 4 scenario(s)",
           "c": "out",
           "s": "out"
         },
@@ -173,7 +173,7 @@
           "s": "out"
         },
         {
-          "t": "  ✖  5 finding(s) to fix. Each says how; DRAFTING.md has the formats.",
+          "t": "  ✖  5 finding(s) to fix — each says how; DRAFTING.md has the formats",
           "c": "err",
           "s": "out"
         },
@@ -183,7 +183,7 @@
           "s": "out"
         },
         {
-          "t": "  What now",
+          "t": "  What now ───────────────────────────────────────────────",
           "c": "out",
           "s": "out"
         }
@@ -285,7 +285,7 @@
       "omitted": 1,
       "lines": [
         {
-          "t": "  specgate draft bookings  ·  docs/brief.md",
+          "t": "  ◆ specgate · draft bookings   docs/brief.md",
           "c": "out",
           "s": "out"
         },
@@ -295,7 +295,7 @@
           "s": "out"
         },
         {
-          "t": "  3 requirement(s), 4 scenario(s)",
+          "t": "  3 requirement(s) · 4 scenario(s)",
           "c": "out",
           "s": "out"
         },
@@ -305,7 +305,7 @@
           "s": "out"
         },
         {
-          "t": "  ✔  Ready to review.",
+          "t": "  ✔  Ready to review",
           "c": "ok",
           "s": "out"
         },
@@ -315,22 +315,22 @@
           "s": "out"
         },
         {
-          "t": "  What now",
+          "t": "  What now ───────────────────────────────────────────────",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "    1. Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business",
+          "t": "   1  Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "    2. Answer what you can in docs/specs/changes/draft-bookings/questions.md",
+          "t": "   2  Answer what you can in docs/specs/changes/draft-bookings/questions.md",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "    3. specgate change archive draft-bookings",
+          "t": "   3  ➜ specgate change archive draft-bookings",
           "c": "out",
           "s": "out"
         }
@@ -344,12 +344,22 @@
       "surface": "change archive",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1330,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 1600,
+      "truncated": true,
+      "omitted": 1,
       "lines": [
         {
-          "t": "  ✔ Archived as 2026-01-01-draft-bookings",
+          "t": "  ◆ specgate · change archive   draft-bookings",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  Archived as 2026-01-01-draft-bookings",
           "c": "ok",
           "s": "out"
         },
@@ -359,17 +369,17 @@
           "s": "out"
         },
         {
-          "t": "    specs:        3 added · 0 modified · 0 removed",
+          "t": "    Specs         3 added · 0 modified · 0 removed",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "    traceability: 3 row(s) added · 0 updated · 0 removed",
+          "t": "    Traceability  3 row(s) added · 0 updated · 0 removed",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "    features:     3 materialised",
+          "t": "    Features      3 materialised",
           "c": "out",
           "s": "out"
         },
@@ -379,7 +389,12 @@
           "s": "out"
         },
         {
-          "t": "  Next: specgate draft — the next module of the brief, or what to build first.",
+          "t": "  Next ───────────────────────────────────────────────────",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ➜  specgate draft",
           "c": "out",
           "s": "out"
         }
@@ -394,11 +409,11 @@
       "exit": 0,
       "typeMs": 26,
       "holdMs": 2140,
-      "truncated": false,
-      "omitted": 0,
+      "truncated": true,
+      "omitted": 2,
       "lines": [
         {
-          "t": "  📊 Project status  courts",
+          "t": "  ◆ specgate · status   courts",
           "c": "out",
           "s": "out"
         },
@@ -408,7 +423,7 @@
           "s": "out"
         },
         {
-          "t": "  Requirements  4 total · 0 done · 4 pending",
+          "t": "  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 4 done",
           "c": "out",
           "s": "out"
         },
@@ -418,22 +433,22 @@
           "s": "out"
         },
         {
-          "t": "  To do",
+          "t": "  To do ──────────────────────────────────────────────────",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "    REQ-001   Preserve existing behaviour                   a test and code",
+          "t": "    ○ REQ-001  Preserve existing behaviour                   a test and code",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "    REQ-002   A member books a court for one hour           a test and code",
+          "t": "    ○ REQ-002  A member books a court for one hour           a test and code",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "    REQ-003   A court is never booked twice for the same …  a test and code",
+          "t": "    ○ REQ-003  A court is never booked twice for the same …  a test and code",
           "c": "out",
           "s": "out"
         },
@@ -443,12 +458,12 @@
           "s": "out"
         },
         {
-          "t": "  Waiting for an answer",
+          "t": "  Waiting for an answer ──────────────────────────────────",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "    REQ-004   A member cancels a booking                    an answer to Q1",
+          "t": "    ○ REQ-004  A member cancels a booking  an answer to Q1",
           "c": "out",
           "s": "out"
         },
@@ -463,7 +478,7 @@
           "s": "out"
         },
         {
-          "t": "  Brief  docs/brief.md · 1 of 1 module(s) drafted",
+          "t": "  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md",
           "c": "out",
           "s": "out"
         },
@@ -473,7 +488,7 @@
           "s": "out"
         },
         {
-          "t": "  Next  specgate done REQ-002  — once a test mentions REQ-002 — that mention is the link; done checks first",
+          "t": "  Next ───────────────────────────────────────────────────",
           "c": "out",
           "s": "out"
         }

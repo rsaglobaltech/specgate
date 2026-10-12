@@ -24,15 +24,16 @@ import { deriveDelta, materialiseChange } from "../../../specops/as_change";
 import { diffDirs } from "../../../../packages/core/src/infrastructure/DirectorySnapshot";
 import type { Diagnostic } from "../../../lib/diagnostics";
 import { agentIo } from "../../../lib/agent";
+import * as ui from "../../../lib/ui";
 
 // Three levels up from dist/scripts/cli/commands/specops is dist/scripts.
 const EXPAND_SCRIPT = path.join(__dirname, "..", "..", "..", "expand_domain_pack.js");
 
 function info(msg) {
-  process.stdout.write(`ℹ️ [INFO] ${msg}\n`);
+  process.stdout.write(ui.logLine(msg));
 }
 function error(msg) {
-  process.stderr.write(`❌ [ERROR] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 
 function usage() {

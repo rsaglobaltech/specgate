@@ -88,11 +88,11 @@ specgate harness prompt REQ-003
 <!-- specgate:out-scratch-harness-prompt:begin — generated; edit the source, not this block -->
 ```text
 $ specgate harness prompt REQ-003
-ℹ️  [harness] Dry run — 1 requirement(s) would be processed:
+  ◆ specgate · harness run   dry run · 1 requirement(s) would be processed
 
-════════════════════════════════════════════════════════════════════════
-REQ-003 (NEEDS_EVERYTHING) → branch harness/REQ-003
-════════════════════════════════════════════════════════════════════════
+
+  REQ-003 · NEEDS_EVERYTHING → branch harness/REQ-003 ────
+
 # Implement REQ-003
 
 You are a coding agent working inside a spec-driven project. Implement exactly one requirement — **REQ-003** — following the project's existing conventions. Do not touch unrelated files.

@@ -39,7 +39,7 @@ export default [
       );
       t.ok(r, "harness run");
       t.expect(
-        new RegExp(`✅ ${req.id}\\s+pass`).test(t.out(r)),
+        new RegExp(`✔  ${req.id}\\s+pass`).test(t.out(r)),
         "the requirement passes the gate",
         r
       );

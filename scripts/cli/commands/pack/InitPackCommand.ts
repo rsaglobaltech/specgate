@@ -10,17 +10,7 @@ import * as path from "node:path";
 import * as readline from "node:readline";
 import { BaseCommand } from "../../../lib/command";
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  cyan: COLOR_ENABLED ? "\x1b[36m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-  red: COLOR_ENABLED ? "\x1b[31m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-};
+import { c } from "../../../lib/ui";
 
 function logError(msg: string) {
   process.stderr.write(`${c.red}✖${c.reset}  ${msg}\n`);

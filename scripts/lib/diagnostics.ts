@@ -25,29 +25,24 @@ export {
 
 // ── Human rendering ───────────────────────────────────────────────────────────
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  red: COLOR_ENABLED ? "\x1b[31m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-  cyan: COLOR_ENABLED ? "\x1b[36m" : "",
-};
+import { c, sym } from "./ui";
 
 const MARK = {
-  [SEVERITY.ERROR]: `${c.red}✖${c.reset}`,
-  [SEVERITY.WARNING]: `${c.yellow}▲${c.reset}`,
-  [SEVERITY.INFO]: `${c.cyan}ℹ${c.reset}`,
+  [SEVERITY.ERROR]: `${c.bad}${sym.fail}${c.reset}`,
+  [SEVERITY.WARNING]: `${c.warn}${sym.warn}${c.reset}`,
+  [SEVERITY.INFO]: `${c.note}${sym.info}${c.reset}`,
 };
 
+/**
+ *   ✖  docs/brief.md  The agent wrote no front matter.  [draft_no_front_matter]
+ *      fix: Run `specgate draft` to see the four fields…
+ */
 export function formatDiagnostic(d: Diagnostic) {
   const where = d.file ? `${d.file}${d.line ? `:${d.line}` : ""}` : d.target || "";
-  const head = `${MARK[d.severity] || "-"}  ${where ? `${c.dim}${where}${c.reset} ` : ""}${d.message}`;
-  const fix = d.fix ? `\n     ${c.dim}fix:${c.reset} ${d.fix}` : "";
-  const code = `${c.dim}[${d.code}]${c.reset}`;
-  return `${head} ${code}${fix}`;
+  const head = `  ${MARK[d.severity] || "-"}  ${where ? `${c.muted}${where}${c.reset}  ` : ""}${d.message}`;
+  const fix = d.fix ? `\n     ${c.muted}fix:${c.reset} ${d.fix}` : "";
+  const code = `${c.muted}[${d.code}]${c.reset}`;
+  return `${head}  ${code}${fix}`;
 }
 
 export function printDiagnostics(diags, stream?) {

@@ -114,3 +114,20 @@ test("parseValidateOutput handles both stdout and stderr simultaneously", () => 
   assert.equal(diags.filter((d) => d.severity === "error").length, 1);
   assert.equal(diags.filter((d) => d.severity === "warning").length, 1);
 });
+
+test("parseValidateOutput reads the CLI's current markers", () => {
+  const { TraceabilityManager } = require("../../src/traceability");
+  const m = new TraceabilityManager();
+  const d = m.parseValidateOutput(
+    "  ✔  Validation passed\n",
+    "  ✖  Missing spec.md\n  ▲  Adoption never retro-filled\n"
+  );
+  assert.deepEqual(
+    d.map((x) => [x.severity, x.message]),
+    [
+      ["info", "Validation passed"],
+      ["error", "Missing spec.md"],
+      ["warning", "Adoption never retro-filled"],
+    ]
+  );
+});

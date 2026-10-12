@@ -6,7 +6,7 @@
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-10-11",
+  "recordedAt": "2026-10-12",
   "title": "smart-parking",
   "cols": 88,
   "streamsMerged": false,
@@ -69,77 +69,77 @@
       "exit": 0,
       "typeMs": 26,
       "holdMs": 1960,
-      "truncated": false,
-      "omitted": 0,
+      "truncated": true,
+      "omitted": 4,
       "lines": [
         {
-          "t": "ℹ️ [INFO] 🧩 Rendering base template",
+          "t": "  ◆ specgate · init",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ℹ  🧩 Rendering base template",
           "c": "info",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] 🛠️ Applying project type template: backend",
+          "t": "  ℹ  🛠️ Applying project type template: backend",
           "c": "info",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] 🧩 No optional modules selected. Generating base + project-type features only.",
+          "t": "  ℹ  🧩 No optional modules selected. Generating base + project-type features only.",
           "c": "info",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] 📋 Summary",
-          "c": "info",
+          "t": "",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Project: Smart Parking",
-          "c": "info",
+          "t": "  Summary ────────────────────────────────────────────────",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Slug: smart-parking",
-          "c": "info",
+          "t": "    · Project: Smart Parking",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Type: backend",
-          "c": "info",
+          "t": "    · Slug: smart-parking",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Domain: parking operations",
-          "c": "info",
+          "t": "    · Type: backend",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Output: ~/smart-parking",
-          "c": "info",
+          "t": "    · Domain: parking operations",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Dry-run: false",
-          "c": "info",
+          "t": "    · Output: ~/smart-parking",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Git: skipped",
-          "c": "info",
+          "t": "    · Dry-run: false",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] Agent: none detected. To drive the daily loop from your agent:",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ️ [INFO]   specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ️ [INFO] ✅ Generation completed",
-          "c": "ok",
+          "t": "    · Git: skipped",
+          "c": "out",
           "s": "out"
         }
       ]
@@ -162,17 +162,17 @@
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] Using pack: ~/packs/multi-tenant/backend/pack.yaml",
+          "t": "  ℹ  Using pack: ~/packs/multi-tenant/backend/pack.yaml",
           "c": "info",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] Generated 3 scenario file(s).",
+          "t": "  ℹ  Generated 3 scenario file(s).",
           "c": "info",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] Domain pack expansion completed.",
+          "t": "  ℹ  Domain pack expansion completed.",
           "c": "info",
           "s": "out"
         }
@@ -188,10 +188,30 @@
       "typeMs": 26,
       "holdMs": 2050,
       "truncated": true,
-      "omitted": 1,
+      "omitted": 5,
       "lines": [
         {
-          "t": "  Needs Test + Code",
+          "t": "  ◆ specgate · plan",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 5 done",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Needs Test + Code ──────────────────────────────────────",
           "c": "out",
           "s": "out"
         },
@@ -201,7 +221,7 @@
           "s": "out"
         },
         {
-          "t": "      ✓ feature: `features/multi-tenant/provisioning_a_tenant_emits_tenantprovisioned.feature`",
+          "t": "      ✔ feature `features/multi-tenant/provisioning_a_tenant_emits_tenantprovisioned.feature`",
           "c": "ok",
           "s": "out"
         },
@@ -211,7 +231,7 @@
           "s": "out"
         },
         {
-          "t": "      ✓ feature: `features/multi-tenant/cross_tenant_read_attempts_are_rejected.feature`",
+          "t": "      ✔ feature `features/multi-tenant/cross_tenant_read_attempts_are_rejected.feature`",
           "c": "ok",
           "s": "out"
         },
@@ -221,7 +241,7 @@
           "s": "out"
         },
         {
-          "t": "      ✓ feature: `features/multi-tenant/exceeding_a_quota_emits_quotaexceeded.feature`",
+          "t": "      ✔ feature `features/multi-tenant/exceeding_a_quota_emits_quotaexceeded.feature`",
           "c": "ok",
           "s": "out"
         },
@@ -231,7 +251,7 @@
           "s": "out"
         },
         {
-          "t": "  Needs Feature File",
+          "t": "  Needs Feature File ─────────────────────────────────────",
           "c": "out",
           "s": "out"
         },
@@ -241,28 +261,8 @@
           "s": "out"
         },
         {
-          "t": "      · feature: -",
+          "t": "      ○ feature -",
           "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "  Needs Test Artifact (TDD)",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "    REQ-000   SCN-000",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "      ✓ feature: `features/core/health.feature`",
-          "c": "ok",
           "s": "out"
         }
       ]
@@ -309,18 +309,13 @@
       "surface": "harness run",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1510,
+      "holdMs": 1870,
       "truncated": false,
       "omitted": 0,
       "lines": [
         {
-          "t": "ℹ️  [harness] Processing 1 requirement(s) from base HEAD.",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ️  [harness] REQ-000: attempt 1/1",
-          "c": "info",
+          "t": "  ◆ specgate · harness run   1 requirement(s) from HEAD",
+          "c": "out",
           "s": "out"
         },
         {
@@ -329,12 +324,22 @@
           "s": "out"
         },
         {
-          "t": "── harness report ──",
-          "c": "dim",
+          "t": "  ◇  REQ-000   attempt 1/1",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "  ✅ REQ-000  pass (1 attempt)  → harness/REQ-000",
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Harness report ─────────────────────────────────────────",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  REQ-000   pass    1 attempt   → harness/REQ-000",
           "c": "ok",
           "s": "out"
         },
@@ -344,18 +349,33 @@
           "s": "out"
         },
         {
-          "t": "  1 passed · 0 failed · 0 skipped",
-          "c": "ok",
-          "s": "out"
-        },
-        {
-          "t": "  Review and merge the harness/* branches you trust.",
+          "t": "  ████████████████████  1 of 1 passed   1 passed · 0 failed · 0 skipped",
           "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️  [harness] Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — `specgate harness report`",
-          "c": "info",
+          "t": "  Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — specgate harness report sums them up",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Next ───────────────────────────────────────────────────",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ➜  git diff HEAD...harness/REQ-000",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "     review and merge the harness/* branches you trust",
+          "c": "out",
           "s": "out"
         }
       ]
@@ -471,28 +491,38 @@
       "surface": "validate",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1060,
+      "holdMs": 1240,
       "truncated": false,
       "omitted": 0,
       "lines": [
         {
-          "t": "ℹ️ [INFO] ✅ Validation passed",
+          "t": "  ◆ specgate · validate   smart-parking",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  Validation passed",
           "c": "ok",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Features detected: 4",
-          "c": "info",
+          "t": "     · Features detected: 4",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Base SDD structure: complete",
-          "c": "info",
+          "t": "     · Base SDD structure: complete",
+          "c": "out",
           "s": "out"
         },
         {
-          "t": "ℹ️ [INFO] - Traceability mode: rich",
-          "c": "info",
+          "t": "     · Traceability mode: rich",
+          "c": "out",
           "s": "out"
         }
       ]

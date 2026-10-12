@@ -10,17 +10,7 @@ import { BaseCommand } from "../../../lib/command";
 
 export const BASELINE_DIR = path.join(".specgate", "baseline");
 
-const COLOR =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR ? "\x1b[0m" : "",
-  bold: COLOR ? "\x1b[1m" : "",
-  dim: COLOR ? "\x1b[2m" : "",
-  green: COLOR ? "\x1b[32m" : "",
-  yellow: COLOR ? "\x1b[33m" : "",
-  red: COLOR ? "\x1b[31m" : "",
-  cyan: COLOR ? "\x1b[36m" : "",
-};
+import { c } from "../../../lib/ui";
 
 function readIfExists(file: string) {
   try {

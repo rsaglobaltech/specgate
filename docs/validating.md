@@ -61,7 +61,7 @@ the only scenario in the project is still the baseline `adopt` wrote:
 
 ```
 ✅ Validation passed
-⚠️ [WARN] Adoption never retro-filled — the only scenario is the adoption baseline.
+  ▲  Adoption never retro-filled — the only scenario is the adoption baseline.
 ```
 
 It is a warning, not a failure: the exit code stays `0` and CI stays green. It
@@ -120,7 +120,7 @@ npx @rsaglobaltech/specgate@latest validate . --strict-coverage
 ```
 
 ```
-❌ [ERROR] Declared scenarios nothing proves: 1
+  ✖  Declared scenarios nothing proves: 1
   ✖  Nothing proves "SCN-012 a fully discounted invoice carries no tax"
      fix: Add a test naming SCN-012 to tests/totals.test.js, or delete the
           scenario if it no longer describes behaviour this project promises.
