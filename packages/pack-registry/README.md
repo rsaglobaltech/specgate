@@ -29,8 +29,8 @@ dependencies. Deploy it to any static host:
 - **Cloudflare Pages**: connect the repo, set build command to
   `node packages/pack-registry/src/build.js`, output directory to
   `packages/pack-registry/dist`.
-- **GitHub Pages**: use a workflow that builds and pushes `dist/` to the
-  `gh-pages` branch.
+- **GitHub Pages**: use a workflow that builds `dist/` and deploys it with
+  `actions/upload-pages-artifact` and `actions/deploy-pages`.
 - **S3 / Netlify / Vercel**: same pattern.
 
 ## Architecture
