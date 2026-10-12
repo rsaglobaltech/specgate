@@ -72,7 +72,7 @@ export default [
           jsonrpc: "2.0",
           id: 4,
           method: "tools/call",
-          params: { name: "specgate_status", arguments: { projectDir: dir } },
+          params: { name: "csda_status", arguments: { projectDir: dir } },
         },
         // The daily loop, from an MCP-only client: `new` and `check` were not
         // tools at all, and `done` never said it needs a requirement.
@@ -113,13 +113,13 @@ export default [
       );
       const names = byId[2].result.tools.map((x) => x.name);
       t.expect(
-        names.includes("specgate_status") && !names.some((n) => n.startsWith("specgate_")),
-        "tools are specgate_*",
+        names.includes("specgate_status") && !names.some((n) => n.startsWith("csda_")),
+        "tools are specgate_*, and the old prefix is gone (ADR-0032)",
         r
       );
       const status = JSON.parse(byId[3].result.content[0].text);
       t.expect(status.schemaVersion === 1, "a tool call runs the CLI and returns its JSON", r);
-      t.expect(byId[4] && !byId[4].error, "an old specgate_* name still resolves", r);
+      t.expect(byId[4] && byId[4].error, "the old csda_* names no longer resolve (ADR-0032)", r);
 
       const tool = (n) => byId[2].result.tools.find((x) => x.name === n);
       t.expect(

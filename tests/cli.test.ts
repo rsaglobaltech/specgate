@@ -40,8 +40,8 @@ test("--help --all shows the whole surface", () => {
   const result = runCli(["--help", "--all"]);
   assert.equal(result.status, 0);
   assert.match(result.stdout, /expand --pack-root/);
-  assert.match(result.stdout, /^  Packs ─/m);
-  assert.match(result.stdout, /^  SpecOps ─/m);
+  assert.match(result.stdout, /^ {2}Packs ─/m);
+  assert.match(result.stdout, /^ {2}SpecOps ─/m);
   assert.ok(
     result.stdout.split("\n").length > runCli([], { cwd: os.tmpdir() }).stdout.split("\n").length,
     "the full help should be longer than the core one"

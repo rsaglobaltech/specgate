@@ -83,8 +83,8 @@ test("one broken sub-project fails the whole monorepo with a per-project summary
     fs.rmSync(path.join(root, "services", "mpi", "spec.md"));
     const r = cli("validate", root);
     assert.equal(r.status, 1);
-    assert.match(r.stdout, /✔  services\/fhir-server/);
-    assert.match(r.stdout, /✖  services\/mpi/);
+    assert.match(r.stdout, /✔ {2}services\/fhir-server/);
+    assert.match(r.stdout, /✖ {2}services\/mpi/);
     assert.match(r.stdout, /1 of 2 project\(s\) passed/);
     // The sub-project's own remedy still surfaces.
     assert.match(r.stderr, /Missing required file: spec\.md/);

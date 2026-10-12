@@ -8,6 +8,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.19.0] — 2026-10-12
+
 ### Changed — breaking
 
 - **One name everywhere: `csda` is gone** ([ADR-0032](docs/specs/adr/0032-one-name-everywhere.md)).
