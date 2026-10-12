@@ -21,11 +21,17 @@ specgate done REQ-004
 <!-- specgate:out-existing-done-refused:begin — generated; edit the source, not this block -->
 ```text
 $ specgate done REQ-004
-❌ [ERROR] --strict-tdd violations detected:
-  [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-002)
-💡 [FIX] TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; once a test names one of its scenarios (SCN-NNN), each scenario needs a test that names it — or move it back to Draft in spec.md.
+  ◆ specgate · done REQ-004   Implemented
 
-✖  REQ-004 not marked Implemented: validation failed. [done_validate_failed]
+  ✖  Specification   the gate, for REQ-004
+
+     ◆ specgate · validate   invoicing
+
+       ✖  --strict-tdd violations detected:
+       [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-002)
+          TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; once a test names one of its scenarios (SCN-NNN), each scenario needs a test that names it — or move it back to Draft in spec.md.
+
+  ✖  REQ-004  not marked Implemented: validation failed.  [done_validate_failed]
      fix: Fix what validate reports, then run `done` again.
 ```
 <!-- specgate:out-existing-done-refused:end -->
@@ -69,7 +75,16 @@ specgate done REQ-004
 <!-- specgate:out-existing-done:begin — generated; edit the source, not this block -->
 ```text
 $ specgate done REQ-004
-✔  REQ-004 → Implemented (1 row updated)
+  ◆ specgate · done REQ-004   Implemented
+
+  ✔  Specification   the gate, for REQ-004
+  ✔  Tests           node --test
+
+  ✔  REQ-004 → Implemented (1 row updated)
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate status
+     what is left, and the next requirement
 ```
 <!-- specgate:out-existing-done:end -->
 

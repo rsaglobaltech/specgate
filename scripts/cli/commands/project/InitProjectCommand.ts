@@ -17,6 +17,7 @@ import {
 import { findCliRoot } from "../../../lib/project-root";
 import { AdoptProjectCommand, detectStack } from "./AdoptCommand";
 import { migrateToDerived } from "../spec/MatrixCommand";
+import * as ui from "../../../lib/ui";
 
 const ROOT_DIR = findCliRoot(__dirname);
 const TEMPLATES_DIR = path.join(ROOT_DIR, "templates");
@@ -142,13 +143,13 @@ export function architectureSections(cfg: any): Record<string, string> {
 }
 
 function logInfo(msg: string) {
-  process.stdout.write(`ℹ️ [INFO] ${msg}\n`);
+  process.stdout.write(ui.logLine(msg));
 }
 function logWarn(msg: string) {
-  process.stdout.write(`⚠️ [WARN] ${msg}\n`);
+  process.stdout.write(ui.warn(msg));
 }
 function logError(msg: string) {
-  process.stderr.write(`❌ [ERROR] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 
 function usage() {
@@ -1017,6 +1018,7 @@ export class InitProjectCommand extends BaseCommand {
     if (rawArgs[0] === "init") rawArgs = rawArgs.slice(1);
 
     const opts = parseArgs(rawArgs);
+    process.stdout.write(ui.header("init"));
 
     // Plain `init` in a repository that already has code adopts it. The team
     // found the tool hard to absorb, and choosing between `init`, `adopt` and
@@ -1027,8 +1029,10 @@ export class InitProjectCommand extends BaseCommand {
     if (adoptsInstead(opts, process.cwd())) {
       if (fs.existsSync(path.join(process.cwd(), "spec.md"))) {
         // Running `init` twice is not a mistake worth an error.
-        logInfo("This repository is already spec-driven — nothing to do.");
-        logInfo("Next: specgate status   # what is left, and the command to run");
+        process.stdout.write(
+          ui.ok("This repository is already spec-driven — nothing to do.") +
+            ui.next("specgate status", "what is left, and the command to run")
+        );
         return;
       }
       const found = detectStack(process.cwd()).detected;
@@ -1038,6 +1042,7 @@ export class InitProjectCommand extends BaseCommand {
       );
       logInfo("To scaffold a separate new project instead: specgate init --new");
       new AdoptProjectCommand([
+        "--no-header",
         "--project-dir",
         process.cwd(),
         ...(opts.dryRun ? ["--dry-run"] : []),

@@ -74,7 +74,7 @@ test("missing required file suggests its template", () => {
     const r = cli("validate", dir);
     assert.equal(r.status, 1);
     assert.match(r.stderr, /Missing required file: spec\.md/);
-    assert.match(r.stderr, /💡 \[FIX\]/);
+    assert.match(r.stderr, / {5}/);
     assert.match(r.stderr, /templates\/base\/spec\.md\.tpl/);
   });
 });
@@ -84,7 +84,7 @@ test("missing traceability.md prints the rich header to paste", () => {
     fs.rmSync(path.join(dir, "docs", "specs", "traceability.md"));
     const r = cli("validate", dir);
     assert.equal(r.status, 1);
-    assert.match(r.stderr, /💡 \[FIX\].*rich matrix header/s);
+    assert.match(r.stderr, / {5}.*rich matrix header/s);
     assert.ok(r.stderr.includes(RICH_HEADER));
   });
 });
@@ -95,7 +95,7 @@ test("no feature files suggests writing a scenario or adding a pack", () => {
     const r = cli("validate", dir);
     assert.equal(r.status, 1);
     assert.match(r.stderr, /No \.feature files/);
-    assert.match(r.stderr, /💡 \[FIX\].*Gherkin scenario/);
+    assert.match(r.stderr, / {5}.*Gherkin scenario/);
     assert.match(r.stderr, /specops add/);
   });
 });
@@ -118,7 +118,7 @@ test("invalid status lists the allowed values", () => {
     const r = cli("validate", dir);
     assert.equal(r.status, 1);
     assert.match(r.stderr, /Invalid status in traceability\.md: WIP/);
-    assert.match(r.stderr, /💡 \[FIX\] Allowed statuses: Draft · /);
+    assert.match(r.stderr, / {5}Allowed statuses: Draft · /);
   });
 });
 
@@ -132,7 +132,7 @@ test("duplicate scenario id suggests renumbering", () => {
     const r = cli("validate", dir);
     assert.equal(r.status, 1);
     assert.match(r.stderr, /Duplicate Scenario ID/);
-    assert.match(r.stderr, /💡 \[FIX\].*renumber/);
+    assert.match(r.stderr, / {5}.*renumber/);
   });
 });
 
@@ -146,7 +146,7 @@ test("feature file missing from the matrix prints a paste-ready row", () => {
     const r = cli("validate", dir);
     assert.equal(r.status, 1);
     assert.match(r.stderr, /Feature file missing from traceability\.md: features\/extra\.feature/);
-    assert.match(r.stderr, /💡 \[FIX\] Add a row/);
+    assert.match(r.stderr, / {5}Add a row/);
     assert.match(r.stderr, /\| REQ-TBD \| SCN-TBD \| `features\/extra\.feature` \|/);
   });
 });
@@ -166,8 +166,8 @@ test("strict-tdd violations come with per-code remedies", () => {
     assert.equal(r.status, 1);
     assert.match(r.stderr, /\[TDD-1\]/);
     assert.match(r.stderr, /\[TDD-3\]/);
-    assert.match(r.stderr, /💡 \[FIX\] TDD-1: Write the test first/);
-    assert.match(r.stderr, /💡 \[FIX\] TDD-3: Add a traceability row/);
+    assert.match(r.stderr, / {5}TDD-1: Write the test first/);
+    assert.match(r.stderr, / {5}TDD-3: Add a traceability row/);
     // No TDD-2 violation → no TDD-2 remedy noise.
     assert.ok(!r.stderr.includes("TDD-2:"));
   });

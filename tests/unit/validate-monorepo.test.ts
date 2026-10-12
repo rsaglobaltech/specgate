@@ -72,9 +72,9 @@ test("validate on a monorepo root validates every declared project", () => {
     const r = cli("validate", root);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /Monorepo: validating 2 project\(s\)/);
-    assert.match(r.stdout, /── services\/fhir-server ──/);
-    assert.match(r.stdout, /── services\/mpi ──/);
-    assert.match(r.stdout, /2\/2 project\(s\) passed/);
+    assert.match(r.stdout, /services\/fhir-server ─+/);
+    assert.match(r.stdout, /services\/mpi ─+/);
+    assert.match(r.stdout, /2 of 2 project\(s\) passed/);
   });
 });
 
@@ -83,9 +83,9 @@ test("one broken sub-project fails the whole monorepo with a per-project summary
     fs.rmSync(path.join(root, "services", "mpi", "spec.md"));
     const r = cli("validate", root);
     assert.equal(r.status, 1);
-    assert.match(r.stdout, /✅ services\/fhir-server/);
-    assert.match(r.stdout, /❌ services\/mpi/);
-    assert.match(r.stdout, /1\/2 project\(s\) passed/);
+    assert.match(r.stdout, /✔  services\/fhir-server/);
+    assert.match(r.stdout, /✖  services\/mpi/);
+    assert.match(r.stdout, /1 of 2 project\(s\) passed/);
     // The sub-project's own remedy still surfaces.
     assert.match(r.stderr, /Missing required file: spec\.md/);
   });
@@ -113,8 +113,8 @@ test("a missing project directory is reported with a fix, others still run", () 
     const r = cli("validate", root);
     assert.equal(r.status, 1);
     assert.match(r.stderr, /Project directory not found: services\/ghost/);
-    assert.match(r.stderr, /💡 \[FIX\] Fix the 'projects:' entry/);
-    assert.match(r.stdout, /2\/3 project\(s\) passed/);
+    assert.match(r.stderr, / {5}Fix the 'projects:' entry/);
+    assert.match(r.stdout, /2 of 3 project\(s\) passed/);
   });
 });
 

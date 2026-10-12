@@ -23,7 +23,16 @@ specgate done REQ-002
 <!-- specgate:out-scratch-done:begin — generated; edit the source, not this block -->
 ```text
 $ specgate done REQ-002
-✔  REQ-002 → Implemented (1 row updated)
+  ◆ specgate · done REQ-002   Implemented
+
+  ✔  Specification   the gate, for REQ-002
+  ✔  Tests           node --test
+
+  ✔  REQ-002 → Implemented (1 row updated)
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate status
+     what is left, and the next requirement
 ```
 <!-- specgate:out-scratch-done:end -->
 
@@ -42,7 +51,7 @@ specgate done REQ-004
 <!-- specgate:out-scratch-done-blocked:begin — generated; edit the source, not this block -->
 ```text
 $ specgate done REQ-004
-✖  REQ-004 not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification). [done_needs_clarification]
+  ✖  REQ-004  not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification).  [done_needs_clarification]
      fix: Answer the question that blocks it in its change's questions.md, remove `status="Needs Clarification"` from its `specgate:trace`, write its test, then run `done`.
 ```
 <!-- specgate:out-scratch-done-blocked:end -->
@@ -60,26 +69,12 @@ specgate check
 <!-- specgate:out-scratch-check-green:begin — generated; edit the source, not this block -->
 ```text
 $ specgate check
-ℹ️ [INFO] ✅ Validation passed
-ℹ️ [INFO] - Features detected: 4
-ℹ️ [INFO] - Base SDD structure: complete
-ℹ️ [INFO] - Traceability mode: rich
-ℹ️ [INFO] - Strict TDD gate: passed (1 row(s) exempt — still Draft, so not checked)
-💡 [FIX] A Draft row owes nothing yet, so --strict-tdd skips it. It starts being
-💡 [FIX] checked the moment its Status leaves Draft — `specgate done <REQ>` does that.
+  ◆ specgate · check   court-bookings
 
-✔ REQ-002 SCN-002: booking a free court lasts one hour (12ms)
-✔ REQ-002 SCN-003: a member sees their bookings (12ms)
-ℹ tests 2
-ℹ suites 0
-ℹ pass 2
-ℹ fail 0
-ℹ cancelled 0
-ℹ skipped 0
-ℹ todo 0
-ℹ duration_ms 1.234
+  ✔  Specification   validate --strict
+  ✔  Tests           node --test
 
-✔  Gate passed — the specification and `node --test`
+  ✔  Gate passed — the specification and `node --test`
 ```
 <!-- specgate:out-scratch-check-green:end -->
 

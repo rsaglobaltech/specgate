@@ -191,7 +191,7 @@ test("adopt --dry-run writes nothing", () => {
     const dir = makeMavenProject(tmp);
     const r = cli(["adopt", "--project-dir", dir, "--keep-matrix", "--dry-run"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /\[dry-run\] write spec\.md/);
+    assert.match(r.stdout, /\+ spec\.md\s+dry run/);
     assert.ok(!fs.existsSync(path.join(dir, "spec.md")));
     assert.ok(!fs.existsSync(path.join(dir, "features")));
   });
@@ -349,7 +349,7 @@ test("adopt --monorepo adopts every declared module and writes the config", () =
 
     const v = cli(["validate", dir]);
     assert.equal(v.status, 0, v.stdout + v.stderr);
-    assert.match(v.stdout, /2\/2 project\(s\) passed/);
+    assert.match(v.stdout, /2 of 2 project\(s\) passed/);
   });
 });
 

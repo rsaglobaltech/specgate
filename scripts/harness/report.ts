@@ -44,15 +44,7 @@ export { HarnessReportSummary } from "../../packages/core/src/domain/HarnessRepo
  */
 export const FALSE_FAILURES_FILE = ".harness/false-failures.jsonl";
 
-const COLOR =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR ? "\x1b[0m" : "",
-  bold: COLOR ? "\x1b[1m" : "",
-  dim: COLOR ? "\x1b[2m" : "",
-  green: COLOR ? "\x1b[32m" : "",
-  yellow: COLOR ? "\x1b[33m" : "",
-};
+import { c } from "../lib/ui";
 
 /** Parsed command-line options for this command. */
 export interface HarnessReportOptions {

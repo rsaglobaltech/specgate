@@ -22,14 +22,15 @@ specgate ci init --provider github
 <!-- specgate:out-scratch-ci:begin — generated; edit the source, not this block -->
 ```text
 $ specgate ci init --provider github
-ℹ️ [INFO] write .github/workflows/spec-gate.yml
-ℹ️ [INFO] ✅ CI gate installed. On every PR/MR the job:
-ℹ️ [INFO]   1. runs `specgate check` — the specification, then the tests, as locally
-ℹ️ [INFO]      runs your tests: `node --test` (test_cmd)
-ℹ️ [INFO]   2. runs `validate --against-lock` when .specops.lock exists, so a
-ℹ️ [INFO]      moved pack tag or an edited generated file fails the build
-ℹ️ [INFO]   3. publishes `plan --format json` as the spec-plan artifact
-ℹ️ [INFO] Commit the file and open a PR to see the gate in action.
+    + .github/workflows/spec-gate.yml
+
+  ✔  CI gate installed. On every PR/MR the job:
+   1  runs `specgate check` — the specification, then the tests, as locally
+     runs your tests: `node --test` (test_cmd)
+   2  runs `validate --against-lock` when .specops.lock exists, so a
+     moved pack tag or an edited generated file fails the build
+   3  publishes `plan --format json` as the spec-plan artifact
+  ℹ  Commit the file and open a PR to see the gate in action.
 ```
 <!-- specgate:out-scratch-ci:end -->
 
@@ -51,12 +52,17 @@ specgate new "A member sees which courts are free on a day"
 <!-- specgate:out-scratch-new:begin — generated; edit the source, not this block -->
 ```text
 $ specgate new "A member sees which courts are free on a day"
-✔  REQ-005 A member sees which courts are free on a day (Draft)
-   spec.md                      ## REQ-005 — rewrite the obligation
-   features/a-member-sees-which-courts-are.feature @SCN-006 — fill in the <placeholders>
-   docs/specs/traceability.md   row linked to the scenario
+  ◆ specgate · new   REQ-005
 
-   Next: write a test that mentions REQ-005 — that is the link — then specgate check
+  ✔  REQ-005 A member sees which courts are free on a day · Draft
+
+    ~ spec.md                        ## REQ-005 — rewrite the obligation
+    + features/a-member-sees-which-courts-are.feature   @SCN-006 — fill in the <placeholders>
+    ~ docs/specs/traceability.md     row linked to the scenario
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate check
+     after you write a test that mentions REQ-005 — that is the link
 ```
 <!-- specgate:out-scratch-new:end -->
 
@@ -72,22 +78,24 @@ specgate status
 <!-- specgate:out-scratch-status-daily:begin — generated; edit the source, not this block -->
 ```text
 $ specgate status
-  📊 Project status  court-bookings
+  ◆ specgate · status   court-bookings
 
-  Requirements  5 total · 1 done · 4 pending
+  Requirements  ████░░░░░░░░░░░░░░░░  1 of 5 done
 
-  To do
-    REQ-001   Preserve existing behaviour                   a test and code
-    REQ-005   A member sees which courts are free on a day  a test and code
-    REQ-003   A court is never booked twice for the same …  a test and code
+  To do ──────────────────────────────────────────────────
+    ○ REQ-001  Preserve existing behaviour                   a test and code
+    ○ REQ-005  A member sees which courts are free on a day  a test and code
+    ○ REQ-003  A court is never booked twice for the same …  a test and code
 
-  Waiting for an answer
-    REQ-004   A member cancels a booking                    an answer to Q1
+  Waiting for an answer ──────────────────────────────────
+    ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)
 
-  Brief  docs/brief.md · 1 of 1 module(s) drafted
+  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 
-  Next  specgate done REQ-005  — once a test mentions REQ-005 — that mention is the link; done checks first
+  Next ───────────────────────────────────────────────────
+  ➜  specgate done REQ-005
+     once a test mentions REQ-005 — that mention is the link; done checks first
 ```
 <!-- specgate:out-scratch-status-daily:end -->
 

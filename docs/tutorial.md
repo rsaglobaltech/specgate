@@ -348,9 +348,9 @@ specgate done REQ-001
 ```
 
 ```text
-❌ [ERROR] --strict-tdd violations detected:
+  ✖  --strict-tdd violations detected:
   [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-001)
-💡 [FIX] TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; …
+     TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; …
 
 ✖  REQ-001 not marked Implemented: validation failed. [done_validate_failed]
      fix: Fix what validate reports, then run `done` again.

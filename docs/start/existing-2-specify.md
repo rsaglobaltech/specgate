@@ -23,16 +23,18 @@ specgate status
 <!-- specgate:out-existing-status:begin — generated; edit the source, not this block -->
 ```text
 $ specgate status
-  📊 Project status  invoicing
+  ◆ specgate · status   invoicing
 
-  Requirements  3 total · 0 done · 3 pending
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 3 done
 
-  To do
-    REQ-001   Preserve existing behaviour                   a test and code
-    REQ-002   Invoices                                      its scenario
-    REQ-003   Customers                                     its scenario
+  To do ──────────────────────────────────────────────────
+    ○ REQ-001  Preserve existing behaviour  a test and code
+    ○ REQ-002  Invoices                     its scenario
+    ○ REQ-003  Customers                    its scenario
 
-  Next  specgate plan  — REQ-002's feature file is missing — plan shows which
+  Next ───────────────────────────────────────────────────
+  ➜  specgate plan
+     REQ-002's feature file is missing — plan shows which
 ```
 <!-- specgate:out-existing-status:end -->
 
@@ -52,12 +54,17 @@ specgate new "An invoice total is rounded to the cent"
 <!-- specgate:out-existing-new:begin — generated; edit the source, not this block -->
 ```text
 $ specgate new "An invoice total is rounded to the cent"
-✔  REQ-004 An invoice total is rounded to the cent (Draft)
-   spec.md                      ## REQ-004 — rewrite the obligation
-   features/an-invoice-total-is-rounded-to.feature @SCN-002 — fill in the <placeholders>
-   docs/specs/traceability.md   row linked to the scenario
+  ◆ specgate · new   REQ-004
 
-   Next: write a test that mentions REQ-004 — that is the link — then specgate check
+  ✔  REQ-004 An invoice total is rounded to the cent · Draft
+
+    ~ spec.md                        ## REQ-004 — rewrite the obligation
+    + features/an-invoice-total-is-rounded-to.feature   @SCN-002 — fill in the <placeholders>
+    ~ docs/specs/traceability.md     row linked to the scenario
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate check
+     after you write a test that mentions REQ-004 — that is the link
 ```
 <!-- specgate:out-existing-new:end -->
 

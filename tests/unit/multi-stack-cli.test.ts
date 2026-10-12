@@ -94,7 +94,7 @@ test("validate walks every stack from the root and passes", () => {
   withTree("spring,quarkus,micronaut", (root) => {
     const r = cli("validate", root);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /3\/3 project\(s\) passed/);
+    assert.match(r.stdout, /3 of 3 project\(s\) passed/);
   });
 });
 

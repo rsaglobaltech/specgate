@@ -485,26 +485,26 @@ export class InitCommand extends BaseCommand {
         status,
       },
       () => {
-        for (const file of written) process.stdout.write(`ℹ️ [INFO] write ${file}\n`);
+        for (const file of written) process.stdout.write(`  ℹ  write ${file}\n`);
         for (const d of status) {
-          if (d.code === "harness_config_merged") process.stdout.write(`ℹ️ [INFO] ${d.message}\n`);
+          if (d.code === "harness_config_merged") process.stdout.write(`  ℹ  ${d.message}\n`);
         }
         // Warnings only reached `--json` before, so a text-mode user learned
         // that a tracked file had changed from `git status` instead of from the
         // command that changed it.
         for (const d of status) {
           if (d.severity !== "warning") continue;
-          process.stderr.write(`⚠️ [WARN] ${d.message}\n`);
-          if (d.fix) process.stderr.write(`💡 [FIX] ${d.fix}\n`);
+          process.stderr.write(`  ▲  ${d.message}\n`);
+          if (d.fix) process.stderr.write(`     ${d.fix}\n`);
         }
         process.stdout.write(
-          "ℹ️ [INFO] ✅ Harness configured.\n" +
-            `ℹ️ [INFO]   gate: validate . --strict${testCmd ? ` + ${testCmd}` : " (no test command detected)"}\n` +
-            "ℹ️ [INFO]   agent: not set — that is your choice and your credentials.\n" +
-            "ℹ️ [INFO] Next:\n" +
-            "ℹ️ [INFO]   1. Read .harness/prompt-prefix.md and make it sound like your team.\n" +
-            "ℹ️ [INFO]   2. specgate harness prompt REQ-001        — see it before paying for it\n" +
-            'ℹ️ [INFO]   3. specgate harness run --req REQ-001 --agent "<cmd> < {prompt_file}"\n'
+          "  ℹ  ✅ Harness configured.\n" +
+            `  ℹ    gate: validate . --strict${testCmd ? ` + ${testCmd}` : " (no test command detected)"}\n` +
+            "  ℹ    agent: not set — that is your choice and your credentials.\n" +
+            "  ℹ  Next:\n" +
+            "  ℹ    1. Read .harness/prompt-prefix.md and make it sound like your team.\n" +
+            "  ℹ    2. specgate harness prompt REQ-001        — see it before paying for it\n" +
+            '  ℹ    3. specgate harness run --req REQ-001 --agent "<cmd> < {prompt_file}"\n'
         );
       }
     );

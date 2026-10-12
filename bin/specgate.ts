@@ -19,57 +19,50 @@ function resolveScript(segments: string[]): string {
 
 // ── Pretty output helpers ─────────────────────────────────────────────────────────
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  red: COLOR_ENABLED ? "\x1b[31m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-  blue: COLOR_ENABLED ? "\x1b[34m" : "",
-  magenta: COLOR_ENABLED ? "\x1b[35m" : "",
-  cyan: COLOR_ENABLED ? "\x1b[36m" : "",
-};
+import { c, sym } from "../scripts/lib/ui";
 
 function info(msg: string): void {
-  process.stdout.write(`${c.cyan}ℹ${c.reset}  ${msg}\n`);
+  process.stdout.write(`  ${c.note}${sym.info}${c.reset}  ${msg}\n`);
 }
 
 function error(msg: string): void {
-  process.stderr.write(`${c.red}✖${c.reset}  ${msg}\n`);
+  process.stderr.write(`  ${c.bad}${sym.fail}${c.reset}  ${msg}\n`);
 }
 
 function banner(): string {
   return (
     `\n` +
-    `  ${c.bold}${c.cyan}🧭 specgate${c.reset}  ${c.dim}v${VERSION}${c.reset}\n` +
-    `  ${c.dim}Specs as executable contracts — requirements, scenarios and traceability that CI enforces.${c.reset}\n`
+    `  ${c.brand}${sym.brand}${c.reset} ${c.bold}specgate${c.reset}  ${c.muted}v${VERSION}${c.reset}\n` +
+    `    ${c.muted}Specs as executable contracts — requirements, scenarios and traceability that CI enforces.${c.reset}\n`
   );
 }
 
+/** `Every day ────────` — the help's sections, in the same shape as every command's. */
 function section(title: string): string {
-  return `\n  ${c.bold}${title}${c.reset}\n`;
+  const rule = sym.line.repeat(Math.max(4, 44 - Array.from(title).length));
+  return `\n  ${c.bold}${title}${c.reset} ${c.muted}${rule}${c.reset}\n`;
 }
 
+/**
+ * One command of the help: its icon, its name, what it does. Icons are emoji
+ * with default emoji presentation, so every one takes two columns and the
+ * names line up (`surface.ts` keeps to that set).
+ */
 function cmd(emoji: string, name: string, summary: string, pad = 16): string {
-  // Use Array.from to count code points (emojis with surrogate pairs count as 1)
   const visible = Array.from(name).length;
   const padding = " ".repeat(Math.max(1, pad - visible));
-  return `    ${c.green}${emoji}${c.reset}  ${c.green}${name}${c.reset}${padding}${c.dim}${summary}${c.reset}\n`;
+  return `    ${emoji}  ${c.accent}${name}${c.reset}${padding}${c.muted}${summary}${c.reset}\n`;
 }
 
 function flag(name: string, summary: string, pad = 18): string {
   const visible = Array.from(name).length;
   const padding = " ".repeat(Math.max(1, pad - visible));
-  return `    ${c.green}${name}${c.reset}${padding}${c.dim}${summary}${c.reset}\n`;
+  return `    ${c.accent}${name}${c.reset}${padding}${c.muted}${summary}${c.reset}\n`;
 }
 
 function example(line: string, comment?: string): string {
-  const prefix = comment ? `    ${c.dim}# ${comment}${c.reset}\n` : "";
-  return `${prefix}    ${c.yellow}$${c.reset} ${line}\n`;
+  const prefix = comment ? `    ${c.muted}# ${comment}${c.reset}\n` : "";
+  return `${prefix}    ${c.muted}$${c.reset} ${line}\n`;
 }
 
 /**
@@ -144,15 +137,14 @@ function renderGroups(groups: any[]): string {
 function usageCore() {
   process.stdout.write(
     banner() +
-      section("USAGE") +
-      `    ${c.cyan}specgate${c.reset} ${c.bold}<command>${c.reset} [options]\n` +
-      `    ${c.dim}Run ‘<command> --help’ for per-command details.${c.reset}\n` +
+      section("Usage") +
+      `    ${c.accent}specgate${c.reset} ${c.bold}<command>${c.reset} [options]     ${c.muted}specgate <command> --help  for its options${c.reset}\n` +
       renderGroups(coreHelpRows()) +
-      section("MORE") +
-      `    ${c.dim}${hiddenCommandCount()} more commands cover packs, automation, agents and reporting.${c.reset}\n` +
-      `    ${c.green}specgate --help --all${c.reset}${c.dim}                    show every command${c.reset}\n` +
-      `    ${c.green}specgate config set profile full${c.reset}${c.dim}         make that the default${c.reset}\n` +
-      section("EXAMPLES") +
+      section("More") +
+      `    ${c.muted}${hiddenCommandCount()} more commands cover packs, automation, agents and reporting.${c.reset}\n` +
+      `    ${c.accent}specgate --help --all${c.reset}${c.muted}                show every command${c.reset}\n` +
+      `    ${c.accent}specgate config set profile full${c.reset}${c.muted}     make that the default${c.reset}\n` +
+      section("Examples") +
       example(`npx @rsaglobaltech/specgate@latest init`, "Existing repo or empty directory") +
       example(`specgate draft`, "Your plan is in docs/brief.md") +
       example(`specgate status`, "Start of day") +
@@ -178,13 +170,13 @@ function helpProfile(): string {
 }
 
 function groupUsage(row: any) {
-  let out = `\n  ${c.bold}specgate ${row.name}${c.reset} <sub-command> [options]\n`;
-  out += section("SUB-COMMANDS");
+  let out = `\n  ${c.brand}${sym.brand}${c.reset} ${c.bold}specgate ${row.name}${c.reset} <sub-command> [options]\n`;
+  out += section("Sub-commands");
   for (const s of row.subcommands) {
     const summary = (s.help && s.help.summary) || (row.help && row.help.summary) || "";
     out += cmd((s.help && s.help.icon) || "·", `${row.name} ${s.name}`, summary, 20);
   }
-  out += `\n  ${c.dim}Run ‘specgate ${row.name} <sub-command> --help’ for its own options.${c.reset}\n\n`;
+  out += `\n  ${c.muted}specgate ${row.name} <sub-command> --help  for its own options${c.reset}\n\n`;
   process.stdout.write(out);
 }
 
@@ -197,19 +189,18 @@ function usage(opts?: { all?: boolean }) {
 function usageFull() {
   process.stdout.write(
     banner() +
-      section("USAGE") +
-      `    ${c.cyan}specgate${c.reset} ${c.bold}<command>${c.reset} [options]\n` +
-      `    ${c.dim}Run ‘<command> --help’ for per-command details.${c.reset}\n` +
+      section("Usage") +
+      `    ${c.accent}specgate${c.reset} ${c.bold}<command>${c.reset} [options]     ${c.muted}specgate <command> --help  for its options${c.reset}\n` +
       renderGroups(helpRows()) +
-      section("GLOBAL FLAGS") +
+      section("Global flags") +
       flag("-h, --help", "Show this help.") +
       flag("-v, --version", "Show CLI version.") +
-      section("EXAMPLES") +
+      section("Examples") +
       EXAMPLES +
-      section("LEARN MORE") +
-      `    ${c.dim}📖 How-to guide   ${c.reset}${c.blue}https://github.com/rsaglobaltech/specgate/blob/main/docs/how-to.md${c.reset}\n` +
-      `    ${c.dim}🌐 Documentation  ${c.reset}${c.blue}https://rsaglobaltech.github.io/specgate/${c.reset}\n` +
-      `    ${c.dim}🪲 Report a bug   ${c.reset}${c.blue}https://github.com/rsaglobaltech/specgate/issues${c.reset}\n` +
+      section("Learn more") +
+      `    📖  ${c.muted}How-to guide   ${c.reset}${c.underline}https://github.com/rsaglobaltech/specgate/blob/main/docs/how-to.md${c.reset}\n` +
+      `    🌐  ${c.muted}Documentation  ${c.reset}${c.underline}https://rsaglobaltech.github.io/specgate/${c.reset}\n` +
+      `    🐞  ${c.muted}Report a bug   ${c.reset}${c.underline}https://github.com/rsaglobaltech/specgate/issues${c.reset}\n` +
       `\n`
   );
 }
@@ -253,7 +244,7 @@ export class CreateSpecDrivenAppCommand implements ICommand {
     // — the question people have when they type it — rather than the list of
     // every command (#96). Outside one, the help is the useful answer.
     if (args.length === 0 && findProjectRoot(process.cwd())) {
-      process.stdout.write(`\n  ${c.dim}All commands: specgate --help${c.reset}\n`);
+      process.env.SPECGATE_BARE = "1";
       args = ["status"];
     }
 

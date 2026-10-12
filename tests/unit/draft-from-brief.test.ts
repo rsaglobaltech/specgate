@@ -98,7 +98,7 @@ test("specgate draft lists the brief's modules and names the next", (t) => {
   const r = cli("draft");
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /bookings\s+not started/);
-  assert.match(r.stdout, /Next {2}specgate draft bookings/);
+  assert.match(r.stdout, /➜ {2}specgate draft bookings/);
   const doc = JSON.parse(cli("draft", "--json").stdout).draft;
   assert.deepEqual(
     doc.modules.map((m) => [m.module, m.state]),
@@ -173,11 +173,11 @@ test("archiving a ready draft needs no task boxes, and points at the next module
   fs.writeFileSync(path.join(change(dir), "specs", "bookings", "spec.md"), DRAFT());
   const archived = cli("change", "archive", "draft-bookings");
   assert.equal(archived.status, 0, archived.stdout + archived.stderr);
-  assert.match(archived.stdout, /Next: specgate draft/);
+  assert.match(archived.stdout, /➜ {2}specgate draft\n/);
   assert.doesNotMatch(archived.stdout, /will fail until the tests exist/, "#92");
   const overview = cli("draft");
   assert.match(overview.stdout, /bookings\s+archived/);
-  assert.match(overview.stdout, /Next {2}specgate draft coupons/);
+  assert.match(overview.stdout, /➜ {2}specgate draft coupons/);
   assert.match(cli("draft", "bookings").stdout, /already drafted and archived/);
 });
 
@@ -283,7 +283,7 @@ test("status points at the brief's next module while nothing real is pending", (
   );
   assert.match(
     cli("status").stdout,
-    /Brief {2}docs\/brief\.md · 0 of 2 module\(s\) drafted · next: bookings/
+    /Brief\s+░+\s+0 of 2 module\(s\) drafted\s+next: bookings\s+docs\/brief\.md/
   );
 });
 
@@ -295,7 +295,7 @@ test("init names specgate draft when the brief is already there", (t) => {
     encoding: "utf8",
   });
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  assert.match(r.stdout + r.stderr, /specgate draft {15}# docs\/brief\.md → requirements/);
+  assert.match(r.stdout + r.stderr, /specgate draft\s+docs\/brief\.md → requirements/);
 });
 
 test("the draft slash command takes the module as its argument", () => {
@@ -465,11 +465,11 @@ test("--agent proposes the front matter; the body stays byte for byte, the rest 
   const r = agent();
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /The agent proposed this, at the top of docs\/brief\.md/);
-  assert.match(r.stdout, /Review it — change anything — then {2}specgate draft/);
+  assert.match(r.stdout, /➜ {2}specgate draft\n\s+review it — change anything/);
   const after = fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8");
   assert.equal(briefBody(after), NOTES, "the brief below the front matter is unchanged");
   assert.equal(fs.existsSync(path.join(dir, "stray.txt")), false);
-  assert.match(cli("draft").stdout, /Next {2}specgate draft courses/);
+  assert.match(cli("draft").stdout, /➜ {2}specgate draft courses/);
 });
 
 test("--agent that rewrites the brief itself is undone whole", (t) => {
@@ -560,9 +560,9 @@ test("after the agent, the next steps are numbered and the brief's progress is s
     r.stdout,
     /Brief {2}bookings ● ready · coupons ○ not started {3}\(0 of 2 archived\)/
   );
-  assert.match(r.stdout, /What now\n {4}1\. Read docs\/specs\/changes\/draft-bookings\/specs\//);
-  assert.match(r.stdout, /3\. specgate change archive draft-bookings/);
-  assert.match(r.stdout, /4\. specgate draft coupons {3}— the next module of the brief/);
+  assert.match(r.stdout, /What now ─+\n\s+1\s+Read docs\/specs\/changes\/draft-bookings\/specs\//);
+  assert.match(r.stdout, /3\s+➜ specgate change archive draft-bookings/);
+  assert.match(r.stdout, /4\s+➜ specgate draft coupons\s+the next module of the brief/);
 });
 
 test("a bare specgate inside a project says where it stands; outside, the help", (t) => {
@@ -571,9 +571,9 @@ test("a bare specgate inside a project says where it stands; outside, the help",
   assert.equal(cli("init", "--no-capabilities").status, 0);
   const inside = spawnSync(process.execPath, [CLI], { cwd: dir, encoding: "utf8" });
   assert.match(inside.stdout, /All commands: specgate --help/);
-  assert.match(inside.stdout, /Next {2}specgate draft bookings/);
+  assert.match(inside.stdout, /➜ {2}specgate draft bookings/);
   const outside = spawnSync(process.execPath, [CLI], { cwd: os.tmpdir(), encoding: "utf8" });
-  assert.match(outside.stdout, /USAGE/);
+  assert.match(outside.stdout, /Usage/);
 });
 
 test("under --agent the prompt says Specgate checks the result, so the agent does not ask to (#97)", () => {

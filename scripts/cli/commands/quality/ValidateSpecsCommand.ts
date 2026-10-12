@@ -6,6 +6,7 @@ import { listChangeIds } from "../../../../packages/core/src/infrastructure/Chan
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import { formatDiagnostic, error, warning } from "../../../lib/diagnostics";
+import * as ui from "../../../lib/ui";
 import { checkAgainstLock } from "../../../specops/against_lock";
 import { requirementGraphFromProject } from "../../../lib/requirement-graph";
 import { SHARED_PATHS } from "../../../../packages/core/src/domain/MultiStack";
@@ -65,10 +66,14 @@ export class ValidateSpecsCommand extends BaseCommand {
 
   private logInfo(msg: string) {
     const stream = this.io && this.io.json ? process.stderr : process.stdout;
-    stream.write(`ℹ️ [INFO] ${msg}\n`);
+    // "✅ …" is the verdict, "- …" a detail under it; anything else is a note.
+    if (msg.startsWith("✅ ")) stream.write(ui.ok(ui.bold(msg.slice(2))));
+    else if (msg.startsWith("- "))
+      stream.write(`     ${ui.muted(ui.sym.bullet)} ${msg.slice(2)}\n`);
+    else stream.write(ui.info(msg));
   }
   private logError(msg: string) {
-    process.stderr.write(`❌ [ERROR] ${msg}\n`);
+    process.stderr.write(ui.fail(msg));
   }
 
   private usage() {
@@ -115,7 +120,7 @@ export class ValidateSpecsCommand extends BaseCommand {
 
   private logFix(lines: string | string[]) {
     for (const line of Array.isArray(lines) ? lines : [lines]) {
-      process.stderr.write(`💡 [FIX] ${line}\n`);
+      process.stderr.write(`     ${ui.muted(line)}\n`);
     }
   }
 
@@ -179,7 +184,7 @@ export class ValidateSpecsCommand extends BaseCommand {
 
   private logWarn(msg: string) {
     const stream = this.io && this.io.json ? process.stderr : process.stdout;
-    stream.write(`⚠️ [WARN] ${msg}\n`);
+    stream.write(ui.warn(msg));
   }
 
   /**
@@ -285,7 +290,7 @@ export class ValidateSpecsCommand extends BaseCommand {
     const projects = cfg && Array.isArray(cfg.projects) ? cfg.projects : null;
     if (!projects || projects.length === 0) return null;
 
-    this.logInfo(`🗂️ Monorepo: validating ${projects.length} project(s) from specops.config.yaml`);
+    this.logInfo(`Monorepo: validating ${projects.length} project(s) from specops.config.yaml`);
     const results = [];
     for (const entry of projects) {
       const rel = typeof entry === "string" ? entry : entry && entry.path;
@@ -294,7 +299,7 @@ export class ValidateSpecsCommand extends BaseCommand {
         continue;
       }
       const subDir = path.join(targetDir, rel);
-      process.stdout.write(`\n── ${rel} ──\n`);
+      process.stdout.write("\n" + ui.section(rel));
       if (!fs.existsSync(subDir)) {
         this.logError(`Project directory not found: ${rel}`);
         this.logFix(`Fix the 'projects:' entry in specops.config.yaml or create ${rel}.`);
@@ -311,7 +316,11 @@ export class ValidateSpecsCommand extends BaseCommand {
       if (strictRequirements) args.push("--strict-requirements");
       if (strictLinks) args.push("--strict-links");
       if (strictCoverage) args.push("--strict-coverage");
-      const r = spawnSync(process.execPath, args, { encoding: "utf8" });
+      // Each project's own run is a section of this one, not a command of its own.
+      const r = spawnSync(process.execPath, args, {
+        encoding: "utf8",
+        env: { ...process.env, SPECGATE_NESTED: "1" },
+      });
       process.stdout.write(r.stdout || "");
       process.stderr.write(r.stderr || "");
 
@@ -335,14 +344,13 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
 
     const failures = results.filter((r) => !r.ok);
-    process.stdout.write("\n── monorepo summary ──\n");
+    process.stdout.write("\n" + ui.section("Monorepo summary"));
     for (const r of results) {
-      process.stdout.write(
-        `  ${r.ok ? "✅" : "❌"} ${r.project}${r.detail ? ` (${r.detail})` : ""}\n`
-      );
+      const line = `${r.project}${r.detail ? ui.muted(` (${r.detail})`) : ""}`;
+      process.stdout.write(r.ok ? ui.ok(line) : ui.fail(line));
     }
     process.stdout.write(
-      `\n${failures.length === 0 ? "✅" : "❌"} ${results.length - failures.length}/${results.length} project(s) passed\n`
+      `\n  ${ui.progress(results.length - failures.length, results.length, "project(s) passed")}\n\n`
     );
     return { failures: failures.length };
   }
@@ -955,6 +963,10 @@ export class ValidateSpecsCommand extends BaseCommand {
         "Check the path for typos, or scaffold a new project first:",
         "  specgate init",
       ]);
+    }
+
+    if (!this.io.json && process.env.SPECGATE_NESTED !== "1") {
+      process.stdout.write(ui.header("validate", path.basename(path.resolve(targetDir))));
     }
 
     const monorepo = this.validateMonorepo(

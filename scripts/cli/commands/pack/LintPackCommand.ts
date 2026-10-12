@@ -14,15 +14,16 @@ import {
 } from "../../../../packages/core/src/domain/GherkinQuality";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { error as diagError, warning as diagWarning } from "../../../lib/diagnostics";
+import * as ui from "../../../lib/ui";
 
 function logInfo(msg: string) {
-  process.stdout.write(`ℹ️  [INFO] ${msg}\n`);
+  process.stdout.write(ui.logLine(msg));
 }
 function logWarn(msg: string) {
-  process.stdout.write(`⚠️  [WARN] ${msg}\n`);
+  process.stdout.write(ui.warn(msg));
 }
 function logError(msg: string) {
-  process.stderr.write(`❌ [ERROR] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 
 export interface LintPackOptions {

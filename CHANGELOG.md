@@ -41,6 +41,22 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - **Under `--agent`, the agent asked for permission to run `specgate draft`**
   (#97), which Specgate runs itself when the agent finishes. The prompt says so.
 
+### Changed
+
+- **A new look for the CLI, one design system for every command.** Each
+  command opens with `◆ specgate · <command>` and ends with one `Next` block, its
+  command alone on a line so it copies clean. `status` and `draft` show progress
+  bars; findings read `✖ message` with `fix:` under them; `check` and `done`
+  draw one line per stage and print what `validate` and the tests said only
+  when they fail. One palette (`scripts/lib/ui.ts`) replaces twenty copies:
+  truecolor where the terminal has it, 256 or 16 colours where not, none under
+  `NO_COLOR` or off a terminal, `FORCE_COLOR` honoured. Symbols are one column
+  wide; `SPECGATE_ASCII=1` swaps them for ASCII. Help icons are emoji that
+  always take two columns, so the names line up.
+- **`validate` and the pack commands lost `❌ [ERROR]`, `💡 [FIX]`, `ℹ️ [INFO]`,
+  `⚠️ [WARN]`** for `✖`, an indented fix, `ℹ` and `▲`. The VS Code extension and
+  the pack registry, which read those lines, read both forms.
+
 ### Added
 
 - **A bare `specgate` inside a project shows where it stands** — `status`, with

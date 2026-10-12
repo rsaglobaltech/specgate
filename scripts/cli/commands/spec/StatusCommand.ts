@@ -16,17 +16,8 @@ import { refreshDerivedMatrix } from "./MatrixCommand";
 import { briefProgress, draftNextCommand } from "./DraftCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  red: COLOR_ENABLED ? "\x1b[31m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-  yellow: COLOR_ENABLED ? "\x1b[33m" : "",
-  cyan: COLOR_ENABLED ? "\x1b[36m" : "",
-};
+import { c, sym } from "../../../lib/ui";
+import * as ui from "../../../lib/ui";
 
 export interface StatusOptions {
   projectDir: string;
@@ -230,74 +221,75 @@ function titleOf(item: any): string {
 }
 
 function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []): void {
-  const { items, counts, pending, orphans } = summary;
-  process.stdout.write(
-    `\n  ${c.bold}📊 Project status${c.reset}  ${c.dim}${path.basename(path.resolve(projectDir))}${c.reset}\n\n`
-  );
-  process.stdout.write(
-    `  ${c.bold}Requirements${c.reset}  ${c.dim}${counts.total} total · ${counts.DONE} done · ${pending} pending${c.reset}\n`
-  );
+  const { items, counts, orphans } = summary;
+  const out = (t: string) => process.stdout.write(t);
+  out(ui.header("status", path.basename(path.resolve(projectDir))));
+  out(`  ${c.bold}Requirements${c.reset}  ${ui.progress(counts.DONE, counts.total, "done")}\n`);
 
-  const queue = (title: string, cats: string[], color: string) => {
+  const queue = (title: string, cats: string[], mark: string, color: string) => {
     const group = items.filter((it: any) => cats.includes(it.category));
     if (group.length === 0) return;
-    process.stdout.write(`\n  ${c.bold}${title}${c.reset}\n`);
-    for (const it of group.slice(0, QUEUE_LIMIT)) {
+    out("\n" + ui.section(title));
+    const rows = group.slice(0, QUEUE_LIMIT).map((it: any) => {
       const name = titleOf(it);
-      process.stdout.write(
-        `    ${c.cyan}${String(it.requirement).padEnd(9)}${c.reset} ${(name.length > 44 ? name.slice(0, 43) + "…" : name).padEnd(45)} ${color}${needsOf(it)}${c.reset}\n`
-      );
-    }
+      return [
+        `${mark} ${c.accent}${it.requirement}${c.reset}`,
+        name.length > 44 ? name.slice(0, 43) + "…" : name,
+        `${color}${needsOf(it)}${c.reset}`,
+      ];
+    });
+    out(ui.table(rows));
     if (group.length > QUEUE_LIMIT)
-      process.stdout.write(
-        `    ${c.dim}… ${group.length - QUEUE_LIMIT} more — specgate plan lists them all${c.reset}\n`
+      out(
+        `    ${ui.muted(`… ${group.length - QUEUE_LIMIT} more — specgate plan lists them all`)}\n`
       );
   };
-  queue("Ready to close", ["NEEDS_STATUS_UPDATE"], c.green);
-  queue("To do", TODO_CATEGORIES, c.yellow);
-  queue("Waiting for an answer", ["WAITING_FOR_ANSWER"], c.dim);
+  queue("Ready to close", ["NEEDS_STATUS_UPDATE"], ui.state("ready"), c.ok);
+  queue("To do", TODO_CATEGORIES, ui.state("todo"), c.warn);
+  queue("Waiting for an answer", ["WAITING_FOR_ANSWER"], ui.state("blocked"), c.muted);
   const waiting = items.filter((it: any) => it.category === "WAITING_FOR_ANSWER" && it.question);
   if (waiting.length > 0)
-    process.stdout.write(
-      `    ${c.dim}Questions: ${[...new Set(waiting.map((it: any) => it.question))].join(" · ")}${c.reset}\n`
+    out(
+      `    ${ui.muted(`Questions: ${[...new Set(waiting.map((it: any) => it.question))].join(" · ")}`)}\n`
     );
 
   if (orphans.length > 0)
-    process.stdout.write(
-      `\n  ${c.red}${orphans.length} orphan feature file(s)${c.reset} ${c.dim}— not in the matrix${c.reset}\n`
+    out(
+      "\n" + ui.fail(`${orphans.length} orphan feature file(s) ${ui.muted("— not in the matrix")}`)
     );
 
   if (notes.length > 0) {
-    process.stdout.write(
-      `\n  ${c.bold}Spec notes${c.reset}  ${c.dim}(not failures — ADR-0029)${c.reset}\n`
-    );
-    for (const n of notes.slice(0, 5)) {
-      process.stdout.write(`    ${c.yellow}${n.code}${c.reset} ${n.message}\n`);
-    }
-    if (notes.length > 5)
-      process.stdout.write(`    ${c.dim}… ${notes.length - 5} more in --json${c.reset}\n`);
+    out("\n" + ui.section("Spec notes"));
+    out(`    ${ui.muted("Not failures — ADR-0029")}\n`);
+    for (const n of notes.slice(0, 5))
+      out(`    ${c.warn}${sym.warn}${c.reset} ${ui.muted(n.code)}  ${n.message}\n`);
+    if (notes.length > 5) out(`    ${ui.muted(`… ${notes.length - 5} more in --json`)}\n`);
   }
 
   if (summary.brief) {
     const b = summary.brief;
     const done = b.modules.filter((m: any) => m.state === "archived").length;
-    process.stdout.write(
-      `\n  ${c.bold}Brief${c.reset}  ${c.dim}${b.brief} · ${done} of ${b.modules.length} module(s) drafted${b.next ? ` · next: ${b.next.module}` : ""}${c.reset}\n`
+    out(
+      `\n  ${c.bold}Brief${c.reset}         ${ui.progress(done, b.modules.length, "module(s) drafted")}` +
+        `${b.next ? `   ${ui.muted("next:")} ${b.next.module}` : ""}   ${ui.muted(b.brief)}\n`
     );
   }
 
   if (lock && lock.packs && lock.packs.length > 0) {
-    process.stdout.write(`\n  ${c.bold}Packs${c.reset}  ${c.dim}(.specops.lock)${c.reset}\n`);
-    for (const p of lock.packs) {
-      process.stdout.write(
-        `    ${c.cyan}${p.pack_id || "?"}${c.reset} ${c.dim}@ ${p.version || "?"}${c.reset}\n`
-      );
-    }
+    out("\n" + ui.section("Packs"));
+    out(
+      ui.table(
+        lock.packs.map((p: any) => [
+          `${c.accent}${p.pack_id || "?"}${c.reset}`,
+          ui.muted(`@ ${p.version || "?"}`),
+        ])
+      )
+    );
   }
 
-  process.stdout.write(
-    `\n  ${c.bold}Next${c.reset}  ${c.green}${nextCommandPlain(summary)}${c.reset}  ${c.dim}— ${nextReason(summary)}${c.reset}\n\n`
-  );
+  out(ui.next(nextCommandPlain(summary), nextReason(summary)));
+  // A bare `specgate` shows this screen: say where the rest of the tool is.
+  if (process.env.SPECGATE_BARE === "1") out(`  ${ui.muted("All commands: specgate --help")}\n\n`);
 }
 
 function emitJson(projectDir: string, summary: any, lock: any, notes: any[] = []): void {

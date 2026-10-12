@@ -8,9 +8,9 @@
  */
 
 export function logInfo(message) {
-  process.stdout.write(`ℹ️ [INFO] ${message}\n`);
+  process.stdout.write(`  ℹ  ${message}\n`);
 }
 
 export function logError(message) {
-  process.stderr.write(`❌ [ERROR] ${message}\n`);
+  process.stderr.write(`  ✖  ${message}\n`);
 }

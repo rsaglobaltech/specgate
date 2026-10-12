@@ -22,15 +22,16 @@ import {
 import { makeClient } from "./clients";
 import { printDiagnostics } from "../lib/diagnostics";
 import { main as pullMain } from "../cli/commands/alm/PullCommand";
+import * as ui from "../lib/ui";
 
 function logInfo(msg) {
-  process.stdout.write(`ℹ️ [INFO] ${msg}\n`);
+  process.stdout.write(ui.logLine(msg));
 }
 function logWarn(msg) {
-  process.stdout.write(`⚠️ [WARN] ${msg}\n`);
+  process.stdout.write(ui.warn(msg));
 }
 function logError(msg) {
-  process.stderr.write(`❌ [ERROR] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 
 function usage() {

@@ -19,15 +19,7 @@ import { error, warning, errorMessage } from "../lib/diagnostics";
 import { agentIo, wantsJson, EXIT } from "../lib/agent";
 import { STEPS, PROJECT_RULES } from "./commands";
 
-const COLOR =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR ? "\x1b[0m" : "",
-  bold: COLOR ? "\x1b[1m" : "",
-  dim: COLOR ? "\x1b[2m" : "",
-  green: COLOR ? "\x1b[32m" : "",
-  cyan: COLOR ? "\x1b[36m" : "",
-};
+import { c } from "../lib/ui";
 
 /**
  * The name every generated agent file uses: `/specgate:apply`,

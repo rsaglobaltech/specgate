@@ -15,14 +15,8 @@ import {
   slugFor,
 } from "../../../../packages/core/src/domain/NewRequirement";
 
-const COLOR_ENABLED =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR_ENABLED ? "\x1b[0m" : "",
-  bold: COLOR_ENABLED ? "\x1b[1m" : "",
-  dim: COLOR_ENABLED ? "\x1b[2m" : "",
-  green: COLOR_ENABLED ? "\x1b[32m" : "",
-};
+import { c } from "../../../lib/ui";
+import * as ui from "../../../lib/ui";
 
 const NULL_SHAPE = { requirement: null };
 
@@ -152,15 +146,35 @@ export class NewCommand extends BaseCommand {
       },
       () =>
         process.stdout.write(
-          `${c.green}✔${c.reset}  ${c.bold}${reqId}${c.reset} ${title} ${c.dim}(Draft)${c.reset}\n` +
+          ui.header("new", reqId) +
+            ui.ok(`${c.bold}${reqId}${c.reset} ${title} ${ui.muted("· Draft")}`) +
+            "\n" +
             (wroteSection
-              ? `   ${c.dim}spec.md                      ## ${reqId} — rewrite the obligation${c.reset}\n`
+              ? ui.fileLine(
+                  "changed",
+                  ui.pad("spec.md", 28),
+                  `## ${reqId} — rewrite the obligation`
+                )
               : "") +
-            `   ${c.dim}${featureRel.padEnd(28)} @${scenarioId} — fill in the <placeholders>${c.reset}\n` +
-            `   ${c.dim}docs/specs/traceability.md   row linked to the scenario${c.reset}\n\n` +
+            ui.fileLine(
+              existing === null ? "added" : "changed",
+              ui.pad(featureRel, 28),
+              `@${scenarioId} — fill in the <placeholders>`
+            ) +
+            ui.fileLine(
+              "changed",
+              ui.pad("docs/specs/traceability.md", 28),
+              "row linked to the scenario"
+            ) +
             (isDerivedProject(projectDir)
-              ? `   ${c.dim}Next: write a test that mentions ${reqId} — that is the link — then ${c.reset}specgate check\n`
-              : `   ${c.dim}Next: write the test, then ${c.reset}specgate req link ${reqId} --test <path> --code <path>\n`)
+              ? ui.next(
+                  "specgate check",
+                  `after you write a test that mentions ${reqId} — that is the link`
+                )
+              : ui.next(
+                  `specgate req link ${reqId} --test <path> --code <path>`,
+                  "after you write the test"
+                ))
         )
     );
   }

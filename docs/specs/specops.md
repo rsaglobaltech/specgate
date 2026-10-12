@@ -203,7 +203,7 @@ Output:
 
   1 added · 2 modified · 9 unchanged
 
-ℹ️ [INFO] Diff completed for 1 pack(s).
+  ℹ  Diff completed for 1 pack(s).
 ```
 
 Legend:

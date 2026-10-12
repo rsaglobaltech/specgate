@@ -6,7 +6,7 @@
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-10-11",
+  "recordedAt": "2026-10-12",
   "title": "courts — the gate",
   "cols": 88,
   "streamsMerged": false,
@@ -19,22 +19,37 @@
       "surface": "done",
       "exit": 1,
       "typeMs": 26,
-      "holdMs": 1240,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 1420,
+      "truncated": true,
+      "omitted": 5,
       "lines": [
         {
-          "t": "❌ [ERROR] --strict-tdd violations detected:",
-          "c": "err",
-          "s": "err"
+          "t": "  ◆ specgate · done REQ-002   Implemented",
+          "c": "out",
+          "s": "out"
         },
         {
-          "t": "  [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-002)",
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✖  Specification   the gate, for REQ-002",
+          "c": "err",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
           "c": "out",
           "s": "err"
         },
         {
-          "t": "💡 [FIX] TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; once a test names one of its scenarios (SCN-NNN), each scenario needs a test that names it — or move it back to Draft in spec.md.",
+          "t": "     ◆ specgate · validate   courts",
           "c": "out",
           "s": "err"
         },
@@ -44,13 +59,8 @@
           "s": "err"
         },
         {
-          "t": "✖  REQ-002 not marked Implemented: validation failed. [done_validate_failed]",
+          "t": "       ✖  --strict-tdd violations detected:",
           "c": "err",
-          "s": "err"
-        },
-        {
-          "t": "     fix: Fix what validate reports, then run `done` again.",
-          "c": "out",
           "s": "err"
         }
       ]
@@ -132,12 +142,37 @@
       "surface": "done",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 900,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 1240,
+      "truncated": true,
+      "omitted": 4,
       "lines": [
         {
-          "t": "✔  REQ-002 → Implemented (1 row updated)",
+          "t": "  ◆ specgate · done REQ-002   Implemented",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  Specification   the gate, for REQ-002",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  Tests           node --test",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  REQ-002 → Implemented (1 row updated)",
           "c": "ok",
           "s": "out"
         }
@@ -156,7 +191,7 @@
       "omitted": 0,
       "lines": [
         {
-          "t": "✖  REQ-004 not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification). [done_needs_clarification]",
+          "t": "  ✖  REQ-004  not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification).  [done_needs_clarification]",
           "c": "err",
           "s": "err"
         },
@@ -175,42 +210,12 @@
       "surface": "check",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 2500,
+      "holdMs": 1240,
       "truncated": false,
       "omitted": 0,
       "lines": [
         {
-          "t": "ℹ️ [INFO] ✅ Validation passed",
-          "c": "ok",
-          "s": "out"
-        },
-        {
-          "t": "ℹ️ [INFO] - Features detected: 4",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ️ [INFO] - Base SDD structure: complete",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ️ [INFO] - Traceability mode: rich",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ️ [INFO] - Strict TDD gate: passed (1 row(s) exempt — still Draft, so not checked)",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "💡 [FIX] A Draft row owes nothing yet, so --strict-tdd skips it. It starts being",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "💡 [FIX] checked the moment its Status leaves Draft — `specgate done <REQ>` does that.",
+          "t": "  ◆ specgate · check   courts",
           "c": "out",
           "s": "out"
         },
@@ -220,53 +225,13 @@
           "s": "out"
         },
         {
-          "t": "✔ REQ-002 SCN-002: booking a free court lasts one hour (12ms)",
+          "t": "  ✔  Specification   validate --strict",
           "c": "ok",
           "s": "out"
         },
         {
-          "t": "✔ REQ-002 SCN-003: a member sees their bookings (12ms)",
+          "t": "  ✔  Tests           node --test",
           "c": "ok",
-          "s": "out"
-        },
-        {
-          "t": "ℹ tests 2",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ suites 0",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ pass 2",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ fail 0",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ cancelled 0",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ skipped 0",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ todo 0",
-          "c": "info",
-          "s": "out"
-        },
-        {
-          "t": "ℹ duration_ms 1.234",
-          "c": "info",
           "s": "out"
         },
         {
@@ -275,7 +240,7 @@
           "s": "out"
         },
         {
-          "t": "✔  Gate passed — the specification and `node --test`",
+          "t": "  ✔  Gate passed — the specification and `node --test`",
           "c": "ok",
           "s": "out"
         }

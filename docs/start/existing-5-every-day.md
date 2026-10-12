@@ -23,16 +23,18 @@ specgate status
 <!-- specgate:out-existing-status-daily:begin — generated; edit the source, not this block -->
 ```text
 $ specgate status
-  📊 Project status  invoicing
+  ◆ specgate · status   invoicing
 
-  Requirements  4 total · 1 done · 3 pending
+  Requirements  █████░░░░░░░░░░░░░░░  1 of 4 done
 
-  To do
-    REQ-001   Preserve existing behaviour                   a test and code
-    REQ-002   Invoices                                      its scenario
-    REQ-003   Customers                                     its scenario
+  To do ──────────────────────────────────────────────────
+    ○ REQ-001  Preserve existing behaviour  a test and code
+    ○ REQ-002  Invoices                     its scenario
+    ○ REQ-003  Customers                    its scenario
 
-  Next  specgate plan  — REQ-002's feature file is missing — plan shows which
+  Next ───────────────────────────────────────────────────
+  ➜  specgate plan
+     REQ-002's feature file is missing — plan shows which
 ```
 <!-- specgate:out-existing-status-daily:end -->
 

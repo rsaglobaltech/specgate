@@ -115,8 +115,8 @@ scenario of placeholders as `0 steps · exit 0`. Write the real steps.
 ### `matrix_stale`
 
 ```
-❌ [ERROR] docs/specs/traceability.md no longer matches spec.md, the feature tags and the tests.
-💡 [FIX] Run `specgate matrix` and commit the result — `specgate check` does it for you.
+  ✖  docs/specs/traceability.md no longer matches spec.md, the feature tags and the tests.
+     Run `specgate matrix` and commit the result — `specgate check` does it for you.
 ```
 
 Only in CI: a test or a tag changed and the regenerated matrix was not

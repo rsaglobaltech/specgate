@@ -17,6 +17,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
+import * as ui from "../../../lib/ui";
+import { c, sym } from "../../../lib/ui";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { error, info } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -372,23 +374,34 @@ export function draftNextCommand(s: ModuleStatus): string {
   return s.state === "ready" ? `specgate change archive ${s.change}` : `specgate draft ${s.module}`;
 }
 
+/** `➜ claude -p … is drafting catalogo…`, and why a flag was added. */
+function agentLine(command: string, doing: string, added: boolean): string {
+  return (
+    `  ${c.brand}${sym.next}${c.reset}  ${ui.cmd(command)}  ${doing}${ui.muted("…")}\n` +
+    (added
+      ? `     ${ui.muted("edit permission added: claude -p cannot write files otherwise")}\n`
+      : "") +
+    "\n"
+  );
+}
+
 /** Each module of the brief and where it stands, on one line: `auth ✔ ready · catalog ○ not started`. */
 function briefLine(projectDir: string, brief: string): string | null {
   const text = readIf(path.resolve(projectDir, brief));
   const modules = text === undefined ? [] : briefModules(text);
   if (modules.length < 2) return null;
   const mark: Record<ModuleState, string> = {
-    archived: "✔ archived",
-    ready: "● ready",
-    drafting: "◐ drafting",
-    "not written": "○ opened",
-    "not started": "○ not started",
+    archived: `${ui.state("done")} archived`,
+    ready: `${ui.state("ready")} ready`,
+    drafting: `${ui.state("doing")} drafting`,
+    "not written": `${ui.state("todo")} opened`,
+    "not started": `${ui.state("todo")} not started`,
   };
   const states = modules.map((m) => moduleStatus(projectDir, m, brief));
   const done = states.filter((s) => s.state === "archived").length;
   return (
-    states.map((s) => `${s.module} ${mark[s.state]}`).join(" · ") +
-    `   (${done} of ${modules.length} archived)`
+    states.map((s) => `${s.module} ${mark[s.state]}`).join(ui.muted(` ${sym.bullet} `)) +
+    ui.muted(`   (${done} of ${modules.length} archived)`)
   );
 }
 
@@ -524,12 +537,12 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
   return { changeId, reqRange, created };
 }
 
-const ICON: Record<ModuleState, string> = {
-  "not started": "○",
-  "not written": "○",
-  drafting: "✎",
-  ready: "✔",
-  archived: "✔",
+const ICON: Record<ModuleState, () => string> = {
+  "not started": () => ui.state("todo"),
+  "not written": () => ui.state("todo"),
+  drafting: () => ui.state("doing"),
+  ready: () => ui.state("ready"),
+  archived: () => ui.state("done"),
 };
 
 function describe(s: ModuleStatus): string {
@@ -590,7 +603,7 @@ export class DraftCommand extends BaseCommand {
     // (a) No brief: what one is, and how to get one.
     if (text === undefined) {
       if (!opts.json) {
-        process.stdout.write(`\n${noBriefExplanation(rel)}\n`);
+        process.stdout.write(ui.header("draft") + `${noBriefExplanation(rel)}\n`);
         process.exitCode = 1;
         return;
       }
@@ -620,13 +633,16 @@ export class DraftCommand extends BaseCommand {
         },
         () =>
           process.stdout.write(
-            `\n  specgate draft  ·  ${rel}\n\n` +
+            ui.header("draft", rel) +
               frontMatterExplanation(rel) +
-              "\n  Or let your agent propose it from your brief. Paste this into Claude Code,\n" +
-              "  Cursor, Codex…:\n\n" +
-              `    ${BRIEF_SETUP_PASTE}\n\n` +
-              '  or let Specgate call it:  specgate draft --agent "claude -p"\n\n' +
-              "  Either way, review the four fields, then run  specgate draft  again.\n\n"
+              "\n" +
+              ui.section("Or let your agent propose it") +
+              "  Paste this into Claude Code, Cursor, Codex…\n\n" +
+              ui.quote(BRIEF_SETUP_PASTE) +
+              ui.next(
+                'specgate draft --agent "claude -p"',
+                "Specgate calls your agent for you — then review the four fields and run specgate draft again"
+              )
           )
       );
       return;
@@ -642,12 +658,12 @@ export class DraftCommand extends BaseCommand {
         },
         () => {
           const out = process.stdout;
-          out.write(`\n  specgate draft  ·  ${rel}\n\n`);
+          out.write(ui.header("draft", rel));
           out.write(
             `  The front matter at the top of ${rel} needs ${problems.length} fix(es):\n\n`
           );
-          for (const p of problems) out.write(`  ✖  ${p.message}\n     ${p.fix}\n`);
-          out.write(`\n  Next  fix them in ${rel}, then  specgate draft\n\n`);
+          for (const p of problems) out.write(ui.fail(p.message) + ui.fix(p.fix));
+          out.write(ui.next("specgate draft", `once they are fixed in ${rel}`));
         }
       );
       process.exitCode = 1;
@@ -663,17 +679,20 @@ export class DraftCommand extends BaseCommand {
 
     io.emit({ draft: { brief: rel, modules: states, next } }, () => {
       const out = process.stdout;
-      out.write(`\n  specgate draft  ·  ${rel}\n\n`);
-      if (product) out.write(`  Product  ${product[1].trim()}\n\n`);
-      const width = Math.max(...modules.map((m) => m.length));
-      out.write("  Modules\n");
-      for (const s of states) {
-        out.write(`    ${ICON[s.state]} ${s.module.padEnd(width)}  ${describe(s)}\n`);
-      }
+      out.write(ui.header("draft", rel));
+      if (product) out.write(ui.kv("Product", ui.bold(product[1].trim()), 10));
+      const archived = states.filter((s) => s.state === "archived").length;
+      out.write(ui.kv("Progress", ui.progress(archived, states.length, "archived"), 10));
+      out.write("\n" + ui.section("Modules"));
+      out.write(
+        ui.table(states.map((s) => [`${ICON[s.state]()} ${s.module}`, ui.muted(describe(s))]))
+      );
       out.write(
         pending
-          ? `\n  Next  ${next}\n\n`
-          : `\n  Every module is drafted and archived.\n  Next  ${next}  — what to build first\n\n`
+          ? ui.next(next)
+          : "\n" +
+              ui.ok("Every module is drafted and archived.") +
+              ui.next(next, "what to build first")
       );
     });
   }
@@ -692,16 +711,17 @@ export class DraftCommand extends BaseCommand {
     fs.writeFileSync(file, BRIEF_TEMPLATE, "utf8");
     io.emit({ draft: { brief: rel, written: true, next: "specgate draft" } }, () =>
       process.stdout.write(
-        `\n  ✔ Wrote ${rel} — a brief to fill in.\n\n` +
-          "  Fill it in, in your own words:\n" +
+        ui.header("draft --new-brief") +
+          ui.ok(`Wrote ${rel} — a brief to fill in.`) +
+          "\n  Fill it in, in your own words:\n" +
           "    1. The four fields at the top — product, surfaces, actors, modules.\n" +
           "       Each has an example in the comment above it.\n" +
           "    2. The sections below — what the product is, who uses it and how, what\n" +
           "       each one must be able to do, the rules and numbers you already know,\n" +
           "       what you don't know yet, and what is out of scope.\n\n" +
           "  Have a plan or an email already? Paste it under the four fields instead\n" +
-          "  of the sections — Specgate reads it as it is.\n\n" +
-          "  Next  specgate draft  — it checks the four fields and says what is next\n\n"
+          "  of the sections — Specgate reads it as it is.\n" +
+          ui.next("specgate draft", "it checks the four fields and says what is next")
       )
     );
   }
@@ -724,8 +744,11 @@ export class DraftCommand extends BaseCommand {
         { draft: { brief: brief.rel, frontMatter: "ok", next: `specgate draft ${first}` } },
         () =>
           process.stdout.write(
-            `\n  The front matter of ${brief.rel} is already there and complete — nothing for the agent to do.\n` +
-              `  Next  specgate draft ${first}\n\n`
+            ui.header("draft --agent", brief.rel) +
+              ui.ok(
+                `The front matter of ${brief.rel} is already there and complete — nothing for the agent to do.`
+              ) +
+              ui.next(`specgate draft ${first}`)
           )
       );
       return;
@@ -738,11 +761,8 @@ export class DraftCommand extends BaseCommand {
     const agent = withWritePermission(opts.agent);
     if (!opts.json) {
       process.stdout.write(
-        `\n  → ${agent.command}  is proposing the front matter of ${brief.rel}…\n` +
-          (agent.added
-            ? `    (edit permission added: claude -p cannot write the file otherwise)\n`
-            : "") +
-          "\n"
+        ui.header("draft --agent", brief.rel) +
+          agentLine(agent.command, `is proposing the front matter of ${brief.rel}`, agent.added)
       );
     }
     const run = runConfinedAgent({
@@ -764,7 +784,10 @@ export class DraftCommand extends BaseCommand {
     }
     if (run.reverted.length > 0 && !opts.json) {
       process.stdout.write(
-        `\n  ↺ Undone — the agent wrote outside the brief: ${run.reverted.join(", ")}\n`
+        "\n" +
+          ui.warn(
+            `${sym.undo} Undone — the agent wrote outside the brief: ${run.reverted.join(", ")}`
+          )
       );
     }
     const after = readIf(path.resolve(projectDir, brief.rel)) ?? "";
@@ -803,14 +826,15 @@ export class DraftCommand extends BaseCommand {
       },
       () => {
         const out = process.stdout;
-        out.write(`\n  The agent proposed this, at the top of ${brief.rel}:\n\n`);
-        for (const l of ["---", ...proposed!.split("\n"), "---"]) out.write(`    ${l}\n`);
-        out.write("\n  Your brief below it is unchanged.\n");
+        out.write(ui.rule() + "\n");
+        out.write(ui.ok(`The agent proposed this, at the top of ${brief.rel}:`) + "\n");
+        out.write(ui.block(["---", ...proposed!.split("\n"), "---"].join("\n")));
+        out.write("\n" + ui.info("Your brief below it is unchanged."));
         if (problems.length > 0) {
           out.write(`\n  It still needs ${problems.length} fix(es):\n`);
-          for (const p of problems) out.write(`  ✖  ${p.message}\n     ${p.fix}\n`);
+          for (const p of problems) out.write(ui.fail(p.message) + ui.fix(p.fix));
         }
-        out.write("\n  Review it — change anything — then  specgate draft\n\n");
+        out.write(ui.next("specgate draft", "review it — change anything — then run it"));
       }
     );
   }
@@ -835,8 +859,11 @@ export class DraftCommand extends BaseCommand {
         },
         () =>
           process.stdout.write(
-            `\n  ✔ ${opts.module} is already drafted and archived (${status.archivedAs}).\n\n` +
-              "  Next  specgate draft  — the next module of the brief, or what to build first\n\n"
+            ui.header(`draft ${opts.module}`) +
+              ui.ok(
+                `${opts.module} is already drafted and archived ${ui.muted(`(${status.archivedAs})`)}`
+              ) +
+              ui.next("specgate draft", "the next module of the brief, or what to build first")
           )
       );
       return;
@@ -883,26 +910,30 @@ export class DraftCommand extends BaseCommand {
         () => {
           const out = process.stdout;
           const dir = `${CHANGES.split(path.sep).join("/")}/${opened.changeId}`;
+          const files: Array<[string, string]> = [
+            [`${dir}/DRAFTING.md`, "how to write it"],
+            [`${dir}/specs/${opts.module}/spec.md`, "the requirements go here"],
+            [`${dir}/change.yaml, proposal.md`, ""],
+          ];
+          const w = Math.max(...files.map((r) => r[0].length));
           out.write(
-            `\n  ✔ Draft ${opened.changeId} opened, linked to ${brief.rel} ` +
-              `(REQ ids ${opened.reqRange[0]}…${opened.reqRange[1]} reserved)\n\n` +
-              [
-                [`${dir}/DRAFTING.md`, "how to write it"],
-                [`${dir}/specs/${opts.module}/spec.md`, "the requirements go here"],
-                [`${dir}/change.yaml, proposal.md`, ""],
-              ]
-                .map(([f, why], _i, all) => {
-                  const w = Math.max(...all.map((r) => r[0].length));
-                  return `    + ${why ? f.padEnd(w) + "   " + why : f}\n`;
-                })
-                .join("") +
+            ui.header(`draft ${opts.module}`, brief.rel) +
+              ui.ok(
+                `Draft ${ui.bold(opened.changeId)} opened ` +
+                  ui.muted(`· REQ ids ${opened.reqRange[0]}…${opened.reqRange[1]} reserved`)
+              ) +
               "\n" +
-              "  Have your agent write it. Paste this into Claude Code, Cursor, Codex…:\n\n" +
-              `    ${pasteLine(opts.module)}\n\n` +
-              `  or let Specgate call it:  specgate draft ${opts.module} --agent "claude -p"\n\n` +
-              `  Then run  specgate draft ${opts.module}  until it says Ready to review.\n\n`
+              files.map(([f, why]) => ui.fileLine("added", why ? ui.pad(f, w) : f, why)).join("") +
+              "\n" +
+              ui.section("Have your agent write it") +
+              "  Paste this into Claude Code, Cursor, Codex…\n\n" +
+              ui.quote(pasteLine(opts.module)) +
+              ui.next(
+                `specgate draft ${opts.module} --agent "claude -p"`,
+                `or let Specgate call it — then run specgate draft ${opts.module} until it says Ready to review`
+              )
           );
-          for (const n of notes) out.write(`  ℹ  ${n.message}\n     ${n.fix}\n\n`);
+          for (const n of notes) out.write(ui.info(n.message) + ui.fix(n.fix) + "\n");
         }
       );
       return;
@@ -926,12 +957,9 @@ export class DraftCommand extends BaseCommand {
     const agent = withWritePermission(opts.agent);
     if (!opts.json) {
       process.stdout.write(
-        `\n  ${created.length ? `✔ Draft ${changeId} opened, linked to ${brief}.\n  ` : ""}` +
-          `→ ${agent.command}  is drafting ${opts.module}…\n` +
-          (agent.added
-            ? `    (edit permission added: claude -p cannot write the draft otherwise)\n`
-            : "") +
-          "\n"
+        ui.header(`draft ${opts.module}`, brief) +
+          (created.length ? ui.ok(`Draft ${changeId} opened, linked to ${brief}.`) : "") +
+          agentLine(agent.command, `is drafting ${opts.module}`, agent.added)
       );
     }
     const run = runConfinedAgent({
@@ -955,7 +983,10 @@ export class DraftCommand extends BaseCommand {
     }
     if (run.reverted.length > 0 && !opts.json) {
       process.stdout.write(
-        `\n  ↺ Undone — the agent wrote outside the draft: ${run.reverted.join(", ")}\n`
+        "\n" +
+          ui.warn(
+            `${sym.undo} Undone — the agent wrote outside the draft: ${run.reverted.join(", ")}`
+          )
       );
     }
     if (!run.ok) {
@@ -981,7 +1012,7 @@ export class DraftCommand extends BaseCommand {
     const status = moduleStatus(projectDir, opts.module, brief);
     // The agent's own output is long and ends just above this: a rule marks
     // where Specgate takes over again, so the next step is not lost in it (#96).
-    if (afterAgent && !opts.json) process.stdout.write(`\n  ${"─".repeat(64)}\n`);
+    if (afterAgent && !opts.json) process.stdout.write(ui.rule());
     if (status.state === "not written") {
       io.emit(
         {
@@ -996,12 +1027,17 @@ export class DraftCommand extends BaseCommand {
         },
         () =>
           process.stdout.write(
-            `\n  specgate draft ${opts.module}  ·  ${brief}\n\n` +
+            (afterAgent ? "\n" : ui.header(`draft ${opts.module}`, brief)) +
               (afterAgent
-                ? `  ✖  The agent ran, but the draft is still the placeholder.\n     ${NO_WRITE_HINT}\n\n`
+                ? ui.fail("The agent ran, but the draft is still the placeholder.") +
+                  ui.fix(NO_WRITE_HINT) +
+                  "\n"
                 : "  The draft is still the placeholder. Have your agent write it:\n\n" +
-                  `    ${pasteLine(opts.module)}\n\n` +
-                  `  or:  specgate draft ${opts.module} --agent "claude -p"\n\n`)
+                  ui.quote(pasteLine(opts.module)) +
+                  ui.next(
+                    `specgate draft ${opts.module} --agent "claude -p"`,
+                    "or let Specgate call it"
+                  ))
           )
       );
       process.exitCode = 1;
@@ -1034,12 +1070,12 @@ export class DraftCommand extends BaseCommand {
       },
       () => {
         const out = process.stdout;
-        out.write(`\n  specgate draft ${opts.module}  ·  ${brief}\n\n`);
+        out.write(afterAgent ? "\n" : ui.header(`draft ${opts.module}`, brief));
         writeFindings(report, diags);
         const dir = `${CHANGES.split(path.sep).join("/")}/${changeId}`;
-        const steps: string[] = [];
+        const steps: Array<string | [string, string]> = [];
         if (errors === 0) {
-          out.write(`${diags.length ? "\n" : ""}  ✔  Ready to review.\n`);
+          out.write(`${diags.length ? "\n" : ""}` + ui.ok(ui.bold("Ready to review")));
           steps.push(
             `Read ${dir}/specs/ with whoever knows the business`,
             fs.existsSync(path.join(projectDir, CHANGES, changeId, "questions.md"))
@@ -1050,23 +1086,27 @@ export class DraftCommand extends BaseCommand {
           const after = nextModuleAfter(projectDir, brief, opts.module);
           steps.push(
             after
-              ? `specgate draft ${after}   — the next module of the brief`
-              : "specgate status   — every module drafted: what to build first"
+              ? [`specgate draft ${after}`, "the next module of the brief"]
+              : ["specgate status", "every module drafted: what to build first"]
           );
         } else {
           out.write(
-            `\n  ✖  ${errors} finding(s) to fix. Each says how; DRAFTING.md has the formats.\n`
+            "\n" +
+              ui.fail(
+                `${ui.bold(`${errors} finding(s) to fix`)} ${ui.muted("— each says how; DRAFTING.md has the formats")}`
+              )
           );
           steps.push(
-            `Fix them, or ask your agent:  specgate draft ${opts.module} --agent "claude -p"`,
-            `${next}   — again, until it says Ready to review`
+            [
+              `specgate draft ${opts.module} --agent "claude -p"`,
+              "your agent fixes them — or fix them yourself",
+            ],
+            [next, "again, until it says Ready to review"]
           );
         }
         const progress = briefLine(projectDir, brief);
-        if (progress) out.write(`\n  Brief  ${progress}\n`);
-        out.write("\n  What now\n");
-        steps.forEach((s, i) => out.write(`    ${i + 1}. ${s}\n`));
-        out.write("\n");
+        if (progress) out.write(`\n  ${c.bold}Brief${c.reset}  ${progress}\n`);
+        out.write(ui.steps("What now", steps));
       }
     );
     process.exitCode = errors === 0 ? 0 : 1;
@@ -1098,7 +1138,7 @@ export class DraftCommand extends BaseCommand {
       },
       () => {
         const out = process.stdout;
-        out.write(`\n  specgate draft --check ${opts.check}\n\n`);
+        out.write(ui.header(`draft --check ${opts.check}`));
         writeFindings(report, status);
         const skipped = report.skipped.length;
         out.write(
@@ -1122,9 +1162,13 @@ function skippedNotes(report: ReturnType<typeof checkDraft>) {
 
 function writeFindings(report: ReturnType<typeof checkDraft>, status: any[]): void {
   const out = process.stdout;
-  out.write(`  ${report.requirements} requirement(s), ${report.scenarios} scenario(s)\n\n`);
+  out.write(
+    `  ${c.bold}${report.requirements}${c.reset} requirement(s) ${ui.muted(sym.bullet)} ` +
+      `${c.bold}${report.scenarios}${c.reset} scenario(s)\n\n`
+  );
   for (const d of status) {
-    out.write(`  ${d.severity === "error" ? "✖" : "ℹ"}  ${d.code}  ${d.message}\n`);
-    if (d.fix && d.severity === "error") out.write(`     fix: ${d.fix}\n`);
+    const line = `${ui.muted(d.code)}  ${d.message}`;
+    out.write(d.severity === "error" ? ui.fail(line) : ui.info(line));
+    if (d.fix && d.severity === "error") out.write(ui.fix(d.fix));
   }
 }

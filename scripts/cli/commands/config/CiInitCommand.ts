@@ -13,6 +13,7 @@ import {
   githubSetup,
   planCi,
 } from "./CiToolchain";
+import * as ui from "../../../lib/ui";
 
 const ROOT_DIR = findCliRoot(__dirname);
 const CI_TEMPLATES = path.join(ROOT_DIR, "templates", "ci");
@@ -50,13 +51,13 @@ export function detectProvider(projectDir: string): { provider: string; from: st
 }
 
 function logInfo(msg: string) {
-  process.stdout.write(`ℹ️ [INFO] ${msg}\n`);
+  process.stdout.write(ui.logLine(msg));
 }
 function logError(msg: string) {
-  process.stderr.write(`❌ [ERROR] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 function logFix(msg: string) {
-  process.stderr.write(`💡 [FIX] ${msg}\n`);
+  process.stderr.write(`     ${ui.muted(msg)}\n`);
 }
 
 function usage() {
@@ -134,7 +135,7 @@ export class CiInitCommand extends BaseCommand {
         opts.provider = detected.provider;
         // On stderr under --stdout: that output is the file, piped somewhere.
         const line = `provider: ${detected.provider} (detected from ${detected.from})`;
-        if (opts.stdout) process.stderr.write(`ℹ️ [INFO] ${line}\n`);
+        if (opts.stdout) process.stderr.write(`  ℹ  ${line}\n`);
         else logInfo(line);
       }
     }

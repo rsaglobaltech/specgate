@@ -12,6 +12,7 @@ import { findCliRoot } from "../../../lib/project-root";
 
 import { detectTestCommand } from "../../../../packages/core/src/domain/TestCommand";
 import { startupTestAdvice } from "../../../harness/init";
+import * as ui from "../../../lib/ui";
 
 /**
  * `adopt` and `harness init` used to answer this differently on the same
@@ -37,13 +38,13 @@ const ADOPT_TEMPLATES = path.join(ROOT_DIR, "templates", "adopt");
 const ADOPT_AGENTS_TEMPLATE = path.join(ROOT_DIR, "templates", "base", "AGENTS.md.tpl");
 
 function logInfo(msg: string) {
-  process.stdout.write(`ℹ️ [INFO] ${msg}\n`);
+  process.stdout.write(ui.logLine(msg));
 }
 function logWarn(msg: string) {
-  process.stdout.write(`⚠️ [WARN] ${msg}\n`);
+  process.stdout.write(ui.warn(msg));
 }
 function logError(msg: string) {
-  process.stderr.write(`❌ [ERROR] ${msg}\n`);
+  process.stderr.write(ui.fail(msg));
 }
 function fail(msg: string, exitCode = 1): never {
   logError(msg);
@@ -549,7 +550,12 @@ export class AdoptProjectCommand extends BaseCommand {
   public execute() {
     let rawArgs = this.args;
     if (rawArgs[0] === "adopt") rawArgs = rawArgs.slice(1);
+    // `init` adopting in place has drawn its own header already.
+    const headed = rawArgs.includes("--no-header");
+    rawArgs = rawArgs.filter((a) => a !== "--no-header");
     const opts = parseArgs(rawArgs);
+    if (!headed)
+      process.stdout.write(ui.header("adopt", path.basename(path.resolve(opts.projectDir || "."))));
     const dir = opts.projectDir;
 
     if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {

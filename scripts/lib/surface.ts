@@ -36,17 +36,17 @@
  * the order and the wording are editorial, not derivable.
  */
 export const HELP_GROUPS = [
-  { id: "core", title: "CORE COMMANDS" },
-  { id: "pack", title: "PACK COMMANDS" },
-  { id: "specops", title: "SPECOPS COMMANDS" },
-  { id: "harness", title: "HARNESS COMMANDS" },
-  { id: "dx", title: "DX COMMANDS" },
+  { id: "core", title: "Core" },
+  { id: "pack", title: "Packs" },
+  { id: "specops", title: "SpecOps" },
+  { id: "harness", title: "Harness" },
+  { id: "dx", title: "Developer experience" },
 ];
 
 /** Sections of the narrowed help, in the order they print. */
 export const CORE_GROUPS = [
-  { id: "start", title: "START HERE" },
-  { id: "daily", title: "EVERY DAY" },
+  { id: "start", title: "Start here" },
+  { id: "daily", title: "Every day" },
 ];
 
 interface HelpRow {
@@ -167,7 +167,7 @@ export const SURFACE: Command[] = [
     script: ["adopt_project.js"],
     help: {
       group: "core",
-      icon: "🏗",
+      icon: "🧱",
       summary: "Install SDD on an EXISTING repository (brownfield, non-invasive).",
     },
     // `init` does this in a repo that has code (phase 1); kept for scripts.
@@ -357,10 +357,10 @@ export const SURFACE: Command[] = [
     script: ["done.js"],
     help: {
       group: "core",
-      icon: "✔",
+      icon: "🏁",
       summary: "Mark a requirement Implemented — after the gate passes for it.",
     },
-    coreHelp: { group: "daily", order: 7, icon: "✔", summary: "Mark a requirement Implemented." },
+    coreHelp: { group: "daily", order: 7, icon: "🏁", summary: "Mark a requirement Implemented." },
     json: { key: "requirement", gate: false, args: "<REQ>" },
     mcp: "mark_requirement_done",
   },
@@ -590,7 +590,7 @@ export const SURFACE: Command[] = [
     ],
     help: {
       group: "dx",
-      icon: "⚙",
+      icon: "🔩",
       summary: "Project preferences: `config init`, `config set profile full`.",
     },
   },
@@ -624,7 +624,7 @@ export const SURFACE: Command[] = [
     subcommands: [{ name: "which" }, { name: "init" }, { name: "fork" }, { name: "validate" }],
     help: {
       group: "dx",
-      icon: "🗺",
+      icon: "📐",
       summary: "Inspect or fork the artefact graph a change follows.",
     },
   },
@@ -634,7 +634,7 @@ export const SURFACE: Command[] = [
     subcommands: [{ name: "bash" }, { name: "zsh" }, { name: "fish" }],
     help: {
       group: "dx",
-      icon: "⌨",
+      icon: "💻",
       summary: "Print a shell completion script (bash · zsh).",
     },
   },
@@ -643,7 +643,7 @@ export const SURFACE: Command[] = [
     script: ["studio.js"],
     help: {
       group: "dx",
-      icon: "🖼",
+      icon: "🎨",
       summary: "Serve a local, read-only HTML view of the spec tree (--json for agents).",
     },
   },

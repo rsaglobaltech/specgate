@@ -17,16 +17,7 @@ import {
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { appendRequirementSection } from "../../../../packages/core/src/domain/SpecSections";
 
-const COLOR =
-  process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
-const c = {
-  reset: COLOR ? "\x1b[0m" : "",
-  bold: COLOR ? "\x1b[1m" : "",
-  dim: COLOR ? "\x1b[2m" : "",
-  green: COLOR ? "\x1b[32m" : "",
-  yellow: COLOR ? "\x1b[33m" : "",
-  red: COLOR ? "\x1b[31m" : "",
-};
+import { c } from "../../../lib/ui";
 
 const NULL_SHAPE = { matrix: null };
 const MATRIX = path.join("docs", "specs", "traceability.md");
