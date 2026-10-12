@@ -43,31 +43,67 @@
   }
 
   // ── Copy buttons ─────────────────────────────────────────────────────────
+  //
+  // The button sits in the block's header (`figcaption`) and the code in the
+  // `pre` beside it: look in the whole block. It used to look inside the
+  // header, found nothing, and did nothing.
+  //
+  // A terminal block holds a command and what it printed; what a reader wants
+  // to paste is the command, so only its `$ ` lines are copied.
+  var textToCopy = function (box) {
+    var code = $("pre code", box) || $("code", box);
+    if (!code) return null;
+    var text = code.textContent;
+    if (box.classList.contains("code--term")) {
+      var cmds = text
+        .split("\n")
+        .filter(function (l) { return /^\$ /.test(l); })
+        .map(function (l) { return l.slice(2); });
+      if (cmds.length) text = cmds.join("\n");
+    }
+    return text.replace(/\n+$/, "");
+  };
+  // Where the Clipboard API is missing or refused (a page not served over
+  // HTTPS, an embedded frame), the old way still works from a click.
+  var copyFallback = function (text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (e) {
+      ok = false;
+    }
+    document.body.removeChild(ta);
+    return ok;
+  };
   $$(".code__copy").forEach(function (btn) {
     btn.addEventListener("click", function () {
-      var code = $("code", btn.parentNode);
-      if (!code) return;
-      var done = function () {
-        btn.textContent = "Copied";
-        btn.classList.add("is-done");
+      var box = btn.closest(".code") || btn.parentNode.parentNode;
+      var text = box && textToCopy(box);
+      if (text === null || text === undefined) return;
+      var say = function (label, done) {
+        btn.textContent = label;
+        btn.classList.toggle("is-done", !!done);
         setTimeout(function () {
           btn.textContent = "Copy";
           btn.classList.remove("is-done");
         }, 1600);
       };
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(code.textContent).then(done, function () {
-          btn.textContent = "Press ⌘C";
-        });
+      var fallback = function () {
+        say(copyFallback(text) ? "Copied" : "Press ⌘C", true);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function () {
+          say("Copied", true);
+        }, fallback);
       } else {
-        // Older browsers: select the text so the reader can copy it themselves
-        // rather than press a button that silently does nothing.
-        var range = document.createRange();
-        range.selectNodeContents(code);
-        var sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        btn.textContent = "Press ⌘C";
+        fallback();
       }
     });
   });

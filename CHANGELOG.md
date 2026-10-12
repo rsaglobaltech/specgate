@@ -8,6 +8,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Copy did nothing on the documentation site.** The button looked for the code
+  inside its own header, found nothing, and gave up silently — on every block of
+  every page and the landing page. It copies now; on a terminal block it copies
+  the commands without their output; and where the Clipboard API is refused it
+  falls back to the browser's copy command.
+
 ### Changed
 
 - **The Start section of the documentation reads as two journeys, not a list.**
