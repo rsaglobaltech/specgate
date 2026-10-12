@@ -6,7 +6,7 @@ import { BaseCommand } from "../../../lib/command";
 import {
   HARNESS_CONFIG_FILE,
   readHarnessConfig,
-  writeHarnessTestCmd,
+  writeHarnessCommand,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 export const CONFIG_DIR = ".specgate";
@@ -29,6 +29,10 @@ export const KEYS: Record<string, { values: string[] | null; describe: string }>
     values: null,
     describe: `The command \`check\` and \`done\` run as your tests. Kept in ${HARNESS_CONFIG_FILE}.`,
   },
+  arch_cmd: {
+    values: null,
+    describe: `Your architecture check (ArchUnit, dependency-cruiser…), run by the gate before the tests. Kept in ${HARNESS_CONFIG_FILE}.`,
+  },
 };
 
 /**
@@ -36,11 +40,12 @@ export const KEYS: Record<string, { values: string[] | null; describe: string }>
  * harness already read it there, and a second home would be two answers to
  * "which tests does the gate run" (#68).
  */
-const HARNESS_KEYS = new Set(["test_cmd"]);
+const HARNESS_KEYS = new Set(["test_cmd", "arch_cmd"]);
 
-function harnessTestCmd(projectDir: string): string | null {
+function harnessCommand(projectDir: string, key: string): string | null {
   try {
-    return (readHarnessConfig(projectDir) || {}).testCmd ?? null;
+    const harness = readHarnessConfig(projectDir) || {};
+    return (key === "arch_cmd" ? harness.archCmd : harness.testCmd) ?? null;
   } catch {
     return null;
   }
@@ -107,8 +112,10 @@ export class ConfigSetCommand extends BaseCommand {
 
     if (action === "list" || (!action && !key)) {
       const config = read(projectDir);
-      const testCmd = harnessTestCmd(projectDir);
-      if (testCmd !== null) config.test_cmd = testCmd;
+      for (const k of HARNESS_KEYS) {
+        const v = harnessCommand(projectDir, k);
+        if (v !== null) config[k] = v;
+      }
       io.emit({ config }, () => {
         const entries = Object.entries(config);
         if (entries.length === 0) {
@@ -131,7 +138,7 @@ export class ConfigSetCommand extends BaseCommand {
 
     if (action === "get") {
       const config = read(projectDir);
-      if (HARNESS_KEYS.has(key)) config[key] = harnessTestCmd(projectDir);
+      if (HARNESS_KEYS.has(key)) config[key] = harnessCommand(projectDir, key);
       io.emit({ config: { [key]: config[key] ?? null } }, () =>
         process.stdout.write(`  ${key} = ${config[key] ?? "(default)"}\n`)
       );
@@ -170,12 +177,15 @@ export class ConfigSetCommand extends BaseCommand {
     if (HARNESS_KEYS.has(key)) {
       if (value.trim() === "") {
         io.usage(NULL_SHAPE, [
-          error("config_value_required", "test_cmd cannot be empty.", {
-            fix: 'specgate config set test_cmd "npm test"',
+          error("config_value_required", `${key} cannot be empty.`, {
+            fix:
+              key === "arch_cmd"
+                ? 'specgate config set arch_cmd "./mvnw -q test -Dtest=ArchitectureTest"'
+                : 'specgate config set test_cmd "npm test"',
           }),
         ]);
       }
-      const file = writeHarnessTestCmd(projectDir, value);
+      const file = writeHarnessCommand(projectDir, key as "test_cmd" | "arch_cmd", value);
       io.emit({ config: { [key]: value } }, () =>
         process.stdout.write(
           `  ✔  ${key} = ${value}\n     ${path.relative(process.cwd(), file) || file}\n` +

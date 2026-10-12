@@ -43,6 +43,7 @@ const KNOWN_KEYS = new Set([
   "agent",
   "agent_profile",
   "test_cmd",
+  "arch_cmd",
   "setup_cmd",
   "max_attempts",
   "concurrency",
@@ -97,6 +98,7 @@ export function readHarnessConfig(projectDir) {
     config.promptPrecedents = /^(1|true|yes|on)$/i.test(String(parsed.prompt_precedents).trim());
   }
   if (parsed.test_cmd !== undefined) config.testCmd = String(parsed.test_cmd);
+  if (parsed.arch_cmd !== undefined) config.archCmd = String(parsed.arch_cmd);
   if (parsed.setup_cmd !== undefined) config.setupCmd = String(parsed.setup_cmd);
   if (parsed.max_attempts !== undefined) {
     const n = Number(parsed.max_attempts);
@@ -264,6 +266,7 @@ export function resolveHarnessSettings(
   return {
     agent: cliArgs.agent || file.agent || "",
     testCmd: cliArgs.testCmd || file.testCmd || "",
+    archCmd: cliArgs.archCmd || file.archCmd || "",
     setupCmd: file.setupCmd || "",
     maxAttempts: cliArgs.maxAttempts || file.maxAttempts || 3,
     concurrency: cliArgs.concurrency || file.concurrency || 1,
@@ -382,15 +385,24 @@ function isAdvisoryProfile(projectDir, profileName): boolean {
  * detects nothing) is replaced, otherwise the key is appended.
  */
 export function writeHarnessTestCmd(projectDir: string, testCmd: string): string {
+  return writeHarnessCommand(projectDir, "test_cmd", testCmd);
+}
+
+/** The same, for any command key the gate reads: `test_cmd` or `arch_cmd`. */
+export function writeHarnessCommand(
+  projectDir: string,
+  key: "test_cmd" | "arch_cmd",
+  value: string
+): string {
   const filePath = path.join(projectDir, HARNESS_CONFIG_FILE);
-  const quoted = /["\\]/.test(testCmd) ? `'${testCmd.replace(/'/g, "''")}'` : `"${testCmd}"`;
-  const line = `test_cmd: ${quoted}`;
+  const quoted = /["\\]/.test(value) ? `'${value.replace(/'/g, "''")}'` : `"${value}"`;
+  const line = `${key}: ${quoted}`;
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, `harness_version: 1\n${line}\n`, "utf8");
     return filePath;
   }
   const lines = fs.readFileSync(filePath, "utf8").split("\n");
-  const at = lines.findIndex((l) => /^#?\s*test_cmd:/.test(l));
+  const at = lines.findIndex((l) => new RegExp(`^#?\\s*${key}:`).test(l));
   if (at >= 0) lines[at] = line;
   else {
     if (lines[lines.length - 1] === "") lines.pop();

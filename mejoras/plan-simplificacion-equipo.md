@@ -366,7 +366,8 @@ especificación en [`docs/specs/use-case-model.md`](../docs/specs/use-case-model
 seis fases.
 
 - [x] ADR-0027, ADR-0028 y especificación.
-- [ ] Fase 1 — `arch_cmd` + SARIF + línea base en `check`, `done` y harness.
+- [x] Fase 1a — `arch_cmd` en `check`, `done` (uno y varios) y la puerta del harness (2026-10-12).
+- [ ] Fase 1b — SARIF + línea base (`specgate arch baseline`).
 - [ ] Fase 2 — tipos de requisito, ficheros de caso de uso, escenarios por camino, grafo, `trace`, reglas.
 - [ ] Fase 3 — `init` propone casos de uso por carpetas; migración de `use-cases.md`; packs N:M.
 - [ ] Fase 4 — Jira: etiquetas `uc:`/`path:`, `alm status` por historia.

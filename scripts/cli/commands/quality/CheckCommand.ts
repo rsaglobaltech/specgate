@@ -26,7 +26,8 @@ function usage(): void {
 
   The gate — what to run before a pull request:
     1. validate --strict   specs, scenarios, traceability, links and coverage
-    2. your tests          from --test-cmd, or test_cmd: in harness.config.yaml
+    2. your architecture   arch_cmd: in harness.config.yaml (ArchUnit, …), if set
+    3. your tests          from --test-cmd, or test_cmd: in harness.config.yaml
 
   Without a test command it still passes, and says it checked the
   specification, not the code.
@@ -114,7 +115,8 @@ export class CheckCommand extends BaseCommand {
 
     const harness = readHarnessConfig(projectDir) || ({} as any);
     const testCmd = testCmdFlag !== undefined ? testCmdFlag : harness.testCmd;
-    const plan = planGateCheck(projectDir, testCmd);
+    const archCmd = (harness.archCmd || "").trim();
+    const plan = planGateCheck(projectDir, testCmd, archCmd);
 
     for (const step of plan.steps) {
       const exec = () =>
@@ -131,7 +133,9 @@ export class CheckCommand extends BaseCommand {
       const label =
         step.stage === "validate"
           ? `Specification   ${ui.muted("validate --strict")}`
-          : `Tests           ${ui.muted(step.argv[0])}`;
+          : step.stage === "arch"
+            ? `Architecture    ${ui.muted(step.argv[0])}`
+            : `Tests           ${ui.muted(step.argv[0])}`;
       const run = json ? exec() : ui.task(label, exec, (r) => ({ ok: r.status === 0 }));
 
       const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
@@ -153,9 +157,17 @@ export class CheckCommand extends BaseCommand {
           ? error("check_validate_failed", "The gate failed: validate --strict.", {
               fix: "Fix what validate reports above, then run `specgate check` again.",
             })
-          : error("check_tests_failed", `The gate failed: \`${step.argv[0]}\`.`, {
-              fix: `Make \`${step.argv[0]}\` pass, then run \`specgate check\` again.`,
-            }),
+          : step.stage === "arch"
+            ? error(
+                "check_arch_failed",
+                `The gate failed: the architecture check \`${step.argv[0]}\`.`,
+                {
+                  fix: `Move the code where the architecture expects it, or change the rule on purpose; then run \`specgate check\` again.`,
+                }
+              )
+            : error("check_tests_failed", `The gate failed: \`${step.argv[0]}\`.`, {
+                fix: `Make \`${step.argv[0]}\` pass, then run \`specgate check\` again.`,
+              }),
       ]);
     }
 
@@ -182,22 +194,31 @@ export class CheckCommand extends BaseCommand {
       {
         check: {
           validate: "passed",
+          architecture: archCmd ? "passed" : "not_configured",
+          archCommand: archCmd || null,
           tests: plan.testsUnverified ? "not_configured" : "passed",
           testCommand: plan.testsUnverified ? null : testCmd,
         },
         status,
       },
       () => {
+        // Not a warning: most projects have no architecture tool, and the gate
+        // is complete without one. It is said, so nobody reads the pass as one.
+        if (!archCmd) {
+          process.stdout.write(
+            `  ${ui.muted(`·  Architecture    not checked — specgate config set arch_cmd "<command>"`)}\n`
+          );
+        }
         if (plan.testsUnverified) {
           process.stdout.write(
             ui.warn(`Tests           ${ui.muted("not configured")}`) +
               `\n  ${c.warn}${NO_TEST_COMMAND_WARNING.message}${c.reset}\n` +
               fixLines.map((l) => `  ${ui.muted(l)}\n`).join("") +
-              `\n  ${c.ok}${ui.sym.ok}  ${c.bold}Gate passed${c.reset} ${ui.muted("— the specification")}\n\n`
+              `\n  ${c.ok}${ui.sym.ok}  ${c.bold}Gate passed${c.reset} ${ui.muted(`— the specification${archCmd ? " and the architecture" : ""}`)}\n\n`
           );
         } else {
           process.stdout.write(
-            `\n  ${c.ok}${ui.sym.ok}  ${c.bold}Gate passed${c.reset} ${ui.muted(`— the specification and \`${testCmd}\``)}\n\n`
+            `\n  ${c.ok}${ui.sym.ok}  ${c.bold}Gate passed${c.reset} ${ui.muted(`— the specification${archCmd ? ", the architecture" : ""} and \`${testCmd}\``)}\n\n`
           );
         }
       }

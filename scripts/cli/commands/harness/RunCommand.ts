@@ -403,6 +403,28 @@ function runGate(worktreeDir, testCmd, timeoutMs, req: any = {}, settings: any =
       hint: "",
     };
   }
+  // ADR-0028: the architecture check runs between validation and the tests,
+  // and its failure goes back to the agent like any other gate failure.
+  const archCmd = String(settings.archCmd || "").trim();
+  if (archCmd) {
+    const arch = spawnSync(archCmd, {
+      shell: true,
+      cwd: worktreeDir,
+      encoding: "utf8",
+      timeout: timeoutMs,
+      maxBuffer: SUBPROCESS_MAX_BUFFER,
+    });
+    if (arch.status !== 0) {
+      return {
+        ok: false,
+        stage: `architecture check: ${archCmd}`,
+        output: (arch.stdout || "") + (arch.stderr || ""),
+        hint:
+          "The code is in a place the architecture does not allow. Move it to the layer the " +
+          "rule names; do not change the rule.",
+      };
+    }
+  }
   if (testCmd) {
     let resolved = substituteGateCommand(testCmd, req);
 

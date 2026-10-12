@@ -177,6 +177,7 @@ export class DoneCommand extends BaseCommand {
       strict: opts.strict,
       reqId: opts.reqId || undefined,
       testCmd: opts.testCmd || harness.testCmd,
+      archCmd: harness.archCmd,
     });
 
     if (!opts.json) process.stdout.write(ui.header(`done ${opts.reqId}`, opts.status));
@@ -201,7 +202,9 @@ export class DoneCommand extends BaseCommand {
       const label =
         step.stage === "validate"
           ? `Specification   ${ui.muted(`the gate, for ${opts.reqId}`)}`
-          : `Tests           ${ui.muted(step.argv[0])}`;
+          : step.stage === "arch"
+            ? `Architecture    ${ui.muted(step.argv[0])}`
+            : `Tests           ${ui.muted(step.argv[0])}`;
       const run = opts.json ? exec() : ui.task(label, exec, (r) => ({ ok: r.status === 0 }));
 
       if (run.status === 0) continue;
@@ -226,17 +229,25 @@ export class DoneCommand extends BaseCommand {
       io.fail(NULL_SHAPE, [
         ...findings,
         error(
-          step.stage === "validate" ? "done_validate_failed" : "done_tests_failed",
+          step.stage === "validate"
+            ? "done_validate_failed"
+            : step.stage === "arch"
+              ? "done_arch_failed"
+              : "done_tests_failed",
           step.stage === "validate"
             ? `not marked ${opts.status}: validation failed.`
-            : `not marked ${opts.status}: the project's tests failed.`,
+            : step.stage === "arch"
+              ? `not marked ${opts.status}: the architecture check failed.`
+              : `not marked ${opts.status}: the project's tests failed.`,
           {
             target: opts.reqId!,
             fix:
               step.stage === "validate"
                 ? "Fix what validate reports, then run `done` again."
-                : `Make \`${step.argv[0]}\` pass, then run \`done\` again. A requirement ` +
-                  `marked Implemented over a red suite is the claim this gate exists to stop.`,
+                : step.stage === "arch"
+                  ? `Make \`${step.argv[0]}\` pass — move the code where the architecture expects it — then run \`done\` again.`
+                  : `Make \`${step.argv[0]}\` pass, then run \`done\` again. A requirement ` +
+                    `marked Implemented over a red suite is the claim this gate exists to stop.`,
           }
         ),
       ]);
@@ -388,7 +399,22 @@ export class DoneCommand extends BaseCommand {
 
     const passing = ids.filter((id) => results.get(id)!.ok);
     let testsUnverified = false;
-    if (passing.length > 0 && opts.check) {
+    const archCmd = (harness.archCmd || "").trim();
+    if (passing.length > 0 && opts.check && archCmd) {
+      const run = spawnSync(archCmd, { cwd: projectDir, encoding: "utf8", shell: true });
+      if (run.status !== 0) {
+        const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
+        if (detail && !opts.json) process.stderr.write(indent(detail) + "\n\n");
+        for (const id of passing) {
+          results.set(id, {
+            ok: false,
+            code: "done_arch_failed",
+            message: "the architecture check failed",
+          });
+        }
+      }
+    }
+    if (passing.length > 0 && opts.check && passing.every((id) => results.get(id)!.ok)) {
       const cmd = (testCmd || "").trim();
       if (cmd === "") {
         testsUnverified = true;

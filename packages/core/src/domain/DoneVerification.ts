@@ -32,7 +32,7 @@ import { detectTraceabilityMode, parseMatrixRows, readRowFields } from "./Tracea
  * remove.
  */
 
-export type VerificationStage = "validate" | "tests";
+export type VerificationStage = "validate" | "arch" | "tests";
 
 export interface VerificationStep {
   stage: VerificationStage;
@@ -62,6 +62,8 @@ export interface DoneCheckOptions {
   reqId?: string;
   /** From `--test-cmd`, or `test_cmd:` in harness.config.yaml. */
   testCmd?: string;
+  /** `arch_cmd:` in harness.config.yaml: the architecture check (ADR-0028). */
+  archCmd?: string;
 }
 
 /**
@@ -91,6 +93,11 @@ export function planDoneVerification(
 
   const steps: VerificationStep[] = [{ stage: "validate", argv: validateArgs }];
 
+  // The architecture before the tests: it is usually faster, and a test that
+  // passes over code in the wrong layer is the green the gate must not give.
+  const archCmd = (opts.archCmd || "").trim();
+  if (archCmd !== "") steps.push({ stage: "arch", argv: [archCmd] });
+
   const testCmd = (opts.testCmd || "").trim();
   if (testCmd !== "") steps.push({ stage: "tests", argv: [testCmd] });
 
@@ -105,8 +112,14 @@ export function planDoneVerification(
  * up recommending a gate that passed a requirement whose test file was gone —
  * followed by the project's tests when a command is configured.
  */
-export function planGateCheck(projectDir: string, testCmd?: string): DoneVerificationPlan {
+export function planGateCheck(
+  projectDir: string,
+  testCmd?: string,
+  archCmd?: string
+): DoneVerificationPlan {
   const steps: VerificationStep[] = [{ stage: "validate", argv: [projectDir, "--strict"] }];
+  const arch = (archCmd || "").trim();
+  if (arch !== "") steps.push({ stage: "arch", argv: [arch] });
   const cmd = (testCmd || "").trim();
   if (cmd !== "") steps.push({ stage: "tests", argv: [cmd] });
   return { steps, testsUnverified: cmd === "" };
