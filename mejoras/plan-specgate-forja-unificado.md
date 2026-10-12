@@ -11,6 +11,8 @@ Reglas que siguen vigentes: sin GitHub Actions (verificar en local); PRs a
 
 ## Fase A — Una puerta de entrada
 
+- [x] Specgate: `arch_cmd` en `check`, `done` y el harness (ADR-0028, puntos 1–2):
+      no estaba implementado, y la fase A lo necesita
 - [ ] `specgate init` en carpeta vacía ofrece "generar el proyecto con forja"
       (`npx @rsaglobaltech/forja@<pin> init`) y adopta el resultado; el
       esqueleto propio se queda para stacks que forja no cubre

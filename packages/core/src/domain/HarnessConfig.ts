@@ -2,6 +2,12 @@ export interface HarnessSettings {
   agent: string;
   testCmd: string;
   /**
+   * The team's architecture check (ArchUnit, dependency-cruiser, import-linter…),
+   * run between validation and the tests wherever the gate runs (ADR-0028).
+   * Empty: the architecture is not checked, and `check` says so.
+   */
+  archCmd?: string;
+  /**
    * Run once in each fresh worktree before the agent — `npm ci`, say. The
    * worktree carries only what git tracks, so without it the agent could not
    * run the tests it is asked to write, and a gate of `npm ci && …` made every
@@ -97,6 +103,7 @@ export class HarnessConfig {
     return new HarnessConfig({
       agent: cliArgs.agent || file.agent || HarnessConfig.DEFAULT_SETTINGS.agent,
       testCmd: cliArgs.testCmd || file.testCmd || HarnessConfig.DEFAULT_SETTINGS.testCmd,
+      archCmd: cliArgs.archCmd || file.archCmd || "",
       setupCmd: file.setupCmd || "",
       maxAttempts:
         cliArgs.maxAttempts || file.maxAttempts || HarnessConfig.DEFAULT_SETTINGS.maxAttempts,

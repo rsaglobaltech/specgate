@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted — 2026-10-07
+Accepted — 2026-10-07. Points 1 and 2 (`arch_cmd` in `check`, `done` and the
+harness gate) implemented on 2026-10-12; SARIF and the baseline (3, 4) are pending.
 
 ## Context
 
