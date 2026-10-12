@@ -135,3 +135,37 @@ test("add --json is one document, with forja's output inside it", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("in a forja project, status names the use case to add for the next requirement", () => {
+  const { nextCommandPlain, forjaAddCommand } = require(
+    path.join(ROOT_DIR, "dist/scripts/cli/commands/spec/StatusCommand")
+  );
+  const todo = {
+    requirement: "REQ-004",
+    category: "NEEDS_EVERYTHING",
+    featureFile: "features/place-an-order.feature",
+  };
+  assert.equal(forjaAddCommand(todo), "specgate add usecase <module>/PlaceAnOrder --req REQ-004");
+  const summary = { items: [todo], counts: { total: 1 }, orphans: [], derived: true };
+  assert.equal(nextCommandPlain({ ...summary, forja: true }), forjaAddCommand(todo));
+  assert.equal(nextCommandPlain({ ...summary, forja: false }), "specgate done REQ-004");
+
+  const dir = tmp();
+  try {
+    const app = path.join(dir, "app");
+    fs.mkdirSync(path.join(app, "lib"), { recursive: true });
+    fs.writeFileSync(path.join(app, "package.json"), '{"name":"a","version":"1.0.0"}');
+    fs.writeFileSync(path.join(app, "lib/index.js"), "");
+    assert.equal(
+      run(dir, process.env, "adopt", "--project-dir", app, "--no-capabilities").status,
+      0
+    );
+    fs.writeFileSync(path.join(app, "forja.config.json"), "{}");
+    assert.equal(run(app, process.env, "new", "Place an order").status, 0);
+    const r = run(app, process.env, "status", "--json");
+    const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
+    assert.match(JSON.stringify(doc), /specgate add usecase <module>\/PlaceAnOrder --req REQ-\d+/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

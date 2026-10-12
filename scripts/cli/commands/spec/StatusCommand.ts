@@ -15,6 +15,7 @@ import { readDerivationSources } from "../../../../packages/core/src/infrastruct
 import { refreshDerivedMatrix } from "./MatrixCommand";
 import { briefProgress, draftNextCommand } from "./DraftCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
+import { findForjaProject } from "../project/Forja";
 
 import { c, sym } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -81,7 +82,14 @@ export function summarise(projectDir: string, traceContent: string) {
   for (const it of items) counts[it.category] = (counts[it.category] || 0) + 1;
   const pending = items.length - counts.DONE;
   const orphans = detectOrphans(projectDir, items);
-  return { items, counts, pending, orphans, derived: isDerivedProject(projectDir) };
+  return {
+    items,
+    counts,
+    pending,
+    orphans,
+    derived: isDerivedProject(projectDir),
+    forja: findForjaProject(projectDir) !== null,
+  };
 }
 
 /**
@@ -171,7 +179,30 @@ function briefFirst({ items, brief }: any): any {
   return brief && brief.next && !firstReal(items) ? brief.next : null;
 }
 
-export function nextCommandPlain({ items, counts, orphans, derived, brief }: any): string {
+/**
+ * In a forja project the next requirement's code has a place to go: `add
+ * usecase` writes the use case there and the test that names the requirement
+ * (ADR-0033). The name comes from the scenario's file; the module is the
+ * user's to choose.
+ */
+export function forjaAddCommand(todo: any): string {
+  // The matrix may hold the file as a link (`[x](features/x.feature)`): take the name.
+  const base =
+    (/([^/\\[\]()`]+)\.feature/.exec(String(todo.featureFile || todo.feature_file || "")) ||
+      [])[1] || "";
+  const name =
+    base
+      .split(/[^A-Za-z0-9]+/)
+      .filter(Boolean)
+      .map((w) => w[0].toUpperCase() + w.slice(1))
+      .join("") || "<Name>";
+  return `specgate add usecase <module>/${name} --req ${todo.requirement}`;
+}
+
+const needsCode = (todo: any) =>
+  ["NEEDS_EVERYTHING", "NEEDS_TEST", "NEEDS_IMPLEMENTATION"].includes(todo.category);
+
+export function nextCommandPlain({ items, counts, orphans, derived, brief, forja }: any): string {
   const first = (cats: string[]) => (items || []).find((it: any) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
   const ready = first(["NEEDS_STATUS_UPDATE"]);
@@ -182,6 +213,7 @@ export function nextCommandPlain({ items, counts, orphans, derived, brief }: any
   if (todo) {
     if (todo.category === "NEEDS_FEATURE") return `specgate plan`;
     if (onlyBaseline(items)) return 'specgate new "<a behaviour you rely on>"';
+    if (forja && needsCode(todo)) return forjaAddCommand(todo);
     // On a generated matrix a test that names its requirement is the link;
     // `done` is what you run once it exists, and it checks first.
     if (derived) return `specgate done ${todo.requirement}`;
@@ -191,7 +223,7 @@ export function nextCommandPlain({ items, counts, orphans, derived, brief }: any
   return "specgate check";
 }
 
-export function nextReason({ items, counts, orphans, derived, brief }: any): string {
+export function nextReason({ items, counts, orphans, derived, brief, forja }: any): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   if ((items || []).some((it: any) => it.category === "NEEDS_STATUS_UPDATE"))
     return "its test exists; close it through the gate";
@@ -206,6 +238,8 @@ export function nextReason({ items, counts, orphans, derived, brief }: any): str
     return `${todo.requirement}'s feature file is missing — plan shows which`;
   if (todo && onlyBaseline(items))
     return "only the adoption baseline is specified — add one requirement your code already meets";
+  if (todo && forja && needsCode(todo))
+    return `${todo.requirement}'s use case and the test that names it, where the architecture expects them`;
   if (todo && derived)
     return `once a test mentions ${todo.requirement} — that mention is the link; done checks first`;
   if (todo) return `write the test first, then record where it is`;
