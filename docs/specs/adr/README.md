@@ -40,6 +40,7 @@ for the policy on when and how to write an ADR.
 | [0030](0030-specgate-verifies-specs-it-did-not-write.md) | Specgate verifies OpenSpec specs it did not write | Accepted | 2026-10-08 |
 | [0031](0031-agents-md-is-the-agent-contract.md) | AGENTS.md is the agent contract; AI_RULES.md folds into it | Accepted | 2026-10-09 |
 | [0032](0032-one-name-everywhere.md) | One name everywhere: the format is renamed too | Accepted | 2026-10-12 |
+| [0033](0033-one-front-door-two-engines.md) | One front door, two engines: Specgate drives forja | Accepted | 2026-10-12 |
 
 ## Template
 
