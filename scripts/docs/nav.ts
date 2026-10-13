@@ -158,6 +158,76 @@ export const NAV: readonly NavSection[] = [
     ],
   },
   {
+    // ADR-0033: forja's documentation lives here, one site for both tools.
+    title: "New project (forja)",
+    icon: "package",
+    summary:
+      "Start from an empty folder with a whole application: the architecture in place, sign-in working, Specgate adopted.",
+    entries: [
+      {
+        slug: "forja/getting-started",
+        group: "Generate",
+        label: "Getting started",
+        blurb: "Generate a Next.js + Expo monorepo in TypeScript, with the hexagon in place.",
+      },
+      {
+        slug: "forja/java",
+        group: "Generate",
+        label: "Java backends",
+        blurb: "A Spring Boot or Quarkus API, a Next.js web app and Keycloak sign-in.",
+      },
+      {
+        slug: "forja/daily-use",
+        group: "Grow it",
+        label: "Daily use",
+        blurb:
+          "Add use cases, entities and ports where the architecture expects them; check the setup.",
+      },
+      {
+        slug: "forja/specgate",
+        group: "Grow it",
+        label: "With Specgate",
+        blurb: "How a generated project adopts Specgate, and how a use case names its requirement.",
+      },
+      {
+        slug: "forja/e2e",
+        group: "Grow it",
+        label: "End-to-end tests",
+        blurb: "Playwright drives the sign-in flow in a real browser.",
+      },
+      {
+        slug: "forja/cli",
+        group: "Reference",
+        label: "forja command line",
+        blurb: "init, add, doctor: every flag and the values it accepts.",
+      },
+      {
+        slug: "forja/config",
+        group: "Reference",
+        label: "forja.config.json",
+        blurb: "Every field, its values and its defaults.",
+      },
+      {
+        slug: "forja/generated-project",
+        group: "Reference",
+        label: "What it generates",
+        blurb: "Recipe by recipe: the folders, the files, the versions.",
+      },
+      {
+        slug: "forja/architecture",
+        group: "Reference",
+        label: "The generated architecture",
+        blurb: "The hexagon forja generates and the rules that keep it.",
+      },
+      {
+        slug: "forja/contributing",
+        group: "Reference",
+        label: "Contributing to forja",
+        blurb: "Develop forja, write a recipe, verify what it generates.",
+      },
+    ],
+  },
+  {
     title: "Every day",
     icon: "file",
     summary: "The loop a team runs on every pull request.",

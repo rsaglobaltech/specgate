@@ -31,8 +31,9 @@ Reglas que siguen vigentes: sin GitHub Actions (verificar en local); PRs a
       real en una carpeta vacía (node)
 - [ ] Publicar: forja 1.0 en npm y Specgate 0.20 (el pin `@1` no resuelve hasta
       entonces; `arch_cmd` necesita 0.20 en los proyectos generados)
-- [ ] Un solo sitio: la documentación de forja como sección "Start a new
-      project" del sitio de Specgate; el sitio de forja apunta allí
+- [x] Un solo sitio: la documentación de forja como sección "New project
+      (forja)" del sitio de Specgate (`docs/forja/`); el sitio de forja
+      conserva la landing y redirige cada página de docs aquí
 
 ## Fase B — Modelo C4
 

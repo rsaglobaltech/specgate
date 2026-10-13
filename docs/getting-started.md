@@ -20,9 +20,10 @@ step works by hand; the agent is a faster pair of hands.
 
 ## 2. Pick your path
 
-<!-- specgate:cards cols=3 -->
+<!-- specgate:cards cols=2 -->
 - [From scratch](start/scratch-1-install.md) — A new product, maybe a client's brief. Five steps: install, turn the brief into checked requirements, build the first one, prove it, keep the loop going.
 - [An existing project](start/existing-1-adopt.md) — Code that already works. Five steps: adopt it without touching a line, write down one behaviour you rely on, close it with a test you already have, put the gate in CI.
+- [A whole new application](forja/getting-started.md) — `specgate init --forja`: forja generates a Next.js + Expo monorepo or a Spring Boot / Quarkus API with the architecture in place, and adopts Specgate.
 - [You cloned a spec-driven repo](quickstart.md) — Someone else set it up. Five minutes to see where the project stands and close your first requirement.
 <!-- specgate:endcards -->
 

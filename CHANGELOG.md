@@ -8,6 +8,31 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.20.0] — 2026-10-12
+
+### Added
+
+- **One front door for a new application** ([ADR-0033](docs/specs/adr/0033-one-front-door-two-engines.md)).
+  `specgate init --forja [<name> <flags…>]` generates a whole application with
+  [forja](https://github.com/rsaglobaltech/forja) — a Next.js + Expo monorepo in
+  TypeScript, or a Spring Boot / Quarkus API with a web app — which adopts
+  Specgate as it installs. In a terminal, plain `init` in an empty folder asks
+  first. forja is fetched with `npx` only when chosen, so Specgate keeps zero
+  runtime dependencies; `SPECGATE_FORJA_CMD` points at another forja.
+- **`specgate add usecase|entity|port`** in a forja project: the class where the
+  architecture expects it, its test and its wiring, through `forja add`; `add
+  usecase` also creates the requirement and names it in the test. Outside a forja
+  project it says to use `new`. In a forja project, `status` suggests it as the
+  next step for a requirement with no code.
+- **`arch_cmd`: your architecture check in the gate** ([ADR-0028](docs/specs/adr/0028-architecture-conformance-is-part-of-the-gate.md), points 1–2).
+  `specgate config set arch_cmd "<cmd>"` — ArchUnit, dependency-cruiser,
+  import-linter… — and `check`, `done` and the harness gate run it between
+  validation and the tests; in the harness a failure goes back to the agent.
+  Without it the gate passes as before and says the architecture was not checked.
+- **The documentation site carries forja's documentation**, as the "New project
+  (forja)" section, and the landing page shows where Specgate and forja sit in
+  the DevOps loop.
+
 ### Fixed
 
 - **Copy did nothing on the documentation site.** The button looked for the code
