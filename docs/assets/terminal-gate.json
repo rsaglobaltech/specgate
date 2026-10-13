@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.19.1",
+    "version": "0.20.0",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
@@ -210,7 +210,7 @@
       "surface": "check",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1240,
+      "holdMs": 1330,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -232,6 +232,11 @@
         {
           "t": "  ✔  Tests           node --test",
           "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "  ·  Architecture    not checked — specgate config set arch_cmd \"<command>\"",
+          "c": "out",
           "s": "out"
         },
         {
