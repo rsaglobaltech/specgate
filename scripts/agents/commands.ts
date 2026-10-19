@@ -11,7 +11,19 @@
  * markdown file at generation time.
  */
 
-export const STEPS = [
+/** One step of the loop, as every agent tool renders it. */
+export interface AgentStep {
+  name: string;
+  summary: string;
+  when: string;
+  /** The commands the step runs, in order. */
+  run: string[];
+  guidance: string[];
+  /** The placeholder in `run` the host fills from the slash command's argument. */
+  argumentHint?: string;
+}
+
+export const STEPS: AgentStep[] = [
   {
     name: "explore",
     summary: "See what is left, and the one command to run next.",

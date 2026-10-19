@@ -35,7 +35,29 @@ export const KEYWORDS = Object.freeze([
   "specgate:trace",
 ]);
 
-export const PHRASES = {
+/** The sentences a generator may translate. Never the grammar. */
+export interface Phrases {
+  systemShall: (behaviour: string) => string;
+  systemShallMeet: (what: string) => string;
+  observableBehaviour: string;
+  priority: (value: string) => string;
+  todoSteps: (name: string) => string;
+  todoStepsPlain: string;
+  precondition: string;
+  action: string;
+  outcome: string;
+  scenarioName: string;
+  shortName: string;
+  capability: string;
+  added: string;
+  modified: string;
+  removed: string;
+}
+
+/** The languages a phrase table exists for. */
+export type Language = "en" | "es" | "pt";
+
+export const PHRASES: Record<Language, Phrases> = {
   en: {
     systemShall: (behaviour) => `The system SHALL ${behaviour}.`,
     systemShallMeet: (what) => `The system SHALL satisfy "${what}".`,
@@ -91,22 +113,22 @@ export const PHRASES = {
 
 export const DEFAULT = "en";
 
-/** The sentences a generator may translate. Never the grammar. */
-export type Phrases = (typeof PHRASES)[typeof DEFAULT];
-
 /**
  * The phrase table for a language tag, falling back to the base tag and then
  * to English. `null` or an unknown tag both mean English.
  */
 export function phrasesFor(tag: string | null | undefined): Phrases {
-  return PHRASES[languageFor(tag)];
+  return (PHRASES as Record<string, Phrases>)[languageFor(tag)];
 }
 
 /** Which of the tables above a tag selects. */
 export function languageFor(tag: string | null | undefined): string {
   if (!tag) return DEFAULT;
+  // Indexed as a plain record on purpose: the lookup is a truthiness test on
+  // whatever tag the config holds, not a membership test on `Language`.
+  const tables: Record<string, Phrases | undefined> = PHRASES;
   const lower = String(tag).toLowerCase();
-  if (PHRASES[lower]) return lower;
+  if (tables[lower]) return lower;
   const base = lower.split("-")[0];
-  return PHRASES[base] ? base : DEFAULT;
+  return tables[base] ? base : DEFAULT;
 }

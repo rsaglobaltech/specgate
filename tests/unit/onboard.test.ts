@@ -14,26 +14,24 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
+import { cliFromRoot as cli } from "../helpers/cli";
 
 const { proposeCapabilities, descendThroughWrappers, titleCase } = require("../../scripts/onboard");
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", cwd: ROOT_DIR });
+/** A capability `onboard` proposes, with the directory that suggested it. */
+interface Capability {
+  id: string;
+  evidence?: string;
+  files?: number;
 }
 
 /** Build a fake repository from a map of path → contents. */
-function repo(files) {
+function repo(files: Record<string, string>) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "onboard-"));
   for (const [rel, contents] of Object.entries(files)) {
     const full = path.join(dir, rel);
     fs.mkdirSync(path.dirname(full), { recursive: true });
-    fs.writeFileSync(full, contents as string, "utf8");
+    fs.writeFileSync(full, contents, "utf8");
   }
   return dir;
 }
@@ -48,7 +46,7 @@ test("capabilities come from the directories a team already named", () => {
   });
   try {
     const caps = proposeCapabilities(dir);
-    assert.deepEqual(caps.map((c) => c.id).sort(), ["billing", "booking", "identity"]);
+    assert.deepEqual(caps.map((c: Capability) => c.id).sort(), ["billing", "booking", "identity"]);
     // Ordered by weight, so the biggest area is the one to describe first.
     assert.equal(caps[0].id, "booking");
     // Every proposal names where it came from — it is an argument, not a verdict.
@@ -69,7 +67,7 @@ test("build and test directories are never proposed as capabilities", () => {
     "tests/OrderTest.java": "//",
   });
   try {
-    const ids = proposeCapabilities(dir).map((c) => c.id);
+    const ids = proposeCapabilities(dir).map((c: Capability) => c.id);
     assert.deepEqual(ids.sort(), ["orders", "shipping"]);
     assert.ok(!ids.includes("config"));
     assert.ok(!ids.includes("node_modules"));
@@ -87,8 +85,8 @@ test("a Java package root is walked through, not proposed", () => {
   });
   try {
     const caps = proposeCapabilities(dir);
-    assert.deepEqual(caps.map((c) => c.id).sort(), ["billing", "catalog"]);
-    assert.ok(!caps.some((c) => c.id === "com"));
+    assert.deepEqual(caps.map((c: Capability) => c.id).sort(), ["billing", "catalog"]);
+    assert.ok(!caps.some((c: Capability) => c.id === "com"));
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -161,7 +159,7 @@ test("an unreadable layout says so, with a way forward", () => {
   const dir = repo({ "index.js": "//" });
   try {
     const doc = JSON.parse(cli("onboard", "--project-dir", dir, "--json").stdout);
-    const codes = doc.status.map((d) => d.code);
+    const codes = doc.status.map((d: { code: string }) => d.code);
     assert.ok(codes.includes("capabilities_undetected"));
     for (const d of doc.status) assert.ok(d.fix, `${d.code} should carry a fix`);
   } finally {
@@ -195,10 +193,10 @@ test("a Gradle module is read through src/main/java, past its build output (H17)
   });
   try {
     const caps = proposeCapabilities(dir);
-    assert.deepEqual(caps.map((c) => c.id).sort(), ["booking", "wallet"]);
+    assert.deepEqual(caps.map((c: Capability) => c.id).sort(), ["booking", "wallet"]);
     assert.equal(caps[0].evidence, "domain/src/main/java/com/lixy/domain/booking");
     // The proposal must not change once someone runs a build.
-    assert.ok(!caps.some((c) => c.id === "build" || c.id === "classes"));
+    assert.ok(!caps.some((c: Capability) => c.id === "build" || c.id === "classes"));
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -245,11 +243,14 @@ test("onboard reads the directory it was given, not an adopted ancestor (H16)", 
 
     assert.equal(doc.onboarding.adopted, false, "the sub-project is not adopted");
     assert.match(doc.onboarding.stack.name, /Java/, "its own stack, not the parent's");
-    assert.deepEqual(doc.onboarding.capabilities.map((c) => c.id).sort(), ["billing", "catalog"]);
+    assert.deepEqual(doc.onboarding.capabilities.map((c: Capability) => c.id).sort(), [
+      "billing",
+      "catalog",
+    ]);
 
     // The ancestor is reported, never substituted.
     assert.equal(doc.onboarding.adoptedAncestor, fs.realpathSync(dir));
-    const advisory = doc.status.find((d) => d.code === "adopted_ancestor");
+    const advisory = doc.status.find((d: { code: string }) => d.code === "adopted_ancestor");
     assert.ok(advisory, "the parent project is worth mentioning");
     assert.ok(advisory.fix.includes("--project-dir"));
   } finally {
@@ -263,7 +264,7 @@ test("a plain adopted project reports no ancestor (H16)", () => {
     const doc = JSON.parse(cli("onboard", "--project-dir", dir, "--json").stdout);
     assert.equal(doc.onboarding.adopted, true);
     assert.equal(doc.onboarding.adoptedAncestor, null);
-    assert.ok(!doc.status.some((d) => d.code === "adopted_ancestor"));
+    assert.ok(!doc.status.some((d: { code: string }) => d.code === "adopted_ancestor"));
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

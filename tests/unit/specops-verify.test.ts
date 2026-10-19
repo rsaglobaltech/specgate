@@ -14,24 +14,18 @@ const {
 } = require("../../scripts/specops/verify");
 const { gitAvailable } = require("../../packages/core/src/infrastructure/RemotePackResolver");
 
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
+import { ROOT_DIR, runCli } from "../helpers/cli";
+import type { CliOptions, CliResult } from "../helpers/cli";
 const FIXTURE_PACK = path.join(ROOT_DIR, "tests", "fixtures", "domain-packs", "parking-management");
 
 const HAS_GIT = gitAvailable();
 const skipReason = HAS_GIT ? undefined : "git is not available on PATH";
 
-function cli(args, options = {}) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], {
-    cwd: ROOT_DIR,
-    encoding: "utf8",
-    ...options,
-  });
+function cli(args: string[], options: CliOptions = {}): CliResult {
+  return runCli(args, { cwd: ROOT_DIR, ...options });
 }
 
-function git(args, opts = {}) {
+function git(args: string[], opts: CliOptions = {}) {
   const result = spawnSync("git", args, { encoding: "utf8", ...opts });
   if (result.status !== 0) {
     throw new Error(`git ${args.join(" ")} failed: ${result.stderr}`);

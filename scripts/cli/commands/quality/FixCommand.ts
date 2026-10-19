@@ -3,7 +3,7 @@ import * as path from "node:path";
 import * as readline from "node:readline/promises";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability, detectOrphans } from "../spec/PlanCommand";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
 import { error, info, errorMessage } from "../../../lib/diagnostics";
 import { isDerivedMatrix } from "../../../../packages/core/src/domain/DerivedMatrix";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
@@ -96,12 +96,12 @@ export function parseArgs(argv: string[]) {
 export class FixCommand extends BaseCommand {
   public async execute() {
     const opts = parseArgs(this.args);
-    const io = agentIo(opts.json);
+    const io: AgentIo = agentIo(opts.json);
 
     let projectDir: string;
     try {
       projectDir = resolveProjectDir(opts.projectDir);
-    } catch (err: any) {
+    } catch (err) {
       io.usage(NULL_SHAPE, [
         error("no_project", errorMessage(err), {
           fix: "Run from inside a spec-driven project, or pass --project-dir <path>.",

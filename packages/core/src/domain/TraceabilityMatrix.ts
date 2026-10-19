@@ -1,4 +1,58 @@
-import { parseTraceabilityRows, buildTraceabilityMarkdown } from "./TraceabilityFormat";
+import {
+  MatrixRow,
+  RichTraceabilityRow,
+  parseTraceabilityRows,
+  buildTraceabilityMarkdown,
+} from "./TraceabilityFormat";
+import { TraceComment } from "./SpecParser";
+
+/**
+ * What a matrix row is made from: a requirement's identity, its
+ * `specgate:trace` comment and its scenarios — a parsed `RequirementNode`, or
+ * the few fields of one that derivation has to hand.
+ */
+export interface TraceSource {
+  id?: string | null;
+  name?: string;
+  trace?: TraceComment;
+  scenarios?: Array<{ id?: string | null }>;
+}
+
+/**
+ * A rich matrix row built from a trace source. Every cell is filled — with `-`,
+ * `TBD` or `Draft` when the trace says nothing — except the requirement, which
+ * is absent when the source had neither an id nor a name.
+ */
+export type TraceRow = Omit<RichTraceabilityRow, "requirement"> & {
+  requirement: string | undefined;
+};
+
+/** What `syncTraceability` did to the matrix. */
+export interface TraceabilitySync {
+  markdown: string;
+  totals: { added: number; updated: number; removed: number; legacyDropped: number };
+}
+
+/** The cells `req add` writes for a new requirement row, by column. */
+export interface RequirementRowFields {
+  requirement?: string;
+  scenarioId?: string;
+  featureFile?: string;
+  useCase?: string;
+  command?: string;
+  aggregate?: string;
+  event?: string;
+  technicalArtifact?: string;
+  testArtifact?: string;
+  status?: string;
+}
+
+/** A requirement `archive` writes into the matrix, or rewrites in place. */
+export interface MatrixUpsert {
+  req: TraceSource;
+  capability?: string;
+  modified?: boolean;
+}
 
 const EMPTY = "-";
 
@@ -8,8 +62,8 @@ function code(value: string | undefined): string {
 }
 
 export class TraceabilityMatrix {
-  public static traceRow(req: any) {
-    const trace = req.trace || {};
+  public static traceRow(req: TraceSource): TraceRow {
+    const trace: TraceComment = req.trace || {};
     const firstScenario = (req.scenarios || [])[0];
     return {
       requirement: req.id || req.name,
@@ -25,14 +79,13 @@ export class TraceabilityMatrix {
     };
   }
 
-  public static statedFields(req: any) {
-    const trace = req.trace || {};
+  public static statedFields(req: TraceSource): Record<string, string> {
+    const trace: TraceComment = req.trace || {};
     const firstScenario = (req.scenarios || [])[0];
     const stated: Record<string, string> = {};
 
-    if (trace.scn || (firstScenario && firstScenario.id)) {
-      stated.scenarioId = trace.scn || firstScenario.id;
-    }
+    const scenarioId = trace.scn || (firstScenario && firstScenario.id);
+    if (scenarioId) stated.scenarioId = scenarioId;
     if (trace.feature) stated.featureFile = code(trace.feature);
     if (trace.uc) stated.useCase = trace.uc;
     if (trace.cmd || trace.qry) stated.commandOrQuery = trace.cmd || trace.qry;
@@ -47,8 +100,8 @@ export class TraceabilityMatrix {
 
   public static syncTraceability(
     existingContent: string | null,
-    applied: { upserts: any[]; removals: string[] }
-  ) {
+    applied: { upserts: MatrixUpsert[]; removals: string[] }
+  ): TraceabilitySync {
     const parsed = existingContent
       ? parseTraceabilityRows(existingContent)
       : { mode: "rich", rows: [] };
@@ -56,8 +109,8 @@ export class TraceabilityMatrix {
     const rows = parsed.mode === "rich" ? parsed.rows.slice() : [];
     const legacyDropped = parsed.mode !== "rich" ? parsed.rows.length : 0;
 
-    const indexOf = (requirement: string) =>
-      rows.findIndex((r: any) => String(r.requirement).trim() === String(requirement).trim());
+    const indexOf = (requirement: string | undefined) =>
+      rows.findIndex((r: MatrixRow) => String(r.requirement).trim() === String(requirement).trim());
 
     let added = 0;
     let updated = 0;
@@ -89,7 +142,7 @@ export class TraceabilityMatrix {
     };
   }
 
-  private static spliceMatrix(existing: string | null, generated: string) {
+  private static spliceMatrix(existing: string | null, generated: string): string {
     if (!existing) return generated;
 
     const lines = existing.replace(/\r\n/g, "\n").split("\n");
@@ -132,7 +185,7 @@ export class TraceabilityMatrix {
     return { content: out.join("\n"), updated };
   }
 
-  public static nextReqId(rows: any[]): string {
+  public static nextReqId(rows: readonly MatrixRow[]): string {
     let max = 0;
     for (const r of rows) {
       const m = (r.requirement || "").match(/^REQ-(\d+)$/);
@@ -141,7 +194,7 @@ export class TraceabilityMatrix {
     return `REQ-${String(max + 1).padStart(3, "0")}`;
   }
 
-  public static nextScenarioId(rows: any[]): string {
+  public static nextScenarioId(rows: readonly MatrixRow[]): string {
     let max = 0;
     for (const r of rows) {
       const m = (r.scenarioId || "").match(/^SCN-(\d+)$/);
@@ -150,8 +203,8 @@ export class TraceabilityMatrix {
     return `SCN-${String(max + 1).padStart(3, "0")}`;
   }
 
-  public static buildRow(fields: any): string {
-    const cell = (v: any) => {
+  public static buildRow(fields: RequirementRowFields): string {
+    const cell = (v: unknown) => {
       const s = (v == null ? "" : String(v)).trim();
       return s === "" ? "-" : s;
     };
@@ -172,8 +225,8 @@ export class TraceabilityMatrix {
 
   public static appendRequirement(
     content: string,
-    fields: any,
-    parsedRows: any[]
+    fields: RequirementRowFields,
+    parsedRows: readonly MatrixRow[]
   ): { content: string; reqId: string; scenarioId: string } {
     const reqId = fields.requirement || this.nextReqId(parsedRows);
     const scenarioId = fields.scenarioId || this.nextScenarioId(parsedRows);
@@ -193,7 +246,7 @@ export class TraceabilityMatrix {
   public static updateRequirementFields(
     content: string,
     reqId: string,
-    fields: Record<string, any>,
+    fields: Record<string, unknown>,
     columnMap: Record<string, number>
   ): { content: string; updated: number } {
     const keys = Object.keys(fields).filter((k) => k in columnMap && fields[k] != null);

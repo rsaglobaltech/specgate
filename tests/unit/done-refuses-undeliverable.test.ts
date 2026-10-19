@@ -15,20 +15,12 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import { cli } from "../helpers/cli";
 
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 const FEATURE = "features/totals-are-rounded-half-up.feature";
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
-
 /** An adopted project with one real requirement (obligation and scenario written), no test yet. */
-function project(needsClarification) {
+function project(needsClarification: boolean) {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-undeliverable-"));
   const dir = path.join(parent, "app");
   fs.mkdirSync(path.join(dir, "lib"), { recursive: true });
@@ -61,14 +53,14 @@ function project(needsClarification) {
   return { parent, dir };
 }
 
-function row(dir) {
+function row(dir: string) {
   return fs
     .readFileSync(path.join(dir, "docs/specs/traceability.md"), "utf8")
     .split("\n")
-    .find((l) => l.startsWith("| REQ-002 |"));
+    .find((l: string) => l.startsWith("| REQ-002 |"));
 }
 
-function writeTest(dir) {
+function writeTest(dir: string) {
   fs.mkdirSync(path.join(dir, "test"), { recursive: true });
   fs.writeFileSync(path.join(dir, "test/totals.test.js"), "// REQ-002 SCN-002\n");
 }
@@ -130,7 +122,7 @@ test("status lists a requirement waiting for an answer apart, naming the questio
     assert.doesNotMatch(text, /REQ-002.*a test and code/);
 
     const doc = JSON.parse(cli("status", "--project-dir", dir, "--json").stdout);
-    const req = doc.requirements.find((r) => r.id === "REQ-002");
+    const req = doc.requirements.find((r: { id: string }) => r.id === "REQ-002");
     assert.equal(req.category, "WAITING_FOR_ANSWER");
     assert.match(req.question, /^Q1 \(docs\/specs\/changes\/draft-totals\/questions\.md\)$/);
     assert.equal(doc.counts.WAITING_FOR_ANSWER, 1);

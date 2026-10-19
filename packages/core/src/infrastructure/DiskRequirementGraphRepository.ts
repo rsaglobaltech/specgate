@@ -3,7 +3,7 @@ import * as path from "node:path";
 
 import { IRequirementGraphRepository } from "../application/ports/IRequirementGraphRepository";
 import { splitDependencies } from "../domain/RequirementGraph";
-import { parseSpec } from "../domain/SpecParser";
+import { SpecNode, parseSpec } from "../domain/SpecParser";
 import { parseMatrixDependencies } from "../domain/TraceabilityFormat";
 import { CAPABILITIES_DIR } from "./ChangeWorkspace";
 
@@ -59,7 +59,7 @@ function readMatrixDependencies(projectDir: string): Record<string, string[]> {
 }
 
 function readSpecDependencies(specPath: string): Array<[string, string[]]> {
-  let parsed: { requirements?: Array<{ id?: string; trace?: Record<string, string> }> };
+  let parsed: SpecNode;
   try {
     parsed = parseSpec(fs.readFileSync(specPath, "utf8"));
   } catch {

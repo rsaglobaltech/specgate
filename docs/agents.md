@@ -1,7 +1,7 @@
 # Agents
 
 Twelve commands speak JSON — `status`, `plan`, `validate`, `report`, `doctor`,
-`fix`, `req list`, `change`, `schema which`, `onboard`, `update` and `done` —
+`fix`, `req list`, `change`, `schema which`, `onboard`, `update` and `apply` —
 and the loop can be driven entirely from Claude Code, Cursor, Copilot,
 Windsurf, Aider, Gemini, Cline, Codex or Antigravity.
 
@@ -25,14 +25,22 @@ specgate agents init --tool claude,cursor     # or pick
 specgate agents init --dry-run                # list destinations, write nothing
 ```
 
-This writes the slash commands for the daily loop — `/specgate:explore` (what is
-left), `/specgate:new`, `/specgate:apply`, `/specgate:check` (the gate) and
-`/specgate:done` — plus `/specgate:draft <module>` to turn the plan in
-`docs/brief.md` into requirements a module at a time, `/specgate:propose` and
-`/specgate:archive` for changing requirements that already shipped, and
-`/specgate:onboard`. Then the
-instruction file each tool reads — `.cursor/rules/specgate.mdc`,
+This writes one slash command per step, from one definition:
+`/specgate:explore` (what is left, and the next command), `/specgate:apply`
+(one requirement: the test first, then the code), `/specgate:check` (the gate),
+`/specgate:draft <module>` (a module of `docs/brief.md` becomes a draft
+change), `/specgate:propose` and `/specgate:archive` (open and close a change),
+`/specgate:onboard`, and `/specgate:new` and `/specgate:done` under their old
+names. Then the instruction file each tool reads — `.cursor/rules/specgate.mdc`,
 `.github/copilot-instructions.md`, `CONVENTIONS.md`, `AGENTS.md` and so on.
+
+The terminal loop is four verbs — `specgate propose`, `specgate apply`,
+`specgate status`, `specgate archive` ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
+The generated files still run the older spellings: `/specgate:propose` runs
+`specgate change new`, `/specgate:archive` runs `specgate change archive`, and
+`/specgate:done` runs `specgate done`. They reach the same engines, with the same
+rule: a change is archived once every requirement in it is Implemented, so an
+archive the agent tries before that is refused.
 
 Existing files are never overwritten without `--force`.
 
@@ -147,5 +155,6 @@ specgate change instructions archive --json
 ## Next
 
 - [Reviewing changes](reviewing-changes.md) — the loop the agent drives
+- [The harness](harness.md) — and `specgate studio`'s `/live` page to watch it work; Claude Code's stream becomes events through `specgate harness events --from claude` ([commands](commands.md#customising))
 - [The agent contract](specs/agent-contract.md) — the full reference
 - [The harness spec](specs/harness.md) — unattended delivery, one requirement per worktree

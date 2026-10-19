@@ -139,7 +139,8 @@ export function runConfinedAgent(o: {
     }
     const full = path.join(o.projectDir, rel);
     if (saved.has(rel)) {
-      const was = saved.get(rel);
+      // Present: `saved.has(rel)` was just checked. Null means "did not exist".
+      const was = saved.get(rel) as Buffer | null;
       const now = fs.existsSync(full) && fs.statSync(full).isFile() ? fs.readFileSync(full) : null;
       if (was === null && now === null) continue;
       if (was !== null && now !== null && was.equals(now)) continue;

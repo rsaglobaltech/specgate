@@ -1,9 +1,9 @@
 "use strict";
 
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
+import { test } from "node:test";
+import assert = require("node:assert/strict");
 
-const { parseArgs, buildPackGraph, renderMermaid, renderDot } = require("../../scripts/lint_pack");
+import { parseArgs, buildPackGraph, renderMermaid, renderDot } from "../../scripts/lint_pack";
 
 // A small, well-formed pack: one full REQ→UC→CMD/AGG/EVT spine.
 const goodPack = {
@@ -47,12 +47,13 @@ test("buildPackGraph builds a node per declared entity", () => {
 
 test("buildPackGraph wires the REQ→UC→CMD/AGG/EVT spine", () => {
   const graph = buildPackGraph(goodPack);
-  const edge = (from, kind) => graph.edges.find((e) => e.from === from && e.kind === kind);
+  const edge = (from: string, kind: string) =>
+    graph.edges.find((e) => e.from === from && e.kind === kind);
 
-  assert.equal(edge("REQ:REQ-001", "implements").to, "UC:UC-001");
-  assert.equal(edge("UC:UC-001", "dispatches").to, "CMD:CMD-001");
-  assert.equal(edge("UC:UC-001", "handled by").to, "AGG:AGG-001");
-  assert.equal(edge("UC:UC-001", "emits").to, "EVT:EVT-001");
+  assert.equal(edge("REQ:REQ-001", "implements")?.to, "UC:UC-001");
+  assert.equal(edge("UC:UC-001", "dispatches")?.to, "CMD:CMD-001");
+  assert.equal(edge("UC:UC-001", "handled by")?.to, "AGG:AGG-001");
+  assert.equal(edge("UC:UC-001", "emits")?.to, "EVT:EVT-001");
 });
 
 test("buildPackGraph records dangling references and adds a missing node", () => {

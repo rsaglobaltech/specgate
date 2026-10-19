@@ -87,6 +87,7 @@ test("one row per tagged scenario, the test found by mentioning the id", () => {
 test("an explicit specgate:trace key wins over what is derived", () => {
   const rows = deriveRows(sources());
   const req3 = rows.find((r) => r.requirement === "REQ-003");
+  assert.ok(req3);
   assert.equal(req3.status, "Implemented");
   assert.equal(req3.technicalArtifact, "`lib/orders.js`");
   assert.equal(req3.testArtifact, "test/cancel.test.js");
@@ -194,7 +195,9 @@ test("the code column comes from source files that mention the requirement", () 
     })
   );
   const r = rows.find((x) => x.requirement === "REQ-002");
+  assert.ok(r);
   assert.equal(r.technicalArtifact, "`lib/totals.js`");
   const r3 = rows.find((x) => x.requirement === "REQ-003");
+  assert.ok(r3);
   assert.equal(r3.technicalArtifact, "`lib/orders.js`", "an explicit artifact still wins");
 });

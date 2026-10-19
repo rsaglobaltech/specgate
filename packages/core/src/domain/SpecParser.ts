@@ -59,7 +59,7 @@ export const REQ_ID = /^REQ-\d+$/;
 export const SCN_ID = /^SCN-[A-Za-z0-9.-]+$/;
 
 /** Stable key for matching a requirement across a delta and a spec. */
-export function slug(text) {
+export function slug(text: unknown): string {
   return String(text || "")
     .toLowerCase()
     .normalize("NFD")
@@ -68,7 +68,7 @@ export function slug(text) {
     .replace(/^-+|-+$/g, "");
 }
 
-export function splitLabel(label) {
+export function splitLabel(label: string): { id: string | null; name: string } {
   // The id by pattern, the rest by index. One regex covering both meant a
   // quantifier for the id sitting next to one for the name, which is the
   // ambiguity `js/polynomial-redos` reports — and `REQ-014 — Title` is easier
@@ -88,7 +88,14 @@ export function splitLabel(label) {
  * The identity of a requirement. Prefer the explicit id; fall back to a slug of
  * the name so pure-markdown specs (no REQ ids) still round-trip.
  */
-export function requirementKey(req) {
+export function requirementKey(req: Pick<RequirementNode, "id" | "name">): string;
+export function requirementKey(req: null | undefined): null;
+export function requirementKey(
+  req: Pick<RequirementNode, "id" | "name"> | null | undefined
+): string | null;
+export function requirementKey(
+  req: Pick<RequirementNode, "id" | "name"> | null | undefined
+): string | null {
   if (!req) return null;
   return req.id ? req.id.toUpperCase() : `name:${slug(req.name)}`;
 }
@@ -96,7 +103,7 @@ export function requirementKey(req) {
 export function parseTraceComment(raw: string): TraceComment {
   // `uc=UC-007 cmd=CMD-011 feature=features/a.feature` → object.
   // Values may be quoted to allow spaces.
-  const trace = {};
+  const trace: TraceComment = {};
   // Strip the delimiters by index rather than by pattern. `-->` inside a regex
   // is what CodeQL reads as a hand-rolled HTML tag filter (`js/bad-tag-filter`),
   // and it is right that a regex is the wrong tool for finding the end of a
@@ -109,7 +116,7 @@ export function parseTraceComment(raw: string): TraceComment {
   // without the others, a run of spaces can be divided between two quantifiers
   // in every possible way.
   const re = /\b([a-z_]+)[ \t]*=[ \t]*("([^"]*)"|'([^']*)'|([^\s"']+))/gi;
-  let m;
+  let m: RegExpExecArray | null;
   while ((m = re.exec(body)) !== null) {
     const value = m[3] !== undefined ? m[3] : m[4] !== undefined ? m[4] : m[5];
     trace[m[1].toLowerCase()] = value;
@@ -151,8 +158,12 @@ export interface RequirementNode {
   trace: TraceComment;
   /** Set by `parseSpec` / `parseDelta`: the identity two documents match on. */
   key?: string | null;
-  /** Set by `parseDelta`: which section of the delta the block came from. */
-  op?: DeltaOperation;
+  /**
+   * Set by `parseDelta`: which section of the delta the block came from.
+   * `renamed` is recognised as a section but carries no operation `archive`
+   * applies.
+   */
+  op?: DeltaOperation | "renamed";
 }
 
 /** The three things a delta can say about a requirement. */
@@ -348,7 +359,7 @@ export function parseMarkdown(source: string): DocumentNode {
   return doc;
 }
 
-export function findSection(doc, name) {
+export function findSection(doc: Pick<DocumentNode, "sections">, name: string): SectionNode | null {
   const wanted = String(name).toLowerCase();
   return doc.sections.find((s) => s.heading && s.heading.toLowerCase() === wanted) || null;
 }
@@ -358,10 +369,18 @@ export function findSection(doc, name) {
  * are collected from every section so a hand-written spec that omits the
  * `## Requirements` heading still parses.
  */
-export function parseSpec(source) {
+/** A capability spec as `parseSpec` returns it. */
+export interface SpecNode {
+  title: string | null;
+  purpose: string[] | string;
+  requirements: RequirementNode[];
+  sections: SectionNode[];
+}
+
+export function parseSpec(source: string): SpecNode {
   const doc = parseMarkdown(source);
   const purposeSection = findSection(doc, "Purpose");
-  const requirements = [];
+  const requirements: RequirementNode[] = [];
   for (const s of doc.sections) {
     for (const r of s.requirements) requirements.push(r);
   }
@@ -373,7 +392,8 @@ export function parseSpec(source) {
   };
 }
 
-export const DELTA_SECTIONS = {
+/** Which delta bucket each recognised `##` heading fills, by lower-cased heading. */
+export const DELTA_SECTIONS: Record<string, DeltaOperation | "renamed"> = {
   "added requirements": "added",
   "modified requirements": "modified",
   "removed requirements": "removed",
@@ -426,18 +446,38 @@ export function parseDelta(source: string): DeltaNode {
 // `archive` rewrites a spec after applying a delta. Rendering goes through the
 // same shapes the parser produces, so parse → render → parse is a fixed point.
 
-function renderTrace(trace) {
+function renderTrace(trace: TraceComment | null | undefined): string | null {
   const keys = Object.keys(trace || {}).sort();
   if (keys.length === 0) return null;
   const parts = keys.map((k) => {
-    const v = String(trace[k]);
+    // Non-null: `keys` is empty, and we returned above, unless `trace` is set.
+    const v = String(trace![k]);
     return /\s/.test(v) ? `${k}="${v}"` : `${k}=${v}`;
   });
   return `<!-- specgate:trace ${parts.join(" ")} -->`;
 }
 
-export function renderRequirement(req) {
-  const out = [];
+/**
+ * A requirement as the renderer reads it. After `parseSpec` / `parseDelta`
+ * its text is one string, which is the only stage that is ever rendered.
+ */
+export interface RenderableRequirement {
+  heading?: string;
+  name?: string;
+  text?: string;
+  scenarios?: Array<{ heading?: string; name?: string; steps?: string[] }>;
+  trace?: TraceComment;
+}
+
+/** A spec as the renderer reads it. */
+export interface RenderableSpec {
+  title?: string | null;
+  purpose?: string;
+  requirements?: RenderableRequirement[];
+}
+
+export function renderRequirement(req: RenderableRequirement): string {
+  const out: string[] = [];
   out.push(`### Requirement: ${req.heading || req.name}`);
   out.push("");
   if (req.text && req.text.trim() !== "") {
@@ -460,8 +500,8 @@ export function renderRequirement(req) {
   return out.join("\n");
 }
 
-export function renderSpec(spec) {
-  const out = [];
+export function renderSpec(spec: RenderableSpec): string {
+  const out: string[] = [];
   out.push(`# ${spec.title || "Specification"}`);
   out.push("");
   if (spec.purpose && spec.purpose.trim() !== "") {

@@ -30,7 +30,9 @@ tool exist because of it.
 | **VS Code extension** | ⚠️ built, not on the Marketplace | ❌ | ❌ | n/a (own editor) | ❌ | ❌ |
 | **MCP server** | ✅ shipped | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Language server (LSP)** | ✅ shipped | ❌ | ❌ | n/a (own editor) | ❌ | ❌ |
-| **Change lifecycle (propose → review → archive)** | ✅ shipped | ✅ **their idea first** | ❌ | ❌ | ❌ | ❌ |
+| **Change lifecycle (propose → apply → archive)** | ✅ shipped | ✅ **their idea first** | ❌ | ❌ | ❌ | ❌ |
+| **Archive waits until a test proves each requirement** | ✅ `archive` refuses while one is pending | ❌ unchecked tasks ask, `--yes` skips | ❌ | ❌ | ❌ | ❌ |
+| **Commands to learn before the first PR** | ✅ 6: `init`, `propose`, `apply`, `status`, `archive`, `check` | ✅ 3 slash commands | ✅ | ✅ | ✅ | ✅ |
 | **Versioned, installable packs (`specops`)** | ✅ shipped | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Cross-platform CLI (Windows/Linux/macOS)** | ✅ Node | ✅ Node | ⚠️ Bash-heavy | ✅ | ✅ | ✅ |
 | **Locked-in to one AI vendor** | ❌ | ❌ | ❌ | ✅ Cursor | ❌ | ❌ |
@@ -72,8 +74,10 @@ tool exist because of it.
 
 ### OpenSpec wins when…
 
-- You want the **change lifecycle and nothing else**. OpenSpec is smaller, and
-  smaller is a feature: fewer concepts to teach, less to get wrong.
+- You want the **change lifecycle and nothing else**. Both tools now say
+  propose, apply, archive; OpenSpec's archive does not wait for tests, and it
+  is smaller — smaller is a feature: fewer concepts to teach, less to get
+  wrong.
 - Your specs are **prose, not a domain model**. If aggregates, commands and
   events would be ceremony for your team, our DDD-lite artefacts are cost
   without benefit.
@@ -82,9 +86,13 @@ tool exist because of it.
 - You are **starting today and want the shortest path** to a working loop.
 
 We took the delta format, the `ADDED`/`MODIFIED`/`REMOVED` grammar and the
-idea of an audited agent contract from their design. Where we differ is
-deliberate: they optimise for the change loop, we add versioned domain packs
-(`specops`) and a traceability matrix that CI enforces. If you do not need
+idea of an audited agent contract from their design. We also took
+their verbs: since [ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md) the
+daily loop is `specgate propose`, `apply`, `status` and `archive`. Where we
+differ is deliberate: `apply` refuses a requirement no test names and marks it
+Implemented only when the gate passes, `archive` refuses a change while one of
+its requirements is pending, and we add versioned domain packs (`specops`) and
+a traceability matrix that CI enforces. If you do not need
 those two things, their smaller surface is the better tool.
 
 > Their contract documents a set of known inconsistencies — snake_case in one
@@ -152,7 +160,7 @@ The delta format is deliberately the same, so the specs come across as-is.
 
 1. `specgate init` in the repo — it adopts it and never overwrites an existing file.
 2. Move `openspec/changes/<id>/` to `docs/specs/changes/<id>/` and add a
-   `change.yaml` (`specgate change new <id>` writes one to copy).
+   `change.yaml` (`specgate propose <id>` writes one to copy).
 3. Move `openspec/specs/<capability>/spec.md` to
    `docs/specs/capabilities/<capability>/spec.md`.
 4. `specgate change validate` — the `ADDED`/`MODIFIED`/`REMOVED` grammar is
@@ -161,6 +169,10 @@ The delta format is deliberately the same, so the specs come across as-is.
 5. Optionally add `<!-- specgate:trace uc=… cmd=… -->` comments where you want
    requirements to reach the traceability matrix. Without them a requirement
    still archives, with `-` in those columns.
+6. For each open change: a test that names each of its requirements,
+   `specgate apply` until each is Implemented, then `specgate archive <id>`.
+   An open change OpenSpec would archive with unticked tasks stays open here
+   until its tests pass.
 
 **Do not migrate** if what you valued was the smaller surface. Steps 4 and 5
 are the tax for the matrix and the CI gate; if you do not want those, you do

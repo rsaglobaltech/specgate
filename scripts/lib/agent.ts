@@ -35,7 +35,7 @@ export const EXIT = Object.freeze({
  * predates the contract (`plan --format json`) and keeps working: breaking it
  * would break every pipeline that already uses it.
  */
-export function wantsJson(argv) {
+export function wantsJson(argv: readonly string[] | null | undefined): boolean {
   const args = argv || [];
   if (args.includes("--json")) return true;
   const i = args.indexOf("--format");

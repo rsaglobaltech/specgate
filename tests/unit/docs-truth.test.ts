@@ -12,10 +12,10 @@
  * Statuses stay a human judgement. This only enforces that the paths are real.
  */
 
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
+import { test } from "node:test";
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import path = require("node:path");
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")

@@ -6,6 +6,7 @@ import { ArchiveChangeUseCase } from "../../packages/core/src/application/Archiv
 import { DiskProjectRepository } from "../../packages/core/src/infrastructure/DiskProjectRepository";
 import { listChangeIds, listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { refreshDerivedMatrix } from "../cli/commands/spec/MatrixCommand";
+import type { Diagnostic } from "./diagnostics";
 
 /**
  * The requirements of open changes, while they are in flight (ADR-0035).
@@ -45,7 +46,7 @@ export function inFlightRequirements(projectDir: string): InFlightRequirement[] 
 export function changeRequirements(projectDir: string, change: string): InFlightRequirement[] {
   const out: InFlightRequirement[] = [];
   for (const d of listDeltas(projectDir, change)) {
-    let parsed: any;
+    let parsed: ReturnType<typeof parseDelta>;
     try {
       parsed = parseDelta(fs.readFileSync(d.file, "utf8"));
     } catch {
@@ -81,12 +82,15 @@ const SKIP = new Set([
   ".stryker-tmp",
 ]);
 
+/** A diagnostic from laying one change over the copy, and which change. */
+export type InFlightProblem = Diagnostic & { change: string };
+
 export interface InFlightView {
   /** The copy: the project with every open change archived into it. */
   dir: string;
   requirements: InFlightRequirement[];
   /** Why a change could not be laid over the copy (an invalid delta), with its file. */
-  problems: any[];
+  problems: InFlightProblem[];
   /** A path inside the copy, as the project's own path. */
   toProject(text: string): string;
   cleanup(): void;
@@ -110,7 +114,7 @@ export function inFlightView(projectDir: string): InFlightView | null {
     filter: (src) => !SKIP.has(path.basename(src)),
   });
 
-  const problems: any[] = [];
+  const problems: InFlightProblem[] = [];
   const repo = new DiskProjectRepository(dir);
   for (const change of listChangeIds(dir)) {
     // Tasks and the draft checklist are the person's gate at archive; here only

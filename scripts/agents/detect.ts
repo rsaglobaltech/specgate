@@ -62,9 +62,9 @@ export function installDetectedAgents(
         ` (${written.length} file(s)${skipped.length ? `, ${skipped.length} already there, left alone` : ""}).`
     );
     log("  Ask your agent: /specgate:explore   # what is left, and what to do next");
-  } catch (err: any) {
+  } catch (err) {
     log(
-      `Agent: could not install the commands (${err && err.message}); run \`specgate agents init\`.`
+      `Agent: could not install the commands (${err && (err as Error).message}); run \`specgate agents init\`.`
     );
   }
 }

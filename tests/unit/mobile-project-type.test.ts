@@ -13,21 +13,16 @@
  * of types, and nothing but a test keeps them in step.
  */
 
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { cli } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
-const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8" });
-}
 
 function scaffoldMobile() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-mobile-"));
@@ -172,7 +167,7 @@ test("every place that lists project types agrees", () => {
     fs.readFileSync(path.join(ROOT_DIR, "schemas/pack.schema.json"), "utf8")
   );
 
-  const projectTypeField = WIZARD_FIELDS.find((f) => f.key === "PROJECT_TYPE");
+  const projectTypeField = WIZARD_FIELDS.find((f: { key: string }) => f.key === "PROJECT_TYPE");
   assert.ok(projectTypeField, "the wizard no longer asks for PROJECT_TYPE");
 
   const fromInit = [...PROJECT_TYPES];

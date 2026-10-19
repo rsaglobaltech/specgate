@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
 import { parseGherkin } from "../../../../packages/core/src/domain/Gherkin";
 import * as ui from "../../../lib/ui";
+import { errorMessage } from "../../../lib/diagnostics";
 
 function logError(msg: string) {
   process.stderr.write(ui.fail(msg));
@@ -77,6 +78,64 @@ export function parseFeatureFile(content: string) {
       steps: scenario.steps.map((step) => ({ keyword: step.keyword, text: step.text })),
     })),
   };
+}
+
+/** A feature file as inference reads it. */
+export type ParsedFeature = ReturnType<typeof parseFeatureFile>;
+
+/** A payload field; the type is always left for a person to fill in. */
+export interface InferredField {
+  name: string;
+  type: string;
+}
+
+/** A command, query or event: an id, a name, and for operations a payload. */
+export interface InferredEntry {
+  id: string;
+  name: string;
+  fields?: InferredField[];
+}
+
+/** A command or query proposed from a `When` step. */
+export interface InferredOperation extends InferredEntry {
+  fields: InferredField[];
+}
+
+export interface InferredRequirement {
+  id: string;
+  title: string;
+}
+
+export interface InferredUseCase {
+  id: string;
+  name: string;
+  requirement: string;
+  command: string;
+  aggregate: string;
+  emits: string[];
+  /** Merge bookkeeping: the file it came from. Never rendered. */
+  __file?: string;
+}
+
+export interface InferredScenario {
+  id: string;
+  title: string;
+  use_case: string;
+  command: string;
+  events: string[];
+  /** Merge bookkeeping: the file it came from. Never rendered. */
+  __file?: string;
+}
+
+/** The proposed pack fragment, before it is rendered. */
+export interface InferredModel {
+  requirements: InferredRequirement[];
+  use_cases: InferredUseCase[];
+  commands: InferredOperation[];
+  queries: InferredOperation[];
+  events: InferredEntry[];
+  scenarios: InferredScenario[];
+  __file?: string;
 }
 
 function pad(n: number) {
@@ -195,7 +254,7 @@ export function extractPayloadHints(text: string): string[] {
   return [...found];
 }
 
-export function collectRequirementIds(parsed: any) {
+export function collectRequirementIds(parsed: ParsedFeature): string[] {
   const ids = new Set<string>();
   const scan = (tags: string[]) => {
     for (const tag of tags || []) {
@@ -216,7 +275,7 @@ export function extractEventNames(text: string) {
   return out;
 }
 
-export function inferModel(parsed: any, sourceFile: string) {
+export function inferModel(parsed: ParsedFeature, sourceFile: string): InferredModel {
   const reqIds = collectRequirementIds(parsed);
   const requirements =
     reqIds.length > 0
@@ -229,7 +288,7 @@ export function inferModel(parsed: any, sourceFile: string) {
         ];
   const primaryReq = requirements[0].id;
 
-  const useCase: any = {
+  const useCase: InferredUseCase = {
     id: "UC-XXX",
     name: parsed.featureName || "TODO: name the use case",
     requirement: primaryReq,
@@ -238,10 +297,10 @@ export function inferModel(parsed: any, sourceFile: string) {
     emits: [],
   };
 
-  const commands: any[] = [];
-  const queries: any[] = [];
-  const events: any[] = [];
-  const scenarios: any[] = [];
+  const commands: InferredOperation[] = [];
+  const queries: InferredOperation[] = [];
+  const events: InferredEntry[] = [];
+  const scenarios: InferredScenario[] = [];
   let ci = 1;
   let qi = 1;
   let ei = 1;
@@ -250,7 +309,7 @@ export function inferModel(parsed: any, sourceFile: string) {
   for (const scn of parsed.scenarios) {
     const scnId = `SCN-${pad(si++)}`;
 
-    const whenStep = scn.steps.find((s: any) => s.keyword === "when");
+    const whenStep = scn.steps.find((s) => s.keyword === "when");
     let operationName: string | null = null;
     let isQuery = false;
 
@@ -267,7 +326,7 @@ export function inferModel(parsed: any, sourceFile: string) {
       if (existing) {
         // A second scenario usually mentions fields the first did not.
         for (const field of extractPayloadHints(whenStep.text)) {
-          if (!existing.fields.some((f: any) => f.name === field)) {
+          if (!existing.fields.some((f) => f.name === field)) {
             existing.fields.push({ name: field, type: "TODO: type" });
           }
         }
@@ -284,7 +343,7 @@ export function inferModel(parsed: any, sourceFile: string) {
     }
 
     const eventNames: string[] = [];
-    for (const step of scn.steps.filter((s: any) => s.keyword === "then")) {
+    for (const step of scn.steps.filter((s) => s.keyword === "then")) {
       for (const name of extractEventNames(step.text)) {
         if (!events.some((e) => e.name === name)) {
           events.push({ id: `EVT-${pad(ei++)}`, name });
@@ -331,10 +390,10 @@ export function inferModel(parsed: any, sourceFile: string) {
  * Requirement ids are unioned; the placeholder `REQ-XXX` only survives when no
  * file named a real one, so one tagged file rescues the whole set.
  */
-export function mergeModels(models: any[], sourceFiles: string[]) {
+export function mergeModels(models: InferredModel[], sourceFiles: string[]): InferredModel {
   if (models.length === 1) return models[0];
 
-  const merged: any = {
+  const merged: InferredModel = {
     requirements: [],
     use_cases: [],
     commands: [],
@@ -343,23 +402,26 @@ export function mergeModels(models: any[], sourceFiles: string[]) {
     scenarios: [],
   };
 
-  const byName = (list: any[], entry: any) => list.find((e) => e.name === entry.name);
+  const byName = (list: InferredEntry[], entry: InferredEntry) =>
+    list.find((e) => e.name === entry.name);
   let si = 1;
 
   for (const model of models) {
     for (const req of model.requirements) {
       if (req.id === "REQ-XXX") continue;
-      if (!merged.requirements.some((r: any) => r.id === req.id)) merged.requirements.push(req);
+      if (!merged.requirements.some((r) => r.id === req.id)) merged.requirements.push(req);
     }
-    for (const key of ["commands", "queries", "events"]) {
-      for (const entry of model[key] || []) {
-        const existing = byName(merged[key], entry);
+    for (const key of ["commands", "queries", "events"] as const) {
+      const target: InferredEntry[] = merged[key];
+      const incoming: InferredEntry[] = model[key] || [];
+      for (const entry of incoming) {
+        const existing = byName(target, entry);
         if (!existing) {
-          merged[key].push({ ...entry });
+          target.push({ ...entry });
           continue;
         }
         for (const field of entry.fields || []) {
-          if (!(existing.fields || []).some((f: any) => f.name === field.name)) {
+          if (!(existing.fields || []).some((f) => f.name === field.name)) {
             existing.fields = [...(existing.fields || []), field];
           }
         }
@@ -372,7 +434,7 @@ export function mergeModels(models: any[], sourceFiles: string[]) {
       merged.scenarios.push({ ...scn, id: `SCN-${pad(si++)}`, __file: model.__file });
     }
     for (const uc of model.use_cases) {
-      if (!merged.use_cases.some((u: any) => u.name === uc.name)) {
+      if (!merged.use_cases.some((u) => u.name === uc.name)) {
         merged.use_cases.push({ ...uc, __file: model.__file });
       }
     }
@@ -380,7 +442,7 @@ export function mergeModels(models: any[], sourceFiles: string[]) {
 
   // Ids are renumbered so the fragment reads as one document rather than as
   // three concatenated ones with three CMD-001s.
-  const renumber = (list: any[], prefix: string) =>
+  const renumber = (list: InferredEntry[], prefix: string) =>
     list.forEach((entry, i) => {
       entry.id = `${prefix}-${pad(i + 1)}`;
     });
@@ -399,7 +461,7 @@ export function mergeModels(models: any[], sourceFiles: string[]) {
   // all with the first file's would be an inference nobody made, and it would
   // read as a fact rather than as the placeholder it is.
   for (const uc of merged.use_cases) {
-    if (!merged.requirements.some((r: any) => r.id === uc.requirement)) {
+    if (!merged.requirements.some((r) => r.id === uc.requirement)) {
       uc.requirement = merged.requirements[0].id;
     }
   }
@@ -408,7 +470,7 @@ export function mergeModels(models: any[], sourceFiles: string[]) {
   // Several files cannot, because two `UC-XXX` entries in one fragment is not
   // a placeholder, it is invalid YAML semantics a reader has to repair.
   if (merged.use_cases.length > 1) {
-    merged.use_cases.forEach((uc: any, i: number) => {
+    merged.use_cases.forEach((uc, i) => {
       const from = uc.id;
       uc.id = `UC-${pad(i + 1)}`;
       for (const scn of merged.scenarios) {
@@ -422,7 +484,7 @@ export function mergeModels(models: any[], sourceFiles: string[]) {
   return merged;
 }
 
-function yamlScalar(value: any) {
+function yamlScalar(value: unknown): string {
   const s = String(value);
   if (s === "") return '""';
   if (/^[A-Za-z0-9_][A-Za-z0-9_ .\-/]*$/.test(s) && !/:\s/.test(s) && !s.includes(": ")) {
@@ -432,7 +494,7 @@ function yamlScalar(value: any) {
   return `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
-export function renderYamlFragment(model: any, sourceFile: string) {
+export function renderYamlFragment(model: InferredModel, sourceFile: string): string {
   const out = [
     `# Proposed pack.yaml fragment inferred from ${sourceFile}`,
     `# Heuristic skeleton — review and resolve every TODO before merging.`,
@@ -462,7 +524,7 @@ export function renderYamlFragment(model: any, sourceFile: string) {
   // Commands and queries render the same way; the pack model separates them and
   // so does this, because a query proposed as a command is a correction every
   // reader had to make by hand.
-  const renderOperations = (label: string, list: any[]) => {
+  const renderOperations = (label: string, list: InferredEntry[]) => {
     // `label: []` on one line. The project's YAML reader rejects a bare `[]`
     // on the line below the key, and an empty `commands:` could always produce
     // one — it just never had an empty list to render until queries arrived.
@@ -535,8 +597,8 @@ export class InferPackCommand extends BaseCommand {
       let stat;
       try {
         stat = fs.statSync(source);
-      } catch (err: any) {
-        logError(`Cannot read '${source}': ${err.message}`);
+      } catch (err) {
+        logError(`Cannot read '${source}': ${errorMessage(err)}`);
         process.exit(1);
       }
       if (stat.isDirectory()) {
@@ -555,13 +617,13 @@ export class InferPackCommand extends BaseCommand {
       }
     }
 
-    const models: any[] = [];
+    const models: InferredModel[] = [];
     for (const file of files) {
       let content: string;
       try {
         content = fs.readFileSync(file, "utf8");
-      } catch (err: any) {
-        logError(`Cannot read feature file '${file}': ${err.message}`);
+      } catch (err) {
+        logError(`Cannot read feature file '${file}': ${errorMessage(err)}`);
         process.exit(1);
       }
       const parsed = parseFeatureFile(content);

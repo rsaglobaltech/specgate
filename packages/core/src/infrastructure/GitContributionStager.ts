@@ -13,7 +13,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 
-function git(args, cwd) {
+function git(args: string[], cwd: string | undefined): string {
   const result = spawnSync("git", args, { cwd, encoding: "utf8" });
   if (result.error) throw new Error(`git ${args[0]} failed to run: ${result.error.message}`);
   if (result.status !== 0) {
@@ -26,7 +26,20 @@ function git(args, cwd) {
  * Clone the pack, branch, write the contribution, commit. Nothing leaves the
  * machine — the caller is handed a branch and the command that would publish it.
  */
-export function stageContribution(repo, version, branch, files, outDir) {
+/** One file of a contribution; the first one's `message` becomes the commit message. */
+export interface ContributionFile {
+  file: string;
+  contents: string;
+  message?: string;
+}
+
+export function stageContribution(
+  repo: string,
+  version: string,
+  branch: string,
+  files: ContributionFile[],
+  outDir?: string | null
+): { dir: string; branch: string; files: string[] } {
   const dir = outDir || fs.mkdtempSync(path.join(os.tmpdir(), "specgate-contribute-"));
   fs.mkdirSync(dir, { recursive: true });
 
@@ -42,7 +55,7 @@ export function stageContribution(repo, version, branch, files, outDir) {
   }
   git(["checkout", "--quiet", "-b", branch], dir);
 
-  const written = [];
+  const written: string[] = [];
   for (const f of files) {
     const full = path.join(dir, f.file);
     fs.mkdirSync(path.dirname(full), { recursive: true });

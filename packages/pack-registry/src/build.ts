@@ -5,7 +5,7 @@
  * Pack-registry static site generator.
  *
  * Usage:
- *   node packages/pack-registry/src/build.js [--packs <dir>] [--out <dir>]
+ *   node dist/packages/pack-registry/src/build.js [--packs <dir>] [--out <dir>]
  *
  * Defaults:
  *   --packs ./packs
@@ -53,11 +53,10 @@ export class PackRegistryBuilder {
 
     fs.mkdirSync(opts.out, { recursive: true });
 
-    // We assume renderIndex is also exported or we will refactor it
     // The install command on every card pins the release this site documents.
-    const version = JSON.parse(
+    const { version } = JSON.parse(
       fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")
-    ).version;
+    ) as { version: string };
     const html = renderIndex(packs, { title: "Specgate domain packs", version });
     const outFile = path.join(opts.out, "index.html");
     fs.writeFileSync(outFile, html, "utf8");
@@ -96,13 +95,10 @@ export class PackRegistryBuilder {
   }
 }
 
-export function main() {
+export function main(): void {
   const builder = new PackRegistryBuilder();
   const opts = builder.parseArgs(process.argv.slice(2));
   builder.build(opts);
 }
 
 if (require.main === module) main();
-
-// Legacy export if needed for tests
-export const parseArgs = (argv: string[]) => new PackRegistryBuilder().parseArgs(argv);

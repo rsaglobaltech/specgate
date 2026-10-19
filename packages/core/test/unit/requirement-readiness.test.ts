@@ -41,7 +41,7 @@ test("no feature file blocks — there is no acceptance criterion to satisfy", (
   assert.equal(r.ready, false);
   assert.ok(codes(r).includes(READINESS_CODES.NO_FEATURE));
   assert.match(r.blockers[0].message, /features\/core\/health\.feature/);
-  assert.match(r.blockers[0].fix, /specgate req link REQ-001 --feature/);
+  assert.match(r.blockers[0].fix ?? "", /specgate req link REQ-001 --feature/);
 });
 
 test("a scenario the gate cannot fail blocks, because a green run would prove nothing", () => {
@@ -116,7 +116,7 @@ test("a TBD test artifact is reported, and that is not the noise A2 had to avoid
   // design.
   const r = requirementReadiness({ ...READY, testDeclared: false });
   assert.deepEqual(codes(r), [READINESS_CODES.NO_TEST_ARTIFACT]);
-  assert.match(r.blockers[0].fix, /--test/);
+  assert.match(r.blockers[0].fix ?? "", /--test/);
   assert.equal(r.ready, true);
 });
 

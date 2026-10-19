@@ -2,10 +2,11 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { resolveProjectDir, findCliRoot } from "../../../lib/project-root";
-import { diagnostic } from "../../../lib/diagnostics";
+import { diagnostic, errorMessage } from "../../../lib/diagnostics";
+import type { Diagnostic } from "../../../lib/diagnostics";
 import { findUnresolvedPlaceholders } from "../../../lib/placeholders";
 import { analyseGherkinSource } from "../../../../packages/core/src/domain/GherkinQuality";
-import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import { MERGE_DRIVER_NAME } from "../../../harness/init";
 import { hasGherkinRunner } from "../../../../packages/core/src/domain/TestCommand";
@@ -580,13 +581,13 @@ export class DoctorCommand extends BaseCommand {
       this.ok("specops", "no lockfile (packs not used — that is fine at L1/L2)");
       return;
     }
-    let lock: any;
+    let lock: { packs?: unknown };
     try {
       lock = JSON.parse(lockRaw);
-    } catch (err: any) {
+    } catch (err) {
       this.recordError(
         "specops",
-        `.specops.lock is not valid JSON: ${err.message}`,
+        `.specops.lock is not valid JSON: ${errorMessage(err)}`,
         "Restore it from git history, or delete it and re-run `specops add` for each pack."
       );
       return;
@@ -620,7 +621,7 @@ export class DoctorCommand extends BaseCommand {
       }
     }
 
-    const io = agentIo(wantsJson(argv));
+    const io: AgentIo = agentIo(wantsJson(argv));
     this.checkEnvironment();
 
     let dir = ".";
@@ -657,7 +658,11 @@ export class DoctorCommand extends BaseCommand {
     const warns = this.findings.filter((f) => f.level === "warn").length;
 
     if (io.json) {
-      const SEVERITY_OF = { ok: "info", warn: "warning", error: "error" };
+      const SEVERITY_OF: Record<Finding["level"], Diagnostic["severity"]> = {
+        ok: "info",
+        warn: "warning",
+        error: "error",
+      };
       io.emit({
         doctor: {
           projectDir: dir,
@@ -667,7 +672,7 @@ export class DoctorCommand extends BaseCommand {
         },
         status: this.findings.map((f) =>
           diagnostic(
-            SEVERITY_OF[f.level] as any,
+            SEVERITY_OF[f.level],
             `doctor_${String(f.check)
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, "_")

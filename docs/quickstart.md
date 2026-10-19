@@ -46,23 +46,38 @@ test that mentions `REQ-007` is linked — nothing to run, nothing to edit.
 matrix by hand, or a link derivation cannot see, uses
 `specgate req link REQ-007 --test … --code …`.)
 
-Adding a brand-new requirement? One command writes it in all three places:
+Adding brand-new behaviour? Open a change:
 
 ```bash
-specgate new "Totals are rounded half-up"
+specgate propose rounding-rules
 ```
 
-It assigns the next `REQ-NNN`, drafts its section in `spec.md`, writes a tagged
-scenario of `<placeholders>` under `features/`, and links the row. Rewrite the
-placeholders before you close it: while the requirement is `Draft` the gate
-leaves them alone, and `specgate done` refuses any that are left.
+It writes `docs/specs/changes/rounding-rules/` — a proposal, tasks, and a delta
+with the next `REQ` ids reserved for it. Write the requirement and its scenario
+in the delta, with real values in place of the `<placeholders>`; the gate
+refuses any that are left when you deliver it. While the change is open its
+requirements already count: `status` lists them and `apply` delivers them.
+(For a single requirement straight into `spec.md`, `specgate new "<title>"`
+still works.)
 
-## 4. Close the loop
+## 4. Deliver it
 
 ```bash
-specgate done REQ-007 --test-cmd "npm test"   # the gate, the suite,
-                                             # then flips the status
+specgate apply REQ-007 --test-cmd "npm test"   # refused while no test names it;
+                                              # the gate, the suite, then Implemented
 ```
+
+Without an id, `specgate apply` takes the next requirement `status` names.
+Nothing is written while the gate fails. `done` is the old name of `apply`.
+
+When every requirement of your change is `Implemented`, close it:
+
+```bash
+specgate archive rounding-rules
+```
+
+It merges the delta into the specs and writes the feature files — and refuses
+while a requirement is still pending, naming the `specgate apply` to run.
 
 ## 5. Check before you push
 
@@ -81,7 +96,7 @@ requirement claims — needs its scenario tagged `@REQ-NNN @SCN-NNN`;
 ## Daily loop, in one line
 
 ```
-specgate status  →  specgate new  →  test that names the REQ  →  specgate done  →  specgate check
+specgate propose  →  test that names the REQ  →  specgate apply  →  specgate status  →  specgate archive  →  specgate check
 ```
 
 That's the whole day-to-day. Reach for the [how-to guide](how-to.md) for

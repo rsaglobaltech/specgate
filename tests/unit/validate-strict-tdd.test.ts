@@ -15,7 +15,13 @@ function mktemp() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "strict-tdd-"));
 }
 
-function buildProject(root, overrides: any = {}) {
+/** What a test may replace in the generated project. */
+interface ProjectOverrides {
+  traceabilityContent?: string;
+  specContent?: string;
+}
+
+function buildProject(root: string, overrides: ProjectOverrides = {}) {
   fs.mkdirSync(path.join(root, "features"), { recursive: true });
   fs.mkdirSync(path.join(root, "docs/specs/adr"), { recursive: true });
 
@@ -43,7 +49,7 @@ function buildProject(root, overrides: any = {}) {
   );
 }
 
-function runValidate(projectDir, extraArgs = []) {
+function runValidate(projectDir: string, extraArgs: string[] = []) {
   return spawnSync(process.execPath, [VALIDATE_SCRIPT, projectDir, ...extraArgs], {
     encoding: "utf8",
   });

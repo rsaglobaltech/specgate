@@ -12,6 +12,8 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { TestContext } from "node:test";
+import type { CliResult } from "../helpers/cli";
 const { petView, nextStreak, recordCheck, readPetState } = require("../../scripts/pet/pet");
 
 const ROOT_DIR = path.resolve(
@@ -25,7 +27,7 @@ const GREEN = {
   streak: { days: 3, lastGreenDay: "2026-10-12" },
 };
 const RED = { lastCheck: { ok: false, at: "2026-10-12T09:00:00" } };
-const view = (over) =>
+const view = (over: Record<string, unknown>) =>
   petView({
     total: 4,
     done: 1,
@@ -93,12 +95,12 @@ test("check records what the cat needs, and the file stays out of git", () => {
   }
 });
 
-function project(t) {
+function project(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pet-proj-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   spawnSync("git", ["init", "-q"], { cwd: dir });
   fs.writeFileSync(path.join(dir, "package.json"), '{"name":"x","scripts":{"test":"node --test"}}');
-  const cli = (args, env = {}) =>
+  const cli = (args: string[], env: Record<string, string> = {}): CliResult =>
     spawnSync(process.execPath, [CLI, ...args], {
       cwd: dir,
       encoding: "utf8",
@@ -108,7 +110,7 @@ function project(t) {
   return { dir, cli };
 }
 
-test("status shows the cat on a terminal only, and config set pet off hides it", (t) => {
+test("status shows the cat on a terminal only, and config set pet off hides it", (t: TestContext) => {
   const { cli } = project(t);
   assert.doesNotMatch(cli(["status"]).stdout, /Gato/, "not in a pipe or a log");
   assert.match(cli(["status"], { SPECGATE_PET: "1" }).stdout, /Gato is curious/);
@@ -116,7 +118,7 @@ test("status shows the cat on a terminal only, and config set pet off hides it",
   assert.doesNotMatch(cli(["status"], { SPECGATE_PET: "1" }).stdout, /Gato/);
 });
 
-test("specgate pet draws the whole cat, and --json carries the same view", (t) => {
+test("specgate pet draws the whole cat, and --json carries the same view", (t: TestContext) => {
   const { cli } = project(t);
   const r = cli(["pet"]);
   assert.equal(r.status, 0, r.stdout + r.stderr);

@@ -52,7 +52,9 @@ test("a declared path the diff never touched is reported, with a fix that names 
   assert.equal(found[0].code, ARTIFACT_CODES.UNTOUCHED);
   assert.equal(found[0].severity, "warning", "a warning by default — see the module note");
   assert.match(found[0].message, /src\/Health\.java/);
-  assert.match(found[0].fix, /specgate req link REQ-007 --code/);
+  const { fix } = found[0];
+  assert.ok(fix);
+  assert.match(fix, /specgate req link REQ-007 --code/);
 });
 
 test("the test artifact gets its own flag in the fix", () => {
@@ -61,7 +63,9 @@ test("the test artifact gets its own flag in the fix", () => {
     touched: [],
     testArtifact: "`src/test/HealthTest.java`",
   });
-  assert.match(found[0].fix, /--test/);
+  const { fix } = found[0];
+  assert.ok(fix);
+  assert.match(fix, /--test/);
 });
 
 test("--strict-artifacts promotes it to an error, and nothing else changes", () => {

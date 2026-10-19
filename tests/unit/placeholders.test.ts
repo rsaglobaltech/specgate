@@ -24,7 +24,7 @@ const {
   isExempt,
 } = require("../../scripts/lib/placeholders");
 
-function withTree(files) {
+function withTree(files: Record<string, string>): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "placeholders-"));
   for (const [rel, content] of Object.entries(files)) {
     const full = path.join(dir, rel);
@@ -103,7 +103,7 @@ test("generated report output is not scanned", () => {
 // the placeholder syntax — and `validate` reported every one as unresolved.
 // The project's own ignore file already states what is not source.
 
-function repoWithIgnored(ignoreLine, files) {
+function repoWithIgnored(ignoreLine: string, files: Record<string, string>): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ignored-"));
   spawnSync("git", ["-C", dir, "init", "--quiet"], { encoding: "utf8" });
   fs.writeFileSync(path.join(dir, ".gitignore"), `${ignoreLine}\n`, "utf8");

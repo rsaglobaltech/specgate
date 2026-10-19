@@ -15,20 +15,11 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
+import { ROOT_DIR, cliFromRoot as cli } from "../helpers/cli";
 
 const { updateFile, generatedFiles, BASELINE_DIR } = require("../../scripts/update");
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", cwd: ROOT_DIR });
-}
-
-function withProject(fn) {
+function withProject(fn: (dir: string) => void) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "update-"));
   const r = cli(
     "init",
@@ -55,7 +46,7 @@ function withProject(fn) {
 const REL = path.join(".claude", "commands", "specgate", "propose.md");
 
 /** Put a file, its baseline, and the incoming version into a known state. */
-function stage(dir, { local, base }: { local: string; base?: string }) {
+function stage(dir: string, { local, base }: { local: string; base?: string }) {
   fs.writeFileSync(path.join(dir, REL), local, "utf8");
   if (base !== undefined) {
     const b = path.join(dir, BASELINE_DIR, REL);
@@ -67,7 +58,7 @@ function stage(dir, { local, base }: { local: string; base?: string }) {
 test("a file with no baseline is adopted, not clobbered", () => {
   // Every project that predates `update` is in this state. Merging against an
   // empty base would report every line as a conflict.
-  withProject((dir) => {
+  withProject((dir: string) => {
     stage(dir, { local: "hand written\n" });
     const result = updateFile(dir, { path: REL, contents: "generated\n" }, { dryRun: false });
 
@@ -79,7 +70,7 @@ test("a file with no baseline is adopted, not clobbered", () => {
 });
 
 test("an upstream change lands when the file was not edited locally", () => {
-  withProject((dir) => {
+  withProject((dir: string) => {
     stage(dir, { local: "line one\nline two\n", base: "line one\nline two\n" });
     const result = updateFile(
       dir,
@@ -93,7 +84,7 @@ test("an upstream change lands when the file was not edited locally", () => {
 
 test("a local edit survives an upstream change to a different part", () => {
   // The whole point of the command.
-  withProject((dir) => {
+  withProject((dir: string) => {
     stage(dir, {
       base: "header\nmiddle\nfooter\n",
       local: "header\nMY TEAM RULE\nmiddle\nfooter\n",
@@ -112,7 +103,7 @@ test("a local edit survives an upstream change to a different part", () => {
 });
 
 test("a genuine conflict is marked and reported, never resolved silently", () => {
-  withProject((dir) => {
+  withProject((dir: string) => {
     stage(dir, { base: "the original line\n", local: "our version of the line\n" });
     const result = updateFile(
       dir,
@@ -130,7 +121,7 @@ test("a genuine conflict is marked and reported, never resolved silently", () =>
 });
 
 test("an unchanged file is left alone", () => {
-  withProject((dir) => {
+  withProject((dir: string) => {
     stage(dir, { local: "same\n", base: "same\n" });
     const result = updateFile(dir, { path: REL, contents: "same\n" }, { dryRun: false });
     assert.equal(result.outcome, "unchanged");
@@ -138,7 +129,7 @@ test("an unchanged file is left alone", () => {
 });
 
 test("upstream not moving means the local file is intentional", () => {
-  withProject((dir) => {
+  withProject((dir: string) => {
     stage(dir, { base: "generated\n", local: "generated, then edited\n" });
     const result = updateFile(dir, { path: REL, contents: "generated\n" }, { dryRun: false });
     assert.equal(result.outcome, "unchanged");
@@ -147,7 +138,7 @@ test("upstream not moving means the local file is intentional", () => {
 });
 
 test("--dry-run writes neither the file nor the baseline", () => {
-  withProject((dir) => {
+  withProject((dir: string) => {
     stage(dir, { base: "a\n", local: "a\n" });
     const before = fs.readFileSync(path.join(dir, REL), "utf8");
     updateFile(dir, { path: REL, contents: "a\nb\n" }, { dryRun: true });
@@ -158,13 +149,13 @@ test("--dry-run writes neither the file nor the baseline", () => {
 
 test("update never introduces a tool the project did not opt into", () => {
   // The project asked for claude only. Cursor's rule file must not appear.
-  withProject((dir) => {
-    const paths = generatedFiles(dir).map((f) => f.path);
+  withProject((dir: string) => {
+    const paths = generatedFiles(dir).map((f: { path: string }) => f.path);
     assert.ok(
-      paths.some((p) => p.includes("commands")),
+      paths.some((p: string) => p.includes("commands")),
       "claude's files are tracked"
     );
-    assert.ok(!paths.some((p) => p.includes(".cursor")), "cursor was never opted into");
+    assert.ok(!paths.some((p: string) => p.includes(".cursor")), "cursor was never opted into");
 
     cli("update", "--project-dir", dir);
     assert.ok(!fs.existsSync(path.join(dir, ".cursor")), "update must not create it either");
@@ -172,7 +163,7 @@ test("update never introduces a tool the project did not opt into", () => {
 });
 
 test("a conflict is surfaced as a diagnostic with a fix", () => {
-  withProject((dir) => {
+  withProject((dir: string) => {
     stage(dir, { base: "original\n", local: "ours\n" });
     // Force the incoming side to differ by regenerating from a modified baseline.
     fs.writeFileSync(path.join(dir, BASELINE_DIR, REL), "original\n", "utf8");
@@ -180,7 +171,7 @@ test("a conflict is surfaced as a diagnostic with a fix", () => {
     const r = cli("update", "--project-dir", dir, "--json");
     assert.equal(r.status, 0, r.stderr);
     const doc = JSON.parse(r.stdout);
-    const conflicts = doc.status.filter((d) => d.code === "update_conflict");
+    const conflicts = doc.status.filter((d: { code: string }) => d.code === "update_conflict");
     for (const d of conflicts) {
       assert.ok(d.fix, "a conflict the user has to resolve must say how");
       assert.match(d.fix, /<<<<<<</);
@@ -191,10 +182,10 @@ test("a conflict is surfaced as a diagnostic with a fix", () => {
 test("the project's own README is never taken for the Claude plugin's", () => {
   // Same path, different file: `update` adopted it as the plugin README, and
   // the next run would have merged the plugin's README into it.
-  withProject((dir) => {
+  withProject((dir: string) => {
     const readme = path.join(dir, "README.md");
     const before = fs.readFileSync(readme, "utf8");
-    assert.ok(!generatedFiles(dir).some((f) => f.path === "README.md"));
+    assert.ok(!generatedFiles(dir).some((f: { path: string }) => f.path === "README.md"));
     cli("update", "--project-dir", dir);
     assert.equal(fs.readFileSync(readme, "utf8"), before);
     assert.ok(!fs.existsSync(path.join(dir, BASELINE_DIR, "README.md")));

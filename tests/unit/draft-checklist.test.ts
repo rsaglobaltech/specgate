@@ -2,15 +2,22 @@
 
 /** The draft checklist D1–D8 (ADR-0029, docs/specs/draft-from-brief.md §4). */
 
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const {
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import {
   checkDraft,
   requirementTitles,
   statedValues,
   actorSurfaces,
   rowNamesId,
-} = require("../../packages/core/src/domain/DraftChecklist");
+  unmeasured,
+  specNotes,
+  apiCalls,
+  openQuestions,
+  deferredAnswer,
+} from "../../packages/core/src/domain/DraftChecklist";
+import type { DraftFiles, DraftReport } from "../../packages/core/src/domain/DraftChecklist";
+import type { SpawnSyncReturns } from "node:child_process";
 
 const BRIEF = `---
 product: Golden State field app
@@ -23,7 +30,10 @@ Workers clock in at rebar jobsites inside a geofence of 100 m. A punch is
 confirmed within 2 seconds. Meal periods follow California Labor Code §512.
 `;
 
-const req = (id, trace, body, scenarios) =>
+/** A scenario as written in a fixture: its id and its steps. */
+type ScenarioFixture = [sid: string, steps: string[]];
+
+const req = (id: string, trace: string, body: string, scenarios: ScenarioFixture[]) =>
   `### Requirement: ${id} — ${id} title\n\n<!-- specgate:trace ${trace} -->\n\n${body}\n\n` +
   scenarios
     .map(
@@ -32,11 +42,11 @@ const req = (id, trace, body, scenarios) =>
     )
     .join("\n");
 
-const delta = (...reqs) => [
+const delta = (...reqs: string[]): DraftFiles["deltas"] => [
   { path: "specs/attendance/spec.md", source: `## ADDED Requirements\n\n${reqs.join("\n")}` },
 ];
 
-const codes = (r) => r.status.map((d) => d.code);
+const codes = (r: DraftReport) => r.status.map((d) => d.code);
 
 const GOOD = req(
   "REQ-101",
@@ -117,7 +127,9 @@ test("D4: a non-functional requirement with no measure", () => {
 });
 
 test("D5: a business rule citing the law needs its source", () => {
-  const scn = [["SCN-106", ["GIVEN a worker", "WHEN they work", "THEN a meal period is offered"]]];
+  const scn: ScenarioFixture[] = [
+    ["SCN-106", ["GIVEN a worker", "WHEN they work", "THEN a meal period is offered"]],
+  ];
   const bare = req(
     "REQ-106",
     "kind=business-rule",
@@ -229,7 +241,7 @@ test("draft --check runs the checklist on a change, with the brief from change.y
     __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
   );
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-draft-"));
-  const cli = (...a) =>
+  const cli = (...a: string[]): SpawnSyncReturns<string> =>
     spawnSync(process.execPath, [path.join(ROOT_DIR, "bin", "specgate.js"), ...a], {
       cwd: dir,
       encoding: "utf8",
@@ -244,7 +256,9 @@ test("draft --check runs the checklist on a change, with the brief from change.y
 
     const red = cli("draft", "--check", "draft-attendance", "--json");
     assert.equal(red.status, 1, red.stdout + red.stderr);
-    assert.ok(JSON.parse(red.stdout).status.some((d) => d.code === "D6_unlisted_value"));
+    assert.ok(
+      (JSON.parse(red.stdout) as DraftReport).status.some((d) => d.code === "D6_unlisted_value")
+    );
 
     fs.writeFileSync(path.join(change, "assumptions.md"), ASSUMED);
     const green = cli("draft", "--check", "draft-attendance");
@@ -262,7 +276,6 @@ test("draft --check runs the checklist on a change, with the brief from change.y
 });
 
 test("D4 flags a promised quantity with no number, not a qualitative constraint", () => {
-  const { unmeasured, specNotes } = require("../../packages/core/src/domain/DraftChecklist");
   assert.equal(unmeasured("Punches SHALL be fast."), true);
   assert.equal(unmeasured("A punch SHALL be confirmed within 2 seconds."), false);
   // The four Golden State NFRs it wrongly flagged at first: verifiable, no quantity.
@@ -350,7 +363,7 @@ test("#45: an answered question no longer holds its requirement", () => {
 });
 
 test("#49 / D9: a scenario the harness gate would refuse fails the draft, in either language", () => {
-  const titled = (title, steps) =>
+  const titled = (title: string, steps: string[]) =>
     `## ADDED Requirements\n\n### Requirement: REQ-113 — Sin puestos no hay reserva\n\n<!-- specgate:trace kind=business-rule -->\n\nEl sistema SHALL cerrar la franja.\n\n#### Scenario: SCN-115 — ${title}\n\n${steps.map((s) => `- ${s}`).join("\n")}\n`;
   const es = [
     "DADO un calendario sin puestos",
@@ -358,7 +371,7 @@ test("#49 / D9: a scenario the harness gate would refuse fails the draft, in eit
     "ENTONCES no hay franjas",
     "Y no se puede reservar",
   ];
-  const run = (src) =>
+  const run = (src: string) =>
     checkDraft({ deltas: [{ path: "specs/c/spec.md", source: src }] }).status.filter(
       (d) => d.code === "D9_scenario_quality"
     );
@@ -392,7 +405,7 @@ test("#48: titles come from spec sections, in spec.md and capability specs", () 
 });
 
 test("#51: a requirement that lives on one surface says so, and D3 asks for that one", () => {
-  const menu = (trace) =>
+  const menu = (trace: string) =>
     req("REQ-200", trace, "El sistema SHALL mostrar el menú.", [
       [
         "SCN-202",
@@ -404,7 +417,7 @@ test("#51: a requirement that lives on one surface says so, and D3 asks for that
       ],
     ]);
   const brief = "---\nactors:\n  - { name: Propietario, surfaces: [api, web] }\n---\n";
-  const d3 = (trace) =>
+  const d3 = (trace: string) =>
     checkDraft({ deltas: delta(menu(trace)), brief }).status.filter(
       (d) => d.code === "D3_surface_missing"
     );
@@ -423,7 +436,7 @@ test("#52: a value already in the project's specification is not unlisted", () =
       ],
     ],
   ]);
-  const d6 = (specText) =>
+  const d6 = (specText: string | undefined) =>
     checkDraft({ deltas: delta(second), brief: BRIEF, specText }).status.filter(
       (d) => d.code === "D6_unlisted_value"
     );
@@ -441,7 +454,7 @@ test("#55 / D10: an id the project already uses is caught before archiving; MODI
   const added = req("REQ-212", "kind=business-rule", "Text.", [
     ["SCN-212", ["GIVEN a booking", "WHEN the task runs", "THEN a mail goes out"]],
   ]);
-  const d10 = (deltas) =>
+  const d10 = (deltas: DraftFiles["deltas"]) =>
     checkDraft({ deltas, idsInUse: used }).status.filter((d) => d.code === "D10_id_in_use");
   assert.match(d10(delta(added))[0].message, /SCN-212 is already a scenario of REQ-209/);
 
@@ -459,7 +472,7 @@ test("#55 / D10: an id the project already uses is caught before archiving; MODI
 test("#61: another actor's screen does not prove this actor's screen", () => {
   const brief =
     "---\nactors:\n  - { name: Propietario, surfaces: [api, web] }\n  - { name: Cliente, surfaces: [api, web] }\n---\n";
-  const datos = (screenStep) =>
+  const datos = (screenStep: string) =>
     req("REQ-220", "kind=functional actor=Propietario", "El sistema SHALL guardar los datos.", [
       [
         "SCN-250",
@@ -471,7 +484,7 @@ test("#61: another actor's screen does not prove this actor's screen", () => {
       ],
       ["SCN-251", ["DADO Pelu1 con sus datos", screenStep, "ENTONCES ve la dirección"]],
     ]);
-  const d3 = (step) =>
+  const d3 = (step: string) =>
     checkDraft({ deltas: delta(datos(step)), brief }).status.filter(
       (d) => d.code === "D3_surface_missing"
     );
@@ -514,7 +527,8 @@ const SETTLE = req(
   ]
 );
 
-const d12 = (files) => checkDraft(files).status.filter((d) => d.code === "D12_unreachable_id");
+const d12 = (files: DraftFiles) =>
+  checkDraft(files).status.filter((d) => d.code === "D12_unreachable_id");
 
 test("#76 / D12: an actor acts on an id no scenario lets them get", () => {
   const found = d12({ deltas: delta(SETTLE), brief: BANK });
@@ -524,7 +538,7 @@ test("#76 / D12: an actor acts on an id no scenario lets them get", () => {
     /SCN-026: Operador does POST \/api\/transferencias\/\{id\}\/liquidacion/
   );
   assert.match(found[0].message, /from \/api\/transferencias/);
-  assert.match(found[0].fix, /GET \/api\/transferencias/);
+  assert.match(found[0].fix ?? "", /GET \/api\/transferencias/);
 });
 
 test("#76 / D12: a list by the same actor, here or in the project, gives them the id", () => {
@@ -613,7 +627,6 @@ test("#76 / D12: an assumption that says where the id comes from; no actor, no f
 });
 
 test("#76: apiCalls finds the collection before the first id; versions are not ids", () => {
-  const { apiCalls } = require("../../packages/core/src/domain/DraftChecklist");
   const [call] = apiCalls("WHEN they POST /api/transferencias/{id}/liquidacion");
   assert.equal(call.method, "POST");
   assert.equal(call.path, "/api/transferencias/{id}/liquidacion");
@@ -757,7 +770,7 @@ test("#75 / D6: a value the requirement's own sourced obligation states needs no
       ],
     ]
   );
-  const d6 = (body) =>
+  const d6 = (body: string) =>
     checkDraft({ deltas: delta(body), brief: BRIEF }).status.filter(
       (d) => d.code === "D6_unlisted_value"
     );
@@ -770,11 +783,7 @@ test("#75 / D6: a value the requirement's own sourced obligation states needs no
 });
 
 test("#82 / D7: a deferred answer keeps the question open", () => {
-  const {
-    openQuestions,
-    deferredAnswer,
-  } = require("../../packages/core/src/domain/DraftChecklist");
-  const q = (answer) =>
+  const q = (answer: string) =>
     `| # | Pregunta | Blocks | Opciones | Answer |\n|---|---|---|---|---|\n| Q1 | ¿Constancia? | REQ-008 | Sí · no | ${answer} |\n`;
   assert.equal(openQuestions(q("Se decidirá con el cliente antes de implementarlo")).length, 1);
   assert.equal(openQuestions(q("TBD")).length, 1);

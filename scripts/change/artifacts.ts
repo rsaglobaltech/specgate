@@ -17,10 +17,12 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { paths, listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
+import type { ChangeConfig } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { resolveSchema } from "../schema/registry";
+import type { SchemaArtifact } from "../schema/registry";
 
 /** The default graph, still exported for callers that predate schemas. */
-export const ARTIFACTS = [
+export const ARTIFACTS: SchemaArtifact[] = [
   { id: "proposal", generates: "proposal.md", requires: [] },
   { id: "specs", generates: "specs/**/spec.md", requires: ["proposal"] },
   { id: "design", generates: "design.md", requires: ["proposal"] },
@@ -32,7 +34,10 @@ export const ARTIFACTS = [
  * the default rather than failing: a change already in flight should not become
  * unreadable because someone deleted a schema file.
  */
-export function artifactsFor(projectDir, config) {
+export function artifactsFor(
+  projectDir: string,
+  config: ChangeConfig | null | undefined
+): SchemaArtifact[] {
   const found = resolveSchema(projectDir, (config && config.schema) || "spec-driven");
   if (!found || !Array.isArray(found.schema.artifacts) || found.schema.artifacts.length === 0) {
     return ARTIFACTS;
@@ -56,7 +61,11 @@ export interface ArtifactStateEntry {
  * may touch several capabilities. `feature` (in `bdd-first`) is written into
  * the project's own `features/` tree, not into the change directory.
  */
-function outputsPresent(projectDir, changeId, artifacts) {
+function outputsPresent(
+  projectDir: string,
+  changeId: string,
+  artifacts: readonly SchemaArtifact[]
+): Record<string, boolean> {
   const dir = paths(projectDir).change(changeId);
   const present: Record<string, boolean> = {};
   for (const a of artifacts) {
@@ -75,7 +84,7 @@ function outputsPresent(projectDir, changeId, artifacts) {
   return present;
 }
 
-function hasAnyFile(dir) {
+function hasAnyFile(dir: string): boolean {
   try {
     return fs.readdirSync(dir).length > 0;
   } catch {
@@ -83,7 +92,11 @@ function hasAnyFile(dir) {
   }
 }
 
-export function artifactState(projectDir, changeId, config) {
+export function artifactState(
+  projectDir: string,
+  changeId: string,
+  config: ChangeConfig
+): ArtifactStateEntry[] {
   const artifacts = artifactsFor(projectDir, config);
   const exists = outputsPresent(projectDir, changeId, artifacts);
 
@@ -93,11 +106,11 @@ export function artifactState(projectDir, changeId, config) {
   // Lite rigor makes design optional in the same way.
   if (config.rigor === "lite" && !exists.design) skipped.design = true;
 
-  const satisfied = (id) => exists[id] || skipped[id];
+  const satisfied = (id: string) => exists[id] || skipped[id];
 
   return artifacts.map((a) => {
     const missingDeps = (a.requires || []).filter((dep) => !satisfied(dep));
-    let status;
+    let status: ArtifactStateEntry["status"];
     if (skipped[a.id]) status = "skipped";
     else if (exists[a.id]) status = "done";
     else if (missingDeps.length > 0) status = "blocked";

@@ -40,7 +40,7 @@ class CliWorld {
     fs.mkdirSync(this.outDir, { recursive: true });
   }
 
-  run(args) {
+  run(args: string[]) {
     this.result = spawnSync("node", [CLI, ...args], {
       encoding: "utf8",
       cwd: ROOT,
@@ -49,7 +49,7 @@ class CliWorld {
     return this.result;
   }
 
-  runInit(extra = []) {
+  runInit(extra: string[] = []) {
     return this.run([
       "init",
       "--config",
@@ -62,7 +62,7 @@ class CliWorld {
     ]);
   }
 
-  writeConfig(content) {
+  writeConfig(content: string) {
     fs.writeFileSync(this.configPath, content);
   }
 

@@ -4,13 +4,14 @@
     "rootDir": "src",
     "outDir": "dist",
     "declaration": false,
-    "sourceMap": false
+    "sourceMap": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "test",
-    "dist"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["test", "dist"]
 }

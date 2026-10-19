@@ -13,15 +13,63 @@ import {
 } from "../../../../packages/core/src/domain/DraftChecklist";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { derivedMatrixFor, refreshDerivedMatrix } from "./MatrixCommand";
-import { briefProgress, draftNextCommand } from "./DraftCommand";
+import { briefProgress, draftNextCommand, ModuleStatus } from "./DraftCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import { findForjaProject } from "../project/Forja";
 import { inFlightView, InFlightView } from "../../../lib/in-flight";
+
+import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
 
 import { c, sym } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { miniPet, petEnabled } from "../../../pet/pet";
 import { petFor } from "./PetCommand";
+
+/**
+ * The lockfile, as far as `status` reads it. `readLock` returns the lock's
+ * JSON untyped; this names the fields used here.
+ */
+interface Lockfile {
+  packs?: Array<{ pack_id?: string; version?: string }>;
+}
+
+/**
+ * One requirement in the queue `status` shows: the plan's item, with what the
+ * queue adds to it. Both spellings of the feature path are declared because
+ * both arrive — the plan's snake_case and a caller's camelCase.
+ */
+export interface QueueItem {
+  requirement: string;
+  /** A plan category, or `WAITING_FOR_ANSWER`, which only the queue knows. */
+  category: string;
+  status?: string;
+  title?: string;
+  feature_file?: string;
+  featureFile?: string;
+  /** The open question that blocks it, as `Q3 (docs/specs/…/questions.md)`. */
+  question?: string | null;
+  /** The open change it belongs to, while that change is in flight (ADR-0035). */
+  change?: string;
+  [key: string]: unknown;
+}
+
+/** The brief's progress, as `briefProgress` reports it. */
+type BriefProgress = NonNullable<ReturnType<typeof briefProgress>>;
+
+/** What `status`, `explore`, `pet` and `done` read about the queue. */
+export interface QueueSummary {
+  items: QueueItem[];
+  counts: Record<string, number>;
+  pending: number;
+  orphans: string[];
+  derived: boolean;
+  forja: boolean;
+  /** Added by `status` itself; null when the brief cannot be read. */
+  brief?: BriefProgress | null;
+}
+
+/** What `nextCommandPlain` and `nextReason` read from a summary. */
+type NextInput = Pick<QueueSummary, "items" | "counts" | "orphans" | "derived" | "forja" | "brief">;
 
 export interface StatusOptions {
   projectDir: string;
@@ -58,9 +106,9 @@ export function parseArgs(argv: string[]): StatusOptions {
   return opts;
 }
 
-export function summarise(projectDir: string, traceContent: string) {
+export function summarise(projectDir: string, traceContent: string): QueueSummary {
   const rows = parseTraceability(traceContent);
-  const items = rows.map((r) => classify(r, projectDir)).filter((x) => x !== null);
+  const items: QueueItem[] = rows.map((r) => classify(r, projectDir)).filter((x) => x !== null);
   // A requirement waiting for an answer is not work anyone can start: listing
   // it as "a test and code" under To do invited exactly that (FinCore, #73).
   const questions = questionsByRequirement(projectDir);
@@ -124,7 +172,7 @@ function questionsByRequirement(projectDir: string): Map<string, string> {
  */
 export function withQueue<T>(
   projectDir: string,
-  read: (summary: any, dir: string, view: InFlightView | null) => T,
+  read: (summary: QueueSummary, dir: string, view: InFlightView | null) => T,
   opts: { write?: boolean } = {}
 ): T {
   const view = inFlightView(projectDir);
@@ -139,7 +187,7 @@ export function withQueue<T>(
     } else if (!view && refreshDerivedMatrix(projectDir)) {
       trace = fs.readFileSync(path.join(dir, TRACE), "utf8");
     }
-    const summary: any = summarise(dir, trace);
+    const summary = summarise(dir, trace);
     if (view) {
       for (const it of summary.items) {
         const owner = view.requirements.find((r) => r.id === it.requirement);
@@ -159,11 +207,11 @@ const TRACE = path.join("docs", "specs", "traceability.md");
  * place first, then the first still to do — never the adoption baseline,
  * never one waiting for an answer.
  */
-export function nextRequirement(items: any[], except: string[] = []): any {
-  const open = (items || []).filter((it: any) => !except.includes(it.requirement));
+export function nextRequirement(items: QueueItem[], except: string[] = []): QueueItem | null {
+  const open = (items || []).filter((it) => !except.includes(it.requirement));
   return (
-    open.find((it: any) => it.category === "NEEDS_STATUS_UPDATE") ||
-    open.find((it: any) => TODO_CATEGORIES.includes(it.category) && !isBaseline(it)) ||
+    open.find((it) => it.category === "NEEDS_STATUS_UPDATE") ||
+    open.find((it) => TODO_CATEGORIES.includes(it.category) && !isBaseline(it)) ||
     null
   );
 }
@@ -174,7 +222,7 @@ const QUEUE_LIMIT = 12;
 const TODO_CATEGORIES = ["NEEDS_FEATURE", "NEEDS_EVERYTHING", "NEEDS_TEST", "NEEDS_IMPLEMENTATION"];
 
 /** What one requirement still needs, in words a person reads at a glance. */
-export function needsOf(item: any): string {
+export function needsOf(item: Pick<QueueItem, "category" | "question">): string {
   switch (item.category) {
     case "NEEDS_FEATURE":
       return "its scenario";
@@ -206,20 +254,20 @@ export function needsOf(item: any): string {
  * After `init`, status used to say "specgate check — write REQ-001's test",
  * a command paired with an instruction about something else.
  */
-function onlyBaseline(items: any[]): boolean {
-  const todo = (items || []).filter((it: any) => TODO_CATEGORIES.includes(it.category));
+function onlyBaseline(items: QueueItem[]): boolean {
+  const todo = (items || []).filter((it) => TODO_CATEGORIES.includes(it.category));
   return (
     todo.length === 1 &&
     String(todo[0].feature_file || todo[0].featureFile || "").includes("features/adoption/baseline")
   );
 }
 
-const isBaseline = (it: any) =>
+const isBaseline = (it: QueueItem) =>
   String(it.feature_file || it.featureFile || "").includes("features/adoption/baseline");
 
 /** The first pending requirement that is not the adoption baseline. */
-function firstReal(items: any[]): any {
-  return (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category) && !isBaseline(it));
+function firstReal(items: QueueItem[]): QueueItem | undefined {
+  return (items || []).find((it) => TODO_CATEGORIES.includes(it.category) && !isBaseline(it));
 }
 
 /**
@@ -227,7 +275,7 @@ function firstReal(items: any[]): any {
  * project that starts from a plan has nothing to build until it is drafted,
  * and "add a requirement" is the wrong advice for it (#94).
  */
-function briefFirst({ items, brief }: any): any {
+function briefFirst({ items, brief }: Pick<NextInput, "items" | "brief">): ModuleStatus | null {
   return brief && brief.next && !firstReal(items) ? brief.next : null;
 }
 
@@ -237,7 +285,7 @@ function briefFirst({ items, brief }: any): any {
  * (ADR-0033). The name comes from the scenario's file; the module is the
  * user's to choose.
  */
-export function forjaAddCommand(todo: any): string {
+export function forjaAddCommand(todo: QueueItem): string {
   // The matrix may hold the file as a link (`[x](features/x.feature)`): take the name.
   const base =
     (/([^/\\[\]()`]+)\.feature/.exec(String(todo.featureFile || todo.feature_file || "")) ||
@@ -251,11 +299,18 @@ export function forjaAddCommand(todo: any): string {
   return `specgate add usecase <module>/${name} --req ${todo.requirement}`;
 }
 
-const needsCode = (todo: any) =>
+const needsCode = (todo: QueueItem) =>
   ["NEEDS_EVERYTHING", "NEEDS_TEST", "NEEDS_IMPLEMENTATION"].includes(todo.category);
 
-export function nextCommandPlain({ items, counts, orphans, derived, brief, forja }: any): string {
-  const first = (cats: string[]) => (items || []).find((it: any) => cats.includes(it.category));
+export function nextCommandPlain({
+  items,
+  counts,
+  orphans,
+  derived,
+  brief,
+  forja,
+}: NextInput): string {
+  const first = (cats: string[]) => (items || []).find((it) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
   const ready = first(["NEEDS_STATUS_UPDATE"]);
   if (ready) return `specgate apply ${ready.requirement}`;
@@ -275,17 +330,18 @@ export function nextCommandPlain({ items, counts, orphans, derived, brief, forja
   return "specgate check";
 }
 
-export function nextReason({ items, counts, orphans, derived, brief, forja }: any): string {
+export function nextReason({ items, counts, orphans, derived, brief, forja }: NextInput): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
-  if ((items || []).some((it: any) => it.category === "NEEDS_STATUS_UPDATE"))
+  if ((items || []).some((it) => it.category === "NEEDS_STATUS_UPDATE"))
     return "its test exists; close it through the gate";
   const module = briefFirst({ items, brief });
   if (module)
     return module.state === "ready"
       ? `the ${module.module} draft is ready — review it, then apply its requirements`
-      : `turn the ${module.module} module of ${brief.brief} into requirements`;
+      : // `briefFirst` returns a module only from a brief.
+        `turn the ${module.module} module of ${brief!.brief} into requirements`;
   const todo =
-    firstReal(items) || (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category));
+    firstReal(items) || (items || []).find((it) => TODO_CATEGORIES.includes(it.category));
   if (todo && todo.category === "NEEDS_FEATURE")
     return `${todo.requirement}'s feature file is missing — plan shows which`;
   if (todo && onlyBaseline(items))
@@ -301,24 +357,29 @@ export function nextReason({ items, counts, orphans, derived, brief, forja }: an
   return "everything is implemented; run the gate";
 }
 
-function titleOf(item: any): string {
+function titleOf(item: Pick<QueueItem, "title">): string {
   const t = String(item.title || "")
     .replace(/^UC-\d+\s*/, "")
     .trim();
   return t && t !== "-" ? t : "";
 }
 
-function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []): void {
+function emitText(
+  projectDir: string,
+  summary: QueueSummary,
+  lock: Lockfile | null,
+  notes: Diagnostic[] = []
+): void {
   const { items, counts, orphans } = summary;
   const out = (t: string) => process.stdout.write(t);
   out(ui.header("status", path.basename(path.resolve(projectDir))));
   out(`  ${c.bold}Requirements${c.reset}  ${ui.progress(counts.DONE, counts.total, "done")}\n`);
 
   const queue = (title: string, cats: string[], mark: string, color: string) => {
-    const group = items.filter((it: any) => cats.includes(it.category));
+    const group = items.filter((it) => cats.includes(it.category));
     if (group.length === 0) return;
     out("\n" + ui.section(title));
-    const rows = group.slice(0, QUEUE_LIMIT).map((it: any) => {
+    const rows = group.slice(0, QUEUE_LIMIT).map((it) => {
       const name = titleOf(it);
       return [
         `${mark} ${c.accent}${it.requirement}${c.reset}`,
@@ -335,10 +396,10 @@ function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []
   queue("Ready to close", ["NEEDS_STATUS_UPDATE"], ui.state("ready"), c.ok);
   queue("To do", TODO_CATEGORIES, ui.state("todo"), c.warn);
   queue("Waiting for an answer", ["WAITING_FOR_ANSWER"], ui.state("blocked"), c.muted);
-  const waiting = items.filter((it: any) => it.category === "WAITING_FOR_ANSWER" && it.question);
+  const waiting = items.filter((it) => it.category === "WAITING_FOR_ANSWER" && it.question);
   if (waiting.length > 0)
     out(
-      `    ${ui.muted(`Questions: ${[...new Set(waiting.map((it: any) => it.question))].join(" · ")}`)}\n`
+      `    ${ui.muted(`Questions: ${[...new Set(waiting.map((it) => it.question))].join(" · ")}`)}\n`
     );
 
   if (orphans.length > 0)
@@ -356,7 +417,7 @@ function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []
 
   if (summary.brief) {
     const b = summary.brief;
-    const done = b.modules.filter((m: any) => m.state === "archived").length;
+    const done = b.modules.filter((m) => m.state === "archived").length;
     out(
       `\n  ${c.bold}Brief${c.reset}         ${ui.progress(done, b.modules.length, "module(s) drafted")}` +
         `${b.next ? `   ${ui.muted("next:")} ${b.next.module}` : ""}   ${ui.muted(b.brief)}\n`
@@ -367,7 +428,7 @@ function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []
     out("\n" + ui.section("Packs"));
     out(
       ui.table(
-        lock.packs.map((p: any) => [
+        lock.packs.map((p) => [
           `${c.accent}${p.pack_id || "?"}${c.reset}`,
           ui.muted(`@ ${p.version || "?"}`),
         ])
@@ -389,7 +450,12 @@ function emitText(projectDir: string, summary: any, lock: any, notes: any[] = []
   if (process.env.SPECGATE_BARE === "1") out(`  ${ui.muted("All commands: specgate --help")}\n\n`);
 }
 
-function emitJson(projectDir: string, summary: any, lock: any, notes: any[] = []): void {
+function emitJson(
+  projectDir: string,
+  summary: QueueSummary,
+  lock: Lockfile | null,
+  notes: Diagnostic[] = []
+): void {
   const { counts, pending, orphans } = summary;
   process.stdout.write(
     JSON.stringify(
@@ -401,7 +467,7 @@ function emitJson(projectDir: string, summary: any, lock: any, notes: any[] = []
         counts,
         orphanFeatures: orphans,
         packs: lock && lock.packs ? lock.packs : [],
-        requirements: summary.items.map((it: any) => ({
+        requirements: summary.items.map((it) => ({
           id: it.requirement,
           title: titleOf(it) || null,
           category: it.category,
@@ -413,7 +479,7 @@ function emitJson(projectDir: string, summary: any, lock: any, notes: any[] = []
           ? {
               brief: {
                 path: summary.brief.brief,
-                modules: summary.brief.modules.map((m: any) => ({
+                modules: summary.brief.modules.map((m) => ({
                   module: m.module,
                   state: m.state,
                 })),
@@ -435,7 +501,7 @@ export class StatusCommand extends BaseCommand {
     let projectDir: string;
     try {
       projectDir = resolveProjectDir(opts.projectDir);
-    } catch (err: any) {
+    } catch (err) {
       process.stderr.write(`${errorMessage(err)}\n`);
       process.exit(2);
     }
@@ -460,13 +526,18 @@ export class StatusCommand extends BaseCommand {
     process.exit(0);
   }
 
-  private report(projectDir: string, opts: StatusOptions, summary: any, dir: string): void {
+  private report(
+    projectDir: string,
+    opts: StatusOptions,
+    summary: QueueSummary,
+    dir: string
+  ): void {
     try {
       summary.brief = briefProgress(projectDir);
     } catch {
       summary.brief = null;
     }
-    let lock = null;
+    let lock: Lockfile | null = null;
     try {
       lock = readLock(projectDir);
     } catch {
@@ -474,7 +545,7 @@ export class StatusCommand extends BaseCommand {
     }
 
     // D4 and D5 on the project's own specification: notes, never failures.
-    let notes: any[] = [];
+    let notes: Diagnostic[] = [];
     try {
       const sources = readDerivationSources(dir);
       const specs = [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])];

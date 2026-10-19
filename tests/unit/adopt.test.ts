@@ -1,17 +1,21 @@
 "use strict";
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { spawnSync } from "node:child_process";
+import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from "node:child_process";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
-function cli(args, options = {}) {
+function cli(
+  args: string[],
+  options: Omit<SpawnSyncOptionsWithStringEncoding, "encoding"> = {}
+): SpawnSyncReturns<string> {
   return spawnSync(process.execPath, [CLI_PATH, ...args], {
     cwd: ROOT_DIR,
     encoding: "utf8",
@@ -19,7 +23,7 @@ function cli(args, options = {}) {
   });
 }
 
-function withTmp(fn) {
+function withTmp<T>(fn: (tmp: string) => T): T {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-adopt-"));
   try {
     return fn(tmp);
@@ -29,7 +33,7 @@ function withTmp(fn) {
 }
 
 /** Brownfield fixture: a Spring Boot / HAPI FHIR Maven project with code. */
-function makeMavenProject(tmp) {
+function makeMavenProject(tmp: string): string {
   const dir = path.join(tmp, "hie-his-platform");
   fs.mkdirSync(path.join(dir, "src", "main", "java", "com", "hie"), { recursive: true });
   fs.writeFileSync(
@@ -241,7 +245,7 @@ test("a fresh adoption passes validate, but says it certifies nothing (H15)", ()
     const doc = JSON.parse(cli(["validate", dir, "--json"]).stdout);
     assert.equal(doc.validation.passed, true);
     assert.equal(doc.validation.adoptionRetrofilled, false);
-    assert.ok(doc.status.some((d) => d.code === "adoption_not_retrofilled"));
+    assert.ok(doc.status.some((d: { code: string }) => d.code === "adoption_not_retrofilled"));
   });
 });
 

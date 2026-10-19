@@ -1,9 +1,9 @@
 "use strict";
 
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
+import { test } from "node:test";
+import assert = require("node:assert/strict");
 
-const {
+import {
   parseArgs,
   parseFeatureFile,
   toPascalCase,
@@ -11,7 +11,7 @@ const {
   extractEventNames,
   inferModel,
   renderYamlFragment,
-} = require("../../scripts/infer_pack");
+} from "../../scripts/infer_pack";
 
 const FEATURE = `@REQ-001
 Feature: Parking Capacity
@@ -145,7 +145,7 @@ test("renderYamlFragment emits a parseable, TODO-annotated fragment", () => {
 // them: the output is a skeleton to review, every guess keeps its `TODO`, and
 // an inference that stops looking like a guess is the failure mode here.
 
-const { isQueryStep, extractPayloadHints, mergeModels } = require("../../scripts/infer_pack");
+import { isQueryStep, extractPayloadHints, mergeModels } from "../../scripts/infer_pack";
 
 const SEARCH = `@REQ-004
 Feature: Parking search
@@ -225,12 +225,12 @@ test("an operation shared by two files is proposed once, not once per file", () 
   );
   const merged = mergeModels([a, b], ["a.feature", "b.feature"]);
   assert.equal(
-    merged.queries.filter((q) => /Searches/.test(q.name)).length,
+    merged.queries.filter((q: { name: string }) => /Searches/.test(q.name)).length,
     1,
     "the shared query was proposed twice"
   );
   assert.deepEqual(
-    merged.requirements.map((r) => r.id),
+    merged.requirements.map((r: { id: string }) => r.id),
     ["REQ-004", "REQ-005"],
     "both files' requirements should survive"
   );
@@ -247,11 +247,11 @@ test("merging renumbers ids so the fragment reads as one document", () => {
     "b.feature"
   );
   const merged = mergeModels([a, b], ["a.feature", "b.feature"]);
-  const ids = merged.commands.map((c) => c.id);
+  const ids = merged.commands.map((c: { id: string }) => c.id);
   assert.deepEqual(ids, [...new Set(ids)], "duplicate command ids");
   assert.deepEqual(
-    merged.scenarios.map((s) => s.id),
-    merged.scenarios.map((_, i) => `SCN-${String(i + 1).padStart(3, "0")}`)
+    merged.scenarios.map((s: { id: string }) => s.id),
+    merged.scenarios.map((_: unknown, i: number) => `SCN-${String(i + 1).padStart(3, "0")}`)
   );
 });
 
@@ -268,10 +268,10 @@ test("merged use cases get distinct ids and keep their own requirement", () => {
     "b.feature"
   );
   const merged = mergeModels([a, b], ["a.feature", "b.feature"]);
-  const ids = merged.use_cases.map((u) => u.id);
+  const ids = merged.use_cases.map((u: { id: string }) => u.id);
   assert.deepEqual(ids, [...new Set(ids)], "duplicate use case ids");
   assert.deepEqual(
-    merged.use_cases.map((u) => u.requirement),
+    merged.use_cases.map((u: { requirement: string }) => u.requirement),
     ["REQ-004", "REQ-005"],
     "a use case must keep the requirement its own file tagged"
   );

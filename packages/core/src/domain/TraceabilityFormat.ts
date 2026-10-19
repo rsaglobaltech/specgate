@@ -8,10 +8,55 @@
  * `ITraceabilityRepository`.
  */
 
-export function parseTraceabilityRows(existingContent) {
-  const rows = [];
-  const seen = new Set();
-  let mode = "legacy";
+/** A row of the rich 10-column matrix, with what its trace lines carry. */
+export interface RichTraceabilityRow {
+  requirement: string;
+  scenarioId: string;
+  featureFile: string;
+  useCase: string;
+  commandOrQuery: string;
+  aggregate: string;
+  event: string;
+  technicalArtifact: string;
+  testArtifact: string;
+  status: string;
+  /** From the `specgate:trace … depends=` line beneath the table. */
+  dependsOn?: string[];
+  /** From the `specgate:trace … context=` line beneath the table. */
+  context?: string;
+}
+
+/** A row of the legacy 4-column matrix. */
+export interface LegacyTraceabilityRow {
+  feature: string;
+  scenario: string;
+  technicalArtifact: string;
+  status: string;
+}
+
+/**
+ * A matrix row as the commands that rewrite the matrix handle it: the fields of
+ * either shape, none of them guaranteed. One file can hold both shapes, and
+ * `buildTraceabilityMarkdown` renders a missing rich cell as `-`.
+ */
+export type MatrixRow = Partial<
+  Omit<RichTraceabilityRow & LegacyTraceabilityRow, "requirement">
+> & {
+  /** Null for a legacy row whose cells name no requirement. */
+  requirement?: string | null;
+};
+
+/** What `parseTraceabilityRows` read out of a matrix file. */
+export interface ParsedTraceability {
+  mode: TraceabilityMode;
+  rows: MatrixRow[];
+  dependsOn: Record<string, string[]>;
+}
+
+export function parseTraceabilityRows(existingContent: string): ParsedTraceability {
+  const rows: MatrixRow[] = [];
+  const seen = new Set<string>();
+  let mode: TraceabilityMode = "legacy";
   // Carried alongside the rows so a rebuild does not drop it — see
   // `parseMatrixDependencies` for why it cannot live in a cell.
   const declaredDependencies = parseMatrixDependencies(existingContent);
@@ -23,8 +68,8 @@ export function parseTraceabilityRows(existingContent) {
 
     const cells = trimmed
       .split("|")
-      .map((cell) => cell.trim())
-      .filter((cell) => cell.length > 0);
+      .map((cell: string) => cell.trim())
+      .filter((cell: string) => cell.length > 0);
 
     if (cells[0] === "Requirement" && cells[1] === "Scenario ID") {
       mode = "rich";
@@ -37,7 +82,7 @@ export function parseTraceabilityRows(existingContent) {
 
     if (cells.length === 10) {
       mode = "rich";
-      const row = {
+      const row: RichTraceabilityRow = {
         requirement: cells[0],
         scenarioId: cells[1],
         featureFile: cells[2],
@@ -66,7 +111,7 @@ export function parseTraceabilityRows(existingContent) {
 
     if (cells.length !== 4) continue;
 
-    const row = {
+    const row: LegacyTraceabilityRow = {
       feature: cells[0],
       scenario: cells[1],
       technicalArtifact: cells[2],
@@ -204,7 +249,7 @@ export function renderMatrixTraceLines(
   return lines.length > 0 ? ["", ...lines] : [];
 }
 
-export function buildTraceabilityMarkdown(rows, mode = "legacy") {
+export function buildTraceabilityMarkdown(rows: readonly MatrixRow[], mode = "legacy"): string {
   if (mode === "rich") {
     const header = [
       "# Traceability Matrix",

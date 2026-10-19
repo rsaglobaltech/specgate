@@ -21,12 +21,13 @@ const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+import type { CliResult } from "../helpers/cli";
 
 const ROOT = path.resolve(__dirname, "../../..");
 const CLI = path.join(ROOT, "bin/specgate.js");
 const CONFIG = path.join(ROOT, "examples/project.config.example");
 
-function cli(...args) {
+function cli(...args: string[]): CliResult {
   return spawnSync(process.execPath, [CLI, ...args], {
     encoding: "utf8",
     cwd: ROOT,
@@ -38,9 +39,9 @@ function cli(...args) {
  * Recursively walk `dir` and return all file paths relative to `dir`,
  * sorted lexicographically. Excludes `.git/`.
  */
-function walkFiles(dir) {
-  const results = [];
-  function walk(current) {
+function walkFiles(dir: string): string[] {
+  const results: string[] = [];
+  function walk(current: string) {
     for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
       const full = path.join(current, entry.name);
       if (entry.isDirectory()) {
@@ -55,7 +56,7 @@ function walkFiles(dir) {
   return results.sort();
 }
 
-function generateProject(outDir) {
+function generateProject(outDir: string) {
   const r = cli("init", "--config", CONFIG, "--out", outDir, "--no-git", "--force");
   assert.equal(r.status, 0, `init failed:\n${r.stdout}\n${r.stderr}`);
   return path.join(outDir, "acme-energy-hub");

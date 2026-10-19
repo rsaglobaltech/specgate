@@ -2,10 +2,12 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseYamlLite } from "../../../../packages/core/src/domain/YamlLite";
+import type { YamlDocument } from "../../../../packages/core/src/domain/YamlLite";
 import { listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import { formatDiagnostic, error, warning } from "../../../lib/diagnostics";
+import type { Diagnostic } from "../../../lib/diagnostics";
 import * as ui from "../../../lib/ui";
 import { checkAgainstLock } from "../../../specops/against_lock";
 import { requirementGraphFromProject } from "../../../lib/requirement-graph";
@@ -20,8 +22,8 @@ import {
   DELIVERED_STATUS,
 } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import * as crypto from "node:crypto";
-import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
-import { findUnresolvedPlaceholders } from "../../../lib/placeholders";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
+import { findUnresolvedPlaceholders, PLACEHOLDER_RE } from "../../../lib/placeholders";
 import { BaseCommand } from "../../../lib/command";
 import { ValidateProjectUseCase } from "../../../../packages/core/src/application/ValidateProjectUseCase";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
@@ -40,6 +42,7 @@ const SUITE_LIES = new Set<string>([
 ]);
 import { specgateTagsIn } from "../../../../packages/core/src/domain/GherkinTags";
 import { parseTraceabilityRows } from "../../../../packages/core/src/domain/TraceabilityFormat";
+import type { MatrixRow } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { analyseRequirementText } from "../../../../packages/core/src/domain/RequirementSyntax";
 import {
   isDerivedMatrix,
@@ -61,8 +64,23 @@ import {
   templateObligationLines,
 } from "../../../../packages/core/src/domain/SpecSections";
 
+/**
+ * A traceability row as the checks read it. The parser returns rich rows or
+ * legacy four-column ones; every column a check reads is optional because a
+ * legacy row lacks most of them.
+ */
+
+/** A `projects:` entry of specops.config.yaml: a path, or `{ path }`. */
+type MonorepoEntry = string | { path?: string } | null | undefined;
+
 export class ValidateSpecsCommand extends BaseCommand {
-  private io: any = null;
+  /** Set first thing in `execute()`; null only while the command is being built. */
+  private io: AgentIo | null = null;
+
+  /** The channel, for the checks — every one of them runs after `execute()` set it. */
+  private get agent(): AgentIo {
+    return this.io!;
+  }
 
   private logInfo(msg: string) {
     const stream = this.io && this.io.json ? process.stderr : process.stdout;
@@ -281,13 +299,14 @@ export class ValidateSpecsCommand extends BaseCommand {
   ) {
     const cfgPath = path.join(targetDir, "specops.config.yaml");
     if (!fs.existsSync(cfgPath)) return null;
-    let cfg: any;
+    let cfg: YamlDocument;
     try {
       cfg = parseYamlLite(fs.readFileSync(cfgPath, "utf8"));
     } catch {
       return null;
     }
-    const projects = cfg && Array.isArray(cfg.projects) ? cfg.projects : null;
+    const projects: MonorepoEntry[] | null =
+      cfg && Array.isArray(cfg.projects) ? cfg.projects : null;
     if (!projects || projects.length === 0) return null;
 
     this.logInfo(`Monorepo: validating ${projects.length} project(s) from specops.config.yaml`);
@@ -384,8 +403,8 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
     if (findings.length === 0) return;
 
-    if (this.io.json) {
-      this.io.fail({ validation: null }, findings);
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, findings);
       return;
     }
     const errs = findings.filter((f) => f.severity === "error");
@@ -412,7 +431,7 @@ export class ValidateSpecsCommand extends BaseCommand {
   private featureFilesOwed(targetDir: string, delivering: string): (rel: string) => boolean {
     const tracePath = path.join(targetDir, "docs/specs/traceability.md");
     if (!fs.existsSync(tracePath)) return () => true;
-    let rows: any[] = [];
+    let rows: MatrixRow[] = [];
     try {
       rows = parseTraceabilityRows(fs.readFileSync(tracePath, "utf8")).rows || [];
     } catch {
@@ -452,7 +471,7 @@ export class ValidateSpecsCommand extends BaseCommand {
    * Once a file is tagged, a row pointing into it has to be right.
    */
   private checkScenarioTags(targetDir: string, traceContent: string) {
-    let rows: any[] = [];
+    let rows: MatrixRow[] = [];
     try {
       rows = parseTraceabilityRows(traceContent).rows || [];
     } catch {
@@ -515,16 +534,16 @@ export class ValidateSpecsCommand extends BaseCommand {
    * rows does not fail its next `validate` over this.
    */
   private checkDeclaredArtifactsExist(targetDir: string, traceContent: string, delivering = "") {
-    let rows: any[] = [];
+    let rows: MatrixRow[] = [];
     try {
       rows = parseTraceabilityRows(traceContent).rows || [];
     } catch {
       return;
     }
 
-    const findings: any[] = [];
+    const findings: Diagnostic[] = [];
     const seen = new Set<string>();
-    const columns: Array<[string, string]> = [
+    const columns: Array<[string, "featureFile" | "technicalArtifact" | "testArtifact"]> = [
       ["feature file", "featureFile"],
       ["technical artifact", "technicalArtifact"],
       ["test artifact", "testArtifact"],
@@ -564,8 +583,8 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
     if (findings.length === 0) return;
 
-    if (this.io.json) {
-      this.io.fail({ validation: null }, findings);
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, findings);
       return;
     }
     this.logError(`Declared artifacts that no longer exist: ${findings.length}`);
@@ -594,7 +613,7 @@ export class ValidateSpecsCommand extends BaseCommand {
    * heuristic.
    */
   private checkScenarioCoverage(targetDir: string, traceContent: string, delivering = "") {
-    let rows: any[] = [];
+    let rows: MatrixRow[] = [];
     try {
       rows = parseTraceabilityRows(traceContent).rows || [];
     } catch {
@@ -618,12 +637,12 @@ export class ValidateSpecsCommand extends BaseCommand {
       return out;
     };
 
-    const findings: any[] = [];
-    const advisories: any[] = [];
+    const findings: Diagnostic[] = [];
+    const advisories: Diagnostic[] = [];
     const seen = new Set<string>();
 
     // Read every row once first, so the check can calibrate before it judges.
-    const readRow = (row: any) => {
+    const readRow = (row: MatrixRow) => {
       const declaredTests = declaredPaths(row.testArtifact).filter(
         (t: string) => t && t !== "-" && t.toUpperCase() !== "TBD"
       );
@@ -746,8 +765,8 @@ export class ValidateSpecsCommand extends BaseCommand {
 
     if (findings.length === 0) return;
 
-    if (this.io.json) {
-      this.io.fail({ validation: null }, [...findings, ...advisories]);
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, [...findings, ...advisories]);
       return;
     }
     this.logError(`Declared scenarios nothing proves: ${findings.length}`);
@@ -832,8 +851,8 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
     if (findings.length === 0) return;
 
-    if (this.io.json) {
-      this.io.fail({ validation: null }, findings);
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, findings);
       return;
     }
     this.logError(`--strict-requirements violations detected: ${findings.length}`);
@@ -855,7 +874,7 @@ export class ValidateSpecsCommand extends BaseCommand {
   private checkTemplateObligations(targetDir: string, delivering: string) {
     const tracePath = path.join(targetDir, "docs/specs/traceability.md");
     if (!fs.existsSync(tracePath)) return;
-    let rows: any[] = [];
+    let rows: MatrixRow[] = [];
     try {
       rows = parseTraceabilityRows(fs.readFileSync(tracePath, "utf8")).rows || [];
     } catch {
@@ -899,8 +918,8 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
     if (findings.length === 0) return;
 
-    if (this.io.json) {
-      this.io.fail({ validation: null }, findings);
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, findings);
       return;
     }
     this.logError(`Requirements delivered on a placeholder obligation: ${findings.length}`);
@@ -965,7 +984,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       ]);
     }
 
-    if (!this.io.json && process.env.SPECGATE_NESTED !== "1") {
+    if (!this.agent.json && process.env.SPECGATE_NESTED !== "1") {
       process.stdout.write(ui.header("validate", path.basename(path.resolve(targetDir))));
     }
 
@@ -1021,7 +1040,6 @@ export class ValidateSpecsCommand extends BaseCommand {
       "docs/specs/adr/README.md",
     ];
     const REQUIRED_DIRS = ["features", "docs/specs"];
-    const PLACEHOLDER_RE = /\{\{[A-Z_][A-Z0-9_]*\}\}/;
 
     for (const d of REQUIRED_DIRS) {
       if (!fs.existsSync(path.join(targetDir, d))) {
@@ -1075,7 +1093,7 @@ export class ValidateSpecsCommand extends BaseCommand {
     const offenders = findUnresolvedPlaceholders(targetDir).map((rel) => path.join(targetDir, rel));
     if (offenders.length > 0) {
       this.logError("Unresolved placeholders detected");
-      const tokens = new Set();
+      const tokens = new Set<string>();
       for (const f of offenders) {
         const lines = fs.readFileSync(f, "utf8").split("\n");
         for (let i = 0; i < lines.length; i++) {
@@ -1085,7 +1103,7 @@ export class ValidateSpecsCommand extends BaseCommand {
           }
         }
       }
-      const varList = [...tokens].map((t: any) => String(t).replace(/[{}]/g, "")).join(", ");
+      const varList = [...tokens].map((t) => String(t).replace(/[{}]/g, "")).join(", ");
       this.logFix([
         `Replace the tokens with real values, or re-expand the pack passing each variable:`,
         `  specgate specops sync --project-dir . (after adding the missing vars to .specops.lock)`,
@@ -1112,7 +1130,7 @@ export class ValidateSpecsCommand extends BaseCommand {
           fix: "Run `specgate matrix` and commit the result — `specgate check` does it for you.",
         }
       );
-      if (this.io.json) this.io.fail({ validation: null }, [stale]);
+      if (this.agent.json) this.agent.fail({ validation: null }, [stale]);
       this.logError(stale.message);
       this.logFix([stale.fix as string]);
       process.exit(1);
@@ -1177,8 +1195,8 @@ export class ValidateSpecsCommand extends BaseCommand {
     };
 
     if (strictTddViolations.length > 0) {
-      if (this.io.json) {
-        this.io.fail(
+      if (this.agent.json) {
+        this.agent.fail(
           { validation: null },
           strictTddViolations.map((v) => {
             const tdd = v.slice(1, 6);
@@ -1270,7 +1288,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       const ids = listChangeIds(targetDir);
       changeCount = ids.length;
       const problems: string[] = [];
-      const rawProblems: any[] = [];
+      const rawProblems: Diagnostic[] = [];
       for (const id of ids) {
         const result = new ValidateChangeUseCase(new DiskProjectRepository(targetDir)).execute(id, {
           strict: false,
@@ -1283,8 +1301,8 @@ export class ValidateSpecsCommand extends BaseCommand {
         }
       }
       if (problems.length > 0) {
-        if (this.io.json) {
-          this.io.fail({ validation: null }, rawProblems);
+        if (this.agent.json) {
+          this.agent.fail({ validation: null }, rawProblems);
           return;
         }
         this.logError("Active changes have invalid delta specs:");
@@ -1294,20 +1312,20 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
 
     let lockChecked = 0;
-    let lockAdvisories: any[] = [];
+    let lockAdvisories: Diagnostic[] = [];
     if (againstLock) {
       const result = checkAgainstLock(targetDir, {});
       lockChecked = result.checked;
-      const errors = result.diagnostics.filter((d: any) => d.severity === "error");
-      const rest = result.diagnostics.filter((d: any) => d.severity !== "error");
+      const errors = result.diagnostics.filter((d) => d.severity === "error");
+      const rest = result.diagnostics.filter((d) => d.severity !== "error");
 
-      if (!this.io.json) {
+      if (!this.agent.json) {
         for (const d of rest) process.stdout.write(`  ${formatDiagnostic(d)}\n`);
       }
 
       if (errors.length > 0) {
-        if (this.io.json) {
-          this.io.fail({ validation: null }, result.diagnostics);
+        if (this.agent.json) {
+          this.agent.fail({ validation: null }, result.diagnostics);
           return;
         }
         this.logError("--against-lock violations detected:");
@@ -1319,7 +1337,7 @@ export class ValidateSpecsCommand extends BaseCommand {
 
     {
       const graph = requirementGraphFromProject(targetDir, [...reqsInMatrix]);
-      const graphProblems: any[] = [];
+      const graphProblems: Diagnostic[] = [];
 
       for (const cycle of graph.cycles) {
         const loop = [...cycle, cycle[0]].join(" → ");
@@ -1356,8 +1374,8 @@ export class ValidateSpecsCommand extends BaseCommand {
       }
 
       if (graphProblems.length > 0) {
-        if (this.io.json) {
-          this.io.fail({ validation: null }, graphProblems);
+        if (this.agent.json) {
+          this.agent.fail({ validation: null }, graphProblems);
           return;
         }
         this.logError("Requirement dependency problems:");
@@ -1380,8 +1398,8 @@ export class ValidateSpecsCommand extends BaseCommand {
         ])
       : lockAdvisories;
 
-    if (this.io.json) {
-      this.io.emit({
+    if (this.agent.json) {
+      this.agent.emit({
         validation: {
           projectDir: targetDir,
           passed: true,

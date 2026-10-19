@@ -19,7 +19,8 @@
  * to supply — `scripts/specops/as_change` wires all three to the real disk.
  */
 
-import { asArray } from "./PackSpec";
+import { PackItem, asArray } from "./PackSpec";
+import { PackEntry } from "./Lockfile";
 import { PackModel } from "./YamlLite";
 import { Phrases } from "./Language";
 
@@ -33,23 +34,53 @@ export interface LoadedPack {
  * The Gherkin steps for one scenario, or null when there are none to be had.
  * Supplied by the caller so this module never opens a template file itself.
  */
-export type ReadSteps = (packDir: string, scenario) => string[] | null;
+export type ReadSteps = (packDir: string, scenario: PackItem) => string[] | null;
 
-export function requirementsById(model) {
-  const out = new Map();
+/** A requirement the delta can name: one whose `id` was present. */
+export type IdentifiedPackItem = PackItem & { id: string };
+
+/** The requirement ids a pack bump adds, changes and retires. */
+export interface PackDeltaSummary {
+  added: string[];
+  modified: string[];
+  removed: string[];
+}
+
+/** What `derivePackDelta` found. `markdown` is null when nothing behavioural changed. */
+export interface DerivedPackDelta {
+  capability: string;
+  markdown: string | null;
+  summary: PackDeltaSummary;
+}
+
+/** How one requirement block renders inside the delta. */
+export interface RequirementBlockOptions {
+  /** A retired requirement: heading and reason, no scenarios. */
+  bodyless?: boolean;
+  reason?: string;
+  /** Where the requirement came from, written into the trace comment. */
+  origin?: string;
+}
+
+export function requirementsById(
+  model: PackModel | null | undefined
+): Map<string, IdentifiedPackItem> {
+  const out = new Map<string, IdentifiedPackItem>();
   for (const req of asArray(model && model.requirements)) {
-    if (req && req.id) out.set(String(req.id), req);
+    if (req && req.id) out.set(String(req.id), req as IdentifiedPackItem);
   }
   return out;
 }
 
-export function scenariosByRequirement(model) {
-  const out = new Map();
+export function scenariosByRequirement(
+  model: PackModel | null | undefined
+): Map<string, PackItem[]> {
+  const out = new Map<string, PackItem[]>();
   for (const sc of asArray(model && model.scenarios)) {
     if (!sc || !sc.requirement_id) continue;
     const key = String(sc.requirement_id);
     if (!out.has(key)) out.set(key, []);
-    out.get(key).push(sc);
+    out.get(key)!.push(sc);
   }
   return out;
 }
@@ -59,10 +90,13 @@ export function scenariosByRequirement(model) {
  * ordering, comments, template paths, the pack's own version — is not a
  * behavioural change and must not produce a delta.
  */
-export function requirementFingerprint(req, scenarios) {
-  const norm = (v) => String(v === undefined || v === null ? "" : v).trim();
+export function requirementFingerprint(
+  req: PackItem,
+  scenarios: PackItem[] | null | undefined
+): string {
+  const norm = (v: unknown) => String(v === undefined || v === null ? "" : v).trim();
   const scenarioPart = (scenarios || [])
-    .map((sc) =>
+    .map((sc: PackItem) =>
       [
         norm(sc.id),
         norm(sc.scenario),
@@ -94,8 +128,11 @@ export function requirementFingerprint(req, scenarios) {
  * tooling reads. The trace comment is already the extension point, and it
  * survives `archive` because the renderer writes the whole trace back out.
  */
-export function traceComment(scenario, origin?) {
-  const parts = [];
+export function traceComment(
+  scenario: PackItem | null | undefined,
+  origin?: string
+): string | null {
+  const parts: string[] = [];
   if (scenario) {
     if (scenario.use_case) parts.push(`uc=${scenario.use_case}`);
     if (scenario.command) parts.push(`cmd=${scenario.command}`);
@@ -109,15 +146,15 @@ export function traceComment(scenario, origin?) {
 }
 
 export function renderRequirementBlock(
-  req,
-  scenarios,
-  packDir,
+  req: IdentifiedPackItem,
+  scenarios: PackItem[] | null | undefined,
+  packDir: string,
   t: Phrases,
   readSteps: ReadSteps,
-  opts?
-) {
-  const o = opts || {};
-  const out = [];
+  opts?: RequirementBlockOptions
+): string {
+  const o: RequirementBlockOptions = opts || {};
+  const out: string[] = [];
   out.push(`### Requirement: ${req.id} — ${req.title || req.id}`);
   out.push("");
 
@@ -175,25 +212,29 @@ export function derivePackDelta(
   packId: string,
   t: Phrases,
   readSteps: ReadSteps,
-  opts?
-) {
+  opts?: { origin?: string }
+): DerivedPackDelta {
   const options = opts || {};
 
-  const oldReqs = oldPack ? requirementsById(oldPack.model) : new Map();
+  const oldReqs = oldPack ? requirementsById(oldPack.model) : new Map<string, IdentifiedPackItem>();
   const newReqs = requirementsById(newPack.model);
-  const oldScenarios = oldPack ? scenariosByRequirement(oldPack.model) : new Map();
+  const oldScenarios = oldPack
+    ? scenariosByRequirement(oldPack.model)
+    : new Map<string, PackItem[]>();
   const newScenarios = scenariosByRequirement(newPack.model);
 
-  const added = [];
-  const modified = [];
-  const removed = [];
+  type Entry = { req: IdentifiedPackItem; scenarios: PackItem[] };
+  const added: Entry[] = [];
+  const modified: Entry[] = [];
+  const removed: Entry[] = [];
 
   for (const [id, req] of newReqs) {
     if (!oldReqs.has(id)) {
       added.push({ req, scenarios: newScenarios.get(id) || [] });
       continue;
     }
-    const before = requirementFingerprint(oldReqs.get(id), oldScenarios.get(id) || []);
+    // Non-null: `oldReqs.has(id)` was checked just above.
+    const before = requirementFingerprint(oldReqs.get(id)!, oldScenarios.get(id) || []);
     const after = requirementFingerprint(req, newScenarios.get(id) || []);
     if (before !== after) modified.push({ req, scenarios: newScenarios.get(id) || [] });
   }
@@ -215,7 +256,7 @@ export function derivePackDelta(
     lines.push("## Purpose", "", String(purpose), "");
   }
 
-  const section = (heading, entries, blockOpts?) => {
+  const section = (heading: string, entries: Entry[], blockOpts?: RequirementBlockOptions) => {
     if (entries.length === 0) return;
     lines.push(`## ${heading}`, "");
     for (const entry of entries) {
@@ -251,7 +292,7 @@ export function derivePackDelta(
 
 // ── The proposal ──────────────────────────────────────────────────────────────
 
-export function changeIdFor(packId, fromVersion, toVersion) {
+export function changeIdFor(packId: string, _fromVersion: string, toVersion: string): string {
   /**
    * Slugify in one pass, with no quantifier over the whole string.
    *
@@ -261,7 +302,7 @@ export function changeIdFor(packId, fromVersion, toVersion) {
    * thing and cannot backtrack, and a change id is short enough that the
    * explicit version reads better anyway.
    */
-  const slug = (v) => {
+  const slug = (v: unknown) => {
     const out: string[] = [];
     for (const ch of String(v)) {
       const keep =
@@ -278,9 +319,14 @@ export function changeIdFor(packId, fromVersion, toVersion) {
   return `upgrade-${slug(packId.split("/").pop())}-${slug(toVersion)}`;
 }
 
-export function renderProposal(entry, targetVersion, summary, t: Phrases) {
+export function renderProposal(
+  entry: PackEntry,
+  targetVersion: string,
+  summary: PackDeltaSummary,
+  t: Phrases
+): string {
   const count = summary.added.length + summary.modified.length + summary.removed.length;
-  const list = (label, ids) =>
+  const list = (label: string, ids: string[]) =>
     ids.length === 0 ? "" : `\n### ${label}\n\n${ids.map((id) => `- ${id}`).join("\n")}\n`;
 
   return `# Proposal: upgrade ${entry.pack_id} to ${targetVersion}
@@ -310,7 +356,7 @@ trabajo de \`specops sync\`.
 `;
 }
 
-export function renderTasks(entry, targetVersion) {
+export function renderTasks(entry: PackEntry, targetVersion: string): string {
   return `# Tasks
 
 ## 1. Review

@@ -10,6 +10,7 @@
  */
 
 import { resolveProjectDir } from "../lib/project-root";
+import { errorMessage } from "../lib/diagnostics";
 import { DiskLockfileRepository } from "../../packages/core/src/infrastructure/DiskLockfileRepository";
 import { RemovePackUseCase } from "../../packages/core/src/application/RemovePackUseCase";
 import { Lockfile } from "../../packages/core/src/domain/Lockfile";
@@ -38,7 +39,7 @@ function usage() {
   );
 }
 
-export function parseArgs(argv) {
+export function parseArgs(argv: string[]): SpecopsRemoveOptions {
   const opts: SpecopsRemoveOptions = { packId: null, projectDir: ".", dryRun: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -75,7 +76,7 @@ export class RemoveCommand extends BaseCommand {
     try {
       projectDir = resolveProjectDir(opts.projectDir, { requireSentinel: true });
     } catch (err) {
-      process.stderr.write(`${err.message}\n`);
+      process.stderr.write(`${errorMessage(err)}\n`);
       process.exit(2);
     }
 

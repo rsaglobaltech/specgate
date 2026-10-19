@@ -27,7 +27,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { parseYamlLite } from "../domain/YamlLite";
+import { YamlDocument, parseYamlLite } from "../domain/YamlLite";
 import { HarnessSettings } from "../domain/HarnessConfig";
 
 export const HARNESS_CONFIG_FILE = "harness.config.yaml";
@@ -61,7 +61,22 @@ const KNOWN_KEYS = new Set([
   "adversary_profile",
 ]);
 
-export function readHarnessConfig(projectDir) {
+/**
+ * One entry of `.harness/profiles.yaml`, as far as the readers below look.
+ * Every field is `unknown` because each reader decides for itself what a bad
+ * value means — fatal for `agent`, ignored for `cost_per_run_hint`.
+ */
+interface HarnessProfile {
+  agent?: unknown;
+  match?: unknown;
+  cost_per_run_hint?: unknown;
+  advisory?: unknown;
+}
+
+/** The `profiles:` mapping of `.harness/profiles.yaml`, by profile name. */
+type HarnessProfiles = Record<string, HarnessProfile | null | undefined>;
+
+export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> | null {
   const filePath = path.join(projectDir, HARNESS_CONFIG_FILE);
   if (!fs.existsSync(filePath)) return null;
 
@@ -230,7 +245,7 @@ export function readHarnessConfig(projectDir) {
 /**
  * Resolve a named profile from `.harness/profiles.yaml` to its agent command.
  */
-export function resolveProfileAgent(projectDir, profileName) {
+export function resolveProfileAgent(projectDir: string, profileName: string): string {
   const profilesPath = path.join(projectDir, ".harness", "profiles.yaml");
   if (!fs.existsSync(profilesPath)) {
     throw new Error(
@@ -240,7 +255,7 @@ export function resolveProfileAgent(projectDir, profileName) {
     );
   }
   const doc = parseYamlLite(fs.readFileSync(profilesPath, "utf8")) || {};
-  const profiles = doc.profiles || {};
+  const profiles = (doc.profiles || {}) as HarnessProfiles;
   const profile = profiles[profileName];
   if (!profile || !profile.agent) {
     const available = Object.keys(profiles);
@@ -296,7 +311,7 @@ export function resolveHarnessSettings(
 }
 
 /** A YAML value that must be a list of names. */
-function asStringList(value, key: string): string[] {
+function asStringList(value: unknown, key: string): string[] {
   if (!Array.isArray(value)) {
     throw new Error(
       `${HARNESS_CONFIG_FILE}: ${key} must be a list of profile names.\n` +
@@ -330,11 +345,11 @@ function asStringList(value, key: string): string[] {
  * file swallow every requirement the moment somebody adds a rule to another.
  */
 export function readProfileRules(
-  projectDir
+  projectDir: string
 ): Array<{ name: string; match: Record<string, string> }> {
   const profilesPath = path.join(projectDir, ".harness", "profiles.yaml");
   if (!fs.existsSync(profilesPath)) return [];
-  let doc;
+  let doc: YamlDocument;
   try {
     doc = parseYamlLite(fs.readFileSync(profilesPath, "utf8")) || {};
   } catch {
@@ -342,7 +357,7 @@ export function readProfileRules(
   }
 
   const rules: Array<{ name: string; match: Record<string, string> }> = [];
-  for (const [name, profile] of Object.entries((doc.profiles || {}) as Record<string, any>)) {
+  for (const [name, profile] of Object.entries((doc.profiles || {}) as HarnessProfiles)) {
     const match = profile && profile.match;
     if (!match || typeof match !== "object" || Array.isArray(match)) continue;
     const criteria: Record<string, string> = {};
@@ -352,27 +367,27 @@ export function readProfileRules(
   return rules;
 }
 
-export function readCostHints(projectDir): Record<string, number> {
+export function readCostHints(projectDir: string): Record<string, number> {
   const profilesPath = path.join(projectDir, ".harness", "profiles.yaml");
   if (!fs.existsSync(profilesPath)) return {};
-  let doc;
+  let doc: YamlDocument;
   try {
     doc = parseYamlLite(fs.readFileSync(profilesPath, "utf8")) || {};
   } catch {
     return {};
   }
   const hints: Record<string, number> = {};
-  for (const [name, profile] of Object.entries((doc.profiles || {}) as Record<string, any>)) {
+  for (const [name, profile] of Object.entries((doc.profiles || {}) as HarnessProfiles)) {
     const value = Number(profile && profile.cost_per_run_hint);
     if (Number.isFinite(value) && value >= 0) hints[name] = value;
   }
   return hints;
 }
 
-function isAdvisoryProfile(projectDir, profileName): boolean {
+function isAdvisoryProfile(projectDir: string, profileName: string): boolean {
   const profilesPath = path.join(projectDir, ".harness", "profiles.yaml");
   const doc = parseYamlLite(fs.readFileSync(profilesPath, "utf8")) || {};
-  const profile = ((doc.profiles || {}) as Record<string, any>)[profileName];
+  const profile = ((doc.profiles || {}) as HarnessProfiles)[profileName];
   return Boolean(profile && profile.advisory === true);
 }
 

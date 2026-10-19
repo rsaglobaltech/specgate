@@ -11,6 +11,7 @@ import {
   CONFLICT_OUTCOMES,
   MergeFn,
   OUTCOME_LABEL,
+  ReconcileOutcome,
   reconcile,
 } from "../../src/domain/Reconciliation";
 
@@ -88,7 +89,7 @@ test("every conflict outcome is labelled, and labelled as a conflict", () => {
   for (const outcome of CONFLICT_OUTCOMES) {
     assert.match(OUTCOME_LABEL[outcome], /CONFLICT/, `${outcome} should read as a conflict`);
   }
-  for (const outcome of Object.keys(OUTCOME_LABEL)) {
+  for (const outcome of Object.keys(OUTCOME_LABEL) as ReconcileOutcome[]) {
     assert.ok(OUTCOME_LABEL[outcome], `${outcome} has no label`);
   }
 });

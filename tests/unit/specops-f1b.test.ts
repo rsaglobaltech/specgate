@@ -26,10 +26,10 @@ const ROOT_DIR = require("node:path").resolve(
 );
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
-const cleanup = (...dirs) =>
+const cleanup = (...dirs: (string | undefined)[]) =>
   dirs.forEach((d) => d && fs.rmSync(d, { recursive: true, force: true }));
 
-function git(args, cwd) {
+function git(args: string[], cwd?: string): string {
   const r = spawnSync("git", args, { cwd, encoding: "utf8" });
   if (r.status !== 0) throw new Error(`git ${args.join(" ")}: ${r.stderr || r.stdout}`);
   return r.stdout;
@@ -55,7 +55,14 @@ const PACK_MODEL = {
 
 const ENTRY = { pack_id: "parking/backend", version: "v0.1.0", repo: "https://x/y.git" };
 
-const row = (over) => ({
+/** The fields of a drift diagnostic these tests read. */
+interface Diagnostic {
+  code: string;
+  severity: string;
+  message: string;
+}
+
+const row = (over: Record<string, string>) => ({
   requirement: "REQ-001",
   scenarioId: "SCN-001",
   featureFile: "`features/capacity/threshold.feature`",
@@ -75,14 +82,14 @@ test("a project honouring the pack reports no drift", () => {
     row({ requirement: "REQ-002", scenarioId: "-", featureFile: "-" }),
   ]);
   assert.deepEqual(
-    diags.filter((d) => d.severity === "error"),
+    diags.filter((d: Diagnostic) => d.severity === "error"),
     []
   );
 });
 
 test("a pack requirement absent from the matrix is drift, with a fix", () => {
   const diags = checkPackAgainstProject(PACK_MODEL, ENTRY, [row({})]);
-  const d = diags.find((x) => x.code === "pack_requirement_missing");
+  const d = diags.find((x: Diagnostic) => x.code === "pack_requirement_missing");
   assert.ok(d);
   assert.equal(d.target, "REQ-002");
   assert.match(d.fix, /specops sync/);
@@ -93,7 +100,7 @@ test("a requirement pointing at a different scenario is drift", () => {
     row({ scenarioId: "SCN-999" }),
     row({ requirement: "REQ-002", scenarioId: "-", featureFile: "-" }),
   ]);
-  const d = diags.find((x) => x.code === "pack_requirement_drifted");
+  const d = diags.find((x: Diagnostic) => x.code === "pack_requirement_drifted");
   assert.ok(d);
   assert.match(d.message, /SCN-999/);
   assert.match(d.fix, /--as-change/);
@@ -104,7 +111,11 @@ test("a requirement pointing at a different feature file is drift", () => {
     row({ featureFile: "`features/other/thing.feature`" }),
     row({ requirement: "REQ-002", scenarioId: "-", featureFile: "-" }),
   ]);
-  assert.ok(diags.some((d) => d.code === "pack_requirement_drifted" && /feature/.test(d.message)));
+  assert.ok(
+    diags.some(
+      (d: Diagnostic) => d.code === "pack_requirement_drifted" && /feature/.test(d.message)
+    )
+  );
 });
 
 test("backticks in the matrix do not read as drift", () => {
@@ -117,11 +128,11 @@ test("backticks in the matrix do not read as drift", () => {
     row({ requirement: "REQ-002", scenarioId: "-", featureFile: "-" }),
   ]);
   assert.deepEqual(
-    withBackticks.filter((d) => d.severity === "error"),
+    withBackticks.filter((d: Diagnostic) => d.severity === "error"),
     []
   );
   assert.deepEqual(
-    without.filter((d) => d.severity === "error"),
+    without.filter((d: Diagnostic) => d.severity === "error"),
     []
   );
 });
@@ -133,10 +144,10 @@ test("local requirements are reported as info, never as drift", () => {
     row({ requirement: "REQ-050", scenarioId: "SCN-050", featureFile: "-" }),
   ]);
   assert.deepEqual(
-    diags.filter((d) => d.severity === "error"),
+    diags.filter((d: Diagnostic) => d.severity === "error"),
     []
   );
-  const local = diags.find((d) => d.code === "local_requirements");
+  const local = diags.find((d: Diagnostic) => d.code === "local_requirements");
   assert.ok(local);
   assert.equal(local.severity, "info");
   assert.match(local.target, /REQ-050/);
@@ -242,9 +253,9 @@ test(
 
 // ── packs that ship changes ───────────────────────────────────────────────────
 
-function mkPackWithChanges(root, packId) {
+function mkPackWithChanges(root: string, packId: string) {
   const base = path.join(root, packId, "changes");
-  const write = (rel, contents) => {
+  const write = (rel: string, contents: string) => {
     const full = path.join(base, rel);
     fs.mkdirSync(path.dirname(full), { recursive: true });
     fs.writeFileSync(full, contents, "utf8");

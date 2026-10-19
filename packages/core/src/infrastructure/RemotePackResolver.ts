@@ -24,11 +24,11 @@ import { spawnSync } from "node:child_process";
 export const DEFAULT_CACHE_DIR = path.join(os.homedir(), ".cache", "specgate", "packs");
 const GIT_TIMEOUT_MS = 60_000;
 
-export function repoHash(repo) {
+export function repoHash(repo: string): string {
   return crypto.createHash("sha256").update(String(repo)).digest("hex").slice(0, 16);
 }
 
-export function safeVersionDir(version) {
+export function safeVersionDir(version: string): string {
   return String(version).replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
@@ -60,18 +60,33 @@ export function gitAvailable() {
 }
 
 /** Offline mode: opt-in via option or the SPECGATE_OFFLINE env var (CI-friendly). */
-function isOffline(opts) {
+function isOffline(opts: { offline?: boolean }): boolean {
   if (typeof opts.offline === "boolean") return opts.offline;
   const env = process.env.SPECGATE_OFFLINE;
   return env === "1" || env === "true";
 }
 
-/**
- * @param {{ repo: string, version: string, cacheDir?: string, force?: boolean, offline?: boolean }} options
- * @returns {{ packRoot: string, commit: string, version: string, cached: boolean }}
- */
-export function resolveRemotePack(options) {
-  const opts = options || {};
+/** What `resolveRemotePack` needs. `repo` and `version` are checked, not assumed. */
+export interface ResolveRemotePackOptions {
+  repo?: string;
+  version?: string;
+  cacheDir?: string;
+  force?: boolean;
+  offline?: boolean;
+}
+
+/** A pack checked out in the local cache. */
+export interface ResolvedPack {
+  packRoot: string;
+  commit: string;
+  version: string;
+  cached: boolean;
+}
+
+export function resolveRemotePack(
+  options: ResolveRemotePackOptions | null | undefined
+): ResolvedPack {
+  const opts: ResolveRemotePackOptions = options || {};
   if (!opts.repo) throw new Error("resolveRemotePack: 'repo' is required");
   if (!opts.version) throw new Error("resolveRemotePack: 'version' is required");
   if (!gitAvailable()) throw new Error("resolveRemotePack: 'git' is not available on PATH");
@@ -124,12 +139,11 @@ export function resolveRemotePack(options) {
  * Create a single-file git bundle of a pack repository (all refs and tags),
  * transportable into air-gapped environments. The bundle is a valid clone
  * source, so `--pack-repo /path/to/pack.bundle` works everywhere a URL does.
- *
- * @param {{ repo: string, out: string, tmpDir?: string }} options
- * @returns {{ out: string, refs: string[] }}
  */
-export function createPackBundle(options) {
-  const opts = options || {};
+export function createPackBundle(
+  options: { repo?: string; out?: string; tmpDir?: string } | null | undefined
+): { out: string; refs: string[] } {
+  const opts: { repo?: string; out?: string; tmpDir?: string } = options || {};
   if (!opts.repo) throw new Error("createPackBundle: 'repo' is required");
   if (!opts.out) throw new Error("createPackBundle: 'out' is required");
   if (!gitAvailable()) throw new Error("createPackBundle: 'git' is not available on PATH");

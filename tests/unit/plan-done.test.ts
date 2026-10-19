@@ -8,11 +8,11 @@
  * covered in tests/cli.test.ts.
  */
 
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
+import { test } from "node:test";
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
 
 const { parseTraceability, classify, hintFor, detectOrphans } = require("../../scripts/plan");
 const { setRequirementStatus, ALLOWED_STATUSES } = require("../../scripts/done");
@@ -30,7 +30,18 @@ function mkProject() {
   return dir;
 }
 
-function richRow(req, scn, feature, useCase, cmd, agg, evt, tech, test, status) {
+function richRow(
+  req: string,
+  scn: string,
+  feature: string,
+  useCase: string,
+  cmd: string,
+  agg: string,
+  evt: string,
+  tech: string,
+  test: string,
+  status: string
+): string {
   return `| ${req} | ${scn} | ${feature} | ${useCase} | ${cmd} | ${agg} | ${evt} | ${tech} | ${test} | ${status} |`;
 }
 

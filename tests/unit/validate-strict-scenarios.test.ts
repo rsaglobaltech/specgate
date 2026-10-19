@@ -22,16 +22,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const REPO_ROOT = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI = path.join(REPO_ROOT, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8" });
-}
+import { cli } from "../helpers/cli";
 
 /** A scaffolded project, which is the only kind that validates clean to start with. */
 function scaffold() {
@@ -42,14 +33,17 @@ function scaffold() {
 }
 
 /** Rewrite the project's own feature with upper-case keywords — H14 in one line. */
-function shoutTheKeywords(projectDir) {
+function shoutTheKeywords(projectDir: string) {
   const file = path.join(projectDir, "features", "core", "health.feature");
   assert.ok(fs.existsSync(file), "the scaffold no longer ships features/core/health.feature");
   fs.writeFileSync(
     file,
     fs
       .readFileSync(file, "utf8")
-      .replace(/^(\s*)(Given|When|Then|And) /gm, (_m, pad, kw) => `${pad}${kw.toUpperCase()} `),
+      .replace(
+        /^(\s*)(Given|When|Then|And) /gm,
+        (_m: string, pad: string, kw: string) => `${pad}${kw.toUpperCase()} `
+      ),
     "utf8"
   );
   return file;

@@ -37,7 +37,9 @@ test("computeFixes appends a row for an orphan feature file", () => {
     assert.equal(actions.length, 1);
     assert.match(actions[0], /orphan\.feature/);
     const rows = parseTraceability(content);
-    assert.ok(rows.some((r) => r.featureFile === "features/core/orphan.feature"));
+    assert.ok(
+      rows.some((r: { featureFile: string }) => r.featureFile === "features/core/orphan.feature")
+    );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -53,7 +55,7 @@ test("computeFixes appends a row for a spec REQ missing from the matrix", () => 
     const { content, actions } = computeFixes(dir, trace, "# Spec\nREQ-001 and REQ-002 here.\n");
     assert.equal(actions.length, 1);
     assert.match(actions[0], /REQ-002/);
-    const ids = parseTraceability(content).map((r) => r.requirement);
+    const ids = parseTraceability(content).map((r: { requirement: string }) => r.requirement);
     assert.ok(ids.includes("REQ-002"));
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

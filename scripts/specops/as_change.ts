@@ -16,6 +16,23 @@ import {
   materialiseChange as writeChange,
 } from "../../packages/core/src/infrastructure/DiskPackDeltaRepository";
 import { derivePackDelta } from "../../packages/core/src/domain/PackDelta";
+import type { DerivedPackDelta } from "../../packages/core/src/domain/PackDelta";
+import type { PackEntry } from "../../packages/core/src/domain/Lockfile";
+
+/** What `deriveDelta` takes besides the two pack roots. */
+export interface DeriveDeltaOptions {
+  /** Whose language setting the generated prose follows. */
+  projectDir?: string;
+  /** Provenance stamped on each requirement, e.g. `pack:<id>@<version>`. */
+  origin?: string;
+}
+
+/** What `materialiseChange` takes besides the derived delta. */
+export interface MaterialiseOptions {
+  /** Overrides the id derived from the pack and the two versions. */
+  changeId?: string;
+  dryRun?: boolean;
+}
 
 export {
   requirementsById,
@@ -40,7 +57,12 @@ export {
  * @returns { capability, markdown, summary: {added[], modified[], removed[]} }
  *          `markdown` is null when nothing behavioural changed.
  */
-export function deriveDelta(oldPackRoot, newPackRoot, packId, opts?) {
+export function deriveDelta(
+  oldPackRoot: string | null,
+  newPackRoot: string,
+  packId: string,
+  opts?: DeriveDeltaOptions
+) {
   const options = opts || {};
   const oldPack = oldPackRoot ? loadPackModel(oldPackRoot, packId) : null;
   const newPack = loadPackModel(newPackRoot, packId);
@@ -58,6 +80,12 @@ export function deriveDelta(oldPackRoot, newPackRoot, packId, opts?) {
  * Materialise the derived delta as a change folder. Returns the list of files
  * written (or that would be written, when `dryRun`).
  */
-export function materialiseChange(projectDir, entry, targetVersion, derived, opts?) {
+export function materialiseChange(
+  projectDir: string,
+  entry: PackEntry,
+  targetVersion: string,
+  derived: DerivedPackDelta & { markdown: string },
+  opts?: MaterialiseOptions
+) {
   return writeChange(projectDir, entry, targetVersion, derived, phrases(projectDir), opts);
 }

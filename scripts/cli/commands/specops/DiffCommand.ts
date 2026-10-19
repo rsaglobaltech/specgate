@@ -18,21 +18,24 @@ import { spawnSync } from "node:child_process";
 import { BaseCommand } from "../../../lib/command";
 
 import { readLock } from "../../../specops/lock";
+import type { LockJson } from "../../../specops/lock";
+import type { PackEntry } from "../../../../packages/core/src/domain/Lockfile";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { resolveRemotePack } from "../../../../packages/core/src/infrastructure/RemotePackResolver";
 import { deriveDelta, materialiseChange } from "../../../specops/as_change";
 import { diffDirs } from "../../../../packages/core/src/infrastructure/DirectorySnapshot";
+import type { FileChangeSet } from "../../../../packages/core/src/domain/FileChangeSet";
 import type { Diagnostic } from "../../../lib/diagnostics";
-import { agentIo } from "../../../lib/agent";
+import { agentIo, AgentIo } from "../../../lib/agent";
 import * as ui from "../../../lib/ui";
 
 // Three levels up from dist/scripts/cli/commands/specops is dist/scripts.
 const EXPAND_SCRIPT = path.join(__dirname, "..", "..", "..", "expand_domain_pack.js");
 
-function info(msg) {
+function info(msg: string): void {
   process.stdout.write(ui.logLine(msg));
 }
-function error(msg) {
+function error(msg: string): void {
   process.stderr.write(ui.fail(msg));
 }
 
@@ -54,8 +57,49 @@ function usage() {
   );
 }
 
-export function parseArgs(argv) {
-  const args = {
+/** Parsed command-line options for this command. */
+export interface DiffArgs {
+  projectDir: string;
+  pack: string;
+  packVersion: string;
+  cacheDir: string;
+  format: string;
+  asChange: boolean;
+  dryRun: boolean;
+  /** `--var KEY=VALUE`, repeatable. */
+  vars: Record<string, string>;
+}
+
+/** One pack's outcome under `--as-change`. */
+interface AsChangeResultBase {
+  packId: string;
+  currentVersion: string;
+  targetVersion: string;
+  summary: { added: string[]; modified: string[]; removed: string[] };
+}
+
+/** Nothing behavioural changed between the two versions. */
+interface NoChangeResult extends AsChangeResultBase {
+  change: null;
+  message: string;
+}
+
+/** A change folder was written, or would be on a dry run. */
+interface ChangeWrittenResult extends AsChangeResultBase {
+  change: string;
+  files: string[];
+  dryRun: boolean;
+}
+
+type AsChangeResult = NoChangeResult | ChangeWrittenResult;
+
+/** A result with a change id wrote (or would write) a change folder. */
+function wroteChange(r: AsChangeResult): r is ChangeWrittenResult {
+  return Boolean(r.change);
+}
+
+export function parseArgs(argv: string[]): DiffArgs {
+  const args: DiffArgs = {
     projectDir: ".",
     pack: "",
     packVersion: "",
@@ -120,7 +164,13 @@ export function parseArgs(argv) {
   return args;
 }
 
-export function buildExpandArgs(entry, version, tmpDir, cacheDir, extraVars = {}) {
+export function buildExpandArgs(
+  entry: PackEntry,
+  version: string,
+  tmpDir: string,
+  cacheDir: string,
+  extraVars: Record<string, string> = {}
+): string[] {
   const out = [
     "--pack-repo",
     entry.repo,
@@ -141,7 +191,7 @@ export function buildExpandArgs(entry, version, tmpDir, cacheDir, extraVars = {}
   return out;
 }
 
-function printChanges(entry, version, changes) {
+function printChanges(entry: PackEntry, version: string, changes: FileChangeSet): void {
   const header = `── ${entry.pack_id} @ ${version}${
     version !== entry.version ? ` (current: ${entry.version})` : ""
   } ──`;
@@ -166,8 +216,8 @@ function printChanges(entry, version, changes) {
  * only reformats templates yields no deltas, which is the property that makes
  * this more useful than the file diff rather than noisier than it.
  */
-export function runAsChange(args, projectDir, lock) {
-  const results = [];
+export function runAsChange(args: DiffArgs, projectDir: string, lock: LockJson): void {
+  const results: AsChangeResult[] = [];
   let matched = 0;
 
   for (const entry of lock.packs) {
@@ -216,7 +266,9 @@ export function runAsChange(args, projectDir, lock) {
       continue;
     }
 
-    const written = materialiseChange(projectDir, entry, targetVersion, derived, {
+    // `markdown` is a string past the check above; the copy carries that type.
+    const delta = { ...derived, markdown: derived.markdown };
+    const written = materialiseChange(projectDir, entry, targetVersion, delta, {
       dryRun: args.dryRun,
     });
     results.push({
@@ -242,11 +294,11 @@ export function runAsChange(args, projectDir, lock) {
   }
 
   for (const r of results) {
-    const header = `── ${r.pack_id} @ ${r.target_version}${
-      r.target_version !== r.current_version ? ` (current: ${r.current_version})` : ""
+    const header = `── ${r.packId} @ ${r.targetVersion}${
+      r.targetVersion !== r.currentVersion ? ` (current: ${r.currentVersion})` : ""
     } ──`;
     process.stdout.write(`\n${header}\n`);
-    if (!r.change) {
+    if (!wroteChange(r)) {
       process.stdout.write(`  ${r.message}\n`);
       continue;
     }
@@ -273,18 +325,22 @@ export class DiffCommand extends BaseCommand {
     let args;
     try {
       args = parseArgs(this.args);
-    } catch (err: any) {
+    } catch (err) {
       // parseArgs doesn't know about format, default to assuming json if --json is passed
-      const io = agentIo(
+      const io: AgentIo = agentIo(
         this.args.includes("--json") ||
           (this.args.includes("--format") && this.args.includes("json"))
       );
       return io.fail({ changes: null }, [
-        { severity: "error", code: "specops_diff_usage", message: err.message || String(err) },
+        {
+          severity: "error",
+          code: "specops_diff_usage",
+          message: (err as Error).message || String(err),
+        },
       ]);
     }
 
-    const io = agentIo(args.format === "json");
+    const io: AgentIo = agentIo(args.format === "json");
     try {
       const projectDir = resolveProjectDir(args.projectDir);
       const lock = readLock(projectDir);
@@ -371,9 +427,13 @@ export class DiffCommand extends BaseCommand {
       } else {
         info(`Diff completed for ${matched} pack(s).`);
       }
-    } catch (err: any) {
+    } catch (err) {
       return io.fail({ changes: null }, [
-        { severity: "error", code: "specops_diff_error", message: err.message || String(err) },
+        {
+          severity: "error",
+          code: "specops_diff_error",
+          message: (err as Error).message || String(err),
+        },
       ]);
     }
   }

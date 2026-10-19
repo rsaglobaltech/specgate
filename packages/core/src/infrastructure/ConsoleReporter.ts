@@ -7,10 +7,10 @@
  * command layer share one definition.
  */
 
-export function logInfo(message) {
+export function logInfo(message: string): void {
   process.stdout.write(`  ℹ  ${message}\n`);
 }
 
-export function logError(message) {
+export function logError(message: string): void {
   process.stderr.write(`  ✖  ${message}\n`);
 }

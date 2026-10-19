@@ -37,7 +37,8 @@ export interface PlanSummary {
 
 export interface RawMatrixRow {
   mode?: string;
-  requirement?: string;
+  /** Null for a legacy row whose cells name no requirement. */
+  requirement?: string | null;
   scenarioId?: string;
   featureFile?: string;
   useCase?: string;

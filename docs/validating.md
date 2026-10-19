@@ -103,7 +103,7 @@ nothing yet, so `--strict-tdd` skips it and the run reports how many it skipped:
 ```
 
 A row starts being checked the moment its `Status` leaves `Draft`, which
-`specgate done <REQ>` does. If you want the stricter reading — every declared
+`specgate apply <REQ>` does. If you want the stricter reading — every declared
 scenario proved, whatever the status — that is `--strict-coverage` below.
 
 ```bash
@@ -138,7 +138,7 @@ failing because a release shipped a heuristic.
 
 `--strict-tdd` is in addition to the normal checks. It is intended for "no contract without a test" gates — particularly useful in `contracts` packs (see §8). Wire it into CI exactly like `validate`, just append the flag.
 
-> A requirement that is not going to be delivered is `Deprecated` (`specgate done REQ-NNN --status Deprecated`): it owes nothing, and `--strict-tdd` skips it. One not started yet simply stays `Draft`.
+> A requirement that is not going to be delivered is `Deprecated` (`specgate apply REQ-NNN --status Deprecated`): it owes nothing, and `--strict-tdd` skips it. One not started yet simply stays `Draft`.
 
 ## The other three gates
 
@@ -198,7 +198,7 @@ a plain Scenario, which is what `specgate new` writes for you to fill in. The
 three rules that make a suite report a pass it never ran — no steps, a keyword
 in the wrong case, an Outline with no Examples — apply to every row.
 
-`specgate done REQ-NNN --check` and `harness run` hold the requirement they are
+`specgate apply REQ-NNN --check` and `harness run` hold the requirement they are
 closing to that rule before its status flips — otherwise they would skip the
 one requirement they are about to mark `Implemented`.
 
@@ -251,14 +251,15 @@ grammars it does not parse.
 Three routes, and only one of them needed a new command:
 
 1. **Fix the code** — the report already gives `file:line`. Open it.
-2. **Update the spec** — `specgate change new <id> --from-value-drift REQ-ID:value_id`
+2. **Update the spec** — `specgate propose <id> --from-value-drift REQ-ID:value_id`
    writes the delta: the full requirement copied into a `## MODIFIED
    Requirements` section with `value_<id>` rewritten to the code's value.
    **The prose is not rewritten** — turning "expires after 15 minutes" into
    "after 30" would be guessing how a sentence should sound on someone's
    behalf, so it leaves an explicit `TODO:` instead. Review it, then
-   `specgate change validate` and `specgate change archive` as usual.
-3. **Retire the requirement** — already `specgate change new <id> --capability <cap>`
+   `specgate change validate`, `specgate apply` the requirement against the new
+   value, and `specgate archive <id>` once it is Implemented.
+3. **Retire the requirement** — already `specgate propose <id> --capability <cap>`
    with a `## REMOVED Requirements` section. The removal mechanism does not
    care why something is removed.
 

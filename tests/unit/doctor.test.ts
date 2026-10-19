@@ -6,23 +6,12 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
+import { ROOT_DIR, cliFromRoot as cli } from "../helpers/cli";
 
 const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], {
-    cwd: ROOT_DIR,
-    encoding: "utf8",
-  });
-}
-
-function makeHealthyProject(tmp) {
+function makeHealthyProject(tmp: string): string {
   const dir = path.join(tmp, "project");
   fs.mkdirSync(path.join(dir, "features"), { recursive: true });
   fs.mkdirSync(path.join(dir, "docs", "specs", "adr"), { recursive: true });
@@ -50,7 +39,7 @@ function makeHealthyProject(tmp) {
   return dir;
 }
 
-function withProject(fn) {
+function withProject<T>(fn: (dir: string, tmp: string) => T): T {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-doctor-"));
   try {
     return fn(makeHealthyProject(tmp), tmp);
@@ -147,7 +136,7 @@ test("doctor flags a corrupt .specops.lock", () => {
  * Built on makeHealthyProject because `doctor` stops at the first structural
  * error — a minimal fixture never reaches this check.
  */
-function withSampleReq(fn, opts?: { row?: string; lock?: boolean }) {
+function withSampleReq<T>(fn: (dir: string) => T, opts?: { row?: string; lock?: boolean }) {
   return withProject((dir) => {
     fs.mkdirSync(path.join(dir, "features", "core"), { recursive: true });
     fs.writeFileSync(
@@ -231,7 +220,7 @@ function shippedCodeDirs(): string[] {
     .filter((entry) => entry === "bin" || entry.startsWith("dist/"));
 }
 
-function installLayout(relative) {
+function installLayout(relative: string) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-layout-"));
   const pkgDir = path.join(root, ...relative.split("/"));
   fs.mkdirSync(pkgDir, { recursive: true });

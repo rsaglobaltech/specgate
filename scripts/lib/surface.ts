@@ -73,7 +73,7 @@ interface JsonContract {
   flag?: string;
 }
 
-interface Subcommand {
+export interface Subcommand {
   name: string;
   script?: string[];
   /**
@@ -111,7 +111,7 @@ interface Subcommand {
   editsContract?: boolean;
 }
 
-interface Command {
+export interface Command {
   name: string;
   script?: string[];
   subcommands?: Subcommand[];
@@ -343,8 +343,9 @@ export const SURFACE: Command[] = [
       icon: "📋",
       summary: "List requirements that still need a test or implementation.",
     },
-    // Not in the daily help: `status` lists the queue itself since phase 1 of
-    // mejoras/plan-simplificacion-equipo.md. `plan` keeps the full detail.
+    // Not in the daily help: `status` lists the queue itself, and the short help
+    // keeps to the four verbs (docs/specs/adr/0035-four-verbs-one-lifecycle.md).
+    // `plan` keeps the full detail.
     json: { key: "plan", gate: false },
     mcp: "plan",
   },
@@ -771,14 +772,36 @@ export const SURFACE: Command[] = [
 
 // ── Derived views ─────────────────────────────────────────────────────────────
 
+/** One row of the published agent-contract table. */
+export interface JsonContractRow {
+  command: string;
+  nullShapeKey: string;
+  gate: boolean;
+}
+
+/** One line of `--help`, under its group. */
+export interface HelpListing {
+  label: string;
+  icon: string;
+  summary: string;
+  order?: number;
+}
+
+/** A help group with the lines it lists. */
+export interface HelpSection {
+  group: string;
+  title: string;
+  rows: HelpListing[];
+}
+
 /** Every top-level command name, in declaration order. */
-export function commandNames() {
+export function commandNames(): string[] {
   return SURFACE.map((c) => c.name);
 }
 
 /** `{ command: [sub, …] }` for every command that dispatches further. */
-export function subcommandNames() {
-  const out = {};
+export function subcommandNames(): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
   for (const command of SURFACE) {
     if (command.subcommands) out[command.name] = command.subcommands.map((s) => s.name);
   }
@@ -790,9 +813,9 @@ export function subcommandNames() {
  * an agent types. `gen_agent_contract.ts` renders these straight into the
  * published table, so the string is the contract's own spelling.
  */
-export function jsonContractRows() {
-  const rows = [];
-  const push = (invocation, json) => {
+export function jsonContractRows(): JsonContractRow[] {
+  const rows: JsonContractRow[] = [];
+  const push = (invocation: string, json: JsonContract) => {
     const args = json.args ? ` ${json.args}` : "";
     const flag = json.flag || "--json";
     rows.push({
@@ -815,9 +838,9 @@ export function jsonContractRows() {
  * the help does. A row's label is `command` or `command sub`, which is why
  * the help can list `ci init` and `plan` side by side.
  */
-export function helpRows() {
-  const byGroup = new Map(HELP_GROUPS.map((g) => [g.id, []]));
-  const add = (label, help) => {
+export function helpRows(): HelpSection[] {
+  const byGroup = new Map(HELP_GROUPS.map((g) => [g.id, [] as HelpListing[]]));
+  const add = (label: string, help: HelpRow) => {
     const bucket = byGroup.get(help.group);
     if (!bucket) throw new Error(`surface: unknown help group '${help.group}' on '${label}'`);
     bucket.push({ label, icon: help.icon, summary: help.summary });
@@ -828,12 +851,13 @@ export function helpRows() {
       if (sub.help) add(`${command.name} ${sub.name}`, sub.help);
     }
   }
-  return HELP_GROUPS.map((g) => ({ group: g.id, title: g.title, rows: byGroup.get(g.id) }));
+  // Every group has its bucket: the map was built from this same list.
+  return HELP_GROUPS.map((g) => ({ group: g.id, title: g.title, rows: byGroup.get(g.id)! }));
 }
 
 /** The same, for the narrowed daily surface. */
-export function coreHelpRows() {
-  const byGroup = new Map(CORE_GROUPS.map((g) => [g.id, []]));
+export function coreHelpRows(): HelpSection[] {
+  const byGroup = new Map(CORE_GROUPS.map((g) => [g.id, [] as HelpListing[]]));
   for (const command of SURFACE) {
     if (!command.coreHelp) continue;
     const bucket = byGroup.get(command.coreHelp.group);
@@ -850,7 +874,7 @@ export function coreHelpRows() {
   for (const rows of byGroup.values()) {
     rows.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }
-  return CORE_GROUPS.map((g) => ({ group: g.id, title: g.title, rows: byGroup.get(g.id) }));
+  return CORE_GROUPS.map((g) => ({ group: g.id, title: g.title, rows: byGroup.get(g.id)! }));
 }
 
 /**
@@ -858,15 +882,15 @@ export function coreHelpRows() {
  * number `usage()` quotes when it points at `--help --all`. It was prose, and
  * prose does not recount itself when a command is added.
  */
-export function hiddenCommandCount() {
+export function hiddenCommandCount(): number {
   return SURFACE.filter((c) => !c.coreHelp).length;
 }
 
 /**
  * `{ toolName: "command" | "command sub" }` for every row an MCP tool fronts.
  */
-export function mcpTools() {
-  const out = {};
+export function mcpTools(): Record<string, string> {
+  const out: Record<string, string> = {};
   for (const command of SURFACE) {
     if (command.subcommands) {
       for (const sub of command.subcommands) {

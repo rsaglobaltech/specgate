@@ -11,11 +11,11 @@
 
 import * as path from "node:path";
 
-function toPosixPath(inputPath) {
+function toPosixPath(inputPath: string): string {
   return inputPath.replace(/\\/g, "/");
 }
 
-export function isSafeRelativePath(candidate) {
+export function isSafeRelativePath(candidate: unknown): boolean {
   if (!candidate || typeof candidate !== "string") return false;
   if (path.isAbsolute(candidate)) return false;
 
@@ -25,7 +25,7 @@ export function isSafeRelativePath(candidate) {
   return true;
 }
 
-function fail(message) {
+function fail(message: string): never {
   throw new Error(message);
 }
 /**
@@ -53,7 +53,7 @@ export const PACK_TIERS = ["proven", "starter"];
  * pre-release or build parts to handle, and this project ships no runtime
  * dependencies.
  */
-export function isNewerThan(a, b) {
+export function isNewerThan(a: string, b: string): boolean {
   const pa = String(a).split(".").map(Number);
   const pb = String(b).split(".").map(Number);
   for (let i = 0; i < 3; i++) {
@@ -62,6 +62,66 @@ export function isNewerThan(a, b) {
     if (x !== y) return x > y;
   }
   return false;
+}
+
+/**
+ * One entry of a pack collection — a requirement, use case, aggregate, event,
+ * scenario — as the validator reads it. Open, because each collection has its
+ * own fields and `schemas/pack.schema.json` is the authority on them; what is
+ * named here is what the rules below look at. Nothing in it is trusted until
+ * `validatePackModel` has checked it.
+ */
+export interface PackItem {
+  id?: string;
+  name?: string;
+  title?: string;
+  status?: string;
+  priority?: string;
+  description?: string;
+  depends_on?: string | string[];
+  /** Scenario fields: its name, its requirement, and the domain it touches. */
+  scenario?: string;
+  requirement_id?: string;
+  use_case?: string;
+  command?: string;
+  aggregate?: string;
+  events?: string | string[];
+  /** A scenario's rendered feature file and the template it comes from. */
+  target?: string;
+  template?: string;
+  [field: string]: unknown;
+}
+
+/**
+ * The parts of a `pack.yaml` that `validatePackModel` judges, typed as a valid
+ * pack would have them. A view over parsed YAML rather than a guarantee: the
+ * function exists to find the places where the file disagrees with this shape.
+ */
+export interface PackManifest {
+  schema_version?: string;
+  metadata?: {
+    name?: string;
+    version?: string;
+    language?: string;
+    project_type?: string;
+    tier?: string;
+    provenance?: string;
+    [key: string]: unknown;
+  };
+  variables?: { required?: string[]; [key: string]: unknown };
+  outputs?: { files?: Array<{ target?: string; template?: string }> };
+  rules?: { traceability?: { target?: string } };
+  requirements?: PackItem[];
+  bounded_contexts?: PackItem[];
+  business_rules?: PackItem[];
+  use_cases?: PackItem[];
+  commands?: PackItem[];
+  queries?: PackItem[];
+  aggregates?: PackItem[];
+  events?: PackItem[];
+  value_objects?: PackItem[];
+  scenarios?: PackItem[];
+  [key: string]: unknown;
 }
 
 export const ALLOWED_STATUSES = new Set([
@@ -79,20 +139,29 @@ export const ALLOWED_STATUSES = new Set([
 
 const ALLOWED_PRIORITIES = new Set(["Must", "Should", "Could", "Won't"]);
 
-export function asArray(value) {
+export function asArray<T>(value: T | T[] | null | undefined): T[] {
   if (Array.isArray(value)) return value;
   if (value === undefined || value === null || value === "") return [];
   return [value];
 }
 
-export function formatList(value, fallback = "-") {
+/**
+ * A pack section as a list of `T`: a lone value is a list of one. The YAML is
+ * not checked against `T` here — callers read the entries field by field and
+ * tolerate what is missing, which is what `T`'s optional fields say.
+ */
+export function sectionItems<T>(value: unknown): T[] {
+  return asArray(value) as T[];
+}
+
+export function formatList(value: unknown, fallback = "-"): string {
   const items = asArray(value)
     .map((item) => String(item).trim())
     .filter(Boolean);
   return items.length > 0 ? items.join(", ") : fallback;
 }
 
-export function entityLabel(entity, fallback = "-") {
+export function entityLabel(entity: PackItem | string | null | undefined, fallback = "-"): string {
   if (!entity) return fallback;
   if (typeof entity === "string") return entity;
   if (entity.id && entity.name) return `${entity.id} ${entity.name}`;
@@ -101,7 +170,7 @@ export function entityLabel(entity, fallback = "-") {
   return fallback;
 }
 
-export function hasStructuredDomainModel(pack) {
+export function hasStructuredDomainModel(pack: Record<string, unknown>): boolean {
   return [
     "requirements",
     "bounded_contexts",
@@ -113,6 +182,18 @@ export function hasStructuredDomainModel(pack) {
     "value_objects",
   ].some((key) => Array.isArray(pack[key]) && pack[key].length > 0);
 }
+/** The pack collections a reference can point into, by their `pack.yaml` key. */
+type RefCollection =
+  | "requirements"
+  | "bounded_contexts"
+  | "use_cases"
+  | "commands"
+  | "queries"
+  | "aggregates"
+  | "events"
+  | "value_objects"
+  | "business_rules";
+
 /**
  * Does this absolute path exist? Supplied by the caller so the rules below stay
  * free of `fs`; `DiskPackRepository.validatePackModel` passes the real disk check.
@@ -153,7 +234,11 @@ function assertNoDependencyCycle(dependsOn: Map<string, string[]>, fail: (m: str
   }
 }
 
-export function validatePackModel(pack, packRoot, templateExists: TemplateExists) {
+export function validatePackModel(
+  pack: PackManifest,
+  packRoot: string,
+  templateExists: TemplateExists
+): { requiredVars: string[] } {
   if (!pack || typeof pack !== "object" || Array.isArray(pack)) {
     fail("Invalid pack format. Root must be an object.");
   }
@@ -169,7 +254,8 @@ export function validatePackModel(pack, packRoot, templateExists: TemplateExists
   // Kept in step with the enum in schemas/pack.schema.json — the schema is the
   // authority, and the two disagreeing is what made `contracts` packs
   // scaffoldable but impossible to install.
-  if (!PACK_PROJECT_TYPES.includes(metadata.project_type)) {
+  // Non-null: the loop above refused a missing or non-string project_type.
+  if (!PACK_PROJECT_TYPES.includes(metadata.project_type!)) {
     fail(
       `metadata.project_type must be one of ${PACK_PROJECT_TYPES.join(", ")}. ` +
         `Found '${metadata.project_type}'.`
@@ -210,8 +296,8 @@ export function validatePackModel(pack, packRoot, templateExists: TemplateExists
     fail("outputs.files must contain at least one file definition.");
   }
 
-  const targets = new Set();
-  const refs = {
+  const targets = new Set<string>();
+  const refs: Record<RefCollection, Map<string, PackItem>> = {
     requirements: new Map(),
     bounded_contexts: new Map(),
     use_cases: new Map(),
@@ -223,7 +309,7 @@ export function validatePackModel(pack, packRoot, templateExists: TemplateExists
     business_rules: new Map(),
   };
 
-  function remember(collectionName, item, label) {
+  function remember(collectionName: RefCollection, item: PackItem, label: string) {
     if (!item || typeof item !== "object") {
       fail(`${collectionName} entries must be objects.`);
     }
@@ -246,36 +332,37 @@ export function validatePackModel(pack, packRoot, templateExists: TemplateExists
     }
   }
 
-  function hasRef(collectionName, ref) {
+  function hasRef(collectionName: RefCollection, ref: unknown) {
     if (!ref) return false;
     return refs[collectionName].has(String(ref));
   }
 
-  function assertRef(collectionName, ref, context) {
+  function assertRef(collectionName: RefCollection, ref: unknown, context: string) {
     if (!ref) return;
     if (!hasRef(collectionName, ref)) {
       fail(`${context} references unknown ${collectionName.slice(0, -1)} '${ref}'.`);
     }
   }
 
-  function assertRefs(collectionName, values, context) {
+  function assertRefs(collectionName: RefCollection, values: unknown, context: string) {
     for (const ref of asArray(values)) {
       assertRef(collectionName, ref, context);
     }
   }
 
-  function assertStatus(status, context) {
+  function assertStatus(status: string | undefined, context: string) {
     if (status !== undefined && !ALLOWED_STATUSES.has(status)) {
       fail(`${context} has invalid status '${status}'.`);
     }
   }
 
-  function assertTemplateExists(templatePath, context) {
+  function assertTemplateExists(templatePath: string | undefined, context: string) {
     if (!isSafeRelativePath(templatePath)) {
       fail(`${context} template path '${templatePath}' is invalid.`);
     }
 
-    const absolute = path.resolve(packRoot, templatePath);
+    // Non-null: isSafeRelativePath refused anything but a non-empty string.
+    const absolute = path.resolve(packRoot, templatePath!);
     if (!absolute.startsWith(packRoot)) {
       fail(`${context} template escapes pack root: ${templatePath}`);
     }
@@ -285,16 +372,18 @@ export function validatePackModel(pack, packRoot, templateExists: TemplateExists
     }
   }
 
-  function assertTarget(target, context) {
+  function assertTarget(target: string | undefined, context: string) {
     if (!isSafeRelativePath(target)) {
       fail(`${context} target path '${target}' is invalid.`);
     }
 
-    if (targets.has(target)) {
+    // Non-null: isSafeRelativePath refused anything but a non-empty string.
+    const safeTarget = target!;
+    if (targets.has(safeTarget)) {
       fail(`Duplicate target path detected: '${target}'.`);
     }
 
-    targets.add(target);
+    targets.add(safeTarget);
   }
 
   for (const fileDef of outputs.files) {
@@ -375,7 +464,7 @@ export function validatePackModel(pack, packRoot, templateExists: TemplateExists
   // the pack is already installed and an agent already paid for.
   const requirementIds = new Set(
     (Array.isArray(pack.requirements) ? pack.requirements : [])
-      .map((r) => r && r.id)
+      .map((r: PackItem) => r && r.id)
       .filter(Boolean)
   );
   const dependsOn = new Map<string, string[]>();
@@ -389,7 +478,8 @@ export function validatePackModel(pack, packRoot, templateExists: TemplateExists
         fail(`Requirement '${item.id}' depends on unknown requirement '${dep}'.`);
       }
     }
-    dependsOn.set(item.id, declared);
+    // Non-null: `remember` above refused every requirement without a string id.
+    dependsOn.set(item.id!, declared);
   }
   assertNoDependencyCycle(dependsOn, fail);
 
@@ -507,8 +597,8 @@ export function validatePackModel(pack, packRoot, templateExists: TemplateExists
     requiredVars,
   };
 }
-export function renderTemplate(content, vars) {
-  return content.replace(/{{([A-Z][A-Z0-9_]*)}}/g, (_, token) => {
+export function renderTemplate(content: string, vars: Record<string, unknown>): string {
+  return content.replace(/{{([A-Z][A-Z0-9_]*)}}/g, (_, token: string) => {
     if (!(token in vars)) {
       fail(`Missing variable '${token}' required by template.`);
     }
@@ -516,8 +606,11 @@ export function renderTemplate(content, vars) {
   });
 }
 
-export function normalizeVars(requiredVars, providedVars) {
-  const normalized = { ...providedVars };
+export function normalizeVars(
+  requiredVars: string[],
+  providedVars: Record<string, string>
+): Record<string, string> {
+  const normalized: Record<string, string> = { ...providedVars };
 
   for (const name of requiredVars) {
     if (!(name in normalized) || normalized[name] === "") {

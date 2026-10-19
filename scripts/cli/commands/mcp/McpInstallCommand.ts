@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 import { BaseCommand } from "../../../lib/command";
-import { agentIo } from "../../../lib/agent";
+import { agentIo, AgentIo } from "../../../lib/agent";
 
 export class McpInstallCommand extends BaseCommand {
   public execute(): void {
@@ -15,7 +15,7 @@ export class McpInstallCommand extends BaseCommand {
       process.exit(0);
     }
     const isJson = this.args.includes("--json");
-    const io = agentIo(isJson);
+    const io: AgentIo = agentIo(isJson);
     const clientIdx = this.args.indexOf("--client");
 
     if (clientIdx === -1 || !this.args[clientIdx + 1]) {
@@ -33,7 +33,8 @@ export class McpInstallCommand extends BaseCommand {
     const client = this.args[clientIdx + 1];
 
     let configPath = "";
-    let configObj: any = {};
+    // The client's own file: keep every key it has, add ours under mcpServers.
+    let configObj: { mcpServers?: Record<string, unknown>; [key: string]: unknown } = {};
     const mcpConfig = {
       command: "npx",
       args: ["-y", "@rsaglobaltech/specgate@latest", "mcp", "serve"],

@@ -13,10 +13,11 @@ import * as path from "node:path";
 import { Phrases, languageFor, phrasesFor } from "../domain/Language";
 
 /** The language tag written in the project's config, if any. */
-export function readConfigured(projectDir) {
+export function readConfigured(projectDir: string | null | undefined): string | null | undefined {
   try {
     const file = path.join(projectDir || ".", ".specgate", "config.json");
-    const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+    // A view, not a check: `languageFor` stringifies whatever is there.
+    const parsed: { language?: string } | null = JSON.parse(fs.readFileSync(file, "utf8"));
     return parsed && parsed.language;
   } catch {
     return null;
@@ -24,11 +25,11 @@ export function readConfigured(projectDir) {
 }
 
 /** The language tag in force for a project. */
-export function resolveLanguage(projectDir): string {
+export function resolveLanguage(projectDir: string | null | undefined): string {
   return languageFor(process.env.SPECGATE_LANGUAGE || readConfigured(projectDir));
 }
 
 /** The phrase table for a project. */
-export function phrases(projectDir): Phrases {
+export function phrases(projectDir: string | null | undefined): Phrases {
   return phrasesFor(process.env.SPECGATE_LANGUAGE || readConfigured(projectDir));
 }

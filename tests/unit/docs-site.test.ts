@@ -28,6 +28,13 @@ const DOCS = path.join(ROOT, "docs");
 const { buildSite } = require("../../scripts/docs/build-site");
 const { NAV, navEntry, navSlugs, neighbours } = require("../../scripts/docs/nav");
 
+/** One page in the built site's `assets/search-index.json`. */
+interface SearchEntry {
+  slug: string;
+  title: string;
+  text?: string;
+}
+
 /** Build the site once; every test reads the same output. */
 function site() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-site-"));
@@ -39,8 +46,8 @@ function site() {
 
 /** Every markdown file the site publishes, `docs/specs/` excluded, at any depth. */
 function shippedSlugs() {
-  const out = [];
-  const walk = (dir, prefix) => {
+  const out: string[] = [];
+  const walk = (dir: string, prefix: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
@@ -71,7 +78,9 @@ test("every shipped document is reachable from the sidebar", () => {
 });
 
 test("the sidebar does not promise a page that is not there", () => {
-  const missing = navSlugs().filter((slug) => !fs.existsSync(path.join(DOCS, `${slug}.md`)));
+  const missing = navSlugs().filter(
+    (slug: string) => !fs.existsSync(path.join(DOCS, `${slug}.md`))
+  );
   assert.deepEqual(
     missing,
     [],
@@ -335,11 +344,11 @@ test("the search index covers what the sidebar offers", () => {
   const { dir } = site();
   try {
     const index = JSON.parse(fs.readFileSync(path.join(dir, "assets/search-index.json"), "utf8"));
-    const indexed = new Set(index.map((e) => e.slug));
-    const missing = navSlugs().filter((slug) => !indexed.has(slug));
+    const indexed = new Set(index.map((e: SearchEntry) => e.slug));
+    const missing = navSlugs().filter((slug: string) => !indexed.has(slug));
     assert.deepEqual(missing, [], `not searchable: ${missing.join(", ")}`);
     assert.ok(
-      index.every((e) => e.title && e.text !== undefined),
+      index.every((e: SearchEntry) => e.title && e.text !== undefined),
       "a search entry with no title"
     );
   } finally {
@@ -374,8 +383,8 @@ test("no page on the site links a reader to a raw markdown file", () => {
   // when it leaves for GitHub, where the file genuinely lives.
   const { dir } = site();
   try {
-    const offenders = [];
-    for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".html"))) {
+    const offenders: string[] = [];
+    for (const file of fs.readdirSync(dir).filter((f: string) => f.endsWith(".html"))) {
       const html = fs.readFileSync(path.join(dir, file), "utf8");
       for (const match of html.matchAll(/href="([^"]*\.md(?:#[^"]*)?)"/g)) {
         if (!match[1].startsWith("https://github.com/")) offenders.push(`${file} → ${match[1]}`);
@@ -397,7 +406,7 @@ test("the ROI calculator is gone, and nothing still points at it", () => {
   const { dir } = site();
   try {
     assert.equal(fs.existsSync(path.join(dir, "roi.html")), false);
-    for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".html"))) {
+    for (const file of fs.readdirSync(dir).filter((f: string) => f.endsWith(".html"))) {
       const html = fs.readFileSync(path.join(dir, file), "utf8");
       assert.ok(!html.includes("roi.html"), `${file} still links to the ROI page`);
     }
@@ -449,16 +458,16 @@ test("the landing page's pilot figures are the projects page's, added up", () =>
   const table = fs.readFileSync(path.join(DOCS, "projects", "index.md"), "utf8");
   const rows = table
     .split("\n")
-    .filter((line) => /^\| \[/.test(line))
-    .map((line) => line.split("|").map((c) => c.trim()));
+    .filter((line: string) => /^\| \[/.test(line))
+    .map((line: string) => line.split("|").map((c: string) => c.trim()));
   assert.equal(rows.length, 6, "the projects table should list six pilots");
   let delivered = 0;
   let waiting = 0;
   for (const cells of rows) {
     const m = /^(\d+) of (\d+)$/.exec(cells[4]);
     assert.ok(m, `unreadable requirements cell: ${cells[4]}`);
-    delivered += Number(m[1]);
-    waiting += Number(m[2]) - Number(m[1]);
+    delivered += Number(m![1]);
+    waiting += Number(m![2]) - Number(m![1]);
   }
   assert.ok(html.includes(`<dt>${rows.length}</dt>`), `the pilot count is not ${rows.length}`);
   assert.ok(html.includes(`<dt>${delivered}</dt>`), `requirements delivered is not ${delivered}`);
@@ -476,7 +485,7 @@ test("every project page says, at the top, what kind of evidence it is", () => {
   // The same rule case studies follow: a reader must not mistake a pilot an
   // agent ran for a customer who chose the tool.
   const dir = path.join(DOCS, "projects");
-  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".md"))) {
+  for (const file of fs.readdirSync(dir).filter((f: string) => f.endsWith(".md"))) {
     const head = fs.readFileSync(path.join(dir, file), "utf8").split("\n").slice(0, 12).join("\n");
     assert.match(head, /agent-driven adoption, not a customer/, `${file} does not say what it is`);
   }
@@ -488,7 +497,7 @@ test("no page ships a mermaid block, because nothing on this site renders one", 
   // Two `graph LR` / `sequenceDiagram` blocks sat in the article for months and
   // were served as literal code. A fenced block the site cannot render is worse
   // than no diagram: it is a diagram the reader can see was meant to be there.
-  const offenders = [];
+  const offenders: string[] = [];
   for (const slug of shippedSlugs()) {
     const source = fs.readFileSync(path.join(DOCS, `${slug}.md`), "utf8");
     if (/^```mermaid/m.test(source)) offenders.push(slug);
@@ -539,7 +548,7 @@ test("no page shows a diagram's markup as text", () => {
   // article. Checking for an escaped `<svg` missed it: the opening tag was
   // fine, the rest was text.
   const { dir } = site();
-  const offenders = [];
+  const offenders: string[] = [];
   const walk = (d: string) => {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       const p = path.join(d, e.name);
@@ -561,7 +570,7 @@ test("a diagram's colours come from the token system", () => {
   // An inline diagram is the only place on the site where a hard-coded hex
   // would still follow the page in one theme and not the other.
   const { diagrams } = require("../../scripts/docs/blocks");
-  const offenders = [];
+  const offenders: string[] = [];
   for (const [name, body] of diagrams(DOCS)) {
     const hexes = body.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
     if (hexes.length > 0) offenders.push(`${name}: ${hexes.join(", ")}`);
@@ -602,7 +611,7 @@ test("the landing page lists every agent tool it claims a number for", () => {
     html.includes(`<dt>${ALL_TOOLS.length}</dt>`),
     `agent-tool count is not ${ALL_TOOLS.length}`
   );
-  const missing = ALL_TOOLS.filter((tool) => !html.includes(`<code>${tool}</code>`));
+  const missing = ALL_TOOLS.filter((tool: string) => !html.includes(`<code>${tool}</code>`));
   assert.deepEqual(missing, [], `counted but not listed: ${missing.join(", ")}`);
 });
 
@@ -654,7 +663,7 @@ test("a case study that is not a real customer says so, at the top", () => {
   const dir = path.join(DOCS, "case-studies");
   if (!fs.existsSync(dir)) return;
   const unmarked = [];
-  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".md"))) {
+  for (const file of fs.readdirSync(dir).filter((f: string) => f.endsWith(".md"))) {
     const head = fs.readFileSync(path.join(dir, file), "utf8").split("\n").slice(0, 12).join("\n");
     const declared =
       /illustration, not a customer|agent-driven adoption, not a customer|verified customer/i;

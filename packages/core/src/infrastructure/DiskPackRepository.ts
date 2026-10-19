@@ -9,15 +9,26 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { parseYamlLite } from "../domain/YamlLite";
-import { isSafeRelativePath, validatePackModel as validatePackSpec } from "../domain/PackSpec";
+import { YamlDocument, parseYamlLite } from "../domain/YamlLite";
+import {
+  PackManifest,
+  isSafeRelativePath,
+  validatePackModel as validatePackSpec,
+} from "../domain/PackSpec";
 import { logInfo } from "./ConsoleReporter";
 
-function fail(message): never {
+function fail(message: string): never {
   throw new Error(message);
 }
 
-export function loadPack(packRoot, packId) {
+/** A `pack.yaml` as read from disk, with where it was found. */
+export interface LoadedPackFile {
+  pack: YamlDocument;
+  packFile: string;
+  packRoot: string;
+}
+
+export function loadPack(packRoot: string, packId: string): LoadedPackFile {
   if (!packRoot) fail("Missing --pack-root <path>.");
   if (!packId) fail("Missing --pack <domain/type>.");
 
@@ -41,7 +52,7 @@ export function loadPack(packRoot, packId) {
     packRoot: normalizedPackPath,
   };
 }
-export function ensureProjectDir(projectDir, dryRun) {
+export function ensureProjectDir(projectDir: string, dryRun: boolean): void {
   if (!projectDir) {
     fail("Missing --project-dir <path>.");
   }
@@ -53,15 +64,21 @@ export function ensureProjectDir(projectDir, dryRun) {
   }
 }
 
-export function readTemplate(packRoot, templatePath) {
+export function readTemplate(packRoot: string, templatePath: string): string {
   return fs.readFileSync(path.resolve(packRoot, templatePath), "utf8");
 }
 
 // Records every file written in the current process so `expand` can snapshot
 // a baseline after rendering. Reset per expansion via resetWrittenFiles().
-const _writtenFiles = [];
+/** One file `writeFile` put on disk, with what it wrote. */
+export interface WrittenFile {
+  file: string;
+  content: string;
+}
 
-export function writeFile(targetFile, content, dryRun) {
+const _writtenFiles: WrittenFile[] = [];
+
+export function writeFile(targetFile: string, content: string, dryRun: boolean): void {
   if (dryRun) {
     logInfo(`[dry-run] write ${targetFile}`);
     return;
@@ -72,15 +89,15 @@ export function writeFile(targetFile, content, dryRun) {
   _writtenFiles.push({ file: targetFile, content });
 }
 
-export function getWrittenFiles() {
+export function getWrittenFiles(): WrittenFile[] {
   return _writtenFiles.slice();
 }
 
-export function resetWrittenFiles() {
+export function resetWrittenFiles(): void {
   _writtenFiles.length = 0;
 }
 
-export function safeResolve(projectDir, relativePath) {
+export function safeResolve(projectDir: string, relativePath: string): string {
   if (!isSafeRelativePath(relativePath)) {
     fail(`Invalid target path '${relativePath}'.`);
   }
@@ -99,6 +116,9 @@ export function safeResolve(projectDir, relativePath) {
  * disk. The rules themselves are pure and take the predicate explicitly; this
  * is the form every caller wants.
  */
-export function validatePackModel(pack, packRoot) {
+export function validatePackModel(
+  pack: PackManifest,
+  packRoot: string
+): { requiredVars: string[] } {
   return validatePackSpec(pack, packRoot, (absolute) => fs.existsSync(absolute));
 }

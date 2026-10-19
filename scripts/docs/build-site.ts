@@ -25,6 +25,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { marked } from "marked";
+import type { Tokens } from "marked";
 
 import { NAV, navEntry, neighbours, journeyOf } from "./nav";
 import { diagrams, inlineDiagrams } from "./blocks";
@@ -147,7 +148,7 @@ function renderMarkdown(
 
   const renderer = new marked.Renderer();
 
-  renderer.heading = ({ tokens, depth }: any) => {
+  renderer.heading = ({ tokens, depth }: Tokens.Heading) => {
     const text = renderer.parser.parseInline(tokens);
     // `parseInline` returns HTML, so an apostrophe arrives as `&#39;`. The
     // heading's text is escaped again where it is printed — in the contents
@@ -165,7 +166,7 @@ function renderMarkdown(
     );
   };
 
-  renderer.link = ({ href, title: linkTitle, tokens }: any) => {
+  renderer.link = ({ href, title: linkTitle, tokens }: Tokens.Link) => {
     const text = renderer.parser.parseInline(tokens);
     const target = rewriteLink(String(href || ""), currentSlug);
     const external = /^https?:/i.test(target);
@@ -183,7 +184,7 @@ function renderMarkdown(
   // The label is how the reference documentation names the file or the shell a
   // snippet belongs to, and it is the difference between six unlabelled blocks
   // and six blocks you can tell apart.
-  renderer.code = ({ text, lang }: any) => {
+  renderer.code = ({ text, lang }: Tokens.Code) => {
     const parts = String(lang || "")
       .trim()
       .split(/\s+/);
@@ -203,15 +204,15 @@ function renderMarkdown(
     );
   };
 
-  renderer.table = ({ header, rows }: any) => {
+  renderer.table = ({ header, rows }: Tokens.Table) => {
     const head = header
-      .map((cell: any) => `<th>${renderer.parser.parseInline(cell.tokens)}</th>`)
+      .map((cell) => `<th>${renderer.parser.parseInline(cell.tokens)}</th>`)
       .join("");
     const body = rows
       .map(
-        (row: any) =>
+        (row) =>
           `<tr>${row
-            .map((cell: any) => `<td>${renderer.parser.parseInline(cell.tokens)}</td>`)
+            .map((cell) => `<td>${renderer.parser.parseInline(cell.tokens)}</td>`)
             .join("")}</tr>`
       )
       .join("");

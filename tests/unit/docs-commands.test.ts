@@ -34,9 +34,8 @@ const { SURFACE } = require("../../scripts/lib/surface");
 const SKIP_DIRS = new Set(["projects", "specs", "diagrams", "assets"]);
 
 /**
- * Flags a command accepts that its `--help` does not list. Each is a gap in
- * the help text, logged in mejoras/specgate-defectos.md, not a licence to
- * document more of them.
+ * Flags a command accepts that its `--help` does not list. Each is a known gap in
+ * the help text, to be closed, not a licence to document more of them.
  */
 const UNLISTED = new Set(["validate --json", "init --pack"]);
 

@@ -15,6 +15,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { CliResult } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -37,9 +38,9 @@ function mkProject() {
   return root;
 }
 
-const cleanup = (root) => fs.rmSync(root, { recursive: true, force: true });
+const cleanup = (root: string) => fs.rmSync(root, { recursive: true, force: true });
 
-function run(root, args) {
+function run(root: string, args: string[]): CliResult {
   return spawnSync(process.execPath, [CLI_PATH, "change", ...args, "--project-dir", root], {
     cwd: root,
     encoding: "utf8",
@@ -47,12 +48,12 @@ function run(root, args) {
 }
 
 /** Parse stdout as the single JSON document the contract promises. */
-function json(result) {
+function json(result: CliResult) {
   try {
     return JSON.parse(result.stdout);
   } catch (err) {
     throw new Error(
-      `stdout was not one JSON document (${err.message}).\n--- stdout ---\n${result.stdout}\n--- stderr ---\n${result.stderr}`
+      `stdout was not one JSON document (${err instanceof Error ? err.message : String(err)}).\n--- stdout ---\n${result.stdout}\n--- stderr ---\n${result.stderr}`
     );
   }
 }
@@ -209,16 +210,16 @@ test("change status reports artefacts in dependency order with next steps", () =
     run(root, ["new", "add-pricing", "--capability", "pricing"]);
     const doc = json(run(root, ["status", "add-pricing", "--json"]));
     assert.deepEqual(
-      doc.artifacts.map((a) => a.id),
+      doc.artifacts.map((a: { id: string }) => a.id),
       ["proposal", "specs", "design", "tasks"]
     );
     // Lite rigor skips design; a skipped artefact satisfies its dependents.
-    const design = doc.artifacts.find((a) => a.id === "design");
+    const design = doc.artifacts.find((a: { id: string }) => a.id === "design");
     assert.equal(design.status, "skipped");
-    const tasks = doc.artifacts.find((a) => a.id === "tasks");
+    const tasks = doc.artifacts.find((a: { id: string }) => a.id === "tasks");
     assert.equal(tasks.status, "done");
     assert.equal(doc.isPlanningComplete, true);
-    assert.ok(doc.nextSteps.some((s) => /tasks\.md/.test(s)));
+    assert.ok(doc.nextSteps.some((s: string) => /tasks\.md/.test(s)));
   } finally {
     cleanup(root);
   }
@@ -271,7 +272,9 @@ test("change validate fails an invalid delta and exits 1", () => {
     assert.equal(result.status, 1);
     const doc = json(result);
     assert.equal(doc.summary.failed, 1);
-    assert.ok(doc.items[0].issues.some((i) => i.code === "requirement_without_scenario"));
+    assert.ok(
+      doc.items[0].issues.some((i: { code: string }) => i.code === "requirement_without_scenario")
+    );
   } finally {
     cleanup(root);
   }
@@ -279,7 +282,7 @@ test("change validate fails an invalid delta and exits 1", () => {
 
 // ── archive ───────────────────────────────────────────────────────────────────
 
-function readyChange(root) {
+function readyChange(root: string) {
   run(root, ["new", "add-pricing", "--capability", "pricing"]);
   const dir = path.join(root, "docs/specs/changes/add-pricing");
   fs.writeFileSync(path.join(dir, "specs/pricing/spec.md"), GOOD_DELTA, "utf8");
@@ -301,9 +304,9 @@ test("archive --dry-run writes nothing and reports the plan", () => {
     assert.equal(result.status, 0);
     const doc = json(result);
     assert.equal(doc.archive.dryRun, true);
-    assert.ok(doc.archive.writes.some((w) => w.kind === "spec"));
-    assert.ok(doc.archive.writes.some((w) => w.kind === "traceability"));
-    assert.ok(doc.archive.writes.some((w) => w.kind === "feature"));
+    assert.ok(doc.archive.writes.some((w: { kind: string }) => w.kind === "spec"));
+    assert.ok(doc.archive.writes.some((w: { kind: string }) => w.kind === "traceability"));
+    assert.ok(doc.archive.writes.some((w: { kind: string }) => w.kind === "feature"));
     assert.equal(fs.existsSync(path.join(root, "docs/specs/capabilities/pricing/spec.md")), false);
     assert.equal(fs.existsSync(path.join(root, "docs/specs/changes/add-pricing")), true);
   } finally {
@@ -388,7 +391,7 @@ El sistema SHALL rechazar una reserva cuando los puestos están llenos.
 test("#53: a MODIFIED requirement's feature file gains the scenarios the change added", () => {
   const root = mkProject();
   try {
-    const spec = (scenarios) => `### Requirement: REQ-145 — Agenda del propietario
+    const spec = (scenarios: string) => `### Requirement: REQ-145 — Agenda del propietario
 
 <!-- specgate:trace status=Implemented feature=features/reservas/REQ-145.feature actor=Propietario kind=functional -->
 
@@ -483,7 +486,9 @@ test("archive reports unchecked tasks of a delivered change, and archives it (AD
     assert.equal(r.status, 0);
     const doc = json(r);
     assert.ok(doc.archive);
-    assert.ok(doc.archive.warnings.some((w) => w.code === "archive_tasks_incomplete"));
+    assert.ok(
+      doc.archive.warnings.some((w: { code: string }) => w.code === "archive_tasks_incomplete")
+    );
   } finally {
     cleanup(root);
   }

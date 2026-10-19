@@ -372,7 +372,7 @@ test("--record appends valuesTotal/valuesMatched/valuesDiverging additively", ()
       .readFileSync(historyPath, "utf8")
       .split("\n")
       .filter(Boolean)
-      .map((l) => JSON.parse(l));
+      .map((l: string) => JSON.parse(l));
     assert.equal(lines.length, 2);
     assert.equal(lines[0].valuesTotal, undefined);
     assert.equal(lines[1].valuesTotal, 1);

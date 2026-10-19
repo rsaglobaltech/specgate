@@ -16,13 +16,16 @@ walk up from the current directory looking for `spec.md`, `.specops.lock` or
 | --- | --- |
 | Start, on a new project or an existing repo | [Getting started](getting-started.md) |
 | Start from a plan or a client's brief | [Write the brief](start/write-the-brief.md) |
+| Learn the daily loop — `propose`, `apply`, `status`, `archive` | [Getting started](getting-started.md#3-learn-the-daily-loop) |
+| Try the whole loop on a copy of my repository | `specgate onboard --tour` — [Command reference](commands.md#starting) |
 | Adopt a repository that already ships, worked end to end | [Brownfield adoption, worked example](case-studies/case-1.md) |
 | Write requirements, scenarios and matrix rows | [Writing specs](writing-specs.md) |
 | Make the gate run locally and in CI | [Validating](validating.md) |
-| Change a spec that already shipped | [Reviewing changes](reviewing-changes.md) |
+| Open a change, deliver it, archive it — or change a spec that already shipped | [Reviewing changes](reviewing-changes.md) |
 | Share domain knowledge across repos | [Domain packs](domain-packs.md) |
 | Wire it into editors, agents, hooks and CI | [Automation](automation.md) |
 | Drive it from Claude, Cursor or Copilot | [Agents](agents.md) |
+| Hand requirements to an agent, and watch it work at `/live` | [The harness](harness.md) |
 | Work out why something is not behaving | [Troubleshooting](troubleshooting.md) |
 | Look up a command | [Command reference](commands.md) |
 

@@ -1,29 +1,20 @@
 "use strict";
 
 /**
- * `specgate matrix` — the matrix generated instead of maintained (phase 3 of
- * mejoras/plan-simplificacion-equipo.md).
+ * `specgate matrix` — the matrix generated instead of maintained, part of the plan to
+ * make the tool simpler for a team to adopt.
  *
  * The promise pinned here is the one that makes the switch safe: migration is
  * row-for-row identical or does nothing, a hand-kept matrix is never touched,
  * and a stale generated one fails the gate.
  */
 
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { cli } from "../helpers/cli";
 
 /** An adopted repo with one linked, delivered requirement and one Draft. */
 function project() {
@@ -52,9 +43,9 @@ function project() {
   return { parent, dir };
 }
 
-const MATRIX = (dir) => path.join(dir, "docs/specs/traceability.md");
-const rows = (md) => md.split("\n").filter((l) => l.startsWith("| REQ-"));
-const norm = (l) => l.replace(/`/g, "").replace(/\| TBD \|/g, "| - |");
+const MATRIX = (dir: string) => path.join(dir, "docs/specs/traceability.md");
+const rows = (md: string) => md.split("\n").filter((l) => l.startsWith("| REQ-"));
+const norm = (l: string) => l.replace(/`/g, "").replace(/\| TBD \|/g, "| - |");
 
 test("migrate turns a hand-kept matrix into a generated one, row for row", () => {
   const { parent, dir } = project();
@@ -148,7 +139,7 @@ function derived() {
   assert.equal(cli("matrix", "--migrate", "--project-dir", p.dir).status, 0);
   return p;
 }
-const row = (dir, id) =>
+const row = (dir: string, id: string) =>
   fs
     .readFileSync(MATRIX(dir), "utf8")
     .split("\n")
@@ -268,7 +259,7 @@ test("--keep-matrix keeps a hand-maintained matrix", () => {
     const scaffold = cli("init", "--yes", "--out", parent, "--no-git");
     assert.equal(scaffold.status, 0, scaffold.stdout + scaffold.stderr);
     const project = fs.readdirSync(parent).find((d) => d !== "shop");
-    assert.match(fs.readFileSync(MATRIX(path.join(parent, project)), "utf8"), /specgate:derived/);
+    assert.match(fs.readFileSync(MATRIX(path.join(parent, project!)), "utf8"), /specgate:derived/);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

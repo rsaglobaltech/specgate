@@ -14,11 +14,26 @@
 import { RequirementGraph } from "./RequirementGraph";
 
 /**
+ * A requirement as the harness reads it: a `plan --format json` item or a
+ * matrix row. Both casings are accepted because both reach it — the plan
+ * writes `feature_file`, the matrix parser `featureFile`.
+ */
+export interface HarnessRequirement {
+  requirement?: string;
+  scenarioId?: string;
+  scenario_id?: string;
+  featureFile?: string;
+  feature_file?: string;
+  dependsOn?: string[];
+  depends_on?: string[];
+}
+
+/**
  * Substitute the {prompt_file} placeholder in an agent command template.
  * Throws when the template is missing the placeholder — without it the agent
  * would never receive the prompt.
  */
-export function substituteAgentCommand(template, promptFile) {
+export function substituteAgentCommand(template: string, promptFile: string): string {
   if (!template.includes("{prompt_file}")) {
     throw new Error(
       "The agent command must contain the {prompt_file} placeholder, e.g. " +
@@ -55,14 +70,14 @@ export function substituteAgentCommand(template, promptFile) {
  *
  * Returns `""` when the requirement declares no feature.
  */
-export function featureFilePath(req): string {
+export function featureFilePath(req: HarnessRequirement): string {
   return String(req.featureFile || req.feature_file || "")
     .replace(/^`|`$/g, "")
     .split("#")[0]
     .trim();
 }
 
-export function substituteGateCommand(template, req) {
+export function substituteGateCommand(template: string, req: HarnessRequirement): string {
   const featureFile = featureFilePath(req);
   return template
     .split("{req}")
@@ -135,7 +150,7 @@ export interface AttemptRecord {
  * many, which is the shape of that mistake. A hint, not a verdict: a legitimate
  * failure must not be second-guessed into passing.
  */
-export function filterHint(template, req, output) {
+export function filterHint(template: string, req: HarnessRequirement, output: string): string {
   if (!String(template).includes("{feature_file}")) return "";
   const featureFile = substituteGateCommand("{feature_file}", req);
   if (!featureFile) return "";
@@ -167,11 +182,16 @@ export function filterHint(template, req, output) {
  * `plan` reports them under `dependsOn` but not `blockedBy`, because a
  * finished dependency constrains nothing.
  */
-export function scheduleLevels(pending) {
+export function scheduleLevels(pending: Array<HarnessRequirement & { requirement: string }>): {
+  levels: RequirementGraph["levels"];
+  cycles: RequirementGraph["cycles"];
+  dependsOn: Record<string, string[]>;
+  graph: RequirementGraph;
+} {
   const pendingIds = pending.map((r) => r.requirement);
   const inQueue = new Set(pendingIds);
 
-  const dependsOn = {};
+  const dependsOn: Record<string, string[]> = {};
   for (const req of pending) {
     // Only dependencies that are themselves in this run constrain the order.
     // A dependency outside the queue is either done or was filtered out by

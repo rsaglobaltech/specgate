@@ -15,29 +15,104 @@
 
 import * as yaml from "js-yaml";
 
-function asArray(v) {
-  if (Array.isArray(v)) return v;
-  if (v === null || v === undefined) return [];
-  return [v];
+/**
+ * The top-level lists of a parsed `pack.yaml`. Each is whatever the YAML
+ * holds — a list, a single entry or nothing — so they stay `unknown` until
+ * `asArray` reads them.
+ */
+export interface PackDocument {
+  requirements?: unknown;
+  use_cases?: unknown;
+  commands?: unknown;
+  queries?: unknown;
+  aggregates?: unknown;
+  events?: unknown;
+  scenarios?: unknown;
 }
+
+/**
+ * One entry of any of those lists, with the fields the graph reads. A
+ * scenario uses `requirement`/`requirement_id`; a use case the reference
+ * fields.
+ */
+interface PackEntry {
+  id?: string;
+  name?: string;
+  requirements?: unknown;
+  requirement?: string;
+  requirement_id?: string;
+  command?: string;
+  query?: string;
+  aggregate?: string;
+  emits?: unknown;
+}
+
+/** A reference kind: the entity a reference field points at. */
+export type ReferenceKind = "requirement" | "command" | "query" | "aggregate" | "event";
 
 /**
  * The set of IDs/names that may legitimately be referenced, grouped by the
  * reference kind that would target them.
- *
- * @typedef {{
- *   requirement: Set<string>,
- *   command: Set<string>,
- *   query: Set<string>,
- *   aggregate: Set<string>,
- *   event: Set<string>,
- *   use_case: Set<string>,
- * }} Declared
  */
+export interface Declared {
+  requirement: Set<string>;
+  command: Set<string>;
+  query: Set<string>;
+  aggregate: Set<string>;
+  event: Set<string>;
+  use_case: Set<string>;
+}
 
-/** @returns {Declared} */
-function collectDeclared(pack) {
-  const declared = {
+/** A dangling reference, in the shape `pack-validator` reports. */
+export interface PackGraphDiagnostic {
+  line: number;
+  col: number;
+  message: string;
+  severity: "error";
+}
+
+/** How many use cases and scenarios point at one requirement. */
+export interface RequirementRefCount {
+  useCases: number;
+  scenarios: number;
+}
+
+export interface PackGraphAnalysis {
+  declared: Declared;
+  dangling: PackGraphDiagnostic[];
+  refCounts: Map<string, RequirementRefCount>;
+}
+
+export interface PackGraphNode {
+  id: string;
+  type: string;
+  label: string;
+}
+
+export interface PackGraphEdge {
+  from: string;
+  to: string;
+  kind: string;
+}
+
+export interface PackGraphModel {
+  nodes: PackGraphNode[];
+  edges: PackGraphEdge[];
+}
+
+/**
+ * A YAML value as a list: a list as is, nothing as empty, anything else as a
+ * list of one. `T` is what the caller expects the items to be; YAML does not
+ * promise it, which is why every reader checks each item before using it.
+ */
+function asArray<T = PackEntry>(v: unknown): T[] {
+  if (Array.isArray(v)) return v;
+  if (v === null || v === undefined) return [];
+  return [v as T];
+}
+
+function collectDeclared(input: unknown): Declared {
+  const declared: Declared = {
     requirement: new Set(),
     command: new Set(),
     query: new Set(),
@@ -45,7 +120,8 @@ function collectDeclared(pack) {
     event: new Set(),
     use_case: new Set(),
   };
-  if (!pack || typeof pack !== "object") return declared;
+  if (!input || typeof input !== "object") return declared;
+  const pack = input as PackDocument;
 
   for (const r of asArray(pack.requirements)) {
     if (r && r.id) declared.requirement.add(String(r.id));
@@ -78,13 +154,14 @@ function collectDeclared(pack) {
  * token (after `: ` or `- `, or inside a flow list) so a substring of a longer
  * identifier is not matched. Returns { line: 0, col: 0 } when not found.
  */
-function findReferencePosition(lines, value) {
+function findReferencePosition(lines: string[], value: string): { line: number; col: number } {
   const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const re = new RegExp(`(^|[\\s:\\[,-])(${escaped})($|[\\s,\\]])`);
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(re);
     if (m) {
-      const col = m.index + m[1].length;
+      // A match from a non-global regex always carries its index.
+      const col = m.index! + m[1].length;
       return { line: i, col };
     }
   }
@@ -95,12 +172,14 @@ function findReferencePosition(lines, value) {
  * Find every dangling `use_case` reference. Returns diagnostic descriptors in
  * the same shape `pack-validator` produces, so `extension.ts` can render them
  * with its existing `makeDiag` helper.
- *
- * @returns {{ line: number, col: number, message: string, severity: "error" }[]}
  */
-function findDanglingReferences(pack, declared, lines) {
-  const diags = [];
-  const flag = (kind, ref, ucLabel) => {
+function findDanglingReferences(
+  pack: PackDocument | null | undefined,
+  declared: Declared,
+  lines: string[]
+): PackGraphDiagnostic[] {
+  const diags: PackGraphDiagnostic[] = [];
+  const flag = (kind: string, ref: string, ucLabel: string) => {
     const { line, col } = findReferencePosition(lines, ref);
     diags.push({
       line,
@@ -114,7 +193,7 @@ function findDanglingReferences(pack, declared, lines) {
     if (!u || typeof u !== "object") continue;
     const ucLabel = u.id || u.name || "use case";
 
-    const reqRefs = asArray(u.requirements || (u.requirement ? [u.requirement] : []));
+    const reqRefs = asArray<string>(u.requirements || (u.requirement ? [u.requirement] : []));
     for (const ref of reqRefs) {
       if (ref && !declared.requirement.has(String(ref))) flag("requirement", String(ref), ucLabel);
     }
@@ -127,29 +206,28 @@ function findDanglingReferences(pack, declared, lines) {
     if (u.aggregate && !declared.aggregate.has(String(u.aggregate))) {
       flag("aggregate", String(u.aggregate), ucLabel);
     }
-    for (const ref of asArray(u.emits)) {
+    for (const ref of asArray<string>(u.emits)) {
       if (ref && !declared.event.has(String(ref))) flag("event", String(ref), ucLabel);
     }
   }
   return diags;
 }
 
-/**
- * Count, per requirement ID, how many use cases and scenarios reference it.
- * @returns {Map<string, { useCases: number, scenarios: number }>}
- */
-function countRequirementReferences(pack) {
-  const counts = new Map();
-  const bump = (id, key) => {
+/** Count, per requirement ID, how many use cases and scenarios reference it. */
+function countRequirementReferences(
+  pack: PackDocument | null | undefined
+): Map<string, RequirementRefCount> {
+  const counts = new Map<string, RequirementRefCount>();
+  const bump = (id: unknown, key: keyof RequirementRefCount) => {
     if (!id) return;
     const k = String(id);
     if (!counts.has(k)) counts.set(k, { useCases: 0, scenarios: 0 });
-    counts.get(k)[key] += 1;
+    counts.get(k)![key] += 1;
   };
 
   for (const u of asArray(pack && pack.use_cases)) {
     if (!u) continue;
-    const reqRefs = asArray(u.requirements || (u.requirement ? [u.requirement] : []));
+    const reqRefs = asArray<string>(u.requirements || (u.requirement ? [u.requirement] : []));
     for (const ref of reqRefs) bump(ref, "useCases");
   }
   for (const s of asArray(pack && pack.scenarios)) {
@@ -159,18 +237,9 @@ function countRequirementReferences(pack) {
   return counts;
 }
 
-/**
- * One-shot analysis of a pack.yaml document.
- *
- * @param {string} content  Raw pack.yaml text.
- * @returns {{
- *   declared: Declared,
- *   dangling: { line:number, col:number, message:string, severity:"error" }[],
- *   refCounts: Map<string, { useCases:number, scenarios:number }>,
- * }}
- */
-function analyzePackGraph(content) {
-  let pack;
+/** One-shot analysis of a pack.yaml document, given its raw text. */
+function analyzePackGraph(content: string): PackGraphAnalysis {
+  let pack: unknown;
   try {
     pack = yaml.load(content, { json: true });
   } catch {
@@ -182,10 +251,11 @@ function analyzePackGraph(content) {
     return { declared, dangling: [], refCounts: new Map() };
   }
   const lines = content.split("\n");
+  const doc = pack as PackDocument;
   return {
     declared,
-    dangling: findDanglingReferences(pack, declared, lines),
-    refCounts: countRequirementReferences(pack),
+    dangling: findDanglingReferences(doc, declared, lines),
+    refCounts: countRequirementReferences(doc),
   };
 }
 
@@ -194,21 +264,23 @@ const INLINE_REF_RE = /^\s*(requirement|command|query|aggregate):\s*/;
 // A YAML block key, e.g. `    emits:` — used to resolve list-item context.
 const BLOCK_KEY_RE = /^(\s*)(?:-\s+)?([a-z_]+):\s*$/;
 // Plural block keys that hold a list of references, mapped to their kind.
-const LIST_KEY_KIND = { emits: "event", requirements: "requirement" };
+const LIST_KEY_KIND: Record<string, ReferenceKind> = {
+  emits: "event",
+  requirements: "requirement",
+};
 
 /**
  * Which reference kind, if any, the value position on `lines[lineIdx]` expects.
  * Handles both `key: <value>` lines and `- <value>` items nested under a
  * reference-list key (`emits:`, `requirements:`). Returns null otherwise.
- *
- * @returns {"requirement"|"command"|"query"|"aggregate"|"event"|null}
  */
-function referenceKindForLine(lines, lineIdx) {
+function referenceKindForLine(lines: string[], lineIdx: number): ReferenceKind | null {
   const line = lines[lineIdx];
   if (line === undefined) return null;
 
   const inline = line.match(INLINE_REF_RE);
-  if (inline) return inline[1];
+  // INLINE_REF_RE only captures one of the reference kinds.
+  if (inline) return inline[1] as ReferenceKind;
 
   // List item: `- value` — walk up to the nearest lower-indent block key.
   const item = line.match(/^(\s*)-\s+/);
@@ -230,7 +302,10 @@ function referenceKindForLine(lines, lineIdx) {
  * Locate where an entity ID or name is *declared* (its `id:` or `name:` line),
  * for go-to-definition. Returns { line, col } of the value, or null.
  */
-function findDeclarationPosition(content, idOrName) {
+function findDeclarationPosition(
+  content: string,
+  idOrName: string
+): { line: number; col: number } | null {
   const lines = content.split("\n");
   const escaped = idOrName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const re = new RegExp(`^\\s*(?:-\\s+)?(?:id|name):\\s*["']?(${escaped})["']?\\s*$`);
@@ -250,33 +325,32 @@ function findDeclarationPosition(content, idOrName) {
 // (REQ → UC → CMD/QUERY/AGG/EVT), same node classes, rendered as Mermaid so the
 // webview can draw it offline without shelling out to the CLI.
 
-function sanitizeNodeId(id) {
+function sanitizeNodeId(id: string): string {
   return id.replace(/[^A-Za-z0-9]/g, "_");
 }
 
 /**
  * Build the node/edge model from parsed pack content. Dangling references
  * become `missing`-typed nodes so the break is visible in the diagram.
- * @returns {{ nodes: {id:string,type:string,label:string}[], edges: {from:string,to:string,kind:string}[] }}
  */
-function buildPackGraphModel(pack) {
-  const nodes = [];
-  const edges = [];
-  const seen = new Set();
-  const addNode = (id, type, label) => {
+function buildPackGraphModel(input: unknown): PackGraphModel {
+  const nodes: PackGraphNode[] = [];
+  const edges: PackGraphEdge[] = [];
+  const seen = new Set<string>();
+  const addNode = (id: string, type: string, label: string) => {
     if (seen.has(id)) return;
     seen.add(id);
     nodes.push({ id, type, label });
   };
-  const missingNode = (kind, ref) => {
+  const missingNode = (kind: string, ref: string) => {
     const id = `MISSING:${kind}:${ref}`;
     addNode(id, "missing", ref);
     return id;
   };
-  if (!pack || typeof pack !== "object") return { nodes, edges };
+  if (!input || typeof input !== "object") return { nodes, edges };
+  const pack = input as PackDocument;
 
-  const declared = collectDeclared(pack);
-  const labelOf = (e, fallback) =>
+  const labelOf = (e: PackEntry, fallback: string): string =>
     e.id && e.name ? `${e.id} ${e.name}` : e.id || e.name || fallback;
 
   for (const r of asArray(pack.requirements)) {
@@ -299,8 +373,8 @@ function buildPackGraphModel(pack) {
   }
 
   // Index commands/queries/aggregates/events by every key they answer to.
-  const indexByKey = (items, prefix) => {
-    const map = new Map();
+  const indexByKey = (items: unknown, prefix: string) => {
+    const map = new Map<string, string>();
     for (const it of asArray(items)) {
       if (!it) continue;
       const node = `${prefix}:${it.id || it.name}`;
@@ -316,14 +390,14 @@ function buildPackGraphModel(pack) {
   const reqNodes = new Map(
     asArray(pack.requirements)
       .filter((r) => r && r.id)
-      .map((r) => [String(r.id), `REQ:${r.id}`])
+      .map((r): [string, string] => [String(r.id), `REQ:${r.id}`])
   );
 
   for (const u of asArray(pack.use_cases)) {
     if (!u || typeof u !== "object") continue;
     const from = `UC:${u.id}`;
 
-    const reqRefs = asArray(u.requirements || (u.requirement ? [u.requirement] : []));
+    const reqRefs = asArray<string>(u.requirements || (u.requirement ? [u.requirement] : []));
     for (const ref of reqRefs) {
       const to = reqNodes.get(String(ref)) || missingNode("requirement", ref);
       edges.push({ from: to, to: from, kind: "implements" });
@@ -349,7 +423,7 @@ function buildPackGraphModel(pack) {
         kind: "handled by",
       });
     }
-    for (const ref of asArray(u.emits)) {
+    for (const ref of asArray<string>(u.emits)) {
       edges.push({
         from,
         to: evtNodes.get(String(ref)) || missingNode("event", ref),
@@ -358,13 +432,12 @@ function buildPackGraphModel(pack) {
     }
   }
 
-  void declared;
   return { nodes, edges };
 }
 
 /** Render a pack.yaml document as a Mermaid `graph LR` string. */
-function renderPackMermaid(content) {
-  let pack;
+function renderPackMermaid(content: string): string {
+  let pack: unknown;
   try {
     pack = yaml.load(content, { json: true });
   } catch {
@@ -393,16 +466,20 @@ function renderPackMermaid(content) {
 }
 
 export class PackGraphAnalyzer {
-  public static collectDeclared(pack: any) {
+  public static collectDeclared(pack: unknown) {
     return collectDeclared(pack);
   }
   public static findReferencePosition(lines: string[], value: string) {
     return findReferencePosition(lines, value);
   }
-  public static findDanglingReferences(pack: any, declared: any, lines: string[]) {
+  public static findDanglingReferences(
+    pack: PackDocument | null | undefined,
+    declared: Declared,
+    lines: string[]
+  ) {
     return findDanglingReferences(pack, declared, lines);
   }
-  public static countRequirementReferences(pack: any) {
+  public static countRequirementReferences(pack: PackDocument | null | undefined) {
     return countRequirementReferences(pack);
   }
   public static analyzePackGraph(content: string) {
@@ -414,7 +491,7 @@ export class PackGraphAnalyzer {
   public static findDeclarationPosition(content: string, idOrName: string) {
     return findDeclarationPosition(content, idOrName);
   }
-  public static buildPackGraphModel(pack: any) {
+  public static buildPackGraphModel(pack: unknown) {
     return buildPackGraphModel(pack);
   }
   public static renderPackMermaid(content: string) {

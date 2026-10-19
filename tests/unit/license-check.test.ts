@@ -22,11 +22,18 @@ const ROOT_DIR = require("node:path").resolve(
 const SCRIPT = path.join(ROOT_DIR, "dist", "scripts", "license_check.js");
 const { isAllowed, licenseOf, summarise } = require(SCRIPT);
 
-function bomWith(components) {
+/** One component of a CycloneDX SBOM, as far as the licence check reads it. */
+interface BomComponent {
+  name?: string;
+  version?: string;
+  licenses?: unknown[];
+}
+
+function bomWith(components: BomComponent[]) {
   return { bomFormat: "CycloneDX", specVersion: "1.5", components };
 }
 
-function runOn(bom, ...extra) {
+function runOn(bom: object, ...extra: string[]) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-lic-"));
   const file = path.join(tmp, "sbom.json");
   fs.writeFileSync(file, JSON.stringify(bom), "utf8");

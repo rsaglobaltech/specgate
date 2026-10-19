@@ -82,27 +82,46 @@ export function parseArgs(argv: string[]) {
   return opts;
 }
 
-export function buildModel(traceContent: string) {
+/** One requirement on the studio page. */
+interface StudioRequirement {
+  requirement: string;
+  scenarioId: string;
+  status: string;
+  featureFile: string;
+  done: boolean;
+}
+
+/** What the studio page draws: the counts and every requirement. */
+export interface StudioModel {
+  total: number;
+  done: number;
+  pending: number;
+  requirements: StudioRequirement[];
+}
+
+export function buildModel(traceContent: string): StudioModel {
   const rows = parseTraceability(traceContent).filter((r) => /^REQ-\d+/.test(r.requirement || ""));
   const requirements = rows.map((r) => ({
-    requirement: r.requirement,
+    // The filter above kept only rows whose requirement is a REQ id.
+    requirement: r.requirement as string,
     scenarioId: r.scenarioId || "",
     status: r.status || "Draft",
     featureFile: r.featureFile || "",
-    done: DONE.has(r.status),
+    // An absent status is never a done one.
+    done: DONE.has(r.status as string),
   }));
   const total = requirements.length;
   const done = requirements.filter((r) => r.done).length;
   return { total, done, pending: total - done, requirements };
 }
 
-function esc(s: any) {
+function esc(s: unknown) {
   return String(s).replace(/[&<>"]/g, (ch) =>
     ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : ch === ">" ? "&gt;" : "&quot;"
   );
 }
 
-export function mermaid(model: any) {
+export function mermaid(model: StudioModel) {
   const lines = ["flowchart LR"];
   for (const r of model.requirements) {
     const id = r.requirement.replace(/-/g, "_");
@@ -117,10 +136,10 @@ export function mermaid(model: any) {
   return lines.join("\n");
 }
 
-export function renderHtml(projectDir: string, model: any) {
+export function renderHtml(projectDir: string, model: StudioModel) {
   const rowsHtml = model.requirements
     .map(
-      (r: any) =>
+      (r) =>
         `<tr><td>${esc(r.requirement)}</td><td>${esc(r.scenarioId)}</td><td>${esc(
           r.status
         )}</td><td>${esc(r.featureFile)}</td></tr>`
@@ -184,7 +203,7 @@ export class StudioCommand extends BaseCommand {
     let projectDir: string;
     try {
       projectDir = resolveProjectDir(opts.projectDir);
-    } catch (err: any) {
+    } catch (err) {
       process.stderr.write(`${errorMessage(err)}\n`);
       process.exit(2);
     }

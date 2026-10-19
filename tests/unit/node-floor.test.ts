@@ -15,15 +15,16 @@
  */
 
 const test = require("node:test");
-const assert = require("node:assert/strict");
+import assert from "node:assert/strict";
 const fs = require("node:fs");
 const path = require("node:path");
+import type { Dirent } from "node:fs";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
-const read = (rel) => fs.readFileSync(path.join(ROOT_DIR, rel), "utf8");
-const json = (rel) => JSON.parse(read(rel));
+const read = (rel: string): string => fs.readFileSync(path.join(ROOT_DIR, rel), "utf8");
+const json = (rel: string) => JSON.parse(read(rel));
 
 /** The single source of truth. Everything else is checked against it. */
 const FLOOR = 22;
@@ -36,9 +37,9 @@ test("every publishable package declares the same floor", () => {
   // A package saying >=18 while the CLI needs 22 is a promise it cannot keep.
   const pkgs = fs
     .readdirSync(path.join(ROOT_DIR, "packages"), { withFileTypes: true })
-    .filter((e) => e.isDirectory())
-    .map((e) => `packages/${e.name}/package.json`)
-    .filter((rel) => fs.existsSync(path.join(ROOT_DIR, rel)));
+    .filter((e: Dirent) => e.isDirectory())
+    .map((e: Dirent) => `packages/${e.name}/package.json`)
+    .filter((rel: string) => fs.existsSync(path.join(ROOT_DIR, rel)));
 
   assert.ok(pkgs.length > 0, "no packages found");
   for (const rel of pkgs) {
@@ -50,7 +51,7 @@ test("every publishable package declares the same floor", () => {
 
 test("no workflow pins a Node older than the floor", () => {
   const dir = path.join(ROOT_DIR, ".github", "workflows");
-  for (const name of fs.readdirSync(dir).filter((f) => f.endsWith(".yml"))) {
+  for (const name of fs.readdirSync(dir).filter((f: string) => f.endsWith(".yml"))) {
     const content = fs.readFileSync(path.join(dir, name), "utf8");
     for (const m of content.matchAll(/node-version:\s*['"]?(\d+)/g)) {
       assert.ok(
@@ -88,7 +89,7 @@ test("the CI templates handed to users do not pin an unsupported Node", () => {
   // These generate a pipeline that runs specgate, so anything below the floor
   // produces a gate that cannot start.
   const dir = path.join(ROOT_DIR, "templates");
-  const walk = (d) => {
+  const walk = (d: string) => {
     for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
       const full = path.join(d, entry.name);
       if (entry.isDirectory()) walk(full);

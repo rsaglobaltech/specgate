@@ -64,9 +64,9 @@ export function exploreBrief(projectDir: string, question: string) {
     (summary) => ({
       counts: summary.counts,
       pending: summary.items
-        .filter((it: any) => it.category !== "DONE")
+        .filter((it) => it.category !== "DONE")
         .slice(0, 20)
-        .map((it: any) => ({
+        .map((it) => ({
           id: it.requirement,
           title: String(it.title || "").replace(/^UC-\d+\s*/, ""),
           needs: needsOf(it),
@@ -139,9 +139,10 @@ export class ExploreCommand extends BaseCommand {
     let projectDir: string;
     try {
       projectDir = resolveProjectDir(dirArg);
-    } catch (err: any) {
+    } catch (err) {
+      // `resolveProjectDir` throws Errors.
       io.usage(NULL_SHAPE, [
-        error("project_not_found", err.message, {
+        error("project_not_found", (err as Error).message, {
           fix: "Run from inside a spec-driven project, or pass --project-dir.",
         }),
       ]);

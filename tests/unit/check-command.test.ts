@@ -1,8 +1,8 @@
 "use strict";
 
 /**
- * `specgate check` — the gate under one name (phase 1 of
- * mejoras/plan-simplificacion-equipo.md).
+ * `specgate check` — the gate under one name, part of the plan to
+ * make the tool simpler for a team to adopt.
  *
  * The team found the tool hard to absorb, and the gate was a fair example:
  * `validate` with a choice of five `--strict-*` flags, and the suite run by a
@@ -16,16 +16,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
+import { cli } from "../helpers/cli";
+import type { CliResult } from "../helpers/cli";
 
 /** A freshly adopted repository: its own gate passes. */
 function adopted() {
@@ -42,7 +34,7 @@ function adopted() {
   return { parent, dir };
 }
 
-function json(r) {
+function json(r: CliResult) {
   return JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
 }
 
@@ -58,7 +50,7 @@ test("check passes and says it did not run the tests when none are configured", 
     assert.equal(doc.check.validate, "passed");
     assert.equal(doc.check.tests, "not_configured");
     assert.deepEqual(
-      doc.status.map((d) => d.code),
+      doc.status.map((d: { code: string }) => d.code),
       ["tests_not_configured"]
     );
   } finally {
@@ -139,7 +131,7 @@ test("check is the strong gate, not a subset of it", () => {
   const { parent, dir } = adopted();
   try {
     const add = cli("req", "add", "Totals are rounded half-up", "--project-dir", dir);
-    const reqId = /Added (REQ-\d+)/.exec(add.stdout)[1];
+    const reqId = /Added (REQ-\d+)/.exec(add.stdout)![1];
     cli(
       "req",
       "link",
@@ -173,7 +165,7 @@ test("req link refuses --status instead of dropping it", () => {
   const { parent, dir } = adopted();
   try {
     const add = cli("req", "add", "Totals are rounded half-up", "--project-dir", dir);
-    const reqId = /Added (REQ-\d+)/.exec(add.stdout)[1];
+    const reqId = /Added (REQ-\d+)/.exec(add.stdout)![1];
     const r = cli(
       "req",
       "link",

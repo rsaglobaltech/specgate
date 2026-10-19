@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { error } from "../../../lib/diagnostics";
-import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import {
   HARNESS_CONFIG_FILE,
@@ -55,15 +55,18 @@ export function configPath(projectDir: string) {
   return path.join(projectDir, CONFIG_DIR, CONFIG_FILE);
 }
 
-export function read(projectDir: string) {
+/** `.specgate/config.json`: setting name → value. */
+export type ProjectConfig = Record<string, unknown>;
+
+export function read(projectDir: string): ProjectConfig {
   try {
-    return JSON.parse(fs.readFileSync(configPath(projectDir), "utf8"));
+    return JSON.parse(fs.readFileSync(configPath(projectDir), "utf8")) as ProjectConfig;
   } catch {
     return {};
   }
 }
 
-export function write(projectDir: string, config: any) {
+export function write(projectDir: string, config: ProjectConfig): string {
   const file = configPath(projectDir);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`, "utf8");
@@ -72,7 +75,7 @@ export function write(projectDir: string, config: any) {
 
 function usage() {
   const keys = Object.entries(KEYS)
-    .map(([k, v]: [string, any]) => {
+    .map(([k, v]) => {
       const allowed = v.values ? ` (${v.values.join(" | ")})` : "";
       return `    ${k}${allowed}\n      ${v.describe}`;
     })
@@ -92,7 +95,7 @@ function usage() {
 export class ConfigSetCommand extends BaseCommand {
   public execute(): void {
     const argv = this.args;
-    const io = agentIo(wantsJson(argv));
+    const io: AgentIo = agentIo(wantsJson(argv));
     const NULL_SHAPE = { config: null };
     const args = argv.filter((a) => a !== "--json");
 

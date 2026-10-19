@@ -25,41 +25,56 @@ neither, it runs `validate . --strict` alone and `ci init` says so.
 
 ---
 
-## The author: one requirement, one pull request
+## The author: one change, one pull request
 
 ```bash
-specgate status                                   # what is open, and the next command
-specgate new "Customers download invoices as PDF" # spec section + scenario + row
+specgate status                     # what is open, and the next command
+specgate propose invoices-pdf       # proposal, tasks, a delta, REQ ids reserved
 ```
 
-`new` writes three things. Edit two of them:
+`propose` opens `docs/specs/changes/invoices-pdf/`. Write two things in it:
 
-1. **`spec.md`, the `## REQ-NNN` section** — replace the generated sentence
-   with the obligation: what must hold, when, and how someone would observe
-   it. One requirement, one obligation. `done` refuses the requirement while
-   the generated sentence is still there (`requirement_template_obligation`).
-2. **`features/<name>.feature`** — replace the three `<placeholders>` with a
-   concrete Given / When / Then. Real values, not "valid data".
-3. **`docs/specs/traceability.md`** — do not touch it. It is generated.
+1. **`proposal.md`** — why the change exists, in a paragraph. The reviewer
+   reads it first.
+2. **The delta, `specs/invoices-pdf/spec.md`** — each requirement as
+   `### Requirement: REQ-007 — <name>`, one obligation with `SHALL` or `MUST`,
+   and a scenario of plain `- GIVEN` / `- WHEN` / `- THEN` bullets with real
+   values, not "valid data". `check` fails while a step still has its
+   `<placeholder>` (`scenario_steps_unwritten`).
+
+Leave `docs/specs/traceability.md` alone. It is generated.
 
 Then write the test, and **mention the requirement in it**. The mention is the
 link; there is nothing else to declare:
 
 ```js
-// REQ-007 SCN-007 — customers download invoices as PDF
+// REQ-007 SCN-007a — customers download invoices as PDF
 test("a paid invoice downloads as a PDF", () => { /* … */ });
 ```
 
-Write the code, then close the requirement:
+Write the code, then deliver the requirement and close the change:
 
 ```bash
-specgate done REQ-007     # runs the gate for it first; writes nothing if it fails
-specgate check            # the whole gate, the one CI runs
+specgate apply                      # the next requirement: refused while no test names it,
+                                    # Implemented only when the gate passes
+specgate archive invoices-pdf       # every requirement Implemented: merged into the specs
+specgate check                      # the whole gate, the one CI runs
 ```
 
-Commit everything `check` touched — `spec.md`, the feature file, the tests,
-the code **and** `docs/specs/traceability.md`. A matrix left behind is the
-most common red build on a first PR (see `matrix_stale` below).
+While the change is open its requirements already count: `status` lists
+them, `apply` judges the project as it will be after archive and writes the
+status in the delta. `archive` refuses while one is still pending, naming the
+`specgate apply REQ-…` to run. So the spec and the code merge together, in
+this pull request, after the gate passed.
+
+Commit everything `archive` and `check` touched — the change folder moved to
+`docs/specs/changes/archive/`, the capability spec, the feature file, the
+tests, the code **and** `docs/specs/traceability.md`. A matrix left behind is
+the most common red build on a first PR (see `matrix_stale` below).
+
+A requirement too small for a change: `specgate new "<title>"` writes it
+straight into `spec.md` with a scenario to fill in, and `specgate apply
+REQ-007` delivers it the same way. `done` is `apply`'s old name; both work.
 
 ### Fixes and refactors
 
@@ -85,7 +100,7 @@ what no tool can judge:
 | The `## REQ-NNN` section in `spec.md` | Is it one obligation? Could two people test it and agree? Is it what the ticket asked for? |
 | The scenario | Do Given / When / Then describe *this* behaviour with real values, or a generic happy path? Is the interesting edge case missing? |
 | The test that mentions `REQ-NNN` | Does it assert what the scenario's *Then* says — or only that nothing throws? A test that mentions the ID and checks nothing passes the gate. |
-| The status change | `specgate:trace … status=Implemented` in `spec.md`. Only on a requirement whose code is in this PR. |
+| The proposal and the status | `proposal.md` says why. Each requirement is `Implemented` — `archive` would not have run otherwise — and its code is in this PR. |
 
 Skip `docs/specs/traceability.md`. It is generated from the files above, and
 CI fails when it is out of date, so a diff there is a consequence, not a
@@ -108,9 +123,13 @@ brackets you can search for. The ones a first PR meets:
 ✖  features/invoices.feature:4 unfilled placeholder in "given <the state before the action>" … [scenario_placeholder_step]
 ```
 
-The scenario still has the `<placeholders>` `new` wrote. A Draft requirement
+A feature file still has the `<placeholders>` `new` wrote. A Draft requirement
 may keep them; one being delivered may not, because Cucumber reports a
 scenario of placeholders as `0 steps · exit 0`. Write the real steps.
+
+In a change's delta the same problem is `scenario_steps_unwritten`, and it
+fails `check` as soon as the change is open (`check_change_invalid`): write the
+scenario before you push the change.
 
 ### `matrix_stale`
 
@@ -146,22 +165,33 @@ does not produce this: delete that test and you get `[TDD-1]` instead.
 ### `requirement_template_obligation`
 
 The requirement claims delivery while its `## REQ-NNN` section still says
-"The system MUST satisfy: <title>." with the note `new` left below it. Write
+"The system MUST satisfy: <title>." with the note `specgate new` left below it. Write
 the real obligation and delete the note. A Draft owes nothing yet.
 
 ### `check_tests_failed` / `done_tests_failed`
 
 The project's tests failed. These run only when a test command is configured
 (`--test-cmd "npm test"`, or `specgate config set test_cmd "npm test"` once). Without
-one, `check` and `done` say they checked the specification and not the code —
+one, `check` and `apply` say they checked the specification and not the code —
 read that warning as "nothing ran", not as a pass.
+
+### `apply_no_test`
+
+No test mentions the requirement yet. Name it in the test that covers it
+(`REQ-007`, and its scenario `SCN-007a`), then run `specgate apply REQ-007`
+again.
 
 ### `done_validate_failed`
 
-`done` ran the gate and it failed; the output above it says why. Nothing was
-written. Fix it and run `done` again. `done --no-check` writes the status
+`apply` ran the gate and it failed; the output above it says why. Nothing was
+written. Fix it and run `apply` again. `apply --no-check` writes the status
 anyway — keep it for the rare case you know the gate is wrong, and say so in
 the PR.
+
+### `archive_requirements_pending`
+
+`archive` found a requirement of the change that is not `Implemented`. Run
+the `specgate apply REQ-…` it names; `--force` does not skip this.
 
 ---
 
@@ -170,7 +200,8 @@ the PR.
 Three sentences are enough. Put them in the repository's contributing guide:
 
 1. A pull request that delivers behaviour carries its requirement, its
-   scenario and a test that mentions it.
+   scenario and a test that mentions it — as a change, archived in the same
+   pull request.
 2. `specgate check` is green before review is requested.
 3. The reviewer reads the requirement, the scenario and the test — not the
    matrix.
@@ -179,7 +210,7 @@ Three sentences are enough. Put them in the repository's contributing guide:
 
 ## Next
 
-- [The five commands, and the rest](commands.md)
+- [The four verbs, and the rest](commands.md)
 - [Write a scenario that is worth testing](writing-specs.md)
 - [Change a requirement that already shipped](reviewing-changes.md)
 - [What the gate checks, flag by flag](validating.md)

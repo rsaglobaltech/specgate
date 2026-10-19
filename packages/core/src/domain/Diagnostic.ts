@@ -40,7 +40,15 @@ export const SEVERITY = Object.freeze({
   INFO: "info",
 });
 
-export function diagnostic(severity, code, message, extra?: DiagnosticExtra) {
+/** How bad a diagnostic is. */
+export type Severity = Diagnostic["severity"];
+
+export function diagnostic(
+  severity: Severity,
+  code: string,
+  message: string,
+  extra?: DiagnosticExtra
+): Diagnostic {
   const d: Diagnostic = { severity, code, message };
   if (extra) {
     if (extra.target !== undefined) d.target = extra.target;
@@ -51,18 +59,22 @@ export function diagnostic(severity, code, message, extra?: DiagnosticExtra) {
   return d;
 }
 
-export const error = (code, message, extra?: DiagnosticExtra) =>
+export const error = (code: string, message: string, extra?: DiagnosticExtra) =>
   diagnostic(SEVERITY.ERROR, code, message, extra);
-export const warning = (code, message, extra?: DiagnosticExtra) =>
+export const warning = (code: string, message: string, extra?: DiagnosticExtra) =>
   diagnostic(SEVERITY.WARNING, code, message, extra);
-export const info = (code, message, extra?: DiagnosticExtra) =>
+export const info = (code: string, message: string, extra?: DiagnosticExtra) =>
   diagnostic(SEVERITY.INFO, code, message, extra);
 
-export function hasErrors(diags) {
+export function hasErrors(
+  diags: readonly Pick<Diagnostic, "severity">[] | null | undefined
+): boolean {
   return (diags || []).some((d) => d.severity === SEVERITY.ERROR);
 }
 
-export function countBySeverity(diags) {
+export function countBySeverity(
+  diags: readonly Pick<Diagnostic, "severity">[] | null | undefined
+): Record<Severity, number> {
   const out = { error: 0, warning: 0, info: 0 };
   for (const d of diags || []) {
     if (out[d.severity] !== undefined) out[d.severity]++;

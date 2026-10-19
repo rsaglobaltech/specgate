@@ -10,21 +10,17 @@
  * detection behind it, which is half a fix wearing the look of a whole one.
  */
 
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { spawnSync } from "node:child_process";
+import { cli } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
 
 function repo(files: Record<string, string>) {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-poly-"));
@@ -126,7 +122,7 @@ test("a test selector is accepted by req link and by validate", () => {
     assert.equal(cli("adopt", "--project-dir", dir).status, 0);
 
     const added = cli("req", "add", "Config is loaded from a Python object", "--project-dir", dir);
-    const reqId = /Added (REQ-\d+)/.exec(added.stdout)[1];
+    const reqId = /Added (REQ-\d+)/.exec(added.stdout)![1];
     assert.equal(
       cli(
         "req",
@@ -187,7 +183,7 @@ test("a requirement with no feature file gets an instruction, not a dash", () =>
   try {
     assert.equal(cli("adopt", "--project-dir", dir).status, 0);
     const added = cli("req", "add", "res.redirect issues a 302", "--project-dir", dir);
-    const reqId = /Added (REQ-\d+)/.exec(added.stdout)[1];
+    const reqId = /Added (REQ-\d+)/.exec(added.stdout)![1];
 
     const prompt = cli("harness", "prompt", reqId, "--project-dir", dir);
     assert.equal(prompt.status, 0, prompt.stdout + prompt.stderr);

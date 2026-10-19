@@ -24,10 +24,19 @@ export const DEFAULT_LABELS = {
   incoming: "incoming (new pack version)",
 };
 
-/**
- * @returns {{ merged: string, conflict: boolean, conflicts: number }}
- */
-export function threeWayMerge(base, local, incoming, labels = {}) {
+/** What a three-way merge produced, and how many regions it could not settle. */
+export interface MergeResult {
+  merged: string;
+  conflict: boolean;
+  conflicts: number;
+}
+
+export function threeWayMerge(
+  base: string,
+  local: string,
+  incoming: string,
+  labels: Partial<typeof DEFAULT_LABELS> = {}
+): MergeResult {
   const lbl = { ...DEFAULT_LABELS, ...labels };
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "specops-merge-"));
   try {

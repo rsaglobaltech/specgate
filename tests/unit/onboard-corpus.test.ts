@@ -29,7 +29,7 @@ const path = require("node:path");
 const { proposeCapabilities } = require("../../scripts/onboard");
 
 /** Materialise a layout: paths ending in `/` are directories, the rest files. */
-function layout(paths) {
+function layout(paths: string[]): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "corpus-"));
   for (const p of paths) {
     const full = path.join(dir, p);
@@ -43,14 +43,14 @@ function layout(paths) {
 }
 
 /** `n` source files under `dir`, so a capability has something to weigh. */
-function code(dir, ext, n) {
+function code(dir: string, ext: string, n: number): string[] {
   return Array.from({ length: n }, (_, i) => `${dir}/File${i}${ext}`);
 }
 
-function idsOf(dir) {
+function idsOf(dir: string): string[] {
   try {
     return proposeCapabilities(dir)
-      .map((c) => c.id)
+      .map((c: { id: string }) => c.id)
       .sort();
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

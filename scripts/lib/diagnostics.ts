@@ -45,7 +45,10 @@ export function formatDiagnostic(d: Diagnostic) {
   return `${head}  ${code}${fix}`;
 }
 
-export function printDiagnostics(diags, stream?) {
+export function printDiagnostics(
+  diags: readonly Diagnostic[] | null | undefined,
+  stream?: NodeJS.WritableStream
+) {
   const out = stream || process.stderr;
   for (const d of diags || []) out.write(`${formatDiagnostic(d)}\n`);
 }
