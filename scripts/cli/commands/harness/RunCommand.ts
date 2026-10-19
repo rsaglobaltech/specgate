@@ -18,7 +18,9 @@
  *   5. Emit a pass/fail/attempts report.
  *
  * Vendor-neutral by construction: the agent is any shell command. The
- * harness never merges a branch — a human reviews and merges.
+ * harness never merges a branch — a human reviews and merges — except with
+ * `--chain`, which a person asks for and which merges only what passed the
+ * gate twice: on its branch and merged (ADR-0036).
  */
 
 import { runWithDeadline } from "../../../lib/run-with-deadline";
@@ -34,6 +36,7 @@ import { BaseCommand } from "../../../lib/command";
 
 import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
+import { detectSetupCommand } from "../../../harness/init";
 import { inFlightView } from "../../../lib/in-flight";
 
 /**
@@ -178,6 +181,15 @@ function usage() {
       "  --req <REQ-NNN>        Limit to specific requirement(s); repeatable.\n" +
       "  --project-dir <path>   Project root (auto-detected from cwd if omitted).\n" +
       "  --base-branch <ref>    Branch/ref each worktree is cut from (default: current HEAD).\n" +
+      "  --setup-cmd <cmd>      Run in each new worktree before the agent. Default: the\n" +
+      "                         install the lockfile implies (npm ci, pnpm, yarn);\n" +
+      "                         `none` runs nothing. The agent gets SPECGATE_REQ and\n" +
+      "                         SPECGATE_ATTEMPT in its environment.\n" +
+      "  --chain                One requirement at a time, in order, each cut from the\n" +
+      "                         previous merge: a green one is merged into the branch\n" +
+      "                         you are on (a merge commit, its prompts left on its\n" +
+      "                         branch), the gate runs again on the merge, and a red\n" +
+      "                         result is undone. Stops at the first failure.\n" +
       "  --timeout <seconds>    Per-agent-invocation timeout (default 1200).\n" +
       "  --keep-worktrees       Do not remove worktrees after each requirement.\n" +
       "  --force                Recreate harness/REQ-NNN branches that already exist.\n" +
@@ -236,6 +248,8 @@ export function parseArgs(argv) {
     push: false,
     remote: "",
     prCmd: "",
+    setupCmd: "",
+    chain: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
@@ -263,6 +277,10 @@ export function parseArgs(argv) {
       args.reqs.push(r);
     } else if (token === "--base-branch") {
       args.baseBranch = argv[++i] || "";
+    } else if (token === "--setup-cmd") {
+      args.setupCmd = argv[++i] || "";
+    } else if (token === "--chain") {
+      args.chain = true;
     } else if (token === "--timeout") {
       const n = Number(argv[++i]);
       if (!Number.isInteger(n) || n < 1) throw new Error("--timeout must be a positive integer");
@@ -965,6 +983,9 @@ function attemptRequirement(req, ctx) {
           cwd: worktreeDir,
           timeoutMs,
           maxBuffer: SUBPROCESS_MAX_BUFFER,
+          // Which requirement and attempt this is, for agents and the wrappers
+          // around them (ADR-0036).
+          env: { SPECGATE_REQ: req.requirement, SPECGATE_ATTEMPT: String(attempt) },
         });
         // Node reports a timeout as an errno-carrying Error; the base `Error`
         // type the spawnSync signature declares does not have `code`.
@@ -2007,6 +2028,98 @@ async function dispatchLevel(runnable, byId, hintByReq, ctx, concurrency) {
   return runWorkers(runnable, byId, ctx, concurrency);
 }
 
+/**
+ * `--chain` (ADR-0036): the one place the harness merges, and only on request.
+ *
+ * Each requirement is cut from the head the previous merge produced, so it
+ * builds on everything before it. A green one is merged into the branch the
+ * run started on with a merge commit — one revertible commit per requirement,
+ * its prompt archive left on its own branch — and the gate runs again on the
+ * merged result: green alone is not green together. A red result is undone,
+ * and the chain stops at the first requirement that does not pass.
+ */
+async function runChain(pending, ctx, hintByReq) {
+  const projectDir = ctx.projectDir;
+  const results: any[] = [];
+  for (let i = 0; i < pending.length; i += 1) {
+    const req = pending[i];
+    const stop = (reason: string) => {
+      for (const rest of pending.slice(i + 1)) {
+        results.push(notAttempted(rest, rest.requirement, reason));
+      }
+    };
+    const [result] = await runLevels([req], ctx, {
+      concurrency: 1,
+      hintByReq,
+      runOne: dispatchLevel,
+    });
+    results.push(result);
+    if (!result || result.result !== "pass") {
+      stop(`the chain stopped at ${req.requirement}`);
+      break;
+    }
+
+    const branch = `harness/${req.requirement}`;
+    const merge = git(projectDir, ["merge", "--no-ff", "--no-commit", branch]);
+    if (merge.status !== 0) {
+      const unresolved = resolveGeneratedConflicts(projectDir);
+      if (unresolved.length > 0) {
+        git(projectDir, ["merge", "--abort"]);
+        Object.assign(result, {
+          result: "fail",
+          error: `merge into the chain's branch conflicted in: ${unresolved.join(", ")}`,
+        });
+        stop(`the chain stopped at ${req.requirement}`);
+        break;
+      }
+    }
+    // The prompts stay on the requirement's branch, for review and --resume;
+    // they never reach the branch the chain merges into.
+    const prompts = git(projectDir, [
+      "diff",
+      "--cached",
+      "--name-only",
+      "--diff-filter=A",
+      "HEAD",
+      "--",
+      PROMPT_ARCHIVE_DIR,
+    ])
+      .stdout.split("\n")
+      .filter(Boolean);
+    if (prompts.length > 0) {
+      git(projectDir, ["rm", "-q", "--cached", "--", ...prompts]);
+      for (const f of prompts) fs.rmSync(path.join(projectDir, f), { force: true });
+    }
+    const title = String(req.title || req.use_case || req.useCase || "").replace(/^UC-\d+\s*/, "");
+    git(projectDir, [
+      "commit",
+      "-q",
+      "-m",
+      `Merge ${branch}${title ? ` — ${title}` : ""}\n\n` +
+        `Merged by \`specgate harness run --chain\` after its gate passed on ${branch}.`,
+    ]);
+
+    const gate = runGate(projectDir, ctx.settings.testCmd, ctx.timeoutMs, req, ctx.settings);
+    if (!gate.ok) {
+      git(projectDir, ["reset", "-q", "--hard", "HEAD~1"]);
+      Object.assign(result, {
+        result: "fail",
+        error: `post-merge gate: ${gate.stage}\n${String(gate.output || "").slice(-4000)}`,
+      });
+      warn(`${req.requirement}: green on ${branch}, red once merged — the merge was undone`);
+      stop(`the chain stopped at ${req.requirement}`);
+      break;
+    }
+    // The gate may regenerate the matrix: it belongs to the merge commit.
+    if (!isGitClean(projectDir)) {
+      git(projectDir, ["add", "-A"]);
+      git(projectDir, ["commit", "-q", "--amend", "--no-edit"]);
+    }
+    info(`${req.requirement}: merged into the chain's branch, gate green`);
+  }
+  return results;
+}
+
 /** A requirement the budget never let start. Not a failure — it was not tried. */
 function notAttempted(req, id, reason) {
   return {
@@ -2099,6 +2212,8 @@ function workerArgs(id, ctx) {
     String(ctx.timeoutSeconds),
     "--max-attempts",
     String(ctx.settings.maxAttempts),
+    "--setup-cmd",
+    ctx.settings.setupCmd || "none",
     ...(ctx.force ? ["--force"] : []),
     ...(ctx.keepWorktrees ? ["--keep-worktrees"] : []),
     ...(ctx.settings.agent ? ["--agent", ctx.settings.agent] : []),
@@ -2310,6 +2425,10 @@ export class RunCommand extends BaseCommand {
 
       const fileConfig = readHarnessConfig(projectDir);
       const settings = resolveHarnessSettings(fileConfig, args);
+      // A fresh worktree has no dependencies. Unless told, install what the
+      // lockfile pins (ADR-0036); `--setup-cmd none` runs nothing.
+      if (settings.setupCmd === "none") settings.setupCmd = "";
+      else if (!settings.setupCmd) settings.setupCmd = detectSetupCommand(projectDir);
 
       // D1: profile match rules live in `.harness/profiles.yaml`, and a project
       // may declare profiles without ever writing a `harness.config.yaml`.
@@ -2371,7 +2490,12 @@ export class RunCommand extends BaseCommand {
 
       if (args.dryRun) {
         process.stdout.write(
-          ui.header("harness run", `dry run · ${pending.length} requirement(s) would be processed`)
+          ui.header(
+            "harness run",
+            `dry run · ${pending.length} requirement(s) would be processed`
+          ) +
+            ui.kv("Setup", settings.setupCmd || "none", 14) +
+            (args.chain ? ui.kv("Chain", "each green requirement merged into this branch", 14) : "")
         );
         for (const req of pending) {
           const prompt = judged(projectDir, (dir) =>
@@ -2407,6 +2531,17 @@ export class RunCommand extends BaseCommand {
       // `Author identity unknown` at the commit step of every requirement.
       const identity = gitIdentityProblem(projectDir);
       if (identity) throw new Error(identity);
+      if (args.chain) {
+        if (args.baseBranch) {
+          throw new Error(
+            "--chain merges into the branch you are on: check that branch out instead of --base-branch."
+          );
+        }
+        const current = git(projectDir, ["rev-parse", "--abbrev-ref", "HEAD"]).stdout.trim();
+        if (!current || current === "HEAD") {
+          throw new Error("--chain needs a branch to merge into; HEAD is detached.");
+        }
+      }
 
       const baseRef = args.baseBranch || "HEAD";
       const concurrencyNote =
@@ -2447,11 +2582,13 @@ export class RunCommand extends BaseCommand {
       };
 
       const startedAt = new Date().toISOString();
-      const results = await runLevels(pending, ctx, {
-        concurrency: settings.concurrency,
-        hintByReq,
-        runOne: dispatchLevel,
-      });
+      const results = args.chain
+        ? await runChain(pending, ctx, hintByReq)
+        : await runLevels(pending, ctx, {
+            concurrency: settings.concurrency,
+            hintByReq,
+            runOne: dispatchLevel,
+          });
 
       // Only the run that a person started writes a record. A worker is one
       // slice of that run, and its own record would be a second copy of the

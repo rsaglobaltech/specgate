@@ -1,6 +1,7 @@
 import { ValidationReport } from "../domain/ValidationReport";
 import { ITraceabilityRepository } from "./ports/ITraceabilityRepository";
 import { requirementSections } from "../domain/SpecSections";
+import { withoutFences } from "../domain/QuotedText";
 import { isDerivedMatrix } from "../domain/DerivedMatrix";
 import {
   ALLOWED_STATUS,
@@ -222,7 +223,14 @@ export class ValidateProjectUseCase {
     }
 
     if (strictTdd && mode === "rich" && typeof opts.specContent === "string") {
-      for (const reqId of new Set(opts.specContent.match(/\bREQ-\d+\b/g) || [])) {
+      // A requirement the spec *declares* — a heading or a requirement table
+      // row, outside fenced examples — owes a row. An id a sentence, a scenario
+      // or a code span merely mentions does not (ADR-0036): demanding one made
+      // authors reword specs around the gate.
+      const declaredIds = requirementSections(withoutFences(opts.specContent)).filter((id) =>
+        /^REQ-\d+$/.test(id)
+      );
+      for (const reqId of new Set(declaredIds)) {
         if (!requirements.has(reqId)) {
           report.addError(
             "strict_tdd_violation",

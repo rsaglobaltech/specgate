@@ -26,8 +26,8 @@ In scope:
   reserved ranges (REQ-121).
 - The generated matrix merges with git's `union` driver; `check` regenerates
   it (REQ-122).
-- Harness: setup detected from the lockfile (REQ-123), prompts never committed
-  (REQ-124), `SPECGATE_REQ`/`SPECGATE_ATTEMPT` for the agent (REQ-125),
+- Harness: setup detected from the lockfile (REQ-123), prompts kept out of
+  the base branch (REQ-124), `SPECGATE_REQ`/`SPECGATE_ATTEMPT` for the agent (REQ-125),
   `--chain` merging only on a green gate, also after the merge (REQ-126,
   REQ-127).
 

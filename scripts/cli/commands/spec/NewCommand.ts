@@ -8,6 +8,7 @@ import { refreshDerivedMatrix } from "./MatrixCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { AddRequirementUseCase } from "../../../../packages/core/src/application/AddRequirementUseCase";
+import { highestReservedReq } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { appendRequirementSection } from "../../../../packages/core/src/domain/SpecSections";
 import {
   featureWithScenario,
@@ -105,10 +106,11 @@ export class NewCommand extends BaseCommand {
       ]);
     }
 
-    const result = new AddRequirementUseCase(new DiskTraceabilityRepository()).execute(projectDir, {
-      useCase: title,
-      featureFile: featureRel,
-    });
+    const result = new AddRequirementUseCase(new DiskTraceabilityRepository()).execute(
+      projectDir,
+      { useCase: title, featureFile: featureRel },
+      highestReservedReq(projectDir)
+    );
     const reqId = result.reqId;
     const scenarioId = result.scenarioId;
 

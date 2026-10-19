@@ -10,6 +10,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **A gate a team can trust** ([ADR-0036](docs/specs/adr/0036-a-gate-a-team-can-trust.md), change `trust-gate`).
+  - `check` compares requirement ids with the base branch (`--base`,
+    `SPECGATE_BASE`, or origin's default) and fails on the same id with another
+    title (`id_taken_on_base`), naming the next id free on both sides.
+  - `harness run --chain`: one requirement at a time, each cut from the
+    previous merge, merged with a merge commit when green, the gate run again
+    on the merge, a red result undone, the chain stopped at the first failure.
+  - `harness run --setup-cmd <cmd|none>`; without it, the install the lockfile
+    implies runs in each new worktree. The agent gets `SPECGATE_REQ` and
+    `SPECGATE_ATTEMPT`.
+  - A corpus fixture of real specification shapes passes `validate --strict`
+    with no finding; `SPECGATE_CORPUS` runs the same test over private projects.
+
 - **Four verbs, one lifecycle** ([ADR-0035](docs/specs/adr/0035-four-verbs-one-lifecycle.md), change `compact-use`).
   The short help is `init`; `propose`, `apply`, `status`, `archive`; `check`.
   - `specgate propose <id>` opens a change with a delta to write (`change new`);
@@ -26,6 +39,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `apply` writes the status in the change's delta.
 
 ### Changed
+
+- The placeholder rule ignores code spans, and the vague-step rule code spans
+  and quoted text: `` `tool verify <module>` `` is a command, not a template.
+- TDD-3 asks a matrix row for a requirement a spec *declares* (a heading or a
+  requirement table row outside fenced code), not for every id it mentions.
+- A generated matrix is declared `merge=union` in `.gitattributes`: parallel
+  branches no longer conflict on it, and `check` regenerates it.
+- `new` and `req add` allocate above the ids open changes reserved.
 
 - **A change is archived when its code is done**, not before. Drafts from a
   brief follow the same path: reviewed, applied, then archived. `draft` names

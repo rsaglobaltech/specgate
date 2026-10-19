@@ -11,7 +11,7 @@ requirements without wrapper scripts.
 
 ### Requirement: REQ-117 — Code and quotes in a step are not placeholders
 
-The system SHALL ignore text inside backtick code spans and double-quoted strings when it looks for unfilled `<placeholder>` steps and vague steps in a scenario, and SHALL keep flagging a placeholder or a vague word written in the step itself.
+The system SHALL ignore text inside backtick code spans when it looks for unfilled `<placeholder>` steps, and text inside code spans and double-quoted strings when it looks for vague steps, and SHALL keep flagging a placeholder or a vague word written in the step itself — a quoted `"<name>"` is still a placeholder.
 
 #### Scenario: SCN-117a — A command in a step
 
@@ -20,7 +20,7 @@ The system SHALL ignore text inside backtick code spans and double-quoted string
 - THEN no `scenario_placeholder_step` and no `vague_step` finding is reported for that step
 - AND a step reading "GIVEN a customer named" followed by a bare angle-bracket placeholder still fails with `scenario_placeholder_step`
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-117.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-117.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-118 — Only a requirement heading needs a matrix row
 
@@ -33,19 +33,19 @@ The system SHALL require a traceability row (TDD-3) only for a requirement decla
 - THEN no TDD-3 finding names REQ-003 or REQ-002 for those mentions
 - AND a `### Requirement: REQ-004` heading with no row still fails TDD-3
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-118.feature kind=business-rule actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-118.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=business-rule -->
 
-### Requirement: REQ-119 — A real project's specification as a regression corpus
+### Requirement: REQ-119 — Real specification shapes as a regression corpus
 
-The system SHALL keep a copy of a real project's specification — agentkit's capability specs, features and matrix — as a test fixture that `validate --strict` passes with no finding, including the two texts that produced false positives before.
+The system SHALL keep, as a test fixture, a project whose specification reproduces the shapes that produced false positives on a real project — a command with an angle-bracket argument in a code span, ids mentioned in prose, scenarios and fenced examples — and that `validate --strict` passes with no finding; and SHALL run the same test over every project directory listed in `SPECGATE_CORPUS`, so a maintainer can check private specifications without copying them into this repository.
 
 #### Scenario: SCN-119a — The corpus stays green
 
-- GIVEN the corpus fixture with the scenario step that names a command with an angle-bracket argument in a code span, and a prose mention of an undeclared id
-- WHEN the test suite runs `specgate validate --strict` on it
-- THEN it exits 0 and reports no error and no warning
+- GIVEN the corpus fixture, and `SPECGATE_CORPUS` naming a second project that passes the gate
+- WHEN the test suite runs `specgate validate --strict` on each
+- THEN each exits 0 and reports no error and no warning
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-119.feature kind=non-functional actor=Maintainer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-119.feature test=tests/unit/trust-gate.test.ts actor=Maintainer kind=non-functional -->
 
 ### Requirement: REQ-120 — An id taken on the base branch is refused before merge
 
@@ -64,7 +64,7 @@ The system SHALL, in `specgate check`, compare every requirement the branch decl
 - WHEN the developer runs `specgate check`
 - THEN the gate does not fail for ids, and says the base comparison was skipped
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-120.feature kind=business-rule actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-120.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=business-rule -->
 
 ### Requirement: REQ-121 — New ids skip the ranges open changes reserved
 
@@ -76,7 +76,7 @@ The system SHALL allocate the id of `specgate new` and `specgate req add` above 
 - WHEN the developer runs `specgate new "Totals are rounded half-up"`
 - THEN the new requirement is REQ-005
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-121.feature kind=business-rule actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-121.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=business-rule -->
 
 ### Requirement: REQ-122 — The generated matrix never blocks a merge
 
@@ -88,7 +88,7 @@ The system SHALL declare the generated `docs/specs/traceability.md` with git's b
 - WHEN the second branch is merged with `git merge`
 - THEN git reports no conflict, and `specgate check` on the result passes with both requirements Implemented in the matrix
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-122.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-122.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-123 — The harness installs dependencies without being told
 
@@ -101,19 +101,19 @@ The system SHALL, when `setup_cmd` is not configured, run in each new harness wo
 - THEN the plan names `npm ci --silent --no-audit --no-fund` as the setup step of each worktree
 - AND with `--setup-cmd none` it names no setup step
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-123.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-123.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=functional -->
 
-### Requirement: REQ-124 — Harness prompts stay out of commits
+### Requirement: REQ-124 — Harness prompts never reach the base branch
 
-The system SHALL keep the prompts the harness hands an agent under `.harness/prompts/`, which git ignores, and SHALL NOT commit them on a requirement's branch, green or failed.
+The system SHALL keep the prompts the harness hands an agent on the requirement's own branch, where a reviewer reads them and `--resume` finds them, and SHALL leave them out of the merge commit `--chain` writes, so they never reach the branch it merges into.
 
-#### Scenario: SCN-124a — A delivered requirement's branch
+#### Scenario: SCN-124a — A chained requirement's merge
 
-- GIVEN a project whose harness delivers one requirement
-- WHEN the developer lists the files changed on its `harness/` branch
-- THEN no prompt file is among them, and the prompt is under `.harness/prompts/` in the project
+- GIVEN a project whose harness delivers one requirement with `--chain`
+- WHEN the developer lists the files the merge commit adds to the base branch
+- THEN no file under `.specops/harness-prompts/` is among them, and the requirement's `harness/` branch still holds its prompt
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-124.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-124.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-125 — The agent knows which requirement it works on
 
@@ -125,7 +125,7 @@ The system SHALL set `SPECGATE_REQ` and `SPECGATE_ATTEMPT` in the environment of
 - WHEN the harness runs it for REQ-002
 - THEN the file reads `REQ-002 1`
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-125.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-125.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-126 — A chain of requirements, each merged only on a green gate
 
@@ -143,7 +143,7 @@ The system SHALL, on `specgate harness run --chain`, deliver the requirements on
 - WHEN the developer runs `specgate harness run --chain`
 - THEN `develop` is unchanged, the second requirement is reported as skipped, and the run exits 1
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-126.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-126.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-127 — The base is never left red by a chain
 
@@ -155,4 +155,4 @@ The system SHALL, when the gate on a merged result fails during `--chain`, resto
 - WHEN the developer runs `specgate harness run --chain`
 - THEN the branch ends at the first requirement's merge commit, and the second is reported failed at `post-merge gate`
 
-<!-- specgate:trace test=tests/unit/trust-gate.test.ts feature=features/trusted-gate/REQ-127.feature kind=business-rule actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-127.feature test=tests/unit/trust-gate.test.ts actor=Developer kind=business-rule -->

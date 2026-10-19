@@ -11,14 +11,19 @@ const RUNNER = path.join(__dirname, "deadline-runner.js");
 
 export function runWithDeadline(
   command: string,
-  opts: { cwd: string; timeoutMs: number; maxBuffer: number }
+  opts: { cwd: string; timeoutMs: number; maxBuffer: number; env?: Record<string, string> }
 ): SpawnSyncReturns<string> {
   const r = spawnSync(process.execPath, [RUNNER], {
     cwd: opts.cwd,
     encoding: "utf8",
     maxBuffer: opts.maxBuffer,
     stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, HARNESS_CMD: command, HARNESS_DEADLINE_MS: String(opts.timeoutMs) },
+    env: {
+      ...process.env,
+      ...(opts.env || {}),
+      HARNESS_CMD: command,
+      HARNESS_DEADLINE_MS: String(opts.timeoutMs),
+    },
     // A backstop only: the runner kills the group at the deadline itself.
     timeout: opts.timeoutMs + 30_000,
     killSignal: "SIGKILL",
