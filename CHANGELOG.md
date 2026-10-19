@@ -71,6 +71,31 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - A delta's scenario findings name their requirement:
   `Scenario "…" of REQ-007 has no steps.`
 
+### Fixed
+
+- **The CLI no longer contradicts ADR-0035–0037** (four verbs, trusted gate, live view).
+  - `agents init` (and the bundled Claude Code plugin) teaches propose → test →
+    apply → archive: `/specgate:propose` opens a change, `/specgate:apply`
+    delivers a requirement, `/specgate:archive` runs only once all are applied;
+    `/specgate:draft` no longer says to archive before building, and
+    `/specgate:done` stays as an alias of apply. `AGENTS.md` says the same.
+  - `docs:terminal:check` and `docs:journey:check` no longer crash: the
+    storyboards leave the draft open, apply its requirements, and show archive
+    waiting for the rest. Recordings and `docs/start/` regenerated.
+  - `specgate explore` outside a Specgate project refuses with
+    `project_not_found` and a fix line (exit 2) instead of an ENOENT stack.
+  - Next-step advice names the new verbs: `propose --from-brief` says
+    `specgate propose --from-brief …`, the no-test-command warning and
+    `done_needs_clarification` say `apply`, and fixes that named `change new`,
+    `change archive` or `done` say `propose`, `archive` or `apply`. The old
+    names keep working.
+  - `status` with an open draft shows its `questions.md` at the change's real
+    path (not under `changes/archive/`), and counts a ready draft as drafted.
+  - Right after `specgate propose`, `check` passes: a change whose delta is
+    still the untouched skeleton is not judged yet, and `status`/`check` say so
+    (`change_delta_unwritten`, info). A delta with real but invalid content
+    still fails.
+
 ## [0.20.0] — 2026-10-12
 
 ### Added
