@@ -76,24 +76,23 @@ stricter with every delivery. Given a test command, it runs your suite too.
 
 **Reviews that read intent.** The reviewer reads the requirement, its
 scenario and the test that names it — the gate has already proved the
-mechanical part. A spec that already shipped changes through a reviewable
-delta: only what moves, never a copy. Archiving merges it into the spec tree
-and writes the feature files, so a merged proposal cannot quietly become
-undone work.
+mechanical part. A change is a reviewable delta: only what moves, never a
+copy. It is archived — merged into the spec tree, with its feature files —
+only once every requirement in it passed the gate, in the same pull request.
 → [Your team's first pull request](docs/first-pr.md) · [Reviewing changes](docs/reviewing-changes.md)
 
 **From a brief, or from OpenSpec.** Save your plan as `docs/brief.md`, run
-`specgate draft`: module by module, it briefs your agent and holds the draft
-to eleven rules — scenarios per actor and surface, sourced laws, every value in the brief or listed as an assumption, open
-questions that block, ids each actor can reach. Teams on OpenSpec keep it: `specgate verify` fails while
+`specgate propose --from-brief`: module by module, it briefs your agent and holds
+the draft to eleven rules — scenarios per actor and surface, sourced laws, every
+value in the brief or listed as an assumption, open questions that block, ids each
+actor can reach. Teams on OpenSpec keep it: `specgate verify` fails while
 a change claims a scenario no test names.
 → [A new project, step by step](docs/new-project.md) · [From a client brief](docs/from-a-brief.md) · [Already on OpenSpec](docs/openspec.md)
 
-**Your agent works the same loop.** `specgate agents init` gives Claude Code,
-Cursor, Copilot, Windsurf, Aider, Gemini, Cline, Codex or Antigravity the five
-steps as slash commands (`/specgate:new`, `/specgate:done`, …) from one
-definition. Every daily command speaks JSON with stable codes and a `fix` on
-each. The MCP server ships in the package: `specgate mcp install --client claude`.
+**Your agent works the same loop.** `specgate agents init` gives Claude Code, Cursor,
+Copilot, Windsurf, Aider, Gemini, Cline, Codex or Antigravity the loop as slash commands
+(`/specgate:propose`, `/specgate:apply`, …) from one definition. Every daily command speaks
+JSON with stable codes and a `fix` on each. MCP ships in the package: `specgate mcp install --client claude`.
 → [Agents](docs/agents.md) · [The agent contract](docs/specs/agent-contract.md) · [Automation and MCP](docs/automation.md)
 
 **Domain knowledge as a dependency.** A pack is a versioned, schema-validated
@@ -102,9 +101,10 @@ upgrade as intent with `specops diff --as-change`, not as a file diff.
 → [Domain packs: 7 proven in the pilots, 11 starter examples](docs/domain-packs.md) · [Supply chain](docs/supply-chain.md)
 
 **Unattended delivery.** `specgate harness run` drives plan → agent → verify →
-done for every pending requirement, each in its own git worktree; it never
-merges. The agent is any shell command with `{prompt_file}`; it stops where retrying cannot help.
-`specgate alm sync` keeps Jira, Azure Boards or GitHub Issues in step.
+apply for every pending requirement, each in its own git worktree; it merges only
+with `--chain`, only what passed the gate. The agent is any shell command with
+`{prompt_file}`; `specgate studio` shows it at work, at `/live`. `specgate alm sync`
+keeps Jira, Azure Boards or GitHub Issues in step.
 → [The harness](docs/harness.md) · [Jira, Azure Boards and GitHub Issues](docs/alm.md)
 
 **Tested as you install it.** Every release runs an end-to-end suite over every
@@ -122,7 +122,7 @@ since 0.14 come from building real products with it, from brief to running app.
 | Draft checklist from a brief           |           ✅           |                         ❌                         |                       ⚠️                       |                              ❌                              |     ❌      |
 | Proves OpenSpec's "done" against tests |      ✅ `verify`       |                         ❌                         |                       ❌                       |                              ❌                              |     ❌      |
 | Vendor-neutral                         |           ✅           |                         ✅                         |                       ✅                       |                              ❌                              |     ✅      |
-| Commands to learn before the first PR  | ✅ 5 (26 more, opt-in) |                         ✅                         |                       ✅                       |                              ✅                              |     ✅      |
+| Commands to learn before the first PR  | ✅ 6 (31 more, opt-in) |                         ✅                         |                       ✅                       |                              ✅                              |     ✅      |
 
 OpenSpec is the closest tool: if you want the change loop without packs or an enforced matrix, it fits better.
 → [Full matrix, trade-offs and migration paths](docs/comparisons.md)
