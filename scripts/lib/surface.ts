@@ -666,7 +666,7 @@ export const SURFACE: Command[] = [
     help: {
       group: "dx",
       icon: "💻",
-      summary: "Print a shell completion script (bash · zsh).",
+      summary: "Print a shell completion script (bash · zsh · fish).",
     },
   },
   {

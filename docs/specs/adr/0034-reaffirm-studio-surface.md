@@ -1,8 +1,10 @@
-# ADR-0024 — Execute ADR-0019: \`csda studio\` is the product
+# ADR-0034 — Execute ADR-0019: `csda studio` is the product
 
 ## Status
 
 Accepted — 2026-08-29
+
+Written as a second ADR-0024; renumbered to 0034 on 2026-10-19 so every number names one decision.
 
 ## Context
 

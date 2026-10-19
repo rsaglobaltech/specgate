@@ -41,6 +41,7 @@ for the policy on when and how to write an ADR.
 | [0031](0031-agents-md-is-the-agent-contract.md) | AGENTS.md is the agent contract; AI_RULES.md folds into it | Accepted | 2026-10-09 |
 | [0032](0032-one-name-everywhere.md) | One name everywhere: the format is renamed too | Accepted | 2026-10-12 |
 | [0033](0033-one-front-door-two-engines.md) | One front door, two engines: Specgate drives forja | Accepted | 2026-10-12 |
+| [0034](0034-reaffirm-studio-surface.md) | Execute ADR-0019: `csda studio` is the product (written as a second 0024) | Accepted | 2026-08-29 |
 
 ## Template
 
