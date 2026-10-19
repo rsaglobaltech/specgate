@@ -28,10 +28,11 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { resolveProjectDir } from "../../../lib/project-root";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
 import { error, warning, info } from "../../../lib/diagnostics";
 import { readAlmConfig } from "../../../alm/core";
 import { makeClient } from "../../../alm/clients";
+import type { AlmClient, AlmConfig } from "../../../alm/port";
 import { paths, listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import {
   InboundIssue,
@@ -40,6 +41,21 @@ import {
 } from "../../../../packages/core/src/domain/InboundChange";
 
 const NULL_SHAPE = { pulled: [], skipped: [] };
+
+/** An issue that became a change. */
+interface PulledIssue {
+  issue: string;
+  change: string;
+  requirement: string;
+  url: string | null;
+}
+
+/** An issue left alone, and why. */
+interface SkippedIssue {
+  issue: string;
+  change: string;
+  reason: string;
+}
 
 export interface PullOptions {
   projectDir: string;
@@ -110,18 +126,20 @@ const pad = (n: number) => String(n).padStart(3, "0");
 
 export async function main(argv: string[]): Promise<void> {
   const opts = parseArgs(argv);
-  const io = agentIo(opts.json || wantsJson(argv));
+  const io: AgentIo = agentIo(opts.json || wantsJson(argv));
   let projectDir: string;
-  let cfg: any;
-  let client: any;
+  let cfg: AlmConfig;
+  let client: AlmClient;
 
   try {
     projectDir = resolveProjectDir(opts.projectDir);
     cfg = readAlmConfig(projectDir);
     client = makeClient(cfg, undefined, projectDir);
-  } catch (e: any) {
+  } catch (e) {
     return io.fail(NULL_SHAPE, [
-      error("alm_pull_error", e.message || String(e), { fix: "Check your ALM configuration." }),
+      error("alm_pull_error", (e as Error).message || String(e), {
+        fix: "Check your ALM configuration.",
+      }),
     ]);
   }
 
@@ -146,8 +164,8 @@ export async function main(argv: string[]): Promise<void> {
 
   const p = paths(projectDir);
   const existing = new Set(listChangeIds(projectDir));
-  const pulled: any[] = [];
-  const skipped: any[] = [];
+  const pulled: PulledIssue[] = [];
+  const skipped: SkippedIssue[] = [];
   let next = nextRequirementNumber(projectDir);
 
   for (const issue of issues) {

@@ -25,7 +25,9 @@ import { readLock } from "../../../specops/lock";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseDelta } from "../../../../packages/core/src/domain/SpecParser";
 import { listDeltas, paths } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
-import { error, warning, printDiagnostics } from "../../../lib/diagnostics";
+import { error, warning, printDiagnostics, errorMessage } from "../../../lib/diagnostics";
+import type { Diagnostic } from "../../../lib/diagnostics";
+import type { RequirementNode } from "../../../../packages/core/src/domain/SpecParser";
 import {
   deltaToPackFragment,
   contributionReadme,
@@ -62,7 +64,7 @@ function usage() {
   );
 }
 
-export function parseArgs(argv) {
+export function parseArgs(argv: string[]): ContributeOptions {
   const opts: ContributeOptions = {
     projectDir: ".",
     change: "",
@@ -101,7 +103,7 @@ export class ContributeCommand extends BaseCommand {
     const opts = parseArgs(this.args);
     const nullShape = { contribution: null };
 
-    const fail = (diags) => {
+    const fail = (diags: Diagnostic[]): never => {
       if (opts.json) {
         process.stdout.write(`${JSON.stringify({ ...nullShape, status: diags }, null, 2)}\n`);
       } else {
@@ -169,7 +171,11 @@ export class ContributeCommand extends BaseCommand {
 
     // Merge every delta in the change into one fragment: upstream cares about
     // requirements, not about how the consuming project filed them.
-    const combined = { added: [], modified: [], removed: [] };
+    const combined: Record<"added" | "modified" | "removed", RequirementNode[]> = {
+      added: [],
+      modified: [],
+      removed: [],
+    };
     for (const d of deltas) {
       const parsed = parseDelta(fs.readFileSync(d.file, "utf8"));
       combined.added.push(...parsed.added);
@@ -258,7 +264,7 @@ export class ContributeCommand extends BaseCommand {
       staged = stageContribution(entry.repo, entry.version, branch, files, opts.out);
     } catch (err) {
       return fail([
-        error("contribute_stage_failed", `Could not stage the contribution: ${err.message}`, {
+        error("contribute_stage_failed", `Could not stage the contribution: ${errorMessage(err)}`, {
           target: entry.pack_id,
           fix: "Check that git is on PATH and the pack repository is reachable.",
         }),

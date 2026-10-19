@@ -9,10 +9,13 @@ import { DeltaSpec } from "../../packages/core/src/domain/DeltaSpec";
  * error("duplicate_requirement")
  */
 
-export function validateDelta(deltaSource: string, opts?: any) {
+type ValidateOptions = Parameters<typeof DeltaSpec.validate>[1];
+type ApplyOptions = Parameters<typeof DeltaSpec.apply>[2];
+
+export function validateDelta(deltaSource: string, opts?: ValidateOptions) {
   return DeltaSpec.validate(deltaSource, opts);
 }
 
-export function applyDelta(specSource: string | null, deltaSource: string, opts?: any) {
+export function applyDelta(specSource: string | null, deltaSource: string, opts?: ApplyOptions) {
   return DeltaSpec.apply(specSource, deltaSource, opts);
 }

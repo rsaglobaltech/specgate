@@ -20,6 +20,7 @@ import { spawnSync } from "node:child_process";
 import { BaseCommand } from "../lib/command";
 
 import { resolveProjectDir } from "../lib/project-root";
+import { errorMessage } from "../lib/diagnostics";
 
 const EXPAND_SCRIPT = path.join(__dirname, "..", "expand_domain_pack.js");
 
@@ -59,7 +60,7 @@ function usage() {
   );
 }
 
-export function parseArgs(argv) {
+export function parseArgs(argv: string[]): SpecopsAddOptions {
   const opts: SpecopsAddOptions = {
     packRepo: "",
     packRoot: "",
@@ -123,7 +124,7 @@ export class AddCommand extends BaseCommand {
     try {
       projectDir = resolveProjectDir(opts.projectDir);
     } catch (err) {
-      process.stderr.write(`${err.message}\n`);
+      process.stderr.write(`${errorMessage(err)}\n`);
       process.exit(2);
     }
 

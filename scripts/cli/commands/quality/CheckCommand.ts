@@ -4,13 +4,14 @@ import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { resolveProjectDir, findCliRoot } from "../../../lib/project-root";
 import { error, warning } from "../../../lib/diagnostics";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import {
   planGateCheck,
   NO_TEST_COMMAND_WARNING,
 } from "../../../../packages/core/src/domain/DoneVerification";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import type { HarnessSettings } from "../../../../packages/core/src/domain/HarnessConfig";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView } from "../../../lib/in-flight";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
@@ -59,7 +60,7 @@ export class CheckCommand extends BaseCommand {
       process.exit(0);
     }
     const json = wantsJson(argv);
-    const io = agentIo(json);
+    const io: AgentIo = agentIo(json);
 
     let testCmdFlag: string | undefined;
     let baseFlag: string | undefined;
@@ -182,7 +183,7 @@ export class CheckCommand extends BaseCommand {
       ]);
     }
 
-    const harness = readHarnessConfig(projectDir) || ({} as any);
+    const harness: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
     const testCmd = testCmdFlag !== undefined ? testCmdFlag : harness.testCmd;
     const archCmd = (harness.archCmd || "").trim();
     const plan = planGateCheck(view ? view.dir : projectDir, testCmd, archCmd);

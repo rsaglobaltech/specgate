@@ -1,5 +1,9 @@
 import { DiskManifestRepository } from "../../packages/core/src/infrastructure/DiskManifestRepository";
-import { SpecopsManifest, BaselineEntry } from "../../packages/core/src/domain/SpecopsManifest";
+import {
+  SpecopsManifest,
+  BaselineEntry,
+  PackManifestInfo,
+} from "../../packages/core/src/domain/SpecopsManifest";
 import * as path from "node:path";
 
 export const SPECOPS_DIR = SpecopsManifest.DIRNAME;
@@ -19,7 +23,13 @@ export function sha256(content: string): string {
   return SpecopsManifest.sha256(content);
 }
 
-export function newManifest(): any {
+/** `.specops/manifest.json` as JSON: what `SpecopsManifest.toJSON()` produces. */
+export interface ManifestJson {
+  specops_manifest_version: number;
+  packs: Record<string, PackManifestInfo>;
+}
+
+export function newManifest(): ManifestJson {
   return SpecopsManifest.createEmpty().toJSON();
 }
 
@@ -27,23 +37,10 @@ export interface WriteOptions {
   dryRun?: boolean;
 }
 
-export function readManifest(projectDir: string): any {
+export function readManifest(projectDir: string): ManifestJson | null {
   const repo = new DiskManifestRepository(projectDir);
   const manifest = repo.readManifest();
   return manifest ? manifest.toJSON() : null;
-}
-
-export function writeManifest(
-  projectDir: string,
-  manifestJson: any,
-  options: WriteOptions = {}
-): { path: string; written: boolean } {
-  const repo = new DiskManifestRepository(projectDir);
-  const manifest = manifestJson
-    ? new SpecopsManifest(manifestJson.specops_manifest_version, manifestJson.packs || {})
-    : SpecopsManifest.createEmpty();
-
-  return repo.writeManifest(manifest, options);
 }
 
 export function readBaseline(projectDir: string, packId: string, rel: string): string | null {

@@ -20,7 +20,41 @@ import * as path from "node:path";
 export const SCHEMA_DIR = path.join(".specgate", "schemas");
 export const SCHEMA_FILE = "schema.yaml";
 
-export const BUILT_IN = {
+/** One artefact in a schema: what it generates and what it waits for. */
+export interface SchemaArtifact {
+  id: string;
+  generates: string;
+  requires: string[];
+}
+
+/** A parsed artefact schema — `artifacts` plus whatever scalars it declares. */
+export interface ArtifactSchema {
+  artifacts: SchemaArtifact[];
+  [key: string]: SchemaArtifact[] | string | undefined;
+}
+
+/** A schema that ships with the CLI: always named and described. */
+export interface BuiltInSchema extends ArtifactSchema {
+  name: string;
+  description: string;
+}
+
+/** A structural problem in a schema, before it becomes a diagnostic. */
+export interface SchemaProblem {
+  code: string;
+  message: string;
+  target?: string;
+}
+
+/** A schema found by name, and where it was found. */
+export interface ResolvedSchema {
+  source: "project" | "built-in";
+  /** Relative to the project; null for a built-in. */
+  path: string | null;
+  schema: ArtifactSchema;
+}
+
+export const BUILT_IN: Record<string, BuiltInSchema> = {
   "spec-driven": {
     name: "spec-driven",
     description: "Proposal first, then the delta specs, then the tasks. The default.",
@@ -46,7 +80,7 @@ export const BUILT_IN = {
 };
 
 /** Minimal YAML emitter for a schema — the repo has no YAML dependency. */
-export function toYaml(schema) {
+export function toYaml(schema: ArtifactSchema): string {
   const lines = [
     `# ${schema.description}`,
     "#",
@@ -67,27 +101,15 @@ export function toYaml(schema) {
   return `${lines.join("\n")}\n`;
 }
 
-/** One artefact in a schema: what it generates and what it waits for. */
-export interface SchemaArtifact {
-  id: string;
-  generates: string;
-  requires: string[];
-}
-
-/** A parsed artefact schema — `artifacts` plus whatever scalars it declares. */
-export interface ArtifactSchema {
-  artifacts: SchemaArtifact[];
-  [key: string]: SchemaArtifact[] | string | undefined;
-}
-
 /**
  * Parse the subset of YAML a schema file uses. Hand-rolled to keep the CLI's
  * zero-runtime-dependency promise, and narrow on purpose: anything richer than
  * this list-of-maps shape is rejected rather than half-understood.
  */
-export function parseYaml(text) {
+export function parseYaml(text: string): ArtifactSchema {
   const schema: ArtifactSchema = { artifacts: [] };
-  let current = null;
+  // Open to the fields this parser does not name: a fork may add its own.
+  let current: (SchemaArtifact & Record<string, string | string[]>) | null = null;
   for (const raw of text.replace(/\r\n/g, "\n").split("\n")) {
     const line = raw.replace(/\s+$/, "");
     if (!line.trim() || line.trim().startsWith("#")) continue;
@@ -128,7 +150,7 @@ export function parseYaml(text) {
   return schema;
 }
 
-function unquote(value) {
+function unquote(value: string | undefined): string {
   const v = (value || "").trim();
   return v.replace(/^["']|["']$/g, "");
 }
@@ -138,8 +160,8 @@ function unquote(value) {
  * names a dependency it does not declare would silently mark every artefact
  * blocked, which looks like the tool being broken.
  */
-export function validateSchema(schema) {
-  const problems = [];
+export function validateSchema(schema: ArtifactSchema): SchemaProblem[] {
+  const problems: SchemaProblem[] = [];
   if (!schema.name) {
     problems.push({ code: "schema_no_name", message: "The schema has no `name`." });
   }
@@ -148,7 +170,7 @@ export function validateSchema(schema) {
     return problems;
   }
 
-  const ids = new Set();
+  const ids = new Set<string>();
   for (const a of schema.artifacts) {
     if (!a.id) {
       problems.push({ code: "artifact_no_id", message: "An artifact has no `id`." });
@@ -194,12 +216,12 @@ export function validateSchema(schema) {
   return problems;
 }
 
-export function findCycle(artifacts) {
-  const byId = new Map<string, any>(artifacts.map((a) => [a.id, a]));
-  const state = new Map();
-  let cycle = null;
+export function findCycle(artifacts: readonly SchemaArtifact[]): string[] | null {
+  const byId = new Map<string, SchemaArtifact>(artifacts.map((a) => [a.id, a]));
+  const state = new Map<string, "visiting" | "done">();
+  let cycle: string[] | null = null;
 
-  function visit(id, trail) {
+  function visit(id: string, trail: string[]): void {
     if (cycle) return;
     if (state.get(id) === "done") return;
     if (state.get(id) === "visiting") {
@@ -218,7 +240,10 @@ export function findCycle(artifacts) {
 }
 
 /** Where a schema comes from: the project's fork, or the built-in. */
-export function resolveSchema(projectDir, name) {
+export function resolveSchema(
+  projectDir: string,
+  name: string | null | undefined
+): ResolvedSchema | null {
   const wanted = name || "spec-driven";
   const forked = path.join(projectDir, SCHEMA_DIR, wanted, SCHEMA_FILE);
   if (fs.existsSync(forked)) {
@@ -234,7 +259,7 @@ export function resolveSchema(projectDir, name) {
   return null;
 }
 
-export function listSchemas(projectDir) {
+export function listSchemas(projectDir: string): string[] {
   const names = new Set(Object.keys(BUILT_IN));
   const dir = path.join(projectDir, SCHEMA_DIR);
   if (fs.existsSync(dir)) {

@@ -15,7 +15,7 @@ import * as path from "node:path";
 
 export const SENTINELS = ["spec.md", ".specops.lock", "specops.config.yaml"];
 
-export function isSpecDrivenDir(dir) {
+export function isSpecDrivenDir(dir: string): boolean {
   for (const name of SENTINELS) {
     if (fs.existsSync(path.join(dir, name))) return true;
   }
@@ -26,7 +26,7 @@ export function isSpecDrivenDir(dir) {
 // /private/tmp) don't cause path-equality surprises downstream — both for the
 // JSON output of `plan` and for assertions in unit tests. Falls back to the
 // input when the path does not yet exist on disk.
-function canonical(p) {
+function canonical(p: string): string {
   try {
     return fs.realpathSync(p);
   } catch {
@@ -34,7 +34,7 @@ function canonical(p) {
   }
 }
 
-export function findProjectRoot(start) {
+export function findProjectRoot(start: string): string | null {
   let dir = path.resolve(start);
   const { root } = path.parse(dir);
   while (true) {

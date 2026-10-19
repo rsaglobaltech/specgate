@@ -49,8 +49,9 @@ export class BundlePackCommand extends BaseCommand {
       logInfo("✅ Bundle created. Air-gapped usage:");
       logInfo(`  specgate specops add --pack-repo ${result.out} --pack-version <tag> …`);
       process.exit(0);
-    } catch (err: any) {
-      logError(err && err.message ? err.message : String(err));
+    } catch (err) {
+      const e = err as Error | null | undefined;
+      logError(e && e.message ? e.message : String(err));
       process.exit(1);
     }
   }

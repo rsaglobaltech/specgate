@@ -13,22 +13,98 @@ import {
   declaredCodeValues,
   compareDeclaredValues,
 } from "../../../../packages/core/src";
+import type { ValueDriftStatus } from "../../../../packages/core/src/domain/ValueAnnotations";
+import type { PlanItem } from "../../../../packages/core/src/domain/RequirementPlan";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
+import { errorMessage } from "../../../lib/diagnostics";
 import * as ui from "../../../lib/ui";
 
 const HISTORY_REL = "reports/spec-coverage-history.jsonl";
 const DONE_CATEGORY = "DONE";
 
-export function buildReport(projectDir: string) {
+/** One declared value compared across spec and code (§8.6). */
+export interface DeclaredValueItem {
+  id: string;
+  /** The capability requirement's id; null when its heading carries none. */
+  requirement: string | null;
+  specValue: string | null;
+  specFile: string;
+  specLine: number;
+  codeValue: string | null;
+  codeFile: string | null;
+  codeLine: number | null;
+  status: ValueDriftStatus;
+}
+
+/** The declared-value drift model: totals and one row per value. */
+export interface DeclaredValuesReport {
+  /** Values both sides declare: matched plus diverging. */
+  total: number;
+  matched: number;
+  diverging: number;
+  specOnly: number;
+  codeOnly: number;
+  items: DeclaredValueItem[];
+}
+
+/** What `.specops.lock` says about the packs this project came from. */
+export interface SpecopsSummary {
+  used: boolean;
+  packs: Array<{ pack: string; version: string }>;
+  baselinePresent: boolean;
+  drift: string[];
+}
+
+/** A pack entry as `readSpecops` reads it: whichever spelling the lockfile uses. */
+interface LockedPackLike {
+  pack?: string;
+  name?: string;
+  version?: string;
+  ref?: string;
+}
+
+/** The coverage report `buildReport` assembles and both renderers read. */
+export interface CoverageReport {
+  schemaVersion: number;
+  projectDir: string;
+  total: number;
+  implemented: number;
+  pending: number;
+  implementedPct: number;
+  byCategory: Record<string, number>;
+  needsTest: string[];
+  orphanFeatures: string[];
+  specops: SpecopsSummary;
+  requirements: PlanItem[];
+  declaredValues: DeclaredValuesReport;
+  /** Diagnostics, when a caller attaches them; `renderJson` defaults it to `[]`. */
+  status?: unknown[];
+}
+
+/**
+ * One line of the coverage history. Lines written before §8.6 carry no
+ * `values*` fields; `readHistory` keeps any line with an `implementedPct`.
+ */
+export interface HistoryEntry {
+  ts?: string;
+  total?: number;
+  implemented?: number;
+  implementedPct: number;
+  valuesTotal?: number;
+  valuesMatched?: number;
+  valuesDiverging?: number;
+}
+
+export function buildReport(projectDir: string): CoverageReport {
   const tracePath = path.join(projectDir, "docs/specs/traceability.md");
   const content = fs.readFileSync(tracePath, "utf8");
   const rows = parseTraceability(content);
-  const items = rows
+  const items: PlanItem[] = rows
     .map((r) => classify(r, (rel: string) => fileExists(projectDir, rel)))
     .filter((x) => x !== null);
   const orphans = detectOrphans(projectDir, items);
 
-  const byCategory = items.reduce((acc: any, it) => {
+  const byCategory = items.reduce((acc: Record<string, number>, it) => {
     acc[it.category] = (acc[it.category] || 0) + 1;
     return acc;
   }, {});
@@ -64,15 +140,19 @@ export function buildReport(projectDir: string) {
  * reports on what was explicitly annotated, same restraint as
  * `DeclaredArtifacts`.
  */
-export function buildDeclaredValues(projectDir: string, items: any[]) {
-  const byRequirement = new Map<string, any>();
+export function buildDeclaredValues(
+  projectDir: string,
+  items: readonly (PlanItem | null | undefined)[]
+): DeclaredValuesReport {
+  // Keyed by requirement id; a capability requirement without one (null) finds no row.
+  const byRequirement = new Map<string | null, PlanItem>();
   for (const it of items) if (it && it.requirement) byRequirement.set(it.requirement, it);
 
   let matched = 0;
   let diverging = 0;
   let specOnly = 0;
   let codeOnly = 0;
-  const allItems: any[] = [];
+  const allItems: DeclaredValueItem[] = [];
 
   for (const { req, specFile } of readCapabilityRequirements(projectDir)) {
     const specEntries = declaredSpecValues(req.trace);
@@ -126,18 +206,19 @@ export function buildDeclaredValues(projectDir: string, items: any[]) {
   };
 }
 
-export function readSpecops(projectDir: string) {
+export function readSpecops(projectDir: string): SpecopsSummary {
   const lockPath = path.join(projectDir, ".specops.lock");
   if (!fs.existsSync(lockPath)) {
     return { used: false, packs: [], baselinePresent: true, drift: [] };
   }
   const drift: string[] = [];
-  let packs: any[] = [];
+  let packs: LockedPackLike[] = [];
   try {
-    const lock = JSON.parse(fs.readFileSync(lockPath, "utf8"));
+    // Read as written: a `null` document throws here and is reported below.
+    const lock = JSON.parse(fs.readFileSync(lockPath, "utf8")) as { packs?: unknown };
     packs = Array.isArray(lock.packs) ? lock.packs : [];
-  } catch (err: any) {
-    drift.push(`.specops.lock is not valid JSON: ${err.message}`);
+  } catch (err) {
+    drift.push(`.specops.lock is not valid JSON: ${errorMessage(err)}`);
   }
   const baselinePresent =
     packs.length === 0 || fs.existsSync(path.join(projectDir, ".specops", "baseline"));
@@ -155,10 +236,10 @@ export function readSpecops(projectDir: string) {
   };
 }
 
-function readHistory(projectDir: string) {
+function readHistory(projectDir: string): HistoryEntry[] {
   const file = path.join(projectDir, HISTORY_REL);
   if (!fs.existsSync(file)) return [];
-  const out = [];
+  const out: HistoryEntry[] = [];
   for (const line of fs.readFileSync(file, "utf8").split("\n")) {
     const t = line.trim();
     if (!t) continue;
@@ -173,7 +254,7 @@ function readHistory(projectDir: string) {
   return out;
 }
 
-function appendHistory(projectDir: string, report: any, now: Date) {
+function appendHistory(projectDir: string, report: CoverageReport, now: Date): void {
   const file = path.join(projectDir, HISTORY_REL);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const dv = report.declaredValues || { total: 0, matched: 0, diverging: 0 };
@@ -191,7 +272,7 @@ function appendHistory(projectDir: string, report: any, now: Date) {
   fs.appendFileSync(file, JSON.stringify(entry) + "\n");
 }
 
-function esc(v: any) {
+function esc(v: unknown): string {
   return String(v == null ? "" : v)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -214,7 +295,7 @@ function sparklineCoords(pts: number[], w: number, h: number, max: number) {
   return pts.map((p, i) => `${(i * step).toFixed(1)},${(h - (p / max) * h).toFixed(1)}`).join(" ");
 }
 
-export function sparkline(history: any[]) {
+export function sparkline(history: readonly HistoryEntry[]): string {
   const pts = history.map((h) => h.implementedPct);
   if (pts.length < 2) return "";
   const w = 240;
@@ -231,7 +312,8 @@ export function sparkline(history: any[]) {
   let valueSeries = "";
   const valuePts = history.map((h) =>
     typeof h.valuesTotal === "number" && h.valuesTotal > 0
-      ? Math.round((h.valuesMatched / h.valuesTotal) * 1000) / 10
+      ? // `appendHistory` writes valuesMatched alongside valuesTotal.
+        Math.round((h.valuesMatched! / h.valuesTotal) * 1000) / 10
       : null
   );
   if (valuePts.every((p) => p !== null)) {
@@ -253,7 +335,7 @@ export function sparkline(history: any[]) {
   );
 }
 
-function tile(value: any, label: string, tone = "") {
+function tile(value: unknown, label: string, tone = ""): string {
   return (
     `<div class="tile ${tone || ""}">` +
     `<div class="tile-value">${esc(value)}</div>` +
@@ -261,14 +343,17 @@ function tile(value: any, label: string, tone = "") {
   );
 }
 
-export function renderHtml(report: any, opts: any) {
+export function renderHtml(
+  report: CoverageReport,
+  opts?: { generatedAt?: Date; history?: HistoryEntry[] }
+): string {
   const generatedAt = (opts && opts.generatedAt) || new Date();
   const history = (opts && opts.history) || [];
   const pct = report.implementedPct;
   const projectName = path.basename(report.projectDir);
 
   const rows = report.requirements
-    .map((it: any) => {
+    .map((it) => {
       const mark = (b: boolean) => (b ? '<span class="ok">✓</span>' : '<span class="no">·</span>');
       const catLabel = CATEGORY_LABELS[it.category] || it.category;
       const catClass = it.category === "DONE" ? "done" : "todo";
@@ -288,7 +373,7 @@ export function renderHtml(report: any, opts: any) {
   const specopsBlock = report.specops.used
     ? `<h2>Domain packs</h2><p>${
         report.specops.packs
-          .map((p: any) => `<code>${esc(p.pack)}</code> ${esc(p.version)}`)
+          .map((p) => `<code>${esc(p.pack)}</code> ${esc(p.version)}`)
           .join(", ") || "—"
       }</p>` +
       (report.specops.drift.length
@@ -305,7 +390,10 @@ export function renderHtml(report: any, opts: any) {
   // §8.6 — declared-value drift. Only rendered when there is something
   // annotated at all: a project with no `value_*`/`specgate:value` pair has
   // nothing to show, the same restraint `orphanBlock` already applies.
-  const dv = report.declaredValues || { total: 0, specOnly: 0, codeOnly: 0, items: [] };
+  // The fallback carries no matched/diverging; they are only read when dvSeen > 0.
+  const dv: Partial<DeclaredValuesReport> &
+    Pick<DeclaredValuesReport, "total" | "specOnly" | "codeOnly" | "items"> =
+    report.declaredValues || { total: 0, specOnly: 0, codeOnly: 0, items: [] };
   const dvSeen = dv.total + dv.specOnly + dv.codeOnly;
   const STATUS_LABELS: Record<string, string> = {
     matched: "Matched",
@@ -321,7 +409,7 @@ export function renderHtml(report: any, opts: any) {
       `<th>Requirement</th><th>Id</th><th>Spec value</th><th>Code value</th><th>State</th>` +
       `</tr></thead><tbody>` +
       dv.items
-        .map((it: any) => {
+        .map((it) => {
           const cls = it.status === "matched" ? "done" : "todo";
           const codeCell = it.codeFile
             ? `<code>${esc(it.codeValue)}</code> <span class="meta">${esc(it.codeFile)}:${esc(it.codeLine)}</span>`
@@ -340,9 +428,7 @@ export function renderHtml(report: any, opts: any) {
       `</tbody></table></div>`
     : "";
 
-  const hasValueTrend = history.some(
-    (h: any) => typeof h.valuesTotal === "number" && h.valuesTotal > 0
-  );
+  const hasValueTrend = history.some((h) => typeof h.valuesTotal === "number" && h.valuesTotal > 0);
   const trendBlock = sparkline(history)
     ? `<div class="trend"><span class="trend-label">${
         hasValueTrend ? "Coverage (green) · Value match (blue, dashed)" : "Coverage trend"
@@ -449,7 +535,7 @@ export interface ReportOptions {
   record: boolean;
 }
 
-function toCamelRequirement(item: any) {
+function toCamelRequirement(item: PlanItem) {
   const {
     scenario_id,
     feature_file,
@@ -472,7 +558,7 @@ function toCamelRequirement(item: any) {
   };
 }
 
-export function renderJson(report: any) {
+export function renderJson(report: CoverageReport): string {
   const wire = {
     ...report,
     requirements: (report.requirements || []).map(toCamelRequirement),
@@ -526,8 +612,8 @@ export class ReportCommand extends BaseCommand {
     let projectDir: string;
     try {
       projectDir = resolveProjectDir(opts.projectDir);
-    } catch (err: any) {
-      process.stderr.write(`${err.message}\n`);
+    } catch (err) {
+      process.stderr.write(`${errorMessage(err)}\n`);
       process.exit(2);
     }
 

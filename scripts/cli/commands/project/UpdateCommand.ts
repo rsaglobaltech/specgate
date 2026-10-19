@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { error, warning, info, errorMessage } from "../../../lib/diagnostics";
-import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { threeWayMerge } from "../../../../packages/core/src/infrastructure/GitMergeDriver";
 import { TOOLS, ALL_TOOLS, renamedPaths } from "../../../agents/init";
 import { BaseCommand } from "../../../lib/command";
@@ -239,7 +239,7 @@ function renderHuman(results: UpdateResult[], dryRun?: boolean) {
 export class UpdateCommand extends BaseCommand {
   public execute(): void {
     const argv = this.args;
-    const io = agentIo(wantsJson(argv));
+    const io: AgentIo = agentIo(wantsJson(argv));
     const NULL_SHAPE = { update: null };
 
     if (argv.includes("--help") || argv.includes("-h")) {

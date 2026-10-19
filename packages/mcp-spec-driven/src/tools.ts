@@ -148,6 +148,14 @@ export class GenericCliTool implements ITool {
 
 export const TOOLS: Record<string, ITool> = {};
 
+/**
+ * What a tool is called with: the arguments of an MCP request, untrusted until
+ * the handler has checked them. Each tool's `inputSchema` says what it
+ * expects; its handler enforces it and names what is missing, so a caller that
+ * leaves out `projectDir` gets that message rather than a type error.
+ */
+export type ToolArgs = Record<string, unknown>;
+
 TOOLS["specgate_init"] = new GenericCliTool(
   "specgate_init",
   "Adopt this repo if it has code, else scaffold one; --new forces a scaffold.",
@@ -1077,10 +1085,10 @@ for (const [published, generated] of [
   if (TOOLS[generated]) TOOLS[published] = TOOLS[generated];
 }
 
-export const readSpec = (args: any) => TOOLS["read_spec"].handler(args);
-export const listRequirements = (args: any) => TOOLS["list_requirements"].handler(args);
-export const updateTraceability = (args: any) => TOOLS["update_traceability"].handler(args);
-export const lintPack = (args: any) => TOOLS["lint_pack"].handler(args);
-export const validateProject = (args: any) => TOOLS["validate_project"].handler(args);
-export const plan = (args: any) => TOOLS["plan"].handler(args);
-export const markRequirementDone = (args: any) => TOOLS["mark_requirement_done"].handler(args);
+export const readSpec = (args: ToolArgs) => TOOLS["read_spec"].handler(args);
+export const listRequirements = (args: ToolArgs) => TOOLS["list_requirements"].handler(args);
+export const updateTraceability = (args: ToolArgs) => TOOLS["update_traceability"].handler(args);
+export const lintPack = (args: ToolArgs) => TOOLS["lint_pack"].handler(args);
+export const validateProject = (args: ToolArgs) => TOOLS["validate_project"].handler(args);
+export const plan = (args: ToolArgs) => TOOLS["plan"].handler(args);
+export const markRequirementDone = (args: ToolArgs) => TOOLS["mark_requirement_done"].handler(args);

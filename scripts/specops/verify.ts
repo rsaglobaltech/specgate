@@ -20,8 +20,8 @@ import * as crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
 
-function walkFiles(dir) {
-  const out = [];
+function walkFiles(dir: string): string[] {
+  const out: string[] = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === ".git") continue;
     const full = path.join(dir, entry.name);
@@ -36,7 +36,7 @@ function walkFiles(dir) {
  * and file contents, NUL-separated. Independent of OS and clone order.
  * @returns {string} "sha256:<hex>"
  */
-export function computePackDigest(packDir) {
+export function computePackDigest(packDir: string): string {
   if (!fs.existsSync(packDir) || !fs.statSync(packDir).isDirectory()) {
     throw new Error(`computePackDigest: not a directory: ${packDir}`);
   }
@@ -57,7 +57,7 @@ export function computePackDigest(packDir) {
  * Read the pack-security policy from specops.config.yaml (flat key).
  * @returns {{ requireSignedPacks: boolean }}
  */
-export function readSecurityPolicy(projectDir) {
+export function readSecurityPolicy(projectDir: string): { requireSignedPacks: boolean } {
   const cfgPath = path.join(projectDir, "specops.config.yaml");
   if (!fs.existsSync(cfgPath)) return { requireSignedPacks: false };
   try {
@@ -69,12 +69,19 @@ export function readSecurityPolicy(projectDir) {
   }
 }
 
+/** The outcome of `verifyTagSignature`, with git's own words. */
+export interface TagSignature {
+  verified: boolean;
+  method: "tag" | "commit" | null;
+  output: string;
+}
+
 /**
  * Verify the GPG signature of a resolved pack: the version tag first,
  * the checked-out commit as a fallback (annotated-tag-less workflows).
  * @returns {{ verified: boolean, method: "tag"|"commit"|null, output: string }}
  */
-export function verifyTagSignature(gitDir, version) {
+export function verifyTagSignature(gitDir: string, version: string): TagSignature {
   const tag = spawnSync("git", ["-C", gitDir, "verify-tag", version], { encoding: "utf8" });
   if (tag.status === 0) {
     return { verified: true, method: "tag", output: (tag.stderr || "").trim() };
@@ -94,7 +101,12 @@ export function verifyTagSignature(gitDir, version) {
  * Throw when the lockfile already pins this (repo, pack, version) to a
  * different content digest — the content behind the version changed.
  */
-export function assertDigestUnchanged(lockEntry, packId, version, actualDigest) {
+export function assertDigestUnchanged(
+  lockEntry: { digest?: string; version?: string } | null | undefined,
+  packId: string,
+  version: string,
+  actualDigest: string
+): void {
   if (!lockEntry || !lockEntry.digest || lockEntry.version !== version) return;
   if (lockEntry.digest !== actualDigest) {
     throw new Error(

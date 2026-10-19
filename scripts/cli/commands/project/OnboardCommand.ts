@@ -3,7 +3,7 @@ import * as ui from "../../../lib/ui";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { error, info } from "../../../lib/diagnostics";
-import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { detectStack } from "./AdoptCommand";
 import { BaseCommand } from "../../../lib/command";
 
@@ -536,6 +536,16 @@ function usage() {
   );
 }
 
+/** What `onboard` found, as the human rendering reads it. */
+interface Onboarding {
+  projectDir: string;
+  adopted: boolean;
+  adoptedAncestor: string | null;
+  stack: ReturnType<typeof detectStack>;
+  capabilities: Capability[];
+  nextCommand: string;
+}
+
 function renderHuman({
   projectDir,
   adopted,
@@ -543,8 +553,8 @@ function renderHuman({
   stack,
   capabilities,
   nextCommand,
-}: any) {
-  const out = [];
+}: Onboarding) {
+  const out: string[] = [];
   out.push(`\n  ${c.bold}${c.cyan}🧭 onboarding${c.reset}  ${c.dim}${projectDir}${c.reset}\n`);
   if (adoptedAncestor && !adopted) {
     out.push(
@@ -591,7 +601,7 @@ function renderHuman({
 export class OnboardCommand extends BaseCommand {
   public execute(): void {
     const argv = this.args;
-    const io = agentIo(wantsJson(argv));
+    const io: AgentIo = agentIo(wantsJson(argv));
     const NULL_SHAPE = { onboarding: null };
 
     if (argv.includes("--help") || argv.includes("-h")) {

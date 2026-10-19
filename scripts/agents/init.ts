@@ -16,8 +16,9 @@ import * as path from "node:path";
 
 import { resolveProjectDir } from "../lib/project-root";
 import { error, warning, errorMessage } from "../lib/diagnostics";
-import { agentIo, wantsJson, EXIT } from "../lib/agent";
-import { STEPS, PROJECT_RULES } from "./commands";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../lib/agent";
+import type { Diagnostic } from "../lib/diagnostics";
+import { STEPS, PROJECT_RULES, AgentStep } from "./commands";
 
 import { c } from "../lib/ui";
 import * as ui from "../lib/ui";
@@ -30,7 +31,7 @@ export const AGENT_NAMESPACE = "specgate";
 
 // ── Renderers, one per tool convention ────────────────────────────────────────
 
-export function slashCommandBody(step) {
+export function slashCommandBody(step: AgentStep): string {
   // A step that takes an argument gets it from the host: `/specgate:draft
   // curriculum` runs `specgate draft curriculum`, and a bare
   // `/specgate:draft` runs `specgate draft`, which lists the modules.
@@ -66,7 +67,7 @@ export function slashCommandBody(step) {
   ].join("\n");
 }
 
-export function instructionsBody(title) {
+export function instructionsBody(title: string): string {
   return [
     `# ${title}`,
     "",
@@ -246,12 +247,26 @@ export function mcpServerConfig() {
   };
 }
 
+/** A file an agent tool reads, relative to the project root. */
+export interface AgentFile {
+  path: string;
+  contents: string;
+}
+
+/** One agent tool: what to call it, and the files it expects. */
+export interface AgentTool {
+  label: string;
+  /** Left out of the default `--tool` set; installed only when named. */
+  optIn?: boolean;
+  files: () => AgentFile[];
+}
+
 /**
  * What each tool expects, and where.
  *
  * Adding a tool is one row: the loop below does not know any tool's name.
  */
-export const TOOLS = {
+export const TOOLS: Record<string, AgentTool> = {
   claude: {
     label: "Claude Code",
     files: () => [
@@ -390,7 +405,7 @@ function usage() {
   );
 }
 
-export function parseArgs(argv) {
+export function parseArgs(argv: string[]): AgentsInitOptions {
   const opts: AgentsInitOptions = {
     tools: DEFAULT_TOOLS,
     projectDir: ".",
@@ -415,6 +430,18 @@ export function parseArgs(argv) {
   return opts;
 }
 
+/** A file `writeAgentFiles` wrote, or would write on a dry run. */
+export interface WrittenAgentFile {
+  /** The tools that asked for it, joined with `+`. */
+  tool: string;
+  path: string;
+}
+
+/** A file `writeAgentFiles` left alone, and why. */
+export interface SkippedAgentFile extends WrittenAgentFile {
+  reason: string;
+}
+
 /**
  * Write the files for `tools` into `projectDir`. An existing file is left
  * untouched unless `force`. Shared by `agents init` and by `init`/`adopt`,
@@ -424,14 +451,14 @@ export function writeAgentFiles(
   projectDir: string,
   tools: string[],
   opts: { force?: boolean; dryRun?: boolean } = {}
-) {
-  const written = [];
-  const skipped = [];
-  const diagnostics = [];
+): { written: WrittenAgentFile[]; skipped: SkippedAgentFile[]; diagnostics: Diagnostic[] } {
+  const written: WrittenAgentFile[] = [];
+  const skipped: SkippedAgentFile[] = [];
+  const diagnostics: Diagnostic[] = [];
 
   // Several tools share a destination — Claude and Codex both read AGENTS.md —
   // so a file is written once and attributed to the tools that asked for it.
-  const planned = new Map();
+  const planned = new Map<string, AgentFile & { tools: string[] }>();
   for (const tool of tools) {
     for (const file of TOOLS[tool].files()) {
       const entry = planned.get(file.path);
@@ -476,9 +503,9 @@ export function writeAgentFiles(
   return { written, skipped, diagnostics };
 }
 
-export function main(argv) {
+export function main(argv: string[]): void {
   const opts = parseArgs(argv);
-  const io = agentIo(opts.json || wantsJson(argv));
+  const io: AgentIo = agentIo(opts.json || wantsJson(argv));
   const NULL_SHAPE = { agents: null };
 
   if (opts.help) {

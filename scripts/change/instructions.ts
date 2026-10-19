@@ -18,8 +18,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { resolveProjectDir } from "../lib/project-root";
-import { error } from "../lib/diagnostics";
-import { agentIo, wantsJson, EXIT } from "../lib/agent";
+import { error, errorMessage } from "../lib/diagnostics";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../lib/agent";
 import {
   paths,
   listChangeIds,
@@ -28,7 +28,39 @@ import {
   CAPABILITIES_DIR,
 } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { artifactState, artifactsFor, ARTIFACTS } from "./artifacts";
+import type { ChangeConfig } from "./artifacts";
 import { BUILT_IN } from "../schema/registry";
+import type { SchemaArtifact } from "../schema/registry";
+
+/** Renders one artefact's skeleton for a change. */
+export type ArtifactTemplate = (changeId: string, projectDir: string) => string;
+
+/** A pseudo-artefact: a stage to carry out rather than a file to write. */
+export interface Stage {
+  summary: string;
+  rules: string[];
+  /** May hold `<id>`, replaced with the change id. */
+  nextCommand: string;
+}
+
+/**
+ * What `change instructions` hands an agent. A stage carries a `summary`; an
+ * artefact carries where it goes, where it stands, and its template.
+ */
+export interface Instructions {
+  change: string;
+  artifact: string;
+  kind: "stage" | "artifact";
+  summary?: string;
+  outputPath?: string | null;
+  state?: string;
+  requires?: string[];
+  unlocks?: string[];
+  template?: string | null;
+  rules: string[];
+  context: InstructionContext;
+  nextCommand: string;
+}
 
 /**
  * The rules an agent gets wrong when it is not told them. Each one exists
@@ -60,7 +92,7 @@ const DESIGN_RULES = [
   "Record the decision and the alternatives rejected. If it is a decision the project will be asked about later, it wants an ADR instead.",
 ];
 
-const ARTIFACT_RULES = {
+const ARTIFACT_RULES: Record<string, string[]> = {
   proposal: PROPOSAL_RULES,
   specs: DELTA_RULES,
   design: DESIGN_RULES,
@@ -68,7 +100,7 @@ const ARTIFACT_RULES = {
 };
 
 /** Pseudo-artefacts: not files to write, but stages to carry out. */
-export const STAGES = {
+export const STAGES: Record<string, Stage> = {
   apply: {
     summary: "Implement the change: write the tests first, then the code.",
     rules: [
@@ -93,13 +125,13 @@ export const STAGES = {
 };
 
 /** What writing this artefact unblocks, derived from the graph rather than restated. */
-export function unlockedBy(artifactId, artifacts?) {
+export function unlockedBy(artifactId: string, artifacts?: readonly SchemaArtifact[]): string[] {
   return (artifacts || ARTIFACTS)
     .filter((a) => (a.requires || []).includes(artifactId))
     .map((a) => a.id);
 }
 
-function readIfExists(file) {
+function readIfExists(file: string): string | null {
   try {
     return fs.readFileSync(file, "utf8");
   } catch {
@@ -112,11 +144,16 @@ function readIfExists(file) {
  * stack, what already exists, and where the change currently stands.
  */
 export interface InstructionContext {
+  stack?: string;
+  /** The change's proposal, for every artefact after it. */
+  proposal?: string;
+  /** The `[first, last]` REQ ids reserved for the change. */
+  reservedReqRange?: string[];
   [key: string]: string | string[] | number | undefined;
 }
 
 /** The project's declared stack, so an agent does not invent one. */
-function projectContext(projectDir) {
+function projectContext(projectDir: string): InstructionContext {
   // AGENTS.md is the agent contract (ADR-0031); AI_RULES.md when it is the only one.
   const agentsMd = readIfExists(path.join(projectDir, "AGENTS.md"));
   const rules = agentsMd || readIfExists(path.join(projectDir, "AI_RULES.md"));
@@ -145,10 +182,15 @@ function projectContext(projectDir) {
   return context;
 }
 
-export function buildInstructions(projectDir, artifact, changeId, templates) {
+export function buildInstructions(
+  projectDir: string,
+  artifact: string,
+  changeId: string,
+  templates: Record<string, ArtifactTemplate>
+): Instructions {
   const p = paths(projectDir);
   const stage = STAGES[artifact];
-  const config = readConfig(projectDir, changeId);
+  const config: ChangeConfig = readConfig(projectDir, changeId);
   const artifacts = artifactsFor(projectDir, config);
   const states = artifactState(projectDir, changeId, config);
   const state = states.find((s) => s.id === artifact);
@@ -201,7 +243,7 @@ const ANY_KNOWN = [
 ];
 
 /** What this project actually recognises, once its schema is resolved. */
-export function knownFor(projectDir, config) {
+export function knownFor(projectDir: string, config: ChangeConfig): string[] {
   return [...artifactsFor(projectDir, config).map((a) => a.id), ...Object.keys(STAGES)];
 }
 
@@ -216,9 +258,9 @@ function usage() {
   );
 }
 
-export function main(argv, templates) {
+export function main(argv: string[], templates: Record<string, ArtifactTemplate>): void {
   const args = argv.filter((a) => a !== "--json");
-  const io = agentIo(wantsJson(argv));
+  const io: AgentIo = agentIo(wantsJson(argv));
   const NULL_SHAPE = { instructions: null };
 
   if (args.includes("--help") || args.includes("-h")) {
@@ -251,7 +293,7 @@ export function main(argv, templates) {
   // Split flags from positionals in one pass — `--project-dir <path>` takes a
   // value, so a naive filter on "starts with -" leaves the path behind as a
   // positional and it gets read as a change id.
-  const positional = [];
+  const positional: string[] = [];
   let projectDirArg = ".";
   for (let i = 1; i < args.length; i++) {
     if (args[i] === "--project-dir" && args[i + 1]) {
@@ -266,7 +308,7 @@ export function main(argv, templates) {
     projectDir = resolveProjectDir(projectDirArg);
   } catch (err) {
     io.usage(NULL_SHAPE, [
-      error("project_not_found", err.message, {
+      error("project_not_found", errorMessage(err), {
         fix: "Run from inside a spec-driven project, or pass --project-dir.",
       }),
     ]);
@@ -320,8 +362,8 @@ export function main(argv, templates) {
   process.exit(EXIT.OK);
 }
 
-function renderHuman(ins) {
-  const out = [];
+function renderHuman(ins: Instructions): void {
+  const out: string[] = [];
   out.push(`\n  ${ins.artifact} — ${ins.change}\n`);
   if (ins.summary) out.push(`  ${ins.summary}\n`);
   if (ins.outputPath) out.push(`  write to: ${ins.outputPath}  (${ins.state})`);
