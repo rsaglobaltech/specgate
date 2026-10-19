@@ -13,7 +13,12 @@ import {
   artifactFile,
 } from "../../../../packages/core/src/domain/DeclaredArtifacts";
 import { DiskRequirementGraphRepository } from "../../../../packages/core/src/infrastructure/DiskRequirementGraphRepository";
-import { RequirementPlan, PlanItem } from "../../../../packages/core/src/domain/RequirementPlan";
+import {
+  RequirementPlan,
+  PlanItem,
+  RawMatrixRow,
+} from "../../../../packages/core/src/domain/RequirementPlan";
+import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
 import { requirementReadiness } from "../../../../packages/core/src/domain/RequirementReadiness";
 import { analyseGherkinSource } from "../../../../packages/core/src/domain/GherkinQuality";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
@@ -52,12 +57,22 @@ export function parseArgs(argv: string[]): PlanOptions {
   return opts;
 }
 
-function trimCell(v: any): string {
+/**
+ * A matrix row as this parser reads it. A legacy matrix has no requirement
+ * column, so its rows carry `requirement: null`, which `classifyRow` reads as
+ * absent.
+ */
+export type TraceRow = Omit<RawMatrixRow, "requirement"> & { requirement?: string | null };
+
+/** Checks whether a path the matrix declares exists. */
+type FileChecker = (relPath: string) => boolean;
+
+function trimCell(v: string): string {
   return (v || "").trim();
 }
 
-export function parseTraceability(content: string): any[] {
-  const rows: any[] = [];
+export function parseTraceability(content: string): TraceRow[] {
+  const rows: TraceRow[] = [];
   let mode: string | null = null;
   for (const raw of content.split("\n")) {
     const line = raw.trimEnd();
@@ -101,10 +116,12 @@ export function parseTraceability(content: string): any[] {
   return rows;
 }
 
-export function classify(row: any, exists: any): any {
+/** `exists`: the project directory, or a checker for the paths a row declares. */
+export function classify(row: TraceRow, exists: string | FileChecker): PlanItem | null {
   const checker = typeof exists === "string" ? (rel: string) => fileExists(exists, rel) : exists;
-  const gap = typeof exists === "string" ? (r: any) => scenarioGap(exists, r) : undefined;
-  return RequirementPlan.classifyRow(row, checker, gap);
+  const gap = typeof exists === "string" ? (r: RawMatrixRow) => scenarioGap(exists, r) : undefined;
+  // `classifyRow` reads a null requirement (a legacy row) as absent.
+  return RequirementPlan.classifyRow(row as RawMatrixRow, checker, gap);
 }
 
 /**
@@ -113,7 +130,10 @@ export function classify(row: any, exists: any): any {
  * "Nothing proves" (`skippedScenarios`), so the plan cannot call a requirement
  * ready that the gate refuses (#54).
  */
-export function scenarioGap(projectDir: string, row: any): boolean {
+export function scenarioGap(
+  projectDir: string,
+  row: Pick<RawMatrixRow, "testArtifact" | "featureFile">
+): boolean {
   const tests = declaredPaths(row.testArtifact || "").filter(
     (t) => t && t !== "-" && t.toUpperCase() !== "TBD"
   );
@@ -129,7 +149,7 @@ export function scenarioGap(projectDir: string, row: any): boolean {
   return skippedScenarios(fs.readFileSync(featurePath, "utf8"), sources).length > 0;
 }
 
-export function hintFor(item: any): string {
+export function hintFor(item: PlanItem): string {
   switch (item.category) {
     case "NEEDS_FEATURE":
       return `Create feature file ${item.feature_file}`;
@@ -162,17 +182,22 @@ export function fileExists(projectDir: string, rel: string): boolean {
   return paths.length > 0 && paths.every((p) => fs.existsSync(path.join(projectDir, p)));
 }
 
-export function buildPlan(rows: any[], exists: any, graph?: any): any[] {
-  const items: any[] = [];
+export function buildPlan(
+  rows: TraceRow[],
+  exists: FileChecker,
+  graph?: { dependenciesOf(requirement: string): string[] }
+): PlanItem[] {
+  const items: PlanItem[] = [];
   for (const r of rows) {
-    const item = RequirementPlan.classifyRow(r, exists);
+    // `classifyRow` reads a null requirement (a legacy row) as absent.
+    const item = RequirementPlan.classifyRow(r as RawMatrixRow, exists);
     if (item) {
       if (graph) {
-        const dependsOn: string[] = graph.dependenciesOf(item.requirement);
+        const dependsOn = graph.dependenciesOf(item.requirement);
         item.depends_on = dependsOn;
-        item.blocked_by = dependsOn.filter((dep: string) => {
-          const target = rows.find((other: any) => other.requirement === dep);
-          return target && !RequirementPlan.DONE_STATUSES.has(target.status);
+        item.blocked_by = dependsOn.filter((dep) => {
+          const target = rows.find((other) => other.requirement === dep);
+          return target && !RequirementPlan.DONE_STATUSES.has(target.status!);
         });
       }
       items.push(item);
@@ -181,7 +206,10 @@ export function buildPlan(rows: any[], exists: any, graph?: any): any[] {
   return items;
 }
 
-export function detectOrphans(projectDir: string, items: any[]): string[] {
+export function detectOrphans(
+  projectDir: string,
+  items: ReadonlyArray<{ feature_file?: string }>
+): string[] {
   const featuresDir = path.join(projectDir, "features");
   if (!fs.existsSync(featuresDir)) return [];
 
@@ -211,14 +239,14 @@ export function detectOrphans(projectDir: string, items: any[]): string[] {
  * so it is skipped entirely when the file is not there, which is already a
  * blocker on its own.
  */
-function readinessFor(projectDir: string, it: any) {
+function readinessFor(projectDir: string, it: PlanItem) {
   const featureRel = String(it.feature_file ?? it.featureFile ?? "")
     .replace(/`/g, "")
     .split("#")[0]
     .trim();
   const featureExists = Boolean(it.feature_exists ?? it.featureExists);
 
-  let scenarioFindings: any[] = [];
+  let scenarioFindings: Diagnostic[] = [];
   if (featureExists && featureRel) {
     try {
       scenarioFindings = analyseGherkinSource(
@@ -244,7 +272,7 @@ function readinessFor(projectDir: string, it: any) {
 }
 
 function emitJson(items: PlanItem[], projectDir: string, orphans: string[]): void {
-  const summary = items.reduce((acc: any, it) => {
+  const summary = items.reduce<Record<string, number>>((acc, it) => {
     acc[it.category] = (acc[it.category] || 0) + 1;
     return acc;
   }, {});
@@ -253,7 +281,7 @@ function emitJson(items: PlanItem[], projectDir: string, orphans: string[]): voi
     (it) => it.category !== "DONE" && (!it.blocked_by || it.blocked_by.length === 0)
   );
 
-  const camelItems = items.map((it: any) => ({
+  const camelItems = items.map((it) => ({
     requirement: it.requirement,
     scenarioId: it.scenario_id ?? it.scenarioId ?? "",
     featureFile: it.feature_file ?? it.featureFile ?? "",
@@ -366,8 +394,9 @@ export class PlanCommand extends BaseCommand {
     let projectDir: string;
     try {
       projectDir = resolveProjectDir(opts.projectDir);
-    } catch (err: any) {
-      process.stderr.write(`${err.message}\n`);
+    } catch (err) {
+      // `resolveProjectDir` throws Errors.
+      process.stderr.write(`${(err as Error).message}\n`);
       process.exit(2);
     }
 
@@ -406,7 +435,7 @@ export class PlanCommand extends BaseCommand {
   }
 }
 
-export function applyDependencies(items: any[], projectDir: string): any[] {
+export function applyDependencies(items: PlanItem[], projectDir: string): PlanItem[] {
   const ids = items.map((it) => it.requirement);
   const graph = requirementGraphFromProject(projectDir, ids);
 
@@ -425,7 +454,7 @@ export function applyDependencies(items: any[], projectDir: string): any[] {
   // A requirement with several scenarios has several items: keep all of them,
   // once each, in dependency order. Indexing by requirement kept only the
   // last one, and a repeated id in the order pushed it twice.
-  const ordered: any[] = [];
+  const ordered: PlanItem[] = [];
   const placed = new Set<string>();
   for (const id of graph.order) {
     if (placed.has(id)) continue;

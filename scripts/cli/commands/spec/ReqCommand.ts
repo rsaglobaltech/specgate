@@ -1,8 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolveProjectDir } from "../../../lib/project-root";
-import { parseTraceability } from "./PlanCommand";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { parseTraceability, TraceRow } from "./PlanCommand";
+import { AgentIo, agentIo, wantsJson } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { AddRequirementUseCase } from "../../../../packages/core/src/application/AddRequirementUseCase";
@@ -51,15 +51,18 @@ export function pad3(n: number) {
   return String(n).padStart(3, "0");
 }
 
-export function nextReqId(rows: any[]) {
+/** Matrix fields by name (`useCase`, `featureFile`, `status`…), as `req` writes them. */
+export type RequirementFields = Record<string, string | undefined>;
+
+export function nextReqId(rows: TraceRow[]) {
   return TraceabilityMatrix.nextReqId(rows);
 }
 
-export function nextScenarioId(rows: any[]) {
+export function nextScenarioId(rows: TraceRow[]) {
   return TraceabilityMatrix.nextScenarioId(rows);
 }
 
-export function buildRow(fields: any) {
+export function buildRow(fields: RequirementFields) {
   return TraceabilityMatrix.buildRow(fields);
 }
 
@@ -71,12 +74,12 @@ export function isMatrixDataLine(line: string) {
   return true;
 }
 
-export function appendRequirement(content: string, fields: any) {
+export function appendRequirement(content: string, fields: RequirementFields) {
   const rows = parseTraceability(content);
   return TraceabilityMatrix.appendRequirement(content, fields, rows);
 }
 
-export function updateRequirementFields(content: string, reqId: string, fields: any) {
+export function updateRequirementFields(content: string, reqId: string, fields: RequirementFields) {
   return TraceabilityMatrix.updateRequirementFields(content, reqId, fields, COL);
 }
 
@@ -91,13 +94,13 @@ function readMatrix(tracePath: string): string {
   return fs.readFileSync(tracePath, "utf8");
 }
 
-function meaningfulCell(value: any) {
+function meaningfulCell(value: string | null | undefined) {
   if (!value || value === "-" || String(value).toUpperCase() === "TBD") return null;
   return value;
 }
 
-function statusColor(status: string) {
-  if (["Implemented", "Verified", "Released"].includes(status)) return c.green;
+function statusColor(status: string | undefined) {
+  if (["Implemented", "Verified", "Released"].includes(status as string)) return c.green;
   if (status === "Draft" || !status) return c.yellow;
   return c.reset;
 }
@@ -184,7 +187,7 @@ const SUB_USAGE: Record<string, string> = {
 };
 SUB_USAGE.remove = SUB_USAGE.rm;
 
-function cmdList(tracePath: string, io?: any) {
+function cmdList(tracePath: string, io?: AgentIo) {
   const rows = parseTraceability(readMatrix(tracePath));
   const reqs = rows.filter((r) => /^REQ-\d+/.test(r.requirement || ""));
 
@@ -211,7 +214,7 @@ function cmdList(tracePath: string, io?: any) {
   }
   process.stdout.write(ui.header("req", `${reqs.length} requirement(s)`));
   for (const r of reqs) {
-    const meaningful = (v: any) => meaningfulCell(v) !== null;
+    const meaningful = (v: string | undefined) => meaningfulCell(v) !== null;
     process.stdout.write(
       `    ${c.cyan}${ui.pad(r.requirement || "", 9)}${c.reset} ${ui.muted(ui.pad(r.scenarioId || "", 8))}  ${statusColor(r.status)}${r.status || "Draft"}${c.reset}\n`
     );

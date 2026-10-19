@@ -58,6 +58,8 @@ import {
 import { specgateTagsByScenario } from "../../../../packages/core/src/domain/GherkinTags";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 
+import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
+
 const CHANGES = path.join("docs", "specs", "changes");
 
 export interface DraftOptions {
@@ -190,9 +192,7 @@ function specFiles(dir: string, rel = ""): string[] {
 function projectSpecText(projectDir: string): string {
   try {
     const sources = readDerivationSources(projectDir);
-    return [sources.spec || "", ...(sources.capabilities || []).map((c: any) => c.source)].join(
-      "\n"
-    );
+    return [sources.spec || "", ...(sources.capabilities || []).map((c) => c.source)].join("\n");
   } catch {
     return "";
   }
@@ -202,7 +202,7 @@ function projectSpecText(projectDir: string): string {
 function projectSpecs(projectDir: string): Array<{ source: string }> {
   try {
     const sources = readDerivationSources(projectDir);
-    return [sources.spec || "", ...(sources.capabilities || []).map((c: any) => c.source)].map(
+    return [sources.spec || "", ...(sources.capabilities || []).map((c) => c.source)].map(
       (source) => ({ source })
     );
   } catch {
@@ -215,7 +215,7 @@ function projectIds(projectDir: string): Map<string, string> {
   const owners = new Map<string, string>();
   try {
     const sources = readDerivationSources(projectDir);
-    const specs = [sources.spec || "", ...(sources.capabilities || []).map((c: any) => c.source)];
+    const specs = [sources.spec || "", ...(sources.capabilities || []).map((c) => c.source)];
     for (const id of requirementTitles(specs.map((source) => ({ source }))).keys()) {
       owners.set(id, id);
     }
@@ -422,7 +422,7 @@ function openFindings(projectDir: string, changeId: string, brief: string): stri
   const result = draftReport(projectDir, changeId, brief);
   if ("failure" in result || result.report.status.length === 0) return "";
   const lines = result.report.status.map(
-    (d: any) => `- ${d.code}: ${d.message}${d.fix ? `\n  fix: ${d.fix}` : ""}`
+    (d) => `- ${d.code}: ${d.message}${d.fix ? `\n  fix: ${d.fix}` : ""}`
   );
   return (
     "\n\n---\n\n## The draft already exists. Fix these findings, and only these:\n\n" +
@@ -571,9 +571,10 @@ export class DraftCommand extends BaseCommand {
     let o: DraftOptions;
     try {
       o = parseArgs(this.args);
-    } catch (err: any) {
+    } catch (err) {
+      // `parseArgs` throws Errors.
       io0.usage({ draft: null }, [
-        error("draft_usage", err.message, { fix: "specgate draft --help" }),
+        error("draft_usage", (err as Error).message, { fix: "specgate draft --help" }),
       ]);
     }
     const opts = o!;
@@ -1169,7 +1170,7 @@ function skippedNotes(report: ReturnType<typeof checkDraft>) {
   );
 }
 
-function writeFindings(report: ReturnType<typeof checkDraft>, status: any[]): void {
+function writeFindings(report: ReturnType<typeof checkDraft>, status: Diagnostic[]): void {
   const out = process.stdout;
   out.write(
     `  ${c.bold}${report.requirements}${c.reset} requirement(s) ${ui.muted(sym.bullet)} ` +

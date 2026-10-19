@@ -6,12 +6,12 @@ import { error } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
 import * as ui from "../../../lib/ui";
 import { refreshDerivedMatrix } from "./MatrixCommand";
-import { summarise, nextCommandPlain, nextReason } from "./StatusCommand";
+import { summarise, nextCommandPlain, nextReason, QueueSummary } from "./StatusCommand";
 import { briefProgress } from "./DraftCommand";
 import { PetView, petView, readPetState, fullPet } from "../../../pet/pet";
 
 /** The cat for a project, from what `status` already reads. Null when there is no project. */
-export function petFor(projectDir: string, summary?: any): PetView | null {
+export function petFor(projectDir: string, summary?: QueueSummary): PetView | null {
   if (!summary) {
     const trace = path.join(projectDir, "docs/specs/traceability.md");
     if (!fs.existsSync(trace)) return null;

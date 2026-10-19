@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { error, warning, info } from "../../../lib/diagnostics";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { AgentIo, agentIo, wantsJson } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import {
   deriveRows,
@@ -16,6 +16,7 @@ import {
 } from "../../../../packages/core/src/domain/DerivedMatrix";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { appendRequirementSection } from "../../../../packages/core/src/domain/SpecSections";
+import type { RawMatrixRow } from "../../../../packages/core/src/domain/RequirementPlan";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -98,14 +99,14 @@ export function refreshDerivedMatrix(projectDir: string): boolean {
 }
 
 /** The migration, computed and not written: what spec.md would become, and why it cannot. */
-function planMigration(projectDir: string, original: any[]) {
+function planMigration(projectDir: string, original: RawMatrixRow[]) {
   const specFile = path.join(projectDir, "spec.md");
   const specBefore = fs.existsSync(specFile) ? fs.readFileSync(specFile, "utf8") : "";
   let spec = specBefore;
   const sources = readDerivationSources(projectDir);
   const blocked: string[] = [];
 
-  const byReq = new Map<string, any[]>();
+  const byReq = new Map<string, RawMatrixRow[]>();
   for (const row of original) {
     const id = String(row.requirement || "").trim();
     if (!/^REQ-/.test(id)) continue;
@@ -273,7 +274,7 @@ export class MatrixCommand extends BaseCommand {
    * difference restores both files and names the requirements that cannot be
    * expressed yet — a migration that loses a row is worse than none.
    */
-  private migrate(io: any, projectDir: string, existing: string | null, dryRun: boolean): void {
+  private migrate(io: AgentIo, projectDir: string, existing: string | null, dryRun: boolean): void {
     if (existing === null) {
       io.usage(NULL_SHAPE, [
         error("traceability_not_found", "No docs/specs/traceability.md to migrate.", {
