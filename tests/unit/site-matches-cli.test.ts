@@ -131,13 +131,12 @@ test("validate --help does not leak the internal script name", () => {
 });
 
 test("the short help is the daily loop and nothing else", () => {
-  // Phase 1 of mejoras/plan-simplificacion-equipo.md: the team found the tool
-  // hard to absorb. Adding a line here is a decision, so it fails a test.
+  // The team found the tool hard to absorb. Adding a line here is a decision,
+  // so it fails a test.
   const help = cli("--help").stdout;
   const shown = [...help.matchAll(/^\s{4}\S+\s{2}(\w+)\s{2,}/gm)].map((m) => m[1]);
-  // `draft` joined `init` under START HERE: most projects begin from a plan,
-  // and the user, starting from one, could not find the way in (#94).
-  // `add` joined the daily loop with ADR-0033: Specgate is the front door to
-  // forja, and adding a use case is a daily step in a forja project.
-  assert.deepEqual(shown, ["init", "draft", "status", "new", "add", "check", "done"], help);
+  // ADR-0035: four verbs over the gate — propose, apply, status, archive — with
+  // `init` once and `check` in CI. `draft` is `propose --from-brief`, `done` is
+  // `apply`, `new` and `add` are in `--help --all`.
+  assert.deepEqual(shown, ["init", "propose", "apply", "status", "archive", "check"], help);
 });

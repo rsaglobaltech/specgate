@@ -38,7 +38,7 @@ function writeChange(dir, t, id, capability, reqId, featureRel) {
 
 export default [
   {
-    name: "a change from proposal to archive, then delivered like any requirement",
+    name: "a change from proposal to archive, delivered while it is in flight (ADR-0035)",
     covers: [
       "change new",
       "change status",
@@ -70,7 +70,18 @@ export default [
         "change show names the requirement"
       );
 
-      t.fails(t.sg(dir, "change", "archive", "add-coupons"), "archive with unchecked tasks");
+      const early = t.sg(dir, "change", "archive", "add-coupons");
+      t.fails(early, "archive before its requirement is delivered");
+      t.expect(/archive_requirements_pending/.test(t.out(early)), "says what is pending", early);
+
+      t.write(dir, "test/coupons.test.js", "// REQ-002\n");
+      t.ok(t.sg(dir, "done", "REQ-002", "--strict"), "done --strict while the change is open");
+      t.expect(
+        /status=Implemented/.test(
+          t.read(dir, "docs/specs/changes/add-coupons/specs/billing/spec.md")
+        ),
+        "the status is written in the change's delta"
+      );
       const tasks = path.join(dir, "docs/specs/changes/add-coupons/tasks.md");
       fs.writeFileSync(tasks, fs.readFileSync(tasks, "utf8").replace(/- \[ \]/g, "- [x]"));
       t.ok(t.sg(dir, "change", "archive", "add-coupons", "--dry-run"), "archive --dry-run");
@@ -90,11 +101,9 @@ export default [
         "tagged with its requirement"
       );
 
-      t.write(dir, "test/coupons.test.js", "// REQ-002\n");
-      t.ok(t.sg(dir, "done", "REQ-002", "--strict"), "done --strict on an archived requirement");
       t.expect(
         /\| test\/coupons\.test\.js \| Implemented \|$/.test(t.matrixRow(dir, "REQ-002")),
-        "linked by mention and closed"
+        "archived Implemented, linked by mention"
       );
       t.ok(t.sg(dir, "validate", ".", "--strict"), "validate --strict");
     },

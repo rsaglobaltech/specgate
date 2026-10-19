@@ -98,6 +98,9 @@ test("done --json says why the gate refused, not only that it did", () => {
   const { parent, dir } = adopted();
   try {
     cli("new", "Invoices download as PDF", "--project-dir", dir);
+    // Its test exists, so the gate runs: what it finds has to travel in the JSON.
+    fs.mkdirSync(path.join(dir, "test"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "test/invoice.test.js"), "// REQ-002\n");
     const r = cli("done", "REQ-002", "--project-dir", dir, "--json");
     assert.equal(r.status, 1);
     const codes = JSON.parse(r.stdout).status.map((d: any) => d.code);
@@ -117,7 +120,7 @@ test("right after adoption, status points at a first real requirement", () => {
     assert.match(doc.nextCommand, /^specgate new /);
     cli("new", "Invoices download as PDF", "--project-dir", dir);
     const after = JSON.parse(cli("status", "--project-dir", dir, "--json").stdout);
-    assert.equal(after.nextCommand, "specgate done REQ-002");
+    assert.equal(after.nextCommand, "specgate apply REQ-002");
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

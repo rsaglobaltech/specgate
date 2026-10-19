@@ -132,11 +132,12 @@ export default [
       t.expect(created.requirement && created.requirement.id === "REQ-002", "new over MCP", r);
       const gate = JSON.parse(byId[6].result.content[0].text);
       t.expect(gate.check && gate.check.validate === "passed", "check over MCP", r);
-      // A scenario of placeholders: done refuses, as it does from the terminal.
+      // No test names it yet: done refuses, as it does from the terminal, and
+      // says which test to write (ADR-0035).
       const done = JSON.parse(byId[7].result.content[0].text);
       t.expect(
-        JSON.stringify(done).includes("done_validate_failed"),
-        "done over MCP runs the gate and refuses",
+        done.requirement === null && JSON.stringify(done).includes("apply_no_test"),
+        "done over MCP refuses a requirement no test names",
         r
       );
     },

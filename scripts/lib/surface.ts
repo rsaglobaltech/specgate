@@ -47,6 +47,7 @@ export const HELP_GROUPS = [
 export const CORE_GROUPS = [
   { id: "start", title: "Start here" },
   { id: "daily", title: "Every day" },
+  { id: "ci", title: "CI" },
 ];
 
 interface HelpRow {
@@ -55,7 +56,7 @@ interface HelpRow {
   summary: string;
   /**
    * Position within the group. The daily surface reads as a sequence —
-   * status → plan → req → change → validate → done — which is neither
+   * propose → apply → status → archive (ADR-0035) — which is neither
    * alphabetical nor the order the commands are declared in.
    */
   order?: number;
@@ -213,7 +214,7 @@ export const SURFACE: Command[] = [
     },
     coreHelp: {
       group: "daily",
-      order: 1,
+      order: 3,
       icon: "🧭",
       summary: "What is left, requirement by requirement, and the one command to run next.",
     },
@@ -259,10 +260,10 @@ export const SURFACE: Command[] = [
       summary: "The gate: validate --strict, then your tests — before you open a PR.",
     },
     coreHelp: {
-      group: "daily",
-      order: 6,
+      group: "ci",
+      order: 1,
       icon: "✅",
-      summary: "The gate: specs, links, coverage — and your tests.",
+      summary: "The gate in CI and before a pull request: specs, links, coverage, tests.",
     },
     json: { key: "check", gate: true, args: "[dir]" },
   },
@@ -275,12 +276,7 @@ export const SURFACE: Command[] = [
       summary:
         "From your plan or brief to requirements, one module at a time — each draft checked against it.",
     },
-    coreHelp: {
-      group: "start",
-      order: 2,
-      icon: "📝",
-      summary: "From a plan: docs/brief.md → requirements, one module at a time.",
-    },
+    // Out of the short help: `propose --from-brief` is the same command (ADR-0035).
     json: { key: "draft", gate: true },
     mcp: false,
   },
@@ -371,7 +367,7 @@ export const SURFACE: Command[] = [
       icon: "🏁",
       summary: "Mark a requirement Implemented — after the gate passes for it.",
     },
-    coreHelp: { group: "daily", order: 7, icon: "🏁", summary: "Mark a requirement Implemented." },
+    // Out of the short help: `apply` is the same command (ADR-0035).
     json: { key: "requirement", gate: false, args: "<REQ>" },
     mcp: "mark_requirement_done",
   },
@@ -384,12 +380,7 @@ export const SURFACE: Command[] = [
       icon: "✨",
       summary: "One requirement in one step: spec.md section, tagged scenario, matrix row.",
     },
-    coreHelp: {
-      group: "daily",
-      order: 3,
-      icon: "✨",
-      summary: "Add a requirement: its prose, its scenario and its row.",
-    },
+    // Out of the short help: a requirement arrives through a change (ADR-0035).
     json: { key: "requirement", gate: false, args: "<title>" },
   },
   {
@@ -405,12 +396,7 @@ export const SURFACE: Command[] = [
       icon: "🧩",
       summary: "In a forja project: a use case, entity or port, with its test and wiring.",
     },
-    coreHelp: {
-      group: "daily",
-      order: 4,
-      icon: "🧩",
-      summary: "Add a use case where the architecture expects it (forja projects).",
-    },
+    // Out of the short help since ADR-0035; `status` names it in forja projects.
   },
   {
     name: "req",
@@ -459,9 +445,64 @@ export const SURFACE: Command[] = [
       summary:
         "Propose, review and archive a change (new · list · show · status · validate · archive).",
     },
-    // Out of the daily help: changing a requirement that already shipped is
-    // not a daily act. The short help is the five-verb loop (phase 1 of
-    // mejoras/plan-simplificacion-equipo.md); `--help --all` lists this.
+    // Out of the short help: `propose` and `archive` are its daily verbs
+    // (ADR-0035); `--help --all` lists the rest.
+  },
+  {
+    // ADR-0035: the daily verbs. `propose` is `change new`, or `draft` with
+    // --from-brief; `apply` is `done`; `archive` is `change archive`.
+    name: "propose",
+    editsContract: true,
+    mcp: false,
+    script: ["propose.js"],
+    help: {
+      group: "core",
+      icon: "💡",
+      summary: "Open a change for an idea, or from docs/brief.md with --from-brief.",
+    },
+    coreHelp: {
+      group: "daily",
+      order: 1,
+      icon: "💡",
+      summary: "Open a change: an idea, or the next module of docs/brief.md.",
+    },
+    json: { key: "change", gate: false, args: "<id>" },
+  },
+  {
+    name: "apply",
+    editsContract: true,
+    mcp: false,
+    script: ["apply.js"],
+    help: {
+      group: "core",
+      icon: "🏁",
+      summary: "Deliver one requirement: its test first, then the gate marks it Implemented.",
+    },
+    coreHelp: {
+      group: "daily",
+      order: 2,
+      icon: "🏁",
+      summary: "Deliver the next requirement: test first, the gate, Implemented.",
+    },
+    json: { key: "requirement", gate: false, args: "[REQ]" },
+  },
+  {
+    name: "archive",
+    editsContract: true,
+    mcp: false,
+    script: ["archive.js"],
+    help: {
+      group: "core",
+      icon: "📦",
+      summary: "Merge a change into the specs once every requirement in it is Implemented.",
+    },
+    coreHelp: {
+      group: "daily",
+      order: 4,
+      icon: "📦",
+      summary: "Close a change once all its requirements are delivered.",
+    },
+    json: { key: "archive", gate: true, args: "<id>" },
   },
 
   {

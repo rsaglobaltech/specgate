@@ -16,6 +16,10 @@ import * as path from "node:path";
 import { findCliRoot } from "../../../lib/project-root";
 import { isDerivedProject, writeRequirementFields } from "../../../lib/derived-writes";
 import { refreshDerivedMatrix } from "./MatrixCommand";
+import { inFlightView, InFlightRequirement, InFlightView, DELIVERED } from "../../../lib/in-flight";
+import { summarise, nextRequirement } from "./StatusCommand";
+import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
+import { deriveRows, setTraceFields } from "../../../../packages/core/src/domain/DerivedMatrix";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -84,21 +88,36 @@ export function parseArgs(argv: string[]): DoneOptions {
 }
 
 export class DoneCommand extends BaseCommand {
+  /** `apply` is the daily name, `done` the one scripts know (ADR-0035): same command. */
+  private verb: "done" | "apply";
+
+  constructor(args: string[] = [], verb: "done" | "apply" = "done") {
+    super(args);
+    this.verb = verb;
+  }
+
   public execute(): void {
     const opts = parseArgs(this.args);
     const io = agentIo(opts.json);
     const NULL_SHAPE = { requirement: null };
+    const verb = this.verb;
 
     // Before the required-argument check: `done --help` used to answer
     // "REQ-id is required", which is a usage error in response to a question.
     if (this.args.includes("--help") || this.args.includes("-h")) {
       process.stdout.write(
-        "Usage:\n" +
-          "  specgate done <REQ-id> [<REQ-id> …] [--status <Status>] [--no-check]\n" +
+        (verb === "done"
+          ? "Same as specgate apply: deliver a requirement through the gate.\n\n"
+          : "Deliver one requirement: its test first, then the gate marks it Implemented.\n\n") +
+          "Usage:\n" +
+          `  specgate ${verb} [<REQ-id> …] [--status <Status>] [--no-check]\n` +
           '                       [--test-cmd "<command>"] [--project-dir <path>] [--json]\n\n' +
-          "Marks a requirement delivered — after the gate `specgate check` runs passes\n" +
-          "for it. Nothing is written when it fails. Several ids are checked one by one\n" +
-          "and the project's tests run once for all of them.\n\n" +
+          "Without an id, takes the next requirement `specgate status` names. Refused\n" +
+          "while no test names the requirement. Marks it delivered when the gate\n" +
+          "`specgate check` runs passes for it; nothing is written when it fails. A\n" +
+          "requirement of an open change is judged as it will be after archive, and\n" +
+          "its status is written in the change's delta. Several ids are checked one by\n" +
+          "one and the project's tests run once for all of them.\n\n" +
           "Options:\n" +
           `  --status <Status>   Target status (default: Implemented).\n` +
           `                      One of: ${ALLOWED_STATUSES.join(", ")}\n` +
@@ -107,7 +126,7 @@ export class DoneCommand extends BaseCommand {
           "  --check, --strict   Run the gate for any status, Approved included.\n" +
           '  --test-cmd "<cmd>"  Also run the project\'s tests and require them to pass.\n' +
           "                      Read from `test_cmd:` in harness.config.yaml when omitted.\n" +
-          "                      Without one, `done` says it checked the specification\n" +
+          `                      Without one, \`${verb}\` says it checked the specification\n` +
           "                      and not the code, rather than reporting a pass.\n" +
           "  --project-dir <p>   Project root (auto-detected from cwd if omitted).\n" +
           "  --json              Emit one JSON document on stdout.\n"
@@ -115,18 +134,11 @@ export class DoneCommand extends BaseCommand {
       process.exit(EXIT.OK);
     }
 
-    if (!opts.reqId) {
-      io.usage(NULL_SHAPE, [
-        error("req_id_required", "REQ-id is required (e.g. REQ-007).", {
-          fix: "Pass the requirement id: specgate done REQ-007",
-        }),
-      ]);
-    }
     if (opts.reqIds.length > 1) return this.executeMany(opts, io);
-    if (!/^REQ-\d+$/.test(opts.reqId!)) {
+    if (opts.reqId && !/^REQ-\d+$/.test(opts.reqId)) {
       io.usage(NULL_SHAPE, [
         error("req_id_malformed", `Invalid REQ-id: ${opts.reqId} (expected REQ-NNN).`, {
-          target: opts.reqId!,
+          target: opts.reqId,
           fix: "Use the REQ-NNN form, e.g. REQ-007.",
         }),
       ]);
@@ -144,43 +156,104 @@ export class DoneCommand extends BaseCommand {
       return;
     }
 
-    // ── The checks, before anything is written ───────────────────────────────
+    // ── The project the gate judges ──────────────────────────────────────────
     //
-    // `--check` and `--strict` used to be parsed and discarded, so `done
-    // REQ-001 --check` printed a tick over a matrix pointing at files that do
-    // not exist. Four documentation pages said it "validates first".
+    // A requirement of an open change lives only in its delta until archive
+    // (ADR-0035): the gate judges the project as it will be after archive.
     // A test written since the last regeneration is new evidence: bring a
-    // generated matrix up to date before checking it, or `done --check`
-    // would refuse the very test that makes the requirement deliverable.
+    // generated matrix up to date before checking it, or the gate would refuse
+    // the very test that makes the requirement deliverable.
     refreshDerivedMatrix(projectDir);
+    const view = inFlightView(projectDir);
+    const dir = view ? view.dir : projectDir;
+    const toProject = (t: string) => (view ? view.toProject(t) : t);
+    const queue = () => summarise(dir, readTrace(dir));
+
+    // No id: the next requirement `status` names.
+    if (!opts.reqId) {
+      const next = fs.existsSync(path.join(dir, TRACE)) ? nextRequirement(queue().items) : null;
+      if (!next) {
+        io.fail(NULL_SHAPE, [
+          error("nothing_to_apply", "No requirement is waiting to be delivered.", {
+            fix: "specgate propose <change-id>",
+          }),
+        ]);
+      }
+      opts.reqId = next.requirement;
+      opts.reqIds = [next.requirement];
+    }
+    const id = opts.reqId!;
+    const owner = view ? view.requirements.find((r) => r.id === id) : undefined;
+    const gated = opts.check && DELIVERED_STATUSES.includes(opts.status);
+
+    // A change whose delta cannot be laid over the project cannot be judged.
+    const broken = owner && view ? view.problems.filter((d) => d.change === owner.change) : [];
+    if (broken.length > 0) {
+      io.fail(NULL_SHAPE, [
+        ...broken.map(({ fix: _fix, change: _change, ...d }) => d),
+        error("change_invalid", `${id}'s change '${owner!.change}' does not validate.`, {
+          target: owner!.change,
+          fix: `specgate change validate ${owner!.change}`,
+        }),
+      ]);
+    }
+
+    if (!opts.json) process.stdout.write(ui.header(`${verb} ${id}`, opts.status));
 
     // Before the suite: a requirement waiting for an answer is refused in a
     // second, with the reason, instead of after the slowest step (#72).
-    if (opts.check && DELIVERED_STATUSES.includes(opts.status)) {
-      const tracePath = path.join(projectDir, "docs", "specs", "traceability.md");
+    if (gated) {
+      const tracePath = path.join(dir, TRACE);
       const blocker = fs.existsSync(tracePath)
-        ? deliveryBlocker(fs.readFileSync(tracePath, "utf8"), opts.reqId!)
+        ? deliveryBlocker(fs.readFileSync(tracePath, "utf8"), id)
         : null;
       if (blocker) {
         io.fail(NULL_SHAPE, [
           error(blocker.code, `not marked ${opts.status}: ${blocker.message}`, {
-            target: opts.reqId!,
+            target: id,
             fix: blocker.fix,
           }),
         ]);
       }
     }
 
+    // Test first (ADR-0035): on a generated matrix a test that names the
+    // requirement — or a `test=` in its trace — is its link, and without one
+    // there is nothing to judge. Said before the gate, with the fix, rather
+    // than as TDD-1 among everything validate finds.
+    if (gated && isDerivedProject(dir)) {
+      const rows = deriveRows(readDerivationSources(dir)).filter((r: any) => r.requirement === id);
+      const tested = (r: any) => {
+        const t = String(r.testArtifact || "")
+          .replace(/`/g, "")
+          .trim();
+        return t !== "" && t !== "-" && t.toUpperCase() !== "TBD";
+      };
+      if (rows.length > 0 && !rows.some(tested)) {
+        const scn = rows.map((r: any) => r.scenarioId).find((x: any) => x && x !== "-");
+        io.fail(NULL_SHAPE, [
+          error("apply_no_test", `${id} has no test that names it yet (TDD-1).`, {
+            target: id,
+            fix: `write a test that names ${id}${scn ? ` (and its scenario ${scn})` : ""}, then run specgate ${verb} ${id}`,
+          }),
+        ]);
+      }
+    }
+
+    // ── The checks, before anything is written ───────────────────────────────
+    //
+    // `--check` and `--strict` used to be parsed and discarded, so `done
+    // REQ-001 --check` printed a tick over a matrix pointing at files that do
+    // not exist. Four documentation pages said it "validates first".
     const harness = readHarnessConfig(projectDir) || ({} as any);
-    const plan = planDoneVerification(projectDir, {
+    const plan = planDoneVerification(dir, {
       check: opts.check,
       strict: opts.strict,
-      reqId: opts.reqId || undefined,
+      reqId: id,
       testCmd: opts.testCmd || harness.testCmd,
       archCmd: harness.archCmd,
     });
 
-    if (!opts.json) process.stdout.write(ui.header(`done ${opts.reqId}`, opts.status));
     for (const step of plan.steps) {
       const exec = () =>
         step.stage === "validate"
@@ -201,7 +274,7 @@ export class DoneCommand extends BaseCommand {
             });
       const label =
         step.stage === "validate"
-          ? `Specification   ${ui.muted(`the gate, for ${opts.reqId}`)}`
+          ? `Specification   ${ui.muted(`the gate, for ${id}`)}`
           : step.stage === "arch"
             ? `Architecture    ${ui.muted(step.argv[0])}`
             : `Tests           ${ui.muted(step.argv[0])}`;
@@ -211,7 +284,7 @@ export class DoneCommand extends BaseCommand {
 
       // The output is the evidence, and it goes out *before* the diagnostic:
       // `io.fail` never returns, so anything written after it is dead code.
-      const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
+      const detail = toProject(`${run.stdout || ""}${run.stderr || ""}`.trim());
       if (detail && !opts.json) process.stderr.write("\n" + indent(detail) + "\n\n");
 
       // Over JSON (and so over MCP) the reason has to travel in the document:
@@ -219,13 +292,18 @@ export class DoneCommand extends BaseCommand {
       let findings: any[] = [];
       if (opts.json && step.stage === "validate") {
         try {
-          const doc = JSON.parse(String(run.stdout).slice(String(run.stdout).indexOf("{")));
-          findings = (doc.status || []).filter((d: any) => d.severity === "error");
+          const stdout = toProject(String(run.stdout));
+          const doc = JSON.parse(stdout.slice(stdout.indexOf("{")));
+          // One fix line per refusal: the findings say what, the last says how.
+          findings = (doc.status || [])
+            .filter((d: any) => d.severity === "error")
+            .map(({ fix: _fix, ...d }: any) => d);
         } catch {
           // Not JSON: the diagnostic below still says it failed.
         }
       }
 
+      const again = `specgate ${verb} ${id}`;
       io.fail(NULL_SHAPE, [
         ...findings,
         error(
@@ -240,40 +318,19 @@ export class DoneCommand extends BaseCommand {
               ? `not marked ${opts.status}: the architecture check failed.`
               : `not marked ${opts.status}: the project's tests failed.`,
           {
-            target: opts.reqId!,
+            target: id,
             fix:
               step.stage === "validate"
-                ? "Fix what validate reports, then run `done` again."
+                ? `fix what validate reports above, then run ${again}`
                 : step.stage === "arch"
-                  ? `Make \`${step.argv[0]}\` pass — move the code where the architecture expects it — then run \`done\` again.`
-                  : `Make \`${step.argv[0]}\` pass, then run \`done\` again. A requirement ` +
-                    `marked Implemented over a red suite is the claim this gate exists to stop.`,
+                  ? `make \`${step.argv[0]}\` pass — the code where the architecture expects it — then run ${again}`
+                  : `make \`${step.argv[0]}\` pass, then run ${again}`,
           }
         ),
       ]);
     }
 
-    // A generated matrix gets its status from spec.md: writing the row would
-    // be undone by the next regeneration.
-    const derivedRows = isDerivedProject(projectDir)
-      ? writeRequirementFields(projectDir, opts.reqId!, { status: opts.status })
-      : undefined;
-    const result =
-      derivedRows === undefined
-        ? new UpdateRequirementStatusUseCase(new DiskTraceabilityRepository()).execute(
-            projectDir,
-            opts.reqId!,
-            opts.status
-          )
-        : derivedRows === null
-          ? {
-              ok: false,
-              code: "requirement_not_in_matrix",
-              error: `${opts.reqId} has no section in spec.md or in a capability spec.`,
-              updated: 0,
-            }
-          : { ok: true, updated: derivedRows };
-
+    const result = writeStatus(projectDir, dir, owner, id, opts.status);
     if (!result.ok) {
       if (result.code === "traceability_not_found") {
         io.usage(NULL_SHAPE, [
@@ -286,10 +343,10 @@ export class DoneCommand extends BaseCommand {
         io.fail(NULL_SHAPE, [
           error(
             "requirement_not_in_matrix",
-            result.error || `${opts.reqId} not found in traceability.md.`,
+            result.error || `${id} not found in traceability.md.`,
             {
-              target: opts.reqId!,
-              fix: `Add a row for ${opts.reqId} — \`specgate req add\` writes one for you.`,
+              target: id,
+              fix: `Add a row for ${id} — \`specgate req add\` writes one for you.`,
             }
           ),
         ]);
@@ -297,16 +354,14 @@ export class DoneCommand extends BaseCommand {
     }
 
     const updated = result.updated;
-    io.emit({ requirement: { id: opts.reqId, status: opts.status, rowsUpdated: updated } }, () =>
+    io.emit({ requirement: { id, status: opts.status, rowsUpdated: updated } }, () =>
       process.stdout.write(
         "\n" +
           ui.ok(
-            `${c.bold}${opts.reqId}${c.reset} ${ui.sym.arrow} ${c.ok}${c.bold}${opts.status}${c.reset} ` +
+            `${c.bold}${id}${c.reset} ${ui.sym.arrow} ${c.ok}${c.bold}${opts.status}${c.reset} ` +
               ui.muted(`(${updated} row${updated > 1 ? "s" : ""} updated)`)
           ) +
-          (plan.testsUnverified
-            ? ""
-            : ui.next("specgate status", "what is left, and the next requirement"))
+          (plan.testsUnverified ? "" : nextAfter(queue().items, id, owner, view))
       )
     );
 
@@ -353,6 +408,9 @@ export class DoneCommand extends BaseCommand {
       return;
     }
     refreshDerivedMatrix(projectDir);
+    // Open changes' requirements are judged as they will be after archive (ADR-0035).
+    const view = inFlightView(projectDir);
+    const dir = view ? view.dir : projectDir;
     const ids = [...new Set(opts.reqIds)];
     const results = new Map<
       string,
@@ -361,7 +419,7 @@ export class DoneCommand extends BaseCommand {
     const harness = readHarnessConfig(projectDir) || ({} as any);
     const testCmd = opts.testCmd || harness.testCmd;
     const gated = opts.check && DELIVERED_STATUSES.includes(opts.status);
-    const tracePath = path.join(projectDir, "docs", "specs", "traceability.md");
+    const tracePath = path.join(dir, TRACE);
 
     for (const id of ids) {
       if (gated && fs.existsSync(tracePath)) {
@@ -371,7 +429,7 @@ export class DoneCommand extends BaseCommand {
           continue;
         }
       }
-      const plan = planDoneVerification(projectDir, {
+      const plan = planDoneVerification(dir, {
         check: opts.check,
         strict: opts.strict,
         reqId: id,
@@ -389,7 +447,9 @@ export class DoneCommand extends BaseCommand {
             ok: false,
             code: "done_validate_failed",
             message: "validation failed",
-            detail: `${run.stdout || ""}${run.stderr || ""}`.trim(),
+            detail: (view ? view.toProject : (t: string) => t)(
+              `${run.stdout || ""}${run.stderr || ""}`.trim()
+            ),
           });
           continue;
         }
@@ -435,23 +495,8 @@ export class DoneCommand extends BaseCommand {
     }
 
     for (const id of ids.filter((x) => results.get(x)!.ok)) {
-      const derivedRows = isDerivedProject(projectDir)
-        ? writeRequirementFields(projectDir, id, { status: opts.status })
-        : undefined;
-      const result =
-        derivedRows === undefined
-          ? new UpdateRequirementStatusUseCase(new DiskTraceabilityRepository()).execute(
-              projectDir,
-              id,
-              opts.status
-            )
-          : derivedRows === null
-            ? {
-                ok: false,
-                error: `${id} has no section in spec.md or in a capability spec.`,
-                updated: 0,
-              }
-            : { ok: true, updated: derivedRows };
+      const owner = view ? view.requirements.find((r) => r.id === id) : undefined;
+      const result = writeStatus(projectDir, dir, owner, id, opts.status);
       if (!result.ok) {
         results.set(id, {
           ok: false,
@@ -473,7 +518,7 @@ export class DoneCommand extends BaseCommand {
     if (opts.json) {
       process.stdout.write(`${JSON.stringify(doc, null, 2)}\n`);
     } else {
-      process.stdout.write(ui.header(`done ${ids.join(" ")}`, opts.status));
+      process.stdout.write(ui.header(`${this.verb} ${ids.join(" ")}`, opts.status));
       for (const id of ids) {
         const r = results.get(id)!;
         if (r.ok) {
@@ -513,4 +558,82 @@ function indent(text: string): string {
     .split("\n")
     .map((l) => `     ${l}`)
     .join("\n");
+}
+
+const TRACE = path.join("docs", "specs", "traceability.md");
+
+function readTrace(dir: string): string {
+  return fs.readFileSync(path.join(dir, TRACE), "utf8");
+}
+
+/**
+ * Write the status to the requirement's one owner: its open change's delta
+ * when it is in flight (ADR-0035), spec.md or its capability spec otherwise,
+ * or the hand-kept matrix of a project that is not derived.
+ */
+function writeStatus(
+  projectDir: string,
+  judgedDir: string,
+  owner: InFlightRequirement | undefined,
+  id: string,
+  status: string
+): { ok: boolean; updated: number; code?: string; error?: string } {
+  if (owner) {
+    const file = path.join(projectDir, owner.deltaFile);
+    const next = setTraceFields(fs.readFileSync(file, "utf8"), id, { status });
+    if (next === null) {
+      return { ok: false, updated: 0, error: `${id} has no section in ${owner.deltaFile}.` };
+    }
+    fs.writeFileSync(file, next, "utf8");
+    const rows = deriveRows(readDerivationSources(judgedDir)).filter(
+      (r: any) => r.requirement === id
+    ).length;
+    return { ok: true, updated: Math.max(rows, 1) };
+  }
+  // A generated matrix gets its status from spec.md: writing the row would
+  // be undone by the next regeneration.
+  const derivedRows = isDerivedProject(projectDir)
+    ? writeRequirementFields(projectDir, id, { status })
+    : undefined;
+  if (derivedRows === undefined) {
+    return new UpdateRequirementStatusUseCase(new DiskTraceabilityRepository()).execute(
+      projectDir,
+      id,
+      status
+    ) as any;
+  }
+  if (derivedRows === null) {
+    return {
+      ok: false,
+      updated: 0,
+      code: "requirement_not_in_matrix",
+      error: `${id} has no section in spec.md or in a capability spec.`,
+    };
+  }
+  return { ok: true, updated: derivedRows };
+}
+
+/**
+ * What to run after a delivery: the next requirement, or — when that one was
+ * its open change's last — archiving the change.
+ */
+function nextAfter(
+  items: any[],
+  id: string,
+  owner: InFlightRequirement | undefined,
+  view: InFlightView | null
+): string {
+  if (owner && view) {
+    const rest = view.requirements.filter((r) => r.change === owner.change && r.id !== id);
+    if (rest.every((r) => DELIVERED.includes(r.status))) {
+      return ui.next(
+        `specgate archive ${owner.change}`,
+        `every requirement of ${owner.change} is delivered`
+      );
+    }
+  }
+  const following = nextRequirement(items, [id]);
+  return following
+    ? ui.next(`specgate apply ${following.requirement}`, "the next requirement")
+    : ui.next("specgate status", "what is left, and the next requirement");
 }

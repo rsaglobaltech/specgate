@@ -86,6 +86,7 @@ export function draftModuleOf(changeId: string): string {
 
 function usage(): string {
   return (
+    "Same as specgate propose --from-brief: a module of your brief becomes a draft change.\n\n" +
     "Usage:\n" +
     "  specgate draft                       your brief's modules, and the one to do next\n" +
     "  specgate draft <module>              open that module's draft — or check it, once it exists\n" +
@@ -366,12 +367,18 @@ export function briefProgress(
   if (text === undefined) return null;
   const modules = briefModules(text).map((m) => moduleStatus(projectDir, m));
   if (modules.length === 0) return null;
-  return { brief: DEFAULT_BRIEF, modules, next: modules.find((m) => m.state !== "archived") };
+  // A ready draft is reviewed and then applied (ADR-0035): the next module to
+  // draft is the first that is neither archived nor ready.
+  return {
+    brief: DEFAULT_BRIEF,
+    modules,
+    next: modules.find((m) => m.state !== "archived" && m.state !== "ready"),
+  };
 }
 
 /** What to run for this module, given where it stands. */
 export function draftNextCommand(s: ModuleStatus): string {
-  return s.state === "ready" ? `specgate change archive ${s.change}` : `specgate draft ${s.module}`;
+  return s.state === "ready" ? "specgate apply" : `specgate draft ${s.module}`;
 }
 
 /** `➜ claude -p … is drafting catalogo…`, and why a flag was added. */
@@ -1051,8 +1058,9 @@ export class DraftCommand extends BaseCommand {
     const report = result.report;
     const diags = [...report.status, ...skippedNotes(report)];
     const errors = report.status.length;
-    const next =
-      errors === 0 ? `specgate change archive ${changeId}` : `specgate draft ${opts.module}`;
+    // Ready: reviewed, then its requirements are applied one by one, and the
+    // change is archived once they are all delivered (ADR-0035).
+    const next = errors === 0 ? "specgate apply" : `specgate draft ${opts.module}`;
     io.emit(
       {
         draft: {
@@ -1081,7 +1089,7 @@ export class DraftCommand extends BaseCommand {
             fs.existsSync(path.join(projectDir, CHANGES, changeId, "questions.md"))
               ? `Answer what you can in ${dir}/questions.md`
               : `Check ${dir}/assumptions.md, if the agent wrote one`,
-            next
+            [next, "its requirements, one at a time; then specgate archive " + changeId]
           );
           const after = nextModuleAfter(projectDir, brief, opts.module);
           steps.push(

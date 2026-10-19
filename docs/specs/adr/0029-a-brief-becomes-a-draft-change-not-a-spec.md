@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted — 2026-10-08
+Accepted — 2026-10-08. Point 1 amended by [ADR-0035](0035-four-verbs-one-lifecycle.md):
+a draft is archived after its requirements are applied, not before.
 
 ## Context
 

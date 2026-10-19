@@ -148,7 +148,7 @@ test("in a forja project, status names the use case to add for the next requirem
   assert.equal(forjaAddCommand(todo), "specgate add usecase <module>/PlaceAnOrder --req REQ-004");
   const summary = { items: [todo], counts: { total: 1 }, orphans: [], derived: true };
   assert.equal(nextCommandPlain({ ...summary, forja: true }), forjaAddCommand(todo));
-  assert.equal(nextCommandPlain({ ...summary, forja: false }), "specgate done REQ-004");
+  assert.equal(nextCommandPlain({ ...summary, forja: false }), "specgate apply REQ-004");
 
   const dir = tmp();
   try {
