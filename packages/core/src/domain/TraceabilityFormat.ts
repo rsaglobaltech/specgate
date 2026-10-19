@@ -39,7 +39,12 @@ export interface LegacyTraceabilityRow {
  * either shape, none of them guaranteed. One file can hold both shapes, and
  * `buildTraceabilityMarkdown` renders a missing rich cell as `-`.
  */
-export type MatrixRow = Partial<RichTraceabilityRow & LegacyTraceabilityRow>;
+export type MatrixRow = Partial<
+  Omit<RichTraceabilityRow & LegacyTraceabilityRow, "requirement">
+> & {
+  /** Null for a legacy row whose cells name no requirement. */
+  requirement?: string | null;
+};
 
 /** What `parseTraceabilityRows` read out of a matrix file. */
 export interface ParsedTraceability {
