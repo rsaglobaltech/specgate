@@ -323,14 +323,18 @@ export class DiffCommand extends BaseCommand {
     let args;
     try {
       args = parseArgs(this.args);
-    } catch (err: any) {
+    } catch (err) {
       // parseArgs doesn't know about format, default to assuming json if --json is passed
       const io: AgentIo = agentIo(
         this.args.includes("--json") ||
           (this.args.includes("--format") && this.args.includes("json"))
       );
       return io.fail({ changes: null }, [
-        { severity: "error", code: "specops_diff_usage", message: err.message || String(err) },
+        {
+          severity: "error",
+          code: "specops_diff_usage",
+          message: (err as Error).message || String(err),
+        },
       ]);
     }
 
@@ -421,9 +425,13 @@ export class DiffCommand extends BaseCommand {
       } else {
         info(`Diff completed for ${matched} pack(s).`);
       }
-    } catch (err: any) {
+    } catch (err) {
       return io.fail({ changes: null }, [
-        { severity: "error", code: "specops_diff_error", message: err.message || String(err) },
+        {
+          severity: "error",
+          code: "specops_diff_error",
+          message: (err as Error).message || String(err),
+        },
       ]);
     }
   }

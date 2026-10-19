@@ -145,6 +145,8 @@ function readIfExists(file: string): string | null {
  */
 export interface InstructionContext {
   stack?: string;
+  /** The change's proposal, for every artefact after it. */
+  proposal?: string;
   /** The `[first, last]` REQ ids reserved for the change. */
   reservedReqRange?: string[];
   [key: string]: string | string[] | number | undefined;

@@ -33,7 +33,8 @@ export class McpInstallCommand extends BaseCommand {
     const client = this.args[clientIdx + 1];
 
     let configPath = "";
-    let configObj: any = {};
+    // The client's own file: keep every key it has, add ours under mcpServers.
+    let configObj: { mcpServers?: Record<string, unknown>; [key: string]: unknown } = {};
     const mcpConfig = {
       command: "npx",
       args: ["-y", "@rsaglobaltech/specgate@latest", "mcp", "serve"],

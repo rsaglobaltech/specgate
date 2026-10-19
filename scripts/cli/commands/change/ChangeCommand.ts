@@ -26,6 +26,7 @@ import {
 } from "../../../lib/diagnostics";
 import type { Diagnostic } from "../../../lib/diagnostics";
 import { buildInstructions } from "../../../change/instructions";
+import type { Instructions } from "../../../change/instructions";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { changeScope, judgeScope } from "../../../../packages/core/src/domain/AuthoringScope";
 import { agentIo } from "../../../lib/agent";
@@ -252,7 +253,7 @@ function emit(opts: { json: boolean }, payload: AgentDocument, renderHuman?: () 
 function resolveValueDriftDelta(
   projectDir: string,
   spec: string
-): { capability: string; content: string } | { diagnostics: any[] } {
+): { capability: string; content: string } | { diagnostics: Diagnostic[] } {
   const sep = spec.indexOf(":");
   const reqId = sep === -1 ? "" : spec.slice(0, sep);
   const valueId = sep === -1 ? "" : spec.slice(sep + 1);
@@ -295,7 +296,8 @@ function resolveValueDriftDelta(
     };
   }
 
-  let rows: any[] = [];
+  // The matrix columns this route reads; the parser returns more.
+  let rows: { requirement?: string; technicalArtifact?: string; testArtifact?: string }[] = [];
   const tracePath = path.join(projectDir, "docs/specs/traceability.md");
   if (fs.existsSync(tracePath)) {
     try {
@@ -857,7 +859,7 @@ function resolveAuthorAgent(projectDir: string, opts: ChangeOptions): string | n
  * The instructions `change instructions` already produces, rendered for an
  * agent rather than for a person.
  */
-function authorPrompt(changeId: string, artifact: string, instructions: any): string {
+function authorPrompt(changeId: string, artifact: string, instructions: Instructions): string {
   const parts = [
     `# Write the ${artifact} for change \`${changeId}\``,
     "",
@@ -1055,12 +1057,16 @@ function cmdArchive(opts: ChangeOptions) {
 
   try {
     repo.executePlan(plan);
-  } catch (err: any) {
+  } catch (err) {
     return fail(opts, nullShape, [
-      error("archive_spec_update_failed", `Archive failed and was rolled back: ${err.message}`, {
-        target: changeId,
-        fix: "Fix the underlying filesystem error and re-run; the project is unchanged.",
-      }),
+      error(
+        "archive_spec_update_failed",
+        `Archive failed and was rolled back: ${errorMessage(err)}`,
+        {
+          target: changeId,
+          fix: "Fix the underlying filesystem error and re-run; the project is unchanged.",
+        }
+      ),
     ]);
   }
   // A generated matrix is rebuilt from the capability specs just written, so

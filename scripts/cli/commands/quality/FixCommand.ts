@@ -101,7 +101,7 @@ export class FixCommand extends BaseCommand {
     let projectDir: string;
     try {
       projectDir = resolveProjectDir(opts.projectDir);
-    } catch (err: any) {
+    } catch (err) {
       io.usage(NULL_SHAPE, [
         error("no_project", errorMessage(err), {
           fix: "Run from inside a spec-driven project, or pass --project-dir <path>.",

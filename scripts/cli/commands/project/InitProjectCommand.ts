@@ -6,6 +6,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseYamlLite } from "../../../../packages/core/src/domain/YamlLite";
+import type { YamlDocument } from "../../../../packages/core/src/domain/YamlLite";
+import { errorMessage } from "../../../lib/diagnostics";
 import { runInitWizard, defaultAnswers, renderConfigYaml } from "./WizardCommand";
 import { BaseCommand } from "../../../lib/command";
 import {
@@ -23,6 +25,13 @@ import * as ui from "../../../lib/ui";
 
 const ROOT_DIR = findCliRoot(__dirname);
 const TEMPLATES_DIR = path.join(ROOT_DIR, "templates");
+
+/**
+ * A project's configuration: the `KEY=value` file, the wizard's answers, and
+ * every variable `validateConfig` derives from them. Each one is a template
+ * variable, which is why every value is a string.
+ */
+export type ProjectConfig = Record<string, string>;
 
 export const PROJECT_TYPES = ["backend", "frontend", "mobile"];
 
@@ -78,7 +87,7 @@ export function stackRules(projectType: string): string {
   return fs.existsSync(file) ? fs.readFileSync(file, "utf8").trimEnd() : "";
 }
 
-export function architectureSections(cfg: any): Record<string, string> {
+export function architectureSections(cfg: ProjectConfig): Record<string, string> {
   const profile = cfg.ARCHITECTURE;
   const isFrontend = cfg.PROJECT_TYPE === "frontend" || cfg.PROJECT_TYPE === "mobile";
   const target = isFrontend
@@ -337,11 +346,11 @@ export function parseConfigKeyValue(content: string) {
 }
 
 export function parseConfigYaml(content: string) {
-  let parsed: any;
+  let parsed: YamlDocument;
   try {
     parsed = parseYamlLite(content);
-  } catch (err: any) {
-    logError(`Invalid YAML config: ${err.message}`);
+  } catch (err) {
+    logError(`Invalid YAML config: ${errorMessage(err)}`);
     process.exit(2);
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -359,11 +368,11 @@ export function parseConfigYaml(content: string) {
   return raw;
 }
 
-function hasDatastore(cfg: any) {
+function hasDatastore(cfg: ProjectConfig) {
   return cfg.DATASTORE !== "none";
 }
 
-function runtimeDockerSection(cfg: any) {
+function runtimeDockerSection(cfg: ProjectConfig) {
   if (cfg.DOCKER_SUPPORT !== "true") {
     return [
       "## Docker",
@@ -410,7 +419,7 @@ function runtimeDockerSection(cfg: any) {
   return lines.join("\n");
 }
 
-function runtimeEnvTable(cfg: any) {
+function runtimeEnvTable(cfg: ProjectConfig) {
   const rows = [
     ["dev", "Local development and day-to-day implementation", "`.env.dev`", cfg.DATABASE_NAME_DEV],
     [
@@ -435,7 +444,7 @@ function runtimeEnvTable(cfg: any) {
   ].join("\n");
 }
 
-function runtimeDatabaseSection(cfg: any) {
+function runtimeDatabaseSection(cfg: ProjectConfig) {
   if (!hasDatastore(cfg)) {
     return [
       "## Data",
@@ -462,7 +471,7 @@ function runtimeDatabaseSection(cfg: any) {
   ].join("\n");
 }
 
-function runtimeInvariants(cfg: any) {
+function runtimeInvariants(cfg: ProjectConfig) {
   const invariants = [];
   if (hasDatastore(cfg)) {
     invariants.push(
@@ -478,11 +487,11 @@ function runtimeInvariants(cfg: any) {
   return invariants.map((line, i) => `${i + 1}. ${line}`).join("\n");
 }
 
-function composeDependsOn(cfg: any) {
+function composeDependsOn(cfg: ProjectConfig) {
   return hasDatastore(cfg) ? "    depends_on:\n      db:\n        condition: service_healthy" : "";
 }
 
-function composeDbService(cfg: any) {
+function composeDbService(cfg: ProjectConfig) {
   if (!hasDatastore(cfg)) return "";
   return `
   db:
@@ -505,7 +514,7 @@ volumes:
     name: ${cfg.PROJECT_SLUG}_\${APP_ENV:-${cfg.DEFAULT_ENV}}_db_data`;
 }
 
-export function validateConfig(cfg: any) {
+export function validateConfig(cfg: ProjectConfig) {
   const required = [
     "PROJECT_NAME",
     "PROJECT_SLUG",
@@ -605,7 +614,7 @@ export function validateConfig(cfg: any) {
   return cfg;
 }
 
-function renderContent(content: string, vars: any) {
+function renderContent(content: string, vars: ProjectConfig) {
   return content.replace(/{{([A-Z][A-Z0-9_]*)}}/g, (_, token) => {
     if (!(token in vars)) {
       logWarn(`Template variable '{{${token}}}' not defined — leaving as-is.`);
@@ -615,7 +624,7 @@ function renderContent(content: string, vars: any) {
   });
 }
 
-function renderFile(src: string, dst: string, vars: any, dryRun: boolean) {
+function renderFile(src: string, dst: string, vars: ProjectConfig, dryRun: boolean) {
   if (dryRun) {
     logInfo(`[dry-run] render ${src} -> ${dst}`);
     return;
@@ -636,7 +645,7 @@ function walkDir(dir: string): string[] {
   return results;
 }
 
-function renderTree(srcRoot: string, dstRoot: string, vars: any, dryRun: boolean) {
+function renderTree(srcRoot: string, dstRoot: string, vars: ProjectConfig, dryRun: boolean) {
   if (!fs.existsSync(srcRoot)) return;
   const allFiles = walkDir(srcRoot).filter((f) => f.endsWith(".tpl"));
   allFiles.sort();
@@ -647,7 +656,7 @@ function renderTree(srcRoot: string, dstRoot: string, vars: any, dryRun: boolean
   }
 }
 
-function applyRuntimeSupportFlags(projectDir: string, cfg: any, dryRun: boolean) {
+function applyRuntimeSupportFlags(projectDir: string, cfg: ProjectConfig, dryRun: boolean) {
   if (cfg.DATASTORE === "none" && !dryRun) {
     for (const file of fs.readdirSync(projectDir)) {
       if (!/^\.env\b/.test(file)) continue;
@@ -697,7 +706,7 @@ function applyRuntimeSupportFlags(projectDir: string, cfg: any, dryRun: boolean)
  * as a description of the system and invents aggregates to fill it. Removing
  * the file is the point, not tidiness (ADR-0022).
  */
-function applyArchitectureProfile(projectDir: string, cfg: any, dryRun: boolean) {
+function applyArchitectureProfile(projectDir: string, cfg: ProjectConfig, dryRun: boolean) {
   const keep = new Set(ARCHITECTURE_DOCS[cfg.ARCHITECTURE] || ALL_DOMAIN_DOCS);
   const drop = ALL_DOMAIN_DOCS.filter((doc) => !keep.has(doc));
   if (drop.length === 0) return;
@@ -808,9 +817,9 @@ function ensureTraceabilityCoverage(projectDir: string) {
  */
 export function generateProject(
   projectDir: string,
-  cfg: any,
+  cfg: ProjectConfig,
   opts: { dryRun: boolean; noSampleReq: boolean; noGit: boolean },
-  wizardAnswers: any
+  wizardAnswers: Record<string, string> | null
 ) {
   logInfo("🧩 Rendering base template");
   renderTree(path.join(TEMPLATES_DIR, "base"), projectDir, cfg, opts.dryRun);
@@ -915,8 +924,8 @@ export function linkOrCopy(
  */
 function scaffoldMultiStack(
   root: string,
-  cfg: any,
-  opts: any,
+  cfg: ProjectConfig,
+  opts: { dryRun: boolean; noSampleReq: boolean },
   plan: { stacks: { name: string; entry: string }[] }
 ) {
   const modes = new Set<string>();
@@ -980,7 +989,7 @@ function scaffoldMultiStack(
 }
 
 function renderMultiStackReadme(
-  cfg: any,
+  cfg: ProjectConfig,
   plan: { stacks: { name: string }[] },
   modes: string[]
 ): string {
@@ -1113,7 +1122,7 @@ export class InitProjectCommand extends BaseCommand {
     if (opts.multiStack) {
       try {
         plan = planStacks(opts.multiStack);
-      } catch (e: any) {
+      } catch (e) {
         if (!(e instanceof InvalidStackList)) throw e;
         logError(e.message);
         logInfo("Fix: specgate init --multi-stack spring,quarkus,micronaut");
@@ -1121,8 +1130,8 @@ export class InitProjectCommand extends BaseCommand {
       }
     }
 
-    let wizardAnswers = null;
-    let cfg: any;
+    let wizardAnswers: Record<string, string> | null = null;
+    let cfg: ProjectConfig;
     if (opts.config) {
       cfg = validateConfig(parseConfig(opts.config));
     } else if (opts.yes) {

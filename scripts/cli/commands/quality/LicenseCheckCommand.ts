@@ -1,5 +1,31 @@
 import * as fs from "node:fs";
 import { BaseCommand } from "../../../lib/command";
+import { errorMessage } from "../../../lib/diagnostics";
+
+/** One licence entry of a CycloneDX component: a named licence, or an SPDX expression. */
+export interface SbomLicenseEntry {
+  license?: { id?: string; name?: string };
+  expression?: string;
+}
+
+/** The fields of a CycloneDX component this check reads. */
+export interface SbomComponent {
+  name?: string;
+  version?: string;
+  licenses?: SbomLicenseEntry[];
+}
+
+/** A CycloneDX document, as `npm sbom --sbom-format cyclonedx` writes it. */
+interface CycloneDxBom {
+  components?: SbomComponent[];
+}
+
+/** What `summarise` finds: a count per licence, and what the policy refuses. */
+export interface LicenseSummary {
+  total: number;
+  table: Array<{ license: string; count: number; packages: string[] }>;
+  violations: Array<{ component: string; license: string }>;
+}
 
 export const ALLOWED = new Set([
   "0BSD",
@@ -18,10 +44,10 @@ export const ALLOWED = new Set([
   "WTFPL",
 ]);
 
-export function licenseOf(component: any) {
+export function licenseOf(component: SbomComponent): string {
   const entries = component.licenses || [];
   const parts = entries
-    .map((e: any) => (e.license && (e.license.id || e.license.name)) || e.expression)
+    .map((e: SbomLicenseEntry) => (e.license && (e.license.id || e.license.name)) || e.expression)
     .filter(Boolean);
   return parts.length ? parts.join(" OR ") : "UNKNOWN";
 }
@@ -54,13 +80,13 @@ function readStdin() {
   }
 }
 
-export function summarise(components: any[]) {
-  const byLicense = new Map();
+export function summarise(components: SbomComponent[]): LicenseSummary {
+  const byLicense = new Map<string, string[]>();
   const violations: Array<{ component: string; license: string }> = [];
   for (const c of components) {
     const lic = licenseOf(c);
     if (!byLicense.has(lic)) byLicense.set(lic, []);
-    byLicense.get(lic).push(`${c.name}@${c.version}`);
+    byLicense.get(lic)!.push(`${c.name}@${c.version}`);
     if (!isAllowed(lic)) violations.push({ component: `${c.name}@${c.version}`, license: lic });
   }
   const table = [...byLicense.entries()]
@@ -69,20 +95,20 @@ export function summarise(components: any[]) {
   return { total: components.length, table, violations };
 }
 
-function renderMarkdown(result: any) {
+function renderMarkdown(result: LicenseSummary): string {
   const lines = [
     `Components: **${result.total}**`,
     "",
     "| Licence | Packages |",
     "| --- | --: |",
-    ...result.table.map((r: any) => `| \`${r.license}\` | ${r.count} |`),
+    ...result.table.map((r) => `| \`${r.license}\` | ${r.count} |`),
   ];
   if (result.violations.length) {
     lines.push(
       "",
       "**Outside the allow-list:**",
       "",
-      ...result.violations.map((v: any) => `- \`${v.component}\` — \`${v.license}\``)
+      ...result.violations.map((v) => `- \`${v.component}\` — \`${v.license}\``)
     );
   }
   return lines.join("\n") + "\n";
@@ -120,11 +146,12 @@ export class LicenseCheckCommand extends BaseCommand {
       process.exit(2);
     }
 
-    let bom: any;
+    let bom: CycloneDxBom;
     try {
+      // The SBOM's shape is npm's; only `components` is read, and defensively.
       bom = JSON.parse(raw);
-    } catch (err: any) {
-      process.stderr.write(`SBOM is not valid JSON: ${err.message}\n`);
+    } catch (err) {
+      process.stderr.write(`SBOM is not valid JSON: ${errorMessage(err)}\n`);
       process.exit(2);
     }
 

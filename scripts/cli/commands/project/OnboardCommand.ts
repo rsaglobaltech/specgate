@@ -536,6 +536,16 @@ function usage() {
   );
 }
 
+/** What `onboard` found, as the human rendering reads it. */
+interface Onboarding {
+  projectDir: string;
+  adopted: boolean;
+  adoptedAncestor: string | null;
+  stack: ReturnType<typeof detectStack>;
+  capabilities: Capability[];
+  nextCommand: string;
+}
+
 function renderHuman({
   projectDir,
   adopted,
@@ -543,8 +553,8 @@ function renderHuman({
   stack,
   capabilities,
   nextCommand,
-}: any) {
-  const out = [];
+}: Onboarding) {
+  const out: string[] = [];
   out.push(`\n  ${c.bold}${c.cyan}🧭 onboarding${c.reset}  ${c.dim}${projectDir}${c.reset}\n`);
   if (adoptedAncestor && !adopted) {
     out.push(

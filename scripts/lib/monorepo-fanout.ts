@@ -44,7 +44,7 @@ export function runMonorepoFanout(
 ): MonorepoFanoutResult | null {
   const cfgPath = path.join(targetDir, "specops.config.yaml");
   if (!fs.existsSync(cfgPath)) return null;
-  let cfg: any;
+  let cfg: { projects?: unknown } | null;
   try {
     cfg = parseYamlLite(fs.readFileSync(cfgPath, "utf8"));
   } catch {

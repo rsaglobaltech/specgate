@@ -5,6 +5,7 @@ import {
   validatePackModel,
 } from "../../../../packages/core/src/infrastructure/DiskPackRepository";
 import { asArray } from "../../../../packages/core/src/domain/PackSpec";
+import type { YamlDocument } from "../../../../packages/core/src/domain/YamlLite";
 import { BaseCommand } from "../../../lib/command";
 import { parseGherkin } from "../../../../packages/core/src/domain/Gherkin";
 import {
@@ -13,7 +14,7 @@ import {
   isGenericTitle as isGenericTitleRule,
 } from "../../../../packages/core/src/domain/GherkinQuality";
 import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
-import { error as diagError, warning as diagWarning } from "../../../lib/diagnostics";
+import { error as diagError, warning as diagWarning, errorMessage } from "../../../lib/diagnostics";
 import * as ui from "../../../lib/ui";
 
 function logInfo(msg: string) {
@@ -93,7 +94,53 @@ export function parseArgs(argv: string[]) {
 
 const NULL_SHAPE = { pack: null, packRoot: null, graph: null };
 
-function lintTodos(pack: any, _errors: string[], warnings: string[]) {
+// ── What lint reads out of pack.yaml ─────────────────────────────────────────
+//
+// Every field is optional: lint runs on packs that are wrong, and reporting
+// what is missing is its job. `schemas/pack.schema.json` is the full format.
+
+/** An entry of any pack section, as far as ids and names go. */
+interface PackItem {
+  id?: string;
+  name?: string;
+  title?: string;
+}
+
+/** A `use_cases` entry. */
+interface UseCaseItem extends PackItem {
+  actor?: string;
+  requirement?: string;
+  requirements?: string | string[];
+  command?: string;
+  query?: string;
+  aggregate?: string;
+  emits?: string | string[];
+}
+
+/** A `scenarios` entry: a template file, or inline given/when/then. */
+interface ScenarioItem extends PackItem {
+  scenario?: string;
+  template?: string;
+  requirement?: string;
+  requirement_id?: string;
+  use_case?: string;
+  given?: string | string[];
+  when?: string | string[];
+  then?: string | string[];
+}
+
+/** An entry that points at another section by id or name. */
+interface ReferringItem extends PackItem {
+  requirement?: string;
+  bounded_context?: string;
+  aggregate?: string;
+  context?: string;
+}
+
+/** A pack section as a list of `T`: a lone value is a list of one. */
+const itemsOf = <T>(value: unknown): T[] => asArray(value);
+
+function lintTodos(pack: YamlDocument, _errors: string[], warnings: string[]) {
   const yaml = JSON.stringify(pack);
   const count = (yaml.match(/TODO/g) || []).length;
   if (count > 0) {
@@ -101,34 +148,34 @@ function lintTodos(pack: any, _errors: string[], warnings: string[]) {
   }
 }
 
-function lintRequirementsCoverage(pack: any, errors: string[], notes: string[]) {
-  const reqIds = new Set(asArray(pack.requirements).map((r: any) => r.id));
-  const usedInUC = new Set(
-    asArray(pack.use_cases).flatMap((uc: any) =>
-      asArray(uc.requirements || (uc.requirement ? [uc.requirement] : []))
+function lintRequirementsCoverage(pack: YamlDocument, errors: string[], notes: string[]) {
+  const reqIds = new Set(itemsOf<PackItem>(pack.requirements).map((r) => r.id));
+  const usedInUC = new Set<string | undefined>(
+    itemsOf<UseCaseItem>(pack.use_cases).flatMap((uc) =>
+      itemsOf<string>(uc.requirements || (uc.requirement ? [uc.requirement] : []))
     )
   );
   // The schema names the field `requirement_id`; reading only `requirement`
   // made every scenario invisible here, so a requirement covered only by a
   // scenario failed `--strict` as unreferenced.
   const usedInSCN = new Set(
-    asArray(pack.scenarios)
-      .map((s: any) => s.requirement_id || s.requirement)
+    itemsOf<ScenarioItem>(pack.scenarios)
+      .map((s) => s.requirement_id || s.requirement)
       .filter(Boolean)
   );
   const usedInAC = new Set(
-    asArray(pack.api_contracts)
-      .map((ac: any) => ac.requirement)
+    itemsOf<ReferringItem>(pack.api_contracts)
+      .map((ac) => ac.requirement)
       .filter(Boolean)
   );
   const usedInCDT = new Set(
-    asArray(pack.consumer_driven_tests)
-      .map((cdt: any) => cdt.requirement)
+    itemsOf<ReferringItem>(pack.consumer_driven_tests)
+      .map((cdt) => cdt.requirement)
       .filter(Boolean)
   );
   const usedInBCR = new Set(
-    asArray(pack.breaking_change_rules)
-      .map((bcr: any) => bcr.requirement)
+    itemsOf<ReferringItem>(pack.breaking_change_rules)
+      .map((bcr) => bcr.requirement)
       .filter(Boolean)
   );
   for (const id of reqIds) {
@@ -154,17 +201,17 @@ function lintRequirementsCoverage(pack: any, errors: string[], notes: string[]) 
   }
 }
 
-function lintUseCaseActors(pack: any, _errors: string[], warnings: string[]) {
-  for (const uc of asArray(pack.use_cases)) {
+function lintUseCaseActors(pack: YamlDocument, _errors: string[], warnings: string[]) {
+  for (const uc of itemsOf<UseCaseItem>(pack.use_cases)) {
     if (!uc.actor || uc.actor.trim() === "") {
       warnings.push(`UC ${uc.id} has no actor defined.`);
     }
   }
 }
 
-function lintBoundedContextAggregates(pack: any, errors: string[], _warnings: string[]) {
-  const bcIds = new Set(asArray(pack.bounded_contexts).map((bc: any) => bc.id));
-  for (const agg of asArray(pack.aggregates)) {
+function lintBoundedContextAggregates(pack: YamlDocument, errors: string[], _warnings: string[]) {
+  const bcIds = new Set(itemsOf<PackItem>(pack.bounded_contexts).map((bc) => bc.id));
+  for (const agg of itemsOf<ReferringItem>(pack.aggregates)) {
     if (agg.bounded_context && !bcIds.has(agg.bounded_context)) {
       errors.push(
         `Aggregate ${agg.id || agg.name} references unknown bounded_context: ${agg.bounded_context}`
@@ -173,19 +220,19 @@ function lintBoundedContextAggregates(pack: any, errors: string[], _warnings: st
   }
 }
 
-function lintEventAggregates(pack: any, errors: string[], _warnings: string[]) {
-  const aggNames = new Set(asArray(pack.aggregates).map((a: any) => a.name));
-  for (const evt of asArray(pack.events)) {
+function lintEventAggregates(pack: YamlDocument, errors: string[], _warnings: string[]) {
+  const aggNames = new Set(itemsOf<PackItem>(pack.aggregates).map((a) => a.name));
+  for (const evt of itemsOf<ReferringItem>(pack.events)) {
     if (evt.aggregate && aggNames.size > 0 && !aggNames.has(evt.aggregate)) {
       errors.push(`Event ${evt.id || evt.name} references unknown aggregate: ${evt.aggregate}`);
     }
   }
 }
 
-function lintScenarioRefs(pack: any, errors: string[], _warnings: string[]) {
-  const reqIds = new Set(asArray(pack.requirements).map((r: any) => r.id));
-  const ucIds = new Set(asArray(pack.use_cases).map((uc: any) => uc.id));
-  for (const scn of asArray(pack.scenarios)) {
+function lintScenarioRefs(pack: YamlDocument, errors: string[], _warnings: string[]) {
+  const reqIds = new Set(itemsOf<PackItem>(pack.requirements).map((r) => r.id));
+  const ucIds = new Set(itemsOf<PackItem>(pack.use_cases).map((uc) => uc.id));
+  for (const scn of itemsOf<ScenarioItem>(pack.scenarios)) {
     if (scn.requirement && !reqIds.has(scn.requirement)) {
       errors.push(`Scenario ${scn.id} references unknown requirement: ${scn.requirement}`);
     }
@@ -195,9 +242,9 @@ function lintScenarioRefs(pack: any, errors: string[], _warnings: string[]) {
   }
 }
 
-function lintRuleContextRefs(pack: any, _errors: string[], warnings: string[]) {
-  const bcIds = new Set(asArray(pack.bounded_contexts).map((bc: any) => bc.id));
-  for (const rule of asArray(pack.rules)) {
+function lintRuleContextRefs(pack: YamlDocument, _errors: string[], warnings: string[]) {
+  const bcIds = new Set(itemsOf<PackItem>(pack.bounded_contexts).map((bc) => bc.id));
+  for (const rule of itemsOf<ReferringItem>(pack.rules)) {
     if (rule.context && bcIds.size > 0 && !bcIds.has(rule.context)) {
       warnings.push(
         `Rule ${rule.id} context '${rule.context}' does not match any bounded_context id.`
@@ -206,7 +253,7 @@ function lintRuleContextRefs(pack: any, _errors: string[], warnings: string[]) {
   }
 }
 
-function lintIdUniqueness(pack: any, errors: string[], _warnings: string[]) {
+function lintIdUniqueness(pack: YamlDocument, errors: string[], _warnings: string[]) {
   const sections = [
     "requirements",
     "use_cases",
@@ -219,8 +266,8 @@ function lintIdUniqueness(pack: any, errors: string[], _warnings: string[]) {
     "commands",
   ];
   for (const section of sections) {
-    const items = asArray(pack[section]);
-    const seen = new Set();
+    const items = itemsOf<PackItem>(pack[section]);
+    const seen = new Set<string>();
     for (const item of items) {
       if (!item.id) continue;
       if (seen.has(item.id)) {
@@ -231,8 +278,10 @@ function lintIdUniqueness(pack: any, errors: string[], _warnings: string[]) {
   }
 }
 
-function lintVariables(pack: any, errors: string[], _warnings: string[]) {
-  const required = asArray(pack.variables && pack.variables.required);
+function lintVariables(pack: YamlDocument, errors: string[], _warnings: string[]) {
+  // An object when present; anything else has no `required` and reads as none.
+  const variables = pack.variables as { required?: unknown } | undefined;
+  const required = asArray(variables && variables.required);
   for (const v of required) {
     if (typeof v !== "string" || !/^[A-Z][A-Z0-9_]*$/.test(v)) {
       errors.push(`Variable '${v}' must be UPPER_SNAKE_CASE.`);
@@ -276,7 +325,20 @@ export const isGenericTitle = isGenericTitleRule;
  * Severity comes from the rule, never from the caller — `scenario_has_no_steps`
  * is an error wherever it is raised, which is the correction H14 forced.
  */
-function checkGherkin(where: string, gherkin: any, errors: string[], scenarioIssues: string[]) {
+/** A scenario as the quality rules see it, from a template or inline. */
+interface GherkinLike {
+  title?: string;
+  steps: Array<{ keyword: string; text: string }>;
+  outline?: boolean;
+  hasExamples?: boolean;
+}
+
+function checkGherkin(
+  where: string,
+  gherkin: GherkinLike,
+  errors: string[],
+  scenarioIssues: string[]
+) {
   const findings = analyseScenario(
     {
       name: gherkin.title || "",
@@ -296,9 +358,9 @@ function checkGherkin(where: string, gherkin: any, errors: string[], scenarioIss
   }
 }
 
-function inlineGherkin(scn: any) {
-  const steps: any[] = [];
-  for (const keyword of ["given", "when", "then"]) {
+function inlineGherkin(scn: ScenarioItem): GherkinLike {
+  const steps: GherkinLike["steps"] = [];
+  for (const keyword of ["given", "when", "then"] as const) {
     for (const text of asArray(scn[keyword])) {
       if (typeof text === "string" && text.trim()) steps.push({ keyword, text: text.trim() });
     }
@@ -307,12 +369,12 @@ function inlineGherkin(scn: any) {
 }
 
 export function lintScenarioQuality(
-  pack: any,
+  pack: YamlDocument,
   packRoot: string,
   errors: string[],
   scenarioIssues: string[]
 ) {
-  for (const scn of asArray(pack.scenarios)) {
+  for (const scn of itemsOf<ScenarioItem>(pack.scenarios)) {
     const label = scn.id || scn.title || scn.scenario || "(unnamed scenario)";
 
     if (!scn.template && (scn.given || scn.when || scn.then)) {
@@ -376,12 +438,17 @@ export function lintScenarioQuality(
   }
 }
 
-function lintInstallable(pack: any, packRoot: string, errors: string[], _warnings: string[]) {
+function lintInstallable(
+  pack: YamlDocument,
+  packRoot: string,
+  errors: string[],
+  _warnings: string[]
+) {
   try {
     validatePackModel(pack, packRoot);
-  } catch (err: any) {
+  } catch (err) {
     errors.push(
-      `Pack cannot be installed: ${err.message} ` +
+      `Pack cannot be installed: ${errorMessage(err)} ` +
         "(`expand` enforces this, so lint has to as well)"
     );
   }
@@ -391,7 +458,7 @@ export interface LintRunOptions {
   strict?: boolean;
 }
 
-export function runLint(pack: any, packRoot: string, opts: LintRunOptions = {}) {
+export function runLint(pack: YamlDocument, packRoot: string, opts: LintRunOptions = {}) {
   const errors: string[] = [];
   const warnings: string[] = [];
   const notes: string[] = [];
@@ -418,11 +485,39 @@ export function runLint(pack: any, packRoot: string, opts: LintRunOptions = {}) 
   return { errors, warnings, notes };
 }
 
-export function buildPackGraph(pack: any) {
-  const nodes: any[] = [];
-  const edges: any[] = [];
-  const broken: any[] = [];
-  const seen = new Set();
+/** A node of the pack graph; `missing` marks a reference to nothing. */
+export interface PackGraphNode {
+  id: string;
+  type: string;
+  label: string;
+}
+
+/** A directed edge of the pack graph, named for the relation. */
+export interface PackGraphEdge {
+  from: string;
+  to: string;
+  kind: string;
+}
+
+/** A reference to an entity the pack does not declare. */
+export interface DanglingReference {
+  from: string;
+  kind: string;
+  ref: string;
+}
+
+/** The pack's requirement → use case → command/aggregate/event graph. */
+export interface PackGraph {
+  nodes: PackGraphNode[];
+  edges: PackGraphEdge[];
+  broken: DanglingReference[];
+}
+
+export function buildPackGraph(pack: YamlDocument): PackGraph {
+  const nodes: PackGraphNode[] = [];
+  const edges: PackGraphEdge[] = [];
+  const broken: DanglingReference[] = [];
+  const seen = new Set<string>();
 
   function addNode(id: string, type: string, label: string) {
     if (seen.has(id)) return;
@@ -438,44 +533,46 @@ export function buildPackGraph(pack: any) {
     return id;
   }
 
-  const requirements = asArray(pack.requirements);
-  const useCases = asArray(pack.use_cases);
-  const commands = asArray(pack.commands);
-  const queries = asArray(pack.queries);
-  const aggregates = asArray(pack.aggregates);
-  const events = asArray(pack.events);
+  const requirements = itemsOf<PackItem>(pack.requirements);
+  const useCases = itemsOf<UseCaseItem>(pack.use_cases);
+  const commands = itemsOf<PackItem>(pack.commands);
+  const queries = itemsOf<PackItem>(pack.queries);
+  const aggregates = itemsOf<PackItem>(pack.aggregates);
+  const events = itemsOf<PackItem>(pack.events);
 
-  const reqById = new Map(requirements.filter((r: any) => r.id).map((r: any) => [r.id, r]));
-  const cmdByKey = new Map();
+  const reqById = new Map(
+    requirements.filter((r) => r.id).map((r): [string | undefined, PackItem] => [r.id, r])
+  );
+  const cmdByKey = new Map<string, PackItem>();
   for (const c of commands) {
     if (c.id) cmdByKey.set(c.id, c);
     if (c.name) cmdByKey.set(c.name, c);
   }
-  const queryByKey = new Map();
+  const queryByKey = new Map<string, PackItem>();
   for (const q of queries) {
     if (q.id) queryByKey.set(q.id, q);
     if (q.name) queryByKey.set(q.name, q);
   }
-  const aggByKey = new Map();
+  const aggByKey = new Map<string, PackItem>();
   for (const a of aggregates) {
     if (a.id) aggByKey.set(a.id, a);
     if (a.name) aggByKey.set(a.name, a);
   }
-  const evtByKey = new Map();
+  const evtByKey = new Map<string, PackItem>();
   for (const e of events) {
     if (e.id) evtByKey.set(e.id, e);
     if (e.name) evtByKey.set(e.name, e);
   }
 
   const nodeId = {
-    req: (r: any) => `REQ:${r.id}`,
-    uc: (u: any) => `UC:${u.id}`,
-    cmd: (c: any) => `CMD:${c.id || c.name}`,
-    query: (q: any) => `QUERY:${q.id || q.name}`,
-    agg: (a: any) => `AGG:${a.id || a.name}`,
-    evt: (e: any) => `EVT:${e.id || e.name}`,
+    req: (r: PackItem) => `REQ:${r.id}`,
+    uc: (u: PackItem) => `UC:${u.id}`,
+    cmd: (c: PackItem) => `CMD:${c.id || c.name}`,
+    query: (q: PackItem) => `QUERY:${q.id || q.name}`,
+    agg: (a: PackItem) => `AGG:${a.id || a.name}`,
+    evt: (e: PackItem) => `EVT:${e.id || e.name}`,
   };
-  const labelOf = (entity: any, fallback: string) => {
+  const labelOf = (entity: PackItem, fallback: string): string => {
     if (entity.id && entity.name) return `${entity.id} ${entity.name}`;
     return entity.id || entity.name || fallback;
   };
@@ -491,7 +588,7 @@ export function buildPackGraph(pack: any) {
     const from = nodeId.uc(u);
     const label = u.id || u.name || "(use case)";
 
-    const reqRefs = asArray(u.requirements || (u.requirement ? [u.requirement] : []));
+    const reqRefs = itemsOf<string>(u.requirements || (u.requirement ? [u.requirement] : []));
     for (const ref of reqRefs) {
       const target = reqById.get(ref);
       if (target) {
@@ -531,7 +628,7 @@ export function buildPackGraph(pack: any) {
       }
     }
 
-    for (const ref of asArray(u.emits)) {
+    for (const ref of itemsOf<string>(u.emits)) {
       const target = evtByKey.get(ref);
       if (target) {
         addEdge(from, nodeId.evt(target), "emits");
@@ -549,7 +646,7 @@ function sanitizeId(id: string) {
   return id.replace(/[^A-Za-z0-9]/g, "_");
 }
 
-export function renderMermaid(graph: any) {
+export function renderMermaid(graph: PackGraph): string {
   const lines = ["graph LR"];
   for (const node of graph.nodes) {
     const safe = sanitizeId(node.id);
@@ -570,7 +667,7 @@ export function renderMermaid(graph: any) {
   return lines.join("\n");
 }
 
-export function renderDot(graph: any) {
+export function renderDot(graph: PackGraph): string {
   const lines = ["digraph pack {", "  rankdir=LR;", "  node [shape=box, style=rounded];"];
   const fill: Record<string, string> = {
     requirement: "#e7f5ff",
@@ -594,7 +691,7 @@ export function renderDot(graph: any) {
   return lines.join("\n");
 }
 
-function emitGraph(pack: any, opts: LintPackOptions) {
+function emitGraph(pack: YamlDocument, opts: LintPackOptions) {
   const graph = buildPackGraph(pack);
   const rendered = opts.graphFormat === "dot" ? renderDot(graph) : renderMermaid(graph);
   process.stdout.write(rendered + "\n");
@@ -626,12 +723,12 @@ export class LintPackCommand extends BaseCommand {
       return;
     }
 
-    let loadResult: any;
+    let loadResult: ReturnType<typeof loadPack>;
     try {
       loadResult = loadPack(opts.packRoot, opts.packId);
-    } catch (err: any) {
+    } catch (err) {
       io.fail({ ...NULL_SHAPE, pack: opts.packId }, [
-        diagError("pack_load_failed", `Failed to load pack: ${err.message}`, {
+        diagError("pack_load_failed", `Failed to load pack: ${errorMessage(err)}`, {
           target: opts.packId,
           fix: "Check --pack-root points at the directory that contains the pack, and --pack at its id.",
         }),
@@ -650,7 +747,7 @@ export class LintPackCommand extends BaseCommand {
           packRoot,
           format: opts.graphFormat,
           graph: rendered,
-          status: graph.broken.map((b: any) =>
+          status: graph.broken.map((b) =>
             diagError(
               "pack_graph_dangling_reference",
               `${b.from} references unknown ${b.kind}: ${b.ref}`,

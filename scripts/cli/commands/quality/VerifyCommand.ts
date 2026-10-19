@@ -14,7 +14,7 @@ import * as crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { BaseCommand } from "../../../lib/command";
 import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
-import { error, type Diagnostic } from "../../../lib/diagnostics";
+import { error, errorMessage, type Diagnostic } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import type { ForeignSpec, SourceText } from "../../../../packages/core/src/domain/ForeignSpec";
@@ -159,7 +159,12 @@ function readLock(projectDir: string): Map<string, string> {
 
 function writeLock(projectDir: string, spec: ForeignSpec, proved: readonly string[]) {
   const file = path.join(projectDir, LOCK);
-  let doc: any = { version: 1, criteria: {} };
+  // Other keys a later version wrote are carried through untouched.
+  let doc: {
+    version: number;
+    criteria: Record<string, { hash: string; commit: string | null }>;
+    [key: string]: unknown;
+  } = { version: 1, criteria: {} };
   try {
     doc = JSON.parse(fs.readFileSync(file, "utf8"));
   } catch {
@@ -229,13 +234,13 @@ export class VerifyCommand extends BaseCommand {
     const io0: AgentIo = agentIo(wantsJson(this.args));
     try {
       o = parseArgs(this.args);
-    } catch (err: any) {
+    } catch (err) {
       io0.usage({ verify: null }, [
-        error("verify_usage", err.message, { fix: "specgate verify --help" }),
+        error("verify_usage", errorMessage(err), { fix: "specgate verify --help" }),
       ]);
     }
-    const io: AgentIo = agentIo(o!.format === "json" || o!.json);
-    const opts = o!;
+    const io: AgentIo = agentIo(o.format === "json" || o.json);
+    const opts = o;
     const projectDir = resolveProjectDir(opts.projectDir);
 
     const spec = readSpec(projectDir, opts.from);
@@ -249,10 +254,10 @@ export class VerifyCommand extends BaseCommand {
 
     if (opts.ids) {
       if (io.json) {
-        io.emit({ verify: { ids: spec!.requirements } });
+        io.emit({ verify: { ids: spec.requirements } });
         return;
       }
-      for (const r of spec!.requirements) {
+      for (const r of spec.requirements) {
         process.stdout.write(`${r.id}  ${r.title}\n`);
         for (const c of r.criteria) process.stdout.write(`  ${c.id}  ${c.title}\n`);
       }
@@ -261,14 +266,14 @@ export class VerifyCommand extends BaseCommand {
 
     let fresh: Set<string> | undefined;
     try {
-      fresh = opts.since ? freshClaims(projectDir, spec!, opts.since) : undefined;
-    } catch (err: any) {
-      io.usage({ verify: null }, [error("verify_since", err.message)]);
+      fresh = opts.since ? freshClaims(projectDir, spec, opts.since) : undefined;
+    } catch (err) {
+      io.usage({ verify: null }, [error("verify_since", errorMessage(err))]);
     }
 
     const tests = readDerivationSources(projectDir).tests;
     const result = verifyClaims({
-      spec: spec!,
+      spec: spec,
       tests,
       freshClaims: fresh,
       lock: readLock(projectDir),
@@ -301,7 +306,7 @@ export class VerifyCommand extends BaseCommand {
     }
 
     const failed = result.status.some((d) => d.severity === "error");
-    if (opts.record && !failed) writeLock(projectDir, spec!, result.proved);
+    if (opts.record && !failed) writeLock(projectDir, spec, result.proved);
 
     if (opts.format === "github") {
       renderGithub(result.status);

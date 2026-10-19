@@ -230,7 +230,15 @@ export function detectStack(dir: string) {
 
   const pkgRaw = readIfExists(path.join(dir, "package.json"));
   if (pkgRaw !== null) {
-    let pkg: any;
+    // Only the fields read below; anything else in package.json is ignored.
+    let pkg:
+      | {
+          name?: unknown;
+          scripts?: Record<string, string>;
+          dependencies?: Record<string, string>;
+          devDependencies?: Record<string, string>;
+        }
+      | undefined;
     try {
       pkg = JSON.parse(pkgRaw);
     } catch {

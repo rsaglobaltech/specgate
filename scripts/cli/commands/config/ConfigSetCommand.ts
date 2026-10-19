@@ -55,15 +55,18 @@ export function configPath(projectDir: string) {
   return path.join(projectDir, CONFIG_DIR, CONFIG_FILE);
 }
 
-export function read(projectDir: string) {
+/** `.specgate/config.json`: setting name → value. */
+export type ProjectConfig = Record<string, unknown>;
+
+export function read(projectDir: string): ProjectConfig {
   try {
-    return JSON.parse(fs.readFileSync(configPath(projectDir), "utf8"));
+    return JSON.parse(fs.readFileSync(configPath(projectDir), "utf8")) as ProjectConfig;
   } catch {
     return {};
   }
 }
 
-export function write(projectDir: string, config: any) {
+export function write(projectDir: string, config: ProjectConfig): string {
   const file = configPath(projectDir);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`, "utf8");
@@ -72,7 +75,7 @@ export function write(projectDir: string, config: any) {
 
 function usage() {
   const keys = Object.entries(KEYS)
-    .map(([k, v]: [string, any]) => {
+    .map(([k, v]) => {
       const allowed = v.values ? ` (${v.values.join(" | ")})` : "";
       return `    ${k}${allowed}\n      ${v.describe}`;
     })

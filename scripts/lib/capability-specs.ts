@@ -14,11 +14,12 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { parseSpec } from "../../packages/core/src/domain/SpecParser";
+import type { RequirementNode } from "../../packages/core/src/domain/SpecParser";
 import { CAPABILITIES_DIR } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 
 export interface CapabilityRequirement {
-  /** The parsed `RequirementNode` — `.id`, `.text`, `.scenarios`, `.trace`. */
-  req: any;
+  /** The parsed requirement — `.id`, `.text`, `.scenarios`, `.trace`. */
+  req: RequirementNode;
   /** The capability's directory name under `docs/specs/capabilities/`. */
   capability: string;
   /** The spec.md path, relative to `projectDir`, posix separators. */
@@ -38,7 +39,7 @@ export function readCapabilityRequirements(projectDir: string): CapabilityRequir
     const specPath = path.join(capabilitiesDir, entry.name, "spec.md");
     if (!fs.existsSync(specPath)) continue;
     const rel = path.relative(projectDir, specPath).split(path.sep).join("/");
-    let spec: any;
+    let spec: ReturnType<typeof parseSpec>;
     try {
       spec = parseSpec(fs.readFileSync(specPath, "utf8"));
     } catch {

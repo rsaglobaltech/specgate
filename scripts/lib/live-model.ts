@@ -8,6 +8,24 @@ import { EVENTS_DIR } from "./harness-events";
  * which attempt, doing what, for how long, which files, how the tests went.
  */
 
+/**
+ * One line of an events file, as read back. Written by `appendEvent`, but read
+ * as untrusted: a line may be half-written or come from another version, so
+ * every field is checked or coerced where it is used.
+ */
+export interface EventRecord {
+  type?: unknown;
+  state?: unknown;
+  attempt?: unknown;
+  t?: unknown;
+  result?: unknown;
+  kind?: unknown;
+  target?: unknown;
+  pass?: unknown;
+  fail?: unknown;
+  [key: string]: unknown;
+}
+
 export interface LiveRequirement {
   req: string;
   attempt: number;
@@ -19,13 +37,13 @@ export interface LiveRequirement {
   elapsed: number;
   files: string[];
   tests: { pass: number; fail: number } | null;
-  steps: any[];
+  steps: EventRecord[];
 }
 
 const STEP_LIMIT = 50;
 
-function parse(lines: string[]): any[] {
-  const out: any[] = [];
+function parse(lines: string[]): EventRecord[] {
+  const out: EventRecord[] = [];
   for (const line of lines) {
     if (!line.trim()) continue;
     try {
@@ -38,7 +56,7 @@ function parse(lines: string[]): any[] {
 }
 
 /** One requirement's state, from its events, its last attempt only. */
-export function foldRequirement(req: string, events: any[]): LiveRequirement | null {
+export function foldRequirement(req: string, events: EventRecord[]): LiveRequirement | null {
   if (events.length === 0) return null;
   const attempt = Math.max(1, ...events.map((e) => Number(e.attempt) || 0));
   const mine = events.filter((e) => (Number(e.attempt) || attempt) === attempt);
