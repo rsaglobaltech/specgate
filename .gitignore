@@ -11,8 +11,8 @@ packages/*/dist/
 # Stray .vsix at the extension package root (the canonical copy lives in releases/)
 packages/vscode-spec-driven/*.vsix
 _site/
-# Local-only evaluation, never committed
-mejoras/aetherdeploy-assessment.md
+# Internal notes and pilot assessments: kept locally, never committed
+mejoras/
 scripts/demo/**/out/
 .smoke-tmp/
 # JVM plugin build output (Java sources are tracked, build artefacts are not)
