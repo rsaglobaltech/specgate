@@ -206,7 +206,7 @@ not want this tool.
 ## 6. References
 
 - [Case Study 1: Smart Parking brownfield adoption](case-studies/case-1.md)
-- [OpenSpec](https://github.com/Fission-AI/OpenSpec) (last reviewed 2026-08) — the benchmark that shaped this tool's change lifecycle; the full analysis is in [`mejoras/openspec-benchmark-plan.md`](../mejoras/openspec-benchmark-plan.md)
+- [OpenSpec](https://github.com/Fission-AI/OpenSpec) (last reviewed 2026-08) — the benchmark that shaped this tool's change lifecycle; the full analysis is in the maintainers' notes
 - [GitHub spec-kit](https://github.com/github/spec-kit) (last reviewed 2026-05)
 - [Cursor `.cursorrules` documentation](https://docs.cursor.com/context/rules-for-ai)
 - [Aider CONVENTIONS.md guide](https://aider.chat/docs/usage/conventions.html)

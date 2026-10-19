@@ -128,7 +128,7 @@ to review; a person decides what it becomes.**
 ## References
 
 - [Drafting from a brief — specification](../draft-from-brief.md)
-- [Golden State pilot — evaluation](../../../mejoras/golden-app-evaluation.md)
+- Golden State pilot — evaluation (maintainers' notes, kept outside the repository)
 - ADR-0015 — Change lifecycle; ADR-0016 — Delta spec format;
   ADR-0022 — Patterns are optional;
   ADR-0023 — Gate where decidable; ADR-0026 — The default gate is the strong

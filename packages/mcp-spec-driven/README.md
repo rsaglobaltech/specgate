@@ -238,5 +238,5 @@ node src/server.js < test/fixtures/initialize.jsonrpc
 - [ ] Sampling capability when `pack init` needs LLM-generated suggestions
 - [ ] Resources capability exposing `spec.md`, traceability, ADRs as MCP resources
 
-See [`mejoras/plan-cierre-enterprise.md`](../../mejoras/plan-cierre-enterprise.md)
+See the maintainers' plan (kept outside the repository)
 for status.
