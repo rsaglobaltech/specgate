@@ -242,8 +242,8 @@ export function runAsChange(args, projectDir, lock) {
   }
 
   for (const r of results) {
-    const header = `── ${r.pack_id} @ ${r.target_version}${
-      r.target_version !== r.current_version ? ` (current: ${r.current_version})` : ""
+    const header = `── ${r.packId} @ ${r.targetVersion}${
+      r.targetVersion !== r.currentVersion ? ` (current: ${r.currentVersion})` : ""
     } ──`;
     process.stdout.write(`\n${header}\n`);
     if (!r.change) {
