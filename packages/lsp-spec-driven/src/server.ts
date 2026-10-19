@@ -25,13 +25,49 @@ export interface LspMessage {
   jsonrpc: string;
   id?: number | string | null;
   method?: string;
-  params?: any;
-  result?: any;
+  params?: unknown;
+  result?: unknown;
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: unknown;
   };
+}
+
+/** A zero-based position in a document, as LSP counts it. */
+export interface LspPosition {
+  line: number;
+  character: number;
+}
+
+/** The LSP `Diagnostic` this server publishes. */
+export interface LspDiagnostic {
+  range: { start: LspPosition; end: LspPosition };
+  severity: number;
+  code: string;
+  source: string;
+  message: string;
+}
+
+// The params of the notifications this server reads. The client sends them;
+// a field that is missing is skipped, as before, rather than validated.
+
+interface DidOpenParams {
+  textDocument?: { uri: string; text: string };
+}
+
+interface DidChangeParams {
+  textDocument: { uri: string };
+  contentChanges?: { text: string }[];
+}
+
+interface DidSaveParams {
+  textDocument: { uri: string };
+  text?: string;
+}
+
+interface DidCloseParams {
+  textDocument?: { uri: string };
 }
 
 export class LspServer implements IServer {
@@ -56,7 +92,7 @@ export class LspServer implements IServer {
     return uri.endsWith("/traceability.md") || uri.endsWith("traceability.md");
   }
 
-  public toLspDiagnostics(diags: SpecDiagnostic[]): any[] {
+  public toLspDiagnostics(diags: SpecDiagnostic[]): LspDiagnostic[] {
     return diags.map((d) => ({
       range: {
         start: { line: d.line, character: d.startCol },
@@ -100,38 +136,45 @@ export class LspServer implements IServer {
       case "initialized":
         return; // notification, no response
 
-      case "textDocument/didOpen":
-        if (params && params.textDocument) {
-          this.publish(params.textDocument.uri, params.textDocument.text);
-        }
-        return;
-
-      case "textDocument/didChange": {
-        // Full sync → the last content change holds the entire document.
-        if (params && params.contentChanges) {
-          const changes = params.contentChanges;
-          const text = changes.length ? changes[changes.length - 1].text : "";
-          this.publish(params.textDocument.uri, text);
+      case "textDocument/didOpen": {
+        const p = params as DidOpenParams | null | undefined;
+        if (p && p.textDocument) {
+          this.publish(p.textDocument.uri, p.textDocument.text);
         }
         return;
       }
 
-      case "textDocument/didSave":
-        if (params && params.text !== undefined) {
-          this.publish(params.textDocument.uri, params.text);
+      case "textDocument/didChange": {
+        // Full sync → the last content change holds the entire document.
+        const p = params as DidChangeParams | null | undefined;
+        if (p && p.contentChanges) {
+          const changes = p.contentChanges;
+          const text = changes.length ? changes[changes.length - 1].text : "";
+          this.publish(p.textDocument.uri, text);
         }
         return;
+      }
 
-      case "textDocument/didClose":
+      case "textDocument/didSave": {
+        const p = params as DidSaveParams | null | undefined;
+        if (p && p.text !== undefined) {
+          this.publish(p.textDocument.uri, p.text);
+        }
+        return;
+      }
+
+      case "textDocument/didClose": {
         // Clear diagnostics for the closed document.
-        if (params && params.textDocument) {
+        const p = params as DidCloseParams | null | undefined;
+        if (p && p.textDocument) {
           this.send({
             jsonrpc: "2.0",
             method: "textDocument/publishDiagnostics",
-            params: { uri: params.textDocument.uri, diagnostics: [] },
+            params: { uri: p.textDocument.uri, diagnostics: [] },
           });
         }
         return;
+      }
 
       case "shutdown":
         this.shuttingDown = true;
