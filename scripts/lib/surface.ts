@@ -469,6 +469,19 @@ export const SURFACE: Command[] = [
     json: { key: "change", gate: false, args: "<id>" },
   },
   {
+    // ADR-0037: thinking with the agent before a change exists; writes nothing.
+    name: "explore",
+    mcp: false,
+    script: ["explore.js"],
+    help: {
+      group: "core",
+      icon: "🔭",
+      summary:
+        "Think with your agent before a change exists: the project's state, nothing written.",
+    },
+    json: { key: "explore", gate: false, args: "[question]" },
+  },
+  {
     name: "apply",
     editsContract: true,
     mcp: false,
@@ -637,6 +650,17 @@ export const SURFACE: Command[] = [
           group: "harness",
           icon: "🧰",
           summary: "Scaffold harness.config.yaml and the prompt prefix.",
+        },
+      },
+      {
+        // ADR-0037: an agent's own stream as harness events, at the end of its pipe.
+        name: "events",
+        mcp: false,
+        script: ["harness", "events.js"],
+        help: {
+          group: "harness",
+          icon: "📡",
+          summary: "Turn an agent's stream into harness events for the live view (--from claude).",
         },
       },
       {

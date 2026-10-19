@@ -145,6 +145,11 @@ one is merged into the branch you are on (a merge commit; its prompts stay on
 its `harness/` branch) and **the gate runs again on the merge**; a red result
 is undone and the chain stops. Without `--chain` the harness never merges.
 
+**Watch it work**: `specgate studio`, then `/live` — attempts, phases, files,
+tests and steps as they happen, from `.harness/events/` (git-ignored). Claude
+Code reports its steps through `… --output-format stream-json --verbose |
+specgate harness events --from claude`.
+
 ## Change agent between attempts
 
 Three attempts with the same agent, the same model and only a different prompt
@@ -279,16 +284,10 @@ specgate harness run --req REQ-002 --format json      # the whole gate output
 specgate harness run --req REQ-002 --keep-worktrees   # reproduce it in place
 ```
 
-**A requirement that builds on another needs its branch as the base:**
-
-```bash
-specgate harness run --req REQ-002 --base-branch harness/REQ-001
-```
-
-That branch also supplies the project configuration for the run, so a fix
-committed to `main` does not apply to a stacked run until the base has it. A
-false failure from that is indistinguishable from a real one — check the gate
-command the report prints.
+**A requirement that builds on another** runs with `--chain`, or with
+`--base-branch harness/REQ-001`. That branch also supplies the project
+configuration, so a fix committed to `main` reaches a stacked run only once the
+base has it — check the gate command the report prints.
 
 ---
 

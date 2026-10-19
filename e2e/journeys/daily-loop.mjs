@@ -4,6 +4,62 @@ import * as path from "node:path";
 
 export default [
   {
+    name: "explore writes nothing, the tour leaves the repository untouched, events are masked (ADR-0037)",
+    covers: ["explore", "onboard", "harness events"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      const before = t.read(dir, "spec.md");
+      const brief = t.sg(dir, "explore", "Should totals round half-up?");
+      t.ok(brief, "explore");
+      t.expect(/## The question/.test(brief.stdout), "explore prints the brief", brief);
+      const tour = t.sg(dir, "onboard", "--tour");
+      t.ok(tour, "onboard --tour");
+      t.expect(
+        /specgate propose <your-first-change>/.test(tour.stdout),
+        "the tour ends with the real first step",
+        tour
+      );
+      t.expect(t.read(dir, "spec.md") === before, "the repository is untouched");
+
+      const events = path.join(dir, "events.jsonl");
+      const stream = [
+        {
+          type: "assistant",
+          message: {
+            content: [
+              {
+                type: "tool_use",
+                id: "a",
+                name: "Bash",
+                input: { command: "TOKEN=s3cr3tvalue npm test" },
+              },
+            ],
+          },
+        },
+        {
+          type: "user",
+          message: { content: [{ type: "tool_result", tool_use_id: "a", content: "ℹ pass 2" }] },
+        },
+        { type: "result", subtype: "success", result: "Done." },
+      ]
+        .map((e) => JSON.stringify(e))
+        .join("\n");
+      const adapted = t.sgEnv(
+        dir,
+        { __stdin: stream, AGENT_EVENTS_FILE: events },
+        "harness",
+        "events",
+        "--from",
+        "claude"
+      );
+      t.ok(adapted, "harness events --from claude");
+      const recorded = t.read(dir, "events.jsonl");
+      t.expect(/"kind":"test"/.test(recorded), "a test step is recorded", adapted);
+      t.expect(!recorded.includes("s3cr3tvalue"), "the secret is masked", adapted);
+    },
+  },
+  {
     name: "brownfield Node: init, then propose → apply → archive (ADR-0035)",
     covers: ["init", "propose", "apply", "archive", "status"],
     run(dir, t) {
@@ -30,7 +86,11 @@ export default [
         status
       );
       t.fails(t.sg(dir, "archive", "round-totals"), "archive before the requirement is delivered");
-      t.write(dir, "test/totals.test.js", `// ${first} SCN-${first.slice(4)}a\nrequire("node:test");\n`);
+      t.write(
+        dir,
+        "test/totals.test.js",
+        `// ${first} SCN-${first.slice(4)}a\nrequire("node:test");\n`
+      );
       t.ok(t.sg(dir, "apply"), "apply takes the next requirement through the gate");
       t.ok(t.sg(dir, "archive", "round-totals"), "archive once it is delivered");
       t.expect(

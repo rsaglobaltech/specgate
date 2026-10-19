@@ -38,6 +38,14 @@ import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightView } from "../../../lib/in-flight";
+import { appendEvent, eventsFileFor } from "../../../lib/harness-events";
+import {
+  EVENTS_ATTEMPT_VAR,
+  EVENTS_FILE_VAR,
+  EVENTS_REQ_VAR,
+  maskCommand,
+  testCounts,
+} from "../../../../packages/core/src/domain/HarnessEvents";
 
 /**
  * `read` against the project as it will be after its open changes are
@@ -415,7 +423,17 @@ function readGateMessages(worktreeDir, reportPath) {
   return run.parsed ? run : null;
 }
 
-function runGate(worktreeDir, testCmd, timeoutMs, req: any = {}, settings: any = {}) {
+/** Told about each gate stage as it ends, for the event file (ADR-0037). */
+type GateReport = (stage: string, result: "pass" | "fail", extra?: Record<string, unknown>) => void;
+
+function runGate(
+  worktreeDir,
+  testCmd,
+  timeoutMs,
+  req: any = {},
+  settings: any = {},
+  report: GateReport = () => {}
+) {
   // `--delivering`: the requirement is still Draft while its gate runs, and a
   // Draft row owes no files. Without it the gate would skip the one
   // requirement this attempt exists to deliver.
@@ -433,6 +451,7 @@ function runGate(worktreeDir, testCmd, timeoutMs, req: any = {}, settings: any =
     // The agent is told about its worktree, not about the copy it was judged in.
     return { ...run, stdout: toProject(run.stdout || ""), stderr: toProject(run.stderr || "") };
   });
+  report("validate --strict", validate.status === 0 ? "pass" : "fail");
   if (validate.status !== 0) {
     return {
       ok: false,
@@ -452,6 +471,7 @@ function runGate(worktreeDir, testCmd, timeoutMs, req: any = {}, settings: any =
       timeout: timeoutMs,
       maxBuffer: SUBPROCESS_MAX_BUFFER,
     });
+    report(`architecture check: ${archCmd}`, arch.status === 0 ? "pass" : "fail");
     if (arch.status !== 0) {
       return {
         ok: false,
@@ -499,6 +519,11 @@ function runGate(worktreeDir, testCmd, timeoutMs, req: any = {}, settings: any =
       maxBuffer: SUBPROCESS_MAX_BUFFER,
       stdio: settings.verbose ? ["ignore", 2, 2] : undefined,
     });
+    report(
+      `test command: ${maskCommand(resolved)}`,
+      test.status === 0 ? "pass" : "fail",
+      testCounts(`${test.stdout || ""}${test.stderr || ""}`)
+    );
     if (test.status !== 0) {
       // Name the command. A gate that silently does the wrong thing — running
       // the whole suite because a filter did not apply, say — produces a
@@ -914,13 +939,24 @@ function attemptRequirement(req, ctx) {
   /** Set when another attempt cannot change the outcome (#50). */
   let stopRetrying = false;
 
+  // The live view's file (ADR-0037), in the project, not the worktree.
+  const eventsFile = eventsFileFor(ctx.projectDir || worktreeDir, req.requirement);
   for (let attempt = firstAttempt; attempt <= settings.maxAttempts; attempt += 1) {
     info(`${req.requirement}: attempt ${attempt}/${settings.maxAttempts}`);
     const attemptStart = Date.now();
+    const event = (e: Record<string, unknown> & { type: string }) =>
+      appendEvent(eventsFile, e, req.requirement, attempt);
+    event({ type: "attempt", state: "start" });
     let agentMs = 0;
     /** Which roles ran this attempt, in order — the run record's answer to "who did this". */
     const profilesUsed: string[] = [];
     const record = (stage: AttemptRecord["endedAt"]) => {
+      event({
+        type: "attempt",
+        state: "end",
+        result: stage === "pass" ? "pass" : "fail",
+        ...(stage === "pass" ? {} : { stage }),
+      });
       attemptLog.push({
         attempt,
         endedAt: stage,
@@ -985,7 +1021,13 @@ function attemptRequirement(req, ctx) {
           maxBuffer: SUBPROCESS_MAX_BUFFER,
           // Which requirement and attempt this is, for agents and the wrappers
           // around them (ADR-0036).
-          env: { SPECGATE_REQ: req.requirement, SPECGATE_ATTEMPT: String(attempt) },
+          env: {
+            SPECGATE_REQ: req.requirement,
+            SPECGATE_ATTEMPT: String(attempt),
+            [EVENTS_FILE_VAR]: eventsFile,
+            [EVENTS_REQ_VAR]: req.requirement,
+            [EVENTS_ATTEMPT_VAR]: String(attempt),
+          },
         });
         // Node reports a timeout as an errno-carrying Error; the base `Error`
         // type the spawnSync signature declares does not have `code`.
@@ -1082,10 +1124,14 @@ function attemptRequirement(req, ctx) {
 
     // `verbose` is a run flag, not a project setting, so it travels on the
     // context rather than in `harness.config.yaml`.
-    const gate = runGate(worktreeDir, settings.testCmd, timeoutMs, req, {
-      ...settings,
-      verbose: ctx.verbose,
-    });
+    const gate = runGate(
+      worktreeDir,
+      settings.testCmd,
+      timeoutMs,
+      req,
+      { ...settings, verbose: ctx.verbose },
+      (stage, result, extra) => event({ type: "gate", stage, result, ...(extra || {}) })
+    );
     if (!gate.ok) {
       previousFailure =
         `Gate failed at: ${gate.stage}\n\n` + (gate.hint ? `⚠ ${gate.hint}\n\n` : "") + gate.output;
@@ -2099,7 +2145,23 @@ async function runChain(pending, ctx, hintByReq) {
         `Merged by \`specgate harness run --chain\` after its gate passed on ${branch}.`,
     ]);
 
-    const gate = runGate(projectDir, ctx.settings.testCmd, ctx.timeoutMs, req, ctx.settings);
+    const eventsFile = eventsFileFor(projectDir, req.requirement);
+    const attempt = Number(result.attempts) || undefined;
+    appendEvent(eventsFile, { type: "merge", into: "HEAD", branch }, req.requirement, attempt);
+    const gate = runGate(
+      projectDir,
+      ctx.settings.testCmd,
+      ctx.timeoutMs,
+      req,
+      ctx.settings,
+      (stage, res, extra) =>
+        appendEvent(
+          eventsFile,
+          { type: "gate", stage: `post-merge ${stage}`, result: res, ...(extra || {}) },
+          req.requirement,
+          attempt
+        )
+    );
     if (!gate.ok) {
       git(projectDir, ["reset", "-q", "--hard", "HEAD~1"]);
       Object.assign(result, {

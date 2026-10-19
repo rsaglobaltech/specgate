@@ -80,6 +80,7 @@ not run reports an `error` about itself.
 | `specgate change instructions <artifact> --json` | `instructions` | no |
 | `specgate change author <id> --json` | `change` | yes |
 | `specgate propose <id> --json` | `change` | no |
+| `specgate explore [question] --json` | `explore` | no |
 | `specgate apply [REQ] --json` | `requirement` | no |
 | `specgate archive <id> --json` | `archive` | yes |
 | `specgate specops diff --json` | `changes` | no |

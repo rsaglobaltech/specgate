@@ -65,6 +65,13 @@
 | REQ-125 | SCN-125a | `features/trusted-gate/REQ-125.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
 | REQ-126 | SCN-126a | `features/trusted-gate/REQ-126.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
 | REQ-127 | SCN-127a | `features/trusted-gate/REQ-127.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-128 | SCN-128a | `features/live-harness/REQ-128.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
+| REQ-129 | SCN-129a | `features/live-harness/REQ-129.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
+| REQ-130 | SCN-130a | `features/live-harness/REQ-130.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
+| REQ-131 | SCN-131a | `features/live-harness/REQ-131.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
+| REQ-132 | SCN-132a | `features/live-harness/REQ-132.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
+| REQ-133 | SCN-133a | `features/live-harness/REQ-133.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
+| REQ-134 | SCN-134a | `features/live-harness/REQ-134.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

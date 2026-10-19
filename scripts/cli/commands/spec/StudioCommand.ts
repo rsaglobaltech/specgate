@@ -7,6 +7,30 @@ import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
 
 import { c } from "../../../lib/ui";
+import { readLive, liveSignature } from "../../../lib/live-model";
+import { livePage } from "../../../lib/live-page";
+
+const LOOPBACK = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+
+/** The host part of a Host header: `localhost:4173` → `localhost`, `[::1]:80` → `[::1]`. */
+export function hostOf(header: string | undefined): string {
+  const h = String(header || "")
+    .trim()
+    .toLowerCase();
+  if (h.startsWith("[")) return h.slice(0, h.indexOf("]") + 1);
+  return h.split(":")[0];
+}
+
+/**
+ * A request studio answers: any, when it was deliberately bound elsewhere with
+ * `--host`; otherwise only one addressed to the loopback by name. A page on
+ * another site that resolves its own name to 127.0.0.1 (DNS rebinding) sends
+ * its own name, and is refused (ADR-0037).
+ */
+export function hostAllowed(bound: string, header: string | undefined): boolean {
+  if (!LOOPBACK.has(bound)) return true;
+  return LOOPBACK.has(hostOf(header));
+}
 
 const DONE = new Set(["Implemented", "Verified", "Released"]);
 
@@ -14,9 +38,11 @@ function usage() {
   process.stdout.write(
     `\n  ${c.bold}${c.cyan}🎨 studio${c.reset}  ${c.dim}— local read-only visualizer (status + REQ graph)${c.reset}\n\n` +
       `  ${c.bold}USAGE${c.reset}\n` +
-      `    ${c.cyan}specgate studio${c.reset} [--port <n>] [--project-dir <path>] [--out <dir>] [--json]\n\n` +
+      `    ${c.cyan}specgate studio${c.reset} [--port <n>] [--host <addr>] [--project-dir <path>] [--out <dir>] [--json]\n\n` +
+      `  ${c.dim}/live shows the harness at work, from .harness/events/, updated as it runs.${c.reset}\n\n` +
       `  ${c.bold}OPTIONS${c.reset}\n` +
       `    ${c.green}--port <n>${c.reset}           ${c.dim}Port to serve on (default 4173).${c.reset}\n` +
+      `    ${c.green}--host <addr>${c.reset}        ${c.dim}Address to bind (default 127.0.0.1: this machine only).${c.reset}\n` +
       `    ${c.green}--project-dir <path>${c.reset} ${c.dim}Project root (auto-detected from cwd if omitted).${c.reset}\n` +
       `    ${c.green}--out <dir>${c.reset}            ${c.dim}Export static HTML/JSON/Mermaid bundle to <dir>.${c.reset}\n` +
       `    ${c.green}--json${c.reset}               ${c.dim}Print the model as JSON and exit (no server).${c.reset}\n` +
@@ -27,17 +53,19 @@ function usage() {
 export interface StudioOptions {
   projectDir: string;
   port: number;
+  host: string;
   json: boolean;
   out?: string;
 }
 
 export function parseArgs(argv: string[]) {
-  const opts: StudioOptions = { projectDir: ".", port: 4173, json: false };
+  const opts: StudioOptions = { projectDir: ".", port: 4173, host: "127.0.0.1", json: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--port" && argv[i + 1]) opts.port = Number(argv[++i]);
     else if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
     else if (a === "--out" && argv[i + 1]) opts.out = argv[++i];
+    else if (a === "--host" && argv[i + 1]) opts.host = argv[++i];
     else if (a === "--json") opts.json = true;
     else if (a === "--help" || a === "-h") {
       usage();
@@ -189,6 +217,44 @@ export class StudioCommand extends BaseCommand {
     }
 
     const server = http.createServer((req, res) => {
+      if (!hostAllowed(opts.host, req.headers.host)) {
+        res.writeHead(403, { "content-type": "text/plain" });
+        res.end("Forbidden: studio answers on this machine only (see --host).\n");
+        return;
+      }
+      const url = String(req.url || "/").split("?")[0];
+      if (url === "/live" || url === "/live/") {
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        res.end(livePage(path.basename(projectDir)));
+        return;
+      }
+      if (url === "/live.json") {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ schemaVersion: 1, projectDir, ...readLive(projectDir) }));
+        return;
+      }
+      if (url === "/live/stream") {
+        res.writeHead(200, {
+          "content-type": "text/event-stream",
+          "cache-control": "no-cache",
+          connection: "keep-alive",
+        });
+        let last = "";
+        const push = () => {
+          const sig = liveSignature(projectDir);
+          if (sig === last) return;
+          last = sig;
+          res.write(`event: live\ndata: ${JSON.stringify(readLive(projectDir))}\n\n`);
+        };
+        push();
+        const timer = setInterval(push, 500);
+        const beat = setInterval(() => res.write(": keep-alive\n\n"), 15000);
+        req.on("close", () => {
+          clearInterval(timer);
+          clearInterval(beat);
+        });
+        return;
+      }
       if (req.url === "/mermaid.min.js") {
         const mermaidPath = getMermaidPath();
         if (fs.existsSync(mermaidPath)) {
@@ -211,10 +277,12 @@ export class StudioCommand extends BaseCommand {
       res.end(renderHtml(projectDir, model));
     });
 
-    server.listen(opts.port, () => {
+    server.listen(opts.port, opts.host, () => {
+      const shown = LOOPBACK.has(opts.host) ? "localhost" : opts.host;
       process.stdout.write(
         `\n  ${c.bold}🎨 specgate studio${c.reset} serving ${c.dim}${projectDir}${c.reset}\n` +
-          `  ${c.green}▶ http://localhost:${opts.port}${c.reset}  ${c.dim}(Ctrl-C to stop · /status.json for the model)${c.reset}\n\n`
+          `  ${c.green}▶ http://${shown}:${opts.port}${c.reset}  ${c.dim}(Ctrl-C to stop · /status.json for the model)${c.reset}\n` +
+          `  ${c.green}▶ http://${shown}:${opts.port}/live${c.reset}  ${c.dim}the harness at work${c.reset}\n\n`
       );
     });
     server.on("error", (err: unknown) => {

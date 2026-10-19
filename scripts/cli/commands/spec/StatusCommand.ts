@@ -12,7 +12,7 @@ import {
   specNotes,
 } from "../../../../packages/core/src/domain/DraftChecklist";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
-import { refreshDerivedMatrix } from "./MatrixCommand";
+import { derivedMatrixFor, refreshDerivedMatrix } from "./MatrixCommand";
 import { briefProgress, draftNextCommand } from "./DraftCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import { findForjaProject } from "../project/Forja";
@@ -124,13 +124,22 @@ function questionsByRequirement(projectDir: string): Map<string, string> {
  */
 export function withQueue<T>(
   projectDir: string,
-  read: (summary: any, dir: string, view: InFlightView | null) => T
+  read: (summary: any, dir: string, view: InFlightView | null) => T,
+  opts: { write?: boolean } = {}
 ): T {
   const view = inFlightView(projectDir);
   try {
     const dir = view ? view.dir : projectDir;
-    if (!view) refreshDerivedMatrix(projectDir);
-    const summary: any = summarise(dir, fs.readFileSync(path.join(dir, TRACE), "utf8"));
+    const onDisk = fs.readFileSync(path.join(dir, TRACE), "utf8");
+    // Read-only callers (`explore`) see the matrix as it would be regenerated,
+    // without writing it.
+    let trace = onDisk;
+    if (!view && opts.write === false) {
+      if (isDerivedProject(projectDir)) trace = derivedMatrixFor(projectDir, onDisk);
+    } else if (!view && refreshDerivedMatrix(projectDir)) {
+      trace = fs.readFileSync(path.join(dir, TRACE), "utf8");
+    }
+    const summary: any = summarise(dir, trace);
     if (view) {
       for (const it of summary.items) {
         const owner = view.requirements.find((r) => r.id === it.requirement);

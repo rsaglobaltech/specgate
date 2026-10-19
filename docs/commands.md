@@ -20,6 +20,8 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 | `specgate init --multi-stack <a,b,c>` | Scaffold one sibling project per stack under a single root, sharing one `spec.md` and one `features/` tree. Each stack keeps its own `AGENTS.md` and traceability matrix — the files that implement and prove a requirement differ per stack. Registers them in `specops.config.yaml`. |
 | `specgate adopt` | Install SDD on an existing repository. Never overwrites a file, never touches source. |
 | `specgate onboard` | Read an existing repository and propose the capabilities its layout implies, with the evidence for each. Writes nothing. |
+| `specgate onboard --tour` | **Learn the loop on your own code**: `propose`, a requirement and its test, `status`, `apply`, `archive` and `check`, run on a temporary copy of the repository (or a sample project), each step narrated with what it proved. The repository is not touched. |
+| `specgate explore ["<question>"] [--agent "<cmd>"]` | **Think before a change exists**: a brief of the requirements by state, the open changes and the open questions, for you or your agent. Writes nothing; with `--agent`, anything the agent writes is undone and named. |
 | `specgate draft` | **Starting from a plan.** Reads `docs/brief.md` (or `--brief <file>`). With no brief, says what one is; with no front matter, explains each field with an example; with a wrong one, says what to fix. Then lists the modules its front matter names, says where each stands — not started, drafting, ready to review, archived — and the one command to run next. |
 | `specgate draft --new-brief` | No plan yet: writes `docs/brief.md` to fill in — the four fields with an example each, and six short sections. Never overwrites a brief. |
 | `specgate draft --agent "<cmd>"` | Your agent proposes the brief's four fields from your text, following `docs/specs/BRIEF-SETUP.md`. It may write only the top of the brief; if your text below changes, the brief is put back. Then you review. |
@@ -112,7 +114,8 @@ Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
 | `specgate config init` | Write a starter `project.yaml`. |
 | `specgate schema which \| init \| fork \| validate` | Inspect or fork the artefact graph a change follows. Ships `spec-driven` and `bdd-first`. |
 | `specgate completion bash\|zsh\|fish [--install]` | Shell completion. |
-| `specgate studio [--port <n>] [--json]` | Serve a local, read-only HTML view of the spec tree. |
+| `specgate studio [--port <n>] [--host <addr>] [--json]` | Serve a local, read-only HTML view of the spec tree, and at `/live` the harness at work — each requirement's attempt, phase, files, tests and steps, updated as they happen. Bound to 127.0.0.1 and refusing other host names unless `--host` says otherwise ([ADR-0037](specs/adr/0037-see-the-harness-work.md)). |
+| `<agent> \| specgate harness events --from claude` | Turn Claude Code's `--output-format stream-json` into harness events for the live view, at the end of the agent's pipe. No file contents, tool output or secrets are written. |
 
 ---
 

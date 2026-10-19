@@ -1,3 +1,5 @@
+import { runTour } from "../../../lib/tour";
+import * as ui from "../../../lib/ui";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { error, info } from "../../../lib/diagnostics";
@@ -524,9 +526,13 @@ export function findAdoptedAncestor(projectDir: string): string | null {
 function usage() {
   process.stdout.write(
     `\n  ${c.bold}${c.cyan}🧭 onboard${c.reset}  ${c.dim}— the guided tour for an existing repository${c.reset}\n\n` +
-      "  USAGE\n    specgate onboard [--project-dir <path>] [--json]\n\n" +
+      "  USAGE\n    specgate onboard [--project-dir <path>] [--tour] [--json]\n\n" +
       "  Reads the repository, proposes the capabilities its code already implies,\n" +
-      "  and tells you the one command to run next. Writes nothing.\n\n"
+      "  and tells you the one command to run next. Writes nothing.\n\n" +
+      "  --tour   Run the whole daily loop — propose, a requirement and its test,\n" +
+      "           status, apply, archive, check — on a temporary copy of this\n" +
+      "           repository (or a sample project), narrating what each step proved.\n" +
+      "           The repository itself is not touched.\n\n"
   );
 }
 
@@ -614,6 +620,8 @@ export class OnboardCommand extends BaseCommand {
       ]);
     }
 
+    if (argv.includes("--tour")) return this.tour(projectDir, io);
+
     const adopted = isAdopted(projectDir);
     const stack = detectStack(projectDir);
     const capabilities = proposeCapabilities(projectDir);
@@ -672,6 +680,43 @@ export class OnboardCommand extends BaseCommand {
       },
       () => renderHuman({ projectDir, adopted, adoptedAncestor, stack, capabilities, nextCommand })
     );
+    process.exit(EXIT.OK);
+  }
+
+  /** The daily loop on a copy, narrated (ADR-0037). */
+  private tour(projectDir: string, io: ReturnType<typeof agentIo>): void {
+    const tour = runTour(projectDir);
+    const payload = { tour: { projectDir, ...tour, next: "specgate propose <your-first-change>" } };
+    if (!tour.ok) {
+      const failed = tour.steps.find((s) => !s.ok);
+      if (!io.json && failed && failed.output) process.stderr.write(`${failed.output}\n`);
+      io.fail({ tour: null }, [
+        error("tour_failed", `The tour stopped at \`${failed ? failed.command : "?"}\`.`, {
+          fix: "Run `specgate doctor` here; then `specgate onboard --tour` again",
+        }),
+      ]);
+    }
+    io.emit(payload, () => {
+      const out: string[] = [ui.header("onboard --tour", path.basename(projectDir))];
+      out.push(
+        tour.on === "copy"
+          ? `  ${ui.muted("On a temporary copy of this repository — the repository is not touched.")}\n`
+          : `  ${ui.muted(`On a sample project: ${tour.fallback}. This repository is not touched.`)}\n`
+      );
+      tour.steps.forEach((s, i) => {
+        out.push(
+          `\n  ${c.green}${ui.sym.ok}${c.reset}  ${c.bold}${i + 1}  ${s.verb}${c.reset}  ${ui.muted(s.command)}\n` +
+            `        ${s.proved}\n`
+        );
+      });
+      out.push(
+        ui.next(
+          "specgate propose <your-first-change>",
+          "the same loop, on your repository, for real"
+        )
+      );
+      process.stdout.write(out.join(""));
+    });
     process.exit(EXIT.OK);
   }
 }
