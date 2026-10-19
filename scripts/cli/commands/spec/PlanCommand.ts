@@ -158,7 +158,7 @@ export function hintFor(item: PlanItem): string {
     case "NEEDS_IMPLEMENTATION":
       return `Implement code at ${item.technical_artifact} (create technical artifact)`;
     case "NEEDS_STATUS_UPDATE":
-      return `Run \`specgate done ${item.requirement}\` to mark implemented`;
+      return `Run \`specgate apply ${item.requirement}\` to mark implemented`;
     case "NEEDS_EVERYTHING":
       return `Declare technical and test artifacts, or create ${item.feature_file}`;
     case "DONE":

@@ -13,7 +13,7 @@ import {
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import type { HarnessSettings } from "../../../../packages/core/src/domain/HarnessConfig";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
-import { inFlightView } from "../../../lib/in-flight";
+import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
 
 import { c } from "../../../lib/ui";
@@ -164,6 +164,14 @@ export class CheckCommand extends BaseCommand {
 
     // Open changes are judged as they will be after archive (ADR-0035): what
     // passes here is what passes once they are archived.
+    const unwritten = unwrittenNotes(projectDir);
+    if (!json) {
+      for (const n of unwritten) {
+        process.stdout.write(
+          `  ${ui.muted(`·  Change          ${n.target} — delta not written yet, not judged until it is`)}\n`
+        );
+      }
+    }
     const view = inFlightView(projectDir);
     const toProject = (t: string) => (view ? view.toProject(t) : t);
     if (view && view.problems.length > 0) {
@@ -252,13 +260,16 @@ export class CheckCommand extends BaseCommand {
           `or pass --test-cmd "${detected}". Until then, nothing here runs your tests.`,
         ]
       : NO_TEST_COMMAND_WARNING.fix;
-    const status = plan.testsUnverified
-      ? [
-          warning("tests_not_configured", NO_TEST_COMMAND_WARNING.message, {
-            fix: fixLines.join(" "),
-          }),
-        ]
-      : [];
+    const status = [
+      ...(plan.testsUnverified
+        ? [
+            warning("tests_not_configured", NO_TEST_COMMAND_WARNING.message, {
+              fix: fixLines.join(" "),
+            }),
+          ]
+        : []),
+      ...unwritten,
+    ];
     recordCheck(projectDir, true);
     io.emit(
       {

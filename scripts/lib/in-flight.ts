@@ -5,6 +5,9 @@ import { parseDelta } from "../../packages/core/src/domain/SpecParser";
 import { ArchiveChangeUseCase } from "../../packages/core/src/application/ArchiveChangeUseCase";
 import { DiskProjectRepository } from "../../packages/core/src/infrastructure/DiskProjectRepository";
 import { listChangeIds, listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
+import type { ChangeDelta } from "../../packages/core/src/infrastructure/ChangeWorkspace";
+import { isUntouchedDelta } from "../../packages/core/src/domain/ChangeTemplates";
+import { info } from "./diagnostics";
 import { refreshDerivedMatrix } from "../cli/commands/spec/MatrixCommand";
 import type { Diagnostic } from "./diagnostics";
 
@@ -33,6 +36,38 @@ export interface InFlightRequirement {
   status: string;
 }
 
+/** A delta still as `propose` wrote it: placeholders only, nothing to judge. */
+function untouched(d: ChangeDelta): boolean {
+  try {
+    return isUntouchedDelta(fs.readFileSync(d.file, "utf8"), d.capability);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The open changes whose every delta is still the skeleton: proposed, not
+ * written yet. The in-flight view leaves them out — judging `<short name>`
+ * right after `propose` failed `check` before anyone had written a word.
+ */
+export function unwrittenChanges(projectDir: string): string[] {
+  return listChangeIds(projectDir).filter((change) => {
+    const deltas = listDeltas(projectDir, change);
+    return deltas.length > 0 && deltas.every(untouched);
+  });
+}
+
+/** What `status` and `check` say about each unwritten change: a note, not a failure. */
+export function unwrittenNotes(projectDir: string): Diagnostic[] {
+  return unwrittenChanges(projectDir).map((change) =>
+    info(
+      "change_delta_unwritten",
+      `Change ${change}: its delta is not written yet — it is judged once it is.`,
+      { target: change, fix: `Write docs/specs/changes/${change}/specs/<capability>/spec.md` }
+    )
+  );
+}
+
 /** Every requirement an open change adds or modifies, change by change. */
 export function inFlightRequirements(projectDir: string): InFlightRequirement[] {
   const out: InFlightRequirement[] = [];
@@ -46,6 +81,7 @@ export function inFlightRequirements(projectDir: string): InFlightRequirement[] 
 export function changeRequirements(projectDir: string, change: string): InFlightRequirement[] {
   const out: InFlightRequirement[] = [];
   for (const d of listDeltas(projectDir, change)) {
+    if (untouched(d)) continue;
     let parsed: ReturnType<typeof parseDelta>;
     try {
       parsed = parseDelta(fs.readFileSync(d.file, "utf8"));
@@ -117,6 +153,12 @@ export function inFlightView(projectDir: string): InFlightView | null {
   const problems: InFlightProblem[] = [];
   const repo = new DiskProjectRepository(dir);
   for (const change of listChangeIds(dir)) {
+    // A delta nobody has written yet is not laid over: its placeholders
+    // would fail as if they were the author's words.
+    const deltas = listDeltas(dir, change);
+    const skeletons = deltas.filter(untouched);
+    if (skeletons.length === deltas.length) continue;
+    for (const d of skeletons) fs.rmSync(d.file, { force: true });
     // Tasks and the draft checklist are the person's gate at archive; here only
     // the specification is laid over, so it can be judged.
     const plan = new ArchiveChangeUseCase(repo).execute(change, { force: true, draft: true });

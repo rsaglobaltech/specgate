@@ -6,7 +6,7 @@
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-10-12",
+  "recordedAt": "2026-10-19",
   "title": "courts — draft from a brief",
   "cols": 88,
   "streamsMerged": false,
@@ -330,71 +330,7 @@
           "s": "out"
         },
         {
-          "t": "   3  ➜ specgate change archive draft-bookings",
-          "c": "out",
-          "s": "out"
-        }
-      ]
-    },
-    {
-      "id": "archive",
-      "caption": "Requirements, Gherkin and the traceability matrix, written in one step.",
-      "cwd": "~/courts",
-      "command": "specgate change archive draft-bookings",
-      "surface": "change archive",
-      "exit": 0,
-      "typeMs": 26,
-      "holdMs": 1600,
-      "truncated": true,
-      "omitted": 1,
-      "lines": [
-        {
-          "t": "  ◆ specgate · change archive   draft-bookings",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "  ✔  Archived as 2026-01-01-draft-bookings",
-          "c": "ok",
-          "s": "out"
-        },
-        {
-          "t": "",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "    Specs         3 added · 0 modified · 0 removed",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "    Traceability  3 row(s) added · 0 updated · 0 removed",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "    Features      3 materialised",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "  Next ───────────────────────────────────────────────────",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "  ➜  specgate draft",
+          "t": "   3  ➜ specgate apply   its requirements, one at a time; then specgate archive draft-bookings",
           "c": "out",
           "s": "out"
         }
@@ -402,7 +338,7 @@
     },
     {
       "id": "status",
-      "caption": "The blocked requirement waits for the client. Nobody builds it by mistake.",
+      "caption": "Reviewed, not archived: its requirements are in flight, and the blocked one waits for the client.",
       "cwd": "~/courts",
       "command": "specgate status",
       "surface": "status",
@@ -468,7 +404,7 @@
           "s": "out"
         },
         {
-          "t": "    Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)",
+          "t": "    Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)",
           "c": "out",
           "s": "out"
         },

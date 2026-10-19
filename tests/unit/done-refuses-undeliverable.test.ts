@@ -88,6 +88,9 @@ test("done refuses a requirement waiting for an answer, even with its test (#72)
     const bare = cli("done", "REQ-002", "--project-dir", dir);
     assert.equal(bare.status, 1, bare.stdout + bare.stderr);
     assert.match(bare.stdout + bare.stderr, /done_needs_clarification/);
+    // ADR-0035: the advice names the daily verb, not its old name.
+    assert.match(bare.stdout + bare.stderr, /then run `specgate apply`/);
+    assert.doesNotMatch(bare.stdout + bare.stderr, /run `done`/);
 
     writeTest(dir);
     const tested = cli("done", "REQ-002", "--project-dir", dir);

@@ -45,8 +45,8 @@ $ specgate draft
     · what you don't know yet — those become questions, not guesses
     · what is out of scope
 
-  Already have one?  Save it as docs/brief.md, then  specgate draft
-  Starting fresh?    specgate draft --new-brief   writes one to fill in
+  Already have one?  Save it as docs/brief.md, then  specgate propose --from-brief
+  Starting fresh?    specgate propose --from-brief --new-brief   writes one to fill in
 ```
 <!-- specgate:out-brief-none:end -->
 
@@ -77,7 +77,7 @@ $ specgate draft --new-brief
   of the sections — Specgate reads it as it is.
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate draft
+  ➜  specgate propose --from-brief
 … 1 more line
 ```
 <!-- specgate:out-brief-new:end -->
@@ -130,7 +130,8 @@ $ specgate draft
 
   modules   The pieces to specify and build, in the order you will build them.
             Each small enough to review in one sitting — 25 requirements at
-            most. Lowercase words with dashes; each becomes `specgate draft <module>`.
+            most. Lowercase words with dashes; each becomes
+            `specgate propose --from-brief <module>`.
             modules: [courses, lessons, exercises, progress]
 
   The whole block, to paste at the top and change:
@@ -150,8 +151,8 @@ $ specgate draft
     Propose the front matter of docs/brief.md: follow docs/specs/BRIEF-SETUP.md
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate draft --agent "claude -p"
-     Specgate calls your agent for you — then review the four fields and run specgate draft again
+  ➜  specgate propose --from-brief --agent "claude -p"
+     Specgate calls your agent for you — then review the four fields and run specgate propose --from-brief again
 ```
 <!-- specgate:out-brief-plain:end -->
 
@@ -222,7 +223,7 @@ Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to c
   ℹ  Your brief below it is unchanged.
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate draft
+  ➜  specgate propose --from-brief
      review it — change anything — then run it
 ```
 <!-- specgate:out-brief-agent:end -->
@@ -252,10 +253,10 @@ $ specgate draft
   ✖  Admin has no surfaces.
      fix: Write it as `- { name: Admin, surfaces: [web] }`, with every place Admin uses.
   ✖  The module "Live classes" has spaces, capitals or symbols.
-     fix: Write it as live-classes — it becomes a folder and a command: specgate draft live-classes.
+     fix: Write it as live-classes — it becomes a folder and a command: specgate propose --from-brief live-classes.
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate draft
+  ➜  specgate propose --from-brief
      once they are fixed in docs/brief.md
 ```
 <!-- specgate:out-brief-error:end -->
@@ -278,7 +279,7 @@ $ specgate draft
     ○ progress   not started
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate draft courses
+  ➜  specgate propose --from-brief courses
 ```
 <!-- specgate:out-brief-ready:end -->
 

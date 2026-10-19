@@ -376,6 +376,24 @@ test("REQ-133 SCN-133a: explore hands the agent the project and undoes what it w
   }
 });
 
+test("explore outside a Specgate project refuses cleanly, like every other command", () => {
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), "sg-explore-none-"));
+  try {
+    const r = cli(empty, ["explore"]);
+    assert.equal(r.status, 2, out(r));
+    assert.doesNotMatch(out(r), /ENOENT|at \S+ \(/);
+    assert.match(out(r), /fix:/);
+    const j = cli(empty, ["explore", "--project-dir", empty, "--json"]);
+    assert.equal(j.status, 2, out(j));
+    const doc = JSON.parse(j.stdout);
+    assert.equal(doc.explore, null);
+    assert.equal(doc.status[0].code, "project_not_found");
+    assert.ok(doc.status[0].fix);
+  } finally {
+    fs.rmSync(empty, { recursive: true, force: true });
+  }
+});
+
 // ── REQ-134 ──────────────────────────────────────────────────────────────────
 
 function snapshot(dir: string) {

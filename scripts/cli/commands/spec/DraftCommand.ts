@@ -378,7 +378,7 @@ export function briefProgress(
 
 /** What to run for this module, given where it stands. */
 export function draftNextCommand(s: ModuleStatus): string {
-  return s.state === "ready" ? "specgate apply" : `specgate draft ${s.module}`;
+  return s.state === "ready" ? "specgate apply" : `specgate propose --from-brief ${s.module}`;
 }
 
 /** `➜ claude -p … is drafting catalogo…`, and why a flag was added. */
@@ -592,7 +592,7 @@ export class DraftCommand extends BaseCommand {
     io.fail({ draft: null }, [
       error("draft_no_brief", `No plan or brief at ${rel}.`, {
         fix:
-          `Save your plan or brief as ${DEFAULT_BRIEF} — any markdown — then run \`specgate draft\`. ` +
+          `Save your plan or brief as ${DEFAULT_BRIEF} — any markdown — then run \`specgate propose --from-brief\`. ` +
           "Somewhere else: --brief <file>.",
       }),
     ]);
@@ -618,8 +618,8 @@ export class DraftCommand extends BaseCommand {
       io.fail({ draft: null }, [
         error("draft_no_brief", `No plan or brief at ${rel}.`, {
           fix:
-            `Save your plan or brief as ${rel} — any markdown — then run \`specgate draft\`. ` +
-            "No plan yet: `specgate draft --new-brief` writes one to fill in. Somewhere else: --brief <file>.",
+            `Save your plan or brief as ${rel} — any markdown — then run \`specgate propose --from-brief\`. ` +
+            "No plan yet: `specgate propose --from-brief --new-brief` writes one to fill in. Somewhere else: --brief <file>.",
         }),
       ]);
     }
@@ -636,7 +636,7 @@ export class DraftCommand extends BaseCommand {
             frontMatter: null,
             guide: BRIEF_SETUP_FILE,
             prompt: BRIEF_SETUP_PASTE,
-            next: 'specgate draft --agent "claude -p"',
+            next: 'specgate propose --from-brief --agent "claude -p"',
           },
         },
         () =>
@@ -648,8 +648,8 @@ export class DraftCommand extends BaseCommand {
               "  Paste this into Claude Code, Cursor, Codex…\n\n" +
               ui.quote(BRIEF_SETUP_PASTE) +
               ui.next(
-                'specgate draft --agent "claude -p"',
-                "Specgate calls your agent for you — then review the four fields and run specgate draft again"
+                'specgate propose --from-brief --agent "claude -p"',
+                "Specgate calls your agent for you — then review the four fields and run specgate propose --from-brief again"
               )
           )
       );
@@ -661,7 +661,11 @@ export class DraftCommand extends BaseCommand {
     if (problems.length > 0) {
       io.emit(
         {
-          draft: { brief: rel, frontMatter: "invalid", next: `edit ${rel}, then specgate draft` },
+          draft: {
+            brief: rel,
+            frontMatter: "invalid",
+            next: `edit ${rel}, then specgate propose --from-brief`,
+          },
           status: problems.map((p) => error(p.code, p.message, { fix: p.fix })),
         },
         () => {
@@ -671,7 +675,7 @@ export class DraftCommand extends BaseCommand {
             `  The front matter at the top of ${rel} needs ${problems.length} fix(es):\n\n`
           );
           for (const p of problems) out.write(ui.fail(p.message) + ui.fix(p.fix));
-          out.write(ui.next("specgate draft", `once they are fixed in ${rel}`));
+          out.write(ui.next("specgate propose --from-brief", `once they are fixed in ${rel}`));
         }
       );
       process.exitCode = 1;
@@ -711,13 +715,13 @@ export class DraftCommand extends BaseCommand {
     if (fs.existsSync(file)) {
       io.fail({ draft: null }, [
         error("draft_brief_exists", `${rel} already exists — nothing was written.`, {
-          fix: "Edit it, then run `specgate draft`; it says what the top of the brief still needs.",
+          fix: "Edit it, then run `specgate propose --from-brief`; it says what the top of the brief still needs.",
         }),
       ]);
     }
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, BRIEF_TEMPLATE, "utf8");
-    io.emit({ draft: { brief: rel, written: true, next: "specgate draft" } }, () =>
+    io.emit({ draft: { brief: rel, written: true, next: "specgate propose --from-brief" } }, () =>
       process.stdout.write(
         ui.header("draft --new-brief") +
           ui.ok(`Wrote ${rel} — a brief to fill in.`) +
@@ -729,7 +733,10 @@ export class DraftCommand extends BaseCommand {
           "       what you don't know yet, and what is out of scope.\n\n" +
           "  Have a plan or an email already? Paste it under the four fields instead\n" +
           "  of the sections — Specgate reads it as it is.\n" +
-          ui.next("specgate draft", "it checks the four fields and says what is next")
+          ui.next(
+            "specgate propose --from-brief",
+            "it checks the four fields and says what is next"
+          )
       )
     );
   }
@@ -749,14 +756,20 @@ export class DraftCommand extends BaseCommand {
     if (frontMatter(brief.text) !== null && checkFrontMatter(brief.text).length === 0) {
       const first = briefModules(brief.text)[0];
       io.emit(
-        { draft: { brief: brief.rel, frontMatter: "ok", next: `specgate draft ${first}` } },
+        {
+          draft: {
+            brief: brief.rel,
+            frontMatter: "ok",
+            next: `specgate propose --from-brief ${first}`,
+          },
+        },
         () =>
           process.stdout.write(
             ui.header("draft --agent", brief.rel) +
               ui.ok(
                 `The front matter of ${brief.rel} is already there and complete — nothing for the agent to do.`
               ) +
-              ui.next(`specgate draft ${first}`)
+              ui.next(`specgate propose --from-brief ${first}`)
           )
       );
       return;
@@ -806,7 +819,7 @@ export class DraftCommand extends BaseCommand {
           "draft_brief_body_changed",
           "The agent changed the brief itself, not only its front matter — undone.",
           {
-            fix: `${brief.rel} is back as it was. Try again, or write the four fields yourself (\`specgate draft\` shows them).`,
+            fix: `${brief.rel} is back as it was. Try again, or write the four fields yourself (\`specgate propose --from-brief\` shows them).`,
           }
         ),
       ]);
@@ -822,14 +835,14 @@ export class DraftCommand extends BaseCommand {
     if (proposed === null) {
       io.fail({ draft: null }, [
         error("draft_no_front_matter", "The agent wrote no front matter.", {
-          fix: `${NO_WRITE_HINT} Or run \`specgate draft\` to see the four fields, and write them yourself.`,
+          fix: `${NO_WRITE_HINT} Or run \`specgate propose --from-brief\` to see the four fields, and write them yourself.`,
         }),
       ]);
     }
     const problems = checkFrontMatter(after);
     io.emit(
       {
-        draft: { brief: brief.rel, frontMatter: proposed, next: "specgate draft" },
+        draft: { brief: brief.rel, frontMatter: proposed, next: "specgate propose --from-brief" },
         status: problems.map((p) => error(p.code, p.message, { fix: p.fix })),
       },
       () => {
@@ -842,7 +855,9 @@ export class DraftCommand extends BaseCommand {
           out.write(`\n  It still needs ${problems.length} fix(es):\n`);
           for (const p of problems) out.write(ui.fail(p.message) + ui.fix(p.fix));
         }
-        out.write(ui.next("specgate draft", "review it — change anything — then run it"));
+        out.write(
+          ui.next("specgate propose --from-brief", "review it — change anything — then run it")
+        );
       }
     );
   }
@@ -862,7 +877,7 @@ export class DraftCommand extends BaseCommand {
             module: opts.module,
             change: changeId,
             state: "archived",
-            next: "specgate draft",
+            next: "specgate propose --from-brief",
           },
         },
         () =>
@@ -871,7 +886,10 @@ export class DraftCommand extends BaseCommand {
               ui.ok(
                 `${opts.module} is already drafted and archived ${ui.muted(`(${status.archivedAs})`)}`
               ) +
-              ui.next("specgate draft", "the next module of the brief, or what to build first")
+              ui.next(
+                "specgate propose --from-brief",
+                "the next module of the brief, or what to build first"
+              )
           )
       );
       return;
@@ -881,7 +899,10 @@ export class DraftCommand extends BaseCommand {
       if (!fs.existsSync(path.join(projectDir, "spec.md"))) {
         io.fail({ draft: null }, [
           error("draft_no_project", "This folder is not a Specgate project yet.", {
-            fix: "Run `specgate init` first, then `specgate draft " + opts.module + "`.",
+            fix:
+              "Run `specgate init` first, then `specgate propose --from-brief " +
+              opts.module +
+              "`.",
           }),
         ]);
       }
@@ -895,7 +916,7 @@ export class DraftCommand extends BaseCommand {
                 "draft_module_not_in_brief",
                 `${opts.module} is not among the brief's modules (${listed.join(", ")}).`,
                 {
-                  fix: "Add it to `modules:` in the brief's front matter, so `specgate draft` lists it.",
+                  fix: "Add it to `modules:` in the brief's front matter, so `specgate propose --from-brief` lists it.",
                 }
               ),
             ]
@@ -911,7 +932,7 @@ export class DraftCommand extends BaseCommand {
             reserved: opened.reqRange,
             created: opened.created,
             prompt: pasteLine(opts.module),
-            next: `specgate draft ${opts.module}`,
+            next: `specgate propose --from-brief ${opts.module}`,
           },
           status: notes,
         },
@@ -937,8 +958,8 @@ export class DraftCommand extends BaseCommand {
               "  Paste this into Claude Code, Cursor, Codex…\n\n" +
               ui.quote(pasteLine(opts.module)) +
               ui.next(
-                `specgate draft ${opts.module} --agent "claude -p"`,
-                `or let Specgate call it — then run specgate draft ${opts.module} until it says Ready to review`
+                `specgate propose --from-brief ${opts.module} --agent "claude -p"`,
+                `or let Specgate call it — then run specgate propose --from-brief ${opts.module} until it says Ready to review`
               )
           );
           // Every note above is built with a `fix`.
@@ -984,7 +1005,7 @@ export class DraftCommand extends BaseCommand {
         error("draft_agent_needs_git", "--agent needs a git repository.", {
           fix:
             "Git is how Specgate finds what the agent wrote and undoes anything outside the draft. " +
-            "Run `git init`, then `specgate draft " +
+            "Run `git init`, then `specgate propose --from-brief " +
             opts.module +
             ' --agent "…"` again — or paste the prompt into your agent yourself.',
         }),
@@ -1031,7 +1052,7 @@ export class DraftCommand extends BaseCommand {
             state: status.state,
             brief,
             prompt: pasteLine(opts.module),
-            next: `specgate draft ${opts.module}`,
+            next: `specgate propose --from-brief ${opts.module}`,
           },
         },
         () =>
@@ -1044,7 +1065,7 @@ export class DraftCommand extends BaseCommand {
                 : "  The draft is still the placeholder. Have your agent write it:\n\n" +
                   ui.quote(pasteLine(opts.module)) +
                   ui.next(
-                    `specgate draft ${opts.module} --agent "claude -p"`,
+                    `specgate propose --from-brief ${opts.module} --agent "claude -p"`,
                     "or let Specgate call it"
                   ))
           )
@@ -1062,7 +1083,7 @@ export class DraftCommand extends BaseCommand {
     const errors = report.status.length;
     // Ready: reviewed, then its requirements are applied one by one, and the
     // change is archived once they are all delivered (ADR-0035).
-    const next = errors === 0 ? "specgate apply" : `specgate draft ${opts.module}`;
+    const next = errors === 0 ? "specgate apply" : `specgate propose --from-brief ${opts.module}`;
     io.emit(
       {
         draft: {
@@ -1096,7 +1117,7 @@ export class DraftCommand extends BaseCommand {
           const after = nextModuleAfter(projectDir, brief, opts.module);
           steps.push(
             after
-              ? [`specgate draft ${after}`, "the next module of the brief"]
+              ? [`specgate propose --from-brief ${after}`, "the next module of the brief"]
               : ["specgate status", "every module drafted: what to build first"]
           );
         } else {
@@ -1108,7 +1129,7 @@ export class DraftCommand extends BaseCommand {
           );
           steps.push(
             [
-              `specgate draft ${opts.module} --agent "claude -p"`,
+              `specgate propose --from-brief ${opts.module} --agent "claude -p"`,
               "your agent fixes them — or fix them yourself",
             ],
             [next, "again, until it says Ready to review"]

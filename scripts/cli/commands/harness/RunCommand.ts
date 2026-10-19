@@ -953,7 +953,7 @@ function checkWriteScopeInWorktree(worktreeDir: string, settings: HarnessSetting
       `makes a passing gate meaningless. Revert them and satisfy the scenario as written.\n` +
       (evidence ? `\nWhat was changed:\n\n\`\`\`diff\n${evidence}\n\`\`\`\n` : "") +
       `\nIf the change is genuinely required, it belongs in a spec change ` +
-      `(\`specgate change new\`), reviewed by a person — not in this attempt.`,
+      `(\`specgate propose\`), reviewed by a person — not in this attempt.`,
   };
 }
 
@@ -1710,7 +1710,7 @@ function preserveFailedAttempt(
     `wip(${req.requirement}): FAILED the gate — do not merge as is\n\n` +
       `${firstLine}\n\n` +
       "Committed by `specgate harness run` so the attempt is reviewable rather than\n" +
-      "discarded. The requirement is still Draft: `specgate done` never ran.",
+      "discarded. The requirement is still Draft: `specgate apply` never ran.",
   ]);
   return commit.status === 0;
 }

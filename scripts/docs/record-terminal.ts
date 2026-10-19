@@ -574,7 +574,7 @@ const SETUP: Record<
     before: (scratch, env) => {
       const project = courtsWithDraft(scratch, env);
       answerTheChecklist(project);
-      run(project, env, ["specgate", "change", "archive", "draft-bookings"]);
+      // Reviewed and left open: a draft is archived after it is applied (ADR-0035).
       run(project, env, ["git", "add", "-A"]);
       run(project, env, ["git", "commit", "-qm", "the specification"]);
     },

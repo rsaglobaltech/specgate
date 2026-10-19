@@ -24,8 +24,8 @@ say so in the prompt: "also wire the test runner so this scenario executes".
 
 ## Option A — by hand, test first
 
-Read the requirement and its scenarios — in `spec.md` and the `.feature` file
-`change archive` wrote under `features/` — then write the test. **Name the
+Read the requirement and its scenarios — in the draft's delta,
+`docs/specs/changes/draft-bookings/specs/bookings/spec.md` — then write the test. **Name the
 requirement in it**: that mention is the whole link between the test and the
 requirement. There is no matrix to edit and nothing to register.
 
@@ -88,6 +88,7 @@ specgate harness prompt REQ-003
 $ specgate harness prompt REQ-003
   ◆ specgate · harness run   dry run · 1 requirement(s) would be processed
 
+  Setup         none
 
   REQ-003 · NEEDS_EVERYTHING → branch harness/REQ-003 ────
 
@@ -105,8 +106,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 #### Scenario: SCN-004 — The second booking is refused
 
 - GIVEN the centre court is booked on Monday evening
-- WHEN another member sends POST /api/bookings for the centre court on Monday evening
-… 78 more lines
+… 85 more lines
 ```
 <!-- specgate:out-scratch-harness-prompt:end -->
 

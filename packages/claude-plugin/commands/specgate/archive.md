@@ -1,23 +1,25 @@
 ---
-description: Merge an accepted change into the spec tree.
+description: Merge a change into the spec tree once every requirement in it is applied.
 ---
 
 # /specgate:archive
 
-Merge an accepted change into the spec tree.
+Merge a change into the spec tree once every requirement in it is applied.
 
-**Use when:** The change is implemented and every task is checked.
+**Use when:** Every requirement the change adds or modifies is Implemented, and the person reviewing it says merge.
 
 ## Run
 
 ```bash
 specgate change instructions archive --json
-specgate change archive <change-id> --dry-run
-specgate change archive <change-id> --json
+specgate archive <change-id> --dry-run
+specgate archive <change-id> --json
 ```
 
 ## Guidance
 
+- A person runs archive: review is the change's pull request. Never archive a change you have not been told to.
+- Archive refuses while a requirement of the change is not applied; the fix it prints names the `specgate apply` to run.
 - Preview with `--dry-run` first: it lists the specs that will move.
 - Archiving writes the specs and materialises the feature files; the matrix follows on its own.
 

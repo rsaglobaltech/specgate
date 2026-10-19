@@ -8,20 +8,20 @@ where the product stands.
 
 | Who | Does what in this phase |
 | --- | --- |
-| **You** | Ask for the requirement to be closed |
+| **You** | Ask for the requirement to be applied |
 | **The gate** | Decides: the specification is complete, a test names the requirement, and your suite passes — or nothing is written |
 | **The report** | Turns the matrix into a page a product owner can read |
 
-## 1. Close the requirement — `specgate done`
+## 1. Apply the requirement — `specgate apply`
 
 ```bash
-specgate done REQ-002
+specgate apply REQ-002
 ```
 
-<!-- specgate:out-scratch-done:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-apply:begin — generated; edit the source, not this block -->
 ```text
-$ specgate done REQ-002
-  ◆ specgate · done REQ-002   Implemented
+$ specgate apply REQ-002
+  ◆ specgate · apply REQ-002   Implemented
 
   ✔  Specification   the gate, for REQ-002
   ✔  Tests           node --test
@@ -29,12 +29,12 @@ $ specgate done REQ-002
   ✔  REQ-002 → Implemented (1 row updated)
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate status
-     what is left, and the next requirement
+  ➜  specgate apply REQ-003
+     the next requirement
 ```
-<!-- specgate:out-scratch-done:end -->
+<!-- specgate:out-scratch-apply:end -->
 
-Before writing `Implemented`, `done` ran the gate for REQ-002 and your test
+Before writing `Implemented`, `apply` ran the gate for REQ-002 and your test
 command. A missing test, a `<placeholder>` left in a scenario or a red suite,
 and it refuses — and writes nothing.
 
@@ -43,20 +43,42 @@ and it refuses — and writes nothing.
 REQ-004 is waiting for the client's answer about the late-cancellation fee:
 
 ```bash
-specgate done REQ-004
+specgate apply REQ-004
 ```
 
-<!-- specgate:out-scratch-done-blocked:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-apply-blocked:begin — generated; edit the source, not this block -->
 ```text
-$ specgate done REQ-004
+$ specgate apply REQ-004
+  ◆ specgate · apply REQ-004   Implemented
+
   ✖  REQ-004  not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification).  [done_needs_clarification]
-     fix: Answer the question that blocks it in its change's questions.md, remove `status="Needs Clarification"` from its `specgate:trace`, write its test, then run `done`.
+     fix: Answer the question that blocks it in its change's questions.md, remove `status="Needs Clarification"` from its `specgate:trace`, write its test, then run `specgate apply`.
 ```
-<!-- specgate:out-scratch-done-blocked:end -->
+<!-- specgate:out-scratch-apply-blocked:end -->
 
 That refusal is the point. An agent asked to "finish the bookings module"
 cannot close it by inventing the fee; the question stays open until a person
 answers it.
+
+And the draft stays open with it. A change is archived when its code is done
+— every requirement it adds applied — so the specification and the code
+merge together:
+
+```bash
+specgate archive draft-bookings
+```
+
+<!-- specgate:out-scratch-archive:begin — generated; edit the source, not this block -->
+```text
+$ specgate archive draft-bookings
+  ✖  draft-bookings  Change 'draft-bookings' has 2 requirement(s) not delivered yet: REQ-003, REQ-004.  [archive_requirements_pending]
+     fix: specgate apply REQ-003
+```
+<!-- specgate:out-scratch-archive:end -->
+
+Once the client answers Q1 and REQ-003 and REQ-004 are applied, the same
+command merges the draft into the specification — after a person has
+reviewed its pull request.
 
 ## 3. Run the whole gate — what CI will run
 
@@ -69,8 +91,10 @@ specgate check
 $ specgate check
   ◆ specgate · check   court-bookings
 
+  ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test
+  ·  Architecture    not checked — specgate config set arch_cmd "<command>"
 
   ✔  Gate passed — the specification and `node --test`
 ```
@@ -93,7 +117,7 @@ $ specgate report --out report.html
 
   ✔  Wrote report.html
 
-  █████░░░░░░░░░░░░░░░  1 of 4 implemented   25%
+  ░░░░░░░░░░░░░░░░░░░░  0 of 1 implemented   0%
 ```
 <!-- specgate:out-scratch-report:end -->
 
@@ -105,7 +129,7 @@ Here is the same report on one of the pilots:
 
 ## You're done when…
 
-- `specgate done REQ-002` printed `→ Implemented`.
+- `specgate apply REQ-002` printed `→ Implemented`.
 - `specgate check` ends with `✔  Gate passed`.
 - `report.html` opens and shows your requirements.
 
@@ -115,7 +139,7 @@ Here is the same report on one of the pilots:
 | --- | --- | --- |
 | `[TDD-1] Test artifact is TBD but status is 'Implemented'` | No test names the requirement | Mention `REQ-NNN` in its test — a comment or the test name |
 | `unfilled placeholder in "given <the state before the action>"` | A scenario still has the template's `<placeholders>` | Write the real Given/When/Then |
-| `not marked Implemented: the project's tests failed. [done_tests_failed]` | Your suite is red | Make it pass, then `done` again |
+| `not marked Implemented: the project's tests failed. [done_tests_failed]` | Your suite is red | Make it pass, then `apply` again |
 | `REQ-004 is waiting for an answer (Needs Clarification). [done_needs_clarification]` | An open question blocks it | Get the answer, record it, remove the status, then test and close |
 
 **[Next: phase 5 — every day →](scratch-5-every-day.md)**

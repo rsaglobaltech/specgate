@@ -3,7 +3,7 @@
 > Adopted into Spec-Driven Development on an existing codebase (brownfield).
 > `specgate new "<title>"` adds the next `REQ-NNN`: a draft section below and
 > a tagged scenario under `features/` — rewrite both. A test that mentions the
-> id is linked to it; `specgate done REQ-NNN` closes it once the gate passes.
+> id is linked to it; `specgate apply REQ-NNN` closes it once the gate passes.
 > Existing behaviour is retro-filled requirement by requirement — start with
 > the ones your team is actively changing.
 

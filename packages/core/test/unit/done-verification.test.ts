@@ -63,4 +63,7 @@ test("no test command is reported as unverified, never as passed", () => {
 test("the warning says what was and was not checked", () => {
   assert.match(NO_TEST_COMMAND_WARNING.message, /specification, not the code/);
   assert.ok(NO_TEST_COMMAND_WARNING.fix.some((l) => l.includes("test_cmd")));
+  // ADR-0035: `apply` is the daily verb; `done` is only its old name.
+  assert.match(NO_TEST_COMMAND_WARNING.fix.join(" "), /`apply` and `check`/);
+  assert.doesNotMatch(NO_TEST_COMMAND_WARNING.fix.join(" "), /`done`/);
 });

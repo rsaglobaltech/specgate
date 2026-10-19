@@ -142,7 +142,7 @@ function usage(): void {
 ` +
       `  ${c.dim}specgate req link${c.reset} REQ-007 --test <path>  set a field (--feature/--test/--code/--uc/--cmd)
 ` +
-      `  ${c.dim}specgate req done${c.reset} REQ-007               mark Implemented (same as specgate done REQ-007)
+      `  ${c.dim}specgate req done${c.reset} REQ-007               mark Implemented (same as specgate apply REQ-007)
 ` +
       `  ${c.dim}specgate req rm${c.reset} REQ-007                 remove its row and its prose (--dry-run, --force)
 
@@ -175,7 +175,7 @@ const SUB_USAGE: Record<string, string> = {
     `\n  📝 ${c.bold}specgate req link${c.reset} REQ-NNN <field flag>...\n\n` +
     `  Sets fields on every row of REQ-NNN. At least one flag is required.\n\n` +
     `  FIELD FLAGS\n${FIELD_FLAGS}\n` +
-    `  The status changes through \`specgate done REQ-NNN [--status <status>] [--check]\`,\n` +
+    `  The status changes through \`specgate apply REQ-NNN [--status <status>] [--check]\`,\n` +
     `  which can verify the requirement before it claims anything.\n\n` +
     `  EXAMPLE\n    specgate req link REQ-007 --feature features/orders.feature --test test/orders.test.js\n\n`,
   rm:
@@ -183,7 +183,7 @@ const SUB_USAGE: Record<string, string> = {
     `  Removes the requirement's rows and its spec.md section.\n\n` +
     `    --dry-run   show what would be removed, write nothing\n` +
     `    --force     required once the requirement has left Draft —\n` +
-    `                \`specgate done REQ-NNN --status Deprecated\` is usually what you want\n\n`,
+    `                \`specgate apply REQ-NNN --status Deprecated\` is usually what you want\n\n`,
 };
 SUB_USAGE.remove = SUB_USAGE.rm;
 
@@ -226,7 +226,7 @@ function cmdList(tracePath: string, io?: AgentIo) {
       process.stdout.write(`      ${ui.muted(`code     ${r.technicalArtifact}`)}\n`);
   }
   process.stdout.write(
-    ui.next("specgate req link <REQ> --test <path>", "then specgate done <REQ>")
+    ui.next("specgate req link <REQ> --test <path>", "then specgate apply <REQ>")
   );
   return 0;
 }
@@ -373,7 +373,7 @@ export class ReqCommand extends BaseCommand {
           `${c.red}✖${c.reset}  ${reqId} is ${delivered.join(", ")}, not Draft.\n` +
             `   ${c.dim}Removing it deletes the record that this was delivered. Re-run with --force ` +
             `if that is what you mean, or set it to Deprecated instead:${c.reset}\n` +
-            `   ${c.dim}specgate done ${reqId} --status Deprecated${c.reset}\n`
+            `   ${c.dim}specgate apply ${reqId} --status Deprecated${c.reset}\n`
         );
         process.exit(1);
       }
@@ -420,7 +420,7 @@ export class ReqCommand extends BaseCommand {
       if (status !== null) {
         process.stderr.write(
           `${c.red}✖${c.reset}  req link does not change the status.\n` +
-            `   ${c.dim}Use: specgate done ${rest.find((a) => /^REQ-\d+$/.test(a)) || "REQ-NNN"} --status ${status} --check${c.reset}\n`
+            `   ${c.dim}Use: specgate apply ${rest.find((a) => /^REQ-\d+$/.test(a)) || "REQ-NNN"} --status ${status} --check${c.reset}\n`
         );
         process.exit(2);
       }

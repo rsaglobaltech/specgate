@@ -10,7 +10,7 @@
  * pure: working out which language a project speaks reads its config.
  */
 
-import { Phrases } from "./Language";
+import { Phrases, PHRASES } from "./Language";
 import { renderRequirement } from "./SpecParser";
 
 export function templateProposal(changeId: string): string {
@@ -86,6 +86,23 @@ ${t.systemShall(t.observableBehaviour)}
 
 <!-- specgate:trace uc=UC-000 feature=features/<area>/<name>.feature -->
 `;
+}
+
+/**
+ * True when a delta is still the skeleton `change new` (or `propose`, or a
+ * draft) wrote: nothing in it is the author's yet. The in-flight view skips
+ * such a change rather than judging placeholders nobody has replaced
+ * (ADR-0035) — the change is not written yet, not wrong.
+ *
+ * Any project language matches, and only the whole file: one replaced
+ * placeholder makes it real content, judged like any other.
+ */
+export function isUntouchedDelta(content: string, capability: string): boolean {
+  const id = /^### Requirement: (\S+) — /m.exec(content);
+  if (!id) return false;
+  const normal = (t: string) => t.replace(/\r\n/g, "\n").trim();
+  const text = normal(content);
+  return Object.values(PHRASES).some((t) => normal(templateDelta(capability, id[1], t)) === text);
 }
 
 /**

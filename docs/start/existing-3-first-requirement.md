@@ -13,26 +13,18 @@ now naming it.
 ## 1. Try to close it — and see why it refuses
 
 ```bash
-specgate done REQ-004
+specgate apply REQ-004
 ```
 
-<!-- specgate:out-existing-done-refused:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-apply-refused:begin — generated; edit the source, not this block -->
 ```text
-$ specgate done REQ-004
-  ◆ specgate · done REQ-004   Implemented
+$ specgate apply REQ-004
+  ◆ specgate · apply REQ-004   Implemented
 
-  ✖  Specification   the gate, for REQ-004
-
-     ◆ specgate · validate   invoicing
-
-       ✖  --strict-tdd violations detected:
-       [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-002)
-          TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; once a test names one of its scenarios (SCN-NNN), each scenario needs a test that names it — or move it back to Draft in spec.md.
-
-  ✖  REQ-004  not marked Implemented: validation failed.  [done_validate_failed]
-     fix: Fix what validate reports, then run `done` again.
+  ✖  REQ-004  REQ-004 has no test that names it yet (TDD-1).  [apply_no_test]
+     fix: write a test that names REQ-004 (and its scenario SCN-002), then run specgate apply REQ-004
 ```
-<!-- specgate:out-existing-done-refused:end -->
+<!-- specgate:out-existing-apply-refused:end -->
 
 The code is there and a test exists, but nothing connects the requirement to
 it. Specgate does not guess which test proves what; a test proves a
@@ -67,13 +59,13 @@ it by hand, and there is nothing to register.
 ## 3. Close it
 
 ```bash
-specgate done REQ-004
+specgate apply REQ-004
 ```
 
-<!-- specgate:out-existing-done:begin — generated; edit the source, not this block -->
+<!-- specgate:out-existing-apply:begin — generated; edit the source, not this block -->
 ```text
-$ specgate done REQ-004
-  ◆ specgate · done REQ-004   Implemented
+$ specgate apply REQ-004
+  ◆ specgate · apply REQ-004   Implemented
 
   ✔  Specification   the gate, for REQ-004
   ✔  Tests           node --test
@@ -81,19 +73,19 @@ $ specgate done REQ-004
   ✔  REQ-004 → Implemented (1 row updated)
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate status
-     what is left, and the next requirement
+  ➜  specgate apply REQ-002
+     the next requirement
 ```
-<!-- specgate:out-existing-done:end -->
+<!-- specgate:out-existing-apply:end -->
 
-`done` ran the gate for REQ-004 and your whole suite before writing
+`apply` ran the gate for REQ-004 and your whole suite before writing
 `Implemented`. From now on, if someone breaks the rounding, `specgate check`
 fails — and names the requirement that broke.
 
 ## The first requirement often finds a bug
 
 Writing the example down is where the surprises are. If the number in your
-scenario and the number your code returns disagree, `done` refuses with
+scenario and the number your code returns disagree, `apply` refuses with
 `the project's tests failed`, and you have found out which one is right
 before a customer did. In the [pilots](../projects/index.md), smoke tests at
 this point found an app that did not start with every test green, and a
@@ -101,7 +93,7 @@ screen nobody could reach.
 
 ## You're done when…
 
-- `specgate done REQ-004` printed `→ Implemented`.
+- `specgate apply REQ-004` printed `→ Implemented`.
 - `specgate status` shows `1 done`.
 
 ## If something goes wrong

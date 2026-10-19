@@ -639,7 +639,7 @@ export class OnboardCommand extends BaseCommand {
     const nextCommand = !adopted
       ? "specgate adopt"
       : capabilities.length > 0
-        ? `specgate change new describe-${capabilities[0].id}`
+        ? `specgate propose describe-${capabilities[0].id}`
         : 'specgate new "<the first behaviour you rely on>"';
 
     const diagnostics = [];
@@ -653,7 +653,7 @@ export class OnboardCommand extends BaseCommand {
     if (capabilities.length === 0) {
       diagnostics.push(
         info("capabilities_undetected", "No capability structure was obvious from the layout.", {
-          fix: "Name them yourself — one per area of behaviour a user would recognise. `specgate change new <id>` opens the first.",
+          fix: "Name them yourself — one per area of behaviour a user would recognise. `specgate propose <id>` opens the first.",
         })
       );
     }

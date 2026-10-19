@@ -624,7 +624,7 @@ export function checkDraft(files: DraftFiles): DraftReport {
         status.push(
           error("D10_id_in_use", `${r.id} already exists in this project.`, {
             ...at(r),
-            fix: "Use an id from the range `change new` reserved, or put the requirement under MODIFIED if this change rewrites it.",
+            fix: "Use an id from the range `specgate propose` reserved, or put the requirement under MODIFIED if this change rewrites it.",
           })
         );
       }

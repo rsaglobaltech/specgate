@@ -108,7 +108,7 @@ specgate config set test_cmd "node --test"
 $ specgate config set test_cmd "node --test"
   ✔  test_cmd = node --test
      harness.config.yaml
-     `check` and `done` now run it.
+     `check` and `apply` now run it.
 ```
 <!-- specgate:out-existing-test-cmd:end -->
 
@@ -123,8 +123,10 @@ specgate check
 $ specgate check
   ◆ specgate · check   invoicing
 
+  ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test
+  ·  Architecture    not checked — specgate config set arch_cmd "<command>"
 
   ✔  Gate passed — the specification and `node --test`
 ```

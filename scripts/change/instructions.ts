@@ -83,7 +83,7 @@ const PROPOSAL_RULES = [
 ];
 
 const TASKS_RULES = [
-  "Tasks are checkboxes. `change archive` refuses to run while any are unchecked, unless --force.",
+  "Tasks are checkboxes. `specgate archive` refuses to run while any are unchecked, unless --force.",
   "One task per reviewable unit of work, not one per file touched.",
 ];
 
@@ -107,20 +107,20 @@ export const STAGES: Record<string, Stage> = {
       "Work one requirement at a time. `specgate status` is the queue.",
       "The scenario in the delta is the acceptance criterion — implement to it, not around it.",
       "Write the test first and mention the requirement's REQ-NNN in it — that mention is the link.",
-      "Close each requirement with `specgate done REQ-NNN`: it runs the gate first and writes nothing while it fails.",
+      "Close each requirement with `specgate apply REQ-NNN`: it runs the gate first and writes nothing while it fails.",
       "Do not edit `docs/specs/traceability.md` by hand — it is generated (`specgate matrix`, and `specgate check` refreshes it).",
     ],
     nextCommand: "specgate check",
   },
   archive: {
-    summary: "Merge the change into the spec tree and file it away.",
+    summary: "Merge the change into the spec tree once its requirements are applied.",
     rules: [
-      "Every task must be checked first, or archive refuses.",
+      "Every requirement the change adds or modifies must be applied (Implemented), and every task checked, or archive refuses.",
       "Preview with `--dry-run`: it lists the specs and matrix rows that will move.",
       "Archiving inserts the traceability rows and materialises the proposed feature files. It is not a file move.",
-      "After archiving, the requirement is real work: `specgate plan` lists it as pending.",
+      "A person runs archive, after reviewing the change: the spec and its code merge together.",
     ],
-    nextCommand: "specgate change archive <id> --dry-run",
+    nextCommand: "specgate archive <id> --dry-run",
   },
 };
 
@@ -327,7 +327,7 @@ export function main(argv: string[], templates: Record<string, ArtifactTemplate>
         {
           fix:
             ids.length === 0
-              ? "Open one first: specgate change new <id>"
+              ? "Open one first: specgate propose <id>"
               : `specgate change instructions ${artifact} <change-id>`,
         }
       ),
@@ -337,9 +337,7 @@ export function main(argv: string[], templates: Record<string, ArtifactTemplate>
     io.fail(NULL_SHAPE, [
       error("change_not_found", `Change "${changeId}" does not exist.`, {
         target: changeId,
-        fix: ids.length
-          ? `Active changes: ${ids.join(", ")}.`
-          : "Open one: specgate change new <id>",
+        fix: ids.length ? `Active changes: ${ids.join(", ")}.` : "Open one: specgate propose <id>",
       }),
     ]);
   }

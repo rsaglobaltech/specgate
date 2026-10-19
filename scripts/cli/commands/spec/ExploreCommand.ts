@@ -148,6 +148,19 @@ export class ExploreCommand extends BaseCommand {
       ]);
       return;
     }
+    // Same refusal as `status`: without a matrix there is no project to brief.
+    if (!fs.existsSync(path.join(projectDir, "docs", "specs", "traceability.md"))) {
+      io.usage(NULL_SHAPE, [
+        error(
+          "project_not_found",
+          `Not a Specgate project: docs/specs/traceability.md not found in ${projectDir}.`,
+          {
+            fix: "Run from inside a Specgate project, pass --project-dir, or scaffold one with specgate init",
+          }
+        ),
+      ]);
+      return;
+    }
     const brief = exploreBrief(projectDir, words.join(" ").trim());
 
     if (!agent) {

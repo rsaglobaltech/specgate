@@ -104,11 +104,12 @@ To describe `src/invoices` completely rather than one rule at a time, do it as
 a reviewed change — the same flow as a new project's brief:
 
 ```bash
-specgate change new describe-invoices --capability invoices
+specgate propose describe-invoices --capability invoices
 ```
 
 Your agent drafts requirements from the code and the tests, `draft --check`
-reviews the draft, you read it, and `change archive` merges it. See
+reviews the draft, you read it, its requirements are applied one by one, and
+`specgate archive` merges it. See
 [From the brief to a checked spec](scratch-2-specify.md) — it is the same
 four steps — and then remove or rewrite the proposed `REQ-002`.
 

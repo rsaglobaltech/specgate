@@ -48,8 +48,10 @@ specgate check
 $ specgate check
   ◆ specgate · check   invoicing
 
+  ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test
+  ·  Architecture    not checked — specgate config set arch_cmd "<command>"
 
   ✔  Gate passed — the specification and `node --test`
 ```

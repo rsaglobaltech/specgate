@@ -620,7 +620,9 @@ function cmdStatus(opts: ChangeOptions) {
     nextSteps.push(`Work through tasks.md (${progress.remaining} remaining)`);
   }
   if (isPlanningComplete && progress.remaining === 0) {
-    nextSteps.push(`Archive with \`specgate change archive ${changeId}\``);
+    nextSteps.push(
+      `Apply each requirement (\`specgate apply REQ-NNN\`), then archive with \`specgate archive ${changeId}\``
+    );
   }
 
   emit(
@@ -705,7 +707,7 @@ function cmdAuthor(opts: ChangeOptions) {
     return fail(opts, NULL_SHAPE, [
       error("change_not_found", `Change "${changeId}" does not exist.`, {
         target: changeId,
-        fix: `Create it first: specgate change new ${changeId}`,
+        fix: `Create it first: specgate propose ${changeId}`,
       }),
     ]);
   }
@@ -983,7 +985,7 @@ function cmdArchive(opts: ChangeOptions) {
           `Draft '${changeId}' has ${checked.report.status.length} open finding(s) in its checklist (${codes}).`,
           {
             target: changeId,
-            fix: `Run \`specgate draft ${draftModuleOf(changeId)}\`, fix what it reports, then archive — or pass --force to archive it as it is.`,
+            fix: `Run \`specgate propose --from-brief ${draftModuleOf(changeId)}\`, fix what it reports, then archive — or pass --force to archive it as it is.`,
           }
         ),
       ]);
@@ -1102,7 +1104,7 @@ function cmdArchive(opts: ChangeOptions) {
         // gate passes. Saying it "will fail until the tests exist" was wrong
         // (#92); what comes next is the queue, or the next module.
         ui.next(
-          isDraft ? "specgate draft" : "specgate status",
+          isDraft ? "specgate propose --from-brief" : "specgate status",
           isDraft
             ? "the next module of the brief, or what to build first"
             : "what each requirement still needs"

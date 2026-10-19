@@ -6,25 +6,25 @@
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-10-12",
+  "recordedAt": "2026-10-19",
   "title": "courts — the gate",
   "cols": 88,
   "streamsMerged": false,
   "steps": [
     {
-      "id": "done-no-test",
-      "caption": "Calling it done before a test exists. The gate says no and writes nothing.",
+      "id": "apply-no-test",
+      "caption": "Applying it before a test exists. The gate says no and writes nothing.",
       "cwd": "~/courts",
-      "command": "specgate done REQ-002",
-      "surface": "done",
+      "command": "specgate apply REQ-002",
+      "surface": "apply",
       "exit": 1,
       "typeMs": 26,
-      "holdMs": 1420,
-      "truncated": true,
-      "omitted": 5,
+      "holdMs": 1150,
+      "truncated": false,
+      "omitted": 0,
       "lines": [
         {
-          "t": "  ◆ specgate · done REQ-002   Implemented",
+          "t": "  ◆ specgate · apply REQ-002   Implemented",
           "c": "out",
           "s": "out"
         },
@@ -34,33 +34,18 @@
           "s": "out"
         },
         {
-          "t": "  ✖  Specification   the gate, for REQ-002",
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✖  REQ-002  REQ-002 has no test that names it yet (TDD-1).  [apply_no_test]",
           "c": "err",
-          "s": "out"
-        },
-        {
-          "t": "",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "",
-          "c": "out",
           "s": "err"
         },
         {
-          "t": "     ◆ specgate · validate   courts",
+          "t": "     fix: write a test that names REQ-002 (and its scenario SCN-002), then run specgate apply REQ-002",
           "c": "out",
-          "s": "err"
-        },
-        {
-          "t": "",
-          "c": "out",
-          "s": "err"
-        },
-        {
-          "t": "       ✖  --strict-tdd violations detected:",
-          "c": "err",
           "s": "err"
         }
       ]
@@ -135,11 +120,11 @@
       ]
     },
     {
-      "id": "done",
+      "id": "apply",
       "caption": "Now the scenario, the test and the suite all pass — and only then is it marked.",
       "cwd": "~/courts",
-      "command": "specgate done REQ-002",
-      "surface": "done",
+      "command": "specgate apply REQ-002",
+      "surface": "apply",
       "exit": 0,
       "typeMs": 26,
       "holdMs": 1240,
@@ -147,7 +132,7 @@
       "omitted": 4,
       "lines": [
         {
-          "t": "  ◆ specgate · done REQ-002   Implemented",
+          "t": "  ◆ specgate · apply REQ-002   Implemented",
           "c": "out",
           "s": "out"
         },
@@ -179,11 +164,50 @@
       ]
     },
     {
-      "id": "done-blocked",
+      "id": "apply-blocked",
       "caption": "The requirement waiting for the client cannot be closed — not by you, not by an agent.",
       "cwd": "~/courts",
-      "command": "specgate done REQ-004",
-      "surface": "done",
+      "command": "specgate apply REQ-004",
+      "surface": "apply",
+      "exit": 1,
+      "typeMs": 26,
+      "holdMs": 1150,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "  ◆ specgate · apply REQ-004   Implemented",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✖  REQ-004  not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification).  [done_needs_clarification]",
+          "c": "err",
+          "s": "err"
+        },
+        {
+          "t": "     fix: Answer the question that blocks it in its change's questions.md, remove `status=\"Needs Clarification\"` from its `specgate:trace`, write its test, then run `specgate apply`.",
+          "c": "out",
+          "s": "err"
+        }
+      ]
+    },
+    {
+      "id": "archive-waits",
+      "caption": "Archive waits: the spec merges with its code, once every requirement in it is applied.",
+      "cwd": "~/courts",
+      "command": "specgate archive draft-bookings",
+      "surface": "archive",
       "exit": 1,
       "typeMs": 26,
       "holdMs": 900,
@@ -191,12 +215,12 @@
       "omitted": 0,
       "lines": [
         {
-          "t": "  ✖  REQ-004  not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification).  [done_needs_clarification]",
+          "t": "  ✖  draft-bookings  Change 'draft-bookings' has 2 requirement(s) not delivered yet: REQ-003, REQ-004.  [archive_requirements_pending]",
           "c": "err",
           "s": "err"
         },
         {
-          "t": "     fix: Answer the question that blocks it in its change's questions.md, remove `status=\"Needs Clarification\"` from its `specgate:trace`, write its test, then run `done`.",
+          "t": "     fix: specgate apply REQ-003",
           "c": "out",
           "s": "err"
         }
@@ -210,7 +234,7 @@
       "surface": "check",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1330,
+      "holdMs": 1420,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -221,6 +245,11 @@
         },
         {
           "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ·  Ids            not compared with a base — no base branch (pass --base <branch>)",
           "c": "out",
           "s": "out"
         },

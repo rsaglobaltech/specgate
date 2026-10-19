@@ -9,6 +9,7 @@ import { DiskProjectRepository } from "../../../../packages/core/src/infrastruct
 import { formatDiagnostic, error, warning } from "../../../lib/diagnostics";
 import type { Diagnostic } from "../../../lib/diagnostics";
 import * as ui from "../../../lib/ui";
+import { unwrittenChanges } from "../../../lib/in-flight";
 import { checkAgainstLock } from "../../../specops/against_lock";
 import { requirementGraphFromProject } from "../../../lib/requirement-graph";
 import { SHARED_PATHS } from "../../../../packages/core/src/domain/MultiStack";
@@ -1285,7 +1286,11 @@ export class ValidateSpecsCommand extends BaseCommand {
     let changeCount = 0;
     const changesDir = path.join(targetDir, "docs/specs/changes");
     if (fs.existsSync(changesDir)) {
-      const ids = listChangeIds(targetDir);
+      // A change still as `propose` wrote it is not written yet, not invalid:
+      // `status` and `check` say so; `change validate <id>` still lists its
+      // placeholders (ADR-0035).
+      const unwritten = new Set(unwrittenChanges(targetDir));
+      const ids = listChangeIds(targetDir).filter((id) => !unwritten.has(id));
       changeCount = ids.length;
       const problems: string[] = [];
       const rawProblems: Diagnostic[] = [];
@@ -1393,7 +1398,7 @@ export class ValidateSpecsCommand extends BaseCommand {
             message:
               "The only scenario in this project is the adoption baseline. Nothing the codebase actually does is specified yet.",
             target: "features/adoption/baseline.feature",
-            fix: 'Retro-fill one requirement you already rely on: specgate new "<behaviour>", then a test that mentions it, then specgate done.',
+            fix: 'Retro-fill one requirement you already rely on: specgate new "<behaviour>", then a test that mentions it, then specgate apply.',
           },
         ])
       : lockAdvisories;
@@ -1445,7 +1450,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       if (exempt > 0) {
         this.logFix([
           "A Draft row owes nothing yet, so --strict-tdd skips it. It starts being",
-          "checked the moment its Status leaves Draft — `specgate done <REQ>` does that.",
+          "checked the moment its Status leaves Draft — `specgate apply <REQ>` does that.",
         ]);
       }
     }
@@ -1455,7 +1460,7 @@ export class ValidateSpecsCommand extends BaseCommand {
         "This passes, but it certifies the skeleton, not the code.",
         "  specgate onboard                     # what this codebase already implies",
         '  specgate new "<behaviour>"            # one requirement you already rely on',
-        "  # then a test that mentions REQ-NNN, and: specgate done REQ-NNN",
+        "  # then a test that mentions REQ-NNN, and: specgate apply REQ-NNN",
       ]);
     }
     process.exit(0);

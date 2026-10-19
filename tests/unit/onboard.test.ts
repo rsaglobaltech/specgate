@@ -149,7 +149,7 @@ test("once adopted, the next step is describing the largest capability", () => {
   try {
     const doc = JSON.parse(cli("onboard", "--project-dir", dir, "--json").stdout);
     assert.equal(doc.onboarding.adopted, true);
-    assert.equal(doc.onboarding.nextCommand, "specgate change new describe-booking");
+    assert.equal(doc.onboarding.nextCommand, "specgate propose describe-booking");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

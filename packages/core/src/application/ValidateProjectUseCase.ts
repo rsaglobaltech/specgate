@@ -165,7 +165,7 @@ export class ValidateProjectUseCase {
           target: status,
           fixLines: [
             `Allowed statuses: ${[...ALLOWED_STATUS].join(" · ")}`,
-            "Use `specgate done <REQ-id>` to flip a row to Implemented safely.",
+            "Use `specgate apply <REQ-id>` to flip a row to Implemented safely.",
           ],
         });
       }
@@ -191,7 +191,7 @@ export class ValidateProjectUseCase {
             target: requirementId,
             fixLines: [
               "Answer the question that blocks it (the `Answer` column of its change's questions.md),",
-              'remove `status="Needs Clarification"` from its `specgate:trace`, write its test, then run `done`.',
+              'remove `status="Needs Clarification"` from its `specgate:trace`, write its test, then run `specgate apply`.',
             ],
           }
         );

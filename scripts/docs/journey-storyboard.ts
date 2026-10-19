@@ -158,14 +158,6 @@ export const SCRATCH: Journey = {
       maxLines: 12,
     },
     {
-      id: "scratch-archive",
-      page: "start/scratch-2-specify",
-      cwd: S,
-      argv: sg("change", "archive", "draft-bookings"),
-      surface: "change archive",
-      maxLines: 16,
-    },
-    {
       id: "scratch-status",
       page: "start/scratch-2-specify",
       cwd: S,
@@ -192,20 +184,31 @@ export const SCRATCH: Journey = {
     },
     // 4 — Prove
     {
-      id: "scratch-done",
+      id: "scratch-apply",
       page: "start/scratch-4-prove",
       cwd: S,
-      argv: sg("done", "REQ-002"),
-      surface: "done",
+      argv: sg("apply", "REQ-002"),
+      surface: "apply",
       maxLines: 14,
     },
     {
-      id: "scratch-done-blocked",
+      id: "scratch-apply-blocked",
       page: "start/scratch-4-prove",
       cwd: S,
-      argv: sg("done", "REQ-004"),
-      surface: "done",
+      argv: sg("apply", "REQ-004"),
+      surface: "apply",
       maxLines: 14,
+      expectExit: 1,
+    },
+    // A draft is archived after its requirements are applied (ADR-0035):
+    // with REQ-004 waiting for the client, archive says what is left.
+    {
+      id: "scratch-archive",
+      page: "start/scratch-4-prove",
+      cwd: S,
+      argv: sg("archive", "draft-bookings"),
+      surface: "archive",
+      maxLines: 8,
       expectExit: 1,
     },
     {
@@ -318,11 +321,11 @@ export const EXISTING: Journey = {
     },
     // 3 — Close the first
     {
-      id: "existing-done-refused",
+      id: "existing-apply-refused",
       page: "start/existing-3-first-requirement",
       cwd: E,
-      argv: sg("done", "REQ-004"),
-      surface: "done",
+      argv: sg("apply", "REQ-004"),
+      surface: "apply",
       maxLines: 14,
       expectExit: 1,
     },
@@ -335,11 +338,11 @@ export const EXISTING: Journey = {
       maxLines: 20,
     },
     {
-      id: "existing-done",
+      id: "existing-apply",
       page: "start/existing-3-first-requirement",
       cwd: E,
-      argv: sg("done", "REQ-004"),
-      surface: "done",
+      argv: sg("apply", "REQ-004"),
+      surface: "apply",
       maxLines: 14,
     },
     // 4 — The gate in CI

@@ -40,7 +40,7 @@ next pull request, a requirement marked done with a red test fails the build.
 ## 2. The daily loop
 
 ```
-specgate status  →  specgate new  →  a test that names the REQ  →  specgate done  →  specgate check
+specgate status  →  specgate propose  →  a test that names the REQ  →  specgate apply  →  specgate check  →  specgate archive
 ```
 
 <!-- specgate:tip -->
@@ -59,22 +59,22 @@ specgate new "A member sees which courts are free on a day"
 <!-- specgate:out-scratch-new:begin — generated; edit the source, not this block -->
 ```text
 $ specgate new "A member sees which courts are free on a day"
-  ◆ specgate · new   REQ-005
+  ◆ specgate · new   REQ-012
 
-  ✔  REQ-005 A member sees which courts are free on a day · Draft
+  ✔  REQ-012 A member sees which courts are free on a day · Draft
 
-    ~ spec.md                        ## REQ-005 — rewrite the obligation
-    + features/a-member-sees-which-courts-are.feature   @SCN-006 — fill in the <placeholders>
+    ~ spec.md                        ## REQ-012 — rewrite the obligation
+    + features/a-member-sees-which-courts-are.feature   @SCN-002 — fill in the <placeholders>
     ~ docs/specs/traceability.md     row linked to the scenario
 
   Next ───────────────────────────────────────────────────
   ➜  specgate check
-     after you write a test that mentions REQ-005 — that is the link
+     after you write a test that mentions REQ-012 — that is the link
 ```
 <!-- specgate:out-scratch-new:end -->
 
 Rewrite its sentence in `spec.md` and the `<placeholders>` in its scenario;
-while it is `Draft` the gate leaves them alone, and `done` refuses any left.
+while it is `Draft` the gate leaves them alone, and `apply` refuses any left.
 
 **Start the day with `status`** — it names the one command to run next:
 
@@ -89,25 +89,27 @@ $ specgate status
 
   Requirements  ████░░░░░░░░░░░░░░░░  1 of 5 done
 
+  Ready to close ─────────────────────────────────────────
+    ● REQ-012  A member sees which courts are free on a day  its test is in place
+
   To do ──────────────────────────────────────────────────
     ○ REQ-001  Preserve existing behaviour                   a test and code
-    ○ REQ-005  A member sees which courts are free on a day  a test and code
     ○ REQ-003  A court is never booked twice for the same …  a test and code
 
   Waiting for an answer ──────────────────────────────────
     ○ REQ-004  A member cancels a booking  an answer to Q1
-    Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)
+    Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
 
-  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
+  Brief         ░░░░░░░░░░░░░░░░░░░░  0 of 1 module(s) drafted   next: bookings   docs/brief.md
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate done REQ-005
-     once a test mentions REQ-005 — that mention is the link; done checks first
+  ➜  specgate apply REQ-012
+     its test exists; close it through the gate
 ```
 <!-- specgate:out-scratch-status-daily:end -->
 
 **A whole new module** goes back through phase 2: a change, a draft,
-`specgate draft <module>`, archive. **A requirement that changes** goes through a change
+`specgate propose --from-brief <module>`, then apply, then archive. **A requirement that changes** goes through a change
 too, as `MODIFIED`, so the review sees the before and after.
 
 ## 3. When the client answers
@@ -115,7 +117,7 @@ too, as `MODIFIED`, so the review sees the before and after.
 Write the answer into the change's `questions.md`, update the requirement and
 its scenario with the real value, remove `status="Needs Clarification"` from
 its `specgate:trace`, and it rejoins the queue: `status` lists it, the harness
-builds it, `done` closes it.
+builds it, `apply` closes it.
 
 ## Gato, the cat that keeps the gate
 
@@ -124,7 +126,7 @@ its state is the project's.
 
 | Gato | Comes from | You look after it with |
 | --- | --- | --- |
-| Grows: egg, kitten, cat, crowned legend | the share of requirements closed | `specgate done` |
+| Grows: egg, kitten, cat, crowned legend | the share of requirements closed | `specgate apply` |
 | Healthy, or sick | how the last `specgate check` ended | a green gate |
 | Worried | requirements waiting for an answer | answering `questions.md` |
 | Asleep | no `check` for a week | running `check` |

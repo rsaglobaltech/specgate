@@ -183,7 +183,7 @@ export function checkFrontMatter(brief: string): BriefProblem[] {
       out.push({
         code: "brief_module_name",
         message: `The module "${m}" has spaces, capitals or symbols.`,
-        fix: `Write it as ${kebab(m) || "lowercase-words"} — it becomes a folder and a command: specgate draft ${kebab(m) || "<module>"}.`,
+        fix: `Write it as ${kebab(m) || "lowercase-words"} — it becomes a folder and a command: specgate propose --from-brief ${kebab(m) || "<module>"}.`,
       });
     } else if (seen.has(m)) {
       out.push({
@@ -233,7 +233,8 @@ export function frontMatterExplanation(brief: string): string {
     "",
     "  modules   The pieces to specify and build, in the order you will build them.",
     "            Each small enough to review in one sitting — 25 requirements at",
-    "            most. Lowercase words with dashes; each becomes `specgate draft <module>`.",
+    "            most. Lowercase words with dashes; each becomes",
+    "            `specgate propose --from-brief <module>`.",
     "            modules: [courses, lessons, exercises, progress]",
     "",
     "  The whole block, to paste at the top and change:",
@@ -260,8 +261,8 @@ export function noBriefExplanation(brief: string): string {
     "    · what you don't know yet — those become questions, not guesses",
     "    · what is out of scope",
     "",
-    "  Already have one?  Save it as docs/brief.md, then  specgate draft",
-    "  Starting fresh?    specgate draft --new-brief   writes one to fill in",
+    "  Already have one?  Save it as docs/brief.md, then  specgate propose --from-brief",
+    "  Starting fresh?    specgate propose --from-brief --new-brief   writes one to fill in",
     "",
   ].join("\n");
 }
@@ -356,9 +357,9 @@ export function briefSetupGuide(brief: string): string {
     "",
     "## Then",
     "",
-    "Run `specgate draft` and fix anything it reports about the front matter.",
+    "Run `specgate propose --from-brief` and fix anything it reports about the front matter.",
     "Stop there and show the front matter to the person: they review it before",
-    "anything is drafted. Do not run `specgate draft <module>`.",
+    "anything is drafted. Do not run `specgate propose --from-brief <module>`.",
     "",
   ].join("\n");
 }
@@ -372,7 +373,7 @@ export function briefSetupPrompt(guide: string): string {
     // #106: the guide says to run `specgate draft`, which is right when it is
     // pasted into an agent; under --agent the agent may only edit, and asked
     // the person to approve a command Specgate was about to run anyway.
-    `Specgate runs \`specgate draft\` itself as soon as you finish and shows the person the result: do not run it, and do not ask for permission to.`,
+    `Specgate runs \`specgate propose --from-brief\` itself as soon as you finish and shows the person the result: do not run it, and do not ask for permission to.`,
     "",
     "---",
     "",

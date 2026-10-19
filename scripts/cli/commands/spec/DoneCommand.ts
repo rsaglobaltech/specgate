@@ -181,7 +181,7 @@ export class DoneCommand extends BaseCommand {
     const view = inFlightView(projectDir);
     const dir = view ? view.dir : projectDir;
     const toProject = (t: string) => (view ? view.toProject(t) : t);
-    const queue = () => summarise(dir, readTrace(dir));
+    const queue = () => summarise(dir, readTrace(dir), projectDir);
 
     // No id: the next requirement `status` names.
     if (!opts.reqId) {

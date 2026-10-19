@@ -709,20 +709,7 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
   What now ───────────────────────────────────────────────
    1  Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
    2  Answer what you can in docs/specs/changes/draft-bookings/questions.md
-   3  ➜ specgate change archive draft-bookings
-… 1 more lines
-
-~/courts $ specgate change archive draft-bookings
-  ◆ specgate · change archive   draft-bookings
-
-  ✔  Archived as 2026-01-01-draft-bookings
-
-    Specs         3 added · 0 modified · 0 removed
-    Traceability  3 row(s) added · 0 updated · 0 removed
-    Features      3 materialised
-
-  Next ───────────────────────────────────────────────────
-  ➜  specgate draft
+   3  ➜ specgate apply   its requirements, one at a time; then specgate archive draft-bookings
 … 1 more lines
 
 ~/courts $ specgate status
@@ -737,7 +724,7 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
 
   Waiting for an answer ──────────────────────────────────
     ○ REQ-004  A member cancels a booking  an answer to Q1
-    Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)
+    Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
 
   Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 
@@ -765,16 +752,12 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
           <div class="term__screen" aria-hidden="true"></div>
           <p class="term__caption" aria-hidden="true"></p>
 <!-- specgate:terminal-gate:begin — generated; edit the source, not this block -->
-<pre class="term__transcript"><code>~/courts $ specgate done REQ-002
-  ◆ specgate · done REQ-002   Implemented
-
-  ✖  Specification   the gate, for REQ-002
+<pre class="term__transcript"><code>~/courts $ specgate apply REQ-002
+  ◆ specgate · apply REQ-002   Implemented
 
 
-     ◆ specgate · validate   courts
-
-       ✖  --strict-tdd violations detected:
-… 5 more lines
+  ✖  REQ-002  REQ-002 has no test that names it yet (TDD-1).  [apply_no_test]
+     fix: write a test that names REQ-002 (and its scenario SCN-002), then run specgate apply REQ-002
 
 ~/courts $ cat test/bookings.test.js
 const test = require(&quot;node:test&quot;);
@@ -789,8 +772,8 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
   assert.equal(list(&quot;ana&quot;).length, 1);
 });
 
-~/courts $ specgate done REQ-002
-  ◆ specgate · done REQ-002   Implemented
+~/courts $ specgate apply REQ-002
+  ◆ specgate · apply REQ-002   Implemented
 
   ✔  Specification   the gate, for REQ-002
   ✔  Tests           node --test
@@ -798,13 +781,21 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
   ✔  REQ-002 → Implemented (1 row updated)
 … 4 more lines
 
-~/courts $ specgate done REQ-004
+~/courts $ specgate apply REQ-004
+  ◆ specgate · apply REQ-004   Implemented
+
+
   ✖  REQ-004  not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification).  [done_needs_clarification]
-     fix: Answer the question that blocks it in its change's questions.md, remove `status=&quot;Needs Clarification&quot;` from its `specgate:trace`, write its test, then run `done`.
+     fix: Answer the question that blocks it in its change's questions.md, remove `status=&quot;Needs Clarification&quot;` from its `specgate:trace`, write its test, then run `specgate apply`.
+
+~/courts $ specgate archive draft-bookings
+  ✖  draft-bookings  Change 'draft-bookings' has 2 requirement(s) not delivered yet: REQ-003, REQ-004.  [archive_requirements_pending]
+     fix: specgate apply REQ-003
 
 ~/courts $ specgate check
   ◆ specgate · check   courts
 
+  ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
   ✔  Specification   validate --strict
   ✔  Tests           node --test
   ·  Architecture    not checked — specgate config set arch_cmd &quot;&lt;command&gt;&quot;
@@ -904,12 +895,12 @@ max_attempts: 1
      review and merge the harness/* branches you trust
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
- .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 100 ++++++++++++++++++++++++
+ .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 106 ++++++++++++++++++++++++
  docs/specs/traceability.md                              |   2 +-
  spec.md                                                 |   2 +-
- src/health.js                                           |   9 +++
+ src/health.js                                           |   9 ++
  test/health.test.js                                     |  11 +++
- 5 files changed, 122 insertions(+), 2 deletions(-)
+ 5 files changed, 128 insertions(+), 2 deletions(-)
 
 ~/smart-parking $ git switch -q harness/REQ-000 &amp;&amp; node --test test/*.test.js
 ✔ REQ-000 SCN-000: GET /health reports the service as UP (12ms)

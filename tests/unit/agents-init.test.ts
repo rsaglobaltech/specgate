@@ -396,3 +396,40 @@ test("a team's own AGENTS.md is kept; only Specgate's block changes", () => {
   assert.match(twice, /Contract v2/);
   assert.doesNotMatch(twice, /Contract v1/);
 });
+
+test("the agent files teach propose → test → apply → archive (ADR-0035)", () => {
+  const { slashCommandBody, instructionsBody } = require("../../scripts/agents/init");
+  const step = (name: string) => STEPS.find((s: { name: string }) => s.name === name);
+  for (const name of ["propose", "apply", "archive", "done"]) {
+    assert.ok(step(name), `/specgate:${name} must exist`);
+  }
+  assert.ok(step("propose").run.includes("specgate propose <change-id>"));
+  assert.ok(step("apply").run.includes("specgate apply <REQ-NNN> --json"));
+  assert.match(slashCommandBody(step("apply")), /test first/);
+  assert.ok(step("archive").run.some((r: string) => r.startsWith("specgate archive ")));
+  assert.match(step("archive").when, /applied|Implemented/);
+  // `done` stays as an alias, and delivers through `apply`.
+  assert.match(slashCommandBody(step("done")), /specgate apply <REQ-NNN>/);
+  // A draft is archived after it is built — archive refuses otherwise.
+  const draft = slashCommandBody(step("draft"));
+  assert.doesNotMatch(draft, /then run `specgate change archive/);
+  assert.match(draft, /specgate apply/);
+  // The loop reads in its order.
+  const names = STEPS.map((s: { name: string }) => s.name);
+  assert.ok(names.indexOf("propose") < names.indexOf("apply"));
+  assert.ok(names.indexOf("apply") < names.indexOf("archive"));
+  const body = instructionsBody("x");
+  assert.ok(body.indexOf("### propose") < body.indexOf("### apply"));
+  assert.ok(body.indexOf("### apply") < body.indexOf("### archive"));
+  // No step advertises the old verbs as the way in.
+  for (const s of STEPS) {
+    for (const line of s.run) {
+      assert.doesNotMatch(line, /^specgate (done|change new|change archive)\b/, line);
+    }
+  }
+  const tpl = fs.readFileSync(path.join(ROOT_DIR, "templates/base/AGENTS.md.tpl"), "utf8");
+  assert.match(tpl, /propose → test → apply → archive/);
+  assert.match(tpl, /`specgate apply REQ-007`/);
+  assert.match(tpl, /`specgate archive <change-id>`/);
+  assert.doesNotMatch(tpl, /specgate done/);
+});

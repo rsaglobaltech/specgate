@@ -58,7 +58,7 @@ export function draftingGuide(i: DraftingGuideInput): string {
           "The brief names no actors in its front matter, so the checklist cannot ask",
           "for a scenario per screen and API (D3 is skipped). Add them to the brief —",
           "`actors: [{ name: Member, surfaces: [api, web] }]` — and run",
-          `\`specgate draft ${i.module}\` again.`,
+          `\`specgate propose --from-brief ${i.module}\` again.`,
         ];
 
   return [
@@ -132,15 +132,16 @@ export function draftingGuide(i: DraftingGuideInput): string {
     "## 4. Check it, until it is ready",
     "",
     "```bash",
-    `specgate draft ${i.module}`,
+    `specgate propose --from-brief ${i.module}`,
     "```",
     "",
     "Fix every finding and run it again, until it says **Ready to review**. A",
     "`D6_unlisted_value` means a value the brief never gave: use the brief's",
     "value, list it in `assumptions.md`, or turn it into a question.",
     "",
-    "Do not archive. A person reads the draft, answers what they can in",
-    `\`questions.md\`, and then runs \`specgate change archive ${i.changeId}\`.`,
+    "Do not archive. A person reads the draft and answers what they can in",
+    "`questions.md`. Each requirement is then built test first and delivered with",
+    `\`specgate apply REQ-NNN\`; once all are applied, a person runs \`specgate archive ${i.changeId}\`.`,
     "",
   ].join("\n");
 }
@@ -153,7 +154,7 @@ export function draftingPrompt(module: string, changeId: string, guide: string):
     `Anything you write outside docs/specs/changes/${changeId}/ is undone afterwards.`,
     "When you finish, say how many requirements you wrote and list the open questions.",
     // #106: see briefSetupPrompt.
-    `Specgate runs \`specgate draft\` itself as soon as you finish and shows the person the result: do not run it, and do not ask for permission to.`,
+    `Specgate runs \`specgate propose --from-brief\` itself as soon as you finish and shows the person the result: do not run it, and do not ask for permission to.`,
     "",
     "---",
     "",
