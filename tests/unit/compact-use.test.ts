@@ -617,3 +617,38 @@ test("REQ-116 SCN-116a: one loop, four verbs", () => {
     p.done();
   }
 });
+
+test("an open change whose delta is still the skeleton is not judged until it is written", () => {
+  const p = adopted();
+  try {
+    assert.equal(cli(p.dir, "propose", "add-greeting").status, 0);
+    // Right after propose: the gate passes, and says why the change was skipped.
+    const r = cli(p.dir, "check");
+    assert.equal(r.status, 0, out(r));
+    assert.match(out(r), /add-greeting[^\n]*not written yet/);
+    const doc = json(cli(p.dir, "check", "--json"));
+    const note = doc.status.find((d: { code: string }) => d.code === "change_delta_unwritten");
+    assert.ok(note, JSON.stringify(doc.status));
+    assert.equal(note.severity, "info");
+    assert.equal(note.target, "add-greeting");
+
+    const s = cli(p.dir, "status");
+    assert.equal(s.status, 0, out(s));
+    assert.match(out(s), /add-greeting[^\n]*not written yet/);
+    const sj = json(cli(p.dir, "status", "--json"));
+    assert.ok(sj.status.some((d: { code: string }) => d.code === "change_delta_unwritten"));
+
+    // Real content that does not validate still fails the gate.
+    const delta = path.join(p.dir, "docs/specs/changes/add-greeting/specs/add-greeting/spec.md");
+    assert.ok(fs.existsSync(delta), "propose writes its delta here");
+    fs.writeFileSync(
+      delta,
+      `# Delta — add-greeting\n\n${added(requirement("REQ-002", "Greet a customer by name", { steps: [] }))}`
+    );
+    const red = cli(p.dir, "check");
+    assert.equal(red.status, 1, out(red));
+    assert.doesNotMatch(out(red), /not written yet/);
+  } finally {
+    p.done();
+  }
+});

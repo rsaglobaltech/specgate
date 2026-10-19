@@ -9,6 +9,7 @@ import { DiskProjectRepository } from "../../../../packages/core/src/infrastruct
 import { formatDiagnostic, error, warning } from "../../../lib/diagnostics";
 import type { Diagnostic } from "../../../lib/diagnostics";
 import * as ui from "../../../lib/ui";
+import { unwrittenChanges } from "../../../lib/in-flight";
 import { checkAgainstLock } from "../../../specops/against_lock";
 import { requirementGraphFromProject } from "../../../lib/requirement-graph";
 import { SHARED_PATHS } from "../../../../packages/core/src/domain/MultiStack";
@@ -1285,7 +1286,11 @@ export class ValidateSpecsCommand extends BaseCommand {
     let changeCount = 0;
     const changesDir = path.join(targetDir, "docs/specs/changes");
     if (fs.existsSync(changesDir)) {
-      const ids = listChangeIds(targetDir);
+      // A change still as `propose` wrote it is not written yet, not invalid:
+      // `status` and `check` say so; `change validate <id>` still lists its
+      // placeholders (ADR-0035).
+      const unwritten = new Set(unwrittenChanges(targetDir));
+      const ids = listChangeIds(targetDir).filter((id) => !unwritten.has(id));
       changeCount = ids.length;
       const problems: string[] = [];
       const rawProblems: Diagnostic[] = [];

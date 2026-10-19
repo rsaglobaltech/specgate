@@ -16,7 +16,7 @@ import { derivedMatrixFor, refreshDerivedMatrix } from "./MatrixCommand";
 import { briefProgress, draftNextCommand, ModuleStatus } from "./DraftCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import { findForjaProject } from "../project/Forja";
-import { inFlightView, InFlightView } from "../../../lib/in-flight";
+import { inFlightView, InFlightView, unwrittenNotes } from "../../../lib/in-flight";
 
 import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
 
@@ -377,7 +377,8 @@ function emitText(
   projectDir: string,
   summary: QueueSummary,
   lock: Lockfile | null,
-  notes: Diagnostic[] = []
+  notes: Diagnostic[] = [],
+  unwritten: Diagnostic[] = []
 ): void {
   const { items, counts, orphans } = summary;
   const out = (t: string) => process.stdout.write(t);
@@ -415,6 +416,12 @@ function emitText(
     out(
       "\n" + ui.fail(`${orphans.length} orphan feature file(s) ${ui.muted("— not in the matrix")}`)
     );
+
+  // Proposed, not written yet: not judged, and said, so nobody wonders why
+  // the change is missing from the queue (ADR-0035).
+  if (unwritten.length > 0) out("\n");
+  for (const n of unwritten)
+    out(`  ${ui.muted(`·  Change ${n.target} — delta not written yet, not judged until it is`)}\n`);
 
   if (notes.length > 0) {
     out("\n" + ui.section("Spec notes"));
@@ -465,7 +472,8 @@ function emitJson(
   projectDir: string,
   summary: QueueSummary,
   lock: Lockfile | null,
-  notes: Diagnostic[] = []
+  notes: Diagnostic[] = [],
+  unwritten: Diagnostic[] = []
 ): void {
   const { counts, pending, orphans } = summary;
   process.stdout.write(
@@ -498,7 +506,7 @@ function emitJson(
             }
           : {}),
         nextCommand: nextCommandPlain(summary),
-        status: notes,
+        status: [...notes, ...unwritten],
       },
       null,
       2
@@ -570,7 +578,8 @@ export class StatusCommand extends BaseCommand {
       notes = [];
     }
 
-    if (opts.format === "json") emitJson(projectDir, summary, lock, notes);
-    else emitText(projectDir, summary, lock, notes);
+    const unwritten = unwrittenNotes(projectDir);
+    if (opts.format === "json") emitJson(projectDir, summary, lock, notes, unwritten);
+    else emitText(projectDir, summary, lock, notes, unwritten);
   }
 }
