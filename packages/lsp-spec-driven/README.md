@@ -12,12 +12,12 @@ the [IntelliJ plugin](../intellij-spec-driven) talks to.
 
 ## Diagnostics
 
-| Code      | Severity | When                                                       |
-| --------- | -------- | ---------------------------------------------------------- |
-| `TDD-1`   | warning  | Test artifact is `TBD` but status is past Draft            |
-| `TDD-2`   | warning  | Row has a post-Draft status but no Scenario ID             |
-| `DUP-SCN` | error    | A Scenario ID appears on more than one row                 |
-| `STATUS`  | error    | Status is not one of the allowed values                    |
+| Code      | Severity | When                                            |
+| --------- | -------- | ----------------------------------------------- |
+| `TDD-1`   | warning  | Test artifact is `TBD` but status is past Draft |
+| `TDD-2`   | warning  | Row has a post-Draft status but no Scenario ID  |
+| `DUP-SCN` | error    | A Scenario ID appears on more than one row      |
+| `STATUS`  | error    | Status is not one of the allowed values         |
 
 Each message includes the exact `specgate req …` command that fixes it.
 
@@ -40,4 +40,6 @@ didClose}`, `shutdown`, `exit`.
   that wires the core to LSP notifications.
 
 Roadmap: pack.yaml dangling-reference diagnostics and reference autocomplete /
-go-to-definition are the next increments (see `mejoras/daily-ux-roadmap.md` §4.1).
+go-to-definition are the next increments. The VS Code extension already offers
+them for `pack.yaml` (`packages/vscode-spec-driven/src/pack-graph.ts`); moving
+them here would give every editor the same checks.

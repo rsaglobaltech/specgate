@@ -7,8 +7,9 @@ and emits a single-page HTML index plus a JSON manifest.
 ## Usage
 
 ```bash
-node packages/pack-registry/src/build.js
-# Defaults:
+npm run build            # compiles the TypeScript sources into dist/
+npm run registry:build   # node dist/packages/pack-registry/src/build.js
+# Options and defaults:
 #   --packs ./packs
 #   --out   ./packages/pack-registry/dist
 ```
@@ -23,11 +24,11 @@ The build:
 
 ## Deployment
 
-The generated `dist/` is plain static HTML with no JavaScript or external
-dependencies. Deploy it to any static host:
+The generated `dist/` is a static page and a JSON file, with no server side.
+Deploy it to any static host:
 
 - **Cloudflare Pages**: connect the repo, set build command to
-  `node packages/pack-registry/src/build.js`, output directory to
+  `npm run build && npm run registry:build`, output directory to
   `packages/pack-registry/dist`.
 - **GitHub Pages**: use a workflow that builds `dist/` and deploys it with
   `actions/upload-pages-artifact` and `actions/deploy-pages`.
@@ -37,14 +38,14 @@ dependencies. Deploy it to any static host:
 
 ```
 src/
-├── scan.js     # Pure: scans packs/ → metadata array (uses CLI for lint)
-├── render.js   # Pure: metadata → HTML strings (no fs)
-└── build.js    # I/O: writes dist/index.html and dist/manifest.json
+├── scan.ts     # Scans packs/ → metadata array (uses the CLI for lint)
+├── render.ts   # Pure: metadata → HTML strings (no fs)
+└── build.ts    # I/O: writes dist/index.html and dist/manifest.json
 test/unit/
-└── registry.test.js  # 10 tests (no browser needed)
+└── registry.test.ts  # no browser needed
 ```
 
-`scan.js` and `render.js` are decoupled — `render.js` is fully pure and could
+`scan.ts` and `render.ts` are decoupled — `render.ts` is fully pure and could
 also produce JSON, RSS, sitemap, etc. without changes.
 
 ## Adding a new pack

@@ -5,7 +5,39 @@
  * No fs or DOM dependency.
  */
 
-function escape(s) {
+/**
+ * What a card needs to know about a pack. `PackMetadata` from `scan.ts`
+ * satisfies it; the optional fields let a caller render a pack that does not
+ * say everything about itself.
+ */
+export interface RenderablePack {
+  id: string;
+  name: string;
+  domain?: string;
+  description?: string;
+  version: string;
+  language: string;
+  project_type: string;
+  tier?: string;
+  provenance?: string;
+  requirements: number;
+  useCases: number;
+  aggregates: number;
+  events: number;
+  scenarios: number;
+  lintStatus: string;
+  lintMessages: string[];
+}
+
+export interface RenderIndexOptions {
+  title?: string;
+  /** ISO timestamp shown in the footer; defaults to now. */
+  generated?: string;
+  /** The release every install command pins. */
+  version?: string;
+}
+
+function escape(s: unknown): string {
   return String(s || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -17,7 +49,7 @@ function escape(s) {
  * Taglines for the eleven starter packs, which carry no provenance of their
  * own. A proven pack's card shows what proved it instead.
  */
-const DOMAIN_META = {
+const DOMAIN_META: Record<string, { tagline: string }> = {
   auth: { tagline: "Authentication, JWT, OAuth2, RBAC & MFA" },
   billing: { tagline: "Subscriptions, invoicing & payment processing" },
   "audit-log": { tagline: "Immutable event trail, GDPR-compliant queries" },
@@ -38,24 +70,24 @@ const DOMAIN_META = {
  * site that ignored the theme. The colour now comes from the same tokens as
  * everything else.
  */
-const STATUS_LABELS = {
+const STATUS_LABELS: Record<string, string> = {
   pass: "verified",
   warn: "warnings",
   fail: "failed",
 };
 
-function renderBadge(status) {
+function renderBadge(status: string): string {
   const label = STATUS_LABELS[status] || status;
   const known = Object.prototype.hasOwnProperty.call(STATUS_LABELS, status);
   const cls = known ? ` badge--${status}` : "";
   return `<span class="badge${cls}">${escape(label)}</span>`;
 }
 
-function renderStat(label, value) {
+function renderStat(label: string, value: number): string {
   return `<div class="stat"><span class="stat__val">${escape(String(value))}</span><span class="stat__label">${escape(label)}</span></div>`;
 }
 
-function shortName(fullName) {
+function shortName(fullName: string): string {
   return fullName
     .replace(/\s+Backend Domain Pack$/i, "")
     .replace(/\s+Domain Pack$/i, "")
@@ -69,7 +101,7 @@ function shortName(fullName) {
  * name, which installs a different package, against a `./packs` folder the
  * reader does not have.
  */
-function installCommand(pack, version) {
+function installCommand(pack: RenderablePack, version: string): string {
   return `specgate specops add \\
   --pack-repo https://github.com/rsaglobaltech/specgate.git \\
   --pack-version v${escape(version)} \\
@@ -80,7 +112,7 @@ function installCommand(pack, version) {
 }
 
 /** Two letters for a domain: `audit-log` → "AL", `search` → "SE". No emoji. */
-function monogram(domain) {
+function monogram(domain: string | undefined): string {
   const parts = String(domain || "?")
     .split(/[-_\s]+/)
     .filter(Boolean);
@@ -93,14 +125,16 @@ function monogram(domain) {
  * requirement; "starter" means a generic example of the format, to rewrite.
  * The eleven starters used to be called curated, which claimed the first.
  */
-function renderTier(pack) {
+function renderTier(pack: RenderablePack): string {
   return pack.tier === "proven"
     ? `<span class="tier tier--proven">Proven in a pilot</span>`
     : `<span class="tier">Starter example</span>`;
 }
 
-function renderCard(pack, version = "0.0.0") {
-  const dm = DOMAIN_META[pack.domain] || { tagline: pack.description || "" };
+function renderCard(pack: RenderablePack, version = "0.0.0"): string {
+  const dm = (pack.domain !== undefined && DOMAIN_META[pack.domain]) || {
+    tagline: pack.description || "",
+  };
   const tagline = pack.tier === "proven" ? pack.provenance : dm.tagline || pack.description || "";
   const expandCmd = installCommand(pack, version);
 
@@ -141,7 +175,7 @@ function renderCard(pack, version = "0.0.0") {
 </article>`;
 }
 
-function renderIndex(packs, options: any = {}) {
+function renderIndex(packs: RenderablePack[], options: RenderIndexOptions = {}): string {
   const title = options.title || "Specgate domain packs";
   const generated = options.generated || new Date().toISOString();
   const passed = packs.filter((p) => p.lintStatus === "pass").length;

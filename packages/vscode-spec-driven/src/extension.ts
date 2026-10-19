@@ -7,14 +7,14 @@ import { findRequirementIds, findIdInTraceability, parseValidateOutput } from ".
 import { runValidate } from "./validate-runner";
 import { PackGraphAnalyzer } from "./pack-graph";
 
-function nonce() {
+function nonce(): string {
   let s = "";
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (let i = 0; i < 24; i++) s += chars[Math.floor(Math.random() * chars.length)];
   return s;
 }
 
-function packGraphHtml(webview: vscode.Webview) {
+function packGraphHtml(webview: vscode.Webview): string {
   const n = nonce();
   const cdn = "https://cdn.jsdelivr.net";
   const csp =
@@ -68,7 +68,7 @@ class RequirementCodeLensProvider implements vscode.CodeLensProvider {
     const cfg = vscode.workspace.getConfiguration("spec-driven");
     if (!cfg.get("codeLens")) return [];
 
-    const lenses = findRequirementIds(document.getText()).map(({ id, line, col, endCol }: any) => {
+    const lenses = findRequirementIds(document.getText()).map(({ id, line, col, endCol }) => {
       const range = new vscode.Range(line, col, line, endCol);
       return new vscode.CodeLens(range, {
         title: `$(link-external) Reveal ${id} in traceability`,
@@ -117,14 +117,14 @@ class PackReferenceCompletionProvider implements vscode.CompletionItemProvider {
     if (path.basename(document.fileName) !== "pack.yaml") return [];
 
     const lines = document.getText().split("\n");
-    const kind = PackGraphAnalyzer.referenceKindForLine(lines, position.line) as string;
+    const kind = PackGraphAnalyzer.referenceKindForLine(lines, position.line);
     if (!kind) return [];
 
     const { declared } = PackGraphAnalyzer.analyzePackGraph(document.getText());
-    const candidates = (declared as any)[kind];
+    const candidates = declared[kind];
     if (!candidates || candidates.size === 0) return [];
 
-    return [...candidates].sort().map((value: any) => {
+    return [...candidates].sort().map((value) => {
       const item = new vscode.CompletionItem(value, vscode.CompletionItemKind.Reference);
       item.detail = `pack.yaml ${KIND_DETAIL[kind]}`;
       return item;
@@ -157,10 +157,8 @@ export class ExtensionActivator {
   private validateDiagnostics: vscode.DiagnosticCollection | undefined;
   private packGraphPanel: vscode.WebviewPanel | null = null;
   private packGraphFsPath: string | null = null;
-  private context: vscode.ExtensionContext | undefined;
 
-  public activate(context: vscode.ExtensionContext) {
-    this.context = context;
+  public activate(context: vscode.ExtensionContext): void {
     this.packDiagnostics = vscode.languages.createDiagnosticCollection("spec-driven-pack");
     this.validateDiagnostics = vscode.languages.createDiagnosticCollection("spec-driven-validate");
 
@@ -184,7 +182,7 @@ export class ExtensionActivator {
         const cfg = this.config();
         if (!cfg.get("validateOnSave")) return;
         const root = this.findProjectRoot(doc.uri.fsPath);
-        if (root) this.triggerProjectValidate(root, cfg.get("cliPath") as string);
+        if (root) this.triggerProjectValidate(root, cfg.get<string>("cliPath"));
       }),
       vscode.workspace.onDidChangeTextDocument((evt) => this.refreshPackGraphFor(evt.document))
     );
@@ -222,7 +220,7 @@ export class ExtensionActivator {
     });
   }
 
-  public deactivate() {
+  public deactivate(): void {
     this.packDiagnostics?.dispose();
     this.validateDiagnostics?.dispose();
     this.packGraphPanel?.dispose();
@@ -259,7 +257,7 @@ export class ExtensionActivator {
   private lintPackDocument(doc: vscode.TextDocument) {
     const cfg = this.config();
     const schemaPath =
-      (cfg.get("schemaPath") as string) ||
+      cfg.get<string>("schemaPath") ||
       path.resolve(__dirname, "../../../../schemas/pack.schema.json");
 
     const { parseError, errors } = validatePackYaml(doc.getText(), schemaPath);
@@ -302,7 +300,7 @@ export class ExtensionActivator {
     );
   }
 
-  private triggerProjectValidate(projectDir: string, cliPath: string) {
+  private triggerProjectValidate(projectDir: string, cliPath: string | undefined) {
     const result = runValidate(projectDir, cliPath);
 
     if (result.spawnError) {
@@ -314,8 +312,8 @@ export class ExtensionActivator {
     }
 
     const diags = parseValidateOutput(result.stdout, result.stderr);
-    const errors = diags.filter((d: any) => d.severity === "error");
-    const warnings = diags.filter((d: any) => d.severity === "warning");
+    const errors = diags.filter((d) => d.severity === "error");
+    const warnings = diags.filter((d) => d.severity === "warning");
 
     const anchorFile = fs.existsSync(path.join(projectDir, "spec.md"))
       ? path.join(projectDir, "spec.md")
@@ -325,8 +323,8 @@ export class ExtensionActivator {
     this.validateDiagnostics?.set(
       anchorUri,
       diags
-        .filter((d: any) => d.severity !== "info")
-        .map((d: any) => this.makeDiag(0, 0, d.message, d.severity))
+        .filter((d) => d.severity !== "info")
+        .map((d) => this.makeDiag(0, 0, d.message, d.severity))
     );
 
     if (result.exitCode === 0) {
@@ -406,7 +404,7 @@ export class ExtensionActivator {
     }
 
     const cfg = this.config();
-    const cliPath = cfg.get("cliPath") as string;
+    const cliPath = cfg.get<string>("cliPath");
 
     for (const folder of folders) {
       this.triggerProjectValidate(folder.uri.fsPath, cliPath);
@@ -441,7 +439,7 @@ export class ExtensionActivator {
       this.packGraphPanel = null;
       this.packGraphFsPath = null;
     });
-    this.packGraphPanel.webview.onDidReceiveMessage((msg) => {
+    this.packGraphPanel.webview.onDidReceiveMessage((msg: { type?: string } | undefined) => {
       if (msg && msg.type === "ready") this.postPackGraph(doc);
     });
   }
@@ -463,10 +461,10 @@ export class ExtensionActivator {
 
 const activator = new ExtensionActivator();
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
   activator.activate(context);
 }
 
-export function deactivate() {
+export function deactivate(): void {
   activator.deactivate();
 }

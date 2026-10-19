@@ -34,6 +34,16 @@ export interface PackMetadata {
   lintMessages: string[];
 }
 
+/** The `metadata` block of a `pack.yaml`, as far as the registry reads it. */
+interface PackYamlMetadata {
+  name?: string;
+  version?: string;
+  language?: string;
+  project_type?: string;
+  tier?: string;
+  provenance?: string;
+}
+
 export class PackScanner {
   public scanPacks(packsRoot: string): PackMetadata[] {
     if (!fs.existsSync(packsRoot)) {
@@ -60,7 +70,7 @@ export class PackScanner {
   }
 
   private buildMetadata(packsRoot: string, id: string): PackMetadata {
-    let pack: any;
+    let pack: Record<string, unknown>;
     try {
       pack = loadPack(packsRoot, id).pack;
     } catch (err: unknown) {
@@ -86,8 +96,9 @@ export class PackScanner {
     }
 
     const lint = this.runLint(packsRoot, id);
-    const meta = pack.metadata || {};
-    const firstReq = Array.isArray(pack.requirements) && pack.requirements[0];
+    const meta = (pack.metadata || {}) as PackYamlMetadata;
+    const firstReq: { description?: string } | false | undefined =
+      Array.isArray(pack.requirements) && pack.requirements[0];
     const description = (firstReq && firstReq.description) || "";
 
     return {
@@ -147,8 +158,6 @@ export class PackScanner {
   }
 }
 
-// Keep legacy export signature for external callers in the transition
+// Function form of the scanner, for callers that do not need the class.
 const scanner = new PackScanner();
-export const scanPacks = (packsRoot: string) => scanner.scanPacks(packsRoot);
-export const buildMetadata = (packsRoot: string, id: string) =>
-  (scanner as any).buildMetadata(packsRoot, id);
+export const scanPacks = (packsRoot: string): PackMetadata[] => scanner.scanPacks(packsRoot);
