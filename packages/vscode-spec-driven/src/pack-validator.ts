@@ -1,16 +1,25 @@
-import * as Ajv2020 from "ajv/dist/2020";
-("use strict");
+"use strict";
 
 /**
  * Pure module — no vscode dependency.
  * Validates pack.yaml content against the JSON Schema (draft 2020-12).
- * Returns structured diagnostic objects that extension.js converts to
+ * Returns structured diagnostic objects that extension.ts converts to
  * vscode.Diagnostic instances.
  */
 
+import * as Ajv2020 from "ajv/dist/2020";
+import type { AnySchemaObject, ErrorObject, ValidateFunction } from "ajv/dist/2020";
 import * as yaml from "js-yaml";
 import * as path from "node:path";
 import * as fs from "node:fs";
+
+type Ajv2020Class = typeof Ajv2020.default;
+
+/** The part of a js-yaml `YAMLException` a parse diagnostic reads. */
+interface YamlParseError {
+  mark?: { line: number; column: number };
+  message?: string;
+}
 
 export interface Diag {
   line: number;
@@ -26,16 +35,19 @@ export interface ValidationResult {
 
 export class PackValidator {
   private schemaPath: string;
-  private ajv: any | null = null;
-  private validateFn: any | null = null;
+  private ajv: InstanceType<Ajv2020Class> | null = null;
+  private validateFn: ValidateFunction | null = null;
 
   constructor(schemaPath?: string) {
     this.schemaPath = schemaPath || path.resolve(__dirname, "../../../../schemas/pack.schema.json");
   }
 
-  private loadAjv() {
+  private loadAjv(): InstanceType<Ajv2020Class> {
     if (!this.ajv) {
-      const Ajv = (Ajv2020 as any).default || Ajv2020;
+      // Under CommonJS interop the namespace carries the class as `default`;
+      // the fallback covers a build that exports the class itself.
+      const Ajv: Ajv2020Class =
+        (Ajv2020 as { default?: Ajv2020Class }).default || (Ajv2020 as unknown as Ajv2020Class);
       this.ajv = new Ajv({ allErrors: true, strict: false });
     }
     return this.ajv;
@@ -43,11 +55,11 @@ export class PackValidator {
 
   public validatePackYaml(content: string): ValidationResult {
     // 1. Parse YAML
-    let parsed: any;
+    let parsed: unknown;
     try {
       parsed = yaml.load(content, { json: true });
     } catch (err: unknown) {
-      const error = err as any;
+      const error = err as YamlParseError;
       return {
         parseError: {
           line: error.mark ? error.mark.line : 0,
@@ -72,7 +84,7 @@ export class PackValidator {
     }
 
     // 2. Load schema
-    let schema: any;
+    let schema: AnySchemaObject;
     try {
       schema = JSON.parse(fs.readFileSync(this.schemaPath, "utf8"));
     } catch (err: unknown) {
@@ -91,7 +103,7 @@ export class PackValidator {
     }
 
     // 3. Validate with AJV
-    let ajv: any;
+    let ajv: InstanceType<Ajv2020Class>;
     try {
       ajv = this.loadAjv();
     } catch (err: unknown) {
@@ -133,7 +145,7 @@ export class PackValidator {
 
     // 4. Map AJV errors to approximate line numbers
     const lines = content.split("\n");
-    const errors = (this.validateFn.errors || []).map((err: any) => {
+    const errors = (this.validateFn.errors || []).map((err): Diag => {
       const line = this.findApproximateLine(lines, err.instancePath, err.schemaPath);
       return {
         line,
@@ -146,7 +158,7 @@ export class PackValidator {
     return { parseError: null, errors };
   }
 
-  private formatAjvError(err: any): string {
+  private formatAjvError(err: ErrorObject): string {
     const ptr = err.instancePath || "(root)";
     const schemaDesc =
       err.parentSchema && err.parentSchema.description ? ` (${err.parentSchema.description})` : "";
