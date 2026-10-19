@@ -1,6 +1,6 @@
 import { resolveProjectDir } from "../../../lib/project-root";
 import { error } from "../../../lib/diagnostics";
-import { agentIo, EXIT } from "../../../lib/agent";
+import { AgentIo, agentIo, EXIT } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { UpdateRequirementStatusUseCase } from "../../../../packages/core/src/application/UpdateRequirementStatusUseCase";
@@ -98,7 +98,8 @@ export class DoneCommand extends BaseCommand {
 
   public execute(): void {
     const opts = parseArgs(this.args);
-    const io = agentIo(opts.json);
+    // Annotated so that `io.fail`, which never returns, narrows what follows it.
+    const io: AgentIo = agentIo(Boolean(opts.json));
     const NULL_SHAPE = { requirement: null };
     const verb = this.verb;
 
@@ -385,7 +386,7 @@ export class DoneCommand extends BaseCommand {
    * suite that starts Postgres every time (FinCore, #77). A requirement that
    * fails its own checks is reported and left as it was; the others close.
    */
-  private executeMany(opts: DoneOptions, io: ReturnType<typeof agentIo>): void {
+  private executeMany(opts: DoneOptions, io: AgentIo): void {
     const NULL_SHAPE = { requirements: null };
     const bad = opts.reqIds.find((id) => !/^REQ-\d+$/.test(id));
     if (bad) {

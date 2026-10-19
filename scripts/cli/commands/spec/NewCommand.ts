@@ -111,8 +111,10 @@ export class NewCommand extends BaseCommand {
       { useCase: title, featureFile: featureRel },
       highestReservedReq(projectDir)
     );
-    const reqId = result.reqId;
-    const scenarioId = result.scenarioId;
+    // A successful `execute` always returns the ids it wrote; the result type
+    // keeps them optional only for its error shape.
+    const reqId = result.reqId!;
+    const scenarioId = result.scenarioId!;
 
     const featureAbs = path.join(projectDir, featureRel);
     const existing = fs.existsSync(featureAbs) ? fs.readFileSync(featureAbs, "utf8") : null;

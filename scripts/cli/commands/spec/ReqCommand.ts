@@ -282,8 +282,6 @@ export class ReqCommand extends BaseCommand {
         );
         process.exit(2);
       }
-      if (title && !fields.useCase) fields.useCase = title;
-
       // The matrix row carries the title; `spec.md` carries the requirement.
       // Writing only the row left the requirement with no text anywhere, which
       // is why `harness prompt` emitted "Implement REQ-002" with nothing in it
@@ -294,7 +292,7 @@ export class ReqCommand extends BaseCommand {
       const useCase = new AddRequirementUseCase(repo);
       const result = useCase.execute(
         resolvedDir,
-        { ...fields, status },
+        { ...fields, status: status ?? undefined },
         highestReservedReq(resolvedDir)
       );
 

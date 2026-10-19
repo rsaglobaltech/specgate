@@ -168,8 +168,9 @@ export function buildPlan(rows: any[], exists: any, graph?: any): any[] {
     const item = RequirementPlan.classifyRow(r, exists);
     if (item) {
       if (graph) {
-        item.depends_on = graph.dependenciesOf(item.requirement);
-        item.blocked_by = item.depends_on.filter((dep: string) => {
+        const dependsOn: string[] = graph.dependenciesOf(item.requirement);
+        item.depends_on = dependsOn;
+        item.blocked_by = dependsOn.filter((dep: string) => {
           const target = rows.find((other: any) => other.requirement === dep);
           return target && !RequirementPlan.DONE_STATUSES.has(target.status);
         });

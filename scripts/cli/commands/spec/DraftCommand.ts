@@ -940,7 +940,8 @@ export class DraftCommand extends BaseCommand {
                 `or let Specgate call it — then run specgate draft ${opts.module} until it says Ready to review`
               )
           );
-          for (const n of notes) out.write(ui.info(n.message) + ui.fix(n.fix) + "\n");
+          // Every note above is built with a `fix`.
+          for (const n of notes) out.write(ui.info(n.message) + ui.fix(n.fix!) + "\n");
         }
       );
       return;
