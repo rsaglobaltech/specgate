@@ -8,6 +8,8 @@
  * one command that happens to read a file.
  */
 
+import type { PackItem } from "./PackSpec";
+
 function stripInlineComment(line) {
   let inSingle = false;
   let inDouble = false;
@@ -294,11 +296,11 @@ export type YamlDocument = Record<string, unknown>;
  */
 export interface PackModel extends YamlDocument {
   metadata?: { name?: string; [key: string]: unknown };
-  requirements?: unknown[];
-  scenarios?: unknown[];
-  use_cases?: unknown[];
-  commands?: unknown[];
-  events?: unknown[];
+  requirements?: PackItem[];
+  scenarios?: PackItem[];
+  use_cases?: PackItem[];
+  commands?: PackItem[];
+  events?: PackItem[];
 }
 
 export function parseYamlLite(content: string): YamlDocument {

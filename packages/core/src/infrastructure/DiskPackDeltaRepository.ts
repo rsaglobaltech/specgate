@@ -11,7 +11,15 @@ import * as path from "node:path";
 
 import { parseYamlLite } from "../domain/YamlLite";
 import { parseGherkin } from "../domain/Gherkin";
-import { LoadedPack, changeIdFor, renderProposal, renderTasks } from "../domain/PackDelta";
+import {
+  DerivedPackDelta,
+  LoadedPack,
+  changeIdFor,
+  renderProposal,
+  renderTasks,
+} from "../domain/PackDelta";
+import { PackItem } from "../domain/PackSpec";
+import { PackEntry } from "../domain/Lockfile";
 import { Phrases } from "../domain/Language";
 
 export function loadPackModel(packRoot: string, packId: string): LoadedPack {
@@ -37,7 +45,10 @@ export function loadPackModel(packRoot: string, packId: string): LoadedPack {
  * Falls back to null rather than inventing behaviour: a delta that says "TODO"
  * is reviewable; one that says something plausible but made up is not.
  */
-export function stepsForScenario(packDir, scenario) {
+export function stepsForScenario(
+  packDir: string,
+  scenario: PackItem | null | undefined
+): string[] | null {
   const templateRel = scenario && scenario.template;
   if (!templateRel) return null;
   const templateFile = path.resolve(packDir, templateRel);
@@ -64,9 +75,18 @@ export function stepsForScenario(packDir, scenario) {
 
 /**
  * Materialise the derived delta as a change folder. Returns the list of files
- * written (or that would be written, when `dryRun`).
+ * written (or that would be written, when `dryRun`). Only a delta with
+ * something in it can be written: one whose `markdown` came back null has no
+ * spec to put in the folder.
  */
-export function materialiseChange(projectDir, entry, targetVersion, derived, t: Phrases, opts?) {
+export function materialiseChange(
+  projectDir: string,
+  entry: PackEntry,
+  targetVersion: string,
+  derived: DerivedPackDelta & { markdown: string },
+  t: Phrases,
+  opts?: { changeId?: string; dryRun?: boolean }
+): { changeId: string; changeDir: string; files: string[] } {
   const o = opts || {};
   const changeId = o.changeId || changeIdFor(entry.pack_id, entry.version, targetVersion);
   const changeDir = path.join(projectDir, "docs", "specs", "changes", changeId);
