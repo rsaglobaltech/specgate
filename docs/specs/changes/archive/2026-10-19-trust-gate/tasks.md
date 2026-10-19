@@ -30,4 +30,4 @@
 ## 6. Verification
 
 - [x] 6.1 Docs, CHANGELOG, help
-- [ ] 6.2 All suites and E2E green
+- [x] 6.2 All suites and E2E green

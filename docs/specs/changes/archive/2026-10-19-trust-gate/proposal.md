@@ -13,7 +13,7 @@ requirements without leaving the base red.
 
 A gate people learn to work around is a gate they stop trusting. This change
 removes each of those reasons. Decision record:
-[ADR-0036](../../adr/0036-a-gate-a-team-can-trust.md).
+[ADR-0036](../../../adr/0036-a-gate-a-team-can-trust.md).
 
 ## Scope
 

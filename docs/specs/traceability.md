@@ -54,6 +54,17 @@
 | REQ-114 | SCN-114a | `features/daily-surface/REQ-114.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
 | REQ-115 | SCN-115a | `features/daily-surface/REQ-115.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
 | REQ-116 | SCN-116a | `features/daily-surface/REQ-116.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-117 | SCN-117a | `features/trusted-gate/REQ-117.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-118 | SCN-118a | `features/trusted-gate/REQ-118.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-119 | SCN-119a | `features/trusted-gate/REQ-119.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-120 | SCN-120a | `features/trusted-gate/REQ-120.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-121 | SCN-121a | `features/trusted-gate/REQ-121.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-122 | SCN-122a | `features/trusted-gate/REQ-122.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-123 | SCN-123a | `features/trusted-gate/REQ-123.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-124 | SCN-124a | `features/trusted-gate/REQ-124.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-125 | SCN-125a | `features/trusted-gate/REQ-125.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-126 | SCN-126a | `features/trusted-gate/REQ-126.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
+| REQ-127 | SCN-127a | `features/trusted-gate/REQ-127.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

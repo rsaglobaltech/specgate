@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — 2026-10-19 (change `trust-gate`)
+Accepted — 2026-10-19 (change `trust-gate`, archived)
 
 ## Context
 
