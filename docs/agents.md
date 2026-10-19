@@ -36,11 +36,11 @@ names. Then the instruction file each tool reads — `.cursor/rules/specgate.mdc
 
 The terminal loop is four verbs — `specgate propose`, `specgate apply`,
 `specgate status`, `specgate archive` ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
-The generated files still run the older spellings: `/specgate:propose` runs
-`specgate change new`, `/specgate:archive` runs `specgate change archive`, and
-`/specgate:done` runs `specgate done`. They reach the same engines, with the same
-rule: a change is archived once every requirement in it is Implemented, so an
-archive the agent tries before that is refused.
+The generated commands run the same verbs: `/specgate:propose` runs
+`specgate propose`, `/specgate:apply` (and its old name `/specgate:done`) runs
+`specgate apply`, and `/specgate:archive` runs `specgate archive`. A change is
+archived once every requirement in it is Implemented, so an archive the agent
+tries before that is refused.
 
 Existing files are never overwritten without `--force`.
 
