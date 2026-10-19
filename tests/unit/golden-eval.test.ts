@@ -12,13 +12,14 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { SpawnSyncReturns } from "node:child_process";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
-function cli(...args) {
+function cli(...args: string[]): SpawnSyncReturns<string> {
   return spawnSync(process.execPath, [CLI_PATH, ...args], {
     encoding: "utf8",
     env: { ...process.env, NO_COLOR: "1" },
@@ -122,9 +123,10 @@ test("the YAML reader takes what YAML libraries write", () => {
 
 test("a trade term is not a vague step; a verdict is", () => {
   const { analyseGherkinSource } = require("../../packages/core/src/domain/GherkinQuality");
-  const feature = (then) =>
+  const feature = (then: string) =>
     `Feature: T\n\n  Scenario: Tag work stays tag work\n    Given an email about the tag work on level 2\n    When the user asks for an explanation\n    Then ${then}\n`;
-  const codes = (src) => analyseGherkinSource(src, "t.feature").map((f) => f.code);
+  const codes = (src: string): string[] =>
+    analyseGherkinSource(src, "t.feature").map((f: { code: string }) => f.code);
   assert.ok(
     !codes(feature('the explanation says "tag work (trabajo extra)"')).includes("vague_step")
   );
@@ -141,10 +143,12 @@ test("a requirement may have several scenarios; a repeat with no scenario is sti
     "<!-- specgate:derived — Do not edit by hand. -->\n\n" +
     "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |\n" +
     "|---|---|---|---|---|---|---|---|---|---|\n";
-  const row = (req, scn) =>
+  const row = (req: string, scn: string) =>
     `| ${req} | ${scn} | \`f.feature\` | - | - | - | - | - | TBD | Draft |\n`;
-  const codes = (table) =>
-    new ValidateProjectUseCase({}).checkMatrix(head + table, {}).report.findings.map((f) => f.code);
+  const codes = (table: string): string[] =>
+    new ValidateProjectUseCase({})
+      .checkMatrix(head + table, {})
+      .report.findings.map((f: { code: string }) => f.code);
   assert.ok(
     !codes(row("REQ-101", "SCN-101") + row("REQ-101", "SCN-102")).includes(
       "duplicate_requirement_id"
@@ -192,7 +196,7 @@ test("a pack keeps a generated matrix generated, and the harness sees its prose 
       path.join(packDir, "templates", "capability.md.tpl"),
       "# Capability — Gold\n\n### Requirement: REQ-101 — Clock in inside the geofence\n\nA worker MUST clock in only inside the geofence.\n\n### Requirement: REQ-102 — A punch is confirmed within 2 seconds\n\nA punch MUST be confirmed in under 2 seconds.\n"
     );
-    const feature = (name) =>
+    const feature = (name: string) =>
       `Feature: ${name}\n\n  Scenario: ${name}\n    Given a worker at the jobsite\n    When they clock in\n    Then the confirmation shows in 2 seconds\n`;
     fs.writeFileSync(
       path.join(packDir, "templates", "features", "fast.feature.tpl"),
@@ -268,7 +272,7 @@ test("a trace line merges field by field: the pack's model changes arrive, the p
   const merge = () => {
     throw new Error("the text did not change; no text merge is needed");
   };
-  const doc = (trace) =>
+  const doc = (trace: string) =>
     `# Capability\n\n### Requirement: REQ-102 — Fast punch\n\n${trace}\n**Obligation (MUST).** Fast punch.\n`;
   // The baseline an older `add` recorded: the template, before trace fields.
   const base = doc("<!-- specgate:trace kind=functional -->");
@@ -287,7 +291,7 @@ test("a trace line merges field by field: the pack's model changes arrive, the p
 
 test("shared domain catalogs keep every pack's rows", () => {
   const { mergeCatalog } = require("../../packages/core/src/domain/CatalogMerge");
-  const table = (...rows) =>
+  const table = (...rows: string[]) =>
     `# Aggregates\n\n| ID | Aggregate |\n| --- | --- |\n${rows.map((r) => `| ${r} |`).join("\n")}\n`;
   const merged = mergeCatalog(
     table("AGG-101 | Punch", "AGG-201 | JobFile (old)"),
@@ -298,7 +302,7 @@ test("shared domain catalogs keep every pack's rows", () => {
 });
 
 test("specops sync brings a pack's new depends_on into a generated matrix without a false conflict", () => {
-  const git = (cwd, ...a) => {
+  const git = (cwd: string, ...a: string[]) => {
     const r = spawnSync("git", a, { cwd, encoding: "utf8" });
     assert.equal(r.status, 0, r.stderr);
   };
@@ -405,7 +409,7 @@ test("a delivered requirement is not planned again for evidence that is not a fi
     technicalArtifact: "existing codebase",
     testArtifact: "npm test",
   };
-  const exists = (p) => p === "features/adoption/baseline.feature";
+  const exists = (p: string) => p === "features/adoption/baseline.feature";
   assert.equal(
     RequirementPlan.classifyRow({ ...row, status: "Draft" }, exists).category,
     "NEEDS_EVERYTHING"
@@ -436,14 +440,21 @@ test("pack lint says when a requirement has no scenario", () => {
     os.tmpdir()
   );
   assert.ok(
-    notes.some((w) => /REQ-101 has no scenario/.test(w)),
+    notes.some((w: string) => /REQ-101 has no scenario/.test(w)),
     notes.join("\n")
   );
 });
 
+/** The fields of a derived matrix row these tests read. */
+interface DerivedRow {
+  scenarioId: string;
+  status: string;
+  testArtifact: string;
+}
+
 test("a scenario added to a delivered requirement is pending until a test names it", () => {
   const { deriveRows } = require("../../packages/core/src/domain/DerivedMatrix");
-  const feature = (scn, title) => ({
+  const feature = (scn: string, title: string) => ({
     path: `features/${scn}.feature`,
     source: `Feature: F\n\n  @REQ-101 @${scn}\n  Scenario: ${title}\n    Given a\n    When b\n    Then c\n`,
   });
@@ -456,7 +467,8 @@ test("a scenario added to a delivered requirement is pending until a test names 
     features,
     tests: [{ path: "tests/clock.test.ts", source: "// REQ-101 SCN-101\n" }],
   });
-  const row = (rows, scn) => rows.find((r) => r.scenarioId === scn);
+  const row = (rows: DerivedRow[], scn: string): DerivedRow =>
+    rows.find((r) => r.scenarioId === scn)!;
   assert.equal(row(byScenario, "SCN-101").status, "Implemented");
   assert.match(row(byScenario, "SCN-101").testArtifact, /clock\.test\.ts/);
   assert.equal(
@@ -518,15 +530,17 @@ test("the drift gate checks every scenario of a requirement, whatever the row or
       { id: "SCN-221", requirement_id: "REQ-209", target: "features/job-files/api_search.feature" },
     ],
   };
-  const row = (scn, feature) => ({
+  const row = (scn: string, feature: string) => ({
     requirement: "REQ-209",
     scenarioId: scn,
     featureFile: `\`${feature}\``,
     status: "Draft",
   });
   const entry = { pack_id: "job-files/backend", version: "v0.2.0", repo: "https://x/y.git" };
-  const drifted = (rows) =>
-    checkPackAgainstProject(pack, entry, rows).filter((d) => d.code === "pack_requirement_drifted");
+  const drifted = (rows: unknown[]) =>
+    checkPackAgainstProject(pack, entry, rows).filter(
+      (d: { code: string }) => d.code === "pack_requirement_drifted"
+    );
 
   // Both present, the API one sorted first: golden_app #34 called it drift.
   assert.deepEqual(
@@ -551,7 +565,7 @@ test("the drift gate checks every scenario of a requirement, whatever the row or
 test("the harness publishes a branch again after the remote deleted it", () => {
   const { publishBranch } = require("../../scripts/cli/commands/harness/RunCommand");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-golden-lease-"));
-  const git = (cwd, ...a) => {
+  const git = (cwd: string, ...a: string[]) => {
     const r = spawnSync("git", a, { cwd, encoding: "utf8" });
     assert.equal(r.status, 0, `git ${a.join(" ")}: ${r.stderr}`);
     return r.stdout;

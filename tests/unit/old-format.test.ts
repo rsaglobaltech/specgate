@@ -11,6 +11,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { CliResult } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -18,11 +19,11 @@ const ROOT_DIR = require("node:path").resolve(
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 const OLD = "csda";
 
-function cli(args, cwd?) {
+function cli(args: string[], cwd?: string): CliResult {
   return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", cwd: cwd || ROOT_DIR });
 }
 
-function withProject(fn) {
+function withProject(fn: (dir: string) => void) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-old-format-"));
   try {
     const r = cli([
@@ -42,20 +43,20 @@ function withProject(fn) {
 }
 
 test("a project on the current format passes", () => {
-  withProject((dir) => {
+  withProject((dir: string) => {
     const r = cli(["validate", dir]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
   });
 });
 
 test("old-format markers fail validate and say how to migrate", () => {
-  withProject((dir) => {
+  withProject((dir: string) => {
     const spec = path.join(dir, "spec.md");
     fs.appendFileSync(spec, `\n<!-- ${OLD}:trace REQ-999 -->\n`);
     const r = cli(["validate", dir, "--json"]);
     assert.notEqual(r.status, 0);
     const doc = JSON.parse(r.stdout);
-    const d = doc.status.find((s) => s.code === "old_format");
+    const d = doc.status.find((s: { code: string }) => s.code === "old_format");
     assert.ok(d, JSON.stringify(doc.status));
     assert.match(d.message, /spec\.md/);
     assert.match(d.fix, /git grep -lI/);
@@ -63,10 +64,10 @@ test("old-format markers fail validate and say how to migrate", () => {
 });
 
 test("an old config directory alone is enough to fail", () => {
-  withProject((dir) => {
+  withProject((dir: string) => {
     fs.mkdirSync(path.join(dir, `.${OLD}`));
     const r = cli(["validate", dir, "--json"]);
     assert.notEqual(r.status, 0);
-    assert.ok(JSON.parse(r.stdout).status.some((s) => s.code === "old_format"));
+    assert.ok(JSON.parse(r.stdout).status.some((s: { code: string }) => s.code === "old_format"));
   });
 });

@@ -23,16 +23,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const REPO_ROOT = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI = path.join(REPO_ROOT, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8" });
-}
+import { ROOT_DIR as REPO_ROOT, cli } from "../helpers/cli";
 
 function scaffold() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "declared-exists-"));
@@ -41,7 +32,7 @@ function scaffold() {
   return { parent, projectDir: path.join(parent, fs.readdirSync(parent)[0]) };
 }
 
-function tracePath(projectDir) {
+function tracePath(projectDir: string): string {
   return path.join(projectDir, "docs/specs/traceability.md");
 }
 
@@ -49,7 +40,7 @@ function tracePath(projectDir) {
  * Mark REQ-000 delivered. A missing file is drift only on a row that claims the
  * work exists; a Draft row names where the work is going to land.
  */
-function deliver(projectDir) {
+function deliver(projectDir: string): void {
   const file = tracePath(projectDir);
   fs.writeFileSync(
     file,
@@ -58,7 +49,7 @@ function deliver(projectDir) {
   );
 }
 
-function pointAtNothing(projectDir, { delivered = true } = {}) {
+function pointAtNothing(projectDir: string, { delivered = true } = {}) {
   const file = tracePath(projectDir);
   fs.writeFileSync(
     file,
@@ -202,7 +193,7 @@ test("--json carries the diagnostic with file, target and fix", () => {
     const r = cli("validate", projectDir, "--strict-links", "--json");
     assert.notEqual(r.status, 0);
     const doc = JSON.parse(r.stdout);
-    const found = doc.status.find((d) => d.code === "declared_artifact_missing");
+    const found = doc.status.find((d: { code: string }) => d.code === "declared_artifact_missing");
     assert.ok(found, JSON.stringify(doc));
     assert.equal(found.file, "docs/specs/traceability.md");
     assert.equal(found.target, "REQ-000");

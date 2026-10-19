@@ -1,10 +1,10 @@
 "use strict";
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { spawnSync } from "node:child_process";
 
 const {
   readAlmConfig,
@@ -21,10 +21,30 @@ const ROOT_DIR = require("node:path").resolve(
 );
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
+/** One line of what `syncRequirements` did, or would do, for a requirement. */
+interface SyncAction {
+  req: string;
+  action: string;
+  issue?: string | null;
+  detail?: string;
+}
+
+/** The REQ → issue mapping `syncRequirements` reads and fills in. */
+type AlmMap = Record<string, { issue: string; url?: string | null }>;
+
+/** A finding from `lintAlmConfig`. */
+interface AlmDiagnostic {
+  code: string;
+  severity: string;
+  target: string;
+  message: string;
+  fix?: string;
+}
+
 const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
 
-function makeProject(tmp) {
+function makeProject(tmp: string): string {
   const dir = path.join(tmp, "project");
   fs.mkdirSync(path.join(dir, "docs", "specs"), { recursive: true });
   fs.writeFileSync(
@@ -48,7 +68,7 @@ function makeProject(tmp) {
   return dir;
 }
 
-function withProject(fn) {
+function withProject<T>(fn: (dir: string, tmp: string) => T): T {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-alm-"));
   try {
     return fn(makeProject(tmp), tmp);
@@ -58,24 +78,24 @@ function withProject(fn) {
 }
 
 /** In-memory ALM double implementing the client interface. */
-function fakeClient(initialIssues = {}) {
+function fakeClient(initialIssues: Record<string, { title?: string; status: string }> = {}) {
   const issues = { ...initialIssues };
   let counter = 100;
-  const calls = [];
+  const calls: Array<[op: string, ...args: string[]]> = [];
   return {
     issues,
     calls,
-    async createIssue(reqId, title) {
+    async createIssue(reqId: string, title: string) {
       const key = `FAKE-${counter++}`;
       issues[key] = { title: `${reqId} — ${title}`, status: "open" };
       calls.push(["create", reqId, key]);
       return { key, url: `https://fake/${key}` };
     },
-    async getIssueStatus(key) {
+    async getIssueStatus(key: string) {
       calls.push(["status", key]);
       return issues[key] ? issues[key].status : "open";
     },
-    async closeIssue(key) {
+    async closeIssue(key: string) {
       calls.push(["close", key]);
       issues[key].status = "done";
     },
@@ -99,8 +119,8 @@ test("extractRequirements aggregates status per REQ with titles from spec.md", (
 test("sync creates issues for unlinked REQs and persists the mapping", async () => {
   await withProject(async (dir) => {
     const client = fakeClient();
-    const map = {};
-    const actions = await syncRequirements(extractRequirements(dir), map, client, {});
+    const map: AlmMap = {};
+    const actions: SyncAction[] = await syncRequirements(extractRequirements(dir), map, client, {});
     assert.deepEqual(
       actions.map((a) => a.action),
       ["created", "created"]
@@ -115,8 +135,8 @@ test("sync creates issues for unlinked REQs and persists the mapping", async () 
 test("sync closes the issue when its REQ is Implemented", async () => {
   await withProject(async (dir) => {
     const client = fakeClient({ "JIRA-1": { status: "open" }, "JIRA-2": { status: "open" } });
-    const map = { "REQ-001": { issue: "JIRA-1" }, "REQ-002": { issue: "JIRA-2" } };
-    const actions = await syncRequirements(extractRequirements(dir), map, client, {});
+    const map: AlmMap = { "REQ-001": { issue: "JIRA-1" }, "REQ-002": { issue: "JIRA-2" } };
+    const actions: SyncAction[] = await syncRequirements(extractRequirements(dir), map, client, {});
     assert.deepEqual(
       actions.map((a) => [a.req, a.action]),
       [
@@ -132,19 +152,20 @@ test("sync closes the issue when its REQ is Implemented", async () => {
 test("sync reports drift when the issue is done but the REQ is open", async () => {
   await withProject(async (dir) => {
     const client = fakeClient({ "JIRA-1": { status: "done" }, "JIRA-2": { status: "done" } });
-    const map = { "REQ-001": { issue: "JIRA-1" }, "REQ-002": { issue: "JIRA-2" } };
-    const actions = await syncRequirements(extractRequirements(dir), map, client, {});
+    const map: AlmMap = { "REQ-001": { issue: "JIRA-1" }, "REQ-002": { issue: "JIRA-2" } };
+    const actions: SyncAction[] = await syncRequirements(extractRequirements(dir), map, client, {});
     const req2 = actions.find((a) => a.req === "REQ-002");
+    assert.ok(req2);
     assert.equal(req2.action, "drift");
-    assert.match(req2.detail, /done in the ALM but REQ-002 is not Implemented/);
+    assert.match(req2.detail ?? "", /done in the ALM but REQ-002 is not Implemented/);
   });
 });
 
 test("sync --dry-run plans without touching the ALM or the mapping", async () => {
   await withProject(async (dir) => {
     const client = fakeClient();
-    const map = {};
-    const actions = await syncRequirements(extractRequirements(dir), map, client, {
+    const map: AlmMap = {};
+    const actions: SyncAction[] = await syncRequirements(extractRequirements(dir), map, client, {
       dryRun: true,
     });
     assert.deepEqual(
@@ -204,7 +225,7 @@ test("lintAlmConfig names the keys nothing will read, and who would have", () =>
     done_state: "Resolved",
     nonsense_key: 42,
   };
-  const diags = lintAlmConfig(cfg);
+  const diags: AlmDiagnostic[] = lintAlmConfig(cfg);
   assert.equal(diags.length, 2);
 
   const byTarget = Object.fromEntries(diags.map((d) => [d.target, d]));
@@ -245,21 +266,24 @@ test("sync reports a requirement it cannot close instead of throwing", async () 
     },
   };
   const map = { "REQ-001": { issue: "X-1" } };
-  const actions = await syncRequirements(
+  const actions: SyncAction[] = await syncRequirements(
     [{ id: "REQ-001", title: "t", status: "done" }],
     map,
     client,
     {}
   );
   assert.equal(actions[0].action, "close-unsupported");
-  assert.match(actions[0].detail, /cannot close X-1/);
+  assert.match(actions[0].detail ?? "", /cannot close X-1/);
 });
 
 // ── Provider clients over an injected fetch ───────────────────────────────────
 
-function fakeFetch(routes) {
-  const seen = [];
-  const impl = async (url, init: any = {}) => {
+/** A canned response: requests whose URL contains `matcher` (and match `method`, if set) get `json`. */
+type Route = [matcher: string, responder: { method?: string; json: unknown }];
+
+function fakeFetch(routes: Route[]) {
+  const seen: Array<{ url: string; method: string; body: unknown }> = [];
+  const impl = async (url: string, init: { method?: string; body?: unknown } = {}) => {
     seen.push({ url: String(url), method: init.method || "GET", body: init.body });
     for (const [matcher, responder] of routes) {
       if (
@@ -290,7 +314,7 @@ test("jiraClient maps the REST API to the client interface", async () => {
     token_env: "T_TOKEN",
     user_env: "T_USER",
   };
-  const routes = [
+  const routes: Route[] = [
     [
       "/rest/api/3/issue/HIE-7/transitions",
       { json: { transitions: [{ id: "31", to: { statusCategory: { key: "done" } } }] } },
@@ -326,7 +350,7 @@ test("azureClient maps work items to the client interface", async () => {
     project_key: "HIE",
     token_env: "T_TOKEN",
   };
-  const routes = [
+  const routes: Route[] = [
     [
       "workitems/$Task",
       { method: "POST", json: { id: 42, _links: { html: { href: "https://x/42" } } } },

@@ -1,25 +1,18 @@
 "use strict";
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { spawnSync } from "node:child_process";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 const PKG = require(path.join(ROOT_DIR, "package.json"));
+import { cliFromRoot as cli } from "../helpers/cli";
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], {
-    cwd: ROOT_DIR,
-    encoding: "utf8",
-  });
-}
-
-function withTmp(fn) {
+function withTmp<T>(fn: (tmp: string) => T): T {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ci-"));
   try {
     return fn(tmp);
@@ -158,7 +151,7 @@ const SPRING_POM =
   "<artifactId>tienda</artifactId><properties><java.version>17</java.version></properties>" +
   "</project>\n";
 
-function render(tmp, provider) {
+function render(tmp: string, provider: string): string {
   const r = cli("ci", "init", "--provider", provider, "--project-dir", tmp, "--stdout");
   assert.equal(r.status, 0, r.stderr);
   assert.ok(!/\{\{[A-Z_]+\}\}/.test(r.stdout), "no unresolved template tokens");

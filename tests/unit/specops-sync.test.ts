@@ -77,13 +77,13 @@ function tmpProject() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "specops-sync-recon-"));
 }
 
-function writeLocal(dir, rel, content) {
+function writeLocal(dir: string, rel: string, content: string) {
   const p = path.join(dir, rel);
   fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, content, "utf8");
 }
 
-function readLocal(dir, rel) {
+function readLocal(dir: string, rel: string) {
   return fs.readFileSync(path.join(dir, rel), "utf8");
 }
 

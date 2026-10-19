@@ -4,6 +4,8 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { SpawnSyncOptions } from "node:child_process";
+import type { CliOptions, CliResult } from "./helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -11,7 +13,7 @@ const ROOT_DIR = require("node:path").resolve(
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 const PKG = require(path.join(ROOT_DIR, "package.json"));
 
-function runCli(args, options = {}) {
+function runCli(args: string[], options: CliOptions = {}): CliResult {
   return spawnSync(process.execPath, [CLI_PATH, ...args], {
     cwd: ROOT_DIR,
     encoding: "utf8",
@@ -346,7 +348,7 @@ test("can init, expand, and validate a generated project end-to-end", () => {
 
 // SpecOps: expand --pack-repo + .specops.lock
 
-function gitInTest(args, opts = {}) {
+function gitInTest(args: string[], opts: SpawnSyncOptions = {}) {
   const result = spawnSync("git", args, { encoding: "utf8", ...opts });
   if (result.status !== 0) {
     // stdout as well as stderr: a commit with nothing to commit exits non-zero
@@ -480,7 +482,7 @@ test("expand rejects --pack-root and --pack-repo together", () => {
 
 // ── SpecOps sync: conflict detection (M3) ───────────────────────────────
 
-function makeFixtureRemoteRepo(tempRoot) {
+function makeFixtureRemoteRepo(tempRoot: string) {
   const remoteRepo = path.join(tempRoot, "remote-pack");
   fs.mkdirSync(remoteRepo, { recursive: true });
   fs.cpSync(
@@ -693,13 +695,13 @@ const WRITE_DECLARED_ARTIFACTS = [
 ].join("\n");
 
 /** An agent script that implements what the prompt declares, then runs `extraJs`. */
-function implementingAgent(tempRoot, extraJs = "fs.writeFileSync('agent-ran.txt', 'ok');") {
+function implementingAgent(tempRoot: string, extraJs = "fs.writeFileSync('agent-ran.txt', 'ok');") {
   const file = path.join(tempRoot, `implementing-agent-${Math.random().toString(36).slice(2)}.js`);
   fs.writeFileSync(file, `${WRITE_DECLARED_ARTIFACTS}\n${extraJs}\n`, "utf8");
   return `node "${file}" {prompt_file}`;
 }
 
-function makeHarnessProject(tempRoot, extraReqs: string[] = []) {
+function makeHarnessProject(tempRoot: string, extraReqs: string[] = []) {
   const projectDir = path.join(tempRoot, "project");
   fs.mkdirSync(path.join(projectDir, "features"), { recursive: true });
   fs.mkdirSync(path.join(projectDir, "docs", "specs", "adr"), { recursive: true });
@@ -952,7 +954,7 @@ test("a parallel run records itself once, not once per worker", { skip: !hasGit(
   assert.equal(result.status, 0, result.stderr + result.stdout);
 
   const runsDir = path.join(projectDir, ".harness", "runs");
-  const records = fs.readdirSync(runsDir).filter((f) => f.endsWith(".json"));
+  const records = fs.readdirSync(runsDir).filter((f: string) => f.endsWith(".json"));
   assert.equal(records.length, 1, `expected one record, got: ${records.join(", ")}`);
 
   const record = JSON.parse(fs.readFileSync(path.join(runsDir, records[0]), "utf8"));
@@ -1119,7 +1121,7 @@ test(
       const updated = fs
         .readFileSync(file, "utf8")
         .split("\n")
-        .map((line) =>
+        .map((line: string) =>
           line.includes(`| ${id} |`) ? line.replace(/Draft \|$/, "Implemented |") : line
         )
         .join("\n");
@@ -1148,10 +1150,10 @@ test(
       "utf8"
     );
     for (const id of ["REQ-001", "REQ-002"]) {
-      const row = matrix.split("\n").find((l) => l.includes(`| ${id} |`));
+      const row = matrix.split("\n").find((l: string) => l.includes(`| ${id} |`));
       assert.match(String(row), /Implemented \|$/, `${id} lost its edit in the merge`);
       assert.equal(
-        matrix.split("\n").filter((l) => l.includes(`| ${id} |`)).length,
+        matrix.split("\n").filter((l: string) => l.includes(`| ${id} |`)).length,
         1,
         `${id} was duplicated — the corruption a union merge produces`
       );
@@ -1469,7 +1471,7 @@ test("doctor reports a project that has outgrown its declared profile", () => {
   const withAggregate = fs
     .readFileSync(matrixPath, "utf8")
     .split("\n")
-    .map((line) => {
+    .map((line: string) => {
       if (!/\| REQ-/.test(line)) return line;
       const cells = line.split("|");
       cells[6] = " AGG-Policy ";
@@ -1745,7 +1747,7 @@ const RUNTIME_BASE_CONFIG = [
 ];
 
 /** Generate a project from an inline config and return its directory. */
-function initRuntimeProject(extraLines) {
+function initRuntimeProject(extraLines: string[]) {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-runtime-"));
   const configPath = path.join(tempRoot, "project.config");
   fs.writeFileSync(configPath, [...RUNTIME_BASE_CONFIG, ...extraLines].join("\n") + "\n", "utf8");

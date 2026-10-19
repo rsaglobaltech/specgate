@@ -13,8 +13,8 @@ import * as path from "node:path";
 
 import { handleMessage, readMessage } from "../../src/server";
 
-function captureStdout(fn) {
-  const chunks = [];
+function captureStdout(fn: () => void): string {
+  const chunks: string[] = [];
   const original = process.stdout.write.bind(process.stdout);
   process.stdout.write = (chunk) => {
     chunks.push(chunk.toString());
@@ -28,7 +28,7 @@ function captureStdout(fn) {
   return chunks.join("");
 }
 
-function parseFramed(output) {
+function parseFramed(output: string) {
   // Extract the JSON body from a Content-Length-framed message
   const match = output.match(/Content-Length: \d+\r\n\r\n(\{.*\})$/s);
   assert.ok(match, `Output is not Content-Length framed: ${output}`);
@@ -76,7 +76,7 @@ test("handleMessage responds to tools/list with all registered tools", () => {
   assert.equal(response.id, 2);
   assert.ok(Array.isArray(response.result.tools));
   assert.ok(response.result.tools.length >= 5, "expected at least 5 tools");
-  const names = response.result.tools.map((t) => t.name);
+  const names = response.result.tools.map((t: { name: string }) => t.name);
   assert.ok(names.includes("read_spec"));
   assert.ok(names.includes("validate_project"));
   assert.ok(names.includes("plan"));
@@ -173,6 +173,6 @@ test("tools are listed as specgate_*", () => {
   const output = captureStdout(() =>
     handleMessage({ jsonrpc: "2.0", id: 20, method: "tools/list", params: {} })
   );
-  const names = parseFramed(output).result.tools.map((t) => t.name);
+  const names = parseFramed(output).result.tools.map((t: { name: string }) => t.name);
   assert.ok(names.includes("specgate_status"), names.join(", "));
 });

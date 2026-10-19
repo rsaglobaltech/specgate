@@ -11,6 +11,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { SpawnSyncOptions } from "node:child_process";
 
 const {
   resolveRemotePack,
@@ -23,7 +24,7 @@ const {
 const HAS_GIT = gitAvailable();
 const skipReason = HAS_GIT ? undefined : "git is not available on PATH";
 
-function git(args, opts = {}) {
+function git(args: string[], opts: SpawnSyncOptions = {}): string {
   const result = spawnSync("git", args, { encoding: "utf8", ...opts });
   if (result.status !== 0) {
     throw new Error(`git ${args.join(" ")} failed: ${result.stderr}`);
@@ -31,7 +32,7 @@ function git(args, opts = {}) {
   return result.stdout.trim();
 }
 
-function makeBareSourceRepo(tag) {
+function makeBareSourceRepo(tag: string): string {
   const src = fs.mkdtempSync(path.join(os.tmpdir(), "specops-src-"));
   git(["init", "--quiet", "--initial-branch=main", src]);
   // Configure local identity + disable signing so commits succeed in any environment.
@@ -60,7 +61,7 @@ function makeBareSourceRepo(tag) {
   return src;
 }
 
-let SOURCE_REPO;
+let SOURCE_REPO: string;
 const TAG = "v1.0.0";
 
 before(() => {
@@ -217,7 +218,7 @@ test(
       const { out, refs } = createPackBundle({ repo: SOURCE_REPO, out: bundlePath });
       assert.ok(fs.existsSync(out));
       assert.ok(
-        refs.some((r) => r.includes(TAG)),
+        refs.some((r: string) => r.includes(TAG)),
         `bundle should carry the ${TAG} tag, got: ${refs.join(", ")}`
       );
 

@@ -1,11 +1,11 @@
 // specgate:allow-placeholders — this file emits or asserts on {{VAR}} template syntax.
 "use strict";
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const path = require("node:path");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import path = require("node:path");
 
-const os = require("node:os");
-const fs = require("node:fs");
+import os = require("node:os");
+import fs = require("node:fs");
 
 const {
   renderTemplate,
@@ -290,7 +290,7 @@ test("parseTraceabilityRows parses legacy rows", () => {
 
 test("parseTraceabilityRows deduplicates legacy rows by feature+scenario key", () => {
   const { rows } = parseTraceabilityRows(LEGACY_MATRIX);
-  const loginRows = rows.filter((r) => r.feature === "Login");
+  const loginRows = rows.filter((r: { feature: string }) => r.feature === "Login");
   assert.equal(loginRows.length, 1);
 });
 
@@ -377,7 +377,8 @@ test("validatePackModel rejects a pack.yaml from a newer schema, and names the f
     // Plain substring checks: building a regex out of a version string means
     // escaping it, and a half-escaped pattern is how this file earned a
     // js/incomplete-sanitization alert in the first place.
-    (err) =>
+    (err: unknown) =>
+      err instanceof Error &&
       err.message.includes("schema_version 9.0.0") &&
       err.message.includes(`up to ${PACK_SCHEMA_VERSION}`) &&
       err.message.includes("Fix:")
@@ -413,8 +414,8 @@ test("every curated pack declares a schema this CLI can read", () => {
   // Guards the release order: bumping PACK_SCHEMA_VERSION without shipping the
   // CLI that understands it would make our own packs uninstallable.
   const packsDir = path.join(REPO_ROOT, "packs");
-  const found = [];
-  const walk = (dir) => {
+  const found: string[] = [];
+  const walk = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);

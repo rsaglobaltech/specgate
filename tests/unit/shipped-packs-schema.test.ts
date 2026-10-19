@@ -156,7 +156,7 @@ test("the object payload spelling still validates, for a community pack that alr
   assert.ok(validate(inline), "the inline spelling must validate");
 
   const block = JSON.parse(JSON.stringify(inline));
-  block.events[0].payload = block.events[0].payload.map((field) => {
+  block.events[0].payload = block.events[0].payload.map((field: string) => {
     const [key, type] = field.split(":").map((s) => s.trim());
     return { [key]: type };
   });

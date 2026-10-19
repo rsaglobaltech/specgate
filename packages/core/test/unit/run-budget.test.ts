@@ -78,6 +78,7 @@ test("no declared hints means no estimate, rather than a confident zero", () => 
 
 test("hints multiply out over the attempts that used each profile", () => {
   const cost = estimateRunCost([["agent", "reviewer"], ["agent"]], { agent: 0.5, reviewer: 0.1 });
+  assert.ok(cost);
   assert.equal(cost.total, 1.1);
   assert.equal(cost.covered, 3);
   assert.equal(cost.uncovered, 0);
@@ -87,6 +88,7 @@ test("attempts by a profile with no hint are counted, not silently folded in", (
   // Otherwise the total reads as complete when a third of the run is missing
   // from it.
   const cost = estimateRunCost([["agent"], ["mystery"], ["mystery"]], { agent: 0.5 });
+  assert.ok(cost);
   assert.equal(cost.total, 0.5);
   assert.equal(cost.covered, 1);
   assert.equal(cost.uncovered, 2);
@@ -97,6 +99,7 @@ test("hints that are not usable numbers do not poison the total", () => {
     agent: 0.5,
     broken: Number.NaN,
   });
+  assert.ok(cost);
   assert.equal(cost.total, 0.5);
   assert.equal(cost.uncovered, 1);
 });

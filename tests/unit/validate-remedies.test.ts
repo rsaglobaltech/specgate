@@ -1,30 +1,18 @@
 // specgate:allow-placeholders — this file emits or asserts on {{VAR}} template syntax.
 "use strict";
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { cliFromRoot as cli } from "../helpers/cli";
 
 const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
 const RICH_SEPARATOR = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |";
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], {
-    cwd: ROOT_DIR,
-    encoding: "utf8",
-  });
-}
-
 /** Minimal project that passes plain `validate`; tests then break one piece. */
-function makeValidProject(tmp) {
+function makeValidProject(tmp: string): string {
   const dir = path.join(tmp, "project");
   fs.mkdirSync(path.join(dir, "features"), { recursive: true });
   fs.mkdirSync(path.join(dir, "docs", "specs", "adr"), { recursive: true });
@@ -52,7 +40,7 @@ function makeValidProject(tmp) {
   return dir;
 }
 
-function withProject(fn) {
+function withProject<T>(fn: (dir: string, tmp: string) => T): T {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-remedy-"));
   try {
     return fn(makeValidProject(tmp), tmp);

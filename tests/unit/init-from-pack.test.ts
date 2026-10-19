@@ -16,18 +16,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
+import { ROOT_DIR, cliFromRoot as cli } from "../helpers/cli";
 
 const { parseReference, newestProjectIn } = require("../../scripts/init_from_pack");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", cwd: ROOT_DIR });
-}
 
 test("a reference splits on the last @, so scp-style git URLs still parse", () => {
   assert.deepEqual(parseReference("https://github.com/acme/x.git@v1.2.3"), {
@@ -98,14 +89,14 @@ test("newestProjectIn returns null rather than guessing", () => {
 
 const FIXTURE_PACKS = path.resolve(ROOT_DIR, "tests/fixtures/domain-packs");
 
-function scaffold(...extra) {
+function scaffold(...extra: string[]) {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-sample-"));
   const r = cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", ...extra);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   return { parent, dir: path.join(parent, fs.readdirSync(parent)[0]) };
 }
 
-function matrix(dir) {
+function matrix(dir: string) {
   return fs.readFileSync(path.join(dir, "docs", "specs", "traceability.md"), "utf8");
 }
 
@@ -155,20 +146,20 @@ test("with --no-sample-req, an installed pack leaves no leftover requirement", (
       assert.equal(r.status, 0, r.stdout + r.stderr);
     }
 
-    const rows = (dir) =>
+    const rows = (dir: string) =>
       matrix(dir)
         .split("\n")
-        .filter((l) => /^\| REQ-\d/.test(l));
+        .filter((l: string) => /^\| REQ-\d/.test(l));
     assert.equal(
       rows(without.dir).length + 1,
       rows(withSample.dir).length,
       "exactly one row differs"
     );
     assert.ok(
-      rows(withSample.dir).some((l) => l.startsWith("| REQ-000 ")),
+      rows(withSample.dir).some((l: string) => l.startsWith("| REQ-000 ")),
       "the leftover"
     );
-    assert.ok(!rows(without.dir).some((l) => l.startsWith("| REQ-000 ")), "no leftover");
+    assert.ok(!rows(without.dir).some((l: string) => l.startsWith("| REQ-000 ")), "no leftover");
 
     // Both are still valid projects — this is a tidiness fix, not a repair.
     for (const dir of [withSample.dir, without.dir]) {

@@ -11,21 +11,17 @@
  * the other nine, which made the right one look like the mistake.
  */
 
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { spawnSync } from "node:child_process";
+import { cli } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
 
 test("--strict means every strict check, so a rotted link cannot pass it", () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-gate-"));
@@ -116,7 +112,7 @@ test("a brownfield link to a pre-existing test does not force a source edit", ()
 
     assert.equal(cli("adopt", "--project-dir", dir, "--keep-matrix").status, 0);
     const added = cli("req", "add", "Owner telephone must be ten digits", "--project-dir", dir);
-    const reqId = /Added (REQ-\d+)/.exec(added.stdout)[1];
+    const reqId = /Added (REQ-\d+)/.exec(added.stdout)![1];
     assert.equal(
       cli(
         "req",
@@ -315,7 +311,7 @@ test("ci init announces the command it actually generates", () => {
     // A project with tests gets `check` (#70); one without, `validate --strict`.
     const generated = / check \./.test(workflow)
       ? "specgate check"
-      : /validate \. (--strict\b[^\s]*)/.exec(workflow)[1];
+      : /validate \. (--strict\b[^\s]*)/.exec(workflow)![1];
     assert.ok(
       r.stdout.includes(generated),
       `announced something other than what it wrote (${generated}):\n${r.stdout}`

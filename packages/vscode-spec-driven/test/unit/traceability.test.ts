@@ -123,7 +123,7 @@ test("parseValidateOutput reads the CLI's current markers", () => {
     "  ✖  Missing spec.md\n  ▲  Adoption never retro-filled\n"
   );
   assert.deepEqual(
-    d.map((x) => [x.severity, x.message]),
+    d.map((x: { severity: string; message: string }) => [x.severity, x.message]),
     [
       ["info", "Validation passed"],
       ["error", "Missing spec.md"],

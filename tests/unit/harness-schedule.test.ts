@@ -159,7 +159,7 @@ test("a cycle is reported as blocked, never attempted and never hung on", async 
 /** A dispatcher that records the base each requirement was given. */
 function baseRecordingDispatcher(verdicts: Record<string, string> = {}) {
   const bases: Record<string, string> = {};
-  const fn = async (runnable: string[], byId: any, hints: any, ctx: any) => {
+  const fn = async (runnable: string[], _byId: any, _hints: any, ctx: any) => {
     for (const id of runnable) bases[id] = ctx.baseFor ? ctx.baseFor(id) : ctx.baseRef;
     return runnable.map((id) => ({
       requirement: id,

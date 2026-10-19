@@ -14,16 +14,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { cwd: ROOT_DIR, encoding: "utf8" });
-}
+import { cliFromRoot as cli } from "../helpers/cli";
 
 const FEATURE = `Feature: Invoice totals
 
@@ -38,7 +29,7 @@ const FEATURE = `Feature: Invoice totals
     Then the tax is zero
 `;
 
-function project(testFileBody, status = "Implemented") {
+function project(testFileBody: string, status = "Implemented") {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-coverage-"));
   const r = cli("init", "--yes", "--out", parent, "--no-git", "--no-sample-req");
   assert.equal(r.status, 0, r.stdout + r.stderr);

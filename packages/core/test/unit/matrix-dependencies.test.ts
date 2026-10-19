@@ -57,7 +57,7 @@ test("the annotation survives a rebuild, which is the whole reason for its place
   );
   const parsed = parseTraceabilityRows(first);
   assert.equal(parsed.rows.length, 2, "the rows must still parse alongside the annotation");
-  assert.deepEqual(parsed.rows[1].dependsOn, ["REQ-001"]);
+  assert.deepEqual((parsed.rows[1] as { dependsOn?: string[] }).dependsOn, ["REQ-001"]);
 
   const second = buildTraceabilityMarkdown(parsed.rows, "rich");
   assert.deepEqual(parseMatrixDependencies(second), { "REQ-002": ["REQ-001"] });

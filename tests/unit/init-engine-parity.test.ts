@@ -14,12 +14,13 @@ const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+import type { CliResult } from "../helpers/cli";
 
 const ROOT = path.resolve(__dirname, "../../..");
 const CLI = path.join(ROOT, "bin/specgate.js");
 const CONFIG = path.join(ROOT, "examples/project.config.example");
 
-function cli(...args) {
+function cli(...args: string[]): CliResult {
   return spawnSync(process.execPath, [CLI, ...args], {
     encoding: "utf8",
     cwd: ROOT,

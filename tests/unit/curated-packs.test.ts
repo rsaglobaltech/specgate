@@ -27,13 +27,13 @@ const { loadPack } = require("../../packages/core/src/infrastructure/DiskPackRep
 const PACKS_DIR = path.join(ROOT_DIR, "packs");
 
 /** Variables beyond the usual three that a pack may declare. */
-const EXTRA_VARS = {
+const EXTRA_VARS: Record<string, string[]> = {
   "sample-contracts/contracts": ["PROVIDER_SERVICE=billing", "CONSUMER_SERVICE=web"],
 };
 
-function packIds() {
-  const ids = [];
-  const walk = (dir) => {
+function packIds(): string[] {
+  const ids: string[] = [];
+  const walk = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
@@ -227,7 +227,7 @@ test("a pack's depends_on reaches plan and stacks the harness branch", () => {
     assert.equal(init.status, 0, init.stdout + init.stderr);
     const projectDir = path.join(
       parent,
-      fs.readdirSync(parent).find((d) => d !== "packs")
+      fs.readdirSync(parent).find((d: string) => d !== "packs")
     );
 
     const expand = spawnSync(
@@ -463,7 +463,7 @@ test("expand tags every scenario it generates, and repeating it does not duplica
     const featureDir = path.join(projectDir, "features", "billing");
     const first = fs
       .readdirSync(featureDir)
-      .map((f) => fs.readFileSync(path.join(featureDir, f), "utf8"));
+      .map((f: string) => fs.readFileSync(path.join(featureDir, f), "utf8"));
     assert.ok(first.length > 0, "expand generated no features");
     for (const content of first) {
       assert.match(content, /@REQ-\d+ @SCN-\d+/, content.slice(0, 200));
@@ -472,7 +472,7 @@ test("expand tags every scenario it generates, and repeating it does not duplica
     assert.equal(expand().status, 0);
     const second = fs
       .readdirSync(featureDir)
-      .map((f) => fs.readFileSync(path.join(featureDir, f), "utf8"));
+      .map((f: string) => fs.readFileSync(path.join(featureDir, f), "utf8"));
     assert.deepEqual(second, first, "a second expand must not change the tags");
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });

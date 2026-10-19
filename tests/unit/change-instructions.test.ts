@@ -15,12 +15,6 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 
 const {
   buildInstructions,
@@ -29,12 +23,9 @@ const {
   STAGES,
 } = require("../../scripts/change/instructions");
 const { TEMPLATES } = require("../../scripts/change/cli");
+import { ROOT_DIR, cliFromRoot as cli } from "../helpers/cli";
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", cwd: ROOT_DIR });
-}
-
-function withChange(fn) {
+function withChange(fn: (dir: string) => void): void {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "instructions-"));
   const r = cli(
     "init",
@@ -110,9 +101,9 @@ test("the delta rules match what the validator enforces", () => {
   // If the validator's codes change, these rules become a lie. Naming the codes
   // here means the drift is visible in this test rather than in the field.
   const rules = buildInstructionsRules();
-  assert.ok(rules.some((r) => r.includes("no_rfc2119_keyword")));
-  assert.ok(rules.some((r) => r.includes("scenario_not_gherkin")));
-  assert.ok(rules.some((r) => r.includes("ADDED Requirements")));
+  assert.ok(rules.some((r: string) => r.includes("no_rfc2119_keyword")));
+  assert.ok(rules.some((r: string) => r.includes("scenario_not_gherkin")));
+  assert.ok(rules.some((r: string) => r.includes("ADDED Requirements")));
 
   const delta = fs.readFileSync(path.join(ROOT_DIR, "scripts/change/delta.ts"), "utf8");
   assert.match(delta, /no_rfc2119_keyword/);

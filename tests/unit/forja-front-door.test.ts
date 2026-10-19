@@ -11,18 +11,15 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
 
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
+import { ROOT_DIR, runCli } from "../helpers/cli";
+import type { CliResult } from "../helpers/cli";
 const { forjaCommand, FORJA_PACKAGE } = require(
   path.join(ROOT_DIR, "dist/scripts/cli/commands/project/Forja")
 );
 
 /** A fake forja: writes its argv and cwd to `log`, exits with `code`. */
-function fakeForja(dir, code = 0) {
+function fakeForja(dir: string, code = 0) {
   const script = path.join(dir, "fake-forja.js");
   const log = path.join(dir, "forja.log");
   fs.writeFileSync(
@@ -36,8 +33,8 @@ function fakeForja(dir, code = 0) {
   };
 }
 
-function run(cwd, env, ...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { cwd, env, encoding: "utf8" });
+function run(cwd: string, env: NodeJS.ProcessEnv, ...args: string[]): CliResult {
+  return runCli(args, { cwd, env });
 }
 
 function tmp() {

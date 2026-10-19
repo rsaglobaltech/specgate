@@ -26,11 +26,11 @@ const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
 const RICH_SEP = "|---|---|---|---|---|---|---|---|---|---|";
 
-function richRow(req, feature, tech, test, status) {
+function richRow(req: string, feature: string, tech: string, test: string, status: string) {
   return `| ${req} | SCN-${req} | ${feature} | UC | Cmd | Agg | Evt | ${tech} | ${test} | ${status} |`;
 }
 
-function mkProject(rows, extra: { files?: string[] } = {}) {
+function mkProject(rows: string[], extra: { files?: string[] } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "report-test-"));
   fs.mkdirSync(path.join(dir, "docs", "specs"), { recursive: true });
   fs.mkdirSync(path.join(dir, "features", "core"), { recursive: true });

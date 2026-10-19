@@ -17,6 +17,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { CliResult } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -33,7 +34,7 @@ function scaffold() {
   return { parent, projectDir: path.join(parent, fs.readdirSync(parent)[0]) };
 }
 
-function run(projectDir, ...args) {
+function run(projectDir: string, ...args: string[]): CliResult {
   return spawnSync(process.execPath, [CLI, "harness", "init", ...args], {
     cwd: projectDir,
     encoding: "utf8",
@@ -61,7 +62,7 @@ test("leaves test_cmd unset rather than writing a placeholder that exits 0", () 
     const config = fs.readFileSync(path.join(projectDir, "harness.config.yaml"), "utf8");
     const live = config
       .split("\n")
-      .filter((line) => !line.trimStart().startsWith("#"))
+      .filter((line: string) => !line.trimStart().startsWith("#"))
       .join("\n");
     assert.ok(!/^\s*test_cmd:/m.test(live), "test_cmd must not be set when none was detected");
     assert.ok(!/echo /.test(live), "no echo placeholder — it would pass the gate unconditionally");
@@ -75,7 +76,7 @@ test("warns when no test command was detected, and says why that is safe", () =>
   try {
     const r = run(projectDir, "--json");
     const doc = JSON.parse(r.stdout);
-    const codes = doc.status.map((d) => d.code);
+    const codes = doc.status.map((d: { code: string }) => d.code);
     assert.ok(codes.includes("harness_test_cmd_unset"), `codes: ${codes.join(", ")}`);
     assert.equal(doc.testCmd, null);
   } finally {
@@ -173,7 +174,7 @@ test("the generated config leaves the agent unset on purpose", () => {
     const config = fs.readFileSync(path.join(projectDir, "harness.config.yaml"), "utf8");
     const live = config
       .split("\n")
-      .filter((line) => !line.trimStart().startsWith("#"))
+      .filter((line: string) => !line.trimStart().startsWith("#"))
       .join("\n");
     assert.ok(!/^\s*agent:/m.test(live), "agent must not be set");
     assert.match(config, /# agent: /, "but it must be shown, commented, as a template");

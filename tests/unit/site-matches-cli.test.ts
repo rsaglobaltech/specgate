@@ -11,21 +11,16 @@
  * a missing feature.
  */
 
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import path = require("node:path");
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 const { PROVIDERS } = require("../../scripts/cli/commands/config/CiInitCommand");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
+import { cli } from "../helpers/cli";
 
 test("the site names no CI provider the CLI would reject", () => {
   const supported = Object.keys(PROVIDERS).map((p) => p.toLowerCase());

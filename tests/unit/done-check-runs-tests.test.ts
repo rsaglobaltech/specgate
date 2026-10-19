@@ -17,16 +17,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
+import { cli } from "../helpers/cli";
 
 const FEATURE = `Feature: Health
 
@@ -76,14 +67,14 @@ function project(opts: any = {}) {
   return { parent, dir };
 }
 
-function statusOf(dir) {
+function statusOf(dir: string) {
   const row = fs
     .readFileSync(path.join(dir, "docs/specs/traceability.md"), "utf8")
     .split("\n")
-    .find((l) => l.startsWith("| REQ-001"));
+    .find((l: string) => l.startsWith("| REQ-001"));
   return row
     .split("|")
-    .map((c) => c.trim())
+    .map((c: string) => c.trim())
     .filter(Boolean)
     .pop();
 }

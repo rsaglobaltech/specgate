@@ -64,7 +64,7 @@ test("read_spec returns spec.md content and lists docs/specs/*.md", () => {
     assert.ok(r.specMd.includes("Acme Energy Hub"), "specMd should contain project name");
     assert.ok(Array.isArray(r.files));
     assert.ok(
-      r.files.some((f) => f.endsWith("traceability.md")),
+      r.files.some((f: string) => f.endsWith("traceability.md")),
       "should list traceability.md"
     );
   } finally {
@@ -101,11 +101,11 @@ test("list_requirements returns an array of requirement objects", () => {
 
     const r = listRequirements({ projectDir }) as any;
     assert.ok(Array.isArray(r.requirements));
-    const ids = r.requirements.map((req) => req.id);
+    const ids = r.requirements.map((req: { id: string }) => req.id);
     assert.ok(ids.includes("REQ-501"), "should find REQ-501");
     assert.ok(ids.includes("REQ-502"), "should find REQ-502");
 
-    const req501 = r.requirements.find((req) => req.id === "REQ-501");
+    const req501 = r.requirements.find((req: { id: string }) => req.id === "REQ-501");
     assert.ok(req501.title.includes("First custom requirement"), `title was: ${req501.title}`);
     assert.ok(typeof req501.line === "number");
     assert.ok(req501.file.includes("spec.md"));
@@ -123,7 +123,7 @@ test("list_requirements deduplicates IDs across files", () => {
     fs.appendFileSync(tracePath, "\n| REQ-077 | reference |\n");
 
     const r = listRequirements({ projectDir }) as any;
-    const occurrences = r.requirements.filter((req) => req.id === "REQ-077");
+    const occurrences = r.requirements.filter((req: { id: string }) => req.id === "REQ-077");
     assert.equal(occurrences.length, 1, "REQ-077 should appear exactly once");
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });

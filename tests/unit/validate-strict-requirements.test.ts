@@ -15,19 +15,20 @@
  * unchecked prose, and the default still does not.
  */
 
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import { test } from "node:test";
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { spawnSync } from "node:child_process";
+import type { CliResult } from "../helpers/cli";
 
 const REPO_ROOT = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
 const CLI = path.join(REPO_ROOT, "bin", "specgate.js");
 
-function cli(...args) {
+function cli(...args: string[]): CliResult {
   return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8" });
 }
 
@@ -38,7 +39,7 @@ function scaffold() {
   return { parent, projectDir: path.join(parent, fs.readdirSync(parent)[0]) };
 }
 
-function writeCapabilitySpec(projectDir, name, body) {
+function writeCapabilitySpec(projectDir: string, name: string, body: string) {
   const dir = path.join(projectDir, "docs/specs/capabilities", name);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "spec.md"), body, "utf8");

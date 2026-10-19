@@ -14,12 +14,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
+import { ROOT_DIR, cliFromRoot as cli } from "../helpers/cli";
+import type { Phrases } from "../../packages/core/src/domain/Language";
 
 const { PHRASES, KEYWORDS } = require("../../packages/core/src/domain/Language");
 const {
@@ -27,11 +23,7 @@ const {
   phrases,
 } = require("../../packages/core/src/infrastructure/DiskLanguageRepository");
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", cwd: ROOT_DIR });
-}
-
-function withProject(fn) {
+function withProject(fn: (dir: string) => void) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "language-"));
   const r = cli(
     "init",
@@ -53,7 +45,7 @@ function withProject(fn) {
 test("no translation table translates a keyword", () => {
   // The heart of it. If a table ever renders "DEBE" where SHALL belongs, the
   // generated delta stops parsing.
-  for (const [lang, table] of Object.entries(PHRASES) as [string, any][]) {
+  for (const [lang, table] of Object.entries(PHRASES) as [string, Phrases][]) {
     const rendered = [
       table.systemShall("x"),
       table.systemShallMeet("y"),
@@ -67,7 +59,7 @@ test("no translation table translates a keyword", () => {
 
 test("every language declares the same phrases", () => {
   const reference = Object.keys(PHRASES.en).sort();
-  for (const [lang, table] of Object.entries(PHRASES)) {
+  for (const [lang, table] of Object.entries(PHRASES) as [string, Phrases][]) {
     assert.deepEqual(Object.keys(table).sort(), reference, `${lang} is missing phrases`);
   }
 });
@@ -82,7 +74,7 @@ test("a regional tag falls back to its base language, not to English", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "language-tag-"));
   try {
     fs.mkdirSync(path.join(dir, ".specgate"), { recursive: true });
-    const write = (language) =>
+    const write = (language: string) =>
       fs.writeFileSync(
         path.join(dir, ".specgate", "config.json"),
         JSON.stringify({ language }),

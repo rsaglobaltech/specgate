@@ -12,13 +12,20 @@ const os = require("node:os");
 const path = require("node:path");
 const http = require("node:http");
 const { spawn, spawnSync } = require("node:child_process");
+import type { SpawnSyncReturns } from "node:child_process";
+import type { IncomingMessage } from "node:http";
+import type { CliResult } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
-function cli(cwd, args, opts: any = {}) {
+function cli(
+  cwd: string,
+  args: string[],
+  opts: { input?: string; env?: Record<string, string> } = {}
+): CliResult {
   return spawnSync(process.execPath, [CLI_PATH, ...args], {
     cwd,
     encoding: "utf8",
@@ -27,20 +34,29 @@ function cli(cwd, args, opts: any = {}) {
   });
 }
 
-function out(r) {
+function out(r: CliResult) {
   return `${r.stdout}${r.stderr}`;
 }
 
-function git(cwd, ...args) {
+function git(cwd: string, ...args: string[]): SpawnSyncReturns<string> {
   return spawnSync("git", args, { cwd, encoding: "utf8" });
 }
 
-function lines(file) {
+/** One line of a harness events file, as these tests read it. */
+interface HarnessEvent {
+  t: number;
+  req: string;
+  attempt: number;
+  type: string;
+  [field: string]: unknown;
+}
+
+function lines(file: string): HarnessEvent[] {
   return fs
     .readFileSync(file, "utf8")
     .split("\n")
     .filter(Boolean)
-    .map((l) => JSON.parse(l));
+    .map((l: string) => JSON.parse(l));
 }
 
 /** A Node repository with code, adopted by plain `specgate init`. */
@@ -60,7 +76,7 @@ function adopted() {
   return { parent, dir, done: () => fs.rmSync(parent, { recursive: true, force: true }) };
 }
 
-function openChange(dir) {
+function openChange(dir: string) {
   assert.equal(cli(dir, ["propose", "pricing", "--capability", "pricing"]).status, 0);
   fs.writeFileSync(
     path.join(dir, "docs/specs/changes/pricing/specs/pricing/spec.md"),
@@ -72,7 +88,7 @@ function openChange(dir) {
   );
 }
 
-function commitAll(dir) {
+function commitAll(dir: string) {
   git(dir, "init", "-q", "-b", "develop");
   git(dir, "config", "user.email", "live@example.com");
   git(dir, "config", "user.name", "Live Test");
@@ -130,12 +146,12 @@ test("REQ-128 SCN-128a: the harness records the attempt and its gate as events",
 
 // ── REQ-129, REQ-130 ─────────────────────────────────────────────────────────
 
-function stream(dir) {
-  const call = (id, name, input) => ({
+function stream(dir: string) {
+  const call = (id: string, name: string, input: Record<string, string>) => ({
     type: "assistant",
     message: { content: [{ type: "tool_use", id, name, input }] },
   });
-  const result = (id, content, isError = false) => ({
+  const result = (id: string, content: string, isError = false) => ({
     type: "user",
     message: { content: [{ type: "tool_result", tool_use_id: id, content, is_error: isError }] },
   });
@@ -206,18 +222,21 @@ test("REQ-129 SCN-129a + REQ-130 SCN-130a: Claude Code's steps become masked eve
 
 // ── REQ-131, REQ-132 ─────────────────────────────────────────────────────────
 
-function get(port, urlPath, host = `127.0.0.1:${port}`) {
-  return new Promise<any>((resolve, reject) => {
-    const req = http.get({ host: "127.0.0.1", port, path: urlPath, headers: { host } }, (res) => {
-      let body = "";
-      res.on("data", (d) => (body += d));
-      res.on("end", () => resolve({ status: res.statusCode, body }));
-    });
+function get(port: number, urlPath: string, host = `127.0.0.1:${port}`) {
+  return new Promise<{ status: number | undefined; body: string }>((resolve, reject) => {
+    const req = http.get(
+      { host: "127.0.0.1", port, path: urlPath, headers: { host } },
+      (res: IncomingMessage) => {
+        let body = "";
+        res.on("data", (d: Buffer) => (body += d));
+        res.on("end", () => resolve({ status: res.statusCode, body }));
+      }
+    );
     req.on("error", reject);
   });
 }
 
-async function studio(dir) {
+async function studio(dir: string) {
   const port = 41000 + Math.floor(Math.random() * 2000);
   // Its own process group: the CLI runs studio as a child, and killing only the
   // CLI would leave the server holding the test open.
@@ -228,7 +247,7 @@ async function studio(dir) {
   });
   await new Promise<void>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("studio did not start")), 8000);
-    child.stdout.on("data", (d) => {
+    child.stdout.on("data", (d: Buffer) => {
       if (String(d).includes("http://")) {
         clearTimeout(timer);
         resolve();
@@ -254,7 +273,8 @@ test("REQ-131 SCN-131a: the live view shows a requirement in progress, and pushe
     const file = path.join(p.dir, ".harness/events/REQ-002.jsonl");
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const now = Math.floor(Date.now() / 1000);
-    const ev = (e) => JSON.stringify({ t: now, req: "REQ-002", attempt: 1, ...e }) + "\n";
+    const ev = (e: Record<string, unknown>) =>
+      JSON.stringify({ t: now, req: "REQ-002", attempt: 1, ...e }) + "\n";
     fs.writeFileSync(
       file,
       ev({ type: "attempt", state: "start" }) +
@@ -263,7 +283,7 @@ test("REQ-131 SCN-131a: the live view shows a requirement in progress, and pushe
         ev({ type: "step", kind: "test", target: "npm test", result: "ok", pass: 3, fail: 0 })
     );
     const model = JSON.parse((await get(s.port, "/live.json")).body);
-    const r = model.requirements.find((x) => x.req === "REQ-002");
+    const r = model.requirements.find((x: { req: string }) => x.req === "REQ-002");
     assert.equal(r.attempt, 1);
     assert.equal(r.phase, "test");
     assert.deepEqual(r.files, ["src/a.ts"]);
@@ -276,8 +296,8 @@ test("REQ-131 SCN-131a: the live view shows a requirement in progress, and pushe
       const got: string[] = [];
       const req = http.get(
         { host: "127.0.0.1", port: s.port, path: "/live/stream", headers: { host: "localhost" } },
-        (res) => {
-          res.on("data", (d) => {
+        (res: IncomingMessage) => {
+          res.on("data", (d: Buffer) => {
             for (const m of String(d).matchAll(/^data: (.*)$/gm)) got.push(m[1]);
             if (got.length === 1) {
               fs.appendFileSync(file, ev({ type: "attempt", state: "end", result: "pass" }));
@@ -292,7 +312,9 @@ test("REQ-131 SCN-131a: the live view shows a requirement in progress, and pushe
       req.on("error", reject);
       setTimeout(() => reject(new Error(`no push: ${got.length}`)), 6000);
     });
-    const last = JSON.parse(pushed[1]).requirements.find((x) => x.req === "REQ-002");
+    const last = JSON.parse(pushed[1]).requirements.find(
+      (x: { req: string }) => x.req === "REQ-002"
+    );
     assert.equal(last.state, "pass");
   } finally {
     s.stop();
@@ -356,9 +378,9 @@ test("REQ-133 SCN-133a: explore hands the agent the project and undoes what it w
 
 // ── REQ-134 ──────────────────────────────────────────────────────────────────
 
-function snapshot(dir) {
+function snapshot(dir: string) {
   const files: string[] = [];
-  const walk = (d) => {
+  const walk = (d: string) => {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       const f = path.join(d, e.name);
       if (e.isDirectory()) walk(f);

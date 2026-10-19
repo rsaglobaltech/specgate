@@ -180,7 +180,7 @@ test("marks round-trip through the append-only file", () => {
 
     const marks = readFalseFailures(dir);
     assert.deepEqual(
-      marks.map((m) => m.requirement),
+      marks.map((m: { requirement: string }) => m.requirement),
       ["REQ-001", "REQ-002"],
       "appending must not overwrite what came before"
     );
