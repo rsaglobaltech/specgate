@@ -14,7 +14,7 @@ loop of four verbs: **propose → apply → archive**, with **status** to see wh
 they are. `check` stays as the CI entry point. Everything else is still there,
 behind `specgate --help --all`.
 
-Decision record: [ADR-0035](../../adr/0035-four-verbs-one-lifecycle.md).
+Decision record: [ADR-0035](../../../adr/0035-four-verbs-one-lifecycle.md).
 
 ## Scope
 

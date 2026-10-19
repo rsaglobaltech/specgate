@@ -44,6 +44,16 @@
 | REQ-104 | SCN-104a | - | - | - | - | - | - | TBD | Draft |
 | REQ-105 | SCN-105a | - | - | - | - | - | - | TBD | Draft |
 | REQ-106 | SCN-106a | - | - | - | - | - | - | TBD | Draft |
+| REQ-107 | SCN-107a | `features/daily-surface/REQ-107.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-108 | SCN-108a | `features/daily-surface/REQ-108.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-109 | SCN-109a | `features/daily-surface/REQ-109.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-110 | SCN-110a | `features/daily-surface/REQ-110.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-111 | SCN-111a | `features/daily-surface/REQ-111.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-112 | SCN-112a | `features/daily-surface/REQ-112.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-113 | SCN-113a | `features/daily-surface/REQ-113.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-114 | SCN-114a | `features/daily-surface/REQ-114.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-115 | SCN-115a | `features/daily-surface/REQ-115.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
+| REQ-116 | SCN-116a | `features/daily-surface/REQ-116.feature` | - | - | - | - | - | tests/unit/compact-use.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -4,7 +4,7 @@
 
 - [x] 1.1 Write the delta spec for `daily-surface` (REQ-107…REQ-116)
 - [x] 1.2 Write ADR-0035
-- [ ] 1.3 A person reviews the change (PR)
+- [x] 1.3 A person reviews the change (PR)
 
 ## 2. Engine
 

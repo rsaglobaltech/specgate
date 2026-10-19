@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — 2026-10-19 (change `compact-use`)
+Accepted — 2026-10-19 (change `compact-use`, archived)
 
 ## Context
 
