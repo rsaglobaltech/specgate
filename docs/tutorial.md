@@ -15,9 +15,14 @@ explains the _concept_ first, then the command, then what you should see.
 > **This tutorial starts from a domain pack.** If you are starting from your
 > own plan or a client's brief instead, follow
 > [Write the brief](start/write-the-brief.md) and the
-> [From scratch](start/scratch-1-install.md) journey — `specgate draft` turns
-> the brief into requirements module by module. Everything from Step 3 on
-> applies to both.
+> [From scratch](start/scratch-1-install.md) journey — `specgate propose
+> --from-brief` turns the brief into requirements module by module. Everything
+> from Step 3 on applies to both.
+>
+> **The daily loop is four verbs**: `propose` opens a change, `apply` delivers
+> one requirement through the gate, `status` says what is left, and `archive`
+> closes the change once its code is done. `init` runs once; `check` is the
+> same gate in CI. Steps 3–6 walk through all of them.
 
 ---
 
@@ -58,7 +63,7 @@ doubt.
 
 | You run it from…                                      | These commands                                                                                                                          |
 | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| 📍 your **implementation project** (`smart-parking/`) | `init`\* · `status` · `new` · `check` · `done` · `specops add` · `specops diff` · `specops sync` · `specops remove` · `change` · `harness run` |
+| 📍 your **implementation project** (`smart-parking/`) | `init`\* · `propose` · `apply` · `status` · `archive` · `check` · `specops add` · `specops diff` · `specops sync` · `specops remove` · `change` · `harness run` |
 | 📦 the **pack repo** (`parking-management-specops/`)  | `pack init` · `pack lint` · `pack lint --graph` · `pack infer` · and "add a requirement as a pack author"                               |
 
 \* `init` is run from the _parent_ directory — it _creates_ the project
@@ -73,13 +78,13 @@ folder. After that, you `cd` into it and stay there.
 3. [Step 2 — Apply the domain pack (`specops add`)](#3-step-2-apply-the-domain-pack-specops-add)
 4. [Step 3 — Run the gate (`check`)](#4-step-3-run-the-gate-check)
 5. [Step 4 — See what is left to build (`status`)](#5-step-4-see-what-is-left-to-build-status)
-6. [Step 5 — Implement a requirement and close the loop (`done`)](#6-step-5-implement-a-requirement-and-close-the-loop-done)
-7. [Step 6 — Add a NEW requirement (`new`)](#7-step-6-add-a-new-requirement-new)
+6. [Step 5 — Implement a requirement and deliver it (`apply`)](#6-step-5-implement-a-requirement-and-deliver-it-apply)
+7. [Step 6 — Add a NEW requirement (`propose` · `archive`)](#7-step-6-add-a-new-requirement-propose-archive)
 8. [Step 7 — Upgrade the pack version (`specops diff` + `specops sync`)](#8-step-7-upgrade-the-pack-version-specops-diff-specops-sync)
 9. [Step 8 — Remove a pack (`specops remove`)](#9-step-8-remove-a-pack-specops-remove)
 10. [Step 9 — Author your own pack (`pack init` · `lint` · `--graph` · `infer`)](#10-step-9-author-your-own-pack)
 11. [Step 10 — Add a NEW requirement (as a pack author)](#11-step-10-add-a-new-requirement-as-a-pack-author)
-12. [Step 11 — Change a requirement that already shipped (`change`)](#12-step-11-change-a-requirement-that-already-shipped-change)
+12. [Step 11 — Change a requirement that already shipped (`propose`)](#12-step-11-change-a-requirement-that-already-shipped-propose)
 13. [Step 12 — Automate delivery with the harness (`harness run`)](#13-step-12-automate-delivery-with-the-harness-harness-run)
 14. [Step 13 — Companion tooling (VS Code · MCP · agents)](#14-step-13-companion-tooling)
 15. [Command cheat-sheet](#15-command-cheat-sheet)
@@ -97,8 +102,8 @@ Optionally install the CLI globally so `specgate` works everywhere:
 
 ```bash
 npm install -g @rsaglobaltech/specgate@latest
-specgate --version          # 0.18.0
-specgate --help             # the six commands you start with: init, draft, status, new, check, done
+specgate --version          # 0.20.0
+specgate --help             # the six you start with: init; propose, apply, status, archive; check
 specgate --help --all       # the whole surface
 ```
 
@@ -253,6 +258,8 @@ specgate config set test_cmd "./mvnw -B verify"   # or mvn -B test, npm test, py
      `check` and `done` now run it.
 ```
 
+(`done` is the old name of `apply`; both run it.)
+
 ### Do it
 
 ```bash
@@ -290,25 +297,30 @@ specgate status
 ```
 
 ```text
-  📊 Project status  smart-parking
+  ◆ specgate · status   smart-parking
 
-  Requirements  6 total · 0 done · 6 pending
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 6 done
 
-  To do
-    REQ-000   Health baseline                               a test and code
-    REQ-001   Monitor Capacity Threshold                    a test and code
-    REQ-002   Register Vehicle Entry                        a test and code
-    REQ-003   Calculate Parking Fee                         a test and code
-    REQ-004   Detect Overstay                               a test and code
-    REQ-005   Send Payment Receipt                          a test and code
+  To do ──────────────────────────────────────────────────
+    ○ REQ-000  Health baseline              its test
+    ○ REQ-001  Monitor Capacity Threshold   a test and code
+    ○ REQ-002  Register Vehicle Entry       a test and code
+    ○ REQ-003  Calculate Parking Fee        a test and code
+    ○ REQ-004  Detect Overstay              a test and code
+    ○ REQ-005  Send Payment Receipt         a test and code
 
-  Packs  (.specops.lock)
-    backend @ v0.1.0
-
-  Next  specgate done REQ-000  — once a test mentions REQ-000 — that mention is the link; done checks first
+  Next ───────────────────────────────────────────────────
+  ➜  specgate apply REQ-000
+     once a test mentions REQ-000 — that mention is the link; apply checks first
 ```
 
-Start every day with it; you never have to remember which command applies.
+(Output trimmed; the layout is the CLI's.) Start every day with it; you never
+have to remember which command applies. Requirements of a change that is still
+open are listed too — they count while the change is in flight.
+
+> **Before a change exists**, `specgate explore "<question>"` prints a brief of
+> the project's state to think through with a person or an agent; it writes
+> nothing. See the [command reference](commands.md#starting).
 
 ### Machine-readable mode
 
@@ -324,7 +336,7 @@ consumes in Step 12, and what an agent reads to know what to work on.
 
 ---
 
-## 6. Step 5 — Implement a requirement and close the loop (`done`)
+## 6. Step 5 — Implement a requirement and deliver it (`apply`)
 
 > 📍 **Run from:** inside your project — `smart-parking/`.
 
@@ -337,23 +349,21 @@ The loop for every requirement is the same four moves:
 2. **Write the test first**, and **name the requirement in it** —
    `REQ-001` in the test name or a comment. That mention is the link.
 3. **Write the production code** until the test passes.
-4. **Close it** with `done`, which runs the gate first.
+4. **Deliver it** with `apply`, which runs the gate first.
 
 ### Do it
 
-`done` refuses while nothing proves the requirement:
+`apply` refuses while no test names the requirement:
 
 ```bash
-specgate done REQ-001
+specgate apply REQ-001
 ```
 
 ```text
-  ✖  --strict-tdd violations detected:
-  [TDD-1] Test artifact is TBD but status is 'Implemented' (scenario: SCN-001)
-     TDD-1: Write a test that mentions the requirement (REQ-NNN) — that is the link; …
+  ◆ specgate · apply REQ-001   Implemented
 
-✖  REQ-001 not marked Implemented: validation failed. [done_validate_failed]
-     fix: Fix what validate reports, then run `done` again.
+  ✖  REQ-001  REQ-001 has no test that names it yet (TDD-1).  [apply_no_test]
+     fix: write a test that names REQ-001 (and its scenario SCN-001), then run specgate apply REQ-001
 ```
 
 Write the test, naming the requirement and its scenario:
@@ -366,21 +376,26 @@ Write the test, naming the requirement and its scenario:
 …then the code, until your suite passes, and run it again:
 
 ```bash
-specgate done REQ-001
+specgate apply REQ-001
 ```
 
 ```text
-✔  REQ-001 → Implemented (1 row updated)
+  ✔  Specification   the gate, for REQ-001
+  ✔  Tests           ./mvnw -B verify
+
+  ✔  REQ-001 → Implemented (1 row updated)
 ```
 
-`done` runs the gate — the specification **and** your `test_cmd` — and marks
-the requirement `Implemented` only if it passes. `--status Verified` (or
-`Released`) targets a later state; `done REQ-001 REQ-002 …` closes several
-with one run of the suite; `--no-check` skips the gate, and says so.
+`apply` runs the gate — the specification **and** your `test_cmd` — and marks
+the requirement `Implemented` only if it passes; when the gate fails it writes
+nothing. Without an id it takes the next requirement `status` names.
+`--status Verified` (or `Released`) targets a later state; `apply REQ-001
+REQ-002 …` delivers several with one run of the suite; `--no-check` skips the
+gate, and says so. `specgate done` is its old name and still works.
 
 ---
 
-## 7. Step 6 — Add a NEW requirement (`new`)
+## 7. Step 6 — Add a NEW requirement (`propose` · `archive`)
 
 > 📍 **Run from:** inside your project — `smart-parking/`. You do **not**
 > touch the pack repo here.
@@ -391,68 +406,106 @@ The pack covers parking operations in general, but **your** project needs
 something extra — say, _"operators can reserve a parking spot in advance."_
 You add it **locally, in your project**. It is yours, not the pack's.
 
-A requirement lives in three places: its section in `spec.md`, a tagged
-scenario under `features/`, and its row in the matrix. `specgate new` writes
-all three at once.
+New work arrives as a **change**: a folder under `docs/specs/changes/` with a
+proposal, a task list and a *delta* — the requirements it adds, with their
+scenarios. The change stays open while you build it, and its requirements
+already count: `status` lists them, `apply` delivers them. When every one is
+`Implemented`, `archive` merges the delta into the specification. **A change
+is archived when its code is done** — spec and code land in the same pull
+request.
 
 ### Do it
 
 ```bash
-specgate new "Operators can reserve a parking spot in advance"
+specgate propose add-reservations --capability reservations
 ```
 
 ```text
-✔  REQ-006 Operators can reserve a parking spot in advance (Draft)
-   spec.md                      ## REQ-006 — rewrite the obligation
-   features/operators-can-reserve-a-parking-spot.feature @SCN-006 — fill in the <placeholders>
-   docs/specs/traceability.md   row linked to the scenario
+  ✔  Change add-reservations created · lite · REQ ids REQ-006…REQ-008 reserved
 
-   Next: write a test that mentions REQ-006 — that is the link — then specgate check
+    + docs/specs/changes/add-reservations/change.yaml
+    + docs/specs/changes/add-reservations/proposal.md
+    + docs/specs/changes/add-reservations/tasks.md
+    + docs/specs/changes/add-reservations/specs/reservations/spec.md
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate apply
+     after you write the delta, a test that names each requirement, and the code
 ```
 
-It takes the next free id. Now make it real:
+The reserved range means two changes in flight never hand out the same
+`REQ-NNN`. Write the delta in
+`docs/specs/changes/add-reservations/specs/reservations/spec.md` —
+`specgate change instructions specs` prints the template and the rules:
 
-1. In `spec.md`, replace the placeholder sentence with the real obligation:
+```markdown
+# Delta — reservations
 
-   ```markdown
-   ## REQ-006 — Operators can reserve a parking spot in advance
+## ADDED Requirements
 
-   An operator MUST be able to reserve a specific spot for a future time
-   window, so a known vehicle is guaranteed space on arrival.
-   ```
+### Requirement: REQ-006 — Reserve a spot in advance
 
-2. In the `.feature` file, replace the `<placeholders>` with a real example —
-   keep the `@REQ-006 @SCN-006` tags, they are what the matrix reads:
+The system SHALL let an operator reserve a free spot for a future window.
 
-   ```gherkin
-   Feature: Operators can reserve a parking spot in advance
+#### Scenario: Reserving an available spot
 
-     @REQ-006 @SCN-006
-     Scenario: Reserving an available spot for a future window
-       Given spot "A-12" is free between "09:00" and "11:00"
-       When an operator reserves spot "A-12" for that window
-       Then spot "A-12" is marked "Reserved" for that window
-   ```
+- GIVEN spot "A-12" is free between "09:00" and "11:00"
+- WHEN an operator reserves spot "A-12" for that window
+- THEN spot "A-12" is marked "Reserved" for that window
+```
 
-3. Then the same loop as Step 5: a test that names `REQ-006`, the code,
-   `specgate done REQ-006`, `specgate check`.
+Steps are plain `- GIVEN` bullets, and the body needs `SHALL`, `MUST`,
+`SHOULD` or `MAY`. `specgate status` now lists `REQ-006` with *a test and
+code* to go. `archive` refuses while it is pending:
 
-While it is `Draft`, the gate leaves it alone; once it leaves `Draft`, the
-gate refuses any `<placeholder>` left in its scenario.
+```text
+  ✖  add-reservations  Change 'add-reservations' has 1 requirement(s) not delivered yet: REQ-006.  [archive_requirements_pending]
+     fix: specgate apply REQ-006
+```
 
+So do what Step 5 did — a test that names `REQ-006`, the code — then deliver
+it and close the change:
+
+```bash
+specgate apply REQ-006
+specgate archive add-reservations
+```
+
+```text
+  ✔  REQ-006 → Implemented (1 row updated)
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate archive add-reservations
+     every requirement of add-reservations is delivered
+
+  ✔  Archived as 2026-10-19-add-reservations
+
+    Specs         1 added · 0 modified · 0 removed
+    Traceability  1 row(s) added · 0 updated · 0 removed
+    Features      1 materialised
+```
+
+Archiving writes the requirement into `docs/specs/capabilities/reservations/`,
+its scenario into `features/reservations/REQ-006.feature`, its matrix row, and
+files the change under `docs/specs/changes/archive/<date>-<id>/`. Tick
+`tasks.md` as you go; once every requirement passed the gate, an unticked task
+is a warning, not a refusal. `--force` never skips the requirement check.
+
+> **One requirement, no change folder?** `specgate new "<title>"` still writes
+> a draft `## REQ-NNN` straight into `spec.md`, with a scenario of
+> `<placeholders>` under `features/` — the quick path for a project that keeps
+> everything in `spec.md`. Rewrite the placeholders, then `apply` as above.
+>
 > **A whole new module, not one requirement?** Write it down in
-> `docs/brief.md` and let `specgate draft <module>` turn it into requirements —
-> see [Write the brief](start/write-the-brief.md).
+> `docs/brief.md` and let `specgate propose --from-brief` turn it into a draft
+> change, module by module — see [Write the brief](start/write-the-brief.md).
+> A draft follows the same path: reviewed, applied, then archived.
 >
 > **Watch the ids when you upgrade the pack.** Your local requirement took
-> the next free id, `REQ-006`. If a later pack version adds its own `REQ-006`,
-> `specops diff` shows the new feature file and `check` fails with a
-> duplicate scenario id after the sync. Read the diff before syncing, and
-> renumber your local requirement first if the pack claims its id.
-
-> **This is the day-one path.** Once a requirement has shipped, changing it
-> goes through the change lifecycle instead — Step 11 — so the modification
-> is reviewable as intent rather than as a diff of the matrix.
+> the next free id. If a later pack version adds the same id, `specops diff`
+> shows the new feature file and `check` fails with a duplicate scenario id
+> after the sync. Read the diff before syncing, and renumber your local
+> requirement first if the pack claims its id.
 
 ---
 
@@ -548,7 +601,7 @@ git commit -m "chore: sync parking pack to v0.2.0"
 ```
 
 > **Read `status` after a sync.** A requirement you had closed can come back
-> as *Ready to close* when the sync rewrote its files — run `specgate done`
+> as *Ready to close* when the sync rewrote its files — run `specgate apply`
 > for it again; its test is still there, so the gate passes.
 
 > Running `specgate specops sync` **without** `--pack-version` just re-renders
@@ -756,71 +809,29 @@ That is the full pack-author loop: **draft scenario → `pack infer` → merge
 
 ---
 
-## 12. Step 11 — Change a requirement that already shipped (`change`)
+## 12. Step 11 — Change a requirement that already shipped (`propose`)
 
 > 📍 **Run from:** inside your project — `smart-parking/`.
 
 ### Concept
 
-Step 6 added a requirement on a blank page. This is the other case, the one
-you hit for the rest of the project's life: **a requirement shipped, and now
-it has to change.** A change makes the modification reviewable as intent — a
-delta stating only what moves — and archiving it rewrites the specification,
-the scenario and the matrix row for you.
+Step 6 added a requirement. This is the other case, the one you hit for the
+rest of the project's life: **a requirement shipped, and now it has to
+change.** It is the same loop — `propose`, `apply`, `archive` — with a delta
+that states only what moves, so the review reads the modification as intent.
 
-`change` works on the requirements under `docs/specs/capabilities/` — the
-ones changes and [drafts](start/write-the-brief.md) create. A requirement
-written with `specgate new` lives only in `spec.md`: change that one by
-editing its section and its scenario, and `check` and `done` hold it to the
-same gate.
+This works on the requirements under `docs/specs/capabilities/` — the ones
+changes and [drafts](start/write-the-brief.md) create. A requirement written
+with `specgate new` lives only in `spec.md`: change that one by editing its
+section and its scenario, and `check` and `apply` hold it to the same gate.
 
-### Bring a capability in through a change
-
-Say the reservation feature arrives as a change instead of a one-line `new`:
-
-```bash
-specgate change new add-reservations --capability reservations
-#   ✔ Change add-reservations created (lite · REQ ids REQ-007…REQ-009 reserved)
-```
-
-The reserved range means two changes in flight never hand out the same
-`REQ-NNN`. Write the delta in
-`docs/specs/changes/add-reservations/specs/reservations/spec.md` —
-`specgate change instructions specs` prints the template and the rules:
-
-```markdown
-# Delta — reservations
-
-## ADDED Requirements
-
-### Requirement: REQ-007 — Reserve a spot in advance
-
-The system SHALL let an operator reserve a free spot for a future window.
-
-#### Scenario: Reserving an available spot
-
-- GIVEN spot "A-12" is free between "09:00" and "11:00"
-- WHEN an operator reserves spot "A-12" for that window
-- THEN spot "A-12" is marked "Reserved" for that window
-```
-
-Tick its `tasks.md`, then archive:
-
-```bash
-specgate change validate add-reservations
-specgate change archive add-reservations
-#   ✔ Archived as 2026-10-11-add-reservations
-#     specs:        1 added · 0 modified · 0 removed
-#     traceability: 1 row(s) added · 0 updated · 0 removed
-```
-
-### Change it later
+### Do it
 
 Months on, reservations need a deposit. Open a second change and write only
 what moves:
 
 ```bash
-specgate change new reservations-need-a-deposit
+specgate propose reservations-need-a-deposit --capability reservations
 ```
 
 ```markdown
@@ -828,7 +839,7 @@ specgate change new reservations-need-a-deposit
 
 ## MODIFIED Requirements
 
-### Requirement: REQ-007 — Reserve a spot in advance
+### Requirement: REQ-006 — Reserve a spot in advance
 
 The system SHALL require a deposit before confirming a reservation, and SHALL
 release the spot if the deposit is not paid within 15 minutes.
@@ -841,22 +852,31 @@ release the spot if the deposit is not paid within 15 minutes.
 ```
 
 `MODIFIED` replaces the whole requirement block; it does not merge scenario
-by scenario. Steps are plain `- GIVEN` bullets, and the body needs `SHALL`,
-`MUST`, `SHOULD` or `MAY`.
+by scenario. While the change is open, `REQ-006` is judged as it will be after
+archive: `status` lists it again and `archive` refuses until it is applied.
+Extend its test to cover the deposit, change the code, then:
 
 ```bash
-specgate change archive reservations-need-a-deposit --dry-run   # the plan, nothing written
-specgate change archive reservations-need-a-deposit
-#   ✔ Archived as 2026-10-11-reservations-need-a-deposit
-#     specs:        0 added · 1 modified · 0 removed
-#   ▲  features/reservations/REQ-007.feature … rewritten from REQ-007's modified scenarios.
+specgate apply REQ-006
+specgate archive reservations-need-a-deposit --dry-run   # the plan, nothing written
+specgate archive reservations-need-a-deposit
+```
+
+```text
+  ✔  Archived as 2026-10-19-reservations-need-a-deposit
+
+    Specs         0 added · 1 modified · 0 removed
+    Traceability  0 row(s) added · 1 updated · 0 removed
+    Features      1 materialised
+
+  ▲  features/reservations/REQ-006.feature  features/reservations/REQ-006.feature rewritten from REQ-006's modified scenarios.  [archive_feature_regenerated]
+     fix: Review the diff: the feature file now matches the delta.
 ```
 
 Archiving applies the delta to `docs/specs/capabilities/`, rewrites the
-scenario under `features/`, updates the matrix row, and files the change
-under `docs/specs/changes/archive/<date>-<id>/`. The requirement is real work
-again: `specgate status` lists what it needs, and `done` refuses it until a
-test covers the new behaviour.
+scenario under `features/`, updates the matrix row, and files the change. If a
+test disproves the delta's wording while you build, fix the delta in the same
+change — nothing was merged yet.
 
 > **It composes with packs.** When the pack itself changes,
 > `specgate specops diff --as-change` derives exactly this kind of proposal
@@ -874,7 +894,7 @@ test covers the new behaviour.
 ### Concept
 
 Everything in Steps 4–6 — read the scenario, write the test, write the
-code, run `done` — is a loop a machine can drive. `harness run` is that
+code, run `apply` — is a loop a machine can drive. `harness run` is that
 driver. For each pending requirement, in an **isolated `git worktree`** on a
 fresh `harness/REQ-NNN` branch, it:
 
@@ -882,13 +902,15 @@ fresh `harness/REQ-NNN` branch, it:
    the exact artifact paths + any previous failure),
 2. shells out to **your** AI agent,
 3. gates the result with `validate --strict` + your test command,
-4. on green → runs `done` and commits; on red → retries, feeding the
+4. on green → marks it Implemented and commits; on red → retries, feeding the
    failure back into the next prompt,
 5. prints a pass/fail/attempts report.
 
 It is **vendor-neutral**: the agent is _any shell command_ that contains
 the `{prompt_file}` placeholder. The harness never merges a branch — you
-review and merge `harness/*` yourself.
+review and merge `harness/*` yourself — unless you ask for `--chain`, which
+merges each green requirement before cutting the next
+([The harness](harness.md#a-chain-of-requirements-merged-as-they-pass)).
 
 ### 13.1 Configure it — using **opencode** as the agent, with a project-wide prompt prefix
 
@@ -980,7 +1002,9 @@ specgate harness run --agent 'opencode run "$(cat {prompt_file})"' --test-cmd "m
 **Flags:** `--req REQ-NNN` (limit to specific requirements, repeatable —
 great for trying one first), `--max-attempts <n>`, `--base-branch <ref>`,
 `--timeout <seconds>`, `--keep-worktrees`, `--force` (recreate existing
-`harness/*` branches), `--format json`.
+`harness/*` branches), `--setup-cmd <cmd|none>` (the install each new worktree
+runs), `--format json`. To watch a run as it happens, `specgate studio` serves
+a live view at `/live` — see [The harness](harness.md).
 
 The command exits non-zero if any requirement did not pass, so CI can gate
 on it. Each result is a branch you can check out, inspect, and merge — or
@@ -1056,7 +1080,8 @@ specgate mcp serve                     # what that config starts, over stdio
 ```
 
 The server exposes the CLI as MCP tools — `specgate_status`, `specgate_check`,
-`specgate_done`, `specgate_change_new` and the rest — so an MCP-aware client
+`specgate_done`, `specgate_change_new`, `specgate_change_archive` and the rest
+(the four verbs under their older names) — so an MCP-aware client
 can drive the same loop natively. See [MCP server](mcp.md).
 
 ### Slash commands, for ten agent tools at once
@@ -1080,8 +1105,10 @@ survive.
 This tutorial started from `init`, on a blank page. On a repository that
 already has code, `specgate init` adopts it: it reads the layout, proposes the
 capabilities the code already implies and writes the spec skeleton without
-touching a line of source. `specgate doctor` reports what has
-drifted, with a fix per finding.
+touching a line of source. `specgate onboard --tour` runs the whole loop —
+propose, a test, `status`, `apply`, `archive`, `check` — on a temporary copy of
+it and narrates each step ([command reference](commands.md#starting)).
+`specgate doctor` reports what has drifted, with a fix per finding.
 
 ---
 
@@ -1092,18 +1119,19 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 | Command | Run from | What it does |
 | --- | --- | --- |
 | `specgate init [--config <f.yaml> --out <dir>]` | 📍 parent dir | Scaffold a new project, or adopt a repository that already has code |
-| `specgate draft [<module>]` | 📍 project | From a plan in `docs/brief.md` to requirements, one module at a time |
-| `specgate status` | 📍 project | What each requirement still needs, and the next command to run |
-| `specgate new "<title>"` | 📍 project | One requirement: its section, its tagged scenario, its row |
-| `specgate done <REQ-NNN …> [--status <S>]` | 📍 project | Run the gate, then mark it Implemented — or refuse |
-| `specgate check` | 📍 project | The gate: `validate --strict`, then your `test_cmd` |
-| `specgate config set test_cmd "<cmd>"` | 📍 project | Tell `check` and `done` how to run your tests |
+| `specgate propose <id> [--capability <c>]` | 📍 project | Open a change: proposal, tasks, a delta to write, reserved ids |
+| `specgate propose --from-brief [<module>]` | 📍 project | From a plan in `docs/brief.md` to a draft change, one module at a time (old name: `draft`) |
+| `specgate apply [<REQ-NNN …>] [--status <S>]` | 📍 project | Refuse with no test naming it; else run the gate, then mark it Implemented (old name: `done`) |
+| `specgate status` | 📍 project | What each requirement still needs — open changes included — and the next command to run |
+| `specgate archive <id> [--dry-run]` | 📍 project | Merge a change whose requirements are all Implemented (old name: `change archive`) |
+| `specgate check` | 📍 project | The gate, locally and in CI: `validate --strict`, then your `test_cmd` |
+| `specgate new "<title>"` | 📍 project | One requirement straight into `spec.md`: its section, its tagged scenario, its row |
+| `specgate explore ["<question>"]` | 📍 project | A brief of where the project stands, to think with before a change exists |
+| `specgate config set test_cmd "<cmd>"` | 📍 project | Tell `check` and `apply` how to run your tests |
 | `specgate matrix [--check]` | 📍 project | Regenerate the traceability matrix from spec, tags and tests |
 | `specgate plan [--json]` | 📍 project | The detailed per-requirement view behind `status` |
 | `specgate fix [--dry-run]` | 📍 project | Apply the repairs `validate` suggests |
-| `specgate change new <id> [--capability <c>]` | 📍 project | Open a change against specs that already shipped |
 | `specgate change status \| validate \| show \| list` | 📍 project | What to write next · check the deltas · inspect · enumerate |
-| `specgate change archive <id> [--dry-run]` | 📍 project | Apply the delta to the specs, scenarios and matrix, then file the change |
 | `specgate specops add --pack-repo … --pack-version … --pack … --var …` | 📍 project | Pull a pack in; writes `.specops.lock` and the `.specops/` baseline |
 | `specgate specops diff [--pack-version …] [--var …]` | 📍 project | Preview what a sync would change — writes nothing |
 | `specgate specops sync [--pack-version …] [--var …]` | 📍 project | Re-render and three-way merge the pack into the project |
@@ -1112,6 +1140,7 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 | `specgate specops contribute --change <id>` | 📍 project | Send a local change back upstream to the pack (never pushes) |
 | `specgate validate --against-lock` | 📍 project | Fail CI when the project drifted from the locked pack version |
 | `specgate harness run [--agent "… {prompt_file}"] [--req …]` | 📍 project | Agent builds each pending requirement on its own branch; the gate decides |
+| `specgate studio` | 📍 project | Local read-only view of the spec tree; `/live` shows the harness at work |
 | `specgate agents init [--tool …]` | 📍 project | Slash commands and instruction files for your agent tools |
 | `specgate mcp serve` | 📍 project | The MCP server over stdio |
 | `specgate pack init --out … --name … --type backend\|frontend\|contracts\|mobile` | 📦 pack repo | Scaffold a pack skeleton |
@@ -1121,18 +1150,18 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 
 **Three ways to add a requirement, side by side:**
 
-| | Day one (Step 6) | As a change (Step 11) | As a pack author (Step 10) |
+| | As a change (Steps 6 and 11) | Quick, in `spec.md` | As a pack author (Step 10) |
 | --- | --- | --- | --- |
 | Where | 📍 your implementation project | 📍 your implementation project | 📦 the pack repo |
-| 1 | `specgate new "<title>"` | `change new <id> --capability <c>` | draft a `.feature`, run `pack infer` |
-| 2 | rewrite its section and scenario | write the delta under `specs/<cap>/spec.md` | merge the inferred skeleton into `pack.yaml` |
-| 3 | a test that names the REQ | `change validate`, then `change archive` | add the feature template under `templates/` |
-| 4 | `done`, then `check` | a test that names the REQ, `done`, `check` | `pack lint --strict --graph` |
-| 5 | — | reviewable as intent, archived with a date | bump version, tag; consumers `specops diff` + `sync` |
+| 1 | `propose <id> --capability <c>` | `specgate new "<title>"` | draft a `.feature`, run `pack infer` |
+| 2 | write the delta under `specs/<cap>/spec.md` | rewrite its section and scenario | merge the inferred skeleton into `pack.yaml` |
+| 3 | a test that names the REQ, the code | a test that names the REQ, the code | add the feature template under `templates/` |
+| 4 | `apply`, then `archive` | `apply` | `pack lint --strict --graph` |
+| 5 | reviewable as intent, archived with a date | — | bump version, tag; consumers `specops diff` + `sync` |
 
-In none of them do you edit the matrix: it is generated. Use the middle
-column once the project is live — it is the one that leaves an audit trail
-of *why* a requirement changed.
+In none of them do you edit the matrix: it is generated. The first column is
+the daily loop — it leaves an audit trail of *why* a requirement was added or
+changed, and `check` runs the same gate in CI for all three.
 
 ---
 

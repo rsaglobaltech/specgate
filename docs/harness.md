@@ -3,7 +3,7 @@
 # The harness
 
 The harness delivers requirements unattended and stops when the gate says no.
-It sits between an archived specification and a person who merges.
+It sits between a specification — archived, or in an open change — and a merge.
 
 <!-- specgate:diagram lifecycle -->
 
@@ -17,7 +17,7 @@ Each pending requirement (or the one `--req` names) gets a fresh worktree on
 it done on its branch; red feeds the failures into the next attempt, up to
 `max_attempts`, and after the last one the work is kept as a `wip(REQ-NNN):
 FAILED the gate` commit with the requirement still `Draft`. A requirement
-waiting for an answer is refused. Nothing is ever merged.
+waiting for an answer is refused. Without `--chain`, nothing is merged.
 
 ## Set it up
 
@@ -255,12 +255,12 @@ need, and it is thrown away afterwards.
 
 **The default is 1, deliberately.** Two reasons, and neither is timidity:
 
-- Every step of a requirement — the gate, the agent, `specgate done`, git — is a
+- Every step of a requirement — the gate, the agent, `specgate apply`, git — is a
   blocking call, so above 1 each requirement runs in a worker process. That
   path is newer than the serial one, which has years of real agent runs behind
   it.
 - Parallelism moves the bottleneck rather than removing it. Four green branches
-  are four reviews, and the harness still never merges.
+  are four reviews, and without `--chain` the harness never merges.
 
 `concurrency: 4` in `harness.config.yaml` sets it for the project.
 
@@ -277,7 +277,7 @@ Some failures end it after one attempt: [when retrying cannot help](troubleshoot
 
 The attempt is **committed on the branch** with a `wip(REQ-NNN): FAILED the
 gate` subject, so the agent's work is there to read instead of discarded. The
-requirement stays `Draft`, because `specgate done` never ran.
+requirement stays `Draft`, because `specgate apply` never ran.
 
 ```bash
 specgate harness run --req REQ-002 --format json      # the whole gate output

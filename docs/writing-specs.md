@@ -10,7 +10,12 @@ artefacts everything else is built on.
 **Goal:** a new requirement with an executable scenario, linked to a test, with
 `check` green — without touching the matrix.
 
-The short way is one command:
+In the daily loop a requirement arrives in a change: `specgate propose <id>`
+opens one, with a delta to write and ids reserved, and `specgate archive`
+merges it once the requirement is Implemented — see
+[Reviewing changes](reviewing-changes.md). The format is the same either way.
+
+The short way, straight into `spec.md`, is one command:
 
 ```bash
 specgate new "Premium customers get 10% off at checkout"
@@ -115,16 +120,17 @@ specgate plan --json
 can be started now. Each requirement carries its `category`, whether it is
 `ready`, and the `blockers` in its way (each with a `code` and a `fix`).
 
-### After implementing, mark the REQ done
+### After implementing, apply it
 
 ```bash
-specgate done REQ-007                          # the gate first, then Status="Implemented"
-specgate done REQ-007 --status Verified         # → Status="Verified", same gate
-specgate done REQ-007 --test-cmd "npm test"     # the gate, then the suite
-specgate done REQ-007 --no-check                # writes the status without the gate
+specgate apply REQ-007                          # the gate first, then Status="Implemented"
+specgate apply REQ-007 --status Verified         # → Status="Verified", same gate
+specgate apply REQ-007 --test-cmd "npm test"     # the gate, then the suite
+specgate apply REQ-007 --no-check                # writes the status without the gate
 ```
 
-`done` runs the gate `specgate check` runs and writes nothing when it fails,
+`apply` (`done` is its old name) refuses a requirement no test names, runs the
+gate `specgate check` runs and writes nothing when it fails,
 so a requirement it closes is one CI will not reopen. It then edits exactly
 one status. Combined with `validate --strict` in CI, the matrix is the live source of truth instead of a rear-view mirror.
 
@@ -139,7 +145,7 @@ The MCP server exposes the daily loop as tools — `specgate_status`,
 2. Read its scenario (`read_spec`, or the feature file in your editor).
 3. Write a test that mentions the requirement id. Run it — confirm it fails.
 4. Write production code until the test passes.
-5. Call `mark_requirement_done` with `requirement` set to that id. It runs the
+5. Call `mark_requirement_done` (what `specgate apply` does) with `requirement` set to that id. It runs the
    gate first; if it returns done_validate_failed, fix what it reports and retry.
 6. Repeat from step 1 until `plan` returns actionable = 0.
 7. Call `specgate_check` before you stop.
@@ -167,7 +173,7 @@ specgate req rm REQ-014
 It takes the matrix row (all of them, if the id somehow has more than one) and
 the requirement's prose in `spec.md`. Past `Draft` it refuses without `--force`:
 removing a delivered requirement deletes the record that it shipped, and
-`specgate done REQ-014 --status Deprecated` is usually what you meant.
+`specgate apply REQ-014 --status Deprecated` is usually what you meant.
 
 It reports what it leaves behind — a feature file no row references any more
 will fail `validate`, and finding that out from a red build instead of from the
@@ -263,9 +269,9 @@ what CI runs — fails with `matrix_stale` if a commit forgot to, and
 `specgate matrix` fixes that. A project that has not migrated is untouched by
 all of this.
 
-The everyday commands write the sources for you: `specgate done` sets `status=`
+The everyday commands write the sources for you: `specgate apply` sets `status=`
 in the requirement's comment, `req link` and `req add --feature …` record their
-links there, `new`, `req rm` and `change archive` regenerate the matrix, and
+links there, `new`, `req rm` and `archive` regenerate the matrix, and
 `status`, `plan` and `check` read it fresh. `fix` has nothing to repair in a
 generated matrix. **One limit, for now:** a domain pack writes `spec.md` and
 the matrix from its own templates, so `specgate expand` turns the project back

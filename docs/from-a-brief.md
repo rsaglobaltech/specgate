@@ -6,16 +6,18 @@ work with — the one the [six pilot products](projects/index.md) were built on,
 as different as a detailed booking document and a five-line description of a
 credit shop.
 
-Steps 1 to 4 below are the _Specify_ phase of a requirement's life; the
-harness and the gate take it from there.
+Steps 1 to 3 below are the _Specify_ phase of a requirement's life; step 4
+is the same loop as any other change — `specgate apply` each requirement
+through the gate, then `specgate archive` the draft
+([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
 
 <!-- specgate:diagram lifecycle -->
 
 ## 1. Keep the brief in the repository
 
 Save it as `docs/brief.md`, as the client wrote it. Add a front matter that
-names who uses the product and how — `specgate draft` explains every field and
-checks them, and `specgate draft --agent "claude -p"` has your agent propose
+names who uses the product and how — `specgate propose --from-brief` (or its
+old name, `specgate draft`) explains every field and checks them, and `specgate draft --agent "claude -p"` has your agent propose
 them. Step by step: [Write the brief](start/write-the-brief.md).
 
 ```markdown
@@ -39,11 +41,13 @@ only appear in an image are otherwise invisible to the checklist.
 ## 2. Draft one module
 
 ```bash
-specgate draft             # the brief's modules: where each stands, which is next
-specgate draft reservas    # opens draft-reservas, linked to the brief
+specgate propose --from-brief            # the brief's modules: where each stands, which is next
+specgate propose --from-brief reservas   # opens draft-reservas, linked to the brief
 ```
 
-`specgate draft reservas` opens the draft — a change folder kept apart from
+`specgate draft` and `specgate draft reservas` are the same commands under
+their old names; this page uses them where a flag only `draft` lists. Opening
+a module creates the draft — a change folder kept apart from
 the specification until a person reviews it — and writes `DRAFTING.md` in it:
 the module's scope, the reserved ids, a scenario per actor and surface from the
 front matter, and the formats below. That file is the prompt. Tell your agent
@@ -68,7 +72,7 @@ next to it:
   use it, one by one or as a range (`REQ-004..REQ-010`).
 - **`questions.md`** — what the brief cannot answer, and the requirements each
   question blocks. A blocked requirement carries
-  `status="Needs Clarification"` in its trace; the harness and `done` refuse
+  `status="Needs Clarification"` in its trace; the harness and `apply` refuse
   it until someone answers, and `status` lists it under "Waiting for an
   answer" with the question that blocks it.
 
@@ -120,22 +124,36 @@ An answered question gets an `Answer` column, or a line below the table such as
 `Answer (Q1): free shipping from 50 €`; the requirement it blocked then drops
 `Needs Clarification`.
 
-## 4. Archive, then build
+## 4. Review, apply, then archive
+
+A draft is a change like any other, and its review is the pull request. Once
+the checklist says **Ready to review**, a person reads the requirements and
+`assumptions.md` with whoever knows the business, answers what they can, and
+the requirements are built one at a time:
 
 ```bash
-specgate change archive draft-reservas
+specgate status                    # the draft's requirements, listed while it is open
+specgate apply                     # the next one: refused until a test names it, then the gate
+specgate archive draft-reservas    # once every requirement in it is Implemented
 ```
 
-A change opened from a brief (`brief:` in `change.yaml`) is archived only when
-its checklist passes; `--force` archives it anyway, and says so in review. A
-draft has no `tasks.md` to tick: the checklist is its gate. Then
-`specgate draft` names the next module.
+While the draft is open its requirements already count: `status` lists them,
+`apply`, `check` and `harness run` judge the project as it will be after
+archive, and `apply` writes each status into the draft's delta. Nothing is
+written into `docs/specs/capabilities/` before archive.
+
+`archive` refuses while a requirement is still pending
+(`archive_requirements_pending`, with `specgate apply REQ-…` as the fix), and
+`--force` does not skip that. A change opened from a brief (`brief:` in
+`change.yaml`) also needs its checklist to pass; `--force` skips only the
+checklist, and says so in review. A draft has no `tasks.md` to tick.
 
 Archiving merges the requirements into `docs/specs/capabilities/`, adds their
-rows to the matrix and writes one feature file per requirement. New
-requirements arrive as `Draft`, so the specification can merge before any code
-exists. Then `specgate harness run` — or a person — delivers them one at a
-time.
+rows to the matrix and writes one feature file per requirement — the spec and
+the code it describes land in the same pull request. A test that disproves the
+spec text is fixed in the same draft, not in a second change. Then
+`specgate propose --from-brief` names the next module. `specgate harness run`
+can deliver the requirements instead of a person, one per worktree.
 
 ## Writing in Spanish
 

@@ -28,14 +28,19 @@ Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json
 
 Every command is a tool, named `specgate_<command>` (`specgate_status`,
 `specgate_ci_init`, …), and each declares the argument it needs. The daily
-loop, and the seven names published before the rest were generated:
+loop, and the seven names published before the rest were generated. The four
+verbs have no tools of their own yet: an MCP client opens a change with
+`specgate_change_new`, delivers a requirement with `mark_requirement_done`
+(what `specgate apply <REQ>` does) and closes the change with
+`specgate_change_archive`, which, like `specgate archive`, refuses while a
+requirement in it is pending.
 
 | Tool | Purpose |
 | --- | --- |
 | `specgate_status` | What is open, and the next command. |
 | `specgate_new` | `specgate new <title>`: a requirement with its scenario. Takes `title`. |
 | `specgate_check` | The gate, then the tests when a test command is configured. |
-| `mark_requirement_done` | `specgate done <REQ>`: runs the gate, then marks it Implemented. Takes `requirement`. |
+| `mark_requirement_done` | `specgate done <REQ>` — `apply`'s old name: runs the gate, then marks it Implemented. Takes `requirement`. |
 | `validate_project` | `validate --strict`, parsed. |
 | `plan` | The pending queue, with what each requirement still needs. |
 | `read_spec` | Returns `spec.md` and lists every `docs/specs/*.md`. |
@@ -127,11 +132,14 @@ Settings:
 ---
 ## Drive delivery with the harness
 
-`specgate harness run` drives plan → agent → verify → done for every pending
-requirement, each in its own git worktree, in dependency order, and it never
-merges.
+`specgate harness run` drives plan → agent → verify → apply for every pending
+requirement, each in its own git worktree, in dependency order. It merges
+nothing unless you ask for `--chain`, which merges each requirement once the
+gate passes on the merge. `specgate studio` shows the run at `/live`; with
+Claude Code as the agent, pipe its stream through
+`specgate harness events --from claude` to see its steps there too.
 
-→ [The harness](harness.md)
+→ [The harness](harness.md) · [Commands](commands.md#customising)
 
 ---
 

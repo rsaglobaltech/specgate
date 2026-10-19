@@ -30,8 +30,8 @@ Quarkus), then `git init` and a repository.
 
 ```bash
 npx specgate init --no-capabilities        # a new project: no proposals from folders
-npx specgate config set test_cmd "<cmd>"   # the tests `check` and `done` run
-npx specgate done REQ-001                  # the adoption baseline
+npx specgate config set test_cmd "<cmd>"   # the tests `check` and `apply` run
+npx specgate apply REQ-001                 # the adoption baseline
 npx specgate ci init --provider github     # the same gate in CI: specification and tests
 ```
 
@@ -66,9 +66,12 @@ See [From a client brief](from-a-brief.md).
 ### 5. Open the draft
 
 ```bash
-npx specgate draft               # the brief's modules, and the next one
-npx specgate draft <module>      # opens it, linked to the brief, with DRAFTING.md
+npx specgate propose --from-brief            # the brief's modules, and the next one
+npx specgate propose --from-brief <module>   # opens it, linked to the brief, with DRAFTING.md
 ```
+
+`specgate draft` and `specgate draft <module>` are the same commands under
+their older name; the checks and the agent option below are spelled with it.
 
 One module per draft: a reviewer reads ten requirements, not sixty
 (`--reserve 12` for a bigger one).
@@ -117,32 +120,37 @@ A question that is not yours to answer stays open:
 ```
 
 The requirement then waits: `status` lists it under "Waiting for an answer",
-`done` refuses it and the harness will not build it. In the clinical pilot the
+`apply` refuses it and the harness will not build it. In the clinical pilot the
 drug-interaction alerts stayed there — nobody may invent that table.
 
-### 9. Archive it
+### 9. Build each requirement, test first
+
+The reviewed draft stays an open change while you build it: `status` lists its
+requirements and `apply` judges each as it will be after archive. The test
+names the requirement and scenario (`REQ-012 SCN-018: …` in the test name):
+that mention is the link. Then:
 
 ```bash
-npx specgate change archive draft-<module>
-```
-
-A draft is archived only when its checklist passes. The requirements move to
-`docs/specs/capabilities/`, one feature file per requirement is written (in
-Spanish when the scenarios are), and they start as `Draft`.
-
-### 10. Build each requirement, test first
-
-The test names the requirement and scenario (`REQ-012 SCN-018: …` in the test
-name): that mention is the link. Then:
-
-```bash
-npx specgate done REQ-012            # refused while the suite is red
+npx specgate apply REQ-012            # refused while no test names it, or the suite is red
 # … the code …
-npx specgate done REQ-012 REQ-013    # several at once: the tests run once
+npx specgate apply REQ-012 REQ-013    # several at once: the tests run once
 ```
 
 Or let the agent do it: `npx specgate harness run`, one worktree per
 requirement, the same gate.
+
+### 10. Archive it
+
+```bash
+npx specgate archive draft-<module>
+```
+
+A draft is archived when its code is done: every requirement it adds is
+Implemented, or `archive` refuses and names the next `specgate apply REQ-…`.
+The requirements move to `docs/specs/capabilities/` and one feature file per
+requirement is written (in Spanish when the scenarios are). A requirement still
+waiting for an answer keeps the draft open; move it to a later change if the
+rest should ship first.
 
 ### 11. Before every push
 
@@ -161,18 +169,20 @@ say. In the six pilots, running the product found:
 - a production build or an application context that did not start,
 - a privacy hole: a search that returned clinical data without a trace.
 
-Each gap becomes a short change — back to step 5 with `change new <module>-2`.
-When the change rewrites a delivered requirement, put it under
-`## MODIFIED Requirements` with all its scenarios: archiving regenerates its
-feature file and returns it to `Draft` until its new scenario has a test.
+Each gap becomes a short change — `specgate propose <module>-2`, then steps 9
+and 10. When the change rewrites a delivered requirement, put it under
+`## MODIFIED Requirements` with all its scenarios and apply it again against
+the new scenario: the change archives only once it is Implemented, and
+archiving regenerates its feature file.
 
 ## The day to day, in short
 
 ```bash
-npx specgate status    # what each requirement still needs, and what waits for an answer
-npx specgate new "…"   # a requirement outside a draft
-npx specgate done REQ-…
-npx specgate check
+npx specgate propose <change-id>   # a change: a delta to write, REQ ids reserved
+npx specgate apply                 # the next requirement through the gate
+npx specgate status                # what each requirement still needs, and what waits for an answer
+npx specgate archive <change-id>   # once every requirement in it is Implemented
+npx specgate check                 # the same gate, in CI
 ```
 
 ## The pilots

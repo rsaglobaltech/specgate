@@ -20,9 +20,10 @@ invoice page, within two seconds, with the invoice number in the file name.
 ```
 
 The prose is for people. The `specgate:trace` comment is for the tool — it holds
-the status, and any link the tool cannot infer. `specgate new` writes the
-section with a draft sentence for you to rewrite; `specgate done` adds the
-comment when it records a status.
+the status, and any link the tool cannot infer. You write the section in a
+change's delta (`specgate propose`), or `specgate new` writes it in `spec.md`
+with a draft sentence for you to rewrite; `specgate apply` records the status
+when the gate passes.
 
 A requirement is useful when two people could test it and agree on the
 answer. "Invoices are easy to get" is a wish; the paragraph above is a
@@ -71,9 +72,9 @@ so it is **computed** from those sources:
 | Requirement, title | the `## REQ-NNN` sections in `spec.md` and capability specs |
 | Scenario, feature file | `@REQ-NNN @SCN-NNN` tags in `features/**/*.feature` |
 | Test, code | files that mention `REQ-NNN` |
-| Status | the `specgate:trace` comment, written by `specgate done` |
+| Status | the `specgate:trace` comment, written by `specgate apply` |
 
-`specgate check` and `specgate done` regenerate it before they judge.
+`specgate check` and `specgate apply` regenerate it before they judge.
 `specgate validate` — what CI runs — fails with `matrix_stale` when the
 committed copy no longer matches its sources. It stays committed because
 people and tools read it; it just has no author.
@@ -98,10 +99,11 @@ reach — a green run says how many rows were exempt:
 - Strict TDD gate: passed (3 row(s) exempt — still Draft, so not checked)
 ```
 
-`specgate done REQ-007` is how a requirement reaches a delivered status, and
-it runs the gate for that requirement first: if the gate would fail, nothing
-is written. (`--no-check` skips it, for the rare case the gate is wrong — say
-so in the pull request.)
+`specgate apply REQ-007` is how a requirement reaches a delivered status. It
+refuses while no test names the requirement, then runs the gate for it: if the
+gate would fail, nothing is written. (`--no-check` skips the gate, for the
+rare case it is wrong — say so in the pull request. `done` is `apply`'s old
+name.)
 
 ## 6. One gate, one name
 
@@ -110,7 +112,7 @@ There is exactly one gate: `validate --strict`. Everything runs it.
 | Where | What runs |
 |---|---|
 | Your machine, before a PR | `specgate check` — the gate, then your tests if a test command is configured |
-| Closing a requirement | `specgate done` — the gate for that requirement, then the status |
+| Delivering a requirement | `specgate apply` — the gate for that requirement, then the status |
 | CI | the job `specgate ci init` writes — `specgate check`, with the project's JDK or Node set up |
 | An agent | the `/specgate:check` command, the `Stop` hook, the harness |
 
@@ -121,11 +123,18 @@ and fail it in the next. Now a green in one place is a green everywhere.
 
 ## Around the core
 
-Three things build on those six ideas. None of them is needed on day one.
+Three things build on those six ideas. The first is the daily loop; the
+other two are not needed on day one.
 
-**Changes.** A requirement that already shipped changes through a reviewable
-delta under `docs/specs/changes/<id>/` — only what moves, never a copy.
-Archiving merges it into the spec tree and writes the feature files.
+**Changes.** New work and edits to what already shipped both go through a
+change: `specgate propose <id>` opens a reviewable delta under
+`docs/specs/changes/<id>/` — only what moves, never a copy. While it is open,
+its requirements count: `status` lists them, `apply` delivers them one by
+one, `check` judges the project as it will be after archive. `specgate
+archive <id>` merges it into the spec tree and writes the feature files once
+every requirement in it is `Implemented` — a change is archived when its code
+is done, so the spec and the code land in one pull request
+([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
 → [Reviewing changes](reviewing-changes.md)
 
 **Domain packs.** A versioned, schema-validated set of requirements and
@@ -135,7 +144,14 @@ reviewable diff. → [Domain packs](domain-packs.md)
 
 **The harness.** Hands one pending requirement at a time to any coding agent
 in its own git worktree, runs the gate on the result, and closes the
-requirement only when it passes. It never merges. → [The harness](harness.md)
+requirement only when it passes. It never merges unless you ask for a chain
+(`--chain`), and `specgate studio` shows it at work at `/live`.
+→ [The harness](harness.md)
+
+Before a change exists, `specgate explore` writes a brief of where the project
+stands for you or your agent to think with; `specgate onboard --tour` runs the
+whole loop on a temporary copy of your repository.
+→ [Command reference](commands.md#starting)
 
 ---
 
@@ -149,7 +165,7 @@ requirement only when it passes. It never merges. → [The harness](harness.md)
 | **The matrix** | `docs/specs/traceability.md`, generated from the above. |
 | **The gate** | `validate --strict`; `check` adds your tests. |
 | **Delivered** | A status of `Implemented`, `Verified` or `Released`. |
-| **Change** | A reviewable delta to requirements that already shipped. |
+| **Change** | A reviewable delta — new requirements or edits to shipped ones — opened by `propose`, archived once its requirements are applied. |
 | **Pack** | A versioned domain model installed with `specgate specops add`. |
 | **Harness** | The unattended plan → agent → gate → done loop. |
 
@@ -157,7 +173,7 @@ requirement only when it passes. It never merges. → [The harness](harness.md)
 
 ## Next
 
-- [Getting started](getting-started.md) — the five commands on your repository
+- [Getting started](getting-started.md) — the four verbs on your repository
 - [Your team's first pull request](first-pr.md) — author, reviewer, and every failure
 - [Writing specs](writing-specs.md) — requirements and scenarios worth testing
 - [Validating](validating.md) — every check the gate runs, flag by flag

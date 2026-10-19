@@ -131,6 +131,35 @@ Before requesting a review, confirm:
 - [ ] Tasks closed by this PR are ticked in the maintainers' plan (kept outside the repository), citing the task ID in the commit
 - [ ] Public CLI flags / commands are documented in `README.md` and `--help`
 - [ ] No `TODO` placeholders remain in committed files
+- [ ] A change to behaviour went through its own change (below), and is archived
+      in the same pull request once all its requirements are Implemented
+
+### A change to behaviour: propose, apply, archive
+
+Specgate is specified with Specgate: `spec.md`, `features/` and
+`docs/specs/capabilities/` are the contract, and a pull request that changes
+what the CLI does changes them through a change folder — the same four verbs
+the [daily loop](README.md#-the-daily-loop--four-verbs) teaches
+([ADR-0035](docs/specs/adr/0035-four-verbs-one-lifecycle.md)). Use the CLI
+you just built:
+
+```bash
+node bin/specgate.js status                  # what is open, and the next command
+node bin/specgate.js propose my-change       # docs/specs/changes/my-change/: proposal, tasks, a delta, REQ ids reserved
+# write each requirement and its scenario in the delta;
+# then, one requirement at a time: a test that names REQ-NNN, then the code
+node bin/specgate.js apply REQ-NNN --test-cmd "npm run test:unit"   # refused until a test names it; Implemented when green
+node bin/specgate.js archive my-change       # once every requirement in it is Implemented
+node bin/specgate.js check                   # the gate, as CI runs it
+```
+
+A change is archived **after** its requirements are applied, not before:
+`archive` refuses while one is pending, and `--force` does not skip that.
+While the change is open its requirements already count — `status`, `apply`
+and `check` read them from the delta — so the spec text and the code that
+proves it are reviewed together. If a test shows the spec text is wrong, fix
+the delta in the same change. A design decision behind the change still gets
+its ADR (§3).
 
 ### Required checks
 
