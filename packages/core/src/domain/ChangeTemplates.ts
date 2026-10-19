@@ -13,7 +13,7 @@
 import { Phrases } from "./Language";
 import { renderRequirement } from "./SpecParser";
 
-export function templateProposal(changeId) {
+export function templateProposal(changeId: string): string {
   return `# Proposal: ${changeId}
 
 ## Intent
@@ -50,7 +50,7 @@ export function templateTasks() {
 `;
 }
 
-export function templateDesign(changeId) {
+export function templateDesign(changeId: string): string {
   return `# Design: ${changeId}
 
 ## Technical approach
@@ -69,7 +69,7 @@ export function templateDesign(changeId) {
 `;
 }
 
-export function templateDelta(capability, reqId, t: Phrases) {
+export function templateDelta(capability: string, reqId: string, t: Phrases): string {
   return `# Delta — ${capability}
 
 ## ADDED Requirements

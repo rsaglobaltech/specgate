@@ -1,6 +1,6 @@
 /**
- * The traceability matrix as a projection, not a document (phase 3 of
- * mejoras/plan-simplificacion-equipo.md).
+ * The traceability matrix as a projection, not a document — the step of
+ * simplifying the tool that took the matrix off the list of things people edit.
  *
  * ## Why
  *

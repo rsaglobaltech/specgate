@@ -68,6 +68,18 @@ export interface ChangeConfig {
   [key: string]: unknown;
 }
 
+/**
+ * A `change.yaml` after `readConfig`: the defaults fill whatever the file left
+ * out, so these keys are always there.
+ */
+export type ResolvedChangeConfig = ChangeConfig & {
+  specgate_change_version: number;
+  schema: string;
+  rigor: string;
+  skip_specs: boolean;
+  retire_capabilities: boolean;
+};
+
 /** A delta spec inside a change, keyed by the capability it targets. */
 export interface ChangeDelta {
   capability: string;
@@ -181,7 +193,7 @@ export function listChangeFeatures(projectDir: string, changeId: string): Change
   return out.sort((a, b) => a.relative.localeCompare(b.relative));
 }
 
-export function readConfig(projectDir: string, changeId: string): ChangeConfig {
+export function readConfig(projectDir: string, changeId: string): ResolvedChangeConfig {
   const file = path.join(paths(projectDir).change(changeId), CHANGE_CONFIG_FILE);
   if (!fs.existsSync(file)) return { ...DEFAULT_CONFIG };
   let parsed;

@@ -18,10 +18,27 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { parseYamlLite } from "../domain/YamlLite";
+import { PackEntry } from "../domain/Lockfile";
 
 export const CONFIG_FILE = "specops.config.yaml";
 
-export function readConfig(projectDir) {
+/** One `packs[]` entry as written; `configToPacks` checks the required ones. */
+export interface SpecopsConfigPack {
+  repo?: string;
+  version?: string;
+  commit?: string;
+  pack_id?: string;
+  vars?: Record<string, string>;
+}
+
+/** A parsed `specops.config.yaml`. */
+export interface SpecopsConfig {
+  specops_version?: number;
+  packs?: SpecopsConfigPack[];
+  [key: string]: unknown;
+}
+
+export function readConfig(projectDir: string): SpecopsConfig | null {
   const filePath = path.join(projectDir, CONFIG_FILE);
   if (!fs.existsSync(filePath)) return null;
   const raw = fs.readFileSync(filePath, "utf8");
@@ -35,11 +52,11 @@ export function readConfig(projectDir) {
  *
  * Throws with a descriptive message on malformed input.
  */
-export function configToPacks(config) {
+export function configToPacks(config: SpecopsConfig | null | undefined): PackEntry[] {
   if (!config || !Array.isArray(config.packs) || config.packs.length === 0) {
     throw new Error(`${CONFIG_FILE}: 'packs' must be a non-empty array`);
   }
-  return config.packs.map((entry, i) => {
+  return config.packs.map((entry: SpecopsConfigPack, i: number) => {
     if (!entry.repo) throw new Error(`${CONFIG_FILE}: packs[${i}] missing 'repo'`);
     if (!entry.version) throw new Error(`${CONFIG_FILE}: packs[${i}] missing 'version'`);
     if (!entry.pack_id) throw new Error(`${CONFIG_FILE}: packs[${i}] missing 'pack_id'`);
