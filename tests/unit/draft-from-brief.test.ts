@@ -290,6 +290,35 @@ test("--agent without git refuses, and says how to go on", (t: TestContext) => {
   assert.match(r.stdout + r.stderr, /draft_agent_needs_git/);
 });
 
+test("status reads an open draft where it is, and counts it as drafted once ready", (t: TestContext) => {
+  const { dir, cli } = project(t, { init: false });
+  fs.writeFileSync(path.join(dir, "package.json"), '{"name":"x","scripts":{"test":"node --test"}}');
+  assert.equal(cli("init", "--no-capabilities").status, 0);
+  assert.equal(cli("draft", "bookings").status, 0);
+  fs.writeFileSync(
+    path.join(change(dir), "specs", "bookings", "spec.md"),
+    DRAFT().replace(
+      "<!-- specgate:trace actor=",
+      '<!-- specgate:trace status="Needs Clarification" actor='
+    )
+  );
+  fs.writeFileSync(
+    path.join(change(dir), "questions.md"),
+    "# Questions\n\n| # | Question | Blocks | Answer |\n|---|---|---|---|\n" +
+      "| Q1 | Can a member book two hours in a row? | REQ-002 | |\n"
+  );
+  assert.equal(cli("draft", "bookings").status, 0, "the draft is ready to review");
+  const r = cli("status");
+  // The open change's questions file is where it is — not under archive/,
+  // which is only where the in-flight view lays it.
+  assert.match(r.stdout, /Q1 \(docs\/specs\/changes\/draft-bookings\/questions\.md\)/);
+  assert.doesNotMatch(r.stdout, /changes\/archive\//);
+  assert.match(r.stdout, /1 of 2 module\(s\) drafted\s+next: coupons/);
+  const doc = JSON.parse(cli("status", "--json").stdout);
+  const req = doc.requirements.find((q: { id: string }) => q.id === "REQ-002");
+  assert.equal(req.question, "Q1 (docs/specs/changes/draft-bookings/questions.md)");
+});
+
 test("status points at the brief's next module while nothing real is pending", (t: TestContext) => {
   const { dir, cli } = project(t, { init: false });
   fs.writeFileSync(path.join(dir, "package.json"), '{"name":"x","scripts":{"test":"node --test"}}');

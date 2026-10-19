@@ -106,12 +106,21 @@ export function parseArgs(argv: string[]): StatusOptions {
   return opts;
 }
 
-export function summarise(projectDir: string, traceContent: string): QueueSummary {
+/**
+ * `questionsFrom` is where the questions files are read: the project itself
+ * when `projectDir` is the in-flight view, whose copy has every open change
+ * moved under `changes/archive/` — a path that does not exist in the project.
+ */
+export function summarise(
+  projectDir: string,
+  traceContent: string,
+  questionsFrom: string = projectDir
+): QueueSummary {
   const rows = parseTraceability(traceContent);
   const items: QueueItem[] = rows.map((r) => classify(r, projectDir)).filter((x) => x !== null);
   // A requirement waiting for an answer is not work anyone can start: listing
   // it as "a test and code" under To do invited exactly that (FinCore, #73).
-  const questions = questionsByRequirement(projectDir);
+  const questions = questionsByRequirement(questionsFrom);
   for (const it of items) {
     if (it.status === "Needs Clarification" && it.category !== "DONE") {
       it.category = "WAITING_FOR_ANSWER";
@@ -187,7 +196,7 @@ export function withQueue<T>(
     } else if (!view && refreshDerivedMatrix(projectDir)) {
       trace = fs.readFileSync(path.join(dir, TRACE), "utf8");
     }
-    const summary = summarise(dir, trace);
+    const summary = summarise(dir, trace, projectDir);
     if (view) {
       for (const it of summary.items) {
         const owner = view.requirements.find((r) => r.id === it.requirement);
@@ -417,7 +426,9 @@ function emitText(
 
   if (summary.brief) {
     const b = summary.brief;
-    const done = b.modules.filter((m) => m.state === "archived").length;
+    // Drafted: written and checked. A ready draft is reviewed and applied
+    // before it is archived (ADR-0035), so it counts as soon as it is ready.
+    const done = b.modules.filter((m) => m.state === "archived" || m.state === "ready").length;
     out(
       `\n  ${c.bold}Brief${c.reset}         ${ui.progress(done, b.modules.length, "module(s) drafted")}` +
         `${b.next ? `   ${ui.muted("next:")} ${b.next.module}` : ""}   ${ui.muted(b.brief)}\n`
