@@ -16,6 +16,7 @@ import {
   materialiseChange as writeChange,
 } from "../../packages/core/src/infrastructure/DiskPackDeltaRepository";
 import { derivePackDelta } from "../../packages/core/src/domain/PackDelta";
+import type { DerivedPackDelta } from "../../packages/core/src/domain/PackDelta";
 import type { PackEntry } from "../../packages/core/src/domain/Lockfile";
 
 /** What `deriveDelta` takes besides the two pack roots. */
@@ -83,7 +84,7 @@ export function materialiseChange(
   projectDir: string,
   entry: PackEntry,
   targetVersion: string,
-  derived: ReturnType<typeof deriveDelta>,
+  derived: DerivedPackDelta & { markdown: string },
   opts?: MaterialiseOptions
 ) {
   return writeChange(projectDir, entry, targetVersion, derived, phrases(projectDir), opts);

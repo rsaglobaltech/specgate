@@ -19,7 +19,6 @@ import {
   paths,
   parseTasks,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
-import type { ChangeConfig } from "../../../change/artifacts";
 import * as ui from "../../../lib/ui";
 
 const RICH_HEADER =
@@ -296,7 +295,7 @@ export class DoctorCommand extends BaseCommand {
 
     for (const id of active) {
       const deltas = listDeltas(dir, id);
-      const config: ChangeConfig = readConfig(dir, id);
+      const config = readConfig(dir, id);
       const progress = taskProgress(dir, id);
 
       if (progress.total > 0 && progress.remaining === 0) {

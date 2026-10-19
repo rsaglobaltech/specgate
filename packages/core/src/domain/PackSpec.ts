@@ -145,6 +145,15 @@ export function asArray<T>(value: T | T[] | null | undefined): T[] {
   return [value];
 }
 
+/**
+ * A pack section as a list of `T`: a lone value is a list of one. The YAML is
+ * not checked against `T` here — callers read the entries field by field and
+ * tolerate what is missing, which is what `T`'s optional fields say.
+ */
+export function sectionItems<T>(value: unknown): T[] {
+  return asArray(value) as T[];
+}
+
 export function formatList(value: unknown, fallback = "-"): string {
   const items = asArray(value)
     .map((item) => String(item).trim())

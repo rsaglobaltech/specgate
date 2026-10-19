@@ -71,6 +71,7 @@ import {
   artifactFile,
 } from "../../../../packages/core/src/domain/DeclaredArtifacts";
 import { parseTraceability } from "../spec/PlanCommand";
+import type { TraceRow } from "../spec/PlanCommand";
 import { main as instructionsMain } from "../../../change/instructions";
 import { briefOf, draftReport, draftModuleOf } from "../spec/DraftCommand";
 
@@ -296,8 +297,7 @@ function resolveValueDriftDelta(
     };
   }
 
-  // The matrix columns this route reads; the parser returns more.
-  let rows: { requirement?: string; technicalArtifact?: string; testArtifact?: string }[] = [];
+  let rows: TraceRow[] = [];
   const tracePath = path.join(projectDir, "docs/specs/traceability.md");
   if (fs.existsSync(tracePath)) {
     try {

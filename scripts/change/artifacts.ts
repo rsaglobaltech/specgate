@@ -17,25 +17,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { paths, listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
+import type { ChangeConfig } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { resolveSchema } from "../schema/registry";
 import type { SchemaArtifact } from "../schema/registry";
-
-/**
- * A change's `change.yaml`, as `readConfig` returns it: the defaults merged
- * with whatever the file declares. Open, because the file is the team's.
- */
-export interface ChangeConfig {
-  specgate_change_version?: number;
-  /** Which artefact graph the change follows; `spec-driven` when absent. */
-  schema?: string;
-  created?: string;
-  rigor?: string;
-  skip_specs?: boolean;
-  retire_capabilities?: boolean;
-  /** `[first, last]` REQ ids reserved for the change. */
-  req_range?: string[];
-  [key: string]: unknown;
-}
 
 /** The default graph, still exported for callers that predate schemas. */
 export const ARTIFACTS: SchemaArtifact[] = [

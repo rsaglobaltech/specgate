@@ -50,10 +50,10 @@ test("buildPackGraph wires the REQ→UC→CMD/AGG/EVT spine", () => {
   const edge = (from: string, kind: string) =>
     graph.edges.find((e) => e.from === from && e.kind === kind);
 
-  assert.equal(edge("REQ:REQ-001", "implements").to, "UC:UC-001");
-  assert.equal(edge("UC:UC-001", "dispatches").to, "CMD:CMD-001");
-  assert.equal(edge("UC:UC-001", "handled by").to, "AGG:AGG-001");
-  assert.equal(edge("UC:UC-001", "emits").to, "EVT:EVT-001");
+  assert.equal(edge("REQ:REQ-001", "implements")?.to, "UC:UC-001");
+  assert.equal(edge("UC:UC-001", "dispatches")?.to, "CMD:CMD-001");
+  assert.equal(edge("UC:UC-001", "handled by")?.to, "AGG:AGG-001");
+  assert.equal(edge("UC:UC-001", "emits")?.to, "EVT:EVT-001");
 });
 
 test("buildPackGraph records dangling references and adds a missing node", () => {

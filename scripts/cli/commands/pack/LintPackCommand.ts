@@ -4,7 +4,7 @@ import {
   loadPack,
   validatePackModel,
 } from "../../../../packages/core/src/infrastructure/DiskPackRepository";
-import { asArray } from "../../../../packages/core/src/domain/PackSpec";
+import { asArray, sectionItems } from "../../../../packages/core/src/domain/PackSpec";
 import type { YamlDocument } from "../../../../packages/core/src/domain/YamlLite";
 import { BaseCommand } from "../../../lib/command";
 import { parseGherkin } from "../../../../packages/core/src/domain/Gherkin";
@@ -137,9 +137,6 @@ interface ReferringItem extends PackItem {
   context?: string;
 }
 
-/** A pack section as a list of `T`: a lone value is a list of one. */
-const itemsOf = <T>(value: unknown): T[] => asArray(value);
-
 function lintTodos(pack: YamlDocument, _errors: string[], warnings: string[]) {
   const yaml = JSON.stringify(pack);
   const count = (yaml.match(/TODO/g) || []).length;
@@ -149,32 +146,32 @@ function lintTodos(pack: YamlDocument, _errors: string[], warnings: string[]) {
 }
 
 function lintRequirementsCoverage(pack: YamlDocument, errors: string[], notes: string[]) {
-  const reqIds = new Set(itemsOf<PackItem>(pack.requirements).map((r) => r.id));
+  const reqIds = new Set(sectionItems<PackItem>(pack.requirements).map((r) => r.id));
   const usedInUC = new Set<string | undefined>(
-    itemsOf<UseCaseItem>(pack.use_cases).flatMap((uc) =>
-      itemsOf<string>(uc.requirements || (uc.requirement ? [uc.requirement] : []))
+    sectionItems<UseCaseItem>(pack.use_cases).flatMap((uc) =>
+      sectionItems<string>(uc.requirements || (uc.requirement ? [uc.requirement] : []))
     )
   );
   // The schema names the field `requirement_id`; reading only `requirement`
   // made every scenario invisible here, so a requirement covered only by a
   // scenario failed `--strict` as unreferenced.
   const usedInSCN = new Set(
-    itemsOf<ScenarioItem>(pack.scenarios)
+    sectionItems<ScenarioItem>(pack.scenarios)
       .map((s) => s.requirement_id || s.requirement)
       .filter(Boolean)
   );
   const usedInAC = new Set(
-    itemsOf<ReferringItem>(pack.api_contracts)
+    sectionItems<ReferringItem>(pack.api_contracts)
       .map((ac) => ac.requirement)
       .filter(Boolean)
   );
   const usedInCDT = new Set(
-    itemsOf<ReferringItem>(pack.consumer_driven_tests)
+    sectionItems<ReferringItem>(pack.consumer_driven_tests)
       .map((cdt) => cdt.requirement)
       .filter(Boolean)
   );
   const usedInBCR = new Set(
-    itemsOf<ReferringItem>(pack.breaking_change_rules)
+    sectionItems<ReferringItem>(pack.breaking_change_rules)
       .map((bcr) => bcr.requirement)
       .filter(Boolean)
   );
@@ -202,7 +199,7 @@ function lintRequirementsCoverage(pack: YamlDocument, errors: string[], notes: s
 }
 
 function lintUseCaseActors(pack: YamlDocument, _errors: string[], warnings: string[]) {
-  for (const uc of itemsOf<UseCaseItem>(pack.use_cases)) {
+  for (const uc of sectionItems<UseCaseItem>(pack.use_cases)) {
     if (!uc.actor || uc.actor.trim() === "") {
       warnings.push(`UC ${uc.id} has no actor defined.`);
     }
@@ -210,8 +207,8 @@ function lintUseCaseActors(pack: YamlDocument, _errors: string[], warnings: stri
 }
 
 function lintBoundedContextAggregates(pack: YamlDocument, errors: string[], _warnings: string[]) {
-  const bcIds = new Set(itemsOf<PackItem>(pack.bounded_contexts).map((bc) => bc.id));
-  for (const agg of itemsOf<ReferringItem>(pack.aggregates)) {
+  const bcIds = new Set(sectionItems<PackItem>(pack.bounded_contexts).map((bc) => bc.id));
+  for (const agg of sectionItems<ReferringItem>(pack.aggregates)) {
     if (agg.bounded_context && !bcIds.has(agg.bounded_context)) {
       errors.push(
         `Aggregate ${agg.id || agg.name} references unknown bounded_context: ${agg.bounded_context}`
@@ -221,8 +218,8 @@ function lintBoundedContextAggregates(pack: YamlDocument, errors: string[], _war
 }
 
 function lintEventAggregates(pack: YamlDocument, errors: string[], _warnings: string[]) {
-  const aggNames = new Set(itemsOf<PackItem>(pack.aggregates).map((a) => a.name));
-  for (const evt of itemsOf<ReferringItem>(pack.events)) {
+  const aggNames = new Set(sectionItems<PackItem>(pack.aggregates).map((a) => a.name));
+  for (const evt of sectionItems<ReferringItem>(pack.events)) {
     if (evt.aggregate && aggNames.size > 0 && !aggNames.has(evt.aggregate)) {
       errors.push(`Event ${evt.id || evt.name} references unknown aggregate: ${evt.aggregate}`);
     }
@@ -230,9 +227,9 @@ function lintEventAggregates(pack: YamlDocument, errors: string[], _warnings: st
 }
 
 function lintScenarioRefs(pack: YamlDocument, errors: string[], _warnings: string[]) {
-  const reqIds = new Set(itemsOf<PackItem>(pack.requirements).map((r) => r.id));
-  const ucIds = new Set(itemsOf<PackItem>(pack.use_cases).map((uc) => uc.id));
-  for (const scn of itemsOf<ScenarioItem>(pack.scenarios)) {
+  const reqIds = new Set(sectionItems<PackItem>(pack.requirements).map((r) => r.id));
+  const ucIds = new Set(sectionItems<PackItem>(pack.use_cases).map((uc) => uc.id));
+  for (const scn of sectionItems<ScenarioItem>(pack.scenarios)) {
     if (scn.requirement && !reqIds.has(scn.requirement)) {
       errors.push(`Scenario ${scn.id} references unknown requirement: ${scn.requirement}`);
     }
@@ -243,8 +240,8 @@ function lintScenarioRefs(pack: YamlDocument, errors: string[], _warnings: strin
 }
 
 function lintRuleContextRefs(pack: YamlDocument, _errors: string[], warnings: string[]) {
-  const bcIds = new Set(itemsOf<PackItem>(pack.bounded_contexts).map((bc) => bc.id));
-  for (const rule of itemsOf<ReferringItem>(pack.rules)) {
+  const bcIds = new Set(sectionItems<PackItem>(pack.bounded_contexts).map((bc) => bc.id));
+  for (const rule of sectionItems<ReferringItem>(pack.rules)) {
     if (rule.context && bcIds.size > 0 && !bcIds.has(rule.context)) {
       warnings.push(
         `Rule ${rule.id} context '${rule.context}' does not match any bounded_context id.`
@@ -266,7 +263,7 @@ function lintIdUniqueness(pack: YamlDocument, errors: string[], _warnings: strin
     "commands",
   ];
   for (const section of sections) {
-    const items = itemsOf<PackItem>(pack[section]);
+    const items = sectionItems<PackItem>(pack[section]);
     const seen = new Set<string>();
     for (const item of items) {
       if (!item.id) continue;
@@ -374,7 +371,7 @@ export function lintScenarioQuality(
   errors: string[],
   scenarioIssues: string[]
 ) {
-  for (const scn of itemsOf<ScenarioItem>(pack.scenarios)) {
+  for (const scn of sectionItems<ScenarioItem>(pack.scenarios)) {
     const label = scn.id || scn.title || scn.scenario || "(unnamed scenario)";
 
     if (!scn.template && (scn.given || scn.when || scn.then)) {
@@ -533,12 +530,12 @@ export function buildPackGraph(pack: YamlDocument): PackGraph {
     return id;
   }
 
-  const requirements = itemsOf<PackItem>(pack.requirements);
-  const useCases = itemsOf<UseCaseItem>(pack.use_cases);
-  const commands = itemsOf<PackItem>(pack.commands);
-  const queries = itemsOf<PackItem>(pack.queries);
-  const aggregates = itemsOf<PackItem>(pack.aggregates);
-  const events = itemsOf<PackItem>(pack.events);
+  const requirements = sectionItems<PackItem>(pack.requirements);
+  const useCases = sectionItems<UseCaseItem>(pack.use_cases);
+  const commands = sectionItems<PackItem>(pack.commands);
+  const queries = sectionItems<PackItem>(pack.queries);
+  const aggregates = sectionItems<PackItem>(pack.aggregates);
+  const events = sectionItems<PackItem>(pack.events);
 
   const reqById = new Map(
     requirements.filter((r) => r.id).map((r): [string | undefined, PackItem] => [r.id, r])
@@ -588,7 +585,7 @@ export function buildPackGraph(pack: YamlDocument): PackGraph {
     const from = nodeId.uc(u);
     const label = u.id || u.name || "(use case)";
 
-    const reqRefs = itemsOf<string>(u.requirements || (u.requirement ? [u.requirement] : []));
+    const reqRefs = sectionItems<string>(u.requirements || (u.requirement ? [u.requirement] : []));
     for (const ref of reqRefs) {
       const target = reqById.get(ref);
       if (target) {
@@ -628,7 +625,7 @@ export function buildPackGraph(pack: YamlDocument): PackGraph {
       }
     }
 
-    for (const ref of itemsOf<string>(u.emits)) {
+    for (const ref of sectionItems<string>(u.emits)) {
       const target = evtByKey.get(ref);
       if (target) {
         addEdge(from, nodeId.evt(target), "emits");

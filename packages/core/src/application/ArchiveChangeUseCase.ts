@@ -8,11 +8,25 @@ import { TraceabilityMatrix } from "../domain/TraceabilityMatrix";
 import { parseDelta } from "../domain/SpecParser";
 import { error, warning } from "../domain/Diagnostic";
 
+/** How an archive is planned. */
+export interface ArchiveOptions {
+  /** Archive with unchecked tasks, and overwrite existing feature files. */
+  force?: boolean;
+  /** A draft from a brief: its checklist, not its tasks, says it is ready. */
+  draft?: boolean;
+  /** Every requirement passed the gate: unchecked tasks warn instead of block. */
+  gated?: boolean;
+  /** The archive folder's date prefix; today's date otherwise. */
+  stamp?: string;
+  /** The clock `stamp` defaults from. */
+  now?: Date;
+}
+
 export class ArchiveChangeUseCase {
   constructor(private repo: IProjectRepository) {}
 
-  public execute(changeId: string, opts?: any): ArchivePlan {
-    const o = opts || {};
+  public execute(changeId: string, opts?: ArchiveOptions): ArchivePlan {
+    const o: ArchiveOptions = opts || {};
     const plan = new ArchivePlan();
 
     if (!this.repo.changeExists(changeId)) {

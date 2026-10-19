@@ -42,6 +42,7 @@ const SUITE_LIES = new Set<string>([
 ]);
 import { specgateTagsIn } from "../../../../packages/core/src/domain/GherkinTags";
 import { parseTraceabilityRows } from "../../../../packages/core/src/domain/TraceabilityFormat";
+import type { MatrixRow } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { analyseRequirementText } from "../../../../packages/core/src/domain/RequirementSyntax";
 import {
   isDerivedMatrix,
@@ -68,15 +69,6 @@ import {
  * legacy four-column ones; every column a check reads is optional because a
  * legacy row lacks most of them.
  */
-interface MatrixRow {
-  requirement?: string;
-  scenarioId?: string;
-  featureFile?: string;
-  technicalArtifact?: string;
-  testArtifact?: string;
-  status?: string;
-  [column: string]: string | undefined;
-}
 
 /** A `projects:` entry of specops.config.yaml: a path, or `{ path }`. */
 type MonorepoEntry = string | { path?: string } | null | undefined;
@@ -551,7 +543,7 @@ export class ValidateSpecsCommand extends BaseCommand {
 
     const findings: Diagnostic[] = [];
     const seen = new Set<string>();
-    const columns: Array<[string, string]> = [
+    const columns: Array<[string, "featureFile" | "technicalArtifact" | "testArtifact"]> = [
       ["feature file", "featureFile"],
       ["technical artifact", "technicalArtifact"],
       ["test artifact", "testArtifact"],

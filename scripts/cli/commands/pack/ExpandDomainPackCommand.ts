@@ -7,11 +7,14 @@ import {
   hasStructuredDomainModel,
   normalizeVars,
   renderTemplate,
+  sectionItems,
 } from "../../../../packages/core/src/domain/PackSpec";
+import type { PackItem } from "../../../../packages/core/src/domain/PackSpec";
 import {
   buildTraceabilityMarkdown,
   parseTraceabilityRows,
 } from "../../../../packages/core/src/domain/TraceabilityFormat";
+import type { MatrixRow } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import {
   ensureProjectDir,
   getWrittenFiles,
@@ -90,10 +93,8 @@ export interface PackScenario {
 }
 
 /** Anything a reference can point at: by id, or by name. */
-interface NamedEntry {
-  id?: string;
-  name?: string;
-}
+/** Any pack entry that has an id or a name; the rest is the section's own. */
+type NamedEntry = PackItem;
 
 interface RequirementEntry extends NamedEntry {
   title?: string;
@@ -145,27 +146,6 @@ interface OperationEntry extends NamedEntry {
   useCase?: string;
   fields?: unknown;
   returns?: unknown;
-}
-
-/**
- * One traceability row, rich (ten columns) or legacy (four). Every field is
- * optional because a row read back from the file has only its own mode's.
- */
-interface MatrixRow {
-  requirement?: string;
-  scenarioId?: string;
-  featureFile?: string;
-  useCase?: string;
-  commandOrQuery?: string;
-  aggregate?: string;
-  event?: string;
-  technicalArtifact?: string;
-  testArtifact?: string;
-  status?: string;
-  context?: string;
-  dependsOn?: string[];
-  feature?: string;
-  scenario?: string;
 }
 
 /** Where the pack came from: a local root, or a pinned remote. */
@@ -497,8 +477,8 @@ function boundedContextOf(
   commandRef: string,
   queryRef: string
 ): string {
-  const aggregates: AggregateEntry[] = asArray(pack.aggregates);
-  const contexts: BoundedContextEntry[] = asArray(pack.bounded_contexts);
+  const aggregates = sectionItems<AggregateEntry>(pack.aggregates);
+  const contexts = sectionItems<BoundedContextEntry>(pack.bounded_contexts);
 
   // The **name**, not the id. `match: { bounded_context: Invoicing }` is what a
   // person writes; `BC-001` is an identifier they never chose and would have to

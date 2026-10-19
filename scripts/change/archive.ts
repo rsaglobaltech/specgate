@@ -1,12 +1,12 @@
 import * as path from "node:path";
 import { DiskProjectRepository } from "../../packages/core/src/infrastructure/DiskProjectRepository";
 import { ArchiveChangeUseCase } from "../../packages/core/src/application/ArchiveChangeUseCase";
+import type { ArchiveOptions } from "../../packages/core/src/application/ArchiveChangeUseCase";
 import { TraceabilityMatrix } from "../../packages/core/src/domain/TraceabilityMatrix";
 import type { ArchivePlan } from "../../packages/core/src/domain/ArchivePlan";
 
 // These wrappers keep the signatures their callers already use, and take
 // whatever the core functions they delegate to take.
-type ArchiveOptions = Parameters<ArchiveChangeUseCase["execute"]>[1];
 type AppliedDelta = Parameters<typeof TraceabilityMatrix.syncTraceability>[1];
 type TracedRequirement = Parameters<typeof TraceabilityMatrix.traceRow>[0];
 

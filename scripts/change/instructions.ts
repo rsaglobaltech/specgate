@@ -27,8 +27,8 @@ import {
   readConfig,
   CAPABILITIES_DIR,
 } from "../../packages/core/src/infrastructure/ChangeWorkspace";
+import type { ChangeConfig } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { artifactState, artifactsFor, ARTIFACTS } from "./artifacts";
-import type { ChangeConfig } from "./artifacts";
 import { BUILT_IN } from "../schema/registry";
 import type { SchemaArtifact } from "../schema/registry";
 
@@ -190,7 +190,7 @@ export function buildInstructions(
 ): Instructions {
   const p = paths(projectDir);
   const stage = STAGES[artifact];
-  const config: ChangeConfig = readConfig(projectDir, changeId);
+  const config = readConfig(projectDir, changeId);
   const artifacts = artifactsFor(projectDir, config);
   const states = artifactState(projectDir, changeId, config);
   const state = states.find((s) => s.id === artifact);

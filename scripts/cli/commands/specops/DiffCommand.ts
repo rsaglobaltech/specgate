@@ -266,7 +266,9 @@ export function runAsChange(args: DiffArgs, projectDir: string, lock: LockJson):
       continue;
     }
 
-    const written = materialiseChange(projectDir, entry, targetVersion, derived, {
+    // `markdown` is a string past the check above; the copy carries that type.
+    const delta = { ...derived, markdown: derived.markdown };
+    const written = materialiseChange(projectDir, entry, targetVersion, delta, {
       dryRun: args.dryRun,
     });
     results.push({

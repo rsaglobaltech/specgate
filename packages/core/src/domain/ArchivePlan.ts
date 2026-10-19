@@ -1,3 +1,5 @@
+import type { Diagnostic } from "./Diagnostic";
+
 export interface WriteOperation {
   file: string;
   contents: string;
@@ -41,8 +43,8 @@ export class ArchivePlan {
   };
 
   public projectDir?: string;
-  public diagnostics: any[] = [];
-  public warnings: any[] = [];
+  public diagnostics: Diagnostic[] = [];
+  public warnings: Diagnostic[] = [];
 
   public get ok(): boolean {
     return this.diagnostics.length === 0;
