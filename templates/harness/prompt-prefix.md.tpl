@@ -20,7 +20,7 @@ from a domain pack:
   stop and say so in your final message. Editing a scenario so your code
   passes is the one failure mode that makes this whole exercise worthless.
 - `docs/specs/**` — spec.md, the traceability matrix, domain model, use cases,
-  commands, events, aggregates, ADRs. `specgate done` updates the matrix; you do
+  commands, events, aggregates, ADRs. `specgate apply` updates the matrix; you do
   not.
 - `AI_RULES.md`, `spec.md`, `.specops.lock`, `.specops/**`.
 

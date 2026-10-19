@@ -50,13 +50,31 @@ export const STEPS: AgentStep[] = [
       "`specgate draft <module>` opens the draft and writes `DRAFTING.md` inside it. Follow it exactly: it has the reserved ids, the actors and surfaces, and every format the checklist reads.",
       "Write only inside `docs/specs/changes/draft-<module>/`. Then run `specgate draft <module>` again and fix every finding until it says **Ready to review**.",
       "A `D6_unlisted_value` is a value the brief never gave: use the brief's value, list it in `assumptions.md`, or make it a question. Never invent a business rule — what only the client can decide goes in `questions.md`.",
-      "Do not archive. End with the open questions for the person: they review the draft, answer what they can, then run `specgate change archive draft-<module>`.",
+      "Do not archive. End with the open questions for the person: they review the draft and answer what they can. Then each requirement is built test first and delivered with `specgate apply REQ-NNN`; a person runs `specgate archive draft-<module>` once all of them are applied.",
+    ],
+  },
+  {
+    // ADR-0035: the daily loop is propose → test → apply → archive. A change
+    // is archived after its requirements are applied, never before.
+    name: "propose",
+    summary: "Open a change: the requirements to add or modify, as a reviewable delta.",
+    when: "The user asks for a behaviour no requirement covers, or for a change to one that shipped.",
+    run: [
+      "specgate propose <change-id>",
+      "specgate change instructions proposal --json",
+      "specgate change instructions specs --json",
+    ],
+    guidance: [
+      "`change instructions` returns the template, the rules the validator enforces, and the project's declared stack. Follow it rather than guessing the format.",
+      "A delta states only what changes. It is not a copy of the spec. Until it is archived, its requirements are in flight: `status`, `check` and `apply` read them from the delta.",
+      "Every requirement body needs SHALL / MUST / SHOULD / MAY, and every scenario needs plain `- GIVEN` / `- WHEN` / `- THEN` bullets.",
+      "Do not archive yet. Next: a test for each requirement, then `/specgate:apply`.",
     ],
   },
   {
     name: "new",
-    summary: "Add a requirement: its prose, its scenario and its row, in one step.",
-    when: "The user asks for a behaviour that no requirement covers yet.",
+    summary: "Add one requirement straight to `spec.md`: its prose, its scenario and its row.",
+    when: "A small project without changes, or the user asks for a single requirement outside a change.",
     run: ['specgate new "<what the system must do>" --json'],
     guidance: [
       "It writes a draft `## REQ-NNN` section in `spec.md` and a scenario of `<placeholder>` steps under `features/`.",
@@ -66,14 +84,19 @@ export const STEPS: AgentStep[] = [
   },
   {
     name: "apply",
-    summary: "Implement one requirement: the test first, then the code.",
-    when: "A requirement has a real scenario and no implementation yet.",
-    run: ["specgate status --json", "specgate change instructions apply --json"],
+    summary: "Deliver one requirement: the test first, then the code, then the gate.",
+    when: "A requirement — in `spec.md` or in an open change — has a real scenario and no implementation yet.",
+    run: [
+      "specgate status --json",
+      "specgate change instructions apply --json",
+      "specgate apply <REQ-NNN> --json",
+    ],
     guidance: [
       "One requirement at a time — `status` is the queue.",
       "Write the test first and **name the requirement in it** (`REQ-007` in a comment or the test name). That mention is the link: no `req link`, no matrix edit.",
       "Mention the requirement in the code that implements it too, so its row points at the code.",
-      "Never change `spec.md` or a `.feature` to make a test pass.",
+      "Never change `spec.md`, a delta or a `.feature` to make a test pass.",
+      "`specgate apply` refuses a requirement no test names and runs the gate; a refusal changes nothing. Green, it records Implemented.",
     ],
   },
   {
@@ -91,42 +114,31 @@ export const STEPS: AgentStep[] = [
     ],
   },
   {
-    name: "done",
-    summary: "Close a requirement through the gate.",
-    when: "Its scenario is real, its test names it and `check` is green.",
-    run: ["specgate done <REQ-NNN> --strict --json"],
-    guidance: [
-      "`--strict` runs the whole gate for this requirement before recording anything; a refusal changes nothing.",
-      "The status is written into `spec.md`; the matrix is regenerated from it.",
-    ],
-  },
-  {
-    name: "propose",
-    summary: "Change a requirement that already shipped, as a reviewable delta.",
-    when: "Rewording, extending or retiring something delivered — not for new work, use `new`.",
-    run: [
-      "specgate change new <change-id>",
-      "specgate change instructions proposal --json",
-      "specgate change instructions specs --json",
-    ],
-    guidance: [
-      "`change instructions` returns the template, the rules the validator enforces, and the project's declared stack. Follow it rather than guessing the format.",
-      "A delta states only what changes. It is not a copy of the spec.",
-      "Every requirement body needs SHALL / MUST / SHOULD / MAY, and every scenario needs plain `- GIVEN` / `- WHEN` / `- THEN` bullets.",
-    ],
-  },
-  {
     name: "archive",
-    summary: "Merge an accepted change into the spec tree.",
-    when: "The change is implemented and every task is checked.",
+    summary: "Merge a change into the spec tree once every requirement in it is applied.",
+    when: "Every requirement the change adds or modifies is Implemented, and the person reviewing it says merge.",
     run: [
       "specgate change instructions archive --json",
-      "specgate change archive <change-id> --dry-run",
-      "specgate change archive <change-id> --json",
+      "specgate archive <change-id> --dry-run",
+      "specgate archive <change-id> --json",
     ],
     guidance: [
+      "A person runs archive: review is the change's pull request. Never archive a change you have not been told to.",
+      "Archive refuses while a requirement of the change is not applied; the fix it prints names the `specgate apply` to run.",
       "Preview with `--dry-run` first: it lists the specs that will move.",
       "Archiving writes the specs and materialises the feature files; the matrix follows on its own.",
+    ],
+  },
+  {
+    // `done` is `apply`'s old name (ADR-0035). Kept so commands installed by
+    // 0.20 and the scripts that call them still work.
+    name: "done",
+    summary: "Old name of `/specgate:apply`: deliver one requirement through the gate.",
+    when: "Only when a script or a person asks for `done` — otherwise use `/specgate:apply`.",
+    run: ["specgate apply <REQ-NNN> --json"],
+    guidance: [
+      "Same command as `/specgate:apply`: the test first, named after the requirement, then `specgate apply`.",
+      "The status is written into `spec.md` or the open change; the matrix is regenerated from it.",
     ],
   },
   {
@@ -136,7 +148,7 @@ export const STEPS: AgentStep[] = [
     run: ["specgate init", "specgate check --json"],
     guidance: [
       "`specgate init` adopts a repository that has code: it never overwrites a file and never touches source.",
-      "Then add real requirements one at a time with `specgate new`, starting with what the team is changing now.",
+      "Then propose real requirements with `specgate propose <change-id>`, starting with what the team is changing now.",
     ],
   },
 ];

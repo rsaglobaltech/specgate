@@ -1,12 +1,12 @@
 ---
-description: Add a requirement: its prose, its scenario and its row, in one step.
+description: Add one requirement straight to `spec.md`: its prose, its scenario and its row.
 ---
 
 # /specgate:new
 
-Add a requirement: its prose, its scenario and its row, in one step.
+Add one requirement straight to `spec.md`: its prose, its scenario and its row.
 
-**Use when:** The user asks for a behaviour that no requirement covers yet.
+**Use when:** A small project without changes, or the user asks for a single requirement outside a change.
 
 ## Run
 
