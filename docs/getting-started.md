@@ -39,32 +39,47 @@ needs at its top.
 
 ## 3. Learn the daily loop
 
-Once a project is set up, the day is five commands:
+Once a project is set up, the day is four verbs — `propose`, `apply`,
+`status`, `archive` — and `check` before a pull request:
 
 <!-- specgate:steps -->
-### `specgate status` — where you stand
+### `specgate propose add-pdf-invoices` — open a change
 
-What is left, requirement by requirement, and the one command to run next.
-`specgate` on its own does the same.
-
-### `specgate new "<what it does>"` — one more requirement
-
-Its sentence in `spec.md`, a scenario to fill in, and its row in the matrix.
+A folder under `docs/specs/changes/` with a proposal, tasks, a delta to write
+and a range of `REQ` ids reserved for it. Write the requirement and its
+scenario in the delta. From a plan instead: `specgate propose --from-brief`.
 
 ### A test that names it
 
 Write a test that mentions `REQ-007` — that mention is the link. Nothing to
-declare.
+declare. Then the code.
 
-### `specgate done REQ-007` — close it
+### `specgate apply` — deliver it
 
-Marked `Implemented` only if the gate passes for it: the specification, the
-link and your test suite.
+The next requirement, or the one you name (`specgate apply REQ-007`). Refused
+while no test names it; marked `Implemented` only if the gate passes for it:
+the specification, the link and your test suite.
+
+### `specgate status` — where you stand
+
+What is left, requirement by requirement — an open change's included — and
+the one command to run next. `specgate` on its own does the same.
+
+### `specgate archive add-pdf-invoices` — close the change
+
+Once every requirement in it is `Implemented`, the delta is merged into the
+specs and the feature files are written. It refuses while one is pending.
+The spec and the code land in the same pull request.
 
 ### `specgate check` — before a pull request
 
 The whole gate. The same command runs in CI.
 <!-- specgate:endsteps -->
+
+A change is archived when its code is done, not before: while it is open its
+requirements already count, in `status`, `apply` and `check`. The old names
+still work — `new` and `done` for one requirement, `draft` and
+`change archive` — and `specgate --help --all` lists every other command.
 
 At the foot of `status` sits **Gato**, the cat that keeps the gate. It grows as
 requirements close and falls sick when `check` is red;
@@ -77,7 +92,7 @@ requirements close and falls sick when `check` is red;
 | 1 | [Install and set up](start/scratch-1-install.md) | [Adopt, touching no code](start/existing-1-adopt.md) |
 | 2 | [Specify](start/scratch-2-specify.md) — the brief becomes a checked draft, a module at a time | [Specify](start/existing-2-specify.md) — one behaviour you rely on |
 | 3 | [Build](start/scratch-3-build.md) — test first, by hand or with the harness | [First requirement](start/existing-3-first-requirement.md) — the test you have names it |
-| 4 | [Prove](start/scratch-4-prove.md) — `done`, `check`, `report` | [CI](start/existing-4-ci.md) — the gate on every pull request |
+| 4 | [Prove](start/scratch-4-prove.md) — `apply` (or `done`), `check`, `report` | [CI](start/existing-4-ci.md) — the gate on every pull request |
 | 5 | [Every day](start/scratch-5-every-day.md) — CI and the loop | [Every day](start/existing-5-every-day.md) — one module at a time |
 
 ## Upgrading from 0.18 or earlier?
@@ -98,5 +113,6 @@ no test names. Nothing to migrate: [Already on OpenSpec](openspec.md).
 
 - [Every command, grouped by when you need it](commands.md)
 - [Write good requirements and scenarios](writing-specs.md)
-- [Hand the loop to an agent — the harness](harness.md)
+- [Learn the loop on your own code](commands.md#starting) — `specgate onboard --tour` runs it on a temporary copy; `specgate explore` briefs you or your agent before a change exists
+- [Hand the loop to an agent — the harness](harness.md), and [watch it work](harness.md#a-chain-of-requirements-merged-as-they-pass) with `specgate studio` at `/live`
 - [Six real products built this way](projects/index.md)

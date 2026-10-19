@@ -55,6 +55,23 @@ No. A bugfix or a refactor that does not change contracted behaviour adds
 none, and the gate only asks for what delivered requirements owe.
 → [Your team's first pull request](first-pr.md)
 
+### When is a change archived — before or after the code?
+
+After. `specgate propose` opens it, its requirements count while it is open
+(`status` lists them, `apply` delivers them), and `specgate archive` merges it
+only once every requirement it adds or modifies is `Implemented`. Until then
+it refuses with `archive_requirements_pending` and the `specgate apply` to
+run; `--force` does not skip that. The spec and the code land in the same pull
+request ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
+→ [Reviewing changes](reviewing-changes.md)
+
+### Do the old commands still work?
+
+Yes. `done` is `apply`, `change new` is `propose`, `draft` is
+`propose --from-brief`, `change archive` is `archive`, and `new` still adds one
+requirement straight to `spec.md`. The short help shows only `init`, the four
+verbs and `check`; `specgate --help --all` shows the rest.
+
 ### Who edits the traceability matrix?
 
 Nobody. It is generated from `spec.md`, the scenario tags and the files that
@@ -63,14 +80,25 @@ with `matrix_stale` when you forget. → [How Specgate thinks](concepts.md)
 
 ### Two branches both changed the matrix and now it conflicts.
 
-Take either side and run `specgate matrix`: it is regenerated from the merged
+A generated matrix is declared `merge=union` in `.gitattributes`, so git keeps
+both sides' rows and `specgate check` regenerates it. On an older setup, take
+either side and run `specgate matrix`: it is regenerated from the merged
 sources, so the conflict resolves itself.
+→ [The harness](harness.md#parallel-branches-and-the-traceability-matrix)
 
-### `done` refuses. Can I force it?
+### Two branches took the same requirement id.
 
-`specgate done REQ-NNN --no-check` writes the status without the gate. Use it
+`specgate check` compares ids with the base branch (`--base`, or origin's
+default) and fails with `id_taken_on_base` when the same id has another title
+there — before the merge, naming the next id free on both sides.
+
+### `apply` refuses. Can I force it?
+
+First read the code. `apply_no_test` means no test mentions the requirement:
+name it in the test, that is the fix. For a gate failure,
+`specgate apply REQ-NNN --no-check` writes the status without the gate. Use it
 when the gate is wrong, say so in the pull request — and open an issue,
-because a wrong gate is a bug.
+because a wrong gate is a bug. (`done` is the old name; it behaves the same.)
 
 ### `check` says it checked the specification, not the code.
 
@@ -104,8 +132,20 @@ touching `spec.md`, `features/**` or the rules fails the attempt.
 
 ### Will the harness merge its work?
 
-Never. It leaves one branch per requirement and stops. Merging is a judgement,
-and a tool that merges its own work removes the last place a person reviews it.
+Not by default. It leaves one branch per requirement and stops. Merging is a
+judgement, and a tool that merges its own work removes the last place a person
+reviews it. When you ask for it with `specgate harness run --chain`, it runs
+the requirements one at a time, each cut from the previous merge, merges a
+green one with a merge commit into the branch you are on, runs the gate again
+on the merge, and stops at the first failure.
+→ [The harness](harness.md#a-chain-of-requirements-merged-as-they-pass)
+
+### Can I watch what the agent is doing?
+
+Yes: `specgate studio`, then open `/live`. It shows each requirement's
+attempt, phase, files, tests and steps as the harness runs, bound to this
+machine unless `--host` says otherwise.
+→ [Command reference](commands.md#customising)
 
 ### What does a harness run cost?
 
@@ -146,5 +186,8 @@ day a new release is published.
 
 Mostly in what happens after the specification is written: a matrix CI
 enforces, Gherkin a runner can execute, versioned domain packs and an
-unattended harness. OpenSpec is smaller, and if you only want the change loop
-it is the better fit. → [Comparisons](comparisons.md)
+unattended harness. The daily loop has the same shape as OpenSpec's —
+`propose`, `apply`, `archive` — but `apply` needs a test that names the
+requirement and a green gate, and `archive` refuses work that is not done.
+OpenSpec is smaller, and if you only want the change loop without a gate it is
+the better fit. → [Comparisons](comparisons.md)
