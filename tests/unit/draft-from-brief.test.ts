@@ -163,14 +163,20 @@ test("draft <module> again: the placeholder, then findings, then ready", (t) => 
   const green = cli("draft", "bookings");
   assert.equal(green.status, 0, green.stdout);
   assert.match(green.stdout, /Ready to review/);
-  assert.match(green.stdout, /specgate change archive draft-bookings/);
+  // Reviewed, then applied; archived once its requirements are delivered (ADR-0035).
+  assert.match(green.stdout, /specgate apply/);
+  assert.match(green.stdout, /specgate archive draft-bookings/);
   assert.match(cli("draft").stdout, /bookings\s+ready to review/);
 });
 
 test("archiving a ready draft needs no task boxes, and points at the next module", (t) => {
   const { dir, cli } = project(t);
   cli("draft", "bookings");
-  fs.writeFileSync(path.join(change(dir), "specs", "bookings", "spec.md"), DRAFT());
+  // Delivered, as `specgate apply` leaves it: archive waits for that (ADR-0035).
+  fs.writeFileSync(
+    path.join(change(dir), "specs", "bookings", "spec.md"),
+    DRAFT().replace("<!-- specgate:trace actor=", "<!-- specgate:trace status=Implemented actor=")
+  );
   const archived = cli("change", "archive", "draft-bookings");
   assert.equal(archived.status, 0, archived.stdout + archived.stderr);
   assert.match(archived.stdout, /➜ {2}specgate draft\n/);
@@ -561,7 +567,8 @@ test("after the agent, the next steps are numbered and the brief's progress is s
     /Brief {2}bookings ● ready · coupons ○ not started {3}\(0 of 2 archived\)/
   );
   assert.match(r.stdout, /What now ─+\n\s+1\s+Read docs\/specs\/changes\/draft-bookings\/specs\//);
-  assert.match(r.stdout, /3\s+➜ specgate change archive draft-bookings/);
+  // Reviewed, applied, then archived (ADR-0035).
+  assert.match(r.stdout, /3\s+➜ specgate apply\s+.*then specgate archive draft-bookings/);
   assert.match(r.stdout, /4\s+➜ specgate draft coupons\s+the next module of the brief/);
 });
 

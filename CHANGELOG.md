@@ -8,6 +8,35 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **Four verbs, one lifecycle** ([ADR-0035](docs/specs/adr/0035-four-verbs-one-lifecycle.md), change `compact-use`).
+  The short help is `init`; `propose`, `apply`, `status`, `archive`; `check`.
+  - `specgate propose <id>` opens a change with a delta to write (`change new`);
+    `propose --from-brief` drafts the next module of `docs/brief.md` (`draft`).
+  - `specgate apply [REQ]` delivers one requirement — the next one when none is
+    named: refused while no test names it (`apply_no_test`, with the fix), gated,
+    then Implemented. `done` is its old name, with the same result.
+  - `specgate archive <id>` merges a change once every requirement it adds or
+    modifies is Implemented (`archive_requirements_pending`); `--force` does not
+    skip that.
+- **An open change's requirements count while it is in flight.** `status`,
+  `apply`, `check` and `harness run` judge the project as it will be after
+  archive — a temporary copy with every open change archived into it — and
+  `apply` writes the status in the change's delta.
+
+### Changed
+
+- **A change is archived when its code is done**, not before. Drafts from a
+  brief follow the same path: reviewed, applied, then archived. `draft` names
+  `specgate apply` once a draft is ready, and the next module to draft skips
+  one that is ready.
+- Unchecked tasks are a warning, not a refusal, for a change whose requirements
+  all passed the gate; a change with none still needs its tasks ticked.
+- `status` names `specgate apply REQ-…` where it named `specgate done REQ-…`.
+- A delta's scenario findings name their requirement:
+  `Scenario "…" of REQ-007 has no steps.`
+
 ## [0.20.0] — 2026-10-12
 
 ### Added

@@ -34,6 +34,24 @@ import { BaseCommand } from "../../../lib/command";
 
 import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
+import { inFlightView } from "../../../lib/in-flight";
+
+/**
+ * `read` against the project as it will be after its open changes are
+ * archived (ADR-0035), so the harness sees, prompts for and gates a change's
+ * requirements while they are in flight. The project itself when none is open.
+ */
+function judged<T>(
+  dir: string,
+  read: (judgedDir: string, toProject: (text: string) => string) => T
+): T {
+  const view = inFlightView(dir);
+  try {
+    return read(view ? view.dir : dir, view ? view.toProject : (text) => text);
+  } finally {
+    if (view) view.cleanup();
+  }
+}
 import { analyseGherkinSource } from "../../../../packages/core/src/domain/GherkinQuality";
 import {
   readHarnessConfig,
@@ -323,12 +341,10 @@ function branchExists(projectDir, branch) {
 }
 
 function runPlan(projectDir) {
-  const r = spawnSync(
-    process.execPath,
-    [PLAN_SCRIPT, "--project-dir", projectDir, "--format", "json"],
-    {
+  const r = judged(projectDir, (dir) =>
+    spawnSync(process.execPath, [PLAN_SCRIPT, "--project-dir", dir, "--format", "json"], {
       encoding: "utf8",
-    }
+    })
   );
   if (r.status !== 0) {
     throw new Error(`plan failed:\n${r.stderr || r.stdout}`);
@@ -388,12 +404,16 @@ function runGate(worktreeDir, testCmd, timeoutMs, req: any = {}, settings: any =
   // The agent's tests are new evidence for a generated matrix: refresh it so
   // the gate judges the attempt, not the matrix as it was before it.
   refreshDerivedMatrix(worktreeDir);
-  const validateArgs = [VALIDATE_SCRIPT, worktreeDir, "--strict"];
-  if (req.requirement) validateArgs.push("--delivering", req.requirement);
-  const validate = spawnSync(process.execPath, validateArgs, {
-    encoding: "utf8",
-    timeout: timeoutMs,
-    maxBuffer: SUBPROCESS_MAX_BUFFER,
+  const validate = judged(worktreeDir, (dir, toProject) => {
+    const validateArgs = [VALIDATE_SCRIPT, dir, "--strict"];
+    if (req.requirement) validateArgs.push("--delivering", req.requirement);
+    const run = spawnSync(process.execPath, validateArgs, {
+      encoding: "utf8",
+      timeout: timeoutMs,
+      maxBuffer: SUBPROCESS_MAX_BUFFER,
+    });
+    // The agent is told about its worktree, not about the copy it was judged in.
+    return { ...run, stdout: toProject(run.stdout || ""), stderr: toProject(run.stderr || "") };
   });
   if (validate.status !== 0) {
     return {
@@ -907,18 +927,20 @@ function attemptRequirement(req, ctx) {
         // implementing step that follows must see what it said. Building once
         // up front meant findings only ever reached the *next* attempt, which
         // is not what a reviewer is for.
-        const prompt = buildPrompt(req, worktreeDir, {
-          promptPrefix: settings.promptPrefix,
-          hint,
-          previousFailure: previousFailure || undefined,
-          reviewFindings: step.advisory ? undefined : reviewFindings || undefined,
-          attempt,
-          maxAttempts: settings.maxAttempts,
-          // Read from the worktree, which carries the matrix at the base
-          // commit — the precedent must be work already accepted, not a
-          // sibling requirement this same run happens to be writing.
-          withPrecedents: settings.promptPrecedents === true,
-        });
+        const prompt = judged(worktreeDir, (dir) =>
+          buildPrompt(req, dir, {
+            promptPrefix: settings.promptPrefix,
+            hint,
+            previousFailure: previousFailure || undefined,
+            reviewFindings: step.advisory ? undefined : reviewFindings || undefined,
+            attempt,
+            maxAttempts: settings.maxAttempts,
+            // Read from the worktree, which carries the matrix at the base
+            // commit — the precedent must be work already accepted, not a
+            // sibling requirement this same run happens to be writing.
+            withPrecedents: settings.promptPrecedents === true,
+          })
+        );
         const promptFile = path.join(
           os.tmpdir(),
           `specgate-harness-prompt-${req.requirement}-${crypto.randomBytes(4).toString("hex")}.md`
@@ -2352,11 +2374,13 @@ export class RunCommand extends BaseCommand {
           ui.header("harness run", `dry run · ${pending.length} requirement(s) would be processed`)
         );
         for (const req of pending) {
-          const prompt = buildPrompt(req, projectDir, {
-            promptPrefix: settings.promptPrefix,
-            hint: hintByReq.get(req.requirement) as string | undefined,
-            withPrecedents: settings.promptPrecedents === true,
-          });
+          const prompt = judged(projectDir, (dir) =>
+            buildPrompt(req, dir, {
+              promptPrefix: settings.promptPrefix,
+              hint: hintByReq.get(req.requirement) as string | undefined,
+              withPrecedents: settings.promptPrecedents === true,
+            })
+          );
           process.stdout.write(
             "\n" +
               ui.section(

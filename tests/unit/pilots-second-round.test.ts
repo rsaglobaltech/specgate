@@ -158,6 +158,14 @@ test("#57: change archive refuses a draft whose checklist fails; --force archive
     assert.match(refused.stdout + refused.stderr, /D6_unlisted_value/);
     assert.ok(fs.existsSync(changeDir), "nothing was archived");
 
+    // --force skips the checklist, never delivery (ADR-0035): deliver it first.
+    const deltaFile = path.join(changeDir, "specs/cart/spec.md");
+    fs.writeFileSync(
+      deltaFile,
+      fs
+        .readFileSync(deltaFile, "utf8")
+        .replace("<!-- specgate:trace actor=", "<!-- specgate:trace status=Implemented actor=")
+    );
     const forced = cli("change", "archive", "draft-cart", "--force", "--project-dir", dir);
     assert.equal(forced.status, 0, forced.stdout + forced.stderr);
   } finally {

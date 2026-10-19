@@ -16,6 +16,7 @@ import { refreshDerivedMatrix } from "./MatrixCommand";
 import { briefProgress, draftNextCommand } from "./DraftCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import { findForjaProject } from "../project/Forja";
+import { inFlightView, InFlightView } from "../../../lib/in-flight";
 
 import { c, sym } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -116,6 +117,48 @@ function questionsByRequirement(projectDir: string): Map<string, string> {
   return found;
 }
 
+/**
+ * The queue with open changes in it (ADR-0035): read from the project as it
+ * will be after archive, each in-flight requirement marked with its change.
+ * `read` runs while that view exists; it is removed afterwards.
+ */
+export function withQueue<T>(
+  projectDir: string,
+  read: (summary: any, dir: string, view: InFlightView | null) => T
+): T {
+  const view = inFlightView(projectDir);
+  try {
+    const dir = view ? view.dir : projectDir;
+    if (!view) refreshDerivedMatrix(projectDir);
+    const summary: any = summarise(dir, fs.readFileSync(path.join(dir, TRACE), "utf8"));
+    if (view) {
+      for (const it of summary.items) {
+        const owner = view.requirements.find((r) => r.id === it.requirement);
+        if (owner) it.change = owner.change;
+      }
+    }
+    return read(summary, dir, view);
+  } finally {
+    if (view) view.cleanup();
+  }
+}
+
+const TRACE = path.join("docs", "specs", "traceability.md");
+
+/**
+ * The requirement `apply` takes when none is named: one whose test is in
+ * place first, then the first still to do — never the adoption baseline,
+ * never one waiting for an answer.
+ */
+export function nextRequirement(items: any[], except: string[] = []): any {
+  const open = (items || []).filter((it: any) => !except.includes(it.requirement));
+  return (
+    open.find((it: any) => it.category === "NEEDS_STATUS_UPDATE") ||
+    open.find((it: any) => TODO_CATEGORIES.includes(it.category) && !isBaseline(it)) ||
+    null
+  );
+}
+
 /** How many queue lines `status` prints before pointing at `plan` for the rest. */
 const QUEUE_LIMIT = 12;
 
@@ -206,7 +249,7 @@ export function nextCommandPlain({ items, counts, orphans, derived, brief, forja
   const first = (cats: string[]) => (items || []).find((it: any) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
   const ready = first(["NEEDS_STATUS_UPDATE"]);
-  if (ready) return `specgate done ${ready.requirement}`;
+  if (ready) return `specgate apply ${ready.requirement}`;
   const module = briefFirst({ items, brief });
   if (module) return draftNextCommand(module);
   const todo = firstReal(items) || first(TODO_CATEGORIES);
@@ -215,8 +258,8 @@ export function nextCommandPlain({ items, counts, orphans, derived, brief, forja
     if (onlyBaseline(items)) return 'specgate new "<a behaviour you rely on>"';
     if (forja && needsCode(todo)) return forjaAddCommand(todo);
     // On a generated matrix a test that names its requirement is the link;
-    // `done` is what you run once it exists, and it checks first.
-    if (derived) return `specgate done ${todo.requirement}`;
+    // `apply` is what you run once it exists, and it checks first.
+    if (derived) return `specgate apply ${todo.requirement}`;
     return `specgate req link ${todo.requirement} --test <path>`;
   }
   if (counts.total === 0) return 'specgate new "<what it does>"';
@@ -230,7 +273,7 @@ export function nextReason({ items, counts, orphans, derived, brief, forja }: an
   const module = briefFirst({ items, brief });
   if (module)
     return module.state === "ready"
-      ? `the ${module.module} draft is ready — review it, then archive`
+      ? `the ${module.module} draft is ready — review it, then apply its requirements`
       : `turn the ${module.module} module of ${brief.brief} into requirements`;
   const todo =
     firstReal(items) || (items || []).find((it: any) => TODO_CATEGORIES.includes(it.category));
@@ -241,7 +284,7 @@ export function nextReason({ items, counts, orphans, derived, brief, forja }: an
   if (todo && forja && needsCode(todo))
     return `${todo.requirement}'s use case and the test that names it, where the architecture expects them`;
   if (todo && derived)
-    return `once a test mentions ${todo.requirement} — that mention is the link; done checks first`;
+    return `once a test mentions ${todo.requirement} — that mention is the link; apply checks first`;
   if (todo) return `write the test first, then record where it is`;
   if (counts.total === 0) return "no requirements yet";
   if (counts.WAITING_FOR_ANSWER > 0)
@@ -354,6 +397,7 @@ function emitJson(projectDir: string, summary: any, lock: any, notes: any[] = []
           title: titleOf(it) || null,
           category: it.category,
           needs: needsOf(it) || null,
+          ...(it.change ? { change: it.change } : {}),
           ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
         })),
         ...(summary.brief
@@ -401,10 +445,13 @@ export class StatusCommand extends BaseCommand {
       process.exit(2);
     }
 
-    // A generated matrix is a cache: read it fresh.
-    refreshDerivedMatrix(projectDir);
-    const traceContent = fs.readFileSync(tracePath, "utf8");
-    const summary: any = summarise(projectDir, traceContent);
+    // A generated matrix is a cache: read it fresh — with the open changes'
+    // requirements in it, as they will be after archive (ADR-0035).
+    withQueue(projectDir, (summary, dir) => this.report(projectDir, opts, summary, dir));
+    process.exit(0);
+  }
+
+  private report(projectDir: string, opts: StatusOptions, summary: any, dir: string): void {
     try {
       summary.brief = briefProgress(projectDir);
     } catch {
@@ -420,7 +467,7 @@ export class StatusCommand extends BaseCommand {
     // D4 and D5 on the project's own specification: notes, never failures.
     let notes: any[] = [];
     try {
-      const sources = readDerivationSources(projectDir);
+      const sources = readDerivationSources(dir);
       const specs = [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])];
       notes = specNotes(specs, sources.features);
       // A row with no use case still has a title in its spec section (#48).
@@ -434,6 +481,5 @@ export class StatusCommand extends BaseCommand {
 
     if (opts.format === "json") emitJson(projectDir, summary, lock, notes);
     else emitText(projectDir, summary, lock, notes);
-    process.exit(0);
   }
 }

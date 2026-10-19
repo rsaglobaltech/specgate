@@ -1,10 +1,47 @@
-/** The five-verb daily loop and the gate. */
+/** The daily loop — four verbs over the gate (ADR-0035) — and the gate. */
 import * as fs from "node:fs";
 import * as path from "node:path";
 
 export default [
   {
-    name: "the installed binary reports its version and the five-verb help",
+    name: "brownfield Node: init, then propose → apply → archive (ADR-0035)",
+    covers: ["init", "propose", "apply", "archive", "status"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init in a repo with code");
+      const proposed = t.sg(dir, "propose", "round-totals", "--json");
+      t.ok(proposed, "propose");
+      const [first] = t.json(proposed).change.reqRange;
+      t.write(
+        dir,
+        "docs/specs/changes/round-totals/specs/round-totals/spec.md",
+        `# Delta — round-totals\n\n## ADDED Requirements\n\n` +
+          `### Requirement: ${first} — Totals are rounded to the cent\n\n` +
+          `The system SHALL round every order total half-up to the cent.\n\n` +
+          `#### Scenario: SCN-${first.slice(4)}a — A total of 10.005 EUR\n\n` +
+          `- GIVEN an order totalling 10.005 EUR\n- WHEN the total is computed\n` +
+          `- THEN the total is 10.01 EUR\n\n` +
+          `<!-- specgate:trace kind=functional actor=Customer -->\n`
+      );
+      const status = t.json(t.sg(dir, "status", "--json"));
+      t.expect(
+        status.requirements.some((r) => r.id === first && r.change === "round-totals"),
+        "status lists the open change's requirement",
+        status
+      );
+      t.fails(t.sg(dir, "archive", "round-totals"), "archive before the requirement is delivered");
+      t.write(dir, "test/totals.test.js", `// ${first} SCN-${first.slice(4)}a\nrequire("node:test");\n`);
+      t.ok(t.sg(dir, "apply"), "apply takes the next requirement through the gate");
+      t.ok(t.sg(dir, "archive", "round-totals"), "archive once it is delivered");
+      t.expect(
+        /status=Implemented/.test(t.read(dir, "docs/specs/capabilities/round-totals/spec.md")),
+        "archived as Implemented"
+      );
+      t.ok(t.sg(dir, "check"), "check after the loop");
+    },
+  },
+  {
+    name: "the installed binary reports its version and the four-verb help",
     covers: [],
     run(dir, t) {
       const v = t.sg(dir, "--version");
@@ -12,7 +49,7 @@ export default [
       t.expect(v.stdout.includes(t.version), `--version should print ${t.version}`, v);
       const help = t.sg(dir, "--help");
       t.ok(help, "--help");
-      for (const verb of ["init", "status", "new", "check", "done"]) {
+      for (const verb of ["init", "propose", "apply", "status", "archive", "check"]) {
         t.expect(new RegExp(`\\b${verb}\\b`).test(help.stdout), `--help should list ${verb}`, help);
       }
       t.expect(!/\breq\s{2,}/.test(help.stdout), "--help should not list req any more", help);
@@ -44,6 +81,14 @@ export default [
 
       // Plain `done`, as the help teaches it: it used to say ✔ here and leave
       // the next `check` — the one in CI — to fail on the same requirement.
+      // With no test it refuses first for that (ADR-0035); with one, for the
+      // placeholders.
+      t.fails(t.sg(dir, "done", req.id), "done before any test names it");
+      t.write(
+        dir,
+        "test/totals.test.js",
+        `// ${req.id} ${req.scenarioId}\nrequire("node:test");\n`
+      );
       const premature = t.sg(dir, "done", req.id);
       t.fails(premature, "done on a scenario of placeholders");
       t.expect(

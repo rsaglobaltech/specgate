@@ -26,6 +26,7 @@ import { phrases } from "../../../../packages/core/src/infrastructure/DiskLangua
 import { ARTIFACTS, artifactState } from "../../../change/artifacts";
 import { parseDelta } from "../../../../packages/core/src/domain/SpecParser";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
+import { changeRequirements, DELIVERED } from "../../../lib/in-flight";
 import { ArchiveChangeUseCase } from "../../../../packages/core/src/application/ArchiveChangeUseCase";
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import {
@@ -84,6 +85,53 @@ import * as ui from "../../../lib/ui";
 
 /** The skeletons `change new` writes, shared with `change instructions`. */
 
+/**
+ * The verb this run was reached through: `propose` and `archive` are the daily
+ * names of `change new` and `change archive` (ADR-0035). Only the wording
+ * differs — the header, the help, the next step.
+ */
+let VERB: "propose" | "archive" | null = null;
+
+/** The help of `propose` and `archive`, and the line that ties the old names to them. */
+function verbUsage(sub: string) {
+  // The old names keep their full help, under the line that names the new verb.
+  if (!VERB && (sub === "new" || sub === "archive")) {
+    process.stdout.write(
+      sub === "new"
+        ? "  Same as specgate propose: an idea becomes a change.\n"
+        : "  Same as specgate archive: close a change once its requirements are delivered.\n"
+    );
+    usage();
+    return true;
+  }
+  if (VERB === "propose") {
+    process.stdout.write(
+      `\n  ${c.bold}${c.cyan}💡 propose${c.reset}  ${c.dim}— open a change${c.reset}\n\n` +
+        `  ${c.bold}USAGE${c.reset}\n` +
+        `    ${c.cyan}specgate propose${c.reset} <change-id> [--capability <name>] [--from-value-drift <REQ:id>]\n` +
+        `                     [--full] [--reserve <n>] [--project-dir <path>] [--json]\n` +
+        `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n\n` +
+        `  Opens docs/specs/changes/<change-id>/ — proposal, tasks, a reserved REQ range and a\n` +
+        `  delta for the capability (named after the change unless --capability says).\n` +
+        `  Then: write the delta, a test that names each requirement, the code; specgate apply.\n\n`
+    );
+    return true;
+  }
+  if (VERB === "archive") {
+    process.stdout.write(
+      `\n  ${c.bold}${c.cyan}📦 archive${c.reset}  ${c.dim}— close a change${c.reset}\n\n` +
+        `  ${c.bold}USAGE${c.reset}\n` +
+        `    ${c.cyan}specgate archive${c.reset} <change-id> [--dry-run] [--force] [--project-dir <path>] [--json]\n\n` +
+        `  Merges the change into the capability specs, the matrix and features/ once every\n` +
+        `  requirement it adds or modifies is Implemented (specgate apply). Nothing skips that.\n` +
+        `  --force archives with unchecked tasks or a draft whose checklist fails, and overwrites\n` +
+        `  existing feature files.\n\n`
+    );
+    return true;
+  }
+  return false;
+}
+
 function usage() {
   process.stdout.write(
     `\n  ${c.bold}${c.cyan}🔄 change${c.reset}  ${c.dim}— propose, review and archive a change${c.reset}\n\n` +
@@ -96,7 +144,7 @@ function usage() {
       `    ${c.green}status [id]${c.reset}    ${c.dim}Which artefact to write next.${c.reset}\n` +
       `    ${c.green}author <id>${c.reset}    ${c.dim}Have an agent write one artefact, confined to the change.${c.reset}\n` +
       `    ${c.green}validate [id]${c.reset}  ${c.dim}Check the deltas against the capability specs.${c.reset}\n` +
-      `    ${c.green}archive <id>${c.reset}   ${c.dim}Merge deltas into the specs, sync traceability, archive.${c.reset}\n\n` +
+      `    ${c.green}archive <id>${c.reset}   ${c.dim}Once its requirements are Implemented: merge, sync traceability, archive.${c.reset}\n\n` +
       `  ${c.bold}OPTIONS${c.reset}\n` +
       `    ${c.green}--project-dir <path>${c.reset}  ${c.dim}Project root (default: auto-detected).${c.reset}\n` +
       `    ${c.green}--json${c.reset}                ${c.dim}One JSON document on stdout; prose on stderr.${c.reset}\n` +
@@ -110,7 +158,8 @@ function usage() {
       `    ${c.green}--reserve <n>${c.reset}         ${c.dim}(new) Reserve n REQ ids for this change (default 3).${c.reset}\n` +
       `    ${c.green}--strict${c.reset}              ${c.dim}(validate) Treat advisory warnings as failures.${c.reset}\n` +
       `    ${c.green}--dry-run${c.reset}             ${c.dim}(archive) Print the plan, write nothing.${c.reset}\n` +
-      `    ${c.green}--force${c.reset}               ${c.dim}(archive) Archive with unchecked tasks or a draft whose checklist fails; overwrite features.${c.reset}\n\n`
+      `    ${c.green}--force${c.reset}               ${c.dim}(archive) Archive with unchecked tasks or a draft whose checklist fails; overwrite features.${c.reset}\n` +
+      `                          ${c.dim}Never without its requirements delivered (ADR-0035).${c.reset}\n\n`
   );
 }
 
@@ -327,6 +376,10 @@ function cmdNew(opts) {
     ]);
   }
 
+  // `propose` always leaves a delta to write: named after the change unless
+  // the person names the capability (ADR-0035).
+  if (VERB === "propose" && !opts.capability && !opts.fromValueDrift) opts.capability = changeId;
+
   if (opts.capability && opts.fromValueDrift) {
     return fail(opts, nullShape, [
       error("conflicting_seed_flags", "--capability and --from-value-drift cannot both be given.", {
@@ -388,17 +441,22 @@ function cmdNew(opts) {
     },
     () => {
       process.stdout.write(
-        ui.header("change new", changeId) +
+        ui.header(VERB === "propose" ? "propose" : "change new", changeId) +
           ui.ok(
             `Change ${c.bold}${changeId}${c.reset} created ` +
               ui.muted(`· ${config.rigor} · REQ ids ${reqRange[0]}…${reqRange[1]} reserved`)
           ) +
           "\n" +
           created.map((f) => ui.fileLine("added", f)).join("") +
-          ui.next(
-            `specgate change validate ${changeId}`,
-            "after you write the proposal, then the delta"
-          )
+          (VERB === "propose"
+            ? ui.next(
+                "specgate apply",
+                "after you write the delta, a test that names each requirement, and the code"
+              )
+            : ui.next(
+                `specgate change validate ${changeId}`,
+                "after you write the proposal, then the delta"
+              ))
       );
     }
   );
@@ -918,9 +976,30 @@ function cmdArchive(opts) {
     }
   }
 
+  // A change is archived when its code is done (ADR-0035): every requirement
+  // it adds or modifies went through the gate. `--force` does not skip this —
+  // it is the one rule archive exists to keep.
+  const owned = changeRequirements(projectDir, changeId);
+  const owed = owned.filter((r) => !DELIVERED.includes(r.status));
+  if (owed.length > 0) {
+    return fail(opts, nullShape, [
+      error(
+        "archive_requirements_pending",
+        `Change '${changeId}' has ${owed.length} requirement(s) not delivered yet: ${owed.map((r) => r.id).join(", ")}.`,
+        { target: changeId, fix: `specgate apply ${owed[0].id}` }
+      ),
+    ]);
+  }
+
   const repo = new DiskProjectRepository(projectDir);
   const useCase = new ArchiveChangeUseCase(repo);
-  const plan = useCase.execute(changeId, { force: opts.force, draft: isDraft });
+  const plan = useCase.execute(changeId, {
+    force: opts.force,
+    draft: isDraft,
+    // The gate is the evidence for a change with requirements; its task boxes
+    // are then a reminder, not a second gate.
+    gated: owned.length > 0,
+  });
 
   if (!plan.ok) {
     return fail(opts, nullShape, plan.diagnostics);
@@ -941,8 +1020,10 @@ function cmdArchive(opts) {
   if (opts.dryRun) {
     return emit(opts, { archive: { ...summary, dryRun: true } }, () => {
       process.stdout.write(
-        ui.header("change archive", `${changeId} · dry run, nothing written`) +
-          ui.section("Archive plan")
+        ui.header(
+          VERB === "archive" ? "archive" : "change archive",
+          `${changeId} · dry run, nothing written`
+        ) + ui.section("Archive plan")
       );
       for (const w of summary.writes) process.stdout.write(ui.fileLine("changed", w.file, w.kind));
       for (const d of summary.deletes)
@@ -977,7 +1058,7 @@ function cmdArchive(opts) {
   emit(opts, { archive: summary }, () => {
     const t = plan.totals;
     process.stdout.write(
-      ui.header("change archive", changeId) +
+      ui.header(VERB === "archive" ? "archive" : "change archive", changeId) +
         ui.ok(`Archived as ${c.bold}${archivedAs}${c.reset}`) +
         "\n" +
         ui
@@ -1014,9 +1095,15 @@ function cmdArchive(opts) {
 // ── entry ─────────────────────────────────────────────────────────────────────
 
 export class CliCommand extends BaseCommand {
+  constructor(args: string[] = [], verb: "propose" | "archive" | null = null) {
+    super(args);
+    VERB = verb;
+  }
+
   public execute() {
     const argv = this.args;
     const sub = argv[0];
+    if ((argv.includes("--help") || argv.includes("-h")) && verbUsage(sub)) process.exit(0);
     if (!sub || sub === "--help" || sub === "-h") {
       usage();
       process.exit(sub ? 0 : 2);

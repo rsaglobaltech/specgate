@@ -119,10 +119,11 @@ const EXAMPLES =
 /**
  * The daily loop, narrowed.
  *
- * The surface grew past twenty, which is more than anyone reads. A new user
- * needs `init` or `adopt` once, then lives in status → plan → req → change →
- * validate → done. Everything else is real but not first — `--help --all`
- * shows it, and `specgate config set profile full` makes that the default.
+ * The surface grew past thirty, which is more than anyone reads. A new user
+ * needs `init` once, then lives in propose → apply → status → archive, with
+ * `check` in CI (ADR-0035). Everything else is real but not first —
+ * `--help --all` shows it, and `specgate config set profile full` makes that
+ * the default.
  *
  * Both help profiles are rendered from the surface registry, so a command
  * cannot exist without appearing in one of them or being deliberately absent
@@ -140,15 +141,16 @@ function usageCore() {
       section("Usage") +
       `    ${c.accent}specgate${c.reset} ${c.bold}<command>${c.reset} [options]     ${c.muted}specgate <command> --help  for its options${c.reset}\n` +
       renderGroups(coreHelpRows()) +
-      section("More") +
-      `    ${c.muted}${hiddenCommandCount()} more commands cover packs, automation, agents and reporting.${c.reset}\n` +
-      `    ${c.accent}specgate --help --all${c.reset}${c.muted}                show every command${c.reset}\n` +
-      `    ${c.accent}specgate config set profile full${c.reset}${c.muted}     make that the default${c.reset}\n` +
       section("Examples") +
       example(`npx @rsaglobaltech/specgate@latest init`, "Existing repo or empty directory") +
-      example(`specgate draft`, "Your plan is in docs/brief.md") +
-      example(`specgate status`, "Start of day") +
-      example(`specgate check`, "Before a pull request") +
+      example(`specgate propose add-dynamic-pricing`, "An idea becomes a change") +
+      example(`specgate propose --from-brief`, "Your plan is in docs/brief.md") +
+      example(`specgate apply`, "The next requirement, through the gate") +
+      example(`specgate archive add-dynamic-pricing`, "Every requirement in it delivered") +
+      section("More") +
+      `    ${c.muted}${hiddenCommandCount()} more commands cover packs, automation, agents and reporting.${c.reset}\n` +
+      `    ${c.accent}specgate config set profile full${c.reset}${c.muted}     make the full list the default${c.reset}\n` +
+      `    ${c.accent}specgate --help --all${c.reset}${c.muted}                show every command${c.reset}\n` +
       "\n"
   );
 }

@@ -79,6 +79,9 @@ not run reports an `error` about itself.
 | `specgate change archive <id> --json` | `archive` | yes |
 | `specgate change instructions <artifact> --json` | `instructions` | no |
 | `specgate change author <id> --json` | `change` | yes |
+| `specgate propose <id> --json` | `change` | no |
+| `specgate apply [REQ] --json` | `requirement` | no |
+| `specgate archive <id> --json` | `archive` | yes |
 | `specgate specops diff --json` | `changes` | no |
 | `specgate harness run --format json` | `results` | no |
 | `specgate harness report --json` | `report` | no |
@@ -108,6 +111,7 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `use_cases_header_missing` | `scripts/validate_specs.ts` |
 | `archive_change_name_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_draft_not_ready` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `archive_requirements_pending` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `archive_spec_update_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_agent_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_agent_unset` | `scripts/cli/commands/change/ChangeCommand.ts` |
@@ -148,7 +152,6 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `archive_no_deltas` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
 | `archive_retire_not_declared` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
 | `archive_target_exists` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
-| `archive_tasks_incomplete` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
 | `traceability_upgraded` | `packages/core/src/application/ArchiveChangeUseCase.ts` |
 | `artifact_required` | `scripts/change/instructions.ts` |
 | `artifact_unknown` | `scripts/change/instructions.ts` |

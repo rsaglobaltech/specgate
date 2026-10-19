@@ -41,14 +41,19 @@ export class ArchiveChangeUseCase {
     // (`specgate draft`) is what says it is ready, and `change archive`
     // already refuses one that is not (#57). Asking the person to also tick
     // boxes nobody wrote was a second gate with nothing behind it (#94).
+    // A change whose requirements all passed the gate (`gated`, ADR-0035) has
+    // its evidence; unchecked boxes are then said, not enforced.
     if (progress.remaining > 0 && !o.force && !o.draft) {
-      plan.diagnostics.push(
-        error(
+      const finding = o.gated ? warning : error;
+      (o.gated ? plan.warnings : plan.diagnostics).push(
+        finding(
           "archive_tasks_incomplete",
           `Change "${changeId}" still has ${progress.remaining} unchecked task(s).`,
           {
             target: changeId,
-            fix: "Finish the tasks, or pass --force to archive anyway.",
+            fix: o.gated
+              ? "Tick them in tasks.md if they are done; the gate already passed for every requirement."
+              : "Finish the tasks, or pass --force to archive anyway.",
           }
         )
       );

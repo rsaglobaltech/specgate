@@ -22,12 +22,14 @@ every other command.
 - AND a last line naming `specgate --help --all`
 - AND `specgate --help --all` still lists `draft`, `done`, `change` and every other command
 
-<!-- specgate:trace feature=features/daily-surface/REQ-107.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-107.feature test=tests/unit/compact-use.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-108 — propose opens a change, from an idea or from the brief
 
 The system SHALL, on `specgate propose` with a change id, open the same change
-folder that `specgate change new` opens, and SHALL, on
+folder that `specgate change new` opens, with a delta skeleton for the
+capability `--capability` names or, without it, for a capability named after
+the change, and SHALL, on
 `specgate propose --from-brief`, do what `specgate draft` does: name the next
 module of `docs/brief.md`, or open that module's draft change when it is named.
 
@@ -35,8 +37,8 @@ module of `docs/brief.md`, or open that module's draft change when it is named.
 
 - GIVEN a project with no open change
 - WHEN the developer runs `specgate propose add-dynamic-pricing`
-- THEN the developer sees `docs/specs/changes/add-dynamic-pricing/` with `proposal.md`, `tasks.md`, `change.yaml` and a delta skeleton, and a reserved REQ range
-- AND a last line naming the next step, `specgate apply`, once the delta is written
+- THEN the developer sees `docs/specs/changes/add-dynamic-pricing/` with `proposal.md`, `tasks.md`, `change.yaml`, a delta skeleton at `specs/add-dynamic-pricing/spec.md`, and a reserved REQ range
+- AND the output ends with the next step, `specgate apply`, once the delta is written
 
 #### Scenario: SCN-108b — Propose from the brief
 
@@ -44,29 +46,37 @@ module of `docs/brief.md`, or open that module's draft change when it is named.
 - WHEN the developer runs `specgate propose --from-brief` and then `specgate propose --from-brief billing`
 - THEN the first run names billing as the next module, and the second opens the draft change `draft-billing` with `DRAFTING.md`, exactly as `specgate draft billing` does
 
-<!-- specgate:trace feature=features/daily-surface/REQ-108.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-108.feature test=tests/unit/compact-use.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-109 — An open change's requirements count while it is in flight
 
 The system SHALL treat the ADDED and MODIFIED requirements of every open
-change as pending requirements for `status`, `apply` and `check`, validated
+change as pending requirements for `status`, `apply`, `check` and
+`harness run`, validated
 with the same rules as the capability specs, and SHALL NOT write them into a
 capability spec, `spec.md` or `features/` before `archive`.
 
 #### Scenario: SCN-109a — Status shows the change's requirement
 
-- GIVEN an open change `add-dynamic-pricing` that adds REQ-120 with one scenario, and no capability spec holding REQ-120
+- GIVEN an open change `add-dynamic-pricing` that adds REQ-002 with one scenario, and no capability spec holding REQ-002
 - WHEN the developer runs `specgate status --json`
-- THEN REQ-120 is listed as pending, with change `add-dynamic-pricing`
+- THEN REQ-002 is listed as pending, with change `add-dynamic-pricing`
 - AND the capability specs and `features/` are byte-for-byte unchanged
 
 #### Scenario: SCN-109b — Check validates the change's requirement
 
-- GIVEN the same change, whose scenario for REQ-120 has no THEN line
+- GIVEN the same change, whose scenario for REQ-002 has no THEN line
 - WHEN the developer runs `specgate check`
-- THEN the gate fails naming REQ-120 and the change's delta file
+- THEN the gate fails naming REQ-002 and the change's delta file
 
-<!-- specgate:trace feature=features/daily-surface/REQ-109.feature kind=functional actor=Developer -->
+#### Scenario: SCN-109c — The harness delivers the change's requirement
+
+- GIVEN the open change with REQ-002 committed, and an agent that writes a test naming REQ-002 and SCN-002a and the code
+- WHEN the developer runs `specgate harness run --req REQ-002`
+- THEN the run reports 1 passed, and on the branch `harness/REQ-002` REQ-002's status in the change's delta is Implemented
+- AND once that branch is merged, `specgate archive add-dynamic-pricing` succeeds
+
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-109.feature test=tests/unit/compact-use.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-110 — apply delivers one requirement: test first, gate, Implemented
 
@@ -78,30 +88,30 @@ requirement that `status` names.
 
 #### Scenario: SCN-110a — No test yet
 
-- GIVEN pending REQ-120 and no test that mentions REQ-120
-- WHEN the developer runs `specgate apply REQ-120`
+- GIVEN pending REQ-002 and no test that mentions REQ-002
+- WHEN the developer runs `specgate apply REQ-002`
 - THEN the command exits 1 with code `apply_no_test`
-- AND the last line reads `fix: write a test that names REQ-120 (and its scenario SCN-120a), then run specgate apply REQ-120`
+- AND the last line reads `fix: write a test that names REQ-002 (and its scenario SCN-002a), then run specgate apply REQ-002`
 
 #### Scenario: SCN-110b — Green gate, Implemented
 
-- GIVEN pending REQ-120, a test that names REQ-120 and SCN-120a, and a test command that passes
-- WHEN the developer runs `specgate apply REQ-120`
-- THEN REQ-120's status is Implemented, the command exits 0, and its last line names the next pending requirement
+- GIVEN pending REQ-002, a test that names REQ-002 and SCN-002a, and a test command that passes
+- WHEN the developer runs `specgate apply REQ-002`
+- THEN REQ-002's status is Implemented, the command exits 0, and its output ends with the next step naming the next pending requirement
 
 #### Scenario: SCN-110c — Red gate, nothing written
 
-- GIVEN pending REQ-120, a test that names it, and a test command that fails
-- WHEN the developer runs `specgate apply REQ-120`
-- THEN the command exits 1, REQ-120's status is unchanged, and the last line is a `fix:` line naming the failing check
+- GIVEN pending REQ-002, a test that names it, and a test command that fails
+- WHEN the developer runs `specgate apply REQ-002`
+- THEN the command exits 1, REQ-002's status is unchanged, and the last line is a `fix:` line naming the failing check
 
 #### Scenario: SCN-110d — No id: the next one
 
-- GIVEN pending REQ-120 and REQ-121, REQ-120 first in `specgate status`
+- GIVEN pending REQ-002 and REQ-003, REQ-002 first in `specgate status`
 - WHEN the developer runs `specgate apply`
-- THEN the command works on REQ-120 and says so in its first line
+- THEN the command works on REQ-002 and says so in its first line
 
-<!-- specgate:trace feature=features/daily-surface/REQ-110.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-110.feature test=tests/unit/compact-use.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-111 — done is apply under its old name
 
@@ -111,11 +121,11 @@ The system SHALL treat `specgate done` with a requirement id as
 
 #### Scenario: SCN-111a — Same result under both names
 
-- GIVEN two copies of a project with pending REQ-120, a test that names it and a passing test command
-- WHEN the developer runs `specgate done REQ-120 --json` in one and `specgate apply REQ-120 --json` in the other
-- THEN both exit 0, both leave REQ-120 Implemented, and the two JSON documents are equal apart from the command name
+- GIVEN two copies of a project with pending REQ-002, a test that names it and a passing test command
+- WHEN the developer runs `specgate done REQ-002 --json` in one and `specgate apply REQ-002 --json` in the other
+- THEN both exit 0, both leave REQ-002 Implemented, and the two JSON documents are equal apart from the command name
 
-<!-- specgate:trace feature=features/daily-surface/REQ-111.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-111.feature test=tests/unit/compact-use.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-112 — archive waits for the code
 
@@ -123,28 +133,31 @@ The system SHALL, on `specgate archive` with a change id, merge the change into
 the capability specs, the traceability matrix and `features/` only when every
 requirement it adds or modifies is Implemented, keeping those statuses; it
 SHALL otherwise refuse, list the requirements still pending, and offer no flag
-that skips this rule.
+that skips this rule. Unchecked tasks SHALL only be a warning when the change
+has a requirement to deliver, since the gate is the evidence; a change with
+none keeps refusing unchecked tasks.
 
 #### Scenario: SCN-112a — A requirement still pending
 
-- GIVEN an open change that adds REQ-120 (Implemented) and REQ-121 (pending)
+- GIVEN an open change that adds REQ-002 (Implemented) and REQ-003 (pending)
 - WHEN a person runs `specgate archive add-dynamic-pricing`
-- THEN the command exits 1 with code `archive_requirements_pending`, nothing is merged, and the message lists REQ-121
-- AND the last line reads `fix: specgate apply REQ-121`
+- THEN the command exits 1 with code `archive_requirements_pending`, nothing is merged, and the message lists REQ-003
+- AND the last line reads `fix: specgate apply REQ-003`
 
 #### Scenario: SCN-112b — Everything delivered
 
-- GIVEN the same change with REQ-120 and REQ-121 both Implemented
+- GIVEN the same change with REQ-002 and REQ-003 both Implemented
 - WHEN a person runs `specgate archive add-dynamic-pricing`
 - THEN both requirements are in the capability spec with status Implemented, their `.feature` files are in `features/`, and the change is under `docs/specs/changes/archive/`
+- AND an unchecked task in its `tasks.md` is reported as a warning, not a refusal
 
 #### Scenario: SCN-112c — A change that only removes
 
-- GIVEN an open change whose delta only removes REQ-050
+- GIVEN an open change whose delta only removes REQ-002
 - WHEN a person runs `specgate archive retire-legacy-export`
 - THEN the change is archived without waiting for any requirement
 
-<!-- specgate:trace feature=features/daily-surface/REQ-112.feature kind=business-rule actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-112.feature test=tests/unit/compact-use.test.ts actor=Developer kind=business-rule -->
 
 ### Requirement: REQ-113 — Every refusal says the fix in one line
 
@@ -155,11 +168,11 @@ command to run or the file to edit, and SHALL carry the same text in the
 
 #### Scenario: SCN-113a — One fix line, human and JSON
 
-- GIVEN a project where `specgate archive add-dynamic-pricing` is refused because REQ-121 is pending
+- GIVEN a project where `specgate archive add-dynamic-pricing` is refused because REQ-003 is pending
 - WHEN the developer runs it once plainly and once with `--json`
 - THEN the plain output's last line is the only line starting with `fix:`, and the JSON diagnostic's `fix` holds the same text on one line
 
-<!-- specgate:trace feature=features/daily-surface/REQ-113.feature kind=non-functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-113.feature test=tests/unit/compact-use.test.ts actor=Developer kind=non-functional -->
 
 ### Requirement: REQ-114 — The four verbs and check speak JSON
 
@@ -171,9 +184,9 @@ stdout and any prose to stderr, on success and on refusal alike.
 
 - GIVEN a project with an open change and one pending requirement
 - WHEN an agent runs each of `propose`, `apply`, `status`, `archive` and `check` with `--json`
-- THEN each stdout parses as exactly one JSON document with the envelope's `schemaVersion`, `ok` and `diagnostics` fields, whether the command succeeded or was refused
+- THEN each stdout parses as exactly one JSON document carrying the command's own key and a `status` array of diagnostics (ADR-0017), whether the command succeeded or was refused
 
-<!-- specgate:trace feature=features/daily-surface/REQ-114.feature kind=non-functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-114.feature test=tests/unit/compact-use.test.ts actor=Developer kind=non-functional -->
 
 ### Requirement: REQ-115 — The old names keep working
 
@@ -183,12 +196,12 @@ SHALL name that verb in the first line of each old name's `--help`.
 
 #### Scenario: SCN-115a — A script written for 0.20
 
-- GIVEN a CI script that runs `specgate change new add-dynamic-pricing` and later `specgate done REQ-120`
+- GIVEN a CI script that runs `specgate change new add-dynamic-pricing` and later `specgate done REQ-002`
 - WHEN it runs against this version
 - THEN both commands succeed as `propose` and `apply` would
 - AND `specgate change archive --help` starts with "Same as specgate archive"
 
-<!-- specgate:trace feature=features/daily-surface/REQ-115.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-115.feature test=tests/unit/compact-use.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-116 — One loop, four verbs
 
@@ -198,9 +211,9 @@ editing only the change's delta, a test and the code.
 
 #### Scenario: SCN-116a — The loop end to end
 
-- GIVEN an empty Node.js project with a passing `npm test`
-- WHEN the developer runs `specgate init --yes`, `specgate propose add-greeting`, writes one requirement in the change's delta, a test naming it and the code, then runs `specgate status`, `specgate apply` and `specgate archive add-greeting`
-- THEN every command exits 0, `specgate status` reports no pending requirement, and the requirement is Implemented in its capability spec
+- GIVEN a Node.js repository with code, a `package.json` and a passing `npm test`
+- WHEN the developer runs `specgate init`, `specgate propose add-greeting`, writes one requirement in the change's delta, a test naming it and the code, then runs `specgate status`, `specgate apply` and `specgate archive add-greeting`
+- THEN every command exits 0, the requirement is Implemented in its capability spec, and `specgate status` no longer lists it as pending
 - AND no other specgate command was run
 
-<!-- specgate:trace feature=features/daily-surface/REQ-116.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/daily-surface/REQ-116.feature test=tests/unit/compact-use.test.ts actor=Developer kind=functional -->

@@ -109,10 +109,13 @@ export class DeltaSpec {
           )
         );
       }
+      // A scenario is named with its requirement: a scenario title alone does
+      // not say where to look in a delta of twenty requirements.
+      const of = req.id ? ` of ${req.id}` : "";
       for (const sc of req.scenarios || []) {
         if (!sc.steps || sc.steps.length === 0) {
           diags.push(
-            error("scenario_without_steps", `Scenario "${sc.name}" has no steps.`, {
+            error("scenario_without_steps", `Scenario "${sc.name}"${of} has no steps.`, {
               file,
               line: sc.line,
               target: sc.name,
@@ -133,7 +136,7 @@ export class DeltaSpec {
           diags.push(
             error(
               "scenario_steps_unwritten",
-              `Scenario "${sc.name}" has placeholder steps, so it asserts nothing.`,
+              `Scenario "${sc.name}"${of} has placeholder steps, so it asserts nothing.`,
               {
                 file,
                 line: sc.line,
@@ -146,7 +149,7 @@ export class DeltaSpec {
           diags.push(
             warning(
               "scenario_not_gherkin",
-              `Scenario "${sc.name}" has no GIVEN/WHEN/THEN step, so it cannot generate a .feature.`,
+              `Scenario "${sc.name}"${of} has no GIVEN/WHEN/THEN step, so it cannot generate a .feature.`,
               {
                 file,
                 line: sc.line,

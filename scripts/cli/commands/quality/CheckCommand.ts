@@ -12,6 +12,7 @@ import {
 } from "../../../../packages/core/src/domain/DoneVerification";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
+import { inFlightView } from "../../../lib/in-flight";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -113,10 +114,31 @@ export class CheckCommand extends BaseCommand {
       );
     }
 
+    // Open changes are judged as they will be after archive (ADR-0035): what
+    // passes here is what passes once they are archived.
+    const view = inFlightView(projectDir);
+    const toProject = (t: string) => (view ? view.toProject(t) : t);
+    if (view && view.problems.length > 0) {
+      recordCheck(projectDir, false);
+      const first = view.problems[0].change;
+      io.fail(NULL_SHAPE, [
+        // One fix line per refusal: the findings say what, the last says how.
+        ...view.problems.map(({ fix: _fix, change: _change, ...d }) => d),
+        error(
+          "check_change_invalid",
+          `The gate failed: open change '${first}' does not validate.`,
+          {
+            target: first,
+            fix: `Fix its delta, then run \`specgate check\` again (\`specgate change validate ${first}\` lists every finding).`,
+          }
+        ),
+      ]);
+    }
+
     const harness = readHarnessConfig(projectDir) || ({} as any);
     const testCmd = testCmdFlag !== undefined ? testCmdFlag : harness.testCmd;
     const archCmd = (harness.archCmd || "").trim();
-    const plan = planGateCheck(projectDir, testCmd, archCmd);
+    const plan = planGateCheck(view ? view.dir : projectDir, testCmd, archCmd);
 
     for (const step of plan.steps) {
       const exec = () =>
@@ -138,7 +160,7 @@ export class CheckCommand extends BaseCommand {
             : `Tests           ${ui.muted(step.argv[0])}`;
       const run = json ? exec() : ui.task(label, exec, (r) => ({ ok: r.status === 0 }));
 
-      const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
+      const detail = toProject(`${run.stdout || ""}${run.stderr || ""}`.trim());
       if (!json && detail && run.status !== 0) {
         process.stdout.write(
           "\n" +

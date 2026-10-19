@@ -36,24 +36,24 @@ The package is scoped, the binary is not ([ADR-0024](docs/specs/adr/0024-the-too
 
 → [Getting started](docs/getting-started.md) · [Your team's first pull request](docs/first-pr.md) · [Quickstart for joiners](docs/quickstart.md)
 
-## 🔁 The daily loop — five commands
+## 🔁 The daily loop — four verbs
 
 ```bash
-specgate status                                    # what is open, and the next command to run
-specgate new "Customers download invoices as PDF"  # requirement + scenario, in one step
-# rewrite the scenario's <placeholders>, then write a test that mentions REQ-007:
-#   // REQ-007 — a paid invoice downloads as a PDF
-specgate done REQ-007                              # runs the gate for it, then marks it Implemented
-specgate check                                     # the whole gate — the same one CI runs
+specgate propose add-pdf-invoices   # a change: proposal, tasks, a delta to write, REQ ids reserved
+# write REQ-007 and its scenario in the delta, a test that mentions REQ-007, the code
+specgate apply                      # the next requirement through the gate: Implemented when green
+specgate status                     # what is open, and the next command to run
+specgate archive add-pdf-invoices   # once every requirement in it is Implemented
 ```
 
-That is all most of a team ever types. **Mentioning `REQ-NNN` in a test is the
-link** — there is nothing else to declare. The traceability matrix is
-generated from `spec.md`, the scenario tags and your tests; nobody edits it,
-and CI fails when the committed copy is out of date. `done` writes nothing
-while the gate fails, so a requirement it closes is one CI will not reopen.
-
-Everything else — packs, changes, the harness, ALM sync — is in `specgate --help --all`.
+`specgate check` is the same gate for CI ([ADR-0035](docs/specs/adr/0035-four-verbs-one-lifecycle.md)).
+**A change is archived when its code is done**: while it is open its
+requirements already count — `status` lists them, `apply` and `check` judge the
+project as it will be after archive — and `archive` refuses one still pending.
+`apply` refuses a requirement no test names and writes nothing while the gate
+fails. **Mentioning `REQ-NNN` in a test is the link**; the matrix is generated.
+From a plan: `specgate propose --from-brief`. Old names (`draft`, `done`…) keep
+working; everything else is in `specgate --help --all`.
 
 ## 🪜 Adopt one level at a time
 
@@ -61,7 +61,7 @@ Each level is useful on its own and never requires the ones above it.
 
 | Level  | You get                                          | Commands                     | Cost    |
 | ------ | ------------------------------------------------ | ---------------------------- | ------- |
-| **L1** | Traceable specs in your repo                     | `init`, `new`, `done`        | ~1 hour |
+| **L1** | Traceable specs in your repo                     | `init`, `propose`, `apply`, `archive` | ~1 hour |
 | **L2** | A PR gate enforcing spec and test coverage       | `check`, `ci init`           | ~1 hour |
 | **L3** | Versioned, reusable domain requirements          | `specops add / sync / diff`  | ~1 day  |
 | **L4** | Agent-driven delivery, one requirement at a time | `agents init`, `harness run` | ~1 week |

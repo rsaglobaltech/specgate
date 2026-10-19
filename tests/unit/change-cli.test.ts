@@ -69,8 +69,9 @@ El sistema SHALL aplicar un recargo del 20 %.
 - WHEN se calcula la tarifa
 - THEN el importe incluye un recargo del 20 %
 
-<!-- specgate:trace uc=UC-007 feature=features/billing/dynamic.feature -->
+<!-- specgate:trace status=Implemented uc=UC-007 feature=features/billing/dynamic.feature -->
 `;
+// Delivered (status=Implemented): a change is archived when its code is done (ADR-0035).
 
 // ── new ───────────────────────────────────────────────────────────────────────
 
@@ -348,7 +349,7 @@ test("#46/#47: a draft with no feature= and no .feature files gets one per requi
 
 ### Requirement: REQ-143 — No se reserva por encima de los puestos
 
-<!-- specgate:trace kind=business-rule -->
+<!-- specgate:trace status=Implemented kind=business-rule -->
 
 El sistema SHALL rechazar una reserva cuando los puestos están llenos.
 
@@ -389,7 +390,7 @@ test("#53: a MODIFIED requirement's feature file gains the scenarios the change 
   try {
     const spec = (scenarios) => `### Requirement: REQ-145 — Agenda del propietario
 
-<!-- specgate:trace feature=features/reservas/REQ-145.feature actor=Propietario kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/reservas/REQ-145.feature actor=Propietario kind=functional -->
 
 El sistema SHALL mostrar al propietario las reservas de un día.
 
@@ -442,7 +443,34 @@ ${scenarios}`;
   }
 });
 
-test("archive refuses while tasks are unchecked, and --force overrides", () => {
+test("archive refuses unchecked tasks when nothing is gated, and --force overrides", () => {
+  const root = mkProject();
+  try {
+    // No requirement to deliver: the task boxes are the only record, so they hold.
+    run(root, ["new", "tidy-docs"]);
+    const dir = path.join(root, "docs/specs/changes/tidy-docs");
+    fs.writeFileSync(
+      path.join(dir, "change.yaml"),
+      fs
+        .readFileSync(path.join(dir, "change.yaml"), "utf8")
+        .replace("skip_specs: false", "skip_specs: true")
+    );
+    fs.writeFileSync(path.join(dir, "tasks.md"), "# Tasks\n\n- [ ] 1.1 pending\n", "utf8");
+    const blocked = run(root, ["archive", "tidy-docs", "--json"]);
+    assert.equal(blocked.status, 1);
+    const doc = json(blocked);
+    assert.equal(doc.archive, null);
+    assert.equal(doc.status[0].code, "archive_tasks_incomplete");
+    assert.match(doc.status[0].fix, /--force/);
+
+    const forced = run(root, ["archive", "tidy-docs", "--force", "--json"]);
+    assert.equal(forced.status, 0);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("archive reports unchecked tasks of a delivered change, and archives it (ADR-0035)", () => {
   const root = mkProject();
   try {
     readyChange(root);
@@ -451,15 +479,11 @@ test("archive refuses while tasks are unchecked, and --force overrides", () => {
       "# Tasks\n\n- [ ] 1.1 pending\n",
       "utf8"
     );
-    const blocked = run(root, ["archive", "add-pricing", "--json"]);
-    assert.equal(blocked.status, 1);
-    const doc = json(blocked);
-    assert.equal(doc.archive, null);
-    assert.equal(doc.status[0].code, "archive_tasks_incomplete");
-    assert.match(doc.status[0].fix, /--force/);
-
-    const forced = run(root, ["archive", "add-pricing", "--force", "--json"]);
-    assert.equal(forced.status, 0);
+    const r = run(root, ["archive", "add-pricing", "--json"]);
+    assert.equal(r.status, 0);
+    const doc = json(r);
+    assert.ok(doc.archive);
+    assert.ok(doc.archive.warnings.some((w) => w.code === "archive_tasks_incomplete"));
   } finally {
     cleanup(root);
   }
