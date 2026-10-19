@@ -19,7 +19,7 @@ The system SHALL, during `specgate harness run`, append one JSON line per event 
 - THEN it holds an attempt start, a gate line for each stage with result `pass`, and an attempt end with result `pass`, each with `req` "REQ-002" and `attempt` 1
 - AND the agent saw `AGENT_EVENTS_FILE` naming that file, and `git status` lists nothing under `.harness/`
 
-<!-- specgate:trace test=tests/unit/live-view.test.ts feature=features/live-harness/REQ-128.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/live-harness/REQ-128.feature test=tests/unit/live-view.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-129 — Claude Code's steps become events
 
@@ -31,7 +31,7 @@ The system SHALL, on `specgate harness events --from claude`, read Claude Code's
 - WHEN it is piped into `specgate harness events --from claude` with `AGENT_EVENTS_FILE` set
 - THEN the file gains three step lines with kinds read, edit and test and targets "src/a.ts", "src/a.ts" and "npm test", and standard output is "Done."
 
-<!-- specgate:trace test=tests/unit/live-view.test.ts feature=features/live-harness/REQ-129.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/live-harness/REQ-129.feature test=tests/unit/live-view.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-130 — No contents, output or secrets in an event
 
@@ -43,7 +43,7 @@ The system SHALL NOT write file contents, tool output, environment values or tok
 - WHEN the adapter records them
 - THEN the events read "Authorization: Bearer ***" and "***" in place of the token, and contain neither "secret body" nor "abc123def456" nor the token's value
 
-<!-- specgate:trace test=tests/unit/live-view.test.ts feature=features/live-harness/REQ-130.feature kind=non-functional actor=Security officer -->
+<!-- specgate:trace status=Implemented feature=features/live-harness/REQ-130.feature test=tests/unit/live-view.test.ts actor=Security kind=non-functional -->
 
 ### Requirement: REQ-131 — A live view in studio
 
@@ -56,7 +56,7 @@ The system SHALL serve, in `specgate studio`, a live view of the harness at `/li
 - THEN REQ-002 is listed in attempt 1, phase "test", with src/a.ts among its files and its last test run at 3 pass
 - AND an event appended to the file reaches `/live/stream` without a reload
 
-<!-- specgate:trace test=tests/unit/live-view.test.ts feature=features/live-harness/REQ-131.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/live-harness/REQ-131.feature test=tests/unit/live-view.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-132 — Studio stays on the developer's machine
 
@@ -68,7 +68,7 @@ The system SHALL bind `specgate studio` to the loopback interface by default, SH
 - WHEN a request arrives with `Host: attacker.example`
 - THEN it is refused with status 403, and the server listens on 127.0.0.1 only
 
-<!-- specgate:trace test=tests/unit/live-view.test.ts feature=features/live-harness/REQ-132.feature kind=non-functional actor=Security officer -->
+<!-- specgate:trace status=Implemented feature=features/live-harness/REQ-132.feature test=tests/unit/live-view.test.ts actor=Security kind=non-functional -->
 
 ### Requirement: REQ-133 — Explore before a change exists
 
@@ -80,7 +80,7 @@ The system SHALL, on `specgate explore` with a question, print a brief for think
 - WHEN the developer runs `specgate explore "Should refunds be partial?" --agent` with that command
 - THEN the agent's answer is shown, notes.md does not exist afterwards, the output names it as undone, and `git status` is as before
 
-<!-- specgate:trace test=tests/unit/live-view.test.ts feature=features/live-harness/REQ-133.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/live-harness/REQ-133.feature test=tests/unit/live-view.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-134 — A guided tour of the loop that leaves the repository untouched
 
@@ -93,4 +93,4 @@ The system SHALL, on `specgate onboard --tour`, run the whole daily loop — `pr
 - THEN the output shows the four verbs and `check` in order, each passing, and ends naming `specgate propose`
 - AND the repository's files are unchanged
 
-<!-- specgate:trace test=tests/unit/live-view.test.ts feature=features/live-harness/REQ-134.feature kind=functional actor=Developer -->
+<!-- specgate:trace status=Implemented feature=features/live-harness/REQ-134.feature test=tests/unit/live-view.test.ts actor=Developer kind=functional -->

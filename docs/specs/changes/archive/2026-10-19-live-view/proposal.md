@@ -8,7 +8,7 @@ the shape but needed a wrapper per agent and a page republished by hand. Two
 more gaps: a way to think with the agent before a change exists, and a way to
 learn the loop on one's own repository without risking it.
 
-Decision record: [ADR-0037](../../adr/0037-see-the-harness-work.md).
+Decision record: [ADR-0037](../../../adr/0037-see-the-harness-work.md).
 
 ## Scope
 

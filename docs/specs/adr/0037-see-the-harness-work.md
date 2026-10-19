@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — 2026-10-19 (change `live-view`)
+Accepted — 2026-10-19 (change `live-view`, archived)
 
 ## Context
 

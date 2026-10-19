@@ -10,6 +10,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **See the harness work** ([ADR-0037](docs/specs/adr/0037-see-the-harness-work.md), change `live-view`).
+  - `harness run` writes `.harness/events/<REQ>.jsonl` — attempts, gate stages,
+    chain merges — and hands the agent `AGENT_EVENTS_FILE`, `AGENT_EVENTS_REQ`,
+    `AGENT_EVENTS_ATTEMPT`.
+  - `specgate harness events --from claude` turns Claude Code's stream into
+    events; no file contents, tool output or secrets, commands masked.
+  - `specgate studio` serves `/live`, `/live.json` and `/live/stream`
+    (server-sent events), bound to 127.0.0.1 and refusing foreign Host headers;
+    `--host` binds elsewhere on purpose.
+  - `specgate explore` — a brief of the project's state for thinking with an
+    agent before a change exists; writes nothing.
+  - `specgate onboard --tour` — the whole loop on a temporary copy, narrated.
+
 - **A gate a team can trust** ([ADR-0036](docs/specs/adr/0036-a-gate-a-team-can-trust.md), change `trust-gate`).
   - `check` compares requirement ids with the base branch (`--base`,
     `SPECGATE_BASE`, or origin's default) and fails on the same id with another
