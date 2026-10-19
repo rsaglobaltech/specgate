@@ -8,9 +8,10 @@
  * the git work stays outside.
  */
 
-import { blockText } from "./SpecParser";
+import { DeltaNode, RequirementNode, TraceComment, blockText } from "./SpecParser";
+import { PackDeltaSummary } from "./PackDelta";
 
-const yamlString = (v) =>
+const yamlString = (v: unknown) =>
   // Backslash first: escaping only the quote leaves `\\` before it able to
   // escape the escape, and the value breaks out of its own string.
   `"${String(v === undefined || v === null ? "" : v)
@@ -24,13 +25,16 @@ const yamlString = (v) =>
  * delta, this reads a delta and writes a `pack.yaml` fragment. Round-tripping
  * the two is what makes the pack and the project speak one language.
  */
-export function deltaToPackFragment(delta, opts?) {
+export function deltaToPackFragment(
+  delta: Pick<DeltaNode, "added" | "modified" | "removed">,
+  opts?: { changeId?: string }
+): string | null {
   const o = opts || {};
-  const requirements = [];
-  const scenarios = [];
+  const requirements: string[] = [];
+  const scenarios: string[] = [];
 
-  const emit = (req, disposition) => {
-    const trace = req.trace || {};
+  const emit = (req: RequirementNode, disposition: string | null) => {
+    const trace: TraceComment = req.trace || {};
     requirements.push(
       [
         `  - id: ${req.id || "REQ-TODO"}`,
@@ -84,7 +88,12 @@ export function deltaToPackFragment(delta, opts?) {
   return `${lines.join("\n")}\n`;
 }
 
-export function contributionReadme(changeId, packId, proposal, summary) {
+export function contributionReadme(
+  changeId: string,
+  packId: string,
+  proposal: string | null | undefined,
+  summary: PackDeltaSummary
+): string {
   return `# Contribution: ${changeId}
 
 Proposed upstream from a project consuming \`${packId}\`.

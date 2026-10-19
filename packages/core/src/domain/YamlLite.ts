@@ -10,7 +10,7 @@
 
 import type { PackItem } from "./PackSpec";
 
-function stripInlineComment(line) {
+function stripInlineComment(line: string): string {
   let inSingle = false;
   let inDouble = false;
 
@@ -37,7 +37,7 @@ function stripInlineComment(line) {
   return line;
 }
 
-function splitKeyValue(text) {
+function splitKeyValue(text: string): { key: string; value: string } | null {
   let inSingle = false;
   let inDouble = false;
 
@@ -97,7 +97,7 @@ function splitFlowItems(inner: string): string[] {
   return items;
 }
 
-function parseScalar(raw) {
+function parseScalar(raw: string): YamlValue {
   const text = raw.trim();
 
   // Quoted scalars, with the escapes YAML defines for each: `''` inside single
@@ -130,12 +130,22 @@ function parseScalar(raw) {
   return text;
 }
 
+/** Anything the reader can produce: a scalar, a sequence, or a mapping. */
+type YamlValue = string | number | boolean | null | YamlValue[] | YamlDocument;
+
+/** One non-blank line, stripped of its comment, with where it sits. */
+interface YamlToken {
+  indent: number;
+  text: string;
+  line: number;
+}
+
 /** A line that starts a mapping entry: a key, then `:` and a space or the end. */
 function isKeyLine(text: string): boolean {
   return /^(?:"[^"]*"|'[^']*'|[^\s'"#-][^:]*?):(?:\s|$)/.test(text);
 }
 
-function parseTokens(tokens) {
+function parseTokens(tokens: YamlToken[]): YamlValue {
   let index = 0;
 
   /**
@@ -168,7 +178,7 @@ function parseTokens(tokens) {
     return text;
   }
 
-  function parseNode(indent) {
+  function parseNode(indent: number): YamlValue {
     if (index >= tokens.length) return null;
     if (tokens[index].indent < indent) return null;
 
@@ -179,8 +189,8 @@ function parseTokens(tokens) {
     return parseObject(indent);
   }
 
-  function parseObject(indent) {
-    const obj = {};
+  function parseObject(indent: number): YamlDocument {
+    const obj: YamlDocument = {};
 
     while (index < tokens.length) {
       const token = tokens[index];
@@ -216,8 +226,8 @@ function parseTokens(tokens) {
     return obj;
   }
 
-  function parseList(indent) {
-    const arr = [];
+  function parseList(indent: number): YamlValue[] {
+    const arr: YamlValue[] = [];
 
     while (index < tokens.length) {
       const token = tokens[index];
@@ -241,7 +251,7 @@ function parseTokens(tokens) {
         continue;
       }
 
-      const obj = {};
+      const obj: YamlDocument = {};
       if (inlinePair.value === "") {
         if (index < tokens.length && tokens[index].indent > indent) {
           obj[inlinePair.key] = parseNode(tokens[index].indent);
@@ -305,14 +315,15 @@ export interface PackModel extends YamlDocument {
 
 export function parseYamlLite(content: string): YamlDocument {
   const lines = content.replace(/\r\n/g, "\n").split("\n");
-  const tokens = [];
+  const tokens: YamlToken[] = [];
 
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
     const withoutComment = stripInlineComment(line);
     if (!withoutComment.trim()) continue;
 
-    const indent = withoutComment.match(/^\s*/)[0].length;
+    // Non-null: `\s*` matches every string, if only the empty prefix.
+    const indent = withoutComment.match(/^\s*/)![0].length;
     tokens.push({
       indent,
       text: withoutComment.trim(),
@@ -321,5 +332,7 @@ export function parseYamlLite(content: string): YamlDocument {
   }
 
   if (tokens.length === 0) return {};
-  return parseTokens(tokens);
+  // The root of these files is always a mapping; a document that is a bare
+  // list or scalar is not one this reader is asked to read.
+  return parseTokens(tokens) as YamlDocument;
 }

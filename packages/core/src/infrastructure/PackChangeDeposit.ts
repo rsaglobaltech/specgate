@@ -20,9 +20,9 @@ import * as path from "node:path";
 
 import { paths } from "./ChangeWorkspace";
 
-function copyTree(from, to) {
-  const written = [];
-  const walk = (src, dest) => {
+function copyTree(from: string, to: string): string[] {
+  const written: string[] = [];
+  const walk = (src: string, dest: string) => {
     fs.mkdirSync(dest, { recursive: true });
     for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
       const s = path.join(src, entry.name);
@@ -45,11 +45,16 @@ function copyTree(from, to) {
  * @param packId     e.g. `parking-management/backend`
  * @returns { deposited, skipped } — change ids, not file paths
  */
-export function depositPackChanges(projectDir, packRoot, packId, opts?) {
+export function depositPackChanges(
+  projectDir: string,
+  packRoot: string,
+  packId: string,
+  opts?: { dryRun?: boolean }
+): { deposited: string[]; skipped: string[] } {
   const o = opts || {};
   const source = path.join(packRoot, packId, "changes");
-  const deposited = [];
-  const skipped = [];
+  const deposited: string[] = [];
+  const skipped: string[] = [];
 
   if (!fs.existsSync(source) || !fs.statSync(source).isDirectory()) {
     return { deposited, skipped };

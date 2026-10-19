@@ -38,7 +38,64 @@ export const DEFAULT_CONFIG = Object.freeze({
   retire_capabilities: false,
 });
 
-export function paths(projectDir) {
+/** Where everything a change touches lives, for one project. */
+export interface ChangePaths {
+  root: string;
+  specs: string;
+  capabilities: string;
+  changes: string;
+  archive: string;
+  traceability: string;
+  change: (id: string) => string;
+  changeSpecs: (id: string) => string;
+  changeFeatures: (id: string) => string;
+  capabilitySpec: (cap: string) => string;
+}
+
+/**
+ * A change's `change.yaml`. The defaults above are always present after
+ * `readConfig`; the rest is whatever the file says, kept so nothing a newer
+ * CLI wrote is dropped on the way through.
+ */
+export interface ChangeConfig {
+  specgate_change_version?: number;
+  schema?: string;
+  created?: string;
+  rigor?: string;
+  skip_specs?: boolean;
+  retire_capabilities?: boolean;
+  req_range?: string[];
+  [key: string]: unknown;
+}
+
+/** A delta spec inside a change, keyed by the capability it targets. */
+export interface ChangeDelta {
+  capability: string;
+  file: string;
+  relative: string;
+}
+
+/** A proposed `.feature` file a change carries. */
+export interface ChangeFeature {
+  file: string;
+  relative: string;
+}
+
+/** One checkbox line of a change's `tasks.md`. */
+export interface ChangeTask {
+  done: boolean;
+  description: string;
+}
+
+/** How far through its `tasks.md` a change is. */
+export interface TaskProgress {
+  total: number;
+  complete: number;
+  remaining: number;
+  tasks: ChangeTask[];
+}
+
+export function paths(projectDir: string): ChangePaths {
   const root = path.resolve(projectDir);
   return {
     root,
@@ -47,15 +104,15 @@ export function paths(projectDir) {
     changes: path.join(root, CHANGES_DIR),
     archive: path.join(root, ARCHIVE_DIR),
     traceability: path.join(root, TRACEABILITY_FILE),
-    change: (id) => path.join(root, CHANGES_DIR, id),
-    changeSpecs: (id) => path.join(root, CHANGES_DIR, id, "specs"),
-    changeFeatures: (id) => path.join(root, CHANGES_DIR, id, "features"),
-    capabilitySpec: (cap) => path.join(root, CAPABILITIES_DIR, cap, "spec.md"),
+    change: (id: string) => path.join(root, CHANGES_DIR, id),
+    changeSpecs: (id: string) => path.join(root, CHANGES_DIR, id, "specs"),
+    changeFeatures: (id: string) => path.join(root, CHANGES_DIR, id, "features"),
+    capabilitySpec: (cap: string) => path.join(root, CAPABILITIES_DIR, cap, "spec.md"),
   };
 }
 
 /** Active changes, sorted. `archive` is never an active change. */
-export function listChangeIds(projectDir) {
+export function listChangeIds(projectDir: string): string[] {
   const p = paths(projectDir);
   if (!fs.existsSync(p.changes)) return [];
   return fs
@@ -65,7 +122,7 @@ export function listChangeIds(projectDir) {
     .sort();
 }
 
-export function listArchivedIds(projectDir) {
+export function listArchivedIds(projectDir: string): string[] {
   const p = paths(projectDir);
   if (!fs.existsSync(p.archive)) return [];
   return fs
@@ -80,12 +137,12 @@ export function listArchivedIds(projectDir) {
  * `docs/specs/changes/<id>/specs/pricing/spec.md` → capability "pricing".
  * Nested capability names (`billing/invoicing`) are supported.
  */
-export function listDeltas(projectDir, changeId) {
+export function listDeltas(projectDir: string, changeId: string): ChangeDelta[] {
   const base = paths(projectDir).changeSpecs(changeId);
-  const out = [];
+  const out: ChangeDelta[] = [];
   if (!fs.existsSync(base)) return out;
 
-  const walk = (dir) => {
+  const walk = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
@@ -103,12 +160,12 @@ export function listDeltas(projectDir, changeId) {
 }
 
 /** Proposed `.feature` files a change carries, relative to its features/ dir. */
-export function listChangeFeatures(projectDir, changeId) {
+export function listChangeFeatures(projectDir: string, changeId: string): ChangeFeature[] {
   const base = paths(projectDir).changeFeatures(changeId);
-  const out = [];
+  const out: ChangeFeature[] = [];
   if (!fs.existsSync(base)) return out;
 
-  const walk = (dir) => {
+  const walk = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
@@ -124,7 +181,7 @@ export function listChangeFeatures(projectDir, changeId) {
   return out.sort((a, b) => a.relative.localeCompare(b.relative));
 }
 
-export function readConfig(projectDir, changeId) {
+export function readConfig(projectDir: string, changeId: string): ChangeConfig {
   const file = path.join(paths(projectDir).change(changeId), CHANGE_CONFIG_FILE);
   if (!fs.existsSync(file)) return { ...DEFAULT_CONFIG };
   let parsed;
@@ -132,13 +189,13 @@ export function readConfig(projectDir, changeId) {
     parsed = parseYamlLite(fs.readFileSync(file, "utf8"));
   } catch (err) {
     throw new Error(
-      `${CHANGE_CONFIG_FILE} of change "${changeId}" is not valid YAML: ${err.message}`
+      `${CHANGE_CONFIG_FILE} of change "${changeId}" is not valid YAML: ${(err as Error).message}`
     );
   }
   return { ...DEFAULT_CONFIG, ...(parsed || {}) };
 }
 
-export function renderConfig(cfg) {
+export function renderConfig(cfg: ChangeConfig): string {
   const lines = [
     `specgate_change_version: ${cfg.specgate_change_version || 1}`,
     `schema: ${cfg.schema || "spec-driven"}`,
@@ -164,11 +221,11 @@ const REQ_ID_RE = /\bREQ-(\d+)\b/g;
  *
  * Two changes worked in parallel would otherwise both mint REQ-014.
  */
-export function highestReservedReq(projectDir) {
+export function highestReservedReq(projectDir: string): number {
   const p = paths(projectDir);
   let max = 0;
-  const scan = (text) => {
-    let m;
+  const scan = (text: string) => {
+    let m: RegExpExecArray | null;
     REQ_ID_RE.lastIndex = 0;
     while ((m = REQ_ID_RE.exec(String(text))) !== null) {
       const n = parseInt(m[1], 10);
@@ -178,7 +235,7 @@ export function highestReservedReq(projectDir) {
 
   if (fs.existsSync(p.traceability)) scan(fs.readFileSync(p.traceability, "utf8"));
 
-  const walkSpecs = (dir) => {
+  const walkSpecs = (dir: string) => {
     if (!fs.existsSync(dir)) return;
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
@@ -198,12 +255,12 @@ export function highestReservedReq(projectDir) {
   return max;
 }
 
-export function formatReqId(n) {
+export function formatReqId(n: number): string {
   return `REQ-${String(n).padStart(3, "0")}`;
 }
 
 /** Reserve `count` consecutive REQ ids for a new change. */
-export function reserveReqRange(projectDir, count) {
+export function reserveReqRange(projectDir: string, count: number): [string, string] {
   const start = highestReservedReq(projectDir) + 1;
   const end = start + Math.max(1, count) - 1;
   return [formatReqId(start), formatReqId(end)];
@@ -213,8 +270,8 @@ export function reserveReqRange(projectDir, count) {
 
 const TASK_LINE = /^[ \t]*[-*][ \t]\[( |x|X)\][ \t](.*)$/;
 
-export function parseTasks(markdown) {
-  const tasks = [];
+export function parseTasks(markdown: string | null | undefined): ChangeTask[] {
+  const tasks: ChangeTask[] = [];
   for (const line of String(markdown || "").split(/\r?\n/)) {
     const m = TASK_LINE.exec(line);
     if (m) tasks.push({ done: m[1].toLowerCase() === "x", description: m[2].trim() });
@@ -222,7 +279,7 @@ export function parseTasks(markdown) {
   return tasks;
 }
 
-export function taskProgress(projectDir, changeId) {
+export function taskProgress(projectDir: string, changeId: string): TaskProgress {
   const file = path.join(paths(projectDir).change(changeId), "tasks.md");
   if (!fs.existsSync(file)) return { total: 0, complete: 0, remaining: 0, tasks: [] };
   const tasks = parseTasks(fs.readFileSync(file, "utf8"));
@@ -230,7 +287,9 @@ export function taskProgress(projectDir, changeId) {
   return { total: tasks.length, complete, remaining: tasks.length - complete, tasks };
 }
 
-export function changeStatusLabel(progress) {
+export function changeStatusLabel(
+  progress: Pick<TaskProgress, "total" | "remaining">
+): "no-tasks" | "complete" | "in-progress" {
   if (progress.total === 0) return "no-tasks";
   if (progress.remaining === 0) return "complete";
   return "in-progress";
