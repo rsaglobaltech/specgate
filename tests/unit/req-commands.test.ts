@@ -20,7 +20,7 @@ const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
 const RICH_SEP = "|---|---|---|---|---|---|---|---|---|---|";
 
-function matrix(...rows) {
+function matrix(...rows: string[]): string {
   return [RICH_HEADER, RICH_SEP, ...rows].join("\n");
 }
 
@@ -100,11 +100,11 @@ test("updateRequirementFields sets only the requested columns on the matching ro
   });
   assert.equal(updated, 1);
   const rows = parseTraceability(content);
-  const r2 = rows.find((r) => r.requirement === "REQ-002");
+  const r2 = rows.find((r: { requirement: string }) => r.requirement === "REQ-002");
   assert.equal(r2.featureFile, "features/pay.feature");
   assert.equal(r2.testArtifact, "src/test/PayTest.java");
   // REQ-001 untouched
-  const r1 = rows.find((r) => r.requirement === "REQ-001");
+  const r1 = rows.find((r: { requirement: string }) => r.requirement === "REQ-001");
   assert.equal(r1.featureFile, "-");
 });
 

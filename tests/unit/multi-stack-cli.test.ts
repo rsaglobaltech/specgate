@@ -14,18 +14,10 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import { cliFromRoot as cli } from "../helpers/cli";
+import type { CliResult } from "../helpers/cli";
 
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { cwd: ROOT_DIR, encoding: "utf8" });
-}
-
-function withTree(stacks, fn) {
+function withTree<T>(stacks: string, fn: (root: string, init: CliResult) => T): T {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-multistack-"));
   try {
     const r = cli("init", "--yes", "--out", tmp, "--multi-stack", stacks, "--no-git");

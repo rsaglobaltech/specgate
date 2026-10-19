@@ -41,7 +41,12 @@ El sistema SHALL redondear al alza.
 - THEN el importe cubre dos horas
 `;
 
-const codes = (diags) => diags.map((d) => d.code).sort();
+/** A delta diagnostic, reduced to what these tests compare. */
+interface Diagnostic {
+  code: string;
+}
+
+const codes = (diags: Diagnostic[]): string[] => diags.map((d) => d.code).sort();
 
 // ── parser ────────────────────────────────────────────────────────────────────
 
@@ -138,7 +143,7 @@ test("an unknown section is an error and the fix lists the valid ones", () => {
 
 - GIVEN x
 `);
-  const d = diagnostics.find((x) => x.code === "delta_unknown_section");
+  const d = diagnostics.find((x: Diagnostic) => x.code === "delta_unknown_section");
   assert.ok(d, "expected delta_unknown_section");
   assert.equal(d.severity, "error");
   assert.match(d.fix, /ADDED Requirements/);
@@ -194,7 +199,7 @@ El sistema SHALL nada.
 `,
     { specSource: SPEC }
   );
-  const d = diagnostics.find((x) => x.code === "unknown_requirement");
+  const d = diagnostics.find((x: Diagnostic) => x.code === "unknown_requirement");
   assert.ok(d);
   assert.match(d.fix, /ADDED Requirements/);
 });
@@ -214,7 +219,7 @@ El sistema SHALL cobrar.
 `,
     { specSource: SPEC }
   );
-  const d = diagnostics.find((x) => x.code === "requirement_already_exists");
+  const d = diagnostics.find((x: Diagnostic) => x.code === "requirement_already_exists");
   assert.ok(d);
   assert.match(d.fix, /MODIFIED/);
 });
@@ -250,7 +255,7 @@ Estaría bien tener descuentos.
 - GIVEN x
 - THEN y
 `);
-  const d = diagnostics.find((x) => x.code === "no_rfc2119_keyword");
+  const d = diagnostics.find((x: Diagnostic) => x.code === "no_rfc2119_keyword");
   assert.ok(d);
   assert.equal(d.severity, "warning");
 });
@@ -280,7 +285,7 @@ El sistema SHALL aplicar un recargo.
   assert.deepEqual(applied.added, ["REQ-014"]);
   const spec = parseSpec(markdown);
   assert.deepEqual(
-    spec.requirements.map((r) => r.id),
+    spec.requirements.map((r: { id: string }) => r.id),
     ["REQ-007", "REQ-008", "REQ-014"]
   );
 });
@@ -302,7 +307,7 @@ El sistema SHALL cobrar 2,00 € por hora iniciada.
   );
   assert.deepEqual(applied.modified, ["REQ-007"]);
   const spec = parseSpec(markdown);
-  const req = spec.requirements.find((r) => r.id === "REQ-007");
+  const req = spec.requirements.find((r: { id: string }) => r.id === "REQ-007");
   assert.match(req.text, /2,00/);
   assert.equal(req.scenarios.length, 1, "the old scenario must not survive");
   assert.equal(req.scenarios[0].id, "SCN-007b");
@@ -322,7 +327,7 @@ test("REMOVED deletes the requirement", () => {
   assert.equal(retired, false);
   const spec = parseSpec(markdown);
   assert.deepEqual(
-    spec.requirements.map((r) => r.id),
+    spec.requirements.map((r: { id: string }) => r.id),
     ["REQ-007"]
   );
 });

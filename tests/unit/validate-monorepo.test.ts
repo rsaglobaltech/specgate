@@ -4,24 +4,12 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
+import { cliFromRoot as cli } from "../helpers/cli";
 
 const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], {
-    cwd: ROOT_DIR,
-    encoding: "utf8",
-  });
-}
-
-function makeSubProject(root, rel) {
+function makeSubProject(root: string, rel: string) {
   const dir = path.join(root, rel);
   fs.mkdirSync(path.join(dir, "features"), { recursive: true });
   fs.mkdirSync(path.join(dir, "docs", "specs", "adr"), { recursive: true });
@@ -49,7 +37,7 @@ function makeSubProject(root, rel) {
   return dir;
 }
 
-function withMonorepo(fn) {
+function withMonorepo(fn: (root: string) => void) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-mono-"));
   try {
     makeSubProject(tmp, path.join("services", "fhir-server"));

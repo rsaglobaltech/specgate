@@ -1,8 +1,8 @@
 "use strict";
 
 /**
- * `specgate new` — one requirement in one step (phase 1 of
- * mejoras/plan-simplificacion-equipo.md).
+ * `specgate new` — one requirement in one step, part of the plan to
+ * make the tool simpler for a team to adopt.
  *
  * Before it: `req add`, an edit to spec.md, a hand-written `.feature` with the
  * right tags, then `req link --feature`. The promise this file pins is the one
@@ -15,16 +15,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
+import { cli } from "../helpers/cli";
+import type { CliResult } from "../helpers/cli";
 
 function adopted() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-new-"));
@@ -37,7 +29,7 @@ function adopted() {
   return { parent, dir };
 }
 
-function json(r) {
+function json(r: CliResult) {
   return JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
 }
 
@@ -56,7 +48,7 @@ test("new writes the prose, the tagged scenario and the linked row", () => {
     const feature = fs.readFileSync(path.join(dir, FEATURE), "utf8");
     assert.match(feature, new RegExp(`@${req.id} @${req.scenarioId}`));
     const matrix = fs.readFileSync(path.join(dir, "docs/specs/traceability.md"), "utf8");
-    const row = matrix.split("\n").find((l) => l.startsWith(`| ${req.id} |`));
+    const row = matrix.split("\n").find((l: string) => l.startsWith(`| ${req.id} |`));
     assert.ok(row && row.includes(FEATURE), row);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });

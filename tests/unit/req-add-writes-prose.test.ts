@@ -16,15 +16,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
+import { cli } from "../helpers/cli";
 
 function adopted() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-prose-"));
@@ -50,7 +42,7 @@ test("req add writes the requirement's prose, not just a row", () => {
   try {
     const r = cli("req", "add", "Totals are rounded half-up", "--project-dir", dir);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    const reqId = /Added (REQ-\d+)/.exec(r.stdout)[1];
+    const reqId = /Added (REQ-\d+)/.exec(r.stdout)![1];
 
     const spec = fs.readFileSync(path.join(dir, "spec.md"), "utf8");
     assert.match(spec, new RegExp(`REQ-${reqId.slice(4)} — Totals are rounded half-up`));
@@ -80,7 +72,7 @@ test("the harness prompt now carries the requirement it asks for", () => {
   const { parent, dir } = adopted();
   try {
     const added = cli("req", "add", "Totals are rounded half-up", "--project-dir", dir);
-    const reqId = /Added (REQ-\d+)/.exec(added.stdout)[1];
+    const reqId = /Added (REQ-\d+)/.exec(added.stdout)![1];
 
     const prompt = cli("harness", "prompt", reqId, "--project-dir", dir);
     assert.equal(prompt.status, 0, prompt.stdout + prompt.stderr);

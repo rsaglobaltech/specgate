@@ -13,12 +13,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
+import { ROOT_DIR, cliFromRoot as cli } from "../helpers/cli";
 
 const {
   BUILT_IN,
@@ -30,11 +25,15 @@ const {
   listSchemas,
 } = require("../../scripts/schema/registry");
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", cwd: ROOT_DIR });
+/** An artefact node, as a schema declares it and as `change status --json` reports it. */
+interface SchemaArtifact {
+  id: string;
+  requires?: string[];
+  status?: string;
+  missingDeps?: string[];
 }
 
-function withProject(fn) {
+function withProject(fn: (dir: string) => void) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "schema-"));
   const r = cli(
     "init",
@@ -60,9 +59,9 @@ test("both built-in schemas are sound graphs", () => {
 });
 
 test("bdd-first puts the scenario before the spec", () => {
-  const specs = BUILT_IN["bdd-first"].artifacts.find((a) => a.id === "specs");
+  const specs = BUILT_IN["bdd-first"].artifacts.find((a: SchemaArtifact) => a.id === "specs");
   assert.deepEqual(specs.requires, ["feature"], "the spec explains a scenario that exists");
-  const feature = BUILT_IN["bdd-first"].artifacts.find((a) => a.id === "feature");
+  const feature = BUILT_IN["bdd-first"].artifacts.find((a: SchemaArtifact) => a.id === "feature");
   assert.deepEqual(feature.requires, ["proposal"]);
 });
 
@@ -100,7 +99,7 @@ test("a cycle is caught and named", () => {
       { id: "b", generates: "b.md", requires: ["a"] },
     ],
   });
-  assert.ok(problems.some((p) => p.code === "artifact_cycle"));
+  assert.ok(problems.some((p: { code: string }) => p.code === "artifact_cycle"));
   assert.ok(
     findCycle([
       { id: "a", generates: "a.md", requires: ["b"] },
@@ -117,7 +116,7 @@ test("duplicate ids and missing outputs are caught", () => {
       { id: "a", generates: "", requires: [] },
     ],
   });
-  const codes = problems.map((p) => p.code);
+  const codes = problems.map((p: { code: string }) => p.code);
   assert.ok(codes.includes("artifact_duplicate_id"));
   assert.ok(codes.includes("artifact_no_output"));
 });
@@ -148,11 +147,11 @@ test("a change follows the schema it declares", () => {
       0
     );
     const doc = JSON.parse(cli("change", "status", "--project-dir", dir, "--json").stdout);
-    const ids = doc.artifacts.map((a) => a.id);
+    const ids = doc.artifacts.map((a: SchemaArtifact) => a.id);
     assert.deepEqual(ids, ["proposal", "feature", "specs", "design", "tasks"]);
 
     // The scenario is not written yet, so the spec that explains it is blocked.
-    const specs = doc.artifacts.find((a) => a.id === "specs");
+    const specs = doc.artifacts.find((a: SchemaArtifact) => a.id === "specs");
     assert.equal(specs.status, "blocked");
     assert.deepEqual(specs.missingDeps, ["feature"]);
   });
@@ -165,7 +164,7 @@ test("a project's own .feature files do not satisfy a change's feature artefact"
     assert.ok(fs.existsSync(path.join(dir, "features/core/health.feature")));
     cli("change", "new", "add-pricing", "--schema", "bdd-first", "--project-dir", dir);
     const doc = JSON.parse(cli("change", "status", "--project-dir", dir, "--json").stdout);
-    assert.equal(doc.artifacts.find((a) => a.id === "feature").status, "ready");
+    assert.equal(doc.artifacts.find((a: SchemaArtifact) => a.id === "feature").status, "ready");
   });
 });
 
@@ -211,7 +210,7 @@ test("an unknown schema falls back rather than breaking a change in flight", () 
     cli("change", "new", "add-pricing", "--schema", "deleted-schema", "--project-dir", dir);
     const doc = JSON.parse(cli("change", "status", "--project-dir", dir, "--json").stdout);
     assert.deepEqual(
-      doc.artifacts.map((a) => a.id),
+      doc.artifacts.map((a: SchemaArtifact) => a.id),
       ["proposal", "specs", "design", "tasks"]
     );
   });

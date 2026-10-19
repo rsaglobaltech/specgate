@@ -176,7 +176,13 @@ test("buildPackGraphModel wires the REQ→UC→CMD/AGG/EVT spine", () => {
   const types = [...new Set(nodes.map((n) => n.type))].sort();
   assert.deepEqual(types, ["aggregate", "command", "event", "requirement", "use_case"]);
 
-  const edge = (from, kind) => edges.find((e) => e.from === from && e.kind === kind);
+  const edge = (from: string, kind: string) => {
+    const found = edges.find(
+      (e: { from: string; to: string; kind: string }) => e.from === from && e.kind === kind
+    );
+    assert.ok(found, `no ${kind} edge from ${from}`);
+    return found;
+  };
   assert.equal(edge("REQ:REQ-001", "implements").to, "UC:UC-001");
   assert.equal(edge("UC:UC-001", "dispatches").to, "CMD:CMD-001");
   assert.equal(edge("UC:UC-001", "emits").to, "EVT:EVT-001");

@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * `status` lists the queue itself (phase 1 of mejoras/plan-simplificacion-equipo.md).
+ * `status` lists the queue itself, so one command answers what is left.
  *
  * It used to print counts and answer "Next: specgate plan" — a second command
  * to find out what the first one meant. Now it names each requirement, what it
@@ -13,16 +13,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
+import { cli } from "../helpers/cli";
 
 function adopted() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-status-"));
@@ -62,7 +53,7 @@ test("a requirement whose test exists is next, by id, through the gate", () => {
 
     const doc = JSON.parse(cli("status", "--project-dir", dir, "--json").stdout);
     assert.equal(doc.nextCommand, "specgate apply REQ-002");
-    const req = doc.requirements.find((r) => r.id === "REQ-002");
+    const req = doc.requirements.find((r: { id: string }) => r.id === "REQ-002");
     assert.equal(req.title, "Totals are rounded half-up");
     assert.equal(req.category, "NEEDS_STATUS_UPDATE");
   } finally {

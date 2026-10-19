@@ -72,9 +72,9 @@ const CONTEXTUAL = [
   },
 ];
 
-let projectDir = null;
+let projectDir: string | null = null;
 
-function scaffold() {
+function scaffold(): string {
   if (projectDir) return projectDir;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-json-"));
   const r = spawnSync(process.execPath, [CLI_PATH, "init", "--yes", "--out", tmp, "--no-git"], {
@@ -83,11 +83,12 @@ function scaffold() {
   assert.equal(r.status, 0, `init failed: ${r.stdout}${r.stderr}`);
   const entries = fs.readdirSync(tmp);
   assert.equal(entries.length, 1, `expected one generated project, got ${entries.join(", ")}`);
-  projectDir = path.join(tmp, entries[0]);
-  return projectDir;
+  const dir: string = path.join(tmp, entries[0]);
+  projectDir = dir;
+  return dir;
 }
 
-function run(args) {
+function run(args: string[]) {
   return spawnSync(process.execPath, [CLI_PATH, ...args, "--json"], {
     cwd: scaffold(),
     encoding: "utf8",
@@ -95,7 +96,7 @@ function run(args) {
 }
 
 /** Every key in the document, at any depth, including inside arrays. */
-function allKeys(value, out = []) {
+function allKeys(value: unknown, out: string[] = []): string[] {
   if (Array.isArray(value)) {
     for (const v of value) allKeys(v, out);
   } else if (value && typeof value === "object") {

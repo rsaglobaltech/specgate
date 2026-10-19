@@ -12,16 +12,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
+import { cli } from "../helpers/cli";
 
 /** An adopted project with two real requirements (REQ-002, REQ-003) and a counting test command. */
 function project() {
@@ -70,18 +61,18 @@ function project() {
   return { parent, dir };
 }
 
-const status = (dir, id) =>
+const status = (dir: string, id: string) =>
   (
     fs
       .readFileSync(path.join(dir, "docs/specs/traceability.md"), "utf8")
       .split("\n")
-      .find((l) => l.startsWith(`| ${id} |`)) || ""
+      .find((l: string) => l.startsWith(`| ${id} |`)) || ""
   )
     .split("|")
     .slice(-2, -1)[0]
     .trim();
 
-const runs = (dir) =>
+const runs = (dir: string) =>
   fs.existsSync(path.join(dir, "runs.txt"))
     ? fs.readFileSync(path.join(dir, "runs.txt"), "utf8").trim().split("\n").length
     : 0;
@@ -112,7 +103,7 @@ test("#77: one requirement without its test is left; the other closes", () => {
     assert.equal(r.status, 1);
     const doc = JSON.parse(r.stdout);
     assert.deepEqual(
-      doc.requirements.map((x) => [x.id, x.ok, x.code]),
+      doc.requirements.map((x: { id: string; ok: boolean; code?: string }) => [x.id, x.ok, x.code]),
       [
         ["REQ-002", true, undefined],
         ["REQ-003", false, "done_validate_failed"],
@@ -182,7 +173,9 @@ test("#78: a Spring project's harness prompt asks for a startup test; a Node one
       "<project><parent><artifactId>spring-boot-starter-parent</artifactId></parent></project>"
     );
     assert.match(startupTestAdvice(parent), /@SpringBootTest/);
-    const prompt = harnessFiles(parent, "mvn -B test").find((f) => /prompt/.test(f.dest)).body;
+    const prompt = harnessFiles(parent, "mvn -B test").find((f: { dest: string }) =>
+      /prompt/.test(f.dest)
+    ).body;
     assert.match(prompt, /boots the real application context with no test doubles/);
 
     fs.writeFileSync(
@@ -194,7 +187,9 @@ test("#78: a Spring project's harness prompt asks for a startup test; a Node one
     fs.rmSync(path.join(parent, "pom.xml"));
     fs.writeFileSync(path.join(parent, "package.json"), "{}");
     assert.equal(startupTestAdvice(parent), null);
-    const nodePrompt = harnessFiles(parent, "npm test").find((f) => /prompt/.test(f.dest)).body;
+    const nodePrompt = harnessFiles(parent, "npm test").find((f: { dest: string }) =>
+      /prompt/.test(f.dest)
+    ).body;
     assert.doesNotMatch(nodePrompt, /test doubles/);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });

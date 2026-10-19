@@ -14,13 +14,15 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { SpawnSyncReturns } from "node:child_process";
+import type { CliResult } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
-function cli(cwd, ...args) {
+function cli(cwd: string, ...args: string[]): CliResult {
   return spawnSync(process.execPath, [CLI_PATH, ...args], {
     cwd,
     encoding: "utf8",
@@ -29,7 +31,7 @@ function cli(cwd, ...args) {
 }
 
 /** The closing "Next" step: the command line and the reason under it. */
-function nextStep(text) {
+function nextStep(text: string) {
   const lines = String(text)
     .split("\n")
     .map((l) => l.trim())
@@ -37,15 +39,15 @@ function nextStep(text) {
   return lines.slice(-2).join("\n");
 }
 
-function json(r) {
+function json(r: CliResult) {
   return JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
 }
 
-function out(r) {
+function out(r: CliResult) {
   return `${r.stdout}${r.stderr}`;
 }
 
-function lastLine(text) {
+function lastLine(text: string) {
   const lines = String(text)
     .split("\n")
     .map((l) => l.trim())
@@ -72,7 +74,7 @@ function adopted(testCmd = "node pass.js") {
   return { parent, dir, done: () => fs.rmSync(parent, { recursive: true, force: true }) };
 }
 
-function requirement(id, title, opts: any = {}) {
+function requirement(id: string, title: string, opts: { steps?: string[]; status?: string } = {}) {
   const scn = `SCN-${id.slice(4)}a`;
   const steps = opts.steps || [
     "- GIVEN a customer named Ada",
@@ -90,7 +92,7 @@ function requirement(id, title, opts: any = {}) {
 }
 
 /** An open change with the given delta body, opened as `propose` opens it. */
-function openChange(dir, id, body, capability = "greeting") {
+function openChange(dir: string, id: string, body: string, capability = "greeting") {
   const r = cli(dir, "change", "new", id, "--capability", capability);
   assert.equal(r.status, 0, out(r));
   fs.writeFileSync(
@@ -99,30 +101,30 @@ function openChange(dir, id, body, capability = "greeting") {
   );
 }
 
-function added(...reqs) {
+function added(...reqs: string[]) {
   return `## ADDED Requirements\n\n${reqs.join("\n")}`;
 }
 
-function nameInTest(dir, file, ...ids) {
+function nameInTest(dir: string, file: string, ...ids: string[]) {
   fs.writeFileSync(
     path.join(dir, "test", file),
     `// ${ids.join(" ")}\nrequire("node:test")("greets", () => {});\n`
   );
 }
 
-function capabilityFiles(dir) {
+function capabilityFiles(dir: string) {
   const root = path.join(dir, "docs/specs/capabilities");
   if (!fs.existsSync(root)) return "";
   return fs
     .readdirSync(root)
     .sort()
-    .map((c) => fs.readFileSync(path.join(root, c, "spec.md"), "utf8"))
+    .map((c: string) => fs.readFileSync(path.join(root, c, "spec.md"), "utf8"))
     .join("\n");
 }
 
-function featureFiles(dir) {
-  const found = [];
-  const walk = (d) => {
+function featureFiles(dir: string) {
+  const found: string[] = [];
+  const walk = (d: string) => {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       const f = path.join(d, e.name);
       if (e.isDirectory()) walk(f);
@@ -209,7 +211,7 @@ test("REQ-109 SCN-109a: status shows an open change's requirement, nothing is wr
     const before = { caps: capabilityFiles(p.dir), features: featureFiles(p.dir) };
     const r = cli(p.dir, "status", "--json");
     assert.equal(r.status, 0, out(r));
-    const req = json(r).requirements.find((x) => x.id === "REQ-002");
+    const req = json(r).requirements.find((x: { id: string }) => x.id === "REQ-002");
     assert.ok(req, "REQ-002 is listed");
     assert.equal(req.change, "add-greeting");
     assert.notEqual(req.category, "DONE");
@@ -247,7 +249,8 @@ test("REQ-109 SCN-109c: the harness delivers an open change's requirement", () =
       added(requirement("REQ-002", "Charge a peak surcharge")),
       "pricing"
     );
-    const git = (...args) => spawnSync("git", args, { cwd: p.dir, encoding: "utf8" });
+    const git = (...args: string[]): SpawnSyncReturns<string> =>
+      spawnSync("git", args, { cwd: p.dir, encoding: "utf8" });
     git("init", "-q");
     git("config", "user.email", "harness-test@example.com");
     git("config", "user.name", "Harness Test");
@@ -364,7 +367,7 @@ test("REQ-110 SCN-110d: apply without an id takes the next pending requirement",
     assert.equal(next, "specgate apply REQ-002");
     const r = cli(p.dir, "apply");
     assert.equal(r.status, 0, out(r));
-    assert.match(r.stdout.split("\n").find((l) => l.trim()) || "", /REQ-002/);
+    assert.match(r.stdout.split("\n").find((l: string) => l.trim()) || "", /REQ-002/);
   } finally {
     p.done();
   }
@@ -447,7 +450,7 @@ test("REQ-112 SCN-112b: archive merges a delivered change, keeping its statuses"
     assert.match(featureFiles(p.dir), /@REQ-002/);
     assert.ok(!fs.existsSync(path.join(p.dir, "docs/specs/changes/add-dynamic-pricing")));
     const archived = fs.readdirSync(path.join(p.dir, "docs/specs/changes/archive"));
-    assert.ok(archived.some((d) => d.endsWith("-add-dynamic-pricing")));
+    assert.ok(archived.some((d: string) => d.endsWith("-add-dynamic-pricing")));
     assert.equal(cli(p.dir, "check").status, 0);
   } finally {
     p.done();
@@ -507,7 +510,9 @@ test("REQ-113 SCN-113a: one fix line, the same in the JSON", () => {
     assert.equal(fixLines.length, 1, plain);
     assert.equal(lastLine(plain), fixLines[0].trim());
     const doc = json(cli(p.dir, "archive", "add-dynamic-pricing", "--json"));
-    const fixes = doc.status.filter((d) => d.severity === "error").map((d) => d.fix);
+    const fixes = doc.status
+      .filter((d: { severity: string }) => d.severity === "error")
+      .map((d: { fix: string }) => d.fix);
     assert.deepEqual(fixes, [fixLines[0].trim().replace(/^fix: /, "")]);
     assert.doesNotMatch(fixes[0], /\n/);
   } finally {
@@ -563,7 +568,7 @@ test("REQ-115 SCN-115a: a script written for 0.20 keeps working", () => {
       const help =
         cli(p.dir, ...args)
           .stdout.split("\n")
-          .find((l) => l.trim()) || "";
+          .find((l: string) => l.trim()) || "";
       assert.match(
         help,
         new RegExp(`Same as specgate ${verb.replace(/-/g, "\\-")}\\b`),
@@ -584,7 +589,7 @@ test("REQ-116 SCN-116a: one loop, four verbs", () => {
     assert.equal(proposed.status, 0, out(proposed));
     const range = /req_range: \[(REQ-\d+)/.exec(
       fs.readFileSync(path.join(p.dir, "docs/specs/changes/add-greeting/change.yaml"), "utf8")
-    )[1];
+    )![1];
     fs.writeFileSync(
       path.join(p.dir, "docs/specs/changes/add-greeting/specs/add-greeting/spec.md"),
       `# Delta — add-greeting\n\n${added(requirement(range, "Greet a customer by name"))}`
@@ -605,9 +610,9 @@ test("REQ-116 SCN-116a: one loop, four verbs", () => {
     }
     assert.match(capabilityFiles(p.dir), new RegExp(`${range}[\\s\\S]*?status=Implemented`));
     const pending = json(cli(p.dir, "status", "--json")).requirements.filter(
-      (x) => x.category !== "DONE"
+      (x: { category: string }) => x.category !== "DONE"
     );
-    assert.ok(!pending.some((x) => x.id === range), JSON.stringify(pending));
+    assert.ok(!pending.some((x: { id: string }) => x.id === range), JSON.stringify(pending));
   } finally {
     p.done();
   }

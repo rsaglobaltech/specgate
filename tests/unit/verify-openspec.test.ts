@@ -5,22 +5,25 @@
  * own layout and headings, as its repository uses them (October 2026).
  */
 
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { spawnSync } from "node:child_process";
+import type { SpawnSyncReturns } from "node:child_process";
 
-const { readOpenSpec } = require("../../packages/core/src/domain/OpenSpecReader");
-const { verifyClaims } = require("../../packages/core/src/domain/VerifyClaims");
-const { namesId, slug } = require("../../packages/core/src/domain/ForeignSpec");
+import { readOpenSpec } from "../../packages/core/src/domain/OpenSpecReader";
+import { verifyClaims } from "../../packages/core/src/domain/VerifyClaims";
+import { namesId, slug } from "../../packages/core/src/domain/ForeignSpec";
+import type { SourceText } from "../../packages/core/src/domain/ForeignSpec";
+import type { VerifyResult } from "../../packages/core/src/domain/VerifyClaims";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-const cli = (cwd, ...args) =>
+const cli = (cwd: string, ...args: string[]): SpawnSyncReturns<string> =>
   spawnSync(process.execPath, [CLI_PATH, ...args], {
     cwd,
     encoding: "utf8",
@@ -61,7 +64,7 @@ The system SHALL sign a worker in with their crew code.
 - **THEN** they are signed in
 `;
 
-const files = (extra = []) => [
+const files = (extra: SourceText[] = []): SourceText[] => [
   { path: "openspec/specs/auth/spec.md", source: MAIN },
   {
     path: "openspec/changes/archive/2026-10-01-add-crew-sign-in/specs/auth/spec.md",
@@ -135,6 +138,7 @@ test("an active change with every task ticked is reported, never gated", () => {
     ])
   );
   const active = spec.claims.find((c) => c.label.includes("add-sign-out"));
+  assert.ok(active);
   assert.equal(active.finished, false);
   const r = verifyClaims({ spec, tests: [{ path: "t.test.ts", source: `${VALID} ${UNKNOWN}` }] });
   const about = r.status.filter(
@@ -215,7 +219,7 @@ test("a test naming an id the spec does not have is reported", () => {
 
 function project() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-verify-"));
-  const git = (...a) => {
+  const git = (...a: string[]): string => {
     const r = spawnSync("git", a, { cwd: dir, encoding: "utf8" });
     assert.equal(r.status, 0, r.stderr);
     return r.stdout;
@@ -227,7 +231,7 @@ function project() {
     ["commit.gpgsign", "false"],
   ])
     git("config", k, v);
-  const write = (rel, text) => {
+  const write = (rel: string, text: string) => {
     fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
     fs.writeFileSync(path.join(dir, rel), text);
   };
@@ -259,7 +263,7 @@ test("verify: a red check, then green once tests name the criteria; --record pin
     const changed = cli(dir, "verify", "--json");
     assert.equal(changed.status, 1);
     assert.ok(
-      JSON.parse(changed.stdout).status.some(
+      (JSON.parse(changed.stdout) as VerifyResult).status.some(
         (d) => d.code === "V3_criterion_changed" && d.target === UNKNOWN
       )
     );
@@ -294,7 +298,9 @@ test("verify --since gates only claims made after the ref", () => {
     git("commit", "--quiet", "-m", "new claim");
     const r = cli(dir, "verify", "--since", "adopted", "--json");
     assert.equal(r.status, 1);
-    const errors = JSON.parse(r.stdout).status.filter((d) => d.severity === "error");
+    const errors = (JSON.parse(r.stdout) as VerifyResult).status.filter(
+      (d) => d.severity === "error"
+    );
     assert.deepEqual(
       errors.map((d) => d.target),
       ["openspec:auth/badge/badge-shows-the-name"]
@@ -321,7 +327,9 @@ test("verify --run fails on a red suite; --format github annotates the spec line
     write("test/auth.test.js", `// ${VALID}\n// ${UNKNOWN}\n`);
     const red = cli(dir, "verify", "--run", "--test-cmd", 'node -e "process.exit(3)"', "--json");
     assert.equal(red.status, 1);
-    assert.ok(JSON.parse(red.stdout).status.some((d) => d.code === "V2_failing_suite"));
+    assert.ok(
+      (JSON.parse(red.stdout) as VerifyResult).status.some((d) => d.code === "V2_failing_suite")
+    );
     assert.equal(cli(dir, "verify", "--run", "--test-cmd", 'node -e "process.exit(0)"').status, 0);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

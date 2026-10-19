@@ -9,7 +9,7 @@
 
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const fc = require("fast-check");
+import * as fc from "fast-check";
 
 const { renderTemplate } = require("../../packages/core/src/domain/PackSpec");
 

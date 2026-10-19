@@ -26,7 +26,7 @@ test("parseFeature extracts scenarios with their steps", () => {
   assert.equal(scenarios.length, 1);
   assert.equal(scenarios[0].title, "does a thing");
   assert.deepEqual(
-    scenarios[0].steps.map((s) => s.keyword),
+    scenarios[0].steps.map((s: { keyword: string }) => s.keyword),
     ["given", "when", "then"]
   );
 });
@@ -34,7 +34,7 @@ test("parseFeature extracts scenarios with their steps", () => {
 test("parseFeature makes And/But inherit the previous keyword's role", () => {
   const [scn] = parseFeature("Scenario: t\n  Given x\n  And y\n  When z\n  Then w\n  And v\n");
   assert.deepEqual(
-    scn.steps.map((s) => s.keyword),
+    scn.steps.map((s: { keyword: string }) => s.keyword),
     ["given", "given", "when", "then", "then"]
   );
 });
@@ -67,7 +67,7 @@ function tmpPack() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "pack-lint-quality-"));
 }
 
-function writeTemplate(root, rel, content) {
+function writeTemplate(root: string, rel: string, content: string) {
   const p = path.join(root, rel);
   fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, content, "utf8");
@@ -94,8 +94,8 @@ test("lintScenarioQuality passes a well-formed scenario clean", () => {
         },
       ],
     };
-    const errors = [];
-    const issues = [];
+    const errors: string[] = [];
+    const issues: string[] = [];
     lintScenarioQuality(pack, root, errors, issues);
     assert.deepEqual(errors, []);
     assert.deepEqual(issues, []);
@@ -113,8 +113,8 @@ test("lintScenarioQuality flags a vague, thin, assertion-less scenario", () => {
       "Feature: F\n  Scenario: test\n    Given stuff\n    When it works\n"
     );
     const pack = { scenarios: [{ id: "SCN-009", template: "templates/weak.feature.tpl" }] };
-    const errors = [];
-    const issues = [];
+    const errors: string[] = [];
+    const issues: string[] = [];
     lintScenarioQuality(pack, root, errors, issues);
     assert.deepEqual(errors, []);
     const joined = issues.join("\n");
@@ -141,8 +141,8 @@ test("lintScenarioQuality errors on a missing template and an Examples-less Outl
         { id: "SCN-B", template: "templates/outline.feature.tpl" },
       ],
     };
-    const errors = [];
-    const issues = [];
+    const errors: string[] = [];
+    const issues: string[] = [];
     lintScenarioQuality(pack, root, errors, issues);
     assert.match(errors.join("\n"), /SCN-A template not found/);
     assert.match(errors.join("\n"), /Scenario Outline has no Examples table/);
@@ -169,8 +169,8 @@ test("lintScenarioQuality flags drift between pack.yaml name and template title"
         },
       ],
     };
-    const errors = [];
-    const issues = [];
+    const errors: string[] = [];
+    const issues: string[] = [];
     lintScenarioQuality(pack, root, errors, issues);
     assert.match(issues.join("\n"), /does not match template title/);
   } finally {
@@ -179,15 +179,15 @@ test("lintScenarioQuality flags drift between pack.yaml name and template title"
 });
 
 test("lintScenarioQuality reports a scenario entry with no content", () => {
-  const errors = [];
-  const issues = [];
+  const errors: string[] = [];
+  const issues: string[] = [];
   lintScenarioQuality({ scenarios: [{ id: "SCN-X" }] }, "/nonexistent", errors, issues);
   assert.match(issues.join("\n"), /SCN-X declares no scenario content/);
 });
 
 test("lintScenarioQuality lints inline given/when/then scenarios", () => {
-  const errors = [];
-  const issues = [];
+  const errors: string[] = [];
+  const issues: string[] = [];
   const pack = {
     scenarios: [
       {
@@ -224,13 +224,13 @@ test("runLint routes scenario issues to warnings, or to errors under --strict", 
   // not be installed. That is a different rule; what is asserted here is where
   // the *scenario-quality* findings land.
   assert.ok(
-    !lenient.errors.some((e) => e.includes("SCN-W")),
+    !lenient.errors.some((e: string) => e.includes("SCN-W")),
     "scenario issues must be warnings without --strict"
   );
-  assert.ok(lenient.warnings.some((w) => w.includes("SCN-W")));
+  assert.ok(lenient.warnings.some((w: string) => w.includes("SCN-W")));
 
   const strict = runLint(weakPack, "/nonexistent", { strict: true });
-  assert.ok(strict.errors.some((e) => e.includes("SCN-W")));
+  assert.ok(strict.errors.some((e: string) => e.includes("SCN-W")));
 });
 
 // ── F3: the two rules that are errors, never warnings ────────────────────────
@@ -251,12 +251,12 @@ test("scenario_has_no_steps is an error without --strict", () => {
     const pack = {
       scenarios: [{ id: "SCN-001", template: "templates/features/empty.feature.tpl" }],
     };
-    const errors = [];
-    const issues = [];
+    const errors: string[] = [];
+    const issues: string[] = [];
     lintScenarioQuality(pack, root, errors, issues);
 
     assert.ok(
-      errors.some((e) => e.includes("scenario_has_no_steps")),
+      errors.some((e: string) => e.includes("scenario_has_no_steps")),
       `expected an error, got errors=${JSON.stringify(errors)} issues=${JSON.stringify(issues)}`
     );
     assert.ok(
@@ -283,8 +283,8 @@ test("keyword_case_invalid is an error, and names the spelling that works", () =
     const pack = {
       scenarios: [{ id: "SCN-001", template: "templates/features/shouting.feature.tpl" }],
     };
-    const errors = [];
-    const issues = [];
+    const errors: string[] = [];
+    const issues: string[] = [];
     lintScenarioQuality(pack, root, errors, issues);
 
     const cased = errors.filter((e) => e.includes("keyword_case_invalid"));
@@ -294,7 +294,7 @@ test("keyword_case_invalid is an error, and names the spelling that works", () =
     assert.ok(/:3:/.test(cased[0]), "with the line, so it can be found");
 
     // The same file also has no steps at all, which is the consequence.
-    assert.ok(errors.some((e) => e.includes("scenario_has_no_steps")));
+    assert.ok(errors.some((e: string) => e.includes("scenario_has_no_steps")));
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -315,8 +315,8 @@ test("a well-formed scenario raises neither rule", () => {
     const pack = {
       scenarios: [{ id: "SCN-001", template: "templates/features/good.feature.tpl" }],
     };
-    const errors = [];
-    const issues = [];
+    const errors: string[] = [];
+    const issues: string[] = [];
     lintScenarioQuality(pack, root, errors, issues);
     assert.deepEqual(errors, []);
     assert.deepEqual(issues, []);

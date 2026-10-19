@@ -25,6 +25,7 @@ const NAME = "REQ-000-2026-08-22T12-11-14-133Z-attempt-1-agent.md";
 
 test("an archived prompt filename is taken apart, attempt and all", () => {
   const parsed = parseArchivedPromptName(NAME);
+  assert.ok(parsed);
   assert.equal(parsed.requirement, "REQ-000");
   assert.equal(parsed.attempt, 1);
   assert.equal(parsed.role, "agent");
@@ -72,7 +73,9 @@ test("within one attempt the newest file wins, so the reviewer does not shadow t
     "REQ-000-2026-08-22T10-00-00-000Z-attempt-2-reviewer.md",
     "REQ-000-2026-08-22T10-30-00-000Z-attempt-2-agent.md",
   ];
-  assert.equal(resumePoint(files, "REQ-000").latest.role, "agent");
+  const { latest } = resumePoint(files, "REQ-000");
+  assert.ok(latest);
+  assert.equal(latest.role, "agent");
 });
 
 test("the last gate failure is recovered from the prompt that carried it", () => {

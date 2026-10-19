@@ -12,13 +12,14 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { CliResult } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
-function cli(...args) {
+function cli(...args: string[]): CliResult {
   return spawnSync(process.execPath, [CLI_PATH, ...args], {
     encoding: "utf8",
     env: { ...process.env, NO_COLOR: "1" },

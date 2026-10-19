@@ -12,12 +12,13 @@
  * if something confirms the commands still do what it says.
  */
 
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import { test } from "node:test";
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { spawnSync } from "node:child_process";
+import type { CliResult } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -27,7 +28,7 @@ const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 const { render, harvestCodes, OUTPUT, COMMANDS } = require("../../scripts/gen_agent_contract");
 const { EXIT } = require("../../scripts/lib/agent");
 
-function cli(args, cwd?) {
+function cli(args: string[], cwd?: string): CliResult {
   return spawnSync(process.execPath, [CLI, ...args], {
     encoding: "utf8",
     cwd: cwd || ROOT_DIR,

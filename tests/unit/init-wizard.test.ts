@@ -17,19 +17,15 @@ const {
 } = require("../../scripts/cli/commands/project/WizardCommand");
 const { parseYamlLite } = require("../../packages/core/src/domain/YamlLite");
 
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], {
-    cwd: ROOT_DIR,
-    encoding: "utf8",
-  });
+/** The part of a wizard field these tests look at. */
+interface WizardField {
+  key: string;
 }
 
-function withTmp(fn) {
+import { CLI_PATH, cliFromRoot as cli, runCli } from "../helpers/cli";
+import type { CliResult } from "../helpers/cli";
+
+function withTmp<T>(fn: (tmp: string) => T): T {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-wizard-"));
   try {
     return fn(tmp);
@@ -73,7 +69,7 @@ test("defaultAnswers covers every required init key", () => {
 // ── validateAnswer ────────────────────────────────────────────────────────────
 
 test("validateAnswer rejects a bad slug with an actionable message", () => {
-  const slugField = WIZARD_FIELDS.find((f) => f.key === "PROJECT_SLUG");
+  const slugField = WIZARD_FIELDS.find((f: WizardField) => f.key === "PROJECT_SLUG");
   const error = validateAnswer(slugField, "Bad Slug!");
   assert.match(error, /lowercase letters, numbers, and dashes/);
   assert.equal(validateAnswer(slugField, "good-slug"), null);
@@ -82,7 +78,7 @@ test("validateAnswer rejects a bad slug with an actionable message", () => {
 test("validateAnswer rejects an unknown project type", () => {
   // `mobile` used to be the example of an invalid type here. It is a supported
   // one now, which is why this assertion had to change rather than the code.
-  const typeField = WIZARD_FIELDS.find((f) => f.key === "PROJECT_TYPE");
+  const typeField = WIZARD_FIELDS.find((f: WizardField) => f.key === "PROJECT_TYPE");
   assert.match(validateAnswer(typeField, "desktop"), /backend, frontend, mobile/);
   assert.equal(validateAnswer(typeField, "frontend"), null);
   assert.equal(validateAnswer(typeField, "mobile"), null);
@@ -103,16 +99,16 @@ test("renderConfigYaml round-trips through the YAML parser", () => {
 
 // ── runInitWizard (injected question fn, no TTY needed) ──────────────────────
 
-function fakeIo(lines) {
+function fakeIo(lines: string[]) {
   const pending = [...lines];
   let written = "";
   const output = new Writable({
-    write(chunk, _enc, cb) {
+    write(chunk: Buffer, _enc: string, cb: () => void) {
       written += chunk.toString();
       cb();
     },
   });
-  const question = async (prompt) => {
+  const question = async (prompt: string) => {
     written += prompt;
     if (pending.length === 0) throw new Error("wizard asked more questions than answers given");
     return pending.shift();
@@ -127,7 +123,7 @@ test("runInitWizard accepts defaults on empty input", async () => {
 });
 
 test("runInitWizard re-asks on invalid input until valid", async () => {
-  const lines = [];
+  const lines: string[] = [];
   for (const field of WIZARD_FIELDS) {
     if (field.key === "PROJECT_SLUG") {
       lines.push("Bad Slug!"); // rejected → re-ask
@@ -143,7 +139,7 @@ test("runInitWizard re-asks on invalid input until valid", async () => {
 });
 
 test("runInitWizard applies custom answers and derives the slug default", async () => {
-  const lines = WIZARD_FIELDS.map((field) =>
+  const lines = WIZARD_FIELDS.map((field: WizardField) =>
     field.key === "PROJECT_NAME" ? "HIE HIS Platform" : ""
   );
   const io = fakeIo(lines);
@@ -174,8 +170,8 @@ test("init --yes scaffolds a valid project with zero other flags", () => {
   });
 });
 
-function cliIn(cwd, ...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { cwd, encoding: "utf8" });
+function cliIn(cwd: string, ...args: string[]): CliResult {
+  return runCli(args, { cwd });
 }
 
 test("init without config outside a terminal fails with a remedy", () => {
@@ -191,7 +187,7 @@ test("init without config outside a terminal fails with a remedy", () => {
 });
 
 test("plain init in a repository with code adopts it in place", () => {
-  // Phase 1 of mejoras/plan-simplificacion-equipo.md: one entry command.
+  // One entry command: `init` adopts existing code instead of needing a second one.
   withTmp((tmp) => {
     fs.writeFileSync(path.join(tmp, "package.json"), '{"name":"shop"}');
     const r = cliIn(tmp, "init");

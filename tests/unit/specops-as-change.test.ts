@@ -8,11 +8,11 @@
  * replaces: it manufactures review noise instead of removing it.
  */
 
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
+import test = require("node:test");
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
 
 const {
   deriveDelta,
@@ -26,7 +26,15 @@ const { parseDelta } = require("../../packages/core/src/domain/SpecParser");
 
 const PACK_ID = "parking-management/backend";
 
-function pack(opts) {
+/** What a fixture pack varies; everything else is the stock parking pack. */
+interface PackOptions {
+  name?: string;
+  version?: string;
+  requirements?: string;
+  scenarios?: string;
+}
+
+function pack(opts?: PackOptions) {
   const o = opts || {};
   // `parseYamlLite` has no inline-collection syntax, so an empty list is
   // expressed by omitting the key rather than by `[]`.
@@ -82,7 +90,7 @@ const FEATURE_TPL = `Feature: Parking Capacity
 `;
 
 /** Write a pack tree under a fresh root and return the root. */
-function mkPackRoot(packYaml, opts?) {
+function mkPackRoot(packYaml: string, opts?: { template?: string | false }) {
   const o = opts || {};
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pack-"));
   const packDir = path.join(root, PACK_ID);
@@ -99,7 +107,8 @@ function mkPackRoot(packYaml, opts?) {
   return root;
 }
 
-const cleanup = (...roots) => roots.forEach((r) => fs.rmSync(r, { recursive: true, force: true }));
+const cleanup = (...roots: string[]) =>
+  roots.forEach((r) => fs.rmSync(r, { recursive: true, force: true }));
 
 // ── the R6 property ───────────────────────────────────────────────────────────
 
@@ -273,7 +282,7 @@ test("a derived delta parses and validates with the change engine", () => {
     assert.equal(parsed.added[0].id, "REQ-002");
 
     const { diagnostics } = validateDelta(derived.markdown, { file: "derived.md" });
-    const errors = diagnostics.filter((d) => d.severity === "error");
+    const errors = diagnostics.filter((d: { severity: string }) => d.severity === "error");
     assert.deepEqual(errors, [], `derived delta must be valid; got ${JSON.stringify(errors)}`);
   } finally {
     cleanup(before, after);

@@ -51,10 +51,24 @@ El sistema SHALL aplicar un recargo del 20 %.
 <!-- specgate:trace uc=UC-007 cmd=CMD-011 feature=features/billing/dynamic_pricing.feature -->
 `;
 
-function mkProject(opts?) {
+/** Knobs for the fixture project; every one defaults to a complete, archivable change. */
+interface ProjectOptions {
+  /** `false` leaves out the change directory altogether. */
+  change?: boolean;
+  changeId?: string;
+  tasksDone?: boolean;
+  skipSpecs?: boolean;
+  retire?: boolean;
+  /** Delta spec contents, or `false` for none. */
+  delta?: string | false;
+  feature?: boolean;
+  capabilitySpec?: string;
+}
+
+function mkProject(opts?: ProjectOptions) {
   const o = opts || {};
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-change-"));
-  const write = (rel, contents) => {
+  const write = (rel: string, contents: string) => {
     const full = path.join(root, rel);
     fs.mkdirSync(path.dirname(full), { recursive: true });
     fs.writeFileSync(full, contents, "utf8");
@@ -89,7 +103,7 @@ function mkProject(opts?) {
   return { root, write };
 }
 
-const cleanup = (root) => fs.rmSync(root, { recursive: true, force: true });
+const cleanup = (root: string) => fs.rmSync(root, { recursive: true, force: true });
 
 // ── retro-compatibility ───────────────────────────────────────────────────────
 
@@ -143,7 +157,7 @@ test("archiving a change that does not exist is an error with a fix", () => {
   try {
     const plan = planArchive(root, "ghost");
     assert.equal(plan.ok, false);
-    const d = plan.diagnostics.find((x) => x.code === "archive_change_not_found");
+    const d = plan.diagnostics.find((x: { code: string }) => x.code === "archive_change_not_found");
     assert.ok(d);
     assert.match(d.fix, /change list/);
   } finally {
@@ -156,7 +170,9 @@ test("unchecked tasks block the archive unless forced", () => {
   try {
     const blocked = planArchive(root, "add-dynamic-pricing");
     assert.equal(blocked.ok, false);
-    assert.ok(blocked.diagnostics.some((d) => d.code === "archive_tasks_incomplete"));
+    assert.ok(
+      blocked.diagnostics.some((d: { code: string }) => d.code === "archive_tasks_incomplete")
+    );
 
     const forced = planArchive(root, "add-dynamic-pricing", { force: true });
     assert.equal(forced.ok, true);
@@ -173,7 +189,9 @@ test("an invalid delta blocks the archive", () => {
   try {
     const plan = planArchive(root, "add-dynamic-pricing");
     assert.equal(plan.ok, false);
-    assert.ok(plan.diagnostics.some((d) => d.code === "requirement_without_scenario"));
+    assert.ok(
+      plan.diagnostics.some((d: { code: string }) => d.code === "requirement_without_scenario")
+    );
   } finally {
     cleanup(root);
   }
@@ -235,9 +253,9 @@ test("an existing feature file is never silently overwritten", () => {
   try {
     write("features/billing/dynamic_pricing.feature", "Feature: mine\n");
     const plan = planArchive(root, "add-dynamic-pricing");
-    assert.ok(plan.warnings.some((w) => w.code === "archive_feature_exists"));
+    assert.ok(plan.warnings.some((w: { code: string }) => w.code === "archive_feature_exists"));
     assert.equal(
-      plan.writes.some((w) => w.kind === "feature"),
+      plan.writes.some((w: { kind: string }) => w.kind === "feature"),
       false
     );
     executeArchive(plan);
@@ -274,7 +292,9 @@ El sistema SHALL cobrar.
   try {
     const plan = planArchive(undeclared.root, "add-dynamic-pricing");
     assert.equal(plan.ok, false);
-    assert.ok(plan.diagnostics.some((d) => d.code === "archive_retire_not_declared"));
+    assert.ok(
+      plan.diagnostics.some((d: { code: string }) => d.code === "archive_retire_not_declared")
+    );
   } finally {
     cleanup(undeclared.root);
   }
@@ -288,7 +308,7 @@ El sistema SHALL cobrar.
   try {
     const plan = planArchive(declared.root, "add-dynamic-pricing");
     assert.equal(plan.ok, true);
-    assert.ok(plan.warnings.some((w) => w.code === "archive_capability_retired"));
+    assert.ok(plan.warnings.some((w: { code: string }) => w.code === "archive_capability_retired"));
     executeArchive(plan);
     assert.equal(
       fs.existsSync(path.join(declared.root, "docs/specs/capabilities/pricing/spec.md")),

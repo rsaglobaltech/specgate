@@ -416,7 +416,7 @@ test("a requirement straight out of `plan --format json` produces a usable promp
 // read neither, and `harness run` reported "No agent configured" while the
 // config plainly declared one.
 
-function projectWithProfiles(config, profiles?) {
+function projectWithProfiles(config: string, profiles?: string) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-profiles-"));
   fs.writeFileSync(path.join(dir, "harness.config.yaml"), config, "utf8");
   if (profiles !== undefined) {
@@ -459,7 +459,7 @@ test("a profile that does not exist names the ones that do", () => {
   try {
     assert.throws(
       () => readHarnessConfig(dir),
-      (err) => /no profile 'nope'/.test(err.message) && /ci, local/.test(err.message)
+      (err: Error) => /no profile 'nope'/.test(err.message) && /ci, local/.test(err.message)
     );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -471,7 +471,7 @@ test("agent_profile without a profiles.yaml says so, and offers the alternative"
   try {
     assert.throws(
       () => readHarnessConfig(dir),
-      (err) => /profiles\.yaml/.test(err.message) && /agent:/.test(err.message)
+      (err: Error) => /profiles\.yaml/.test(err.message) && /agent:/.test(err.message)
     );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -485,7 +485,7 @@ test("an unknown key is rejected rather than ignored", () => {
   try {
     assert.throws(
       () => readHarnessConfig(dir),
-      (err) => /unknown key\(s\): agnet/.test(err.message) && /Known keys:/.test(err.message)
+      (err: Error) => /unknown key\(s\): agnet/.test(err.message) && /Known keys:/.test(err.message)
     );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -576,17 +576,17 @@ test("an anchor in the feature cell is dropped, since it is not a path", () => {
 // and nothing else. With the worktree removed by default, that left nothing to
 // act on — found by running REQ-002 and being unable to tell why it failed.
 
-function captureReport(results, format = "text") {
+function captureReport(results: unknown[], format = "text") {
   const written: string[] = [];
   const original = process.stdout.write;
-  (process.stdout as any).write = (chunk) => {
+  process.stdout.write = ((chunk: string | Uint8Array) => {
     written.push(String(chunk));
     return true;
-  };
+  }) as typeof process.stdout.write;
   try {
     printReport(results, format);
   } finally {
-    (process.stdout as any).write = original;
+    process.stdout.write = original;
   }
   return written.join("");
 }
@@ -820,7 +820,10 @@ test("harness run refuses a requirement whose scenario has no steps, before spen
     const featurePath = path.join(projectDir, featureRel);
     const shouted = fs
       .readFileSync(featurePath, "utf8")
-      .replace(/^(\s*)(Given|When|Then|And) /gm, (_m, pad, kw) => `${pad}${kw.toUpperCase()} `);
+      .replace(
+        /^(\s*)(Given|When|Then|And) /gm,
+        (_m: string, pad: string, kw: string) => `${pad}${kw.toUpperCase()} `
+      );
     fs.writeFileSync(featurePath, shouted, "utf8");
     spawnSync("git", ["add", "-A"], { cwd: projectDir });
     spawnSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "shout"], {
@@ -895,12 +898,12 @@ function greenableProject() {
     fs
       .readFileSync(specPath, "utf8")
       .split("\n")
-      .filter((l) => !l.includes("REQ-001"))
+      .filter((l: string) => !l.includes("REQ-001"))
       .join("\n"),
     "utf8"
   );
 
-  const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+  const git = (...args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
   git("init", "-q");
   git("config", "user.email", "harness-test@example.com");
   git("config", "user.name", "Harness Test");
@@ -924,7 +927,11 @@ let scriptedAgentSeq = 0;
  * `writes` is a list of `[relative path, contents]`. Contents starting with `+`
  * are appended. `sleepMs` delays before exiting, for the budget tests.
  */
-function scriptedAgent(parent, writes, opts: any = {}) {
+function scriptedAgent(
+  parent: string,
+  writes: Array<[string, string]>,
+  opts: { sleepMs?: number } = {}
+) {
   const file = path.join(parent, `agent-${(scriptedAgentSeq += 1)}.js`);
   fs.writeFileSync(
     file,
@@ -960,13 +967,13 @@ function scriptedAgent(parent, writes, opts: any = {}) {
  * The harness now refuses an empty attempt, so the stand-in has to do what the
  * cheapest real agent does: write one file.
  */
-function minimalAgent(parent) {
+function minimalAgent(parent: string) {
   return scriptedAgent(parent, [
     ["src/harness-fixture.ts", "export const writtenByTheFixtureAgent = true;\n"],
   ]);
 }
 
-function runHarness(projectDir, agent, extra = []) {
+function runHarness(projectDir: string, agent: string, extra: string[] = []) {
   return spawnSync(
     process.execPath,
     [
@@ -1065,7 +1072,8 @@ test("allow_paths in harness.config.yaml is an escape hatch that has to be writt
       ["allow_paths:", "  - 'features/**'", ""].join("\n"),
       "utf8"
     );
-    const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+    const git = (...args: string[]) =>
+      spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
     git("add", "-A");
     git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "allow");
 
@@ -1233,7 +1241,7 @@ function projectWithDeclaredPaths({ existing = false } = {}) {
       ),
     "utf8"
   );
-  const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+  const git = (...args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
   git("add", "-A");
   git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "paths");
   return { parent, projectDir };
@@ -1369,7 +1377,8 @@ test("--resume over a requirement that never started runs it, rather than refusi
 test("--resume re-attaches to the interrupted worktree and keeps the partial work", () => {
   const { parent, projectDir } = greenableProject();
   try {
-    const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+    const git = (...args: string[]) =>
+      spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
 
     // The state a kill -9 leaves behind: branch at base, a live worktree with
     // uncommitted work, and one archived prompt for the attempt in flight.
@@ -1412,7 +1421,8 @@ test("after exhausted attempts, --resume picks up at the next attempt", () => {
     const first = runHarness(projectDir, breaking, ["--max-attempts", "2"]);
     assert.match(first.stdout + first.stderr, /0 passed/);
 
-    const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+    const git = (...args: string[]) =>
+      spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
     const head = git("log", "-1", "--format=%s", "harness/REQ-000").stdout;
     assert.match(head, /FAILED the gate/, "the exhausted run should have left a wip commit");
 
@@ -1434,7 +1444,8 @@ test("a resumed run cleans up the worktree it re-attached to", () => {
   // remove` on a path that never existed fails quietly, so nothing would say so.
   const { parent, projectDir } = greenableProject();
   try {
-    const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+    const git = (...args: string[]) =>
+      spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
     const worktree = path.join(parent, "interrupted-worktree");
     assert.equal(git("worktree", "add", "-b", "harness/REQ-000", worktree, "HEAD").status, 0);
     fs.writeFileSync(path.join(worktree, "partial-work.txt"), "half\n", "utf8");
@@ -1478,7 +1489,7 @@ function projectWithMissingFeature() {
       .replace("`features/core/health.feature`", "`features/core/missing.feature`"),
     "utf8"
   );
-  const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+  const git = (...args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
   git("add", "-A");
   git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "missing feature");
   return { parent, projectDir };
@@ -1526,10 +1537,14 @@ test("an unrunnable scenario skips even without --skip-not-ready", () => {
       feature,
       fs
         .readFileSync(feature, "utf8")
-        .replace(/^(\s*)(Given|When|Then|And) /gm, (_m, pad, kw) => `${pad}${kw.toUpperCase()} `),
+        .replace(
+          /^(\s*)(Given|When|Then|And) /gm,
+          (_m: string, pad: string, kw: string) => `${pad}${kw.toUpperCase()} `
+        ),
       "utf8"
     );
-    const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+    const git = (...args: string[]) =>
+      spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
     git("add", "-A");
     git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "shout");
 
@@ -1569,7 +1584,7 @@ test("plan --json carries ready and blockers, each blocker with a fix", () => {
     );
     const req = JSON.parse(planned.stdout).requirements[0];
     assert.equal(req.ready, false);
-    const codes = req.blockers.map((b) => b.code);
+    const codes = req.blockers.map((b: { code: string }) => b.code);
     assert.ok(codes.includes("requirement_has_no_feature"), codes.join(", "));
     for (const b of req.blockers) assert.ok(b.fix, `${b.code} has no fix`);
   } finally {
@@ -1622,7 +1637,7 @@ function cucumberProject() {
   // A fresh worktree carries only what git tracks, so the runner needs the
   // repository's own installed Cucumber.
   fs.symlinkSync(path.join(REPO_ROOT, "node_modules"), path.join(projectDir, "node_modules"));
-  const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+  const git = (...args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
   git("add", "-A");
   git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "cucumber");
   return { parent, projectDir };
@@ -1690,7 +1705,7 @@ function threeRequirementProject() {
   const { parent, projectDir } = greenableProject();
   const matrixPath = path.join(projectDir, "docs/specs/traceability.md");
   const matrix = fs.readFileSync(matrixPath, "utf8");
-  const row = matrix.split("\n").find((l) => l.startsWith("| REQ-000"));
+  const row = matrix.split("\n").find((l: string) => l.startsWith("| REQ-000"));
   assert.ok(row, "the scaffolded matrix no longer has a REQ-000 row");
 
   const extra = ["001", "002"].map((n) =>
@@ -1711,13 +1726,13 @@ function threeRequirementProject() {
       "utf8"
     );
   }
-  const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+  const git = (...args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
   git("add", "-A");
   git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "three");
   return { parent, projectDir };
 }
 
-function runAll(projectDir, agent, extra = []) {
+function runAll(projectDir: string, agent: string, extra: string[] = []) {
   return spawnSync(
     process.execPath,
     [
@@ -1802,7 +1817,7 @@ test("--budget-seconds stops the run and still writes the ledger", () => {
     // `.json` only — the directory also carries the `.gitignore` the ledger
     // writes so run records stay local to the machine.
     const runsDir = path.join(projectDir, ".harness", "runs");
-    const runs = fs.readdirSync(runsDir).filter((f) => f.endsWith(".json"));
+    const runs = fs.readdirSync(runsDir).filter((f: string) => f.endsWith(".json"));
     assert.equal(runs.length, 1, "the ledger must survive a budget stop");
     const record = JSON.parse(fs.readFileSync(path.join(runsDir, runs[0]), "utf8"));
     assert.equal(record.bounded, true, "the record should say the run had a ceiling");
@@ -1827,7 +1842,8 @@ test("a repository with no git identity is refused before the agent runs", () =>
   // included, thrown away by a one-line config.
   const { parent, projectDir } = greenableProject();
   try {
-    const git = (...args) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
+    const git = (...args: string[]) =>
+      spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
     git("config", "--unset", "user.email");
     git("config", "--unset", "user.name");
 

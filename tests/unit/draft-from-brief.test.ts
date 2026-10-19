@@ -12,6 +12,9 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { SpawnSyncReturns } from "node:child_process";
+import type { TestContext } from "node:test";
+import type { CliResult } from "../helpers/cli";
 const { briefModules } = require("../../packages/core/src/domain/DraftChecklist");
 const { agentInvocation, withWritePermission } = require("../../scripts/draft/confined-agent");
 const { STEPS } = require("../../scripts/agents/commands");
@@ -61,9 +64,13 @@ The system SHALL let a member book a free court for one hour.
 - THEN the member sees the booking for one hour
 `;
 
-const git = (dir, ...a) => spawnSync("git", ["-C", dir, ...a], { encoding: "utf8" });
+const git = (dir: string, ...a: string[]): SpawnSyncReturns<string> =>
+  spawnSync("git", ["-C", dir, ...a], { encoding: "utf8" });
 
-function project(t, { brief = BRIEF, init = true } = {}) {
+function project(
+  t: TestContext,
+  { brief = BRIEF, init = true }: { brief?: string | null; init?: boolean } = {}
+) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-brief-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   if (init) fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
@@ -71,11 +78,13 @@ function project(t, { brief = BRIEF, init = true } = {}) {
     fs.mkdirSync(path.join(dir, "docs"), { recursive: true });
     fs.writeFileSync(path.join(dir, "docs", "brief.md"), brief);
   }
-  const cli = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: "utf8" });
+  const cli = (...a: string[]): CliResult =>
+    spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: "utf8" });
   return { dir, cli };
 }
 
-const change = (dir, m = "bookings") => path.join(dir, "docs", "specs", "changes", `draft-${m}`);
+const change = (dir: string, m = "bookings") =>
+  path.join(dir, "docs", "specs", "changes", `draft-${m}`);
 
 test("briefModules reads the front matter, inline or as a list", () => {
   assert.deepEqual(briefModules(BRIEF), ["bookings", "coupons"]);
@@ -86,14 +95,14 @@ test("briefModules reads the front matter, inline or as a list", () => {
   assert.deepEqual(briefModules("# no front matter"), []);
 });
 
-test("specgate draft with no brief says where to put one", (t) => {
+test("specgate draft with no brief says where to put one", (t: TestContext) => {
   const { cli } = project(t, { brief: null });
   const r = cli("draft");
   assert.equal(r.status, 1);
   assert.match(r.stdout, /Save it as docs\/brief\.md, then {2}specgate draft/);
 });
 
-test("specgate draft lists the brief's modules and names the next", (t) => {
+test("specgate draft lists the brief's modules and names the next", (t: TestContext) => {
   const { cli } = project(t);
   const r = cli("draft");
   assert.equal(r.status, 0, r.stderr);
@@ -101,7 +110,7 @@ test("specgate draft lists the brief's modules and names the next", (t) => {
   assert.match(r.stdout, /➜ {2}specgate draft bookings/);
   const doc = JSON.parse(cli("draft", "--json").stdout).draft;
   assert.deepEqual(
-    doc.modules.map((m) => [m.module, m.state]),
+    doc.modules.map((m: { module: string; state: string }) => [m.module, m.state]),
     [
       ["bookings", "not started"],
       ["coupons", "not started"],
@@ -109,7 +118,7 @@ test("specgate draft lists the brief's modules and names the next", (t) => {
   );
 });
 
-test("a brief without front matter gets the block to paste, not a guess", (t) => {
+test("a brief without front matter gets the block to paste, not a guess", (t: TestContext) => {
   const { cli } = project(t, { brief: "# Plan\n\nMembers book courts.\n" });
   const r = cli("draft");
   assert.equal(r.status, 0);
@@ -117,7 +126,7 @@ test("a brief without front matter gets the block to paste, not a guess", (t) =>
   assert.doesNotMatch(r.stdout, /Modules\n/, "no modules are invented");
 });
 
-test("draft <module> opens the draft linked to the brief, with its guide", (t) => {
+test("draft <module> opens the draft linked to the brief, with its guide", (t: TestContext) => {
   const { dir, cli } = project(t);
   const r = cli("draft", "bookings");
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -143,7 +152,7 @@ test("draft <module> opens the draft linked to the brief, with its guide", (t) =
   assert.match(guide, /specgate draft bookings/);
 });
 
-test("draft <module> again: the placeholder, then findings, then ready", (t) => {
+test("draft <module> again: the placeholder, then findings, then ready", (t: TestContext) => {
   const { dir, cli } = project(t);
   cli("draft", "bookings");
 
@@ -157,7 +166,12 @@ test("draft <module> again: the placeholder, then findings, then ready", (t) => 
   assert.equal(red.status, 1);
   const doc = JSON.parse(red.stdout);
   assert.equal(doc.draft.state, "drafting");
-  assert.ok(doc.status.some((d) => d.code === "D6_unlisted_value" && d.message.includes('"12"')));
+  assert.ok(
+    doc.status.some(
+      (d: { code: string; message: string }) =>
+        d.code === "D6_unlisted_value" && d.message.includes('"12"')
+    )
+  );
 
   fs.writeFileSync(spec, DRAFT());
   const green = cli("draft", "bookings");
@@ -169,7 +183,7 @@ test("draft <module> again: the placeholder, then findings, then ready", (t) => 
   assert.match(cli("draft").stdout, /bookings\s+ready to review/);
 });
 
-test("archiving a ready draft needs no task boxes, and points at the next module", (t) => {
+test("archiving a ready draft needs no task boxes, and points at the next module", (t: TestContext) => {
   const { dir, cli } = project(t);
   cli("draft", "bookings");
   // Delivered, as `specgate apply` leaves it: archive waits for that (ADR-0035).
@@ -187,14 +201,14 @@ test("archiving a ready draft needs no task boxes, and points at the next module
   assert.match(cli("draft", "bookings").stdout, /already drafted and archived/);
 });
 
-test("draft <module> outside a Specgate project asks for init first", (t) => {
+test("draft <module> outside a Specgate project asks for init first", (t: TestContext) => {
   const { cli } = project(t, { init: false });
   const r = cli("draft", "bookings");
   assert.equal(r.status, 1);
   assert.match(r.stdout + r.stderr, /specgate init/);
 });
 
-test("a module the brief does not list is drafted, with a note", (t) => {
+test("a module the brief does not list is drafted, with a note", (t: TestContext) => {
   const { cli } = project(t);
   const r = cli("draft", "payments");
   assert.equal(r.status, 0);
@@ -228,7 +242,7 @@ const AGENT_COMMANDS: Array<[string, (stub: string) => string]> = [
 ];
 
 for (const [label, command] of AGENT_COMMANDS) {
-  test(`--agent (${label}) drafts, undoes what it wrote elsewhere, keeps the person's edits`, (t) => {
+  test(`--agent (${label}) drafts, undoes what it wrote elsewhere, keeps the person's edits`, (t: TestContext) => {
     const { dir } = project(t);
     git(dir, "init", "-q");
     git(
@@ -269,14 +283,14 @@ for (const [label, command] of AGENT_COMMANDS) {
   });
 }
 
-test("--agent without git refuses, and says how to go on", (t) => {
+test("--agent without git refuses, and says how to go on", (t: TestContext) => {
   const { cli } = project(t);
   const r = cli("draft", "bookings", "--agent", "true");
   assert.equal(r.status, 1);
   assert.match(r.stdout + r.stderr, /draft_agent_needs_git/);
 });
 
-test("status points at the brief's next module while nothing real is pending", (t) => {
+test("status points at the brief's next module while nothing real is pending", (t: TestContext) => {
   const { dir, cli } = project(t, { init: false });
   fs.writeFileSync(path.join(dir, "package.json"), '{"name":"x","scripts":{"test":"node --test"}}');
   const init = cli("init", "--no-capabilities");
@@ -284,7 +298,7 @@ test("status points at the brief's next module while nothing real is pending", (
   const doc = JSON.parse(cli("status", "--json").stdout);
   assert.equal(doc.nextCommand, "specgate draft bookings");
   assert.deepEqual(
-    doc.brief.modules.map((m) => m.state),
+    doc.brief.modules.map((m: { state: string }) => m.state),
     ["not started", "not started"]
   );
   assert.match(
@@ -293,7 +307,7 @@ test("status points at the brief's next module while nothing real is pending", (
   );
 });
 
-test("init names specgate draft when the brief is already there", (t) => {
+test("init names specgate draft when the brief is already there", (t: TestContext) => {
   const { dir } = project(t, { init: false });
   fs.writeFileSync(path.join(dir, "package.json"), '{"name":"x","scripts":{"test":"node --test"}}');
   const r = spawnSync(process.execPath, [CLI, "init", "--no-capabilities"], {
@@ -305,7 +319,7 @@ test("init names specgate draft when the brief is already there", (t) => {
 });
 
 test("the draft slash command takes the module as its argument", () => {
-  const step = STEPS.find((s) => s.name === "draft");
+  const step = STEPS.find((s: { name: string }) => s.name === "draft");
   assert.ok(step, "a /specgate:draft step");
   const body = slashCommandBody(step);
   assert.match(body, /^argument-hint: <module>$/m);
@@ -327,7 +341,7 @@ Lingo is an online language school. Students learn on the web or on their phone.
 
 const codesOf = (brief: string) => checkFrontMatter(brief).map((p: any) => p.code);
 
-test("no brief: what a brief is, and --new-brief to start one", (t) => {
+test("no brief: what a brief is, and --new-brief to start one", (t: TestContext) => {
   const { cli } = project(t, { brief: null });
   const r = cli("draft");
   assert.equal(r.status, 1);
@@ -338,7 +352,7 @@ test("no brief: what a brief is, and --new-brief to start one", (t) => {
   assert.equal(doc.status[0].code, "draft_no_brief");
 });
 
-test("--new-brief writes the template, and never over a brief that exists", (t) => {
+test("--new-brief writes the template, and never over a brief that exists", (t: TestContext) => {
   const { dir, cli } = project(t, { brief: null });
   const r = cli("draft", "--new-brief");
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -361,7 +375,7 @@ test("--new-brief writes the template, and never over a brief that exists", (t) 
   assert.equal(fs.readFileSync(file, "utf8"), NOTES, "the brief is untouched");
 });
 
-test("the template's placeholders are reported one field at a time", (t) => {
+test("the template's placeholders are reported one field at a time", (t: TestContext) => {
   const { cli } = project(t, { brief: BRIEF_TEMPLATE });
   const r = cli("draft");
   assert.equal(r.status, 1);
@@ -371,7 +385,7 @@ test("the template's placeholders are reported one field at a time", (t) => {
   assert.equal(actorSurfaces(BRIEF_TEMPLATE).has("teacher"), false);
 });
 
-test("a brief without front matter gets every field explained, and the agent's guide", (t) => {
+test("a brief without front matter gets every field explained, and the agent's guide", (t: TestContext) => {
   const { dir, cli } = project(t, { brief: NOTES });
   const r = cli("draft");
   assert.equal(r.status, 0, r.stderr);
@@ -466,7 +480,7 @@ function withGit(t: any, brief: string) {
   return { ...p, agent };
 }
 
-test("--agent proposes the front matter; the body stays byte for byte, the rest is undone", (t) => {
+test("--agent proposes the front matter; the body stays byte for byte, the rest is undone", (t: TestContext) => {
   const { dir, agent, cli } = withGit(t, NOTES);
   const r = agent();
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -478,7 +492,7 @@ test("--agent proposes the front matter; the body stays byte for byte, the rest 
   assert.match(cli("draft").stdout, /➜ {2}specgate draft courses/);
 });
 
-test("--agent that rewrites the brief itself is undone whole", (t) => {
+test("--agent that rewrites the brief itself is undone whole", (t: TestContext) => {
   const { dir, agent } = withGit(t, NOTES);
   const r = agent({ MANGLE: "1" });
   assert.equal(r.status, 1);
@@ -486,7 +500,7 @@ test("--agent that rewrites the brief itself is undone whole", (t) => {
   assert.equal(fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8"), NOTES);
 });
 
-test("--agent on a complete front matter does nothing", (t) => {
+test("--agent on a complete front matter does nothing", (t: TestContext) => {
   const { agent } = withGit(t, BRIEF);
   const r = agent();
   assert.equal(r.status, 0);
@@ -494,7 +508,7 @@ test("--agent on a complete front matter does nothing", (t) => {
 });
 
 test("/specgate:draft writes only the front matter, then stops for the person", () => {
-  const body = slashCommandBody(STEPS.find((s) => s.name === "draft"));
+  const body = slashCommandBody(STEPS.find((s: { name: string }) => s.name === "draft"));
   assert.match(body, /follow `docs\/specs\/BRIEF-SETUP\.md`/);
   assert.match(body, /never a word below it/);
   assert.match(body, /\*\*stop\*\* and show the front matter to the person/);
@@ -503,7 +517,7 @@ test("/specgate:draft writes only the front matter, then stops for the person", 
 
 // ── #103 and #105: an agent that cannot write, and what comes after ────────────
 
-function committed(dir) {
+function committed(dir: string) {
   git(dir, "init", "-q");
   git(
     dir,
@@ -537,7 +551,7 @@ test("claude -p gets edit permission, unless the command brings its own", () => 
   }
 });
 
-test("an agent that writes nothing is told apart from a draft to fix, with the likely cause", (t) => {
+test("an agent that writes nothing is told apart from a draft to fix, with the likely cause", (t: TestContext) => {
   const { dir } = project(t);
   committed(dir);
   const r = spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", "true"], {
@@ -549,7 +563,7 @@ test("an agent that writes nothing is told apart from a draft to fix, with the l
   assert.match(r.stdout, /--permission-mode acceptEdits/);
 });
 
-test("after the agent, the next steps are numbered and the brief's progress is shown", (t) => {
+test("after the agent, the next steps are numbered and the brief's progress is shown", (t: TestContext) => {
   const { dir } = project(t);
   committed(dir);
   const stub = path.join(dir, "..", `next-${path.basename(dir)}.js`);
@@ -572,7 +586,7 @@ test("after the agent, the next steps are numbered and the brief's progress is s
   assert.match(r.stdout, /4\s+➜ specgate draft coupons\s+the next module of the brief/);
 });
 
-test("a bare specgate inside a project says where it stands; outside, the help", (t) => {
+test("a bare specgate inside a project says where it stands; outside, the help", (t: TestContext) => {
   const { dir, cli } = project(t, { init: false });
   fs.writeFileSync(path.join(dir, "package.json"), '{"name":"x","scripts":{"test":"node --test"}}');
   assert.equal(cli("init", "--no-capabilities").status, 0);
@@ -594,7 +608,7 @@ test("under --agent the prompt says Specgate checks the result, so the agent doe
   }
 });
 
-test("a second --agent pass gets the draft's findings in its prompt", (t) => {
+test("a second --agent pass gets the draft's findings in its prompt", (t: TestContext) => {
   const { dir } = project(t);
   committed(dir);
   const stub = path.join(dir, "..", `pass-${path.basename(dir)}.js`);

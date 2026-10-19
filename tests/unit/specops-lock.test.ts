@@ -162,7 +162,7 @@ test("readLock rejects a lockfile written by a newer CLI, and names the fix", ()
     );
     assert.throws(
       () => readLock(dir),
-      (err) =>
+      (err: Error) =>
         err.message.includes("newer version of this CLI") &&
         err.message.includes("Fix:") &&
         err.message.includes(`format ${SPECOPS_SCHEMA_VERSION + 1}`)

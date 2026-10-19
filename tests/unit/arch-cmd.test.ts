@@ -14,19 +14,11 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import { ROOT_DIR, cli, json } from "../helpers/cli";
 
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 const { planGateCheck, planDoneVerification } = require(
   path.join(ROOT_DIR, "dist/packages/core/src/domain/DoneVerification")
 );
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
 
 function adopted() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-arch-"));
@@ -42,18 +34,14 @@ function adopted() {
   return { parent, dir };
 }
 
-function json(r) {
-  return JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
-}
-
 test("the architecture runs between validation and the tests", () => {
   const plan = planGateCheck("/p", "npm test", "npm run arch");
   assert.deepEqual(
-    plan.steps.map((s) => s.stage),
+    plan.steps.map((s: { stage: string }) => s.stage),
     ["validate", "arch", "tests"]
   );
   assert.deepEqual(
-    planGateCheck("/p", "npm test", "  ").steps.map((s) => s.stage),
+    planGateCheck("/p", "npm test", "  ").steps.map((s: { stage: string }) => s.stage),
     ["validate", "tests"]
   );
   const done = planDoneVerification("/p", {
@@ -64,7 +52,7 @@ test("the architecture runs between validation and the tests", () => {
     archCmd: "npm run arch",
   });
   assert.deepEqual(
-    done.steps.map((s) => s.stage),
+    done.steps.map((s: { stage: string }) => s.stage),
     ["validate", "arch", "tests"]
   );
 });

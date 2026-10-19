@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const Ajv = require("ajv/dist/2020");
+import type { ErrorObject } from "ajv";
 
 const ROOT = path.resolve(__dirname, "../../..");
 const schemaPath = path.join(ROOT, "schemas", "pack.schema.json");
@@ -27,7 +28,8 @@ test("parking-management fixture passes the JSON Schema", () => {
   const valid = validate(pack);
   if (!valid) {
     assert.fail(
-      "Schema errors:\n" + validate.errors.map((e) => `  ${e.instancePath} ${e.message}`).join("\n")
+      "Schema errors:\n" +
+        validate.errors.map((e: ErrorObject) => `  ${e.instancePath} ${e.message}`).join("\n")
     );
   }
   assert.ok(valid);
@@ -169,7 +171,8 @@ test("accepts a minimal contracts pack", () => {
   const valid = validate(pack);
   if (!valid) {
     assert.fail(
-      "Schema errors:\n" + validate.errors.map((e) => `  ${e.instancePath} ${e.message}`).join("\n")
+      "Schema errors:\n" +
+        validate.errors.map((e: ErrorObject) => `  ${e.instancePath} ${e.message}`).join("\n")
     );
   }
   assert.ok(valid);
@@ -233,6 +236,6 @@ test("accepts 'contracts' as a valid project_type", () => {
   // contracts type requires api_contracts not DDD sections — just verify enum passes
   validate(pack);
   // may fail on missing api_contracts (from else branch), but NOT on enum
-  const enumError = (validate.errors || []).find((e) => e.keyword === "enum");
+  const enumError = (validate.errors || []).find((e: ErrorObject) => e.keyword === "enum");
   assert.equal(enumError, undefined, "should not fail on enum for 'contracts'");
 });

@@ -16,12 +16,13 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { CliResult } from "../helpers/cli";
 
 const ROOT_DIR = path.resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
-const cli = (cwd, ...args) =>
+const cli = (cwd: string, ...args: string[]): CliResult =>
   spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: "utf8" });
 
 test("a freshly installed pack passes validate --against-lock", () => {
@@ -50,7 +51,7 @@ test("a freshly installed pack passes validate --against-lock", () => {
     assert.equal(add.status, 0, add.stdout + add.stderr);
 
     const matrix = fs.readFileSync(path.join(project, "docs/specs/traceability.md"), "utf8");
-    const row = matrix.split("\n").find((l) => l.startsWith("| REQ-004 |"));
+    const row = matrix.split("\n").find((l: string) => l.startsWith("| REQ-004 |"));
     assert.ok(row, "REQ-004 has a row");
     assert.match(row, /\| REQ-004 \| - \| - \| UC-004/);
     assert.match(row, /\| Draft \|$/);

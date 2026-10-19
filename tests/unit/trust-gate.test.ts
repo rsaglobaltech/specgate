@@ -14,6 +14,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import type { CliResult } from "../helpers/cli";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -21,7 +22,32 @@ const ROOT_DIR = require("node:path").resolve(
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 const CORPUS = path.join(ROOT_DIR, "tests", "fixtures", "corpus");
 
-function cli(cwd, ...args) {
+/** One finding in the `status` list of `validate --json` / `check --json`. */
+interface Diagnostic {
+  severity: string;
+  code: string;
+  message: string;
+  fix?: string;
+}
+
+/** One requirement's outcome in `harness run --format json`. */
+interface HarnessResult {
+  requirement: string;
+  result: string;
+  error?: string;
+}
+
+/** How `chainProject` shapes the project and its scripted agent. */
+interface ChainOptions {
+  testCmd?: string;
+  extraFiles?: [string, string][];
+  failFor?: string;
+  envFile?: string;
+}
+
+type ChainProject = ReturnType<typeof chainProject>;
+
+function cli(cwd: string, ...args: string[]): CliResult {
   return spawnSync(process.execPath, [CLI_PATH, ...args], {
     cwd,
     encoding: "utf8",
@@ -29,15 +55,15 @@ function cli(cwd, ...args) {
   });
 }
 
-function out(r) {
+function out(r: CliResult) {
   return `${r.stdout}${r.stderr}`;
 }
 
-function json(r) {
+function json(r: CliResult) {
   return JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
 }
 
-function git(cwd, ...args) {
+function git(cwd: string, ...args: string[]): CliResult {
   return spawnSync("git", args, { cwd, encoding: "utf8" });
 }
 
@@ -59,7 +85,7 @@ function adopted(testCmd = "node pass.js") {
   return { parent, dir, done: () => fs.rmSync(parent, { recursive: true, force: true }) };
 }
 
-function requirement(id, title, steps, extra = "") {
+function requirement(id: string, title: string, steps: string[], extra = "") {
   return (
     `### Requirement: ${id} — ${title}\n\n` +
     `The system SHALL ${title.toLowerCase()}.${extra}\n\n` +
@@ -70,7 +96,7 @@ function requirement(id, title, steps, extra = "") {
 }
 
 /** An open change with these requirements, opened as `propose` opens it. */
-function openChange(dir, id, reqs, capability = "commands") {
+function openChange(dir: string, id: string, reqs: string[], capability = "commands") {
   const r = cli(dir, "propose", id, "--capability", capability);
   assert.equal(r.status, 0, out(r));
   fs.writeFileSync(
@@ -79,7 +105,7 @@ function openChange(dir, id, reqs, capability = "commands") {
   );
 }
 
-function nameInTest(dir, file, ...ids) {
+function nameInTest(dir: string, file: string, ...ids: string[]) {
   // An empty test/ is not tracked, so a checkout may have removed it.
   fs.mkdirSync(path.join(dir, "test"), { recursive: true });
   fs.writeFileSync(
@@ -160,7 +186,7 @@ test("REQ-118 SCN-118a: an id a spec only mentions owes no matrix row", () => {
       strictTdd: true,
       specContent: spec,
     });
-    const messages = report.errors.map((f) => f.message).join("\n");
+    const messages = report.errors.map((f: { message: string }) => f.message).join("\n");
     assert.match(messages, /TDD-3\] Requirement REQ-004/);
     assert.doesNotMatch(messages, /REQ-003|REQ-999/);
   } finally {
@@ -178,7 +204,7 @@ test("REQ-119 SCN-119a: the corpus passes the strict gate with no finding", () =
   for (const project of projects) {
     const r = cli(project, "validate", ".", "--strict", "--json");
     assert.equal(r.status, 0, `${project}\n${out(r)}`);
-    const findings = (json(r).status || []).filter((d) =>
+    const findings = (json(r).status || []).filter((d: Diagnostic) =>
       ["error", "warning"].includes(d.severity)
     );
     assert.deepEqual(findings, [], `${project}: ${JSON.stringify(findings, null, 2)}`);
@@ -187,7 +213,7 @@ test("REQ-119 SCN-119a: the corpus passes the strict gate with no finding", () =
 
 // ── REQ-120 ──────────────────────────────────────────────────────────────────
 
-function gitRepo(dir) {
+function gitRepo(dir: string) {
   git(dir, "init", "-q", "-b", "main");
   git(dir, "config", "user.email", "trust@example.com");
   git(dir, "config", "user.name", "Trust Test");
@@ -195,7 +221,7 @@ function gitRepo(dir) {
   git(dir, "commit", "-qm", "seed");
 }
 
-function capability(dir, cap, reqs) {
+function capability(dir: string, cap: string, reqs: string[]) {
   const file = path.join(dir, "docs/specs/capabilities", cap, "spec.md");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `# ${cap}\n\n## Requirements\n\n${reqs.join("\n")}`);
@@ -224,9 +250,9 @@ test("REQ-120 SCN-120a: an id taken on the base with another title fails check",
 
     const r = cli(p.dir, "check", "--base", "develop", "--json");
     assert.equal(r.status, 1, out(r));
-    const errors = json(r).status.filter((d) => d.severity === "error");
+    const errors = json(r).status.filter((d: Diagnostic) => d.severity === "error");
     assert.deepEqual(
-      errors.map((d) => d.code),
+      errors.map((d: Diagnostic) => d.code),
       ["id_taken_on_base"]
     );
     assert.match(
@@ -278,7 +304,7 @@ test("REQ-121 SCN-121a: new skips the ids an open change reserved", () => {
 // ── REQ-122 ──────────────────────────────────────────────────────────────────
 
 /** What a person writes after `specgate new`: the obligation and the scenario's steps. */
-function fillScenario(dir, featureFile) {
+function fillScenario(dir: string, featureFile: string) {
   const spec = path.join(dir, "spec.md");
   fs.writeFileSync(
     spec,
@@ -344,7 +370,7 @@ test("REQ-122 SCN-122a: two branches deliver two requirements and merge cleanly"
  * and an agent that delivers whichever requirement SPECGATE_REQ names: its
  * code and a test naming it. `failFor` makes the agent fail that one.
  */
-function chainProject(opts: any = {}) {
+function chainProject(opts: ChainOptions = {}) {
   const p = adopted(opts.testCmd || "node pass.js");
   openChange(p.dir, "pricing", [
     requirement("REQ-002", "Charge a peak surcharge", [
@@ -383,12 +409,12 @@ function chainProject(opts: any = {}) {
   return { ...p, agent: `"${process.execPath}" "${agent}" {prompt_file}` };
 }
 
-function harness(p, ...extra) {
+function harness(p: ChainProject, ...extra: string[]) {
   return cli(p.dir, "harness", "run", "--agent", p.agent, "--max-attempts", "1", ...extra);
 }
 
 /** The chain over the change's two requirements, not the adoption baseline. */
-function chain(p, ...extra) {
+function chain(p: ChainProject, ...extra: string[]) {
   return harness(p, "--chain", "--req", "REQ-002", "--req", "REQ-003", ...extra);
 }
 
@@ -464,7 +490,7 @@ test("REQ-126 SCN-126b: the chain stops at the first requirement that fails", ()
     assert.equal(git(p.dir, "rev-parse", "develop").stdout.trim(), before);
     const results = JSON.parse(r.stdout).results;
     assert.deepEqual(
-      results.map((x) => [x.requirement, x.result]),
+      results.map((x: HarnessResult) => [x.requirement, x.result]),
       [
         ["REQ-002", "fail"],
         ["REQ-003", "skipped"],
@@ -489,7 +515,7 @@ test("REQ-127 SCN-127a: green alone, red together — the merge is undone", () =
     assert.equal(r.status, 1, out(r));
     const results = JSON.parse(r.stdout).results;
     assert.deepEqual(
-      results.map((x) => [x.requirement, x.result]),
+      results.map((x: HarnessResult) => [x.requirement, x.result]),
       [
         ["REQ-002", "pass"],
         ["REQ-003", "fail"],

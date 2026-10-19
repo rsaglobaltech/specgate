@@ -14,16 +14,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
-
-const ROOT_DIR = require("node:path").resolve(
-  __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
-);
-const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
-
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI_PATH, ...args], { encoding: "utf8" });
-}
+import { cli } from "../helpers/cli";
 
 function scaffold() {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-rm-"));
@@ -32,27 +23,27 @@ function scaffold() {
   return { parent, dir: path.join(parent, "my-spec-driven-app") };
 }
 
-function matrixRows(dir) {
+function matrixRows(dir: string) {
   return fs
     .readFileSync(path.join(dir, "docs/specs/traceability.md"), "utf8")
     .split("\n")
-    .filter((l) => /^\|\s*REQ-/.test(l.trim()));
+    .filter((l: string) => /^\|\s*REQ-/.test(l.trim()));
 }
 
 test("rm takes the row and the prose, and the project still validates", () => {
   const { parent, dir } = scaffold();
   try {
     const added = cli("req", "add", "Totals are rounded half-up", "--project-dir", dir);
-    const reqId = /Added (REQ-\d+)/.exec(added.stdout)[1];
+    const reqId = /Added (REQ-\d+)/.exec(added.stdout)![1];
     assert.equal(
-      matrixRows(dir).some((l) => l.includes(reqId)),
+      matrixRows(dir).some((l: string) => l.includes(reqId)),
       true
     );
 
     const r = cli("req", "rm", reqId, "--project-dir", dir);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.equal(
-      matrixRows(dir).some((l) => l.includes(reqId)),
+      matrixRows(dir).some((l: string) => l.includes(reqId)),
       false
     );
     assert.ok(!fs.readFileSync(path.join(dir, "spec.md"), "utf8").includes(reqId));
@@ -92,7 +83,7 @@ test("a delivered requirement is refused without --force", () => {
     assert.match(refused.stderr, /not Draft/);
     assert.match(refused.stderr, /Deprecated/, "the non-destructive alternative must be offered");
     assert.equal(
-      matrixRows(dir).some((l) => l.includes("REQ-000")),
+      matrixRows(dir).some((l: string) => l.includes("REQ-000")),
       true,
       "nothing was removed"
     );
@@ -100,7 +91,7 @@ test("a delivered requirement is refused without --force", () => {
     const forced = cli("req", "rm", "REQ-000", "--force", "--project-dir", dir);
     assert.equal(forced.status, 0, forced.stdout + forced.stderr);
     assert.equal(
-      matrixRows(dir).some((l) => l.includes("REQ-000")),
+      matrixRows(dir).some((l: string) => l.includes("REQ-000")),
       false
     );
   } finally {

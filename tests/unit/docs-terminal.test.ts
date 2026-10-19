@@ -38,23 +38,64 @@ const { renderFallbackHtml, RULES, classify, pace } = require("../../scripts/doc
 const { readBlock } = require("../../scripts/docs/blocks");
 const { SURFACE } = require("../../scripts/lib/surface");
 
+/** One beat of a storyboard: what the demo should show, and how it should exit. */
+interface Beat {
+  id: string;
+  expectExit?: number;
+}
+
+/** A storyboard: the script a recording is made from. */
+interface Storyboard {
+  id: string;
+  file: string;
+  label: string;
+  block: string;
+  beats: Beat[];
+}
+
+/** One recorded step, as stored in the recording's JSON. */
+interface RecordedStep {
+  id: string;
+  caption: string;
+  cwd: string;
+  command: string;
+  exit: number;
+  typeMs: number;
+  holdMs: number;
+  surface: string;
+  lines: Array<{ c: string }>;
+}
+
+/** A recording file: what the terminal player replays. */
+interface Recording {
+  schemaVersion: number;
+  recordedAt: string;
+  recordedWith: { version: string };
+  steps: RecordedStep[];
+}
+
+const BOARDS: Storyboard[] = STORYBOARDS;
+
 /** Every recording, with the storyboard it claims to be of. */
-const RECORDINGS = STORYBOARDS.map((board: any) => {
+const RECORDINGS = BOARDS.map((board) => {
   const raw = fs.readFileSync(path.join(DOCS, "assets", board.file), "utf8");
-  return { board, raw, rec: JSON.parse(raw) };
+  return { board, raw, rec: JSON.parse(raw) as Recording };
 });
 
 /** One test per recording, named after it, so a failure says which. */
-function eachRecording(name: string, fn: (r: { board: any; raw: string; rec: any }) => void) {
+function eachRecording(
+  name: string,
+  fn: (r: { board: Storyboard; raw: string; rec: Recording }) => void
+) {
   for (const r of RECORDINGS) test(`${r.board.id}: ${name}`, () => fn(r));
 }
 
 test("there are three recordings, and the page offers each as a tab", () => {
   assert.deepEqual(
-    STORYBOARDS.map((b: any) => b.id),
+    BOARDS.map((b) => b.id),
     ["brief", "gate", "harness"]
   );
-  for (const board of STORYBOARDS) {
+  for (const board of BOARDS) {
     assert.match(INDEX, new RegExp(`data-term-src="\\./assets/${board.file.replace(".", "\\.")}"`));
     assert.ok(INDEX.includes(`>${board.label}<`), `no tab labelled "${board.label}"`);
   }
@@ -66,7 +107,16 @@ eachRecording("the recording is the shape the player knows", ({ rec: REC }) => {
   assert.equal(REC.schemaVersion, 1);
   assert.ok(Array.isArray(REC.steps) && REC.steps.length > 0, "no steps");
   for (const step of REC.steps) {
-    for (const field of ["id", "caption", "cwd", "command", "exit", "typeMs", "holdMs", "lines"]) {
+    for (const field of [
+      "id",
+      "caption",
+      "cwd",
+      "command",
+      "exit",
+      "typeMs",
+      "holdMs",
+      "lines",
+    ] as const) {
       assert.ok(step[field] !== undefined, `${step.id}: missing ${field}`);
     }
     assert.ok(Array.isArray(step.lines), `${step.id}: lines is not an array`);
@@ -77,7 +127,7 @@ eachRecording("the storyboard and the recording agree, beat for beat", ({ board,
   // Catches a beat added to the storyboard and never captured.
   assert.deepEqual(
     REC.steps.map((s) => s.id),
-    board.beats.map((b: any) => b.id),
+    board.beats.map((b) => b.id),
     "run `npm run docs:terminal` — the storyboard changed and the recording did not"
   );
 });
@@ -142,7 +192,7 @@ eachRecording("every flag in the recording still exists in the source", ({ rec: 
   );
 });
 
-function readAll(dir) {
+function readAll(dir: string): string {
   let out = "";
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
@@ -214,7 +264,7 @@ eachRecording("the fallback contains no markup of its own", ({ board }) => {
 test("the landing page loads the player", () => {
   assert.match(INDEX, /assets\/terminal\.css/);
   assert.match(INDEX, /class="term__transcript"/);
-  for (const asset of ["assets/terminal.css", ...STORYBOARDS.map((b: any) => `assets/${b.file}`)]) {
+  for (const asset of ["assets/terminal.css", ...BOARDS.map((b) => `assets/${b.file}`)]) {
     assert.ok(fs.existsSync(path.join(DOCS, asset)), `${asset} is missing`);
   }
 });
@@ -239,7 +289,7 @@ eachRecording("every line class the recording uses has a colour", ({ rec: REC })
 test("the recordings prove the loop the page promises", () => {
   // The landing page names these by name. A set of recordings that skipped
   // one would be illustrating a different product.
-  const surfaces = RECORDINGS.flatMap(({ rec }) => rec.steps.map((s: any) => s.surface));
+  const surfaces = RECORDINGS.flatMap(({ rec }) => rec.steps.map((s) => s.surface));
   for (const required of [
     "init",
     "plan",
@@ -263,18 +313,18 @@ eachRecording(
     // A refusal is part of the demo, so it is declared on the beat — and a beat
     // that stopped refusing is as wrong as one that started failing.
     const wrong = rec.steps
-      .map((s: any, i: number) => ({
+      .map((s, i) => ({
         id: s.id,
         exit: s.exit,
         want: board.beats[i].expectExit ?? 0,
       }))
-      .filter((s: any) => s.exit !== s.want)
-      .map((s: any) => `${s.id} exited ${s.exit}, expected ${s.want}`);
+      .filter((s) => s.exit !== s.want)
+      .map((s) => `${s.id} exited ${s.exit}, expected ${s.want}`);
     assert.deepEqual(wrong, []);
     const last = rec.steps[rec.steps.length - 1];
     assert.equal(last.exit, 0, "the last step of the demo failed");
     assert.ok(
-      rec.steps.some((s: any) => s.lines.some((l: any) => l.c === "ok")),
+      rec.steps.some((s) => s.lines.some((l) => l.c === "ok")),
       "nothing in the whole recording is green"
     );
   }
@@ -292,7 +342,10 @@ eachRecording("pacing stays inside sane bounds", ({ rec: REC }) => {
 });
 
 eachRecording("the whole replay is short enough that somebody watches it", ({ rec: REC }) => {
-  const total = REC.steps.reduce((sum, s) => sum + s.holdMs + s.command.length * s.typeMs, 0);
+  const total = REC.steps.reduce(
+    (sum: number, s) => sum + s.holdMs + s.command.length * s.typeMs,
+    0
+  );
   assert.ok(total < 90_000, `the replay runs ${Math.round(total / 1000)}s — cut a beat`);
 });
 
@@ -302,7 +355,7 @@ test("the normalisation rules are all still there, in order", () => {
   // Named so that removing one is a visible edit rather than a silent one. Each
   // of these exists because something leaked or churned without it.
   assert.deepEqual(
-    RULES.map((r) => r.id),
+    RULES.map((r: { id: string }) => r.id),
     [
       "carriage",
       "ansi",

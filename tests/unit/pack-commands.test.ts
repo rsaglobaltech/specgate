@@ -6,12 +6,13 @@ const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+import type { CliResult } from "../helpers/cli";
 
 const ROOT = path.resolve(__dirname, "../../..");
 const CLI = path.join(ROOT, "bin/specgate.js");
 const PACK_ROOT = path.join(ROOT, "tests/fixtures/domain-packs");
 
-function cli(...args) {
+function cli(...args: string[]): CliResult {
   return spawnSync(process.execPath, [CLI, ...args], {
     encoding: "utf8",
     cwd: ROOT,
@@ -159,8 +160,8 @@ test("every project type scaffolds Gherkin that Cucumber sees steps in", () => {
       );
 
       // Whatever Gherkin it wrote, Cucumber must find steps in it.
-      const features = [];
-      const walk = (d) => {
+      const features: string[] = [];
+      const walk = (d: string) => {
         for (const e of fs.readdirSync(d, { withFileTypes: true })) {
           const full = path.join(d, e.name);
           if (e.isDirectory()) walk(full);

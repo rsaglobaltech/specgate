@@ -18,6 +18,13 @@ const packageJson = require(path.join(repoRoot, "package.json"));
 
 const { SURFACE } = require("../../scripts/lib/surface");
 
+/** A command registry row, as `scripts/lib/surface` declares it. */
+interface SurfaceRow {
+  name: string;
+  script?: string[];
+  subcommands?: SurfaceRow[];
+}
+
 /**
  * Every registry row that names a script, subcommands included.
  *
@@ -26,7 +33,7 @@ const { SURFACE } = require("../../scripts/lib/surface");
  */
 function dispatchableRows(): Array<{ name: string; script: string[] }> {
   const out: Array<{ name: string; script: string[] }> = [];
-  const visit = (rows, prefix: string) => {
+  const visit = (rows: SurfaceRow[] | undefined, prefix: string) => {
     for (const row of rows || []) {
       const name = prefix ? `${prefix} ${row.name}` : row.name;
       if (row.script) out.push({ name, script: row.script });

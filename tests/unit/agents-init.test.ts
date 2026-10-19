@@ -8,12 +8,12 @@
  * because a copy is stale the moment the grammar moves.
  */
 
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import { test } from "node:test";
+import assert = require("node:assert/strict");
+import fs = require("node:fs");
+import os = require("node:os");
+import path = require("node:path");
+import { spawnSync } from "node:child_process";
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -22,12 +22,9 @@ const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 
 const { TOOLS, ALL_TOOLS, DEFAULT_TOOLS, parseArgs } = require("../../scripts/agents/init");
 const { STEPS } = require("../../scripts/agents/commands");
+import { cliFromRoot as cli } from "../helpers/cli";
 
-function cli(...args) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", cwd: ROOT_DIR });
-}
-
-function withProject(fn) {
+function withProject(fn: (dir: string) => void): void {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "agents-init-"));
   const r = cli(
     "init",
