@@ -11,7 +11,42 @@ import {
   shorten,
   stepKind,
   testCounts,
+  HarnessEvent,
 } from "../../packages/core/src/domain/HarnessEvents";
+
+/**
+ * A tool call's input, as Claude Code's stream sends it: an object whose keys
+ * depend on the tool (`file_path`, `command`, `old_string`…).
+ */
+type ToolInput = Record<string, unknown>;
+
+/**
+ * One block of a stream message's `content`, as far as this reads it. The
+ * fields of a `tool_use` and a `tool_result` are declared as present: those
+ * are the only blocks that are read for them, and the stream always sends them.
+ */
+interface StreamContent {
+  type?: string;
+  /** `text`: what the model said. */
+  text?: string;
+  /** `tool_use`: the call's id, tool name and input. */
+  id: string;
+  name: string;
+  input: ToolInput;
+  /** `tool_result`: the call it answers, its output and whether it failed. */
+  tool_use_id: string;
+  content?: unknown;
+  is_error?: boolean;
+}
+
+/** One line of `--output-format stream-json`, as far as this reads it. */
+interface StreamEvent {
+  type?: string;
+  message?: { content?: StreamContent[] | unknown };
+  result?: unknown;
+  is_error?: boolean;
+  subtype?: string;
+}
 
 /**
  * `specgate harness events --from claude` — Claude Code's stream as harness
@@ -69,8 +104,8 @@ function relative(file: string): string {
 }
 
 /** The file path or command a tool call worked on. */
-function targetOf(input: any): string {
-  const i = input || {};
+function targetOf(input: ToolInput | null | undefined): string {
+  const i: ToolInput = input || {};
   const file = i.file_path ?? i.path ?? i.notebook_path;
   if (typeof file === "string") return relative(file);
   if (typeof i.command === "string") return maskCommand(i.command);
@@ -84,7 +119,9 @@ const lines = (s: unknown) => (typeof s === "string" && s !== "" ? s.split("\n")
 function textOf(content: unknown): string {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
-    return content.map((c) => (c && typeof c.text === "string" ? c.text : "")).join("\n");
+    return content
+      .map((c: { text?: unknown } | null) => (c && typeof c.text === "string" ? c.text : ""))
+      .join("\n");
   }
   return "";
 }
@@ -103,8 +140,8 @@ export async function main(argv: string[]): Promise<void> {
   const file = process.env[EVENTS_FILE_VAR] || null;
   const req = process.env[EVENTS_REQ_VAR] || undefined;
   const attempt = Number(process.env[EVENTS_ATTEMPT_VAR]) || undefined;
-  const write = (e: any) => appendEvent(file, e, req, attempt);
-  const pending = new Map<string, { name: string; input: any; started: number }>();
+  const write = (e: HarnessEvent) => appendEvent(file, e, req, attempt);
+  const pending = new Map<string, { name: string; input: ToolInput; started: number }>();
   let finalResult = "";
   let failed = false;
 
@@ -112,7 +149,7 @@ export async function main(argv: string[]): Promise<void> {
   for await (const raw of rl) {
     const line = raw.trim();
     if (!line) continue;
-    let e: any;
+    let e: StreamEvent;
     try {
       e = JSON.parse(line);
     } catch {
@@ -120,21 +157,22 @@ export async function main(argv: string[]): Promise<void> {
     }
     const content = (e.message && e.message.content) || [];
     if (e.type === "assistant" && Array.isArray(content)) {
-      for (const c of content) {
+      for (const c of content as StreamContent[]) {
         if (c.type === "text" && String(c.text || "").trim()) {
-          write({ type: "message", text: shorten(c.text) });
+          // Non-empty after trimming, so `text` is there.
+          write({ type: "message", text: shorten(c.text!) });
         } else if (c.type === "tool_use") {
           pending.set(c.id, { name: c.name, input: c.input, started: now() });
         }
       }
     } else if (e.type === "user" && Array.isArray(content)) {
-      for (const c of content) {
+      for (const c of content as StreamContent[]) {
         if (c.type !== "tool_result") continue;
         const call = pending.get(c.tool_use_id);
         if (!call) continue;
         pending.delete(c.tool_use_id);
-        const command =
-          call.input && typeof call.input.command === "string" ? call.input.command : "";
+        const given = call.input && call.input.command;
+        const command = typeof given === "string" ? given : "";
         const kind = stepKind(call.name, command);
         const extra: Record<string, unknown> =
           kind === "edit"
@@ -157,7 +195,7 @@ export async function main(argv: string[]): Promise<void> {
       }
     } else if (e.type === "result") {
       finalResult = typeof e.result === "string" ? e.result : "";
-      failed = e.is_error === true || (e.subtype && e.subtype !== "success");
+      failed = e.is_error === true || Boolean(e.subtype && e.subtype !== "success");
     }
   }
   if (finalResult) process.stdout.write(`${finalResult}\n`);
