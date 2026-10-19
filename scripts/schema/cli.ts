@@ -13,7 +13,7 @@ import * as path from "node:path";
 
 import { resolveProjectDir } from "../lib/project-root";
 import { error, warning, diagnostic, errorMessage } from "../lib/diagnostics";
-import { agentIo, wantsJson, EXIT } from "../lib/agent";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../lib/agent";
 import {
   BUILT_IN,
   SCHEMA_DIR,
@@ -23,6 +23,7 @@ import {
   resolveSchema,
   listSchemas,
 } from "./registry";
+import type { ArtifactSchema } from "./registry";
 
 function usage() {
   process.stdout.write(
@@ -36,19 +37,19 @@ function usage() {
   );
 }
 
-export function schemaPath(projectDir, name) {
+export function schemaPath(projectDir: string, name: string): string {
   return path.join(projectDir, SCHEMA_DIR, name, SCHEMA_FILE);
 }
 
-export function writeSchema(projectDir, name, schema) {
+export function writeSchema(projectDir: string, name: string, schema: ArtifactSchema): string {
   const file = schemaPath(projectDir, name);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, toYaml({ ...schema, name }), "utf8");
   return path.join(SCHEMA_DIR, name, SCHEMA_FILE);
 }
 
-export function main(argv) {
-  const io = agentIo(wantsJson(argv));
+export function main(argv: string[]): void {
+  const io: AgentIo = agentIo(wantsJson(argv));
   const NULL_SHAPE = { schema: null };
   const args = argv.filter((a) => a !== "--json");
 
@@ -58,7 +59,7 @@ export function main(argv) {
   }
 
   let projectDirArg = ".";
-  const positional = [];
+  const positional: string[] = [];
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--project-dir" && args[i + 1]) projectDirArg = args[++i];
     else if (!args[i].startsWith("-")) positional.push(args[i]);
@@ -204,7 +205,7 @@ export function main(argv) {
   ]);
 }
 
-export const FIXES = {
+export const FIXES: Record<string, string> = {
   schema_no_name: "Add a top-level `name:` line.",
   schema_no_artifacts: "Declare at least one entry under `artifacts:`.",
   artifact_no_id: "Every artifact needs an `id`.",

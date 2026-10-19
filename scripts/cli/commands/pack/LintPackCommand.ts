@@ -12,7 +12,7 @@ import {
   analyseScenario,
   isGenericTitle as isGenericTitleRule,
 } from "../../../../packages/core/src/domain/GherkinQuality";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
 import { error as diagError, warning as diagWarning } from "../../../lib/diagnostics";
 import * as ui from "../../../lib/ui";
 
@@ -93,7 +93,7 @@ export function parseArgs(argv: string[]) {
 
 const NULL_SHAPE = { pack: null, packRoot: null, graph: null };
 
-function lintTodos(pack: any, errors: string[], warnings: string[]) {
+function lintTodos(pack: any, _errors: string[], warnings: string[]) {
   const yaml = JSON.stringify(pack);
   const count = (yaml.match(/TODO/g) || []).length;
   if (count > 0) {
@@ -614,7 +614,7 @@ export class LintPackCommand extends BaseCommand {
     const rawArgs = this.args[0] === "pack" ? this.args.slice(1) : this.args;
     const args = rawArgs[0] === "lint" ? rawArgs.slice(1) : rawArgs;
     const opts = parseArgs(args);
-    const io = agentIo(opts.json);
+    const io: AgentIo = agentIo(opts.json);
 
     if (!opts.packRoot || !opts.packId) {
       if (!io.json) usage();
@@ -669,9 +669,11 @@ export class LintPackCommand extends BaseCommand {
 
     const { errors, warnings, notes } = runLint(pack, packRoot, { strict: opts.strict });
 
+    // Narrowed above; a callback would not see the narrowing on `opts`.
+    const { packId } = opts;
     const status = [
-      ...warnings.map((w) => diagWarning("pack_lint_warning", w, { target: opts.packId })),
-      ...errors.map((e) => diagError("pack_lint_error", e, { target: opts.packId })),
+      ...warnings.map((w) => diagWarning("pack_lint_warning", w, { target: packId })),
+      ...errors.map((e) => diagError("pack_lint_error", e, { target: packId })),
     ];
 
     io.emitAndGate({ pack: opts.packId, packRoot, graph: null, status }, () => {

@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { resolveProjectDir, findCliRoot } from "../../../lib/project-root";
 import { error, warning } from "../../../lib/diagnostics";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import {
   planGateCheck,
@@ -59,7 +59,7 @@ export class CheckCommand extends BaseCommand {
       process.exit(0);
     }
     const json = wantsJson(argv);
-    const io = agentIo(json);
+    const io: AgentIo = agentIo(json);
 
     let testCmdFlag: string | undefined;
     let baseFlag: string | undefined;

@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { error } from "../../../lib/diagnostics";
-import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 
 import { findCliRoot } from "../../../lib/project-root";
@@ -60,7 +60,7 @@ export function newestProjectIn(outDir: string) {
 export class InitFromPackCommand extends BaseCommand {
   public execute(): void {
     const argv = this.args;
-    const io = agentIo(wantsJson(argv));
+    const io: AgentIo = agentIo(wantsJson(argv));
     const NULL_SHAPE = { project: null };
 
     if (argv.includes("--help") || argv.includes("-h")) {

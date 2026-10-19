@@ -3,7 +3,7 @@ import * as ui from "../../../lib/ui";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { error, info } from "../../../lib/diagnostics";
-import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { detectStack } from "./AdoptCommand";
 import { BaseCommand } from "../../../lib/command";
 
@@ -591,7 +591,7 @@ function renderHuman({
 export class OnboardCommand extends BaseCommand {
   public execute(): void {
     const argv = this.args;
-    const io = agentIo(wantsJson(argv));
+    const io: AgentIo = agentIo(wantsJson(argv));
     const NULL_SHAPE = { onboarding: null };
 
     if (argv.includes("--help") || argv.includes("-h")) {

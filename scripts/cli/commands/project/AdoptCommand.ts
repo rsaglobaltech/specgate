@@ -379,7 +379,8 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
     : (require("./OnboardCommand") as typeof import("./OnboardCommand")).proposeCapabilities(dir);
   const proposed = buildProposedRequirements(capabilities);
 
-  const vars = {
+  // A string map, not a literal: `opts.vars` (`--var KEY=VALUE`) may override any key.
+  const vars: Record<string, string> = {
     PROJECT_NAME: detected.PROJECT_NAME,
     PROJECT_SLUG: slugify(detected.PROJECT_NAME),
     DOMAIN: "general",

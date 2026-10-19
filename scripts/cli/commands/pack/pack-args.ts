@@ -7,12 +7,26 @@
  */
 
 /** Pack rule violations are thrown; the command layer turns them into output. */
-function fail(message): never {
+function fail(message: string): never {
   throw new Error(message);
 }
 
-export function parseArgs(argv) {
-  const args = {
+/** The flags the pack commands share, parsed. */
+export interface PackArgs {
+  packRoot: string;
+  pack: string;
+  projectDir: string;
+  dryRun: boolean;
+  noExamples: boolean;
+  /** `--var KEY=VALUE`, repeatable. */
+  vars: Record<string, string>;
+  packRepo: string;
+  packVersion: string;
+  cacheDir: string;
+}
+
+export function parseArgs(argv: string[]): PackArgs {
+  const args: PackArgs = {
     packRoot: "",
     pack: "",
     projectDir: "",

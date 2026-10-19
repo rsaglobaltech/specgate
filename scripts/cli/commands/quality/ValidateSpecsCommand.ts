@@ -21,7 +21,7 @@ import {
 } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import * as crypto from "node:crypto";
 import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
-import { findUnresolvedPlaceholders } from "../../../lib/placeholders";
+import { findUnresolvedPlaceholders, PLACEHOLDER_RE } from "../../../lib/placeholders";
 import { BaseCommand } from "../../../lib/command";
 import { ValidateProjectUseCase } from "../../../../packages/core/src/application/ValidateProjectUseCase";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
@@ -1021,7 +1021,6 @@ export class ValidateSpecsCommand extends BaseCommand {
       "docs/specs/adr/README.md",
     ];
     const REQUIRED_DIRS = ["features", "docs/specs"];
-    const PLACEHOLDER_RE = /\{\{[A-Z_][A-Z0-9_]*\}\}/;
 
     for (const d of REQUIRED_DIRS) {
       if (!fs.existsSync(path.join(targetDir, d))) {

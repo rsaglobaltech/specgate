@@ -1,5 +1,5 @@
 import { BaseCommand } from "../../../lib/command";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
 import { error } from "../../../lib/diagnostics";
 import { c } from "../../../lib/ui";
 import { findForjaProject, runForja, runForjaCaptured } from "./Forja";
@@ -40,7 +40,7 @@ export class AddCommand extends BaseCommand {
       process.exit(argv.length === 0 ? 2 : 0);
     }
     const json = wantsJson(argv);
-    const io = agentIo(json);
+    const io: AgentIo = agentIo(json);
 
     if (!KINDS.includes(argv[0])) {
       io.usage(NULL_SHAPE, [

@@ -7,16 +7,23 @@ import { Lockfile, PackEntry } from "../../packages/core/src/domain/Lockfile";
  * "pack_id"
  */
 
+/** `.specops.lock` as JSON: what `Lockfile.toJSON()` produces. */
+export interface LockJson {
+  specops_version: number;
+  specgate_version: string;
+  packs: PackEntry[];
+}
+
 export const LOCK_FILENAME = Lockfile.FILENAME;
 export const SPECOPS_SCHEMA_VERSION = Lockfile.CURRENT_SCHEMA_VERSION;
 
-export function readLock(projectDir: string): any {
+export function readLock(projectDir: string): LockJson | null {
   const repo = new DiskLockfileRepository(projectDir);
   const lock = repo.readLock();
   return lock ? lock.toJSON() : null;
 }
 
-export function upsertPackEntry(lockJson: any, entry: PackEntry): any {
+export function upsertPackEntry(lockJson: LockJson | null, entry: PackEntry): LockJson {
   const lock = lockJson
     ? new Lockfile(lockJson.specops_version, lockJson.specgate_version, lockJson.packs || [])
     : Lockfile.createEmpty();
@@ -31,7 +38,7 @@ export interface WriteOptions {
 
 export function writeLock(
   projectDir: string,
-  lockJson: any,
+  lockJson: LockJson | null,
   options: WriteOptions = {}
 ): { path: string; written: boolean } {
   const repo = new DiskLockfileRepository(projectDir);
@@ -42,6 +49,6 @@ export function writeLock(
   return repo.writeLock(lock, options);
 }
 
-export function newLock(specgateVersion?: string): any {
+export function newLock(specgateVersion?: string): LockJson {
   return Lockfile.createEmpty(specgateVersion).toJSON();
 }

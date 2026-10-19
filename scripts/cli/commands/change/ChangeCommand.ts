@@ -17,11 +17,19 @@ import { BaseCommand } from "../../../lib/command";
 import { resolveProjectDir } from "../../../lib/project-root";
 import * as os from "node:os";
 import { spawnSync } from "node:child_process";
-import { error, warning, hasErrors, printDiagnostics } from "../../../lib/diagnostics";
+import {
+  error,
+  warning,
+  hasErrors,
+  printDiagnostics,
+  errorMessage,
+} from "../../../lib/diagnostics";
+import type { Diagnostic } from "../../../lib/diagnostics";
 import { buildInstructions } from "../../../change/instructions";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { changeScope, judgeScope } from "../../../../packages/core/src/domain/AuthoringScope";
 import { agentIo } from "../../../lib/agent";
+import type { AgentDocument } from "../../../lib/agent";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { ARTIFACTS, artifactState } from "../../../change/artifacts";
 import { parseDelta } from "../../../../packages/core/src/domain/SpecParser";
@@ -182,7 +190,7 @@ export interface ChangeOptions {
   positional: string[];
 }
 
-function parseArgs(argv) {
+function parseArgs(argv: string[]): ChangeOptions {
   const opts: ChangeOptions = {
     projectDir: ".",
     json: false,
@@ -225,8 +233,12 @@ function parseArgs(argv) {
 
 // The contract itself lives in scripts/lib/agent.ts; these are thin adapters
 // that keep the existing `opts`-first call sites unchanged.
-const fail = (opts, nullShape, diags) => agentIo(opts.json).fail(nullShape, diags);
-const emit = (opts, payload, renderHuman) => agentIo(opts.json).emit(payload, renderHuman);
+function fail(opts: { json: boolean }, nullShape: AgentDocument, diags: Diagnostic[]): never {
+  return agentIo(opts.json).fail(nullShape, diags);
+}
+function emit(opts: { json: boolean }, payload: AgentDocument, renderHuman?: () => void): void {
+  return agentIo(opts.json).emit(payload, renderHuman);
+}
 
 /**
  * Route 2 of the three-way resolution for a declared-value divergence
@@ -345,7 +357,7 @@ function resolveValueDriftDelta(
 
 // ── new ───────────────────────────────────────────────────────────────────────
 
-function cmdNew(opts) {
+function cmdNew(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const p = paths(projectDir);
   const changeId = opts.positional[0];
@@ -406,8 +418,8 @@ function cmdNew(opts) {
     req_range: reqRange,
   };
 
-  const created = [];
-  const write = (file, contents) => {
+  const created: string[] = [];
+  const write = (file: string, contents: string) => {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, contents, "utf8");
     created.push(path.relative(projectDir, file).split(path.sep).join("/"));
@@ -464,7 +476,7 @@ function cmdNew(opts) {
 
 // ── list ──────────────────────────────────────────────────────────────────────
 
-function cmdList(opts) {
+function cmdList(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const ids = listChangeIds(projectDir);
   const changes = ids.map((id) => {
@@ -502,7 +514,7 @@ function cmdList(opts) {
 
 // ── show ──────────────────────────────────────────────────────────────────────
 
-function cmdShow(opts) {
+function cmdShow(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const p = paths(projectDir);
   const changeId = opts.positional[0];
@@ -569,7 +581,7 @@ function cmdShow(opts) {
 
 // ── status ────────────────────────────────────────────────────────────────────
 
-function cmdStatus(opts) {
+function cmdStatus(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const ids = listChangeIds(projectDir);
   const changeId = opts.positional[0] || (ids.length === 1 ? ids[0] : null);
@@ -672,7 +684,7 @@ function cmdStatus(opts) {
  * whatever you were in the middle of. Clean first, and reverting can only ever
  * discard the agent's own work.
  */
-function cmdAuthor(opts) {
+function cmdAuthor(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const changeId = opts.positional[0];
   const artifact = opts.artifact || "proposal";
@@ -832,7 +844,7 @@ function cmdAuthor(opts) {
 }
 
 /** The agent command for authoring: explicit flag, then profile, then harness config. */
-function resolveAuthorAgent(projectDir: string, opts): string | null {
+function resolveAuthorAgent(projectDir: string, opts: ChangeOptions): string | null {
   if (opts.agent) return opts.agent;
   const config = readHarnessConfig(projectDir) || {};
   if (opts.agentProfile) {
@@ -882,7 +894,7 @@ function authorPrompt(changeId: string, artifact: string, instructions: any): st
   return parts.join("\n");
 }
 
-function cmdValidate(opts) {
+function cmdValidate(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const requested = opts.positional[0];
   const ids = requested ? [requested] : listChangeIds(projectDir);
@@ -942,7 +954,7 @@ function cmdValidate(opts) {
 
 // ── archive ───────────────────────────────────────────────────────────────────
 
-function cmdArchive(opts) {
+function cmdArchive(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const changeId = opts.positional[0];
   const nullShape = { archive: null };
@@ -1006,7 +1018,7 @@ function cmdArchive(opts) {
   }
 
   const archivedAs = plan.move ? path.basename(plan.move.to) : `${changeId}-archived`;
-  const rel = (f) => path.relative(projectDir, f).split(path.sep).join("/");
+  const rel = (f: string) => path.relative(projectDir, f).split(path.sep).join("/");
   const summary = {
     change: changeId,
     archivedAs: archivedAs,
@@ -1057,6 +1069,8 @@ function cmdArchive(opts) {
 
   emit(opts, { archive: summary }, () => {
     const t = plan.totals;
+    // Set on every plan that gets this far: only a failed plan returns early.
+    const trace = t.traceability!;
     process.stdout.write(
       ui.header(VERB === "archive" ? "archive" : "change archive", changeId) +
         ui.ok(`Archived as ${c.bold}${archivedAs}${c.reset}`) +
@@ -1067,7 +1081,7 @@ function cmdArchive(opts) {
         ui
           .kv(
             "Traceability",
-            `${t.traceability.added} row(s) added · ${t.traceability.updated} updated · ${t.traceability.removed} removed`,
+            `${trace.added} row(s) added · ${trace.updated} updated · ${trace.removed} removed`,
             14
           )
           .replace(/^ {2}/, "    ") +
@@ -1118,7 +1132,7 @@ export class CliCommand extends BaseCommand {
 
     const opts = parseArgs(argv.slice(1));
 
-    const table = {
+    const table: Record<string, (opts: ChangeOptions) => void> = {
       new: cmdNew,
       list: cmdList,
       show: cmdShow,
@@ -1140,7 +1154,7 @@ export class CliCommand extends BaseCommand {
       handler(opts);
     } catch (err) {
       fail(opts, {}, [
-        error("change_error", err.message, {
+        error("change_error", errorMessage(err), {
           fix: "Re-run with --json for the machine-readable form of this failure.",
         }),
       ]);

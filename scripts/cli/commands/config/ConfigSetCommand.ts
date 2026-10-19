@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { error } from "../../../lib/diagnostics";
-import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import {
   HARNESS_CONFIG_FILE,
@@ -92,7 +92,7 @@ function usage() {
 export class ConfigSetCommand extends BaseCommand {
   public execute(): void {
     const argv = this.args;
-    const io = agentIo(wantsJson(argv));
+    const io: AgentIo = agentIo(wantsJson(argv));
     const NULL_SHAPE = { config: null };
     const args = argv.filter((a) => a !== "--json");
 

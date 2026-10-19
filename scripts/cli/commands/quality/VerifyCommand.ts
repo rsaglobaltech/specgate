@@ -13,7 +13,7 @@ import * as path from "node:path";
 import * as crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { BaseCommand } from "../../../lib/command";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
 import { error, type Diagnostic } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
@@ -226,7 +226,7 @@ function renderGithub(status: Diagnostic[]) {
 export class VerifyCommand extends BaseCommand {
   public execute(): void {
     let o: VerifyOptions;
-    const io0 = agentIo(wantsJson(this.args));
+    const io0: AgentIo = agentIo(wantsJson(this.args));
     try {
       o = parseArgs(this.args);
     } catch (err: any) {
@@ -234,7 +234,7 @@ export class VerifyCommand extends BaseCommand {
         error("verify_usage", err.message, { fix: "specgate verify --help" }),
       ]);
     }
-    const io = agentIo(o!.format === "json" || o!.json);
+    const io: AgentIo = agentIo(o!.format === "json" || o!.json);
     const opts = o!;
     const projectDir = resolveProjectDir(opts.projectDir);
 

@@ -20,9 +20,10 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
 import { warning } from "../lib/diagnostics";
+import type { Diagnostic } from "../lib/diagnostics";
 import { PROVIDERS, getProvider } from "./providers";
 import { CORE_CONFIG_KEYS } from "./port";
-import type { AlmConfig } from "./port";
+import type { AlmCapabilities, AlmClient, AlmConfig } from "./port";
 
 export const MAP_RELPATH = path.join(".specops", "alm-map.json");
 export const CONFIG_FILENAME = "alm.config.yaml";
@@ -30,13 +31,52 @@ export const CONFIG_FILENAME = "alm.config.yaml";
 /** Matrix statuses that mean "this requirement is delivered". */
 export const DONE_STATUSES = new Set(["Implemented", "Verified", "Released"]);
 
+/** One requirement as the sync sees it: delivered or not, nothing finer. */
+export interface AlmRequirement {
+  id: string;
+  title: string;
+  status: "done" | "open";
+}
+
+/** The ALM issue a requirement is linked to. */
+export interface AlmMapEntry {
+  issue: string;
+  url?: string | null;
+}
+
+/** `.specops/alm-map.json`: REQ id → its issue. */
+export type AlmMap = Record<string, AlmMapEntry>;
+
+/** What the sync did, or would do, for one requirement. */
+export interface SyncAction {
+  req: string;
+  action:
+    | "would-create"
+    | "created"
+    | "close-unsupported"
+    | "would-close"
+    | "closed"
+    | "drift"
+    | "in-sync";
+  issue: string | null;
+  detail?: string;
+}
+
+/**
+ * The part of an `AlmClient` the sync calls. `capabilities` is optional
+ * because a client that declares none is taken to support everything.
+ */
+export type SyncClient = Pick<AlmClient, "createIssue" | "getIssueStatus" | "closeIssue"> & {
+  capabilities?: Partial<AlmCapabilities>;
+};
+
 // ── Config ────────────────────────────────────────────────────────────────────
 
 /**
  * Read alm.config.yaml. Tokens are NEVER stored in the file — only the
  * name of the environment variable that holds them.
  */
-export function readAlmConfig(projectDir) {
+export function readAlmConfig(projectDir: string): AlmConfig {
   const cfgPath = path.join(projectDir, CONFIG_FILENAME);
   if (!fs.existsSync(cfgPath)) {
     // Built from the declarations rather than written out: a hand-kept example
@@ -92,7 +132,7 @@ export function readAlmConfig(projectDir) {
  *
  * @returns {object[]} diagnostics, empty when every key is read
  */
-export function lintAlmConfig(cfg, projectDir?: string) {
+export function lintAlmConfig(cfg: AlmConfig, projectDir?: string): Diagnostic[] {
   const provider = getProvider(cfg.provider, projectDir);
   const read = new Set([
     ...CORE_CONFIG_KEYS,
@@ -100,7 +140,7 @@ export function lintAlmConfig(cfg, projectDir?: string) {
     ...provider.config.optional,
   ]);
 
-  const diagnostics = [];
+  const diagnostics: Diagnostic[] = [];
   for (const key of Object.keys(cfg)) {
     if (read.has(key)) continue;
     const alsoIn = PROVIDERS.filter(
@@ -129,13 +169,14 @@ export function lintAlmConfig(cfg, projectDir?: string) {
 
 // ── Mapping file ──────────────────────────────────────────────────────────────
 
-export function readAlmMap(projectDir) {
+export function readAlmMap(projectDir: string): AlmMap {
   const mapPath = path.join(projectDir, MAP_RELPATH);
   if (!fs.existsSync(mapPath)) return {};
-  return JSON.parse(fs.readFileSync(mapPath, "utf8"));
+  // The file is ours, written by `writeAlmMap`; its shape is trusted here.
+  return JSON.parse(fs.readFileSync(mapPath, "utf8")) as AlmMap;
 }
 
-export function writeAlmMap(projectDir, map, dryRun) {
+export function writeAlmMap(projectDir: string, map: AlmMap, dryRun: boolean): string {
   const mapPath = path.join(projectDir, MAP_RELPATH);
   if (dryRun) return mapPath;
   fs.mkdirSync(path.dirname(mapPath), { recursive: true });
@@ -151,7 +192,7 @@ export function writeAlmMap(projectDir, map, dryRun) {
  * done status.
  * @returns Array<{ id, title, status: "done"|"open" }>
  */
-export function extractRequirements(projectDir) {
+export function extractRequirements(projectDir: string): AlmRequirement[] {
   const tracePath = path.join(projectDir, "docs", "specs", "traceability.md");
   if (!fs.existsSync(tracePath)) {
     throw new Error(`No traceability matrix at ${tracePath} — run adopt/init first.`);
@@ -159,12 +200,12 @@ export function extractRequirements(projectDir) {
   const spec = fs.existsSync(path.join(projectDir, "spec.md"))
     ? fs.readFileSync(path.join(projectDir, "spec.md"), "utf8")
     : "";
-  const titles = {};
+  const titles: Record<string, string> = {};
   for (const m of spec.matchAll(/^##\s+(REQ-\d+)\s*[—-]\s*(.+)$/gm)) {
     titles[m[1]] = m[2].trim();
   }
 
-  const rowsByReq = new Map();
+  const rowsByReq = new Map<string, string[]>();
   for (const line of fs.readFileSync(tracePath, "utf8").split("\n")) {
     if (!line.trim().startsWith("|") || line.includes("---")) continue;
     const cells = line.split("|").map((c) => c.trim());
@@ -172,7 +213,7 @@ export function extractRequirements(projectDir) {
     if (!req) continue;
     const status = cells[cells.length - 2] || "";
     if (!rowsByReq.has(req)) rowsByReq.set(req, []);
-    rowsByReq.get(req).push(status);
+    rowsByReq.get(req)!.push(status);
   }
 
   return [...rowsByReq.entries()].map(([id, statuses]) => ({
@@ -192,9 +233,14 @@ export function extractRequirements(projectDir) {
  * @param {{ dryRun?: boolean }} opts
  * @returns {Promise<Array<{req,action,issue,detail?}>>} actions taken/planned
  */
-export async function syncRequirements(requirements, map, client, opts) {
+export async function syncRequirements(
+  requirements: readonly AlmRequirement[],
+  map: AlmMap,
+  client: SyncClient,
+  opts?: { dryRun?: boolean }
+): Promise<SyncAction[]> {
   const dryRun = !!(opts && opts.dryRun);
-  const actions = [];
+  const actions: SyncAction[] = [];
 
   for (const req of requirements) {
     const linked = map[req.id];

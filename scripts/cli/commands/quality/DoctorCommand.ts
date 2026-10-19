@@ -5,7 +5,7 @@ import { resolveProjectDir, findCliRoot } from "../../../lib/project-root";
 import { diagnostic } from "../../../lib/diagnostics";
 import { findUnresolvedPlaceholders } from "../../../lib/placeholders";
 import { analyseGherkinSource } from "../../../../packages/core/src/domain/GherkinQuality";
-import { agentIo, wantsJson, EXIT } from "../../../lib/agent";
+import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import { MERGE_DRIVER_NAME } from "../../../harness/init";
 import { hasGherkinRunner } from "../../../../packages/core/src/domain/TestCommand";
@@ -18,6 +18,7 @@ import {
   paths,
   parseTasks,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
+import type { ChangeConfig } from "../../../change/artifacts";
 import * as ui from "../../../lib/ui";
 
 const RICH_HEADER =
@@ -294,7 +295,7 @@ export class DoctorCommand extends BaseCommand {
 
     for (const id of active) {
       const deltas = listDeltas(dir, id);
-      const config = readConfig(dir, id);
+      const config: ChangeConfig = readConfig(dir, id);
       const progress = taskProgress(dir, id);
 
       if (progress.total > 0 && progress.remaining === 0) {
@@ -620,7 +621,7 @@ export class DoctorCommand extends BaseCommand {
       }
     }
 
-    const io = agentIo(wantsJson(argv));
+    const io: AgentIo = agentIo(wantsJson(argv));
     this.checkEnvironment();
 
     let dir = ".";

@@ -10,6 +10,7 @@ const packageJson = require(path.join(rootDir, "package.json"));
 const VERSION: string = packageJson.version || "0.0.0";
 import { ICommand } from "../scripts/lib/command";
 import { SURFACE, helpRows, coreHelpRows, hiddenCommandCount } from "../scripts/lib/surface";
+import type { Command, HelpSection } from "../scripts/lib/surface";
 import { findProjectRoot } from "../scripts/lib/project-root";
 
 /** Resolve a registry row's `script` segments to a path under dist/scripts. */
@@ -129,9 +130,9 @@ const EXAMPLES =
  * cannot exist without appearing in one of them or being deliberately absent
  * from both.
  */
-function renderGroups(groups: any[]): string {
+function renderGroups(groups: HelpSection[]): string {
   return groups
-    .map((g) => section(g.title) + g.rows.map((r: any) => cmd(r.icon, r.label, r.summary)).join(""))
+    .map((g) => section(g.title) + g.rows.map((r) => cmd(r.icon, r.label, r.summary)).join(""))
     .join("");
 }
 
@@ -171,10 +172,11 @@ function helpProfile(): string {
   return "core";
 }
 
-function groupUsage(row: any) {
+/** Called only for a row that groups sub-commands. */
+function groupUsage(row: Command) {
   let out = `\n  ${c.brand}${sym.brand}${c.reset} ${c.bold}specgate ${row.name}${c.reset} <sub-command> [options]\n`;
   out += section("Sub-commands");
-  for (const s of row.subcommands) {
+  for (const s of row.subcommands!) {
     const summary = (s.help && s.help.summary) || (row.help && row.help.summary) || "";
     out += cmd((s.help && s.help.icon) || "·", `${row.name} ${s.name}`, summary, 20);
   }
@@ -262,7 +264,7 @@ export class CreateSpecDrivenAppCommand implements ICommand {
 
     const command = args[0];
 
-    const row = SURFACE.find((c: any) => c.name === command);
+    const row = SURFACE.find((c) => c.name === command);
     if (!row) {
       info(`Unknown command: ${command}`);
       usage();
@@ -279,7 +281,7 @@ export class CreateSpecDrivenAppCommand implements ICommand {
       process.exit(0);
     }
     if (row.subcommands && !row.script && args.length === 1) {
-      const expected = row.subcommands.map((s: any) => s.name).join(", ");
+      const expected = row.subcommands.map((s) => s.name).join(", ");
       error(`Unknown ${command} sub-command: (none). Expected: ${expected}`);
       groupUsage(row);
       process.exit(2);
@@ -302,15 +304,17 @@ export class CreateSpecDrivenAppCommand implements ICommand {
 
     // Otherwise the sub-command is the route, and an unknown one stops here.
     const subName = args[1];
-    const sub = (row.subcommands || []).find((s: any) => s.name === subName);
+    const sub = (row.subcommands || []).find((s) => s.name === subName);
     if (!sub) {
-      const expected = (row.subcommands || []).map((s: any) => s.name).join(", ");
+      const expected = (row.subcommands || []).map((s) => s.name).join(", ");
       error(`Unknown ${command} sub-command: ${subName || "(none)"}. Expected: ${expected}`);
       usage();
       process.exit(2);
     }
 
-    const target = resolveScript(sub.script);
+    // A row without its own script scripts every sub-command; the surface
+    // registry test holds the registry to that.
+    const target = resolveScript(sub.script!);
     ensureExecutable(target);
     runNodeScript(target, args.slice(sub.argsFrom === undefined ? 2 : sub.argsFrom));
   }

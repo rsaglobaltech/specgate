@@ -27,6 +27,11 @@ import { spawnSync } from "node:child_process";
 import { BaseCommand } from "../../../lib/command";
 
 import { readLock, writeLock, upsertPackEntry, newLock } from "../../../specops/lock";
+import type { LockJson } from "../../../specops/lock";
+import type { PackEntry } from "../../../../packages/core/src/domain/Lockfile";
+import type { BaselineEntry } from "../../../../packages/core/src/domain/SpecopsManifest";
+import type { ReconcileOutcome } from "../../../../packages/core/src/domain/Reconciliation";
+import { errorMessage } from "../../../lib/diagnostics";
 import {
   readConfig,
   configToPacks,
@@ -52,13 +57,13 @@ import * as ui from "../../../lib/ui";
 // Three levels up from dist/scripts/cli/commands/specops is dist/scripts.
 const EXPAND_SCRIPT = path.join(__dirname, "..", "..", "..", "expand_domain_pack.js");
 
-function info(msg) {
+function info(msg: string): void {
   process.stdout.write(ui.logLine(msg));
 }
-function warn(msg) {
+function warn(msg: string): void {
   process.stdout.write(ui.warn(msg));
 }
-function error(msg) {
+function error(msg: string): void {
   process.stderr.write(ui.fail(msg));
 }
 
@@ -79,8 +84,32 @@ function usage() {
   );
 }
 
-export function parseArgs(argv) {
-  const args = {
+/** Parsed command-line options for this command. */
+export interface SyncArgs {
+  projectDir: string;
+  pack: string;
+  packVersion: string;
+  cacheDir: string;
+  dryRun: boolean;
+  /** Take the pack's version of a locally edited file. */
+  force: boolean;
+  /** Leave a conflicting file untouched instead of writing markers. */
+  abortOnConflict: boolean;
+  /** `--var KEY=VALUE`, repeatable. */
+  vars: Record<string, string>;
+}
+
+/** How many files ended each way, for the per-pack summary. */
+type OutcomeCounts = Partial<Record<ReconcileOutcome, number>>;
+
+/** A file the merge could not settle on its own. */
+interface ConflictFile {
+  rel: string;
+  outcome: ReconcileOutcome;
+}
+
+export function parseArgs(argv: string[]): SyncArgs {
+  const args: SyncArgs = {
     projectDir: ".",
     pack: "",
     packVersion: "",
@@ -139,7 +168,14 @@ export function parseArgs(argv) {
   return args;
 }
 
-export function buildExpandArgs(entry, version, projectDir, cacheDir, dryRun, extraVars = {}) {
+export function buildExpandArgs(
+  entry: PackEntry,
+  version: string,
+  projectDir: string,
+  cacheDir: string,
+  dryRun: boolean,
+  extraVars: Record<string, string> = {}
+): string[] {
   const out = [
     "--pack-repo",
     entry.repo,
@@ -163,7 +199,7 @@ export function buildExpandArgs(entry, version, projectDir, cacheDir, dryRun, ex
   return out;
 }
 
-export function resolvePacks(projectDir) {
+export function resolvePacks(projectDir: string): { packs: PackEntry[]; source: string } {
   const lock = readLock(projectDir);
   if (lock) {
     if (!Array.isArray(lock.packs) || lock.packs.length === 0) {
@@ -188,7 +224,14 @@ export function resolvePacks(projectDir) {
  * Returns { outcome, baselineContent } where baselineContent is what should
  * be recorded as the next merge base for this file.
  */
-export function reconcileFile(rel, incoming, projectDir, packId, args, seeded = null) {
+export function reconcileFile(
+  rel: string,
+  incoming: string,
+  projectDir: string,
+  packId: string,
+  args: SyncArgs,
+  seeded: string | null = null
+): { outcome: ReconcileOutcome; baselineContent: string | null } {
   const localPath = path.join(projectDir, rel);
   const local = fs.existsSync(localPath) ? fs.readFileSync(localPath, "utf8") : null;
   // A file sync seeded the render with is one `expand` merges into rather
@@ -214,7 +257,11 @@ export function reconcileFile(rel, incoming, projectDir, packId, args, seeded = 
  * that just ran, so this costs nothing); local packs are read in place.
  * Returns null when neither applies, and the caller simply skips the step.
  */
-function resolvePackRootForChanges(entry, version, args) {
+function resolvePackRootForChanges(
+  entry: PackEntry,
+  version: string,
+  args: SyncArgs
+): string | null {
   if (entry.pack_root) return entry.pack_root;
   if (!entry.repo) return null;
   try {
@@ -229,7 +276,7 @@ function resolvePackRootForChanges(entry, version, args) {
   }
 }
 
-function syncPack(entry, args, projectDir) {
+function syncPack(entry: PackEntry, args: SyncArgs, projectDir: string) {
   const version = args.packVersion || entry.version;
   const bumping = args.packVersion && args.packVersion !== entry.version;
   info(`Syncing ${entry.pack_id} @ ${version}` + (bumping ? ` (was ${entry.version})` : ""));
@@ -252,15 +299,15 @@ function syncPack(entry, args, projectDir) {
       (tmpLock && tmpLock.packs.find((p) => p.pack_id === entry.pack_id)) || null;
 
     const renderedFiles = walkFiles(tmpDir);
-    const counts = {};
-    const conflictFiles = [];
-    const baselineEntries = [];
+    const counts: OutcomeCounts = {};
+    const conflictFiles: ConflictFile[] = [];
+    const baselineEntries: BaselineEntry[] = [];
 
     for (const rel of renderedFiles) {
       // A generated matrix is regenerated once every pack is in, never merged.
       if (seeded.derived && rel === MATRIX) continue;
       const incoming = fs.readFileSync(path.join(tmpDir, rel), "utf8");
-      const seed = seeded.files.has(rel) ? seeded.files.get(rel) : null;
+      const seed = seeded.files.has(rel) ? seeded.files.get(rel)! : null;
       // Seeded and untouched: this pack has nothing to say about the file.
       if (seed !== null && incoming === seed) continue;
       const { outcome, baselineContent } = reconcileFile(
@@ -297,7 +344,7 @@ function syncPack(entry, args, projectDir) {
         }
       }
     } catch (err) {
-      warn(`  could not read changes shipped by ${entry.pack_id}: ${err.message}`);
+      warn(`  could not read changes shipped by ${entry.pack_id}: ${errorMessage(err)}`);
     }
 
     if (!args.dryRun) {
@@ -329,14 +376,15 @@ const MATRIX = "docs/specs/traceability.md";
  * `specops sync` left a one-line diff in `.specops.lock` to commit or revert
  * (golden_app finding #30). The timestamp now moves only with the pack.
  */
-const sortedJson = (o) =>
+const sortedJson = (o: Record<string, unknown> | null | undefined) =>
   JSON.stringify(
     Object.keys(o || {})
       .sort()
-      .map((k) => [k, o[k]])
+      // Only reached with keys, so `o` is present.
+      .map((k) => [k, o![k]])
   );
 
-export function keptExpandedAt(lock, resolved): string | null {
+export function keptExpandedAt(lock: LockJson | null, resolved: PackEntry): string | null {
   const prev = ((lock && lock.packs) || []).find((p) => p.pack_id === resolved.pack_id);
   if (!prev || !prev.expanded_at) return null;
   const same =
@@ -358,10 +406,13 @@ export function keptExpandedAt(lock, resolved): string | null {
  * The matrix gets only its marker — `expand` then writes trace fields
  * instead of rows; spec.md and the catalogs get the project's copy.
  */
-export function seedRender(projectDir, tmpDir) {
+export function seedRender(
+  projectDir: string,
+  tmpDir: string
+): { derived: boolean; files: Map<string, string> } {
   const files = new Map<string, string>();
   const derived = isDerivedProject(projectDir);
-  const copy = (rel) => {
+  const copy = (rel: string) => {
     const from = path.join(projectDir, rel);
     if (!fs.existsSync(from)) return;
     const content = fs.readFileSync(from, "utf8");
@@ -378,8 +429,13 @@ export function seedRender(projectDir, tmpDir) {
   return { derived, files };
 }
 
-function printPackSummary(packId, version, counts, conflictFiles) {
-  const parts = Object.keys(OUTCOME_LABEL)
+function printPackSummary(
+  packId: string,
+  version: string,
+  counts: OutcomeCounts,
+  conflictFiles: readonly ConflictFile[]
+): void {
+  const parts = (Object.keys(OUTCOME_LABEL) as ReconcileOutcome[])
     .filter((k) => counts[k])
     .map((k) => `${counts[k]} ${OUTCOME_LABEL[k]}`);
   process.stdout.write(`\n── ${packId} @ ${version} ──\n`);
@@ -402,7 +458,7 @@ export class SyncCommand extends BaseCommand {
       let matched = 0;
       let totalConflicts = 0;
       let anyFailure = false;
-      const lockUpdates = [];
+      const lockUpdates: PackEntry[] = [];
 
       for (const entry of packs) {
         if (args.pack && entry.pack_id !== args.pack) continue;
@@ -460,7 +516,7 @@ export class SyncCommand extends BaseCommand {
 
       info(`Sync completed for ${matched} pack(s) with no conflicts.`);
     } catch (err) {
-      error(err.message);
+      error(errorMessage(err));
       process.exit(1);
     }
   }

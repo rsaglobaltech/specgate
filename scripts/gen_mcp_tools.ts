@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { SURFACE, mcpTools } from "./lib/surface";
+import type { Command, Subcommand } from "./lib/surface";
 
 /**
  * Resolve the repository root rather than walking up from `__dirname`.
@@ -10,7 +11,7 @@ import { SURFACE, mcpTools } from "./lib/surface";
  * reported success on every run and never once wrote the file it is for, which
  * is why the committed registry drifted from the surface it is generated from.
  */
-function repoRoot() {
+function repoRoot(): string {
   let dir = __dirname;
   for (;;) {
     if (fs.existsSync(path.join(dir, "package.json"))) return dir;
@@ -21,7 +22,7 @@ function repoRoot() {
 }
 
 const OUT_FILE = path.join(repoRoot(), "packages/mcp-spec-driven/src/tools.ts");
-const toolsMap = mcpTools() as Record<string, string>;
+const toolsMap = mcpTools();
 
 // Convert toolsMap { toolName: "command name" } back into lookup by "command name"
 const cmdToTool = Object.entries(toolsMap).reduce(
@@ -180,10 +181,18 @@ export class GenericCliTool implements ITool {
 
 export const TOOLS: Record<string, ITool> = {};
 
+/**
+ * What a tool is called with: the arguments of an MCP request, untrusted until
+ * the handler has checked them. Each tool's \`inputSchema\` says what it
+ * expects; its handler enforces it and names what is missing, so a caller that
+ * leaves out \`projectDir\` gets that message rather than a type error.
+ */
+export type ToolArgs = Record<string, unknown>;
+
 `;
 
 for (const command of SURFACE) {
-  const processCmd = (cmdDef: any, subDef: any) => {
+  const processCmd = (cmdDef: Command, subDef: Subcommand | null) => {
     const cmdString = subDef ? `${cmdDef.name} ${subDef.name}` : cmdDef.name;
     const toolName = cmdToTool[cmdString];
     if (!toolName) return; // skipped via mcp: false
@@ -271,13 +280,13 @@ for (const [published, generated] of [
   if (TOOLS[generated]) TOOLS[published] = TOOLS[generated];
 }
 
-export const readSpec = (args: any) => TOOLS["read_spec"].handler(args);
-export const listRequirements = (args: any) => TOOLS["list_requirements"].handler(args);
-export const updateTraceability = (args: any) => TOOLS["update_traceability"].handler(args);
-export const lintPack = (args: any) => TOOLS["lint_pack"].handler(args);
-export const validateProject = (args: any) => TOOLS["validate_project"].handler(args);
-export const plan = (args: any) => TOOLS["plan"].handler(args);
-export const markRequirementDone = (args: any) => TOOLS["mark_requirement_done"].handler(args);
+export const readSpec = (args: ToolArgs) => TOOLS["read_spec"].handler(args);
+export const listRequirements = (args: ToolArgs) => TOOLS["list_requirements"].handler(args);
+export const updateTraceability = (args: ToolArgs) => TOOLS["update_traceability"].handler(args);
+export const lintPack = (args: ToolArgs) => TOOLS["lint_pack"].handler(args);
+export const validateProject = (args: ToolArgs) => TOOLS["validate_project"].handler(args);
+export const plan = (args: ToolArgs) => TOOLS["plan"].handler(args);
+export const markRequirementDone = (args: ToolArgs) => TOOLS["mark_requirement_done"].handler(args);
 `;
 
 fs.writeFileSync(OUT_FILE, out);

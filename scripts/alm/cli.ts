@@ -20,17 +20,17 @@ import {
   syncRequirements,
 } from "./core";
 import { makeClient } from "./clients";
-import { printDiagnostics } from "../lib/diagnostics";
+import { printDiagnostics, errorMessage } from "../lib/diagnostics";
 import { main as pullMain } from "../cli/commands/alm/PullCommand";
 import * as ui from "../lib/ui";
 
-function logInfo(msg) {
+function logInfo(msg: string): void {
   process.stdout.write(ui.logLine(msg));
 }
-function logWarn(msg) {
+function logWarn(msg: string): void {
   process.stdout.write(ui.warn(msg));
 }
-function logError(msg) {
+function logError(msg: string): void {
   process.stderr.write(ui.fail(msg));
 }
 
@@ -52,8 +52,8 @@ function usage() {
   );
 }
 
-function parseCommon(argv) {
-  const opts = { projectDir: ".", dryRun: false, rest: [] };
+function parseCommon(argv: string[]): { projectDir: string; dryRun: boolean; rest: string[] } {
+  const opts = { projectDir: ".", dryRun: false, rest: [] as string[] };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
     else if (argv[i] === "--dry-run") opts.dryRun = true;
@@ -79,7 +79,7 @@ async function main() {
   try {
     projectDir = resolveProjectDir(opts.projectDir, { requireSentinel: true });
   } catch (err) {
-    logError(err.message);
+    logError(errorMessage(err));
     process.exit(2);
   }
 
@@ -137,10 +137,13 @@ async function main() {
       }
       if (!opts.dryRun) writeAlmMap(projectDir, map, false);
 
-      const summary = actions.reduce((acc, a) => {
-        acc[a.action] = (acc[a.action] || 0) + 1;
-        return acc;
-      }, {});
+      const summary = actions.reduce(
+        (acc, a) => {
+          acc[a.action] = (acc[a.action] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
       logInfo(`Summary: ${JSON.stringify(summary)}`);
       if (drift > 0) {
         logWarn(`${drift} drift finding(s) — reconcile the matrix or the board.`);
@@ -148,7 +151,7 @@ async function main() {
       }
       process.exit(0);
     } catch (err) {
-      logError(err.message);
+      logError(errorMessage(err));
       process.exit(1);
     }
   }

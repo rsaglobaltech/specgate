@@ -60,8 +60,8 @@ export const SKIP_DIRS = new Set([
  * and the fixed list alone. A scan that refuses to run without git would be a
  * worse failure than the one it prevents.
  */
-function gitIgnoredNames(dir) {
-  const ignored = new Set();
+function gitIgnoredNames(dir: string): Set<string> {
+  const ignored = new Set<string>();
   try {
     const r = spawnSync(
       "git",
@@ -82,9 +82,9 @@ function gitIgnoredNames(dir) {
   return ignored;
 }
 
-export function walk(dir, ignored = null) {
+export function walk(dir: string, ignored: Set<string> | null = null): string[] {
   const skipIgnored = ignored || gitIgnoredNames(dir);
-  const out = [];
+  const out: string[] = [];
   let entries;
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -102,7 +102,7 @@ export function walk(dir, ignored = null) {
 }
 
 /** True when the file is exempt for a stated reason, rather than by accident. */
-export function isExempt(file, content) {
+export function isExempt(file: string, content: string): boolean {
   // A .tpl file is unrendered by definition — its {{VAR}} tokens are the point,
   // not a defect. Generated projects never contain .tpl files, so this does not
   // weaken the check for the projects the gate is aimed at; it only stops it
@@ -117,8 +117,8 @@ export function isExempt(file, content) {
  * Every file under `rootDir` that still carries an unresolved `{{TOKEN}}`,
  * as paths relative to `rootDir` with POSIX separators.
  */
-export function findUnresolvedPlaceholders(rootDir) {
-  const offenders = [];
+export function findUnresolvedPlaceholders(rootDir: string): string[] {
+  const offenders: string[] = [];
   for (const file of walk(rootDir)) {
     let content;
     try {
@@ -135,8 +135,8 @@ export function findUnresolvedPlaceholders(rootDir) {
 }
 
 /** The distinct variable names still unresolved, for an actionable message. */
-export function missingVariables(rootDir, offenders) {
-  const names = new Set();
+export function missingVariables(rootDir: string, offenders: readonly string[]): string[] {
+  const names = new Set<string>();
   for (const rel of offenders) {
     let content;
     try {

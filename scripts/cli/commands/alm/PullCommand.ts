@@ -28,7 +28,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { resolveProjectDir } from "../../../lib/project-root";
-import { agentIo, wantsJson } from "../../../lib/agent";
+import { agentIo, wantsJson, AgentIo } from "../../../lib/agent";
 import { error, warning, info } from "../../../lib/diagnostics";
 import { readAlmConfig } from "../../../alm/core";
 import { makeClient } from "../../../alm/clients";
@@ -110,7 +110,7 @@ const pad = (n: number) => String(n).padStart(3, "0");
 
 export async function main(argv: string[]): Promise<void> {
   const opts = parseArgs(argv);
-  const io = agentIo(opts.json || wantsJson(argv));
+  const io: AgentIo = agentIo(opts.json || wantsJson(argv));
   let projectDir: string;
   let cfg: any;
   let client: any;
