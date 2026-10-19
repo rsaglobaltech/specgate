@@ -30,8 +30,9 @@ export {
 
 // This file is what the command registry spawns, so it stays the entry point.
 if (require.main === module) {
-  new RunCommand(process.argv.slice(2)).execute().catch((err: any) => {
-    error(err && err.message ? err.message : String(err));
+  new RunCommand(process.argv.slice(2)).execute().catch((err: unknown) => {
+    const thrown = err as { message?: string } | null | undefined;
+    error(thrown && thrown.message ? thrown.message : String(err));
     process.exit(1);
   });
 }

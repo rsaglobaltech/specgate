@@ -70,7 +70,7 @@ export function setupCommand(projectDir: string): string {
     : '# setup_cmd: "npm ci"   # ← run in each fresh worktree before the agent';
 }
 
-export function detectTestCommand(projectDir) {
+export function detectTestCommand(projectDir: string) {
   // One detector, shared with `adopt`/`onboard`. They used to disagree on the
   // same pom.xml — `./mvnw -B test` there, `mvn -B test` here — which a cold
   // evaluator found by running both. `preferVerify` is the one intentional
@@ -214,7 +214,7 @@ export function withBuild(projectDir: string, testCmd: string | null): string | 
   }
 }
 
-export function projectName(projectDir) {
+export function projectName(projectDir: string): string {
   const specPath = path.join(projectDir, "spec.md");
   if (fs.existsSync(specPath)) {
     const heading = /^#\s+(.+)$/m.exec(fs.readFileSync(specPath, "utf8"));
@@ -250,7 +250,7 @@ export interface HarnessInitOptions {
   json: boolean;
 }
 
-function parseArgs(argv) {
+function parseArgs(argv: string[]): HarnessInitOptions {
   const opts: HarnessInitOptions = {
     projectDir: ".",
     testCmd: null,
@@ -371,7 +371,7 @@ export class InitCommand extends BaseCommand {
     let keptTestCmd: string | null = null;
     if (existingConfig !== null && !opts.force && !opts.testCmd) {
       try {
-        const parsed: any = parseYamlLite(existingConfig);
+        const parsed = parseYamlLite(existingConfig);
         if (parsed && parsed.test_cmd !== undefined) keptTestCmd = String(parsed.test_cmd);
       } catch {
         keptTestCmd = null;
@@ -427,7 +427,7 @@ export class InitCommand extends BaseCommand {
       return;
     }
 
-    const written = [];
+    const written: string[] = [];
     for (const out of outputs) {
       if (merged && merged.length === 0 && out.dest === CONFIG_FILE) continue;
       const abs = path.join(projectDir, out.dest);

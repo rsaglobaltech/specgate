@@ -31,7 +31,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
-import { spawn, spawnSync } from "node:child_process";
+import { ChildProcess, spawn, spawnSync } from "node:child_process";
 import { BaseCommand } from "../../../lib/command";
 
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -69,12 +69,14 @@ import {
   readProfileRules,
   resolveHarnessSettings,
   resolveProfileAgent,
+  HarnessSettings,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 import { agentIo } from "../../../lib/agent";
 import {
   checkWriteScope,
   parseGitStatus,
+  WriteScopeChanges,
   protectingPattern,
   onlyTraceStatusChanged,
 } from "../../../../packages/core/src/domain/WriteScope";
@@ -96,7 +98,11 @@ import { requirementReadiness } from "../../../../packages/core/src/domain/Requi
 import { selectProfile } from "../../../../packages/core/src/domain/ProfileMatch";
 import { parseMatrixContexts } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { RequirementPlan } from "../../../../packages/core/src/domain/RequirementPlan";
-import { budgetVerdict, hasBudget } from "../../../../packages/core/src/domain/RunBudget";
+import {
+  BudgetVerdict,
+  budgetVerdict,
+  hasBudget,
+} from "../../../../packages/core/src/domain/RunBudget";
 import { withWorktreeLock } from "../../../harness/worktree-lock";
 import {
   NO_PROBE,
@@ -112,12 +118,134 @@ import {
 } from "../../../../packages/core/src/domain/CucumberMessages";
 import {
   AttemptRecord,
+  AttemptStep,
   featureFilePath,
   planAttempt,
   scheduleLevels,
   substituteAgentCommand,
   substituteGateCommand,
 } from "../../../../packages/core/src/domain/HarnessRun";
+import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
+
+/**
+ * One requirement as `plan --format json` hands it to the harness.
+ *
+ * Both spellings of a field are declared because both arrive: `plan` writes
+ * camelCase, while the matrix rows and older callers carry snake_case, and the
+ * harness reads whichever is present. The index signature keeps it a plain
+ * record, which is what `buildPrompt` takes.
+ */
+export interface HarnessRequirement {
+  requirement: string;
+  category?: string;
+  status?: string;
+  title?: string;
+  useCase?: string;
+  use_case?: string;
+  scenarioId?: string;
+  scenario_id?: string;
+  featureFile?: string;
+  feature_file?: string;
+  featureExists?: boolean;
+  testArtifact?: string;
+  test_artifact?: string;
+  technicalArtifact?: string;
+  technical_artifact?: string;
+  dependsOn?: string[];
+  depends_on?: string[];
+  [key: string]: unknown;
+}
+
+/** The part of `plan --format json` the harness reads. */
+interface PlanDocument {
+  requirements?: HarnessRequirement[];
+  next_steps?: Array<{ requirement: string; hint: string }>;
+}
+
+/**
+ * The resolved settings plus `verbose`, which is a run flag rather than a
+ * project setting and so only ever travels with the gate's copy.
+ */
+type GateSettings = Partial<HarnessSettings> & { verbose?: boolean };
+
+/** What the gate said: green, or the stage it failed at and why. */
+interface GateResult {
+  ok: boolean;
+  stage: string;
+  output: string;
+  hint?: string;
+}
+
+/** Where a resumed requirement picks up, and what the gate said last time. */
+interface ResumeAt {
+  attempt: number;
+  previousFailure: string;
+}
+
+/** What one `harness run` carries from requirement to requirement. */
+interface RunContext {
+  projectDir: string;
+  baseRef: string;
+  settings: HarnessSettings;
+  timeoutMs: number;
+  timeoutSeconds: number;
+  keepWorktrees: boolean;
+  force: boolean;
+  resume: boolean;
+  skipNotReady: boolean;
+  budgetSeconds: number;
+  maxRequirements: number;
+  strictArtifacts: boolean;
+  verbose: boolean;
+  /** Set per level by `runLevels`: the base each requirement is cut from. */
+  baseFor?: (id: string) => string;
+  /** Set per level by `runLevels`: may one more requirement start? */
+  mayStart?: () => boolean;
+  /** Why `mayStart` said no. */
+  stopReason?: () => string;
+  /** The plan's hint for the requirement being processed. */
+  hint?: string;
+}
+
+/** The context of one requirement's attempts, inside its worktree. */
+interface AttemptContext extends RunContext {
+  worktreeDir: string;
+  resumeAt: ResumeAt | null;
+  matchedProfile: string | null;
+}
+
+/** How a requirement ended. `blocked` and `skipped` were never attempted. */
+type RequirementVerdict = "pass" | "fail" | "skipped" | "blocked";
+
+/** One requirement's line in the report, the run record and a worker's JSON. */
+export interface RequirementResult extends PublishOutcome {
+  requirement: string;
+  category?: string;
+  result: RequirementVerdict;
+  attempts: number;
+  branch: string;
+  base?: string;
+  durationMs?: number;
+  error?: string;
+  workPreserved?: boolean;
+  attemptLog?: AttemptRecord[];
+  adversarial?: ProbeOutcome;
+}
+
+/** What `attemptRequirement` decides; `processRequirement` adds the rest. */
+type AttemptOutcome = Pick<
+  RequirementResult,
+  "result" | "attempts" | "attemptLog" | "error" | "workPreserved" | "adversarial"
+>;
+
+/** Runs one level of the schedule: in process, or through worker processes. */
+type LevelRunner = (
+  runnable: string[],
+  byId: Map<string, HarnessRequirement>,
+  hintByReq: Map<string, string>,
+  ctx: RunContext,
+  concurrency: number
+) => Promise<RequirementResult[]>;
 
 // Three levels up from dist/scripts/cli/commands/harness is dist/scripts,
 // where the command entry points live.
@@ -144,7 +272,7 @@ const WORKER_ENTRY = path.join(SCRIPTS_DIR, "harness", "run.js");
  */
 let jsonMode = false;
 
-export function setJsonMode(on) {
+export function setJsonMode(on: unknown): void {
   jsonMode = Boolean(on);
 }
 
@@ -159,17 +287,17 @@ function progressLine(mark: string, msg: string): string {
   if (/^\s{2,}/.test(msg)) return `     ${ui.pad("", 9)} ${ui.muted(msg.trim())}\n`;
   return `  ${mark}  ${msg}\n`;
 }
-function info(msg) {
+function info(msg: string): void {
   (jsonMode ? process.stderr : process.stdout).write(
     progressLine(`${ui.c.brand}${ui.ASCII ? "*" : "◇"}${ui.c.reset}`, msg)
   );
 }
-function warn(msg) {
+function warn(msg: string): void {
   (jsonMode ? process.stderr : process.stdout).write(
     progressLine(`${ui.c.warn}${ui.sym.warn}${ui.c.reset}`, msg)
   );
 }
-export function error(msg) {
+export function error(msg: string): void {
   process.stderr.write(ui.fail(msg));
 }
 
@@ -229,7 +357,7 @@ function usage() {
   );
 }
 
-export function parseArgs(argv) {
+export function parseArgs(argv: string[]) {
   const args = {
     projectDir: ".",
     agent: "",
@@ -349,11 +477,11 @@ export function parseArgs(argv) {
   return args;
 }
 
-function git(projectDir, gitArgs, opts = {}) {
+function git(projectDir: string, gitArgs: string[], opts: { encoding?: "utf8" } = {}) {
   return spawnSync("git", ["-C", projectDir, ...gitArgs], { encoding: "utf8", ...opts });
 }
 
-function isGitClean(projectDir) {
+function isGitClean(projectDir: string): boolean {
   const r = git(projectDir, ["status", "--porcelain"]);
   if (r.status !== 0) {
     throw new Error(`git status failed: ${r.stderr || r.stdout}`);
@@ -361,12 +489,12 @@ function isGitClean(projectDir) {
   return r.stdout.trim() === "";
 }
 
-function branchExists(projectDir, branch) {
+function branchExists(projectDir: string, branch: string): boolean {
   const r = git(projectDir, ["branch", "--list", branch]);
   return r.status === 0 && r.stdout.trim() !== "";
 }
 
-function runPlan(projectDir) {
+function runPlan(projectDir: string): PlanDocument {
   const r = judged(projectDir, (dir) =>
     spawnSync(process.execPath, [PLAN_SCRIPT, "--project-dir", dir, "--format", "json"], {
       encoding: "utf8",
@@ -375,11 +503,12 @@ function runPlan(projectDir) {
   if (r.status !== 0) {
     throw new Error(`plan failed:\n${r.stderr || r.stdout}`);
   }
-  let parsed;
+  let parsed: PlanDocument;
   try {
     parsed = JSON.parse(r.stdout);
   } catch (err) {
-    throw new Error(`plan produced invalid JSON: ${err.message}`);
+    // `JSON.parse` only ever throws a SyntaxError.
+    throw new Error(`plan produced invalid JSON: ${(err as Error).message}`);
   }
   return parsed;
 }
@@ -410,7 +539,7 @@ const SUBPROCESS_MAX_BUFFER = 64 * 1024 * 1024;
  * Returns `null` when there is nothing to read — a project that does not use
  * Cucumber must not be failed by a check that never applied.
  */
-function readGateMessages(worktreeDir, reportPath) {
+function readGateMessages(worktreeDir: string, reportPath: string) {
   if (!reportPath) return null;
   const file = path.isAbsolute(reportPath) ? reportPath : path.join(worktreeDir, reportPath);
   let raw;
@@ -427,13 +556,13 @@ function readGateMessages(worktreeDir, reportPath) {
 type GateReport = (stage: string, result: "pass" | "fail", extra?: Record<string, unknown>) => void;
 
 function runGate(
-  worktreeDir,
-  testCmd,
-  timeoutMs,
-  req: any = {},
-  settings: any = {},
+  worktreeDir: string,
+  testCmd: string,
+  timeoutMs: number,
+  req: Partial<HarnessRequirement> = {},
+  settings: GateSettings = {},
   report: GateReport = () => {}
-) {
+): GateResult {
   // `--delivering`: the requirement is still Draft while its gate runs, and a
   // Draft row owes no files. Without it the gate would skip the one
   // requirement this attempt exists to deliver.
@@ -590,7 +719,13 @@ function runGate(
  *
  * Best-effort: never fail a run over a bookkeeping write.
  */
-function archivePrompt(worktreeDir, requirement, attempt, step, prompt: string): void {
+function archivePrompt(
+  worktreeDir: string,
+  requirement: string,
+  attempt: number,
+  step: AttemptStep,
+  prompt: string
+): void {
   try {
     const dir = path.join(worktreeDir, ...PROMPT_ARCHIVE_DIR.split("/"));
     fs.mkdirSync(dir, { recursive: true });
@@ -629,8 +764,8 @@ function discardWorktreeChanges(worktreeDir: string): void {
  */
 function runAdversarialProbe(
   worktreeDir: string,
-  req: any,
-  settings: any,
+  req: HarnessRequirement,
+  settings: HarnessSettings,
   timeoutMs: number,
   promptFor: (instruction: string) => string
 ): ProbeOutcome {
@@ -724,7 +859,7 @@ function runAdversarialProbe(
  * had correctly created both declared artifacts and was reported as having
  * touched neither.
  */
-function worktreeChanges(worktreeDir) {
+function worktreeChanges(worktreeDir: string): WriteScopeChanges | null {
   const status = git(worktreeDir, ["status", "--porcelain", "-uall"]);
   if (status.status !== 0) return null;
   return parseGitStatus(status.stdout || "");
@@ -760,7 +895,7 @@ function worktreeChanges(worktreeDir) {
  * it. It is also the cheaper order — an empty attempt stops before the project's
  * test command runs.
  */
-function producedNothing(worktreeDir) {
+function producedNothing(worktreeDir: string): boolean {
   return isEmptyAttempt(touchedPaths(worktreeDir));
 }
 
@@ -772,7 +907,7 @@ function producedNothing(worktreeDir) {
  * regeneration (golden_app finding #37). A hand edit still differs, and still
  * fails.
  */
-export function isRegeneratedMatrix(worktreeDir, rel) {
+export function isRegeneratedMatrix(worktreeDir: string, rel: string): boolean {
   if (rel !== "docs/specs/traceability.md" || !isDerivedProject(worktreeDir)) return false;
   try {
     const current = fs.readFileSync(path.join(worktreeDir, rel), "utf8");
@@ -783,13 +918,13 @@ export function isRegeneratedMatrix(worktreeDir, rel) {
 }
 
 /** A spec file whose only change is the `status=` `specgate done` writes (#56). */
-function isStatusOnlyEdit(worktreeDir, rel) {
+function isStatusOnlyEdit(worktreeDir: string, rel: string): boolean {
   if (!/\.md$/.test(rel)) return false;
   const d = git(worktreeDir, ["diff", "-U0", "HEAD", "--", rel]);
   return d.status === 0 && onlyTraceStatusChanged(d.stdout || "");
 }
 
-function checkWriteScopeInWorktree(worktreeDir, settings) {
+function checkWriteScopeInWorktree(worktreeDir: string, settings: HarnessSettings) {
   const all = worktreeChanges(worktreeDir);
   if (!all) return null;
   const changes = {
@@ -838,7 +973,7 @@ function checkWriteScopeInWorktree(worktreeDir, settings) {
  * Returns null when there is nothing to report, including when the gate command
  * is one whose meaning does not live in a file we can read.
  */
-function checkGateCommandInWorktree(worktreeDir, baseRef, testCmd) {
+function checkGateCommandInWorktree(worktreeDir: string, baseRef: string, testCmd: string) {
   if (!testCmd) return null;
 
   const probe = gateCommandIntegrity(testCmd, "{}", "{}");
@@ -852,14 +987,16 @@ function checkGateCommandInWorktree(worktreeDir, baseRef, testCmd) {
 
   const result = gateCommandIntegrity(testCmd, before, after);
   if (!result.checked || !result.changed) return null;
+  // A checked result always names its script: the probe above resolved it.
+  const changed = result.script!;
 
   return {
     manifest,
-    script: result.script.script,
+    script: changed.script,
     message:
       `agent_rewrote_gate_command — the gate runs \`${testCmd}\`, and this attempt ` +
       `changed what that means.\n\n` +
-      `  ${manifest} → scripts.${result.script.script}\n` +
+      `  ${manifest} → scripts.${changed.script}\n` +
       `  before: ${result.before === null ? "(absent)" : result.before}\n` +
       `  after:  ${result.after === null ? "(absent)" : result.after}\n\n` +
       `The command the gate runs is part of the contract this requirement is ` +
@@ -877,7 +1014,7 @@ function checkGateCommandInWorktree(worktreeDir, baseRef, testCmd) {
  * Shared with the write-scope guard, which is why A2 costs almost nothing: the
  * diff was already being read.
  */
-function touchedPaths(worktreeDir) {
+function touchedPaths(worktreeDir: string): string[] {
   const changes = worktreeChanges(worktreeDir);
   return changes ? [...changes.modified, ...changes.added] : [];
 }
@@ -899,7 +1036,11 @@ function touchedPaths(worktreeDir) {
  * gate that rejects good work — which already cost two runs on REQ-002.
  * `--strict-artifacts` is for a project that wants it enforced.
  */
-function checkDeclaredArtifactsInWorktree(worktreeDir, req, strict) {
+function checkDeclaredArtifactsInWorktree(
+  worktreeDir: string,
+  req: HarnessRequirement,
+  strict: boolean
+) {
   const findings = checkDeclaredArtifacts(
     {
       touched: touchedPaths(worktreeDir),
@@ -912,7 +1053,7 @@ function checkDeclaredArtifactsInWorktree(worktreeDir, req, strict) {
   return findings.length > 0 ? findings : null;
 }
 
-function attemptRequirement(req, ctx) {
+function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): AttemptOutcome {
   const { worktreeDir, settings, timeoutMs, hint } = ctx;
   /**
    * What the gate said last time, recovered from the prompt archive when this
@@ -1426,8 +1567,14 @@ function resolveGeneratedConflicts(worktree: string): string[] {
  * @param deps   the requirement's dependencies, in declaration order
  * @param passed REQ → branch, for the dependencies that passed in this run
  */
-function deriveBase(projectDir, reqId, deps, passed, ctx) {
-  const branches = deps.map((d) => passed.get(d)).filter(Boolean);
+function deriveBase(
+  projectDir: string,
+  reqId: string,
+  deps: string[],
+  passed: Map<string, string>,
+  ctx: { baseRef: string }
+): { base: string } | { error: string } {
+  const branches = deps.map((d) => passed.get(d)).filter((b): b is string => Boolean(b));
 
   if (branches.length === 0) return { base: ctx.baseRef };
   if (branches.length === 1) return { base: branches[0] };
@@ -1490,7 +1637,7 @@ function deriveBase(projectDir, reqId, deps, passed, ctx) {
  * `finally` could remove it — holding the agent's uncommitted partial work.
  * Re-using it is the difference between resuming and starting over.
  */
-function existingWorktreeFor(projectDir, branch) {
+function existingWorktreeFor(projectDir: string, branch: string): string | null {
   const listed = git(projectDir, ["worktree", "list", "--porcelain"]);
   if (listed.status !== 0) return null;
 
@@ -1516,7 +1663,7 @@ function existingWorktreeFor(projectDir, branch) {
  * `preserveFailedAttempt` once the attempts are spent, so a freshly added
  * worktree checks it out.
  */
-function resumeFrom(worktreeDir, requirement) {
+function resumeFrom(worktreeDir: string, requirement: string): ResumeAt {
   const dir = path.join(worktreeDir, ...PROMPT_ARCHIVE_DIR.split("/"));
   let names: string[] = [];
   try {
@@ -1548,7 +1695,11 @@ function resumeFrom(worktreeDir, requirement) {
   return { attempt: point.attempt, previousFailure };
 }
 
-function preserveFailedAttempt(worktreeDir, req, failure) {
+function preserveFailedAttempt(
+  worktreeDir: string,
+  req: HarnessRequirement,
+  failure: string
+): boolean {
   if (isGitClean(worktreeDir)) return false;
 
   git(worktreeDir, ["add", "-A"]);
@@ -1603,12 +1754,12 @@ function preserveFailedAttempt(worktreeDir, req, failure) {
  *   Default behaviour stays what it was — this ships in a minor — and a person
  *   who wants to point an agent at a half-ready requirement is allowed to.
  */
-function readinessOf(projectDir, req) {
+function readinessOf(projectDir: string, req: HarnessRequirement) {
   const rel = featureFilePath(req);
   const file = rel ? path.resolve(projectDir, rel) : "";
   const featureExists = Boolean(file && fs.existsSync(file));
 
-  let scenarioFindings = [];
+  let scenarioFindings: Diagnostic[] = [];
   if (featureExists) {
     try {
       scenarioFindings = analyseGherkinSource(fs.readFileSync(file, "utf8"), rel);
@@ -1651,7 +1802,7 @@ function readinessOf(projectDir, req) {
 }
 
 /** The settings a context carries, tolerating the worker path's shape. */
-function settingsOf(ctx: any) {
+function settingsOf(ctx: Partial<RunContext> | null | undefined): Partial<HarnessSettings> {
   return (ctx && ctx.settings) || {};
 }
 
@@ -1692,7 +1843,7 @@ function gitIdentityProblem(projectDir: string): string {
   );
 }
 
-function processRequirement(req, ctx) {
+function processRequirement(req: HarnessRequirement, ctx: RunContext): RequirementResult {
   const { projectDir, baseRef, keepWorktrees, force } = ctx;
   const branch = `harness/${req.requirement}`;
 
@@ -1831,7 +1982,7 @@ function processRequirement(req, ctx) {
       resumeAt,
       matchedProfile,
     });
-    const result = {
+    const result: RequirementResult = {
       requirement: req.requirement,
       category: req.category,
       branch,
@@ -1870,7 +2021,12 @@ interface PublishOutcome {
  * flip a pass to a fail — the code is good; the human just has to publish
  * manually — but they are reported.
  */
-export function publishBranch(projectDir, branch, req, settings) {
+export function publishBranch(
+  projectDir: string,
+  branch: string,
+  req: Pick<HarnessRequirement, "requirement">,
+  settings: Pick<HarnessSettings, "push" | "remote" | "prCmd">
+): PublishOutcome {
   const published: PublishOutcome = {};
   if (!settings.push) return published;
 
@@ -1936,9 +2092,9 @@ export function publishBranch(projectDir, branch, req, settings) {
  */
 const FAILURE_TAIL_LINES = 20;
 
-export function printReport(results, format, recorded?: string) {
+export function printReport(results: RequirementResult[], format: string, recorded?: string): void {
   if (format === "json") {
-    const summary = results.reduce((acc, r) => {
+    const summary = results.reduce<Record<string, number>>((acc, r) => {
       acc[r.result] = (acc[r.result] || 0) + 1;
       return acc;
     }, {});
@@ -1964,7 +2120,7 @@ export function printReport(results, format, recorded?: string) {
         ui.muted(`${r.attempts} attempt${r.attempts === 1 ? "" : "s"}`) +
         `   ${ui.c.accent}${ui.sym.arrow} ${r.branch}${ui.c.reset}\n`
     );
-    const sub = (t: string) => process.stdout.write(`       ${t}\n`);
+    const sub = (t: string | undefined) => process.stdout.write(`       ${t}\n`);
     if (r.result === "blocked") {
       // Nothing ran, so there is no gate output to show — only the reason.
       sub(r.error);
@@ -2023,7 +2179,8 @@ export function printReport(results, format, recorded?: string) {
     );
   }
   if (pass > 0) {
-    const first = results.find((r) => r.result === "pass");
+    // `pass > 0`, so there is one.
+    const first = results.find((r) => r.result === "pass")!;
     process.stdout.write(
       ui.next(
         `git diff HEAD...${first.branch}`,
@@ -2049,20 +2206,21 @@ export function printReport(results, format, recorded?: string) {
  * scoped to one requirement, so a parallel run and a serial run execute the
  * same code.
  */
-async function dispatchLevel(runnable, byId, hintByReq, ctx, concurrency) {
+const dispatchLevel: LevelRunner = async (runnable, byId, hintByReq, ctx, concurrency) => {
   if (concurrency <= 1) {
-    const results = [];
+    const results: RequirementResult[] = [];
     for (const id of runnable) {
       // Asked before each one, not once for the level. Independent
       // requirements all land in a single level — the common case — so a
       // ceiling checked only between levels never fires. Measured: a
       // `--budget-seconds 2` run of three 3-second agents ran all three.
       if (ctx.mayStart && !ctx.mayStart()) {
-        results.push(notAttempted(byId.get(id), id, ctx.stopReason()));
+        results.push(notAttempted(byId.get(id), id, ctx.stopReason!()));
         continue;
       }
+      // Every id in a level comes from the queue `byId` was built from.
       results.push(
-        processRequirement(byId.get(id), {
+        processRequirement(byId.get(id)!, {
           ...ctx,
           baseRef: ctx.baseFor ? ctx.baseFor(id) : ctx.baseRef,
           hint: hintByReq.get(id),
@@ -2072,7 +2230,7 @@ async function dispatchLevel(runnable, byId, hintByReq, ctx, concurrency) {
     return results;
   }
   return runWorkers(runnable, byId, ctx, concurrency);
-}
+};
 
 /**
  * `--chain` (ADR-0036): the one place the harness merges, and only on request.
@@ -2084,9 +2242,13 @@ async function dispatchLevel(runnable, byId, hintByReq, ctx, concurrency) {
  * merged result: green alone is not green together. A red result is undone,
  * and the chain stops at the first requirement that does not pass.
  */
-async function runChain(pending, ctx, hintByReq) {
+async function runChain(
+  pending: HarnessRequirement[],
+  ctx: RunContext,
+  hintByReq: Map<string, string>
+): Promise<RequirementResult[]> {
   const projectDir = ctx.projectDir;
-  const results: any[] = [];
+  const results: RequirementResult[] = [];
   for (let i = 0; i < pending.length; i += 1) {
     const req = pending[i];
     const stop = (reason: string) => {
@@ -2183,7 +2345,11 @@ async function runChain(pending, ctx, hintByReq) {
 }
 
 /** A requirement the budget never let start. Not a failure — it was not tried. */
-function notAttempted(req, id, reason) {
+function notAttempted(
+  req: HarnessRequirement | null | undefined,
+  id: string,
+  reason: string
+): RequirementResult {
   return {
     requirement: id,
     category: req ? req.category : "",
@@ -2202,19 +2368,24 @@ function notAttempted(req, id, reason) {
  * worker that dies without printing one is reported as a failure carrying its
  * output, rather than vanishing from the run.
  */
-function runWorkers(runnable, byId, ctx, concurrency) {
+function runWorkers(
+  runnable: string[],
+  byId: Map<string, HarnessRequirement> | null,
+  ctx: RunContext,
+  concurrency: number
+): Promise<RequirementResult[]> {
   return new Promise((resolve) => {
-    const results = [];
+    const results: RequirementResult[] = [];
     const queue = [...runnable];
-    const running = new Map();
+    const running = new Map<string, ChildProcess>();
 
     const fill = () => {
       while (running.size < concurrency && queue.length > 0) {
-        const id = queue.shift();
+        const id = queue.shift()!;
         // Same question as the sequential path: a worker already in flight is
         // never interrupted, but the next one need not be started.
         if (ctx.mayStart && !ctx.mayStart()) {
-          results.push(notAttempted(byId ? byId.get(id) : null, id, ctx.stopReason()));
+          results.push(notAttempted(byId ? byId.get(id) : null, id, ctx.stopReason!()));
           continue;
         }
         const child = spawn(process.execPath, [WORKER_ENTRY, ...workerArgs(id, ctx)], {
@@ -2258,7 +2429,7 @@ function runWorkers(runnable, byId, ctx, concurrency) {
  * `harness.config.yaml`, so a profile resolved once in the parent cannot
  * resolve differently in a child.
  */
-function workerArgs(id, ctx) {
+function workerArgs(id: string, ctx: RunContext): string[] {
   return [
     "--req",
     id,
@@ -2284,9 +2455,9 @@ function workerArgs(id, ctx) {
 }
 
 /** A worker's report, or an honest failure describing why there is none. */
-function parseWorkerReport(id, stdout, stderr) {
+function parseWorkerReport(id: string, stdout: string, stderr: string): RequirementResult {
   try {
-    const parsed = JSON.parse(stdout);
+    const parsed = JSON.parse(stdout) as { results?: RequirementResult[] };
     const one = (parsed.results || []).find((r) => r.requirement === id);
     if (one) return one;
   } catch {
@@ -2320,7 +2491,11 @@ function parseWorkerReport(id, stdout, stderr) {
  * invocations. A requirement whose dependency failed has not been attempted;
  * calling that a failure would be a lie in the report.
  */
-export async function runLevels(pending, ctx, opts) {
+export async function runLevels(
+  pending: HarnessRequirement[],
+  ctx: RunContext,
+  opts: { concurrency: number; hintByReq: Map<string, string>; runOne: LevelRunner }
+): Promise<RequirementResult[]> {
   const { concurrency, hintByReq, runOne } = opts;
   /**
    * The run's ceiling (C1). Checked before starting a level, never inside one:
@@ -2334,9 +2509,15 @@ export async function runLevels(pending, ctx, opts) {
   };
   const budgetStartedAt = Date.now();
   let started = 0;
-  let stoppedBy = null;
-  const { levels, cycles, dependsOn, graph } = scheduleLevels(pending);
-  const byId: Map<string, any> = new Map(pending.map((r) => [r.requirement, r]));
+  // Asserted rather than annotated: it is assigned inside `mayStart`, and an
+  // annotated `null` would stay narrowed to `null` everywhere below.
+  let stoppedBy = null as BudgetVerdict | null;
+  const schedule = scheduleLevels(pending);
+  const { levels, cycles, graph } = schedule;
+  // REQ → the requirements in this run it waits for. Core builds it as a plain
+  // object and does not declare its shape.
+  const dependsOn: Record<string, string[]> = schedule.dependsOn;
+  const byId = new Map<string, HarnessRequirement>(pending.map((r) => [r.requirement, r]));
 
   if (cycles.length > 0) {
     // `validate` is the gate that reports the cycle properly. Here we only
@@ -2346,10 +2527,10 @@ export async function runLevels(pending, ctx, opts) {
     }
   }
 
-  const results = [];
-  const blocked = new Set();
+  const results: RequirementResult[] = [];
+  const blocked = new Set<string>();
   /** REQ → the branch its work landed on, for the requirements that follow it. */
-  const passedBranches = new Map();
+  const passedBranches = new Map<string, string>();
 
   for (const level of levels) {
     const runnable = level.filter((id) => !blocked.has(id));
@@ -2371,10 +2552,10 @@ export async function runLevels(pending, ctx, opts) {
 
     // A requirement is cut from its dependencies' branches, not from the run's
     // base: that is where the code it builds on exists during a run.
-    const derivationFailures = new Map();
-    const baseFor = (id) => {
+    const derivationFailures = new Map<string, string>();
+    const baseFor = (id: string): string => {
       const derived = deriveBase(ctx.projectDir, id, dependsOn[id] || [], passedBranches, ctx);
-      if (derived.error) {
+      if ("error" in derived) {
         derivationFailures.set(id, derived.error);
         return ctx.baseRef;
       }
@@ -2411,7 +2592,8 @@ export async function runLevels(pending, ctx, opts) {
       hintByReq,
       {
         ...ctx,
-        baseFor: (id) => bases.get(id),
+        // Only `attemptable` ids reach the runner, and each has a base.
+        baseFor: (id) => bases.get(id)!,
         // The level asks before starting each requirement. `started` counts
         // what was actually begun, so the count ceiling and the clock agree.
         mayStart: () => {
@@ -2685,7 +2867,8 @@ export class RunCommand extends BaseCommand {
       // caused it. It still fails the run, because work was left undone.
       const failed = results.filter((r) => r.result !== "pass").length;
       process.exit(failed > 0 ? 1 : 0);
-    } catch (err: any) {
+    } catch (err) {
+      const thrown = err as { message?: string };
       let isJson = false;
       try {
         isJson = parseArgs(this.args).format === "json";
@@ -2694,7 +2877,7 @@ export class RunCommand extends BaseCommand {
       }
       const io = agentIo(isJson);
       return io.fail({ results: null }, [
-        { severity: "error", code: "harness_run_error", message: err.message || String(err) },
+        { severity: "error", code: "harness_run_error", message: thrown.message || String(err) },
       ]);
     }
   }

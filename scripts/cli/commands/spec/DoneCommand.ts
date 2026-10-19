@@ -1,6 +1,6 @@
 import { resolveProjectDir } from "../../../lib/project-root";
 import { error } from "../../../lib/diagnostics";
-import { agentIo, EXIT } from "../../../lib/agent";
+import { AgentIo, agentIo, EXIT } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { UpdateRequirementStatusUseCase } from "../../../../packages/core/src/application/UpdateRequirementStatusUseCase";
@@ -9,7 +9,10 @@ import {
   deliveryBlocker,
   NO_TEST_COMMAND_WARNING,
 } from "../../../../packages/core/src/domain/DoneVerification";
-import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import {
+  HarnessSettings,
+  readHarnessConfig,
+} from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -17,12 +20,21 @@ import { findCliRoot } from "../../../lib/project-root";
 import { isDerivedProject, writeRequirementFields } from "../../../lib/derived-writes";
 import { refreshDerivedMatrix } from "./MatrixCommand";
 import { inFlightView, InFlightRequirement, InFlightView, DELIVERED } from "../../../lib/in-flight";
-import { summarise, nextRequirement } from "./StatusCommand";
+import { summarise, nextRequirement, QueueItem } from "./StatusCommand";
+import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
+
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { deriveRows, setTraceFields } from "../../../../packages/core/src/domain/DerivedMatrix";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
+
+/** A row of the generated matrix, as far as `done` reads it. Core returns them untyped. */
+interface DerivedRow {
+  requirement?: string;
+  scenarioId?: string;
+  testArtifact?: string;
+}
 
 export const ALLOWED_STATUSES = [
   "Draft",
@@ -98,7 +110,8 @@ export class DoneCommand extends BaseCommand {
 
   public execute(): void {
     const opts = parseArgs(this.args);
-    const io = agentIo(opts.json);
+    // Annotated so that `io.fail`, which never returns, narrows what follows it.
+    const io: AgentIo = agentIo(Boolean(opts.json));
     const NULL_SHAPE = { requirement: null };
     const verb = this.verb;
 
@@ -147,9 +160,10 @@ export class DoneCommand extends BaseCommand {
     let projectDir: string;
     try {
       projectDir = resolveProjectDir(opts.projectDir);
-    } catch (err: any) {
+    } catch (err) {
+      // `resolveProjectDir` throws Errors.
       io.usage(NULL_SHAPE, [
-        error("project_not_found", err.message, {
+        error("project_not_found", (err as Error).message, {
           fix: "Run from inside a spec-driven project, or pass --project-dir.",
         }),
       ]);
@@ -222,15 +236,17 @@ export class DoneCommand extends BaseCommand {
     // there is nothing to judge. Said before the gate, with the fix, rather
     // than as TDD-1 among everything validate finds.
     if (gated && isDerivedProject(dir)) {
-      const rows = deriveRows(readDerivationSources(dir)).filter((r: any) => r.requirement === id);
-      const tested = (r: any) => {
+      const rows: DerivedRow[] = deriveRows(readDerivationSources(dir)).filter(
+        (r: DerivedRow) => r.requirement === id
+      );
+      const tested = (r: DerivedRow) => {
         const t = String(r.testArtifact || "")
           .replace(/`/g, "")
           .trim();
         return t !== "" && t !== "-" && t.toUpperCase() !== "TBD";
       };
       if (rows.length > 0 && !rows.some(tested)) {
-        const scn = rows.map((r: any) => r.scenarioId).find((x: any) => x && x !== "-");
+        const scn = rows.map((r) => r.scenarioId).find((x) => x && x !== "-");
         io.fail(NULL_SHAPE, [
           error("apply_no_test", `${id} has no test that names it yet (TDD-1).`, {
             target: id,
@@ -245,7 +261,7 @@ export class DoneCommand extends BaseCommand {
     // `--check` and `--strict` used to be parsed and discarded, so `done
     // REQ-001 --check` printed a tick over a matrix pointing at files that do
     // not exist. Four documentation pages said it "validates first".
-    const harness = readHarnessConfig(projectDir) || ({} as any);
+    const harness: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
     const plan = planDoneVerification(dir, {
       check: opts.check,
       strict: opts.strict,
@@ -289,15 +305,15 @@ export class DoneCommand extends BaseCommand {
 
       // Over JSON (and so over MCP) the reason has to travel in the document:
       // the agent got `done_validate_failed` and nothing it could act on.
-      let findings: any[] = [];
+      let findings: Array<Omit<Diagnostic, "fix">> = [];
       if (opts.json && step.stage === "validate") {
         try {
           const stdout = toProject(String(run.stdout));
-          const doc = JSON.parse(stdout.slice(stdout.indexOf("{")));
+          const doc: { status?: Diagnostic[] } = JSON.parse(stdout.slice(stdout.indexOf("{")));
           // One fix line per refusal: the findings say what, the last says how.
           findings = (doc.status || [])
-            .filter((d: any) => d.severity === "error")
-            .map(({ fix: _fix, ...d }: any) => d);
+            .filter((d) => d.severity === "error")
+            .map(({ fix: _fix, ...d }) => d);
         } catch {
           // Not JSON: the diagnostic below still says it failed.
         }
@@ -385,7 +401,7 @@ export class DoneCommand extends BaseCommand {
    * suite that starts Postgres every time (FinCore, #77). A requirement that
    * fails its own checks is reported and left as it was; the others close.
    */
-  private executeMany(opts: DoneOptions, io: ReturnType<typeof agentIo>): void {
+  private executeMany(opts: DoneOptions, io: AgentIo): void {
     const NULL_SHAPE = { requirements: null };
     const bad = opts.reqIds.find((id) => !/^REQ-\d+$/.test(id));
     if (bad) {
@@ -399,9 +415,10 @@ export class DoneCommand extends BaseCommand {
     let projectDir: string;
     try {
       projectDir = resolveProjectDir(opts.projectDir);
-    } catch (err: any) {
+    } catch (err) {
+      // `resolveProjectDir` throws Errors.
       io.usage(NULL_SHAPE, [
-        error("project_not_found", err.message, {
+        error("project_not_found", (err as Error).message, {
           fix: "Run from inside a spec-driven project, or pass --project-dir.",
         }),
       ]);
@@ -416,7 +433,7 @@ export class DoneCommand extends BaseCommand {
       string,
       { ok: boolean; code?: string; message?: string; detail?: string }
     >();
-    const harness = readHarnessConfig(projectDir) || ({} as any);
+    const harness: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
     const testCmd = opts.testCmd || harness.testCmd;
     const gated = opts.check && DELIVERED_STATUSES.includes(opts.status);
     const tracePath = path.join(dir, TRACE);
@@ -586,7 +603,7 @@ function writeStatus(
     }
     fs.writeFileSync(file, next, "utf8");
     const rows = deriveRows(readDerivationSources(judgedDir)).filter(
-      (r: any) => r.requirement === id
+      (r: DerivedRow) => r.requirement === id
     ).length;
     return { ok: true, updated: Math.max(rows, 1) };
   }
@@ -600,7 +617,7 @@ function writeStatus(
       projectDir,
       id,
       status
-    ) as any;
+    );
   }
   if (derivedRows === null) {
     return {
@@ -618,7 +635,7 @@ function writeStatus(
  * its open change's last — archiving the change.
  */
 function nextAfter(
-  items: any[],
+  items: QueueItem[],
   id: string,
   owner: InFlightRequirement | undefined,
   view: InFlightView | null
