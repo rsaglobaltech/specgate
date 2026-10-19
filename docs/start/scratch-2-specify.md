@@ -53,7 +53,7 @@ $ specgate draft
     ○ bookings  not started
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate draft bookings
+  ➜  specgate propose --from-brief bookings
 ```
 <!-- specgate:out-scratch-draft-list:end -->
 
@@ -83,8 +83,8 @@ $ specgate draft bookings
     Draft the bookings module: follow docs/specs/changes/draft-bookings/DRAFTING.md
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate draft bookings --agent "claude -p"
-     or let Specgate call it — then run specgate draft bookings until it says Ready to review
+  ➜  specgate propose --from-brief bookings --agent "claude -p"
+     or let Specgate call it — then run specgate propose --from-brief bookings until it says Ready to review
 ```
 <!-- specgate:out-scratch-draft-open:end -->
 
@@ -144,8 +144,8 @@ $ specgate draft bookings
   ✖  5 finding(s) to fix — each says how; DRAFTING.md has the formats
 
   What now ───────────────────────────────────────────────
-   1  ➜ specgate draft bookings --agent "claude -p"   your agent fixes them — or fix them yourself
-   2  ➜ specgate draft bookings   again, until it says Ready to review
+   1  ➜ specgate propose --from-brief bookings --agent "claude -p"   your agent fixes them — or fix them yourself
+   2  ➜ specgate propose --from-brief bookings   again, until it says Ready to review
 ```
 <!-- specgate:out-scratch-draft-check:end -->
 
@@ -174,40 +174,19 @@ $ specgate draft bookings
   What now ───────────────────────────────────────────────
    1  Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
    2  Answer what you can in docs/specs/changes/draft-bookings/questions.md
-   3  ➜ specgate change archive draft-bookings
+   3  ➜ specgate apply   its requirements, one at a time; then specgate archive draft-bookings
    4  ➜ specgate status   every module drafted: what to build first
 ```
 <!-- specgate:out-scratch-draft-check-again:end -->
 
-## 5. Review it, then archive it into the specification
+## 5. Review it — and leave it open
 
-Read the draft with whoever knows the business, answer what you can in
-`questions.md`, then:
-
-```bash
-specgate change archive draft-bookings
-```
-
-<!-- specgate:out-scratch-archive:begin — generated; edit the source, not this block -->
-```text
-$ specgate change archive draft-bookings
-  ◆ specgate · change archive   draft-bookings
-
-  ✔  Archived as 2026-01-01-draft-bookings
-
-    Specs         3 added · 0 modified · 0 removed
-    Traceability  3 row(s) added · 0 updated · 0 removed
-    Features      3 materialised
-
-  Next ───────────────────────────────────────────────────
-  ➜  specgate draft
-     the next module of the brief, or what to build first
-```
-<!-- specgate:out-scratch-archive:end -->
-
-The requirements are now in the specification as `Draft`: written down,
-not yet owed. A Draft requirement costs the gate nothing until someone starts
-closing it.
+Read the draft with whoever knows the business, and answer what you can in
+`questions.md`. Review is the draft's pull request; nothing is archived yet.
+An open change's requirements are **in flight**: `status`, `check` and
+`apply` read them from the draft, and the gate judges them as they will be
+once archived. The draft is archived after its requirements are built and
+applied — the specification and its code merge together (phase 4).
 
 ## 6. See what is next
 
@@ -229,17 +208,17 @@ $ specgate status
 
   Waiting for an answer ──────────────────────────────────
     ○ REQ-004  A member cancels a booking  an answer to Q1
-    Questions: Q1 (docs/specs/changes/archive/2026-01-01-draft-bookings/questions.md)
+    Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
 
   Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate done REQ-002
-     once a test mentions REQ-002 — that mention is the link; done checks first
+  ➜  specgate apply REQ-002
+     once a test mentions REQ-002 — that mention is the link; apply checks first
 ```
 <!-- specgate:out-scratch-status:end -->
 
-REQ-004 is **waiting for an answer**: the harness will not build it and `done`
+REQ-004 is **waiting for an answer**: the harness will not build it and `apply`
 will not close it until the client answers Q1. Nobody has to remember that.
 
 <!-- specgate:note -->
@@ -253,7 +232,7 @@ Both forms keep working.
 ## You're done when…
 
 - `specgate draft bookings` says `✔  Ready to review.` and a person has read the draft.
-- `change archive` has merged it, and `specgate status` lists the requirements.
+- `specgate status` lists its requirements, in flight, and the draft is still open.
 - Every open question is in `questions.md`, and the requirement it blocks says so.
 
 Then `specgate draft` names the next module; repeat steps 3–5. The [brief guide](../from-a-brief.md) has

@@ -96,11 +96,11 @@ specgate config set test_cmd "node --test"
 $ specgate config set test_cmd "node --test"
   ✔  test_cmd = node --test
      harness.config.yaml
-     `check` and `done` now run it.
+     `check` and `apply` now run it.
 ```
 <!-- specgate:out-scratch-test-cmd:end -->
 
-From now on `check` and `done` run your suite as part of the gate. Use your
+From now on `check` and `apply` run your suite as part of the gate. Use your
 stack's own command: `npm test`, `./mvnw -B verify`, `pytest`, `go test ./...`.
 
 ## 4. Run the gate
@@ -114,8 +114,10 @@ specgate check
 $ specgate check
   ◆ specgate · check   court-bookings
 
+  ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test
+  ·  Architecture    not checked — specgate config set arch_cmd "<command>"
 
   ✔  Gate passed — the specification and `node --test`
 ```

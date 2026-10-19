@@ -218,16 +218,9 @@ export const BRIEF_BEATS: readonly Beat[] = [
     maxLines: 10,
   },
   {
-    id: "archive",
-    caption: "Requirements, Gherkin and the traceability matrix, written in one step.",
-    cwd: "courts",
-    argv: ["specgate", "change", "archive", "draft-bookings"],
-    surface: "change archive",
-    maxLines: 10,
-  },
-  {
     id: "status",
-    caption: "The blocked requirement waits for the client. Nobody builds it by mistake.",
+    caption:
+      "Reviewed, not archived: its requirements are in flight, and the blocked one waits for the client.",
     cwd: "courts",
     argv: ["specgate", "status"],
     surface: "status",
@@ -238,16 +231,18 @@ export const BRIEF_BEATS: readonly Beat[] = [
 /**
  * The gate refusing, then accepting.
  *
- * Starts where the brief recording ends. Two refusals are the point: work
- * with no test behind it, and a requirement still waiting for the client.
+ * Starts where the brief recording ends: the draft reviewed, still open.
+ * The refusals are the point: work with no test behind it, a requirement
+ * still waiting for the client, and an archive before the code is done
+ * (ADR-0035).
  */
 export const GATE_BEATS: readonly Beat[] = [
   {
-    id: "done-no-test",
-    caption: "Calling it done before a test exists. The gate says no and writes nothing.",
+    id: "apply-no-test",
+    caption: "Applying it before a test exists. The gate says no and writes nothing.",
     cwd: "courts",
-    argv: ["specgate", "done", "REQ-002"],
-    surface: "done",
+    argv: ["specgate", "apply", "REQ-002"],
+    surface: "apply",
     maxLines: 8,
     expectExit: 1,
   },
@@ -260,20 +255,30 @@ export const GATE_BEATS: readonly Beat[] = [
     maxLines: 14,
   },
   {
-    id: "done",
+    id: "apply",
     caption: "Now the scenario, the test and the suite all pass — and only then is it marked.",
     cwd: "courts",
-    argv: ["specgate", "done", "REQ-002"],
-    surface: "done",
+    argv: ["specgate", "apply", "REQ-002"],
+    surface: "apply",
     maxLines: 6,
   },
   {
-    id: "done-blocked",
+    id: "apply-blocked",
     caption:
       "The requirement waiting for the client cannot be closed — not by you, not by an agent.",
     cwd: "courts",
-    argv: ["specgate", "done", "REQ-004"],
-    surface: "done",
+    argv: ["specgate", "apply", "REQ-004"],
+    surface: "apply",
+    maxLines: 6,
+    expectExit: 1,
+  },
+  {
+    id: "archive-waits",
+    caption:
+      "Archive waits: the spec merges with its code, once every requirement in it is applied.",
+    cwd: "courts",
+    argv: ["specgate", "archive", "draft-bookings"],
+    surface: "archive",
     maxLines: 6,
     expectExit: 1,
   },

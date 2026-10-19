@@ -45,7 +45,7 @@ sick when `check` is red, and repeats the next command —
 ## The loop
 
 ```
-specgate status  →  specgate new  →  a test that names the REQ  →  specgate done  →  specgate check
+specgate status  →  specgate propose  →  a test that names the REQ  →  specgate apply  →  specgate check  →  specgate archive
 ```
 
 ## Three habits that make adoption stick
@@ -55,7 +55,7 @@ specgate status  →  specgate new  →  a test that names the REQ  →  specgat
    it in the test. The fix closes it. Your specification fills up where the
    risk actually was.
 2. **One module at a time, as a change.** When a module matters — billing,
-   permissions, anything regulated — describe it with `change new`, let your
+   permissions, anything regulated — describe it with `specgate propose`, let your
    agent draft it from the code, run `draft --check`, review, archive. Then
    replace or remove its proposed requirement from adoption.
 3. **New features start as requirements.** A feature request becomes
