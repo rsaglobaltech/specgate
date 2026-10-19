@@ -142,17 +142,18 @@ test("--strict-tdd fails when a row lacks Scenario ID and Status is Ready for De
 
 // ── --strict-tdd: TDD-3 (requirement in spec.md missing from matrix) ──────────
 
-test("--strict-tdd fails when spec.md references a REQ not in traceability.md", () => {
+test("--strict-tdd fails when spec.md declares a REQ not in traceability.md", () => {
   const root = mktemp();
   try {
     const richHeader =
       "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
     const separator = "|---|---|---|---|---|---|---|---|---|---|";
-    // Matrix only has REQ-001; spec.md mentions REQ-001 and REQ-002
+    // Matrix only has REQ-001; spec.md declares REQ-001 and REQ-002 (a
+    // heading — a mention in prose owes no row, ADR-0036).
     const row =
       "| REQ-001 | SCN-001 | features/sample.feature | UC-001 | Cmd | Agg | Evt | Art | Test | Draft |";
     buildProject(root, {
-      specContent: "# Spec\n\nREQ-001 is covered. REQ-002 is not.\n",
+      specContent: "# Spec\n\n## REQ-001 — Covered\n\n## REQ-002 — Not covered\n",
       traceabilityContent: `# Traceability\n\n${richHeader}\n${separator}\n${row}\n`,
     });
     const result = runValidate(root, ["--strict-tdd"]);

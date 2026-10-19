@@ -54,9 +54,10 @@ commands for the tools people actually use.
 
 **The agent works in a fresh worktree, which carries only what git tracks** — no
 `node_modules`, no `target/`, no `.venv`. An agent must not spend its attempt
-installing dependencies: put that in the gate command (`--test-cmd "npm ci &&
-npm test"`), the only part that knows how. Found the expensive way, by an agent
-that spent its first attempt on `npm install` and timed out.
+installing dependencies, so the harness does it first: `setup_cmd:`,
+`--setup-cmd`, or else what the lockfile implies (`npm ci`, pnpm, yarn);
+`--setup-cmd none` runs nothing. The agent gets `SPECGATE_REQ` and
+`SPECGATE_ATTEMPT` in its environment.
 
 Or commit the commands your team uses and pick one by name:
 
@@ -84,6 +85,12 @@ rather than the greatest common denominator of the whole plan.
 
 ## Parallel branches and the traceability matrix
 
+**A generated matrix** (the default) never blocks a merge: it is declared
+`merge=union` in `.gitattributes`, git keeps both sides' rows, and `specgate
+check` regenerates it ([ADR-0036](specs/adr/0036-a-gate-a-team-can-trust.md)).
+**A hand-kept matrix**, where a duplicated row is corruption, uses the
+row-wise driver below.
+
 Every harness branch flips its own row in `docs/specs/traceability.md`. Git
 merges by lines and needs an unchanged line between two changed regions to treat
 them as independent — and matrix rows are consecutive lines. So two branches
@@ -99,16 +106,14 @@ specgate harness init --project-dir .   # writes .gitattributes, registers the d
 git add .gitattributes && git commit -m "merge the matrix by row"
 ```
 
-It resolves the case it exists for — two branches, two different rows — and it
-still **conflicts** when two branches set the _same_ row to different values,
-because quietly discarding somebody's decision is worse than asking.
+It still **conflicts** when two branches set the _same_ row to different
+values: discarding somebody's decision is worse than asking.
 
 **Every clone registers it once.** `.gitattributes` is committed, but
 `merge.specgate-matrix.driver` is local git config that nothing can commit, so a
 fresh checkout and every CI job needs `specgate harness init` too. Until then git
 falls back to its built-in merge — the conflict the project had before, never a
-silently wrong result — and `specgate doctor` reports the gap rather than leaving it
-to be found mid-merge.
+silently wrong result — and `specgate doctor` reports the gap.
 
 ### Resolving one by hand
 
@@ -125,9 +130,20 @@ markers around that one row:
 
 Keep exactly one of the two lines and delete the three marker lines. **Never
 keep both:** a duplicated requirement is the one corruption this file must not
-have — it is also what a naive `merge=union` produces, which is why that is not
-what specgate configures. Then run `specgate validate .`, which checks the statuses are
+have — it is also what `merge=union` produces, which is why a hand-kept matrix
+uses the row-wise driver instead. Then run `specgate validate .`, which checks the statuses are
 legal and that no scenario id repeats.
+
+## A chain of requirements, merged as they pass
+
+```bash
+specgate harness run --chain --req REQ-002 --req REQ-003   # on develop
+```
+
+One requirement at a time, in order, each cut from the previous merge. A green
+one is merged into the branch you are on (a merge commit; its prompts stay on
+its `harness/` branch) and **the gate runs again on the merge**; a red result
+is undone and the chain stops. Without `--chain` the harness never merges.
 
 ## Change agent between attempts
 

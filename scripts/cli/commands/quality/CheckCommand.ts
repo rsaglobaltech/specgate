@@ -13,6 +13,7 @@ import {
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView } from "../../../lib/in-flight";
+import { checkIdsAgainstBase } from "../../../lib/base-ids";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -23,7 +24,7 @@ const NULL_SHAPE = { check: null };
 function usage(): void {
   process.stdout.write(
     `
-  ✅ ${c.bold}specgate check${c.reset} [dir] [--test-cmd "<command>"] [--json]
+  ✅ ${c.bold}specgate check${c.reset} [dir] [--test-cmd "<command>"] [--base <branch>] [--json]
 
   The gate — what to run before a pull request:
     1. validate --strict   specs, scenarios, traceability, links and coverage
@@ -32,6 +33,10 @@ function usage(): void {
 
   Without a test command it still passes, and says it checked the
   specification, not the code.
+
+  Requirement ids are compared with the base branch (--base, SPECGATE_BASE,
+  or origin's default): the same id with another title there fails the gate
+  before the merge. Skipped, and said, without git or a base to read.
 
   Exit 0 green · 1 the gate failed · 2 usage error.
 
@@ -57,6 +62,7 @@ export class CheckCommand extends BaseCommand {
     const io = agentIo(json);
 
     let testCmdFlag: string | undefined;
+    let baseFlag: string | undefined;
     const positional: string[] = [];
     for (let i = 0; i < argv.length; i++) {
       const a = argv[i];
@@ -66,6 +72,15 @@ export class CheckCommand extends BaseCommand {
           io.usage(NULL_SHAPE, [
             error("missing_value", "--test-cmd needs a command.", {
               fix: 'specgate check --test-cmd "npm test"',
+            }),
+          ]);
+        }
+      } else if (a === "--base") {
+        baseFlag = argv[++i];
+        if (baseFlag === undefined) {
+          io.usage(NULL_SHAPE, [
+            error("missing_value", "--base needs a branch.", {
+              fix: "specgate check --base develop",
             }),
           ]);
         }
@@ -111,6 +126,38 @@ export class CheckCommand extends BaseCommand {
     if (refreshed && !json) {
       process.stdout.write(
         `  ${ui.muted("↻  docs/specs/traceability.md regenerated from its sources")}\n`
+      );
+    }
+
+    // Two branches allocate ids as max+1 over their own checkout; the
+    // collision is caught here, before the merge (ADR-0036).
+    const ids = checkIdsAgainstBase(projectDir, baseFlag);
+    if (ids.state === "checked" && ids.collisions.length > 0) {
+      recordCheck(projectDir, false);
+      const first = ids.collisions[0];
+      io.fail(NULL_SHAPE, [
+        ...ids.collisions.slice(1).map((x) =>
+          error("id_taken_on_base", `${x.id} is "${x.here}" here and "${x.base}" on ${ids.base}.`, {
+            target: x.id,
+          })
+        ),
+        error(
+          "id_taken_on_base",
+          `${first.id} is "${first.here}" here and "${first.base}" on ${ids.base}.`,
+          {
+            target: first.id,
+            fix: `renumber ${first.id} on this branch to ${ids.nextFree}, the next id free on both sides`,
+          }
+        ),
+      ]);
+    }
+    if (!json) {
+      process.stdout.write(
+        `  ${ui.muted(
+          ids.state === "checked"
+            ? `·  Ids            compared with ${ids.base}`
+            : `·  Ids            not compared with a base — ${ids.reason}`
+        )}\n`
       );
     }
 
@@ -219,6 +266,7 @@ export class CheckCommand extends BaseCommand {
           architecture: archCmd ? "passed" : "not_configured",
           archCommand: archCmd || null,
           tests: plan.testsUnverified ? "not_configured" : "passed",
+          ids: ids.state === "checked" ? `compared with ${ids.base}` : `skipped: ${ids.reason}`,
           testCommand: plan.testsUnverified ? null : testCmd,
         },
         status,

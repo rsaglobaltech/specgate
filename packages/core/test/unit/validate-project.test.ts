@@ -177,10 +177,14 @@ test("TDD-2: a row past Draft with no Scenario ID is a violation", () => {
   assert.match(report.errors[0].message, /^\[TDD-2\]/);
 });
 
-test("TDD-3: a REQ in spec.md with no matrix row is a violation", () => {
+test("TDD-3: a REQ spec.md declares with no matrix row is a violation", () => {
+  // Declared by a heading: a mere mention in prose owes no row (ADR-0036).
   const { report } = useCase().checkMatrix(
     richMatrix([["REQ-001", "SCN-001", "tests/a.test.ts", "Implemented"]]),
-    { strictTdd: true, specContent: "REQ-001 is here and so is REQ-002.\n" }
+    {
+      strictTdd: true,
+      specContent: "## REQ-001 — Here\n\n## REQ-002 — Not in the matrix\n\nSee also REQ-003.\n",
+    }
   );
   assert.equal(report.errors.length, 1);
   assert.match(report.errors[0].message, /^\[TDD-3\] Requirement REQ-002/);

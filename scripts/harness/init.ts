@@ -52,15 +52,19 @@ const NULL_SHAPE = { projectDir: null, files: [] };
  * What a fresh worktree needs before anything runs in it: the dependency
  * install the lockfile pins. `null` when nothing here says.
  */
-export function setupCommand(projectDir: string): string {
+export function detectSetupCommand(projectDir: string): string {
   const has = (f: string) => fs.existsSync(path.join(projectDir, f));
-  const cmd = has("package-lock.json")
+  return has("package-lock.json")
     ? "npm ci --silent --no-audit --no-fund"
     : has("pnpm-lock.yaml")
       ? "pnpm install --frozen-lockfile"
       : has("yarn.lock")
         ? "yarn install --frozen-lockfile"
         : "";
+}
+
+export function setupCommand(projectDir: string): string {
+  const cmd = detectSetupCommand(projectDir);
   return cmd
     ? `setup_cmd: "${cmd}"`
     : '# setup_cmd: "npm ci"   # ← run in each fresh worktree before the agent';

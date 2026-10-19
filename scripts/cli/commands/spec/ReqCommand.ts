@@ -6,6 +6,7 @@ import { agentIo, wantsJson } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { AddRequirementUseCase } from "../../../../packages/core/src/application/AddRequirementUseCase";
+import { highestReservedReq } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { LinkRequirementUseCase } from "../../../../packages/core/src/application/LinkRequirementUseCase";
 import { DoneCommand } from "./DoneCommand";
 import { isDerivedProject, writeRequirementFields } from "../../../lib/derived-writes";
@@ -291,7 +292,11 @@ export class ReqCommand extends BaseCommand {
 
       const repo = new DiskTraceabilityRepository();
       const useCase = new AddRequirementUseCase(repo);
-      const result = useCase.execute(resolvedDir, { ...fields, status });
+      const result = useCase.execute(
+        resolvedDir,
+        { ...fields, status },
+        highestReservedReq(resolvedDir)
+      );
 
       const specPath = path.join(resolvedDir, "spec.md");
       let wroteSection = false;

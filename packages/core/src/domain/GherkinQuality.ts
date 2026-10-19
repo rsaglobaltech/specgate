@@ -38,6 +38,7 @@
  * but it does run.
  */
 
+import { withoutCodeSpans, withoutQuoted } from "./QuotedText";
 import type { Diagnostic } from "./Diagnostic";
 import { error, warning } from "./Diagnostic";
 import { findKeywordCaseIssues, parseGherkin } from "./Gherkin";
@@ -198,7 +199,9 @@ export function analyseScenario(
   }
 
   for (const step of scenario.steps) {
-    if (!scenario.outline && PLACEHOLDER_RE.test(step.text)) {
+    // A code span is literal — `cmd <arg>` names a command (ADR-0036); a quoted
+    // "<name>" is still a template nobody filled in.
+    if (!scenario.outline && PLACEHOLDER_RE.test(withoutCodeSpans(step.text))) {
       found.push(
         error(
           QUALITY_CODES.PLACEHOLDER_STEP,
@@ -208,7 +211,7 @@ export function analyseScenario(
       );
       continue;
     }
-    if (VAGUE_STEP_RE.test(step.text)) {
+    if (VAGUE_STEP_RE.test(withoutQuoted(step.text))) {
       found.push(
         warning(
           QUALITY_CODES.VAGUE_STEP,

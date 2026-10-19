@@ -267,7 +267,7 @@ export function resolveHarnessSettings(
     agent: cliArgs.agent || file.agent || "",
     testCmd: cliArgs.testCmd || file.testCmd || "",
     archCmd: cliArgs.archCmd || file.archCmd || "",
-    setupCmd: file.setupCmd || "",
+    setupCmd: cliArgs.setupCmd || file.setupCmd || "",
     maxAttempts: cliArgs.maxAttempts || file.maxAttempts || 3,
     concurrency: cliArgs.concurrency || file.concurrency || 1,
     promptPrefix: cliArgs.promptPrefix || file.promptPrefix || "",
