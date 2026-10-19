@@ -188,6 +188,6 @@ test("a provider that cannot search says so instead of failing mid-run", () => {
     const result = runPull(dir, []);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /alm_pull_unsupported|cannot search/);
-    assert.match(result.stderr, /specgate change new/, "it should say how to do it by hand");
+    assert.match(result.stderr, /specgate propose/, "it should say how to do it by hand");
   });
 });

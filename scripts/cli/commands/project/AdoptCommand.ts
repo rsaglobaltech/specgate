@@ -607,12 +607,16 @@ export class AdoptProjectCommand extends BaseCommand {
     // it is the next thing to do; when the project is bare, say where it goes.
     const hasBrief = fs.existsSync(path.join(dir, "docs", "brief.md"));
     if (hasBrief) {
-      logInfo("  2. specgate draft               # docs/brief.md → requirements, module by module");
+      logInfo(
+        "  2. specgate propose --from-brief  # docs/brief.md → requirements, module by module"
+      );
     } else if (capabilities.length > 0) {
       logInfo("  2. Argue with the seeded proposals in spec.md — each one names its evidence");
     } else {
       logInfo('  2. specgate new "<behaviour>"   # one requirement you already rely on');
-      logInfo("     or, from a plan: save it as docs/brief.md, then  specgate draft");
+      logInfo(
+        "     or, from a plan: save it as docs/brief.md, then  specgate propose --from-brief"
+      );
     }
     logInfo("  3. specgate status              # what each requirement still needs");
     logInfo("  4. specgate ci init             # put the gate in CI");

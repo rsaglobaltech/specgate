@@ -178,7 +178,7 @@ test("req link refuses --status instead of dropping it", () => {
       dir
     );
     assert.equal(r.status, 2, r.stdout + r.stderr);
-    assert.match(r.stderr, new RegExp(`specgate done ${reqId} --status Implemented`));
+    assert.match(r.stderr, new RegExp(`specgate apply ${reqId} --status Implemented`));
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

@@ -1393,7 +1393,7 @@ export class ValidateSpecsCommand extends BaseCommand {
             message:
               "The only scenario in this project is the adoption baseline. Nothing the codebase actually does is specified yet.",
             target: "features/adoption/baseline.feature",
-            fix: 'Retro-fill one requirement you already rely on: specgate new "<behaviour>", then a test that mentions it, then specgate done.',
+            fix: 'Retro-fill one requirement you already rely on: specgate new "<behaviour>", then a test that mentions it, then specgate apply.',
           },
         ])
       : lockAdvisories;
@@ -1445,7 +1445,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       if (exempt > 0) {
         this.logFix([
           "A Draft row owes nothing yet, so --strict-tdd skips it. It starts being",
-          "checked the moment its Status leaves Draft — `specgate done <REQ>` does that.",
+          "checked the moment its Status leaves Draft — `specgate apply <REQ>` does that.",
         ]);
       }
     }
@@ -1455,7 +1455,7 @@ export class ValidateSpecsCommand extends BaseCommand {
         "This passes, but it certifies the skeleton, not the code.",
         "  specgate onboard                     # what this codebase already implies",
         '  specgate new "<behaviour>"            # one requirement you already rely on',
-        "  # then a test that mentions REQ-NNN, and: specgate done REQ-NNN",
+        "  # then a test that mentions REQ-NNN, and: specgate apply REQ-NNN",
       ]);
     }
     process.exit(0);

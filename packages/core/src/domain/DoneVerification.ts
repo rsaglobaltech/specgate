@@ -125,12 +125,12 @@ export function planGateCheck(
   return { steps, testsUnverified: cmd === "" };
 }
 
-/** The line `done` prints when nothing ran the project's tests. */
+/** The line `apply` (and `done`) prints when nothing ran the project's tests. */
 export const NO_TEST_COMMAND_WARNING = Object.freeze({
   message: "No test command configured — this checked the specification, not the code.",
   fix: [
     'Configure it once with specgate config set test_cmd "<command>" (or pass',
-    "--test-cmd) so every `done` and `check` runs it. A requirement marked Implemented on a static",
+    "--test-cmd) so every `apply` and `check` runs it. A requirement marked Implemented on a static",
     "check alone is a claim nothing executed.",
   ],
 });
@@ -165,6 +165,6 @@ export function deliveryBlocker(traceContent: string, reqId: string): DeliveryBl
     message: `${reqId} is waiting for an answer (Needs Clarification).`,
     fix:
       "Answer the question that blocks it in its change's questions.md, remove " +
-      '`status="Needs Clarification"` from its `specgate:trace`, write its test, then run `done`.',
+      '`status="Needs Clarification"` from its `specgate:trace`, write its test, then run `specgate apply`.',
   };
 }

@@ -274,7 +274,7 @@ export class DoctorCommand extends BaseCommand {
             "capability drift",
             `${req} is in the ${entry.name} capability spec but has no traceability row`,
             "`specgate matrix` regenerates it from the capability spec" +
-              " — or re-run `specgate change archive`, which writes the row for you."
+              " — or re-run `specgate archive`, which writes the row for you."
           );
         }
       }
@@ -302,7 +302,7 @@ export class DoctorCommand extends BaseCommand {
         this.warn(
           "stale change",
           `${id} has all ${progress.total} tasks checked but is still active`,
-          `Archive it: specgate change archive ${id} --dry-run`
+          `Archive it: specgate archive ${id} --dry-run`
         );
       }
 

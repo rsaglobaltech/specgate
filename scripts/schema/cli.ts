@@ -147,7 +147,7 @@ export function main(argv: string[]): void {
     return io.emit({ schema: { name: to, path: written, from } }, () =>
       process.stdout.write(
         `\n  ✔  ${to} written to ${written}\n     copied from ${from} (${source.source})\n\n` +
-          `  Use it: specgate change new <id> --schema ${to}\n\n`
+          `  Use it: specgate propose <id> --schema ${to}\n\n`
       )
     );
   }

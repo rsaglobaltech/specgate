@@ -150,7 +150,7 @@ export async function main(argv: string[]): Promise<void> {
     return io.fail(NULL_SHAPE, [
       error("alm_pull_unsupported", `Provider '${cfg.provider}' cannot search the board.`, {
         target: cfg.provider,
-        fix: "Open the change by hand: specgate change new <id>, then paste the issue into its proposal.",
+        fix: "Open the change by hand: specgate propose <id>, then paste the issue into its proposal.",
       }),
     ]);
   }

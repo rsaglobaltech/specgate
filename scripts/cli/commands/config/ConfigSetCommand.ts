@@ -192,7 +192,7 @@ export class ConfigSetCommand extends BaseCommand {
       io.emit({ config: { [key]: value } }, () =>
         process.stdout.write(
           `  ✔  ${key} = ${value}\n     ${path.relative(process.cwd(), file) || file}\n` +
-            "     `check` and `done` now run it.\n"
+            "     `check` and `apply` now run it.\n"
         )
       );
       process.exit(EXIT.OK);

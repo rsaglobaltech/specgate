@@ -352,7 +352,7 @@ export class MatrixCommand extends BaseCommand {
             `     ${ui.muted("spec.md now owns status and explicit links (specgate:trace); the matrix is generated.")}\n` +
             ui.next(
               "specgate check",
-              "commit both files — from now on: specgate new · specgate done · specgate check"
+              "commit both files — from now on: specgate propose · specgate apply · specgate check"
             )
         )
     );

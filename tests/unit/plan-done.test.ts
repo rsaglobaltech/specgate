@@ -289,7 +289,7 @@ test("hintFor returns a useful message for each category", () => {
   assert.match(hintFor({ ...sample, category: "NEEDS_FEATURE" }), /Create/);
   assert.match(hintFor({ ...sample, category: "NEEDS_TEST" }), /test/);
   assert.match(hintFor({ ...sample, category: "NEEDS_IMPLEMENTATION" }), /create/);
-  assert.match(hintFor({ ...sample, category: "NEEDS_STATUS_UPDATE" }), /done REQ-007/);
+  assert.match(hintFor({ ...sample, category: "NEEDS_STATUS_UPDATE" }), /apply REQ-007/);
 });
 
 // ── done.setRequirementStatus ──────────────────────────────────────────────────────────
