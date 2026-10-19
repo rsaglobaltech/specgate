@@ -128,7 +128,7 @@ Before requesting a review, confirm:
 - [ ] `npm run lint && npm run format:check` passes
 - [ ] New behaviour is covered by at least one test (unit, BDD, or E2E)
 - [ ] If this is a design decision, an ADR is included (see §3)
-- [ ] Tasks closed by this PR are ticked in [`mejoras/plan-cierre-enterprise.md`](mejoras/plan-cierre-enterprise.md), citing the task ID in the commit
+- [ ] Tasks closed by this PR are ticked in the maintainers' plan (kept outside the repository), citing the task ID in the commit
 - [ ] Public CLI flags / commands are documented in `README.md` and `--help`
 - [ ] No `TODO` placeholders remain in committed files
 
