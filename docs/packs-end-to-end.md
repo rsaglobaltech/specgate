@@ -86,7 +86,7 @@ specgate status
 
 `specgate check` passes: the requirements are Draft, so they owe nothing yet.
 From here the daily loop is the usual one — `status`, a test that names the
-requirement, `done`, `check` — described in
+requirement, `apply`, `check` — described in
 [Build the first requirement](start/scratch-3-build.md) and
 [Prove it](start/scratch-4-prove.md).
 

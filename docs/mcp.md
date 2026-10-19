@@ -69,6 +69,12 @@ Seven of those names — `read_spec`, `list_requirements`,
 `mark_requirement_done` — were published before the rest were generated, and
 keep resolving. The old `specgate_*` names resolve too.
 
+The four verbs of the terminal loop have no tools under their new names yet.
+Over MCP the same loop is `specgate_change_new` (what `specgate propose` does),
+`mark_requirement_done` (`specgate apply <REQ>`), `specgate_status`, and
+`specgate_change_archive` (`specgate archive`) — which refuses, as the terminal
+does, while a requirement the change adds or modifies is not Implemented.
+
 Every tool answers with the command's JSON document: a payload plus `status`,
 a list of diagnostics with a stable `code` and a `fix`. Branch on `code`, never
 on the message. → [The agent contract](specs/agent-contract.md)

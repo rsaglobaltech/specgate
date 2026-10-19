@@ -46,6 +46,12 @@ needs `Bash` to run the project's build, and `Bash(npm:*)` is enough for a Node
 project. It works inside a throwaway git worktree, which is the whole reason the
 harness uses one.
 
+**To watch Claude Code work**, end its pipe with
+`specgate harness events --from claude` (it reads Claude's stream-json output)
+and open `specgate studio` at `/live` — see
+[watch it work](harness.md#a-chain-of-requirements-merged-as-they-pass).
+`specgate explore --agent` has the easier contract `draft --agent` has, above.
+
 ## A tool whose invocation fits none of those
 
 Write a wrapper. It is three lines, and it is the supported answer — not a
