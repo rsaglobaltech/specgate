@@ -57,9 +57,3 @@ export function icon(name: string | undefined, cls = "icon"): string {
     `stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`
   );
 }
-
-export function hasIcon(name: string | undefined): boolean {
-  return Boolean(name && ICONS[name]);
-}
-
-export const ICON_NAMES = Object.keys(ICONS);

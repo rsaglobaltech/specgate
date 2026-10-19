@@ -377,18 +377,12 @@ function isAdvisoryProfile(projectDir, profileName): boolean {
 }
 
 /**
- * Set `test_cmd:` in harness.config.yaml, creating the file when there is none
- * (#68). `check` and `done` read the test command from here, and until this
- * existed only `harness init` wrote it — a command that talks about agents and
- * prompts to a team that does not use the harness. Every other line is kept:
- * the first `test_cmd:` line (or the commented one `harness init` leaves when it
- * detects nothing) is replaced, otherwise the key is appended.
+ * Set a command the gate reads, `test_cmd` or `arch_cmd`, in harness.config.yaml,
+ * creating the file when there is none (#68). `check` and `done` read it from
+ * here. Every other line is kept: the first line for the key (or the commented
+ * one `harness init` leaves when it detects nothing) is replaced, otherwise the
+ * key is appended.
  */
-export function writeHarnessTestCmd(projectDir: string, testCmd: string): string {
-  return writeHarnessCommand(projectDir, "test_cmd", testCmd);
-}
-
-/** The same, for any command key the gate reads: `test_cmd` or `arch_cmd`. */
 export function writeHarnessCommand(
   projectDir: string,
   key: "test_cmd" | "arch_cmd",

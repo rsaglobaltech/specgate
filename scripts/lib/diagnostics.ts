@@ -49,13 +49,3 @@ export function printDiagnostics(diags, stream?) {
   const out = stream || process.stderr;
   for (const d of diags || []) out.write(`${formatDiagnostic(d)}\n`);
 }
-
-/**
- * The failure shape for `--json` mode: one JSON document on stdout carrying the
- * command's null-shape plus the diagnostics, and exit 1. Prose never goes to
- * stdout in JSON mode, so a consumer can always `| jq .`.
- */
-export function failJson(nullShape, diags) {
-  process.stdout.write(`${JSON.stringify({ ...nullShape, status: diags }, null, 2)}\n`);
-  process.exit(1);
-}

@@ -30,3 +30,7 @@ BOOK_PLAN.md
 GEMINI_BOOK_PROMPT.md
 book/
 packages/gradle-plugin/bin/
+
+# Local agent and tool state
+.claude/
+.local/
