@@ -16,12 +16,14 @@ export interface AddRequirementFields {
   [key: string]: any;
 }
 
-export interface AddRequirementResult {
-  ok: boolean;
-  reqId?: string;
-  scenarioId?: string;
-  error?: string;
-}
+/**
+ * Ids are guaranteed on success; a failure carries only its reason. The ids are
+ * spelled out as absent on failure so a caller that reads them before checking
+ * `ok` still compiles, and gets `string | undefined`.
+ */
+export type AddRequirementResult =
+  | { ok: true; reqId: string; scenarioId: string; error?: undefined }
+  | { ok: false; error: string; reqId?: undefined; scenarioId?: undefined };
 
 export class AddRequirementUseCase {
   constructor(private traceRepo: ITraceabilityRepository) {}

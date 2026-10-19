@@ -34,9 +34,9 @@
  * and `validate` fails when it no longer matches its sources.
  */
 
-import { TraceabilityMatrix } from "./TraceabilityMatrix";
-import { buildTraceabilityMarkdown, parseTraceabilityRows } from "./TraceabilityFormat";
-import { parseSpec, parseTraceComment } from "./SpecParser";
+import { TraceRow, TraceabilityMatrix } from "./TraceabilityMatrix";
+import { MatrixRow, buildTraceabilityMarkdown, parseTraceabilityRows } from "./TraceabilityFormat";
+import { SpecNode, parseSpec, parseTraceComment } from "./SpecParser";
 import { specgateTagsByScenario } from "./GherkinTags";
 
 /** First line of a derived matrix. Its presence is what makes a project derived. */
@@ -223,8 +223,8 @@ function scenarioVariants(
 }
 
 /** The matrix rows the sources imply. */
-export function deriveRows(sources: DerivationSources): any[] {
-  const rows: any[] = [];
+export function deriveRows(sources: DerivationSources): TraceRow[] {
+  const rows: TraceRow[] = [];
   for (const req of requirementsIn(sources.spec)) {
     const trace: Record<string, string> = { ...req.trace };
     const explicitTest = Boolean(trace.test);
@@ -235,7 +235,7 @@ export function deriveRows(sources: DerivationSources): any[] {
     const variants = scenarioVariants(trace, scenarios, sources, explicitTest);
 
     for (const t of variants) {
-      const row: any = TraceabilityMatrix.traceRow({ id: req.id, trace: t });
+      const row = TraceabilityMatrix.traceRow({ id: req.id, trace: t });
       if (t.depends) row.dependsOn = String(t.depends).split(",").filter(Boolean);
       if (t.context) row.context = t.context;
       rows.push(row);
@@ -246,7 +246,7 @@ export function deriveRows(sources: DerivationSources): any[] {
   for (const cap of [...(sources.capabilities || [])].sort((a, b) =>
     a.path.localeCompare(b.path)
   )) {
-    let parsed: any;
+    let parsed: SpecNode;
     try {
       parsed = parseSpec(cap.source);
     } catch {
@@ -265,7 +265,7 @@ export function deriveRows(sources: DerivationSources): any[] {
       const scenarios = trace.scn || trace.feature ? [] : taggedScenarios(sources.features, req.id);
       const variants = scenarioVariants(trace, scenarios, sources, explicitTest);
       for (const t of variants) {
-        const row: any = TraceabilityMatrix.traceRow({ ...req, trace: t });
+        const row = TraceabilityMatrix.traceRow({ ...req, trace: t });
         if (t.depends) row.dependsOn = String(t.depends).split(",").filter(Boolean);
         if (t.context) row.context = t.context;
         rows.push(row);
@@ -276,7 +276,7 @@ export function deriveRows(sources: DerivationSources): any[] {
 }
 
 /** The generated `traceability.md`. */
-export function renderDerivedMatrix(rows: any[], projectName?: string): string {
+export function renderDerivedMatrix(rows: readonly MatrixRow[], projectName?: string): string {
   const body = buildTraceabilityMarkdown(rows, "rich").replace(
     "# Traceability Matrix",
     `# Traceability Matrix${projectName ? ` — ${projectName}` : ""}`
@@ -371,7 +371,7 @@ export function renderTraceComment(trace: Record<string, string>): string | null
 
 // ── Comparing, for --check and for migration ─────────────────────────────────
 
-const COLUMNS = [
+const COLUMNS: Array<keyof MatrixRow> = [
   "requirement",
   "scenarioId",
   "featureFile",
@@ -395,12 +395,15 @@ function norm(v: unknown): string {
 }
 
 /** A row as a comparable key, backticks and spacing ignored. */
-export function rowKey(row: any): string {
+export function rowKey(row: MatrixRow): string {
   return COLUMNS.map((c) => norm(row[c])).join(" | ");
 }
 
 /** Rows present on one side and not the other. Empty both ways means equal. */
-export function diffRows(expected: any[], actual: any[]): { missing: string[]; extra: string[] } {
+export function diffRows(
+  expected: readonly MatrixRow[],
+  actual: readonly MatrixRow[]
+): { missing: string[]; extra: string[] } {
   const a = expected.map(rowKey);
   const b = actual.map(rowKey);
   const missing = a.filter((k) => !b.includes(k));
@@ -409,7 +412,7 @@ export function diffRows(expected: any[], actual: any[]): { missing: string[]; e
 }
 
 /** The rows a matrix file holds, in the shape `deriveRows` returns. */
-export function rowsOf(matrixContent: string): any[] {
+export function rowsOf(matrixContent: string): MatrixRow[] {
   const parsed = parseTraceabilityRows(matrixContent);
   return parsed.mode === "rich" ? parsed.rows : [];
 }
@@ -428,7 +431,7 @@ export function traceValueWritable(v: string): boolean {
 
 export function fieldsToReproduce(
   req: DerivedRequirement,
-  rows: any[],
+  rows: readonly MatrixRow[],
   sources: DerivationSources
 ): { fields: Record<string, string> } | { reason: string } {
   const derived = deriveRows({
@@ -455,9 +458,9 @@ export function fieldsToReproduce(
   }
 
   const row = rows[0];
-  const first = derived[0] || {};
+  const first: MatrixRow = derived[0] || {};
   const fields: Record<string, string> = {};
-  const set = (key: string, column: string, value?: string) => {
+  const set = (key: string, column: keyof MatrixRow, value?: string) => {
     if (norm(row[column]) !== norm(first[column])) fields[key] = value ?? norm(row[column]);
   };
   if (rows.length === 1) {

@@ -1,5 +1,16 @@
-import { parseSpec, parseDelta, requirementKey, renderSpec, REQ_ID, blockText } from "./SpecParser";
-import { error, warning } from "./Diagnostic";
+import {
+  DeltaNode,
+  RenderableSpec,
+  RequirementNode,
+  SpecNode,
+  parseSpec,
+  parseDelta,
+  requirementKey,
+  renderSpec,
+  REQ_ID,
+  blockText,
+} from "./SpecParser";
+import { Diagnostic, error, warning } from "./Diagnostic";
 // RFC2119 lives in RequirementSyntax.ts now (F6) — this is the only importer,
 // so nothing needs a re-export.
 import { RFC2119 } from "./RequirementSyntax";
@@ -33,19 +44,46 @@ export function isPlaceholderStep(step: string): boolean {
   return /^(todo|tbd|\.\.\.|…|<[^>]*>)$/i.test(body);
 }
 
+/** What `DeltaSpec.validate` needs besides the delta. */
+export interface DeltaValidateOptions {
+  /** Where the delta lives, for the diagnostics. */
+  file?: string;
+  /** The capability spec the delta applies to; checked against when given. */
+  specSource?: string | null;
+  /**
+   * Passed by `change validate`, not read here: the checks are the same either
+   * way, and what `--strict` makes of a warning is the caller's decision.
+   */
+  strict?: boolean;
+}
+
+/** What `DeltaSpec.apply` produced: the new spec, and which keys moved. */
+export interface AppliedDelta {
+  markdown: string;
+  spec: SpecNode;
+  applied: { added: string[]; modified: string[]; removed: string[] };
+  /** Every requirement is gone: the capability itself is being retired. */
+  retired: boolean;
+}
+
 export class DeltaSpec {
-  public static validate(deltaSource: string, opts?: any) {
+  public static validate(
+    deltaSource: string,
+    opts?: DeltaValidateOptions
+  ): { delta: DeltaNode; diagnostics: Diagnostic[] } {
     const o = opts || {};
     const file = o.file || "spec.md";
-    const diags: any[] = [];
-    const delta: any = parseDelta(deltaSource);
+    const diags: Diagnostic[] = [];
+    const delta = parseDelta(deltaSource);
 
     for (const unknown of delta.unknownSections) {
       diags.push(
         error("delta_unknown_section", `Unknown delta section: "## ${unknown.heading}".`, {
           file,
           line: unknown.line,
-          target: unknown.heading,
+          // Null only for requirements above the first heading; the envelope
+          // has always carried that null through as it is.
+          target: unknown.heading as string,
           fix: `Use one of: ${VALID_SECTIONS.join(", ")}.`,
         })
       );
@@ -62,7 +100,7 @@ export class DeltaSpec {
       );
     }
 
-    const seen = new Map();
+    const seen = new Map<string, number>();
     for (const req of all) {
       const key = requirementKey(req);
       if (seen.has(key)) {
@@ -178,8 +216,8 @@ export class DeltaSpec {
     }
 
     if (o.specSource !== undefined && o.specSource !== null) {
-      const spec: any = parseSpec(o.specSource);
-      const existing = new Set(spec.requirements.map((r: any) => requirementKey(r)));
+      const spec = parseSpec(o.specSource);
+      const existing = new Set(spec.requirements.map((r) => requirementKey(r)));
 
       for (const req of delta.added) {
         if (existing.has(requirementKey(req))) {
@@ -202,7 +240,8 @@ export class DeltaSpec {
           diags.push(
             error(
               "unknown_requirement",
-              `${req.op.toUpperCase()} requirement "${req.heading}" does not exist in the capability spec.`,
+              // Non-null: `parseDelta` sets `op` on every requirement it buckets.
+              `${req.op!.toUpperCase()} requirement "${req.heading}" does not exist in the capability spec.`,
               {
                 file,
                 line: req.line,
@@ -221,10 +260,14 @@ export class DeltaSpec {
     return { delta, diagnostics: diags };
   }
 
-  public static apply(specSource: string | null, deltaSource: string, opts?: any) {
+  public static apply(
+    specSource: string | null,
+    deltaSource: string,
+    opts?: { title?: string }
+  ): AppliedDelta {
     const o = opts || {};
-    const delta: any = parseDelta(deltaSource);
-    const spec: any = specSource
+    const delta = parseDelta(deltaSource);
+    const spec: SpecNode = specSource
       ? parseSpec(specSource)
       : { title: o.title || "Specification", purpose: "", requirements: [], sections: [] };
 
@@ -232,7 +275,9 @@ export class DeltaSpec {
     if (!spec.title) spec.title = delta.title || o.title || "Specification";
 
     const applied = { added: [] as string[], modified: [] as string[], removed: [] as string[] };
-    const byKey = new Map(spec.requirements.map((r: any) => [requirementKey(r), r]));
+    const byKey = new Map<string, RequirementNode>(
+      spec.requirements.map((r) => [requirementKey(r), r])
+    );
 
     for (const req of delta.removed) {
       const key = requirementKey(req);
@@ -256,23 +301,23 @@ export class DeltaSpec {
       }
     }
 
-    const order = spec.requirements
-      .map((r: any) => requirementKey(r))
-      .filter((k: string) => byKey.has(k));
+    const order = spec.requirements.map((r) => requirementKey(r)).filter((k) => byKey.has(k));
     for (const key of byKey.keys()) {
       if (!order.includes(key)) order.push(key);
     }
-    spec.requirements = order.map((k: string) => byKey.get(k));
+    // Non-null: `order` holds only keys `byKey` has.
+    spec.requirements = order.map((k) => byKey.get(k)!);
 
     return {
-      markdown: renderSpec(spec),
+      // Parsed, so every block is one string by now — what the renderer reads.
+      markdown: renderSpec(spec as RenderableSpec),
       spec,
       applied,
       retired: spec.requirements.length === 0 && applied.removed.length > 0,
     };
   }
 
-  private static stripOp(req: any) {
+  private static stripOp(req: RequirementNode): Omit<RequirementNode, "op"> {
     const { op: _op, ...rest } = req;
     return rest;
   }
