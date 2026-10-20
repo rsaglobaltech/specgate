@@ -20,7 +20,7 @@ export abstract class HttpAlmClient implements AlmClient {
   abstract readonly capabilities: AlmCapabilities;
 
   protected readonly baseUrl: string;
-  private readonly fetchImpl: FetchLike;
+  protected readonly fetchImpl: FetchLike;
 
   protected constructor(cfg: AlmConfig, fetchImpl?: FetchLike) {
     // A trailing slash in the config is invisible until it produces
@@ -52,12 +52,38 @@ export abstract class HttpAlmClient implements AlmClient {
     what: string,
     init?: Record<string, unknown>
   ): Promise<HttpResponse> {
-    const res = await this.fetchImpl(`${this.baseUrl}${path}`, init);
-    if (!res.ok) {
+    const res = await this.fetchImpl(`${await this.apiBase()}${path}`, init);
+    const status = this.refusedAs(res) ?? (res.ok ? undefined : res.status);
+    if (status !== undefined) {
       const body = await res.text().catch(() => "");
-      throw new Error(`${what} failed: HTTP ${res.status} ${body.slice(0, 300)}`);
+      const fix = this.fixFor(status);
+      throw new Error(
+        `${what} failed: HTTP ${status} ${body.slice(0, 300)}` + (fix ? `\nFix: ${fix}` : "")
+      );
     }
     return res;
+  }
+
+  /**
+   * Where API requests go. The site itself, unless a provider's API lives
+   * elsewhere — Jira's scoped tokens only work through Atlassian's gateway.
+   */
+  protected async apiBase(): Promise<string> {
+    return this.baseUrl;
+  }
+
+  /**
+   * A response that says yes but means no. Some servers answer a refused
+   * credential as an anonymous request — 200 and an empty result — and say
+   * so only in a header; a provider maps that to the status it means.
+   */
+  protected refusedAs(_res: HttpResponse): number | undefined {
+    return undefined;
+  }
+
+  /** A provider's own advice for a refused request; none by default. */
+  protected fixFor(_status: number): string | undefined {
+    return undefined;
   }
 
   /** The same, returning the parsed body, which is what every caller wants. */

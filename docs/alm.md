@@ -15,36 +15,43 @@ rather than reconciled.
 ## Configure
 
 `alm.config.yaml` at the project root. **Tokens never live in this file** —
-only the *name* of the environment variable that holds them, so the file is
+only the _name_ of the environment variable that holds them, so the file is
 safe to commit and CI supplies the secret.
 
 ```yaml
 alm_version: 1
-provider: jira            # jira | azure
+provider: jira # jira | azure
 base_url: https://acme.atlassian.net
 project_key: HIE
-token_env: JIRA_TOKEN     # env var holding the API token
-user_env: JIRA_USER       # jira only: env var holding the account email
+token_env: JIRA_TOKEN # env var holding the API token
+user_env: JIRA_USER # jira only: env var holding the account email
+cloud_id: auto # jira only: for a token created with scopes
 ```
 
 Which keys a provider reads is the provider's own declaration, and they differ:
 
 <!-- specgate:alm-provider-table — checked by tests/unit/alm-conformance.test.ts -->
 
-| Provider | Required | Optional |
-| --- | --- | --- |
-| `jira` | `base_url`, `project_key`, `token_env` | `user_env`, `issue_type` |
-| `azure` | `base_url`, `project_key`, `token_env` | `issue_type`, `done_state` |
-| `github` | `repo`, `token_env` | `base_url` |
+| Provider | Required                               | Optional                             |
+| -------- | -------------------------------------- | ------------------------------------ |
+| `jira`   | `base_url`, `project_key`, `token_env` | `user_env`, `issue_type`, `cloud_id` |
+| `azure`  | `base_url`, `project_key`, `token_env` | `issue_type`, `done_state`           |
+| `github` | `repo`, `token_env`                    | `base_url`                           |
 
-Three asymmetries worth knowing, because the first two used to fail silently:
+Four asymmetries worth knowing, because the first two used to fail silently:
 
 - **`done_state` is Azure-only.** Jira's workflows are per-project, so "done"
-  there is a status *category* and closing means finding a transition into it.
+  there is a status _category_ and closing means finding a transition into it.
   Setting `done_state` on a Jira project does nothing — and `sync` now says so
   before its first request.
 - **`user_env` is Jira-only**, because Jira Cloud's Basic auth pairs the token
   with an account email. It defaults to `JIRA_USER` when omitted.
+- **`cloud_id` is Jira-only.** A token created _with scopes_ — the kind
+  Atlassian now offers first — is refused by the site itself
+  (`AUTHENTICATED_FAILED`) and only works through Atlassian's gateway,
+  `https://api.atlassian.com/ex/jira/<cloud id>`. `cloud_id: auto` reads the
+  id from the site, without sending the token there; links to issues keep
+  `base_url`. A 401 from the site names this fix.
 - **GitHub takes `repo`, not `project_key`**, and its `base_url` is optional.
   Its unit is a repository — `repo: acme/widgets` — and github.com has one API
   host, so only GitHub Enterprise Server needs a base URL. It has no
@@ -52,11 +59,11 @@ Three asymmetries worth knowing, because the first two used to fail silently:
   closed).
 
 Any key that the configured provider does not read is reported as a warning
-with a fix, naming the provider that *would* have read it.
+with a fix, naming the provider that _would_ have read it.
 
 ### Closed is not always done, on GitHub
 
-GitHub records *why* an issue was closed. Closing as **not planned** means the
+GitHub records _why_ an issue was closed. Closing as **not planned** means the
 team decided against the work; closing as **completed** means it happened. Only
 the second reads as `done` here.
 
@@ -93,7 +100,7 @@ ALM credential** — a connector cannot talk to a board without one. The trust
 model is exactly that of a devDependency, and it deserves the same scrutiny:
 read it, pin it, and treat an update like any other dependency update.
 
-Three things the CLI does so that it is no *worse* than a devDependency:
+Three things the CLI does so that it is no _worse_ than a devDependency:
 
 - **Nothing is ever installed automatically.** The package must already be in
   your `node_modules`. Editing a config file can never fetch and run new code —
@@ -119,8 +126,8 @@ rather than fail at the first request.
 
 ## Bringing work in: `alm pull`
 
-The request every team makes after seeing `sync` is the other direction — *the
-product owner opens the ticket, make it appear in the repo*. It does, as a
+The request every team makes after seeing `sync` is the other direction — _the
+product owner opens the ticket, make it appear in the repo_. It does, as a
 **change**, never as a matrix row:
 
 ```bash

@@ -115,6 +115,8 @@ export type FetchLike = (url: string, init?: Record<string, unknown>) => Promise
 export interface HttpResponse {
   readonly ok: boolean;
   readonly status: number;
+  /** Absent in older fakes; a provider that reads a header must cope with that. */
+  readonly headers?: { get(name: string): string | null };
   json(): Promise<unknown>;
   text(): Promise<string>;
 }

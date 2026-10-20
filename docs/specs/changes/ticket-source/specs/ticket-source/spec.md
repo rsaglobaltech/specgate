@@ -19,11 +19,11 @@ The system SHALL search Jira Cloud through `GET /rest/api/3/search/jql`, asking 
 - WHEN the developer runs `specgate alm pull --label spec-driven --dry-run`
 - THEN it lists KAN-13 and KAN-16, and no request went to `/rest/api/3/search?`
 
-<!-- specgate:trace status=Draft feature=features/ticket-source/REQ-143.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/ticket-source/REQ-143.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-144 — Scoped tokens reach Jira through the gateway
 
-The system SHALL, when `alm.config.yaml` sets `cloud_id` to a site id or to `auto`, send every Jira API request to `https://api.atlassian.com/ex/jira/<cloud id>`, resolving `auto` once from the unauthenticated `<base_url>/_edge/tenant_info` and sending no credential with that request, while links to issues keep `base_url`; and SHALL, when a request to the site itself is refused with HTTP 401, name `cloud_id: auto` in the fix.
+The system SHALL, when `alm.config.yaml` sets `cloud_id` to a site id or to `auto`, send every Jira API request to `https://api.atlassian.com/ex/jira/<cloud id>`, resolving `auto` once from the unauthenticated `<base_url>/_edge/tenant_info` and sending no credential with that request, while links to issues keep `base_url`; and SHALL, when a request to the site itself is refused with HTTP 401 or answered as anonymous — a response whose `X-Seraph-LoginReason` is `AUTHENTICATED_FAILED`, which Jira returns with HTTP 200 and no issues — fail and name `cloud_id: auto` in the fix, instead of reporting that nothing was found.
 
 #### Scenario: SCN-144a — A scoped token
 
@@ -37,7 +37,13 @@ The system SHALL, when `alm.config.yaml` sets `cloud_id` to a site id or to `aut
 - WHEN the developer runs `specgate alm pull --dry-run`
 - THEN it exits 1 and the message says to set `cloud_id: auto` for a token created with scopes
 
-<!-- specgate:trace status=Draft feature=features/ticket-source/REQ-144.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
+#### Scenario: SCN-144c — Answered as anonymous
+
+- GIVEN the same config without `cloud_id`, and a site whose search answers HTTP 200 with no issues and `X-Seraph-LoginReason: AUTHENTICATED_FAILED`
+- WHEN the developer runs `specgate alm pull --dry-run`
+- THEN it exits 1 naming `cloud_id: auto`, and does not say "No open issues"
+
+<!-- specgate:trace status=Implemented feature=features/ticket-source/REQ-144.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-145 — A ticket is read into its parts
 
