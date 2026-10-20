@@ -16,9 +16,12 @@ through the gate, then `specgate archive` the draft
 ## 1. Keep the brief in the repository
 
 Save it as `docs/brief.md`, as the client wrote it. Add a front matter that
-names who uses the product and how — `specgate propose --from-brief` (or its
-old name, `specgate draft`) explains every field and checks them, and `specgate draft --agent "claude -p"` has your agent propose
-them. Step by step: [Write the brief](start/write-the-brief.md).
+names who uses the product and how, and a section per module with its rules,
+examples and questions. `specgate propose --from-brief` explains every field,
+`specgate propose --from-brief --agent "claude -p"` has your agent propose the
+fields and then the sections from the client's text, and
+`specgate propose --from-brief --check` checks the brief before anything is
+drafted. Step by step: [Write the brief](start/write-the-brief.md).
 
 ```markdown
 ---
@@ -33,10 +36,18 @@ modules: [calendario, reservas, cupones]
 # The brief, unchanged
 
 …
-```
 
-If the brief has screenshots, describe what they show below it — values that
-only appear in an image are otherwise invisible to the checklist.
+## Module: reservas
+
+Rules
+- A slot is booked by one Cliente at a time.
+
+Examples
+- The one where Ana books the 10:00 slot of "Corte de pelo".
+
+Questions
+- Can a Cliente book two slots in a row?
+```
 
 ## 2. Draft one module
 
@@ -45,17 +56,17 @@ specgate propose --from-brief            # the brief's modules: where each stand
 specgate propose --from-brief reservas   # opens draft-reservas, linked to the brief
 ```
 
-`specgate draft` and `specgate draft reservas` are the same commands under
-their old names; this page uses them where a flag only `draft` lists. Opening
+`specgate draft` is the old name of `specgate propose --from-brief`; both
+work. Opening
 a module creates the draft — a change folder kept apart from
 the specification until a person reviews it — and writes `DRAFTING.md` in it:
-the module's scope, the reserved ids, a scenario per actor and surface from the
+the module's section of the brief with its values and questions, the reserved ids, a scenario per actor and surface from the
 front matter, and the formats below. That file is the prompt. Tell your agent
 `Draft the reservas module: follow docs/specs/changes/draft-reservas/DRAFTING.md`,
 or let Specgate call it:
 
 ```bash
-specgate draft reservas --agent "claude -p"
+specgate propose --from-brief reservas --agent "claude -p"
 ```
 
 The prompt goes to the agent on standard input, or in a file when the command
@@ -81,10 +92,11 @@ next to it:
 Run the same command again — on a draft that exists, it is the check:
 
 ```bash
-specgate draft reservas
+specgate propose --from-brief reservas
 ```
 
-(`specgate draft --check <change-id>` runs the same checklist on any change.)
+(`specgate propose --from-brief --check <change-id>` runs the same checklist on
+any change; `--check` alone checks the brief itself.)
 
 | Code | Asks                                                                                                                                           |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------- |

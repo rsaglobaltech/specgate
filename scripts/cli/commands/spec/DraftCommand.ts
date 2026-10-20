@@ -609,6 +609,14 @@ function nextFor(s: ModuleStatus | undefined): string {
 }
 
 export class DraftCommand extends BaseCommand {
+  /** How the person called it, for the header: `draft`, or `propose --from-brief`. */
+  private readonly verb: string;
+
+  constructor(args: string[] = [], verb = "draft") {
+    super(args);
+    this.verb = verb;
+  }
+
   public execute(): void {
     const io0 = agentIo(wantsJson(this.args));
     let o: DraftOptions;
@@ -655,7 +663,7 @@ export class DraftCommand extends BaseCommand {
     // (a) No brief: what one is, and how to get one.
     if (text === undefined) {
       if (!opts.json) {
-        process.stdout.write(ui.header("draft") + `${noBriefExplanation(rel)}\n`);
+        process.stdout.write(ui.header(this.verb) + `${noBriefExplanation(rel)}\n`);
         process.exitCode = 1;
         return;
       }
@@ -685,7 +693,7 @@ export class DraftCommand extends BaseCommand {
         },
         () =>
           process.stdout.write(
-            ui.header("draft", rel) +
+            ui.header(this.verb, rel) +
               frontMatterExplanation(rel) +
               "\n" +
               ui.section("Or let your agent propose it") +
@@ -714,7 +722,7 @@ export class DraftCommand extends BaseCommand {
         },
         () => {
           const out = process.stdout;
-          out.write(ui.header("draft", rel));
+          out.write(ui.header(this.verb, rel));
           out.write(
             `  The front matter at the top of ${rel} needs ${problems.length} fix(es):\n\n`
           );
@@ -737,7 +745,7 @@ export class DraftCommand extends BaseCommand {
         },
         () => {
           const out = process.stdout;
-          out.write(ui.header("draft", rel));
+          out.write(ui.header(this.verb, rel));
           out.write(`  ${rel} needs ${errors.length} fix(es) before a module is drafted:\n\n`);
           writeBriefFindings(errors);
           out.write(
@@ -759,7 +767,7 @@ export class DraftCommand extends BaseCommand {
 
     io.emit({ draft: { brief: rel, modules: states, next }, status: findings }, () => {
       const out = process.stdout;
-      out.write(ui.header("draft", rel));
+      out.write(ui.header(this.verb, rel));
       if (product) out.write(ui.kv("Product", ui.bold(product[1].trim()), 10));
       const archived = states.filter((s) => s.state === "archived").length;
       out.write(ui.kv("Progress", ui.progress(archived, states.length, "archived"), 10));
@@ -809,7 +817,7 @@ export class DraftCommand extends BaseCommand {
       },
       () => {
         const out = process.stdout;
-        out.write(ui.header("draft --check", brief.rel));
+        out.write(ui.header(`${this.verb} --check`, brief.rel));
         writeBriefFindings(findings);
         out.write(
           errors > 0
@@ -847,7 +855,7 @@ export class DraftCommand extends BaseCommand {
       { draft: { brief: rel, written: true, next: "specgate propose --from-brief --check" } },
       () =>
         process.stdout.write(
-          ui.header("draft --new-brief") +
+          ui.header(`${this.verb} --new-brief`) +
             ui.ok(`Wrote ${rel} — a brief to fill in.`) +
             "\n  Fill it in, in your own words:\n" +
             "    1. The four fields at the top — product, surfaces, actors, modules.\n" +
@@ -893,7 +901,7 @@ export class DraftCommand extends BaseCommand {
         },
         () =>
           process.stdout.write(
-            ui.header("draft --agent", brief.rel) +
+            ui.header(`${this.verb} --agent`, brief.rel) +
               ui.ok(
                 `The front matter of ${brief.rel} is already there and complete — nothing for the agent to do.`
               ) +
@@ -910,7 +918,7 @@ export class DraftCommand extends BaseCommand {
     const agent = withWritePermission(opts.agent);
     if (!opts.json) {
       process.stdout.write(
-        ui.header("draft --agent", brief.rel) +
+        ui.header(`${this.verb} --agent`, brief.rel) +
           agentLine(agent.command, `is proposing the front matter of ${brief.rel}`, agent.added)
       );
     }
@@ -1013,7 +1021,7 @@ export class DraftCommand extends BaseCommand {
     const agent = withWritePermission(opts.agent);
     if (!opts.json) {
       process.stdout.write(
-        ui.header("draft --agent", brief.rel) +
+        ui.header(`${this.verb} --agent`, brief.rel) +
           agentLine(agent.command, `is proposing the module sections of ${brief.rel}`, agent.added)
       );
     }
@@ -1104,7 +1112,7 @@ export class DraftCommand extends BaseCommand {
         },
         () =>
           process.stdout.write(
-            ui.header(`draft ${opts.module}`) +
+            ui.header(`${this.verb} ${opts.module}`) +
               ui.ok(
                 `${opts.module} is already drafted and archived ${ui.muted(`(${status.archivedAs})`)}`
               ) +
@@ -1181,7 +1189,7 @@ export class DraftCommand extends BaseCommand {
           ];
           const w = Math.max(...files.map((r) => r[0].length));
           out.write(
-            ui.header(`draft ${opts.module}`, brief.rel) +
+            ui.header(`${this.verb} ${opts.module}`, brief.rel) +
               ui.ok(
                 `Draft ${ui.bold(opened.changeId)} opened ` +
                   ui.muted(`· REQ ids ${opened.reqRange[0]}…${opened.reqRange[1]} reserved`)
@@ -1222,7 +1230,7 @@ export class DraftCommand extends BaseCommand {
     const agent = withWritePermission(opts.agent);
     if (!opts.json) {
       process.stdout.write(
-        ui.header(`draft ${opts.module}`, brief) +
+        ui.header(`${this.verb} ${opts.module}`, brief) +
           (created.length ? ui.ok(`Draft ${changeId} opened, linked to ${brief}.`) : "") +
           agentLine(agent.command, `is drafting ${opts.module}`, agent.added)
       );
@@ -1292,7 +1300,7 @@ export class DraftCommand extends BaseCommand {
         },
         () =>
           process.stdout.write(
-            (afterAgent ? "\n" : ui.header(`draft ${opts.module}`, brief)) +
+            (afterAgent ? "\n" : ui.header(`${this.verb} ${opts.module}`, brief)) +
               (afterAgent
                 ? ui.fail("The agent ran, but the draft is still the placeholder.") +
                   ui.fix(NO_WRITE_HINT) +
@@ -1336,7 +1344,7 @@ export class DraftCommand extends BaseCommand {
       },
       () => {
         const out = process.stdout;
-        out.write(afterAgent ? "\n" : ui.header(`draft ${opts.module}`, brief));
+        out.write(afterAgent ? "\n" : ui.header(`${this.verb} ${opts.module}`, brief));
         writeFindings(report, diags);
         const dir = `${CHANGES.split(path.sep).join("/")}/${changeId}`;
         const steps: Array<string | [string, string]> = [];
@@ -1404,7 +1412,7 @@ export class DraftCommand extends BaseCommand {
       },
       () => {
         const out = process.stdout;
-        out.write(ui.header(`draft --check ${opts.check}`));
+        out.write(ui.header(`${this.verb} --check ${opts.check}`));
         writeFindings(report, status);
         const skipped = report.skipped.length;
         out.write(

@@ -120,7 +120,9 @@ function verbUsage(sub: string) {
         `  ${c.bold}USAGE${c.reset}\n` +
         `    ${c.cyan}specgate propose${c.reset} <change-id> [--capability <name>] [--from-value-drift <REQ:id>]\n` +
         `                     [--full] [--reserve <n>] [--project-dir <path>] [--json]\n` +
-        `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n\n` +
+        `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n` +
+        `    ${c.cyan}specgate propose --from-brief${c.reset} --check | --new-brief | --agent <cmd>\n` +
+        `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n\n` +
         `  Opens docs/specs/changes/<change-id>/ — proposal, tasks, a reserved REQ range and a\n` +
         `  delta for the capability (named after the change unless --capability says).\n` +
         `  Then: write the delta, a test that names each requirement, the code; specgate apply.\n\n` +

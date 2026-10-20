@@ -9,7 +9,10 @@ import { DraftCommand } from "./cli/commands/spec/DraftCommand";
  */
 export function propose(argv: string[]): void {
   if (argv.includes("--from-brief")) {
-    new DraftCommand(argv.filter((a) => a !== "--from-brief")).execute();
+    new DraftCommand(
+      argv.filter((a) => a !== "--from-brief"),
+      "propose --from-brief"
+    ).execute();
     return;
   }
   new CliCommand(["new", ...argv], "propose").execute();

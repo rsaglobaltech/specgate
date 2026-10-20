@@ -8,6 +8,49 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+A brief shaped like what it becomes, checked before any agent drafts from it
+(ADR-0038).
+
+### Changed
+
+- **A draft is not opened over a broken brief.** `propose --from-brief
+  <module>` refuses with `brief_not_ready` while the brief has an error: an
+  empty body, an empty module section, a module without its section once the
+  brief uses sections, or rules without examples. A brief with no module
+  sections — a pasted email — drafts as before.
+- **`--new-brief` writes cards.** Why, a glossary, a `## Module:` section with
+  Rules, Examples and Questions, and notes, in place of the six sections.
+
+### Added
+
+- **Brief cards** ([ADR-0038](docs/specs/adr/0038-brief-cards.md), change `brief-cards`).
+  - `specgate propose --from-brief --check`: rules B1–B11 on the brief, each
+    with its fix. Errors (B1–B4) stop a draft; warnings (B5–B11) name vague
+    words, promises without a number, technology in a rule, modules too big,
+    actors never mentioned, non-goals in a rule, and conditions placed last
+    (EARS).
+  - `non_goals: [...]` in the front matter.
+  - `DRAFTING.md` quotes the module's section and lists its values and
+    questions: a rule becomes a requirement, an example a scenario, a question
+    a `questions.md` row.
+  - `propose --from-brief --agent` proposes the module sections from pasted
+    notes, once the fields are complete; a lost line puts the brief back
+    (`draft_brief_text_lost`).
+  - `propose --help` says when no brief is needed.
+- **"Write the brief" in eight steps**, with a glossary, the EARS patterns and
+  the whole Lingo example, its outputs recorded.
+
+### Fixed
+
+- **Front matter shapes are reported as shapes.** `actors: [Admin]` was "There
+  is no `actors:` list" and `surfaces: web` passed silently; both are now
+  `brief_wrong_shape` with the line to write.
+- **D6 no longer reads HTML comments as the brief.** A template's hint such as
+  "e.g. 48 hours" made 48 look stated.
+- **`explore` prints a project snapshot**, no longer called a brief.
+- **The guides use `propose --from-brief`** where they still said `draft`, and
+  forja's guide follows propose → apply → archive.
+
 ## [0.21.0] — 2026-10-20
 
 The daily loop becomes four verbs over the same gate (ADR-0035), the gate stops

@@ -60,7 +60,7 @@ adoption failed (no network, for example), forja prints those commands among the
 instead. Either way, the next steps end with:
 
 ```bash
-npx specgate draft    # after you fill in docs/brief.md — see docs/specgate.md
+npx specgate propose --from-brief   # after you fill in docs/brief.md — see docs/specgate.md
 npx specgate          # where the specification stands, and what to run next
 ```
 
@@ -72,31 +72,32 @@ and `docs/specs/traceability.md`.
 The flow below is the one in the generated `docs/specgate.md`. Run `npx specgate` on its own whenever
 you lose track: it shows where the specification stands and the command to run next.
 
-1. **Write the brief.** Paste the client's brief into `docs/brief.md` and fill in the four fields.
-   `npx specgate draft` explains each field; `npx specgate draft --agent "claude -p"` lets your agent
-   propose them.
+1. **Write the brief.** Paste the client's brief into `docs/brief.md` and fill in the four fields
+   and a section per module. `npx specgate propose --from-brief` explains each field;
+   `npx specgate propose --from-brief --agent "claude -p"` lets your agent propose them;
+   `npx specgate propose --from-brief --check` checks the brief.
 2. **Draft a module.** Your agent writes the requirements and scenarios, and Specgate checks them
    against the brief:
 
    ```bash
-   npx specgate draft orders --agent "claude -p"
+   npx specgate propose --from-brief orders --agent "claude -p"
    ```
 
-   Without an agent, `npx specgate draft orders` prints the line to paste into one. Repeat until it
+   Without an agent, `npx specgate propose --from-brief orders` prints the line to paste into one. Repeat until it
    says *Ready to review*.
 3. **Review it** with whoever knows the business. The open questions go to the client.
-4. **Archive it.** The requirements join the specification:
+4. **Build each requirement, test first.** A test that names `REQ-007` is the link. `forja add
+   usecase` writes the use case and that test for you; see the next section.
+5. **Deliver it.** Specgate refuses while the suite is red:
 
    ```bash
-   npx specgate change archive draft-orders
+   npx specgate apply REQ-007
    ```
 
-5. **Build each requirement, test first.** A test that names `REQ-007` is the link. `forja add
-   usecase` writes the use case and that test for you; see the next section.
-6. **Close the requirement.** Specgate refuses while the suite is red:
+6. **Archive the module** once all its requirements are delivered; they join the specification:
 
    ```bash
-   npx specgate done REQ-007
+   npx specgate archive draft-orders
    ```
 
 7. **Before every pull request**, run the gate:
@@ -149,7 +150,7 @@ The output names the requirement, the scenario file when Specgate reports one, a
 | `--no-spec` | no requirement and no id in the test |
 | `--dry-run` | shows the files; creates no requirement |
 
-`--req` works for requirements that came out of `specgate draft`: the archived module already has
+`--req` works for requirements that came out of `specgate propose --from-brief`: the archived module already has
 `REQ-007`, and you want the code for it.
 
 ```bash

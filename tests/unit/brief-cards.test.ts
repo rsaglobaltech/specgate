@@ -20,6 +20,7 @@ import type { CliResult } from "../helpers/cli";
 const { checkBrief } = require("../../scripts/draft/brief-check");
 const { keepsEveryLine } = require("../../scripts/draft/brief-setup");
 const { readBriefBody, cardValues } = require("../../packages/core/src/domain/BriefCards");
+const { LINGO_EXAMPLE } = require("../../scripts/docs/record-journey");
 
 const ROOT_DIR = path.resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -481,6 +482,8 @@ test("REQ-142 SCN-142a: the page's example brief passes --check", (t: TestContex
   const page = fs.readFileSync(PAGE, "utf8");
   const m = /<!-- specgate:example-brief -->\s*```markdown\n([\s\S]*?)\n```/.exec(page);
   assert.ok(m, "the page marks its example brief");
+  // The example is the one the recorder runs, so the outputs on the page are its own.
+  assert.equal(m![1] + "\n", LINGO_EXAMPLE);
   const { cli } = project(t, m![1] + "\n");
   const r = cli("propose", "--from-brief", "--check");
   assert.equal(r.status, 0, r.stdout);

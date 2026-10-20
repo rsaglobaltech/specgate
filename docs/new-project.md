@@ -70,8 +70,10 @@ npx specgate propose --from-brief            # the brief's modules, and the next
 npx specgate propose --from-brief <module>   # opens it, linked to the brief, with DRAFTING.md
 ```
 
-`specgate draft` and `specgate draft <module>` are the same commands under
-their older name; the checks and the agent option below are spelled with it.
+`specgate draft` is the older name of `specgate propose --from-brief`; both
+work. Before the first module, `specgate propose --from-brief --check` checks
+the brief itself: its fields, a section per module, rules with examples
+([Write the brief](start/write-the-brief.md)).
 
 One module per draft: a reviewer reads ten requirements, not sixty
 (`--reserve 12` for a bigger one).
@@ -80,7 +82,7 @@ One module per draft: a reviewer reads ten requirements, not sixty
 
 Tell your agent `Draft the <module> module: follow
 docs/specs/changes/draft-<module>/DRAFTING.md` — or run
-`specgate draft <module> --agent "claude -p"`. The agent writes
+`specgate propose --from-brief <module> --agent "claude -p"`. The agent writes
 `specs/<module>/spec.md` and two files next to it:
 
 - **`assumptions.md`** — every value the brief does not give, and the
@@ -98,7 +100,7 @@ every pilot found by running the product.
 ### 7. Check it
 
 ```bash
-npx specgate draft <module>
+npx specgate propose --from-brief <module>
 ```
 
 Twelve rules, D1–D12: a scenario per requirement and per surface, values that
