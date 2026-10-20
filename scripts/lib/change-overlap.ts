@@ -30,9 +30,15 @@ function git(dir: string, args: string[]) {
 
 const isOpen = (changeId: string) => changeId !== "archive" && !changeId.startsWith(".");
 
-/** The requirements a delta's text modifies or removes. */
-function rewritten(lines: string[]): string[] {
-  const out: string[] = [];
+/** What a delta does to requirements: the ones it rewrites, and the ids it adds. */
+interface Touches {
+  rewrites: Set<string>;
+  adds: Set<string>;
+}
+
+const touches = (): Touches => ({ rewrites: new Set(), adds: new Set() });
+
+function read(lines: string[], into: Touches): void {
   let section = "";
   for (const line of lines) {
     const s = SECTION.exec(line);
@@ -41,10 +47,13 @@ function rewritten(lines: string[]): string[] {
       continue;
     }
     const r = REQUIREMENT.exec(line);
-    if (r && (section === "MODIFIED" || section === "REMOVED")) out.push(r[1]);
+    if (!r) continue;
+    if (section === "MODIFIED" || section === "REMOVED") into.rewrites.add(r[1]);
+    else if (section === "ADDED") into.adds.add(r[1]);
   }
-  return out;
 }
+
+const empty = (t: Touches) => t.rewrites.size === 0 && t.adds.size === 0;
 
 function deltaFiles(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -54,18 +63,18 @@ function deltaFiles(dir: string): string[] {
   });
 }
 
-/** Open change → the requirements it rewrites, in the working tree. */
-function localChanges(projectDir: string): Map<string, Set<string>> {
-  const out = new Map<string, Set<string>>();
+/** Open change → what it does to requirements, in the working tree. */
+function localChanges(projectDir: string): Map<string, Touches> {
+  const out = new Map<string, Touches>();
   const changes = path.join(projectDir, CHANGES);
   if (!fs.existsSync(changes)) return out;
   for (const e of fs.readdirSync(changes, { withFileTypes: true })) {
     if (!e.isDirectory() || !isOpen(e.name)) continue;
-    const reqs = new Set<string>();
+    const t = touches();
     for (const file of deltaFiles(path.join(changes, e.name, "specs"))) {
-      for (const id of rewritten(fs.readFileSync(file, "utf8").split("\n"))) reqs.add(id);
+      read(fs.readFileSync(file, "utf8").split("\n"), t);
     }
-    if (reqs.size) out.set(e.name, reqs);
+    if (!empty(t)) out.set(e.name, t);
   }
   return out;
 }
@@ -89,9 +98,9 @@ function unmergedRefs(projectDir: string): string[] {
     .filter((r) => git(projectDir, ["merge-base", "--is-ancestor", r, "HEAD"]).status !== 0);
 }
 
-/** `branch → change → requirements it rewrites`, read from every unmerged branch. */
-function branchChanges(projectDir: string): Map<string, Map<string, Set<string>>> {
-  const out = new Map<string, Map<string, Set<string>>>();
+/** `branch → change → what it does`, read from every unmerged branch. */
+function branchChanges(projectDir: string): Map<string, Map<string, Touches>> {
+  const out = new Map<string, Map<string, Touches>>();
   const refs = unmergedRefs(projectDir);
   for (let i = 0; i < refs.length; i += BATCH) {
     const batch = refs.slice(i, i + BATCH);
@@ -121,17 +130,19 @@ function branchChanges(projectDir: string): Map<string, Map<string, Set<string>>
       const [ref, file] = key.split("\u0000");
       const change = OPEN_DELTA.exec(file)?.[1];
       if (!change || !isOpen(change)) continue;
-      const reqs = rewritten(lines);
-      if (!reqs.length) continue;
       const branch = shortRef(ref);
       if (!out.has(branch)) out.set(branch, new Map());
       const changes = out.get(branch)!;
-      if (!changes.has(change)) changes.set(change, new Set());
-      for (const id of reqs) changes.get(change)!.add(id);
+      if (!changes.has(change)) changes.set(change, touches());
+      read(lines, changes.get(change)!);
     }
   }
   return out;
 }
+
+const CLASH_FIX =
+  "Two requirements cannot share an id. Renumber the one whose branch is not merged yet: " +
+  "a new id above both, in its delta and in the tests that name it.";
 
 const FIX =
   "Agree which goes first. Merge that one, bring it into the other branch, and draft the second " +
@@ -139,13 +150,30 @@ const FIX =
 
 /**
  * `change_overlap` for each requirement an open change here rewrites that
- * another open change also rewrites — on this branch or on an unmerged one.
+ * another open change also rewrites — on this branch or on an unmerged one —
+ * and `change_id_clash` for each id it adds that a change on an unmerged
+ * branch adds too.
  */
 export function changeOverlaps(projectDir: string): Diagnostic[] {
   const local = localChanges(projectDir);
   if (local.size === 0) return [];
   const out: Diagnostic[] = [];
   const said = new Set<string>();
+  const clash = (req: string, mine: string, other: string, where: string) => {
+    const key = `clash\u0000${req}\u0000${other}`;
+    if (said.has(key)) return;
+    said.add(key);
+    out.push(
+      warning(
+        "change_id_clash",
+        `${req} is added by ${mine} and also by change ${other} ${where}.`,
+        {
+          target: req,
+          fix: CLASH_FIX,
+        }
+      )
+    );
+  };
   const say = (req: string, mine: string, other: string, where: string) => {
     const key = `${req}\u0000${[mine, other].sort().join("\u0000")}`;
     if (said.has(key)) return;
@@ -162,18 +190,21 @@ export function changeOverlaps(projectDir: string): Diagnostic[] {
   const ids = [...local.keys()];
   for (let i = 0; i < ids.length; i++) {
     for (let j = i + 1; j < ids.length; j++) {
-      for (const req of local.get(ids[i])!) {
-        if (local.get(ids[j])!.has(req)) say(req, ids[i], ids[j], "on this branch");
+      for (const req of local.get(ids[i])!.rewrites) {
+        if (local.get(ids[j])!.rewrites.has(req)) say(req, ids[i], ids[j], "on this branch");
       }
     }
   }
 
   for (const [branch, changes] of branchChanges(projectDir)) {
-    for (const [other, reqs] of changes) {
+    for (const [other, theirs] of changes) {
       // The same change on its own pushed branch, or an older copy of it.
       if (local.has(other)) continue;
-      for (const [mine, mineReqs] of local) {
-        for (const req of mineReqs) if (reqs.has(req)) say(req, mine, other, `on ${branch}`);
+      for (const [mine, t] of local) {
+        for (const req of t.rewrites)
+          if (theirs.rewrites.has(req)) say(req, mine, other, `on ${branch}`);
+        // Reserved on two clones before either fetched the other (REQ-164).
+        for (const req of t.adds) if (theirs.adds.has(req)) clash(req, mine, other, `on ${branch}`);
       }
     }
   }

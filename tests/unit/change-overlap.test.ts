@@ -161,3 +161,92 @@ test("REQ-160: outside git, only the working tree is read", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── REQ-163, REQ-164 ─────────────────────────────────────────────────────────
+
+test("REQ-164 SCN-164a: two changes that add the same id are reported", () => {
+  const dir = repo();
+  try {
+    git(dir, "checkout", "-q", "-b", "feature/PET-104-walk-in");
+    writeChange(dir, "pet-104-walk-in", [], ["REQ-010"]);
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "PET-104 draft");
+    git(dir, "checkout", "-q", "develop");
+    git(dir, "checkout", "-q", "-b", "feature/PET-103-international");
+    writeChange(dir, "pet-103-international", [], ["REQ-010", "REQ-011"]);
+    const found = changeOverlaps(dir) as Array<{ code: string; target: string; message: string }>;
+    const clash = found.filter((d) => d.code === "change_id_clash");
+    assert.equal(clash.length, 1, JSON.stringify(found));
+    assert.equal(clash[0].target, "REQ-010");
+    assert.match(clash[0].message, /pet-104-walk-in/);
+    assert.match(clash[0].message, /feature\/PET-104-walk-in/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-163 SCN-163a: a ticket's change sees a branch a colleague pushed meanwhile", () => {
+  const origin = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-fetch-origin-"));
+  const mine = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-fetch-mine-"));
+  const theirs = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-fetch-theirs-"));
+  try {
+    git(origin, "init", "-q", "--bare", "-b", "develop");
+    const seed = repo();
+    git(seed, "remote", "add", "origin", origin);
+    git(seed, "push", "-q", "origin", "develop");
+    fs.rmSync(seed, { recursive: true, force: true });
+    for (const d of [mine, theirs]) {
+      fs.rmSync(d, { recursive: true, force: true });
+      assert.equal(spawnSync("git", ["clone", "-q", "-b", "develop", origin, d]).status, 0);
+    }
+    // The colleague opens PET-104, reserving REQ-010…REQ-012, and pushes it.
+    git(theirs, "checkout", "-q", "-b", "feature/PET-104-walk-in");
+    writeChange(theirs, "pet-104-walk-in", [], ["REQ-010"]);
+    fs.writeFileSync(
+      path.join(theirs, "docs", "specs", "changes", "pet-104-walk-in", "change.yaml"),
+      "specgate_change_version: 1\nreq_range: [REQ-010, REQ-012]\n"
+    );
+    git(theirs, "add", "-A");
+    git(theirs, "commit", "-qm", "PET-104 open");
+    git(theirs, "push", "-q", "origin", "feature/PET-104-walk-in");
+
+    // I never fetched it; opening PET-103 must see it anyway.
+    const ticket = path.join(os.tmpdir(), `pet103-${process.pid}.json`);
+    fs.writeFileSync(
+      ticket,
+      JSON.stringify({
+        key: "PET-103",
+        fields: {
+          summary: "International telephone",
+          issuetype: { name: "Story" },
+          description:
+            'Acceptance Criteria\n- Given the form, when I save "+49301234567", then the owner is saved.',
+        },
+      })
+    );
+    const run = spawnSync(
+      process.execPath,
+      [
+        path.join(ROOT_DIR, "dist", "scripts", "propose.js"),
+        "--from-ticket",
+        ticket,
+        "--capability",
+        "owners",
+        "--no-push",
+        "--project-dir",
+        mine,
+      ],
+      { encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } }
+    );
+    fs.rmSync(ticket);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const yaml = fs.readFileSync(
+      path.join(mine, "docs", "specs", "changes", "pet-103-international-telephone", "change.yaml"),
+      "utf8"
+    );
+    const first = Number(/^req_range: \[REQ-(\d+)/m.exec(yaml)![1]);
+    assert.ok(first > 12, `PET-103 reserved from REQ-${first}`);
+  } finally {
+    for (const d of [origin, mine, theirs]) fs.rmSync(d, { recursive: true, force: true });
+  }
+});

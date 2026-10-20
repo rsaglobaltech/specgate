@@ -21,7 +21,7 @@ specgate doctor
 | `tests_not_configured`, `check_tests_failed`, `check_arch_failed`, `check_validate_failed`, `check_change_invalid`, `scenario_steps_unwritten`, `scenario_placeholder_step`, `scenario_not_covered`, `[TDD-1]`, `declared_artifact_missing`, `requirement_template_obligation`, `id_taken_on_base`, `matrix_stale` | [The gate](#the-gate)                   |
 | `apply_no_test`, `done_validate_failed`, `done_tests_failed`, `done_needs_clarification`, `archive_requirements_pending`, `archive_draft_not_ready`                                                                                                                                                                | [Apply and archive](#apply-and-archive) |
 | `D1`–`D12`, `draft_no_brief`, `draft_module_not_in_brief`, `draft_agent_failed`, `draft_agent_needs_git`, `draft_brief_text_lost`, `draft_brief_body_changed`                                                                                                                                                      | [Drafting](#drafting)                   |
-| `T1`–`T9`, `ticket_*`, `pr_failed`, `change_overlap`                                                                                                                                                                                                                                                               | [Tickets](#tickets)                     |
+| `T1`–`T9`, `ticket_*`, `pr_failed`, `change_overlap`, `change_id_clash`                                                                                                                                                                                                                                            | [Tickets](#tickets)                     |
 | `requirement_scenario_unrunnable`, `agent_rewrote_gate_command`                                                                                                                                                                                                                                                    | [Harness](#harness)                     |
 | `alm_config_unread_key`                                                                                                                                                                                                                                                                                            | [Tickets](#tickets)                     |
 
@@ -117,6 +117,13 @@ they are, the second rewrite would replace the first, with or without a git
 conflict. Agree which goes first, merge it, bring it into the other branch, and
 draft the second change again over the requirement as merged. Run `git fetch`
 first, so the remote branches you compare against are current.
+
+`change_id_clash` means two open changes on different branches add a
+requirement with the same id: both were opened before either clone had fetched
+the other's branch. `propose --from-ticket` fetches `origin` before it reserves
+ids, so this needs two tickets opened within seconds of each other. Renumber
+the one whose branch is not merged yet, in its delta and in the tests that
+name it.
 
 `alm_config_unread_key` means a key in `alm.config.yaml` that your provider
 does not read. The message names the provider that would; see

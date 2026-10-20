@@ -183,6 +183,15 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
   return { name, note: null };
 }
 
+/** Fetch `origin` before ids are reserved; a note when it could not, else null. */
+function fetchOrigin(dir: string): string | null {
+  if (git(dir, ["remote", "get-url", "origin"]).status !== 0) return null;
+  const fetched = git(dir, ["fetch", "-q", "origin"]);
+  if (fetched.status === 0) return null;
+  const why = fetched.stderr.trim().split("\n")[0] ?? "";
+  return `Could not fetch origin (${why}): ids were reserved from the branches already known.`;
+}
+
 /**
  * The branch on `origin` as soon as work starts: a Git host linked to Jira
  * shows it in the ticket, and a Jira automation ("branch created → In
@@ -525,7 +534,11 @@ export class TicketCommand extends BaseCommand {
       ]);
     }
 
+    // What colleagues pushed since the last fetch: their ticket branches hold
+    // reserved ids this change must not reuse (REQ-163).
+    const fetched = fetchOrigin(projectDir);
     const branch = opts.branch ? ticketBranch(projectDir, ticket) : { name: null, note: null };
+    if (fetched) branch.note = branch.note ? `${fetched} ${branch.note}` : fetched;
     const opened = openChange(projectDir, ticket, changeId, capability);
     const pushed = branch.name && opts.push ? pushBranch(projectDir, branch.name) : null;
     if (opts.agent) {
