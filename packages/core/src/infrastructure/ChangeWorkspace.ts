@@ -19,6 +19,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { highestOnOtherBranches } from "./IdsAcrossBranches";
 import { parseYamlLite } from "../domain/YamlLite";
 
 export const SPECS_DIR = path.join("docs", "specs");
@@ -127,11 +128,14 @@ export function paths(projectDir: string): ChangePaths {
 export function listChangeIds(projectDir: string): string[] {
   const p = paths(projectDir);
   if (!fs.existsSync(p.changes)) return [];
-  return fs
-    .readdirSync(p.changes, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && e.name !== "archive")
-    .map((e) => e.name)
-    .sort();
+  return (
+    fs
+      .readdirSync(p.changes, { withFileTypes: true })
+      // `.<id>.opening` is a change being written, not a change (ADR-0039).
+      .filter((e) => e.isDirectory() && e.name !== "archive" && !e.name.startsWith("."))
+      .map((e) => e.name)
+      .sort()
+  );
 }
 
 export function listArchivedIds(projectDir: string): string[] {
@@ -264,6 +268,8 @@ export function highestReservedReq(projectDir: string): number {
     walkSpecs(path.join(dir, "specs"));
   }
 
+  // And every other branch's changes: a sibling ticket's branch has its own (REQ-152).
+  max = Math.max(max, highestOnOtherBranches(projectDir, "REQ"));
   return max;
 }
 

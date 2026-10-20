@@ -122,7 +122,10 @@ function verbUsage(sub: string) {
         `                     [--full] [--reserve <n>] [--project-dir <path>] [--json]\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --check | --new-brief | --agent <cmd>\n` +
-        `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n\n` +
+        `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n` +
+        `    ${c.cyan}specgate propose --from-ticket${c.reset} <KEY | issue.json> [--check] [--capability <name>]\n` +
+        `                     [--agent <cmd>] [--no-branch]\n` +
+        `                     ${c.dim}a Jira ticket as the source text: its Definition of Ready, then its change (docs/from-a-ticket.md)${c.reset}\n\n` +
         `  Opens docs/specs/changes/<change-id>/ — proposal, tasks, a reserved REQ range and a\n` +
         `  delta for the capability (named after the change unless --capability says).\n` +
         `  Then: write the delta, a test that names each requirement, the code; specgate apply.\n\n` +
@@ -130,6 +133,7 @@ function verbUsage(sub: string) {
         `    One behaviour to fix or change     No brief: specgate propose <change-id>\n` +
         `    A feature with a few rules (2–6)   No brief: specgate propose <change-id>, rules in the delta\n` +
         `    A product, or a large area of one  A brief: docs/brief.md, then specgate propose --from-brief\n` +
+        `    A story your analyst wrote in Jira  The ticket: specgate propose --from-ticket <KEY>\n` +
         `                                       ${c.dim}(how to write it: specgate propose --from-brief --new-brief)${c.reset}\n\n`
     );
     return true;
@@ -982,6 +986,19 @@ function cmdArchive(opts: ChangeOptions) {
   // checklist passes: reservas_app archived one with two findings open and
   // nothing said so (#57). `--force` archives anyway, as it does for tasks.
   const isDraft = Boolean(briefOf(projectDir, changeId));
+  // A ticket's change goes on to its pull request, archive included (REQ-159).
+  const ticketKey = /^ticket:\s*(\S+)\s*$/m.exec(
+    (() => {
+      try {
+        return fs.readFileSync(
+          path.join(projectDir, "docs", "specs", "changes", changeId, "change.yaml"),
+          "utf8"
+        );
+      } catch {
+        return "";
+      }
+    })()
+  )?.[1];
   if (!opts.force && isDraft) {
     const checked = draftReport(projectDir, changeId);
     if ("report" in checked && checked.report.status.length > 0) {
@@ -992,7 +1009,7 @@ function cmdArchive(opts: ChangeOptions) {
           `Draft '${changeId}' has ${checked.report.status.length} open finding(s) in its checklist (${codes}).`,
           {
             target: changeId,
-            fix: `Run \`specgate propose --from-brief ${draftModuleOf(changeId)}\`, fix what it reports, then archive — or pass --force to archive it as it is.`,
+            fix: `Run \`specgate propose ${ticketKey ? `--from-ticket ${ticketKey}` : `--from-brief ${draftModuleOf(changeId)}`}\`, fix what it reports, then archive — or pass --force to archive it as it is.`,
           }
         ),
       ]);
@@ -1111,10 +1128,16 @@ function cmdArchive(opts: ChangeOptions) {
         // gate passes. Saying it "will fail until the tests exist" was wrong
         // (#92); what comes next is the queue, or the next module.
         ui.next(
-          isDraft ? "specgate propose --from-brief" : "specgate status",
-          isDraft
-            ? "the next module of the brief, or what to build first"
-            : "what each requirement still needs"
+          ticketKey
+            ? `specgate alm pr ${changeId}`
+            : isDraft
+              ? "specgate propose --from-brief"
+              : "specgate status",
+          ticketKey
+            ? `${ticketKey}'s pull request, with this archive in it`
+            : isDraft
+              ? "the next module of the brief, or what to build first"
+              : "what each requirement still needs"
         )
     );
     if (plan.warnings.length > 0) printDiagnostics(plan.warnings, process.stdout);

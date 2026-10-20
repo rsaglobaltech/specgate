@@ -36,6 +36,7 @@ import {
   DEFAULT_CONFIG,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { templateDelta } from "../../../../packages/core/src/domain/ChangeTemplates";
+import { highestOnOtherBranches } from "../../../../packages/core/src/infrastructure/IdsAcrossBranches";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
 import type { ModuleCards } from "../../../draft/drafting-guide";
@@ -448,7 +449,7 @@ function briefLine(projectDir: string, brief: string): string | null {
  * checker (it may only edit), so it gets the findings in its prompt — without
  * them it would redraft blind and leave the same ones behind.
  */
-function openFindings(projectDir: string, changeId: string, brief: string): string {
+export function openFindings(projectDir: string, changeId: string, brief: string): string {
   if (!fs.existsSync(path.join(projectDir, CHANGES, changeId))) return "";
   const result = draftReport(projectDir, changeId, brief);
   if ("failure" in result || result.report.status.length === 0) return "";
@@ -481,7 +482,7 @@ function writeSetupGuide(projectDir: string, brief: string): void {
 }
 
 /** The next free SCN number, past every scenario the project or a change uses. */
-function nextScenario(projectDir: string): string {
+export function nextScenario(projectDir: string): string {
   let max = 0;
   for (const id of projectIds(projectDir).keys()) {
     const m = /^SCN-(\d+)$/.exec(id);
@@ -497,7 +498,8 @@ function nextScenario(projectDir: string): string {
     for (const e of entries) {
       const full = path.join(dir, e.name);
       if (e.isDirectory()) walk(full);
-      else if (e.name.endsWith(".md") || e.name.endsWith(".feature")) {
+      // change.yaml holds a change's reserved scenario range (REQ-157).
+      else if (e.name.endsWith(".md") || e.name.endsWith(".feature") || e.name === "change.yaml") {
         for (const m of fs.readFileSync(full, "utf8").matchAll(/\bSCN-(\d+)\b/g)) {
           max = Math.max(max, Number(m[1]));
         }
@@ -506,10 +508,22 @@ function nextScenario(projectDir: string): string {
   };
   walk(path.join(projectDir, "docs", "specs"));
   walk(path.join(projectDir, "features"));
+  max = Math.max(max, highestOnOtherBranches(projectDir, "SCN"));
   for (const m of (readIf(path.join(projectDir, "spec.md")) || "").matchAll(/\bSCN-(\d+)\b/g)) {
     max = Math.max(max, Number(m[1]));
   }
   return `SCN-${String(max + 1).padStart(3, "0")}`;
+}
+
+/** Three scenario ids per requirement id, from the next free one (REQ-157). */
+export function reserveScenarioRange(
+  projectDir: string,
+  reqRange: [string, string]
+): [string, string] {
+  const first = nextScenario(projectDir);
+  const reqs = Number(reqRange[1].slice(4)) - Number(reqRange[0].slice(4)) + 1;
+  const last = Number(first.slice(4)) + Math.max(1, reqs) * 3 - 1;
+  return [first, `SCN-${String(last).padStart(3, "0")}`];
 }
 
 /** The one line to paste into any agent. */
@@ -551,6 +565,7 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
   const changeId = `draft-${module}`;
   const dir = path.join(projectDir, CHANGES, changeId);
   const reqRange = reserveReqRange(projectDir, o.reserve) as [string, string];
+  const scnRange = reserveScenarioRange(projectDir, reqRange);
   const config = {
     ...DEFAULT_CONFIG,
     created: new Date().toISOString().slice(0, 10),
@@ -572,7 +587,8 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
       changeId,
       brief,
       reqRange,
-      firstScenario: nextScenario(projectDir),
+      firstScenario: scnRange[0],
+      lastScenario: scnRange[1],
       maxRequirements: o.maxRequirements,
       actors: actorSurfaces(briefText),
       cards: moduleCards(briefText, module),
@@ -582,7 +598,10 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
     path.join("specs", module, "spec.md"),
     templateDelta(module, reqRange[0], phrases(projectDir))
   );
-  write("change.yaml", `${renderConfig(config).trimEnd()}\nbrief: ${brief}\n`);
+  write(
+    "change.yaml",
+    `${renderConfig(config).trimEnd()}\nscn_range: [${scnRange[0]}, ${scnRange[1]}]\nbrief: ${brief}\n`
+  );
   write("proposal.md", proposalFor(module, changeId, brief));
   return { changeId, reqRange, created };
 }

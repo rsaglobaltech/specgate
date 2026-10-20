@@ -145,3 +145,47 @@ export function migrateAiRules(
   }
   return { moved: true, agents };
 }
+
+/**
+ * The block, rewritten from the installed template (REQ-155). Its facts —
+ * the header's architecture and domain, the stack, API and testing line — and
+ * its "Project rules" section are the project's, so they are kept; the rest is
+ * Specgate's and follows the version installed. Without this, a project
+ * adopted without agent files never got a new contract: `update` had nothing
+ * to merge. Null when there is no block.
+ */
+export function refreshContract(
+  projectDir: string,
+  opts: { dryRun?: boolean } = {}
+): "updated" | "unchanged" | null {
+  const file = path.join(projectDir, "AGENTS.md");
+  if (!fs.existsSync(file)) return null;
+  const existing = fs.readFileSync(file, "utf8");
+  const start = existing.indexOf(BEGIN.slice(0, 22));
+  const end = existing.indexOf(END);
+  if (start === -1 || end === -1 || end < start) return null;
+  const inner = existing.slice(existing.indexOf("\n", start) + 1, end);
+  const header = /^(\w+) project · architecture: ([^·\n]+?) · domain: ([^\n]+)$/m.exec(inner);
+  const name = /^# AGENTS\.md\s*[—–-]\s*(.+)$/m.exec(inner)?.[1]?.trim();
+  const rules = /^## Project rules\n([\s\S]*)$/m.exec(inner)?.[1]?.trim() ?? "";
+  const root = findCliRoot(__dirname);
+  const tpl = fs.readFileSync(path.join(root, "templates", "base", "AGENTS.md.tpl"), "utf8");
+  const vars: Record<string, string> = {
+    PROJECT_NAME: name || path.basename(path.resolve(projectDir)),
+    PROJECT_TYPE: header?.[1] ?? "existing",
+    ARCHITECTURE: header?.[2]?.trim() ?? "minimal",
+    DOMAIN: header?.[3]?.trim() ?? "see spec.md",
+    STACK: rulesField(inner, "Stack") || "see below",
+    API_STYLE: rulesField(inner, "API") || "as built",
+    TESTING: rulesField(inner, "Testing") || "see below",
+    STACK_RULES: rules,
+    ARCHITECTURE_MODELING_RULES: "",
+    ARCHITECTURE_CHECKS: "",
+  };
+  const contract =
+    tpl.replace(/\{\{([A-Z_]+)\}\}/g, (all, k) => (k in vars ? vars[k] : all)).trimEnd() + "\n";
+  const merged = mergeContract(existing, contract);
+  if (merged === existing) return "unchanged";
+  if (!opts.dryRun) fs.writeFileSync(file, merged, "utf8");
+  return "updated";
+}

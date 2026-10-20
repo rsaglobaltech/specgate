@@ -107,6 +107,11 @@ export interface AlmClient {
   closeIssue(issueKey: string): Promise<void>;
   /** Present only when `capabilities.listIssues` is true. */
   listIssues?(label: string): Promise<IssueSummary[]>;
+  /**
+   * One issue as the provider's own JSON, for `propose --from-ticket`
+   * (ADR-0039). Read-only, and only for the configured project's keys.
+   */
+  readIssue?(key: string): Promise<unknown>;
 }
 
 /** The subset of `fetch` the providers use, so tests can replay recordings. */
@@ -115,6 +120,8 @@ export type FetchLike = (url: string, init?: Record<string, unknown>) => Promise
 export interface HttpResponse {
   readonly ok: boolean;
   readonly status: number;
+  /** Absent in older fakes; a provider that reads a header must cope with that. */
+  readonly headers?: { get(name: string): string | null };
   json(): Promise<unknown>;
   text(): Promise<string>;
 }
@@ -144,7 +151,7 @@ export const CAPABILITY_METHOD: Readonly<Record<keyof AlmCapabilities, keyof Alm
 };
 
 /** Config keys the core itself reads, whatever the provider. */
-export const CORE_CONFIG_KEYS: readonly string[] = ["alm_version", "provider"];
+export const CORE_CONFIG_KEYS: readonly string[] = ["alm_version", "provider", "pr"];
 
 /**
  * Check a provider declaration is well formed.

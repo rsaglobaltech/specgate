@@ -80,6 +80,22 @@
 | REQ-140 | SCN-140a | `features/brief-cards/REQ-140.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
 | REQ-141 | SCN-141a | `features/brief-cards/REQ-141.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
 | REQ-142 | SCN-142a | `features/brief-cards/REQ-142.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-143 | SCN-143a | `features/ticket-source/REQ-143.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-144 | SCN-144a | `features/ticket-source/REQ-144.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-145 | SCN-145a | `features/ticket-source/REQ-145.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-146 | SCN-146a | `features/ticket-source/REQ-146.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-147 | SCN-147a | `features/ticket-source/REQ-147.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-148 | SCN-148a | `features/ticket-source/REQ-148.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-149 | SCN-149a | `features/ticket-source/REQ-149.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-150 | SCN-150a | `features/ticket-source/REQ-150.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-152 | SCN-152a | `features/trusted-gate/REQ-152.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-153 | SCN-153a | `features/ticket-source/REQ-153.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-154 | SCN-154a | `features/ticket-source/REQ-154.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-155 | SCN-155a | `features/ticket-source/REQ-155.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-156 | SCN-156a | `features/ticket-source/REQ-156.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-157 | SCN-157a | `features/ticket-source/REQ-157.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-158 | SCN-158a | `features/ticket-source/REQ-158.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-159 | SCN-159a | `features/ticket-source/REQ-159.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

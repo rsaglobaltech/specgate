@@ -20,13 +20,14 @@ export abstract class HttpAlmClient implements AlmClient {
   abstract readonly capabilities: AlmCapabilities;
 
   protected readonly baseUrl: string;
-  private readonly fetchImpl: FetchLike;
+  protected readonly fetchImpl: FetchLike;
 
   protected constructor(cfg: AlmConfig, fetchImpl?: FetchLike) {
     // A trailing slash in the config is invisible until it produces
     // `https://host//rest/api` against a real server, so it is stripped once,
     // here, rather than in each provider's URL building.
     this.baseUrl = String(cfg.base_url ?? "").replace(/\/$/, "");
+    assertSecureUrl(this.baseUrl, "base_url");
     this.fetchImpl = fetchImpl ?? ((globalThis as { fetch: FetchLike }).fetch as FetchLike);
   }
 
@@ -52,12 +53,38 @@ export abstract class HttpAlmClient implements AlmClient {
     what: string,
     init?: Record<string, unknown>
   ): Promise<HttpResponse> {
-    const res = await this.fetchImpl(`${this.baseUrl}${path}`, init);
-    if (!res.ok) {
+    const res = await this.fetchImpl(`${await this.apiBase()}${path}`, init);
+    const status = this.refusedAs(res) ?? (res.ok ? undefined : res.status);
+    if (status !== undefined) {
       const body = await res.text().catch(() => "");
-      throw new Error(`${what} failed: HTTP ${res.status} ${body.slice(0, 300)}`);
+      const fix = this.fixFor(status);
+      throw new Error(
+        `${what} failed: HTTP ${status} ${body.slice(0, 300)}` + (fix ? `\nFix: ${fix}` : "")
+      );
     }
     return res;
+  }
+
+  /**
+   * Where API requests go. The site itself, unless a provider's API lives
+   * elsewhere — Jira's scoped tokens only work through Atlassian's gateway.
+   */
+  protected async apiBase(): Promise<string> {
+    return this.baseUrl;
+  }
+
+  /**
+   * A response that says yes but means no. Some servers answer a refused
+   * credential as an anonymous request — 200 and an empty result — and say
+   * so only in a header; a provider maps that to the status it means.
+   */
+  protected refusedAs(_res: HttpResponse): number | undefined {
+    return undefined;
+  }
+
+  /** A provider's own advice for a refused request; none by default. */
+  protected fixFor(_status: number): string | undefined {
+    return undefined;
   }
 
   /** The same, returning the parsed body, which is what every caller wants. */
@@ -68,5 +95,26 @@ export abstract class HttpAlmClient implements AlmClient {
   ): Promise<T> {
     const res = await this.request(path, what, init);
     return (await res.json()) as T;
+  }
+}
+
+/**
+ * A URL a credential is sent to. `alm.config.yaml` is committed, so a change
+ * to it is a change to where the token goes: never in clear text. Only a
+ * server on this machine may be plain http, for local tests and proxies.
+ */
+export function assertSecureUrl(url: string, key: string): void {
+  if (!url) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`${key} '${url}' is not a URL.\nFix: write it as https://host.`);
+  }
+  const local = ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname);
+  if (parsed.protocol !== "https:" && !(local && parsed.protocol === "http:")) {
+    throw new Error(
+      `${key} '${url}' is not https: the token would travel in clear text.\nFix: use the https:// address.`
+    );
   }
 }

@@ -1,4 +1,4 @@
-import { migrateAiRules } from "../../../agents/contract-file";
+import { migrateAiRules, refreshContract } from "../../../agents/contract-file";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -286,6 +286,9 @@ export class UpdateCommand extends BaseCommand {
             .filter(Boolean)
         : []
     );
+    // The contract follows the installed Specgate, whatever else exists (REQ-155).
+    const contract = agentsMigration.moved ? null : refreshContract(projectDir, { dryRun });
+    if (contract) renamed.push({ path: "AGENTS.md", outcome: contract });
     if (files.length === 0 && renamed.length === 0) {
       io.emit(
         {

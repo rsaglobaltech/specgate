@@ -1,13 +1,19 @@
 #!/usr/bin/env node
 import { CliCommand } from "./cli/commands/change/ChangeCommand";
 import { DraftCommand } from "./cli/commands/spec/DraftCommand";
+import { TicketCommand } from "./cli/commands/change/TicketCommand";
 
 /**
  * `specgate propose` — the first of the daily verbs (ADR-0035). An idea opens
  * a change, as `change new` does; `--from-brief` drafts the next module of
- * docs/brief.md, as `draft` does. One engine each, two ways in.
+ * docs/brief.md, as `draft` does; `--from-ticket` takes a Jira ticket as the
+ * source text instead (ADR-0039).
  */
 export function propose(argv: string[]): void {
+  if (argv.includes("--from-ticket")) {
+    void new TicketCommand(argv).execute();
+    return;
+  }
   if (argv.includes("--from-brief")) {
     new DraftCommand(
       argv.filter((a) => a !== "--from-brief"),

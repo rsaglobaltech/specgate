@@ -8,6 +8,7 @@
  *   specgate alm pull   [--label <name>] [--project-dir <dir>] [--dry-run]
  *   specgate alm link   <REQ-id> <issue-key> [--project-dir <dir>]
  *   specgate alm status [--project-dir <dir>]
+ *   specgate alm pr     <change> [--no-push] [--no-check] [--project-dir <dir>]
  */
 
 import { resolveProjectDir } from "../lib/project-root";
@@ -22,6 +23,7 @@ import {
 import { makeClient } from "./clients";
 import { printDiagnostics, errorMessage } from "../lib/diagnostics";
 import { main as pullMain } from "../cli/commands/alm/PullCommand";
+import { main as prMain } from "../cli/commands/alm/PrCommand";
 import * as ui from "../lib/ui";
 
 function logInfo(msg: string): void {
@@ -40,13 +42,16 @@ function usage() {
       "  specgate alm sync   [--project-dir <dir>] [--dry-run]\n" +
       "  specgate alm link   <REQ-id> <issue-key> [--project-dir <dir>]\n" +
       "  specgate alm status [--project-dir <dir>]\n" +
-      "  specgate alm pull   [--label <name>] [--project-dir <dir>] [--dry-run]\n\n" +
+      "  specgate alm pull   [--label <name>] [--project-dir <dir>] [--dry-run]\n" +
+      "  specgate alm pr     <change> [--no-push] [--no-check] [--project-dir <dir>]\n\n" +
       "sync   Creates an ALM issue for every unlinked REQ, closes issues whose REQ\n" +
       "       is Implemented, and reports drift (issue done, REQ still open).\n" +
       "link   Manually map an existing issue to a requirement.\n" +
       "status Print the current REQ ↔ issue mapping without network access.\n" +
       "pull   Open a change per labelled issue. The scenario is left unwritten:\n" +
-      "       a ticket carries no acceptance criterion, so that part is yours.\n\n" +
+      "       a ticket carries no acceptance criterion, so that part is yours.\n" +
+      "pr     Push the ticket's branch and open, or update, its one pull request\n" +
+      "       on GitHub (pr: in alm.config.yaml). Never merges.\n\n" +
       "Configuration: alm.config.yaml at the project root (provider, base_url,\n" +
       "project_key, token_env). Tokens come from the environment, never the file.\n"
   );
@@ -156,6 +161,13 @@ async function main() {
     }
   }
 
+  if (sub === "pr") {
+    // Outside `scripts/alm/` too: a pull request belongs to the repository,
+    // not to the board (ADR-0039 §4).
+    await prMain(argv.slice(1));
+    return;
+  }
+
   if (sub === "pull") {
     // Implemented outside `scripts/alm/` on purpose: ADR-0021 forbids this
     // subsystem from writing the spec tree, and a pull has to produce files.
@@ -164,7 +176,7 @@ async function main() {
     return;
   }
 
-  logError(`Unknown alm sub-command: ${sub || "(none)"}. Expected: sync, link, status, pull`);
+  logError(`Unknown alm sub-command: ${sub || "(none)"}. Expected: sync, link, status, pull, pr`);
   usage();
   process.exit(2);
 }
