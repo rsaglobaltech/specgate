@@ -1208,3 +1208,98 @@ test("REQ-149: the update keeps what a person wrote, and only looks at the base 
     fs.rmSync(origin, { recursive: true, force: true });
   }
 });
+
+test("REQ-145: criteria on consecutive lines, each opening with Given, stay apart", () => {
+  const plain = readTicket({
+    key: "KAN-92",
+    fields: {
+      description: [
+        "Akzeptanzkriterien",
+        "Angenommen A, wenn B, dann C.",
+        "Angenommen D, wenn E, dann F.",
+        "Given G, when H,",
+        "then I.",
+      ].join("\n"),
+    },
+  });
+  assert.equal(plain.criteria.length, 3, JSON.stringify(plain.criteria));
+  assert.equal(plain.criteria[2], "Given G, when H, then I.");
+  const adf = readTicket({
+    key: "KAN-93",
+    fields: {
+      description: {
+        type: "doc",
+        content: [
+          para({ strong: "Acceptance Criteria" }),
+          para("Given A, then B."),
+          para("Given C, then D."),
+          para("Given E, then F."),
+        ],
+      },
+    },
+  });
+  assert.equal(adf.criteria.length, 3, JSON.stringify(adf.criteria));
+});
+
+test("REQ-148: a base that is not a safe git ref is refused, never replaced by HEAD", () => {
+  const dir = repo();
+  try {
+    git(dir, "checkout", "-q", "-b", "feature/KAN-12-other");
+    const file = path.join(os.tmpdir(), `kan13c-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    const run = spawnSync(
+      process.execPath,
+      [PROPOSE, "--from-ticket", file, "--capability", "entry-exit", "--project-dir", dir],
+      {
+        encoding: "utf8",
+        env: { ...process.env, NO_COLOR: "1", SPECGATE_BASE: "--output=/tmp/x" },
+      }
+    );
+    fs.rmSync(file);
+    assert.equal(git(dir, "rev-parse", "--abbrev-ref", "HEAD"), "feature/KAN-12-other");
+    assert.match(run.stdout, /not a safe git ref/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-147: a change being opened is not a change", () => {
+  const { listChangeIds } = require("../../packages/core/src/infrastructure/ChangeWorkspace");
+  const dir = project(JIRA);
+  try {
+    fs.mkdirSync(path.join(dir, "docs", "specs", "changes", ".kan-13-x.opening"), {
+      recursive: true,
+    });
+    fs.mkdirSync(path.join(dir, "docs", "specs", "changes", "kan-14-y"), { recursive: true });
+    assert.deepEqual(listChangeIds(dir), ["kan-14-y"]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-149: a lost closing marker does not make the block grow on every run", () => {
+  const { mergeBody } = require("../../scripts/vcs/github-pr");
+  const block = "<!-- specgate:pr change=c -->\nnew\n<!-- /specgate:pr -->";
+  const once = mergeBody("Notes.\n\n<!-- specgate:pr change=c -->\nold, closer deleted", block);
+  assert.equal(once, `Notes.\n\n${block}`);
+  assert.equal(mergeBody(once, block), once);
+});
+
+test("REQ-149: a ticket: in change.yaml that is not a Jira key pushes nothing", () => {
+  const { dir, origin } = ticketRepo();
+  try {
+    const yaml = path.join(dir, CHANGE_13, "change.yaml");
+    fs.writeFileSync(yaml, "specgate_change_version: 1\nticket: KAN-1(\n");
+    git(dir, "commit", "-qam", "KAN-13 broken key");
+    const run = runPr(dir, []);
+    assert.equal(run.status, 1);
+    assert.match(run.stdout + run.stderr, /not a Jira issue key/);
+    assert.equal(
+      spawnSync("git", ["-C", origin, "branch", "--list"], { encoding: "utf8" }).stdout.trim(),
+      ""
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(origin, { recursive: true, force: true });
+  }
+});

@@ -56,10 +56,13 @@ interface OpenPr {
 }
 
 const BLOCK = /<!-- specgate:pr [^>]*-->[\s\S]*?<!-- \/specgate:pr -->/;
+/** The block's opening marker, its closer deleted: everything after it was ours. */
+const OPENED = /<!-- specgate:pr [^>]*-->[\s\S]*$/;
 
 /** The description with Specgate's block replaced, or added after what is there. */
 export function mergeBody(current: string, block: string): string {
   if (BLOCK.test(current)) return current.replace(BLOCK, () => block);
+  if (OPENED.test(current)) return current.replace(OPENED, () => block);
   return current.trim() ? `${current.trimEnd()}\n\n${block}` : block;
 }
 
@@ -101,7 +104,8 @@ export async function openOrUpdatePr(
     // What a person wrote stays: the title, once it names the ticket, and
     // every line outside Specgate's own block of the description.
     const patch: Record<string, string> = { body: mergeBody(mine.body ?? "", pr.body) };
-    if (!new RegExp(`(^|[^A-Z0-9_-])${pr.key}(?![0-9])`).test(mine.title ?? ""))
+    const key = pr.key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (!new RegExp(`(^|[^A-Z0-9_-])${key}(?![0-9])`).test(mine.title ?? ""))
       patch.title = pr.title;
     const updated = await call<{ number: number; html_url: string }>(
       `/repos/${cfg.repo}/pulls/${mine.number}`,

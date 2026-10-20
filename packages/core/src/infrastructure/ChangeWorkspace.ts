@@ -127,11 +127,14 @@ export function paths(projectDir: string): ChangePaths {
 export function listChangeIds(projectDir: string): string[] {
   const p = paths(projectDir);
   if (!fs.existsSync(p.changes)) return [];
-  return fs
-    .readdirSync(p.changes, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && e.name !== "archive")
-    .map((e) => e.name)
-    .sort();
+  return (
+    fs
+      .readdirSync(p.changes, { withFileTypes: true })
+      // `.<id>.opening` is a change being written, not a change (ADR-0039).
+      .filter((e) => e.isDirectory() && e.name !== "archive" && !e.name.startsWith("."))
+      .map((e) => e.name)
+      .sort()
+  );
 }
 
 export function listArchivedIds(projectDir: string): string[] {

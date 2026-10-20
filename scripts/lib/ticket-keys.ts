@@ -22,11 +22,9 @@ function git(dir: string, args: string[]) {
 export function baseFor(dir: string, given?: string): string | null {
   const resolved = resolveBase(dir, given);
   if (resolved) {
-    try {
-      assertSafeGitRef(resolved);
-    } catch {
-      return null;
-    }
+    // Throws for a ref git would read as an option: a base that cannot be
+    // used is an error, never "no base" — that would mean HEAD.
+    assertSafeGitRef(resolved, "base");
     return resolved;
   }
   for (const name of ["develop", "main", "master"]) {
@@ -41,7 +39,12 @@ export function ticketKeyFindings(dir: string, given?: string): Diagnostic[] {
   if (branch.status !== 0) return [];
   const key = TICKET_BRANCH.exec(branch.stdout.trim())?.[1];
   if (!key) return [];
-  const base = baseFor(dir, given);
+  let base: string | null;
+  try {
+    base = baseFor(dir, given);
+  } catch {
+    return [];
+  }
   if (!base || base === branch.stdout.trim()) return [];
   const log = git(dir, ["log", `${base}..HEAD`, "--format=%h%x09%s"]);
   if (log.status !== 0) return [];

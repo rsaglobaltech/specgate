@@ -157,7 +157,15 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
   }
   // From the base, not from wherever HEAD is: another ticket's branch would
   // bring its commits into this ticket's pull request.
-  const base = baseFor(dir);
+  let base: string | null;
+  try {
+    base = baseFor(dir);
+  } catch {
+    return {
+      name: null,
+      note: `Branch ${name} not created: the base branch is not a safe git ref (check --base or SPECGATE_BASE).`,
+    };
+  }
   const made = git(dir, ["checkout", "-q", "-b", name, ...(base ? [base] : [])]);
   if (made.status !== 0) {
     return { name: null, note: `Branch ${name} not created: ${made.stderr.trim()}` };
@@ -264,51 +272,56 @@ function openChange(projectDir: string, t: Ticket, changeId: string, capability:
   // or absent, so an interrupted run never leaves one that looks opened.
   const dir = path.join(projectDir, CHANGES, `.${changeId}.opening`);
   fs.rmSync(dir, { recursive: true, force: true });
-  const reqRange = reserveReqRange(projectDir, Math.min(10, Math.max(3, t.criteria.length))) as [
-    string,
-    string,
-  ];
-  const copyPath = `${CHANGES}/${changeId}/ticket.md`;
-  const copy = ticketCopy(t);
-  const created: string[] = [];
-  const write = (rel: string, contents: string) => {
-    const full = path.join(dir, rel);
-    fs.mkdirSync(path.dirname(full), { recursive: true });
-    fs.writeFileSync(full, contents, "utf8");
-    created.push(`${CHANGES}/${changeId}/${rel}`);
-  };
-  const values = [...new Set(t.criteria.flatMap((c) => statedValues(c)))];
-  write("ticket.md", copy);
-  write("proposal.md", proposalFor(t, changeId, capability));
-  const questions = questionsFor(t);
-  if (questions) write("questions.md", questions);
-  write(
-    "DRAFTING.md",
-    ticketGuide({
-      ticket: t,
-      capability,
-      changeId,
-      copy: copyPath,
-      reqRange,
-      firstScenario: nextScenario(projectDir),
-      values,
-    })
-  );
-  write(
-    path.join("specs", capability, "spec.md"),
-    templateDelta(capability, reqRange[0], phrases(projectDir))
-  );
-  const config = {
-    ...DEFAULT_CONFIG,
-    created: new Date().toISOString().slice(0, 10),
-    req_range: reqRange,
-  };
-  write(
-    "change.yaml",
-    `${renderConfig(config).trimEnd()}\nbrief: ${copyPath}\nticket: ${t.key}\nticket_sha256: ${sha256(copy)}\n`
-  );
-  fs.renameSync(dir, final);
-  return { reqRange, created };
+  try {
+    const reqRange = reserveReqRange(projectDir, Math.min(10, Math.max(3, t.criteria.length))) as [
+      string,
+      string,
+    ];
+    const copyPath = `${CHANGES}/${changeId}/ticket.md`;
+    const copy = ticketCopy(t);
+    const created: string[] = [];
+    const write = (rel: string, contents: string) => {
+      const full = path.join(dir, rel);
+      fs.mkdirSync(path.dirname(full), { recursive: true });
+      fs.writeFileSync(full, contents, "utf8");
+      created.push(`${CHANGES}/${changeId}/${rel}`);
+    };
+    const values = [...new Set(t.criteria.flatMap((c) => statedValues(c)))];
+    write("ticket.md", copy);
+    write("proposal.md", proposalFor(t, changeId, capability));
+    const questions = questionsFor(t);
+    if (questions) write("questions.md", questions);
+    write(
+      "DRAFTING.md",
+      ticketGuide({
+        ticket: t,
+        capability,
+        changeId,
+        copy: copyPath,
+        reqRange,
+        firstScenario: nextScenario(projectDir),
+        values,
+      })
+    );
+    write(
+      path.join("specs", capability, "spec.md"),
+      templateDelta(capability, reqRange[0], phrases(projectDir))
+    );
+    const config = {
+      ...DEFAULT_CONFIG,
+      created: new Date().toISOString().slice(0, 10),
+      req_range: reqRange,
+    };
+    write(
+      "change.yaml",
+      `${renderConfig(config).trimEnd()}\nbrief: ${copyPath}\nticket: ${t.key}\nticket_sha256: ${sha256(copy)}\n`
+    );
+    fs.renameSync(dir, final);
+    return { reqRange, created };
+  } catch (e) {
+    fs.rmSync(dir, { recursive: true, force: true });
+    throw e;
+  }
 }
 
 /** The copy without the line that records when it was read. */

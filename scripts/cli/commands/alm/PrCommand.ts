@@ -108,6 +108,11 @@ export async function main(argv: string[]): Promise<void> {
     }
     const yaml = fs.readFileSync(path.join(changeDir, "change.yaml"), "utf8");
     const key = /^ticket:\s*(\S+)\s*$/m.exec(yaml)?.[1];
+    if (key && !/^[A-Z][A-Z0-9_]+-\d+$/.test(key)) {
+      throw new Error(
+        `ticket: ${key} in change.yaml is not a Jira issue key.\nFix: write the ticket's key, e.g. ticket: KAN-13.`
+      );
+    }
     if (!key) {
       throw new Error(
         `${o.change} was not opened from a ticket (no ticket: in change.yaml).\nFix: open it with specgate propose --from-ticket <KEY>.`

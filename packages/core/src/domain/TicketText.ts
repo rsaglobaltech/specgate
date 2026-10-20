@@ -69,6 +69,9 @@ const QUESTION_HEADINGS = ["open questions", "offene fragen", "preguntas abierta
 const SOURCE_LINE = /^\s*(?:\*\*)?(?:source|quelle|fuente)\s*:\s*(?:\*\*)?\s*(.+)$/i;
 const ASSUMPTION = /\s*(?:assumption|annahme|supuesto)\s*:\s*/i;
 const ITEM = /^\s*(?:[-*•]|\d+[.)])\s+(.*)$/;
+/** A criterion's first word: on its own line, it starts a criterion even without a marker. */
+const OPENS_CRITERION =
+  /^\s*(?:\*\*)?(?:given|gegeben sei|angenommen|dado|dada|scenario|szenario|escenario)\b/i;
 
 type Section = "intent" | "criteria" | "questions" | "other";
 
@@ -176,7 +179,8 @@ export function documentText(value: unknown): string {
 
 /**
  * A section's lines as items. A list marker starts an item; so does a line of
- * text after a blank line or at the start. A line right below an item
+ * text after a blank line, at the start, or opening with "Given" (or its
+ * German and Spanish words). A line right below an item
  * continues it (a wrapped line, a nested list). No text is dropped: a
  * criterion written as a paragraph between list items is still a criterion.
  */
@@ -195,6 +199,9 @@ function items(lines: string[]): string[] {
     } else if (!line.trim()) {
       flush();
     } else if (current === null) {
+      current = line.trim();
+    } else if (OPENS_CRITERION.test(line)) {
+      flush();
       current = line.trim();
     } else {
       current += " " + (m ? m[1] : line).trim();
