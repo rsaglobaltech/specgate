@@ -183,6 +183,18 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
   return { name, note: null };
 }
 
+/** Commit the opened change; a note when it could not, else null. */
+function commitOpening(dir: string, t: Ticket, changeId: string): string | null {
+  const added = git(dir, ["add", "--", `${CHANGES}/${changeId}`]);
+  const made =
+    added.status === 0
+      ? git(dir, ["commit", "-q", "-m", `${t.key} docs(spec): open the change from the ticket`])
+      : added;
+  if (made.status === 0) return null;
+  const why = (made.stderr || made.stdout).trim().split("\n")[0] ?? "";
+  return `The opened change is not committed (${why}): commit it, so its reserved ids reach the others.`;
+}
+
 /** Fetch `origin` before ids are reserved; a note when it could not, else null. */
 function fetchOrigin(dir: string): string | null {
   if (git(dir, ["remote", "get-url", "origin"]).status !== 0) return null;
@@ -540,6 +552,10 @@ export class TicketCommand extends BaseCommand {
     const branch = opts.branch ? ticketBranch(projectDir, ticket) : { name: null, note: null };
     if (fetched) branch.note = branch.note ? `${fetched} ${branch.note}` : fetched;
     const opened = openChange(projectDir, ticket, changeId, capability);
+    // On the branch it created, the opening is committed, so pushing it
+    // publishes the ids it reserved to every other clone (REQ-165).
+    const committed = branch.name ? commitOpening(projectDir, ticket, changeId) : null;
+    if (committed) branch.note = branch.note ? `${branch.note} ${committed}` : committed;
     const pushed = branch.name && opts.push ? pushBranch(projectDir, branch.name) : null;
     if (opts.agent) {
       return this.withAgent(

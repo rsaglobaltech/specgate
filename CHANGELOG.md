@@ -21,6 +21,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 - **OpenCode in `agents init`** (REQ-162): `/specgate-*` commands in
   `.opencode/commands/`, detected from `.opencode/` or `opencode.json`.
+- **Opening a ticket's change commits and pushes it** (REQ-165), so the ids it
+  reserved are visible to every other clone at once; the branch used to be
+  pushed empty, with the reservation left uncommitted on one disk.
 - **`change_id_clash`** (REQ-164), and `propose --from-ticket` fetches
   `origin` before reserving ids (REQ-163): two developers who opened tickets a
   minute apart on two clones both reserved REQ-010.

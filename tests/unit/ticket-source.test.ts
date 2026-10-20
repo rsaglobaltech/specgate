@@ -1154,7 +1154,11 @@ test("REQ-148: the ticket's branch starts from the base, not from another ticket
       git(dir, "rev-parse", "--abbrev-ref", "HEAD"),
       "feature/KAN-13-register-vehicle-entry"
     );
-    assert.equal(git(dir, "log", "--format=%s", "main..HEAD"), "", "nothing of KAN-12 comes along");
+    // Only the opening of KAN-13's change (REQ-165); nothing of KAN-12 comes along.
+    assert.equal(
+      git(dir, "log", "--format=%s", "main..HEAD"),
+      "KAN-13 docs(spec): open the change from the ticket"
+    );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -1736,8 +1740,7 @@ test("REQ-148 SCN-148e: gitflow — the ticket's branch starts from develop, not
     );
     assert.equal(git(dir, "merge-base", "--is-ancestor", "develop", "HEAD"), "");
     const { ticketKeyFindings } = require("../../scripts/lib/ticket-keys");
-    git(dir, "add", "-A");
-    git(dir, "commit", "-qm", "KAN-13 docs(spec): open the change");
+    // The opening is committed with the key (REQ-165); develop's commits are not the ticket's.
     assert.deepEqual(ticketKeyFindings(dir), [], "develop's own commits are not the ticket's");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

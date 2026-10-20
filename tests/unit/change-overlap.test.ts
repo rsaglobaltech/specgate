@@ -250,3 +250,68 @@ test("REQ-163 SCN-163a: a ticket's change sees a branch a colleague pushed meanw
     for (const d of [origin, mine, theirs]) fs.rmSync(d, { recursive: true, force: true });
   }
 });
+
+// ── REQ-165 ──────────────────────────────────────────────────────────────────
+
+test("REQ-165 SCN-165a: opening a ticket's change publishes its reservation", () => {
+  const origin = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pub-origin-"));
+  const mine = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pub-mine-"));
+  const theirs = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pub-theirs-"));
+  try {
+    git(origin, "init", "-q", "--bare", "-b", "develop");
+    const seed = repo();
+    git(seed, "remote", "add", "origin", origin);
+    git(seed, "push", "-q", "origin", "develop");
+    fs.rmSync(seed, { recursive: true, force: true });
+    for (const d of [mine, theirs]) {
+      fs.rmSync(d, { recursive: true, force: true });
+      assert.equal(spawnSync("git", ["clone", "-q", "-b", "develop", origin, d]).status, 0);
+      git(d, "config", "user.email", "t@example.com");
+      git(d, "config", "user.name", "T");
+    }
+    const ticket = path.join(os.tmpdir(), `pet104-${process.pid}.json`);
+    fs.writeFileSync(
+      ticket,
+      JSON.stringify({
+        key: "PET-104",
+        fields: {
+          summary: "Walk-in owners",
+          issuetype: { name: "Story" },
+          description:
+            "Acceptance Criteria\n- Given the form, when I save an empty telephone, then the owner is saved.",
+        },
+      })
+    );
+    const run = spawnSync(
+      process.execPath,
+      [
+        path.join(ROOT_DIR, "dist", "scripts", "propose.js"),
+        "--from-ticket",
+        ticket,
+        "--capability",
+        "owners",
+        "--project-dir",
+        theirs,
+      ],
+      { encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } }
+    );
+    fs.rmSync(ticket);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(git(theirs, "status", "--porcelain"), "", "the opened change is committed");
+
+    git(mine, "fetch", "-q", "origin");
+    const branch = "origin/feature/PET-104-walk-in-owners";
+    assert.equal(
+      git(mine, "log", "-1", "--format=%s", branch),
+      "PET-104 docs(spec): open the change from the ticket"
+    );
+    const yaml = git(
+      mine,
+      "show",
+      `${branch}:docs/specs/changes/pet-104-walk-in-owners/change.yaml`
+    );
+    assert.match(yaml, /^req_range: \[REQ-\d+, REQ-\d+\]$/m);
+  } finally {
+    for (const d of [origin, mine, theirs]) fs.rmSync(d, { recursive: true, force: true });
+  }
+});
