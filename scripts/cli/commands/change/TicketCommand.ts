@@ -34,7 +34,7 @@ import {
   renderConfig,
   reserveReqRange,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
-import { draftReport, nextScenario } from "../spec/DraftCommand";
+import { draftReport, nextScenario, openFindings } from "../spec/DraftCommand";
 import { ticketGuide, ticketPrompt } from "../../../draft/ticket-guide";
 import { runConfinedAgent, withWritePermission } from "../../../draft/confined-agent";
 import { baseFor } from "../../../lib/ticket-keys";
@@ -549,7 +549,9 @@ export class TicketCommand extends BaseCommand {
       changeId,
       allowed: (rel) => rel.startsWith(`${CHANGES}/${changeId}/`) && rel !== copy,
       command: agent.command,
-      prompt: ticketPrompt(ticket, changeId, guide),
+      // A second run fixes what the checklist found, as on the brief path:
+      // without the findings, the agent read a finished draft and changed nothing.
+      prompt: ticketPrompt(ticket, changeId, guide) + openFindings(projectDir, changeId, copy),
       showOutput: !opts.json,
     });
     if (run.problem === "no_git") {

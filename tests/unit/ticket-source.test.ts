@@ -1303,3 +1303,50 @@ test("REQ-149: a ticket: in change.yaml that is not a Jira key pushes nothing", 
     fs.rmSync(origin, { recursive: true, force: true });
   }
 });
+
+test("REQ-147: --agent on an open change hands the agent the findings to fix", () => {
+  const dir = repo();
+  try {
+    const file = path.join(os.tmpdir(), `kan13d-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    assert.equal(
+      runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit", "--no-branch"]).status,
+      0
+    );
+    const change = path.join(dir, CHANGE_13);
+    fs.writeFileSync(
+      path.join(change, "specs", "entry-exit", "spec.md"),
+      [
+        "## ADDED Requirements",
+        "",
+        "### Requirement: REQ-001 — Plates are normalized",
+        "",
+        "<!-- specgate:trace actor=Administrator kind=business-rule -->",
+        "",
+        "The system SHALL store a plate in uppercase without spaces.",
+        "",
+        "#### Scenario: SCN-001 — A lowercase plate",
+        "",
+        '- GIVEN a plate typed as "ab 123 cd"',
+        "- WHEN I save",
+        '- THEN it is stored as "AB123CD"',
+        "",
+      ].join("\n")
+    );
+    fs.writeFileSync(
+      path.join(change, "questions.md"),
+      "| # | Question | Blocks | Answer |\n|---|---|---|---|\n| Q1 | Keep plates after a year? |  |  |\n"
+    );
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "draft");
+    const prompt = path.join(os.tmpdir(), `prompt-${process.pid}.txt`);
+    const run = runPropose(dir, ["--from-ticket", file, "--agent", `cat > ${prompt}`]);
+    fs.rmSync(file);
+    const sentPrompt = fs.readFileSync(prompt, "utf8");
+    fs.rmSync(prompt);
+    assert.match(sentPrompt, /Fix these findings, and only these/, run.stdout);
+    assert.match(sentPrompt, /D7_floating_question/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

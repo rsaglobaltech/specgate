@@ -448,7 +448,7 @@ function briefLine(projectDir: string, brief: string): string | null {
  * checker (it may only edit), so it gets the findings in its prompt — without
  * them it would redraft blind and leave the same ones behind.
  */
-function openFindings(projectDir: string, changeId: string, brief: string): string {
+export function openFindings(projectDir: string, changeId: string, brief: string): string {
   if (!fs.existsSync(path.join(projectDir, CHANGES, changeId))) return "";
   const result = draftReport(projectDir, changeId, brief);
   if ("failure" in result || result.report.status.length === 0) return "";
