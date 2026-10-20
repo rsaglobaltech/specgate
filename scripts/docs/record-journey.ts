@@ -69,8 +69,8 @@ students.
 
 The teacher creates courses by level and publishes lessons with their
 material. Students follow their course on the web or on their phone, do the
-exercises of each lesson and see their progress. The teacher sees each
-student's progress and corrects written exercises.
+exercises of each lesson and see their progress quickly. The teacher sees
+each student's progress and corrects written exercises.
 
 We don't know yet whether students pay per course or per month.
 `;
@@ -88,6 +88,73 @@ modules: [courses, lessons, exercises, progress]
 
 `;
 
+/** The front matter once the person has reviewed it: the check settled, a non-goal added. */
+const LINGO_REVIEWED = `---
+product: Lingo — online lessons for a language school
+surfaces: [web, mobile]
+actors:
+  - { name: Teacher, surfaces: [web] }
+  - { name: Student, surfaces: [web, mobile] }
+modules: [courses, lessons, exercises, progress]
+non_goals: [video calls]
+---
+
+`;
+
+/** The module sections the stand-in proposes from the notes: one rule still vague. */
+const lingoCards = (progressRule: string) => `
+## Module: courses
+
+Rules
+- A teacher creates a course with one level, from "A1" to "C2".
+- A student follows one course.
+
+Examples
+- The one where the teacher creates "Spanish A2".
+- The one where Ana follows "Spanish A2".
+
+Questions
+- Can a student follow two courses at once?
+- Do students pay per course or per month?
+
+## Module: lessons
+
+Rules
+- A teacher publishes a lesson in a course, with its material.
+- When a lesson is published, the students of its course see it.
+
+Examples
+- The one where the teacher publishes "Greetings" in "Spanish A2" with a PDF.
+- The one where Ana opens "Spanish A2" on her phone and sees "Greetings".
+
+## Module: exercises
+
+Rules
+- A lesson has exercises, done on the web or on the phone.
+- The teacher corrects written exercises.
+
+Examples
+- The one where Ana answers the 3 exercises of "Greetings".
+- The one where the teacher corrects Ana's written answer.
+
+Questions
+- Are the other exercises corrected automatically?
+
+## Module: progress
+
+Rules
+- ${progressRule}
+- The teacher sees each student's progress.
+
+Examples
+- The one where Ana has done 2 of the 3 exercises of "Greetings" and sees 2 of 3.
+- The one where the teacher sees Ana at 2 of 3.
+`;
+
+/** The whole Lingo brief, reviewed: what the page shows as its example. */
+export const LINGO_EXAMPLE =
+  LINGO_REVIEWED + LINGO_BRIEF + lingoCards("A student's progress opens in under 2 seconds.");
+
 function lingoProject(scratch: string, name: string, env: NodeJS.ProcessEnv): string {
   const project = path.join(scratch, name);
   write(
@@ -100,56 +167,52 @@ function lingoProject(scratch: string, name: string, env: NodeJS.ProcessEnv): st
   return project;
 }
 
+/** A stand-in for `claude -p` on PATH: it ignores the prompt and runs `script`. */
+function standIn(scratch: string, script: string[]): void {
+  fs.writeFileSync(
+    path.join(scratch, "bin", "claude"),
+    ["#!/usr/bin/env bash", "cat > /dev/null", ...script, ""].join("\n"),
+    { mode: 0o755 }
+  );
+}
+
 const BRIEF_HOOKS: Record<string, Hook> = {
-  "brief-none": (project, env) => {
-    lingoProject(path.dirname(project), "lingo", env);
+  "brief-new": (project, env) => {
     lingoProject(path.dirname(project), "lingo-new", env);
   },
-  // You: your notes, saved as they are.
-  "brief-plain": (project, env) => {
-    const lingo = path.join(path.dirname(project), "lingo");
+  // You: your notes, saved as they are. The stand-in does what BRIEF-SETUP.md
+  // asks — a front matter on top, the notes untouched.
+  "brief-agent": (project, env) => {
+    const scratch = path.dirname(project);
+    const lingo = lingoProject(scratch, "lingo", env);
     write(path.join(lingo, "docs", "brief.md"), LINGO_BRIEF);
     commit(lingo, env, "the brief");
-  },
-  // A stand-in for `claude -p` on PATH: it reads the prompt and does what
-  // BRIEF-SETUP.md asks — a front matter on top, the notes untouched.
-  "brief-agent": (project) => {
-    const scratch = path.dirname(project);
     const fmFile = path.join(scratch, "tmp", "lingo-front-matter.md");
     write(fmFile, LINGO_FRONT_MATTER);
-    const claude = path.join(scratch, "bin", "claude");
-    fs.writeFileSync(
-      claude,
-      [
-        "#!/usr/bin/env bash",
-        "cat > /dev/null",
-        `cat "${fmFile}" docs/brief.md > docs/brief.md.new && mv docs/brief.md.new docs/brief.md`,
-        'echo "Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to check."',
-        "",
-      ].join("\n"),
-      { mode: 0o755 }
-    );
+    standIn(scratch, [
+      `cat "${fmFile}" docs/brief.md > docs/brief.md.new && mv docs/brief.md.new docs/brief.md`,
+      'echo "Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to check."',
+    ]);
   },
-  // You, reviewing: a tablet, an admin, a module written as a title.
-  "brief-error": (project) => {
-    const brief = path.join(path.dirname(project), "lingo", "docs", "brief.md");
-    const text = fs
-      .readFileSync(brief, "utf8")
-      .replace(
-        "  - { name: Teacher, surfaces: [web] }",
-        "  - { name: Teacher, surfaces: [web, tablet] }\n  - { name: Admin }"
-      )
-      .replace(
-        "modules: [courses, lessons, exercises, progress]",
-        "modules: [courses, lessons, Live classes, progress]"
-      );
-    write(brief, text);
+  // You, reviewing the fields; then the stand-in does what BRIEF-CARDS.md asks.
+  "brief-cards-agent": (project, env) => {
+    const scratch = path.dirname(project);
+    const lingo = path.join(scratch, "lingo");
+    write(path.join(lingo, "docs", "brief.md"), LINGO_REVIEWED + LINGO_BRIEF);
+    commit(lingo, env, "the front matter, reviewed");
+    const cardsFile = path.join(scratch, "tmp", "lingo-cards.md");
+    write(cardsFile, lingoCards("A student sees their progress quickly."));
+    standIn(scratch, [
+      `cat "${cardsFile}" >> docs/brief.md`,
+      'echo "Added 4 module sections from your notes; 3 questions the notes leave open."',
+    ]);
   },
-  // You: fixed — the front matter the agent proposed, reviewed.
+  // You: the vague rule made testable — the brief as the page shows it.
   "brief-ready": (project) => {
-    const brief = path.join(path.dirname(project), "lingo", "docs", "brief.md");
-    write(brief, LINGO_FRONT_MATTER + LINGO_BRIEF);
+    write(path.join(path.dirname(project), "lingo", "docs", "brief.md"), LINGO_EXAMPLE);
   },
+  "brief-draft": (project, env) =>
+    commit(path.join(path.dirname(project), "lingo"), env, "the brief"),
 };
 
 // ── From scratch: court bookings ────────────────────────────────────────────

@@ -31,3 +31,8 @@ export function withoutFences(markdown: string): string {
     })
     .join("\n");
 }
+
+/** The text with every HTML comment blanked, its line breaks kept. */
+export function withoutComments(text: string): string {
+  return String(text || "").replace(/<!--[\s\S]*?-->/g, (c) => c.replace(/[^\n]/g, ""));
+}

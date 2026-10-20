@@ -134,7 +134,7 @@ specgate change author add-dynamic-pricing --artifact specs   --agent-profile lo
 `{prompt_file}` is filled in by Specgate: it writes the prompt it built to a
 temporary file and puts that file's path in your command, so any agent that
 reads a file or standard input works. A draft written from the brief needs none
-of this — [`specgate draft <module> --agent "claude -p"`](start/write-the-brief.md)
+of this — [`specgate propose --from-brief <module> --agent "claude -p"`](start/write-the-brief.md)
 sends the prompt on standard input ([From a client brief](from-a-brief.md)).
 
 This is the `spec-author` role of the multi-agent harness, and it is a separate

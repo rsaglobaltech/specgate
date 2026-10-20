@@ -390,13 +390,15 @@ test("--new-brief writes the template, and never over a brief that exists", (t: 
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const file = path.join(dir, "docs", "brief.md");
   assert.equal(fs.readFileSync(file, "utf8"), BRIEF_TEMPLATE);
+  // ADR-0038: why, a glossary, a card per module, and notes.
   for (const section of [
-    "## What the product is",
-    "## Who uses it and how",
-    "## What each one must be able to do",
-    "## Rules and numbers you already know",
-    "## What you don't know yet",
-    "## Out of scope",
+    "## Why",
+    "## Glossary",
+    "## Module: <first-module>",
+    "Rules\n",
+    "Examples\n",
+    "Questions\n",
+    "## Notes",
   ]) {
     assert.ok(BRIEF_TEMPLATE.includes(section), section);
   }
@@ -532,8 +534,27 @@ test("--agent that rewrites the brief itself is undone whole", (t: TestContext) 
   assert.equal(fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8"), NOTES);
 });
 
-test("--agent on a complete front matter does nothing", (t: TestContext) => {
-  const { agent } = withGit(t, BRIEF);
+test("--agent on a complete front matter with its module sections does nothing", (t: TestContext) => {
+  const sections = [
+    "",
+    "## Module: bookings",
+    "",
+    "Rules",
+    "- A court cannot be booked twice for the same hour.",
+    "",
+    "Examples",
+    "- The one where a Member books the centre court at 18:00.",
+    "",
+    "## Module: coupons",
+    "",
+    "Rules",
+    "- A coupon is used once.",
+    "",
+    "Examples",
+    "- The one where a Member uses a coupon twice.",
+    "",
+  ].join("\n");
+  const { agent } = withGit(t, BRIEF + sections);
   const r = agent();
   assert.equal(r.status, 0);
   assert.match(r.stdout, /already there and complete/);
