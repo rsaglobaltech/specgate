@@ -1407,3 +1407,37 @@ test("REQ-148: --no-push keeps the branch local; a failed push is said, the chan
     fs.rmSync(origin, { recursive: true, force: true });
   }
 });
+
+test("REQ-152 SCN-152a: two tickets on two branches never mint the same id", () => {
+  const dir = repo(JIRA + "epics:\n  KAN-5: parking\n");
+  try {
+    git(dir, "checkout", "-q", "-b", "develop");
+    git(dir, "checkout", "-q", "-b", "feature/KAN-14-vehicle-type-catalog");
+    const other = path.join(dir, "docs", "specs", "changes", "kan-14-vehicle-type-catalog");
+    fs.mkdirSync(path.join(other, "specs", "parking"), { recursive: true });
+    fs.writeFileSync(
+      path.join(other, "change.yaml"),
+      "specgate_change_version: 1\nreq_range: [REQ-002, REQ-005]\n"
+    );
+    fs.writeFileSync(
+      path.join(other, "specs", "parking", "spec.md"),
+      "## ADDED Requirements\n\n### Requirement: REQ-005 — x\n\n#### Scenario: SCN-006 — y\n"
+    );
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "KAN-14 draft");
+    git(dir, "checkout", "-q", "develop");
+    const file = path.join(os.tmpdir(), `kan13g-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "parking", "--no-push"]);
+    fs.rmSync(file);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const yaml = fs.readFileSync(path.join(dir, CHANGE_13, "change.yaml"), "utf8");
+    assert.match(yaml, /req_range: \[REQ-006, /);
+    assert.match(
+      fs.readFileSync(path.join(dir, CHANGE_13, "DRAFTING.md"), "utf8"),
+      /from `SCN-007` up/
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

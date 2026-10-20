@@ -19,6 +19,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { highestOnOtherBranches } from "./IdsAcrossBranches";
 import { parseYamlLite } from "../domain/YamlLite";
 
 export const SPECS_DIR = path.join("docs", "specs");
@@ -267,6 +268,8 @@ export function highestReservedReq(projectDir: string): number {
     walkSpecs(path.join(dir, "specs"));
   }
 
+  // And every other branch's changes: a sibling ticket's branch has its own (REQ-152).
+  max = Math.max(max, highestOnOtherBranches(projectDir, "REQ"));
   return max;
 }
 

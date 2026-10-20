@@ -36,6 +36,7 @@ import {
   DEFAULT_CONFIG,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { templateDelta } from "../../../../packages/core/src/domain/ChangeTemplates";
+import { highestOnOtherBranches } from "../../../../packages/core/src/infrastructure/IdsAcrossBranches";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
 import type { ModuleCards } from "../../../draft/drafting-guide";
@@ -506,6 +507,7 @@ export function nextScenario(projectDir: string): string {
   };
   walk(path.join(projectDir, "docs", "specs"));
   walk(path.join(projectDir, "features"));
+  max = Math.max(max, highestOnOtherBranches(projectDir, "SCN"));
   for (const m of (readIf(path.join(projectDir, "spec.md")) || "").matchAll(/\bSCN-(\d+)\b/g)) {
     max = Math.max(max, Number(m[1]));
   }
