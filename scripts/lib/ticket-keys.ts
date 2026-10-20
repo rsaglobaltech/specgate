@@ -6,6 +6,8 @@
  */
 
 import { spawnSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { warning } from "./diagnostics";
 import type { Diagnostic } from "./diagnostics";
 import { resolveBase } from "./base-ids";
@@ -60,4 +62,48 @@ export function ticketKeyFindings(dir: string, given?: string): Diagnostic[] {
         fix: `Reword it to start with ${key} (git commit --amend for the last one), so Jira shows it in ${key}.`,
       })
     );
+}
+
+const CHANGES = path.join("docs", "specs", "changes");
+const JIRA_KEY = /^[A-Z][A-Z0-9_]+-\d+$/;
+
+function specFiles(dir: string): string[] {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const full = path.join(dir, e.name);
+    return e.isDirectory() ? specFiles(full) : e.name === "spec.md" ? [full] : [];
+  });
+}
+
+/** The ticket of the open change whose delta holds `requirement`, or null (REQ-156). */
+export function ticketKeyOf(projectDir: string, requirement: string): string | null {
+  const changes = path.join(projectDir, CHANGES);
+  if (!fs.existsSync(changes)) return null;
+  const heading = new RegExp(`^###\\s+Requirement:\\s+${requirement}(?![0-9])`, "m");
+  for (const e of fs.readdirSync(changes, { withFileTypes: true })) {
+    if (!e.isDirectory() || e.name === "archive" || e.name.startsWith(".")) continue;
+    const dir = path.join(changes, e.name);
+    if (!specFiles(path.join(dir, "specs")).some((f) => heading.test(fs.readFileSync(f, "utf8"))))
+      continue;
+    const yaml = path.join(dir, "change.yaml");
+    const key = fs.existsSync(yaml)
+      ? /^ticket:\s*(\S+)\s*$/m.exec(fs.readFileSync(yaml, "utf8"))?.[1]
+      : undefined;
+    return key && JIRA_KEY.test(key) ? key : null;
+  }
+  return null;
+}
+
+/** The harness's commit for a requirement: the ticket key first when it has one. */
+export function harnessCommitMessage(
+  projectDir: string,
+  requirement: string,
+  attempt: number,
+  maxAttempts: number
+): string {
+  const key = ticketKeyOf(projectDir, requirement);
+  const subject = key
+    ? `${key} ${requirement}: implement via specgate harness`
+    : `feat(${requirement}): implement via specgate harness`;
+  return `${subject}\n\nAttempt ${attempt}/${maxAttempts}.`;
 }

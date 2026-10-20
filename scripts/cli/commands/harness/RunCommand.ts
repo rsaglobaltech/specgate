@@ -23,6 +23,7 @@
  * gate twice: on its branch and merged (ADR-0036).
  */
 
+import { harnessCommitMessage, ticketKeyOf } from "../../../lib/ticket-keys";
 import { runWithDeadline } from "../../../lib/run-with-deadline";
 import { derivedMatrixFor, refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
@@ -1343,7 +1344,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     const commit = git(worktreeDir, [
       "commit",
       "-m",
-      `feat(${req.requirement}): implement via specgate harness\n\nAttempt ${attempt}/${settings.maxAttempts}.`,
+      harnessCommitMessage(worktreeDir, req.requirement, attempt, settings.maxAttempts),
     ]);
     if (commit.status !== 0) {
       previousFailure = `git commit failed:\n${commit.stderr || commit.stdout}`;
@@ -2299,11 +2300,12 @@ async function runChain(
       for (const f of prompts) fs.rmSync(path.join(projectDir, f), { force: true });
     }
     const title = String(req.title || req.use_case || req.useCase || "").replace(/^UC-\d+\s*/, "");
+    const mergeKey = ticketKeyOf(projectDir, req.requirement);
     git(projectDir, [
       "commit",
       "-q",
       "-m",
-      `Merge ${branch}${title ? ` — ${title}` : ""}\n\n` +
+      `${mergeKey ? `${mergeKey} ` : ""}Merge ${branch}${title ? ` — ${title}` : ""}\n\n` +
         `Merged by \`specgate harness run --chain\` after its gate passed on ${branch}.`,
     ]);
 

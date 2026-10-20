@@ -1577,3 +1577,39 @@ test("REQ-155 SCN-155a: updating Specgate updates the agent contract", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── REQ-156 ──────────────────────────────────────────────────────────────────
+
+test("REQ-156 SCN-156a: the harness's commits name the ticket", () => {
+  const { ticketKeyOf, harnessCommitMessage } = require("../../scripts/lib/ticket-keys");
+  const dir = project(JIRA);
+  try {
+    const change = path.join(dir, "docs", "specs", "changes", "kan-14-vehicle-type-catalog");
+    fs.mkdirSync(path.join(change, "specs", "parking"), { recursive: true });
+    fs.writeFileSync(
+      path.join(change, "change.yaml"),
+      "specgate_change_version: 1\nticket: KAN-14\n"
+    );
+    fs.writeFileSync(
+      path.join(change, "specs", "parking", "spec.md"),
+      "## ADDED Requirements\n\n### Requirement: REQ-002 — Default vehicle types\n"
+    );
+    assert.equal(ticketKeyOf(dir, "REQ-002"), "KAN-14");
+    assert.equal(ticketKeyOf(dir, "REQ-020"), null);
+    assert.match(
+      harnessCommitMessage(dir, "REQ-002", 3, 3),
+      /^KAN-14 REQ-002: implement via specgate harness\n\nAttempt 3\/3\./
+    );
+    assert.match(
+      harnessCommitMessage(dir, "REQ-020", 1, 3),
+      /^feat\(REQ-020\): implement via specgate harness/
+    );
+    fs.writeFileSync(
+      path.join(change, "change.yaml"),
+      "specgate_change_version: 1\nticket: KAN-1(\n"
+    );
+    assert.equal(ticketKeyOf(dir, "REQ-002"), null, "a key that is not a Jira key is not used");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
