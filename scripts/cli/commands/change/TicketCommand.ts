@@ -54,6 +54,24 @@ export interface TicketOptions {
 
 const NULL_SHAPE = { ticket: null };
 
+function usage(): void {
+  process.stdout.write(
+    [
+      "",
+      "  specgate propose --from-ticket <KEY | issue.json> [options]",
+      "",
+      "  A Jira ticket as the source text of a change (docs/from-a-ticket.md).",
+      "",
+      "  --check               Its Definition of Ready (T1–T9); writes nothing",
+      "  --capability <name>   The capability, when its epic is not under epics:",
+      "  --agent <cmd>         Have your agent draft it, confined to the change",
+      "  --no-branch           Do not create feature/<KEY>-<slug>",
+      "  --project-dir <path>  --json",
+      "",
+    ].join("\n") + "\n"
+  );
+}
+
 export function parseTicketArgs(argv: string[]): TicketOptions {
   const opts: TicketOptions = {
     ticket: "",
@@ -368,6 +386,7 @@ function ticketJson(t: Ticket) {
 
 export class TicketCommand extends BaseCommand {
   async execute(): Promise<void> {
+    if (this.args.includes("--help") || this.args.includes("-h")) return usage();
     const opts = parseTicketArgs(this.args);
     const io = agentIo(opts.json);
     if (!opts.ticket) {

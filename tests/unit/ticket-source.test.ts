@@ -1011,3 +1011,14 @@ test("REQ-150 SCN-150a: the page and the help agree", () => {
   assert.match(commands, /--from-ticket/);
   assert.match(commands, /specgate alm pr/);
 });
+
+test("REQ-150: propose --from-ticket --help explains the options, it is not a ticket key", () => {
+  const run = spawnSync(process.execPath, [PROPOSE, "--from-ticket", "--help"], {
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  });
+  assert.equal(run.status, 0, run.stderr);
+  assert.match(run.stdout, /--capability/);
+  assert.match(run.stdout, /--no-branch/);
+  assert.match(run.stdout, /from-a-ticket\.md/);
+});
