@@ -139,7 +139,7 @@ The system SHALL, when `specgate propose --from-ticket <KEY>` opens a change in 
 - WHEN the developer runs `specgate propose --from-ticket KAN-13.json --check`
 - THEN it reports `ticket_changed` showing the old and the new line
 
-<!-- specgate:trace status=Draft feature=features/ticket-source/REQ-148.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/ticket-source/REQ-148.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-149 — One pull request per ticket
 

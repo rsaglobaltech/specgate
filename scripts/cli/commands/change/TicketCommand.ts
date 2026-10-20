@@ -7,13 +7,14 @@
  * `scripts/alm/` (ADR-0021 §1).
  */
 
+import { spawnSync } from "node:child_process";
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
 import * as ui from "../../../lib/ui";
 import { agentIo } from "../../../lib/agent";
-import { error } from "../../../lib/diagnostics";
+import { error, warning } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { readAlmConfig } from "../../../alm/core";
 import { makeClient } from "../../../alm/clients";
@@ -109,6 +110,36 @@ async function loadTicket(ref: string, cfg: AlmConfig | undefined, projectDir: s
     );
   }
   return readTicket(await client.readIssue(ref), opts);
+}
+
+function git(dir: string, args: string[]) {
+  return spawnSync("git", ["-C", dir, ...args], { encoding: "utf8" });
+}
+
+const isBug = (t: Ticket) => /^(bug|defect|fehler|incidencia|error)$/i.test(t.type.trim());
+
+/**
+ * `feature/KAN-13-register-vehicle-entry`, or `bugfix/…` for a bug: the key is
+ * what makes the Git host show the branch in the ticket. Only from a clean
+ * tree — carrying someone's uncommitted work onto a ticket's branch would mix
+ * it into that ticket.
+ */
+function ticketBranch(dir: string, t: Ticket): { name: string | null; note: string | null } {
+  if (git(dir, ["rev-parse", "--is-inside-work-tree"]).status !== 0) {
+    return { name: null, note: null };
+  }
+  const name = `${isBug(t) ? "bugfix" : "feature"}/${t.key}${changeIdFor(t).slice(t.key.length)}`;
+  if (git(dir, ["status", "--porcelain"]).stdout.trim()) {
+    return {
+      name: null,
+      note: `Branch not created: there are uncommitted changes. Commit them, then: git checkout -b ${name}`,
+    };
+  }
+  const made = git(dir, ["checkout", "-q", "-b", name]);
+  if (made.status !== 0) {
+    return { name: null, note: `Branch ${name} not created: ${made.stderr.trim()}` };
+  }
+  return { name, note: null };
 }
 
 function readIf(file: string): string | undefined {
@@ -252,6 +283,45 @@ function openChange(projectDir: string, t: Ticket, changeId: string, capability:
   return { reqRange, created };
 }
 
+/** The copy without the line that records when it was read. */
+const comparable = (copy: string) =>
+  copy
+    .split("\n")
+    .filter((l) => !l.startsWith("<!-- specgate:ticket "))
+    .map((l) => l.trimEnd());
+
+/**
+ * `ticket_changed`: the ticket on the board is not the one the change was
+ * drafted from. The copy stays the record of what was agreed; the person
+ * decides whether the change follows.
+ */
+function changedSince(projectDirOption: string, t: Ticket): Diagnostic[] {
+  let projectDir: string;
+  try {
+    projectDir = resolveProjectDir(projectDirOption);
+  } catch {
+    return [];
+  }
+  const copy = readIf(path.join(projectDir, CHANGES, changeIdFor(t), "ticket.md"));
+  if (copy === undefined) return [];
+  const before = comparable(copy);
+  const now = comparable(ticketCopy(t));
+  const gone = before.filter((l) => l.trim() && !now.includes(l));
+  const added = now.filter((l) => l.trim() && !before.includes(l));
+  if (gone.length === 0 && added.length === 0) return [];
+  return [
+    warning(
+      "ticket_changed",
+      `${t.key} changed since ${changeIdFor(t)} was opened:\n` +
+        [...gone.map((l) => `       - ${l}`), ...added.map((l) => `       + ${l}`)].join("\n"),
+      {
+        target: t.key,
+        fix: "Decide with the analyst whether the change follows; if it does, update the delta and ticket.md together, in one commit naming the ticket.",
+      }
+    ),
+  ];
+}
+
 /** `ticket_copy_edited` when `ticket.md` no longer matches the hash taken when it was read. */
 function copyIntegrity(dir: string): Diagnostic[] {
   const yaml = readIf(path.join(dir, "change.yaml")) ?? "";
@@ -360,6 +430,7 @@ export class TicketCommand extends BaseCommand {
       ]);
     }
 
+    const branch = opts.branch ? ticketBranch(projectDir, ticket) : { name: null, note: null };
     const opened = openChange(projectDir, ticket, changeId, capability);
     if (opts.agent) return this.withAgent(opts, projectDir, ticket, changeId, opened.created);
     io.emit(
@@ -369,6 +440,7 @@ export class TicketCommand extends BaseCommand {
         capability,
         reserved: opened.reqRange,
         created: opened.created,
+        branch: branch.name,
         next: `specgate propose --from-ticket ${opts.ticket}`,
         status: findings,
       },
@@ -384,6 +456,8 @@ export class TicketCommand extends BaseCommand {
           ) + "\n"
         );
         for (const f of opened.created) out.write(ui.fileLine("added", f, ""));
+        if (branch.name) out.write("\n" + ui.ok(`On branch ${ui.bold(branch.name)}`));
+        if (branch.note) out.write("\n" + ui.info(branch.note));
         out.write(
           "\n" +
             ui.section("Have your agent write it") +
@@ -528,7 +602,7 @@ export class TicketCommand extends BaseCommand {
   /** `--check`: the ticket's parts, and what keeps it from being drafted. */
   private check(opts: TicketOptions, ticket: Ticket): void {
     const io = agentIo(opts.json);
-    const findings = checkTicket(ticket);
+    const findings = [...checkTicket(ticket), ...changedSince(opts.projectDir, ticket)];
     const errors = findings.filter((d) => d.severity === "error").length;
     const warnings = findings.filter((d) => d.severity === "warning").length;
     const ready = ticketReady(findings);

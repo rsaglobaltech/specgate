@@ -15,6 +15,7 @@ import type { HarnessSettings } from "../../../../packages/core/src/domain/Harne
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
+import { ticketKeyFindings } from "../../../lib/ticket-keys";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -130,6 +131,13 @@ export class CheckCommand extends BaseCommand {
       );
     }
 
+    // On a ticket's branch, commits that do not name the ticket (ADR-0039).
+    // Said whatever the gate decides: a failed gate is fixed on the same branch.
+    const ticketKeys = ticketKeyFindings(projectDir, baseFlag);
+    if (!json) {
+      for (const d of ticketKeys) process.stdout.write(ui.warn(d.message) + ui.fix(d.fix ?? ""));
+    }
+
     // Two branches allocate ids as max+1 over their own checkout; the
     // collision is caught here, before the merge (ADR-0036).
     const ids = checkIdsAgainstBase(projectDir, baseFlag);
@@ -137,6 +145,7 @@ export class CheckCommand extends BaseCommand {
       recordCheck(projectDir, false);
       const first = ids.collisions[0];
       io.fail(NULL_SHAPE, [
+        ...ticketKeys,
         ...ids.collisions.slice(1).map((x) =>
           error("id_taken_on_base", `${x.id} is "${x.here}" here and "${x.base}" on ${ids.base}.`, {
             target: x.id,
@@ -178,6 +187,7 @@ export class CheckCommand extends BaseCommand {
       recordCheck(projectDir, false);
       const first = view.problems[0].change;
       io.fail(NULL_SHAPE, [
+        ...ticketKeys,
         // One fix line per refusal: the findings say what, the last says how.
         ...view.problems.map(({ fix: _fix, change: _change, ...d }) => d),
         error(
@@ -231,6 +241,7 @@ export class CheckCommand extends BaseCommand {
 
       recordCheck(projectDir, false);
       io.fail(NULL_SHAPE, [
+        ...ticketKeys,
         step.stage === "validate"
           ? error("check_validate_failed", "The gate failed: validate --strict.", {
               fix: "Fix what validate reports above, then run `specgate check` again.",
@@ -269,6 +280,7 @@ export class CheckCommand extends BaseCommand {
           ]
         : []),
       ...unwritten,
+      ...ticketKeys,
     ];
     recordCheck(projectDir, true);
     io.emit(

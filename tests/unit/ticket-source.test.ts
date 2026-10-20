@@ -700,3 +700,123 @@ test("REQ-147 SCN-147c: the copy edited to pass is refused", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── REQ-148 ──────────────────────────────────────────────────────────────────
+
+const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
+
+function git(dir: string, ...args: string[]) {
+  const r = spawnSync(
+    "git",
+    ["-C", dir, "-c", "user.email=t@example.com", "-c", "user.name=T", ...args],
+    {
+      encoding: "utf8",
+    }
+  );
+  assert.equal(r.status, 0, r.stderr);
+  return r.stdout.trim();
+}
+
+/** A project in a git repository, everything committed on `main`. */
+function repo(config = JIRA): string {
+  const dir = project(config);
+  git(dir, "init", "-q", "-b", "main");
+  git(dir, "add", "-A");
+  git(dir, "commit", "-qm", "init");
+  return dir;
+}
+
+test("REQ-148 SCN-148a: a story becomes feature/KAN-13-…, a bug bugfix/…", () => {
+  const dir = repo();
+  try {
+    const file = path.join(os.tmpdir(), `kan13-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit"]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(
+      git(dir, "rev-parse", "--abbrev-ref", "HEAD"),
+      "feature/KAN-13-register-vehicle-entry"
+    );
+    fs.rmSync(file);
+
+    git(dir, "checkout", "-q", "main");
+    git(dir, "clean", "-qfd");
+    const bug = story(
+      "KAN-90",
+      ["Given a plate with a dash, when I save, then it is stored without it."],
+      {
+        summary: "Plate with dash rejected",
+        issuetype: { name: "Bug" },
+      }
+    );
+    const bugFile = path.join(os.tmpdir(), `kan90-${process.pid}.json`);
+    fs.writeFileSync(bugFile, JSON.stringify(bug));
+    const fixed = runPropose(dir, ["--from-ticket", bugFile, "--capability", "entry-exit"]);
+    assert.equal(fixed.status, 0, fixed.stdout + fixed.stderr);
+    assert.equal(
+      git(dir, "rev-parse", "--abbrev-ref", "HEAD"),
+      "bugfix/KAN-90-plate-with-dash-rejected"
+    );
+    fs.rmSync(bugFile);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-148: --no-branch, or uncommitted work, leaves the branch alone", () => {
+  const dir = repo();
+  try {
+    fs.writeFileSync(path.join(dir, "wip.txt"), "unsaved");
+    const file = exported(dir, "KAN-13.json", KAN_13);
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit"]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(git(dir, "rev-parse", "--abbrev-ref", "HEAD"), "main");
+    assert.match(run.stdout, /uncommitted/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-148 SCN-148b: check warns for each commit that does not name the ticket", () => {
+  const dir = repo();
+  try {
+    git(dir, "checkout", "-q", "-b", "feature/KAN-13-register-vehicle-entry");
+    fs.writeFileSync(path.join(dir, "a.txt"), "a");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "KAN-13 REQ-151: normalize plates");
+    fs.writeFileSync(path.join(dir, "b.txt"), "b");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "fix typo");
+    const run = spawnSync(process.execPath, [CLI, "check", dir, "--json"], {
+      encoding: "utf8",
+      env: { ...process.env, NO_COLOR: "1" },
+    });
+    const doc = JSON.parse(run.stdout) as { status: Array<{ code: string; message: string }> };
+    const missing = doc.status.filter((d) => d.code === "ticket_key_missing");
+    assert.equal(missing.length, 1, run.stdout);
+    assert.match(missing[0].message, /fix typo/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-148 SCN-148c: the analyst changed a criterion", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "KAN-13.json", KAN_13);
+    assert.equal(
+      runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit", "--no-branch"]).status,
+      0
+    );
+    const changed = JSON.parse(JSON.stringify(KAN_13));
+    const second = changed.fields.description.content[3].content[1].content[0].content;
+    second[second.length - 1].text = " the entry date/time is pre-filled with the current time.";
+    fs.writeFileSync(file, JSON.stringify(changed));
+    const run = runPropose(dir, ["--from-ticket", file, "--check"]);
+    assert.match(run.stdout, /ticket_changed/);
+    assert.match(run.stdout, /- .*pre-filled with the current date and time\./);
+    assert.match(run.stdout, /\+ .*pre-filled with the current time\./);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
