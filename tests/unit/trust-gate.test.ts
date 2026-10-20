@@ -304,6 +304,36 @@ test("REQ-120 SCN-120c: a gitflow project compares ids with its pr base", () => 
   }
 });
 
+test("REQ-120 SCN-120d: a requirement the base changed is not an id taken", () => {
+  // Found in a rehearsal: the second of two tickets rewriting REQ-009 was told
+  // to renumber it once the first had merged. It had taken nothing.
+  const p = adopted();
+  const steps = ["- GIVEN a", "- WHEN b", "- THEN c"];
+  try {
+    capability(p.dir, "owners", [
+      requirement("REQ-009", "An owner's telephone is exactly 10 digits", steps),
+    ]);
+    gitRepo(p.dir);
+    git(p.dir, "checkout", "-q", "-b", "develop");
+    git(p.dir, "checkout", "-q", "-b", "feature");
+    git(p.dir, "checkout", "-q", "develop");
+    capability(p.dir, "owners", [
+      requirement(
+        "REQ-009",
+        "An owner's telephone is 10 digits, or an international number",
+        steps
+      ),
+    ]);
+    git(p.dir, "commit", "-qam", "PET-103 merged");
+    git(p.dir, "checkout", "-q", "feature");
+
+    const r = cli(p.dir, "check", "--base", "develop", "--json");
+    assert.ok(!json(r).status.some((d: Diagnostic) => d.code === "id_taken_on_base"), out(r));
+  } finally {
+    p.done();
+  }
+});
+
 test("REQ-120 SCN-120b: no git, no comparison, and check says so", () => {
   const p = adopted();
   try {

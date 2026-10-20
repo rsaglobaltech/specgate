@@ -146,8 +146,15 @@ export function checkIdsAgainstBase(projectDir: string, given?: string): BaseIdC
 
   const here = titles(workingTree(projectDir));
   const there = titles(atRef(projectDir, base, prefix));
+  // Only ids this branch introduced can collide. One both sides already held
+  // where they last met is concurrent editing, not a reused id (REQ-120):
+  // renumbering it would break every test that names it.
+  const met = git(projectDir, ["merge-base", "HEAD", base]);
+  const inherited =
+    met.status === 0 ? titles(atRef(projectDir, met.stdout.trim(), prefix)) : new Map();
   const collisions: IdCollision[] = [];
   for (const [id, title] of here) {
+    if (inherited.has(id)) continue;
     const other = there.get(id);
     if (other !== undefined && norm(other) !== norm(title)) {
       collisions.push({ id, here: title, base: other });

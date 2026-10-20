@@ -11,6 +11,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **`id_taken_on_base` only for ids the branch introduced** (REQ-120): a
+  requirement the base changed after the branch started was reported as an id
+  taken, with the advice to renumber it.
 - **A local `develop` nobody updated is not the base** (REQ-148): `pr.base`
   resolves to `origin/develop` unless the local branch already contains it,
   and a ticket's branch no longer tracks its base. Behind origin, every
