@@ -975,3 +975,39 @@ test("REQ-149 SCN-149b: run again, the same pull request is updated", () => {
     fs.rmSync(origin, { recursive: true, force: true });
   }
 });
+
+// ── REQ-150 ──────────────────────────────────────────────────────────────────
+
+test("REQ-150 SCN-150a: the page and the help agree", () => {
+  const page = fs.readFileSync(path.join(ROOT_DIR, "docs", "from-a-ticket.md"), "utf8");
+  for (const rule of [
+    "T1_no_criteria",
+    "T2_vague",
+    "T3_unmeasured",
+    "T4_technical",
+    "T5_too_big",
+    "T6_test_instruction",
+    "T7_not_behaviour",
+    "T8_orphan_subtask",
+    "T9_open_question",
+    "ticket_epic",
+    "ticket_changed",
+    "ticket_key_missing",
+  ]) {
+    assert.ok(page.includes(rule), `the page explains ${rule}`);
+  }
+  assert.match(page, /cloud_id: auto/);
+  assert.match(page, /specgate alm pr/);
+  assert.match(page, /token_env/);
+  assert.doesNotMatch(page, /ATATT|ghp_|github_pat_/, "no token, not even an example one");
+  const help = spawnSync(process.execPath, [CLI, "propose", "--help"], {
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  }).stdout;
+  assert.match(help, /--from-ticket/);
+  const alm = spawnSync(process.execPath, [ALM_CLI, "--help"], { encoding: "utf8" }).stdout;
+  assert.match(alm, /alm pr/);
+  const commands = fs.readFileSync(path.join(ROOT_DIR, "docs", "commands.md"), "utf8");
+  assert.match(commands, /--from-ticket/);
+  assert.match(commands, /specgate alm pr/);
+});

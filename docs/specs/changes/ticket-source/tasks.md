@@ -23,8 +23,8 @@
 
 ## 5. Documentation
 
-- [ ] 5.1 "From a Jira ticket", help, CHANGELOG (REQ-150)
+- [x] 5.1 "From a Jira ticket", help, CHANGELOG (REQ-150)
 
 ## 6. Verification
 
-- [ ] 6.1 All suites green
+- [x] 6.1 All suites green

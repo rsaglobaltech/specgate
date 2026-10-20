@@ -9,7 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 ## [Unreleased]
 
 A brief shaped like what it becomes, checked before any agent drafts from it
-(ADR-0038).
+(ADR-0038); and a Jira ticket as source text, as a brief is (ADR-0039).
+
+### Fixed
+
+- **`specgate alm pull` works against Jira Cloud again.** Atlassian removed
+  `/rest/api/3/search` (HTTP 410); search now pages `/rest/api/3/search/jql`
+  by `nextPageToken`, up to 1000 issues.
+- **Tokens created with scopes.** `cloud_id: auto` sends every Jira request
+  through `api.atlassian.com/ex/jira/<cloud id>`, the only door such a token
+  opens. Sent to the site, such a token is answered as anonymous — HTTP 200 and
+  no issues — which used to read as "No open issues"; it is now a 401 whose fix
+  names `cloud_id: auto`.
 
 ### Changed
 
@@ -23,6 +34,22 @@ A brief shaped like what it becomes, checked before any agent drafts from it
 
 ### Added
 
+- **From a Jira ticket** ([ADR-0039](docs/specs/adr/0039-the-ticket-as-source-text.md),
+  change `ticket-source`, [the page](docs/from-a-ticket.md)).
+  - `specgate propose --from-ticket <KEY | issue.json> --check`: the ticket's
+    intent, source, acceptance criteria and open questions (English, German or
+    Spanish headings, ADF or plain text, or `acceptance_field`), and a
+    Definition of Ready, T1–T9, each with a fix an analyst applies in Jira.
+  - `specgate propose --from-ticket <KEY>`: the change `<key>-<slug>` with
+    `ticket.md` as its source — the D-checklist runs against the ticket, and an
+    edited copy is `ticket_copy_edited` — the capability from `epics:`, and the
+    branch `feature/<KEY>-<slug>` (`bugfix/` for a bug). `--agent` drafts it,
+    confined, never writing the copy.
+  - `ticket_changed` when the ticket moved since the change was opened;
+    `ticket_key_missing` from `check` for a commit on the ticket's branch that
+    does not name it.
+  - `specgate alm pr <change>`: one pull request per ticket on GitHub, titled
+    with the key, its body the requirements and the gate. Never merges.
 - **Brief cards** ([ADR-0038](docs/specs/adr/0038-brief-cards.md), change `brief-cards`).
   - `specgate propose --from-brief --check`: rules B1–B11 on the brief, each
     with its fix. Errors (B1–B4) stop a draft; warnings (B5–B11) name vague

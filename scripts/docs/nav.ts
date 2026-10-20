@@ -253,6 +253,12 @@ export const NAV: readonly NavSection[] = [
         blurb: "A brief to a reviewed draft: assumptions, open questions and the draft checklist.",
       },
       {
+        slug: "from-a-ticket",
+        label: "From a Jira ticket",
+        blurb:
+          "A story with acceptance criteria to a change checked against it, a branch and a pull request.",
+      },
+      {
         slug: "new-project",
         label: "A new project, step by step",
         blurb: "The twelve steps six pilots took, from a client's brief to a running product.",

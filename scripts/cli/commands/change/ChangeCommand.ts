@@ -122,7 +122,10 @@ function verbUsage(sub: string) {
         `                     [--full] [--reserve <n>] [--project-dir <path>] [--json]\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --check | --new-brief | --agent <cmd>\n` +
-        `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n\n` +
+        `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n` +
+        `    ${c.cyan}specgate propose --from-ticket${c.reset} <KEY | issue.json> [--check] [--capability <name>]\n` +
+        `                     [--agent <cmd>] [--no-branch]\n` +
+        `                     ${c.dim}a Jira ticket as the source text: its Definition of Ready, then its change (docs/from-a-ticket.md)${c.reset}\n\n` +
         `  Opens docs/specs/changes/<change-id>/ — proposal, tasks, a reserved REQ range and a\n` +
         `  delta for the capability (named after the change unless --capability says).\n` +
         `  Then: write the delta, a test that names each requirement, the code; specgate apply.\n\n` +
@@ -130,6 +133,7 @@ function verbUsage(sub: string) {
         `    One behaviour to fix or change     No brief: specgate propose <change-id>\n` +
         `    A feature with a few rules (2–6)   No brief: specgate propose <change-id>, rules in the delta\n` +
         `    A product, or a large area of one  A brief: docs/brief.md, then specgate propose --from-brief\n` +
+        `    A story your analyst wrote in Jira  The ticket: specgate propose --from-ticket <KEY>\n` +
         `                                       ${c.dim}(how to write it: specgate propose --from-brief --new-brief)${c.reset}\n\n`
     );
     return true;

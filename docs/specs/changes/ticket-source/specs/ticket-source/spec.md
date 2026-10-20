@@ -169,4 +169,4 @@ The system SHALL document the ticket path on a page `docs/from-a-ticket.md` — 
 - WHEN the developer reads `docs/from-a-ticket.md` and runs `specgate propose --help`
 - THEN the page names T1 to T9 and `cloud_id: auto`, and the help lists `--from-ticket`
 
-<!-- specgate:trace status=Draft feature=features/ticket-source/REQ-150.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/ticket-source/REQ-150.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
