@@ -208,6 +208,16 @@ the commits and the pull request to the ticket from the key, so the Jira
 Automation rules move the ticket as they do with GitHub. For the CI job,
 `specgate ci init --provider jenkins` (or `gitlab`) writes the gate.
 
+Keep the `base:` line of the `pr:` block even without `alm pr`. With gitflow,
+where work starts from `develop` and the repository's default branch is
+`main`, it is what the ticket's branch, the ticket-key check and the id check
+measure from:
+
+```yaml
+pr:
+  base: develop # the branch pull requests target
+```
+
 ## Next
 
 - [From a Jira ticket](from-a-ticket.md)

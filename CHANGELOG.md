@@ -11,6 +11,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **`check` compares ids with `pr.base`** (REQ-120): ticket keys were
+  measured from `develop` and ids from the remote's default, `main`, so an id
+  taken on `develop` and not yet released went unseen.
 - **`harness init` keeps a generated matrix on `merge=union`**: it appended
   the row driver after the union line, and git takes the last matching line,
   so the matrix could stop a merge again (ADR-0036).
