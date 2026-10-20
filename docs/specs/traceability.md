@@ -92,6 +92,7 @@
 | REQ-153 | SCN-153a | `features/ticket-source/REQ-153.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
 | REQ-154 | SCN-154a | `features/ticket-source/REQ-154.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
 | REQ-155 | SCN-155a | `features/ticket-source/REQ-155.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-156 | SCN-156a | `features/ticket-source/REQ-156.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
