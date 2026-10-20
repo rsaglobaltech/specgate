@@ -176,7 +176,8 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
       note: `Branch ${name} not created: the base branch is not a safe git ref (check --base or SPECGATE_BASE).`,
     };
   }
-  const made = git(dir, ["checkout", "-q", "-b", name, ...(base ? [base] : [])]);
+  // Untracked: cut from origin/develop, it would otherwise pull from develop.
+  const made = git(dir, ["checkout", "-q", "--no-track", "-b", name, ...(base ? [base] : [])]);
   if (made.status !== 0) {
     return { name: null, note: `Branch ${name} not created: ${made.stderr.trim()}` };
   }

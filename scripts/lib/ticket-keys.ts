@@ -124,10 +124,15 @@ export function prBase(dir: string): string | null {
   } catch {
     return null;
   }
-  for (const ref of [base, `origin/${base}`]) {
-    if (git(dir, ["rev-parse", "--verify", "--quiet", `${ref}^{commit}`]).status === 0) return ref;
-  }
-  return null;
+  const exists = (ref: string) =>
+    git(dir, ["rev-parse", "--verify", "--quiet", `${ref}^{commit}`]).status === 0;
+  const remote = `origin/${base}`;
+  if (!exists(base)) return exists(remote) ? remote : null;
+  // Nobody updates their local develop: behind origin it would make every
+  // colleague's commit merged from origin look like this ticket's (REQ-148).
+  // The local branch only when it already holds origin's, e.g. unpushed work.
+  if (!exists(remote)) return base;
+  return git(dir, ["merge-base", "--is-ancestor", remote, base]).status === 0 ? base : remote;
 }
 
 /**

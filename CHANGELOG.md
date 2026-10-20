@@ -11,6 +11,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **A local `develop` nobody updated is not the base** (REQ-148): `pr.base`
+  resolves to `origin/develop` unless the local branch already contains it,
+  and a ticket's branch no longer tracks its base. Behind origin, every
+  colleague's commit merged from `origin/develop` was reported as missing the
+  ticket key.
 - **`check` compares ids with `pr.base`** (REQ-120): ticket keys were
   measured from `develop` and ids from the remote's default, `main`, so an id
   taken on `develop` and not yet released went unseen.

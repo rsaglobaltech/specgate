@@ -1748,6 +1748,46 @@ test("REQ-148 SCN-148e: gitflow — the ticket's branch starts from develop, not
   }
 });
 
+test("REQ-148 SCN-148f: a local develop behind origin is not the base", () => {
+  // Nobody updates their local develop. Measured from it, a colleague's commit
+  // merged from origin/develop looked like this ticket's.
+  const origin = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-origin-"));
+  const colleague = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-colleague-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-clone-"));
+  try {
+    git(origin, "init", "-q", "--bare", "-b", "develop");
+    git(dir, "init", "-q", "-b", "develop");
+    fs.writeFileSync(path.join(dir, "alm.config.yaml"), PR_CONFIG);
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "adoption");
+    git(dir, "remote", "add", "origin", origin);
+    git(dir, "push", "-q", "-u", "origin", "develop");
+
+    fs.rmSync(colleague, { recursive: true, force: true });
+    assert.equal(spawnSync("git", ["clone", "-q", origin, colleague]).status, 0);
+    fs.writeFileSync(path.join(colleague, "README.md"), "pull requests target develop\n");
+    git(colleague, "add", "-A");
+    git(colleague, "commit", "-qm", "chore: pull requests target develop");
+    git(colleague, "push", "-q", "origin", "develop");
+
+    git(dir, "checkout", "-q", "-b", "feature/KAN-13-register-vehicle-entry");
+    fs.writeFileSync(path.join(dir, "notes.md"), "entry\n");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "KAN-13 docs(spec): open the change from the ticket");
+    git(dir, "fetch", "-q", "origin");
+    git(dir, "merge", "-q", "--no-edit", "origin/develop");
+
+    const { ticketKeyFindings } = require("../../scripts/lib/ticket-keys");
+    const messages = ticketKeyFindings(dir).map((d: { message: string }) => d.message);
+    assert.ok(
+      !messages.some((m: string) => m.includes("pull requests target develop")),
+      messages.join("\n")
+    );
+  } finally {
+    for (const d of [dir, colleague, origin]) fs.rmSync(d, { recursive: true, force: true });
+  }
+});
+
 test("REQ-161 SCN-161a: a German summary makes a readable change id", () => {
   const dir = project(JIRA);
   try {
