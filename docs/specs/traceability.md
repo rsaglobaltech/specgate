@@ -96,6 +96,7 @@
 | REQ-157 | SCN-157a | `features/ticket-source/REQ-157.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
 | REQ-158 | SCN-158a | `features/ticket-source/REQ-158.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
 | REQ-159 | SCN-159a | `features/ticket-source/REQ-159.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-160 | SCN-160a | `features/trusted-gate/REQ-160.feature` | - | - | - | - | - | tests/unit/change-overlap.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
