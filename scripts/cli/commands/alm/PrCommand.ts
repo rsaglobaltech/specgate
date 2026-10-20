@@ -123,6 +123,15 @@ export async function main(argv: string[]): Promise<void> {
         `The current branch '${branch}' is not ${key}'s.\nFix: check out its branch (feature/${key}-…) first.`
       );
     }
+    // The pull request holds what is committed; the gate would judge the
+    // working tree. Uncommitted work makes the two disagree.
+    if (git(projectDir, ["status", "--porcelain"]).stdout.trim()) {
+      throw new Error(
+        "There are uncommitted changes: the pull request would not hold them.\nFix: commit them (starting with " +
+          key +
+          "), then run this again."
+      );
+    }
     if (o.push) {
       const pushed = git(projectDir, ["push", "-q", "-u", "origin", branch]);
       if (pushed.status !== 0) throw new Error(`git push failed: ${pushed.stderr.trim()}`);
@@ -142,8 +151,9 @@ export async function main(argv: string[]): Promise<void> {
       `**Gate:** ${g.line}`,
       "",
       "_Opened by `specgate alm pr`. Specgate never merges._",
+      "<!-- /specgate:pr -->",
     ].join("\n");
-    const pr = await openOrUpdatePr(cfg, { head: branch, title: `${key} ${summary}`, body });
+    const pr = await openOrUpdatePr(cfg, { head: branch, key, title: `${key} ${summary}`, body });
     io.emit({ pr: { ...pr, branch, ticket: key, requirements: reqs, gate: g.ok } }, () =>
       process.stdout.write(
         ui.header("alm pr", o.change) +

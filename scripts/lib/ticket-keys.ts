@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 import { warning } from "./diagnostics";
 import type { Diagnostic } from "./diagnostics";
 import { resolveBase } from "./base-ids";
+import { assertSafeGitRef } from "../../packages/core/src/domain/GitSafety";
 
 /** `feature/KAN-13-register-vehicle-entry` → `KAN-13`. */
 const TICKET_BRANCH = /^(?:feature|bugfix|hotfix)\/([A-Z][A-Z0-9_]+-\d+)(?:-|$)/;
@@ -18,9 +19,16 @@ function git(dir: string, args: string[]) {
 }
 
 /** The base: `--base`, SPECGATE_BASE or origin's default, else develop, main, master. */
-function baseFor(dir: string, given?: string): string | null {
+export function baseFor(dir: string, given?: string): string | null {
   const resolved = resolveBase(dir, given);
-  if (resolved) return resolved;
+  if (resolved) {
+    try {
+      assertSafeGitRef(resolved);
+    } catch {
+      return null;
+    }
+    return resolved;
+  }
   for (const name of ["develop", "main", "master"]) {
     if (git(dir, ["rev-parse", "--verify", "--quiet", `refs/heads/${name}`]).status === 0)
       return name;

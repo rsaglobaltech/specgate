@@ -27,6 +27,7 @@ export abstract class HttpAlmClient implements AlmClient {
     // `https://host//rest/api` against a real server, so it is stripped once,
     // here, rather than in each provider's URL building.
     this.baseUrl = String(cfg.base_url ?? "").replace(/\/$/, "");
+    assertSecureUrl(this.baseUrl, "base_url");
     this.fetchImpl = fetchImpl ?? ((globalThis as { fetch: FetchLike }).fetch as FetchLike);
   }
 
@@ -94,5 +95,26 @@ export abstract class HttpAlmClient implements AlmClient {
   ): Promise<T> {
     const res = await this.request(path, what, init);
     return (await res.json()) as T;
+  }
+}
+
+/**
+ * A URL a credential is sent to. `alm.config.yaml` is committed, so a change
+ * to it is a change to where the token goes: never in clear text. Only a
+ * server on this machine may be plain http, for local tests and proxies.
+ */
+export function assertSecureUrl(url: string, key: string): void {
+  if (!url) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`${key} '${url}' is not a URL.\nFix: write it as https://host.`);
+  }
+  const local = ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname);
+  if (parsed.protocol !== "https:" && !(local && parsed.protocol === "http:")) {
+    throw new Error(
+      `${key} '${url}' is not https: the token would travel in clear text.\nFix: use the https:// address.`
+    );
   }
 }

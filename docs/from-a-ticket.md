@@ -158,8 +158,11 @@ This pushes the branch and opens one pull request against `pr.base`:
   its status, and says whether `specgate check` passes. The command runs the
   check itself; `--no-check` skips it and the body says so.
 
-Running it again updates the same pull request. It never merges, closes or
-deletes anything.
+Running it again updates the same pull request. It changes only its own block
+of the description, so what reviewers wrote stays, and it keeps a title a
+person edited, as long as the title still names the key. It refuses while there
+are uncommitted changes, because the pull request would not hold them. It never
+merges, closes or deletes anything.
 
 To make the gate block the merge on GitHub, run `specgate check` in CI and make
 that job a required status check on the base branch.

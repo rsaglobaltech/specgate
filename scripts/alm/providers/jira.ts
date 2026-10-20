@@ -1,4 +1,5 @@
 import { HttpAlmClient } from "./http-client";
+import { documentText } from "../../../packages/core/src/domain/TicketText";
 import type {
   AlmCapabilities,
   AlmConfig,
@@ -149,7 +150,7 @@ class JiraClient extends HttpAlmClient {
 
   async getIssueStatus(issueKey: string): Promise<IssueStatus> {
     const issue = await this.requestJson<JiraStatusResponse>(
-      `/rest/api/3/issue/${issueKey}?fields=status`,
+      `/rest/api/3/issue/${issueKeyPath(issueKey)}?fields=status`,
       `Jira read ${issueKey}`,
       { headers: this.headers }
     );
@@ -184,7 +185,7 @@ class JiraClient extends HttpAlmClient {
         found.push({
           key: issue.key,
           title: String(issue.fields?.summary ?? ""),
-          body: flattenAdf(issue.fields?.description),
+          body: documentText(issue.fields?.description),
           url: `${this.baseUrl}/browse/${issue.key}`,
         });
       }
@@ -222,17 +223,21 @@ class JiraClient extends HttpAlmClient {
 
   async closeIssue(issueKey: string): Promise<void> {
     const transition = await this.findDoneTransition(issueKey);
-    await this.request(`/rest/api/3/issue/${issueKey}/transitions`, `Jira transition ${issueKey}`, {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify({ transition: { id: transition.id } }),
-    });
+    await this.request(
+      `/rest/api/3/issue/${issueKeyPath(issueKey)}/transitions`,
+      `Jira transition ${issueKey}`,
+      {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({ transition: { id: transition.id } }),
+      }
+    );
   }
 
   /** The workflow decides which transition means done; there may be none. */
   private async findDoneTransition(issueKey: string): Promise<JiraTransition> {
     const { transitions } = await this.requestJson<JiraTransitions>(
-      `/rest/api/3/issue/${issueKey}/transitions`,
+      `/rest/api/3/issue/${issueKeyPath(issueKey)}/transitions`,
       `Jira list transitions for ${issueKey}`,
       { headers: this.headers }
     );
@@ -245,22 +250,15 @@ class JiraClient extends HttpAlmClient {
 }
 
 /**
- * The plain text inside an Atlassian Document Format value.
- *
- * ADF nests content nodes arbitrarily; only the `text` leaves matter here, and
- * a shape this does not recognise yields "" rather than a stringified object.
+ * An issue key as a path segment. The map file and `alm link` hand keys in;
+ * one with a slash or a dot-dot would walk the authenticated request to
+ * another endpoint of the site.
  */
-function flattenAdf(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (!value || typeof value !== "object") return "";
-  const node = value as { text?: unknown; content?: unknown };
-  if (typeof node.text === "string") return node.text;
-  if (!Array.isArray(node.content)) return "";
-  return node.content
-    .map((child) => flattenAdf(child))
-    .filter(Boolean)
-    .join("\n")
-    .trim();
+function issueKeyPath(key: string): string {
+  if (!/^[A-Z][A-Z0-9_]+-\d+$/.test(key)) {
+    throw new Error(`Jira: '${key}' is not an issue key (PROJECT-123).`);
+  }
+  return encodeURIComponent(key);
 }
 
 export const jiraProvider: AlmProvider = {

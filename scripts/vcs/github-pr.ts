@@ -9,6 +9,7 @@
  */
 
 import type { FetchLike } from "../alm/port";
+import { assertSecureUrl } from "../alm/providers/http-client";
 
 export interface PrConfig {
   repo: string;
@@ -36,17 +37,35 @@ export function prConfig(raw: unknown): PrConfig {
       "alm.config.yaml has no pr.repo.\nFix: add\npr:\n  provider: github\n  repo: <owner>/<repo>\n  base: develop\n  token_env: GITHUB_TOKEN"
     );
   }
+  const apiUrl = String(pr.base_url ?? "https://api.github.com").replace(/\/$/, "");
+  assertSecureUrl(apiUrl, "pr.base_url");
   return {
     repo,
     base: String(pr.base ?? "develop"),
     tokenEnv: String(pr.token_env ?? "GITHUB_TOKEN"),
-    apiUrl: String(pr.base_url ?? "https://api.github.com").replace(/\/$/, ""),
+    apiUrl,
   };
+}
+
+interface OpenPr {
+  number: number;
+  html_url: string;
+  title?: string;
+  body?: string | null;
+  base?: { ref?: string };
+}
+
+const BLOCK = /<!-- specgate:pr [^>]*-->[\s\S]*?<!-- \/specgate:pr -->/;
+
+/** The description with Specgate's block replaced, or added after what is there. */
+export function mergeBody(current: string, block: string): string {
+  if (BLOCK.test(current)) return current.replace(BLOCK, () => block);
+  return current.trim() ? `${current.trimEnd()}\n\n${block}` : block;
 }
 
 export async function openOrUpdatePr(
   cfg: PrConfig,
-  pr: { head: string; title: string; body: string },
+  pr: { head: string; key: string; title: string; body: string },
   fetchImpl: FetchLike = (globalThis as { fetch: FetchLike }).fetch
 ): Promise<PullRequest> {
   const token = process.env[cfg.tokenEnv];
@@ -72,15 +91,22 @@ export async function openOrUpdatePr(
     return (await res.json()) as T;
   };
   const owner = cfg.repo.split("/")[0];
-  const open = await call<Array<{ number: number; html_url: string }>>(
-    `/repos/${cfg.repo}/pulls?head=${encodeURIComponent(`${owner}:${pr.head}`)}&state=open`,
+  const open = await call<OpenPr[]>(
+    `/repos/${cfg.repo}/pulls?head=${encodeURIComponent(`${owner}:${pr.head}`)}` +
+      `&base=${encodeURIComponent(cfg.base)}&state=open`,
     `list the pull requests of ${pr.head}`
   );
-  if (open.length > 0) {
+  const mine = open.find((p) => !p.base || p.base.ref === cfg.base);
+  if (mine) {
+    // What a person wrote stays: the title, once it names the ticket, and
+    // every line outside Specgate's own block of the description.
+    const patch: Record<string, string> = { body: mergeBody(mine.body ?? "", pr.body) };
+    if (!new RegExp(`(^|[^A-Z0-9_-])${pr.key}(?![0-9])`).test(mine.title ?? ""))
+      patch.title = pr.title;
     const updated = await call<{ number: number; html_url: string }>(
-      `/repos/${cfg.repo}/pulls/${open[0].number}`,
-      `update pull request #${open[0].number}`,
-      { method: "PATCH", body: JSON.stringify({ title: pr.title, body: pr.body }) }
+      `/repos/${cfg.repo}/pulls/${mine.number}`,
+      `update pull request #${mine.number}`,
+      { method: "PATCH", body: JSON.stringify(patch) }
     );
     return { number: updated.number, url: updated.html_url, action: "updated" };
   }

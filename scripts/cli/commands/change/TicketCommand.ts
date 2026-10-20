@@ -37,6 +37,7 @@ import {
 import { draftReport, nextScenario } from "../spec/DraftCommand";
 import { ticketGuide, ticketPrompt } from "../../../draft/ticket-guide";
 import { runConfinedAgent, withWritePermission } from "../../../draft/confined-agent";
+import { baseFor } from "../../../lib/ticket-keys";
 
 const CHANGES = "docs/specs/changes";
 /** The placeholder `templateDelta` writes: a delta nobody has written yet. */
@@ -53,6 +54,7 @@ export interface TicketOptions {
 }
 
 const NULL_SHAPE = { ticket: null };
+const JIRA_KEY = /^[A-Z][A-Z0-9_]+-\d+$/;
 
 function usage(): void {
   process.stdout.write(
@@ -153,7 +155,10 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
       note: `Branch not created: there are uncommitted changes. Commit them, then: git checkout -b ${name}`,
     };
   }
-  const made = git(dir, ["checkout", "-q", "-b", name]);
+  // From the base, not from wherever HEAD is: another ticket's branch would
+  // bring its commits into this ticket's pull request.
+  const base = baseFor(dir);
+  const made = git(dir, ["checkout", "-q", "-b", name, ...(base ? [base] : [])]);
   if (made.status !== 0) {
     return { name: null, note: `Branch ${name} not created: ${made.stderr.trim()}` };
   }
@@ -254,7 +259,11 @@ function questionsFor(t: Ticket): string | undefined {
 
 /** Write the change: the copy, the proposal, the questions, the guide and the delta. */
 function openChange(projectDir: string, t: Ticket, changeId: string, capability: string) {
-  const dir = path.join(projectDir, CHANGES, changeId);
+  const final = path.join(projectDir, CHANGES, changeId);
+  // Written aside and moved in one rename: a change folder is either whole
+  // or absent, so an interrupted run never leaves one that looks opened.
+  const dir = path.join(projectDir, CHANGES, `.${changeId}.opening`);
+  fs.rmSync(dir, { recursive: true, force: true });
   const reqRange = reserveReqRange(projectDir, Math.min(10, Math.max(3, t.criteria.length))) as [
     string,
     string,
@@ -298,6 +307,7 @@ function openChange(projectDir: string, t: Ticket, changeId: string, capability:
     "change.yaml",
     `${renderConfig(config).trimEnd()}\nbrief: ${copyPath}\nticket: ${t.key}\nticket_sha256: ${sha256(copy)}\n`
   );
+  fs.renameSync(dir, final);
   return { reqRange, created };
 }
 
@@ -403,6 +413,15 @@ export class TicketCommand extends BaseCommand {
       ticket = await loadTicket(opts.ticket, almConfig(projectDir), projectDir);
     } catch (e) {
       return io.fail(NULL_SHAPE, [error("ticket_unreadable", (e as Error).message)]);
+    }
+    // The key names the change, the branch and its folder: one that is not a
+    // Jira key — an exported file can say anything — would put them anywhere.
+    if (!JIRA_KEY.test(ticket.key)) {
+      return io.fail(NULL_SHAPE, [
+        error("ticket_bad_key", `${JSON.stringify(ticket.key)} is not a Jira issue key.`, {
+          fix: 'An issue key is a project key and a number: "KAN-13". Export the issue from Jira again.',
+        }),
+      ]);
     }
     if (opts.check) return this.check(opts, ticket);
     return this.open(opts, projectDir, ticket);

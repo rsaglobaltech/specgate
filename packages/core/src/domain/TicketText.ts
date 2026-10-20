@@ -98,13 +98,21 @@ function sectionOf(line: string): Section | null {
 interface AdfNode {
   type?: string;
   text?: string;
-  attrs?: { level?: number };
+  attrs?: { level?: number; text?: string; url?: string; shortName?: string; timestamp?: string };
   content?: AdfNode[];
 }
 
 function inline(node: AdfNode): string {
   if (node.type === "text") return node.text ?? "";
   if (node.type === "hardBreak") return "\n";
+  // Inline nodes that carry their text in attrs: "@Ana", a smart link, an emoji.
+  if (node.type === "mention") return node.attrs?.text ?? "";
+  if (node.type === "emoji") return node.attrs?.text ?? node.attrs?.shortName ?? "";
+  if (node.type === "inlineCard") return node.attrs?.url ?? "";
+  if (node.type === "date") {
+    const ms = Number(node.attrs?.timestamp);
+    return Number.isFinite(ms) ? new Date(ms).toISOString().slice(0, 10) : "";
+  }
   return (node.content ?? []).map(inline).join("");
 }
 
@@ -166,29 +174,34 @@ export function documentText(value: unknown): string {
 
 // ── The parts ─────────────────────────────────────────────────────────────────
 
-/** A section's lines as items: list items, or else its non-empty paragraphs. */
+/**
+ * A section's lines as items. A list marker starts an item; so does a line of
+ * text after a blank line or at the start. A line right below an item
+ * continues it (a wrapped line, a nested list). No text is dropped: a
+ * criterion written as a paragraph between list items is still a criterion.
+ */
 function items(lines: string[]): string[] {
-  const listed: string[] = [];
+  const out: string[] = [];
   let current: string | null = null;
+  const flush = () => {
+    if (current !== null && current.trim()) out.push(current.trim());
+    current = null;
+  };
   for (const line of lines) {
     const m = ITEM.exec(line);
     if (m && !/^\s{3,}/.test(line)) {
-      if (current !== null) listed.push(current);
+      flush();
       current = m[1].trim();
-    } else if (current !== null && line.trim()) {
-      current += " " + line.trim();
-    } else if (current !== null) {
-      listed.push(current);
-      current = null;
+    } else if (!line.trim()) {
+      flush();
+    } else if (current === null) {
+      current = line.trim();
+    } else {
+      current += " " + (m ? m[1] : line).trim();
     }
   }
-  if (current !== null) listed.push(current);
-  if (listed.length) return listed;
-  return lines
-    .join("\n")
-    .split(/\n\s*\n/)
-    .map((p) => p.replace(/\s*\n\s*/g, " ").trim())
-    .filter(Boolean);
+  flush();
+  return out;
 }
 
 function question(text: string): TicketQuestion {

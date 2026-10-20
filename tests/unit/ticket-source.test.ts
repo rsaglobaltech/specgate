@@ -1022,3 +1022,189 @@ test("REQ-150: propose --from-ticket --help explains the options, it is not a ti
   assert.match(run.stdout, /--no-branch/);
   assert.match(run.stdout, /from-a-ticket\.md/);
 });
+
+// ── Review findings: the edges ───────────────────────────────────────────────
+
+test("REQ-147: a key that is not a Jira key opens nothing, wherever it would point", () => {
+  for (const key of ["../../../../escape-1", "KAN-1\nticket_sha256: 0", "", "kan-1"]) {
+    const dir = project(JIRA);
+    try {
+      const file = exported(
+        dir,
+        "bad.json",
+        story(key, ["Given a plate, when saved, then listed."])
+      );
+      const run = runPropose(dir, ["--from-ticket", file, "--capability", "x", "--no-branch"]);
+      assert.equal(run.status, 1, `${JSON.stringify(key)}: ${run.stdout}`);
+      assert.match(run.stdout + run.stderr, /ticket_bad_key/);
+      assert.ok(!fs.existsSync(path.join(dir, "docs", "specs", "changes")));
+      assert.ok(!fs.existsSync(path.resolve(dir, "..", "..", "escape-1")));
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
+
+test("REQ-145: no text of a criteria section is lost, list or not", () => {
+  const t = readTicket({
+    key: "KAN-91",
+    fields: {
+      description: [
+        "Acceptance Criteria",
+        "Given a plate AB123CD, when I save, then it is listed.",
+        "- Given an empty plate, when I save, then it is refused.",
+        "",
+        "Given a full garage, when a car arrives, then entry is refused.",
+      ].join("\n"),
+    },
+  });
+  assert.equal(t.criteria.length, 3, JSON.stringify(t.criteria));
+  assert.match(t.criteria[2], /full garage/);
+});
+
+test("REQ-145: mentions, emoji, links and dates keep their text", () => {
+  const { documentText } = require("../../packages/core/src/domain/TicketText");
+  const text = documentText({
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "Given " },
+          { type: "mention", attrs: { text: "@Ana" } },
+          { type: "text", text: " opens " },
+          { type: "inlineCard", attrs: { url: "https://example.com/x" } },
+          { type: "emoji", attrs: { text: "✅" } },
+        ],
+      },
+    ],
+  });
+  assert.equal(text, "Given @Ana opens https://example.com/x✅");
+});
+
+test("REQ-143: alm pull keeps a paragraph on one line, bold words and all", () => {
+  const dir = project(JIRA);
+  try {
+    const run = runWithJira(
+      dir,
+      ALM_CLI,
+      ["pull", "--label", "spec-driven", "--project-dir", dir],
+      [
+        {
+          match: "/rest/api/3/search/jql",
+          json: {
+            isLast: true,
+            issues: [
+              {
+                key: "KAN-13",
+                fields: {
+                  summary: "Register vehicle entry",
+                  description: {
+                    type: "doc",
+                    content: [para("This is ", { strong: "bold" }, " text")],
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ]
+    );
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const proposal = fs.readFileSync(
+      path.join(dir, "docs", "specs", "changes", "alm-kan-13", "proposal.md"),
+      "utf8"
+    );
+    assert.match(proposal, /This is bold text/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-144: credentials never travel over plain http", () => {
+  const dir = project(JIRA.replace("https://specgatedemo", "http://specgatedemo"));
+  try {
+    const run = runWithJira(
+      dir,
+      ALM_CLI,
+      ["pull", "--dry-run", "--project-dir", dir],
+      [{ match: "/search/jql", json: { issues: [], isLast: true } }]
+    );
+    assert.equal(run.status, 1);
+    assert.match(run.stdout + run.stderr, /https/);
+    assert.equal(run.seen.length, 0, "no request may leave");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-148: the ticket's branch starts from the base, not from another ticket's branch", () => {
+  const dir = repo();
+  try {
+    git(dir, "checkout", "-q", "-b", "feature/KAN-12-other");
+    fs.writeFileSync(path.join(dir, "other.txt"), "x");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "KAN-12 other work");
+    const file = path.join(os.tmpdir(), `kan13b-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit"]);
+    fs.rmSync(file);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(
+      git(dir, "rev-parse", "--abbrev-ref", "HEAD"),
+      "feature/KAN-13-register-vehicle-entry"
+    );
+    assert.equal(git(dir, "log", "--format=%s", "main..HEAD"), "", "nothing of KAN-12 comes along");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-149: alm pr refuses uncommitted work: the pull request would not hold it", () => {
+  const { dir, origin } = ticketRepo();
+  try {
+    fs.writeFileSync(path.join(dir, "wip.txt"), "unsaved");
+    const run = runPr(dir, []);
+    assert.equal(run.status, 1);
+    assert.match(run.stdout + run.stderr, /uncommitted/);
+    assert.equal(sent(dir).length, 0);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(origin, { recursive: true, force: true });
+  }
+});
+
+test("REQ-149: the update keeps what a person wrote, and only looks at the base it targets", () => {
+  const { dir, origin } = ticketRepo();
+  try {
+    const run = runPr(dir, [
+      {
+        match: "/repos/acme/garage/pulls?",
+        json: [
+          {
+            number: 7,
+            html_url: "https://github.com/acme/garage/pull/7",
+            title: "KAN-13 Register entry (reviewed by Ana)",
+            base: { ref: "develop" },
+            body: "Reviewer notes: check the plates.\n\n<!-- specgate:pr change=kan-13-register-vehicle-entry -->\nold\n<!-- /specgate:pr -->",
+          },
+        ],
+      },
+      {
+        match: "/repos/acme/garage/pulls/7",
+        method: "PATCH",
+        json: { number: 7, html_url: "https://github.com/acme/garage/pull/7" },
+      },
+    ]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.match(sent(dir)[0].url, /base=develop/);
+    const patch = sent(dir).find((s) => s.method === "PATCH")!;
+    assert.equal(patch.body.title, undefined, "a title that names the key is the person's");
+    assert.match(String(patch.body.body), /^Reviewer notes: check the plates\./);
+    assert.match(String(patch.body.body), /REQ-151/);
+    assert.doesNotMatch(String(patch.body.body), /\nold\n/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(origin, { recursive: true, force: true });
+  }
+});
