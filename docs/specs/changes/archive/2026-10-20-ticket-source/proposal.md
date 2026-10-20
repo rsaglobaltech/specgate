@@ -10,7 +10,7 @@ which stopped working, because Atlassian removed the search endpoint it calls.
 Tokens created with scopes, the kind Atlassian now issues, are refused too.
 And nothing ties the change to the branch and the pull request the board shows.
 
-Decision record: [ADR-0039](../../adr/0039-the-ticket-as-source-text.md),
+Decision record: [ADR-0039](../../../adr/0039-the-ticket-as-source-text.md),
 amending ADR-0021. Tested against a Jira Cloud site with 65 stories in 9 epics.
 
 ## Scope
