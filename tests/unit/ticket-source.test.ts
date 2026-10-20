@@ -1441,3 +1441,78 @@ test("REQ-152 SCN-152a: two tickets on two branches never mint the same id", () 
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── REQ-153, REQ-154 ─────────────────────────────────────────────────────────
+
+/** A forja-shaped monorepo: npm workspaces, a Spring API, a Next.js web app. */
+function monorepo(): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-mono-"));
+  const write = (rel: string, text: string) => {
+    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+    fs.writeFileSync(path.join(dir, rel), text);
+  };
+  write(
+    "package.json",
+    JSON.stringify({
+      name: "garage",
+      private: true,
+      workspaces: ["apps/web", "packages/*"],
+      scripts: { test: "npm run test:api && npm run test:web" },
+      devDependencies: { typescript: "5" },
+    })
+  );
+  write(
+    "apps/api/pom.xml",
+    "<project><artifactId>garage-api</artifactId><properties><java.version>21</java.version></properties><parent><artifactId>spring-boot-starter-parent</artifactId></parent><dependencies><dependency><artifactId>testcontainers</artifactId></dependency></dependencies></project>"
+  );
+  write(
+    "apps/web/package.json",
+    JSON.stringify({
+      name: "web",
+      dependencies: { next: "16", react: "19" },
+      devDependencies: { typescript: "5", vitest: "3" },
+    })
+  );
+  return dir;
+}
+
+test("REQ-153 SCN-153a: a monorepo's stack is read from its apps", () => {
+  const dir = monorepo();
+  try {
+    const run = spawnSync(
+      process.execPath,
+      [CLI, "adopt", "--no-capabilities", "--no-agents", "--project-dir", dir],
+      {
+        encoding: "utf8",
+        env: { ...process.env, NO_COLOR: "1" },
+      }
+    );
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const agents = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
+    const stack = /^Stack: (.*)$/m.exec(agents)![1];
+    assert.match(stack, /Spring Boot[^+]*\(apps\/api\)/, stack);
+    assert.match(stack, /next[^+]*\(apps\/web\)/, stack);
+    assert.match(agents, /Testing: [^\n]*JUnit 5, Testcontainers/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-154 SCN-154a: the agent contract names the ticket path", () => {
+  const dir = monorepo();
+  try {
+    spawnSync(
+      process.execPath,
+      [CLI, "adopt", "--no-capabilities", "--no-agents", "--project-dir", dir],
+      { encoding: "utf8" }
+    );
+    const agents = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
+    const section = agents.slice(agents.indexOf("## From a brief or a Jira ticket"));
+    assert.ok(agents.includes("## From a brief or a Jira ticket"), agents);
+    assert.match(section, /specgate propose --from-ticket/);
+    assert.match(section, /ticket\.md/);
+    assert.match(section, /commit message/i);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

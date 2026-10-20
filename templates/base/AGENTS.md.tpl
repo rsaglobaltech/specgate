@@ -22,12 +22,13 @@ The loop is propose → test → apply → archive:
 Each step in detail: the `/specgate:*` commands, or
 `specgate change instructions <artifact> --json`.
 
-## From a plan or brief
+## From a brief or a Jira ticket
 
-`specgate propose --from-brief` names the next module of `docs/brief.md`;
-`specgate propose --from-brief <module>` opens it and writes `DRAFTING.md` —
-follow it, then re-run until "Ready to review". Never archive a draft
-yourself: a person reviews it, and it is archived after it is applied.
+`specgate propose --from-brief <module>` or `specgate propose --from-ticket
+<KEY>` opens the draft and writes `DRAFTING.md` — follow it, then re-run until
+"Ready to review". Never archive a draft yourself: a person reviews it. Never
+edit a change's `ticket.md`; start every commit message with the ticket key
+(`KAN-13 REQ-007: …`), and never use Smart Commits (`#done`): they write to Jira.
 
 ## Never
 

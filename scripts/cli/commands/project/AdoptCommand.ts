@@ -180,7 +180,63 @@ export function gradleRootProjectName(dir: string): string | null {
   return null;
 }
 
+/**
+ * The stack, monorepo included. A root `package.json` with workspaces is the
+ * build's front door, not the whole stack: a forja project keeps its Spring
+ * API in `apps/api` and its Next.js app in `apps/web`, and reading only the
+ * root wrote "Stack: Node.js" into the contract an agent works from (REQ-153).
+ */
 export function detectStack(dir: string) {
+  const facts = detectManifest(dir);
+  if (facts.detected !== "package.json" || !hasWorkspaces(dir)) return facts;
+  const stacks: string[] = [];
+  const testing: string[] = [];
+  for (const app of appDirs(dir)) {
+    const sub = detectManifest(path.join(dir, app));
+    if (sub.detected === "none") continue;
+    stacks.push(`${sub.STACK} (${app})`);
+    for (const t of sub.TESTING.split(/,\s*/)) if (!testing.includes(t)) testing.push(t);
+  }
+  if (stacks.length === 0) return facts;
+  return {
+    ...facts,
+    STACK: stacks.join(" + "),
+    TESTING: testing.join(", "),
+    detected: "workspaces",
+  };
+}
+
+function hasWorkspaces(dir: string): boolean {
+  try {
+    const pkg = JSON.parse(readIfExists(path.join(dir, "package.json")) ?? "{}") as {
+      workspaces?: unknown;
+    };
+    return (
+      Array.isArray(pkg.workspaces) ||
+      (typeof pkg.workspaces === "object" && pkg.workspaces !== null)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** `apps/*`, `services/*` and `backend`: where a monorepo keeps what it runs. */
+function appDirs(dir: string): string[] {
+  const out: string[] = [];
+  for (const parent of ["apps", "services"]) {
+    const full = path.join(dir, parent);
+    if (!fs.existsSync(full)) continue;
+    for (const e of fs
+      .readdirSync(full, { withFileTypes: true })
+      .sort((a, b) => a.name.localeCompare(b.name))) {
+      if (e.isDirectory()) out.push(`${parent}/${e.name}`);
+    }
+  }
+  if (fs.existsSync(path.join(dir, "backend"))) out.push("backend");
+  return out;
+}
+
+function detectManifest(dir: string) {
   const facts = {
     PROJECT_NAME: path.basename(dir),
     STACK: "unknown — edit AGENTS.md with your stack",

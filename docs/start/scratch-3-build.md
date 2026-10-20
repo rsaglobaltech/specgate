@@ -106,7 +106,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 #### Scenario: SCN-004 — The second booking is refused
 
 - GIVEN the centre court is booked on Monday evening
-… 85 more lines
+… 86 more lines
 ```
 <!-- specgate:out-scratch-harness-prompt:end -->
 
