@@ -8,10 +8,28 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.22.0] — 2026-10-20
+
 A brief shaped like what it becomes, checked before any agent drafts from it
-(ADR-0038); and a Jira ticket as source text, as a brief is (ADR-0039).
+(ADR-0038); and a Jira ticket as source text, as a brief is (ADR-0039). Tried
+end to end on a real Jira Cloud board and GitHub: two stories went from the
+ticket to Done, the board moved by its own automation.
 
 ### Fixed
+
+- **New ids are free on every branch** (REQ-152). Two changes opened on two
+  branches both reserved REQ-002: reserving ids now reads every local and
+  remote-tracking branch. A change also reserves its scenario ids,
+  `scn_range` in `change.yaml` (REQ-157).
+- **A monorepo's stack is read from its apps** (REQ-153). With npm workspaces,
+  `AGENTS.md` said "Stack: Node.js" for a Spring API in `apps/api`.
+- **`specgate update` updates the `AGENTS.md` contract** (REQ-155), keeping its
+  facts and project rules, also when the project has no other agent files.
+- **The harness's commits name the ticket** (REQ-156): `KAN-14 REQ-002: …`.
+- **`--agent` on an open change hands the agent its findings.** A second run
+  read a finished draft and changed nothing.
+- **Credentials never travel over plain http**: `base_url` and `pr.base_url`
+  must be https (localhost excepted).
 
 - **`specgate alm pull` works against Jira Cloud again.** Atlassian removed
   `/rest/api/3/search` (HTTP 410); search now pages `/rest/api/3/search/jql`
@@ -49,7 +67,12 @@ A brief shaped like what it becomes, checked before any agent drafts from it
     `ticket_key_missing` from `check` for a commit on the ticket's branch that
     does not name it.
   - `specgate alm pr <change>`: one pull request per ticket on GitHub, titled
-    with the key, its body the requirements and the gate. Never merges.
+    with the key, its body the requirements and the gate, the archived change
+    included (REQ-159). Never merges; keeps what reviewers wrote.
+  - The ticket's branch is pushed as soon as it is created (REQ-148), so a
+    Jira automation moves the ticket when work starts.
+  - `AGENTS.md` names the ticket path (REQ-154); in a project connected to
+    Jira, `status` suggests `propose --from-ticket` (REQ-158).
 - **Brief cards** ([ADR-0038](docs/specs/adr/0038-brief-cards.md), change `brief-cards`).
   - `specgate propose --from-brief --check`: rules B1–B11 on the brief, each
     with its fix. Errors (B1–B4) stop a draft; warnings (B5–B11) name vague

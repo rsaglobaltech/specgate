@@ -53,7 +53,11 @@ const server = http.createServer((req, res) => {
     if (url.pathname === "/rest/api/3/issue" && req.method === "POST") {
       return send(res, 201, { key: create(body.fields || {}) });
     }
+    // Jira Cloud's enhanced search: /rest/api/3/search was removed (HTTP 410).
     if (url.pathname === "/rest/api/3/search") {
+      return send(res, 410, { errorMessages: ["The requested API has been removed."] });
+    }
+    if (url.pathname === "/rest/api/3/search/jql") {
       const label = /labels = "([^"]+)"/.exec(url.searchParams.get("jql") || "")?.[1];
       const found = [...issues.values()].filter(
         (i) => !i.done && (!label || i.labels.includes(label))
@@ -63,6 +67,7 @@ const server = http.createServer((req, res) => {
           key: i.key,
           fields: { summary: i.summary, description: adf(i.description) },
         })),
+        isLast: true,
       });
     }
     const transitions = /^\/rest\/api\/3\/issue\/([^/]+)\/transitions$/.exec(url.pathname);
