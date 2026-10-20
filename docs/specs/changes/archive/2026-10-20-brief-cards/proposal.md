@@ -11,7 +11,7 @@ with every section still a comment. Building agentkit and the pilots showed
 it, and Birgitta Böckeler's review of Kiro, spec-kit and Tessl names the same
 risks: one workflow for every size, and more markdown to review than code.
 
-Decision record: [ADR-0038](../../adr/0038-brief-cards.md). Analysis:
+Decision record: [ADR-0038](../../../adr/0038-brief-cards.md). Analysis:
 agentkit's `docs/brief-proposal.md`.
 
 ## Scope

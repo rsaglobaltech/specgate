@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — 2026-10-20 (change `brief-cards`)
+Accepted — 2026-10-20 (change `brief-cards`, archived)
 
 ## Context
 

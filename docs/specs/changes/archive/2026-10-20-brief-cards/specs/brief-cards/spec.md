@@ -19,7 +19,7 @@ The system SHALL, when it checks a brief's front matter, report as `brief_wrong_
 - THEN it exits 1 with two `brief_wrong_shape` findings, one whose fix reads "surfaces: [web]" and one whose fix reads "- { name: Admin, surfaces: [web] }"
 - AND no finding says "There is no `actors:` list"
 
-<!-- specgate:trace status=Draft feature=features/brief-cards/REQ-135.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-135.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-136 — The brief is checked before any agent runs
 
@@ -27,7 +27,7 @@ The system SHALL, on `specgate propose --from-brief --check`, check the brief ag
 
 #### Scenario: SCN-136a — A brief with an empty module
 
-- GIVEN a Lingo brief whose courses section holds only the comment "<!-- rules go here -->"
+- GIVEN a Lingo brief whose courses section holds only the comment `<!-- rules go here -->`
 - WHEN the developer runs `specgate propose --from-brief --check`
 - THEN it exits 1, names `B2_empty_module` for courses with its fix, and `git status` shows no change
 
@@ -43,7 +43,7 @@ The system SHALL, on `specgate propose --from-brief --check`, check the brief ag
 - WHEN the developer runs `specgate propose --from-brief --check`
 - THEN it exits 0, shows `B5_vague` and `B6_unmeasured` for courses, and says "Ready to draft"
 
-<!-- specgate:trace status=Draft feature=features/brief-cards/REQ-136.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-136.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-137 — Module sections are each module's scope
 
@@ -67,7 +67,7 @@ The system SHALL read every `## Module: <name>` section of a brief, with its `Ru
 - WHEN the developer runs `specgate propose --from-brief --check`
 - THEN it exits 0, and its only finding is the note `B3_no_sections`
 
-<!-- specgate:trace status=Draft feature=features/brief-cards/REQ-137.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-137.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-138 — Warnings make each rule testable
 
@@ -79,7 +79,7 @@ The system SHALL warn, without failing the check, with `B5_vague` for a rule usi
 - WHEN the developer runs `specgate propose --from-brief --check`
 - THEN it exits 0 and shows `B11_condition_last` for the first rule, `B10_non_goal` for the second and `B7_technical` for the third
 
-<!-- specgate:trace status=Draft feature=features/brief-cards/REQ-138.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-138.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-139 — The new brief has cards to fill
 
@@ -89,9 +89,9 @@ The system SHALL, on `specgate propose --from-brief --new-brief`, write a brief 
 
 - GIVEN a project with no brief
 - WHEN the developer runs `specgate propose --from-brief --new-brief` and then `specgate propose --from-brief --check`
-- THEN `docs/brief.md` holds "## Module: <first-module>" with "Rules", "Examples" and "Questions", and the check exits 1 with `brief_placeholder` and `B2_empty_module` findings and no `B3_no_section`
+- THEN `docs/brief.md` holds `## Module: <first-module>` with "Rules", "Examples" and "Questions", and the check exits 1 with `brief_placeholder` and `B2_empty_module` findings and no `B3_no_section`
 
-<!-- specgate:trace status=Draft feature=features/brief-cards/REQ-139.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-139.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-140 — The draft starts from its module's cards
 
@@ -105,11 +105,11 @@ The system SHALL, when `specgate propose --from-brief <module>` opens a draft fo
 
 #### Scenario: SCN-140b — A value only in a comment
 
-- GIVEN a brief whose only "48" is inside "<!-- e.g. 48 hours -->", and a draft scenario stating 48
+- GIVEN a brief whose only "48" is inside `<!-- e.g. 48 hours -->`, and a draft scenario stating 48
 - WHEN the developer runs `specgate propose --from-brief courses` on the draft
 - THEN it reports `D6_unlisted_value` for 48
 
-<!-- specgate:trace status=Draft feature=features/brief-cards/REQ-140.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-140.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-141 — The agent proposes the cards from pasted notes
 
@@ -127,7 +127,7 @@ The system SHALL, on `specgate propose --from-brief --agent <command>` when the 
 - WHEN the developer runs `specgate propose --from-brief --agent` with that command
 - THEN it exits 1 with `draft_brief_text_lost`, and the brief is byte for byte as before
 
-<!-- specgate:trace status=Draft feature=features/brief-cards/REQ-141.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-141.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-142 — The guide says when a brief is needed and how to write one
 
@@ -139,4 +139,4 @@ The system SHALL document, in `specgate propose --help` and at the top of `docs/
 - WHEN a test reads `specgate propose --help`, the page and the page's example brief
 - THEN the help names "No brief" for one behaviour, the page has steps 1 to 8 and a glossary and no "specgate draft" command, and the example brief passes `--check` with exit 0
 
-<!-- specgate:trace status=Draft feature=features/brief-cards/REQ-142.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/brief-cards/REQ-142.feature test=tests/unit/brief-cards.test.ts actor=Developer kind=functional -->

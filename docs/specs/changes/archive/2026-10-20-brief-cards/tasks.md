@@ -25,4 +25,4 @@
 
 ## 5. Verification
 
-- [ ] 5.1 All suites green
+- [x] 5.1 All suites green

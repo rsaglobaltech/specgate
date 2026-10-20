@@ -45,7 +45,7 @@ for the policy on when and how to write an ADR.
 | [0035](0035-four-verbs-one-lifecycle.md) | Four verbs, one lifecycle: archive when the code is done | Accepted | 2026-10-19 |
 | [0036](0036-a-gate-a-team-can-trust.md) | A gate a team can trust: no false positives, ids checked, matrix merges, harness chain | Accepted | 2026-10-19 |
 | [0037](0037-see-the-harness-work.md) | See the harness work: events, a live view, explore, a tour | Accepted | 2026-10-19 |
-| [0038](0038-brief-cards.md) | Brief cards: module sections with rules, examples and questions, checked before drafting | Proposed | 2026-10-20 |
+| [0038](0038-brief-cards.md) | Brief cards: module sections with rules, examples and questions, checked before drafting | Accepted | 2026-10-20 |
 
 ## Template
 

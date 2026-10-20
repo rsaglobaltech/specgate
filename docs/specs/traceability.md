@@ -72,6 +72,14 @@
 | REQ-132 | SCN-132a | `features/live-harness/REQ-132.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
 | REQ-133 | SCN-133a | `features/live-harness/REQ-133.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
 | REQ-134 | SCN-134a | `features/live-harness/REQ-134.feature` | - | - | - | - | - | tests/unit/live-view.test.ts | Implemented |
+| REQ-135 | SCN-135a | `features/brief-cards/REQ-135.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-136 | SCN-136a | `features/brief-cards/REQ-136.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-137 | SCN-137a | `features/brief-cards/REQ-137.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-138 | SCN-138a | `features/brief-cards/REQ-138.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-139 | SCN-139a | `features/brief-cards/REQ-139.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-140 | SCN-140a | `features/brief-cards/REQ-140.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-141 | SCN-141a | `features/brief-cards/REQ-141.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-142 | SCN-142a | `features/brief-cards/REQ-142.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
