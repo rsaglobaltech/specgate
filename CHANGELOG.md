@@ -8,6 +8,23 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.21.0] — 2026-10-20
+
+The daily loop becomes four verbs over the same gate (ADR-0035), the gate stops
+failing on text that is not a defect (ADR-0036), and the harness can be watched
+while it works (ADR-0037).
+
+### Breaking
+
+- **`archive` (and `change archive`) waits for the code.** A change is merged
+  into the specs only once every requirement it adds or modifies is
+  Implemented; before, it was archived first and delivered after. `--force`
+  does not skip this. Drafts from a brief follow the same path: review, apply,
+  then archive. Scripts that archived a change before implementing it now get
+  `archive_requirements_pending` with the `specgate apply` to run.
+- **`specgate studio` binds to 127.0.0.1** and refuses requests addressed to
+  another host name; pass `--host` to serve it elsewhere (a devcontainer).
+
 ### Added
 
 - **See the harness work** ([ADR-0037](docs/specs/adr/0037-see-the-harness-work.md), change `live-view`).
@@ -71,8 +88,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - A delta's scenario findings name their requirement:
   `Scenario "…" of REQ-007 has no steps.`
 
+- The codebase compiles under full `strict` TypeScript (`noImplicitAny`,
+  `strictNullChecks`, `noUnusedLocals`, `noUnusedParameters`), typed throughout
+  instead of `any`; the documentation site, README and CONTRIBUTING teach the
+  four-verb loop.
+- Dev dependencies: @cucumber/cucumber 13.3.0, typescript-eslint 8.71.2,
+  prettier 3.9.10, js-yaml 5.5.0, marked 18.1.1, @types/node 26.6.5; Pages
+  actions `upload-pages-artifact` v5 and `deploy-pages` v5.
+
 ### Fixed
 
+- `specops diff --as-change` printed `── undefined @ undefined ──` in its human
+  output: it read snake_case fields from camelCase results.
 - **The CLI no longer contradicts ADR-0035–0037** (four verbs, trusted gate, live view).
   - `agents init` (and the bundled Claude Code plugin) teaches propose → test →
     apply → archive: `/specgate:propose` opens a change, `/specgate:apply`
