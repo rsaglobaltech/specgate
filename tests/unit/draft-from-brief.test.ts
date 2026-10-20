@@ -355,10 +355,10 @@ test("the draft slash command takes the module as its argument", () => {
   assert.ok(step, "a /specgate:draft step");
   const body = slashCommandBody(step);
   assert.match(body, /^argument-hint: <module>$/m);
-  assert.match(body, /^specgate draft \$ARGUMENTS$/m);
+  assert.match(body, /^specgate propose --from-brief \$ARGUMENTS$/m);
   assert.match(body, /Do not archive/);
   // Every other tool reads the plain form.
-  assert.ok(step.run.includes("specgate draft <module>"));
+  assert.ok(step.run.includes("specgate propose --from-brief <module>"));
 });
 
 // ── Writing the brief (#95) ─────────────────────────────────────────────────
@@ -565,7 +565,7 @@ test("/specgate:draft writes only the front matter, then stops for the person", 
   assert.match(body, /follow `docs\/specs\/BRIEF-SETUP\.md`/);
   assert.match(body, /never a word below it/);
   assert.match(body, /\*\*stop\*\* and show the front matter to the person/);
-  assert.match(body, /specgate draft --new-brief/);
+  assert.match(body, /specgate propose --from-brief --new-brief/);
 });
 
 // ── #103 and #105: an agent that cannot write, and what comes after ────────────

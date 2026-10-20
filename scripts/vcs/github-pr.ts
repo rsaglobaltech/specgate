@@ -76,7 +76,7 @@ export async function openOrUpdatePr(
     throw new Error(
       `Environment variable ${cfg.tokenEnv} is not set.\n` +
         "Fix: export a token that may write pull requests to this repository " +
-        "(a fine-grained token: Contents and Pull requests, read and write)."
+        "(a fine-grained token for this repository with Pull requests: read and write; pushing uses your git credentials)."
     );
   }
   const headers = {

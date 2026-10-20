@@ -66,7 +66,7 @@ export function assertContractEditable(toolName: string, projectDir: string): vo
   throw new Error(
     toolName +
       " writes files the specification contract protects, and no change is open." +
-      " Open one first: specgate change new <id>." +
+      " Open one first: specgate propose <id>." +
       ' To allow it permanently, set "mcpAllowContractEdits": true in .specgate/config.json.'
   );
 }

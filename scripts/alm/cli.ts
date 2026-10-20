@@ -48,8 +48,9 @@ function usage() {
       "       is Implemented, and reports drift (issue done, REQ still open).\n" +
       "link   Manually map an existing issue to a requirement.\n" +
       "status Print the current REQ ↔ issue mapping without network access.\n" +
-      "pull   Open a change per labelled issue. The scenario is left unwritten:\n" +
-      "       a ticket carries no acceptance criterion, so that part is yours.\n" +
+      "pull   Open a change per labelled issue, from its title and description;\n" +
+      "       the scenario is yours to write. To draft from a ticket's acceptance\n" +
+      "       criteria, use specgate propose --from-ticket <KEY>.\n" +
       "pr     Push the ticket's branch and open, or update, its one pull request\n" +
       "       on GitHub (pr: in alm.config.yaml). Never merges.\n\n" +
       "Configuration: alm.config.yaml at the project root (provider, base_url,\n" +

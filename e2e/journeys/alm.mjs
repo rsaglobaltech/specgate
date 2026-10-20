@@ -1,7 +1,33 @@
 /** Requirements kept in step with a board — against a Jira stand-in. */
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { spawnSync } from "node:child_process";
 import { startFake } from "../lib.mjs";
+
+const git = (dir, ...args) =>
+  spawnSync(
+    "git",
+    ["-C", dir, "-c", "user.email=e2e@example.com", "-c", "user.name=E2E", ...args],
+    {
+      encoding: "utf8",
+    }
+  );
+
+/** A Jira story as an export holds it: description with its acceptance criteria. */
+const STORY = {
+  key: "SHOP-42",
+  fields: {
+    summary: "Invoices as PDF",
+    issuetype: { name: "Story" },
+    labels: [],
+    description: [
+      "As an accountant, I want each invoice as a PDF so that I can archive it.",
+      "",
+      "Acceptance Criteria",
+      "- Given invoice INV-7, when I download it, then I get a PDF named INV-7.pdf.",
+    ].join("\n"),
+  },
+};
 
 export default [
   {
@@ -103,6 +129,93 @@ export default [
         );
       } finally {
         jira.stop();
+      }
+    },
+  },
+  {
+    name: "alm pr opens one pull request per ticket, and updates it instead of opening a second",
+    covers: ["alm pr"],
+    async run(dir, t) {
+      const github = await startFake("github");
+      process.env.FAKE_GITHUB_TOKEN = "not-a-real-token";
+      const origin = fs.mkdtempSync(path.join(path.dirname(dir), "origin-"));
+      try {
+        t.nodeRepo(dir);
+        t.ok(t.sg(dir, "init"), "init");
+        t.write(
+          dir,
+          "alm.config.yaml",
+          [
+            "provider: jira",
+            "base_url: https://shop.atlassian.net",
+            "project_key: SHOP",
+            "token_env: FAKE_JIRA_TOKEN",
+            "pr:",
+            "  provider: github",
+            "  repo: acme/shop",
+            "  base: develop",
+            "  token_env: FAKE_GITHUB_TOKEN",
+            `  base_url: ${github.url}`,
+            "",
+          ].join("\n")
+        );
+        t.write(dir, "SHOP-42.json", JSON.stringify(STORY));
+        git(dir, "init", "-q", "-b", "develop");
+        git(dir, "add", "-A");
+        git(dir, "commit", "-qm", "init");
+        git(origin, "init", "-q", "--bare");
+        git(dir, "remote", "add", "origin", origin);
+
+        const opened = t.sg(
+          dir,
+          "propose",
+          "--from-ticket",
+          "SHOP-42.json",
+          "--capability",
+          "invoicing"
+        );
+        t.ok(opened, "propose --from-ticket");
+        const branch = git(dir, "rev-parse", "--abbrev-ref", "HEAD").stdout.trim();
+        t.expect(
+          branch === "feature/SHOP-42-invoices-as-pdf",
+          `the ticket's branch (${branch})`,
+          opened
+        );
+        git(dir, "add", "-A");
+        git(dir, "commit", "-qm", "SHOP-42 docs(spec): open the change");
+
+        const change = "shop-42-invoices-as-pdf";
+        const first = t.sg(dir, "alm", "pr", change, "--no-check");
+        t.ok(first, "alm pr");
+        let pulls = await github.json("/__pulls");
+        t.expect(pulls.length === 1, "one pull request", first);
+        t.expect(
+          pulls[0].title === "SHOP-42 Invoices as PDF",
+          `titled with the key (${pulls[0].title})`,
+          first
+        );
+        t.expect(
+          pulls[0].base === "develop" && pulls[0].head === branch,
+          "from the ticket's branch into develop",
+          first
+        );
+        t.expect(
+          git(origin, "rev-parse", "--verify", branch).status === 0,
+          "the branch was pushed",
+          first
+        );
+
+        const again = t.sg(dir, "alm", "pr", change, "--no-check");
+        t.ok(again, "alm pr, run again");
+        pulls = await github.json("/__pulls");
+        t.expect(
+          pulls.length === 1,
+          "the same pull request is updated, not a second opened",
+          again
+        );
+      } finally {
+        github.stop();
+        fs.rmSync(origin, { recursive: true, force: true });
       }
     },
   },
