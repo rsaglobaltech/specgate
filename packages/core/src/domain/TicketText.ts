@@ -19,6 +19,11 @@
  * Pure: the issue JSON in, the parts out. Reading Jira is the provider's job.
  */
 
+import type { Diagnostic } from "./Diagnostic";
+import { error, info, warning } from "./Diagnostic";
+import { TECHNICAL, VAGUE } from "./BriefCards";
+import { withoutQuoted } from "./QuotedText";
+
 export interface TicketQuestion {
   readonly text: string;
   /** What the analyst assumed meanwhile — "Assumption: …" — or null. */
@@ -251,4 +256,161 @@ export function readTicket(issue: unknown, opts: ReadTicketOptions = {}): Ticket
     questions: items(sections.questions).map(question),
     description,
   };
+}
+
+// ── The Definition of Ready: T1 to T9 ────────────────────────────────────────
+
+const MAX_CRITERIA = 8;
+
+/** A criterion that tells the developer which tests to write, not what the system does. */
+const TEST_INSTRUCTION =
+  /\b(?:unit|integration|e2e|end-to-end|regression|automated)[- ]?tests?\b|\btests?\s+(?:run|cover|pass)|\bpruebas\s+(?:unitarias|de integraci[oó]n)|\b(?:unit|integrations?)-?tests?\b|\btestf[aä]lle\b/i;
+
+/**
+ * A quantity promised without a number. Narrower than the draft's D-rule: a
+ * ticket says "when the dashboard loads" and "the action is not available"
+ * about behaviour, and any digit in a criterion is taken as its measure.
+ */
+const QUANTITY =
+  /\b(?:fast|faster|quick(?:ly)?|slow|speed|latency|response time|performan(?:t|ce)|throughput|concurren(?:t|cy)|scalab(?:le|ility)|uptime|real[- ]time|instant(?:ly)?|r[aá]pid[oa]?|veloz|escalable|schnell|performant|echtzeit)\b/i;
+const unmeasured = (text: string) =>
+  QUANTITY.test(text.replace(/\b\p{L}+-\p{L}+/gu, "")) && !/\d/.test(text);
+
+/** What a deliverable's criteria speak of: work handed over, not behaviour. */
+const DELIVERABLE =
+  /\b(?:delivered|documented|reviewed|approve[sd]?|signed off|figma|figjam|miro|wirefram\w*|mockups?|prototypes?|design system|style ?guide|geliefert|dokumentiert|abgenommen|entregad[oa]s?|documentad[oa]s?|revisad[oa]s?|aprobad[oa]s?)\b/i;
+
+const isEpic = (type: string) => /^epic$|^épica$/i.test(type.trim());
+const isSubtask = (type: string) => /^sub-?task$|^unteraufgabe$|^subtarea$/i.test(type.trim());
+
+/**
+ * Rules T1 to T9 over a ticket. Errors keep a change from opening: a draft
+ * from this ticket would be wrong. Warnings are for the analyst and the
+ * reviewer. Every fix is written for whoever edits the ticket in Jira.
+ */
+export function checkTicket(t: Ticket): Diagnostic[] {
+  const out: Diagnostic[] = [];
+  const target = t.key || "ticket";
+
+  if (isEpic(t.type)) {
+    return [
+      error(
+        "ticket_epic",
+        `${target} is an epic: it maps to a capability and is not drafted itself.`,
+        {
+          target,
+          fix: `Map it in alm.config.yaml (epics: { ${target}: <capability> }) and draft its stories one by one.`,
+        }
+      ),
+    ];
+  }
+
+  if (isSubtask(t.type) && !t.parent) {
+    out.push(
+      error("T8_orphan_subtask", `${target} is a sub-task with no parent story.`, {
+        target,
+        fix: "Attach it to its story in Jira; a sub-task is drafted as part of its story's change.",
+      })
+    );
+  }
+
+  if (t.criteria.length === 0) {
+    out.push(
+      error("T1_no_criteria", `${target} has no acceptance criteria.`, {
+        target,
+        fix:
+          'In the description, add a line "Acceptance Criteria" and under it one item per ' +
+          'criterion: "Given …, when …, then …".',
+      })
+    );
+  }
+
+  t.criteria.forEach((criterion, i) => {
+    const n = i + 1;
+    const where = { target: `${target} criterion ${n}` };
+    const bare = withoutQuoted(criterion);
+    // "quick-action buttons" names a thing; "easy-to-use" is still vague.
+    const vague = [...bare.matchAll(new RegExp(VAGUE.source, "giu"))]
+      .filter((m) => {
+        const after = bare.slice(m.index! + m[0].length);
+        return !/^-\p{L}/u.test(after) || /^-to-/i.test(after);
+      })
+      .map((m) => `"${m[1]}"`);
+    if (vague.length) {
+      out.push(
+        error(
+          "T2_vague",
+          `Criterion ${n} says ${[...new Set(vague)].join(" and ")}, which no test can check.`,
+          {
+            ...where,
+            fix: 'Say what it means in values: "within 2 seconds", "in at most 3 clicks".',
+          }
+        )
+      );
+    }
+    if (unmeasured(bare)) {
+      out.push(
+        warning("T3_unmeasured", `Criterion ${n} promises a quantity and states no number.`, {
+          ...where,
+          fix: 'Give the number and its unit: "responds within 2 seconds for 1,000 entries a day".',
+        })
+      );
+    }
+    const tech = TECHNICAL.exec(bare);
+    if (tech) {
+      out.push(
+        warning("T4_technical", `Criterion ${n} names ${tech[1]}: how, not what.`, {
+          ...where,
+          fix: "Say what the user or the business sees; the technology is the team's decision.",
+        })
+      );
+    }
+    if (TEST_INSTRUCTION.test(bare)) {
+      out.push(
+        warning("T6_test_instruction", `Criterion ${n} prescribes tests instead of behaviour.`, {
+          ...where,
+          fix: 'Write each case it lists as a criterion of its own ("Given a stay of 1 hour 1 minute, then …"); the tests follow from those.',
+        })
+      );
+    }
+  });
+
+  if (t.criteria.length > MAX_CRITERIA) {
+    out.push(
+      warning("T5_too_big", `${target} has ${t.criteria.length} criteria.`, {
+        target,
+        fix: `Split the story: at most ${MAX_CRITERIA} criteria each, so one change stays reviewable.`,
+      })
+    );
+  }
+
+  if (t.criteria.length > 0 && t.criteria.every((c) => DELIVERABLE.test(c))) {
+    out.push(
+      warning(
+        "T7_not_behaviour",
+        `${target}'s criteria speak of deliverables, not of what the system does.`,
+        {
+          target,
+          fix: "A deliverable is tracked on the board, not specified: leave it out of the spec, or add criteria for what the system does.",
+        }
+      )
+    );
+  }
+
+  for (const q of t.questions) {
+    if (!q.assumption) {
+      out.push(
+        info("T9_open_question", `"${q.text}" has no stated assumption.`, {
+          target,
+          fix: 'Add "Assumption: …" after the question, so the draft can proceed and the reviewer sees what was assumed.',
+        })
+      );
+    }
+  }
+  return out;
+}
+
+/** Ready when no T-rule is an error. */
+export function ticketReady(findings: readonly Diagnostic[]): boolean {
+  return !findings.some((d) => d.severity === "error");
 }

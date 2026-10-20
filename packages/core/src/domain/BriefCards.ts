@@ -198,13 +198,14 @@ export function cardValues(section: ModuleSection): string[] {
 
 /**
  * Words a test cannot check. English and Spanish: Specgate's pilots wrote
- * briefs in both.
+ * briefs in both. German since tickets (ADR-0039): enterprise boards are
+ * often written in it.
  */
-const VAGUE =
-  /(?<![\p{L}])(fast|quick(?:ly)?|easy|easily|simple|user[- ]friendly|intuitive(?:ly)?|secure(?:ly)?|robust|flexible|efficient(?:ly)?|appropriate(?:ly)?|adequate(?:ly)?|seamless(?:ly)?|as needed|as soon as possible|asap|etc\.?|and so on|tbd|r[aá]pid[oa]s?|r[aá]pidamente|f[aá]cil(?:es|mente)?|sencill[oa]s?|intuitiv[oa]s?|amigable|robust[oa]s?|eficiente(?:s|mente)?|adecuad[oa]s?|lo antes posible|etc[eé]tera|por definir)(?![\p{L}])/iu;
+export const VAGUE =
+  /(?<![\p{L}])(fast|quick(?:ly)?|easy|easily|simple|user[- ]friendly|intuitive(?:ly)?|secure(?:ly)?|robust|flexible|efficient(?:ly)?|appropriate(?:ly)?|adequate(?:ly)?|seamless(?:ly)?|as needed|as soon as possible|asap|etc\.?|and so on|tbd|r[aá]pid[oa]s?|r[aá]pidamente|f[aá]cil(?:es|mente)?|sencill[oa]s?|intuitiv[oa]s?|amigable|robust[oa]s?|eficiente(?:s|mente)?|adecuad[oa]s?|lo antes posible|etc[eé]tera|por definir|schnell(?:e[nrs]?)?|z[uü]gig|einfach(?:e[nrs]?)?|benutzerfreundlich(?:e[nrs]?)?|intuitiv(?:e[nrs]?)?|flexibel|effizient(?:e[nrs]?)?|angemessen(?:e[nrs]?)?|nahtlos|zeitnah|m[oö]glichst bald|usw\.?)(?![\p{L}])/iu;
 
 /** Frameworks, databases, libraries: how, in a brief about what. */
-const TECHNICAL =
+export const TECHNICAL =
   /\b(postgres(?:ql)?|mysql|mariadb|mongo(?:db)?|redis|sqlite|oracle db|dynamodb|elasticsearch|firebase|supabase|kafka|rabbitmq|react|angular|vue(?:\.js)?|svelte|next\.js|nuxt|django|flask|fastapi|rails|laravel|spring(?: boot)?|express(?:\.js)?|nest(?:js)?|quarkus|flutter|react native|docker|kubernetes|k8s|aws|lambda|s3|azure|gcp|graphql|prisma|hibernate|typeorm)\b/i;
 
 /** A rule's condition, when it opens the sentence — EARS's "When …", "If …, then …". */

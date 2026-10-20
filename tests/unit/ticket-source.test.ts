@@ -419,3 +419,147 @@ test("REQ-145: acceptance_field, when it has text, is where the criteria come fr
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── REQ-146 ──────────────────────────────────────────────────────────────────
+
+const { checkTicket, readTicket } = require("../../packages/core/src/domain/TicketText");
+
+/** A story with these criteria, as plain text. */
+function story(key: string, criteria: string[], extra: Record<string, unknown> = {}) {
+  return {
+    key,
+    fields: {
+      summary: "A story",
+      issuetype: { name: "Story" },
+      labels: [],
+      description: [
+        "As an administrator I want this.",
+        "",
+        ...(criteria.length ? ["Acceptance Criteria", ...criteria.map((c) => `- ${c}`)] : []),
+      ].join("\n"),
+      ...extra,
+    },
+  };
+}
+
+const codes = (issue: unknown) =>
+  (checkTicket(readTicket(issue)) as Array<{ code: string }>).map((d) => d.code);
+
+test("REQ-146 SCN-146a: no criteria is T1, nothing is written", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "story.json", story("KAN-72", []));
+    const before = fs.readdirSync(dir).sort();
+    const run = runPropose(dir, ["--from-ticket", file, "--check"]);
+    assert.equal(run.status, 1, run.stdout);
+    assert.match(run.stdout + run.stderr, /T1_no_criteria/);
+    assert.match(run.stdout + run.stderr, /Acceptance Criteria/);
+    assert.deepEqual(fs.readdirSync(dir).sort(), before);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-146 SCN-146b: a criterion that prescribes tests warns, the ticket is ready", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "KAN-18.json", KAN_18);
+    const run = runPropose(dir, ["--from-ticket", file, "--check"]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.match(run.stdout, /T6_test_instruction[^\n]*criterion 4/);
+    assert.match(run.stdout, /Ready to draft/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-146 SCN-146c: vague German words are T2, named", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(
+      dir,
+      "story.json",
+      story("KAN-73", ["Die Liste lädt schnell und ist benutzerfreundlich"])
+    );
+    const run = runPropose(dir, ["--from-ticket", file, "--check"]);
+    assert.equal(run.status, 1);
+    assert.match(run.stdout + run.stderr, /T2_vague[^\n]*"schnell"[^\n]*"benutzerfreundlich"/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-146 SCN-146d: criteria about deliverables are T7", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(
+      dir,
+      "story.json",
+      story("KAN-56", [
+        "Given the design work, when user flows are delivered, then they cover login.",
+        "Given the flows, when they are reviewed, then the product owner approves them.",
+      ])
+    );
+    const run = runPropose(dir, ["--from-ticket", file, "--check"]);
+    assert.match(run.stdout, /T7_not_behaviour/);
+    assert.match(run.stdout, /tracked on the board, not specified/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-146: the remaining T-rules, each on the case it names", () => {
+  const nine = Array.from(
+    { length: 9 },
+    (_, i) => `Given ${i} cars, when one leaves, then ${i - 1} remain.`
+  );
+  assert.ok(codes(story("KAN-80", nine)).includes("T5_too_big"));
+  assert.ok(
+    codes(
+      story("KAN-81", [
+        "Given a busy morning, when an entry is saved, then the response time stays low",
+      ])
+    ).includes("T3_unmeasured")
+  );
+  assert.ok(
+    codes(story("KAN-82", ["Given a plate, when it is saved, then PostgreSQL stores it"])).includes(
+      "T4_technical"
+    )
+  );
+  const orphan = {
+    key: "KAN-3",
+    fields: {
+      summary: "Subtask 2.1",
+      issuetype: { name: "Subtask" },
+      description: { type: "doc", content: [] },
+    },
+  };
+  assert.deepEqual(codes(orphan).sort(), ["T1_no_criteria", "T8_orphan_subtask"]);
+  assert.ok(
+    codes(KAN_18).every((c: string) => c !== "T9_open_question"),
+    "KAN-18's question states its assumption"
+  );
+  const asked = story("KAN-83", ["Given a plate, when it is saved, then it is listed."]);
+  (asked.fields as { description: string }).description +=
+    "\n\nOpen questions\n- Do we keep plates after a year?";
+  assert.ok(codes(asked).includes("T9_open_question"));
+  assert.deepEqual(
+    codes(story("KAN-84", ["Given a plate AB123CD, when it is saved, then it is listed."])),
+    []
+  );
+  // What the real KAN board taught: behaviour words that are not quantities.
+  assert.deepEqual(
+    codes(
+      story("KAN-63", [
+        'Given the dashboard, when it loads, then quick-action buttons "Register entry" are visible.',
+        "Given a voided invoice, when I void it again, then the action is not available.",
+      ])
+    ),
+    []
+  );
+  const epic = {
+    key: "KAN-5",
+    fields: { summary: "E2 · Vehicle Entry & Exit", issuetype: { name: "Epic" } },
+  };
+  assert.deepEqual(codes(epic), ["ticket_epic"]);
+});

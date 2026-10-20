@@ -65,7 +65,7 @@ The system SHALL read one issue — from Jira by key, or from a file holding Jir
 
 ### Requirement: REQ-146 — A ticket is checked against a Definition of Ready
 
-The system SHALL, on `specgate propose --from-ticket <KEY> --check`, check the ticket against rules T1 to T9 without writing any file, listing each finding with its code, the criterion it is about when it has one, and a fix an analyst can apply in Jira, and exit 1 when a finding is an error and 0 otherwise. The errors are `T1_no_criteria` (no criterion), `T2_vague` (a criterion with a vague word, in English, German or Spanish) and `T8_orphan_subtask` (a sub-task with no parent); the warnings are `T3_unmeasured`, `T4_technical`, `T5_too_big` (more than 8 criteria), `T6_test_instruction` (a criterion that prescribes tests instead of behaviour) and `T7_not_behaviour` (a ticket labelled `design` or `ui` with no criterion naming an outcome); `T9_open_question` is a note for a question with no stated assumption.
+The system SHALL, on `specgate propose --from-ticket <KEY> --check`, check the ticket against rules T1 to T9 without writing any file, listing each finding with its code, the criterion it is about when it has one, and a fix an analyst can apply in Jira, and exit 1 when a finding is an error and 0 otherwise. The errors are `T1_no_criteria` (no criterion), `T2_vague` (a criterion with a vague word, in English, German or Spanish) and `T8_orphan_subtask` (a sub-task with no parent); the warnings are `T3_unmeasured`, `T4_technical`, `T5_too_big` (more than 8 criteria), `T6_test_instruction` (a criterion that prescribes tests instead of behaviour) and `T7_not_behaviour` (a ticket whose every criterion speaks of a deliverable — delivered, documented, reviewed, approved, a design tool, wireframes, mockups, a prototype — instead of what the system does); `T9_open_question` is a note for a question with no stated assumption. An issue of type Epic is not checked against T1 to T9: it is refused with `ticket_epic`, whose fix names the `epics:` map and its stories, since an epic maps to a capability and is not drafted itself.
 
 #### Scenario: SCN-146a — A ticket with no criteria
 
@@ -85,7 +85,13 @@ The system SHALL, on `specgate propose --from-ticket <KEY> --check`, check the t
 - WHEN the developer runs `specgate propose --from-ticket story.json --check`
 - THEN it exits 1 and shows `T2_vague` naming "schnell" and "benutzerfreundlich"
 
-<!-- specgate:trace status=Draft feature=features/ticket-source/REQ-146.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
+#### Scenario: SCN-146d — A design deliverable
+
+- GIVEN an exported story whose criteria read "when user flows are delivered, then they cover login" and "when they are reviewed, then the product owner approves them"
+- WHEN the developer runs `specgate propose --from-ticket story.json --check`
+- THEN it shows `T7_not_behaviour`, whose fix says a deliverable is tracked on the board, not specified
+
+<!-- specgate:trace status=Implemented feature=features/ticket-source/REQ-146.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-147 — A ready ticket opens a change checked against it
 

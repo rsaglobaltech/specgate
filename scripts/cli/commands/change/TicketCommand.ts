@@ -17,7 +17,12 @@ import { resolveProjectDir } from "../../../lib/project-root";
 import { readAlmConfig } from "../../../alm/core";
 import { makeClient } from "../../../alm/clients";
 import type { AlmConfig } from "../../../alm/port";
-import { readTicket } from "../../../../packages/core/src/domain/TicketText";
+import {
+  checkTicket,
+  readTicket,
+  ticketReady,
+} from "../../../../packages/core/src/domain/TicketText";
+import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
 import type { Ticket } from "../../../../packages/core/src/domain/TicketText";
 
 export interface TicketOptions {
@@ -116,7 +121,17 @@ export class TicketCommand extends BaseCommand {
   /** `--check`: the ticket's parts, and what keeps it from being drafted. */
   private check(opts: TicketOptions, ticket: Ticket): void {
     const io = agentIo(opts.json);
-    io.emit({ ticket: ticketJson(ticket), status: [] }, () => {
+    const findings = checkTicket(ticket);
+    const errors = findings.filter((d) => d.severity === "error").length;
+    const warnings = findings.filter((d) => d.severity === "warning").length;
+    const ready = ticketReady(findings);
+    const epic = findings.some((d) => d.code === "ticket_epic");
+    const next = ready
+      ? `specgate propose --from-ticket ${opts.ticket}`
+      : epic
+        ? "specgate propose --from-ticket <story key> --check"
+        : `specgate propose --from-ticket ${opts.ticket} --check`;
+    io.emit({ ticket: ticketJson(ticket), ready, errors, warnings, next, status: findings }, () => {
       const out = process.stdout;
       out.write(ui.header("propose --from-ticket --check", ticket.key));
       out.write(
@@ -126,8 +141,45 @@ export class TicketCommand extends BaseCommand {
               `· ${ticket.type || "issue"} · ${ticket.criteria.length} criteria · ` +
                 `${ticket.questions.length} open question(s)`
             )
+        ) + (findings.length ? "\n" : "")
+      );
+      writeFindings(findings);
+      out.write(
+        "\n" +
+          (ready
+            ? ui.ok(
+                ui.bold("Ready to draft") +
+                  (warnings ? ui.muted(` — ${warnings} warning(s) for you to judge`) : "")
+              )
+            : ui.fail(
+                epic
+                  ? ui.bold("An epic is not drafted — its stories are")
+                  : `${ui.bold(`${errors} error(s) to fix in Jira before drafting`)} ${ui.muted("— each says how")}`
+              ))
+      );
+      out.write(
+        ui.next(
+          next,
+          ready ? "open the change" : epic ? "one of its stories" : "once the ticket is fixed"
         )
       );
     });
+    process.exitCode = ready ? 0 : 1;
+  }
+}
+
+function writeFindings(findings: readonly Diagnostic[]): void {
+  const out = process.stdout;
+  for (const d of findings) {
+    const where = d.target ? `${ui.bold(d.target)}  ` : "";
+    const line = `${ui.muted(d.code)}  ${where}${d.message}`;
+    out.write(
+      d.severity === "error"
+        ? ui.fail(line)
+        : d.severity === "warning"
+          ? ui.warn(line)
+          : ui.info(line)
+    );
+    if (d.fix) out.write(ui.fix(d.fix));
   }
 }
