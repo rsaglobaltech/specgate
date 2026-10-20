@@ -50,6 +50,7 @@ export interface TicketOptions {
   projectDir: string;
   capability: string;
   branch: boolean;
+  push: boolean;
   agent: string;
 }
 
@@ -68,6 +69,7 @@ function usage(): void {
       "  --capability <name>   The capability, when its epic is not under epics:",
       "  --agent <cmd>         Have your agent draft it, confined to the change",
       "  --no-branch           Do not create feature/<KEY>-<slug>",
+      "  --no-push             Create it, but do not push it to origin",
       "  --project-dir <path>  --json",
       "",
     ].join("\n") + "\n"
@@ -82,6 +84,7 @@ export function parseTicketArgs(argv: string[]): TicketOptions {
     projectDir: ".",
     capability: "",
     branch: true,
+    push: true,
     agent: "",
   };
   for (let i = 0; i < argv.length; i++) {
@@ -92,6 +95,7 @@ export function parseTicketArgs(argv: string[]): TicketOptions {
     else if (a === "--project-dir") opts.projectDir = argv[++i] ?? ".";
     else if (a === "--capability") opts.capability = argv[++i] ?? "";
     else if (a === "--no-branch") opts.branch = false;
+    else if (a === "--no-push") opts.push = false;
     else if (a === "--agent") opts.agent = argv[++i] ?? "";
   }
   return opts;
@@ -171,6 +175,23 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
     return { name: null, note: `Branch ${name} not created: ${made.stderr.trim()}` };
   }
   return { name, note: null };
+}
+
+/**
+ * The branch on `origin` as soon as work starts: a Git host linked to Jira
+ * shows it in the ticket, and a Jira automation ("branch created → In
+ * Progress") moves the ticket — Specgate itself never writes to Jira. A failed
+ * push is said and leaves the change as it is.
+ */
+function pushBranch(dir: string, name: string): { ok: boolean; note: string } | null {
+  if (git(dir, ["remote", "get-url", "origin"]).status !== 0) return null;
+  const pushed = git(dir, ["push", "-q", "-u", "origin", name]);
+  if (pushed.status === 0) return { ok: true, note: `Branch ${name} pushed to origin` };
+  const why = pushed.stderr.trim().split("\n")[0] ?? "";
+  return {
+    ok: false,
+    note: `Branch not pushed (${why}). Push it yourself: git push -u origin ${name}`,
+  };
 }
 
 function readIf(file: string): string | undefined {
@@ -483,6 +504,7 @@ export class TicketCommand extends BaseCommand {
 
     const branch = opts.branch ? ticketBranch(projectDir, ticket) : { name: null, note: null };
     const opened = openChange(projectDir, ticket, changeId, capability);
+    const pushed = branch.name && opts.push ? pushBranch(projectDir, branch.name) : null;
     if (opts.agent) return this.withAgent(opts, projectDir, ticket, changeId, opened.created);
     io.emit(
       {
@@ -492,6 +514,7 @@ export class TicketCommand extends BaseCommand {
         reserved: opened.reqRange,
         created: opened.created,
         branch: branch.name,
+        pushed: pushed?.ok ?? false,
         next: `specgate propose --from-ticket ${opts.ticket}`,
         status: findings,
       },
@@ -509,6 +532,7 @@ export class TicketCommand extends BaseCommand {
         for (const f of opened.created) out.write(ui.fileLine("added", f, ""));
         if (branch.name) out.write("\n" + ui.ok(`On branch ${ui.bold(branch.name)}`));
         if (branch.note) out.write("\n" + ui.info(branch.note));
+        if (pushed) out.write(pushed.ok ? ui.ok(pushed.note) : ui.warn(pushed.note));
         out.write(
           "\n" +
             ui.section("Have your agent write it") +

@@ -1350,3 +1350,60 @@ test("REQ-147: --agent on an open change hands the agent the findings to fix", (
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-148 SCN-148d: the branch is on the host as soon as work starts", () => {
+  const dir = repo();
+  const origin = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-origin-"));
+  try {
+    git(origin, "init", "-q", "--bare");
+    git(dir, "remote", "add", "origin", origin);
+    git(dir, "push", "-q", "origin", "main");
+    const file = path.join(os.tmpdir(), `kan13e-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit"]);
+    fs.rmSync(file);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(
+      git(origin, "branch", "--list", "feature/KAN-13-register-vehicle-entry")
+        .replace("*", "")
+        .trim(),
+      "feature/KAN-13-register-vehicle-entry"
+    );
+    assert.equal(
+      git(dir, "rev-parse", "--abbrev-ref", "@{upstream}"),
+      "origin/feature/KAN-13-register-vehicle-entry"
+    );
+    assert.match(run.stdout, /pushed/i);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(origin, { recursive: true, force: true });
+  }
+});
+
+test("REQ-148: --no-push keeps the branch local; a failed push is said, the change stays", () => {
+  const dir = repo();
+  const origin = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-origin-"));
+  try {
+    git(origin, "init", "-q", "--bare");
+    git(dir, "remote", "add", "origin", origin);
+    const file = path.join(os.tmpdir(), `kan13f-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    assert.equal(
+      runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit", "--no-push"]).status,
+      0
+    );
+    assert.equal(git(origin, "branch", "--list"), "");
+    git(dir, "checkout", "-q", "main");
+    git(dir, "branch", "-q", "-D", "feature/KAN-13-register-vehicle-entry");
+    fs.rmSync(path.join(dir, CHANGE_13), { recursive: true, force: true });
+    git(dir, "remote", "set-url", "origin", path.join(origin, "missing"));
+    const failed = runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit"]);
+    fs.rmSync(file);
+    assert.equal(failed.status, 0, failed.stdout + failed.stderr);
+    assert.match(failed.stdout, /not pushed/i);
+    assert.ok(fs.existsSync(path.join(dir, CHANGE_13, "ticket.md")));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(origin, { recursive: true, force: true });
+  }
+});

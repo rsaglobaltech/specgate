@@ -135,6 +135,23 @@ The agent can write only inside the change, and never `ticket.md`. The text of
 a ticket is data to specify, not instructions to the agent. Run the command
 again until it says **Ready to review**. A person then reviews the draft.
 
+### Move the ticket on the board
+
+Specgate never writes to Jira. The board moves itself from what the Git host
+tells it. Once the host is linked to Jira (the _GitHub for Jira_ app), add
+three rules in _Project settings → Automation_:
+
+| When (trigger)       | Then (action)                         |
+| -------------------- | ------------------------------------- |
+| Branch created       | Transition the issue to _In Progress_ |
+| Pull request created | Transition the issue to _In Review_   |
+| Pull request merged  | Transition the issue to _Done_        |
+
+`propose --from-ticket` pushes the ticket's branch to `origin` as soon as it
+creates it, so the ticket moves when work starts. Pass `--no-push` to keep
+the branch local. The workflow needs those statuses: add them to the board
+first.
+
 ## 4. Build it, with the key in every commit
 
 Deliver each requirement as usual, test first, then `specgate apply REQ-…`.
