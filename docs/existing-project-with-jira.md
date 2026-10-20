@@ -165,7 +165,18 @@ with the requirement it is building (the agent is set as usual, in
 `harness.config.yaml` or with `--agent`):
 
 ```bash
-npx specgate harness run --test-cmd "mvn -B -P unit-test test -Dgroups={req}"
+npx specgate harness run --test-cmd "mvn -B -P unit-test test -Dgroups={req} -DfailIfNoTests=true"
+```
+
+`-DfailIfNoTests=true` matters. Without it, a test that lacks the tag is not
+selected, Maven runs zero tests and reports success, and the requirement looks
+proven when nothing ran. Say it in your team's rules too, below Specgate's
+block in `AGENTS.md`, so the agent tags every test it writes:
+
+```markdown
+## Team rules
+
+- Tag every test with the requirement it proves: `@Tag("REQ-007")`.
 ```
 
 Only `harness run` replaces `{req}` (and `{scenario}`, `{feature_file}`).
@@ -174,7 +185,7 @@ not put `{req}` in `test_cmd`. To run one requirement's tests by hand, write
 the id yourself:
 
 ```bash
-npx specgate apply REQ-007 --test-cmd "mvn -B -P unit-test test -Dgroups=REQ-007"
+npx specgate apply REQ-007 --test-cmd "mvn -B -P unit-test test -Dgroups=REQ-007 -DfailIfNoTests=true"
 ```
 
 CI keeps running the full suite from `test_cmd`, so the fast gate never
