@@ -1780,3 +1780,32 @@ test("REQ-161 SCN-161a: a German summary makes a readable change id", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-148: with --agent too, the branch and a failed push are said", () => {
+  const dir = repo();
+  try {
+    git(dir, "remote", "add", "origin", path.join(os.tmpdir(), `no-such-origin-${process.pid}`));
+    const file = path.join(os.tmpdir(), `kan13i-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    const run = runPropose(dir, [
+      "--from-ticket",
+      file,
+      "--capability",
+      "entry-exit",
+      "--agent",
+      "true",
+    ]);
+    fs.rmSync(file);
+    assert.match(run.stdout, /On branch feature\/KAN-13-register-vehicle-entry/, run.stdout);
+    assert.match(run.stdout, /not pushed/i);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-147: the agent is told everything it needs is in the guide", () => {
+  const { ticketPrompt } = require("../../scripts/draft/ticket-guide");
+  const prompt = ticketPrompt({ key: "KAN-13" }, "kan-13-x", "GUIDE");
+  assert.match(prompt, /Everything you need is in this guide/);
+  assert.match(prompt, /do not read Specgate's own code/i);
+});

@@ -200,6 +200,18 @@ function pushBranch(dir: string, name: string): { ok: boolean; note: string } | 
   };
 }
 
+/** What happened to the ticket's branch, as `open` and `--agent` both print it. */
+function branchLines(
+  branch: { name: string | null; note: string | null },
+  pushed: { ok: boolean; note: string } | null
+): string {
+  return (
+    (branch.name ? ui.ok(`On branch ${ui.bold(branch.name)}`) : "") +
+    (branch.note ? ui.info(branch.note) : "") +
+    (pushed ? (pushed.ok ? ui.ok(pushed.note) : ui.warn(pushed.note)) : "")
+  );
+}
+
 function readIf(file: string): string | undefined {
   return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : undefined;
 }
@@ -516,7 +528,16 @@ export class TicketCommand extends BaseCommand {
     const branch = opts.branch ? ticketBranch(projectDir, ticket) : { name: null, note: null };
     const opened = openChange(projectDir, ticket, changeId, capability);
     const pushed = branch.name && opts.push ? pushBranch(projectDir, branch.name) : null;
-    if (opts.agent) return this.withAgent(opts, projectDir, ticket, changeId, opened.created);
+    if (opts.agent) {
+      return this.withAgent(
+        opts,
+        projectDir,
+        ticket,
+        changeId,
+        opened.created,
+        branchLines(branch, pushed)
+      );
+    }
     io.emit(
       {
         ticket: ticketJson(ticket),
@@ -566,7 +587,8 @@ export class TicketCommand extends BaseCommand {
     projectDir: string,
     ticket: Ticket,
     changeId: string,
-    created: string[] = []
+    created: string[] = [],
+    branchNotes = ""
   ): void {
     const io = agentIo(opts.json);
     const guide = readIf(path.join(projectDir, CHANGES, changeId, "DRAFTING.md")) ?? "";
@@ -576,6 +598,7 @@ export class TicketCommand extends BaseCommand {
       process.stdout.write(
         ui.header("propose --from-ticket", ticket.key) +
           (created.length ? ui.ok(`Change ${changeId} opened.`) : "") +
+          branchNotes +
           ui.logLine(`${agent.command} is drafting ${ticket.key}`)
       );
     }
