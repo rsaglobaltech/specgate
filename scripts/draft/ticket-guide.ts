@@ -16,6 +16,8 @@ export interface TicketGuideInput {
   copy: string;
   reqRange: [string, string];
   firstScenario: string;
+  /** The last of the change's reserved scenario ids (REQ-157). */
+  lastScenario?: string;
   /** Numbers and "quoted labels" the criteria state. */
   values: string[];
 }
@@ -34,7 +36,9 @@ export function ticketGuide(i: TicketGuideInput): string {
     "  Specgate refuses a draft whose copy of the ticket changed.",
     `- **Write only inside:** \`${scope}\`.`,
     `- **Requirement ids:** \`${i.reqRange[0]}\` … \`${i.reqRange[1]}\`, no others.`,
-    `- **Scenario ids:** from \`${i.firstScenario}\` up, one each.`,
+    i.lastScenario
+      ? `- **Scenario ids:** \`${i.firstScenario}\` … \`${i.lastScenario}\`, one each, no others.`
+      : `- **Scenario ids:** from \`${i.firstScenario}\` up, one each.`,
     "",
     "## 0. Your scope — the acceptance criteria",
     "",

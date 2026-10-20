@@ -22,6 +22,8 @@ export interface DraftingGuideInput {
   brief: string;
   reqRange: [string, string];
   firstScenario: string;
+  /** The last of the change's reserved scenario ids (REQ-157). */
+  lastScenario?: string;
   maxRequirements: number;
   /** actor → surfaces, from the brief's front matter. */
   actors: Map<string, string[]>;
@@ -121,7 +123,9 @@ export function draftingGuide(i: DraftingGuideInput): string {
     `- **The brief:** \`${i.brief}\` — the only source of business facts.`,
     `- **Write only inside:** \`${scope}\`.`,
     `- **Requirement ids:** \`${i.reqRange[0]}\` … \`${i.reqRange[1]}\`, no others — at most ${i.maxRequirements} requirements.`,
-    `- **Scenario ids:** from \`${i.firstScenario}\` up, one each.`,
+    i.lastScenario
+      ? `- **Scenario ids:** \`${i.firstScenario}\` … \`${i.lastScenario}\`, one each, no others.`
+      : `- **Scenario ids:** from \`${i.firstScenario}\` up, one each.`,
     "",
     ...cardsPart(i),
     "## 1. The requirements — `specs/" + i.module + "/spec.md`",

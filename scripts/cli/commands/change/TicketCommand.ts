@@ -34,7 +34,7 @@ import {
   renderConfig,
   reserveReqRange,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
-import { draftReport, nextScenario, openFindings } from "../spec/DraftCommand";
+import { draftReport, openFindings, reserveScenarioRange } from "../spec/DraftCommand";
 import { ticketGuide, ticketPrompt } from "../../../draft/ticket-guide";
 import { runConfinedAgent, withWritePermission } from "../../../draft/confined-agent";
 import { baseFor } from "../../../lib/ticket-keys";
@@ -298,6 +298,7 @@ function openChange(projectDir: string, t: Ticket, changeId: string, capability:
       string,
       string,
     ];
+    const scnRange = reserveScenarioRange(projectDir, reqRange);
     const copyPath = `${CHANGES}/${changeId}/ticket.md`;
     const copy = ticketCopy(t);
     const created: string[] = [];
@@ -320,7 +321,8 @@ function openChange(projectDir: string, t: Ticket, changeId: string, capability:
         changeId,
         copy: copyPath,
         reqRange,
-        firstScenario: nextScenario(projectDir),
+        firstScenario: scnRange[0],
+        lastScenario: scnRange[1],
         values,
       })
     );
@@ -335,7 +337,7 @@ function openChange(projectDir: string, t: Ticket, changeId: string, capability:
     };
     write(
       "change.yaml",
-      `${renderConfig(config).trimEnd()}\nbrief: ${copyPath}\nticket: ${t.key}\nticket_sha256: ${sha256(copy)}\n`
+      `${renderConfig(config).trimEnd()}\nscn_range: [${scnRange[0]}, ${scnRange[1]}]\nbrief: ${copyPath}\nticket: ${t.key}\nticket_sha256: ${sha256(copy)}\n`
     );
     fs.renameSync(dir, final);
     return { reqRange, created };

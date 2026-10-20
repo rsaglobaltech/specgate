@@ -1435,7 +1435,7 @@ test("REQ-152 SCN-152a: two tickets on two branches never mint the same id", () 
     assert.match(yaml, /req_range: \[REQ-006, /);
     assert.match(
       fs.readFileSync(path.join(dir, CHANGE_13, "DRAFTING.md"), "utf8"),
-      /from `SCN-007` up/
+      /Scenario ids:\*\* `SCN-007` …/
     );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -1609,6 +1609,55 @@ test("REQ-156 SCN-156a: the harness's commits name the ticket", () => {
       "specgate_change_version: 1\nticket: KAN-1(\n"
     );
     assert.equal(ticketKeyOf(dir, "REQ-002"), null, "a key that is not a Jira key is not used");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ── REQ-157, REQ-158 ─────────────────────────────────────────────────────────
+
+test("REQ-157 SCN-157a: a change reserves its scenario ids", () => {
+  const dir = project(JIRA);
+  try {
+    const kan14 = path.join(dir, "docs", "specs", "changes", "kan-14-vehicle-type-catalog");
+    fs.mkdirSync(path.join(kan14, "specs", "parking"), { recursive: true });
+    fs.writeFileSync(
+      path.join(kan14, "change.yaml"),
+      "specgate_change_version: 1\nreq_range: [REQ-002, REQ-007]\nscn_range: [SCN-002, SCN-019]\n"
+    );
+    fs.writeFileSync(path.join(kan14, "specs", "parking", "spec.md"), "<!-- placeholder -->\n");
+    const file = exported(dir, "KAN-13.json", KAN_13);
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "parking", "--no-branch"]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const yaml = fs.readFileSync(path.join(dir, CHANGE_13, "change.yaml"), "utf8");
+    const range = /^scn_range: \[(SCN-\d+), (SCN-\d+)\]$/m.exec(yaml);
+    assert.ok(range, yaml);
+    assert.equal(range![1], "SCN-020");
+    const guide = fs.readFileSync(path.join(dir, CHANGE_13, "DRAFTING.md"), "utf8");
+    assert.ok(
+      guide.includes(range![1]) && guide.includes(range![2]),
+      "DRAFTING.md names the range"
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-158 SCN-158a: status points a Jira project to its tickets", () => {
+  const dir = monorepo();
+  try {
+    spawnSync(
+      process.execPath,
+      [CLI, "adopt", "--no-capabilities", "--no-agents", "--project-dir", dir],
+      { encoding: "utf8" }
+    );
+    fs.writeFileSync(path.join(dir, "alm.config.yaml"), JIRA);
+    const run = spawnSync(process.execPath, [CLI, "status", "--project-dir", dir], {
+      encoding: "utf8",
+      env: { ...process.env, NO_COLOR: "1" },
+    });
+    assert.match(run.stdout, /specgate propose --from-ticket <KEY> --check/, run.stdout);
+    assert.doesNotMatch(run.stdout, /specgate new "/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

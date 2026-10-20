@@ -64,12 +64,17 @@ export interface QueueSummary {
   orphans: string[];
   derived: boolean;
   forja: boolean;
+  /** `alm.config.yaml` names Jira: the work arrives as tickets (REQ-158). */
+  tickets?: boolean;
   /** Added by `status` itself; null when the brief cannot be read. */
   brief?: BriefProgress | null;
 }
 
 /** What `nextCommandPlain` and `nextReason` read from a summary. */
-type NextInput = Pick<QueueSummary, "items" | "counts" | "orphans" | "derived" | "forja" | "brief">;
+type NextInput = Pick<
+  QueueSummary,
+  "items" | "counts" | "orphans" | "derived" | "forja" | "brief" | "tickets"
+>;
 
 export interface StatusOptions {
   projectDir: string;
@@ -147,6 +152,7 @@ export function summarise(
     orphans,
     derived: isDerivedProject(projectDir),
     forja: findForjaProject(projectDir) !== null,
+    tickets: readsTickets(projectDir),
   };
 }
 
@@ -263,6 +269,18 @@ export function needsOf(item: Pick<QueueItem, "category" | "question">): string 
  * After `init`, status used to say "specgate check — write REQ-001's test",
  * a command paired with an instruction about something else.
  */
+function readsTickets(projectDir: string): boolean {
+  try {
+    return /^provider:\s*["']?jira["']?\s*$/m.test(
+      fs.readFileSync(path.join(projectDir, "alm.config.yaml"), "utf8")
+    );
+  } catch {
+    return false;
+  }
+}
+
+const FROM_TICKET = "specgate propose --from-ticket <KEY> --check";
+
 function onlyBaseline(items: QueueItem[]): boolean {
   const todo = (items || []).filter((it) => TODO_CATEGORIES.includes(it.category));
   return (
@@ -313,6 +331,7 @@ const needsCode = (todo: QueueItem) =>
 
 export function nextCommandPlain({
   items,
+  tickets,
   counts,
   orphans,
   derived,
@@ -328,18 +347,27 @@ export function nextCommandPlain({
   const todo = firstReal(items) || first(TODO_CATEGORIES);
   if (todo) {
     if (todo.category === "NEEDS_FEATURE") return `specgate plan`;
-    if (onlyBaseline(items)) return 'specgate new "<a behaviour you rely on>"';
+    if (onlyBaseline(items))
+      return tickets ? FROM_TICKET : 'specgate new "<a behaviour you rely on>"';
     if (forja && needsCode(todo)) return forjaAddCommand(todo);
     // On a generated matrix a test that names its requirement is the link;
     // `apply` is what you run once it exists, and it checks first.
     if (derived) return `specgate apply ${todo.requirement}`;
     return `specgate req link ${todo.requirement} --test <path>`;
   }
-  if (counts.total === 0) return 'specgate new "<what it does>"';
+  if (counts.total === 0) return tickets ? FROM_TICKET : 'specgate new "<what it does>"';
   return "specgate check";
 }
 
-export function nextReason({ items, counts, orphans, derived, brief, forja }: NextInput): string {
+export function nextReason({
+  items,
+  counts,
+  orphans,
+  derived,
+  brief,
+  forja,
+  tickets,
+}: NextInput): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   if ((items || []).some((it) => it.category === "NEEDS_STATUS_UPDATE"))
     return "its test exists; close it through the gate";
@@ -354,13 +382,16 @@ export function nextReason({ items, counts, orphans, derived, brief, forja }: Ne
   if (todo && todo.category === "NEEDS_FEATURE")
     return `${todo.requirement}'s feature file is missing — plan shows which`;
   if (todo && onlyBaseline(items))
-    return "only the adoption baseline is specified — add one requirement your code already meets";
+    return tickets
+      ? "the work comes from Jira — check a ticket is ready, then open its change"
+      : "only the adoption baseline is specified — add one requirement your code already meets";
   if (todo && forja && needsCode(todo))
     return `${todo.requirement}'s use case and the test that names it, where the architecture expects them`;
   if (todo && derived)
     return `once a test mentions ${todo.requirement} — that mention is the link; apply checks first`;
   if (todo) return `write the test first, then record where it is`;
-  if (counts.total === 0) return "no requirements yet";
+  if (counts.total === 0)
+    return tickets ? "no requirements yet — start from a ticket" : "no requirements yet";
   if (counts.WAITING_FOR_ANSWER > 0)
     return `${counts.WAITING_FOR_ANSWER} wait for an answer; everything else is implemented — run the gate`;
   return "everything is implemented; run the gate";
