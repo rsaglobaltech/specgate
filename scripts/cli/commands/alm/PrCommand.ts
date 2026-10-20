@@ -43,6 +43,22 @@ function parse(argv: string[]): PrOptions {
   return o;
 }
 
+/**
+ * The change, open or archived. A ticket's change is archived on its branch,
+ * so the pull request carries the archive (REQ-159): the most recent
+ * `archive/<date>-<id>` when the change is no longer open.
+ */
+function changePath(projectDir: string, id: string): string | null {
+  if (fs.existsSync(path.join(projectDir, CHANGES, id))) return `${CHANGES}/${id}`;
+  const archive = path.join(projectDir, CHANGES, "archive");
+  if (!fs.existsSync(archive)) return null;
+  const dated = fs
+    .readdirSync(archive)
+    .filter((name) => name.endsWith(`-${id}`) && /^\d{4}-\d{2}-\d{2}-/.test(name))
+    .sort();
+  return dated.length ? `${CHANGES}/archive/${dated[dated.length - 1]}` : null;
+}
+
 function git(dir: string, args: string[]) {
   return spawnSync("git", ["-C", dir, ...args], { encoding: "utf8" });
 }
@@ -102,10 +118,11 @@ export async function main(argv: string[]): Promise<void> {
   try {
     const projectDir = resolveProjectDir(o.projectDir);
     const cfg = prConfig(readAlmConfig(projectDir).pr);
-    const changeDir = path.join(projectDir, CHANGES, o.change);
-    if (!fs.existsSync(changeDir)) {
+    const changeRel = changePath(projectDir, o.change);
+    if (!changeRel) {
       throw new Error(`No change '${o.change}' under ${CHANGES}/.\nFix: specgate change list.`);
     }
+    const changeDir = path.join(projectDir, changeRel);
     const yaml = fs.readFileSync(path.join(changeDir, "change.yaml"), "utf8");
     const key = /^ticket:\s*(\S+)\s*$/m.exec(yaml)?.[1];
     if (key && !/^[A-Z][A-Z0-9_]+-\d+$/.test(key)) {
@@ -147,7 +164,7 @@ export async function main(argv: string[]): Promise<void> {
     const body = [
       `<!-- specgate:pr change=${o.change} -->`,
       `**Ticket:** ${link ? `[${key}](${link})` : key} — ${summary}`,
-      `**Change:** \`${CHANGES}/${o.change}/\``,
+      `**Change:** \`${changeRel}/\``,
       "",
       "| Requirement | Status |",
       "|---|---|",

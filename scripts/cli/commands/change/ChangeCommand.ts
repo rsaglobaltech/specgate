@@ -986,6 +986,19 @@ function cmdArchive(opts: ChangeOptions) {
   // checklist passes: reservas_app archived one with two findings open and
   // nothing said so (#57). `--force` archives anyway, as it does for tasks.
   const isDraft = Boolean(briefOf(projectDir, changeId));
+  // A ticket's change goes on to its pull request, archive included (REQ-159).
+  const ticketKey = /^ticket:\s*(\S+)\s*$/m.exec(
+    (() => {
+      try {
+        return fs.readFileSync(
+          path.join(projectDir, "docs", "specs", "changes", changeId, "change.yaml"),
+          "utf8"
+        );
+      } catch {
+        return "";
+      }
+    })()
+  )?.[1];
   if (!opts.force && isDraft) {
     const checked = draftReport(projectDir, changeId);
     if ("report" in checked && checked.report.status.length > 0) {
@@ -996,7 +1009,7 @@ function cmdArchive(opts: ChangeOptions) {
           `Draft '${changeId}' has ${checked.report.status.length} open finding(s) in its checklist (${codes}).`,
           {
             target: changeId,
-            fix: `Run \`specgate propose --from-brief ${draftModuleOf(changeId)}\`, fix what it reports, then archive — or pass --force to archive it as it is.`,
+            fix: `Run \`specgate propose ${ticketKey ? `--from-ticket ${ticketKey}` : `--from-brief ${draftModuleOf(changeId)}`}\`, fix what it reports, then archive — or pass --force to archive it as it is.`,
           }
         ),
       ]);
@@ -1115,10 +1128,16 @@ function cmdArchive(opts: ChangeOptions) {
         // gate passes. Saying it "will fail until the tests exist" was wrong
         // (#92); what comes next is the queue, or the next module.
         ui.next(
-          isDraft ? "specgate propose --from-brief" : "specgate status",
-          isDraft
-            ? "the next module of the brief, or what to build first"
-            : "what each requirement still needs"
+          ticketKey
+            ? `specgate alm pr ${changeId}`
+            : isDraft
+              ? "specgate propose --from-brief"
+              : "specgate status",
+          ticketKey
+            ? `${ticketKey}'s pull request, with this archive in it`
+            : isDraft
+              ? "the next module of the brief, or what to build first"
+              : "what each requirement still needs"
         )
     );
     if (plan.warnings.length > 0) printDiagnostics(plan.warnings, process.stdout);

@@ -1662,3 +1662,38 @@ test("REQ-158 SCN-158a: status points a Jira project to its tickets", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── REQ-159 ──────────────────────────────────────────────────────────────────
+
+test("REQ-159 SCN-159a: the pull request carries the archived change", () => {
+  const { dir, origin } = ticketRepo();
+  try {
+    const archive = path.join(
+      dir,
+      "docs",
+      "specs",
+      "changes",
+      "archive",
+      "2026-10-20-kan-13-register-vehicle-entry"
+    );
+    fs.mkdirSync(path.dirname(archive), { recursive: true });
+    fs.renameSync(path.join(dir, CHANGE_13), archive);
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "KAN-13 archive");
+    const run = runPr(dir, [
+      { match: "/repos/acme/garage/pulls?", json: [] },
+      {
+        match: "/repos/acme/garage/pulls",
+        method: "POST",
+        json: { number: 8, html_url: "https://github.com/acme/garage/pull/8" },
+      },
+    ]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const post = sent(dir).find((s) => s.method === "POST")!;
+    assert.equal(post.body.title, "KAN-13 Register vehicle entry");
+    assert.match(String(post.body.body), /REQ-151/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(origin, { recursive: true, force: true });
+  }
+});
