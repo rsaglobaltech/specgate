@@ -151,7 +151,7 @@ export const CAPABILITY_METHOD: Readonly<Record<keyof AlmCapabilities, keyof Alm
 };
 
 /** Config keys the core itself reads, whatever the provider. */
-export const CORE_CONFIG_KEYS: readonly string[] = ["alm_version", "provider"];
+export const CORE_CONFIG_KEYS: readonly string[] = ["alm_version", "provider", "pr"];
 
 /**
  * Check a provider declaration is well formed.

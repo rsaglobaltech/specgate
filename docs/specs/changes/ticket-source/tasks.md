@@ -19,7 +19,7 @@
 
 ## 4. The pull request
 
-- [ ] 4.1 `alm pr <change>` on GitHub (REQ-149)
+- [x] 4.1 `alm pr <change>` on GitHub (REQ-149)
 
 ## 5. Documentation
 

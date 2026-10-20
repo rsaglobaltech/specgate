@@ -157,7 +157,7 @@ The system SHALL, on `specgate alm pr <change>`, push the change's branch and op
 - WHEN the developer runs `specgate alm pr kan-13-register-vehicle-entry` again
 - THEN the same pull request is updated and no second one is created
 
-<!-- specgate:trace status=Draft feature=features/ticket-source/REQ-149.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/ticket-source/REQ-149.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-150 — From a Jira ticket, documented
 

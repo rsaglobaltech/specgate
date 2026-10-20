@@ -20,6 +20,7 @@ const ALM_CLI = path.join(ROOT_DIR, "dist", "scripts", "alm", "cli.js");
 /** One canned answer: the first route whose `match` the URL contains wins. */
 interface Route {
   match: string;
+  method?: string;
   status?: number;
   json?: unknown;
   headers?: Record<string, string>;
@@ -818,5 +819,159 @@ test("REQ-148 SCN-148c: the analyst changed a criterion", () => {
     assert.match(run.stdout, /\+ .*pre-filled with the current time\./);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ── REQ-149 ──────────────────────────────────────────────────────────────────
+
+const PR_CONFIG =
+  JIRA +
+  "pr:\n  provider: github\n  repo: acme/garage\n  base: develop\n  token_env: TICKET_TEST_GH\n";
+
+/** A repo on the ticket's branch, with a change holding REQ-151 Implemented, and a bare origin. */
+function ticketRepo(): { dir: string; origin: string } {
+  const dir = repo(PR_CONFIG);
+  const origin = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-origin-"));
+  git(origin, "init", "-q", "--bare");
+  git(dir, "remote", "add", "origin", origin);
+  git(dir, "checkout", "-q", "-b", "feature/KAN-13-register-vehicle-entry");
+  const change = path.join(dir, CHANGE_13);
+  fs.mkdirSync(path.join(change, "specs", "entry-exit"), { recursive: true });
+  fs.writeFileSync(
+    path.join(change, "ticket.md"),
+    "# KAN-13 — Register vehicle entry\n\n<!-- specgate:ticket key=KAN-13 url=https://specgatedemo.atlassian.net/browse/KAN-13 -->\n"
+  );
+  fs.writeFileSync(
+    path.join(change, "change.yaml"),
+    "specgate_change_version: 1\nticket: KAN-13\n"
+  );
+  fs.writeFileSync(
+    path.join(change, "specs", "entry-exit", "spec.md"),
+    [
+      "## ADDED Requirements",
+      "",
+      "### Requirement: REQ-151 — License plate normalization",
+      "",
+      "<!-- specgate:trace actor=Administrator kind=business-rule status=Implemented -->",
+      "",
+    ].join("\n")
+  );
+  git(dir, "add", "-A");
+  git(dir, "commit", "-qm", "KAN-13 REQ-151: normalize plates");
+  return { dir, origin };
+}
+
+/** The bodies the fake GitHub received, by method. */
+function sent(dir: string): Array<{ url: string; method: string; body: Record<string, unknown> }> {
+  const file = path.join(dir, "bodies.json");
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : [];
+}
+
+function runPr(dir: string, routes: Route[]) {
+  const shim = path.join(dir, "..", `pr-shim-${process.pid}.js`);
+  const routesFile = path.join(dir, "..", `pr-routes-${process.pid}.json`);
+  fs.writeFileSync(routesFile, JSON.stringify(routes));
+  fs.writeFileSync(
+    shim,
+    [
+      `const fs = require("node:fs");`,
+      `const routes = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));`,
+      `const out = process.argv[3];`,
+      `globalThis.fetch = async (url, init = {}) => {`,
+      `  const all = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, "utf8")) : [];`,
+      `  all.push({ url: String(url), method: init.method || "GET", auth: (init.headers || {}).Authorization || "", body: init.body ? JSON.parse(init.body) : null });`,
+      `  fs.writeFileSync(out, JSON.stringify(all));`,
+      `  const r = routes.find((x) => String(url).includes(x.match) && (!x.method || x.method === (init.method || "GET")));`,
+      `  const status = r ? (r.status || 200) : 404;`,
+      `  const body = JSON.stringify(r ? r.json : { message: "Not Found" });`,
+      `  return { ok: status < 400, status, headers: { get: () => null }, json: async () => JSON.parse(body), text: async () => body };`,
+      `};`,
+      `process.argv = [process.argv[0], process.argv[4], ...process.argv.slice(5)];`,
+      `require(process.argv[1]);`,
+    ].join("\n")
+  );
+  const run = spawnSync(
+    process.execPath,
+    [
+      shim,
+      routesFile,
+      path.join(dir, "bodies.json"),
+      ALM_CLI,
+      "pr",
+      "kan-13-register-vehicle-entry",
+      "--no-check",
+      "--project-dir",
+      dir,
+    ],
+    { encoding: "utf8", env: { ...process.env, NO_COLOR: "1", TICKET_TEST_GH: "gh-secret" } }
+  );
+  fs.rmSync(shim);
+  fs.rmSync(routesFile);
+  return run;
+}
+
+test("REQ-149 SCN-149a: the first pull request, titled with the key, against develop", () => {
+  const { dir, origin } = ticketRepo();
+  try {
+    const run = runPr(dir, [
+      { match: "/repos/acme/garage/pulls?", json: [] },
+      {
+        match: "/repos/acme/garage/pulls",
+        method: "POST",
+        json: { number: 7, html_url: "https://github.com/acme/garage/pull/7" },
+      },
+    ]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(
+      git(origin, "rev-parse", "--verify", "feature/KAN-13-register-vehicle-entry").length,
+      40
+    );
+    const posts = sent(dir).filter((s) => s.method === "POST");
+    assert.equal(posts.length, 1);
+    const pr = posts[0].body;
+    assert.equal(pr.title, "KAN-13 Register vehicle entry");
+    assert.equal(pr.base, "develop");
+    assert.equal(pr.head, "feature/KAN-13-register-vehicle-entry");
+    assert.match(String(pr.body), /KAN-13/);
+    assert.match(String(pr.body), /REQ-151[^\n]*Implemented/);
+    assert.match(String(pr.body), /specgate check/);
+    assert.match(
+      sent(dir)[0].url,
+      /head=acme%3Afeature%2FKAN-13-register-vehicle-entry|head=acme:feature\/KAN-13/
+    );
+    assert.match(run.stdout, /github\.com\/acme\/garage\/pull\/7/);
+    assert.ok(!(run.stdout + run.stderr).includes("gh-secret"));
+    assert.ok(
+      sent(dir).every((s) => s.method !== "PUT" && !/merge/.test(s.url)),
+      "never merges"
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(origin, { recursive: true, force: true });
+  }
+});
+
+test("REQ-149 SCN-149b: run again, the same pull request is updated", () => {
+  const { dir, origin } = ticketRepo();
+  try {
+    const run = runPr(dir, [
+      {
+        match: "/repos/acme/garage/pulls?",
+        json: [{ number: 7, html_url: "https://github.com/acme/garage/pull/7" }],
+      },
+      {
+        match: "/repos/acme/garage/pulls/7",
+        method: "PATCH",
+        json: { number: 7, html_url: "https://github.com/acme/garage/pull/7" },
+      },
+    ]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(sent(dir).filter((s) => s.method === "POST").length, 0);
+    const patch = sent(dir).find((s) => s.method === "PATCH")!;
+    assert.equal(patch.body.title, "KAN-13 Register vehicle entry");
+    assert.match(run.stdout, /updated/i);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(origin, { recursive: true, force: true });
   }
 });
