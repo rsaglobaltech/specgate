@@ -11,6 +11,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **`harness init` keeps a generated matrix on `merge=union`**: it appended
+  the row driver after the union line, and git takes the last matching line,
+  so the matrix could stop a merge again (ADR-0036).
 - **A ticket's branch starts from `develop` with gitflow** (REQ-148): from
   `pr.base`, else the branch you are on, else the remote's default. A clone
   whose default is `main` cut the branch from `origin/main`, without the

@@ -1256,6 +1256,33 @@ test(
   }
 );
 
+test("harness init leaves a generated matrix to its union merge", { skip: !hasGit() }, () => {
+  // `.gitattributes` takes the last matching line. Appending the row driver
+  // after `merge=union` turned a generated matrix, which must never stop a
+  // merge (ADR-0036), into one that conflicts on a row both branches changed.
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-union-"));
+  const projectDir = makeHarnessProject(tempRoot);
+  fs.writeFileSync(
+    path.join(projectDir, ".gitattributes"),
+    "docs/specs/traceability.md merge=union\n",
+    "utf8"
+  );
+
+  const init = runCli(["harness", "init", "--project-dir", projectDir]);
+  assert.equal(init.status, 0, init.stderr);
+  const attributes = fs.readFileSync(path.join(projectDir, ".gitattributes"), "utf8");
+  assert.doesNotMatch(attributes, /merge=specgate-matrix/);
+  assert.match(attributes, /merge=specgate-spec/);
+  const routed = spawnSync(
+    "git",
+    ["-C", projectDir, "check-attr", "merge", "docs/specs/traceability.md"],
+    { encoding: "utf8" }
+  );
+  assert.match(routed.stdout, /merge: union/);
+
+  fs.rmSync(tempRoot, { recursive: true, force: true });
+});
+
 test(
   "REQ-166: doctor reports a capability spec driver this clone has not registered",
   {

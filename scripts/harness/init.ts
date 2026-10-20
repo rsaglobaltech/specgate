@@ -461,7 +461,7 @@ export class InitCommand extends BaseCommand {
       status.push(
         info(
           "merge_driver_registered",
-          "docs/specs/traceability.md now merges row by row and capability specs requirement by requirement, so parallel branches do not collide.",
+          "Parallel branches no longer collide on the traceability matrix or on capability specs: the rules are in .gitattributes, the drivers in this clone's git config.",
           {
             target: ".gitattributes",
             fix: "Commit .gitattributes. Every other clone and CI runs `specgate harness init` once to register the driver in its own git config.",
@@ -600,8 +600,22 @@ export function installMergeDriver(projectDir: string) {
   const attributesPath = path.join(projectDir, ".gitattributes");
   const existing = fs.existsSync(attributesPath) ? fs.readFileSync(attributesPath, "utf8") : "";
 
+  // A path the project already routes elsewhere keeps its rule: the last
+  // matching line wins, and a generated matrix is `merge=union` on purpose
+  // (ADR-0036), so the row driver appended after it would take that away.
+  const routedElsewhere = (d: MergeDriver) =>
+    existing
+      .split("\n")
+      .some(
+        (l) =>
+          l.trim().split(/\s+/)[0] === d.pattern &&
+          /merge=/.test(l) &&
+          !l.includes(`merge=${d.name}`)
+      );
+  const drivers = MERGE_DRIVERS.filter((d) => !routedElsewhere(d));
+
   let appendedToTracked = false;
-  for (const d of MERGE_DRIVERS) {
+  for (const d of drivers) {
     const current = fs.existsSync(attributesPath) ? fs.readFileSync(attributesPath, "utf8") : "";
     if (current.includes(attributesLine(d))) continue;
     // `.gitattributes` is committed, so appending to it changes a file the
@@ -663,7 +677,7 @@ export function installMergeDriver(projectDir: string) {
   //
   // So `driver` goes in first and `name` only follows if it landed; and if it
   // did not, any stale `name` is removed rather than left pointing at nothing.
-  for (const d of MERGE_DRIVERS) {
+  for (const d of drivers) {
     const driverCommand = commandFor(d);
     const configured = gitConfig(`merge.${d.name}.driver`, `${driverCommand} %O %A %B`);
 
