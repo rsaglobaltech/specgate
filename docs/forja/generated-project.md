@@ -98,7 +98,7 @@ The versions forja pins, as written in the recipes and templates:
 | Java | 21 |
 | PostgreSQL image | `16-alpine` (Node), `17-alpine` (Java) |
 | Keycloak image | `26.8` |
-| Specgate | `^0.19.1` |
+| Specgate | the version forja pins; see [forja and Specgate](specgate.md#what-forja-installs) |
 
 ## How it is written
 

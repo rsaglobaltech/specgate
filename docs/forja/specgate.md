@@ -20,7 +20,7 @@ In the wizard, tick "Specgate (spec-driven development)" under Extras.
 
 | What | Where |
 | --- | --- |
-| `@rsaglobaltech/specgate` `^0.19.1` | root `package.json`, `devDependencies` |
+| `@rsaglobaltech/specgate`, at the version forja pins | root `package.json`, `devDependencies` |
 | `spec`, `spec:status`, `spec:check` scripts | root `package.json`, running `specgate`, `specgate status` and `specgate check` |
 | The brief to fill in | `docs/brief.md` |
 | The day-to-day guide | `docs/specgate.md` |
@@ -50,7 +50,7 @@ npx specgate config set test_cmd "npm test"
 npx specgate config set arch_cmd "npm run arch"
 ```
 
-The third line puts the architecture in the gate: `specgate check`, `specgate done` and the harness
+The third line puts the architecture in the gate: `specgate check`, `specgate apply` and the harness
 run `npm run arch` between the specification and the tests, so code in the wrong layer fails the gate
 even when every test passes. On Node, `npm run arch` checks the core's import rules; on Java it runs
 the ArchUnit test alone. It needs Specgate 0.20 or newer; an older one leaves the gate as it was.
@@ -66,6 +66,16 @@ npx specgate          # where the specification stands, and what to run next
 
 `forja doctor` warns until the project is adopted, which it detects by the presence of `spec.md`
 and `docs/specs/traceability.md`.
+
+### Move to the current Specgate
+
+The steps below use the four verbs (`propose`, `apply`, `status`, `archive`), which need Specgate
+0.21 or newer. Check the version forja pinned in the root `package.json`; if it is older, move the
+project to the current release:
+
+```bash
+npm install --save-dev @rsaglobaltech/specgate@latest
+```
 
 ## Module by module
 
@@ -85,16 +95,19 @@ you lose track: it shows where the specification stands and the command to run n
 
    Without an agent, `npx specgate propose --from-brief orders` prints the line to paste into one. Repeat until it
    says *Ready to review*.
-3. **Review it** with whoever knows the business. The open questions go to the client.
+3. **Review it** with whoever knows the business. The open questions go to the client. The draft
+   stays an open change while you build it.
 4. **Build each requirement, test first.** A test that names `REQ-007` is the link. `forja add
    usecase` writes the use case and that test for you; see the next section.
-5. **Deliver it.** Specgate refuses while the suite is red:
+5. **Apply each requirement.** Specgate refuses while no test names it or the suite is red, and
+   marks it Implemented when the gate passes:
 
    ```bash
    npx specgate apply REQ-007
    ```
 
-6. **Archive the module** once all its requirements are delivered; they join the specification:
+6. **Archive the module** once every requirement in it is Implemented. `archive` refuses before
+   that; it merges the requirements into the specification, on your branch, before the pull request:
 
    ```bash
    npx specgate archive draft-orders
@@ -105,6 +118,10 @@ you lose track: it shows where the specification stands and the command to run n
    ```bash
    npx specgate check
    ```
+
+When the work arrives as Jira stories instead of a brief, each ticket opens its own change with
+`npx specgate propose --from-ticket <KEY>`; the build, apply and archive steps are the same. See
+[From a Jira ticket](../from-a-ticket.md).
 
 Each module of the specification is a hexagonal module of the code: `application/<module>/` in
 `packages/core` on Node, `apps/api/.../<module>/` on Java.
@@ -141,6 +158,8 @@ The output names the requirement, the scenario file when Specgate reports one, a
 └  Next: write the scenario, make the test prove it (npm test), then npx specgate done REQ-003
 ```
 
+forja 1.0.0 prints the older command name. Run `npx specgate apply REQ-003` for that last step.
+
 ### The options
 
 | Option | Effect |
@@ -163,4 +182,4 @@ If Specgate cannot write the requirement, forja still writes the files and warns
 ## In CI
 
 With the `ci` extra too, the generated GitHub Actions workflow has a `spec` job that runs
-`npx -y @rsaglobaltech/specgate@0.19.1 validate . --strict`. The tests themselves run in the other jobs.
+`validate . --strict` with the Specgate version forja pinned. The tests themselves run in the other jobs.

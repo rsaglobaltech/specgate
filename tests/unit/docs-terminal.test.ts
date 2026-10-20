@@ -295,7 +295,7 @@ test("the recordings prove the loop the page promises", () => {
     "plan",
     "harness run",
     "validate",
-    "draft",
+    "propose",
     "apply",
     "archive",
     "check",

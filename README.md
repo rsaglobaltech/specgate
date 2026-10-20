@@ -12,126 +12,111 @@
 
 </div>
 
-> Stop coding before requirements are operationally clear. Every requirement
-> maps to a scenario, a domain artefact, an implementation and a test — and the
-> gate fails when one is missing.
+Specgate keeps what your product must do in the repository, as numbered
+requirements with Gherkin scenarios, next to the code and the tests that prove
+them. A test that mentions a requirement's id (`REQ-007`) is the link, and the
+traceability matrix is generated from those mentions. The gate, `specgate check`,
+fails a pull request when a delivered requirement has no scenario or no test
+that names it, or when your test suite fails.
 
----
+## ⚡ Install
 
-## ⚡ Start
+You need **Node.js 22 or later**.
 
 ```bash
-npm i -g @rsaglobaltech/specgate   # or prefix every command with npx @rsaglobaltech/specgate@latest
-
-cd your-repo                       # or an empty directory
-specgate init                      # adopts the code that is there, touching none of it;
-                                   # scaffolds a new project where there is none
-specgate ci init                   # the gate as a CI job — GitHub, GitLab, Azure or Jenkins,
-                                   # detected from the repository
-specgate check                     # the gate, locally
+npm install --save-dev @rsaglobaltech/specgate   # in a project with a package.json
+npx specgate --help
 ```
 
-Requires **Node.js ≥ 22** — or none with Docker: `docker run --rm -v "$PWD:/workspace" ghcr.io/rsaglobaltech/specgate check`.
-The package is scoped, the binary is not ([ADR-0024](docs/specs/adr/0024-the-tool-is-renamed-the-format-is-not.md)).
+Without installing it (an empty folder, a Java or Python project), prefix each
+command with `npx @rsaglobaltech/specgate@latest` instead of `npx specgate`.
+With Docker and no Node.js: `docker run --rm -v "$PWD:/workspace" ghcr.io/rsaglobaltech/specgate check`.
 
-→ [Getting started](docs/getting-started.md) · [Your team's first pull request](docs/first-pr.md) · [Quickstart for joiners](docs/quickstart.md)
+Then run `init` once:
 
-## 🔁 The daily loop — four verbs
+- **In a repository that has code** (`package.json`, `pom.xml`, `go.mod`, …),
+  `specgate init` adopts it in place: it adds `spec.md`, `features/` and
+  `docs/specs/`, and changes no source file.
+- **In an empty folder**, `npx @rsaglobaltech/specgate@latest init` scaffolds a
+  new specification project. A wizard asks for the project's name, type, stack
+  and test toolchain, then creates it in a new sub-folder named after the
+  project, for example `./my-spec-driven-app/`. `--yes` takes every default
+  without asking. It writes the specification files, not application code.
+
+Step by step, with every output shown: [Getting started](docs/getting-started.md).
+
+## 🔁 The lifecycle — four verbs
 
 ```bash
-specgate propose add-pdf-invoices   # a change: proposal, tasks, a delta to write, REQ ids reserved
-# write REQ-007 and its scenario in the delta, a test that mentions REQ-007, the code
-specgate apply                      # the next requirement through the gate: Implemented when green
-specgate status                     # what is open, and the next command to run
+specgate propose add-pdf-invoices   # open a change: a proposal, a delta to write, REQ ids reserved
+# write REQ-007 and its scenario in the delta, a test that mentions REQ-007, then the code
+specgate apply REQ-007              # refused until a test names it and the gate passes; then Implemented
+specgate status                     # what is left, and the next command to run
 specgate archive add-pdf-invoices   # once every requirement in it is Implemented
 ```
 
-`specgate check` is the same gate for CI ([ADR-0035](docs/specs/adr/0035-four-verbs-one-lifecycle.md)).
-**A change is archived when its code is done**: while it is open its
-requirements already count — `status` lists them, `apply` and `check` judge the
-project as it will be after archive — and `archive` refuses one still pending.
-`apply` refuses a requirement no test names and writes nothing while the gate
-fails. **Mentioning `REQ-NNN` in a test is the link**; the matrix is generated.
-From a plan: `specgate propose --from-brief`. Old names (`draft`, `done`…) keep
-working; everything else is in `specgate --help --all`.
+`specgate check` runs the same gate before a pull request and in CI;
+`specgate ci init` writes the CI job for GitHub, GitLab, Azure or Jenkins.
+You archive a change on its branch, before the pull request, so the spec and
+the code reach review together.
 
-## 🪜 Adopt one level at a time
+## 📥 Where work comes from
 
-Each level is useful on its own and never requires the ones above it.
+Every piece of work enters the same lifecycle. Pick the entry that matches what
+you have:
 
-| Level  | You get                                          | Commands                     | Cost    |
-| ------ | ------------------------------------------------ | ---------------------------- | ------- |
-| **L1** | Traceable specs in your repo                     | `init`, `propose`, `apply`, `archive` | ~1 hour |
-| **L2** | A PR gate enforcing spec and test coverage       | `check`, `ci init`           | ~1 hour |
-| **L3** | Versioned, reusable domain requirements          | `specops add / sync / diff`  | ~1 day  |
-| **L4** | Agent-driven delivery, one requirement at a time | `agents init`, `harness run` | ~1 week |
+| You have | Run | Guide |
+| --- | --- | --- |
+| One behaviour to add or change | `specgate propose <change-id>` | [Propose one change](docs/start/existing-2-specify.md) |
+| A client brief, or a plan for a new product | `specgate propose --from-brief` | [From a client brief](docs/from-a-brief.md) |
+| A Jira story with acceptance criteria | `specgate propose --from-ticket <KEY>` | [From a Jira ticket](docs/from-a-ticket.md) |
 
 ## 🛠️ What it does
 
-**A gate that does not lie.** `specgate check` fails when a delivered
-requirement has no scenario, template steps, no test that mentions it, or
-points at a file that is gone. A Draft owes nothing yet: green on day one,
-stricter with every delivery. Given a test command, it runs your suite too.
-→ [Writing specs](docs/writing-specs.md) · [Validating](docs/validating.md) · [Command reference](docs/commands.md)
-
-**Reviews that read intent.** The reviewer reads the requirement, its
-scenario and the test that names it — the gate has already proved the
-mechanical part. A change is a reviewable delta: only what moves, never a
-copy. It is archived — merged into the spec tree, with its feature files —
-only once every requirement in it passed the gate, in the same pull request.
-→ [Your team's first pull request](docs/first-pr.md) · [Reviewing changes](docs/reviewing-changes.md)
-
-**From a brief, or from OpenSpec.** Save your plan as `docs/brief.md`, run
-`specgate propose --from-brief`: module by module, it briefs your agent and holds
-the draft to eleven rules — scenarios per actor and surface, sourced laws, every
-value in the brief or listed as an assumption, open questions that block, ids each
-actor can reach. Teams on OpenSpec keep it: `specgate verify` fails while
-a change claims a scenario no test names.
-→ [A new project, step by step](docs/new-project.md) · [From a client brief](docs/from-a-brief.md) · [Already on OpenSpec](docs/openspec.md)
-
-**Your agent works the same loop.** `specgate agents init` gives Claude Code, Cursor,
-Copilot, Windsurf, Aider, Gemini, Cline, Codex or Antigravity the loop as slash commands
-(`/specgate:propose`, `/specgate:apply`, …) from one definition. Every daily command speaks
-JSON with stable codes and a `fix` on each. MCP ships in the package: `specgate mcp install --client claude`.
-→ [Agents](docs/agents.md) · [The agent contract](docs/specs/agent-contract.md) · [Automation and MCP](docs/automation.md)
-
-**Domain knowledge as a dependency.** A pack is a versioned, schema-validated
-domain model. Install it, pin it, upgrade it deliberately — and review the
-upgrade as intent with `specops diff --as-change`, not as a file diff.
-→ [Domain packs: 7 proven in the pilots, 11 starter examples](docs/domain-packs.md) · [Supply chain](docs/supply-chain.md)
-
-**Unattended delivery.** `specgate harness run` drives plan → agent → verify →
-apply for every pending requirement, each in its own git worktree; it merges only
-with `--chain`, only what passed the gate. The agent is any shell command with
-`{prompt_file}`; `specgate studio` shows it at work, at `/live`. `specgate alm sync`
-keeps Jira, Azure Boards or GitHub Issues in step.
-→ [The harness](docs/harness.md) · [Jira, Azure Boards and GitHub Issues](docs/alm.md)
-
-**Tested as you install it.** Every release runs an end-to-end suite over every
-command, against the packed tarball, on Linux, macOS and Windows; releases
-since 0.14 come from building real products with it, from brief to running app.
+- **A gate that does not lie.** `check` fails when a delivered requirement has
+  no scenario, no test that names it, or points at a missing file. A `Draft`
+  owes nothing yet, so the gate is green on day one.
+  → [Validating](docs/validating.md)
+- **Reviews that read intent.** A change is a delta: only what moves. The
+  reviewer reads the requirement, its scenario and its test.
+  → [Your team's first pull request](docs/first-pr.md)
+- **Drafts held to their source.** A draft from a brief or a ticket is checked
+  against that text: every value it uses must come from the source or be listed
+  as an assumption. → [From a client brief](docs/from-a-brief.md)
+- **Your agent works the same loop.** `specgate agents init` installs the loop
+  as slash commands for Claude Code, Cursor, Copilot and other agent tools; an
+  MCP server ships in the package. → [Agent tools](docs/agents.md)
+- **Unattended delivery.** `specgate harness run` hands each pending requirement
+  to your coding agent in its own git worktree and keeps only what passes the
+  gate. → [The harness](docs/harness.md)
+- **Domain knowledge as a dependency.** Versioned domain packs install
+  requirements a team has already proved. → [Domain packs](docs/domain-packs.md)
+- **Already on OpenSpec?** `specgate verify` checks what OpenSpec calls done
+  against your tests. → [Already on OpenSpec](docs/openspec.md)
 
 ## 🆚 How it compares
 
-| Capability                             |        **this**        | [OpenSpec](https://github.com/Fission-AI/OpenSpec) | [spec-kit](https://github.com/github/spec-kit) | [Cursor rules](https://docs.cursor.com/context/rules-for-ai) | README only |
-| -------------------------------------- | :--------------------: | :------------------------------------------------: | :--------------------------------------------: | :----------------------------------------------------------: | :---------: |
-| Change lifecycle                       |           ✅           |                         ✅                         |                       ❌                       |                              ❌                              |     ❌      |
-| Versioned domain packs                 |           ✅           |                         ❌                         |                       ⚠️                       |                              ❌                              |     ❌      |
-| Traceability matrix + CI gate          |           ✅           |                         ❌                         |                       ⚠️                       |                              ❌                              |     ❌      |
-| Agent JSON contract                    |           ✅           |                         ✅                         |                       ❌                       |                              ❌                              |     ❌      |
-| Draft checklist from a brief           |           ✅           |                         ❌                         |                       ⚠️                       |                              ❌                              |     ❌      |
-| Proves OpenSpec's "done" against tests |      ✅ `verify`       |                         ❌                         |                       ❌                       |                              ❌                              |     ❌      |
-| Vendor-neutral                         |           ✅           |                         ✅                         |                       ✅                       |                              ❌                              |     ✅      |
-| Commands to learn before the first PR  | ✅ 6 (31 more, opt-in) |                         ✅                         |                       ✅                       |                              ✅                              |     ✅      |
+Specgate does each of the things below. What the closest alternatives cover:
 
-OpenSpec is the closest tool: if you want the change loop without packs or an enforced matrix, it fits better.
-→ [Full matrix, trade-offs and migration paths](docs/comparisons.md)
+| Capability                    | [OpenSpec](https://github.com/Fission-AI/OpenSpec) | [spec-kit](https://github.com/github/spec-kit) | [Cursor rules](https://docs.cursor.com/context/rules-for-ai) |
+| ----------------------------- | :------------------------------------------------: | :--------------------------------------------: | :----------------------------------------------------------: |
+| Change lifecycle              |                         ✅                         |                       ❌                       |                              ❌                              |
+| Traceability matrix + CI gate |                         ❌                         |                       ⚠️                       |                              ❌                              |
+| Draft checked against a brief |                         ❌                         |                       ⚠️                       |                              ❌                              |
+| Work from Jira tickets        |                         ❌                         |                       ❌                       |                              ❌                              |
+| Versioned domain packs        |                         ❌                         |                       ⚠️                       |                              ❌                              |
+| Vendor-neutral                |                         ✅                         |                       ✅                       |                              ❌                              |
+
+OpenSpec is the closest tool: if you want the change loop without an enforced
+gate, it fits better. → [Full comparison](docs/comparisons.md)
 
 ## 📚 Documentation
 
-- [Getting started](docs/getting-started.md) · [Your team's first pull request](docs/first-pr.md) · [Command reference](docs/commands.md)
-- [How-to guides](docs/how-to.md) · [Tutorial](docs/tutorial.md) · [Supply chain](docs/supply-chain.md) · [Architecture](docs/specs/architecture.md)
-- [Case study](docs/case-studies/case-1.md) · [ADRs](docs/specs/adr/README.md) · [Docs site](https://rsaglobaltech.github.io/specgate/) · [Spec coverage report](https://rsaglobaltech.github.io/specgate/report.html)
+- [Getting started](docs/getting-started.md) — install, pick your path, the four verbs
+- [From a Jira ticket](docs/from-a-ticket.md) · [From a client brief](docs/from-a-brief.md)
+- [Concepts](docs/concepts.md) — the ideas and vocabulary behind every command
+- [Commands](docs/commands.md) — every command and flag
+- [FAQ](docs/faq.md) · [Troubleshooting](docs/troubleshooting.md) · [Docs site](https://rsaglobaltech.github.io/specgate/)
 
 ## 🧰 Companion tools
 
@@ -140,8 +125,8 @@ OpenSpec is the closest tool: if you want the change loop without packs or an en
 
 ## 🤝 Contributing
 
-PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) (good first: templates, validator rules,
-domain packs) · [MAINTAINERS.md](MAINTAINERS.md) · [SECURITY.md](SECURITY.md) for private reports.
+PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) · [MAINTAINERS.md](MAINTAINERS.md) ·
+[SECURITY.md](SECURITY.md) for private reports.
 
 ## 📄 License
 

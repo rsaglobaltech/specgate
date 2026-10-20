@@ -1,61 +1,73 @@
 # Choosing and wiring your agent
 
-The harness has no agent runtime and no SDK dependency. **The agent is any shell
-command containing `{prompt_file}`** — the harness writes the prompt to a
-temporary file, substitutes the path, runs the command, and reads its exit code
-plus the gate result.
+At the end of this page you have an agent command that the harness and the
+drafting commands can run, with the permissions it needs, the dependencies it
+expects, and a profile your team shares.
 
-That is the whole contract. Everything below is detail.
+**You need:** a coding agent you can run from the command line (Claude Code,
+Aider, OpenCode, Codex…), signed in with your own credentials. Specgate has no
+agent runtime and no SDK: **the agent is any shell command.** What the harness
+does around the agent (worktrees, the gate, chains, parallel runs) is on
+[The harness](harness.md).
 
-`specgate propose --from-brief --agent` is the one place with an easier
-contract: a command without `{prompt_file}` gets the prompt on standard input,
-so `specgate propose --from-brief curriculum --agent "claude -p"` just works.
-In print mode Claude Code cannot write a file without permission, so Specgate adds
-`--permission-mode acceptEdits` when the command carries no permission flag of
-its own — and says so. That is safe there because Specgate undoes every write
-outside the draft. Other agents need their own auto-approve flag; if one runs
-and writes nothing, `draft` says that is the likely cause. The harness, which
-runs unattended, always wants the placeholder and its own allowances (below).
+## The contract: `{prompt_file}`
+
+Specgate writes the prompt to a temporary file and puts that file's path where
+`{prompt_file}` stands in your command. It runs the command, then judges the
+result with the gate, not with the agent's exit code alone.
 
 ```bash
 specgate harness run --req REQ-001 --agent "claude -p < {prompt_file}"
 ```
 
-## The commands for the tools people actually use
+| Command | Without `{prompt_file}` |
+| --- | --- |
+| `specgate harness run` | Refused. The harness never guesses where the prompt goes. |
+| `specgate change author` | Refused, for the same reason. |
+| `specgate propose --from-brief`, `--from-ticket` and `specgate explore` | The prompt arrives on standard input. |
 
-Each of these is a working `--agent` value. Pick the one you have.
+So `specgate propose --from-brief billing --agent "claude -p"` works as it
+is. In print mode Claude Code cannot write a file without permission, so for
+these drafting commands Specgate adds `--permission-mode acceptEdits` when your
+command carries no permission flag of its own, and says so. That is safe
+because Specgate undoes every write outside the draft. Other agents need their
+own auto-approve flag; if one runs and writes nothing, the command says that is
+the likely cause.
+
+## Commands for common tools
 
 | Tool | `--agent` value |
 | --- | --- |
 | Claude Code | `claude -p < {prompt_file}` |
 | Aider | `aider --yes --message-file {prompt_file}` |
-| Cursor CLI | `cursor-agent --prompt-file {prompt_file}` |
 | OpenCode | `opencode run "$(cat {prompt_file})"` |
-| Anything else | `./my-agent.sh {prompt_file}` |
+| Cursor CLI | `cursor-agent -p "$(cat {prompt_file})"` |
+| Anything else | `./my-agent.sh {prompt_file}` (a wrapper, below) |
 
-**Tool allowances matter more than the model.** An agent in non-interactive mode
-cannot ask permission, so without them it reads the prompt, fails to write a
-file, and the attempt is wasted:
+The command runs in a shell, so `< {prompt_file}` and `"$(cat {prompt_file})"`
+both work. Agent tools change their flags between versions: check each tool's
+own documentation for the exact non-interactive flags, especially for OpenCode
+and the Cursor CLI, whose rows show the shape rather than a tested command.
+Run `specgate harness run --dry-run` to see the prompt before you pay for one.
+
+## Tool allowances
+
+An agent in non-interactive mode cannot ask for permission. Without
+allowances it reads the prompt, fails to write a file, and the attempt is
+wasted. Give it the tools it needs:
 
 ```bash
 specgate harness run --agent "claude -p --allowedTools Read Write Edit Glob Grep 'Bash(npm:*)' < {prompt_file}"
 ```
 
 Scope them rather than reaching for `--dangerously-skip-permissions`. The agent
-needs `Bash` to run the project's build, and `Bash(npm:*)` is enough for a Node
-project. It works inside a throwaway git worktree, which is the whole reason the
-harness uses one.
-
-**To watch Claude Code work**, end its pipe with
-`specgate harness events --from claude` (it reads Claude's stream-json output)
-and open `specgate studio` at `/live` — see
-[watch it work](harness.md#a-chain-of-requirements-merged-as-they-pass).
-`specgate explore --agent` has the easier contract `draft --agent` has, above.
+needs `Bash` to build and test the project, and `Bash(npm:*)` is enough for a
+Node project (`Bash(./mvnw:*)` for Maven, and so on). The harness runs it in a
+throwaway git worktree, which limits what a mistake can reach.
 
 ## A tool whose invocation fits none of those
 
-Write a wrapper. It is three lines, and it is the supported answer — not a
-workaround:
+Write a wrapper. It is three lines, and it is the supported answer:
 
 ```bash
 #!/bin/sh
@@ -67,17 +79,36 @@ exec some-agent --instructions "$(cat "$1")"
 specgate harness run --agent "./my-agent.sh {prompt_file}"
 ```
 
-The harness never inspects the command. If your tool reads the prompt from
-stdin, from a flag, from an environment variable or from a file it is told
-about, a wrapper turns that into the one shape the harness expects.
+Whether your tool reads the prompt from standard input, a flag, an environment
+variable or a file, a wrapper turns it into the one shape Specgate expects.
 
-## Committing the commands your team uses
+## Dependencies: the setup command
 
-Typing the command every run is how it ends up different on every machine. Put
-the ones your team uses in `.harness/profiles.yaml` and name one:
+The harness gives the agent a fresh git worktree, which holds only what git
+tracks: no `node_modules`, no `target/`, no `.venv`. An agent must not spend
+its attempt installing dependencies, so the harness installs them first, with
+the **setup command**:
+
+1. `--setup-cmd "<cmd>"` on the command line, or
+2. `setup_cmd:` in `harness.config.yaml`, or
+3. by default, the install your lockfile implies (`npm ci`, pnpm or yarn).
+
+```yaml
+# harness.config.yaml
+setup_cmd: "./mvnw -q dependency:go-offline"
+```
+
+`--setup-cmd none` runs nothing. Keep the test command (`test_cmd:`) for tests
+only: installing there would repeat the install on every gate run.
+
+## Commit the commands your team uses
+
+Typing the command on every run is how it ends up different on every machine.
+Put your team's commands in `.harness/profiles.yaml` and name one:
 
 ```yaml
 # .harness/profiles.yaml
+profiles_version: 1
 profiles:
   local:
     agent: "claude -p --allowedTools Read Write Edit 'Bash(npm:*)' < {prompt_file}"
@@ -90,19 +121,19 @@ profiles:
 agent_profile: local
 ```
 
-**Write profiles in block form, as above.** The reader is a dependency-free YAML
-subset, and an inline mapping — `local: { agent: "…" }` — parses as a *string*,
-leaving the profile with no `agent` and the run stopping with `no profile 'local'
-with an agent`.
+**Write profiles in block form, as above.** Specgate reads a dependency-free
+subset of YAML, and an inline mapping (`local: { agent: "…" }`) is read as a
+string: the profile has no `agent` and the run stops with
+`no profile 'local' with an agent`.
 
 An explicit `agent:` in `harness.config.yaml` beats a profile: the narrower
-statement wins.
+statement wins. `specgate change author --agent-profile local` uses the same
+profiles.
 
 ## A different agent per requirement
 
 A profile that declares `match:` selects itself, so one run can give an
-infrastructure requirement different tools from a domain one — instead of the
-allowances being the greatest common denominator of the whole plan:
+infrastructure requirement different tools from a domain one:
 
 ```yaml
 profiles:
@@ -114,125 +145,68 @@ profiles:
     match: { bounded_context: "*" }
 ```
 
-First match wins, so order in the file is the priority, and a `"*"` catch-all
-belongs last. No match uses the run's default — that is not an error.
+The first match wins, so the order in the file is the priority and a `"*"`
+catch-all goes last. No match uses the run's default agent.
 
-Matchable keys are `bounded_context`, `requirement`, `feature` and `category`.
-An **unknown key matches nothing** rather than being ignored, so
-`bounded_contex:` — one letter short — cannot quietly become a rule that matches
-everything.
+You can match on `bounded_context`, `requirement`, `feature` and `category`.
+An **unknown key matches nothing**, so a typo such as `bounded_contex:` cannot
+become a rule that matches everything. `specgate expand` records each
+requirement's bounded context, so domain-pack projects have something to match.
 
-`specgate expand` records each requirement's bounded context beside the traceability
-matrix, so the match has something to work with without anybody maintaining a
-second list.
+## A different agent per attempt
 
-## A ladder of roles within one requirement
-
-`attempt_profiles` names a profile per attempt, and the last rung repeats — a
-cheaper model first, a stronger one on the retry:
+The same agent and model three times is mostly a re-roll. A ladder gives each
+attempt its own profile, and can add an advisory reviewer before each retry:
 
 ```yaml
-attempt_profiles: [fast, strong]
-review_profile: reviewer     # advisory: it never approves
+# harness.config.yaml
+attempt_profiles:
+  - implementer        # attempt 1
+  - repairer           # attempt 2
+  - repairer-strong    # attempt 3, and any after it
+review_profile: reviewer
 ```
 
-A reviewer runs before a retry, its findings go into the next prompt, and
-anything it wrote is discarded. That is the line between this and a committee:
-**the gate stays the only judge.**
-
-## What a run costs
-
-The harness measures wall-clock, because an agent is any shell command and only
-the agent knows what it spent in tokens. A profile may declare an estimate:
-
 ```yaml
+# .harness/profiles.yaml
 profiles:
-  local:
+  implementer:
     agent: "claude -p < {prompt_file}"
-    cost_per_run_hint: 0.35
+  repairer:
+    agent: "claude -p < {prompt_file}"
+  repairer-strong:
+    agent: "claude --model opus -p < {prompt_file}"
+  reviewer:
+    agent: "claude -p < {prompt_file}"
+    advisory: true
 ```
 
-`specgate harness report` multiplies it out and labels it *declared, not measured*.
-Attempts by a profile with no hint are counted separately, so the total never
-reads as complete when part of the run is missing from it.
+A ladder shorter than `max_attempts` repeats its last rung. Without these keys,
+one agent runs every attempt.
 
-Put a ceiling on the run itself:
+**The reviewer advises; it never approves.** It runs before each retry (never
+before the first attempt), its output goes into the next prompt as findings,
+and everything it wrote is discarded. The gate stays the only judge. A profile
+named by `review_profile` must declare `advisory: true`, or the harness refuses
+to start. `.harness/runs/<timestamp>.json` names the roles that ran each
+attempt, and the branch keeps one prompt per role (`attempt-2-reviewer.md`,
+`attempt-2-implementer.md`).
 
-```bash
-specgate harness run --budget-seconds 3600 --max-requirements 5
-```
-
-Both are checked **before starting** each requirement, never mid-attempt —
-interrupting one would throw away the money already spent on it. Running out is
-not an error: the run ends normally, names what it never started, and still
-writes its ledger.
-
-## Two things that will bite you
-
-**A command without `{prompt_file}` is refused.** The harness will not guess
-where your agent wants the prompt:
-
-```
-❌ The agent command must contain the {prompt_file} placeholder,
-   e.g. --agent "claude -p < {prompt_file}"
-```
-
-**The agent works in a fresh worktree, which carries only what git tracks.**
-There is no `node_modules`, no `target/`, no `.venv`. An agent must not spend
-its attempt installing dependencies — put that in the gate command, which is the
-only part that knows how:
-
-```bash
-specgate harness run --test-cmd "npm ci && npm test"
-```
-
-This was found the expensive way: an agent spent its first attempt on `npm
-install` and timed out.
-
-## Trying it without spending anything
-
-Every one of these is safe to run against a real project:
-
-```bash
-specgate harness prompt REQ-001          # the exact prompt, printed, no agent
-specgate harness run --dry-run           # what it would do, in order
-specgate harness run --agent "true {prompt_file}" --max-attempts 1
-```
-
-The last one runs the whole loop with an agent that does nothing, which is the
-quickest way to find out whether your gate can go green at all before an agent
-is paid to try.
-
-## Show the agent what "accepted" looks like here
+## Show the agent what "accepted" looks like
 
 ```yaml
 # harness.config.yaml
 prompt_precedents: 1
 ```
 
-Everything else in the prompt is **normative** — the requirement's facts, its
-Gherkin, `AGENTS.md`, the definition of done. None of it is an *example*, and
-an agent starts every requirement with no conversation history, so it has never
-seen what an accepted implementation looks like in your repository. It invents a
-house style, and the next attempt is spent correcting it.
-
-With this on, the prompt gains one section: the most recent **Verified**
+An agent starts every requirement with no history, so it has never seen an
+accepted implementation in your repository and invents a house style. With
+this setting the prompt gains one section: the most recent **Verified**
 requirement in the same bounded context, with the first forty lines of its test
-and of its production code. Three rules decide what is shown, and each exists to
-stop the section doing harm:
-
-| Rule | Why |
-| --- | --- |
-| Same bounded context, from the `context=` key `expand` already derives | A precedent from elsewhere teaches conventions that do not apply — with the authority of having been accepted |
-| `Verified`, never `Implemented` | One means the code exists; the other means somebody checked it |
-| An earlier requirement only | Precedent means already settled |
-
-The section says in as many words that it is an example of *shape*, not of
-behaviour, so it is not read as a second specification. If nothing qualifies it
-does not appear — never empty — and a moved artifact never stops a run.
-
-Off by default: it costs prompt budget and says nothing until a project has
-accepted work to point at.
+and its code. It must be Verified (someone checked it, not only Implemented),
+from the same bounded context, and earlier than the current requirement. The
+section says it shows *shape*, not behaviour, and it is left out when nothing
+qualifies. It is off by default because it costs prompt space.
 
 ## Let something try to break it
 
@@ -249,16 +223,10 @@ profiles:
     agent: "claude -p < {prompt_file}"
 ```
 
-The reviewer above returns **prose**. An adversary returns a **test**, and a
-test either fails or it does not — one is an argument, the other is evidence.
-
-Once a requirement's gate has gone green and the work is committed, the
-adversary is asked for one additional test: a case the requirement should
-handle and might not — an empty input, a boundary, a duplicate, a failure path.
-The project's own test command then runs again with that test in place.
-
-**A failing probe never changes the verdict.** The requirement still passes, and
-a warning is recorded on the run:
+Once a requirement's gate is green and the work is committed, the adversary is
+asked for one extra test: an empty input, a boundary, a duplicate, a failure
+path. The project's tests then run again with it. **A failing probe never
+changes the verdict**; it records a warning:
 
 ```
 ⚠️  REQ-007: The gate passed for REQ-007, and an adversarial probe then made the
@@ -266,19 +234,45 @@ a warning is recorded on the run:
     or a test asserting something REQ-007 never promised.
 ```
 
-That wording is the design. An adversary can always assert a behaviour nobody
-specified, so letting it fail the run would block work that is correct — and
-would make it a second judge. `validate --strict` plus your test command
-stay the only one, for the same reason the reviewer is advisory.
+The probe runs once per requirement, only on a green gate, and its writes are
+discarded. The profile must declare `advisory: true`.
 
-The probe runs **once per requirement**, only on a green gate, and its writes
-are discarded so the branch carries the implementer's work alone. The profile
-must declare `advisory: true`; without it the harness refuses to start, because
-a profile whose output you expect to be kept is not an adversary.
+## What a run costs
+
+The harness measures wall-clock time, because only the agent knows what it
+spent in tokens. A profile may declare an estimate per run, which
+`specgate harness report` multiplies out and labels *declared, not measured*:
+
+```yaml
+profiles:
+  local:
+    agent: "claude -p < {prompt_file}"
+    cost_per_run_hint: 0.35
+```
+
+Put a ceiling on a run:
+
+```bash
+specgate harness run --budget-seconds 3600 --max-requirements 5
+```
+
+Both are checked before each requirement starts, never in the middle of an
+attempt. Running out is not an error: the run ends, names what it did not
+start, and still writes its record.
+
+## Try it without spending anything
+
+```bash
+specgate harness prompt REQ-001                                    # the exact prompt
+specgate harness run --dry-run                                     # what it would do
+specgate harness run --agent "true {prompt_file}" --max-attempts 1 # an agent that does nothing
+```
+
+The last one runs the whole loop with an agent that writes nothing: the
+quickest way to learn whether your gate can go green at all before an agent is
+paid to try.
 
 ## Next
 
-- [The harness](harness.md) — what happens around the agent: worktrees, the
-  gate, retries, resuming and the run ledger.
-- [Agent tools](agents.md) — wiring Claude Code, Cursor, Copilot and six others
-  into the same loop, so the instructions live in one place.
+- [The harness](harness.md)
+- [Agents](agents.md)

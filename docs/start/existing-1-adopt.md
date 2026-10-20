@@ -5,21 +5,36 @@
 a line of it, and a gate that passes with your existing tests.
 <!-- specgate:endgoal -->
 
+**Before you start:** Node.js 22 or later, a Git repository with a build
+file (`package.json`, `pom.xml`, `build.gradle`, `go.mod`, `pyproject.toml`,
+`Cargo.toml`, …), and a test suite that passes.
+
 The example is a small Node invoicing service with two modules
 (`src/invoices`, `src/customers`) and its own tests. Maven, Gradle, Go,
 Python, Cargo and .NET projects go the same way.
 
 | Who | Does what in this phase |
 | --- | --- |
-| **You** | Run four commands, read what they propose |
+| **You** | Run five commands, read what they propose |
 | **Specgate** | Reads the build file and the layout; writes specification files only |
 | **The gate** | Runs your existing suite, to prove the wiring |
 
-## 1. Look before writing anything — `specgate onboard`
+## 1. Install Specgate in the project
 
 ```bash
 cd your-existing-repo
-npx @rsaglobaltech/specgate@latest onboard
+npm install --save-dev @rsaglobaltech/specgate
+```
+
+These pages write commands as `specgate status`. Where you installed it
+this way, type `npx specgate status`. On a project without a `package.json`,
+run it without installing: prefix each command with
+`npx @rsaglobaltech/specgate@latest`.
+
+## 2. Look before writing anything — `specgate onboard`
+
+```bash
+specgate onboard
 ```
 
 <!-- specgate:out-existing-onboard:begin — generated; edit the source, not this block -->
@@ -47,10 +62,10 @@ $ specgate onboard
 <!-- specgate:out-existing-onboard:end -->
 
 `onboard` writes nothing. It names the stack and test command it found, and
-the capabilities your layout already implies — a proposal to argue with, not
-a verdict.
+the **capabilities** — areas of the product, such as invoices — your layout
+already implies. They are a proposal to argue with, not a verdict.
 
-## 2. Adopt — `specgate init`
+## 3. Adopt — `specgate init`
 
 ```bash
 specgate init
@@ -97,7 +112,7 @@ only files that do not exist yet. It seeds one **proposed** requirement per
 capability (`REQ-002 Invoices`, `REQ-003 Customers`), each marked as a guess,
 each `Draft`, so nothing claims to be specified or verified.
 
-## 3. Tell it how to run your tests
+## 4. Tell it how to run your tests
 
 ```bash
 specgate config set test_cmd "node --test"
@@ -112,7 +127,7 @@ $ specgate config set test_cmd "node --test"
 ```
 <!-- specgate:out-existing-test-cmd:end -->
 
-## 4. Run the gate
+## 5. Run the gate
 
 ```bash
 specgate check
@@ -160,4 +175,6 @@ certifies the skeleton, not the code. Phase 2 changes that.
 
 Want the whole path on one page first? [A worked example: one service adopted end to end](../case-studies/case-1.md).
 
-**[Next: phase 2 — write down what you rely on →](existing-2-specify.md)**
+## Next
+
+**[Phase 2 — write down what you rely on →](existing-2-specify.md)**

@@ -6,10 +6,19 @@ work with — the one the [six pilot products](projects/index.md) were built on,
 as different as a detailed booking document and a five-line description of a
 credit shop.
 
-Steps 1 to 3 below are the _Specify_ phase of a requirement's life; step 4
-is the same loop as any other change — `specgate apply` each requirement
-through the gate, then `specgate archive` the draft
+At the end you will have a **draft**, a change whose requirements were
+written from the brief and checked against it, reviewed by a person and ready
+to build. Steps 1 to 3 turn the brief into that draft; step 4 is the same loop
+as any other change: `specgate apply` each requirement through the gate, then
+`specgate archive` the draft
 ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
+
+**You need:** a project where Specgate is set up
+([Getting started](getting-started.md)) and the client's brief. A coding agent
+is optional but saves most of the writing.
+
+Your work arrives as Jira stories with acceptance criteria rather than as a
+brief? Use the ticket path instead: [From a Jira ticket](from-a-ticket.md).
 
 <!-- specgate:diagram lifecycle -->
 
@@ -56,12 +65,11 @@ specgate propose --from-brief            # the brief's modules: where each stand
 specgate propose --from-brief reservas   # opens draft-reservas, linked to the brief
 ```
 
-`specgate draft` is the old name of `specgate propose --from-brief`; both
-work. Opening
-a module creates the draft — a change folder kept apart from
-the specification until a person reviews it — and writes `DRAFTING.md` in it:
-the module's section of the brief with its values and questions, the reserved ids, a scenario per actor and surface from the
-front matter, and the formats below. That file is the prompt. Tell your agent
+Opening a module creates the draft, a change folder kept apart from the
+specification until a person reviews it, and writes `DRAFTING.md` in it. That
+file holds the module's section of the brief with its values and questions,
+the reserved ids, a scenario to write per actor and surface from the front
+matter, and the formats below. It is the prompt for your agent. Tell your agent
 `Draft the reservas module: follow docs/specs/changes/draft-reservas/DRAFTING.md`,
 or let Specgate call it:
 
@@ -115,19 +123,25 @@ any change; `--check` alone checks the brief itself.)
 D6 is the one that keeps a draft honest: on a vague brief it lists almost every
 value, and that list is the conversation to have with the client.
 
-D12 catches what every pilot found only by running the product: each scenario
-right on its own, and an operator who can settle a transfer by its id with no
-way to see which transfers are pending. A `GET` on the collection by the same
-actor, or the `POST` that creates it, closes it — in the draft or in the
-project's specification — and so does a list nested under its parent with the
-same name (`GET /api/eventos/{id}/sesiones` for `POST /api/sesiones/{id}/sala`).
-The caller is the actor the step names before the call, else the
-requirement's. When the id reaches the actor outside the API (a customer reads
-their IBAN to the teller), or through a list under another name (an agenda),
-say so in `assumptions.md`, in a row naming the requirement and the collection
-path. A MODIFIED requirement also counts the rows of the archived change that
-first wrote it. D11 is reserved: matching each API action with its screen
-scenario is not mechanical yet.
+D12 catches a gap every pilot found only by running the product: each
+scenario was right on its own, yet an operator could settle a transfer by its
+id with no way to see which transfers were pending.
+
+D12 is satisfied when the same actor has one of these, in the draft or in the
+project's specification:
+
+- a `GET` on the collection;
+- the `POST` that creates the item;
+- a list nested under its parent with the same name
+  (`GET /api/eventos/{id}/sesiones` for `POST /api/sesiones/{id}/sala`);
+- a row in `assumptions.md`, naming the requirement and the collection path,
+  that says where the id comes from. Use it when the id reaches the actor
+  outside the API (a customer reads their IBAN to the teller) or through a list
+  under another name (an agenda).
+
+The actor is the one the step names before the call, or else the
+requirement's actor. For a `MODIFIED` requirement, the `assumptions.md` rows
+of the archived change that first wrote it count too.
 
 D6 also accepts a value the requirement's own obligation states under a
 `Source:` line: "24 characters" of a cited ISO norm needs no assumption row.
@@ -176,10 +190,15 @@ Write scenarios with `DADO / CUANDO / ENTONCES / Y`; the requirement body keeps
 ## What the checklist cannot see
 
 It checks that a scenario exists for each surface, and (D12) that an actor can
-reach the ids they act on, not that the draft asks for everything. In every pilot, an action with only an API scenario — upload a
-photo, add to cart — was built as an API with no button, and the gate stayed
-green. Run the product once, by hand or headless, after each module: that is
+reach the ids they act on, not that the draft asks for everything. In every
+pilot, an action with only an API scenario (upload a photo, add to cart) was
+built as an API with no button, and the gate stayed green. Run the product once, by hand or headless, after each module: that is
 where those gaps show, and each became a short follow-up change.
 
-The design is [ADR-0029](specs/adr/README.md) and
-[draft-from-brief](specs/draft-from-brief.md).
+The design is [ADR-0029](specs/adr/0029-a-brief-becomes-a-draft-change-not-a-spec.md)
+and [draft-from-brief](specs/draft-from-brief.md).
+
+## Next
+
+- [Write the brief](start/write-the-brief.md) — the brief's front matter and sections, field by field
+- [From a Jira ticket](from-a-ticket.md) — the same checks, with a Jira story as the source

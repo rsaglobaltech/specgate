@@ -1,103 +1,130 @@
-# Quickstart — you just cloned a spec-driven repo
+# Joining a project
 
-> 5 minutes. For a developer **joining** a project that already uses Specgate.
-> Setting it up yourself? Start a [new project from scratch](start/scratch-1-install.md)
-> or [adopt an existing one](start/existing-1-adopt.md) — both are on
-> [Getting started](getting-started.md).
+You joined a team whose repository already uses Specgate. In about ten
+minutes you will see where the project stands and know the loop to deliver
+your first requirement, whether the work comes as a change or as a Jira
+ticket.
 
-## 0. Prerequisites
+Setting Specgate up yourself instead? See [Getting started](getting-started.md).
 
-- **Node.js ≥ 22**.
-- Run everything below with `specgate` (installed via `npx @rsaglobaltech/specgate`
-  or a global install; the binary is `specgate` either way). All commands auto-detect the project root from your
-  current directory — no `--project-dir` needed once you're inside the repo.
+## What you need
+
+- Node.js 22 or later, and git.
+- The repository cloned, with its dependencies installed:
 
 ```bash
-git clone <your-repo> && cd <your-repo>
-npm install            # or your project's setup
+git clone <your-repo>
+cd <your-repo>
+npm install
 ```
+
+If the project lists `@rsaglobaltech/specgate` in its `package.json`, run
+every command below as `npx specgate`, which uses the version the team pinned.
+If it does not (a Java or Python project, for example), use
+`npx @rsaglobaltech/specgate@latest` in place of `specgate`. Commands find the
+project root from your current directory.
 
 ## 1. See where the project stands
 
 ```bash
-specgate status
+npx specgate status
 ```
 
-Lists every requirement and what it still needs — its scenario, its test, its
-code, or just closing — and ends with the one command to run next, naming the
-requirement. `specgate plan` has the full detail when you want it.
+It lists every requirement and what it still needs (its scenario, its test,
+its code), and ends with the one command to run next.
 
-## 2. Read the requirement, then work
+## 2. Read the requirement
 
-Each requirement maps to a Gherkin `.feature` file (the executable spec) and a
-row in `docs/specs/traceability.md`, which is generated — nobody edits it. Read
-the feature, **write the test first**, then the code until the test passes.
+A **requirement** (`REQ-007`) is one numbered obligation in `spec.md` or in a
+capability spec under `docs/specs/capabilities/`. Its **scenario** is a Gherkin
+example in `features/`, tagged `@REQ-007 @SCN-007`. Read both before you write
+any code. The words are defined in [Concepts](concepts.md#vocabulary).
 
-## 3. Name the requirement in its test — that is the link
+## 3. Open a change
+
+New work goes through a **change**: a folder under `docs/specs/changes/` that
+holds the requirements being added or modified until they are built. Open it
+the way your team gets its work.
+
+**From an idea or a request:**
+
+```bash
+npx specgate propose rounding-rules
+```
+
+It creates `docs/specs/changes/rounding-rules/` with a proposal and a delta
+(the requirements and scenarios this change adds or modifies), and reserves
+the next `REQ` ids. Write the requirement and its scenario in the delta, with
+real values in place of the `<placeholders>`.
+
+**From a Jira ticket:**
+
+```bash
+npx specgate propose --from-ticket KAN-13 --check
+npx specgate propose --from-ticket KAN-13
+```
+
+The first command checks the ticket against the team's Definition of Ready
+(rules T1 to T9). The second opens the change from the ticket's text, then
+creates and pushes the branch `feature/KAN-13-<slug>`. The project must already
+be connected to Jira: see [From a Jira ticket](from-a-ticket.md).
+
+## 4. Build it, test first
+
+Write the test first and name the requirement in it. That mention is the link
+between the requirement and the test: there is nothing else to declare.
 
 ```java
-// REQ-007: a payment over the limit is refused
+// REQ-007 SCN-007: a payment over the limit is refused
 @Test void refusesPaymentsOverTheLimit() { … }
 ```
 
-The matrix is generated from `spec.md`, the scenario tags and the tests, so a
-test that mentions `REQ-007` is linked — nothing to run, nothing to edit.
-`specgate check` regenerates it before the gate. (A project that keeps its
-matrix by hand, or a link derivation cannot see, uses
-`specgate req link REQ-007 --test … --code …`.)
+Then write the code until the test passes. On a ticket's change, start every
+commit message with the ticket key (`KAN-13 REQ-007: refuse payments over the
+limit`).
 
-Adding brand-new behaviour? Open a change:
+## 5. Deliver each requirement
 
 ```bash
-specgate propose rounding-rules
+npx specgate apply REQ-007
 ```
 
-It writes `docs/specs/changes/rounding-rules/` — a proposal, tasks, and a delta
-with the next `REQ` ids reserved for it. Write the requirement and its scenario
-in the delta, with real values in place of the `<placeholders>`; the gate
-refuses any that are left when you deliver it. While the change is open its
-requirements already count: `status` lists them and `apply` delivers them.
-(For a single requirement straight into `spec.md`, `specgate new "<title>"`
-still works.)
+`apply` refuses while no test names the requirement. Then it runs the gate
+(the specification, the links and your test suite) and marks the requirement
+`Implemented` only if the gate passes. Without an id it takes the next
+requirement `status` names. `apply` does not commit; commit when it is green.
 
-## 4. Deliver it
+## 6. Archive the change, then open the pull request
+
+When every requirement of the change is `Implemented`:
 
 ```bash
-specgate apply REQ-007 --test-cmd "npm test"   # refused while no test names it;
-                                              # the gate, the suite, then Implemented
+npx specgate archive rounding-rules
+npx specgate check
 ```
 
-Without an id, `specgate apply` takes the next requirement `status` names.
-Nothing is written while the gate fails. `done` is the old name of `apply`.
+`archive` merges the delta into the specification, the traceability matrix
+and `features/`, and refuses while a requirement is still pending. `check` is
+the whole gate, the same one CI runs. Commit, push and open your pull request:
+the spec and the code reach review together.
 
-When every requirement of your change is `Implemented`, close it:
+For a ticket's change, `alm pr` pushes the branch and opens one pull request
+per ticket on GitHub:
 
 ```bash
-specgate archive rounding-rules
+npx specgate alm pr kan-13-register-vehicle-entry
 ```
 
-It merges the delta into the specs and writes the feature files — and refuses
-while a requirement is still pending, naming the `specgate apply` to run.
+If `check` says it checked the specification and not the code, no test
+command is set. Run `npx specgate config set test_cmd "npm test"` once.
 
-## 5. Check before you push
+## The loop, in one line
 
-```bash
-specgate check --test-cmd "npm test"
+```text
+status → propose → test that names the REQ → code → apply → archive → check → pull request
 ```
 
-`check` is the gate: `validate --strict`, then your tests. Run
-`specgate config set test_cmd "npm test"` once and it is just `specgate check`. Without a test command
-it still passes — and says it checked the specification, not the code.
+## Next
 
-Every failure tells you the exact fix. An orphan `.feature` — one no
-requirement claims — needs its scenario tagged `@REQ-NNN @SCN-NNN`;
-`specgate fix --dry-run` lists anything it can repair on its own.
-
-## Daily loop, in one line
-
-```
-specgate propose  →  test that names the REQ  →  specgate apply  →  specgate status  →  specgate archive  →  specgate check
-```
-
-That's the whole day-to-day. Reach for the [how-to guide](how-to.md) for
-specific recipes, or the [tutorial](tutorial.md) to build a project end-to-end.
+- [Your team's first pull request](first-pr.md) — what the author writes, what the reviewer reads
+- [From a Jira ticket](from-a-ticket.md) — the ticket path in full

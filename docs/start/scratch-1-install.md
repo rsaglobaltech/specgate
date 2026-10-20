@@ -5,12 +5,14 @@
 and a gate that passes — before there is a single requirement.
 <!-- specgate:endgoal -->
 
+**Before you start:** Node.js 22 or later, and Git.
+
 The example is the one the landing page records: court bookings for a tennis
 club, in plain Node. Your stack will differ; the commands will not.
 
 | Who | Does what in this phase |
 | --- | --- |
-| **You** | Create the project the way your stack does, run three commands |
+| **You** | Create the project the way your stack does, run four commands |
 | **Your agent** | Nothing yet |
 | **The gate** | Runs once, on an empty specification, to prove the wiring |
 
@@ -28,13 +30,23 @@ npm init -y          # here: a package.json whose test script is `node --test`
 
 ## 2. Set Specgate up — `specgate init`
 
+Install Specgate as a development dependency, then set it up:
+
 ```bash
-npx @rsaglobaltech/specgate@latest init
+npm install --save-dev @rsaglobaltech/specgate
+npx specgate init
 ```
+
+These pages write commands as `specgate status`. Where you installed it
+this way, type `npx specgate status`. On a stack without a `package.json`,
+run it without installing: prefix each command with
+`npx @rsaglobaltech/specgate@latest`.
 
 `init` sees the `package.json`, so it sets Specgate up **in place**, in this
 folder, and touches no code. It writes the specification (`spec.md`), the
-agent contract (`AGENTS.md`), the traceability matrix and a baseline scenario:
+agent contract (`AGENTS.md`) that every coding agent reads, the
+**traceability matrix** — the table that links each requirement to its
+scenario, code and test — and a baseline scenario:
 
 <!-- specgate:out-scratch-init:begin — generated; edit the source, not this block -->
 ```text
@@ -123,8 +135,9 @@ $ specgate check
 ```
 <!-- specgate:out-scratch-check:end -->
 
-Green, with an honest warning: there is nothing to certify yet. The warning
-goes away in the next phase, when the brief becomes requirements.
+Green. As `init` warned, this certifies the skeleton, not behaviour: there is
+nothing to certify yet. That changes in the next phase, when the brief becomes
+requirements.
 
 ## You're done when…
 
@@ -141,11 +154,13 @@ git add -A && git commit -m "Specgate set up"
 | --- | --- | --- |
 | `Gate passed — the specification` and *"nothing here runs your tests"* | No test command is configured | `specgate config set test_cmd "<your command>"` |
 | A new `<slug>/` folder appeared | There was no build file, so `init` scaffolded | Create the project first, then `init` inside it |
-| `command not found: specgate` | Not installed globally | Prefix with `npx @rsaglobaltech/specgate@latest`, or `npm install -g @rsaglobaltech/specgate` |
+| `command not found: specgate` | It is installed in the project, not on your PATH | Type `npx specgate` before the command, as in `npx specgate check` |
 
 **Using an agent?** `specgate agents init --tool claude` (or `cursor`,
 `copilot`, `gemini`, …) installs the `/specgate:*` commands for it. See
 [Agents](../agents.md).
 
-**Next:** have a plan or a client's brief? [Write the brief](write-the-brief.md)
-first — then **[phase 2 — from the brief to a checked spec →](scratch-2-specify.md)**
+## Next
+
+Have a plan or a client's brief? [Write the brief](write-the-brief.md) first,
+then go on to **[phase 2 — from the brief to a checked spec →](scratch-2-specify.md)**

@@ -16,15 +16,23 @@ Boot or Quarkus API with a Next.js web app as its client. This page walks throug
 
 ## Install
 
+forja is not on the npm registry. Install the latest release, 1.0.0, from its
+GitHub release:
+
 ```bash Install
-npm install -g @rsaglobaltech/forja
+npm install -g https://github.com/rsaglobaltech/forja/releases/download/v1.0.0/rsaglobaltech-forja-1.0.0.tgz
 forja --version
 ```
 
-You can also run it without installing:
+### From Specgate
+
+`specgate init --forja` runs forja for you and passes everything after
+`--forja` to `forja init`. It looks for forja on the npm registry unless
+`SPECGATE_FORJA_CMD` names the command to run, so install forja as above and
+point Specgate at it:
 
 ```bash
-npx @rsaglobaltech/forja init
+SPECGATE_FORJA_CMD=forja npx @rsaglobaltech/specgate@latest init --forja shop --backend spring
 ```
 
 ## Your first project, with the wizard

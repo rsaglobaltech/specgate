@@ -1,9 +1,13 @@
 # Supply chain
 
-A domain pack is a dependency that writes files into your repository. That
-makes it the most interesting attack surface this tool has, and the reason the
-guarantees below exist. This page covers what is enforced, what is opt-in, and
-how to run any of it on a network that cannot reach GitHub.
+This page lists what Specgate fetches, writes and sends, and what protects
+each of those: domain packs (pinned, digested, optionally signed), the
+credentials the Jira and GitHub commands use, offline use, and the tool's own
+dependencies.
+
+A **domain pack** is a dependency that writes files into your repository: a
+set of ready-made requirements and scenarios for a business domain. That makes
+it the largest attack surface this tool has.
 
 For reporting a vulnerability, see [SECURITY.md](../SECURITY.md).
 
@@ -85,9 +89,8 @@ the check starts distinguishing anything.
 Two independent mechanisms, for two different situations.
 
 **A machine that has the pack cached already.** Packs are cached under
-`~/.cache/specgate/packs/<sha256-of-repo>/<version>/` — the directory and the
-variable below kept the tool's former name, `specgate`, so existing caches and CI
-settings keep working. `specops add --cache-dir <path>` points somewhere else.
+`~/.cache/specgate/packs/<sha256-of-repo>/<version>/`;
+`specops add --cache-dir <path>` points somewhere else.
 Setting `SPECGATE_OFFLINE=1` makes resolution use the cache and refuse to reach the
 network:
 
@@ -116,6 +119,39 @@ weakened by the transport.
 
 Both paths are worth rehearsing before you need them. A restore procedure that
 has never been run is a hope, not a procedure.
+
+## Credentials for Jira and GitHub
+
+Most commands never touch a credential. The ones that talk to Jira, Azure
+Boards or GitHub do, and all of them follow the same rules:
+
+| Command | Reaches | Credential |
+| --- | --- | --- |
+| `specgate propose --from-ticket <KEY>` | Jira: reads one issue | the variable `token_env` names (and `user_env` for the account email) |
+| `specgate alm sync`, `alm pull` | Your tracker (Jira, Azure Boards, GitHub Issues): `pull` reads issues, `sync` also creates and closes them | the variable `token_env` names |
+| `specgate alm pr <change-id>` | git push to your remote; the GitHub API | your normal git credentials for the push; the variable `pr.token_env` names for the API |
+
+- **Tokens live in the environment, never in a file.** `alm.config.yaml` is
+  committed, so it holds only the *names* of environment variables
+  (`token_env: JIRA_TOKEN`), never their values. Keep the values in your
+  environment or your system's keychain, and in CI as masked secrets.
+- **Credentials only travel over https.** `base_url`, and `pr.base_url` for a
+  GitHub Enterprise server, must be `https://` addresses; Specgate refuses a
+  plain `http://` address, because the token would travel in clear text. Only
+  a server on your own machine (`localhost`) may use `http://`.
+- **Reading a ticket writes nothing to Jira.** `--from-ticket` reads one issue
+  at a time, only keys of `project_key`. A Jira token created with scopes needs
+  only `read:jira-work`, and works through Atlassian's gateway
+  (`cloud_id: auto`).
+- **Give `alm pr` a narrow GitHub token.** Use a fine-grained token for the one
+  repository, with Pull requests set to read and write. Do not reuse a broad
+  personal token, such as the one your GitHub CLI holds.
+- **`alm pr` pushes a branch.** It pushes the ticket's branch to `origin` with
+  your git credentials, then opens or updates one pull request. It never
+  merges. With `--no-push` it skips the push, for a branch you pushed yourself.
+
+Setup for each mode: [From a Jira ticket](from-a-ticket.md) and
+[Jira and Azure Boards](alm.md).
 
 ## Dependencies of this tool
 
@@ -186,3 +222,8 @@ its justification stay in the same change.
 `specgate validate` is a specification gate, not a security scanner. It checks that
 requirements have scenarios, tests and traceability rows. It will not tell you
 your application has an injection flaw, and it never claims to.
+
+## Next
+
+- [From a Jira ticket](from-a-ticket.md)
+- [Domain packs](domain-packs.md)

@@ -1,136 +1,199 @@
 # Command reference
 
-Every command, grouped by when you reach for it. `specgate --help` shows the six
-of the daily loop — `init`; `propose`, `apply`, `status`, `archive`; `check`
-([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)); `specgate --help --all`
-shows this whole surface, and `specgate config set profile full` makes that the
-default.
+Every Specgate command, one line each, grouped by the job you are doing. Each
+row links to the page that explains it in full.
 
-Each command takes `--json`. See [the agent contract](specs/agent-contract.md).
+`specgate --help` lists the daily loop. `specgate --help --all` lists every
+command, and `specgate <command> --help` shows a command's options. To make the
+full list the default, run `specgate config set profile full`.
 
----
+In these tables, a **change** is a folder under `docs/specs/changes/<id>/` that
+proposes new or changed requirements; the **gate** is `specgate check`. See
+[the vocabulary](concepts.md#vocabulary) for the other terms.
 
-## Starting
+## The loop
 
-| Command                                              | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `specgate init`                                      | **Start here.** In a repository that already has code, adopts it in place — the same as `adopt`, touching no code. Anywhere else, scaffolds a new project (interactive wizard when no `--config`). `--new` forces a scaffold; `--yes`, `--config`, `--out` and `--multi-stack` always scaffold. Running it twice is not an error.                                                                                                                                                        |
-| `specgate init --forja [<name> <flags…>]`            | **Generate a whole application** with [forja](https://rsaglobaltech.github.io/forja/) — a Next.js + Expo monorepo in TypeScript, or a Spring Boot / Quarkus API with a web app — which adopts Specgate as it installs ([ADR-0033](specs/adr/0033-one-front-door-two-engines.md)). Everything after `--forja` goes to `forja init`. In a terminal, plain `init` in an empty folder asks first. forja is fetched with `npx` at a pinned major; `SPECGATE_FORJA_CMD` points at another one. |
-| `specgate init --from-pack <repo>@<tag> --pack <id>` | Scaffold **and** install a pinned domain pack in one step. An unpinned reference is refused.                                                                                                                                                                                                                                                                                                                                                                                             |
-| `specgate init --multi-stack <a,b,c>`                | Scaffold one sibling project per stack under a single root, sharing one `spec.md` and one `features/` tree. Each stack keeps its own `AGENTS.md` and traceability matrix — the files that implement and prove a requirement differ per stack. Registers them in `specops.config.yaml`.                                                                                                                                                                                                   |
-| `specgate adopt`                                     | Install SDD on an existing repository. Never overwrites a file, never touches source.                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `specgate onboard`                                   | Read an existing repository and propose the capabilities its layout implies, with the evidence for each. Writes nothing.                                                                                                                                                                                                                                                                                                                                                                 |
-| `specgate onboard --tour`                            | **Learn the loop on your own code**: `propose`, a requirement and its test, `status`, `apply`, `archive` and `check`, run on a temporary copy of the repository (or a sample project), each step narrated with what it proved. The repository is not touched.                                                                                                                                                                                                                            |
-| `specgate explore ["<question>"] [--agent "<cmd>"]`  | **Think before a change exists**: a project snapshot — the requirements by state, the open changes and the open questions, for you or your agent. Writes nothing; with `--agent`, anything the agent writes is undone and named.                                                                                                                                                                                                                                                         |
-| `specgate draft`                                     | **Starting from a plan.** Reads `docs/brief.md` (or `--brief <file>`). With no brief, says what one is; with no front matter, explains each field with an example; with a wrong one, says what to fix. Then lists the modules its front matter names, says where each stands — not started, drafting, ready to review, archived — and the one command to run next.                                                                                                                       |
-| `specgate draft --new-brief`                         | No plan yet: writes `docs/brief.md` to fill in — the four fields with an example each, why, a glossary, a section per module with its rules, examples and questions, and notes. Never overwrites a brief.                                                                                                                                                                                                                                                                                |
-| `specgate draft --check`                             | The brief rules on the brief, writing nothing: B1–B4 are errors — a field in the wrong shape, an empty brief or module, a module without its section, rules without examples — and stop a module's draft from opening; B5–B11 warn about wording a test cannot check.                                                                                                                                                                                                                    |
-| `specgate draft --agent "<cmd>"`                     | Your agent proposes the brief's four fields from your text, following `docs/specs/BRIEF-SETUP.md`; once they are complete, a section per module, following `docs/specs/BRIEF-CARDS.md`. It may write only the brief, and only add to it: if your text changes, the brief is put back. Then you review.                                                                                                                                                                                   |
-| `specgate draft <module>`                            | The first time, opens `draft-<module>`: a change linked to the brief, with `DRAFTING.md` — the prompt for your agent, with the reserved ids, each actor's surfaces and the formats the checklist reads. Every time after, runs the checklist on it and says what is next. `--reserve <n>` (default 10).                                                                                                                                                                                  |
-| `specgate draft <module> --agent "<cmd>"`            | Hand the draft to your agent — the prompt on standard input, or in a file if the command contains `{prompt_file}` — undo whatever it writes outside the draft, then check it. Needs git.                                                                                                                                                                                                                                                                                                 |
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate init` | Adopts a repository that has code, or scaffolds a new project. | [Getting started](getting-started.md) |
+| `specgate propose <change-id>` | Opens a change: a proposal, a delta and a reserved range of REQ ids. | [Change a shipped requirement](reviewing-changes.md) |
+| `specgate apply [<REQ>]` | Delivers one requirement: refused until a test names it and the gate passes. | [Writing specs](writing-specs.md#after-implementing-apply-it) |
+| `specgate status` | What is left, and the one command to run next. | [Writing specs](writing-specs.md#close-the-loop-status-implement-apply) |
+| `specgate archive <change-id>` | Merges a change into the specs once every requirement in it is Implemented. | [Change a shipped requirement](reviewing-changes.md#6-archive-it) |
+| `specgate check` | The gate: `validate --strict`, your architecture check, then your tests. | [Validating](validating.md) |
 
-## Every day
+`apply` does not commit; commit after it. `archive` runs on your branch, before
+the pull request, so the spec and the code are reviewed together.
 
-| Command                                                                                                            | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `specgate propose <id> [--capability <name>]`                                                                      | **Open a change** — what `change new` does, with a delta to write for the capability (named after the change unless `--capability` says) and a reserved `REQ` range. `--from-brief [<module>]` is `draft`: the next module of `docs/brief.md`, or that module's draft.                                                                                                                                                                                                                                                                                                                                     |
-| `specgate propose --from-ticket <KEY \| issue.json> [--check] [--capability <name>] [--agent <cmd>] [--no-branch]` | **A Jira ticket as the source text** ([From a Jira ticket](from-a-ticket.md)). `--check` is its Definition of Ready (T1–T9); without it, opens the change `<key>-<slug>` with `ticket.md`, checked against the ticket, on the branch `feature/<KEY>-<slug>`.                                                                                                                                                                                                                                                                                                                                               |
-| `specgate apply [<REQ> …]`                                                                                         | **Deliver a requirement**: the one named, or the next one `status` names. Refused while no test names it (`apply_no_test`, with the fix); then the gate — `validate --strict` for it, `arch_cmd`, the project's tests — and Implemented when green, nothing written when red. A requirement of an open change is judged as it will be after archive and its status is written in the change's delta. `done` is its old name.                                                                                                                                                                               |
-| `specgate archive <id>`                                                                                            | **Close a change** once every requirement it adds or modifies is Implemented — merge the delta into the specs, the matrix rows, the feature files. Refused while one is pending (`archive_requirements_pending`, with `specgate apply REQ-…` as the fix); `--force` never skips that. `change archive` is its old name.                                                                                                                                                                                                                                                                                    |
-| `specgate status`                                                                                                  | Where the project stands: totals by state, what is ready to close, what is to do — open changes' requirements included, each with its change — what waits for an answer (with the question that blocks it), orphan features, locked pack versions, and the one command to run next.                                                                                                                                                                                                                                                                                                                        |
-| `specgate plan`                                                                                                    | Requirements that still need a test, code or a status change.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `specgate add usecase\|entity\|port <module/Name>`                                                                 | In a project forja generated: the class where the architecture expects it, its test and its wiring, by running `forja add`. `add usecase` also creates the requirement and names it in the test; `--req REQ-007` names an existing one. Outside a forja project it says to use `new`.                                                                                                                                                                                                                                                                                                                      |
-| `specgate new "<title>"`                                                                                           | **Add a requirement in one step**: a draft `## REQ-NNN` in `spec.md`, a tagged scenario of `<placeholders>` under `features/`, and its matrix row linked to it. `--feature <path>` appends to an existing file.                                                                                                                                                                                                                                                                                                                                                                                            |
-| `specgate req add \| link \| done \| list`                                                                         | Manage matrix rows without hand-editing the ten-column table.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `specgate pet`                                                                                                     | **Gato, the cat that keeps the gate**: the project's health as a pet — fed by closed requirements, sick on a red `check`, worried by open questions. A small version sits at the foot of `status` on a terminal; `specgate config set pet off` hides it.                                                                                                                                                                                                                                                                                                                                                   |
-| `specgate req rm <REQ>`                                                                                            | Remove a requirement's matrix row(s) and its prose in `spec.md`. `--dry-run` previews; `--force` is required past `Draft`, because removing a delivered requirement deletes the record that it shipped. Reports any feature file left unreferenced, and says what it did **not** touch.                                                                                                                                                                                                                                                                                                                    |
-| `specgate done <REQ> [<REQ> …]`                                                                                    | Same as `apply`. Mark requirements Implemented — several at once check each on its own and run the project's tests once. Runs the gate first (`validate --strict`, as `check` does) and refuses to write on failure — also when the requirement waits for an answer (`Needs Clarification`); `--no-check` skips it. `Draft`, `Approved` and `Deprecated` are written without it unless `--check` is given. `--test-cmd "<cmd>"` (or `test_cmd:` in `harness.config.yaml`) also runs the project's tests and requires them to pass. Without one, `done` says it checked the specification and not the code. |
-| `specgate check [dir] [--test-cmd "<cmd>"] [--base <branch>]`                                                      | **The gate before a PR**: `validate --strict`, then the architecture check (`arch_cmd:` in `harness.config.yaml`, when set), then the project's tests (`--test-cmd`, or `test_cmd:` in `harness.config.yaml`). Without a test command it passes and says it checked the specification, not the code. It also compares requirement ids with the base branch (`--base`, `SPECGATE_BASE`, or origin's default): the same id with another title there fails as `id_taken_on_base`, before the merge; without git or a base it says the comparison was skipped.                                                 |
-| `specgate matrix [--check \| --migrate]`                                                                           | Generate `traceability.md` from `spec.md`, scenario tags and tests instead of maintaining it. `--migrate` switches a hand-kept matrix over, only if the result is identical row for row. See [A matrix nobody edits](writing-specs.md#a-matrix-nobody-edits).                                                                                                                                                                                                                                                                                                                                              |
-| `specgate fix`                                                                                                     | Apply the repairs `validate` suggests. `--dry-run` previews.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `specgate validate [--strict] [--against-lock]`                                                                    | The gate. Structure, traceability and Gherkin always; `--strict` adds TDD, links, scenarios, requirements and coverage — what CI should run (`check` is this plus your tests). The individual `--strict-*` flags still work.                                                                                                                                                                                                                                                                                                                                                                               |
-| `specgate validate . --strict-coverage`                                                                            | Fails when a scenario in a declared feature file is named by no test artifact. A name match, so it is opt-in — it does not run your suite.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+## Where work comes from
 
-## Changing a spec that already shipped
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate propose <change-id>` | One behaviour: you write the delta yourself. | [Change a shipped requirement](reviewing-changes.md) |
+| `specgate propose --from-brief` | Lists the modules of `docs/brief.md` and the next one to draft. | [From a brief](from-a-brief.md) |
+| `specgate propose --from-brief --new-brief` | Writes a `docs/brief.md` for you to fill in. Never overwrites one. | [Write the brief](start/write-the-brief.md) |
+| `specgate propose --from-brief --check` | Runs the brief rules (B1–B11) on the brief. Writes nothing. | [Write the brief](start/write-the-brief.md#step-8-check-it) |
+| `specgate propose --from-brief --agent "<cmd>"` | Your agent proposes the brief's fields, then a section per module. | [From a brief](from-a-brief.md) |
+| `specgate propose --from-brief <module>` | Opens that module's draft change, or checks it once it exists. | [From a brief](from-a-brief.md#2-draft-one-module) |
+| `specgate propose --from-ticket <KEY>` | Opens a change from a Jira ticket, on a new `feature/<KEY>-<slug>` branch. | [From a Jira ticket](from-a-ticket.md) |
+| `specgate propose --from-ticket <KEY> --check` | The ticket's Definition of Ready (rules T1–T9). Writes nothing. | [From a Jira ticket](from-a-ticket.md#is-the-ticket-ready) |
+| `specgate alm pr <change-id>` | Pushes the ticket's branch and opens or updates its one pull request on GitHub. | [From a Jira ticket](from-a-ticket.md#the-daily-loop-per-ticket) |
 
-| Command                                                           | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `specgate change new <id> [--lite\|--full] [--schema <name>]`     | Open a change. Reserves a `REQ` range so two changes in flight never collide.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `specgate change new <id> --from-value-drift <REQ-ID>:<value_id>` | Seed the change from a value `specgate report` found diverging — the delta arrives written.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `specgate change status`                                          | Which artefact to write next, in dependency order.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `specgate change instructions <artifact>`                         | The template, the rules the validator enforces, the project's stack, and what writing it unblocks.                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `specgate change author <id>`                                     | Have an agent write one artefact, confined to the change directory and gated by `change validate`.                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `specgate change validate`                                        | Check the deltas. Runs inside `specgate validate` too.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `specgate change archive <id>`                                    | Same as `archive`: once every requirement in the change is Implemented, merge the delta into the specs, write the matrix rows, materialise the feature files. `--dry-run` first.                                                                                                                                                                                                                                                                                                                                                |
-| `specgate draft --check <id> [--brief <file>]`                    | The checklist on any change (what `draft <module>` runs on its own draft). Is a draft change complete enough to review? Every requirement has a scenario and a kind, each actor's surfaces (API, screen) have a scenario, non-functional requirements are measured, cited laws name a source, every value is in the brief or listed in `assumptions.md`, every open question blocks something, every scenario passes the harness gate's scenario rules. [ADR-0029](specs/adr/0029-a-brief-becomes-a-draft-change-not-a-spec.md) |
+More options for `--from-ticket`: `--agent "<cmd>"` has your agent draft the
+change, `--capability <name>` names the capability when the ticket's epic is
+not mapped, `--no-branch` skips creating the branch, and `--no-push` creates it
+without pushing. A ticket can also be a file: `--from-ticket KAN-13.json`.
+For `--from-brief <module>`, `--agent "<cmd>"` hands the draft to your agent and
+`--reserve <n>` sets how many REQ ids it reserves (default 10).
 
-→ [Reviewing changes](reviewing-changes.md)
+## Starting a project
 
-## Domain packs
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate init --new` | Scaffolds a new project even where code already exists. | [Getting started](getting-started.md) |
+| `specgate init --forja <name>` | Generates a whole application with forja, wired for Specgate. | [forja](forja/specgate.md) |
+| `specgate init --from-pack <repo>@<tag> --pack <id>` | Scaffolds and installs a pinned domain pack in one step. | [Domain packs](domain-packs.md) |
+| `specgate init --multi-stack <a,b>` | One sibling project per stack, sharing one `spec.md` and `features/`. | `specgate init --help` |
+| `specgate adopt` | Installs Specgate in an existing repository. Never overwrites a file. | [Getting started](getting-started.md) |
+| `specgate onboard` | Proposes the capabilities an existing repository's layout implies. Writes nothing. | `specgate onboard --help` |
+| `specgate onboard --tour` | Runs the whole loop on a temporary copy of your repository, narrated. | `specgate onboard --help` |
+| `specgate add usecase <module/Name>` | In a forja project: the class, its test and its wiring (also `entity`, `port`). | `specgate add --help` |
 
-| Command                                         | What it does                                                                                                                                                                                                                                     |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `specgate pack init \| lint \| infer \| bundle` | Scaffold (`--type backend\|frontend\|mobile\|contracts`), lint (`--strict`, `--graph`, `--json`), infer from a `.feature`, or export as a git bundle for air-gapped use. Lint runs the installer's own validation, so passing means installable. |
-| `specgate specops add \| remove`                | Install or drop a pack. Writes `.specops.lock`.                                                                                                                                                                                                  |
-| `specgate specops sync`                         | Re-render locked packs, three-way merging your edits.                                                                                                                                                                                            |
-| `specgate specops diff [--as-change]`           | Preview a version bump — as files, or as a reviewable change proposal.                                                                                                                                                                           |
-| `specgate specops contribute --change <id>`     | Send a local change back upstream to the pack. Never pushes.                                                                                                                                                                                     |
-| `specgate expand`                               | Low-level pack render. `specops add` is the ergonomic path.                                                                                                                                                                                      |
+**forja is not on the npm registry.** `init --forja` runs
+`npx @rsaglobaltech/forja@1` unless the `SPECGATE_FORJA_CMD` environment
+variable names another command. Install forja from its GitHub release
+tarball, then point Specgate at it:
 
-→ [Domain packs](domain-packs.md)
+```bash
+npm install -g https://github.com/rsaglobaltech/forja/releases/download/v1.0.0/rsaglobaltech-forja-1.0.0.tgz
+SPECGATE_FORJA_CMD=forja specgate init --forja shop
+```
+
+**`init --from-pack` has a known issue:** it fails on a requirement with two
+scenarios. Until it is fixed, run `specgate init` and then `specgate specops add`.
+
+## Requirements
+
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate new "<title>"` | Adds one requirement straight to `spec.md`, without a change. A shortcut for small projects. | [Writing specs](writing-specs.md) |
+| `specgate req add "<title>"` | Adds a Draft requirement and its matrix row. | `specgate req --help` |
+| `specgate req link <REQ> --test <path>` | Records a link (`--feature`, `--test`, `--code`, …) for a requirement. | `specgate req --help` |
+| `specgate req rm <REQ>` | Removes a requirement's row and prose. `--force` past Draft. | [Writing specs](writing-specs.md#removing-a-requirement) |
+| `specgate req list` | Lists requirements and their status. | `specgate req --help` |
+| `specgate plan` | Requirements that still need a test, code or a status change. | [Writing specs](writing-specs.md#close-the-loop-status-implement-apply) |
+| `specgate explore ["<question>"]` | A snapshot of the project to think with, before a change exists. Writes nothing. | `specgate explore --help` |
+| `specgate matrix` | Regenerates the traceability matrix from `spec.md`, tags and tests. | [A matrix nobody edits](writing-specs.md#a-matrix-nobody-edits) |
+| `specgate fix` | Applies the repairs `validate` suggests. `--dry-run` previews. | `specgate fix --help` |
+| `specgate validate . --strict` | Checks specs, scenarios, links and coverage, without running tests. | [Validating](validating.md) |
+
+## Changes
+
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate change list` | Open changes and their task progress. | [Change a shipped requirement](reviewing-changes.md) |
+| `specgate change show <id>` | A change's proposal, deltas and what they touch. | [Change a shipped requirement](reviewing-changes.md) |
+| `specgate change status [<id>]` | Which file of the change to write next. | [Change a shipped requirement](reviewing-changes.md) |
+| `specgate change instructions <artifact>` | The template and rules for one file of a change, for you or an agent. | [Agents](agents.md#why-the-generated-files-are-thin) |
+| `specgate change author <id>` | Has an agent write one file of a change, confined to the change folder. | [Change a shipped requirement](reviewing-changes.md#have-an-agent-draft-a-file) |
+| `specgate change validate [<id>]` | Checks the deltas. `specgate validate` runs it too. | [Change a shipped requirement](reviewing-changes.md) |
+| `specgate propose <id> --from-value-drift <REQ:id>` | Opens a change that updates a declared value the code disagrees with. | [Validating](validating.md#declared-value-drift-a-report-not-a-gate) |
+
+## Jira and other trackers (ALM)
+
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate alm sync` | Mirror mode: creates an issue per requirement and closes it when the requirement is done. | [Jira and Azure Boards](alm.md) |
+| `specgate alm pull` | Opens a change for each issue with a label (`--label <name>`). | [Jira and Azure Boards](alm.md#bring-issues-in-alm-pull) |
+| `specgate alm link <REQ> <issue>` | Maps an existing issue to a requirement. | [Jira and Azure Boards](alm.md) |
+| `specgate alm status` | The requirement-to-issue mapping, without network access. | [Jira and Azure Boards](alm.md) |
+| `specgate alm pr <change-id>` | One pull request per ticket on GitHub. `--no-push`, `--no-check`. | [From a Jira ticket](from-a-ticket.md#the-daily-loop-per-ticket) |
+
+All of these read `alm.config.yaml` at the project root. It names environment
+variables that hold the tokens, never the tokens themselves. Jira has two modes
+— a ticket as the source of a change, or a mirror of your requirements — and
+you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
+[Jira and Azure Boards](alm.md).
 
 ## Automation and CI
 
-| Command                                                                        | What it does                                                                                                                                                                                                                                                                                       |
-| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `specgate harness init`                                                        | Scaffold `harness.config.yaml` and `.harness/prompt-prefix.md`. Detects the gate from your build files; leaves the agent unset on purpose.                                                                                                                                                         |
-| `specgate harness run`                                                         | The plan → agent → verify → done loop, one git worktree per requirement. Never merges.                                                                                                                                                                                                             |
-| `specgate harness prompt <REQ>`                                                | Print the prompt the harness would hand an agent, before paying for tokens.                                                                                                                                                                                                                        |
-| `specgate ci init`                                                             | Generate the CI job — the gate and the project's tests — for GitHub, GitLab, Azure or Jenkins.                                                                                                                                                                                                     |
-| `specgate verify [--run] [--since <ref>] [--record] [--ids] [--format github]` | **For teams on OpenSpec.** Reads `openspec/` in place and fails while an archived change claims a scenario no test names. `--since` gates only new claims; `--record` pins each verified scenario's text, so a later edit must be verified again. Action: `rsaglobaltech/specgate/actions/verify`. |
-| `specgate alm sync`                                                            | Sync requirements with Jira or Azure Boards — create, close, report drift.                                                                                                                                                                                                                         |
-| `specgate alm status`                                                          | The requirement ↔ issue mapping, without touching the network.                                                                                                                                                                                                                                     |
-| `specgate alm link <REQ> <issue>`                                              | Adopt an issue that already exists into the mapping.                                                                                                                                                                                                                                               |
-| `specgate alm pull [--label <name>]`                                           | Open a change per labelled issue, its scenarios left for you to write.                                                                                                                                                                                                                             |
-| `specgate alm pr <change> [--no-push] [--no-check]`                            | Push a ticket's branch and open, or update, its one pull request on GitHub (`pr:` in `alm.config.yaml`). Never merges.                                                                                                                                                                             |
-| `specgate report`                                                              | Spec-coverage dashboard as a self-contained HTML file. Includes declared-value drift when the project annotates any.                                                                                                                                                                               |
-| `specgate doctor`                                                              | Diagnose the project and the environment. Every finding ships a fix.                                                                                                                                                                                                                               |
-
-→ [Automation](automation.md) · [The harness](harness.md) · [Jira and Azure Boards](alm.md)
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate harness init` | Writes `harness.config.yaml` and the prompt prefix. Leaves the agent unset. | [The harness](harness.md#set-it-up) |
+| `specgate harness run` | Delivers pending requirements with an agent, one git worktree each. | [The harness](harness.md) |
+| `specgate harness prompt <REQ>` | Prints the prompt an agent would get. Runs nothing. | [Choosing your agent](agent-setup.md) |
+| `specgate harness report` | First-attempt rate and time per delivered requirement. | [What the harness has cost](harness-report.md) |
+| `specgate harness events --from claude` | Turns Claude Code's stream into events for the live view. | [The harness](harness.md#watch-it-work) |
+| `specgate studio` | A local, read-only view of the spec tree; `/live` shows the harness. | `specgate studio --help` |
+| `specgate ci init` | Writes the CI job for GitHub, GitLab, Azure or Jenkins. | [Validating](validating.md) |
+| `specgate verify` | For OpenSpec projects: fails while a done scenario has no test naming it. | [Already on OpenSpec](openspec.md) |
+| `specgate report` | A spec-coverage dashboard as one HTML file. | `specgate report --help` |
+| `specgate doctor` | Diagnoses the project and the environment, with a fix per finding. | [Troubleshooting](troubleshooting.md) |
 
 ## Agents
 
-| Command                                 | What it does                                                                                                                      |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `specgate agents init [--tool <names>]` | Slash commands and instruction files for Claude Code, Cursor, Copilot, Windsurf, Aider, Gemini, Cline, Codex and Antigravity.     |
-| `specgate update`                       | Refresh those generated files after a CLI upgrade, three-way merging your edits. Conflicts are reported, never resolved silently. |
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate agents init` | Slash commands and instruction files for your agent tools. | [Agents](agents.md) |
+| `specgate update` | Refreshes those generated files after an upgrade, keeping your edits. | [Agents](agents.md) |
+| `specgate mcp install --client claude` | Writes the MCP server configuration for Claude Desktop or Cursor. | [The MCP server](mcp.md) |
+| `specgate mcp serve` | Runs the MCP server over stdio. The client starts it; you do not. | [The MCP server](mcp.md) |
 
-→ [Agents](agents.md)
+## Domain packs
+
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate specops add` | Installs a pack at a pinned tag and records it in `.specops.lock`. | [Domain packs](domain-packs.md) |
+| `specgate specops remove` | Drops a pack from `.specops.lock`. | [Domain packs](domain-packs.md) |
+| `specgate specops sync` | Re-renders the installed packs, keeping your local edits. | [Domain packs](domain-packs.md) |
+| `specgate specops diff` | Previews a version bump; `--as-change` turns it into a change. | [Domain packs](domain-packs.md) |
+| `specgate specops contribute` | Sends a local change back to the pack. Never pushes. | [Domain packs](domain-packs.md) |
+| `specgate pack init` | Scaffolds a new pack. | [Domain packs](domain-packs.md) |
+| `specgate pack lint` | Checks a pack before anyone installs it. | [Domain packs](domain-packs.md) |
+| `specgate pack infer` | Proposes a `pack.yaml` from a `.feature` file. | [Domain packs](domain-packs.md) |
+| `specgate pack bundle` | Exports a pack repository as one file for offline networks. | [Supply chain](supply-chain.md#air-gapped-and-offline-networks) |
+| `specgate expand` | Low-level pack rendering. Prefer `specops add`. | [Domain packs](domain-packs.md) |
 
 ## Customising
 
-| Command                                                 | What it does                                                                                                                                                                                                                                                                                                       |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `specgate config set profile core\|full`                | How much of this surface `--help` shows.                                                                                                                                                                                                                                                                           |
-| `specgate config set language es\|pt`                   | Language for generated prose. `SHALL` and `GIVEN`/`WHEN`/`THEN` never translate.                                                                                                                                                                                                                                   |
-| `specgate config set test_cmd "<cmd>"`                  | The tests `check` and `done` run. Written as `test_cmd:` in `harness.config.yaml`; no harness needed.                                                                                                                                                                                                              |
-| `specgate config set arch_cmd "<cmd>"`                  | Your architecture check — ArchUnit, dependency-cruiser, import-linter… — run by `check`, `done` and the harness gate between validation and the tests ([ADR-0028](specs/adr/0028-architecture-conformance-is-part-of-the-gate.md)). A failure in the harness goes back to the agent.                               |
-| `specgate config init`                                  | Write a starter `project.yaml`.                                                                                                                                                                                                                                                                                    |
-| `specgate schema which \| init \| fork \| validate`     | Inspect or fork the artefact graph a change follows. Ships `spec-driven` and `bdd-first`.                                                                                                                                                                                                                          |
-| `specgate completion bash\|zsh\|fish [--install]`       | Shell completion.                                                                                                                                                                                                                                                                                                  |
-| `specgate studio [--port <n>] [--host <addr>] [--json]` | Serve a local, read-only HTML view of the spec tree, and at `/live` the harness at work — each requirement's attempt, phase, files, tests and steps, updated as they happen. Bound to 127.0.0.1 and refusing other host names unless `--host` says otherwise ([ADR-0037](specs/adr/0037-see-the-harness-work.md)). |
-| `<agent> \| specgate harness events --from claude`      | Turn Claude Code's `--output-format stream-json` into harness events for the live view, at the end of the agent's pipe. No file contents, tool output or secrets are written.                                                                                                                                      |
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate config set test_cmd "<cmd>"` | The tests `check` and `apply` run. | `specgate config set --help` |
+| `specgate config set arch_cmd "<cmd>"` | Your architecture check, run by the gate before the tests. | [Validating](validating.md) |
+| `specgate config set profile full` | Makes `--help` list every command (`core` lists the loop). | `specgate config set --help` |
+| `specgate config set language es` | The language of generated prose. Keywords stay in English. | `specgate config set --help` |
+| `specgate config init` | Writes a starter `project.yaml`. | `specgate config init --help` |
+| `specgate schema which` | Shows which artefact graph a change follows (also `init`, `fork`, `validate`). | `specgate schema --help` |
+| `specgate completion zsh` | Prints shell completion for bash, zsh or fish. | `specgate completion --help` |
 
----
+## The small things
 
-## Exit codes
+| Command | What it does | Details |
+| --- | --- | --- |
+| `specgate pet` | Gato, the cat that keeps the gate: the project's health as a pet. | `specgate pet --help` |
+| `specgate config set pet off` | Hides Gato from the end of `status`. | `specgate config set --help` |
 
-| Code | Meaning                                              |
-| ---- | ---------------------------------------------------- |
-| `0`  | Success, including advisory warnings                 |
-| `1`  | Failure, or a gate that found something              |
-| `2`  | Usage error — unknown flag, missing argument         |
-| `3`  | A required script is missing (a broken installation) |
+## Output and exit codes
 
-→ [The agent contract](specs/agent-contract.md) for the JSON envelope and the
-full diagnostic code catalogue.
+Many commands take `--json` and then print one JSON document on standard
+output; [the agent contract](specs/agent-contract.md) lists the format and
+every diagnostic code.
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Success, including advisory warnings |
+| `1` | Failure, or a gate that found something |
+| `2` | Usage error: an unknown flag or a missing argument |
+| `3` | A required script is missing (a broken installation) |
+
+## Old names
+
+These names still work, so older scripts keep running. Use the new name in
+anything you write.
+
+| Old name | Use instead |
+| --- | --- |
+| `specgate draft` | `specgate propose --from-brief` |
+| `specgate done` | `specgate apply` |
+| `specgate change new` | `specgate propose` |
+| `specgate change archive` | `specgate archive` |

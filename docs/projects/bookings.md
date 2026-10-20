@@ -28,6 +28,10 @@ copied from another product, and the integration section was empty.
 
 ## How Specgate was used
 
+<!-- specgate:note -->
+Recorded with Specgate 0.16–0.18. Today the same steps are: propose → build and apply each requirement → archive.
+<!-- specgate:endnote -->
+
 The brief went into `docs/brief.md` unchanged, with a front matter naming the
 actors and their surfaces, and a description of what each screenshot shows.
 

@@ -217,6 +217,24 @@ const BRIEF_HOOKS: Record<string, Hook> = {
 
 // ── From scratch: court bookings ────────────────────────────────────────────
 
+/** Phase 5: a requirement that came up in a conversation, as its change's delta. */
+const FREE_COURTS_DELTA = `# Delta — free-courts
+
+## ADDED Requirements
+
+### Requirement: REQ-012 — A member sees which courts are free on a day
+
+<!-- specgate:trace actor=Member kind=functional -->
+
+The system SHALL list, for a day, the courts that are free at each hour.
+
+#### Scenario: SCN-006 — The centre court is taken on Monday evening
+
+- GIVEN the centre court is booked on Monday evening
+- WHEN a member sends GET /api/courts/free?day=monday
+- THEN Monday evening lists every court except the centre court
+`;
+
 const SCRATCH_SETUP: { before: Hook; steps: Record<string, Hook> } = {
   // What `npm init -y` writes, minus what changes between npm versions.
   before: (project, env) => {
@@ -252,6 +270,21 @@ const SCRATCH_SETUP: { before: Hook; steps: Record<string, Hook> } = {
     },
     "scratch-harness-prompt": (project, env) => commit(project, env, "REQ-002: book a court"),
     "scratch-ci": (project, env) => commit(project, env, "REQ-002 done"),
+    // You: the delta of the new change, written over the template `propose` left.
+    "scratch-status-daily": (project) =>
+      write(
+        path.join(
+          project,
+          "docs",
+          "specs",
+          "changes",
+          "free-courts",
+          "specs",
+          "free-courts",
+          "spec.md"
+        ),
+        FREE_COURTS_DELTA
+      ),
   },
 };
 
@@ -315,16 +348,24 @@ test("numbers run per year", () => {
 });
 `;
 
-const ROUNDING_FEATURE = (
-  req: string,
-  scn: string
-) => `Feature: An invoice total is rounded to the cent
+const ROUNDING_CHANGE = path.join("docs", "specs", "changes", "invoice-rounding");
 
-  @${req} @${scn}
-  Scenario: Three lines at 21% VAT
-    Given an invoice with lines of 3 × 0.10, 1 × 19.99 and 2 × 4.55
-    When its total is computed at 21% VAT
-    Then the total is 35.56
+/** The delta a person writes over the template `propose` left. */
+const ROUNDING_DELTA = `# Delta — invoice-rounding
+
+## ADDED Requirements
+
+### Requirement: REQ-004 — An invoice total is rounded to the cent
+
+<!-- specgate:trace kind=business-rule -->
+
+The system SHALL round an invoice total, VAT included, to the cent.
+
+#### Scenario: SCN-002 — Three lines at 21% VAT
+
+- GIVEN an invoice with lines of 3 × 0.10, 1 × 19.99 and 2 × 4.55
+- WHEN its total is computed at 21% VAT
+- THEN the total is 35.56
 `;
 
 const EXISTING_SETUP: { before: Hook; steps: Record<string, Hook> } = {
@@ -343,30 +384,28 @@ const EXISTING_SETUP: { before: Hook; steps: Record<string, Hook> } = {
   },
   steps: {
     "existing-status": (project, env) => commit(project, env, "adopt specgate"),
-    // You: the placeholders `new` wrote, replaced with the real example.
-    "existing-feature": (project) => {
-      const file = path.join(project, "features", "an-invoice-total-is-rounded-to.feature");
-      const tags = /@(REQ-\d+) @(SCN-\d+)/.exec(fs.readFileSync(file, "utf8"));
-      if (!tags)
-        throw new Error("`new` wrote no tags — the journey's scenario cannot be filled in");
-      fs.writeFileSync(file, ROUNDING_FEATURE(tags[1], tags[2]), "utf8");
-      const spec = path.join(project, "spec.md");
-      fs.writeFileSync(
-        spec,
-        fs
-          .readFileSync(spec, "utf8")
-          .replace(
-            /(## REQ-004[^\n]*\n)([\s\S]*?)(?=\n## |\n---|$)/,
-            (_m, head) =>
-              `${head}\n<!-- specgate:trace kind=business-rule -->\n\nThe system SHALL round an invoice total, VAT included, to the cent.\n`
-          ),
-        "utf8"
-      );
-    },
+    // You: the change's delta, written over the template `propose` left.
+    "existing-delta": (project) =>
+      write(
+        path.join(project, ROUNDING_CHANGE, "specs", "invoice-rounding", "spec.md"),
+        ROUNDING_DELTA
+      ),
     // You: the test you already had, now naming the requirement.
     "existing-test": (project) =>
       write(path.join(project, "test", "total.test.js"), totalTest(true)),
-    "existing-ci": (project, env) => commit(project, env, "REQ-004 done"),
+    // You: the change's tasks ticked as they were done.
+    "existing-archive": (project) => {
+      const tasks = path.join(project, ROUNDING_CHANGE, "tasks.md");
+      fs.writeFileSync(
+        tasks,
+        fs
+          .readFileSync(tasks, "utf8")
+          .replace(/- \[ \] 2\.1\s*$/m, "- [x] 2.1 Name REQ-004 in test/total.test.js")
+          .replace(/- \[ \]/g, "- [x]"),
+        "utf8"
+      );
+    },
+    "existing-ci": (project, env) => commit(project, env, "invoice-rounding: REQ-004"),
   },
 };
 

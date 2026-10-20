@@ -3,8 +3,6 @@
 Six ideas explain everything the CLI does. Read this once and every command,
 error and flag has a reason you can predict.
 
----
-
 ## 1. A requirement is a sentence that can be wrong
 
 A requirement lives in `spec.md` (or in a capability spec under
@@ -102,12 +100,13 @@ reach — a green run says how many rows were exempt:
 `specgate apply REQ-007` is how a requirement reaches a delivered status. It
 refuses while no test names the requirement, then runs the gate for it: if the
 gate would fail, nothing is written. (`--no-check` skips the gate, for the
-rare case it is wrong — say so in the pull request. `done` is `apply`'s old
-name.)
+rare case it is wrong — say so in the pull request.)
 
 ## 6. One gate, one name
 
-There is exactly one gate: `validate --strict`. Everything runs it.
+There is exactly one gate: `validate --strict` on the specification, then
+your architecture check and your tests when they are configured.
+`specgate check` runs it, and so does everything else.
 
 | Where | What runs |
 |---|---|
@@ -119,23 +118,33 @@ There is exactly one gate: `validate --strict`. Everything runs it.
 A gate that was slightly different in each place used to approve work in one
 and fail it in the next. Now a green in one place is a green everywhere.
 
----
-
 ## Around the core
 
 Three things build on those six ideas. The first is the daily loop; the
 other two are not needed on day one.
 
 **Changes.** New work and edits to what already shipped both go through a
-change: `specgate propose <id>` opens a reviewable delta under
-`docs/specs/changes/<id>/` — only what moves, never a copy. While it is open,
-its requirements count: `status` lists them, `apply` delivers them one by
-one, `check` judges the project as it will be after archive. `specgate
-archive <id>` merges it into the spec tree and writes the feature files once
-every requirement in it is `Implemented` — a change is archived when its code
-is done, so the spec and the code land in one pull request
-([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
-→ [Reviewing changes](reviewing-changes.md)
+change: a folder under `docs/specs/changes/<id>/` holding a proposal and a
+delta, which lists only the requirements and scenarios that move, never a copy
+of the spec. While it is open, its requirements count: `status` lists them,
+`apply` delivers them one by one, `check` judges the project as it will be
+after archive. `specgate archive <id>` merges it into the spec tree and writes
+the feature files once every requirement in it is `Implemented`. A change is
+archived when its code is done, on its branch, so the spec and the code land
+in one pull request ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
+→ [Change a shipped requirement](reviewing-changes.md)
+
+A change comes from one of three places:
+
+| Source | Command | Guide |
+|---|---|---|
+| One behaviour you describe yourself | `specgate propose <change-id>` | [Propose one change](start/existing-2-specify.md) |
+| A brief: a new product, or a large area of one | `specgate propose --from-brief` | [From a client brief](from-a-brief.md) |
+| A Jira ticket with acceptance criteria | `specgate propose --from-ticket <KEY>` | [From a Jira ticket](from-a-ticket.md) |
+
+A change from a brief or a ticket is a **draft**: it is checked against its
+source text, and every value it uses must come from that text or be listed as
+an assumption.
 
 **Domain packs.** A versioned, schema-validated set of requirements and
 scenarios for a domain (multi-tenancy, payments, …), installed like a
@@ -143,33 +152,38 @@ dependency, pinned by digest in `.specops.lock`, and upgraded through a
 reviewable diff. → [Domain packs](domain-packs.md)
 
 **The harness.** Hands one pending requirement at a time to any coding agent
-in its own git worktree, runs the gate on the result, and closes the
-requirement only when it passes. It never merges unless you ask for a chain
-(`--chain`), and `specgate studio` shows it at work at `/live`.
+in its own git worktree, runs the gate on the result, and marks the
+requirement `Implemented` only when it passes. It never merges unless you ask
+for a chain (`--chain`), and `specgate studio` shows it at work at `/live`.
 → [The harness](harness.md)
 
 Before a change exists, `specgate explore` writes a brief of where the project
 stands for you or your agent to think with; `specgate onboard --tour` runs the
 whole loop on a temporary copy of your repository.
-→ [Command reference](commands.md#starting)
+→ [Command reference](commands.md#starting-a-project)
 
----
-
-## The vocabulary
+## Vocabulary
 
 | Term | Meaning |
 |---|---|
-| **Requirement** (`REQ-NNN`) | One obligation of the system, in `spec.md`. |
-| **Scenario** (`SCN-NNN`) | A Gherkin example that demonstrates a requirement. |
-| **Capability spec** | A `docs/specs/<capability>/spec.md` holding the requirements of one area. |
-| **The matrix** | `docs/specs/traceability.md`, generated from the above. |
-| **The gate** | `validate --strict`; `check` adds your tests. |
+| **Assumption** | A value a draft uses that its brief or ticket does not state (a price, a limit, a label), listed in the change's `assumptions.md` with the requirements that use it. |
+| **Brief** | Your plan for a product, saved as `docs/brief.md`, with a short front matter naming the product, its actors, their surfaces and its modules. |
+| **Capability** | One area of the product (orders, invoices, …). Its requirements live in `docs/specs/capabilities/<capability>/spec.md`. |
+| **Change** | A folder under `docs/specs/changes/<id>/` holding work in progress: a proposal and a delta. Opened by `propose`, closed by `archive`. |
+| **D-rules** | The drafting checklist (D1–D12) a draft from a brief must pass: a scenario per requirement and per surface, values with a source, open questions that block, and more. |
+| **Definition of Ready** | The checks a Jira ticket must pass before it becomes a change: the T-rules. |
 | **Delivered** | A status of `Implemented`, `Verified` or `Released`. |
-| **Change** | A reviewable delta — new requirements or edits to shipped ones — opened by `propose`, archived once its requirements are applied. |
+| **Delta** | The part of a change that says what moves: the requirements and scenarios it adds, modifies or removes. |
+| **Draft** | A change opened from a brief or a ticket, and checked against that source text before a person reviews it. Not to be confused with the status `Draft`, which a requirement has before work on it starts and which owes nothing to the gate. |
+| **Gate** | `specgate check`: the specification checks (`validate --strict`), your architecture check if you set one, and your tests. `apply` runs it for one requirement; CI runs it on every pull request. |
+| **Harness** | `specgate harness run`: hands each pending requirement to a coding agent in its own git worktree, runs the gate, and marks the requirement `Implemented` only when it passes. |
 | **Pack** | A versioned domain model installed with `specgate specops add`. |
-| **Harness** | The unattended plan → agent → gate → done loop. |
-
----
+| **Question** / **Needs Clarification** | What a draft's source cannot answer, listed in the change's `questions.md`. A requirement a question blocks has the status `Needs Clarification`: `apply` and the harness refuse it until someone answers. |
+| **Requirement** (`REQ-NNN`) | One obligation of the system, a numbered section in `spec.md` or a capability spec. |
+| **Scenario** (`SCN-NNN`) | A Gherkin example that demonstrates a requirement, in `features/`. |
+| **T-rules** | The ticket's Definition of Ready (T1–T9): acceptance criteria present, measurable and about behaviour, the ticket small enough, no open question, and more. |
+| **Ticket** | A Jira story or bug used as the source text of a change: `specgate propose --from-ticket <KEY>`. |
+| **Traceability matrix** | `docs/specs/traceability.md`: one row per scenario, linking requirement, scenario, feature file, test, code and status. Generated, never edited. |
 
 ## Next
 

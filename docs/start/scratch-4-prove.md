@@ -6,11 +6,14 @@ gate has checked it — the whole gate green, and a page that tells anyone
 where the product stands.
 <!-- specgate:endgoal -->
 
+**Before you start:** [phase 3](scratch-3-build.md) is done — REQ-002 has a
+test that names it, and the test passes.
+
 | Who | Does what in this phase |
 | --- | --- |
 | **You** | Ask for the requirement to be applied |
-| **The gate** | Decides: the specification is complete, a test names the requirement, and your suite passes — or nothing is written |
-| **The report** | Turns the matrix into a page a product owner can read |
+| **The gate** (`specgate check`) | Decides: the specification is complete, a test names the requirement, and your suite passes — or nothing is written |
+| **The report** | Turns the traceability matrix into a page a product owner can read |
 
 ## 1. Apply the requirement — `specgate apply`
 
@@ -36,7 +39,8 @@ $ specgate apply REQ-002
 
 Before writing `Implemented`, `apply` ran the gate for REQ-002 and your test
 command. A missing test, a `<placeholder>` left in a scenario or a red suite,
-and it refuses — and writes nothing.
+and it refuses — and writes nothing. It does not commit either; commit the
+test, the code and the status together.
 
 ## 2. Watch it refuse what is not finished
 
@@ -60,7 +64,7 @@ That refusal is the point. An agent asked to "finish the bookings module"
 cannot close it by inventing the fee; the question stays open until a person
 answers it.
 
-And the draft stays open with it. A change is archived when its code is done
+And the draft stays open with it. You archive a change when its code is done
 — every requirement it adds applied — so the specification and the code
 merge together:
 
@@ -77,8 +81,9 @@ $ specgate archive draft-bookings
 <!-- specgate:out-scratch-archive:end -->
 
 Once the client answers Q1 and REQ-003 and REQ-004 are applied, the same
-command merges the draft into the specification — after a person has
-reviewed its pull request.
+command merges the draft into the specification, the traceability matrix and
+`features/`. Archive on your branch, then open the pull request: the
+specification and its code reach review together.
 
 ## 3. Run the whole gate — what CI will run
 
@@ -123,7 +128,7 @@ $ specgate report --out report.html
 
 One self-contained HTML page: what is done, what is pending, what is missing
 a test, and what is waiting for an answer — readable without the repository.
-Here is the same report on one of the pilots:
+Here is the same report on one of the pilot projects:
 
 ![The specgate report for the HealthTech pilot: 23 of 24 requirements implemented, each with its feature, test and code, and one waiting for an answer.](../assets/img/report-healthtech.webp)
 
@@ -142,4 +147,6 @@ Here is the same report on one of the pilots:
 | `not marked Implemented: the project's tests failed. [done_tests_failed]` | Your suite is red | Make it pass, then `apply` again |
 | `REQ-004 is waiting for an answer (Needs Clarification). [done_needs_clarification]` | An open question blocks it | Get the answer, record it, remove the status, then test and close |
 
-**[Next: phase 5 — every day →](scratch-5-every-day.md)**
+## Next
+
+**[Phase 5 — every day →](scratch-5-every-day.md)**

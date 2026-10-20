@@ -44,30 +44,31 @@ export interface NavSection {
 }
 
 /**
- * Simplification plan, phase 6: the places a reader goes, in the order they
- * need them — start, every day, the gate, existing code, reference,
- * extensions — and everything else under "Advanced". Every shipped document
- * is still in exactly one section.
+ * The places a reader goes, in the order they need them: start, where the
+ * work comes from, every day, the gate, existing code, reference, extensions;
+ * then forja, a companion tool, and everything else under "Advanced". Every
+ * shipped document is still in exactly one section.
  */
 export const NAV: readonly NavSection[] = [
   {
     title: "Start",
     icon: "rocket",
     summary:
-      "Two journeys of five phases — from scratch, or on code you already have — every output recorded from the CLI.",
+      "Install it, learn the ideas behind it, and follow one of two journeys of five short steps — a new project, or code you already have.",
     entries: [
       {
         slug: "getting-started",
         group: "Begin",
-        label: "Pick your path",
+        label: "Getting started",
         blurb:
-          "Starting from scratch, or bringing code you already have? Both journeys at a glance.",
+          "Install it, choose where you start and where the work comes from, then the four verbs.",
       },
       {
-        slug: "quickstart",
+        slug: "concepts",
         group: "Begin",
-        label: "You cloned a spec-driven repo",
-        blurb: "Someone handed you a spec-driven repository. Start here instead.",
+        label: "Concepts",
+        blurb:
+          "The six ideas behind every command, and the vocabulary: change, delta, draft, gate, matrix.",
       },
       {
         slug: "start/scratch-1-install",
@@ -78,19 +79,13 @@ export const NAV: readonly NavSection[] = [
         blurb: "Create the project with your own tools, set Specgate up, run the gate once.",
       },
       {
-        slug: "start/write-the-brief",
-        group: "From scratch",
-        label: "Write the brief",
-        blurb:
-          "Your plan as docs/brief.md, the four fields on top — or let your agent propose them.",
-      },
-      {
         slug: "start/scratch-2-specify",
         group: "From scratch",
         step: 2,
         time: "20–60 min a module",
         label: "Specify",
-        blurb: "The brief becomes a draft per module, checked by `draft --check`, then archived.",
+        blurb:
+          "The brief becomes a draft change per module, checked against the brief, then reviewed by a person.",
       },
       {
         slug: "start/scratch-3-build",
@@ -106,7 +101,8 @@ export const NAV: readonly NavSection[] = [
         step: 4,
         time: "2 min",
         label: "Prove",
-        blurb: "`done` closes it only through the gate; `check` and `report` show where it stands.",
+        blurb:
+          "`apply` marks a requirement Implemented only through the gate; `check` and `report` show where it stands.",
       },
       {
         slug: "start/scratch-5-every-day",
@@ -114,7 +110,7 @@ export const NAV: readonly NavSection[] = [
         step: 5,
         time: "10 min, once",
         label: "Every day",
-        blurb: "The gate in CI, the five-command loop, and Gato.",
+        blurb: "The gate in CI, and the four verbs every day.",
       },
       {
         slug: "start/existing-1-adopt",
@@ -138,7 +134,7 @@ export const NAV: readonly NavSection[] = [
         step: 3,
         time: "5 min",
         label: "First requirement",
-        blurb: "The test you already have names it; `done` closes it.",
+        blurb: "The test you already have names it; `apply` marks it Implemented.",
       },
       {
         slug: "start/existing-4-ci",
@@ -155,6 +151,229 @@ export const NAV: readonly NavSection[] = [
         label: "Every day",
         blurb: "One behaviour per bug fix, one module at a time.",
       },
+      {
+        slug: "quickstart",
+        group: "Someone else set it up",
+        label: "Joining a project",
+        blurb:
+          "The repository already uses Specgate: see where it stands and deliver your first requirement.",
+      },
+    ],
+  },
+  {
+    title: "Where work comes from",
+    icon: "compass",
+    summary:
+      "Three entries into the same lifecycle: a change you describe, a client brief, or a Jira ticket.",
+    entries: [
+      {
+        slug: "start/write-the-brief",
+        label: "Write the brief",
+        blurb:
+          "Your plan as docs/brief.md, the four fields on top — or let your agent propose them.",
+      },
+      {
+        slug: "from-a-brief",
+        label: "From a client brief",
+        blurb: "A brief to a reviewed draft: assumptions, open questions and the draft checklist.",
+      },
+      {
+        slug: "from-a-ticket",
+        label: "From a Jira ticket",
+        blurb:
+          "A story with acceptance criteria to a change checked against it, a branch and a pull request.",
+      },
+      {
+        slug: "existing-project-with-jira",
+        label: "An existing codebase, with Jira",
+        blurb:
+          "Adopt a years-old codebase whose work arrives as Jira tickets: the spec grows ticket by ticket.",
+      },
+    ],
+  },
+  {
+    title: "Every day",
+    icon: "file",
+    summary: "The loop a team runs on every pull request.",
+    entries: [
+      {
+        slug: "first-pr",
+        label: "Your team's first PR",
+        blurb: "What the author writes, what the reviewer reads, and what to do when check fails.",
+      },
+      {
+        slug: "reviewing-changes",
+        label: "Change a shipped requirement",
+        blurb: "Propose, review and archive a change to specs that already shipped.",
+      },
+      {
+        slug: "writing-specs",
+        label: "Writing specs",
+        blurb: "Requirements, scenarios and the traceability matrix.",
+      },
+      {
+        slug: "new-project",
+        label: "A new product, step by step",
+        blurb: "The twelve steps six pilots took, from a client's brief to a running product.",
+      },
+    ],
+  },
+  {
+    title: "The gate in CI",
+    icon: "server",
+    summary: "What fails a pull request, and how to wire it in.",
+    entries: [
+      {
+        slug: "validating",
+        label: "Validating",
+        blurb: "Every check the gate runs, what each status owes, and the flags behind check.",
+      },
+      {
+        slug: "automation",
+        label: "Automation",
+        blurb: "Generate the gate for GitHub, GitLab, Azure or Jenkins.",
+      },
+    ],
+  },
+  {
+    title: "Existing code",
+    icon: "compass",
+    summary: "Adopting Specgate on a repository that already ships.",
+    entries: [
+      {
+        slug: "case-studies/case-1",
+        label: "Worked example: brownfield adoption",
+        blurb:
+          "One existing service adopted end to end — invented company, every command and output real.",
+      },
+      {
+        slug: "vs-openspec",
+        label: "Specgate or OpenSpec",
+        blurb: "Where they differ, where OpenSpec is ahead, and how to use both.",
+      },
+      {
+        slug: "openspec",
+        label: "Already on OpenSpec",
+        blurb: "Keep your OpenSpec specs; verify proves that what they call done is done.",
+      },
+      {
+        slug: "comparisons",
+        label: "Comparisons",
+        blurb: "How this differs from OpenSpec, Spec Kit and writing it yourself.",
+      },
+    ],
+  },
+  {
+    title: "Proven on real products",
+    icon: "check",
+    summary:
+      "Six products built from real client briefs — what worked, and what Specgate got wrong.",
+    entries: [
+      {
+        slug: "projects/index",
+        label: "All six, compared",
+        blurb: "Brief, stack, requirements and tests for each pilot, side by side.",
+      },
+      {
+        slug: "projects/rebar-crew",
+        label: "Rebar Crew — field app",
+        blurb: "Expo + Next.js: 47 of 47, after a first round that was done and unusable.",
+      },
+      {
+        slug: "projects/bookings",
+        label: "Bookings — appointments",
+        blurb: "Next.js from a detailed brief: 38 of 38 in five cycles.",
+      },
+      {
+        slug: "projects/credit-shop",
+        label: "Credit shop — e-commerce",
+        blurb: "A five-line brief became 24 requirements, nearly every value an assumption.",
+      },
+      {
+        slug: "projects/fincore",
+        label: "FinCore — core banking",
+        blurb: "Spring Boot: 59 of 60, one legal question left to the client.",
+      },
+      {
+        slug: "projects/eventtech",
+        label: "EventTech — event operations",
+        blurb: "Quarkus with event sourcing and real time: 38 of 38.",
+      },
+      {
+        slug: "projects/healthtech",
+        label: "HealthTech — clinical cases",
+        blurb: "Quarkus in a regulated domain: 23 of 24, no clinical rule invented.",
+      },
+    ],
+  },
+  {
+    title: "Reference",
+    icon: "book",
+    summary: "Every command, a router to the right guide, and what to do when something fails.",
+    entries: [
+      {
+        slug: "commands",
+        label: "Command reference",
+        blurb: "Every command, its flags and its JSON shape.",
+      },
+      {
+        slug: "how-to",
+        label: "How-to guides",
+        blurb: "I want to… — the guide for each task.",
+      },
+      {
+        slug: "faq",
+        label: "FAQ",
+        blurb: "The questions a team asks in its first week, answered in two lines each.",
+      },
+      {
+        slug: "troubleshooting",
+        label: "Troubleshooting",
+        blurb: "When the gate says no and you disagree.",
+      },
+    ],
+  },
+  {
+    title: "Extensions",
+    icon: "robot",
+    summary: "Agents, MCP, the harness, domain packs and your issue tracker.",
+    entries: [
+      {
+        slug: "agents",
+        label: "Agent tools",
+        blurb: "Wire Claude Code, Cursor, Copilot and six others into the same loop.",
+      },
+      {
+        slug: "mcp",
+        label: "The MCP server",
+        blurb:
+          "The daily loop as tools for Claude Desktop, Cursor and other MCP clients, and the guard on the spec.",
+      },
+      {
+        slug: "harness",
+        label: "The harness",
+        blurb: "Unattended delivery: plan → agent → gate → apply, one worktree per requirement.",
+      },
+      {
+        slug: "harness-report",
+        label: "What the harness has cost",
+        blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",
+      },
+      {
+        slug: "domain-packs",
+        label: "Domain packs",
+        blurb: "Install requirements a pilot already proved, or package your own.",
+      },
+      {
+        slug: "packs-end-to-end",
+        label: "Domain packs, end to end",
+        blurb: "Install a pack, upgrade it to a new version, and take it off again.",
+      },
+      {
+        slug: "alm",
+        label: "Jira, Azure Boards, GitHub",
+        blurb: "Mirror requirements onto a board without letting the board define them.",
+      },
     ],
   },
   {
@@ -162,7 +381,7 @@ export const NAV: readonly NavSection[] = [
     title: "New project (forja)",
     icon: "package",
     summary:
-      "Start from an empty folder with a whole application: the architecture in place, sign-in working, Specgate adopted.",
+      "forja, a companion tool, generates a whole application with the architecture in place, sign-in working and Specgate adopted.",
     entries: [
       {
         slug: "forja/getting-started",
@@ -228,203 +447,6 @@ export const NAV: readonly NavSection[] = [
     ],
   },
   {
-    title: "Every day",
-    icon: "file",
-    summary: "The loop a team runs on every pull request.",
-    entries: [
-      {
-        slug: "first-pr",
-        label: "Your team's first PR",
-        blurb: "What the author writes, what the reviewer reads, and what to do when check fails.",
-      },
-      {
-        slug: "writing-specs",
-        label: "Writing specs",
-        blurb: "Requirements, scenarios and the traceability matrix.",
-      },
-      {
-        slug: "reviewing-changes",
-        label: "Reviewing changes",
-        blurb: "Propose, review and archive a change to specs that already shipped.",
-      },
-      {
-        slug: "from-a-brief",
-        label: "From a client brief",
-        blurb: "A brief to a reviewed draft: assumptions, open questions and the draft checklist.",
-      },
-      {
-        slug: "from-a-ticket",
-        label: "From a Jira ticket",
-        blurb:
-          "A story with acceptance criteria to a change checked against it, a branch and a pull request.",
-      },
-      {
-        slug: "new-project",
-        label: "A new project, step by step",
-        blurb: "The twelve steps six pilots took, from a client's brief to a running product.",
-      },
-    ],
-  },
-  {
-    title: "Proven on real products",
-    icon: "check",
-    summary:
-      "Six products built from real client briefs — what worked, and what Specgate got wrong.",
-    entries: [
-      {
-        slug: "projects/index",
-        label: "All six, compared",
-        blurb: "Brief, stack, requirements and tests for each pilot, side by side.",
-      },
-      {
-        slug: "projects/rebar-crew",
-        label: "Rebar Crew — field app",
-        blurb: "Expo + Next.js: 47 of 47, after a first round that was done and unusable.",
-      },
-      {
-        slug: "projects/bookings",
-        label: "Bookings — appointments",
-        blurb: "Next.js from a detailed brief: 38 of 38 in five cycles.",
-      },
-      {
-        slug: "projects/credit-shop",
-        label: "Credit shop — e-commerce",
-        blurb: "A five-line brief became 24 requirements, nearly every value an assumption.",
-      },
-      {
-        slug: "projects/fincore",
-        label: "FinCore — core banking",
-        blurb: "Spring Boot: 59 of 60, one legal question left to the client.",
-      },
-      {
-        slug: "projects/eventtech",
-        label: "EventTech — event operations",
-        blurb: "Quarkus with event sourcing and real time: 38 of 38.",
-      },
-      {
-        slug: "projects/healthtech",
-        label: "HealthTech — clinical cases",
-        blurb: "Quarkus in a regulated domain: 23 of 24, no clinical rule invented.",
-      },
-    ],
-  },
-  {
-    title: "The gate in CI",
-    icon: "server",
-    summary: "What fails a pull request, and how to wire it in.",
-    entries: [
-      {
-        slug: "validating",
-        label: "Validating",
-        blurb: "Every check the gate runs, what each status owes, and the flags behind check.",
-      },
-      {
-        slug: "automation",
-        label: "Automation",
-        blurb: "Generate the gate for GitHub, GitLab, Azure or Jenkins.",
-      },
-    ],
-  },
-  {
-    title: "Existing code",
-    icon: "compass",
-    summary: "Adopting Specgate on a repository that already ships.",
-    entries: [
-      {
-        slug: "case-studies/case-1",
-        label: "Worked example: brownfield adoption",
-        blurb:
-          "One existing service adopted end to end — invented company, every command and output real.",
-      },
-      {
-        slug: "vs-openspec",
-        label: "Specgate or OpenSpec",
-        blurb: "Where they differ, where OpenSpec is ahead, and how to use both.",
-      },
-      {
-        slug: "openspec",
-        label: "Already on OpenSpec",
-        blurb: "Keep your OpenSpec specs; verify proves that what they call done is done.",
-      },
-      {
-        slug: "comparisons",
-        label: "Comparisons",
-        blurb: "How this differs from OpenSpec, Spec Kit and writing it yourself.",
-      },
-    ],
-  },
-  {
-    title: "Reference",
-    icon: "book",
-    summary: "Every command, the ideas behind them, and what to do when something fails.",
-    entries: [
-      {
-        slug: "commands",
-        label: "Command reference",
-        blurb: "Every command, its flags and its JSON shape.",
-      },
-      {
-        slug: "concepts",
-        label: "How Specgate thinks",
-        blurb:
-          "Six ideas — requirement, scenario, mention, generated matrix, status, one gate — that explain every command.",
-      },
-      {
-        slug: "faq",
-        label: "FAQ",
-        blurb: "The questions a team asks in its first week, answered in two lines each.",
-      },
-      {
-        slug: "troubleshooting",
-        label: "Troubleshooting",
-        blurb: "When the gate says no and you disagree.",
-      },
-    ],
-  },
-  {
-    title: "Extensions",
-    icon: "robot",
-    summary: "Agents, MCP, the harness, domain packs and your issue tracker.",
-    entries: [
-      {
-        slug: "agents",
-        label: "Agent tools",
-        blurb: "Wire Claude Code, Cursor, Copilot and six others into the same loop.",
-      },
-      {
-        slug: "mcp",
-        label: "The MCP server",
-        blurb:
-          "The daily loop as tools for Claude Desktop, Cursor and other MCP clients, and the guard on the spec.",
-      },
-      {
-        slug: "harness",
-        label: "The harness",
-        blurb: "Unattended delivery: plan → agent → gate → done, one worktree per requirement.",
-      },
-      {
-        slug: "harness-report",
-        label: "What the harness has cost",
-        blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",
-      },
-      {
-        slug: "domain-packs",
-        label: "Domain packs",
-        blurb: "Install requirements a pilot already proved, or package your own.",
-      },
-      {
-        slug: "packs-end-to-end",
-        label: "Domain packs, end to end",
-        blurb: "Install a pack, upgrade it to a new version, and take it off again.",
-      },
-      {
-        slug: "alm",
-        label: "Jira, Azure Boards, GitHub",
-        blurb: "Mirror requirements onto a board without letting the board define them.",
-      },
-    ],
-  },
-  {
     title: "Advanced",
     icon: "book",
     summary: "Longer reads, setups and the reasons behind the design.",
@@ -432,17 +454,13 @@ export const NAV: readonly NavSection[] = [
       {
         slug: "tutorial",
         label: "Tutorial: Smart Parking",
-        blurb: "A complete worked example, from a blank folder to a delivered requirement.",
+        blurb:
+          "A complete worked example on a domain pack, from a blank folder to a delivered requirement.",
       },
       {
         slug: "agent-setup",
         label: "Choosing your agent",
         blurb: "Claude, Aider, Cursor or a three-line wrapper — and the two things that bite.",
-      },
-      {
-        slug: "how-to",
-        label: "How-to guides",
-        blurb: "Short answers to specific questions.",
       },
       {
         slug: "supply-chain",
