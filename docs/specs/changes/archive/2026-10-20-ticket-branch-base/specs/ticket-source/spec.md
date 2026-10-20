@@ -44,10 +44,10 @@ The system SHALL, when `specgate propose --from-ticket <KEY>` opens a change in 
 
 The system SHALL, when it makes a change id and a branch name from a ticket's summary, write `ß` as `ss`, `ä`, `ö`, `ü` as `ae`, `oe`, `ue` (and their capitals), and drop other accents to their base letter, before it keeps letters and digits.
 
-#### Scenario: SCN-161a — Groß-/Kleinschreibung
+#### Scenario: SCN-161a — "Groß" becomes "gross" in the change id
 
 - GIVEN the exported PET-101 with the summary "Suche ignoriert Groß-/Kleinschreibung nicht"
 - WHEN the developer runs `specgate propose --from-ticket PET-101.json --capability owners --no-branch`
 - THEN the change is `pet-101-suche-ignoriert-gross-kleinschreibung-nicht`
 
-<!-- specgate:trace actor=Developer kind=functional status=Draft test=tests/unit/ticket-source.test.ts -->
+<!-- specgate:trace status=Implemented test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
