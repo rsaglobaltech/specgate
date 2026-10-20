@@ -29,3 +29,9 @@ Feature: The ticket key travels with the work
     Given a clone whose remote's default branch is `main`, where the developer is on `develop`, which has commits `main` lacks, and `alm.config.yaml` names `pr.base: develop`
     When the developer runs `specgate propose --from-ticket KAN-13.json --capability entry-exit`
     Then the branch `feature/KAN-13-register-vehicle-entry` starts from `develop`, and `specgate check` on it warns `ticket_key_missing` for none of `develop`'s commits
+
+  @REQ-148 @SCN-148f
+  Scenario: The developer's develop is behind origin
+    Given a clone with `pr.base: develop` whose local `develop` lacks the colleague's commit "chore: pull requests target develop" that `origin/develop` has, and a ticket branch that merged `origin/develop`
+    When the developer runs `specgate check` on the ticket branch
+    Then it does not warn `ticket_key_missing` for the colleague's commit

@@ -119,7 +119,7 @@ The system SHALL, on `specgate propose --from-ticket <KEY>` for a ticket with no
 
 ### Requirement: REQ-148 — The ticket key travels with the work
 
-The system SHALL, when `specgate propose --from-ticket <KEY>` opens a change in a git repository with no uncommitted changes, create and check out the branch `feature/<KEY>-<slug>`, or `bugfix/<KEY>-<slug>` for a ticket of type Bug, from the base branch — `pr.base` in `alm.config.yaml` when it names a branch that exists, otherwise the current branch when it is not another ticket's branch, otherwise the remote's default branch — unless `--no-branch` is given; SHALL then push that branch to `origin` and set it as upstream, unless `--no-push` is given or there is no `origin`, so a Git host linked to Jira shows the ticket's branch — and a Jira automation can move the ticket — as soon as work starts, saying so when the push fails without undoing the change; SHALL, on `specgate check` in a change's branch, warn with `ticket_key_missing` for each commit since the base branch (`pr.base` when set, otherwise as for `--base`) whose message does not contain the change's ticket key; and SHALL, on `--check` for a ticket whose change already exists, report `ticket_changed` with the lines that differ from `ticket.md`.
+The system SHALL, when `specgate propose --from-ticket <KEY>` opens a change in a git repository with no uncommitted changes, create and check out, without tracking the base, the branch `feature/<KEY>-<slug>`, or `bugfix/<KEY>-<slug>` for a ticket of type Bug, from the base branch — `pr.base` in `alm.config.yaml` when it names a branch that exists — the local branch when it already contains `origin/<pr.base>`, otherwise `origin/<pr.base>`, so a local copy nobody updated is not the base — otherwise the current branch when it is not another ticket's branch, otherwise the remote's default branch — unless `--no-branch` is given; SHALL then push that branch to `origin` and set it as upstream, unless `--no-push` is given or there is no `origin`, so a Git host linked to Jira shows the ticket's branch — and a Jira automation can move the ticket — as soon as work starts, saying so when the push fails without undoing the change; SHALL, on `specgate check` in a change's branch, warn with `ticket_key_missing` for each commit since the base branch (`pr.base` when set, otherwise as for `--base`) whose message does not contain the change's ticket key; and SHALL, on `--check` for a ticket whose change already exists, report `ticket_changed` with the lines that differ from `ticket.md`.
 
 #### Scenario: SCN-148a — A story becomes a branch
 
@@ -150,6 +150,12 @@ The system SHALL, when `specgate propose --from-ticket <KEY>` opens a change in 
 - GIVEN a clone whose remote's default branch is `main`, where the developer is on `develop`, which has commits `main` lacks, and `alm.config.yaml` names `pr.base: develop`
 - WHEN the developer runs `specgate propose --from-ticket KAN-13.json --capability entry-exit`
 - THEN the branch `feature/KAN-13-register-vehicle-entry` starts from `develop`, and `specgate check` on it warns `ticket_key_missing` for none of `develop`'s commits
+
+#### Scenario: SCN-148f — The developer's develop is behind origin
+
+- GIVEN a clone with `pr.base: develop` whose local `develop` lacks the colleague's commit "chore: pull requests target develop" that `origin/develop` has, and a ticket branch that merged `origin/develop`
+- WHEN the developer runs `specgate check` on the ticket branch
+- THEN it does not warn `ticket_key_missing` for the colleague's commit
 
 <!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-148.feature kind=functional status=Implemented test=tests/unit/ticket-source.test.ts -->
 
