@@ -103,6 +103,7 @@
 | REQ-164 | SCN-164a | `features/trusted-gate/REQ-164.feature` | - | - | - | - | - | tests/unit/change-overlap.test.ts | Implemented |
 | REQ-165 | SCN-165a | `features/ticket-source/REQ-165.feature` | - | - | - | - | - | tests/unit/change-overlap.test.ts | Implemented |
 | REQ-166 | SCN-166a | `features/trusted-gate/REQ-166.feature` | - | - | - | - | - | packages/core/test/unit/capability-spec-merge.test.ts | Implemented |
+| REQ-168 | SCN-168a | `features/trusted-gate/REQ-168.feature` | - | - | - | - | - | tests/unit/change-base.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -6,4 +6,4 @@ Found rehearsing two tickets that rewrite one requirement: once the first was me
 
 ## Scope
 
-REQ-120: an id collides only when this branch introduced it, that is when it is absent at the merge base of the branch and the base. A requirement both sides hold from before is concurrent editing, which REQ-160 and REQ-167 cover.
+REQ-120: an id collides only when this branch introduced it, that is when it is absent at the merge base of the branch and the base. A requirement both sides hold from before is concurrent editing, which REQ-160 and REQ-168 cover.
