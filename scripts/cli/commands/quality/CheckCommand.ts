@@ -16,6 +16,7 @@ import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
 import { ticketKeyFindings } from "../../../lib/ticket-keys";
+import { changeOverlaps } from "../../../lib/change-overlap";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -131,9 +132,10 @@ export class CheckCommand extends BaseCommand {
       );
     }
 
-    // On a ticket's branch, commits that do not name the ticket (ADR-0039).
+    // On a ticket's branch, commits that do not name the ticket (ADR-0039);
+    // and requirements another open change rewrites too (REQ-160).
     // Said whatever the gate decides: a failed gate is fixed on the same branch.
-    const ticketKeys = ticketKeyFindings(projectDir, baseFlag);
+    const ticketKeys = [...ticketKeyFindings(projectDir, baseFlag), ...changeOverlaps(projectDir)];
     if (!json) {
       for (const d of ticketKeys) process.stdout.write(ui.warn(d.message) + ui.fix(d.fix ?? ""));
     }

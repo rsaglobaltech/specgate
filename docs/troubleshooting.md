@@ -21,7 +21,7 @@ specgate doctor
 | `tests_not_configured`, `check_tests_failed`, `check_arch_failed`, `check_validate_failed`, `check_change_invalid`, `scenario_steps_unwritten`, `scenario_placeholder_step`, `scenario_not_covered`, `[TDD-1]`, `declared_artifact_missing`, `requirement_template_obligation`, `id_taken_on_base`, `matrix_stale` | [The gate](#the-gate)                   |
 | `apply_no_test`, `done_validate_failed`, `done_tests_failed`, `done_needs_clarification`, `archive_requirements_pending`, `archive_draft_not_ready`                                                                                                                                                                | [Apply and archive](#apply-and-archive) |
 | `D1`–`D12`, `draft_no_brief`, `draft_module_not_in_brief`, `draft_agent_failed`, `draft_agent_needs_git`, `draft_brief_text_lost`, `draft_brief_body_changed`                                                                                                                                                      | [Drafting](#drafting)                   |
-| `T1`–`T9`, `ticket_*`, `pr_failed`                                                                                                                                                                                                                                                                                 | [Tickets](#tickets)                     |
+| `T1`–`T9`, `ticket_*`, `pr_failed`, `change_overlap`                                                                                                                                                                                                                                                               | [Tickets](#tickets)                     |
 | `requirement_scenario_unrunnable`, `agent_rewrote_gate_command`                                                                                                                                                                                                                                                    | [Harness](#harness)                     |
 | `alm_config_unread_key`                                                                                                                                                                                                                                                                                            | [Tickets](#tickets)                     |
 
@@ -109,6 +109,14 @@ board, are in the table of
 `ticket_epic`, `ticket_changed`, `ticket_copy_edited`, `ticket_key_missing`,
 `ticket_bad_key`, `ticket_no_capability` and the `specgate alm pr` errors
 (`pr_failed`). The **T-rules** are the ticket's Definition of Ready.
+
+`change_overlap` means two open changes rewrite the same requirement: one in
+your branch, the other on the same branch or on another branch that is not
+merged yet (`check` reads every local and remote-tracking branch). Merged as
+they are, the second rewrite would replace the first, with or without a git
+conflict. Agree which goes first, merge it, bring it into the other branch, and
+draft the second change again over the requirement as merged. Run `git fetch`
+first, so the remote branches you compare against are current.
 
 `alm_config_unread_key` means a key in `alm.config.yaml` that your provider
 does not read. The message names the provider that would; see

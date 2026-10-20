@@ -8,6 +8,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`change_overlap`** (REQ-160): `check`, and the report on a change opened
+  from a ticket, warn when a requirement your open change modifies or removes
+  is also rewritten by another open change, on this branch or on any local or
+  remote-tracking branch not merged yet. Two tickets rewriting REQ-012 on two
+  branches used to surface as a git conflict at the second merge, or not at
+  all.
+
 ## [0.22.1] — 2026-10-20
 
 Documentation a newcomer can follow, and the CLI's words brought in line with it.

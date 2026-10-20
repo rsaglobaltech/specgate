@@ -38,6 +38,7 @@ import { draftReport, openFindings, reserveScenarioRange } from "../spec/DraftCo
 import { ticketGuide, ticketPrompt } from "../../../draft/ticket-guide";
 import { runConfinedAgent, withWritePermission } from "../../../draft/confined-agent";
 import { baseFor } from "../../../lib/ticket-keys";
+import { changeOverlaps } from "../../../lib/change-overlap";
 
 const CHANGES = "docs/specs/changes";
 /** The placeholder `templateDelta` writes: a delta nobody has written yet. */
@@ -622,7 +623,12 @@ export class TicketCommand extends BaseCommand {
       return;
     }
     const report = result?.report;
-    const status: Diagnostic[] = [...integrity, ...(report?.status ?? [])];
+    const status: Diagnostic[] = [
+      ...integrity,
+      ...(report?.status ?? []),
+      // Another open change rewrites one of these requirements (REQ-160).
+      ...changeOverlaps(projectDir),
+    ];
     const errors = status.filter((d) => d.severity === "error").length;
     const ready = !notWritten && errors === 0;
     const next = ready ? "specgate apply" : `specgate propose --from-ticket ${opts.ticket}`;
