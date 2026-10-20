@@ -46,6 +46,7 @@ for the policy on when and how to write an ADR.
 | [0036](0036-a-gate-a-team-can-trust.md) | A gate a team can trust: no false positives, ids checked, matrix merges, harness chain | Accepted | 2026-10-19 |
 | [0037](0037-see-the-harness-work.md) | See the harness work: events, a live view, explore, a tour | Accepted | 2026-10-19 |
 | [0038](0038-brief-cards.md) | Brief cards: module sections with rules, examples and questions, checked before drafting | Accepted | 2026-10-20 |
+| [0039](0039-the-ticket-as-source-text.md) | The ticket as source text: a ticket with acceptance criteria opens a change checked against it; the board stays read-only | Accepted | 2026-10-20 |
 
 ## Template
 
