@@ -32,11 +32,11 @@ Which keys a provider reads is the provider's own declaration, and they differ:
 
 <!-- specgate:alm-provider-table — checked by tests/unit/alm-conformance.test.ts -->
 
-| Provider | Required                               | Optional                             |
-| -------- | -------------------------------------- | ------------------------------------ |
-| `jira`   | `base_url`, `project_key`, `token_env` | `user_env`, `issue_type`, `cloud_id` |
-| `azure`  | `base_url`, `project_key`, `token_env` | `issue_type`, `done_state`           |
-| `github` | `repo`, `token_env`                    | `base_url`                           |
+| Provider | Required                               | Optional                                                          |
+| -------- | -------------------------------------- | ----------------------------------------------------------------- |
+| `jira`   | `base_url`, `project_key`, `token_env` | `user_env`, `issue_type`, `cloud_id`, `acceptance_field`, `epics` |
+| `azure`  | `base_url`, `project_key`, `token_env` | `issue_type`, `done_state`                                        |
+| `github` | `repo`, `token_env`                    | `base_url`                                                        |
 
 Four asymmetries worth knowing, because the first two used to fail silently:
 

@@ -9,7 +9,7 @@
 
 - [x] 2.1 Search through `/search/jql`, page by page (REQ-143)
 - [x] 2.2 Scoped tokens through the gateway (REQ-144)
-- [ ] 2.3 A ticket read into its parts (REQ-145)
+- [x] 2.3 A ticket read into its parts (REQ-145)
 
 ## 3. From a ticket to a change
 

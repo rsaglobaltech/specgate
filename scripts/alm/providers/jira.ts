@@ -61,6 +61,7 @@ class JiraClient extends HttpAlmClient {
   private readonly projectKey: string;
   private readonly issueType: string;
   private readonly cloudId: string | undefined;
+  private readonly acceptanceField: string | undefined;
   private gateway: Promise<string> | undefined;
 
   constructor(cfg: AlmConfig, fetchImpl?: FetchLike) {
@@ -76,6 +77,7 @@ class JiraClient extends HttpAlmClient {
     this.projectKey = String(cfg.project_key ?? "");
     this.issueType = cfg.issue_type ?? "Task";
     this.cloudId = cfg.cloud_id ? String(cfg.cloud_id).trim() : undefined;
+    this.acceptanceField = cfg.acceptance_field ? String(cfg.acceptance_field) : undefined;
   }
 
   /**
@@ -197,6 +199,27 @@ class JiraClient extends HttpAlmClient {
     return found;
   }
 
+  /**
+   * One issue, with the fields a ticket is read from. A key outside the
+   * configured project is refused before any request: the credential may see
+   * other projects, and this command has no business there.
+   */
+  async readIssue(key: string): Promise<unknown> {
+    if (!new RegExp(`^${this.projectKey}-\\d+$`).test(key)) {
+      throw new Error(
+        `Jira: ${key} is not an issue of project ${this.projectKey}.\n` +
+          "Fix: use a key of the project in alm.config.yaml, or export the issue and pass the file."
+      );
+    }
+    const fields = ["summary", "issuetype", "parent", "labels", "description", "status"];
+    if (typeof this.acceptanceField === "string") fields.push(this.acceptanceField);
+    return this.requestJson<unknown>(
+      `/rest/api/3/issue/${key}?fields=${fields.join(",")}`,
+      `Jira read ${key}`,
+      { headers: this.headers }
+    );
+  }
+
   async closeIssue(issueKey: string): Promise<void> {
     const transition = await this.findDoneTransition(issueKey);
     await this.request(`/rest/api/3/issue/${issueKey}/transitions`, `Jira transition ${issueKey}`, {
@@ -249,7 +272,8 @@ export const jiraProvider: AlmProvider = {
     // variable in the config is better, not compulsory.
     // `cloud_id` routes a token created with scopes through Atlassian's
     // gateway: a site id, or `auto` to read it from the site.
-    optional: ["user_env", "issue_type", "cloud_id"],
+    // `acceptance_field` and `epics` serve `propose --from-ticket` (ADR-0039).
+    optional: ["user_env", "issue_type", "cloud_id", "acceptance_field", "epics"],
   },
   capabilities: { create: true, readStatus: true, close: true, listIssues: true },
   create: (cfg, fetchImpl) => new JiraClient(cfg, fetchImpl),

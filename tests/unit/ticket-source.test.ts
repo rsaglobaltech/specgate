@@ -223,3 +223,199 @@ test("REQ-144 SCN-144c: a search answered as anonymous fails instead of finding 
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── Exported tickets ─────────────────────────────────────────────────────────
+
+const PROPOSE = path.join(ROOT_DIR, "dist", "scripts", "propose.js");
+
+type Inline = string | { strong: string };
+
+/** A paragraph as Jira's editor writes one: text runs, some bold. */
+function para(...runs: Inline[]) {
+  return {
+    type: "paragraph",
+    content: runs.map((r) =>
+      typeof r === "string"
+        ? { type: "text", text: r }
+        : { type: "text", text: r.strong, marks: [{ type: "strong" }] }
+    ),
+  };
+}
+
+function list(ordered: boolean, items: Inline[][]) {
+  return {
+    type: ordered ? "orderedList" : "bulletList",
+    content: items.map((runs) => ({ type: "listItem", content: [para(...runs)] })),
+  };
+}
+
+/** "Given …, when …, then …" with the keywords bold, as the analyst wrote KAN-18. */
+const gwt = (given: string, when: string, then: string): Inline[] => [
+  { strong: "Given" },
+  ` ${given}, `,
+  { strong: "when" },
+  ` ${when}, `,
+  { strong: "then" },
+  ` ${then}`,
+];
+
+const KAN_18 = {
+  key: "KAN-18",
+  fields: {
+    summary: "Parking fee calculation",
+    issuetype: { name: "Story" },
+    parent: { key: "KAN-6" },
+    labels: ["garage-system", "open-questions", "spec-2.2"],
+    description: {
+      type: "doc",
+      version: 1,
+      content: [
+        para(
+          "As an administrator, I want the system to calculate the parking fee automatically so that customers are charged correctly."
+        ),
+        para({ strong: "Source:" }, " Spec §2.2"),
+        para({ strong: "Acceptance Criteria" }),
+        list(true, [
+          gwt(
+            "a vehicle without an active subscription",
+            "its exit is registered",
+            "the fee = billing increments (rounded up) × rate per increment, and never less than the minimum charge."
+          ),
+          gwt(
+            "a vehicle whose plate has an active subscription on the exit date",
+            "its exit is registered",
+            "the subscription rule is applied instead of the time-based fee."
+          ),
+          gwt("the rate in force at exit time", "the fee is calculated", "that rate is used."),
+          gwt(
+            "the calculation logic",
+            "unit tests run",
+            "they cover at least: 0 minutes, exactly 1 hour, 1 hour 1 minute, a stay crossing midnight, and a multi-day stay."
+          ),
+          gwt(
+            "any calculated fee",
+            "it is stored",
+            "it is rounded to 2 decimal places using a decimal type."
+          ),
+        ]),
+        para({ strong: "Open questions" }),
+        list(false, [
+          [
+            "When a subscriber exits, is an invoice issued with amount 0, or no invoice at all? Assumption: invoice issued with amount 0.",
+          ],
+        ]),
+      ],
+    },
+  },
+};
+
+/** A ticket's parts, as `--check --json` reports them. */
+interface TicketJson {
+  key: string;
+  summary: string;
+  type: string;
+  parent: string | null;
+  intent: string;
+  source: string | null;
+  criteria: string[];
+  questions: Array<{ text: string; assumption: string | null }>;
+}
+
+function runPropose(dir: string, args: string[]) {
+  return spawnSync(process.execPath, [PROPOSE, ...args, "--project-dir", dir], {
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "1" },
+  });
+}
+
+function exported(dir: string, name: string, issue: unknown): string {
+  const file = path.join(dir, name);
+  fs.writeFileSync(file, JSON.stringify(issue), "utf8");
+  return file;
+}
+
+// ── REQ-145 ──────────────────────────────────────────────────────────────────
+
+test("REQ-145 SCN-145a: a story is read into intent, source, criteria and questions", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "KAN-18.json", KAN_18);
+    const run = runPropose(dir, ["--from-ticket", file, "--check", "--json"]);
+    const doc = JSON.parse(run.stdout) as { ticket: TicketJson };
+    const t = doc.ticket;
+    assert.equal(t.key, "KAN-18");
+    assert.equal(t.type, "Story");
+    assert.equal(t.parent, "KAN-6");
+    assert.match(t.intent, /^As an administrator/);
+    assert.equal(t.source, "Spec §2.2");
+    assert.equal(t.criteria.length, 5);
+    assert.match(t.criteria[0], /^Given a vehicle without an active subscription, when/);
+    assert.equal(t.questions.length, 1);
+    assert.match(t.questions[0].text, /^When a subscriber exits/);
+    assert.equal(t.questions[0].assumption, "invoice issued with amount 0.");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-145 SCN-145b: German headings in a plain-text description", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "story.json", {
+      key: "KAN-70",
+      fields: {
+        summary: "Kennzeichen suchen",
+        issuetype: { name: "Story" },
+        labels: [],
+        description: [
+          "Als Administrator möchte ich ein Fahrzeug nach Kennzeichen finden.",
+          "",
+          "Akzeptanzkriterien:",
+          "- Angenommen das Kennzeichen AB123CD ist in der Garage, wenn ich AB123CD suche, dann erscheint es in der Liste.",
+          "- Angenommen kein Fahrzeug passt, wenn ich suche, dann erscheint 'Kein Fahrzeug gefunden'.",
+          "",
+          "Offene Fragen",
+          "- Soll die Suche Teiltreffer finden? Annahme: ja, ab 3 Zeichen.",
+        ].join("\n"),
+      },
+    });
+    const run = runPropose(dir, ["--from-ticket", file, "--check", "--json"]);
+    const t = (JSON.parse(run.stdout) as { ticket: TicketJson }).ticket;
+    assert.equal(t.criteria.length, 2);
+    assert.match(t.criteria[1], /Kein Fahrzeug gefunden/);
+    assert.equal(t.questions.length, 1);
+    assert.equal(t.questions[0].assumption, "ja, ab 3 Zeichen.");
+    assert.match(t.intent, /^Als Administrator/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-145: acceptance_field, when it has text, is where the criteria come from", () => {
+  const dir = project(JIRA + "acceptance_field: customfield_10050\n");
+  try {
+    const file = exported(dir, "story.json", {
+      key: "KAN-71",
+      fields: {
+        summary: "Export invoices",
+        issuetype: { name: "Story" },
+        description: "As an accountant I want a CSV of the month's invoices.",
+        customfield_10050: {
+          type: "doc",
+          content: [
+            list(false, [
+              ["Given October has 3 invoices, when I export October, then the CSV has 3 rows."],
+            ]),
+          ],
+        },
+      },
+    });
+    const run = runPropose(dir, ["--from-ticket", file, "--check", "--json"]);
+    const t = (JSON.parse(run.stdout) as { ticket: TicketJson }).ticket;
+    assert.deepEqual(t.criteria, [
+      "Given October has 3 invoices, when I export October, then the CSV has 3 rows.",
+    ]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -107,6 +107,11 @@ export interface AlmClient {
   closeIssue(issueKey: string): Promise<void>;
   /** Present only when `capabilities.listIssues` is true. */
   listIssues?(label: string): Promise<IssueSummary[]>;
+  /**
+   * One issue as the provider's own JSON, for `propose --from-ticket`
+   * (ADR-0039). Read-only, and only for the configured project's keys.
+   */
+  readIssue?(key: string): Promise<unknown>;
 }
 
 /** The subset of `fetch` the providers use, so tests can replay recordings. */

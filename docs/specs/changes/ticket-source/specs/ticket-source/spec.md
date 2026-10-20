@@ -61,7 +61,7 @@ The system SHALL read one issue — from Jira by key, or from a file holding Jir
 - WHEN the developer runs `specgate propose --from-ticket story.json --check --json`
 - THEN the criteria and the questions are read from those sections
 
-<!-- specgate:trace status=Draft feature=features/ticket-source/REQ-145.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/ticket-source/REQ-145.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-146 — A ticket is checked against a Definition of Ready
 
