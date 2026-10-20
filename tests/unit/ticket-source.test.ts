@@ -1697,3 +1697,86 @@ test("REQ-159 SCN-159a: the pull request carries the archived change", () => {
     fs.rmSync(origin, { recursive: true, force: true });
   }
 });
+
+// ── REQ-148 (gitflow base), REQ-161 ──────────────────────────────────────────
+
+test("REQ-148 SCN-148e: gitflow — the ticket's branch starts from develop, not the remote's main", () => {
+  const upstream = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-upstream-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-clone-"));
+  try {
+    // An upstream whose default branch is main, cloned: origin/HEAD → origin/main.
+    git(upstream, "init", "-q", "-b", "main");
+    fs.writeFileSync(path.join(upstream, "README.md"), "upstream\n");
+    git(upstream, "add", "-A");
+    git(upstream, "commit", "-qm", "upstream history");
+    fs.rmSync(dir, { recursive: true, force: true });
+    assert.equal(spawnSync("git", ["clone", "-q", upstream, dir]).status, 0);
+    git(dir, "checkout", "-q", "-b", "develop");
+    fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
+    fs.mkdirSync(path.join(dir, "docs", "specs"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "docs", "specs", "traceability.md"),
+      "# Traceability Matrix\n\n| Requirement | Status |\n|---|---|\n"
+    );
+    fs.writeFileSync(path.join(dir, "alm.config.yaml"), PR_CONFIG);
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "the company's adoption, only on develop");
+    const file = path.join(os.tmpdir(), `kan13h-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit", "--no-push"]);
+    fs.rmSync(file);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(
+      git(dir, "rev-parse", "--abbrev-ref", "HEAD"),
+      "feature/KAN-13-register-vehicle-entry"
+    );
+    assert.ok(
+      fs.existsSync(path.join(dir, "alm.config.yaml")),
+      "develop's files are on the ticket's branch"
+    );
+    assert.equal(git(dir, "merge-base", "--is-ancestor", "develop", "HEAD"), "");
+    const { ticketKeyFindings } = require("../../scripts/lib/ticket-keys");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "KAN-13 docs(spec): open the change");
+    assert.deepEqual(ticketKeyFindings(dir), [], "develop's own commits are not the ticket's");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(upstream, { recursive: true, force: true });
+  }
+});
+
+test("REQ-161 SCN-161a: a German summary makes a readable change id", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "PET-101.json", {
+      key: "PET-101",
+      fields: {
+        summary: "Suche ignoriert Groß-/Kleinschreibung nicht",
+        issuetype: { name: "Bug" },
+        description:
+          'Akzeptanzkriterien\n- Angenommen "Davis", wenn ich "davis" suche, dann wird "Davis" angezeigt.',
+      },
+    });
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "owners", "--no-branch"]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.ok(
+      fs.existsSync(
+        path.join(
+          dir,
+          "docs",
+          "specs",
+          "changes",
+          "pet-101-suche-ignoriert-gross-kleinschreibung-nicht"
+        )
+      ),
+      fs.readdirSync(path.join(dir, "docs", "specs", "changes")).join(", ")
+    );
+    const { changeIdFor } = require("../../scripts/cli/commands/change/TicketCommand");
+    assert.equal(
+      changeIdFor({ key: "PET-7", summary: "Größe für Ärzte ändern, café" }),
+      "pet-7-groesse-fuer-aerzte-aendern-cafe"
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

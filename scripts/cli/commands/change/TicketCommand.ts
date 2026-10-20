@@ -37,7 +37,7 @@ import {
 import { draftReport, openFindings, reserveScenarioRange } from "../spec/DraftCommand";
 import { ticketGuide, ticketPrompt } from "../../../draft/ticket-guide";
 import { runConfinedAgent, withWritePermission } from "../../../draft/confined-agent";
-import { baseFor } from "../../../lib/ticket-keys";
+import { baseFor, prBase, TICKET_BRANCH } from "../../../lib/ticket-keys";
 import { changeOverlaps } from "../../../lib/change-overlap";
 
 const CHANGES = "docs/specs/changes";
@@ -162,9 +162,14 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
   }
   // From the base, not from wherever HEAD is: another ticket's branch would
   // bring its commits into this ticket's pull request.
+  // `pr.base` first (where its pull request goes); else the branch you are on,
+  // unless it is another ticket's; only then the remote's default, which with
+  // gitflow is main while the work starts from develop.
   let base: string | null;
   try {
-    base = baseFor(dir);
+    const current = git(dir, ["rev-parse", "--abbrev-ref", "HEAD"]).stdout.trim();
+    const onBase = current !== "HEAD" && !TICKET_BRANCH.test(current);
+    base = prBase(dir) ?? (onBase ? current : baseFor(dir));
   } catch {
     return {
       name: null,
@@ -201,7 +206,10 @@ function readIf(file: string): string | undefined {
 
 /** `kan-13-register-vehicle-entry`: the key, then the summary's first words. */
 export function changeIdFor(t: Ticket): string {
+  // "Groß" is "gross", "Ärzte" "aerzte" (REQ-161); other accents drop.
   const slug = t.summary
+    .replace(/ß/g, "ss")
+    .replace(/[ÄÖÜäöü]/g, (c) => ({ Ä: "Ae", Ö: "Oe", Ü: "Ue", ä: "ae", ö: "oe", ü: "ue" })[c] ?? c)
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()

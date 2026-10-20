@@ -8,6 +8,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A ticket's branch starts from `develop` with gitflow** (REQ-148): from
+  `pr.base`, else the branch you are on, else the remote's default. A clone
+  whose default is `main` cut the branch from `origin/main`, without the
+  team's work on `develop`; `ticket_key_missing` measures from the same base.
+- **Readable ids from German summaries** (REQ-161): `ß` → `ss`, `ä` → `ae`…;
+  "Groß-/Kleinschreibung" made `gro-kleinschreibung`.
+
 ### Added
 
 - **`change_overlap`** (REQ-160): `check`, and the report on a change opened
