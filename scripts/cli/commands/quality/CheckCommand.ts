@@ -17,6 +17,7 @@ import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
 import { prBase, ticketKeyFindings } from "../../../lib/ticket-keys";
 import { changeOverlaps } from "../../../lib/change-overlap";
+import { changeBaseFindings, recordBases } from "../../../lib/change-base";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -135,7 +136,13 @@ export class CheckCommand extends BaseCommand {
     // On a ticket's branch, commits that do not name the ticket (ADR-0039);
     // and requirements another open change rewrites too (REQ-160).
     // Said whatever the gate decides: a failed gate is fixed on the same branch.
-    const ticketKeys = [...ticketKeyFindings(projectDir, baseFlag), ...changeOverlaps(projectDir)];
+    const ticketKeys = [
+      ...ticketKeyFindings(projectDir, baseFlag),
+      ...changeOverlaps(projectDir),
+      ...changeBaseFindings(projectDir, baseFlag),
+    ];
+    // After the comparison, so the first sight of a change records, not warns (REQ-168).
+    recordBases(projectDir);
     if (!json) {
       for (const d of ticketKeys) process.stdout.write(ui.warn(d.message) + ui.fix(d.fix ?? ""));
     }

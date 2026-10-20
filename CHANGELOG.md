@@ -34,6 +34,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **`change_base_moved`** (REQ-168): a change records, in `based_on` in its
+  `change.yaml`, the text of each requirement it modifies or removes; `check`
+  warns and `archive` refuses when that requirement changed since, and `check`
+  warns before the branch has even brought the base in.
+  `change validate <change> --rebased` records the new text once the delta is
+  rewritten. When two tickets rewrote one requirement, the second used to
+  archive over the first with a green gate and no conflict.
 - **Capability specs merge requirement by requirement** (REQ-166):
   `harness init` registers a second git merge driver, `specgate-spec`, for
   `docs/specs/capabilities/*/spec.md`, and `doctor` checks it. Two tickets

@@ -41,6 +41,11 @@ function parse(text: string): Parsed {
   return { preamble: normal.slice(0, first), blocks };
 }
 
+/** Each `### Requirement:` block of a capability spec, by id (REQ-168 reads them too). */
+export function requirementBlocks(text: string): Map<string, string> {
+  return parse(text).blocks;
+}
+
 const numeric = (id: string) => Number(/(\d+)/.exec(id)?.[1] ?? 0);
 
 /** Three-way choice for one unit; `null` when both sides changed it differently. */

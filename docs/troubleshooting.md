@@ -21,7 +21,7 @@ specgate doctor
 | `tests_not_configured`, `check_tests_failed`, `check_arch_failed`, `check_validate_failed`, `check_change_invalid`, `scenario_steps_unwritten`, `scenario_placeholder_step`, `scenario_not_covered`, `[TDD-1]`, `declared_artifact_missing`, `requirement_template_obligation`, `id_taken_on_base`, `matrix_stale` | [The gate](#the-gate)                   |
 | `apply_no_test`, `done_validate_failed`, `done_tests_failed`, `done_needs_clarification`, `archive_requirements_pending`, `archive_draft_not_ready`                                                                                                                                                                | [Apply and archive](#apply-and-archive) |
 | `D1`–`D12`, `draft_no_brief`, `draft_module_not_in_brief`, `draft_agent_failed`, `draft_agent_needs_git`, `draft_brief_text_lost`, `draft_brief_body_changed`                                                                                                                                                      | [Drafting](#drafting)                   |
-| `T1`–`T9`, `ticket_*`, `pr_failed`, `change_overlap`, `change_id_clash`                                                                                                                                                                                                                                            | [Tickets](#tickets)                     |
+| `T1`–`T9`, `ticket_*`, `pr_failed`, `change_overlap`, `change_id_clash`, `change_base_moved`                                                                                                                                                                                                                       | [Tickets](#tickets)                     |
 | `requirement_scenario_unrunnable`, `agent_rewrote_gate_command`                                                                                                                                                                                                                                                    | [Harness](#harness)                     |
 | `alm_config_unread_key`                                                                                                                                                                                                                                                                                            | [Tickets](#tickets)                     |
 
@@ -124,6 +124,17 @@ the other's branch. `propose --from-ticket` fetches `origin` before it reserves
 ids, so this needs two tickets opened within seconds of each other. Renumber
 the one whose branch is not merged yet, in its delta and in the tests that
 name it.
+
+`change_base_moved` means a requirement your change modifies or removes has
+changed since your delta was written: usually the other ticket of a
+`change_overlap` merged first. Archiving your delta as it is would replace the
+requirement with your rewrite of the old text, and the other ticket's rule
+would be lost without a conflict, so `archive` refuses. Bring the base into
+your branch, rewrite the requirement in your delta over the text as it reads
+now, keeping what the other change added, then run
+`specgate change validate <change> --rebased` to record the new text. The
+first `check` or `change validate` that sees a change records what it
+rewrites, in `based_on` in its `change.yaml`.
 
 A git conflict in `docs/specs/capabilities/<name>/spec.md` with markers around
 whole requirements means both branches rewrote that requirement. Write it as

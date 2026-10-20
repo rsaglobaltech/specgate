@@ -39,6 +39,7 @@ import { ticketGuide, ticketPrompt } from "../../../draft/ticket-guide";
 import { runConfinedAgent, withWritePermission } from "../../../draft/confined-agent";
 import { baseFor, prBase, TICKET_BRANCH } from "../../../lib/ticket-keys";
 import { changeOverlaps } from "../../../lib/change-overlap";
+import { changeBaseFindings, recordBases } from "../../../lib/change-base";
 
 const CHANGES = "docs/specs/changes";
 /** The placeholder `templateDelta` writes: a delta nobody has written yet. */
@@ -687,9 +688,12 @@ export class TicketCommand extends BaseCommand {
     const status: Diagnostic[] = [
       ...integrity,
       ...(report?.status ?? []),
-      // Another open change rewrites one of these requirements (REQ-160).
+      // Another open change rewrites one of these requirements (REQ-160),
+      // or one of them moved under this change (REQ-168).
       ...changeOverlaps(projectDir),
+      ...changeBaseFindings(projectDir),
     ];
+    recordBases(projectDir);
     const errors = status.filter((d) => d.severity === "error").length;
     const ready = !notWritten && errors === 0;
     const next = ready ? "specgate apply" : `specgate propose --from-ticket ${opts.ticket}`;
