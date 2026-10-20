@@ -1809,3 +1809,38 @@ test("REQ-147: the agent is told everything it needs is in the guide", () => {
   assert.match(prompt, /Everything you need is in this guide/);
   assert.match(prompt, /do not read Specgate's own code/i);
 });
+
+// ── REQ-162 ──────────────────────────────────────────────────────────────────
+
+test("REQ-162 SCN-162a: OpenCode gets the loop's commands", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-opencode-"));
+  try {
+    fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
+    fs.writeFileSync(path.join(dir, "opencode.json"), "{}\n");
+    const run = spawnSync(
+      process.execPath,
+      [CLI, "agents", "init", "--tool", "opencode", "--project-dir", dir],
+      {
+        encoding: "utf8",
+        env: { ...process.env, NO_COLOR: "1" },
+      }
+    );
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const draft = fs.readFileSync(
+      path.join(dir, ".opencode", "commands", "specgate-draft.md"),
+      "utf8"
+    );
+    assert.match(draft, /^---\ndescription: .+\n/);
+    assert.match(draft, /^specgate propose --from-brief \$ARGUMENTS$/m);
+    assert.match(draft, /^# \/specgate-draft$/m);
+    assert.ok(fs.existsSync(path.join(dir, "AGENTS.md")));
+    const help = spawnSync(process.execPath, [CLI, "agents", "init", "--help"], {
+      encoding: "utf8",
+    }).stdout;
+    assert.match(help, /opencode/);
+    const { detectAgents } = require("../../scripts/agents/detect");
+    assert.ok(detectAgents(dir).includes("opencode"));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

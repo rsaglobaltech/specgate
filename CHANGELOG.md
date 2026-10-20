@@ -19,6 +19,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **OpenCode in `agents init`** (REQ-162): `/specgate-*` commands in
+  `.opencode/commands/`, detected from `.opencode/` or `opencode.json`.
 - **`change_overlap`** (REQ-160): `check`, and the report on a change opened
   from a ticket, warn when a requirement your open change modifies or removes
   is also rewritten by another open change, on this branch or on any local or

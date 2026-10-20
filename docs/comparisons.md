@@ -38,7 +38,7 @@ tool exist because of it.
 | **Discoverable pack registry** | ⚠️ generator ships, not yet hosted | n/a | ❌ | ❌ | ❌ | n/a |
 | **Zero-install (just docs)** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Agent JSON contract, documented and tested** | ✅ generated from source | ✅ hand-written | ❌ | ❌ | ❌ | ❌ |
-| **Slash commands for agent tools** | ✅ 10 tools (`agents init`) | ✅ | ❌ | n/a | ❌ | ❌ |
+| **Slash commands for agent tools** | ✅ 11 tools (`agents init`) | ✅ | ❌ | n/a | ❌ | ❌ |
 | **Configurable artefact graph** | ✅ `specgate schema` | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Multi-repo spec sharing** | ✅ private packs | ⚠️ Stores | ❌ | ❌ | ❌ | ❌ |
 | **Time to first value** | ✅ **< 1s CLI, measured**[^ttfv] | ✅ minutes | ✅ minutes | ✅ instant | ✅ instant | ✅ instant |

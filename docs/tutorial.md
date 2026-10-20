@@ -1082,7 +1082,7 @@ The server exposes the CLI as MCP tools — `specgate_status`, `specgate_check`,
 (the four verbs under their older names) — so an MCP-aware client
 can drive the same loop natively. See [MCP server](mcp.md).
 
-### Slash commands, for ten agent tools at once
+### Slash commands, for eleven agent tools at once
 
 ```bash
 specgate agents init                     # or --tool claude,cursor

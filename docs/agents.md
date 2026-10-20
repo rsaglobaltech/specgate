@@ -5,8 +5,10 @@ commands for each step, an instruction file it reads on every session, and the
 rules it must not break.
 
 **You need:** a project where `specgate init` has run, and one of the agent
-tools below. `specgate agents init` supports nine: Claude Code, Cursor,
-Copilot, Windsurf, Aider, Gemini, Cline, Codex and Antigravity. It can also
+tools below. `specgate agents init` supports ten: Claude Code, Cursor,
+Copilot, Windsurf, Aider, Gemini, Cline, Codex, Antigravity and OpenCode. In
+OpenCode the commands are `/specgate-draft`, `/specgate-apply` and so on,
+written to `.opencode/commands/`; it reads `AGENTS.md` itself. It can also
 write a Claude Code plugin, on request
 ([Install the Claude Code plugin](automation.md#install-the-claude-code-plugin)).
 To run an agent unattended instead, see [The harness](harness.md).

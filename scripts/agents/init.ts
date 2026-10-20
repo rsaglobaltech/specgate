@@ -326,6 +326,22 @@ export const TOOLS: Record<string, AgentTool> = {
     label: "Codex",
     files: () => [{ path: "AGENTS.md", contents: instructionsBody("Agent instructions") }],
   },
+  opencode: {
+    label: "OpenCode",
+    // OpenCode reads AGENTS.md itself; its commands are Markdown files under
+    // `.opencode/commands/`, invoked by file name (`/specgate-draft`), with a
+    // `description` in the front matter and `$ARGUMENTS` for what follows.
+    files: () => [
+      ...STEPS.map((s) => ({
+        path: path.join(".opencode", "commands", `${AGENT_NAMESPACE}-${s.name}.md`),
+        contents: slashCommandBody(s).replace(
+          `# /${AGENT_NAMESPACE}:${s.name}`,
+          `# /${AGENT_NAMESPACE}-${s.name}`
+        ),
+      })),
+      { path: "AGENTS.md", contents: instructionsBody("Agent instructions") },
+    ],
+  },
   antigravity: {
     label: "Antigravity",
     // Two files, because Antigravity reads both halves of what Specgate offers:
