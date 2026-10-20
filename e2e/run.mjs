@@ -83,7 +83,7 @@ function surfaceCommands() {
   const names = [];
   for (const c of SURFACE) {
     // Plumbing git calls as a merge driver: nobody types it.
-    if (c.name === "merge-traceability") continue;
+    if (c.name.startsWith("merge-")) continue;
     if (c.subcommands) for (const s of c.subcommands) names.push(`${c.name} ${s.name}`);
     else names.push(c.name);
   }

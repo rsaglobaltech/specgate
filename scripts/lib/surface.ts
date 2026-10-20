@@ -205,6 +205,12 @@ export const SURFACE: Command[] = [
     // a hidden command rather than a line in a menu nobody can act on.
   },
   {
+    // Plumbing too: the merge driver for docs/specs/capabilities/*/spec.md.
+    name: "merge-capability-spec",
+    script: ["merge-capability-spec.js"],
+    mcp: false,
+  },
+  {
     name: "status",
     script: ["status.js"],
     help: {

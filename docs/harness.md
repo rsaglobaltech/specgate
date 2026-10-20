@@ -142,6 +142,20 @@ keep both**, because a duplicated requirement row is corruption. Then run
 `specgate validate .`, which checks the statuses and that no scenario id
 repeats.
 
+## Parallel branches and capability specs
+
+With one change per ticket, two branches often archive into the same
+capability, `docs/specs/capabilities/<name>/spec.md`. Git would conflict on
+the whole file when the capability is new on both. `specgate harness init`
+also registers a driver for these files that merges **requirement by
+requirement**: requirements with different ids are united and sorted by id,
+and a requirement changed on one side only takes that side.
+
+It **conflicts** only when both branches rewrote the same requirement
+differently, the case `change_overlap` warned about before either branch was
+merged. Write the requirement as it should read once both changes hold,
+delete the marker lines, and run `specgate check`.
+
 ## Run more than one requirement at a time
 
 ```bash
@@ -195,15 +209,15 @@ newer path than the serial one. And four green branches are four reviews.
 
 For a nightly job that leaves branches to review:
 
-| Option | What it does |
-| --- | --- |
-| `--resume` | Continues an interrupted run from the attempt it stopped on. |
-| `--budget-seconds <n>` | Stops cleanly before starting a requirement once the time is spent. |
-| `--max-requirements <n>` | Attempts at most n requirements. |
-| `--skip-not-ready` | Skips requirements an agent cannot succeed at (no feature, unmet dependencies). |
-| `--push` | Pushes each green `harness/REQ-NNN` branch. |
-| `--pr-cmd "<cmd>"` | Runs after each push, with `{branch}` and `{req}` placeholders. |
-| `--verbose` | Streams the gate's output while it runs. |
+| Option                   | What it does                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| `--resume`               | Continues an interrupted run from the attempt it stopped on.                    |
+| `--budget-seconds <n>`   | Stops cleanly before starting a requirement once the time is spent.             |
+| `--max-requirements <n>` | Attempts at most n requirements.                                                |
+| `--skip-not-ready`       | Skips requirements an agent cannot succeed at (no feature, unmet dependencies). |
+| `--push`                 | Pushes each green `harness/REQ-NNN` branch.                                     |
+| `--pr-cmd "<cmd>"`       | Runs after each push, with `{branch}` and `{req}` placeholders.                 |
+| `--verbose`              | Streams the gate's output while it runs.                                        |
 
 ## When a run fails
 

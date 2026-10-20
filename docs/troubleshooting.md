@@ -125,6 +125,13 @@ ids, so this needs two tickets opened within seconds of each other. Renumber
 the one whose branch is not merged yet, in its delta and in the tests that
 name it.
 
+A git conflict in `docs/specs/capabilities/<name>/spec.md` with markers around
+whole requirements means both branches rewrote that requirement. Write it as
+it should read with both changes, delete the markers and run `specgate check`.
+If the conflict covers the whole file instead, this clone has not registered
+the merge driver: `specgate doctor` says so, and `specgate harness init`
+registers it.
+
 `alm_config_unread_key` means a key in `alm.config.yaml` that your provider
 does not read. The message names the provider that would; see
 [every key](alm.md#every-key).

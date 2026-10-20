@@ -1203,6 +1203,89 @@ test(
   }
 );
 
+test(
+  "REQ-166 SCN-166a: two branches archiving into the same new capability merge without a conflict",
+  { skip: !hasGit() },
+  () => {
+    // Found merging two tickets of a rehearsal: each archived its own
+    // requirements into a capability that did not exist on the base, and git
+    // answered add/add on the whole file.
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-spec-drv-"));
+    const projectDir = makeHarnessProject(tempRoot);
+
+    const init = runCli(["harness", "init", "--project-dir", projectDir]);
+    assert.equal(init.status, 0, init.stderr);
+    const attributes = fs.readFileSync(path.join(projectDir, ".gitattributes"), "utf8");
+    assert.match(attributes, /^docs\/specs\/capabilities\/\*\/spec\.md merge=specgate-spec$/m);
+    gitInTest(["add", "-A"], { cwd: projectDir });
+    gitInTest(["commit", "--quiet", "-m", "harness setup"], { cwd: projectDir });
+
+    const capability = path.join(projectDir, "docs", "specs", "capabilities", "owners");
+    const spec = (ids: string[]) =>
+      "# Owners\n\n## Requirements\n\n" +
+      ids.map((id) => `### Requirement: ${id} — Rule\n\nThe system SHALL do ${id}.\n`).join("\n");
+    for (const [branch, ids] of [
+      ["ticket/a", ["REQ-009"]],
+      ["ticket/b", ["REQ-006", "REQ-007"]],
+    ] as const) {
+      gitInTest(["checkout", "--quiet", "-b", branch, "main"], { cwd: projectDir });
+      fs.mkdirSync(capability, { recursive: true });
+      fs.writeFileSync(path.join(capability, "spec.md"), spec([...ids]), "utf8");
+      gitInTest(["add", "-A"], { cwd: projectDir });
+      gitInTest(["commit", "--quiet", "-m", `archive ${branch}`], { cwd: projectDir });
+      gitInTest(["checkout", "--quiet", "main"], { cwd: projectDir });
+    }
+
+    for (const branch of ["ticket/a", "ticket/b"]) {
+      const merge = spawnSync("git", ["-C", projectDir, "merge", "--no-edit", branch], {
+        encoding: "utf8",
+      });
+      assert.equal(
+        merge.status,
+        0,
+        `merging ${branch} conflicted:\n${merge.stdout}${merge.stderr}`
+      );
+    }
+    const merged = fs.readFileSync(path.join(capability, "spec.md"), "utf8");
+    assert.deepEqual(
+      [...merged.matchAll(/^### Requirement: (REQ-\d+)/gm)].map((m) => m[1]),
+      ["REQ-006", "REQ-007", "REQ-009"]
+    );
+
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+);
+
+test(
+  "REQ-166: doctor reports a capability spec driver this clone has not registered",
+  {
+    skip: !hasGit(),
+  },
+  () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-spec-doctor-"));
+    const projectDir = path.join(tempRoot, "p");
+    fs.mkdirSync(projectDir, { recursive: true });
+    gitInitForTest(projectDir);
+    fs.writeFileSync(path.join(projectDir, "spec.md"), "# Spec\n", "utf8");
+    fs.writeFileSync(
+      path.join(projectDir, ".gitattributes"),
+      "docs/specs/capabilities/*/spec.md merge=specgate-spec\n",
+      "utf8"
+    );
+
+    const line = () =>
+      runCli(["doctor", "--project-dir", projectDir])
+        .stdout.split("\n")
+        .find((l) => l.includes("spec merge driver")) || "";
+    assert.match(line(), /has not registered it/);
+
+    gitInTest(["config", "merge.specgate-spec.driver", "node x %O %A %B"], { cwd: projectDir });
+    assert.match(line(), /requirement by requirement/);
+
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+);
+
 // ── change author — the spec-author role (E2-02) ─────────────────────────
 
 /** A project with one change ready to be authored, committed and clean. */

@@ -461,7 +461,7 @@ export class InitCommand extends BaseCommand {
       status.push(
         info(
           "merge_driver_registered",
-          "docs/specs/traceability.md now merges row by row, so parallel harness branches do not collide.",
+          "docs/specs/traceability.md now merges row by row and capability specs requirement by requirement, so parallel branches do not collide.",
           {
             target: ".gitattributes",
             fix: "Commit .gitattributes. Every other clone and CI runs `specgate harness init` once to register the driver in its own git config.",
@@ -528,11 +528,49 @@ export class InitCommand extends BaseCommand {
   }
 }
 
-// ── the traceability merge driver ────────────────────────────────────────────
+// ── the merge drivers ────────────────────────────────────────────
 
 /** What `.gitattributes` must say for git to route the matrix to our driver. */
 export const MERGE_DRIVER_NAME = "specgate-matrix";
 export const GITATTRIBUTES_LINE = `docs/specs/traceability.md merge=${MERGE_DRIVER_NAME}`;
+
+/** One merge driver: the files it owns, the hidden command git runs, and why. */
+export interface MergeDriver {
+  name: string;
+  pattern: string;
+  command: string;
+  title: string;
+  /** The `.gitattributes` comment above its line. */
+  comment: string;
+  /** What doctor says when it is registered. */
+  healthy: string;
+}
+
+export const MERGE_DRIVERS: MergeDriver[] = [
+  {
+    name: MERGE_DRIVER_NAME,
+    pattern: "docs/specs/traceability.md",
+    command: "merge-traceability",
+    title: "specgate traceability matrix merge",
+    comment:
+      "# Merge the traceability matrix row by row, so parallel harness\n" +
+      "# branches do not collide on adjacent rows. Needs the driver registered:\n",
+    healthy: "traceability.md merges row by row",
+  },
+  {
+    // REQ-166: two tickets archiving into one capability.
+    name: "specgate-spec",
+    pattern: "docs/specs/capabilities/*/spec.md",
+    command: "merge-capability-spec",
+    title: "specgate capability spec merge",
+    comment:
+      "# Merge capability specs requirement by requirement, so two tickets that\n" +
+      "# archive into the same capability do not collide. Needs the driver registered:\n",
+    healthy: "capability specs merge requirement by requirement",
+  },
+];
+
+export const attributesLine = (d: MergeDriver) => `${d.pattern} merge=${d.name}`;
 
 /**
  * Register the row-wise merge driver for `docs/specs/traceability.md`.
@@ -563,18 +601,19 @@ export function installMergeDriver(projectDir: string) {
   const existing = fs.existsSync(attributesPath) ? fs.readFileSync(attributesPath, "utf8") : "";
 
   let appendedToTracked = false;
-  if (!existing.includes(GITATTRIBUTES_LINE)) {
+  for (const d of MERGE_DRIVERS) {
+    const current = fs.existsSync(attributesPath) ? fs.readFileSync(attributesPath, "utf8") : "";
+    if (current.includes(attributesLine(d))) continue;
     // `.gitattributes` is committed, so appending to it changes a file the
     // whole team shares. A cold evaluator found this the way you always find a
     // silent write — in `git status`, after the fact — so the command says it.
-    appendedToTracked = existing !== "";
-    const separator = existing === "" || existing.endsWith("\n") ? "" : "\n";
+    appendedToTracked ||= existing !== "";
+    const separator = current === "" || current.endsWith("\n") ? "" : "\n";
     fs.appendFileSync(
       attributesPath,
-      `${separator}# Merge the traceability matrix row by row, so parallel harness\n` +
-        `# branches do not collide on adjacent rows. Needs the driver registered:\n` +
+      `${separator}${d.comment}` +
         `#   specgate harness init --project-dir .\n` +
-        `${GITATTRIBUTES_LINE}\n`,
+        `${attributesLine(d)}\n`,
       "utf8"
     );
   }
@@ -601,9 +640,10 @@ export function installMergeDriver(projectDir: string) {
     "specgate.js"
   );
   const driverIsPortable = fs.existsSync(localBin);
-  const driverCommand = driverIsPortable
-    ? `node node_modules/@rsaglobaltech/specgate/bin/specgate.js merge-traceability`
-    : `node ${JSON.stringify(path.join(__dirname, "..", "merge-traceability.js"))}`;
+  const commandFor = (d: MergeDriver) =>
+    driverIsPortable
+      ? `node node_modules/@rsaglobaltech/specgate/bin/specgate.js ${d.command}`
+      : `node ${JSON.stringify(path.join(__dirname, "..", `${d.command}.js`))}`;
 
   const gitConfig = (key: string, value: string) =>
     spawnSync("git", ["-C", projectDir, "config", key, value], { encoding: "utf8" });
@@ -623,27 +663,30 @@ export function installMergeDriver(projectDir: string) {
   //
   // So `driver` goes in first and `name` only follows if it landed; and if it
   // did not, any stale `name` is removed rather than left pointing at nothing.
-  const configured = gitConfig(`merge.${MERGE_DRIVER_NAME}.driver`, `${driverCommand} %O %A %B`);
+  for (const d of MERGE_DRIVERS) {
+    const driverCommand = commandFor(d);
+    const configured = gitConfig(`merge.${d.name}.driver`, `${driverCommand} %O %A %B`);
 
-  if (configured.status !== 0) {
-    spawnSync("git", ["-C", projectDir, "config", "--unset", `merge.${MERGE_DRIVER_NAME}.name`], {
-      encoding: "utf8",
-    });
-    return warning(
-      "merge_driver_not_registered",
-      "Could not register the traceability merge driver in git config.",
-      {
-        target: ".gitattributes",
-        fix:
-          `Run it by hand inside the project:\n` +
-          `  git config merge.${MERGE_DRIVER_NAME}.driver '${driverCommand} %O %A %B'\n` +
-          "Until then git uses its built-in merge, which conflicts when two " +
-          "harness branches touch adjacent rows.",
-      }
-    );
+    if (configured.status !== 0) {
+      spawnSync("git", ["-C", projectDir, "config", "--unset", `merge.${d.name}.name`], {
+        encoding: "utf8",
+      });
+      return warning(
+        "merge_driver_not_registered",
+        `Could not register the ${d.title} driver in git config.`,
+        {
+          target: ".gitattributes",
+          fix:
+            `Run it by hand inside the project:\n` +
+            `  git config merge.${d.name}.driver '${driverCommand} %O %A %B'\n` +
+            `Until then git merges ${d.pattern} by lines, which conflicts when two ` +
+            "parallel branches touch neighbouring lines.",
+        }
+      );
+    }
+
+    gitConfig(`merge.${d.name}.name`, d.title);
   }
-
-  gitConfig(`merge.${MERGE_DRIVER_NAME}.name`, "specgate traceability matrix merge");
 
   if (!driverIsPortable) {
     return warning(
