@@ -14,9 +14,9 @@ import * as ui from "../../../lib/ui";
  * `specgate explore` — thinking with the agent before a change exists
  * (ADR-0037).
  *
- * A brief of where the project stands — requirements by state, the open
+ * A snapshot of where the project stands — requirements by state, the open
  * changes and what they add, the questions still open — and the person's
- * question. Nothing is written: with `--agent`, the agent gets the brief and
+ * question. Nothing is written: with `--agent`, the agent gets the snapshot and
  * anything it writes in the project is undone, and said.
  */
 
@@ -26,9 +26,9 @@ function usage(): void {
   process.stdout.write(
     "Usage:\n" +
       '  specgate explore ["<question>"] [--agent "<cmd>"] [--project-dir <path>] [--json]\n\n' +
-      "A brief for thinking with an agent before a change exists: the requirements by\n" +
+      "A project snapshot for thinking with an agent before a change exists: the requirements by\n" +
       "state, the open changes and their requirements, the open questions, and your\n" +
-      "question. Writes nothing. With --agent, the agent gets the brief (on standard\n" +
+      "question. Writes nothing. With --agent, the agent gets the snapshot (on standard\n" +
       "input, or in a file if the command contains {prompt_file}) and whatever it\n" +
       "writes in the project is undone — the output names it. Needs git for --agent.\n" +
       "When you know what to change: specgate propose <change-id>.\n"
@@ -58,7 +58,7 @@ function questionsIn(projectDir: string): string[] {
   return found;
 }
 
-export function exploreBrief(projectDir: string, question: string) {
+export function projectSnapshot(projectDir: string, question: string) {
   const queue = withQueue(
     projectDir,
     (summary) => ({
@@ -148,7 +148,7 @@ export class ExploreCommand extends BaseCommand {
       ]);
       return;
     }
-    // Same refusal as `status`: without a matrix there is no project to brief.
+    // Same refusal as `status`: without a matrix there is no project to snapshot.
     if (!fs.existsSync(path.join(projectDir, "docs", "specs", "traceability.md"))) {
       io.usage(NULL_SHAPE, [
         error(
@@ -161,21 +161,21 @@ export class ExploreCommand extends BaseCommand {
       ]);
       return;
     }
-    const brief = exploreBrief(projectDir, words.join(" ").trim());
+    const snapshot = projectSnapshot(projectDir, words.join(" ").trim());
 
     if (!agent) {
-      io.emit({ explore: { ...brief, agent: null } }, () => process.stdout.write(brief.text));
+      io.emit({ explore: { ...snapshot, agent: null } }, () => process.stdout.write(snapshot.text));
       return;
     }
 
     if (!json)
-      process.stdout.write(ui.header("explore", brief.question || path.basename(projectDir)));
+      process.stdout.write(ui.header("explore", snapshot.question || path.basename(projectDir)));
     const run = runConfinedAgent({
       projectDir,
       changeId: "explore",
       allowed: () => false,
       command: agent,
-      prompt: brief.text,
+      prompt: snapshot.text,
       showOutput: !json,
     });
     if (run.problem === "no_git") {
@@ -184,7 +184,7 @@ export class ExploreCommand extends BaseCommand {
           "explore_needs_git",
           "--agent needs a git repository to undo what the agent writes.",
           {
-            fix: "git init, or run specgate explore without --agent and paste the brief yourself",
+            fix: "git init, or run specgate explore without --agent and paste the snapshot yourself",
           }
         ),
       ]);
@@ -201,7 +201,7 @@ export class ExploreCommand extends BaseCommand {
         }),
       ]);
     }
-    io.emit({ explore: { ...brief, agent, undone: run.reverted } }, () =>
+    io.emit({ explore: { ...snapshot, agent, undone: run.reverted } }, () =>
       process.stdout.write(ui.next("specgate propose <change-id>", "once a direction is chosen"))
     );
   }

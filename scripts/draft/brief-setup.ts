@@ -58,6 +58,81 @@ export interface BriefProblem {
   code: string;
   message: string;
   fix: string;
+  /** The front matter field a `brief_wrong_shape` is about. */
+  field?: string;
+}
+
+/** The items under `name:` written as a YAML block list (`  - web`). */
+function blockItems(fm: string, name: string): string[] {
+  const m = new RegExp(`^${name}:[ \\t]*\\n((?:[ \\t]+-[^\\n]*\\n?)+)`, "m").exec(uncomment(fm));
+  return m
+    ? m[1]
+        .split("\n")
+        .map((l) => l.replace(/^\s*-\s*/, "").trim())
+        .filter(Boolean)
+    : [];
+}
+
+/**
+ * B1 — a field Specgate cannot read because of how it is written, not
+ * because it is missing. `actors: [Admin]` was reported as "There is no
+ * `actors:` list" and `surfaces: web` passed silently (ADR-0038).
+ */
+function wrongShapes(fm: string): BriefProblem[] {
+  const out: BriefProblem[] = [];
+  const asList = (items: string[]) => `[${items.join(", ")}]`;
+  const surfacesValue = field(fm, "surfaces") ?? "";
+  const productSurfaces = surfacesValue.startsWith("[")
+    ? list(surfacesValue)
+    : surfacesValue
+      ? surfacesValue.split(/[,\s]+/).filter(Boolean)
+      : blockItems(fm, "surfaces");
+  const oneSurface = productSurfaces.find((x) => !placeholder(x)) || "web";
+
+  for (const name of ["surfaces", "modules", "non_goals"]) {
+    const value = field(fm, name);
+    if (value === null) continue;
+    // `modules:` may be a YAML block list; the checklist reads both.
+    if (name === "modules" && value === "") continue;
+    const items =
+      value === ""
+        ? blockItems(fm, name)
+        : value.startsWith("[")
+          ? null
+          : value
+              .split(",")
+              .map((x) => x.trim())
+              .filter(Boolean);
+    if (items === null || items.length === 0) continue;
+    out.push({
+      code: "brief_wrong_shape",
+      field: name,
+      message: `\`${name}:\` is written as ${value === "" ? "a list of lines" : `"${value}"`}, not as a [...] list.`,
+      fix: `Write it as ${name}: ${asList(items)}`,
+    });
+  }
+
+  // Actors as bare names: `actors: [Admin]`, or `  - Admin`.
+  const actorsValue = field(fm, "actors");
+  if (actorsValue !== null) {
+    const bare =
+      actorsValue.startsWith("[") && !actorsValue.includes("{")
+        ? list(actorsValue)
+        : actorsValue === ""
+          ? blockItems(fm, "actors").filter((x) => !x.startsWith("{"))
+          : actorsValue.startsWith("[") || actorsValue.startsWith("{")
+            ? []
+            : [actorsValue];
+    for (const a of bare.filter((x) => !placeholder(x))) {
+      out.push({
+        code: "brief_wrong_shape",
+        field: "actors",
+        message: `The actor "${a}" is a bare name: Specgate cannot tell where ${a} uses the product.`,
+        fix: `Write it as - { name: ${a}, surfaces: [${oneSurface}] }, one line under actors:, with every place ${a} uses.`,
+      });
+    }
+  }
+  return out;
 }
 
 const placeholder = (v: string) => /<[^>]+>/.test(v);
@@ -91,6 +166,10 @@ export function checkFrontMatter(brief: string): BriefProblem[] {
     });
   }
 
+  const shapes = wrongShapes(fm);
+  out.push(...shapes);
+  const misshapen = new Set(shapes.map((p) => p.field));
+
   const surfaces = list(field(fm, "surfaces"));
   const unfilled = surfaces.filter(placeholder);
   if (unfilled.length > 0) {
@@ -113,7 +192,7 @@ export function checkFrontMatter(brief: string): BriefProblem[] {
   // Every `name:` is an actor; the checklist only reads `{ name: X, surfaces: [..] }`.
   const named = [...text.matchAll(/\bname:\s*([^,}\n]+)/g)].map((m) => m[1].trim());
   const actors = actorSurfaces(brief);
-  if (named.length === 0) {
+  if (named.length === 0 && !misshapen.has("actors")) {
     out.push({
       code: "brief_no_actors",
       message: "There is no `actors:` list.",
@@ -162,7 +241,7 @@ export function checkFrontMatter(brief: string): BriefProblem[] {
   }
 
   const modules = briefModules(brief);
-  if (modules.length === 0) {
+  if (modules.length === 0 && !misshapen.has("modules")) {
     out.push({
       code: "brief_no_modules",
       message: "There is no `modules:` list, or it is empty.",
@@ -267,7 +346,7 @@ export function noBriefExplanation(brief: string): string {
   ].join("\n");
 }
 
-/** `docs/brief.md` from `specgate draft --new-brief`. */
+/** `docs/brief.md` from `specgate draft --new-brief`: the fields, then a card per module (ADR-0038). */
 export const BRIEF_TEMPLATE = `---
 # The product, in a few words.
 # Example: Lingo — online lessons for a language school
@@ -286,33 +365,46 @@ actors:
 # small enough to review in one sitting. Lowercase words with dashes.
 # Example: [courses, lessons, exercises, progress]
 modules: [<first-module>, <second-module>]
+# Optional: what the product will not do, at least for now.
+# non_goals: [payments, video calls]
 ---
 
 # <your product>
 
-## What the product is
+## Why
 
-<!-- Two or three sentences: what it does, and for whom. -->
+<!-- The problem in two sentences, and one or two successes you can measure:
+     "a student finds today's lesson in under 10 seconds", never "fast". -->
 
-## Who uses it and how
+## Glossary
 
-<!-- Each kind of person, or system, and where: on the web, on a phone, through an API. -->
+<!-- The words of this business, one line each. Example:
+     - level: A1 to C2 of the CEFR -->
 
-## What each one must be able to do
+## Module: <first-module>
 
-<!-- For each of them, the things they do, in their own words. A line each is enough. -->
+<!-- One section per module, in the order of modules:. Example:
+     Rules
+     - A course holds at most 12 students.
+     - When a course is full, joining it is refused with "This course is full".
+     Examples
+     - The one where Ana joins "Spanish A2", which has 11 students.
+     - The one where Ana tries to join "Spanish A2", which has 12.
+     Questions
+     - Can a student be in two courses at once? -->
 
-## Rules and numbers you already know
+Rules
+- <one sentence: what must hold>
 
-<!-- Prices, limits, deadlines, opening hours. Only real ones: if you are not sure, leave it out. -->
+Examples
+- <the one where …>
 
-## What you don't know yet
+Questions
+- <what you do not know yet>
 
-<!-- Open questions. Each becomes a question for the client instead of a guess. -->
+## Notes
 
-## Out of scope
-
-<!-- What the product will not do, at least for now. -->
+<!-- Anything else, as it is: the client's email, meeting notes. -->
 `;
 
 /** Where the guide for an agent proposing the front matter is written. */
@@ -379,4 +471,84 @@ export function briefSetupPrompt(guide: string): string {
     "",
     guide,
   ].join("\n");
+}
+
+/** Where the guide for an agent proposing the module sections is written. */
+export const BRIEF_CARDS_FILE = "docs/specs/BRIEF-CARDS.md";
+
+/** The line to paste into any agent to have it propose the module sections. */
+export const BRIEF_CARDS_PASTE = `Propose the module sections of docs/brief.md: follow ${BRIEF_CARDS_FILE}`;
+
+/** The guide an agent follows to propose a section per module (ADR-0038). */
+export function briefCardsGuide(brief: string, modules: string[]): string {
+  return [
+    "# Propose the brief's module sections",
+    "",
+    `Read \`${brief}\` and add, at its end, one section per module of its front`,
+    `matter — ${modules.map((m) => `\`${m}\``).join(", ")} — in that order. A person reviews what you write.`,
+    "",
+    "## The rules",
+    "",
+    "- **Keep every line that is there.** Add sections below the text; never",
+    "  change, move or delete a line of it. If one line is lost, your work is undone.",
+    "- **Only what the brief states.** Every rule, example and question comes from",
+    "  the brief's own text. A value the brief does not give is a question, never a",
+    "  guess.",
+    `- Write only \`${brief}\`. Anything else you write is undone.`,
+    "",
+    "## Each section",
+    "",
+    "```markdown",
+    "## Module: courses",
+    "",
+    "Rules",
+    "- A course holds at most 12 students.",
+    '- When a course is full, joining it is refused with "This course is full".',
+    "",
+    "Examples",
+    '- The one where Ana joins "Spanish A2", which has 11 students.',
+    '- The one where Ana tries to join "Spanish A2", which has 12.',
+    "",
+    "Questions",
+    "- Can a student be in two courses at once?",
+    "```",
+    "",
+    "- **Rules**: one sentence each, what must hold. Open with the condition when",
+    '  there is one: "When …, …", "If …, then …". Numbers with their unit; labels',
+    "  and messages in double quotes, exactly as the brief writes them.",
+    '- **Examples**: at least one per rule, "The one where …", with the rule\'s own',
+    "  values.",
+    "- **Questions**: what the brief leaves open about this module, at most three.",
+    "",
+    "## Then",
+    "",
+    "Stop and show the sections to the person: they review them before anything",
+    "is drafted.",
+    "",
+  ].join("\n");
+}
+
+export function briefCardsPrompt(guide: string): string {
+  return [
+    `Propose the module sections of docs/brief.md, following the guide below (also saved as ${BRIEF_CARDS_FILE}).`,
+    "Specgate checks the brief itself as soon as you finish: do not run it, and do not ask for permission to.",
+    "",
+    "---",
+    "",
+    guide,
+  ].join("\n");
+}
+
+/**
+ * Whether every non-blank line of `before` is still in `after`, in order.
+ * An agent adding sections may add lines anywhere; it may not lose one.
+ */
+export function keepsEveryLine(before: string, after: string): boolean {
+  const want = before.split(/\r?\n/).filter((l) => l.trim() !== "");
+  const have = after.split(/\r?\n/);
+  let at = 0;
+  for (const line of have) {
+    if (at < want.length && line === want[at]) at += 1;
+  }
+  return at === want.length;
 }

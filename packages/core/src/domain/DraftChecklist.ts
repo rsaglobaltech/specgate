@@ -16,6 +16,7 @@ import type { Diagnostic } from "./Diagnostic";
 import { error, info } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
 import { analyseScenario } from "./GherkinQuality";
+import { withoutComments } from "./QuotedText";
 
 export const KINDS = new Set(["functional", "non-functional", "business-rule"]);
 
@@ -498,6 +499,9 @@ export function checkDraft(files: DraftFiles): DraftReport {
     skipped.push({ rule: "D6", why: "no brief given" });
   } else {
     const assumptions = files.assumptions || "";
+    // A template's hints are comments, not the brief: "<!-- e.g. 48 hours -->"
+    // made 48 look stated (ADR-0038).
+    const briefText = withoutComments(files.brief);
     for (const r of reqs) {
       for (const s of r.scenarios) {
         // One finding per value per scenario: a name repeated in three steps is
@@ -507,7 +511,7 @@ export function checkDraft(files: DraftFiles): DraftReport {
           for (const v of statedValues(step)) {
             if (seen.has(v)) continue;
             seen.add(v);
-            if (inText(v, files.brief)) continue;
+            if (inText(v, briefText)) continue;
             if (files.specText && inText(v, files.specText)) continue;
             // A value the requirement's own obligation states, under a `Source:`
             // line, is the cited norm's: "24 characters" and "modulo 97" of ISO

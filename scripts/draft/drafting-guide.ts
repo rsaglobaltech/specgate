@@ -25,6 +25,53 @@ export interface DraftingGuideInput {
   maxRequirements: number;
   /** actor → surfaces, from the brief's front matter. */
   actors: Map<string, string[]>;
+  /** The module's own section of the brief, when it has one (ADR-0038). */
+  cards?: ModuleCards;
+}
+
+/** A module's section of the brief, as `DRAFTING.md` hands it over. */
+export interface ModuleCards {
+  /** The section as the brief writes it, heading included. */
+  source: string;
+  /** Its numbers and "quoted labels", in order. */
+  values: string[];
+  questions: string[];
+}
+
+/** The module's cards: the scope, the values, the questions — or nothing. */
+function cardsPart(i: DraftingGuideInput): string[] {
+  const cards = i.cards;
+  if (!cards) return [];
+  return [
+    "## 0. Your scope — the " + i.module + " section of the brief",
+    "",
+    "This is the only text you draft from. Each **rule** becomes a requirement",
+    "(quote it under `> Brief:`), each **example** a scenario of that",
+    "requirement, each **question** a row of `questions.md`.",
+    "",
+    "````markdown",
+    cards.source,
+    "````",
+    "",
+    ...(cards.values.length
+      ? [
+          "**The values you may use** — write them exactly so; any other value goes",
+          "in `assumptions.md` or becomes a question:",
+          "",
+          cards.values.map((v) => `\`${v}\``).join(" · "),
+          "",
+        ]
+      : []),
+    ...(cards.questions.length
+      ? [
+          "**Questions to copy into `questions.md`**, each with the requirements it",
+          "blocks:",
+          "",
+          ...cards.questions.map((q) => `- ${q}`),
+          "",
+        ]
+      : []),
+  ];
 }
 
 const SCREEN = new Set(["web", "mobile", "desktop", "app", "screen", "ui"]);
@@ -68,11 +115,15 @@ export function draftingGuide(i: DraftingGuideInput): string {
     "scenarios. Nothing is built yet: this is the specification a person will",
     "review. Specgate checks it against the brief.",
     "",
+    ...(i.cards
+      ? [`The brief's \`## Module: ${i.module}\` section is your scope: section 0 below.`, ""]
+      : []),
     `- **The brief:** \`${i.brief}\` — the only source of business facts.`,
     `- **Write only inside:** \`${scope}\`.`,
     `- **Requirement ids:** \`${i.reqRange[0]}\` … \`${i.reqRange[1]}\`, no others — at most ${i.maxRequirements} requirements.`,
     `- **Scenario ids:** from \`${i.firstScenario}\` up, one each.`,
     "",
+    ...cardsPart(i),
     "## 1. The requirements — `specs/" + i.module + "/spec.md`",
     "",
     "Replace the placeholder with one block per requirement:",

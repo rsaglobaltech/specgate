@@ -123,7 +123,12 @@ function verbUsage(sub: string) {
         `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n\n` +
         `  Opens docs/specs/changes/<change-id>/ — proposal, tasks, a reserved REQ range and a\n` +
         `  delta for the capability (named after the change unless --capability says).\n` +
-        `  Then: write the delta, a test that names each requirement, the code; specgate apply.\n\n`
+        `  Then: write the delta, a test that names each requirement, the code; specgate apply.\n\n` +
+        `  ${c.bold}A BRIEF, OR NOT${c.reset}\n` +
+        `    One behaviour to fix or change     No brief: specgate propose <change-id>\n` +
+        `    A feature with a few rules (2–6)   No brief: specgate propose <change-id>, rules in the delta\n` +
+        `    A product, or a large area of one  A brief: docs/brief.md, then specgate propose --from-brief\n` +
+        `                                       ${c.dim}(how to write it: specgate propose --from-brief --new-brief)${c.reset}\n\n`
     );
     return true;
   }
