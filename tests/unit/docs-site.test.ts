@@ -190,13 +190,14 @@ test("the landing page still names the daily loop and what each step does", () =
   // A redesign moved this section from a numbered list to a staged journey and
   // silently dropped two of its commands along the way: the page kept its
   // shape and lost the thing it was for. A visual review does not catch that,
-  // so the loop is pinned here — the five daily commands since 0.13, and the
+  // so the loop is pinned here — the four verbs of ADR-0035, the gate, and the
   // harness that hands the same loop to an agent.
   const html = fs.readFileSync(path.join(ROOT, "docs", "index.html"), "utf8");
   for (const command of [
+    "specgate propose",
+    "specgate apply",
     "specgate status",
-    "specgate new",
-    "specgate done",
+    "specgate archive",
     "specgate check",
     "specgate harness run",
     "specgate init",

@@ -34,6 +34,7 @@ difference is what stands behind `apply` and `archive`.
 | **When a change is archived** | When its code is done: `specgate archive` refuses while a requirement it adds or modifies is not Implemented, and `--force` does not skip that. | Archive asks to continue when tasks are unchecked, and `--yes` skips the question. `/opsx:verify` is an AI review, and its docs say it "won't block archive". |
 | **Your tests** | Run by the gate. A test that mentions `REQ-007` is linked to it; nothing to maintain by hand. | Not run or linked by the CLI. The docs suggest enforcing it "with your own CI or hook". |
 | **A draft written from a brief** | `specgate propose --from-brief <module>` hands your agent the brief and the formats, then compares the draft with the brief and stops on numbers, limits and fees the brief never stated. | Prompts ask the agent not to invent intent and to record its assumptions; nothing checks the result. |
+| **Work from Jira tickets** | `specgate propose --from-ticket <KEY>` checks the story against a Definition of Ready, opens a change from its acceptance criteria on its own branch, and `specgate alm pr` opens one pull request per ticket. See [From a Jira ticket](from-a-ticket.md). | No Jira integration in the CLI; the story reaches a proposal through your agent or by hand. |
 | **Open questions** | A requirement in *Needs Clarification* cannot be built by the harness or delivered by `apply` until someone answers. | Recorded as assumptions in prose; nothing blocks on them. |
 | **Unattended building** | `specgate harness run`: one requirement per git worktree, the gate after each attempt, failures fed into the next. It merges only with `--chain`, one green requirement at a time. | `/opsx:apply` works through the task list in your agent session. |
 | **Proof for the business** | `specgate report`: one page per product — what is done, what is pending, what is missing a test. | `openspec view`, a terminal dashboard. |
@@ -51,8 +52,10 @@ We would rather you hear it from us:
   Specgate's verbs are as few, but `apply` asks for a test per requirement and
   `archive` waits for all of them — that is the point, and it is also more
   work.
-- **Customisation.** OpenSpec's workflow schemas can be forked and shared;
-  Specgate's lifecycle is fixed.
+- **Customisation.** OpenSpec's workflow schemas can be forked and shared.
+  Specgate's can be forked too (`specgate schema fork spec-driven <name>`
+  copies the built-in artefact graph into the project to edit), but the gate
+  inside `apply` and `archive` is the same whatever the schema.
 
 ## What we learned building six products
 
@@ -84,3 +87,8 @@ the rest.
 
 The [full comparison](comparisons.md) also covers Spec Kit, Cursor rules and a
 plain README.
+
+## Next
+
+- [Already on OpenSpec](openspec.md) — keep OpenSpec and gate it with `specgate verify`
+- [Getting started](getting-started.md) — install Specgate and pick your path

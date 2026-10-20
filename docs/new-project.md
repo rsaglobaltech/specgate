@@ -1,13 +1,19 @@
-# From a client brief to a running product
+# A new product, step by step
 
-The path six real products took, from a client's brief to a product that runs
-and a gate that holds it: a booking app, a credit shop, a core banking system,
-an event-operations platform, a clinical-case manager and a field app for a
-rebar crew. The same twelve steps every time. Three of them are yours and cannot be
-delegated: reading the brief (1), reviewing each draft (8) and using the
-product (12). The agent can run the rest.
+This page is the order of work for a new product, from a client's brief to a
+product that runs and a gate that holds it. Six real products took this path:
+a booking app, a credit shop, a core banking system, an event-operations
+platform, a clinical-case manager and a field app for a rebar crew. It was the
+same twelve steps every time. Three of them are yours and cannot be delegated:
+reading the brief (1), reviewing each draft (8) and using the product (12). A
+coding agent can run the rest.
 
 The details of each step live in other guides; this one is the order.
+
+**You need:** Node.js 22 or later, git, the client's brief, and a coding agent
+if you want it to write the drafts. Commands are written as `npx specgate`,
+which runs the copy installed in the project in step 3. In a project without a
+`package.json`, type `npx @rsaglobaltech/specgate@latest` in its place.
 
 ## Once per project
 
@@ -23,12 +29,15 @@ requirement ("the agenda as it was at any date"), not a product to install.
 ### 2. Create the project
 
 Specgate does not generate application code; it adopts a project that already
-builds. Use your scaffold (forja for Next.js, the framework's own for Spring or
-Quarkus), then `git init` and a repository.
+builds. Use your framework's own scaffold, or forja, Specgate's companion tool,
+which generates a TypeScript or Java application with the architecture in
+place ([forja: Getting started](forja/getting-started.md)). Then `git init`
+and a repository.
 
 ### 3. Adopt Specgate
 
 ```bash
+npm install --save-dev @rsaglobaltech/specgate
 npx specgate init --no-capabilities        # a new project: no proposals from folders
 npx specgate config set test_cmd "<cmd>"   # the tests `check` and `apply` run
 npx specgate apply REQ-001                 # the adoption baseline
@@ -70,8 +79,7 @@ npx specgate propose --from-brief            # the brief's modules, and the next
 npx specgate propose --from-brief <module>   # opens it, linked to the brief, with DRAFTING.md
 ```
 
-`specgate draft` is the older name of `specgate propose --from-brief`; both
-work. Before the first module, `specgate propose --from-brief --check` checks
+Before the first module, `npx specgate propose --from-brief --check` checks
 the brief itself: its fields, a section per module, rules with examples
 ([Write the brief](start/write-the-brief.md)).
 
@@ -82,7 +90,7 @@ One module per draft: a reviewer reads ten requirements, not sixty
 
 Tell your agent `Draft the <module> module: follow
 docs/specs/changes/draft-<module>/DRAFTING.md` — or run
-`specgate propose --from-brief <module> --agent "claude -p"`. The agent writes
+`npx specgate propose --from-brief <module> --agent "claude -p"`. The agent writes
 `specs/<module>/spec.md` and two files next to it:
 
 - **`assumptions.md`** — every value the brief does not give, and the
@@ -103,9 +111,10 @@ every pilot found by running the product.
 npx specgate propose --from-brief <module>
 ```
 
-Twelve rules, D1–D12: a scenario per requirement and per surface, values that
-come from somewhere, laws with their source, open questions that block, ids
-that do not collide, and (D12) an actor who can get every id they act on. A
+Running it again on the open draft runs the drafting checklist, the D-rules:
+a scenario per requirement and per surface, values that come from somewhere,
+laws with their source, open questions that block, ids that do not collide,
+and an actor who can get every id they act on. A
 first pass usually has findings; each one is a sentence to add or a value to
 declare. See the table in [From a client brief](from-a-brief.md#3-check-the-draft).
 
@@ -171,7 +180,7 @@ say. In the six pilots, running the product found:
 - a production build or an application context that did not start,
 - a privacy hole: a search that returned clinical data without a trace.
 
-Each gap becomes a short change — `specgate propose <module>-2`, then steps 9
+Each gap becomes a short change — `npx specgate propose <module>-2`, then steps 9
 and 10. When the change rewrites a delivered requirement, put it under
 `## MODIFIED Requirements` with all its scenarios and apply it again against
 the new scenario: the change archives only once it is Implemented, and
@@ -179,13 +188,20 @@ archiving regenerates its feature file.
 
 ## The day to day, in short
 
+Once the first modules are built, new work arrives as a change you describe or
+as a Jira ticket:
+
 ```bash
-npx specgate propose <change-id>   # a change: a delta to write, REQ ids reserved
-npx specgate apply                 # the next requirement through the gate
-npx specgate status                # what each requirement still needs, and what waits for an answer
-npx specgate archive <change-id>   # once every requirement in it is Implemented
-npx specgate check                 # the same gate, in CI
+npx specgate propose <change-id>          # a change: a delta to write, REQ ids reserved
+npx specgate propose --from-ticket <KEY>  # or a Jira story: see From a Jira ticket
+npx specgate apply                        # the next requirement through the gate
+npx specgate status                       # what each requirement still needs, and what waits for an answer
+npx specgate archive <change-id>          # once every requirement in it is Implemented
+npx specgate check                        # the same gate, in CI
 ```
+
+The ticket path, including the one pull request per ticket, is in
+[From a Jira ticket](from-a-ticket.md).
 
 ## The pilots
 
@@ -197,3 +213,8 @@ Each project page says what worked, what Specgate got wrong and what was fixed:
 - [FinCore](projects/fincore.md) — Spring Boot; Specgate on a JVM stack
 - [EventTech](projects/eventtech.md) — Quarkus, event sourcing, real time; D12's first use
 - [HealthTech](projects/healthtech.md) — a regulated domain: what is not known waits for an answer
+
+## Next
+
+- [From a client brief](from-a-brief.md) — steps 4 to 10 in detail
+- [Write the brief](start/write-the-brief.md) — the brief's front matter, field by field

@@ -1,84 +1,42 @@
 # Automation
 
-Wiring the loop into the tools a team already runs: editors, agents,
-hooks and CI.
+This page wires the Specgate loop into the tools your team already runs:
+agents, editors, git hooks, CI without Node, and Jira. Pick the sections you
+need; each one stands alone.
 
----
+**You need:** a project where `specgate init` has run, and Specgate installed as
+a dev dependency (`npm install --save-dev @rsaglobaltech/specgate`). The CI job
+itself is covered in [Validating](validating.md#run-it-in-ci).
 
-## Wire the MCP server into Claude / Cursor / Aider
+## Give an agent the loop over MCP
 
-**Goal:** let an MCP-aware AI agent work the daily loop — status, new, check, done — without a terminal.
+An MCP client (Claude Desktop, Cursor, Claude Code, Antigravity) can run the
+loop as tools: what is open, the gate, delivering a requirement. The server
+ships inside the CLI:
 
-The server ships inside the CLI: `specgate mcp serve` runs it over stdio.
-`specgate mcp install --client claude` (or `cursor`) writes the
-config for you; by hand it is:
-
-Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
-
-```json
-{
-  "mcpServers": {
-    "spec-driven": {
-      "command": "npx",
-      "args": ["-y", "@rsaglobaltech/specgate", "mcp", "serve"]
-    }
-  }
-}
+```bash
+specgate mcp install --client claude
 ```
 
-Every command is a tool, named `specgate_<command>` (`specgate_status`,
-`specgate_ci_init`, …), and each declares the argument it needs. The daily
-loop, and the seven names published before the rest were generated. The four
-verbs have no tools of their own yet: an MCP client opens a change with
-`specgate_change_new`, delivers a requirement with `mark_requirement_done`
-(what `specgate apply <REQ>` does) and closes the change with
-`specgate_change_archive`, which, like `specgate archive`, refuses while a
-requirement in it is pending.
-
-| Tool | Purpose |
-| --- | --- |
-| `specgate_status` | What is open, and the next command. |
-| `specgate_new` | `specgate new <title>`: a requirement with its scenario. Takes `title`. |
-| `specgate_check` | The gate, then the tests when a test command is configured. |
-| `mark_requirement_done` | `specgate done <REQ>` — `apply`'s old name: runs the gate, then marks it Implemented. Takes `requirement`. |
-| `validate_project` | `validate --strict`, parsed. |
-| `plan` | The pending queue, with what each requirement still needs. |
-| `read_spec` | Returns `spec.md` and lists every `docs/specs/*.md`. |
-| `list_requirements` | Returns every `REQ-NNN` with title, file, and line. |
-| `update_traceability` | Appends a row to a hand-kept matrix; refuses on a generated one. |
-| `lint_pack` | Runs `pack lint` and returns structured errors. |
-
-**Tools that write the specification are guarded.** An agent may not rewrite
-the spec it is measured against, so `specgate_new`, `mark_requirement_done`
-and the other writers refuse unless a change is open (`specgate change new
-<id>`) or the team allows it in `.specgate/config.json`:
-
-```json
-{ "mcpAllowContractEdits": true }
-```
-
-Restart the client; the tools appear in the model's tool list as `spec-driven.*`.
-
----
-
----
+Tools that write the specification refuse unless a change is open. Setup, the
+tool list and the guard are on [The MCP server](mcp.md).
 
 ## Install the Claude Code plugin
 
-**Goal:** the loop as slash commands, the spec tree over MCP, and the gate
-running *before* the session can end rather than after it in CI.
+The plugin gives Claude Code the loop as slash commands, the spec tree over
+MCP, and a hook that runs the gate before a session can end.
 
 ```bash
 specgate agents init --tool claude-plugin --project-dir ./specgate-plugin
 ```
 
-That writes a complete plugin: `.claude-plugin/plugin.json`, the six commands
-of the loop under `commands/specgate/`, an `.mcp.json` pointing at the spec-driven
-MCP server, and `hooks/hooks.json` with the gate.
+That writes a complete plugin: `.claude-plugin/plugin.json`, nine slash
+commands under `commands/specgate/`, an `.mcp.json` that starts the MCP server,
+and `hooks/hooks.json` with the gate.
 
-**The hook is the part no other target can offer.** Every other tool here gets
-*instructions* — text an agent may or may not follow. A plugin gets a `Stop`
-hook, which runs whether the agent likes it or not:
+**The hook is what no instruction file can do.** Other agent tools get text an
+agent may or may not follow. A plugin gets a `Stop` hook, which runs whatever
+the agent decides:
 
 ```
 The spec gate is failing, so this work is not finished:
@@ -90,92 +48,72 @@ The spec gate is failing, so this work is not finished:
 Run `specgate validate . --strict` to see all of it.
 ```
 
-The session does not end while that is true. `validate --strict` stops
-being something that reviews an agent's work after it has gone and becomes
-something it cannot walk past.
+The session does not end while the gate fails. The hook blocks **once per
+prompt**: the second time, it reports the findings and lets the session end,
+because a person needs to see the answer. A project without `spec.md`, or a
+machine without `specgate` on its `PATH`, is left alone.
 
-**It will not trap you.** The hook blocks **once per prompt**. The second time
-the same prompt reaches it, the findings are reported and the session ends: by
-then the agent has been told, and a human needs to see the answer more than the
-loop needs another turn. A project without `spec.md`, or a machine without
-`specgate` on `PATH`, is left alone entirely.
-
-`claude-plugin` is the one target `specgate agents init` does *not* write by
-default — a plugin is an installable artefact, not something to scatter into
-every project.
-
----
-
----
+`claude-plugin` is the one target `specgate agents init` does not write by
+default: a plugin is something you install once, not a file for every project.
 
 ## Use the VS Code extension
 
-**Goal:** get inline diagnostics for `pack.yaml`, code-lens to jump to the traceability row, and validate-on-save.
+The extension adds diagnostics for `pack.yaml`, a "Reveal in traceability" link
+on requirement ids, and validation on save.
 
-1. Install [`vscode-spec-driven`](../packages/vscode-spec-driven) from the Marketplace (`ext install rsaglobaltech.vscode-spec-driven`).
-2. Open a project root. The extension auto-detects `spec.md` / `docs/specs/traceability.md`.
-3. Open any `pack.yaml` — diagnostics from the JSON Schema appear in the Problems panel.
-4. Hover any `REQ-NNN` (or `UC-`, `SCN-`, `AGG-`, `EVT-`, `RUL-`, `CMD-`) → CodeLens shows "Reveal in traceability".
-5. Enable validate-on-save: open settings, search **Spec-Driven**, tick `validateOnSave`. The CLI runs after every save and posts results to the Problems panel.
-
-Settings:
+1. Build it. It is not on the Marketplace yet: in a clone of the
+   [Specgate repository](https://github.com/rsaglobaltech/specgate/tree/main/packages/vscode-spec-driven),
+   run `npm run package` in `packages/vscode-spec-driven`, then install the
+   `.vsix` file with **Extensions → Install from VSIX…**.
+2. Open a project root. The extension finds `spec.md` and
+   `docs/specs/traceability.md` on its own.
+3. Open a `pack.yaml`: schema errors appear in the Problems panel.
+4. Hover a `REQ-NNN` (or `UC-`, `SCN-`, `AGG-`, `EVT-`, `RUL-`, `CMD-`) to
+   get **Reveal in traceability**.
+5. To validate on save, open the settings, search **Spec-Driven** and tick
+   `validateOnSave`.
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
-| `spec-driven.validateOnSave` | `false` | Run `validate` on every file save. |
-| `spec-driven.codeLens` | `true` | Show "Reveal in traceability" code lenses. |
-| `spec-driven.cliPath` | `npx @rsaglobaltech/specgate` | Override if you ship the CLI vendored. |
-| `spec-driven.schemaPath` | bundled | Point at a custom `pack.schema.json`. |
+| `spec-driven.validateOnSave` | `false` | Run `validate` on every save. |
+| `spec-driven.codeLens` | `true` | Show "Reveal in traceability". |
+| `spec-driven.cliPath` | `npx @rsaglobaltech/specgate` | The command that runs Specgate. |
+| `spec-driven.schemaPath` | bundled | A custom `pack.schema.json`. |
 
----
+## Deliver requirements with the harness
 
----
-## Drive delivery with the harness
+The **harness** is Specgate's unattended loop. `specgate harness run` gives
+each pending requirement to an agent in its own git worktree, runs the gate,
+and marks the requirement Implemented with `specgate apply` when the gate
+passes. It merges nothing unless you pass `--chain`. `specgate studio` shows
+the run as it happens, at `/live`.
 
-`specgate harness run` drives plan → agent → verify → apply for every pending
-requirement, each in its own git worktree, in dependency order. It merges
-nothing unless you ask for `--chain`, which merges each requirement once the
-gate passes on the merge. `specgate studio` shows the run at `/live`; with
-Claude Code as the agent, pipe its stream through
-`specgate harness events --from claude` to see its steps there too.
+→ [The harness](harness.md) · [Choosing and wiring your agent](agent-setup.md)
 
-→ [The harness](harness.md) · [Commands](commands.md#customising)
+## Run the gate without Node
 
----
-
----
-
-## Run the gate without Node on the build agent
-
-The generated CI configs call `npx`, which needs Node. Plenty of build agents
-do not have it — a Java shop's Jenkins agent, a locked-down runner — and that
-is the whole reason the Docker image and the Maven and Gradle plugins exist.
-
-> **Image name across the rename.** The examples below name
-> `ghcr.io/rsaglobaltech/specgate:<version>`, which is where every tag cut from
-> 0.8.0 on lands. Tags published before the rename live at
-> `ghcr.io/rsaglobaltech/specgate:<version>` and keep working — a published tag is
-> never rebuilt in place, so nothing was republished under the new name
-> retroactively. They are the same tool, but only the `specgate` images carry a
-> `specgate` binary: an image tagged `specgate:0.2.1` answers to `specgate` and
-> `create-spec-driven-app`, so pin the image and the command name together.
+The generated CI jobs call `npx`, which needs Node. When a build agent has no
+Node (a Java team's Jenkins agent, a locked-down runner), use the Docker image
+or the Maven and Gradle plugins.
 
 **Docker.** Mount the workspace and run the gate:
 
 ```bash
 docker run --rm -v "$PWD:/workspace" \
-  ghcr.io/rsaglobaltech/specgate:0.17.10 validate . --strict
+  ghcr.io/rsaglobaltech/specgate:0.22.1 validate . --strict
 ```
 
-Pin the version. `latest` is a convenience for a laptop, not for a pipeline —
-a gate that changes under you is not a gate. The image is published for
-`linux/amd64` and `linux/arm64`, so ARM runners work unchanged.
+Pin the version: `latest` is fine on a laptop, but a gate that changes under a
+pipeline is not a gate. Images are published for `linux/amd64` and
+`linux/arm64`. Tags before 0.8.0 exist only under the tool's former name,
+`ghcr.io/rsaglobaltech/csda`, and their command is not `specgate`; use 0.8.0 or
+later.
 
 In GitLab CI, that is the whole job:
 
 ```yaml
 spec-gate:
-  image: ghcr.io/rsaglobaltech/specgate:0.17.10
+  image: ghcr.io/rsaglobaltech/specgate:0.22.1
   stage: test
   script:
     - specgate validate . --strict
@@ -185,12 +123,12 @@ In Jenkins:
 
 ```groovy
 stage('Spec gate') {
-    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:0.17.10' } }
+    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:0.22.1' } }
     steps { sh 'specgate validate . --strict' }
 }
 ```
 
-**Maven or Gradle.** If the build already runs one of those, bind the gate to a
+**Maven or Gradle.** If the build already runs one of them, bind the gate to a
 phase instead of adding a container:
 
 ```xml
@@ -205,66 +143,59 @@ phase instead of adding a container:
 </plugin>
 ```
 
-`validate` binds to the `verify` phase by default, so `mvn verify` runs the
-gate without further wiring. `plan` and `doctor` are goals too.
+The `validate` goal binds to the `verify` phase, so `mvn verify` runs the gate.
+`plan` and `doctor` are goals too. The plugins target Java 11, because a
+corporate build agent is where you cannot choose the JDK.
 
-**Not published yet.** The plugin builds and its tests run in CI, but it is not
-on Maven Central — that needs an OSSRH account and a signing key. Until then,
-`mvn -f packages/maven-plugin install` from a clone puts it in your local
-repository. The Docker path above needs nothing.
+**Not published yet.** The plugin is not on Maven Central. Until it is, run
+`mvn -f packages/maven-plugin install` in a clone of the Specgate repository to
+put it in your local Maven repository. The Docker image needs nothing.
 
-The plugins target **Java 11** deliberately: a corporate build agent is exactly
-where you cannot choose the JDK.
+## Run the gate in a pre-commit hook
 
-## Wire `validate` into a pre-commit hook
-
-**Goal:** block commits that drop a `REQ` without a `.feature` or a `traceability.md` row before they ever leave the developer's machine.
-
-Plain shell (works without husky/lefthook):
+A hook catches a requirement without a scenario or a test before the commit
+leaves your machine. With plain git, no extra tools:
 
 ```bash
-# .git/hooks/pre-commit  (chmod +x)
+# .git/hooks/pre-commit  (make it executable: chmod +x)
 #!/usr/bin/env bash
 set -e
-echo "→ specgate validate --strict"
-npx --yes @rsaglobaltech/specgate@0.18.0 validate . --strict
-echo "→ specgate specops diff (must be clean)"
-DIFF=$(npx --yes @rsaglobaltech/specgate@0.18.0 specops diff --format json 2>/dev/null || true)
-if echo "$DIFF" | grep -q '"added":\[\([^]].\)\]\|"modified":\[\([^]].\)\]'; then
-  echo "✖ Pack content drifted. Run \`specgate specops sync\` and commit again."
-  exit 1
+npx specgate validate . --strict
+if [ -f .specops.lock ]; then
+  npx specgate validate . --against-lock
 fi
 ```
 
-Or with **husky** (`package.json`):
+The second command fails when files a domain pack rendered no longer match the
+pack version recorded in `.specops.lock`.
+
+Or with **husky**:
 
 ```bash
 npm install --save-dev husky
 npx husky init
-echo 'npx --yes @rsaglobaltech/specgate@0.18.0 validate . --strict' > .husky/pre-commit
+echo 'npx specgate validate . --strict' > .husky/pre-commit
 ```
 
-Mirror the same call in CI (see §4) so the gate survives `--no-verify`.
+Anyone can skip a hook with `git commit --no-verify`, so run the same gate in
+CI as well: see [Validating](validating.md#run-it-in-ci).
 
----
+## Connect Jira
 
----
+Specgate works with Jira in two modes. Pick one per project.
 
-## Sync requirements with Jira or Azure Boards
+| Mode | What Specgate does in Jira | Start with |
+| --- | --- | --- |
+| A ticket as the source of a change | Only reads. The board moves through Jira Automation rules. | [From a Jira ticket](from-a-ticket.md) |
+| A mirror of your requirements | Writes: an issue per requirement, closed when it is done. | [Jira and Azure Boards](alm.md) |
 
-`specgate alm sync` keeps the traceability matrix and the board in step — creating
-an issue for each unlinked requirement, closing it when the requirement is
-done, and reporting drift rather than resolving it.
-
-→ [Jira and Azure Boards](alm.md)
-
----
-
----
+In the first mode, `specgate propose --from-ticket <KEY>` opens a change from a
+story and its acceptance criteria, and `specgate alm pr <change-id>` opens one
+pull request per ticket. In the second, `specgate alm sync` keeps the issues in
+step with the requirements, and `specgate alm pull` opens a change for each
+labelled issue. Azure Boards supports the mirror mode.
 
 ## Next
 
 - [The harness](harness.md)
-- [Jira and Azure Boards](alm.md)
-- [The agent contract](specs/agent-contract.md)
-- [The harness spec](specs/harness.md)
+- [From a Jira ticket](from-a-ticket.md)

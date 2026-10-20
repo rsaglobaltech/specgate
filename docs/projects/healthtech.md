@@ -32,6 +32,10 @@ responsible for data protection, who reviews who read what.
 
 ## How Specgate was used
 
+<!-- specgate:note -->
+Recorded with Specgate 0.16–0.18. Today the same steps are: propose → build and apply each requirement → archive.
+<!-- specgate:endnote -->
+
 <!-- specgate:steps -->
 ### Adopt once
 

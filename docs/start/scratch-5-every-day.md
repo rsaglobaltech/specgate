@@ -1,9 +1,13 @@
 # From scratch · 5 — Every day
 
 <!-- specgate:goal -->
-**When you finish:** the gate on every pull request, and a daily loop short enough to
-remember — five commands, none of which asks you to edit a matrix.
+**When you finish:** the gate on every pull request, and a daily loop short
+enough to remember — four verbs: `propose`, `apply`, `status` and `archive`.
 <!-- specgate:endgoal -->
+
+**Before you start:** phases [1](scratch-1-install.md) to
+[4](scratch-4-prove.md) are done, and the project is on a Git host with CI
+(GitHub, GitLab, Azure DevOps or Jenkins).
 
 | Who | Does what in this phase |
 | --- | --- |
@@ -34,13 +38,42 @@ $ specgate ci init --provider github
 ```
 <!-- specgate:out-scratch-ci:end -->
 
-`gitlab`, `azure` and `jenkins` work the same way. Commit the file; from the
-next pull request, a requirement marked done with a red test fails the build.
+`gitlab`, `azure` and `jenkins` work the same way. Commit the file, and make
+the job a required check in your main branch's protection rules: from then
+on, a pull request with a red test cannot merge.
 
-## 2. The daily loop
+## 2. Where work comes from
+
+Work arrives in one of three ways. Each opens a **change** — a folder with
+the requirements and scenarios being added — and from there the loop is the
+same.
+
+| The work arrives as… | Open the change with | Guide |
+| --- | --- | --- |
+| One behaviour, or a feature with a few rules | `specgate propose <change-id>` | This page, below |
+| A Jira story with acceptance criteria | `specgate propose --from-ticket <KEY>` | [From a Jira ticket](../from-a-ticket.md) |
+| A new module of the product, from the brief | `specgate propose --from-brief <module>` | [Phase 2](scratch-2-specify.md) |
+
+A Jira ticket is read, never written to.
+`specgate propose --from-ticket KAN-13 --check` runs its Definition of Ready
+(rules T1–T9: acceptance criteria present, measurable, small enough), and the
+same command without `--check` opens the change and pushes its branch,
+`feature/KAN-13-<slug>`.
+
+## 3. The daily loop
+
+1. **Propose** — open the change and write its delta: the requirements and
+   scenarios it adds.
+2. **Build** — for each requirement, a test that names it, then the code.
+3. **Apply** — `specgate apply REQ-NNN`; commit.
+4. **Archive** — `specgate archive <change-id>` once every requirement is
+   applied, on your branch.
+5. **Pull request** — the specification and the code reach review together.
+   For a ticket's change, the `alm pr` command opens it — see
+   [From a Jira ticket](../from-a-ticket.md).
 
 ```
-specgate status  →  specgate propose  →  a test that names the REQ  →  specgate apply  →  specgate check  →  specgate archive
+specgate propose  →  test and code  →  specgate apply  →  specgate archive  →  pull request
 ```
 
 <!-- specgate:tip -->
@@ -50,33 +83,50 @@ ends the same way — a **Next** block with the command alone on its line, so
 you can copy it.
 <!-- specgate:endtip -->
 
-**A new requirement** that came up in a conversation, not in a brief:
+**A new requirement** that came up in a conversation, not in the brief:
 
 ```bash
-specgate new "A member sees which courts are free on a day"
+specgate propose free-courts
 ```
 
-<!-- specgate:out-scratch-new:begin — generated; edit the source, not this block -->
+<!-- specgate:out-scratch-propose:begin — generated; edit the source, not this block -->
 ```text
-$ specgate new "A member sees which courts are free on a day"
-  ◆ specgate · new   REQ-012
+$ specgate propose free-courts
+  ◆ specgate · propose   free-courts
 
-  ✔  REQ-012 A member sees which courts are free on a day · Draft
+  ✔  Change free-courts created · lite · REQ ids REQ-012…REQ-014 reserved
 
-    ~ spec.md                        ## REQ-012 — rewrite the obligation
-    + features/a-member-sees-which-courts-are.feature   @SCN-002 — fill in the <placeholders>
-    ~ docs/specs/traceability.md     row linked to the scenario
+    + docs/specs/changes/free-courts/change.yaml
+    + docs/specs/changes/free-courts/proposal.md
+    + docs/specs/changes/free-courts/tasks.md
+    + docs/specs/changes/free-courts/specs/free-courts/spec.md
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate check
-     after you write a test that mentions REQ-012 — that is the link
+  ➜  specgate apply
+     after you write the delta, a test that names each requirement, and the code
 ```
-<!-- specgate:out-scratch-new:end -->
+<!-- specgate:out-scratch-propose:end -->
 
-Rewrite its sentence in `spec.md` and the `<placeholders>` in its scenario;
-while it is `Draft` the gate leaves them alone, and `apply` refuses any left.
+Replace the template in the change's delta,
+`docs/specs/changes/free-courts/specs/free-courts/spec.md`, with the
+requirement and its scenario:
 
-**Start the day with `status`** — it names the one command to run next:
+```markdown
+### Requirement: REQ-012 — A member sees which courts are free on a day
+
+<!-- specgate:trace actor=Member kind=functional -->
+
+The system SHALL list, for a day, the courts that are free at each hour.
+
+#### Scenario: SCN-006 — The centre court is taken on Monday evening
+
+- GIVEN the centre court is booked on Monday evening
+- WHEN a member sends GET /api/courts/free?day=monday
+- THEN Monday evening lists every court except the centre court
+```
+
+**Start the day with `status`** — it lists the new requirement with the rest,
+and names the one command to run next:
 
 ```bash
 specgate status
@@ -89,35 +139,33 @@ $ specgate status
 
   Requirements  ████░░░░░░░░░░░░░░░░  1 of 5 done
 
-  Ready to close ─────────────────────────────────────────
-    ● REQ-012  A member sees which courts are free on a day  its test is in place
-
   To do ──────────────────────────────────────────────────
     ○ REQ-001  Preserve existing behaviour                   a test and code
     ○ REQ-003  A court is never booked twice for the same …  a test and code
+    ○ REQ-012  A member sees which courts are free on a day  a test and code
 
   Waiting for an answer ──────────────────────────────────
     ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
 
-  Brief         ░░░░░░░░░░░░░░░░░░░░  0 of 1 module(s) drafted   next: bookings   docs/brief.md
+  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate apply REQ-012
-     its test exists; close it through the gate
+  ➜  specgate apply REQ-003
+     once a test mentions REQ-003 — that mention is the link; apply checks first
 ```
 <!-- specgate:out-scratch-status-daily:end -->
 
-**A whole new module** goes back through phase 2: a change, a draft,
-`specgate propose --from-brief <module>`, then apply, then archive. **A requirement that changes** goes through a change
-too, as `MODIFIED`, so the review sees the before and after.
+**A requirement that changes** goes through a change too, under
+`## MODIFIED Requirements` in its delta, so the review sees the before and
+after.
 
-## 3. When the client answers
+## 4. When the client answers
 
 Write the answer into the change's `questions.md`, update the requirement and
 its scenario with the real value, remove `status="Needs Clarification"` from
 its `specgate:trace`, and it rejoins the queue: `status` lists it, the harness
-builds it, `apply` closes it.
+builds it, `apply` marks it done.
 
 ## Gato, the cat that keeps the gate
 
@@ -139,16 +187,10 @@ CI, and `specgate config set pet off` puts it away. The streak lives in
 
 ## You're done when…
 
-- `.github/workflows/spec-gate.yml` (or your provider's file) is committed.
-- Your team starts with `specgate status` and ends with `specgate check`.
-
-## Where to go next
-
-- [Write good requirements and scenarios](../writing-specs.md)
-- [Your team's first pull request — author and reviewer](../first-pr.md)
-- [Hand the loop to an agent — the harness](../harness.md)
-- [Install a proven pack instead of drafting a module](../domain-packs.md)
-- [Every command](../commands.md)
+- `.github/workflows/spec-gate.yml` (or your provider's file) is committed, and
+  the job is a required check.
+- Your team starts with `specgate status` and ends each change with
+  `specgate archive` and a pull request.
 
 ## If something goes wrong
 
@@ -157,5 +199,13 @@ CI, and `specgate config set pet off` puts it away. The streak lives in
 | `.github/workflows/spec-gate.yml already exists — refusing to overwrite.` | You already have that file | `--stdout` to print the job and paste it in, or `--force` to replace |
 | `Unknown provider: circleci` | Not supported | `github`, `gitlab`, `azure` or `jenkins`; or run `specgate check` from any CI by hand |
 | `status` says `Next  specgate plan` | A requirement has no feature file | `specgate plan` names it |
+
+## Next
+
+- [From a Jira ticket](../from-a-ticket.md)
+- [Write good requirements and scenarios](../writing-specs.md)
+- [Your team's first pull request — author and reviewer](../first-pr.md)
+- [Hand the loop to an agent — the harness](../harness.md)
+- [Every command](../commands.md)
 
 [← Back to the start](../getting-started.md)

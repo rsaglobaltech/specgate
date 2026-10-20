@@ -129,7 +129,7 @@ test("the refusal says what to do about it", () => {
       () => assertContractEditable("specgate_req_add", dir),
       (error: Error) => {
         assert.match(error.message, /specgate_req_add/, "does not name the tool");
-        assert.match(error.message, /specgate change new/, "does not name the way forward");
+        assert.match(error.message, /specgate propose/, "does not name the way forward");
         assert.match(error.message, /mcpAllowContractEdits/, "does not name the escape hatch");
         return true;
       }

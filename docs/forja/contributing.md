@@ -122,16 +122,12 @@ Quarkus, ArchUnit, Keycloak, PostgreSQL and Specgate.
 
 ## Releases
 
-Releases are published from a local machine:
-
-```bash
-npm publish
-```
-
-`prepublishOnly` runs the build, the type check and the tests first, and `publishConfig` makes the
-package `@rsaglobaltech/forja` public. There is no release pipeline. The repository contains a
-`.github/workflows/ci.yml`, but it is not used: GitHub Actions stay off, and every check above runs
-locally.
+forja is not published to the npm registry. A release is a package tarball attached to a GitHub
+release of the forja repository (for 1.0.0, `rsaglobaltech-forja-1.0.0.tgz`), and users install it
+from that URL, as [Getting started](getting-started.md#install) shows. The tarball is built on a local
+machine once the build, the type check and the tests pass. There is no release pipeline. The
+repository contains a `.github/workflows/ci.yml`, but it is not used: GitHub Actions stay off, and
+every check above runs locally.
 
 Record each change in `CHANGELOG.md`, and tick the matching box in `ROADMAP.md`, in the same pull
 request.

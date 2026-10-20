@@ -6,10 +6,13 @@ test that names it. Two ways: by hand (or with your agent in the chat), or
 handed to the harness, which builds it unattended on its own branch.
 <!-- specgate:endgoal -->
 
+**Before you start:** [phase 2](scratch-2-specify.md) is done — the
+`draft-bookings` change is reviewed and still open.
+
 | Who | Does what in this phase |
 | --- | --- |
 | **You** or **your agent** | Write the test first, then the code until it passes |
-| **The harness** (optional) | Builds pending requirements one by one, each on its own branch, and never merges |
+| **The harness** (optional) | Specgate's runner for unattended work: builds pending requirements one by one, each on its own branch, and merges nothing unless you ask |
 | **The gate** | Not yet — that is phase 4 |
 
 ## Before the first one: make one scenario run
@@ -27,7 +30,7 @@ say so in the prompt: "also wire the test runner so this scenario executes".
 Read the requirement and its scenarios — in the draft's delta,
 `docs/specs/changes/draft-bookings/specs/bookings/spec.md` — then write the test. **Name the
 requirement in it**: that mention is the whole link between the test and the
-requirement. There is no matrix to edit and nothing to register.
+requirement. There is no table to edit and nothing to register.
 
 ```js
 // test/bookings.test.js
@@ -74,8 +77,9 @@ docstring, a Go test name. The gate looks for the id, not for a framework.
 The harness takes the next pending requirement, writes a prompt from its
 Gherkin, creates a git worktree on `harness/REQ-NNN`, runs your agent there,
 and then runs the gate. Green: the requirement is marked done on its branch.
-Red: the failures go into the next attempt. Either way it never merges — that
-stays a person's job.
+Red: the failures go into the next attempt. Either way it does not merge —
+that stays a person's job, unless you ask for `--chain`, which merges each
+requirement that passed into the current branch.
 
 See exactly what your agent will be told, before it runs:
 
@@ -138,7 +142,9 @@ review is one requirement.
 | You see | It means | Do |
 | --- | --- | --- |
 | `REQ-004 is not a pending requirement — skipped.` | It is waiting for an answer, or already done | `specgate status` says which |
-| `No pending requirements. Nothing to do.` | Every requirement is done or blocked | Archive the next module (phase 2) |
+| `No pending requirements. Nothing to do.` | Every requirement is done or waiting for an answer | Open the next module's draft with `specgate propose --from-brief`, or answer the open questions |
 | The harness commits `wip(…): FAILED the gate` | Out of attempts | Read the failures in the commit, fix the spec or the prompt, re-run with `--force` |
 
-**[Next: phase 4 — prove it →](scratch-4-prove.md)**
+## Next
+
+**[Phase 4 — prove it →](scratch-4-prove.md)**

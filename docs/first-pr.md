@@ -23,6 +23,21 @@ on your machine, so a green there is a green in CI. It runs the `test_cmd` you
 configured (`specgate config set test_cmd …`), or the one it detects; with
 neither, it runs `validate . --strict` alone and `ci init` says so.
 
+### Make the gate a required check
+
+A red CI job only blocks a merge when the repository requires it. On GitHub,
+open **Settings → Branches**, add a protection rule for the branch pull
+requests target (`main`, and `develop` if you use it), and turn on:
+
+1. **Require a pull request before merging.**
+2. **Require status checks to pass before merging**, then search for and
+   select the job `specgate ci init` wrote, `spec-gate`. It appears in the list
+   once it has run on one pull request.
+
+GitLab (protected branches, "Pipelines must succeed") and Azure DevOps (a
+build validation branch policy) have the same setting. Without it, a pull
+request can be merged while the gate is red.
+
 ---
 
 ## The author: one change, one pull request
@@ -49,7 +64,9 @@ link; there is nothing else to declare:
 
 ```js
 // REQ-007 SCN-007a — customers download invoices as PDF
-test("a paid invoice downloads as a PDF", () => { /* … */ });
+test("a paid invoice downloads as a PDF", () => {
+  /* … */
+});
 ```
 
 Write the code, then deliver the requirement and close the change:
@@ -74,7 +91,21 @@ the most common red build on a first PR (see `matrix_stale` below).
 
 A requirement too small for a change: `specgate new "<title>"` writes it
 straight into `spec.md` with a scenario to fill in, and `specgate apply
-REQ-007` delivers it the same way. `done` is `apply`'s old name; both work.
+REQ-007` delivers it the same way.
+
+### From a ticket
+
+When the work is a Jira story, the same pull request starts from the ticket.
+The differences:
+
+- Open the change with `specgate propose --from-ticket KAN-13`. It creates and
+  pushes the branch `feature/KAN-13-…`.
+- Start every commit message with the key: `KAN-13 REQ-151: normalize plates`.
+- Run `specgate archive <change-id>` on the branch, commit, then open the pull
+  request with `specgate alm pr <change-id>`. Archive comes first, so the spec
+  and the code reach review together.
+
+The setup and the full loop are in [From a Jira ticket](from-a-ticket.md).
 
 ### Fixes and refactors
 
@@ -95,12 +126,12 @@ a scenario, the scenario has real steps, a test names it, and the files the
 matrix points at exist. **Do not re-check that by hand.** Spend the review on
 what no tool can judge:
 
-| Read | Ask |
-|---|---|
-| The `## REQ-NNN` section in `spec.md` | Is it one obligation? Could two people test it and agree? Is it what the ticket asked for? |
-| The scenario | Do Given / When / Then describe *this* behaviour with real values, or a generic happy path? Is the interesting edge case missing? |
-| The test that mentions `REQ-NNN` | Does it assert what the scenario's *Then* says — or only that nothing throws? A test that mentions the ID and checks nothing passes the gate. |
-| The proposal and the status | `proposal.md` says why. Each requirement is `Implemented` — `archive` would not have run otherwise — and its code is in this PR. |
+| Read                                  | Ask                                                                                                                                           |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| The `## REQ-NNN` section in `spec.md` | Is it one obligation? Could two people test it and agree? Is it what the ticket asked for?                                                    |
+| The scenario                          | Do Given / When / Then describe _this_ behaviour with real values, or a generic happy path? Is the interesting edge case missing?             |
+| The test that mentions `REQ-NNN`      | Does it assert what the scenario's _Then_ says — or only that nothing throws? A test that mentions the ID and checks nothing passes the gate. |
+| The proposal and the status           | `proposal.md` says why. Each requirement is `Implemented` — `archive` would not have run otherwise — and its code is in this PR.              |
 
 Skip `docs/specs/traceability.md`. It is generated from the files above, and
 CI fails when it is out of date, so a diff there is a consequence, not a
@@ -157,7 +188,7 @@ status back to Draft in `spec.md`.
 ✖  docs/specs/traceability.md REQ-007's test artifact `test/invoice.test.js` does not exist. [declared_artifact_missing]
 ```
 
-A file the requirement points at *explicitly* is gone — a path written in its
+A file the requirement points at _explicitly_ is gone — a path written in its
 `specgate:trace` comment (`test='…'`, `artifact='…'`), or in a hand-kept matrix.
 Restore it, or fix the path. A test linked only by mentioning the requirement
 does not produce this: delete that test and you get `[TDD-1]` instead.

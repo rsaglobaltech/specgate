@@ -6,6 +6,10 @@ never again sit on red code — and adopting it does not ask you to fix the
 past first.
 <!-- specgate:endgoal -->
 
+**Before you start:** [phase 3](existing-3-first-requirement.md) is done —
+REQ-004 is applied and its change archived. The project is on a Git host with
+CI (GitHub, GitLab, Azure DevOps or Jenkins).
+
 | Who | Does what in this phase |
 | --- | --- |
 | **You** | Generate the CI job and commit it |
@@ -57,20 +61,28 @@ $ specgate check
 ```
 <!-- specgate:out-existing-check-green:end -->
 
-Note what makes this safe on old code: requirements still in `Draft` — the
-adoption's proposals, anything not described yet — are **exempt**, and the
-output says how many. The gate holds the code to what you have written down,
-and only that. Each requirement you close raises the bar by one.
+This is what makes the gate safe on old code: requirements still in `Draft`
+— the adoption's proposals, anything not described yet — are **exempt**. The
+gate holds the code to what you have written down, and only that. Each
+requirement you apply raises the bar by one.
 
 ## 3. Commit and open a pull request
 
 ```bash
-git add -A && git commit -m "Specgate: the gate in CI, REQ-004 closed"
+git add -A && git commit -m "Specgate: the gate in CI"
 ```
 
 The first pull request shows the job running your specification and your
 suite. From then on, a pull request that breaks REQ-004's rounding fails —
 with the requirement's id in the failure.
+
+## 4. Make the job a required check
+
+A failing job only blocks a merge when the branch requires it. On GitHub:
+**Settings → Branches → Branch protection rules**, protect your main branch,
+and add the gate's job under **Require status checks to pass before merging**.
+GitLab and Azure DevOps have the same setting for merge requests and pull
+requests.
 
 ## Already on OpenSpec?
 
@@ -82,6 +94,7 @@ claims are reported, not failed. It has its own CI action; see
 ## You're done when…
 
 - The CI file is committed and the job is green on a pull request.
+- The job is a required check on your main branch.
 - A deliberately broken test makes the job fail (try it once).
 
 ## If something goes wrong
@@ -92,4 +105,6 @@ claims are reported, not failed. It has its own CI action; see
 | `Unknown provider: circleci` | Not a supported provider | Run `npx @rsaglobaltech/specgate@latest check` as a step in any CI |
 | The job passes locally, fails in CI | CI lacks your test toolchain | Install it before the `check` step |
 
-**[Next: phase 5 — every day →](existing-5-every-day.md)**
+## Next
+
+**[Phase 5 — every day →](existing-5-every-day.md)**

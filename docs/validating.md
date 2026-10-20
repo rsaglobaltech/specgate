@@ -1,123 +1,173 @@
 # Validating
 
-The gate. `validate` is what makes a spec a contract rather than a
-document — run it locally, then make it a required check.
+At the end of this page the gate runs on your machine before every pull
+request, and in CI as a required check that blocks a merge when it fails. The
+**gate** is the set of checks that decides whether the specification and the
+code still agree.
 
----
+**You need:** a project where `specgate init` has run, Specgate installed as a
+dev dependency (`npm install --save-dev @rsaglobaltech/specgate`), and, for the
+CI part, a repository on GitHub, GitLab, Azure DevOps or Jenkins.
 
-## Run `validate` locally and in CI
-
-**Goal:** make `validate` part of every PR.
-
-Local:
+## Run the gate on your machine: `specgate check`
 
 ```bash
-npx @rsaglobaltech/specgate@latest validate .
+specgate check
 ```
 
-GitHub Actions:
+`check` runs three things, in order, and stops at the first failure:
+
+1. `validate --strict`: specs, scenarios, traceability, links and coverage.
+2. Your architecture check, if you set one with
+   `specgate config set arch_cmd "<cmd>"` (ArchUnit, dependency-cruiser, …).
+3. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`.
+
+Without a test command, `check` still passes and says it checked the
+specification, not the code. Set one.
+
+`check` also compares requirement ids with the base branch (`--base <branch>`,
+or origin's default branch). The same id with a different title there fails
+the gate as `id_taken_on_base`, before two pull requests collide on merge.
+
+Run `check` before every pull request. `specgate apply` runs the same gate for
+the one requirement it delivers.
+
+## Run it in CI
+
+The quickest way is to let Specgate write the job:
+
+```bash
+specgate ci init
+```
+
+It detects your CI provider (GitHub, GitLab, Azure or Jenkins), sets up the
+project's toolchain (Node, or a JDK for Maven and Gradle) and runs
+`specgate check` at the version you have installed, so a green on your machine
+is a green in CI. On GitHub the job is called `spec-gate`.
+
+If you write the job by hand, run `validate --strict` and pin the version. A
+release can change what the gate checks, and a pipeline should not change
+under a green branch:
 
 ```yaml
 # .github/workflows/specs.yml
-name: Spec validation
+name: Spec gate
 on: [push, pull_request]
 jobs:
-  validate:
+  spec-gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
-      # --strict-links is what checks the matrix against the filesystem: without
-      # it a row pointing at a deleted test file still passes. Pin the version in
-      # CI so a release cannot change the gate under a green branch.
-      - run: npx --yes @rsaglobaltech/specgate@0.18.0 validate . --strict
+      # --strict is the whole specification gate, pinned so a release
+      # cannot change it under you. It does not run your tests.
+      - run: npx --yes @rsaglobaltech/specgate@0.22.1 validate . --strict
 ```
 
-`specgate ci init` writes a fuller job for you: it sets up the project's
-toolchain (Temurin for Maven or Gradle, at the Java version the build declares;
-`npm ci` for Node) and runs `specgate check`, so the job fails when the tests
-do, not only when the specification does.
+`validate --strict` checks the specification only. To fail the job when the
+tests fail as well, run `check` instead, as the generated job does.
 
-What `validate` checks:
+## Make it a required check
 
-- required directories (`features/`, `docs/specs/`),
-- required files (`spec.md`, `AGENTS.md` — or a legacy `AI_RULES.md` — `traceability.md`, ADR entrypoint),
-- at least one `.feature`,
-- no unresolved `{{...}}` placeholders,
-- traceability matrix header presence,
-- every `.feature` appears in `traceability.md`,
-- allowed traceability statuses,
-- duplicate `Scenario ID` detection,
-- expected `use-cases.md` and `events.md` headers when those files exist.
+A CI job that fails does not stop a merge on its own. On GitHub:
 
-Exit codes: `0` ok · `1` unhandled · `2` usage · `3` missing prerequisite · `4` destination conflict.
+1. Push a branch once, so GitHub has seen the `spec-gate` job run.
+2. Open **Settings → Branches** (or **Settings → Rules → Rulesets**) and add a
+   rule for your main branch, and for `develop` if you use one.
+3. Turn on **Require status checks to pass before merging** and select
+   `spec-gate`, plus any other CI jobs you rely on.
+4. Save. A pull request with a red gate can no longer be merged.
 
-### The one thing a pass does not tell you
+GitLab, Azure DevOps and Jenkins have the same setting under their own names
+(protected branches, branch policies, required builds).
+[Your team's first pull request](first-pr.md) covers what the author and the
+reviewer do once the check is in place.
 
-A freshly adopted repository passes on day one — deliberately, because a gate
-that rejects a new adoption is a gate nobody installs. So `validate` warns when
-the only scenario in the project is still the baseline `adopt` wrote:
+## What `validate` checks
 
-```
-✅ Validation passed
-  ▲  Adoption never retro-filled — the only scenario is the adoption baseline.
-```
+Plain `specgate validate .` checks the structure every project needs:
 
-It is a warning, not a failure: the exit code stays `0` and CI stays green. It
-exists because the alternative is worse — a project that specified nothing
-looking exactly like a healthy one at the only place most teams check. In
-`--json`, `validation.adoptionRetrofilled` carries the same fact, alongside an
-`adoption_not_retrofilled` advisory in `status[]`.
+- the `features/` and `docs/specs/` directories,
+- `spec.md`, `AGENTS.md`, the traceability matrix and the ADR index,
+- at least one `.feature` file, and no unresolved `{{...}}` placeholders,
+- every `.feature` file appears in the matrix, with an allowed status,
+- no duplicate scenario ids,
+- the deltas of every open change.
 
----
+Exit code `0` means it passed, including with warnings; `1` means it found
+something.
 
----
+### What `--strict` adds
 
-## The gate is `validate . --strict`
+`--strict` is the gate. It adds five checks in one flag:
 
-```bash
-npx @rsaglobaltech/specgate@latest validate . --strict
-```
+| Check | What fails |
+| --- | --- |
+| TDD | A requirement past Draft with no test, no scenario or no matrix row. |
+| Scenarios | A scenario that cannot fail: no steps, no `When`/`Then`, vague steps. |
+| Requirements | A requirement that states no obligation (`SHALL`, `MUST`, …). |
+| Links | A delivered row that points at a file that no longer exists. |
+| Coverage | A declared scenario that no test names. |
 
-One name, every check below. The individual `--strict-*` flags still work, so an
-existing CI invocation keeps meaning what it meant — but `--strict` is what to
-put in CI and what every other page recommends.
+Each check also has its own flag (`--strict-tdd`, `--strict-scenarios`,
+`--strict-requirements`, `--strict-links`, `--strict-coverage`), so an existing
+pipeline keeps meaning what it meant. Use `--strict` in anything new: one of
+the individual flags alone passes a requirement whose test file does not exist.
 
-This matters more than it sounds. Ten places used to call `--strict-tdd` "the
-gate" while only the generated workflow ran the stronger command, so anyone
-following the documentation got a check that **passes on an `Implemented`
-requirement whose test file does not exist**. One name that means all of them is
-the fix; correcting the wording in ten places would have left the same trap for
-the eleventh.
+The details of each check follow.
 
-## Enforce TDD with `validate --strict-tdd`
+### TDD: Draft requirements owe nothing yet
 
-**Goal:** fail PRs when a `REQ` that has started work has no scenario, no implementing test, or no row in `traceability.md`.
-
-**`Draft` rows are exempt, on purpose.** A requirement nobody has started owes
-nothing yet, so `--strict-tdd` skips it and the run reports how many it skipped:
+A requirement nobody has started is exempt, and the run says how many it
+skipped:
 
 ```
 - Strict TDD gate: passed (3 row(s) exempt — still Draft, so not checked)
 ```
 
-A row starts being checked the moment its `Status` leaves `Draft`, which
-`specgate apply <REQ>` does. If you want the stricter reading — every declared
-scenario proved, whatever the status — that is `--strict-coverage` below.
+A requirement is checked from the moment its status leaves Draft, which is
+what `specgate apply` does. A requirement you will not deliver is marked
+Deprecated (`specgate apply REQ-NNN --status Deprecated`) and is skipped too.
 
-```bash
-npx @rsaglobaltech/specgate@latest validate . --strict-tdd
-```
+### Scenarios: each one can fail
 
-### `--strict-coverage` — every scenario is actually proved
+Over `features/**/*.feature`:
 
-A matrix row names one `Scenario ID` and one feature file. The file may hold
-five scenarios, and until this flag nothing related the other four to anything:
+- No scenario that Cucumber would see as empty. Upper-case `GIVEN`/`WHEN`/`THEN`
+  is the usual cause: Gherkin keywords are case-sensitive, so the scenario runs
+  zero steps and passes.
+- Every scenario has a `When` and a `Then`, at least three steps and a title
+  that names the behaviour.
+- No vague step text, and no `Scenario Outline` without `Examples`.
 
-```bash
-npx @rsaglobaltech/specgate@latest validate . --strict-coverage
-```
+`specgate doctor` reports the same rules as warnings, which is the gradual path
+for a repository you brought in with `specgate adopt`.
+
+### Requirements: each one states an obligation
+
+Over `docs/specs/capabilities/**/spec.md`, every requirement uses `SHALL`,
+`MUST`, `SHOULD`, `MAY`, `DEBE` or `DEBERÁ`, and one that opens with `IF`
+resolves with `THEN` in the same sentence. It does not parse EARS grammar: these
+two rules are what a pattern match can check honestly.
+
+### Links: delivered rows point at real files
+
+Every feature file, technical artifact and test artifact a delivered row
+(`Implemented`, `Verified` or `Released`) names must exist. A Draft row may
+name a file that is not written yet. A path may carry a line range
+(`src/auth/login.ts#L15-L89`); the range is not part of the path.
+
+The scenario rules work the same way: most are owed on delivery, including
+`scenario_placeholder_step`, the `<placeholder>` that `specgate new` leaves for
+you to fill in. The three that make a suite report a pass it never ran (no
+steps, a keyword in the wrong case, an Outline with no Examples) apply to every
+row.
+
+### Coverage: every scenario is named by a test
+
+A matrix row names one scenario and one feature file, but the file may hold
+five scenarios. Coverage checks each of them:
 
 ```
   ✖  Declared scenarios nothing proves: 1
@@ -126,94 +176,40 @@ npx @rsaglobaltech/specgate@latest validate . --strict-coverage
           scenario if it no longer describes behaviour this project promises.
 ```
 
-This is the scenario an agent skips when it cannot satisfy it — measured: given
-five scenarios where one contradicted another, an agent wrote tests for four,
-the gate approved, and the row went to `Implemented`.
+This catches the scenario an agent skips when it cannot satisfy it. It matches
+a scenario's `@SCN-NNN` tag, the id in its title, or the title itself against
+the test the row declares. It is a name match and does not run your suite.
 
-It matches a scenario's `@SCN-NNN` tag, the id in its title, or failing both the
-title itself, against the test artifact the row declares. **It is a name match:
-this does not run your suite.** That is why it is opt-in rather than part of
-`--strict-tdd` — a project that names its tests some other way should not start
-failing because a release shipped a heuristic.
+On a repository adopted with tests written years earlier, no test names a
+requirement yet. Then the check reports that it could not run instead of
+failing every row:
 
-`--strict-tdd` is in addition to the normal checks. It is intended for "no contract without a test" gates — particularly useful in `contracts` packs (see §8). Wire it into CI exactly like `validate`, just append the flag.
+```
+⚠ --strict-coverage could not run: no test artifact in this project names its
+  requirement or any of its scenarios.
+```
 
-> A requirement that is not going to be delivered is `Deprecated` (`specgate apply REQ-NNN --status Deprecated`): it owes nothing, and `--strict-tdd` skips it. One not started yet simply stays `Draft`.
+Name one requirement in the test that proves it (a comment is enough), and the
+check starts holding the rest of the matrix to the same standard.
 
-## The other three gates
+## A pass on a freshly adopted repository
 
-`--strict-tdd` is one of four opt-in gates. Every one of them is **additive** to
-the normal checks and **off by default**, for the same reason: each one is
-legitimate to fail while a project is still finding its shape, and a gate that
-fires on honest work gets switched off for good.
+A repository passes the gate on the day you adopt it, so that adopting never
+breaks a build. `validate` warns while the only scenario is still the baseline
+that `adopt` wrote:
 
-Turn them on one at a time, in CI, once the repository is clean for that rule.
+```
+✅ Validation passed
+  ▲  Adoption never retro-filled — the only scenario is the adoption baseline.
+```
 
-### `--strict-scenarios` — the scenarios say something falsifiable
+The exit code stays `0`. In `--json`, `validation.adoptionRetrofilled` carries
+the same fact, with an `adoption_not_retrofilled` advisory in `status[]`.
 
-Applies the pack's eight scenario quality rules to `features/**/*.feature`:
+## Declared-value drift: a report, not a gate
 
-- No scenario Cucumber would see as empty. Upper-case `GIVEN`/`WHEN`/`THEN` is
-  the usual cause — Gherkin keywords are case-sensitive, so the real parser
-  absorbs them as description and the scenario runs zero steps and exits `0`.
-- Every scenario has a `When` and a `Then`, at least three steps, and a title
-  that names the behaviour.
-- No vague, unfalsifiable step text; no `Scenario Outline` without `Examples`.
-
-`specgate doctor` reports the same rules as advisories rather than failures, which
-is the gradual path for a repository brought in with `specgate adopt`.
-
-### `--strict-requirements` — the requirement states an obligation
-
-Over `docs/specs/capabilities/**/spec.md`:
-
-- Every requirement states an obligation — `SHALL`, `MUST`, `SHOULD`, `MAY`,
-  `DEBE`, `DEBERÁ`.
-- A requirement that opens with `IF` resolves with `THEN` in the same sentence.
-
-**What it deliberately does not do:** parse EARS grammar. No regex can reliably
-tell "the system" from a response clause, and a check that claims to enforce a
-grammar it does not parse is worse than no check. These two rules are what a
-regex can assert honestly — nothing wider.
-
-The point is upstream of any code checking: `- Max 5 failed attempts per hour
-per user` is not something a machine can hold code to. This gate makes the
-requirement itself say something before anything tries to verify against it.
-
-### `--strict-links` — the matrix points at files that exist
-
-Every Feature file / Technical artifact / Test artifact the matrix declares as
-a path still exists on disk. A cell may anchor a line range
-(`src/auth/login.ts#L15-L89`); the anchor is not part of the path.
-
-**Only delivered rows owe their files.** A `Draft` or `In Dev` row routinely
-names the file a requirement is *going to* land in, before anyone writes it.
-Planning ahead is not documentary drift, so the check applies to rows that are
-`Implemented`, `Verified` or `Released`. A delivered row whose file has gone is
-drift, and fails.
-
-The same line applies to `--strict-scenarios`: the scenario rules are owed on
-delivery — including `scenario_placeholder_step`, an unfilled `<placeholder>` in
-a plain Scenario, which is what `specgate new` writes for you to fill in. The
-three rules that make a suite report a pass it never ran — no steps, a keyword
-in the wrong case, an Outline with no Examples — apply to every row.
-
-`specgate apply REQ-NNN --check` and `harness run` hold the requirement they are
-closing to that rule before its status flips — otherwise they would skip the
-one requirement they are about to mark `Implemented`.
-
----
-
----
-
-## Declared-value drift — a report, not a gate
-
-The one thing none of the four gates catches is the case where the spec and the
-code both exist, both are consistent, and **disagree**: *session timeout is 30m
-but the spec requires 15m*. `--strict-requirements` checks the shape of the
-sentence; `--strict-links` checks that the file exists; neither reads what is
-in it.
-
+The gate cannot tell when the spec and the code both exist and disagree, for
+example a session timeout of 30 minutes in the code and 15 in the spec.
 Annotate the value on both sides, and `specgate report` compares them:
 
 ```markdown
@@ -224,66 +220,26 @@ Annotate the value on both sides, and `specgate report` compares them:
 // specgate:value session_timeout=15m
 ```
 
-`specgate:value` is a plain literal string found by scanning line by line, so it
-reads the same behind `//`, `#`, `--`, or no comment marker at all — the same
-reason `specgate:trace` works in any markdown file. Comparison is exact string
-equality between two things a human or an agent wrote on purpose.
+`specgate:value` is found line by line, behind any comment marker. The
+comparison is exact string equality: `15m` and `900000` are different values.
+Each value is **matched**, **diverging**, **spec only** or **code only**, and
+`specgate report --record` adds the totals to the report history.
 
-Each identifier lands in one of four states: **matched**, **diverging**,
-**spec only**, **code only**. The report gains a section listing them with
-`file:line` for the code side, and `--record` appends `valuesTotal`,
-`valuesMatched` and `valuesDiverging` to the history — additive, so an older
-history line simply lacks them.
+It is a report rather than a gate because annotations cover only the values
+someone chose to annotate; a hard gate over them would mostly measure who
+remembered ([ADR-0023](specs/adr/0023-checking-content-gate-or-report.md)).
 
-**Why this is a report and not `--strict-values`.** Two reasons, both about
-scale. Annotating every checkable fact is hand work that grows with the number
-of facts while coverage does not; and the more complex a system gets, the
-smaller the fraction of its requirements that reduce to a scalar at all. A hard
-gate over a partial, hand-maintained set of annotations would mostly measure
-who remembered to annotate. See ADR-0023.
+When a value diverges, you have three options:
 
-**It does not interpret units.** `15m` and `900000` are different strings, and
-this compares strings. Claiming otherwise would be asserting authority over two
-grammars it does not parse.
-
-### Acting on a divergence
-
-Three routes, and only one of them needed a new command:
-
-1. **Fix the code** — the report already gives `file:line`. Open it.
-2. **Update the spec** — `specgate propose <id> --from-value-drift REQ-ID:value_id`
-   writes the delta: the full requirement copied into a `## MODIFIED
-   Requirements` section with `value_<id>` rewritten to the code's value.
-   **The prose is not rewritten** — turning "expires after 15 minutes" into
-   "after 30" would be guessing how a sentence should sound on someone's
-   behalf, so it leaves an explicit `TODO:` instead. Review it, then
-   `specgate change validate`, `specgate apply` the requirement against the new
-   value, and `specgate archive <id>` once it is Implemented.
-3. **Retire the requirement** — already `specgate propose <id> --capability <cap>`
-   with a `## REMOVED Requirements` section. The removal mechanism does not
-   care why something is removed.
-
----
-
----
+1. **Fix the code.** The report gives the file and line.
+2. **Update the spec.** `specgate propose <id> --from-value-drift REQ-ID:value_id`
+   opens a change whose delta carries the code's value. It leaves the prose with
+   a `TODO:` for you to reword. Review it, deliver the requirement with
+   `specgate apply`, and `specgate archive <id>` when it is Implemented.
+3. **Retire the requirement.** Open a change with `specgate propose <id>` and
+   list it under `## REMOVED Requirements`.
 
 ## Next
 
-- [Automate the loop](automation.md)
-- [Troubleshooting](troubleshooting.md)
-
-**On a brownfield repository it says so instead of failing you.** Retro-fitting
-specs onto tests written years earlier means pointing a row at a test that does
-not mention any requirement — and the only way to satisfy a name match there
-would be to edit that test, which is the one thing `adopt` promises never to
-make you do. So the check calibrates: if no test artifact in the project names
-its requirement or a scenario, the convention is not in use here and `validate`
-reports that it could not run rather than failing every row.
-
-```
-⚠ --strict-coverage could not run: no test artifact in this project names its
-  requirement or any of its scenarios.
-```
-
-Name one requirement in the test that proves it — a comment is enough — and the
-check starts holding the rest of the matrix to the same standard.
+- [Your team's first pull request](first-pr.md)
+- [Automation](automation.md)

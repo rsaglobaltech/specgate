@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.22.0",
+    "version": "0.22.1",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
   },
   "recordedAt": "2026-10-20",
-  "title": "smart-parking",
+  "title": "smart-parking — a pack, then the harness",
   "cols": 88,
   "streamsMerged": false,
   "steps": [

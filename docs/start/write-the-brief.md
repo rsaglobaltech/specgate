@@ -6,6 +6,12 @@ module at a time, and checks every draft against it. This page teaches the
 brief in eight steps, about 25 minutes, with one example throughout:
 **Lingo**, an invented online language school.
 
+**When you finish:** a `docs/brief.md` that `specgate propose --from-brief --check`
+calls ready, with its modules listed and the first one named.
+
+**Before you start:** a project with Specgate set up —
+[phase 1](scratch-1-install.md) of the from-scratch journey.
+
 | Who | Does what |
 | --- | --- |
 | **You** | Write the brief, or review what your agent proposes from your notes |
@@ -21,6 +27,7 @@ Often not. A brief is for a product, or a large part of one.
 | One behaviour to fix or change | No brief. `specgate propose <change-id>`, and write the requirement in the delta. |
 | A feature with a few rules (2–6) | No brief. `specgate propose <change-id>`, with the rules and examples in the delta. |
 | A product, or a large area of one | A brief, then `specgate propose --from-brief`, one module at a time. |
+| A story your analyst wrote in Jira | No brief. `specgate propose --from-ticket <KEY>`: the ticket is the source. See [From a Jira ticket](../from-a-ticket.md). |
 
 ## Words used here
 
@@ -31,6 +38,8 @@ Often not. A brief is for a product, or a large part of one.
 - **Surface** — where an actor reaches it: `api`, `web`, `mobile` or `desktop`.
 - **Rule**, **example**, **question** — the three kinds of card in a module.
 - **Requirement**, **scenario** — what a rule and an example become in the draft.
+- **Change** — a folder under `docs/specs/changes/` holding the requirements
+  and scenarios a piece of work adds, until it is built.
 - **Draft** — the change `specgate propose --from-brief <module>` opens.
 
 ## Start the file
@@ -430,6 +439,8 @@ The system SHALL show a lesson to the students of its course once it is publishe
 | `brief_not_ready` | `propose --from-brief <module>` found an error | Run `--check` and fix what it says |
 | `draft_brief_text_lost` | The agent changed your notes | Nothing was kept; run it again, or write the sections yourself |
 
+## Next
+
 Drafting the modules is the next step, in the from-scratch journey:
-[phase 2 — from the brief to a checked spec](scratch-2-specify.md). Starting
-the project itself is [phase 1](scratch-1-install.md).
+**[phase 2 — from the brief to a checked spec →](scratch-2-specify.md)**.
+Starting the project itself is [phase 1](scratch-1-install.md).

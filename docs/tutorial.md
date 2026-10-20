@@ -1,8 +1,8 @@
 <!-- specgate:allow-placeholders — this file documents the {{VAR}} template syntax. -->
 # 🚗 End-to-end tutorial — building **Smart Parking**
 
-A friendly, step-by-step walk through **every** command in
-`specgate`. We build one real backend project — **Smart
+A step-by-step walk through the commands you use most in
+`specgate`, and many of the others. We build one real backend project — **Smart
 Parking** — on top of the public demo pack
 [`rsaglobaltech/parking-management-specops`](https://github.com/rsaglobaltech/parking-management-specops).
 
@@ -12,12 +12,12 @@ explains the _concept_ first, then the command, then what you should see.
 > If you have not installed the CLI globally, replace every `specgate` in
 > this guide with `npx @rsaglobaltech/specgate@latest`.
 >
-> **This tutorial starts from a domain pack.** If you are starting from your
-> own plan or a client's brief instead, follow
-> [Write the brief](start/write-the-brief.md) and the
-> [From scratch](start/scratch-1-install.md) journey — `specgate propose
-> --from-brief` turns the brief into requirements module by module. Everything
-> from Step 3 on applies to both.
+> **This tutorial follows domain packs.** For work from a client's brief, see
+> [From a client brief](from-a-brief.md) and the
+> [From scratch](start/scratch-1-install.md) journey: `specgate propose
+> --from-brief` turns the brief into requirements module by module. For work
+> from a Jira ticket, see [From a Jira ticket](from-a-ticket.md). Everything
+> from Step 3 on applies to all three.
 >
 > **The daily loop is four verbs**: `propose` opens a change, `apply` delivers
 > one requirement through the gate, `status` says what is left, and `archive`
@@ -102,7 +102,7 @@ Optionally install the CLI globally so `specgate` works everywhere:
 
 ```bash
 npm install -g @rsaglobaltech/specgate@latest
-specgate --version          # 0.20.0
+specgate --version          # 0.22.1
 specgate --help             # the six you start with: init; propose, apply, status, archive; check
 specgate --help --all       # the whole surface
 ```
@@ -255,10 +255,8 @@ specgate config set test_cmd "./mvnw -B verify"   # or mvn -B test, npm test, py
 ```text
   ✔  test_cmd = ./mvnw -B verify
      harness.config.yaml
-     `check` and `done` now run it.
+     `check` and `apply` now run it.
 ```
-
-(`done` is the old name of `apply`; both run it.)
 
 ### Do it
 
@@ -320,7 +318,7 @@ open are listed too — they count while the change is in flight.
 
 > **Before a change exists**, `specgate explore "<question>"` prints a brief of
 > the project's state to think through with a person or an agent; it writes
-> nothing. See the [command reference](commands.md#starting).
+> nothing. See the [command reference](commands.md#starting-a-project).
 
 ### Machine-readable mode
 
@@ -391,7 +389,7 @@ the requirement `Implemented` only if it passes; when the gate fails it writes
 nothing. Without an id it takes the next requirement `status` names.
 `--status Verified` (or `Released`) targets a later state; `apply REQ-001
 REQ-002 …` delivers several with one run of the suite; `--no-check` skips the
-gate, and says so. `specgate done` is its old name and still works.
+gate, and says so.
 
 ---
 
@@ -883,7 +881,7 @@ change — nothing was merged yet.
 > from the version bump — so you review an upstream upgrade as intent rather
 > than as a file diff.
 
-→ [Reviewing changes](reviewing-changes.md) for the full reference.
+→ [Change a shipped requirement](reviewing-changes.md) for the full reference.
 
 ---
 
@@ -1107,7 +1105,7 @@ already has code, `specgate init` adopts it: it reads the layout, proposes the
 capabilities the code already implies and writes the spec skeleton without
 touching a line of source. `specgate onboard --tour` runs the whole loop —
 propose, a test, `status`, `apply`, `archive`, `check` — on a temporary copy of
-it and narrates each step ([command reference](commands.md#starting)).
+it and narrates each step ([command reference](commands.md#starting-a-project)).
 `specgate doctor` reports what has drifted, with a fix per finding.
 
 ---
@@ -1120,10 +1118,11 @@ The 📍 / 📦 column is the thing to remember — **where** you run it.
 | --- | --- | --- |
 | `specgate init [--config <f.yaml> --out <dir>]` | 📍 parent dir | Scaffold a new project, or adopt a repository that already has code |
 | `specgate propose <id> [--capability <c>]` | 📍 project | Open a change: proposal, tasks, a delta to write, reserved ids |
-| `specgate propose --from-brief [<module>]` | 📍 project | From a plan in `docs/brief.md` to a draft change, one module at a time (old name: `draft`) |
-| `specgate apply [<REQ-NNN …>] [--status <S>]` | 📍 project | Refuse with no test naming it; else run the gate, then mark it Implemented (old name: `done`) |
+| `specgate propose --from-brief [<module>]` | 📍 project | From a plan in `docs/brief.md` to a draft change, one module at a time |
+| `specgate propose --from-ticket <KEY>` | 📍 project | From a Jira story to a change on its own branch, checked against the ticket |
+| `specgate apply [<REQ-NNN …>] [--status <S>]` | 📍 project | Refuse with no test naming it; else run the gate, then mark it Implemented |
 | `specgate status` | 📍 project | What each requirement still needs — open changes included — and the next command to run |
-| `specgate archive <id> [--dry-run]` | 📍 project | Merge a change whose requirements are all Implemented (old name: `change archive`) |
+| `specgate archive <id> [--dry-run]` | 📍 project | Merge a change whose requirements are all Implemented |
 | `specgate check` | 📍 project | The gate, locally and in CI: `validate --strict`, then your `test_cmd` |
 | `specgate new "<title>"` | 📍 project | One requirement straight into `spec.md`: its section, its tagged scenario, its row |
 | `specgate explore ["<question>"]` | 📍 project | A brief of where the project stands, to think with before a change exists |

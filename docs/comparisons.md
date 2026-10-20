@@ -14,8 +14,6 @@ tool exist because of it.
 > maintainers of each compared tool for review; their feedback (if received)
 > is referenced in footnotes.
 
----
-
 ## 1. At-a-glance matrix
 
 | Capability | `specgate` | **OpenSpec** | GitHub `spec-kit` | Cursor `.cursorrules` | Aider `CONVENTIONS.md` | Plain `README.md` |
@@ -32,6 +30,7 @@ tool exist because of it.
 | **Language server (LSP)** | ✅ shipped | ❌ | ❌ | n/a (own editor) | ❌ | ❌ |
 | **Change lifecycle (propose → apply → archive)** | ✅ shipped | ✅ **their idea first** | ❌ | ❌ | ❌ | ❌ |
 | **Archive waits until a test proves each requirement** | ✅ `archive` refuses while one is pending | ❌ unchecked tasks ask, `--yes` skips | ❌ | ❌ | ❌ | ❌ |
+| **Work from Jira tickets** | ✅ `propose --from-ticket`: Definition of Ready, one PR per ticket | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Commands to learn before the first PR** | ✅ 6: `init`, `propose`, `apply`, `status`, `archive`, `check` | ✅ 3 slash commands | ✅ | ✅ | ✅ | ✅ |
 | **Versioned, installable packs (`specops`)** | ✅ shipped | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Cross-platform CLI (Windows/Linux/macOS)** | ✅ Node | ✅ Node | ⚠️ Bash-heavy | ✅ | ✅ | ✅ |
@@ -39,7 +38,7 @@ tool exist because of it.
 | **Discoverable pack registry** | ⚠️ generator ships, not yet hosted | n/a | ❌ | ❌ | ❌ | n/a |
 | **Zero-install (just docs)** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Agent JSON contract, documented and tested** | ✅ generated from source | ✅ hand-written | ❌ | ❌ | ❌ | ❌ |
-| **Slash commands for agent tools** | ✅ 8 tools | ✅ | ❌ | n/a | ❌ | ❌ |
+| **Slash commands for agent tools** | ✅ 10 tools (`agents init`) | ✅ | ❌ | n/a | ❌ | ❌ |
 | **Configurable artefact graph** | ✅ `specgate schema` | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Multi-repo spec sharing** | ✅ private packs | ⚠️ Stores | ❌ | ❌ | ❌ | ❌ |
 | **Time to first value** | ✅ **< 1s CLI, measured**[^ttfv] | ✅ minutes | ✅ minutes | ✅ instant | ✅ instant | ✅ instant |
@@ -57,8 +56,6 @@ tool exist because of it.
     of the compared tools: writing the first real Gherkin scenario and test is
     human time regardless of tooling.
 
----
-
 ## 2. When each tool wins
 
 ### `specgate` wins when…
@@ -69,6 +66,9 @@ tool exist because of it.
   and humans share the same vocabulary.
 - You operate **multiple environments** (dev/feature/prod) and want generated
   Docker / devcontainer / `.env` scaffolding aligned with the domain.
+- Your work arrives as **Jira stories with acceptance criteria**: each ticket
+  is checked against a Definition of Ready, becomes a change on its own
+  branch, and ends as one pull request ([From a Jira ticket](from-a-ticket.md)).
 - You want a **portable, vendor-neutral** workflow that works with Claude,
   Cursor, Aider, Copilot, or no agent at all.
 
@@ -134,8 +134,6 @@ those two things, their smaller surface is the better tool.
 
 > Fine for week-1. Doesn't scale past week-12.
 
----
-
 ## 3. When `specgate` loses
 
 These are the honest trade-offs. We'd rather you choose a different tool than
@@ -146,11 +144,9 @@ adopt ours and regret it.
 | **Solo developer, 1-week throwaway** | Setup overhead exceeds the project lifespan | Use a `README.md` + Gherkin in a single file |
 | **Cursor-only team, no portability concern** | Our CLI duplicates what `.cursorrules` already does for them | Stick with Cursor rules |
 | **Already on GitHub `spec-kit` for 6+ months** | Switching cost > marginal feature gap | Wait for `spec-kit` to add DDD/JSON-Schema; we'll re-publish this page |
-| **Front-end-only project with no domain logic** | DDD vocabulary feels heavy | Use `--type frontend` (lighter) but consider plain templates |
+| **Front-end-only project with no domain logic** | DDD vocabulary feels heavy | Choose the `frontend` project type when the `init` wizard asks, but consider plain templates |
 | **Highly conservative shop, no Node.js allowed** | We require Node ≥ 22 at runtime | Run the published Docker image, or the Maven / Gradle plugin, which launch the CLI for you |
 | **You hate YAML** | Pack format is YAML | We won't ship JSON/TOML packs in 0.x; revisit in 1.0 |
-
----
 
 ## 4. Migration paths
 
@@ -180,9 +176,10 @@ not want this tool.
 
 ### From `spec-kit` → `specgate`
 
-1. Run `npx @rsaglobaltech/specgate init --config your.config --out ./next`.
+1. Run `npx @rsaglobaltech/specgate@latest init --config specgate.yaml --out ./next`
+   (a YAML file with the wizard's answers; without `--config` the wizard asks).
 2. Copy your existing `spec-kit` artefacts into the generated `docs/specs/`.
-3. Run `validate` — it will tell you what's missing in the traceability matrix.
+3. Run `specgate check` — it will tell you what's missing in the traceability matrix.
 4. Keep `spec-kit` running for 1 release cycle as a parallel checker.
 
 ### From `.cursorrules` → `specgate`
@@ -196,9 +193,9 @@ not want this tool.
 
 1. Generate a project as above.
 2. Copy the existing README into `docs/specs/glossary.md`.
-3. Run `pack init` to scaffold a domain pack from your existing module list.
-
----
+3. Optionally, `specgate pack init --out ./domain-packs --name "<your domain>"`
+   writes an empty domain-pack skeleton; fill it with the requirements from
+   your module list.
 
 ## 5. Questions worth asking before you choose
 
@@ -213,8 +210,6 @@ not want this tool.
 5. **What's the cost of being wrong?** — All four alternatives are reversible
    in <1 day; choose the one that lets you experiment cheapest.
 
----
-
 ## 6. References
 
 - [Case Study 1: Smart Parking brownfield adoption](case-studies/case-1.md)
@@ -223,8 +218,15 @@ not want this tool.
 - [Cursor `.cursorrules` documentation](https://docs.cursor.com/context/rules-for-ai)
 - [Aider CONVENTIONS.md guide](https://aider.chat/docs/usage/conventions.html)
 
-Our own column was last verified against the shipped CLI on **2026-08-16**,
-and the "Time to first value" row re-measured on **2026-08-26** (see the footnote).
+Our own column was last verified against the shipped CLI on **2026-08-16**;
+the Jira row, the agent-tool count and the migration commands against 0.22.0
+on **2026-10-20**. The "Time to first value" row was re-measured on
+**2026-08-26** (see the footnote).
 OpenSpec was reviewed **2026-08**; the other columns **2026-05**.
 Pull requests with corrections are welcome — see
 [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## Next
+
+- [Specgate or OpenSpec](vs-openspec.md) — the closest comparison, in detail
+- [Getting started](getting-started.md) — install it and pick your path

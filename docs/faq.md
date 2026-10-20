@@ -3,8 +3,6 @@
 The questions teams ask in the first week, with the short answer and where the
 long one lives.
 
----
-
 ## Adopting it
 
 ### Does it work on a repository that already exists?
@@ -45,7 +43,28 @@ scenario that ran zero steps.
 Delete `spec.md`, `features/`, `docs/specs/` and the CI job. Adoption never
 touched your code, so nothing else depends on it.
 
----
+## Where work comes from
+
+### Can work start from a Jira ticket?
+
+Yes. `specgate propose --from-ticket KAN-13` reads the story from Jira and
+opens a change from its description and acceptance criteria, on a branch named
+after the ticket. `--check` first tests the ticket against the Definition of
+Ready (rules T1 to T9). You build and archive the change as usual, then
+`specgate alm pr <change-id>` opens one pull request per ticket on GitHub.
+Jira is only read. → [From a Jira ticket](from-a-ticket.md)
+
+### A brief, a ticket, or neither?
+
+| You have | Use |
+| --- | --- |
+| One behaviour to add or change | Neither: `specgate propose <change-id>` |
+| A feature with a few rules (two to six) | Neither: `specgate propose <change-id>`, the rules in the delta |
+| A new product, or a large area of one | A brief: `docs/brief.md`, then `specgate propose --from-brief` |
+| A Jira story with acceptance criteria | The ticket: `specgate propose --from-ticket <KEY>` |
+
+All three open the same kind of change and follow the same lifecycle.
+→ [Getting started](getting-started.md#3-where-does-the-work-come-from)
 
 ## Day to day
 
@@ -63,14 +82,18 @@ only once every requirement it adds or modifies is `Implemented`. Until then
 it refuses with `archive_requirements_pending` and the `specgate apply` to
 run; `--force` does not skip that. The spec and the code land in the same pull
 request ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
-→ [Reviewing changes](reviewing-changes.md)
+→ [Change a shipped requirement](reviewing-changes.md)
 
-### Do the old commands still work?
+### Which old command names still work?
 
-Yes. `done` is `apply`, `change new` is `propose`, `draft` is
-`propose --from-brief`, `change archive` is `archive`, and `new` still adds one
-requirement straight to `spec.md`. The short help shows only `init`, the four
-verbs and `check`; `specgate --help --all` shows the rest.
+All of them, as aliases: `specgate draft` is `propose --from-brief`,
+`specgate done` is `apply`, `specgate change new` is `propose` and
+`specgate change archive` is `archive`. The guides use the new names only.
+→ [Old names](commands.md#old-names)
+
+`specgate new` is not an old name: it adds one requirement straight to
+`spec.md`, without a change, which suits a small project. The short help shows
+only `init`, the four verbs and `check`; `specgate --help --all` shows the rest.
 
 ### Who edits the traceability matrix?
 
@@ -98,7 +121,7 @@ First read the code. `apply_no_test` means no test mentions the requirement:
 name it in the test, that is the fix. For a gate failure,
 `specgate apply REQ-NNN --no-check` writes the status without the gate. Use it
 when the gate is wrong, say so in the pull request — and open an issue,
-because a wrong gate is a bug. (`done` is the old name; it behaves the same.)
+because a wrong gate is a bug.
 
 ### `check` says it checked the specification, not the code.
 
@@ -111,8 +134,6 @@ No test command is configured, so nothing ran your tests. Run
 The requirement, its scenario and the test that mentions it — not the matrix.
 The one thing the gate cannot catch is a test that names a requirement and
 does not test it. → [Your team's first pull request](first-pr.md#the-reviewer-what-to-read-what-to-skip)
-
----
 
 ## Agents
 
@@ -153,14 +174,20 @@ Whatever your agent costs. The harness measures wall-clock time; a profile
 may declare a cost hint, and `specgate harness report` multiplies it out and
 says the figure is declared, not measured.
 
----
-
 ## Security and operations
 
 ### Does the CLI send telemetry?
 
-No. It makes network calls only when you ask for something remote: an ALM
-sync, a pack fetched from a git URL, or `npx` downloading the package itself.
+No. It makes network calls only when you ask for something remote:
+
+- `specgate propose --from-ticket <KEY>` reads the ticket from Jira, and pushes
+  the new branch with your git credentials;
+- `specgate alm pr` pushes the ticket's branch and calls GitHub's API to open
+  or update its pull request;
+- `specgate alm sync` writes to Jira (or Azure Boards, or GitHub Issues):
+  it creates and closes issues;
+- `specgate alm pull` reads labelled issues;
+- a pack fetched from a git URL, and `npx` downloading the package itself.
 
 ### Can it run air-gapped?
 
@@ -178,8 +205,6 @@ SBOM, and its licence policy is a build gate. → [Supply chain](supply-chain.md
 (`npx @rsaglobaltech/specgate@<version>`), so CI does not change behaviour the
 day a new release is published.
 
----
-
 ## Compared with others
 
 ### How is this different from OpenSpec or Spec Kit?
@@ -191,3 +216,8 @@ unattended harness. The daily loop has the same shape as OpenSpec's —
 requirement and a green gate, and `archive` refuses work that is not done.
 OpenSpec is smaller, and if you only want the change loop without a gate it is
 the better fit. → [Comparisons](comparisons.md)
+
+## Next
+
+- [Getting started](getting-started.md) — install, pick your path, the four verbs
+- [Troubleshooting](troubleshooting.md) — when the gate says no and you disagree

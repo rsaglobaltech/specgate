@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.22.0",
+    "version": "0.22.1",
     "node": "v24.x",
     "platform": "darwin",
     "packSource": "local"
   },
   "recordedAt": "2026-10-20",
-  "title": "courts — draft from a brief",
+  "title": "courts — from a brief",
   "cols": 88,
   "streamsMerged": false,
   "steps": [
@@ -89,8 +89,8 @@
       "id": "check-draft",
       "caption": "An agent drafted three requirements. The checklist finds every value nobody gave it.",
       "cwd": "~/courts",
-      "command": "specgate draft bookings",
-      "surface": "draft",
+      "command": "specgate propose --from-brief bookings",
+      "surface": "propose",
       "exit": 1,
       "typeMs": 26,
       "holdMs": 2320,
@@ -98,7 +98,7 @@
       "omitted": 2,
       "lines": [
         {
-          "t": "  ◆ specgate · draft bookings   docs/brief.md",
+          "t": "  ◆ specgate · propose --from-brief bookings   docs/brief.md",
           "c": "out",
           "s": "out"
         },
@@ -276,8 +276,8 @@
       "id": "check-again",
       "caption": "Every value is now in the brief or written down as an assumption.",
       "cwd": "~/courts",
-      "command": "specgate draft bookings",
-      "surface": "draft",
+      "command": "specgate propose --from-brief bookings",
+      "surface": "propose",
       "exit": 0,
       "typeMs": 26,
       "holdMs": 1600,
@@ -285,7 +285,7 @@
       "omitted": 1,
       "lines": [
         {
-          "t": "  ◆ specgate · draft bookings   docs/brief.md",
+          "t": "  ◆ specgate · propose --from-brief bookings   docs/brief.md",
           "c": "out",
           "s": "out"
         },

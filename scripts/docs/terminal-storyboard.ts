@@ -2,8 +2,8 @@
  * What the landing page's terminals show, declared as data.
  *
  * Three recordings, one per question a visitor brings — "what happens to my
- * client's brief?", "what stops a bad change?", "what if an agent does the
- * work?" — shown as tabs over one player. Each is captured from the real CLI
+ * client's brief?", "what stops a bad change?", "how does a team share
+ * requirements, and hand them to an agent?" — shown as tabs over one player. Each is captured from the real CLI
  * by `record-terminal.ts` and checked by `docs-terminal.test.ts`.
  *
  * Read by two things that must not disagree: `record-terminal.ts`, which runs
@@ -76,7 +76,11 @@ export interface Storyboard {
   readonly beats: readonly Beat[];
 }
 
-/** The agent harness — the original recording, kept under its original names. */
+/**
+ * Packs, for teams that share requirements: a project generated from a config,
+ * a domain pack installed and pinned, then the harness building one of its
+ * requirements. Kept under its original ids and file name.
+ */
 export const BEATS: readonly Beat[] = [
   {
     id: "config",
@@ -169,7 +173,7 @@ export const BEATS: readonly Beat[] = [
 /**
  * From a client's brief to a specification.
  *
- * The beat that matters is the first `draft bookings`: the agent wrote a
+ * The beat that matters is the first `propose --from-brief bookings`: the agent wrote a
  * plausible draft and invented a fee the brief never states. The checklist
  * finds it, the fee becomes a question for the client, and the requirement it
  * blocks arrives as "waiting for an answer" instead of as code.
@@ -187,8 +191,8 @@ export const BRIEF_BEATS: readonly Beat[] = [
     id: "check-draft",
     caption: "An agent drafted three requirements. The checklist finds every value nobody gave it.",
     cwd: "courts",
-    argv: ["specgate", "draft", "bookings"],
-    surface: "draft",
+    argv: ["specgate", "propose", "--from-brief", "bookings"],
+    surface: "propose",
     maxLines: 18,
     expectExit: 1,
   },
@@ -213,8 +217,8 @@ export const BRIEF_BEATS: readonly Beat[] = [
     id: "check-again",
     caption: "Every value is now in the brief or written down as an assumption.",
     cwd: "courts",
-    argv: ["specgate", "draft", "bookings"],
-    surface: "draft",
+    argv: ["specgate", "propose", "--from-brief", "bookings"],
+    surface: "propose",
     maxLines: 10,
   },
   {
@@ -296,7 +300,7 @@ export const STORYBOARDS: readonly Storyboard[] = [
   {
     id: "brief",
     label: "From a brief",
-    title: "courts — draft from a brief",
+    title: "courts — from a brief",
     file: "terminal-brief.json",
     block: "terminal-brief",
     beats: BRIEF_BEATS,
@@ -311,8 +315,8 @@ export const STORYBOARDS: readonly Storyboard[] = [
   },
   {
     id: "harness",
-    label: "Hand it to an agent",
-    title: "smart-parking",
+    label: "Packs, for teams that share requirements",
+    title: "smart-parking — a pack, then the harness",
     file: "terminal-demo.json",
     block: "terminal",
     beats: BEATS,

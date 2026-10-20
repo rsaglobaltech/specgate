@@ -168,6 +168,10 @@ that breaks a proved rule, or marks something done that no test proves, fails.
 
 ## 5. A whole module, written down from the code
 
+<!-- specgate:note -->
+Recorded with Specgate 0.18.0. Today the same steps are: propose → build and apply each requirement → archive.
+<!-- specgate:endnote -->
+
 One requirement at a time works for a bug fix. For a module, open a change: it
 is reviewed as one pull request and archived into the specification in one go.
 

@@ -249,6 +249,8 @@ export const SURFACE: Command[] = [
       { name: "link" },
       { name: "status" },
       { name: "pull", editsContract: true, json: { key: "pulled", gate: false } },
+      // Pushes a branch and opens a pull request: a person's step, not an MCP tool.
+      { name: "pr", mcp: false },
     ],
   },
   {
