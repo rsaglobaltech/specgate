@@ -481,7 +481,7 @@ function writeSetupGuide(projectDir: string, brief: string): void {
 }
 
 /** The next free SCN number, past every scenario the project or a change uses. */
-function nextScenario(projectDir: string): string {
+export function nextScenario(projectDir: string): string {
   let max = 0;
   for (const id of projectIds(projectDir).keys()) {
     const m = /^SCN-(\d+)$/.exec(id);

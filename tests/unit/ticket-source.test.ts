@@ -563,3 +563,140 @@ test("REQ-146: the remaining T-rules, each on the case it names", () => {
   };
   assert.deepEqual(codes(epic), ["ticket_epic"]);
 });
+
+// ── REQ-147 ──────────────────────────────────────────────────────────────────
+
+const KAN_13 = {
+  key: "KAN-13",
+  fields: {
+    summary: "Register vehicle entry",
+    issuetype: { name: "Story" },
+    parent: { key: "KAN-5" },
+    labels: ["garage-system", "spec-2.1"],
+    description: {
+      type: "doc",
+      version: 1,
+      content: [
+        para(
+          "As an administrator, I want to register a vehicle's entry so that I can track which vehicles are in the garage and since when."
+        ),
+        para({ strong: "Source:" }, " Spec §2.1 (Vehicle entry registration)"),
+        para({ strong: "Acceptance Criteria" }),
+        list(false, [
+          gwt(
+            "the entry form",
+            "it is displayed",
+            "it contains: license plate (required), vehicle type (required), owner name (optional) and entry date/time."
+          ),
+          gwt(
+            "the entry form",
+            "it opens",
+            "the entry date/time is pre-filled with the current date and time."
+          ),
+          gwt(
+            'a plate typed with lowercase letters or spaces (e.g. "ab 123 cd")',
+            "I save",
+            'it is stored normalized as uppercase without spaces ("AB123CD").'
+          ),
+          gwt(
+            "a required field is empty",
+            "I save",
+            "the entry is not saved and the missing field is highlighted."
+          ),
+          gwt(
+            "a plate that already has an open entry",
+            "I try to register a new entry",
+            'it is rejected with the message "Vehicle is already in the garage".'
+          ),
+          gwt(
+            "valid input",
+            "I save",
+            'the entry is stored with status "inside" and appears in the list of vehicles in the garage.'
+          ),
+        ]),
+      ],
+    },
+  },
+};
+
+const CHANGE_13 = path.join("docs", "specs", "changes", "kan-13-register-vehicle-entry");
+
+test("REQ-147 SCN-147a: KAN-13 opens a change checked against its own words", () => {
+  const dir = project(JIRA + "epics:\n  KAN-5: entry-exit\n");
+  try {
+    const file = exported(dir, "KAN-13.json", KAN_13);
+    const run = runPropose(dir, ["--from-ticket", file, "--no-branch"]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const change = path.join(dir, CHANGE_13);
+    const read = (f: string) => fs.readFileSync(path.join(change, f), "utf8");
+    assert.match(read("ticket.md"), /Vehicle is already in the garage/);
+    assert.match(read("ticket.md"), /As an administrator, I want to register/);
+    assert.match(read("proposal.md"), /ticket: KAN-13/);
+    assert.match(read("proposal.md"), /> As an administrator/);
+    const guide = read("DRAFTING.md");
+    assert.equal((guide.match(/^\d\. Given /gm) || []).length, 6, guide);
+    assert.match(guide, /`AB123CD`/);
+    assert.ok(fs.existsSync(path.join(change, "specs", "entry-exit", "spec.md")));
+    const yaml = read("change.yaml");
+    assert.match(
+      yaml,
+      new RegExp(`^brief: ${CHANGE_13.split(path.sep).join("/")}/ticket\\.md$`, "m")
+    );
+    assert.match(yaml, /^ticket: KAN-13$/m);
+    assert.match(yaml, /^ticket_sha256: [0-9a-f]{64}$/m);
+    assert.match(run.stdout, /kan-13-register-vehicle-entry/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-147 SCN-147b: an epic nobody mapped opens nothing", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "KAN-13.json", KAN_13);
+    const run = runPropose(dir, ["--from-ticket", file, "--no-branch"]);
+    assert.equal(run.status, 1);
+    assert.match(run.stdout + run.stderr, /ticket_no_capability/);
+    assert.match(run.stdout + run.stderr, /--capability/);
+    assert.match(run.stdout + run.stderr, /epics:/);
+    assert.ok(!fs.existsSync(path.join(dir, CHANGE_13)));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-147: a ticket with an error opens nothing", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "story.json", story("KAN-72", []));
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "x", "--no-branch"]);
+    assert.equal(run.status, 1);
+    assert.match(run.stdout + run.stderr, /ticket_not_ready/);
+    assert.ok(!fs.existsSync(path.join(dir, "docs", "specs", "changes")));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-147 SCN-147c: the copy edited to pass is refused", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "KAN-13.json", KAN_13);
+    const opened = runPropose(dir, [
+      "--from-ticket",
+      file,
+      "--capability",
+      "entry-exit",
+      "--no-branch",
+    ]);
+    assert.equal(opened.status, 0, opened.stdout + opened.stderr);
+    const copy = path.join(dir, CHANGE_13, "ticket.md");
+    fs.appendFileSync(copy, "\n- Given anything, then 42.\n");
+    const again = runPropose(dir, ["--from-ticket", file, "--no-branch"]);
+    assert.match(again.stdout + again.stderr, /ticket_copy_edited/);
+    assert.doesNotMatch(again.stdout, /Ready to review/);
+    assert.equal(again.status, 1);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

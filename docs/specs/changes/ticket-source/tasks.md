@@ -14,7 +14,7 @@
 ## 3. From a ticket to a change
 
 - [x] 3.1 Definition of Ready, T1–T9 (REQ-146)
-- [ ] 3.2 `propose --from-ticket <KEY>` (REQ-147)
+- [x] 3.2 `propose --from-ticket <KEY>` (REQ-147)
 - [ ] 3.3 Branch, commit keys, `ticket_changed` (REQ-148)
 
 ## 4. The pull request

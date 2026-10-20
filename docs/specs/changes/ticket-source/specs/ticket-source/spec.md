@@ -115,7 +115,7 @@ The system SHALL, on `specgate propose --from-ticket <KEY>` for a ticket with no
 - WHEN the developer runs `specgate propose --from-ticket KAN-13.json`
 - THEN it reports `ticket_copy_edited` as an error and does not say "Ready to review"
 
-<!-- specgate:trace status=Draft feature=features/ticket-source/REQ-147.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented feature=features/ticket-source/REQ-147.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-148 — The ticket key travels with the work
 
