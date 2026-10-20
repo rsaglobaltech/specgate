@@ -17,3 +17,9 @@ Feature: The ticket key travels with the work
     Given the opened change, and an exported KAN-13 whose second criterion now ends "pre-filled with the current time"
     When the developer runs `specgate propose --from-ticket KAN-13.json --check`
     Then it reports `ticket_changed` showing the old and the new line
+
+  @REQ-148 @SCN-148d
+  Scenario: The branch is on the host as soon as work starts
+    Given a clean git repository whose `origin` is reachable, and the exported KAN-13
+    When the developer runs `specgate propose --from-ticket KAN-13.json --capability entry-exit`
+    Then `origin` has the branch `feature/KAN-13-register-vehicle-entry`, and the local branch tracks it
