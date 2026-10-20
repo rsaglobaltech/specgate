@@ -8,6 +8,29 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.22.1] — 2026-10-20
+
+Documentation a newcomer can follow, and the CLI's words brought in line with it.
+
+### Changed
+
+- **The documentation, rewritten** after an audit of every page against the
+  CLI and the first real end-to-end run on Jira Cloud and GitHub. Three
+  sources of work (a change, a brief, a Jira ticket) into one lifecycle of
+  four verbs; the recorded journeys run `propose`, `apply` and `archive`;
+  archive comes before the pull request everywhere. New pages: *From a Jira
+  ticket* for a team lead setting it up, and *An existing codebase, with work
+  in Jira* (Maven profiles, a parent POM, Bitbucket and Jenkins).
+- **The `/specgate:draft` agent command runs `propose --from-brief`**, and the
+  MCP write guard names `specgate propose <id>`.
+
+### Fixed
+
+- `propose --help` lists `--no-push`; `alm --help` no longer says a ticket has
+  no acceptance criterion.
+- `alm pr` asks for the least token it needs: Pull requests, read and write.
+- `alm pr` is covered by an E2E journey and is not exposed as an MCP tool.
+
 ## [0.22.0] — 2026-10-20
 
 A brief shaped like what it becomes, checked before any agent drafts from it
