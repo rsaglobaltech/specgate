@@ -446,6 +446,49 @@ function story(key: string, criteria: string[], extra: Record<string, unknown> =
 const codes = (issue: unknown) =>
   (checkTicket(readTicket(issue)) as Array<{ code: string }>).map((d) => d.code);
 
+test("REQ-171 SCN-171a: the check says where the change will go", () => {
+  // Found handing a ticket over from agentkit: ready, branch made, and only
+  // then "No capability for PAY-123".
+  const dir = project(JIRA);
+  try {
+    fs.mkdirSync(path.join(dir, "docs", "specs", "capabilities", "billing"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "docs", "specs", "capabilities", "billing", "spec.md"),
+      "# Billing\n\n## Requirements\n"
+    );
+    const file = exported(
+      dir,
+      "PAY-123.json",
+      story("PAY-123", ["Given an invoice, when it is shown, then it shows the total."])
+    );
+    const read = (args: string[]) => {
+      const run = runPropose(dir, ["--from-ticket", file, "--check", "--json", ...args]);
+      return {
+        run,
+        doc: JSON.parse(run.stdout) as {
+          ready: boolean;
+          capability: string | null;
+          status: Array<{ code: string; severity: string; message: string; fix?: string }>;
+        },
+      };
+    };
+
+    const none = read([]);
+    assert.equal(none.doc.ready, true, none.run.stdout);
+    assert.equal(none.doc.capability, null);
+    const warned = none.doc.status.find((d) => d.code === "ticket_no_capability");
+    assert.ok(warned, none.run.stdout);
+    assert.equal(warned.severity, "warning");
+    assert.match(`${warned.message} ${warned.fix ?? ""}`, /billing/);
+
+    const given = read(["--capability", "billing"]);
+    assert.equal(given.doc.capability, "billing");
+    assert.ok(!given.doc.status.some((d) => d.code === "ticket_no_capability"), given.run.stdout);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("REQ-146 SCN-146a: no criteria is T1, nothing is written", () => {
   const dir = project(JIRA);
   try {

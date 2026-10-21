@@ -776,6 +776,9 @@ export class TicketCommand extends BaseCommand {
   private check(opts: TicketOptions, ticket: Ticket): void {
     const io = agentIo(opts.json);
     const findings = [...checkTicket(ticket), ...changedSince(opts.projectDir, ticket)];
+    // Where the change would go, said before any branch exists (REQ-171).
+    const where = this.capabilityFor(opts, ticket);
+    if (where.missing) findings.push(where.missing);
     const errors = findings.filter((d) => d.severity === "error").length;
     const warnings = findings.filter((d) => d.severity === "warning").length;
     const ready = ticketReady(findings);
@@ -785,40 +788,92 @@ export class TicketCommand extends BaseCommand {
       : epic
         ? "specgate propose --from-ticket <story key> --check"
         : `specgate propose --from-ticket ${opts.ticket} --check`;
-    io.emit({ ticket: ticketJson(ticket), ready, errors, warnings, next, status: findings }, () => {
-      const out = process.stdout;
-      out.write(ui.header("propose --from-ticket --check", ticket.key));
-      out.write(
-        ui.ok(
-          `${ui.bold(ticket.key)} ${ticket.summary} ` +
-            ui.muted(
-              `· ${ticket.type || "issue"} · ${ticket.criteria.length} criteria · ` +
-                `${ticket.questions.length} open question(s)`
-            )
-        ) + (findings.length ? "\n" : "")
-      );
-      writeFindings(findings);
-      out.write(
-        "\n" +
-          (ready
-            ? ui.ok(
-                ui.bold("Ready to draft") +
-                  (warnings ? ui.muted(` — ${warnings} warning(s) for you to judge`) : "")
+    io.emit(
+      {
+        ticket: ticketJson(ticket),
+        ready,
+        capability: where.capability,
+        errors,
+        warnings,
+        next,
+        status: findings,
+      },
+      () => {
+        const out = process.stdout;
+        out.write(ui.header("propose --from-ticket --check", ticket.key));
+        out.write(
+          ui.ok(
+            `${ui.bold(ticket.key)} ${ticket.summary} ` +
+              ui.muted(
+                `· ${ticket.type || "issue"} · ${ticket.criteria.length} criteria · ` +
+                  `${ticket.questions.length} open question(s)`
               )
-            : ui.fail(
-                epic
-                  ? ui.bold("An epic is not drafted — its stories are")
-                  : `${ui.bold(`${errors} error(s) to fix in Jira before drafting`)} ${ui.muted("— each says how")}`
-              ))
-      );
-      out.write(
-        ui.next(
-          next,
-          ready ? "open the change" : epic ? "one of its stories" : "once the ticket is fixed"
-        )
-      );
-    });
+          ) + (findings.length ? "\n" : "")
+        );
+        writeFindings(findings);
+        out.write(
+          "\n" +
+            (ready
+              ? ui.ok(
+                  ui.bold("Ready to draft") +
+                    (warnings ? ui.muted(` — ${warnings} warning(s) for you to judge`) : "")
+                )
+              : ui.fail(
+                  epic
+                    ? ui.bold("An epic is not drafted — its stories are")
+                    : `${ui.bold(`${errors} error(s) to fix in Jira before drafting`)} ${ui.muted("— each says how")}`
+                ))
+        );
+        out.write(
+          ui.next(
+            next,
+            ready ? "open the change" : epic ? "one of its stories" : "once the ticket is fixed"
+          )
+        );
+      }
+    );
     process.exitCode = ready ? 0 : 1;
+  }
+
+  /**
+   * The capability a change for this ticket would be opened in: `--capability`
+   * or the epic's mapping; outside a Specgate project, or for an epic, no say.
+   */
+  private capabilityFor(
+    opts: TicketOptions,
+    ticket: Ticket
+  ): { capability: string | null; missing: Diagnostic | null } {
+    let projectDir: string;
+    try {
+      projectDir = resolveProjectDir(opts.projectDir);
+    } catch {
+      return { capability: null, missing: null };
+    }
+    const capability = opts.capability || capabilityOf(ticket, almConfig(projectDir));
+    if (capability) return { capability, missing: null };
+    if (!fs.existsSync(path.join(projectDir, "spec.md")) || /^epic$/i.test(ticket.type.trim())) {
+      return { capability: null, missing: null };
+    }
+    const root = path.join(projectDir, "docs", "specs", "capabilities");
+    const existing = fs.existsSync(root)
+      ? fs
+          .readdirSync(root, { withFileTypes: true })
+          .filter((e) => e.isDirectory())
+          .map((e) => e.name)
+          .sort()
+      : [];
+    return {
+      capability: null,
+      missing: warning(
+        "ticket_no_capability",
+        `No capability for ${ticket.key}: ${ticket.parent ? `its epic ${ticket.parent} is not mapped` : "it has no epic"}.`,
+        {
+          fix:
+            `Pass --capability <name>${existing.length ? ` (existing: ${existing.join(", ")})` : ""}, ` +
+            `or map the epic in alm.config.yaml under epics:.`,
+        }
+      ),
+    };
   }
 }
 

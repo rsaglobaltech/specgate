@@ -11,6 +11,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **The check says where the change will go** (REQ-171):
+  `propose --from-ticket --check --json` reports `capability`, from
+  `--capability` or the epic's mapping, and warns `ticket_no_capability`
+  with the capabilities that exist. A tool that creates the branch learns it
+  before the branch exists, not when opening the change fails.
 - **A ticket's branch may name its team** (REQ-170): `feature/<team>/KAN-13`,
   the way agentkit names it, is KAN-13's branch for `check` and
   `propose --from-ticket`, like `feature/KAN-13-…`.
