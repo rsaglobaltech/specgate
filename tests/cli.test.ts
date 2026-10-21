@@ -1389,6 +1389,40 @@ test(
   }
 );
 
+test(
+  "REQ-172 SCN-172a: a clone registers the merge drivers alone, writing nothing",
+  { skip: !hasGit() },
+  () => {
+    // Found rehearsing a ticket: harness init also wrote harness.config.yaml
+    // and .harness/, leaving the developer's tree dirty.
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-drivers-only-"));
+    const projectDir = makeHarnessProject(tempRoot);
+    assert.equal(runCli(["harness", "init", "--project-dir", projectDir]).status, 0);
+    gitInTest(["add", "-A"], { cwd: projectDir });
+    gitInTest(["commit", "--quiet", "-m", "harness setup"], { cwd: projectDir });
+    for (const name of ["specgate-spec", "specgate-matrix"]) {
+      for (const key of ["driver", "name"]) {
+        spawnSync("git", ["-C", projectDir, "config", "--unset", `merge.${name}.${key}`]);
+      }
+    }
+
+    const r = runCli(["harness", "init", "--merge-drivers", "--project-dir", projectDir]);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    for (const name of ["specgate-spec", "specgate-matrix"]) {
+      const got = spawnSync("git", ["-C", projectDir, "config", "--get", `merge.${name}.driver`], {
+        encoding: "utf8",
+      });
+      assert.equal(got.status, 0, `${name} is registered`);
+    }
+    const status = spawnSync("git", ["-C", projectDir, "status", "--porcelain"], {
+      encoding: "utf8",
+    });
+    assert.equal(status.stdout, "", "nothing written");
+
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+);
+
 // ── change author — the spec-author role (E2-02) ─────────────────────────
 
 /** A project with one change ready to be authored, committed and clean. */
