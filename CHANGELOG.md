@@ -11,6 +11,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **A clone registers the merge drivers alone** (REQ-172):
+  `specgate harness init --merge-drivers` registers them in the clone's git
+  config and writes no other file; `harness init` also wrote
+  `harness.config.yaml` and `.harness/`, leaving a developer's tree dirty.
 - **The check says where the change will go** (REQ-171):
   `propose --from-ticket --check --json` reports `capability`, from
   `--capability` or the epic's mapping, and warns `ticket_no_capability`
