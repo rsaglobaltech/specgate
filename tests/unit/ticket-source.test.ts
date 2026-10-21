@@ -718,10 +718,16 @@ function git(dir: string, ...args: string[]) {
   return r.stdout.trim();
 }
 
-/** A project in a git repository, everything committed on `main`. */
+/**
+ * A project in a git repository, everything committed on `main`. Its own
+ * identity: `propose` commits the opening (REQ-165), and a CI runner has no
+ * global one.
+ */
 function repo(config = JIRA): string {
   const dir = project(config);
   git(dir, "init", "-q", "-b", "main");
+  git(dir, "config", "user.email", "t@example.com");
+  git(dir, "config", "user.name", "T");
   git(dir, "add", "-A");
   git(dir, "commit", "-qm", "init");
   return dir;
