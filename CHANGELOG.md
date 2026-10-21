@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.22.2] — 2026-10-21
+
+Parallel tickets that never overwrite each other, rehearsed end to end on a brownfield Maven project with Jira tickets and OpenCode.
+
 ### Fixed
 
 - **A merge driver that is gone falls back to git's merge** (REQ-169): in a
