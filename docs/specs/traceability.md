@@ -107,6 +107,7 @@
 | REQ-169 | SCN-169a | `features/trusted-gate/REQ-169.feature` | - | - | - | - | - | tests/cli.test.ts | Implemented |
 | REQ-170 | SCN-170a | `features/ticket-source/REQ-170.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
 | REQ-171 | SCN-171a | `features/ticket-source/REQ-171.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-172 | SCN-172a | `features/trusted-gate/REQ-172.feature` | - | - | - | - | - | tests/cli.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
