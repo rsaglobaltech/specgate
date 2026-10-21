@@ -12,3 +12,15 @@ Feature: An id taken on the base branch is refused before merge
     Given a project with no git repository
     When the developer runs `specgate check`
     Then the gate does not fail for ids, and says the base comparison was skipped
+
+  @REQ-120 @SCN-120c
+  Scenario: A gitflow project compares with develop
+    Given a clone whose remote's default branch is `main`, an `alm.config.yaml` with `pr: base: develop`, and a `develop` branch that declares REQ-003 "Export orders as CSV"
+    When the developer runs `specgate check` with no `--base` on a branch whose open change adds REQ-003 "Refund an order"
+    Then the gate fails with `id_taken_on_base` and says the ids were compared with `develop`
+
+  @REQ-120 @SCN-120d
+  Scenario: A requirement the base changed is not an id taken
+    Given a branch started from `develop` when REQ-009 was "An owner's telephone is exactly 10 digits", and `develop` has since renamed REQ-009 "An owner's telephone is 10 digits, or an international number"
+    When the developer runs `specgate check` on the branch, which has not touched REQ-009
+    Then the gate does not fail with `id_taken_on_base` for REQ-009

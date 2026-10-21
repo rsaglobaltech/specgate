@@ -33,7 +33,7 @@
 
 <header class="top">
   <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
-  <span class="top__version">v0.22.1</span>
+  <span class="top__version">v0.22.2</span>
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -57,7 +57,7 @@
 <section class="mx">
   <div class="ed-wrap mx__grid">
     <div class="mx__copy">
-      <p class="mx__eyebrow">[ v0.22.1 ] — A change, a brief or a Jira ticket, to proven requirements</p>
+      <p class="mx__eyebrow">[ v0.22.2 ] — A change, a brief or a Jira ticket, to proven requirements</p>
       <h1 class="mx__title">No test,<br>no <span>done.</span></h1>
       <p class="mx__lede">
         Specgate turns a change you describe, a client's brief or a Jira story
@@ -112,7 +112,7 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
     <dl class="pb__tool">
       <div><dt>0</dt><dd>runtime dependencies</dd></div>
       <div><dt>36</dt><dd>commands, four of them for every day</dd></div>
-      <div><dt>10</dt><dd>agent tools wired from one definition</dd></div>
+      <div><dt>11</dt><dd>agent tools wired from one definition</dd></div>
     </dl>
     <p class="pb__claims">
       <span>Zero runtime dependencies</span><span>Any agent CLI</span><span>MIT</span><span>Every command tested end to end on Linux, macOS and Windows</span>
@@ -911,12 +911,12 @@ max_attempts: 1
      review and merge the harness/* branches you trust
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
- .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 107 ++++++++++++++++++++++++
+ .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 106 ++++++++++++++++++++++++
  docs/specs/traceability.md                              |   2 +-
  spec.md                                                 |   2 +-
  src/health.js                                           |   9 ++
  test/health.test.js                                     |  11 +++
- 5 files changed, 129 insertions(+), 2 deletions(-)
+ 5 files changed, 128 insertions(+), 2 deletions(-)
 
 ~/smart-parking $ git switch -q harness/REQ-000 &amp;&amp; node --test test/*.test.js
 ✔ REQ-000 SCN-000: GET /health reports the service as UP (12ms)
@@ -943,7 +943,7 @@ max_attempts: 1
     </div>
 
     <p class="term__meta">
-      Recorded from <strong>v0.22.1</strong>. <a href="./domain-packs.html">Domain packs →</a> <a href="./tutorial.html">The harness run, explained →</a>
+      Recorded from <strong>v0.22.2</strong>. <a href="./domain-packs.html">Domain packs →</a> <a href="./tutorial.html">The harness run, explained →</a>
     </p>
   </div>
 </section>
@@ -1173,7 +1173,7 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"</code></pre>
     </figure>
     <p class="ed-tools">
       <span>Wired from one definition</span>
-      <code>claude</code><code>claude-plugin</code><code>cursor</code><code>copilot</code><code>windsurf</code><code>aider</code><code>gemini</code><code>cline</code><code>codex</code><code>antigravity</code>
+      <code>claude</code><code>claude-plugin</code><code>cursor</code><code>copilot</code><code>windsurf</code><code>aider</code><code>gemini</code><code>cline</code><code>codex</code><code>antigravity</code><code>opencode</code>
     </p>
     <p class="ed-actions">
       <a class="ed-link" href="#watch">Watch a real run →</a>
@@ -1398,7 +1398,7 @@ npx specgate propose --from-brief</code></pre>
       <a href="./release-process.html">Releases</a>
     </nav>
   </div>
-  <p class="ed-wrap ed-foot__note">Documentation for v0.22.1. Every number on this page is checked against the repository by a test.</p>
+  <p class="ed-wrap ed-foot__note">Documentation for v0.22.2. Every number on this page is checked against the repository by a test.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>

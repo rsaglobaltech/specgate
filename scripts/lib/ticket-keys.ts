@@ -14,7 +14,7 @@ import { resolveBase } from "./base-ids";
 import { assertSafeGitRef } from "../../packages/core/src/domain/GitSafety";
 
 /** `feature/KAN-13-register-vehicle-entry` → `KAN-13`. */
-const TICKET_BRANCH = /^(?:feature|bugfix|hotfix)\/([A-Z][A-Z0-9_]+-\d+)(?:-|$)/;
+export const TICKET_BRANCH = /^(?:feature|bugfix|hotfix)\/([A-Z][A-Z0-9_]+-\d+)(?:-|$)/;
 
 function git(dir: string, args: string[]) {
   return spawnSync("git", ["-C", dir, ...args], { encoding: "utf8" });
@@ -43,7 +43,7 @@ export function ticketKeyFindings(dir: string, given?: string): Diagnostic[] {
   if (!key) return [];
   let base: string | null;
   try {
-    base = baseFor(dir, given);
+    base = ticketBase(dir, given);
   } catch {
     return [];
   }
@@ -106,4 +106,43 @@ export function harnessCommitMessage(
     ? `${key} ${requirement}: implement via specgate harness`
     : `feat(${requirement}): implement via specgate harness`;
   return `${subject}\n\nAttempt ${attempt}/${maxAttempts}.`;
+}
+
+/** `pr.base` from `alm.config.yaml`: the branch a ticket's pull request targets. */
+export function prBase(dir: string): string | null {
+  let yaml: string;
+  try {
+    yaml = fs.readFileSync(path.join(dir, "alm.config.yaml"), "utf8");
+  } catch {
+    return null;
+  }
+  const block = /^pr:\s*\n((?:[ \t]+.*\n?)*)/m.exec(yaml)?.[1] ?? "";
+  const base = /^[ \t]+base:[ \t]*["']?([^\s"'#]+)/m.exec(block)?.[1];
+  if (!base) return null;
+  try {
+    assertSafeGitRef(base, "base");
+  } catch {
+    return null;
+  }
+  const exists = (ref: string) =>
+    git(dir, ["rev-parse", "--verify", "--quiet", `${ref}^{commit}`]).status === 0;
+  const remote = `origin/${base}`;
+  if (!exists(base)) return exists(remote) ? remote : null;
+  // Nobody updates their local develop: behind origin it would make every
+  // colleague's commit merged from origin look like this ticket's (REQ-148).
+  // The local branch only when it already holds origin's, e.g. unpushed work.
+  if (!exists(remote)) return base;
+  return git(dir, ["merge-base", "--is-ancestor", remote, base]).status === 0 ? base : remote;
+}
+
+/**
+ * The base a ticket's work is measured against. An explicit `--base` or
+ * SPECGATE_BASE first; then `pr.base`, the branch its pull request targets;
+ * then the remote's default. With gitflow the remote's default is `main` while
+ * the work starts from `develop`: measured from `main`, every commit of
+ * `develop` looked like the ticket's (REQ-148).
+ */
+export function ticketBase(dir: string, given?: string): string | null {
+  if (given || process.env.SPECGATE_BASE) return baseFor(dir, given);
+  return prBase(dir) ?? baseFor(dir);
 }

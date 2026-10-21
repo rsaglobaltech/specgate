@@ -13,7 +13,7 @@ export default [
       const { SURFACE } = require(path.join(pkg, "dist", "scripts", "lib", "surface.js"));
       const broken = [];
       for (const c of SURFACE) {
-        if (c.name === "merge-traceability") continue;
+        if (c.name.startsWith("merge-")) continue;
         const targets = c.subcommands ? c.subcommands.map((s) => [c.name, s.name]) : [[c.name]];
         if (c.subcommands) targets.unshift([c.name]);
         for (const argv of targets) {

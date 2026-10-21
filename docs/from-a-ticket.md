@@ -196,11 +196,11 @@ No API access? Export the issue as JSON and pass `--from-ticket KAN-13.json`.
    `specgate propose --from-ticket <KEY> --check`.
 2. Check the ticket: `specgate propose --from-ticket KAN-13 --check`.
 3. Open the change, from a clean working tree:
-   `specgate propose --from-ticket KAN-13`. It creates the branch
-   `feature/KAN-13-register-vehicle-entry` from the base branch (`bugfix/…` for
-   a Bug), pushes it to `origin`, which moves the ticket to In Progress, and
-   opens the change `kan-13-register-vehicle-entry`. Add `--no-push` to keep
-   the branch local, or `--no-branch` to stay on the branch you are on.
+   `specgate propose --from-ticket KAN-13`. It creates
+   `feature/KAN-13-register-vehicle-entry` (`bugfix/…` for a Bug) from
+   `pr.base` or the branch you are on, opens the change, commits it and pushes
+   the branch: the ticket moves to In Progress, and every clone sees the ids
+   it reserved. `--no-push` keeps it local; `--no-branch` commits nothing.
 4. Have the agent draft it:
    `specgate propose --from-ticket KAN-13 --agent "claude -p"`. Run
    `specgate propose --from-ticket KAN-13` until it says **Ready to review**.

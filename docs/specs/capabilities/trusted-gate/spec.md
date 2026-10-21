@@ -49,7 +49,7 @@ The system SHALL keep, as a test fixture, a project whose specification reproduc
 
 ### Requirement: REQ-120 — An id taken on the base branch is refused before merge
 
-The system SHALL, in `specgate check`, compare every requirement the branch declares — in capability specs and in open changes — with the requirements on the base branch, and SHALL fail with `id_taken_on_base` when an id exists on the base with a different title, naming both titles and the next free id; it SHALL skip the comparison, saying so, when there is no git repository or no base reference.
+The system SHALL, in `specgate check`, compare every requirement the branch declares — in capability specs and in open changes — with the requirements on the base branch, and SHALL fail with `id_taken_on_base` when an id this branch introduced — one absent where the branch and the base last met — exists on the base with a different title, naming both titles and the next free id; the base branch SHALL be `--base`, else `SPECGATE_BASE`, else the `pr: base:` of `alm.config.yaml` when that branch exists, else the remote's default branch; it SHALL skip the comparison, saying so, when there is no git repository or no base reference.
 
 #### Scenario: SCN-120a — Two branches, one id
 
@@ -63,6 +63,18 @@ The system SHALL, in `specgate check`, compare every requirement the branch decl
 - GIVEN a project with no git repository
 - WHEN the developer runs `specgate check`
 - THEN the gate does not fail for ids, and says the base comparison was skipped
+
+#### Scenario: SCN-120c — A gitflow project compares with develop
+
+- GIVEN a clone whose remote's default branch is `main`, an `alm.config.yaml` with `pr: base: develop`, and a `develop` branch that declares REQ-003 "Export orders as CSV"
+- WHEN the developer runs `specgate check` with no `--base` on a branch whose open change adds REQ-003 "Refund an order"
+- THEN the gate fails with `id_taken_on_base` and says the ids were compared with `develop`
+
+#### Scenario: SCN-120d — A requirement the base changed is not an id taken
+
+- GIVEN a branch started from `develop` when REQ-009 was "An owner's telephone is exactly 10 digits", and `develop` has since renamed REQ-009 "An owner's telephone is 10 digits, or an international number"
+- WHEN the developer runs `specgate check` on the branch, which has not touched REQ-009
+- THEN the gate does not fail with `id_taken_on_base` for REQ-009
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-120.feature kind=business-rule status=Implemented test=tests/unit/trust-gate.test.ts -->
 
@@ -168,3 +180,105 @@ The system SHALL, when it reserves requirement ids for a new change (`propose`, 
 - THEN the change `kan-13-register-vehicle-entry` reserves ids from REQ-006 up, and its `DRAFTING.md` starts scenarios at SCN-007
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-152.feature kind=functional status=Implemented test=tests/unit/ticket-source.test.ts -->
+
+### Requirement: REQ-160 — Two changes that rewrite the same requirement are reported
+
+The system SHALL, on `specgate check` and when it reports on a change opened from a ticket, warn with `change_overlap` for every requirement that an open change in the working tree modifies or removes and that another open change — on the same branch, or on any local or remote-tracking branch not yet merged into the current one — also modifies or removes, naming the other change and its branch and saying how to resolve it; and SHALL say nothing about a branch whose tip is already part of the current branch, nor about the same change seen on its own pushed branch.
+
+#### Scenario: SCN-160a — Two tickets rewrite REQ-012
+
+- GIVEN a repository whose branch `feature/KAN-16-exit` holds an open change `kan-16-exit` that modifies REQ-012, and the developer is on `feature/KAN-13-entry`, whose open change `kan-13-entry` also modifies REQ-012
+- WHEN the developer runs `specgate check`
+- THEN it warns `change_overlap` for REQ-012, naming `kan-16-exit` and `feature/KAN-16-exit`
+
+#### Scenario: SCN-160b — The other branch is already merged
+
+- GIVEN the same two changes, where `feature/KAN-16-exit` has since been merged into `feature/KAN-13-entry`
+- WHEN the developer runs `specgate check`
+- THEN it does not warn `change_overlap` for `kan-16-exit`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-160.feature kind=functional status=Implemented test=tests/unit/change-overlap.test.ts -->
+
+### Requirement: REQ-163 — A ticket's change sees the branches pushed meanwhile
+
+The system SHALL, when `specgate propose --from-ticket <KEY>` opens a change in a repository with an `origin` remote, fetch `origin` before it reserves requirement and scenario ids, so the ids other developers' ticket branches already reserved are known; and SHALL go on, saying so, when the fetch fails.
+
+#### Scenario: SCN-163a — A colleague pushed a ticket branch a minute ago
+
+- GIVEN a clone whose `origin` has a branch `feature/PET-104-walk-in` this clone has never fetched, holding a change that reserves REQ-010
+- WHEN the developer runs `specgate propose --from-ticket PET-103.json --capability owners`
+- THEN PET-103's change reserves ids above REQ-010
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-163.feature kind=functional status=Implemented test=tests/unit/change-overlap.test.ts -->
+
+### Requirement: REQ-164 — Two changes that add the same id are reported
+
+The system SHALL, on `specgate check` and when it reports on a change opened from a ticket, warn with `change_id_clash` for every requirement id that an open change in the working tree adds and that another open change on any local or remote-tracking branch not merged into the current one also adds, naming the other change and its branch and saying to renumber the one not yet merged.
+
+#### Scenario: SCN-164a — Both opened at the same second
+
+- GIVEN a branch `feature/PET-104-walk-in` whose open change adds REQ-010, and the developer on `feature/PET-103-international`, whose open change adds REQ-010 too
+- WHEN the developer runs `specgate check`
+- THEN it warns `change_id_clash` for REQ-010, naming the PET-104 change and its branch
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-164.feature kind=functional status=Implemented test=tests/unit/change-overlap.test.ts -->
+
+### Requirement: REQ-166 — Capability specs merge requirement by requirement
+
+The system SHALL, once `specgate harness init` has registered it, merge `docs/specs/capabilities/*/spec.md` requirement by requirement: a requirement only one side added, changed or removed takes that side; one both sides changed alike takes that text; the result lists the requirements in id order; and only a requirement both sides changed differently is left in conflict, with markers around that requirement alone. `specgate doctor` SHALL report a clone where `.gitattributes` names the driver and its git config does not.
+
+#### Scenario: SCN-166a — Two branches add to a capability that did not exist
+
+- GIVEN a repository with the merge drivers registered, a branch that archived REQ-009 into a new `owners` capability, and another that archived REQ-006 and REQ-007 into it
+- WHEN the second branch is merged into the first
+- THEN the merge succeeds without a conflict and `owners/spec.md` lists REQ-006, REQ-007 and REQ-009, in that order
+
+#### Scenario: SCN-166b — Both sides rewrote the same requirement
+
+- GIVEN the same requirement REQ-009 rewritten differently on each side
+- WHEN the branches are merged
+- THEN the merge stops with a conflict around REQ-009 only, and every other requirement is merged
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-166.feature kind=functional status=Implemented test=packages/core/test/unit/capability-spec-merge.test.ts -->
+
+### Requirement: REQ-168 — A change never replaces a requirement that moved under it
+
+The system SHALL record in an open change's `change.yaml`, as `based_on`, a fingerprint of each requirement the change modifies or removes, taken from the capability spec when `specgate check` or `specgate change validate` first sees it, and ignoring its trace comment; SHALL warn with `change_base_moved` on `check`, and refuse to archive with `change_base_moved`, when that requirement in the capability spec no longer matches its fingerprint; SHALL warn with `change_base_moved` on `check` when the requirement differs between the base branch and the commit where this branch and the base last met; and SHALL record the requirement's current text again on `specgate change validate <change> --rebased`.
+
+#### Scenario: SCN-168a — The other ticket merged first
+
+- GIVEN an open change that modifies REQ-009, checked once while REQ-009 read "An owner's telephone is exactly 10 digits", and a capability spec where REQ-009 now reads "An owner's telephone is 10 digits, or an international number"
+- WHEN the developer runs `specgate archive` for that change
+- THEN it refuses with `change_base_moved` naming REQ-009, and the capability spec is unchanged
+
+#### Scenario: SCN-168b — The base moved before the branch caught up
+
+- GIVEN a branch whose open change modifies REQ-009, and a base branch `develop` where REQ-009 has been rewritten since the branch started
+- WHEN the developer runs `specgate check --base develop`
+- THEN it warns `change_base_moved` for REQ-009, naming `develop`
+
+#### Scenario: SCN-168c — The delta was rewritten over the new text
+
+- GIVEN the change of SCN-168a, with its delta rewritten over the new REQ-009
+- WHEN the developer runs `specgate change validate` for it with `--rebased`, then `specgate check`
+- THEN `check` reports no `change_base_moved`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-168.feature kind=functional status=Implemented test=tests/unit/change-base.test.ts -->
+
+### Requirement: REQ-169 — A merge driver that is gone falls back to git's own merge
+
+The system SHALL register each merge driver so that, when the specgate file it runs no longer exists, the file is merged by lines as git would merge it without the driver, with conflict markers wherever the two sides conflict, and stderr says the driver is missing and to re-run `specgate harness init`; and `specgate doctor` SHALL warn when a registered merge driver points at a file that does not exist.
+
+#### Scenario: SCN-169a — The copy of specgate the driver ran is gone
+
+- GIVEN a repository where `specgate harness init` registered the merge drivers, and the specgate copy they run has since been removed
+- WHEN a branch that rewrote a line of a capability spec is merged into one that rewrote the same line differently
+- THEN the merge stops with git's conflict markers around that line, holding both texts, and stderr says the merge driver is missing
+
+#### Scenario: SCN-169b — Doctor names the missing driver
+
+- GIVEN the same repository
+- WHEN the developer runs `specgate doctor`
+- THEN it warns that the spec merge driver points at a file that does not exist
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-169.feature kind=functional status=Implemented test=tests/cli.test.ts -->

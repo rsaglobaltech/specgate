@@ -25,6 +25,7 @@ const MARKERS: ReadonlyArray<[string, string[]]> = [
   ["cline", [".clinerules"]],
   ["codex", [".codex"]],
   ["antigravity", [".agents"]],
+  ["opencode", [".opencode", "opencode.json", "opencode.jsonc"]],
 ];
 
 export function detectAgents(projectDir: string): string[] {

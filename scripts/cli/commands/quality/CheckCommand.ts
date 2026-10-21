@@ -15,7 +15,9 @@ import type { HarnessSettings } from "../../../../packages/core/src/domain/Harne
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
-import { ticketKeyFindings } from "../../../lib/ticket-keys";
+import { prBase, ticketKeyFindings } from "../../../lib/ticket-keys";
+import { changeOverlaps } from "../../../lib/change-overlap";
+import { changeBaseFindings, recordBases } from "../../../lib/change-base";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -37,7 +39,7 @@ function usage(): void {
   specification, not the code.
 
   Requirement ids are compared with the base branch (--base, SPECGATE_BASE,
-  or origin's default): the same id with another title there fails the gate
+  pr.base in alm.config.yaml, or origin's default): the same id with another title there fails the gate
   before the merge. Skipped, and said, without git or a base to read.
 
   Exit 0 green · 1 the gate failed · 2 usage error.
@@ -131,16 +133,27 @@ export class CheckCommand extends BaseCommand {
       );
     }
 
-    // On a ticket's branch, commits that do not name the ticket (ADR-0039).
+    // On a ticket's branch, commits that do not name the ticket (ADR-0039);
+    // and requirements another open change rewrites too (REQ-160).
     // Said whatever the gate decides: a failed gate is fixed on the same branch.
-    const ticketKeys = ticketKeyFindings(projectDir, baseFlag);
+    const ticketKeys = [
+      ...ticketKeyFindings(projectDir, baseFlag),
+      ...changeOverlaps(projectDir),
+      ...changeBaseFindings(projectDir, baseFlag),
+    ];
+    // After the comparison, so the first sight of a change records, not warns (REQ-168).
+    recordBases(projectDir);
     if (!json) {
       for (const d of ticketKeys) process.stdout.write(ui.warn(d.message) + ui.fix(d.fix ?? ""));
     }
 
     // Two branches allocate ids as max+1 over their own checkout; the
-    // collision is caught here, before the merge (ADR-0036).
-    const ids = checkIdsAgainstBase(projectDir, baseFlag);
+    // collision is caught here, before the merge (ADR-0036). Against the same
+    // base as ticket keys: a gitflow project's `pr: base:` (REQ-120).
+    const ids = checkIdsAgainstBase(
+      projectDir,
+      baseFlag || process.env.SPECGATE_BASE || prBase(projectDir) || undefined
+    );
     if (ids.state === "checked" && ids.collisions.length > 0) {
       recordCheck(projectDir, false);
       const first = ids.collisions[0];

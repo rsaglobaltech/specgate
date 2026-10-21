@@ -25,6 +25,7 @@ import {
   errorMessage,
 } from "../../../lib/diagnostics";
 import type { Diagnostic } from "../../../lib/diagnostics";
+import { archiveBaseMoved, recordBases } from "../../../lib/change-base";
 import { buildInstructions } from "../../../change/instructions";
 import type { Instructions } from "../../../change/instructions";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
@@ -178,6 +179,7 @@ function usage() {
       `    ${c.green}--agent-profile <n>${c.reset}   ${c.dim}(author) A profile from .harness/profiles.yaml.${c.reset}\n` +
       `    ${c.green}--reserve <n>${c.reset}         ${c.dim}(new) Reserve n REQ ids for this change (default 3).${c.reset}\n` +
       `    ${c.green}--strict${c.reset}              ${c.dim}(validate) Treat advisory warnings as failures.${c.reset}\n` +
+      `    ${c.green}--rebased${c.reset}             ${c.dim}(validate <id>) The delta was rewritten over requirements that moved; record them as they read now.${c.reset}\n` +
       `    ${c.green}--dry-run${c.reset}             ${c.dim}(archive) Print the plan, write nothing.${c.reset}\n` +
       `    ${c.green}--force${c.reset}               ${c.dim}(archive) Archive with unchecked tasks or a draft whose checklist fails; overwrite features.${c.reset}\n` +
       `                          ${c.dim}Never without its requirements delivered (ADR-0035).${c.reset}\n\n`
@@ -189,6 +191,7 @@ export interface ChangeOptions {
   projectDir: string;
   json: boolean;
   strict: boolean;
+  rebased: boolean;
   dryRun: boolean;
   force: boolean;
   full: boolean;
@@ -208,6 +211,7 @@ function parseArgs(argv: string[]): ChangeOptions {
     projectDir: ".",
     json: false,
     strict: false,
+    rebased: false,
     dryRun: false,
     force: false,
     full: false,
@@ -228,6 +232,7 @@ function parseArgs(argv: string[]): ChangeOptions {
     else if (a === "--agent-profile" && argv[i + 1]) opts.agentProfile = argv[++i];
     else if (a === "--json") opts.json = true;
     else if (a === "--strict") opts.strict = true;
+    else if (a === "--rebased") opts.rebased = true;
     else if (a === "--dry-run") opts.dryRun = true;
     else if (a === "--force") opts.force = true;
     else if (a === "--yes" || a === "-y") opts.yes = true;
@@ -924,12 +929,23 @@ function cmdValidate(opts: ChangeOptions) {
     ]);
   }
 
+  if (opts.rebased && !requested) {
+    return fail(opts, { items: [] }, [
+      error("change_name_required", "`--rebased` records one change: name it.", {
+        fix: "specgate change validate <change-id> --rebased",
+      }),
+    ]);
+  }
+
   const items = ids.map((id) => {
     const result = new ValidateChangeUseCase(new DiskProjectRepository(projectDir)).execute(
       id,
       opts
     );
     const failed = opts.strict ? result.diagnostics.length > 0 : hasErrors(result.diagnostics);
+    // What each delta rewrites, as it reads now: on first sight, or on
+    // --rebased once the delta was rewritten over a requirement that moved (REQ-168).
+    if (!failed) recordBases(projectDir, { changeId: id, rebased: opts.rebased });
     return {
       id,
       type: "change",
@@ -1015,6 +1031,11 @@ function cmdArchive(opts: ChangeOptions) {
       ]);
     }
   }
+
+  // Never over a requirement that moved under the delta (REQ-168): archiving
+  // would drop the other change's rewrite without a conflict. Not --force-able.
+  const moved = archiveBaseMoved(projectDir, changeId);
+  if (moved.length > 0) return fail(opts, nullShape, moved);
 
   // A change is archived when its code is done (ADR-0035): every requirement
   // it adds or modifies went through the gate. `--force` does not skip this —

@@ -1154,7 +1154,11 @@ test("REQ-148: the ticket's branch starts from the base, not from another ticket
       git(dir, "rev-parse", "--abbrev-ref", "HEAD"),
       "feature/KAN-13-register-vehicle-entry"
     );
-    assert.equal(git(dir, "log", "--format=%s", "main..HEAD"), "", "nothing of KAN-12 comes along");
+    // Only the opening of KAN-13's change (REQ-165); nothing of KAN-12 comes along.
+    assert.equal(
+      git(dir, "log", "--format=%s", "main..HEAD"),
+      "KAN-13 docs(spec): open the change from the ticket"
+    );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -1695,5 +1699,191 @@ test("REQ-159 SCN-159a: the pull request carries the archived change", () => {
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
     fs.rmSync(origin, { recursive: true, force: true });
+  }
+});
+
+// ── REQ-148 (gitflow base), REQ-161 ──────────────────────────────────────────
+
+test("REQ-148 SCN-148e: gitflow — the ticket's branch starts from develop, not the remote's main", () => {
+  const upstream = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-upstream-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-clone-"));
+  try {
+    // An upstream whose default branch is main, cloned: origin/HEAD → origin/main.
+    git(upstream, "init", "-q", "-b", "main");
+    fs.writeFileSync(path.join(upstream, "README.md"), "upstream\n");
+    git(upstream, "add", "-A");
+    git(upstream, "commit", "-qm", "upstream history");
+    fs.rmSync(dir, { recursive: true, force: true });
+    assert.equal(spawnSync("git", ["clone", "-q", upstream, dir]).status, 0);
+    git(dir, "checkout", "-q", "-b", "develop");
+    fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
+    fs.mkdirSync(path.join(dir, "docs", "specs"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "docs", "specs", "traceability.md"),
+      "# Traceability Matrix\n\n| Requirement | Status |\n|---|---|\n"
+    );
+    fs.writeFileSync(path.join(dir, "alm.config.yaml"), PR_CONFIG);
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "the company's adoption, only on develop");
+    const file = path.join(os.tmpdir(), `kan13h-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "entry-exit", "--no-push"]);
+    fs.rmSync(file);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(
+      git(dir, "rev-parse", "--abbrev-ref", "HEAD"),
+      "feature/KAN-13-register-vehicle-entry"
+    );
+    assert.ok(
+      fs.existsSync(path.join(dir, "alm.config.yaml")),
+      "develop's files are on the ticket's branch"
+    );
+    assert.equal(git(dir, "merge-base", "--is-ancestor", "develop", "HEAD"), "");
+    const { ticketKeyFindings } = require("../../scripts/lib/ticket-keys");
+    // The opening is committed with the key (REQ-165); develop's commits are not the ticket's.
+    assert.deepEqual(ticketKeyFindings(dir), [], "develop's own commits are not the ticket's");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(upstream, { recursive: true, force: true });
+  }
+});
+
+test("REQ-148 SCN-148f: a local develop behind origin is not the base", () => {
+  // Nobody updates their local develop. Measured from it, a colleague's commit
+  // merged from origin/develop looked like this ticket's.
+  const origin = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-origin-"));
+  const colleague = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-colleague-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-clone-"));
+  try {
+    git(origin, "init", "-q", "--bare", "-b", "develop");
+    git(dir, "init", "-q", "-b", "develop");
+    fs.writeFileSync(path.join(dir, "alm.config.yaml"), PR_CONFIG);
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "adoption");
+    git(dir, "remote", "add", "origin", origin);
+    git(dir, "push", "-q", "-u", "origin", "develop");
+
+    fs.rmSync(colleague, { recursive: true, force: true });
+    assert.equal(spawnSync("git", ["clone", "-q", origin, colleague]).status, 0);
+    fs.writeFileSync(path.join(colleague, "README.md"), "pull requests target develop\n");
+    git(colleague, "add", "-A");
+    git(colleague, "commit", "-qm", "chore: pull requests target develop");
+    git(colleague, "push", "-q", "origin", "develop");
+
+    git(dir, "checkout", "-q", "-b", "feature/KAN-13-register-vehicle-entry");
+    fs.writeFileSync(path.join(dir, "notes.md"), "entry\n");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "KAN-13 docs(spec): open the change from the ticket");
+    git(dir, "fetch", "-q", "origin");
+    git(dir, "merge", "-q", "--no-edit", "origin/develop");
+
+    const { ticketKeyFindings } = require("../../scripts/lib/ticket-keys");
+    const messages = ticketKeyFindings(dir).map((d: { message: string }) => d.message);
+    assert.ok(
+      !messages.some((m: string) => m.includes("pull requests target develop")),
+      messages.join("\n")
+    );
+  } finally {
+    for (const d of [dir, colleague, origin]) fs.rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("REQ-161 SCN-161a: a German summary makes a readable change id", () => {
+  const dir = project(JIRA);
+  try {
+    const file = exported(dir, "PET-101.json", {
+      key: "PET-101",
+      fields: {
+        summary: "Suche ignoriert Groß-/Kleinschreibung nicht",
+        issuetype: { name: "Bug" },
+        description:
+          'Akzeptanzkriterien\n- Angenommen "Davis", wenn ich "davis" suche, dann wird "Davis" angezeigt.',
+      },
+    });
+    const run = runPropose(dir, ["--from-ticket", file, "--capability", "owners", "--no-branch"]);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.ok(
+      fs.existsSync(
+        path.join(
+          dir,
+          "docs",
+          "specs",
+          "changes",
+          "pet-101-suche-ignoriert-gross-kleinschreibung-nicht"
+        )
+      ),
+      fs.readdirSync(path.join(dir, "docs", "specs", "changes")).join(", ")
+    );
+    const { changeIdFor } = require("../../scripts/cli/commands/change/TicketCommand");
+    assert.equal(
+      changeIdFor({ key: "PET-7", summary: "Größe für Ärzte ändern, café" }),
+      "pet-7-groesse-fuer-aerzte-aendern-cafe"
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-148: with --agent too, the branch and a failed push are said", () => {
+  const dir = repo();
+  try {
+    git(dir, "remote", "add", "origin", path.join(os.tmpdir(), `no-such-origin-${process.pid}`));
+    const file = path.join(os.tmpdir(), `kan13i-${process.pid}.json`);
+    fs.writeFileSync(file, JSON.stringify(KAN_13));
+    const run = runPropose(dir, [
+      "--from-ticket",
+      file,
+      "--capability",
+      "entry-exit",
+      "--agent",
+      "true",
+    ]);
+    fs.rmSync(file);
+    assert.match(run.stdout, /On branch feature\/KAN-13-register-vehicle-entry/, run.stdout);
+    assert.match(run.stdout, /not pushed/i);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-147: the agent is told everything it needs is in the guide", () => {
+  const { ticketPrompt } = require("../../scripts/draft/ticket-guide");
+  const prompt = ticketPrompt({ key: "KAN-13" }, "kan-13-x", "GUIDE");
+  assert.match(prompt, /Everything you need is in this guide/);
+  assert.match(prompt, /do not read Specgate's own code/i);
+});
+
+// ── REQ-162 ──────────────────────────────────────────────────────────────────
+
+test("REQ-162 SCN-162a: OpenCode gets the loop's commands", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-opencode-"));
+  try {
+    fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
+    fs.writeFileSync(path.join(dir, "opencode.json"), "{}\n");
+    const run = spawnSync(
+      process.execPath,
+      [CLI, "agents", "init", "--tool", "opencode", "--project-dir", dir],
+      {
+        encoding: "utf8",
+        env: { ...process.env, NO_COLOR: "1" },
+      }
+    );
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const draft = fs.readFileSync(
+      path.join(dir, ".opencode", "commands", "specgate-draft.md"),
+      "utf8"
+    );
+    assert.match(draft, /^---\ndescription: .+\n/);
+    assert.match(draft, /^specgate propose --from-brief \$ARGUMENTS$/m);
+    assert.match(draft, /^# \/specgate-draft$/m);
+    assert.ok(fs.existsSync(path.join(dir, "AGENTS.md")));
+    const help = spawnSync(process.execPath, [CLI, "agents", "init", "--help"], {
+      encoding: "utf8",
+    }).stdout;
+    assert.match(help, /opencode/);
+    const { detectAgents } = require("../../scripts/agents/detect");
+    assert.ok(detectAgents(dir).includes("opencode"));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });

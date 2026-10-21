@@ -1,4 +1,5 @@
 <!-- specgate:allow-placeholders — release notes quote the {{VAR}} template syntax. -->
+
 # Changelog
 
 Notable changes, newest first. Follows [Keep a Changelog](https://keepachangelog.com/)
@@ -7,6 +8,68 @@ and [Semantic Versioning](https://semver.org/).
 The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
+
+## [0.22.2] — 2026-10-21
+
+Parallel tickets that never overwrite each other, rehearsed end to end on a brownfield Maven project with Jira tickets and OpenCode.
+
+### Fixed
+
+- **A merge driver that is gone falls back to git's merge** (REQ-169): in a
+  project without `node_modules`, the drivers run this machine's copy of
+  specgate. With that copy gone, git stopped the merge with only your side in
+  the file, no markers, and `git add` dropped the other side's text. The
+  driver now says it is missing and merges by lines; `specgate doctor` warns.
+  Re-run `specgate harness init` in clones registered before this release.
+- **`id_taken_on_base` only for ids the branch introduced** (REQ-120): a
+  requirement the base changed after the branch started was reported as an id
+  taken, with the advice to renumber it.
+- **A local `develop` nobody updated is not the base** (REQ-148): `pr.base`
+  resolves to `origin/develop` unless the local branch already contains it,
+  and a ticket's branch no longer tracks its base. Behind origin, every
+  colleague's commit merged from `origin/develop` was reported as missing the
+  ticket key.
+- **`check` compares ids with `pr.base`** (REQ-120): ticket keys were
+  measured from `develop` and ids from the remote's default, `main`, so an id
+  taken on `develop` and not yet released went unseen.
+- **`harness init` keeps a generated matrix on `merge=union`**: it appended
+  the row driver after the union line, and git takes the last matching line,
+  so the matrix could stop a merge again (ADR-0036).
+- **A ticket's branch starts from `develop` with gitflow** (REQ-148): from
+  `pr.base`, else the branch you are on, else the remote's default. A clone
+  whose default is `main` cut the branch from `origin/main`, without the
+  team's work on `develop`; `ticket_key_missing` measures from the same base.
+- **Readable ids from German summaries** (REQ-161): `ß` → `ss`, `ä` → `ae`…;
+  "Groß-/Kleinschreibung" made `gro-kleinschreibung`.
+
+### Added
+
+- **`change_base_moved`** (REQ-168): a change records, in `based_on` in its
+  `change.yaml`, the text of each requirement it modifies or removes; `check`
+  warns and `archive` refuses when that requirement changed since, and `check`
+  warns before the branch has even brought the base in.
+  `change validate <change> --rebased` records the new text once the delta is
+  rewritten. When two tickets rewrote one requirement, the second used to
+  archive over the first with a green gate and no conflict.
+- **Capability specs merge requirement by requirement** (REQ-166):
+  `harness init` registers a second git merge driver, `specgate-spec`, for
+  `docs/specs/capabilities/*/spec.md`, and `doctor` checks it. Two tickets
+  archiving into the same capability used to conflict on the whole file; only
+  a requirement both rewrote differently conflicts now.
+- **OpenCode in `agents init`** (REQ-162): `/specgate-*` commands in
+  `.opencode/commands/`, detected from `.opencode/` or `opencode.json`.
+- **Opening a ticket's change commits and pushes it** (REQ-165), so the ids it
+  reserved are visible to every other clone at once; the branch used to be
+  pushed empty, with the reservation left uncommitted on one disk.
+- **`change_id_clash`** (REQ-164), and `propose --from-ticket` fetches
+  `origin` before reserving ids (REQ-163): two developers who opened tickets a
+  minute apart on two clones both reserved REQ-010.
+- **`change_overlap`** (REQ-160): `check`, and the report on a change opened
+  from a ticket, warn when a requirement your open change modifies or removes
+  is also rewritten by another open change, on this branch or on any local or
+  remote-tracking branch not merged yet. Two tickets rewriting REQ-012 on two
+  branches used to surface as a git conflict at the second merge, or not at
+  all.
 
 ## [0.22.1] — 2026-10-20
 
@@ -18,9 +81,9 @@ Documentation a newcomer can follow, and the CLI's words brought in line with it
   CLI and the first real end-to-end run on Jira Cloud and GitHub. Three
   sources of work (a change, a brief, a Jira ticket) into one lifecycle of
   four verbs; the recorded journeys run `propose`, `apply` and `archive`;
-  archive comes before the pull request everywhere. New pages: *From a Jira
-  ticket* for a team lead setting it up, and *An existing codebase, with work
-  in Jira* (Maven profiles, a parent POM, Bitbucket and Jenkins).
+  archive comes before the pull request everywhere. New pages: _From a Jira
+  ticket_ for a team lead setting it up, and _An existing codebase, with work
+  in Jira_ (Maven profiles, a parent POM, Bitbucket and Jenkins).
 - **The `/specgate:draft` agent command runs `propose --from-brief`**, and the
   MCP write guard names `specgate propose <id>`.
 
@@ -66,7 +129,7 @@ ticket to Done, the board moved by its own automation.
 ### Changed
 
 - **A draft is not opened over a broken brief.** `propose --from-brief
-  <module>` refuses with `brief_not_ready` while the brief has an error: an
+<module>` refuses with `brief_not_ready` while the brief has an error: an
   empty body, an empty module section, a module without its section once the
   brief uses sections, or rules without examples. A brief with no module
   sections — a pasted email — drafts as before.
@@ -188,7 +251,7 @@ while it works (ADR-0037).
 
 - The placeholder rule ignores code spans, and the vague-step rule code spans
   and quoted text: `` `tool verify <module>` `` is a command, not a template.
-- TDD-3 asks a matrix row for a requirement a spec *declares* (a heading or a
+- TDD-3 asks a matrix row for a requirement a spec _declares_ (a heading or a
   requirement table row outside fenced code), not for every id it mentions.
 - A generated matrix is declared `merge=union` in `.gitattributes`: parallel
   branches no longer conflict on it, and `check` regenerates it.
@@ -252,7 +315,7 @@ while it works (ADR-0037).
   runtime dependencies; `SPECGATE_FORJA_CMD` points at another forja.
 - **`specgate add usecase|entity|port`** in a forja project: the class where the
   architecture expects it, its test and its wiring, through `forja add`; `add
-  usecase` also creates the requirement and names it in the test. Outside a forja
+usecase` also creates the requirement and names it in the test. Outside a forja
   project it says to use `new`. In a forja project, `status` suggests it as the
   next step for a requirement with no code.
 - **`arch_cmd`: your architecture check in the gate** ([ADR-0028](docs/specs/adr/0028-architecture-conformance-is-part-of-the-gate.md), points 1–2).
@@ -388,8 +451,8 @@ while it works (ADR-0037).
   `transfers`, `event-registration`, `clinical-record`, `appointment-booking`,
   `shop-orders` and `time-attendance`: 65 requirements and 85 scenarios, each
   implemented and tested by the product it came from (Spring Boot, Quarkus and
-  TypeScript stacks). Questions a pilot could not answer ship as *Needs
-  Clarification* — drug interaction alerts, shipping costs — instead of an
+  TypeScript stacks). Questions a pilot could not answer ship as _Needs
+  Clarification_ — drug interaction alerts, shipping costs — instead of an
   invented answer. Separate id ranges, so a project can install all seven.
   Install them with `specops add` into a project made by `specgate init`;
   `init --from-pack` does not handle a requirement with two scenarios yet.
@@ -554,9 +617,9 @@ while it works (ADR-0037).
 
 ### Documentation
 
-- **Two new guides.** *From a client brief* — the brief, a draft per module,
+- **Two new guides.** _From a client brief_ — the brief, a draft per module,
   assumptions and open questions, the D1–D10 checklist, writing in Spanish, and
-  what the checklist cannot see. *Already on OpenSpec* — `verify`, scenario ids,
+  what the checklist cannot see. _Already on OpenSpec_ — `verify`, scenario ids,
   V1–V7, adopting with `--since`, the GitHub Action.
 - **The harness** documents when it does not retry, the per-attempt time limit,
   and the build in the gate; **the README** covers drafting from a brief,
@@ -643,7 +706,7 @@ From a second and third cycle on the same product (reservas_app), on 0.17.1.
 - **`plan` and `status` agree with `validate` about untested scenarios.** A
   requirement with two scenarios no test named was "Ready to close — its test
   is in place", and `NEEDS_STATUS_UPDATE` to the harness, while `validate
-  --strict` said "Nothing proves" them. It is now `NEEDS_TEST`.
+--strict` said "Nothing proves" them. It is now `NEEDS_TEST`.
 - **`draft --check`:** a requirement can say it lives on one surface
   (`surfaces=web` in its trace), so a menu is not asked for an API scenario
   (D3); a value already in the project's specification — reviewed in an
@@ -669,7 +732,7 @@ Found building a second real product from a client brief (reservas_app,
 written in Spanish).
 
 - **A draft archives into feature files, in its own language.** `change
-  archive` wrote no `.feature` for a requirement whose trace named none — a
+archive` wrote no `.feature` for a requirement whose trace named none — a
   draft that passed `draft --check` archived with "0 materialised". Each
   requirement with scenarios now gets `features/<capability>/<REQ>.feature`.
   Scenarios written with `DADO / CUANDO / ENTONCES` become Spanish Gherkin
@@ -693,7 +756,7 @@ written in Spanish).
   the one line that turns it on (`specgate harness init`). The first gate after
   adoption still checks the specification only, as documented.
 - **`draft --check`:** an answered question (an `Answer` column, or `Answer
-  (Q1): …` below the table) no longer keeps its requirement waiting; a value
+(Q1): …` below the table) no longer keeps its requirement waiting; a value
   repeated in a scenario is one finding, not one per mention; "responsive" is
   not read as a promised response time, and `px` is a unit.
 - **`status` shows the title of a requirement archived from a change** instead
@@ -709,6 +772,7 @@ written in Spanish).
   version, commit or variables do.
 
 ## [0.16.0] — 2026-10-09
+
 ### Changed
 
 - **`AGENTS.md` is the agent contract; `AI_RULES.md` folds into it**
@@ -784,7 +848,7 @@ written in Spanish).
   (`--run`), or after a scenario's text changed since `--record` pinned it.
   `--since <ref>` gates only claims made after the ref, so adopting it never
   fails a project for its past. `--ids` prints the ids to name; `--format
-  github` annotates the spec lines; `actions/verify` runs it on pull requests.
+github` annotates the spec lines; `actions/verify` runs it on pull requests.
   Read against OpenSpec's own repository: 747 scenarios, 108 claims, including
   its archived history from before the structured format.
 
@@ -874,7 +938,7 @@ published 0.14.1:
 
 - **A pack keeps a generated matrix generated.** Installing a pack wrote
   matrix rows and turned the project back into a hand-kept matrix; `matrix
-  --migrate` then wrote 47 placeholder sections into `spec.md` titled after
+--migrate` then wrote 47 placeholder sections into `spec.md` titled after
   use cases. Now each requirement's use case, command, aggregate, event and
   context go into the `csda:trace` of its section — the pack's capability
   spec, or a new `spec.md` section carrying the pack's own description — and
@@ -889,7 +953,7 @@ published 0.14.1:
   scenario: a requirement with two scenarios ran two paid agent sessions on
   the same branch.
 - **`setup_cmd`** prepares each fresh worktree before the agent (`harness
-  init` proposes `npm ci` / `pnpm install` / `yarn install` from the
+init` proposes `npm ci` / `pnpm install` / `yarn install` from the
   lockfile), so the agent can run the tests it writes and `check` no longer
   needs `npm ci` in `test_cmd`. The generated prompt prefix teaches linking by
   mention instead of "the test named in the matrix".
@@ -912,7 +976,7 @@ domain packs in a specops repository:
   lines, and the `''` / `\"` escapes inside quotes. A pack generated with
   PyYAML's defaults failed with "Unexpected YAML token".
 - **"tag work" is not a vague step.** The vague-step check matched the bare
-  word *work*; it now flags verdicts ("it works", "should work"), not trade
+  word _work_; it now flags verdicts ("it works", "should work"), not trade
   terms.
 - **A requirement can have several scenarios.** On a generated matrix a
   requirement with two scenarios has two rows, and the gate called it a
@@ -993,7 +1057,7 @@ Found by following the documentation step by step on the published 0.13.0:
   published.
 - **Diagrams render on every docs page.** A blank line inside an inlined SVG
   ended Markdown's HTML block, so the rest of the diagram showed as a block of
-  escaped markup on *Domain packs* and in *Specs that cannot lie*. Blank lines
+  escaped markup on _Domain packs_ and in _Specs that cannot lie_. Blank lines
   are dropped when a diagram is inlined, and a test fails on any page showing
   diagram markup as text.
 - **`mcp install --help` names the clients it supports.** It offered
@@ -1087,7 +1151,7 @@ Found by following the documentation step by step on the published 0.13.0:
   `completion`, `studio`, `onboard` — take it from 14 to 34 of 60 commands, and
   offline journeys for packs — `specops add/diff/sync/remove` against a local
   git remote with tags, `pack bundle` for an air-gapped install, `pack
-  init/lint/infer`, `expand` — to 43, and the change cycle (`new` → `archive`
+init/lint/infer`, `expand` — to 43, and the change cycle (`new` → `archive`
   → delivered with `done`), `change author` reverting an agent's write outside
   the change, `harness init/prompt/run/report` and `specops contribute` to 55.
 
@@ -1275,13 +1339,13 @@ Agent files generated by earlier versions are named `csda`; run
   short help and keep working. `adopt`'s next steps now teach `check`, `new`,
   `status` and `ci init`.
 - **`status` lists the queue itself.** One line per requirement — its title and
-  what it still needs — split into *Ready to close* and *To do*, capped at 12
+  what it still needs — split into _Ready to close_ and _To do_, capped at 12
   per group. `Next` names a requirement (`specgate done REQ-003 --strict`)
   instead of answering `specgate plan`. `--json` gains a `requirements` array.
   `plan` leaves the daily help and keeps the full detail.
 - **`plan` no longer says "code & test exist" over a row with no code.** A
-  declared code path is optional; the heading now says *its declared test and
-  code exist*.
+  declared code path is optional; the heading now says _its declared test and
+  code exist_.
 - **The scenario rules are owed on delivery, like the files.** A Draft row's
   feature file is not held to `--strict-scenarios`, so a fresh `specgate new`
   does not turn CI red. The three rules that make a suite report a pass it
@@ -1346,7 +1410,7 @@ Agent files generated by earlier versions are named `csda`; run
   and `--from` repeats and accepts a directory, so a command shared by three
   files is proposed once.
 
-  `--llm` is *not* here: ADR-0014 defers it, and reopening that needs an ADR
+  `--llm` is _not_ here: ADR-0014 defers it, and reopening that needs an ADR
   rather than a flag. Everything above stays a skeleton to review with every
   guess carrying its `TODO` — an inference that stops looking like a guess is
   the failure mode the ADR names. Closes #32.
@@ -1390,7 +1454,7 @@ Agent files generated by earlier versions are named `csda`; run
   runs in its own process and every one creates a worktree in the same
   repository; git writes `.git/worktrees/<name>/` incrementally, so a sibling
   read an entry that was half there and failed with `failed to read …
-  /commondir`. Worse, the failure was *attributed*: the run reported the
+/commondir`. Worse, the failure was _attributed_: the run reported the
   requirement as failed with "the agent produced no files", so a race in the
   harness read as the agent's fault.
 
@@ -1428,7 +1492,7 @@ Agent files generated by earlier versions are named `csda`; run
   [`spec-gate`](https://www.npmjs.com/package/spec-gate) normalises to exactly
   `specgate`, so the registry refuses the name to everyone and reports it as a
   credentials error. ADR-0024 had checked availability with `npm view specgate`
-  → 404, which says *not published* and never *creatable*; the
+  → 404, which says _not published_ and never _creatable_; the
   [2026-09-01 addendum](docs/specs/adr/0024-the-tool-is-renamed-the-format-is-not.md)
   records both the decision and the bad check that led to it.
 
@@ -1470,7 +1534,7 @@ the one that finishes the rename past the layer where it had stopped.
   **The on-disk format is deliberately unchanged.** `csda:trace`, `csda:value`,
   `csda:allow-placeholders` and the `.csda/` directory keep their names. Those
   are not branding: they are a parsed format and a config directory that live
-  inside *user* repositories, and renaming them would be a silent breaking
+  inside _user_ repositories, and renaming them would be a silent breaking
   change to every adopted project — surfacing as "requirement not found" rather
   than as "your marker prefix changed". Reading both prefixes is a real
   migration feature, not a find-and-replace, and it is not built here.
@@ -1485,7 +1549,7 @@ the one that finishes the rename past the layer where it had stopped.
   rebuilt in place and keep working.
 
   `docs/release-process.md` gains the one-time cutover: the exact `npm
-  deprecate` invocation for `create-spec-driven-app`, why the old package is
+deprecate` invocation for `create-spec-driven-app`, why the old package is
   deprecated and never unpublished (npm blocks reusing an unpublished name, and
   a pinned dependency would break for no gain), and the sequencing constraint —
   the rename and the release that publishes `specgate` are one event, because
@@ -1521,7 +1585,7 @@ The release that starts checking content instead of only paperwork. Every check
 until now answered "are these documents internally consistent?"; none answered
 "does the code say what the spec says?". These do — for the narrow slice where
 that question has an honest answer. The reasoning, including what was
-deliberately *not* built, is [ADR-0023](docs/specs/adr/0023-checking-content-gate-or-report.md).
+deliberately _not_ built, is [ADR-0023](docs/specs/adr/0023-checking-content-gate-or-report.md).
 
 ### Added
 
@@ -1533,7 +1597,7 @@ deliberately *not* built, is [ADR-0023](docs/specs/adr/0023-checking-content-gat
   the H13 mistake. These two rules are what a regex can assert honestly.
 
   The point is upstream of any code checking: `- Max 5 failed attempts per hour
-  per user` is not something a machine can hold code to. RFC 2119 detection also
+per user` is not something a machine can hold code to. RFC 2119 detection also
   stops being duplicated — `DeltaSpec` enforced it for requirements inside a
   change while a capability spec at rest was never checked; both now read one
   definition.
@@ -1546,7 +1610,7 @@ deliberately *not* built, is [ADR-0023](docs/specs/adr/0023-checking-content-gat
   Opt-in, and that was measured rather than assumed: the first version ran
   unconditionally on the theory that a missing path has no legitimate reading,
   and the test suite disproved it at once — a `Draft` or `In Dev` row routinely
-  names the file a requirement is *going to* land in. Planning ahead is not
+  names the file a requirement is _going to_ land in. Planning ahead is not
   documentary drift.
 
 - **Declared-value drift in `csda report`.** Annotate a value on both sides —
@@ -1570,7 +1634,7 @@ deliberately *not* built, is [ADR-0023](docs/specs/adr/0023-checking-content-gat
 
 - **`csda change new <id> --from-value-drift <REQ-ID>:<value_id>`** turns a
   diverging value into a reviewable change. It writes a `## MODIFIED
-  Requirements` delta carrying the full requirement, with the structured
+Requirements` delta carrying the full requirement, with the structured
   `value_<id>` rewritten to the value the code declares.
 
   **The prose is left alone.** Turning "expires after 15 minutes" into "after
@@ -1586,7 +1650,7 @@ deliberately *not* built, is [ADR-0023](docs/specs/adr/0023-checking-content-gat
 
 ### Fixed
 
-- **The gate approved an agent that wrote nothing (H19).** The gate runs *before*
+- **The gate approved an agent that wrote nothing (H19).** The gate runs _before_
   `csda done`, so at gate time the requirement is still `Draft` — and
   `--strict-tdd`'s "no `Test Artifact = TBD` past Draft" rule does not apply to a
   Draft row. `done` then moved the status to `Implemented` and nothing validated
@@ -1618,8 +1682,8 @@ deliberately *not* built, is [ADR-0023](docs/specs/adr/0023-checking-content-gat
 
   Worse than a red gate on day one: `csda harness run` on a new project **burned
   all three agent attempts** failing on something the agent neither caused nor
-  could fix. And it contradicted the README's L2 — *"a PR gate enforcing spec and
-  test coverage, ~1 hour"* — since the gate was red before the hour started.
+  could fix. And it contradicted the README's L2 — _"a PR gate enforcing spec and
+  test coverage, ~1 hour"_ — since the gate was red before the hour started.
 
   The placeholder row is gone, replaced by a comment pointing at
   `csda req add "<what the requirement does>"`, which writes the row in `spec.md`
@@ -1675,7 +1739,7 @@ deliberately *not* built, is [ADR-0023](docs/specs/adr/0023-checking-content-gat
 - **`specgate adopt` did not run at all.** `templates/adopt/spec.md.tpl` asks
   for `{{PROPOSED_REQUIREMENTS}}` and nothing supplied it, so the brownfield
   entry point died on `Missing variable 'PROPOSED_REQUIREMENTS' required by
-  template` for every repository.
+template` for every repository.
 
   Two parallel branches caused it. P6 taught `adopt` to seed one requirement per
   capability `onboard` reads off the layout, and added `--monorepo` and
@@ -1742,7 +1806,7 @@ deliberately *not* built, is [ADR-0023](docs/specs/adr/0023-checking-content-gat
 - **The landing page claimed 24 commands against a surface of 25.**
 
 - **CI had not run this repository's own gate since the rename.** The rename
-  commit changed the *references* to `bin/specgate.{ts,js}` in `ci.yml`,
+  commit changed the _references_ to `bin/specgate.{ts,js}` in `ci.yml`,
   `CONTRIBUTING.md` and `AI_RULES.md` without renaming the file, so the step
   named "Validate this repository against its own spec gate" ran
   `node bin/specgate.js validate .` against a path that did not exist and every
@@ -1760,7 +1824,6 @@ deliberately *not* built, is [ADR-0023](docs/specs/adr/0023-checking-content-gat
   masked: the `adopt` regression above failed those files on every platform, so
   nothing distinguished "broken everywhere" from "broken on Windows".
 
-
 ## [0.7.0] — 2026-08-23
 
 The release that closes the gate on itself. Every item below came from running
@@ -1777,7 +1840,7 @@ H16, all four measured before anything was written and reproduced after.
 
 - **`csda harness run --skip-not-ready`** skips a requirement an agent could not
   succeed at — no feature file, unmet dependencies, `Deprecated`, or `Needs
-  Clarification`. `csda plan --format json` now carries `ready` and `blockers[]`
+Clarification`. `csda plan --format json` now carries `ready` and `blockers[]`
   per requirement, each blocker with a fix. Default is to warn and run it
   anyway; an unrunnable scenario skips regardless, because an empty scenario
   passes and a green run over one proves nothing.
@@ -1785,7 +1848,7 @@ H16, all four measured before anything was written and reproduced after.
 - **`csda harness run --resume`** continues an interrupted run: it re-attaches to
   the branch and, when git still knows of one, to the worktree holding the
   agent's uncommitted work. Where it picks up is read from the prompt archive,
-  not the run ledger — the ledger is written when a run *finishes*, so an
+  not the run ledger — the ledger is written when a run _finishes_, so an
   interrupted run leaves none.
 
 - **`csda harness run --budget-seconds` and `--max-requirements`** put a ceiling
@@ -1810,7 +1873,7 @@ H16, all four measured before anything was written and reproduced after.
 
 - **`csda harness report`** gains where attempts end, which requirements spend
   every attempt, a series over time, and `--mark-false-failure REQ-NNN --reason
-  "…"`. The real-failure rate reads `—` until somebody marks one: nothing
+"…"`. The real-failure rate reads `—` until somebody marks one: nothing
   recorded can tell a gate that was wrong from work that was.
 
 - **`depends_on`** on a pack's requirements. The harness cuts a dependent's
@@ -1860,7 +1923,7 @@ H16, all four measured before anything was written and reproduced after.
 
 - **`parseYamlLite` split inline sequences on every comma**, including the ones
   inside quotes, so `responsibilities: ["Invoice line items, totals, status,
-  aging"]` parsed as four items carrying stray quote characters.
+aging"]` parsed as four items carrying stray quote characters.
 
 ### Security
 
@@ -1915,9 +1978,9 @@ date.
 - **The scenarios shipped in the curated packs were never executed.** 27 of the
   28 scenarios under `packs/**` wrote their keywords in upper case —
   `GIVEN` / `WHEN` / `THEN` — and Gherkin keywords are case-sensitive. Cucumber
-  read those lines as the scenario's *description*, so the scenario existed with
+  read those lines as the scenario's _description_, so the scenario existed with
   **zero steps**, and an empty scenario passes: `1 scenario (1 passed) · 0 steps
-  · exit 0`.
+· exit 0`.
 
   Every project seeded with `csda specops add` therefore inherited an acceptance
   criterion that approves anything, and a harness run over those requirements
@@ -1947,7 +2010,7 @@ date.
   first run already had.
 
   The attempt is now committed on the branch with a `wip(REQ-NNN): FAILED the
-  gate — do not merge as is` subject. The requirement stays `Draft`, because
+gate — do not merge as is` subject. The requirement stays `Draft`, because
   `csda done` never ran, so nothing about the matrix claims the work is good. A
   human reads it and decides; git just stops throwing it away. The report says
   whether the work was preserved, and distinguishes that from an agent that
@@ -1958,7 +2021,7 @@ date.
   a filter silently fails to apply — a runner config pinning its own paths will
   override the CLI argument — the gate rejects correct work and the failure is
   indistinguishable from broken code. It cost two agent runs to explain the
-  first time. The harness cannot know how many tests *should* run, but it can
+  first time. The harness cannot know how many tests _should_ run, but it can
   notice a command that asked for one feature against output reporting many, and
   warn. A hint, not a verdict: a genuine failure must not be explained away.
 
@@ -1999,7 +2062,7 @@ date.
   version and path.
 
   Reported by a user whose `csda -v` kept printing 0.1.2 after installing "the
-  latest". The tool was right — it *was* 0.1.2, from a global install made
+  latest". The tool was right — it _was_ 0.1.2, from a global install made
   months earlier. `npx create-spec-driven-app@latest` runs a temporary copy and
   never touches a global one, so the two answer different questions and nothing
   said so. Three minor versions behind, with no way to notice.
@@ -2009,8 +2072,7 @@ date.
   newest is not doctor's business, and a lookup would break the offline and
   air-gapped modes the tool promises.
 
-- **Doctor's Node check read `>= 20`** for a release after the floor moved to
-  22. It now reads the floor from `package.json` rather than repeating it — the
+- **Doctor's Node check read `>= 20`** for a release after the floor moved to 22. It now reads the floor from `package.json` rather than repeating it — the
   same drift the floor guard exists to prevent, in the one file the guard did
   not cover.
 
@@ -2019,7 +2081,7 @@ date.
 ### Fixed
 
 - **The gate could not run the scenario it was gating.** `test_cmd` was a fixed
-  string with no substitution, and the gate runs *before* `csda done` — so the
+  string with no substitution, and the gate runs _before_ `csda done` — so the
   requirement is still Draft and `validate --strict-tdd` does not demand its
   test either. Between them, `harness run` could mark a requirement Implemented
   with its scenario never executed.
@@ -2034,7 +2096,7 @@ date.
   With that, the same no-op agent fails at the requirement's own scenario.
 
 - **The harness blocked its own second run.** It archived each prompt into the
-  *project* directory, which left untracked files behind — and the harness
+  _project_ directory, which left untracked files behind — and the harness
   refuses to start on a dirty tree. The archive now goes in the worktree, where
   `git add -A` commits it with the work, so the prompt arrives in the branch
   under review. That is what an audit copy was for.
@@ -2130,7 +2192,6 @@ date.
   migrating is the shape that never worked, and `pack lint` now names exactly
   what is wrong with it.
 
-
 - **The CLI is called `csda` in every place it is a command.** The package
   ships two binaries — `create-spec-driven-app` and the `csda` alias — and the
   two were used interchangeably, so the same command appeared under different
@@ -2206,7 +2267,7 @@ date.
   `schema_version` and `.specops.lock`'s `specops_version` were both written by
   the CLI and read by nothing, so a file from a newer version was accepted and
   then misread field by field. Both now fail up front, naming the versions and
-  the upgrade command. Older files still load — only *newer than this CLI* is
+  the upgrade command. Older files still load — only _newer than this CLI_ is
   refused.
 
 - **`SECURITY.md`, `MAINTAINERS.md` and `CODEOWNERS`**, with private
@@ -2310,7 +2371,7 @@ date.
   runner. The workflow needed QEMU alongside buildx to cross-build.
 
   The 0.2.0 image tag could not be rebuilt in place: re-running a workflow
-  against an old tag checks out the workflow *as it was at that tag*, which did
+  against an old tag checks out the workflow _as it was at that tag_, which did
   not yet have the fix. Hence a patch release rather than moving a published
   tag.
 
@@ -2346,7 +2407,7 @@ and brownfield onboarding have all landed since.
 ### Added
 
 - **Change lifecycle** — `csda change new | list | show | status | validate |
-  archive`. Modify a spec that already shipped through a reviewable delta.
+archive`. Modify a spec that already shipped through a reviewable delta.
   Archiving merges it into the spec tree, writes the traceability rows and
   materialises the feature files.
 - **`csda change instructions <artifact>`** — the single context engine.

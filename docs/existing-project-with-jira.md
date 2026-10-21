@@ -44,12 +44,12 @@ add a `package.json` just for Specgate. Run it with `npx` and a pinned version
 instead, and use the same version in CI:
 
 ```bash
-npx @rsaglobaltech/specgate@0.22.1 init --dry-run
-npx @rsaglobaltech/specgate@0.22.1 init
+npx @rsaglobaltech/specgate@0.22.2 init --dry-run
+npx @rsaglobaltech/specgate@0.22.2 init
 ```
 
 The commands below write `npx specgate`; in a repository without a
-`package.json`, read it as `npx @rsaglobaltech/specgate@0.22.1`.
+`package.json`, read it as `npx @rsaglobaltech/specgate@0.22.2`.
 
 In a repository that already has a `pom.xml`, `build.gradle`, `package.json`
 or similar, `specgate init` adopts the project in place; it is the same as
@@ -165,7 +165,18 @@ with the requirement it is building (the agent is set as usual, in
 `harness.config.yaml` or with `--agent`):
 
 ```bash
-npx specgate harness run --test-cmd "mvn -B -P unit-test test -Dgroups={req}"
+npx specgate harness run --test-cmd "mvn -B -P unit-test test -Dgroups={req} -DfailIfNoTests=true"
+```
+
+`-DfailIfNoTests=true` matters. Without it, a test that lacks the tag is not
+selected, Maven runs zero tests and reports success, and the requirement looks
+proven when nothing ran. Say it in your team's rules too, below Specgate's
+block in `AGENTS.md`, so the agent tags every test it writes:
+
+```markdown
+## Team rules
+
+- Tag every test with the requirement it proves: `@Tag("REQ-007")`.
 ```
 
 Only `harness run` replaces `{req}` (and `{scenario}`, `{feature_file}`).
@@ -174,7 +185,7 @@ not put `{req}` in `test_cmd`. To run one requirement's tests by hand, write
 the id yourself:
 
 ```bash
-npx specgate apply REQ-007 --test-cmd "mvn -B -P unit-test test -Dgroups=REQ-007"
+npx specgate apply REQ-007 --test-cmd "mvn -B -P unit-test test -Dgroups=REQ-007 -DfailIfNoTests=true"
 ```
 
 CI keeps running the full suite from `test_cmd`, so the fast gate never
@@ -196,6 +207,16 @@ description. Bitbucket's and GitLab's own Jira integrations link the branch,
 the commits and the pull request to the ticket from the key, so the Jira
 Automation rules move the ticket as they do with GitHub. For the CI job,
 `specgate ci init --provider jenkins` (or `gitlab`) writes the gate.
+
+Keep the `base:` line of the `pr:` block even without `alm pr`. With gitflow,
+where work starts from `develop` and the repository's default branch is
+`main`, it is what the ticket's branch, the ticket-key check and the id check
+measure from:
+
+```yaml
+pr:
+  base: develop # the branch pull requests target
+```
 
 ## Next
 

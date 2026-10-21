@@ -8,7 +8,8 @@ import { findUnresolvedPlaceholders } from "../../../lib/placeholders";
 import { analyseGherkinSource } from "../../../../packages/core/src/domain/GherkinQuality";
 import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
-import { MERGE_DRIVER_NAME } from "../../../harness/init";
+import { MERGE_DRIVERS, MERGE_DRIVER_NAME } from "../../../harness/init";
+import type { MergeDriver } from "../../../harness/init";
 import { hasGherkinRunner } from "../../../../packages/core/src/domain/TestCommand";
 import {
   listChangeIds,
@@ -361,21 +362,39 @@ export class DoctorCommand extends BaseCommand {
    * back to its built-in merge, which is what the project had before. Unhelped
    * is not broken.
    */
-  private checkMergeDriver(dir: string) {
+  private checkMergeDrivers(dir: string) {
+    for (const d of MERGE_DRIVERS) this.checkMergeDriver(dir, d);
+  }
+
+  private checkMergeDriver(dir: string, d: MergeDriver) {
     const attributes = path.join(dir, ".gitattributes");
     if (!fs.existsSync(attributes)) return;
-    if (!fs.readFileSync(attributes, "utf8").includes(`merge=${MERGE_DRIVER_NAME}`)) return;
+    if (!fs.readFileSync(attributes, "utf8").includes(`merge=${d.name}`)) return;
+    // The matrix check keeps its historical label; the others name their file.
+    const label = d.name === MERGE_DRIVER_NAME ? "merge driver" : "spec merge driver";
 
     const get = (key: string) =>
       String(
         spawnSync("git", ["-C", dir, "config", "--get", key], { encoding: "utf8" }).stdout || ""
       ).trim();
 
-    const driver = get(`merge.${MERGE_DRIVER_NAME}.driver`);
-    const name = get(`merge.${MERGE_DRIVER_NAME}.name`);
+    const driver = get(`merge.${d.name}.driver`);
+    const name = get(`merge.${d.name}.name`);
 
     if (driver) {
-      this.ok("merge driver", "traceability.md merges row by row");
+      // The file the driver runs, quoted or not; `node x` in a hand-made
+      // config names none, and there is nothing to check.
+      const file = /"([^"]+\.js)"|(?:^|\s)([^\s"']+\.js)(?=\s|$)/.exec(driver);
+      const runs = file ? (file[1] ?? file[2]) : undefined;
+      if (runs && !fs.existsSync(path.resolve(dir, runs))) {
+        this.warn(
+          label,
+          `the driver points at ${runs}, which does not exist — git merges ${d.pattern} by lines until it is registered again`,
+          "Run `specgate harness init --project-dir .` here to point it at this machine's specgate."
+        );
+        return;
+      }
+      this.ok(label, d.healthy);
       return;
     }
 
@@ -384,17 +403,17 @@ export class DoctorCommand extends BaseCommand {
       // the merge outright with "custom merge driver ... lacks command line",
       // so the file cannot be merged at all. An error, not a warning.
       this.recordError(
-        "merge driver",
-        `merge.${MERGE_DRIVER_NAME}.name is set but its driver command is missing — git will refuse to merge traceability.md`,
-        `Either finish the registration with \`specgate harness init --project-dir .\`, or remove the half: git config --unset merge.${MERGE_DRIVER_NAME}.name`
+        label,
+        `merge.${d.name}.name is set but its driver command is missing — git will refuse to merge ${d.pattern}`,
+        `Either finish the registration with \`specgate harness init --project-dir .\`, or remove the half: git config --unset merge.${d.name}.name`
       );
       return;
     }
 
     this.warn(
-      "merge driver",
-      ".gitattributes routes traceability.md to the specgate merge driver, but this clone has not registered it",
-      "Run `specgate harness init --project-dir .` here. Until then git merges the matrix by lines, so two parallel harness branches collide on adjacent rows."
+      label,
+      `.gitattributes routes ${d.pattern} to the specgate merge driver, but this clone has not registered it`,
+      `Run \`specgate harness init --project-dir .\` here. Until then git merges ${d.pattern} by lines, so two parallel branches collide on neighbouring lines.`
     );
   }
 
@@ -648,7 +667,7 @@ export class DoctorCommand extends BaseCommand {
       this.checkChanges(dir);
       this.checkPlaceholders(dir);
       this.checkSpecops(dir);
-      this.checkMergeDriver(dir);
+      this.checkMergeDrivers(dir);
       this.checkArchitectureProfile(dir);
       this.checkSampleRequirement(dir);
       this.checkScenarioQuality(dir);

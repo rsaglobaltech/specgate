@@ -1,0 +1,53 @@
+# Delta — ticket-source
+
+## MODIFIED Requirements
+
+### Requirement: REQ-148 — The ticket key travels with the work
+
+The system SHALL, when `specgate propose --from-ticket <KEY>` opens a change in a git repository with no uncommitted changes, create and check out the branch `feature/<KEY>-<slug>`, or `bugfix/<KEY>-<slug>` for a ticket of type Bug, from the base branch — `pr.base` in `alm.config.yaml` when it names a branch that exists, otherwise the current branch when it is not another ticket's branch, otherwise the remote's default branch — unless `--no-branch` is given; SHALL then push that branch to `origin` and set it as upstream, unless `--no-push` is given or there is no `origin`, so a Git host linked to Jira shows the ticket's branch — and a Jira automation can move the ticket — as soon as work starts, saying so when the push fails without undoing the change; SHALL, on `specgate check` in a change's branch, warn with `ticket_key_missing` for each commit since the base branch (`pr.base` when set, otherwise as for `--base`) whose message does not contain the change's ticket key; and SHALL, on `--check` for a ticket whose change already exists, report `ticket_changed` with the lines that differ from `ticket.md`.
+
+#### Scenario: SCN-148a — A story becomes a branch
+
+- GIVEN a clean git repository and the exported KAN-13, of type Story
+- WHEN the developer runs `specgate propose --from-ticket KAN-13.json --capability entry-exit`
+- THEN the current branch is `feature/KAN-13-register-vehicle-entry`
+
+#### Scenario: SCN-148b — A commit without the key
+
+- GIVEN that branch with one commit "KAN-13 REQ-151: normalize plates" and one commit "fix typo"
+- WHEN the developer runs `specgate check`
+- THEN it warns `ticket_key_missing` for "fix typo" only
+
+#### Scenario: SCN-148c — The analyst changed a criterion
+
+- GIVEN the opened change, and an exported KAN-13 whose second criterion now ends "pre-filled with the current time"
+- WHEN the developer runs `specgate propose --from-ticket KAN-13.json --check`
+- THEN it reports `ticket_changed` showing the old and the new line
+
+#### Scenario: SCN-148d — The branch is on the host as soon as work starts
+
+- GIVEN a clean git repository whose `origin` is reachable, and the exported KAN-13
+- WHEN the developer runs `specgate propose --from-ticket KAN-13.json --capability entry-exit`
+- THEN `origin` has the branch `feature/KAN-13-register-vehicle-entry`, and the local branch tracks it
+
+#### Scenario: SCN-148e — Gitflow: the ticket's branch starts from develop
+
+- GIVEN a clone whose remote's default branch is `main`, where the developer is on `develop`, which has commits `main` lacks, and `alm.config.yaml` names `pr.base: develop`
+- WHEN the developer runs `specgate propose --from-ticket KAN-13.json --capability entry-exit`
+- THEN the branch `feature/KAN-13-register-vehicle-entry` starts from `develop`, and `specgate check` on it warns `ticket_key_missing` for none of `develop`'s commits
+
+<!-- specgate:trace status=Implemented feature=features/ticket-source/REQ-148.feature test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->
+
+## ADDED Requirements
+
+### Requirement: REQ-161 — A German or accented summary makes a readable change id
+
+The system SHALL, when it makes a change id and a branch name from a ticket's summary, write `ß` as `ss`, `ä`, `ö`, `ü` as `ae`, `oe`, `ue` (and their capitals), and drop other accents to their base letter, before it keeps letters and digits.
+
+#### Scenario: SCN-161a — "Groß" becomes "gross" in the change id
+
+- GIVEN the exported PET-101 with the summary "Suche ignoriert Groß-/Kleinschreibung nicht"
+- WHEN the developer runs `specgate propose --from-ticket PET-101.json --capability owners --no-branch`
+- THEN the change is `pet-101-suche-ignoriert-gross-kleinschreibung-nicht`
+
+<!-- specgate:trace status=Implemented test=tests/unit/ticket-source.test.ts actor=Developer kind=functional -->

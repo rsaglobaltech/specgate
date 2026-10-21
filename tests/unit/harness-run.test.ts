@@ -106,7 +106,12 @@ test("buildPrompt embeds the requirement facts and the definition of done", () =
     // than the emphasis markers it happens to use.
     assert.match(prompt, /Do not edit `docs\/specs\/traceability\.md`/);
     assert.match(prompt, /Do not modify\*\* `spec\.md`, `AGENTS\.md` \(or `AI_RULES\.md`\)/);
-    assert.match(prompt, /specgate status` is the queue/);
+    // Inside the harness the agent runs no specgate command: the harness runs
+    // the gate and marks the requirement. Told to run `specgate apply`, an
+    // agent ran an old global specgate that had no `apply` and wrote nothing.
+    assert.match(prompt, /Do not run `specgate` yourself/);
+    assert.doesNotMatch(prompt, /specgate status` is the queue/);
+    assert.doesNotMatch(prompt, /Close each requirement with `specgate apply/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

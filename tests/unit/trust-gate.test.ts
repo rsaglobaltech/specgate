@@ -270,6 +270,70 @@ test("REQ-120 SCN-120a: an id taken on the base with another title fails check",
   }
 });
 
+test("REQ-120 SCN-120c: a gitflow project compares ids with its pr base", () => {
+  // Ticket keys already measured from `pr: base:` (REQ-148) while ids were
+  // compared with the remote's default, so one `check` named two bases.
+  const p = adopted();
+  try {
+    gitRepo(p.dir);
+    git(p.dir, "checkout", "-q", "-b", "develop");
+    capability(p.dir, "orders", [
+      requirement("REQ-003", "Export orders as CSV", ["- GIVEN a", "- WHEN b", "- THEN c"]),
+    ]);
+    git(p.dir, "add", "-A");
+    git(p.dir, "commit", "-qm", "develop: orders");
+
+    git(p.dir, "checkout", "-q", "main");
+    git(p.dir, "checkout", "-q", "-b", "feature");
+    fs.writeFileSync(
+      path.join(p.dir, "alm.config.yaml"),
+      "alm_version: 1\nprovider: jira\nbase_url: https://example.atlassian.net\n" +
+        "project_key: KAN\npr:\n  base: develop # the branch pull requests target\n"
+    );
+    openChange(p.dir, "refunds", [
+      requirement("REQ-003", "Refund an order", ["- GIVEN a", "- WHEN b", "- THEN c"]),
+    ]);
+
+    const r = cli(p.dir, "check", "--json");
+    assert.equal(r.status, 1, out(r));
+    const taken = json(r).status.find((d: Diagnostic) => d.code === "id_taken_on_base");
+    assert.ok(taken, out(r));
+    assert.match(taken.message, /"Export orders as CSV" on develop/);
+  } finally {
+    p.done();
+  }
+});
+
+test("REQ-120 SCN-120d: a requirement the base changed is not an id taken", () => {
+  // Found in a rehearsal: the second of two tickets rewriting REQ-009 was told
+  // to renumber it once the first had merged. It had taken nothing.
+  const p = adopted();
+  const steps = ["- GIVEN a", "- WHEN b", "- THEN c"];
+  try {
+    capability(p.dir, "owners", [
+      requirement("REQ-009", "An owner's telephone is exactly 10 digits", steps),
+    ]);
+    gitRepo(p.dir);
+    git(p.dir, "checkout", "-q", "-b", "develop");
+    git(p.dir, "checkout", "-q", "-b", "feature");
+    git(p.dir, "checkout", "-q", "develop");
+    capability(p.dir, "owners", [
+      requirement(
+        "REQ-009",
+        "An owner's telephone is 10 digits, or an international number",
+        steps
+      ),
+    ]);
+    git(p.dir, "commit", "-qam", "PET-103 merged");
+    git(p.dir, "checkout", "-q", "feature");
+
+    const r = cli(p.dir, "check", "--base", "develop", "--json");
+    assert.ok(!json(r).status.some((d: Diagnostic) => d.code === "id_taken_on_base"), out(r));
+  } finally {
+    p.done();
+  }
+});
+
 test("REQ-120 SCN-120b: no git, no comparison, and check says so", () => {
   const p = adopted();
   try {

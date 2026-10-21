@@ -37,7 +37,9 @@ import {
 import { draftReport, openFindings, reserveScenarioRange } from "../spec/DraftCommand";
 import { ticketGuide, ticketPrompt } from "../../../draft/ticket-guide";
 import { runConfinedAgent, withWritePermission } from "../../../draft/confined-agent";
-import { baseFor } from "../../../lib/ticket-keys";
+import { baseFor, prBase, TICKET_BRANCH } from "../../../lib/ticket-keys";
+import { changeOverlaps } from "../../../lib/change-overlap";
+import { changeBaseFindings, recordBases } from "../../../lib/change-base";
 
 const CHANGES = "docs/specs/changes";
 /** The placeholder `templateDelta` writes: a delta nobody has written yet. */
@@ -161,20 +163,47 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
   }
   // From the base, not from wherever HEAD is: another ticket's branch would
   // bring its commits into this ticket's pull request.
+  // `pr.base` first (where its pull request goes); else the branch you are on,
+  // unless it is another ticket's; only then the remote's default, which with
+  // gitflow is main while the work starts from develop.
   let base: string | null;
   try {
-    base = baseFor(dir);
+    const current = git(dir, ["rev-parse", "--abbrev-ref", "HEAD"]).stdout.trim();
+    const onBase = current !== "HEAD" && !TICKET_BRANCH.test(current);
+    base = prBase(dir) ?? (onBase ? current : baseFor(dir));
   } catch {
     return {
       name: null,
       note: `Branch ${name} not created: the base branch is not a safe git ref (check --base or SPECGATE_BASE).`,
     };
   }
-  const made = git(dir, ["checkout", "-q", "-b", name, ...(base ? [base] : [])]);
+  // Untracked: cut from origin/develop, it would otherwise pull from develop.
+  const made = git(dir, ["checkout", "-q", "--no-track", "-b", name, ...(base ? [base] : [])]);
   if (made.status !== 0) {
     return { name: null, note: `Branch ${name} not created: ${made.stderr.trim()}` };
   }
   return { name, note: null };
+}
+
+/** Commit the opened change; a note when it could not, else null. */
+function commitOpening(dir: string, t: Ticket, changeId: string): string | null {
+  const added = git(dir, ["add", "--", `${CHANGES}/${changeId}`]);
+  const made =
+    added.status === 0
+      ? git(dir, ["commit", "-q", "-m", `${t.key} docs(spec): open the change from the ticket`])
+      : added;
+  if (made.status === 0) return null;
+  const why = (made.stderr || made.stdout).trim().split("\n")[0] ?? "";
+  return `The opened change is not committed (${why}): commit it, so its reserved ids reach the others.`;
+}
+
+/** Fetch `origin` before ids are reserved; a note when it could not, else null. */
+function fetchOrigin(dir: string): string | null {
+  if (git(dir, ["remote", "get-url", "origin"]).status !== 0) return null;
+  const fetched = git(dir, ["fetch", "-q", "origin"]);
+  if (fetched.status === 0) return null;
+  const why = fetched.stderr.trim().split("\n")[0] ?? "";
+  return `Could not fetch origin (${why}): ids were reserved from the branches already known.`;
 }
 
 /**
@@ -194,13 +223,28 @@ function pushBranch(dir: string, name: string): { ok: boolean; note: string } | 
   };
 }
 
+/** What happened to the ticket's branch, as `open` and `--agent` both print it. */
+function branchLines(
+  branch: { name: string | null; note: string | null },
+  pushed: { ok: boolean; note: string } | null
+): string {
+  return (
+    (branch.name ? ui.ok(`On branch ${ui.bold(branch.name)}`) : "") +
+    (branch.note ? ui.info(branch.note) : "") +
+    (pushed ? (pushed.ok ? ui.ok(pushed.note) : ui.warn(pushed.note)) : "")
+  );
+}
+
 function readIf(file: string): string | undefined {
   return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : undefined;
 }
 
 /** `kan-13-register-vehicle-entry`: the key, then the summary's first words. */
 export function changeIdFor(t: Ticket): string {
+  // "Groß" is "gross", "Ärzte" "aerzte" (REQ-161); other accents drop.
   const slug = t.summary
+    .replace(/ß/g, "ss")
+    .replace(/[ÄÖÜäöü]/g, (c) => ({ Ä: "Ae", Ö: "Oe", Ü: "Ue", ä: "ae", ö: "oe", ü: "ue" })[c] ?? c)
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
@@ -504,10 +548,27 @@ export class TicketCommand extends BaseCommand {
       ]);
     }
 
+    // What colleagues pushed since the last fetch: their ticket branches hold
+    // reserved ids this change must not reuse (REQ-163).
+    const fetched = fetchOrigin(projectDir);
     const branch = opts.branch ? ticketBranch(projectDir, ticket) : { name: null, note: null };
+    if (fetched) branch.note = branch.note ? `${fetched} ${branch.note}` : fetched;
     const opened = openChange(projectDir, ticket, changeId, capability);
+    // On the branch it created, the opening is committed, so pushing it
+    // publishes the ids it reserved to every other clone (REQ-165).
+    const committed = branch.name ? commitOpening(projectDir, ticket, changeId) : null;
+    if (committed) branch.note = branch.note ? `${branch.note} ${committed}` : committed;
     const pushed = branch.name && opts.push ? pushBranch(projectDir, branch.name) : null;
-    if (opts.agent) return this.withAgent(opts, projectDir, ticket, changeId, opened.created);
+    if (opts.agent) {
+      return this.withAgent(
+        opts,
+        projectDir,
+        ticket,
+        changeId,
+        opened.created,
+        branchLines(branch, pushed)
+      );
+    }
     io.emit(
       {
         ticket: ticketJson(ticket),
@@ -557,7 +618,8 @@ export class TicketCommand extends BaseCommand {
     projectDir: string,
     ticket: Ticket,
     changeId: string,
-    created: string[] = []
+    created: string[] = [],
+    branchNotes = ""
   ): void {
     const io = agentIo(opts.json);
     const guide = readIf(path.join(projectDir, CHANGES, changeId, "DRAFTING.md")) ?? "";
@@ -567,6 +629,7 @@ export class TicketCommand extends BaseCommand {
       process.stdout.write(
         ui.header("propose --from-ticket", ticket.key) +
           (created.length ? ui.ok(`Change ${changeId} opened.`) : "") +
+          branchNotes +
           ui.logLine(`${agent.command} is drafting ${ticket.key}`)
       );
     }
@@ -622,7 +685,15 @@ export class TicketCommand extends BaseCommand {
       return;
     }
     const report = result?.report;
-    const status: Diagnostic[] = [...integrity, ...(report?.status ?? [])];
+    const status: Diagnostic[] = [
+      ...integrity,
+      ...(report?.status ?? []),
+      // Another open change rewrites one of these requirements (REQ-160),
+      // or one of them moved under this change (REQ-168).
+      ...changeOverlaps(projectDir),
+      ...changeBaseFindings(projectDir),
+    ];
+    recordBases(projectDir);
     const errors = status.filter((d) => d.severity === "error").length;
     const ready = !notWritten && errors === 0;
     const next = ready ? "specgate apply" : `specgate propose --from-ticket ${opts.ticket}`;
