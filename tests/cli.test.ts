@@ -1313,6 +1313,82 @@ test(
   }
 );
 
+/** A harness project whose registered drivers run a specgate copy that is gone. */
+function projectWithDriversGone(tempRoot: string) {
+  const projectDir = makeHarnessProject(tempRoot);
+  const init = runCli(["harness", "init", "--project-dir", projectDir]);
+  assert.equal(init.status, 0, init.stderr);
+  // The copy `harness init` registered is this checkout; point the registered
+  // commands at one that no longer exists, as a cleared npx cache leaves them.
+  for (const name of ["specgate-matrix", "specgate-spec"]) {
+    const key = `merge.${name}.driver`;
+    const driver = spawnSync("git", ["-C", projectDir, "config", "--get", key], {
+      encoding: "utf8",
+    }).stdout.trim();
+    const gone = driver.replace(/[^\s"']*\.js/, path.join(tempRoot, "gone", "driver.js"));
+    assert.notEqual(gone, driver, `no script path in ${driver}`);
+    gitInTest(["config", key, gone], { cwd: projectDir });
+  }
+  return projectDir;
+}
+
+test(
+  "REQ-169 SCN-169a: a merge driver that is gone falls back to git's line merge",
+  { skip: !hasGit() },
+  () => {
+    // Found preparing a Maven project: no node_modules, so the driver runs this
+    // machine's copy of specgate. With that copy gone, git stopped the merge
+    // with our side alone in the file, no markers, the other side's text lost.
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-drv-gone-"));
+    const projectDir = projectWithDriversGone(tempRoot);
+    const capability = path.join(projectDir, "docs", "specs", "capabilities", "owners");
+    const spec = (rule: string) =>
+      `# Owners\n\n## Requirements\n\n### Requirement: REQ-009 — Telephone\n\nThe system SHALL accept ${rule}.\n`;
+    fs.mkdirSync(capability, { recursive: true });
+    fs.writeFileSync(path.join(capability, "spec.md"), spec("10 digits"), "utf8");
+    gitInTest(["add", "-A"], { cwd: projectDir });
+    gitInTest(["commit", "--quiet", "-m", "harness setup"], { cwd: projectDir });
+
+    for (const [branch, rule] of [
+      ["ticket/a", "an international number"],
+      ["ticket/b", "an empty telephone"],
+    ]) {
+      gitInTest(["checkout", "--quiet", "-b", branch, "main"], { cwd: projectDir });
+      fs.writeFileSync(path.join(capability, "spec.md"), spec(rule), "utf8");
+      gitInTest(["commit", "--quiet", "-am", `archive ${branch}`], { cwd: projectDir });
+    }
+
+    const merge = spawnSync("git", ["-C", projectDir, "merge", "--no-edit", "ticket/a"], {
+      encoding: "utf8",
+    });
+    assert.notEqual(merge.status, 0, "the two rewrites conflict");
+    const merged = fs.readFileSync(path.join(capability, "spec.md"), "utf8");
+    assert.match(merged, /^<<<<<<< /m, merged);
+    assert.match(merged, /an empty telephone/);
+    assert.match(merged, /an international number/, "the other side's text is kept");
+    assert.match(merge.stdout + merge.stderr, /merge driver .*not found/i);
+    assert.match(merge.stdout + merge.stderr, /harness init/);
+
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+);
+
+test(
+  "REQ-169 SCN-169b: doctor warns about a merge driver whose file is gone",
+  { skip: !hasGit() },
+  () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-drv-gone-doc-"));
+    const projectDir = projectWithDriversGone(tempRoot);
+    const line =
+      runCli(["doctor", "--project-dir", projectDir])
+        .stdout.split("\n")
+        .find((l) => l.includes("spec merge driver")) || "";
+    assert.match(line, /does not exist/, line);
+
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+);
+
 // ── change author — the spec-author role (E2-02) ─────────────────────────
 
 /** A project with one change ready to be authored, committed and clean. */

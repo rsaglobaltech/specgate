@@ -382,6 +382,18 @@ export class DoctorCommand extends BaseCommand {
     const name = get(`merge.${d.name}.name`);
 
     if (driver) {
+      // The file the driver runs, quoted or not; `node x` in a hand-made
+      // config names none, and there is nothing to check.
+      const file = /"([^"]+\.js)"|(?:^|\s)([^\s"']+\.js)(?=\s|$)/.exec(driver);
+      const runs = file ? (file[1] ?? file[2]) : undefined;
+      if (runs && !fs.existsSync(path.resolve(dir, runs))) {
+        this.warn(
+          label,
+          `the driver points at ${runs}, which does not exist — git merges ${d.pattern} by lines until it is registered again`,
+          "Run `specgate harness init --project-dir .` here to point it at this machine's specgate."
+        );
+        return;
+      }
       this.ok(label, d.healthy);
       return;
     }

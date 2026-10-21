@@ -11,6 +11,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **A merge driver that is gone falls back to git's merge** (REQ-169): in a
+  project without `node_modules`, the drivers run this machine's copy of
+  specgate. With that copy gone, git stopped the merge with only your side in
+  the file, no markers, and `git add` dropped the other side's text. The
+  driver now says it is missing and merges by lines; `specgate doctor` warns.
+  Re-run `specgate harness init` in clones registered before this release.
 - **`id_taken_on_base` only for ids the branch introduced** (REQ-120): a
   requirement the base changed after the branch started was reported as an id
   taken, with the advice to renumber it.

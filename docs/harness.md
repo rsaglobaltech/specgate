@@ -156,6 +156,12 @@ differently, the case `change_overlap` warned about before either branch was
 merged. Write the requirement as it should read once both changes hold,
 delete the marker lines, and run `specgate check`.
 
+**In a project without its own `node_modules`**, Maven for one, the drivers
+run this machine's copy of specgate. If that copy goes away (an `npx` cache
+cleared, a global install removed), the drivers say so and git merges these
+files by lines, with its usual conflict markers, and `specgate doctor` warns.
+Run `specgate harness init` again to point them at the copy you have now.
+
 ## Run more than one requirement at a time
 
 ```bash

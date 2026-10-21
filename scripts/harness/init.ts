@@ -573,6 +573,30 @@ export const MERGE_DRIVERS: MergeDriver[] = [
 export const attributesLine = (d: MergeDriver) => `${d.pattern} merge=${d.name}`;
 
 /**
+ * The command git runs for a driver: `node <file> [args] %O %A %B` while
+ * `file` is there, and git's own line merge once it is not (REQ-169).
+ *
+ * Without a `node_modules` of its own, Maven for one, a project's driver runs
+ * this machine's copy of specgate, and copies go away: an npx cache cleared, a
+ * global install upgraded. `node` then fails, and git stops the merge with the
+ * file holding our side alone — no markers, the other side's text gone from it,
+ * and `git add` keeps it that way. Falling back to `git merge-file` leaves the
+ * same markers git would have left without the driver.
+ *
+ * `file` is written as the shell should read it (quoted when it is a path
+ * with spaces); the script is single-quoted, so it holds no single quote.
+ */
+export function driverCommand(file: string, args: string[] = []): string {
+  const script =
+    "o=$1; a=$2; b=$3; f=$4; shift 3; " +
+    'if [ -f "$f" ]; then exec node "$@" "$o" "$a" "$b"; fi; ' +
+    'echo "specgate: merge driver $f not found, so this file was merged by lines. ' +
+    'Fix: run specgate harness init." >&2; ' +
+    'exec git merge-file -L ours -L base -L theirs "$a" "$o" "$b"';
+  return `sh -c '${script}' specgate-merge %O %A %B ${[file, ...args].join(" ")}`;
+}
+
+/**
  * Register the row-wise merge driver for `docs/specs/traceability.md`.
  *
  * Parallel harness runs produce one branch per requirement, each flipping its
@@ -656,8 +680,8 @@ export function installMergeDriver(projectDir: string) {
   const driverIsPortable = fs.existsSync(localBin);
   const commandFor = (d: MergeDriver) =>
     driverIsPortable
-      ? `node node_modules/@rsaglobaltech/specgate/bin/specgate.js ${d.command}`
-      : `node ${JSON.stringify(path.join(__dirname, "..", `${d.command}.js`))}`;
+      ? driverCommand("node_modules/@rsaglobaltech/specgate/bin/specgate.js", [d.command])
+      : driverCommand(JSON.stringify(path.join(__dirname, "..", `${d.command}.js`)));
 
   const gitConfig = (key: string, value: string) =>
     spawnSync("git", ["-C", projectDir, "config", key, value], { encoding: "utf8" });
@@ -679,7 +703,7 @@ export function installMergeDriver(projectDir: string) {
   // did not, any stale `name` is removed rather than left pointing at nothing.
   for (const d of drivers) {
     const driverCommand = commandFor(d);
-    const configured = gitConfig(`merge.${d.name}.driver`, `${driverCommand} %O %A %B`);
+    const configured = gitConfig(`merge.${d.name}.driver`, driverCommand);
 
     if (configured.status !== 0) {
       spawnSync("git", ["-C", projectDir, "config", "--unset", `merge.${d.name}.name`], {
@@ -692,7 +716,7 @@ export function installMergeDriver(projectDir: string) {
           target: ".gitattributes",
           fix:
             `Run it by hand inside the project:\n` +
-            `  git config merge.${d.name}.driver '${driverCommand} %O %A %B'\n` +
+            `  git config merge.${d.name}.driver ${JSON.stringify(driverCommand)}\n` +
             `Until then git merges ${d.pattern} by lines, which conflicts when two ` +
             "parallel branches touch neighbouring lines.",
         }
