@@ -807,6 +807,30 @@ test("REQ-148 SCN-148b: check warns for each commit that does not name the ticke
   }
 });
 
+test("REQ-170 SCN-170a: a team's branch is still the ticket's", () => {
+  // agentkit names a ticket's branch feature/<team>/<KEY>, across repositories.
+  const dir = repo();
+  try {
+    git(dir, "checkout", "-q", "-b", "feature/parking/KAN-13");
+    fs.writeFileSync(path.join(dir, "a.txt"), "a");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "KAN-13 REQ-151: normalize plates");
+    fs.writeFileSync(path.join(dir, "b.txt"), "b");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "fix typo");
+    const run = spawnSync(process.execPath, [CLI, "check", dir, "--json"], {
+      encoding: "utf8",
+      env: { ...process.env, NO_COLOR: "1" },
+    });
+    const doc = JSON.parse(run.stdout) as { status: Array<{ code: string; message: string }> };
+    const missing = doc.status.filter((d) => d.code === "ticket_key_missing");
+    assert.equal(missing.length, 1, run.stdout);
+    assert.match(missing[0].message, /fix typo/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("REQ-148 SCN-148c: the analyst changed a criterion", () => {
   const dir = project(JIRA);
   try {

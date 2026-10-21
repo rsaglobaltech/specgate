@@ -70,7 +70,7 @@ function usage(): void {
       "  --check               Its Definition of Ready (T1–T9); writes nothing",
       "  --capability <name>   The capability, when its epic is not under epics:",
       "  --agent <cmd>         Have your agent draft it, confined to the change",
-      "  --no-branch           Do not create feature/<KEY>-<slug>",
+      "  --no-branch           Stay on this branch; committed there if it names <KEY>",
       "  --no-push             Create it, but do not push it to origin",
       "  --project-dir <path>  --json",
       "",
@@ -185,12 +185,32 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
   return { name, note: null };
 }
 
-/** Commit the opened change; a note when it could not, else null. */
+/**
+ * The branch the developer is on, when it already names the ticket: one
+ * another tool made, as agentkit does, before `--no-branch` (REQ-165).
+ */
+function givenTicketBranch(dir: string, t: Ticket): string | null {
+  const current = git(dir, ["rev-parse", "--abbrev-ref", "HEAD"]);
+  if (current.status !== 0) return null;
+  const name = current.stdout.trim();
+  return TICKET_BRANCH.exec(name)?.[1] === t.key ? name : null;
+}
+
+/** Commit the opened change, and only it; a note when it could not, else null. */
 function commitOpening(dir: string, t: Ticket, changeId: string): string | null {
-  const added = git(dir, ["add", "--", `${CHANGES}/${changeId}`]);
+  const folder = `${CHANGES}/${changeId}`;
+  const added = git(dir, ["add", "--", folder]);
+  // On a branch someone else made, other work may be staged: it stays staged.
   const made =
     added.status === 0
-      ? git(dir, ["commit", "-q", "-m", `${t.key} docs(spec): open the change from the ticket`])
+      ? git(dir, [
+          "commit",
+          "-q",
+          "-m",
+          `${t.key} docs(spec): open the change from the ticket`,
+          "--",
+          folder,
+        ])
       : added;
   if (made.status === 0) return null;
   const why = (made.stderr || made.stdout).trim().split("\n")[0] ?? "";
@@ -551,11 +571,14 @@ export class TicketCommand extends BaseCommand {
     // What colleagues pushed since the last fetch: their ticket branches hold
     // reserved ids this change must not reuse (REQ-163).
     const fetched = fetchOrigin(projectDir);
-    const branch = opts.branch ? ticketBranch(projectDir, ticket) : { name: null, note: null };
+    const branch = opts.branch
+      ? ticketBranch(projectDir, ticket)
+      : { name: givenTicketBranch(projectDir, ticket), note: null };
     if (fetched) branch.note = branch.note ? `${fetched} ${branch.note}` : fetched;
     const opened = openChange(projectDir, ticket, changeId, capability);
-    // On the branch it created, the opening is committed, so pushing it
-    // publishes the ids it reserved to every other clone (REQ-165).
+    // On the ticket's branch, created here or given, the opening is
+    // committed, so pushing it publishes the ids it reserved to every other
+    // clone (REQ-165).
     const committed = branch.name ? commitOpening(projectDir, ticket, changeId) : null;
     if (committed) branch.note = branch.note ? `${branch.note} ${committed}` : committed;
     const pushed = branch.name && opts.push ? pushBranch(projectDir, branch.name) : null;

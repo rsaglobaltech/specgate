@@ -9,6 +9,20 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **A ticket's branch may name its team** (REQ-170): `feature/<team>/KAN-13`,
+  the way agentkit names it, is KAN-13's branch for `check` and
+  `propose --from-ticket`, like `feature/KAN-13-…`.
+
+### Changed
+
+- **`--no-branch` on the ticket's branch publishes the reservation**
+  (REQ-165): when another tool already made a branch whose name carries the
+  key, `propose --from-ticket --no-branch` commits the change's folder, and
+  only it, and pushes it, as when Specgate creates the branch. On any other
+  branch it still commits nothing.
+
 ## [0.22.2] — 2026-10-21
 
 Parallel tickets that never overwrite each other, rehearsed end to end on a brownfield Maven project with Jira tickets and OpenCode.
