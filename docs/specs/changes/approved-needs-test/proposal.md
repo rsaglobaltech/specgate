@@ -10,4 +10,4 @@
 
 ## Out of scope
 
-Scoping the harness gate to the requirement under test: a project already red before the harness starts is caught by the harness's own pre-flight (REQ-174).
+Scoping the harness gate to the requirement under test: a project already red before the harness starts is caught by the harness's own pre-flight (REQ-175).

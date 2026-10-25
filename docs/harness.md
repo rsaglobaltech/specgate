@@ -221,11 +221,20 @@ For a nightly job that leaves branches to review:
 | `--budget-seconds <n>`   | Stops cleanly before starting a requirement once the time is spent.             |
 | `--max-requirements <n>` | Attempts at most n requirements.                                                |
 | `--skip-not-ready`       | Skips requirements an agent cannot succeed at (no feature, unmet dependencies). |
+| `--skip-baseline`        | Runs even when the base already fails `validate --strict`.                      |
 | `--push`                 | Pushes each green `harness/REQ-NNN` branch.                                     |
 | `--pr-cmd "<cmd>"`       | Runs after each push, with `{branch}` and `{req}` placeholders.                 |
 | `--verbose`              | Streams the gate's output while it runs.                                        |
 
 ## When a run fails
+
+**Before any agent runs**, the harness validates the base. The gate judges the
+whole project, so a requirement outside the run that is past Draft with no test
+(TDD-1, TDD-2), such as one marked Approved before its test, would fail every
+attempt whatever the agent did, and the agent may not change its status. The
+run stops there and lists them: write their tests or move them back to Draft,
+or pass `--skip-baseline` to run anyway. What fails on the requirements being
+run is theirs to fix, and does not stop it.
 
 The report prints the tail of the gate output and the command that failed.
 Some failures end the run after one attempt, because retrying cannot help:

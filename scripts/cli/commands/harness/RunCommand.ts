@@ -347,6 +347,10 @@ function usage() {
       "                         feature, an unrunnable scenario, unmet dependencies,\n" +
       "                         Deprecated or Needs Clarification. Default: warn and\n" +
       "                         run them anyway.\n" +
+      "  --skip-baseline        Run even when the base already fails `validate --strict`.\n" +
+      "                         Default: refuse before any agent runs, since every\n" +
+      "                         attempt would fail the same gate for a reason outside\n" +
+      "                         its requirement.\n" +
       "  --strict-artifacts     Fail an attempt whose diff never touches the paths the\n" +
       "                         matrix declares for the requirement (default: warn).\n" +
       "  --push                 Push each green harness/REQ-NNN branch to the remote.\n" +
@@ -380,6 +384,7 @@ export function parseArgs(argv: string[]) {
     verbose: false,
     strictArtifacts: false,
     skipNotReady: false,
+    skipBaseline: false,
     budgetSeconds: 0,
     maxRequirements: 0,
     push: false,
@@ -444,6 +449,8 @@ export function parseArgs(argv: string[]) {
       args.strictArtifacts = true;
     } else if (token === "--skip-not-ready") {
       args.skipNotReady = true;
+    } else if (token === "--skip-baseline") {
+      args.skipBaseline = true;
     } else if (token === "--budget-seconds") {
       const n = Number(argv[++i]);
       if (!Number.isInteger(n) || n < 1) {
@@ -551,6 +558,44 @@ function readGateMessages(worktreeDir: string, reportPath: string) {
   }
   const run = parseCucumberMessages(raw);
   return run.parsed ? run : null;
+}
+
+/**
+ * What the base already fails that no attempt in this run can fix, or null.
+ * The gate judges the whole project, and a requirement past Draft with no test
+ * (TDD-1, TDD-2) is one the agent may not touch: its status is in the
+ * specification, and the agent works on another requirement. Findings about
+ * the requirements being run are theirs to fix (a missing feature, say), and
+ * do not count here.
+ */
+function baselineProblem(projectDir: string, running: Set<string>): string | null {
+  const run = judged(projectDir, (dir, toProject) => {
+    const r = spawnSync(process.execPath, [VALIDATE_SCRIPT, dir, "--strict"], {
+      encoding: "utf8",
+      maxBuffer: SUBPROCESS_MAX_BUFFER,
+    });
+    return { ...r, stdout: toProject(r.stdout || ""), stderr: toProject(r.stderr || "") };
+  });
+  if (run.status === 0) return null;
+  const outside = `${run.stdout}${run.stderr}`
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => /\[TDD-[12]\]/.test(l))
+    .filter((l) => {
+      const owner = /\((?:scenario|requirement): ([A-Z]+-[A-Za-z0-9.]+)\)/.exec(l);
+      return !(owner && running.has(owner[1]));
+    });
+  if (outside.length === 0) return null;
+  const shown = outside.slice(0, 12);
+  return (
+    "The base already fails the gate (`validate --strict`) on requirements outside this run, " +
+    "before any agent runs:\n" +
+    shown.map((l) => `    ${l.replace(/^✖\s*/, "")}`).join("\n") +
+    (outside.length > shown.length ? `\n    … ${outside.length - shown.length} more` : "") +
+    "\nEvery attempt would fail it too, whatever its requirement: a status past Draft owes a " +
+    "test. Write those tests or move those requirements back to Draft (`specgate check` shows " +
+    "it whole), or pass --skip-baseline."
+  );
 }
 
 /** Told about each gate stage as it ends, for the event file (ADR-0037). */
@@ -2787,6 +2832,25 @@ export class RunCommand extends BaseCommand {
         if (!current || current === "HEAD") {
           throw new Error("--chain needs a branch to merge into; HEAD is detached.");
         }
+      }
+
+      // REQ-175: the gate judges the whole project, so a base it already fails
+      // fails every attempt, whatever the agent does for its requirement. Said
+      // once, here, rather than after three paid attempts per requirement.
+      // Only for the branch you are on: --base-branch names a ref this checkout
+      // does not hold, and a worker has already been through it in its parent.
+      if (!args.skipBaseline && !args.baseBranch && !process.env.SPECGATE_HARNESS_WORKER) {
+        // The ids the run owns: its requirements and their scenarios.
+        const running = new Set<string>();
+        const inRun = new Set(pending.map((r) => r.requirement));
+        for (const row of plan.requirements || []) {
+          if (!inRun.has(row.requirement)) continue;
+          running.add(row.requirement);
+          const scn = row.scenarioId || row.scenario_id;
+          if (scn) running.add(String(scn));
+        }
+        const red = baselineProblem(projectDir, running);
+        if (red) throw new Error(red);
       }
 
       const baseRef = args.baseBranch || "HEAD";
