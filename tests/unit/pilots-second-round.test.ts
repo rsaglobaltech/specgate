@@ -106,7 +106,8 @@ test("#77: one requirement without its test is left; the other closes", () => {
       doc.requirements.map((x: { id: string; ok: boolean; code?: string }) => [x.id, x.ok, x.code]),
       [
         ["REQ-002", true, undefined],
-        ["REQ-003", false, "done_validate_failed"],
+        // Refused before validate since REQ-173, with the reason `apply REQ-003` gives alone.
+        ["REQ-003", false, "apply_no_test"],
       ]
     );
     assert.equal(status(dir, "REQ-002"), "Implemented");

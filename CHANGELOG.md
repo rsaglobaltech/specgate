@@ -9,6 +9,40 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.22.3] — 2026-10-25
+
+What a first project from a brief tripped over, from statuses to the harness's first attempt: rehearsed on a Spanish brief with eight modules and a Next.js monorepo.
+
+### Fixed
+
+- **Approved owes a test, as the strict gate says** (REQ-173): `apply
+--status Approved` wrote Approved on a requirement no test named, and the
+  next `validate --strict` failed TDD-1 for the whole project, so every
+  `harness run` went red whatever requirement it worked on. `apply` and `done`
+  now refuse it with the TDD-1 reason and the fix, as they already did for
+  Implemented; `--no-check` writes it and warns. An unknown `--status`, such
+  as `Aproved`, is refused instead of written.
+- **A base the gate already fails is said before any agent runs** (REQ-175):
+  the harness gate judges the whole project, so a red base failed every
+  attempt for a reason outside its requirement, three paid attempts at a time.
+  `harness run` now validates the base first and stops when a requirement
+  outside the run is past Draft with no test (TDD-1, TDD-2), which no attempt
+  may fix; no branch is created, and `--skip-baseline` runs anyway.
+- **A question that blocks nothing says so** (REQ-176): D7 refused every open
+  question without a requirement to block, so a question for later had to be
+  dropped. `none` (or `—`, `ninguno`) in its Blocks column makes it a warning;
+  an empty cell is still refused. `docs/from-a-brief.md` now shows how to
+  answer a question, step by step.
+- **An open draft can reserve more ids** (REQ-177): a draft's ten ids could
+  not grow, and agents folded new behaviour into existing requirements to fit.
+  `propose --from-brief <module> --reserve <n>` on an open draft now grows its
+  ranges and rewrites DRAFTING.md, as long as its range is the last reserved.
+- **Three papercuts on a first project** (REQ-178): B9 no longer warns about
+  the one actor of a brief written in the first person; `harness init` keeps
+  a `.harness/prompt-prefix.md` you edited instead of refusing, so it can be
+  re-run to register the merge drivers; and `validate` without a directory
+  names `specgate validate .` instead of printing the whole help.
+
 ## [0.22.2] — 2026-10-21
 
 Parallel tickets that never overwrite each other, rehearsed end to end on a brownfield Maven project with Jira tickets and OpenCode.

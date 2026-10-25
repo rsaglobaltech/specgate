@@ -105,6 +105,11 @@
 | REQ-166 | SCN-166a | `features/trusted-gate/REQ-166.feature` | - | - | - | - | - | packages/core/test/unit/capability-spec-merge.test.ts | Implemented |
 | REQ-168 | SCN-168a | `features/trusted-gate/REQ-168.feature` | - | - | - | - | - | tests/unit/change-base.test.ts | Implemented |
 | REQ-169 | SCN-169a | `features/trusted-gate/REQ-169.feature` | - | - | - | - | - | tests/cli.test.ts | Implemented |
+| REQ-173 | SCN-173a | `features/daily-surface/REQ-173.feature` | - | - | - | - | - | tests/unit/approved-needs-test.test.ts | Implemented |
+| REQ-175 | SCN-175a | `features/live-harness/REQ-175.feature` | - | - | - | - | - | tests/cli.test.ts | Implemented |
+| REQ-176 | SCN-176a | `features/brief-cards/REQ-176.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
+| REQ-177 | SCN-177a | `features/change-lifecycle/REQ-177.feature` | - | - | - | - | - | tests/unit/draft-reserve-more.test.ts | Implemented |
+| REQ-178 | SCN-178a | `features/daily-surface/REQ-178.feature` | - | - | - | - | - | tests/unit/adopter-papercuts.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
