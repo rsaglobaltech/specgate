@@ -29,6 +29,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   dropped. `none` (or `—`, `ninguno`) in its Blocks column makes it a warning;
   an empty cell is still refused. `docs/from-a-brief.md` now shows how to
   answer a question, step by step.
+- **An open draft can reserve more ids** (REQ-177): a draft's ten ids could
+  not grow, and agents folded new behaviour into existing requirements to fit.
+  `propose --from-brief <module> --reserve <n>` on an open draft now grows its
+  ranges and rewrites DRAFTING.md, as long as its range is the last reserved.
 
 ## [0.22.2] — 2026-10-21
 
