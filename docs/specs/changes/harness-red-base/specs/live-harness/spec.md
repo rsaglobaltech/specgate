@@ -18,4 +18,4 @@ The system SHALL, before `specgate harness run` creates a worktree or invokes an
 - WHEN the developer runs `specgate harness run --req REQ-001 --skip-baseline`
 - THEN the agent runs
 
-<!-- specgate:trace status=Draft test=tests/cli.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/cli.test.ts actor=Developer kind=functional -->

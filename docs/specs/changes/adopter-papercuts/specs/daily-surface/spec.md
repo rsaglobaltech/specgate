@@ -24,4 +24,4 @@ The system SHALL not warn B9_actor_unnamed about the only declared actor of a br
 - WHEN the developer runs `specgate validate --strict`
 - THEN it exits 2 and stderr names `specgate validate . --strict`
 
-<!-- specgate:trace status=Draft test=tests/unit/adopter-papercuts.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/adopter-papercuts.test.ts actor=Developer kind=functional -->

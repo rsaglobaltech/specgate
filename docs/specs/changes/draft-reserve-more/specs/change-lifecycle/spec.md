@@ -24,4 +24,4 @@ The system SHALL, when `specgate propose --from-brief <module> --reserve <n>` na
 - WHEN the developer runs `specgate propose --from-brief bookings --reserve 5`
 - THEN the command exits 1 saying it already holds 10, and change.yaml is unchanged
 
-<!-- specgate:trace status=Draft test=tests/unit/draft-reserve-more.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/draft-reserve-more.test.ts actor=Developer kind=functional -->

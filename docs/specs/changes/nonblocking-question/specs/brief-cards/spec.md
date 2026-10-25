@@ -18,4 +18,4 @@ The system SHALL treat an open question of a draft's `questions.md` whose Blocks
 - WHEN the draft is checked
 - THEN D7_floating_question is an error whose fix names "none"
 
-<!-- specgate:trace status=Draft test=tests/unit/draft-checklist.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/draft-checklist.test.ts actor=Developer kind=functional -->

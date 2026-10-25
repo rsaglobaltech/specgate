@@ -30,4 +30,4 @@ The system SHALL refuse `specgate apply` and `specgate done` with a `--status` t
 - WHEN the developer runs `specgate apply REQ-002 --status Approved --no-check`
 - THEN REQ-002 is Approved and stderr warns that `validate --strict` fails TDD-1 until a test names REQ-002
 
-<!-- specgate:trace status=Draft test=tests/unit/approved-needs-test.test.ts actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/approved-needs-test.test.ts actor=Developer kind=functional -->
