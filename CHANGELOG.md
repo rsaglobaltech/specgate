@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.22.3] — 2026-10-25
+
+What a first project from a brief tripped over, from statuses to the harness's first attempt: rehearsed on a Spanish brief with eight modules and a Next.js monorepo.
+
 ### Fixed
 
 - **Approved owes a test, as the strict gate says** (REQ-173): `apply
