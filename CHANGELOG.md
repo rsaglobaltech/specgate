@@ -9,6 +9,16 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Approved owes a test, as the strict gate says** (REQ-173): `apply
+  --status Approved` wrote Approved on a requirement no test named, and the
+  next `validate --strict` failed TDD-1 for the whole project, so every
+  `harness run` went red whatever requirement it worked on. `apply` and `done`
+  now refuse it with the TDD-1 reason and the fix, as they already did for
+  Implemented; `--no-check` writes it and warns. An unknown `--status`, such
+  as `Aproved`, is refused instead of written.
+
 ## [0.22.2] — 2026-10-21
 
 Parallel tickets that never overwrite each other, rehearsed end to end on a brownfield Maven project with Jira tickets and OpenCode.
