@@ -214,6 +214,10 @@ const OPENS_WITH_CONDITION =
 /** A condition placed after the obligation: "Joining is refused if the course is full". */
 const LATE_CONDITION = /\s(if|when|whenever|unless|while|once|cuando|si|mientras|salvo que)\s/i;
 
+/** The author speaking as "I", in English or Spanish (B9, REQ-178). */
+const FIRST_PERSON =
+  /(?<![\p{L}])(?:I|I'm|I've|my|soy|estoy|quiero|tengo|necesito|uso|yo|mi|mis|me)(?![\p{L}'])/gu;
+
 const MAX_RULES = 7;
 const MAX_QUESTIONS = 3;
 
@@ -385,8 +389,13 @@ export function checkBriefBody(brief: string): Diagnostic[] {
     }
   }
 
-  // B9 — every declared actor appears in the brief.
-  for (const a of actors.filter((x) => !isPlaceholder(x))) {
+  // B9 — every declared actor appears in the brief. A brief its one actor
+  // wrote in the first person ("Soy…, quiero…") names them on every line, as
+  // "I": warning about it sent its author to rewrite their own words (REQ-178).
+  const declared = actors.filter((x) => !isPlaceholder(x));
+  const firstPerson = (plain.match(FIRST_PERSON) || []).length >= 2;
+  for (const a of declared) {
+    if (declared.length === 1 && firstPerson) break;
     if (!nameRe(a).test(plain)) {
       out.push(
         warning(
@@ -394,7 +403,9 @@ export function checkBriefBody(brief: string): Diagnostic[] {
           `The actor ${a} is declared and the brief never mentions them.`,
           {
             target: a,
-            fix: "Say in a rule or an example what they do — or take them off `actors:`.",
+            fix: firstPerson
+              ? "The brief is in the first person: say once which actor its author is, and what the others do — or take them off `actors:`."
+              : "Say in a rule or an example what they do — or take them off `actors:`.",
           }
         )
       );

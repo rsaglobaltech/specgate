@@ -33,6 +33,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   not grow, and agents folded new behaviour into existing requirements to fit.
   `propose --from-brief <module> --reserve <n>` on an open draft now grows its
   ranges and rewrites DRAFTING.md, as long as its range is the last reserved.
+- **Three papercuts on a first project** (REQ-178): B9 no longer warns about
+  the one actor of a brief written in the first person; `harness init` keeps
+  a `.harness/prompt-prefix.md` you edited instead of refusing, so it can be
+  re-run to register the merge drivers; and `validate` without a directory
+  names `specgate validate .` instead of printing the whole help.
 
 ## [0.22.2] — 2026-10-21
 
