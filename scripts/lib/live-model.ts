@@ -28,6 +28,10 @@ export interface EventRecord {
 
 export interface LiveRequirement {
   req: string;
+  /** Its title in the specification, or "" when no spec names it (REQ-179). */
+  title: string;
+  /** The module it belongs to: its open change (`draft-diario` → `diario`) or capability; "" for spec.md. */
+  group: string;
   attempt: number;
   /** `starting`, the kind of the last step, `gate`, or the attempt's result. */
   phase: string;
@@ -91,6 +95,8 @@ export function foldRequirement(req: string, events: EventRecord[]): LiveRequire
     );
   return {
     req,
+    title: "",
+    group: "",
     attempt,
     phase,
     state: end ? (end.result === "pass" ? "pass" : "fail") : "running",
@@ -116,9 +122,58 @@ function eventFiles(projectDir: string): string[] {
   }
 }
 
+const TITLE = /^(?:##|###\s+Requirement:)\s+(REQ-\d+)\s+[—–-]\s+(.+?)\s*$/gm;
+
+/**
+ * Requirement titles from spec.md and every markdown file under docs/specs —
+ * capability specs and open changes' deltas alike — so the live view can say
+ * what REQ-022 is (REQ-179). The first title found for an id wins.
+ */
+export function requirementTitles(
+  projectDir: string
+): Map<string, { title: string; group: string }> {
+  const titles = new Map<string, { title: string; group: string }>();
+  const read = (file: string) => {
+    const parts = path.relative(projectDir, file).split(path.sep);
+    const at = parts.findIndex((p) => p === "changes" || p === "capabilities");
+    const group =
+      at >= 0 && parts[at + 1] && parts[at + 1] !== "archive"
+        ? parts[at + 1].replace(/^draft-/, "")
+        : "";
+    let text = "";
+    try {
+      text = fs.readFileSync(file, "utf8");
+    } catch {
+      return;
+    }
+    for (const m of text.matchAll(TITLE)) {
+      // A template's "<a short name>" is not a title.
+      if (!titles.has(m[1]) && !/[<>]/.test(m[2])) titles.set(m[1], { title: m[2], group });
+    }
+  };
+  read(path.join(projectDir, "spec.md"));
+  const walk = (dir: string) => {
+    let entries: fs.Dirent[] = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      // DRAFTING.md shows the format with an example requirement; it names none.
+      else if (e.name.endsWith(".md") && e.name !== "DRAFTING.md") read(full);
+    }
+  };
+  walk(path.join(projectDir, "docs", "specs"));
+  return titles;
+}
+
 /** Every requirement with events, the most recently active first. */
 export function readLive(projectDir: string): { requirements: LiveRequirement[] } {
   const requirements: LiveRequirement[] = [];
+  const titles = requirementTitles(projectDir);
   for (const file of eventFiles(projectDir)) {
     let text = "";
     try {
@@ -127,7 +182,14 @@ export function readLive(projectDir: string): { requirements: LiveRequirement[] 
       continue;
     }
     const folded = foldRequirement(path.basename(file, ".jsonl"), parse(text.split("\n")));
-    if (folded) requirements.push(folded);
+    if (folded) {
+      const known = titles.get(folded.req);
+      requirements.push({
+        ...folded,
+        title: known ? known.title : "",
+        group: known ? known.group : "",
+      });
+    }
   }
   requirements.sort((a, b) => b.updated - a.updated);
   return { requirements };
