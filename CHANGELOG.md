@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.23.0] — 2026-10-25
+
+The live view, read like a CI run: watch the harness work through a run requirement by requirement, step by step.
+
 ### Changed
 
 - **The live view reads like a CI run** (REQ-179): `/live` listed every
