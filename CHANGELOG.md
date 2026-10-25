@@ -9,6 +9,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **The live view reads like a CI run** (REQ-179): `/live` listed every
+  requirement the same way, by id alone. It now has a sidebar of the run's
+  requirements by module, a summary of the run, its requirements as a graph of
+  jobs, and the selected one's steps (Agent, each gate stage, the stages still
+  to come) with the agent's stream as the log of the step in progress. Each
+  requirement shows its title from the specification. Light and dark.
+
 ## [0.22.3] — 2026-10-25
 
 What a first project from a brief tripped over, from statuses to the harness's first attempt: rehearsed on a Spanish brief with eight modules and a Next.js monorepo.
