@@ -13,7 +13,7 @@
  */
 
 import type { Diagnostic } from "./Diagnostic";
-import { error, info } from "./Diagnostic";
+import { error, info, warning } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
 import { analyseScenario } from "./GherkinQuality";
 import { withoutComments } from "./QuotedText";
@@ -212,9 +212,17 @@ export function deferredAnswer(answer: string): boolean {
   return DEFERRED.test(text) || DEFERRED_ALONE.test(text);
 }
 
-function questionRows(
-  md: string
-): Array<{ row: string; blocks: string[]; line: number; answered: boolean; deferred: boolean }> {
+/** A Blocks cell that says, on purpose, that nothing waits for the question (REQ-176). */
+const NONE_BLOCKED = /^(none|nothing|ninguno|ninguna|nada|n\/a|—|–|-)\.?$/i;
+
+function questionRows(md: string): Array<{
+  row: string;
+  blocks: string[];
+  noneBlocked: boolean;
+  line: number;
+  answered: boolean;
+  deferred: boolean;
+}> {
   const lines = md.replace(/\r\n/g, "\n").split("\n");
   const header = lines.findIndex((l) => /^\|.*\bBlocks\b.*\|/i.test(l));
   if (header === -1) return [];
@@ -225,6 +233,7 @@ function questionRows(
   const out: Array<{
     row: string;
     blocks: string[];
+    noneBlocked: boolean;
     line: number;
     answered: boolean;
     deferred: boolean;
@@ -241,6 +250,7 @@ function questionRows(
     out.push({
       row,
       blocks: (cells[at] || "").match(/REQ-[A-Za-z0-9.]+/g) || [],
+      noneBlocked: NONE_BLOCKED.test((cells[at] || "").replace(/\*\*/g, "").trim()),
       line: i + 1,
       answered: answers.length > 0 && !deferred,
       deferred,
@@ -546,12 +556,28 @@ export function checkDraft(files: DraftFiles): DraftReport {
     for (const q of questionRows(files.questions)) {
       if (q.answered) continue;
       if (q.blocks.length === 0) {
+        // Said on purpose ("none"): a question for later that nothing in this
+        // draft is built around, such as a backup export nobody asked for yet.
+        // Kept in questions.md instead of dropped, and nothing waits on it
+        // (REQ-176). An empty cell is still a question someone forgot to tie.
         status.push(
-          error("D7_floating_question", `Question ${q.row} blocks no requirement.`, {
-            file: "questions.md",
-            line: q.line,
-            fix: "Name the requirements it blocks in the Blocks column — a question that blocks nothing is answered by guessing.",
-          })
+          q.noneBlocked
+            ? warning(
+                "D7_question_blocks_nothing",
+                `Question ${q.row} blocks no requirement: nothing in this draft waits for its answer.`,
+                {
+                  file: "questions.md",
+                  line: q.line,
+                  fix: "If a requirement depends on it, name it in the Blocks column and set it Needs Clarification.",
+                }
+              )
+            : error("D7_floating_question", `Question ${q.row} blocks no requirement.`, {
+                file: "questions.md",
+                line: q.line,
+                fix:
+                  "Name the requirements it blocks in the Blocks column — a question that blocks nothing is answered by guessing. " +
+                  'A question nothing here depends on says so: write "none" in its Blocks column.',
+              })
         );
         continue;
       }

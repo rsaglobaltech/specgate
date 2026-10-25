@@ -215,6 +215,35 @@ test("D7: a question must block requirements, and they must wait", () => {
   assert.ok(!codes(ok).includes("D7_floating_question"));
 });
 
+test("REQ-176 SCN-176a: a question that says it blocks nothing is a warning, not a refusal", () => {
+  const r0 = req("REQ-107", "kind=functional", "Text.", [
+    ["SCN-107", ["GIVEN a", "WHEN b", "THEN c"]],
+  ]);
+  for (const none of ["none", "—", "-", "ninguno", "ninguna", "n/a"]) {
+    const q = `| # | Question | Blocks |\n|---|---|---|\n| Q4 | Should it export a backup? | ${none} |`;
+    const r = checkDraft({ deltas: delta(r0), brief: BRIEF, questions: q });
+    const d7 = r.status.filter((d) => d.code.startsWith("D7_"));
+    assert.deepEqual(
+      d7.map((d) => [d.code, d.severity]),
+      [["D7_question_blocks_nothing", "warning"]],
+      `Blocks "${none}"`
+    );
+    assert.match(d7[0].message, /Q4/);
+  }
+});
+
+test("REQ-176 SCN-176b: an empty Blocks cell is still refused", () => {
+  const r0 = req("REQ-107", "kind=functional", "Text.", [
+    ["SCN-107", ["GIVEN a", "WHEN b", "THEN c"]],
+  ]);
+  const q = "| # | Question | Blocks |\n|---|---|---|\n| Q4 | Should it export a backup? | |";
+  const r = checkDraft({ deltas: delta(r0), brief: BRIEF, questions: q });
+  const d7 = r.status.filter((d) => d.code === "D7_floating_question");
+  assert.equal(d7.length, 1);
+  assert.equal(d7[0].severity, "error");
+  assert.match(String(d7[0].fix), /none/);
+});
+
 test("D8: a draft too large to review", () => {
   const many = Array.from({ length: 4 }, (_, i) =>
     req(`REQ-2${i}0`, "kind=functional", "T.", [[`SCN-2${i}0`, ["GIVEN a", "WHEN b", "THEN c"]]])

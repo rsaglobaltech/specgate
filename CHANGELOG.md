@@ -12,12 +12,23 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 ### Fixed
 
 - **Approved owes a test, as the strict gate says** (REQ-173): `apply
-  --status Approved` wrote Approved on a requirement no test named, and the
+--status Approved` wrote Approved on a requirement no test named, and the
   next `validate --strict` failed TDD-1 for the whole project, so every
   `harness run` went red whatever requirement it worked on. `apply` and `done`
   now refuse it with the TDD-1 reason and the fix, as they already did for
   Implemented; `--no-check` writes it and warns. An unknown `--status`, such
   as `Aproved`, is refused instead of written.
+- **A base the gate already fails is said before any agent runs** (REQ-175):
+  the harness gate judges the whole project, so a red base failed every
+  attempt for a reason outside its requirement, three paid attempts at a time.
+  `harness run` now validates the base first and stops when a requirement
+  outside the run is past Draft with no test (TDD-1, TDD-2), which no attempt
+  may fix; no branch is created, and `--skip-baseline` runs anyway.
+- **A question that blocks nothing says so** (REQ-176): D7 refused every open
+  question without a requirement to block, so a question for later had to be
+  dropped. `none` (or `—`, `ninguno`) in its Blocks column makes it a warning;
+  an empty cell is still refused. `docs/from-a-brief.md` now shows how to
+  answer a question, step by step.
 
 ## [0.22.2] — 2026-10-21
 
