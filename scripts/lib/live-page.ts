@@ -584,7 +584,7 @@ export function livePage(projectName: string): string {
   }
   function setView(v){
     view = v; $("vRun").setAttribute("aria-pressed", String(v === "run")); $("vMatrix").setAttribute("aria-pressed", String(v === "matrix"));
-    $("runView").hidden = v !== "run"; $("matrixView").hidden = v !== "matrix"; if (v === "matrix") refreshMatrix(); else { stepsKey = ""; draw(); }
+    $("runView").hidden = v !== "run"; $("matrixView").hidden = v !== "matrix"; if (v === "matrix") { drawMatrix(); refreshMatrix(); } else { stepsKey = ""; draw(); }
   }
 
   function draw(){

@@ -273,3 +273,11 @@ test("REQ-181 SCN-181c: the run as a matrix by module, not a graph of jobs", () 
   }
   assert.ok(!html.includes("function graph("), "no graph of jobs");
 });
+
+test("REQ-181 SCN-181b: opening the Traceability view draws the matrix already read for the run", () => {
+  // The run view reads the matrix first; switching views must draw it, not
+  // wait for a change that may never come.
+  const html = livePage("demo");
+  const setView = html.slice(html.indexOf("function setView("), html.indexOf("function draw()"));
+  assert.match(setView, /v === "matrix"\) \{ drawMatrix\(\); refreshMatrix\(\); \}/);
+});
