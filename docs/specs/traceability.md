@@ -111,6 +111,13 @@
 | REQ-177 | SCN-177a | `features/change-lifecycle/REQ-177.feature` | - | - | - | - | - | tests/unit/draft-reserve-more.test.ts | Implemented |
 | REQ-178 | SCN-178a | `features/daily-surface/REQ-178.feature` | - | - | - | - | - | tests/unit/adopter-papercuts.test.ts | Implemented |
 | REQ-179 | SCN-179a | `features/live-harness/REQ-179.feature` | - | - | - | - | - | tests/unit/live-view-polish.test.ts | Implemented |
+| REQ-180 | SCN-180a | `features/live-harness/REQ-180.feature` | - | - | - | - | - | tests/unit/live-detail.test.ts | Implemented |
+| REQ-181 | SCN-181a | `features/live-harness/REQ-181.feature` | - | - | - | - | - | tests/unit/live-detail.test.ts | Implemented |
+| REQ-182 | SCN-182a | `features/live-harness/REQ-182.feature` | - | - | - | - | - | tests/unit/live-agent.test.ts | Implemented |
+| REQ-184 | SCN-184a | `features/harness/REQ-184.feature` | - | - | - | - | - | tests/unit/harness-hardening.test.ts | Implemented |
+| REQ-185 | SCN-185a | `features/harness/REQ-185.feature` | - | - | - | - | - | tests/unit/harness-hardening.test.ts | Implemented |
+| REQ-186 | SCN-186a | `features/harness/REQ-186.feature` | - | - | - | - | - | tests/unit/harness-hardening.test.ts | Implemented |
+| REQ-183 | SCN-183a | `features/trusted-gate/REQ-183.feature` | - | - | - | - | - | packages/core/test/unit/done-verification.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
