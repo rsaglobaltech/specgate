@@ -263,3 +263,13 @@ test("REQ-180 SCN-180c: a later run's attempt 1 is the last attempt, not an earl
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-181 SCN-181c: the run as a matrix by module, not a graph of jobs", () => {
+  const html = livePage("demo");
+  assert.ok(html.includes('id="chain" role="group"'), "the centre is a group of rows");
+  assert.ok(html.includes("function modules(list, sel)"));
+  for (const want of ["mm-row", "mm-legend", '"blocked"', '"queued"']) {
+    assert.ok(html.includes(want), `page has ${want}`);
+  }
+  assert.ok(!html.includes("function graph("), "no graph of jobs");
+});

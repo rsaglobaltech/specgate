@@ -8,6 +8,10 @@
  * selected one's steps with the agent's stream as the log of the step in
  * progress.
  *
+ * REQ-182: the sidebar is the run's work queue (now, needs attention, up next,
+ * finished recently) with the agent's model, context and tokens; an Agent tab
+ * shows the selected attempt's session and the prompt it was given.
+ *
  * REQ-181: the header stays in view while the page scrolls; modules fold, in
  * the sidebar as an accordion the viewer opens and closes, and in the graph
  * once all their requirements have passed; the selected requirement opens into
@@ -53,9 +57,18 @@ export function livePage(projectName: string): string {
   aside summary .count{margin-left:auto;font-weight:400;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
   .job{display:flex;width:100%;align-items:center;gap:8px;padding:5px 10px 5px 30px;border:0;border-radius:6px;background:none;text-align:left;cursor:pointer;font-size:13px}
   .job:hover{background:var(--soft)} .job.sel{background:var(--sel);font-weight:600}
-  .job .name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .job .name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .job .name>span{display:block;overflow:hidden;text-overflow:ellipsis}
   .job .d{font-size:12px;color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
   .summary-btn{padding-left:10px;margin-bottom:6px;font-weight:600}
+  .qsec{margin:10px 0 14px} .qsec h2{display:flex;align-items:center;gap:8px;margin:0 0 4px;padding:0 10px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .qsec h2 .count{margin-left:auto;font-weight:400;font-variant-numeric:tabular-nums} .qsec .job{padding-left:10px;align-items:flex-start}
+  .qsec .job .ic{margin-top:3px} .job small{display:block;font-size:11.5px;color:var(--muted);font-weight:400}
+  .qsec p{margin:2px 10px 6px;font-size:12.5px} .muted{color:var(--muted)}
+  .now{border:1px solid var(--run);border-radius:6px;padding:4px 0 8px;background:var(--panel)}
+  .kv{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px 10px;margin:4px 10px 0;font-size:12.5px} .kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+  .ctx{display:flex;flex-direction:column;gap:3px} .ctx .d{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  details.prompt{margin-top:10px} details.prompt summary{cursor:pointer;color:var(--accent);font-size:13px}
+  details.prompt pre{max-height:420px;overflow:auto;background:var(--log);color:var(--log-ink);padding:12px;border-radius:6px;font:12px/1.55 var(--mono);white-space:pre-wrap}
   main{flex:1;min-width:0;padding:0 28px 28px}
   .stick{position:sticky;top:var(--top);z-index:10;background:var(--bg);padding:20px 0 12px;display:flex;flex-direction:column;gap:12px}
   .head{display:flex;align-items:center;gap:12px;flex-wrap:wrap} .head h1{margin:0;font-size:20px;font-weight:600}
@@ -67,7 +80,18 @@ export function livePage(projectName: string): string {
   #progress div span{display:block;font-size:12px;color:var(--muted)} #progress div b{font-weight:400;font-variant-numeric:tabular-nums}
   .bar{display:flex;height:6px;border-radius:999px;overflow:hidden;background:var(--soft)} .bar i{display:block}
   .gap{display:flex;flex-direction:column;gap:16px}
-  .graph{padding:8px 4px} #chain{display:block;width:100%}
+  .mm-row{display:grid;grid-template-columns:28px 150px minmax(0,1fr) 70px 90px;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--soft)}
+  .mm-row:last-of-type{border-bottom:0} .mm-head{font-size:12px;font-weight:600;color:var(--muted);border-bottom-color:var(--line)}
+  .mm-row b{font-weight:600} .mm-row .num{text-align:right;font-variant-numeric:tabular-nums} .mm-row .muted{color:var(--muted)}
+  .mm-row.has-fail{background:rgba(207,34,46,.05)} .mm-row.has-run{background:var(--run-bg)} .mm-row.queued{color:var(--muted)}
+  .mm-bar{display:flex;gap:3px}
+  .seg{flex:1;min-width:6px;height:16px;border:0;border-radius:3px;padding:0;cursor:pointer;background:var(--soft)}
+  .seg.pass{background:var(--pass)} .seg.fail{background:var(--fail)} .seg.queued{background:var(--soft);box-shadow:inset 0 0 0 1px var(--line)}
+  .seg.running{background:repeating-linear-gradient(135deg,#bf8700 0 5px,#d4a72c 5px 10px)}
+  .seg.blocked{background:none;box-shadow:inset 0 0 0 1.5px var(--faint)}
+  .seg.on{outline:2px solid var(--accent);outline-offset:2px} .seg:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  .mm-legend{display:flex;gap:16px;justify-content:flex-end;padding:10px 16px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
+  .mm-legend span{display:inline-flex;align-items:center;gap:6px} .mm-legend .seg{width:14px;height:10px;flex:none;cursor:default}
   #focus{display:flex;flex-direction:column;overflow:hidden}
   #focus .fh{padding:12px 16px 0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
   #focus .fh b{font-weight:600} #focus .fh span{font-size:12px;color:var(--muted)}
@@ -122,7 +146,7 @@ export function livePage(projectName: string): string {
   <span id="conn" class="pill"><i></i><span id="connText">connecting</span></span>
 </div>
 <div class="layout">
-  <aside aria-label="Requirements by module"><div id="jobs"></div></aside>
+  <aside aria-label="Work queue"><div id="jobs"></div></aside>
   <main>
     <section id="runView">
       <div class="stick">
@@ -130,7 +154,7 @@ export function livePage(projectName: string): string {
         <div id="progress" class="box" role="status"></div>
       </div>
       <div class="gap">
-        <div class="box graph"><svg id="chain" role="img" aria-label="The requirements of the run as a graph of jobs, finished modules folded"></svg></div>
+        <div class="box" id="chain" role="group" aria-label="The run by module: one segment per requirement"></div>
         <section id="focus" class="box" aria-live="polite">
           <div class="fh"><b id="fName">—</b><span id="fMeta"></span></div>
           <div class="tabs" role="tablist" aria-label="About this requirement">
@@ -138,11 +162,13 @@ export function livePage(projectName: string): string {
             <button type="button" role="tab" data-tab="req" aria-selected="false">Requirement</button>
             <button type="button" role="tab" data-tab="files" aria-selected="false">Tests and files</button>
             <button type="button" role="tab" data-tab="attempts" aria-selected="false">Attempts</button>
+            <button type="button" role="tab" data-tab="agent" aria-selected="false">Agent</button>
           </div>
           <div class="pane" data-pane="steps"><ol id="pipeline" aria-label="Steps: Agent, Specification, Architecture, Tests, Merge"></ol></div>
           <div class="pane" data-pane="req" hidden></div>
           <div class="pane" data-pane="files" hidden></div>
           <div class="pane" data-pane="attempts" hidden></div>
+          <div class="pane" data-pane="agent" hidden></div>
         </section>
       </div>
     </section>
@@ -190,7 +216,9 @@ export function livePage(projectName: string): string {
     return v;
   }
   function selected(list){
-    if (pinned) { var p = list.filter(function(r){ return r.req === pinned; })[0]; if (p) return p; }
+    if (pinned) { var p = list.filter(function(r){ return r.req === pinned; })[0]; if (p) return p;
+      var m = matrix.filter(function(x){ return x.requirement === pinned; })[0];
+      if (m) return {req:m.requirement, title:m.title, group:m.group, state:"queued", attempt:0, steps:[], started:now(), updated:now(), elapsed:0, agent:null, usage:null, prompt:null}; }
     return list.filter(function(r){ return r.state === "running"; })[0] || list[0] || null;
   }
   function ordered(reqs){ return reqs.slice().sort(function(a, b){ return a.started - b.started; }); }
@@ -204,28 +232,86 @@ export function livePage(projectName: string): string {
   }
   function pick(id){ pinned = pinned === id ? null : id; stepsKey = ""; draw(); }
 
-  /** The sidebar: one accordion per module, opened and closed by the viewer and remembered. */
+  function kt(n){ n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n >= 1e4 ? Math.round(n / 1e3) + "k" : n >= 1e3 ? (n / 1e3).toFixed(1) + "k" : String(n); }
+  function usd(n){ return n === null || n === undefined ? "—" : "$" + Number(n).toFixed(2); }
+  function shortModel(m){ return String(m || "").replace(/^claude-/, ""); }
+  /** How full the context is, as a bar: green, amber past 60%, red past 85%. */
+  function ctxBar(u){
+    var w = el("div", "ctx"), pct = u && u.window ? Math.min(100, u.context / u.window * 100) : 0;
+    var bar = el("div", "bar"), i = el("i"); i.style.width = pct + "%";
+    i.style.background = pct > 85 ? "var(--fail)" : pct > 60 ? "var(--run)" : "var(--pass)"; bar.appendChild(i);
+    w.append(bar, el("span", "d", u && u.window ? kt(u.context) + " of " + kt(u.window) + " · " + Math.round(pct) + "%" : "—"));
+    return w;
+  }
+  function jobBtn(r, sel, note, state){
+    var b = el("button", "job" + (sel && sel.req === r.req ? " sel" : "")); b.type = "button";
+    b.setAttribute("aria-current", sel && sel.req === r.req ? "true" : "false");
+    var txt = el("span", "name"); txt.append(el("span", "", r.req + " " + (r.title || "")));
+    if (note) txt.appendChild(el("small", "", note));
+    b.append(icon(state || r.state), txt);
+    b.addEventListener("click", function(){ pick(r.req); });
+    return b;
+  }
+  function block(title, count){
+    var d = el("section", "qsec"), h = el("h2"); h.append(el("span", "", title));
+    if (count !== undefined) h.appendChild(el("span", "count", String(count)));
+    d.appendChild(h); return d;
+  }
+
+  /**
+   * The sidebar is the run's work queue (REQ-182), not a second map of it: what
+   * runs now and with which model and context, what needs a person, what comes
+   * next, and what finished last. The map is the matrix in the centre.
+   */
   function sidebar(list, sel){
     var box = $("jobs"), keepScroll = box.parentNode.scrollTop; box.replaceChildren();
     var sum = el("button", "job summary-btn" + (pinned ? "" : " sel"), "Summary"); sum.type = "button";
     sum.addEventListener("click", function(){ pinned = null; stepsKey = ""; draw(); }); box.appendChild(sum);
-    groups(list).forEach(function(g){
-      var key = g.name || "-", d = el("details"), has = sel && g.reqs.some(function(r){ return r.req === sel.req; });
-      d.open = key in open ? open[key] : (!g.done || has);
-      var sm = el("summary"), chev = s("svg", {viewBox:"0 0 16 16", "class":"chev", "aria-hidden":"true"});
-      s("path", {d:"M6 4l4 4-4 4", fill:"none", stroke:"currentColor", "stroke-width":"1.8", "stroke-linecap":"round", "stroke-linejoin":"round"}, chev);
-      sm.append(chev, icon(g.fail ? "fail" : g.done ? "pass" : "running", 14), el("span", "", cap(g.name)), el("span", "count", g.pass + "/" + g.reqs.length));
-      d.appendChild(sm);
-      d.addEventListener("toggle", function(){ open[key] = d.open; save("sg-live-open", open); });
-      g.reqs.forEach(function(r){
-        var b = el("button", "job" + (sel && sel.req === r.req ? " sel" : "")); b.type = "button";
-        b.setAttribute("aria-current", sel && sel.req === r.req ? "true" : "false");
-        b.append(icon(r.state), el("span", "name", r.req + " " + (r.title || "")), el("span", "d", dur(elapsed(r))));
-        b.addEventListener("click", function(){ pick(r.req); });
-        d.appendChild(b);
-      });
-      box.appendChild(d);
-    });
+    var since = model.queueStarted || 0, byReq = {}, titles = {};
+    list.forEach(function(r){ byReq[r.req] = r; });
+    matrix.forEach(function(m){ titles[m.requirement] = m.title; });
+
+    var cur = list.filter(function(r){ return r.state === "running"; })[0];
+    var now0 = block("Now");
+    if (cur) {
+      var card = el("div", "now"); card.appendChild(jobBtn(cur, sel, "attempt " + cur.attempt + " · " + cur.phase + " · " + dur(elapsed(cur))));
+      var kv = el("dl", "kv");
+      var add = function(k, v){ var dd = el("dd"); if (typeof v === "string") dd.textContent = v; else dd.appendChild(v); kv.append(el("dt", "", k), dd); };
+      add("Model", cur.agent ? shortModel(cur.agent.model) : "not reported");
+      add("Context", ctxBar(cur.usage));
+      add("Output", cur.usage ? kt(cur.usage.output) + " tokens" : "—");
+      if (cur.prompt) add("Prompt", "~" + kt(cur.prompt.tokens) + " tokens · " + cur.prompt.lines + " lines");
+      card.appendChild(kv); now0.appendChild(card);
+    } else now0.appendChild(el("p", "muted", "Nothing running."));
+    box.appendChild(now0);
+
+    var need = list.filter(function(r){ return r.state === "fail"; }).map(function(r){
+      var g = r.steps.filter(function(e){ return e.type === "gate" && e.result !== "pass"; })[0];
+      return {r:r, note:"failed · attempt " + r.attempt + (g ? " · " + clip(String(g.stage).split(":")[0], 40) : ""), st:"fail"}; });
+    var seenB = {};
+    matrix.forEach(function(m){ if (m.status === "Needs Clarification" && !byReq[m.requirement] && !seenB[m.requirement]) { seenB[m.requirement] = 1;
+      need.push({r:{req:m.requirement, title:m.title, state:"idle"}, note:"blocked · needs clarification", st:"idle"}); } });
+    var n1 = block("Needs attention", need.length);
+    need.forEach(function(x){ n1.appendChild(jobBtn(x.r, sel, x.note, x.st)); });
+    if (!need.length) n1.appendChild(el("p", "muted", "Nothing failed or blocked."));
+    box.appendChild(n1);
+
+    var done = list.filter(function(r){ return r.state === "pass" && r.started >= since; });
+    var next = (model.queue || []).filter(function(id){ var r = byReq[id]; return !(r && r.started >= since); });
+    var times = done.map(function(r){ return r.elapsed; }).sort(function(a, b){ return a - b; });
+    var median = times.length ? times[Math.floor(times.length / 2)] : 0;
+    var n2 = block("Up next", next.length);
+    if (next.length && median) n2.appendChild(el("p", "muted", "about " + dur(next.length * median) + " at " + dur(median) + " each"));
+    next.slice(0, 6).forEach(function(id){ n2.appendChild(jobBtn({req:id, title:titles[id] || "", state:"idle"}, sel, "", "idle")); });
+    if (next.length > 6) n2.appendChild(el("p", "muted", "+ " + (next.length - 6) + " more"));
+    if (!next.length) n2.appendChild(el("p", "muted", (model.queue || []).length ? "The queue is done." : "No queue recorded for this run."));
+    box.appendChild(n2);
+
+    var recent = list.filter(function(r){ return r.state === "pass"; }).sort(function(a, b){ return b.updated - a.updated; }).slice(0, 5);
+    var n3 = block("Finished recently");
+    recent.forEach(function(r){ n3.appendChild(jobBtn(r, sel, dur(r.elapsed) + (r.usage && r.usage.cost !== null ? " · " + usd(r.usage.cost) : ""), "pass")); });
+    if (!recent.length) n3.appendChild(el("p", "muted", "None yet."));
+    box.appendChild(n3);
     box.parentNode.scrollTop = keepScroll;
   }
 
@@ -241,7 +327,9 @@ export function livePage(projectName: string): string {
     var box = $("progress"); box.replaceChildren();
     [["Started", first ? stamp(first) : "—"], ["Duration", first ? dur(last - first) : "—"],
      ["Requirements", p + " passed · " + run + " running · " + f + " failed"],
-     ["Agent time", dur(list.reduce(function(a, r){ return a + elapsed(r); }, 0))]].forEach(function(x){
+     ["Agent time", dur(list.reduce(function(a, r){ return a + elapsed(r); }, 0))]].concat(model.totals && (model.totals.input || model.totals.output) ? [
+     ["Tokens", kt(model.totals.input + model.totals.cacheRead + model.totals.cacheWrite) + " in · " + kt(model.totals.output) + " out"],
+     ["Cost", usd(model.totals.cost)]] : []).forEach(function(x){
       var d = el("div"); d.append(el("span", "", x[0]), el("b", "", x[1])); box.appendChild(d);
     });
     var bar = el("div", "bar"); bar.style.flexBasis = "100%"; var total = Math.max(1, list.length);
@@ -249,52 +337,52 @@ export function livePage(projectName: string): string {
     box.appendChild(bar);
   }
 
-  /** The graph of jobs: finished modules fold into one box, the rest one box per requirement, joined in the order they ran. */
-  function graph(list, sel){
-    var svg = $("chain"), W = Math.max(svg.clientWidth || 900, 360), bw = 168, bh = 40, gx = 24, gy = 34, padX = 18, padY = 30;
-    var perRow = Math.max(1, Math.floor((W - padX * 2 + gx) / (bw + gx)));
-    var nodes = [];
-    groups(list).forEach(function(g){
-      var has = sel && g.reqs.some(function(r){ return r.req === sel.req; });
-      if (g.done && !has && !expanded[g.name]) nodes.push({fold:true, group:g});
-      else g.reqs.forEach(function(r){ nodes.push({req:r, group:g}); });
+  /**
+   * The run as a matrix of modules (REQ-181): one row per module, a segment
+   * per requirement in id order, coloured by what happened to it in this run,
+   * or by its status when the run has not reached it; the passed count and
+   * the agent time. A segment opens its requirement below.
+   */
+  function modules(list, sel){
+    var box = $("chain"); box.replaceChildren();
+    var byReq = {}; list.forEach(function(r){ byReq[r.req] = r; });
+    var reqs = [], seen = {};
+    matrix.forEach(function(m){ if (seen[m.requirement] || m.requirement === "REQ-001") return; seen[m.requirement] = 1;
+      reqs.push({req:m.requirement, title:m.title, group:m.group, status:m.status}); });
+    list.forEach(function(r){ if (!seen[r.req]) { seen[r.req] = 1; reqs.push({req:r.req, title:r.title, group:r.group, status:"Draft"}); } });
+    if (!reqs.length) { box.appendChild(el("div", "empty", "No harness events yet. Run specgate harness run: each requirement appears here as it starts.")); return; }
+    var order = [], rowsBy = {};
+    reqs.sort(function(x, y){ return x.req.localeCompare(y.req); }).forEach(function(q){
+      var g = q.group || "spec"; if (!rowsBy[g]) { rowsBy[g] = []; order.push(g); } rowsBy[g].push(q); });
+    var rank = function(g){ var rs = rowsBy[g], ev = rs.map(function(q){ return byReq[q.req]; }).filter(Boolean);
+      return ev.length ? Math.min.apply(null, ev.map(function(r){ return r.started; })) : Infinity; };
+    order.sort(function(x, y){ return rank(x) - rank(y); });
+    var head = el("div", "mm-row mm-head");
+    ["", "Module", "Requirements", "Passed", "Time"].forEach(function(h, i){ var c = el("span", i >= 3 ? "num" : "", h); head.appendChild(c); });
+    box.appendChild(head);
+    order.forEach(function(g){
+      var rs = rowsBy[g], pass = 0, fail = 0, run = 0, time = 0;
+      var row = el("div", "mm-row"), bar = el("span", "mm-bar");
+      rs.forEach(function(q){
+        var ev = byReq[q.req], st = ev ? ev.state : (q.status === "Implemented" || q.status === "Verified" || q.status === "Released") ? "pass"
+          : q.status === "Needs Clarification" ? "blocked" : "queued";
+        if (st === "pass") pass++; else if (st === "fail") fail++; else if (st === "running") run++;
+        if (ev) time += elapsed(ev);
+        var seg = el("button", "seg " + st + (sel && sel.req === q.req ? " on" : "")); seg.type = "button";
+        seg.title = q.req + " — " + (q.title || "") + " · " + (ev ? st + " · " + dur(elapsed(ev)) : st);
+        seg.setAttribute("aria-label", seg.title);
+        seg.addEventListener("click", function(){ pick(q.req); });
+        bar.appendChild(seg);
+      });
+      var state = fail ? "fail" : run ? "running" : pass === rs.length ? "pass" : "idle";
+      if (fail) row.classList.add("has-fail"); else if (run) row.classList.add("has-run"); else if (state === "idle" && !pass) row.classList.add("queued");
+      row.append(icon(state), el("b", "", cap(g === "spec" ? "" : g)), bar, el("span", "num", pass + "/" + rs.length), el("span", "num muted", time ? dur(time) : pass === rs.length ? "earlier" : "queued"));
+      box.appendChild(row);
     });
-    var rows = [], row = null, lastGroup = null;
-    nodes.forEach(function(n){
-      var w = n.fold ? 2 : 1;
-      if (!row || row.used + w > perRow || n.group.name !== lastGroup) { row = {label: n.group.name !== lastGroup ? n.group : null, items:[], used:0}; rows.push(row); }
-      row.items.push(n); row.used += w; lastGroup = n.group.name;
-    });
-    var H = Math.max(80, padY + rows.length * (bh + gy) + 8);
-    svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.setAttribute("height", String(H)); svg.replaceChildren();
-    if (!list.length) { var t0 = s("text", {x:W / 2, y:H / 2, "text-anchor":"middle", fill:"var(--muted)", "font-size":"13"}, svg); t0.textContent = "No harness events yet. Run specgate harness run: each requirement appears here as it starts."; return; }
-    var placed = [];
-    rows.forEach(function(rw, ri){
-      var y = padY + ri * (bh + gy), x = padX;
-      if (rw.label) { var l = s("text", {x:padX, y:y - 10, "font-size":"12", "font-weight":"600", fill:"var(--muted)"}, svg); l.textContent = cap(rw.label.name) + " · " + rw.label.pass + "/" + rw.label.reqs.length; }
-      rw.items.forEach(function(n){ var w = n.fold ? bw * 2 + gx : bw; placed.push({n:n, x:x, y:y, w:w}); x += w + gx; });
-    });
-    for (var i = 1; i < placed.length; i++) {
-      var a = placed[i - 1], b = placed[i], st = b.n.fold ? "pass" : b.n.req.state;
-      var c = st === "running" ? "var(--run)" : st === "fail" ? "var(--fail)" : "var(--faint)";
-      if (a.y === b.y) s("line", {x1:a.x + a.w, y1:a.y + bh / 2, x2:b.x, y2:b.y + bh / 2, stroke:c, "stroke-width":"1.5"}, svg);
-      else s("path", {d:"M" + (a.x + a.w) + " " + (a.y + bh / 2) + " h" + (gx / 2) + " V" + (a.y + bh + gy / 2) + " H" + (b.x - gx / 2) + " V" + (b.y + bh / 2) + " H" + b.x, fill:"none", stroke:c, "stroke-width":"1.5"}, svg);
-    }
-    placed.forEach(function(p){
-      var n = p.n, on = !n.fold && sel && sel.req === n.req.req;
-      var g = s("g", {transform:"translate(" + p.x + "," + p.y + ")", tabindex:"0", role:"button", style:"cursor:pointer",
-        "aria-label": n.fold ? cap(n.group.name) + ", all passed, unfold" : n.req.req + " " + (n.req.title || "") + ", " + n.req.state}, svg);
-      s("rect", {width:p.w, height:bh, rx:6, fill: on ? "var(--sel)" : "var(--panel)", stroke: on ? "var(--accent)" : "var(--line)", "stroke-width": on ? 2 : 1}, g);
-      var ic = icon(n.fold ? "pass" : n.req.state, 16); ic.setAttribute("x", "12"); ic.setAttribute("y", String(bh / 2 - 8)); g.appendChild(ic);
-      var label = s("text", {x:36, y:bh / 2 + 4.5, "font-size":"13", "font-weight": on || n.fold ? "600" : "400", fill:"var(--ink)"}, g);
-      label.textContent = n.fold ? cap(n.group.name) + " · " + n.group.reqs.length + " requirements" : n.req.req;
-      var d = s("text", {x:p.w - 12, y:bh / 2 + 4.5, "text-anchor":"end", "font-size":"12", fill:"var(--muted)"}, g);
-      d.textContent = n.fold ? dur(n.group.time) : dur(elapsed(n.req));
-      var tip = s("title", {}, g); tip.textContent = n.fold ? "Click to unfold " + cap(n.group.name) : n.req.req + " — " + (n.req.title || "");
-      var act = function(){ if (n.fold) { expanded[n.group.name] = true; draw(); } else pick(n.req.req); };
-      g.addEventListener("click", act);
-      g.addEventListener("keydown", function(ev){ if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); act(); } });
-    });
+    var legend = el("div", "mm-legend");
+    [["pass", "passed"], ["running", "running"], ["fail", "failed"], ["blocked", "blocked"], ["queued", "queued"]].forEach(function(x){
+      var s0 = el("span"), sw = el("i", "seg " + x[0]); s0.append(sw, document.createTextNode(x[1])); legend.appendChild(s0); });
+    box.appendChild(legend);
   }
 
   function steps(r){
@@ -405,16 +493,54 @@ export function livePage(projectName: string): string {
     if (!d.attempts.length) { var tr0 = el("tr"), td0 = el("td", "", "No attempt recorded."); td0.colSpan = 6; tr0.appendChild(td0); t.appendChild(tr0); }
     a.appendChild(t); p.appendChild(a);
   }
+  /** The agent's session for the selected attempt: model, context, tokens, cost and the prompt it was given (REQ-182). */
+  function paneAgent(r){
+    var p = document.querySelector('[data-pane="agent"]'); p.replaceChildren();
+    if (!r.agent && !r.usage && !r.prompt) {
+      p.appendChild(el("div", "empty", "No session reported for this attempt. Agents piped through specgate harness events --from claude report their model, tokens and prompt."));
+      return;
+    }
+    var a = sect("Session"), m = el("div", "meta");
+    m.append(el("span", "", "Model: " + (r.agent ? r.agent.model || "—" : "—")));
+    if (r.agent && r.agent.version) m.appendChild(el("span", "", "Claude Code " + r.agent.version));
+    if (r.agent && r.agent.permission) m.appendChild(el("span", "", "Permissions: " + r.agent.permission));
+    if (r.agent && r.agent.tools) m.appendChild(el("span", "", r.agent.tools + " tools"));
+    if (r.usage && r.usage.turns !== null) m.appendChild(el("span", "", r.usage.turns + " turns"));
+    a.appendChild(m); p.appendChild(a);
+    if (r.usage) {
+      var c = sect("Context window"); c.appendChild(ctxBar(r.usage));
+      c.appendChild(el("div", "meta", "Peak " + kt(r.usage.peak) + (r.usage.window ? " · " + Math.round(r.usage.peak / r.usage.window * 100) + "% of the window" : "")));
+      p.appendChild(c);
+      var t = sect("Tokens"), tb = el("table"), hr = el("tr");
+      ["Input", "Cache read", "Cache write", "Output", "Cost"].forEach(function(x){ hr.appendChild(el("th", "", x)); }); tb.appendChild(hr);
+      var tr = el("tr"), fin = r.usage.input || r.usage.cacheRead || r.usage.cacheWrite;
+      [fin ? kt(r.usage.input) : "—", fin ? kt(r.usage.cacheRead) : "—", fin ? kt(r.usage.cacheWrite) : "—", kt(r.usage.output), usd(r.usage.cost)].forEach(function(x){ tr.appendChild(el("td", "mono", x)); });
+      tb.appendChild(tr); t.appendChild(tb);
+      if (!fin) t.appendChild(el("div", "meta", "Totals and cost arrive when the session ends."));
+      p.appendChild(t);
+    }
+    if (r.prompt) {
+      var q = sect("Prompt"), qm = el("div", "meta");
+      qm.append(el("span", "", "For: " + r.prompt.role), el("span", "", r.prompt.lines + " lines"), el("span", "", kt(r.prompt.chars) + " characters"), el("span", "", "~" + kt(r.prompt.tokens) + " tokens (estimated)"));
+      var url = "live/req/" + encodeURIComponent(r.req) + "/prompt/" + r.attempt + ".txt", open1 = el("a", "", "Open in a new tab"); open1.href = url; open1.target = "_blank"; open1.rel = "noopener";
+      qm.appendChild(open1); q.appendChild(qm);
+      var dt = el("details", "prompt"), ds = el("summary", "", "Show the prompt"), pre = el("pre");
+      dt.append(ds, pre);
+      dt.addEventListener("toggle", function(){ if (dt.open && !pre.textContent) fetch(url).then(function(x){ return x.text(); }).then(function(x){ pre.textContent = x; }).catch(function(){ pre.textContent = "Not kept."; }); });
+      q.appendChild(dt); p.appendChild(q);
+    }
+  }
   function focus(sel){
     $("fName").textContent = sel ? sel.req + " · " + (sel.title || "") : "—";
-    $("fMeta").textContent = sel ? "attempt " + sel.attempt + (sel.group ? " · " + sel.group : "") + " · harness/" + sel.req : "";
+    $("fMeta").textContent = sel ? "attempt " + sel.attempt + (sel.group ? " · " + sel.group : "") + " · harness/" + sel.req + (sel.agent ? " · " + shortModel(sel.agent.model) : "") : "";
     Array.prototype.forEach.call(document.querySelectorAll(".tabs button"), function(b){ b.setAttribute("aria-selected", String(b.dataset.tab === tab)); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-pane]"), function(p){ p.hidden = p.dataset.pane !== tab; });
     if (!sel) return steps(null);
-    var key = sel.req + ":" + sel.attempt + ":" + sel.steps.length + ":" + sel.state + ":" + tab;
+    var key = sel.req + ":" + sel.attempt + ":" + sel.steps.length + ":" + sel.state + ":" + tab + ":" + (sel.usage ? sel.usage.context + "/" + sel.usage.output : "");
     if (key === stepsKey) return;
     stepsKey = key;
     if (tab === "steps") steps(sel);
+    else if (tab === "agent") paneAgent(sel);
     else detail(sel, function(d){ if (tab === "req") paneReq(d); else if (tab === "files") paneFiles(d); else paneAttempts(d); });
   }
 
@@ -452,9 +578,9 @@ export function livePage(projectName: string): string {
     if (!order.length) box.appendChild(el("div", "empty box", matrix.length ? "No row matches the filter." : "Reading the matrix…"));
   }
   function refreshMatrix(){
-    if (!matrixDirty || view !== "matrix") return;
+    if (!matrixDirty) return;
     matrixDirty = false;
-    fetch("live/matrix.json").then(function(x){ return x.json(); }).then(function(m){ matrix = m.rows || []; drawMatrix(); }).catch(function(){ matrixDirty = true; });
+    fetch("live/matrix.json").then(function(x){ return x.json(); }).then(function(m){ matrix = m.rows || []; if (view === "matrix") drawMatrix(); else draw(); }).catch(function(){ matrixDirty = true; });
   }
   function setView(v){
     view = v; $("vRun").setAttribute("aria-pressed", String(v === "run")); $("vMatrix").setAttribute("aria-pressed", String(v === "matrix"));
@@ -464,7 +590,7 @@ export function livePage(projectName: string): string {
   function draw(){
     var list = ordered(model.requirements || []), sel = selected(list);
     sidebar(list, sel);
-    if (view === "run") { summary(list); graph(list, sel); focus(sel); }
+    if (view === "run") { summary(list); modules(list, sel); focus(sel); }
   }
   function tick(){
     var list = ordered(model.requirements || []), sel = selected(list);

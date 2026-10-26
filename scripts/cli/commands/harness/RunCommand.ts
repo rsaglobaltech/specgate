@@ -39,7 +39,7 @@ import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightView } from "../../../lib/in-flight";
-import { appendEvent, eventsFileFor } from "../../../lib/harness-events";
+import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
 import {
   EVENTS_ATTEMPT_VAR,
   EVENTS_FILE_VAR,
@@ -1188,6 +1188,14 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         );
         fs.writeFileSync(promptFile, prompt, "utf8");
         archivePrompt(worktreeDir, req.requirement, attempt, step, prompt);
+        // The live view shows what the agent was told and how big it was (REQ-182).
+        keepPrompt(ctx.projectDir || worktreeDir, req.requirement, attempt, prompt);
+        event({
+          type: "prompt",
+          role: step.profile || (step.advisory ? "reviewer" : "agent"),
+          chars: prompt.length,
+          lines: prompt.split("\n").length,
+        });
 
         // D1: a profile chosen by matching this requirement, when one matches.
         // The role ladder still wins — `attempt_profiles` names a profile for
@@ -2890,6 +2898,14 @@ export class RunCommand extends BaseCommand {
         strictArtifacts: args.strictArtifacts,
         verbose: args.verbose,
       };
+
+      // What the live view lists as up next (REQ-182).
+      if (!process.env.SPECGATE_HARNESS_WORKER) {
+        writeQueue(
+          projectDir,
+          pending.map((r) => r.requirement)
+        );
+      }
 
       const startedAt = new Date().toISOString();
       const results = args.chain
