@@ -9,6 +9,53 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.24.0] — 2026-10-26
+
+A live view you can work from, and a harness that survives a night: what a twenty-requirement chain in a Next.js app ran into.
+
+### Added
+
+- **A requirement opens into everything the project holds about it**
+  (REQ-180): clicking a requirement in `/live` shows its statement, its
+  scenarios with their steps, the spec file and line that define it, its
+  assumptions, the tests that name it, its feature, every attempt with the
+  stage it failed at, and the files the last attempt changed, each linked to
+  the editor.
+- **The agent's session in the live view** (REQ-182):
+  `harness events --from claude` now records the model, the context of each message against the
+  model's window, and the session's tokens, cost and turns; `harness run`
+  keeps the run's queue and each attempt's prompt beside the events. The
+  sidebar is the run's work queue (now, needs attention, up next with an
+  estimate, finished recently), the summary adds tokens and cost, and an
+  Agent tab shows the selected attempt's session and the prompt it was given.
+
+### Changed
+
+- **The live view groups by module and keeps its header in view** (REQ-181):
+  the header and summary stay put while the page scrolls; the centre is a
+  matrix by module, one segment per requirement, queued ones included; and a
+  Traceability view shows the matrix as it stands, filtered as you type.
+
+### Fixed
+
+- **The harness no longer fills the disk** (REQ-184): the in-flight view
+  copied each worktree whole, `.next/cache` included, until a chain stopped
+  with ENOSPC. It now copies only what git keeps, and a requirement does not
+  start with less than 2 GB free (`SPECGATE_HARNESS_MIN_FREE_GB`).
+- **Re-running delivered requirements works in the order asked** (REQ-185):
+  `--req` order is kept, and a branch whose own work is already merged is
+  recreated without `--force`.
+- **One harness run per working copy** (REQ-186): a lock beside the events
+  refuses a second run; `check` warns while a run holds it; a post-merge
+  failure says it ran in the working copy.
+- **`check` fills the test command's placeholders** (REQ-183): a test command
+  with `{req}` ran with the literal text. `check` runs it for the whole
+  project, with the placeholders empty; `apply` and `done` fill `{req}` with
+  the requirement they deliver.
+- **The live view takes the last attempt that started**, not the highest
+  attempt number, so a new run's attempt 1 is not hidden by an earlier run's
+  attempt 3.
+
 ## [0.23.0] — 2026-10-25
 
 The live view, read like a CI run: watch the harness work through a run requirement by requirement, step by step.
