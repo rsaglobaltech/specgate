@@ -22,6 +22,7 @@ const {
   orderAsGiven,
   existingBranchAction,
   acquireRunLock,
+  branchMergedInto,
   runLockHolder,
 } = require("../../scripts/lib/harness-guard");
 
@@ -91,6 +92,39 @@ test("REQ-185 SCN-185b: a branch already merged is recreated without --force; on
   assert.equal(existingBranchAction({ ...base, merged: false, force: true }), "recreate");
   assert.equal(existingBranchAction({ ...base, merged: false, resume: true }), "resume");
   assert.equal(existingBranchAction({ ...base, exists: false, merged: false }), "new");
+});
+
+test("REQ-185 SCN-185b: merged means work made on the branch and merged, not a branch left at the base", () => {
+  const dir = repo();
+  try {
+    git(dir, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "base");
+    git(dir, "branch", "harness/REQ-001");
+    assert.equal(branchMergedInto(dir, "harness/REQ-001", "HEAD"), false, "made nothing");
+
+    git(dir, "checkout", "-q", "-b", "harness/REQ-002");
+    fs.writeFileSync(path.join(dir, "two.txt"), "2\n");
+    git(dir, "add", "two.txt");
+    git(dir, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "work");
+    git(dir, "checkout", "-q", "-");
+    assert.equal(branchMergedInto(dir, "harness/REQ-002", "HEAD"), false, "work not merged yet");
+
+    git(
+      dir,
+      "-c",
+      "user.email=t@t",
+      "-c",
+      "user.name=t",
+      "merge",
+      "-q",
+      "--no-ff",
+      "-m",
+      "merge",
+      "harness/REQ-002"
+    );
+    assert.equal(branchMergedInto(dir, "harness/REQ-002", "HEAD"), true, "work merged");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("REQ-186 SCN-186a: one harness run at a time in a working copy", () => {

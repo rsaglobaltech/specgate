@@ -22,7 +22,7 @@ The system SHALL copy into the in-flight view only the files git tracks or would
 
 ### Requirement: REQ-185 — Re-running delivered requirements works in the order asked
 
-The system SHALL run the requirements `--req` names in the order given, and SHALL recreate, without `--force`, a requirement's branch that is already merged into the base; a branch with work not merged still needs `--resume` or `--force`.
+The system SHALL run the requirements `--req` names in the order given, and SHALL recreate, without `--force`, a requirement's branch whose own commits are all merged into the base and that no worktree holds; a branch with no commit of its own, or with work not merged, still needs `--resume` or `--force`.
 
 #### Scenario: SCN-185a — --req runs in the order given
 

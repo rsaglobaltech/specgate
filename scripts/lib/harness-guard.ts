@@ -85,6 +85,24 @@ export function existingBranchAction(b: {
   return "skip";
 }
 
+/**
+ * Whether a requirement's branch holds work and all of it is already in
+ * `base` (REQ-185). A branch with no commit of its own does not count: an
+ * interrupted attempt leaves one, with its work in a worktree still to resume.
+ */
+export function branchMergedInto(projectDir: string, branch: string, base: string): boolean {
+  const run = (...args: string[]) =>
+    spawnSync("git", args, { cwd: projectDir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const tip = run("rev-parse", "--verify", "--quiet", branch).stdout.trim();
+  if (!tip) return false;
+  if (run("merge-base", "--is-ancestor", tip, base).status !== 0) return false;
+  // On the base's own line, the tip is a commit the base already had: the
+  // branch made nothing. Merged work reaches the base through a merge.
+  const line = new Set(run("rev-list", "--first-parent", base).stdout.split("\n"));
+  if (line.has(tip)) return false;
+  return !run("worktree", "list", "--porcelain").stdout.includes(`branch refs/heads/${branch}`);
+}
+
 // Beside the events, which git ignores: a lock that showed as an untracked
 // file made the run's own workers refuse a working tree that was not clean.
 const LOCK = path.join(".harness", "events", "run.lock");

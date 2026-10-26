@@ -42,6 +42,7 @@ import { inFlightView } from "../../../lib/in-flight";
 import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
 import {
   acquireRunLock,
+  branchMergedInto,
   existingBranchAction,
   freeBytes,
   lowDiskMessage,
@@ -1983,8 +1984,7 @@ function processRequirement(req: HarnessRequirement, ctx: RunContext): Requireme
   let resuming = false;
   const exists = branchExists(projectDir, branch);
   // A branch already merged into the base holds nothing to lose (REQ-185).
-  const merged =
-    exists && git(projectDir, ["merge-base", "--is-ancestor", branch, baseRef]).status === 0;
+  const merged = exists && branchMergedInto(projectDir, branch, baseRef);
   const action = existingBranchAction({ exists, merged, resume: Boolean(ctx.resume), force });
   if (exists) {
     if (action === "resume") {
