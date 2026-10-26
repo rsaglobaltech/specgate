@@ -62,8 +62,19 @@ function parse(lines: string[]): EventRecord[] {
 /** One requirement's state, from its events, its last attempt only. */
 export function foldRequirement(req: string, events: EventRecord[]): LiveRequirement | null {
   if (events.length === 0) return null;
-  const attempt = Math.max(1, ...events.map((e) => Number(e.attempt) || 0));
-  const mine = events.filter((e) => (Number(e.attempt) || attempt) === attempt);
+  // The last attempt is the one that started last, not the highest number: a
+  // new run counts from 1 again on the same events file (REQ-180).
+  const lastStart = events
+    .map((e) => e.type === "attempt" && e.state === "start")
+    .lastIndexOf(true);
+  const attempt =
+    lastStart >= 0
+      ? Number(events[lastStart].attempt) || 1
+      : Math.max(1, ...events.map((e) => Number(e.attempt) || 0));
+  const mine =
+    lastStart >= 0
+      ? events.slice(lastStart)
+      : events.filter((e) => (Number(e.attempt) || attempt) === attempt);
   const start = mine.find((e) => e.type === "attempt" && e.state === "start");
   const end = [...mine].reverse().find((e) => e.type === "attempt" && e.state === "end");
   const last = mine[mine.length - 1] || events[events.length - 1];
