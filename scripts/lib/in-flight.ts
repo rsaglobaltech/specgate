@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import { copyableFiles } from "./harness-guard";
 import * as os from "node:os";
 import * as path from "node:path";
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
@@ -145,10 +146,21 @@ export function inFlightView(projectDir: string): InFlightView | null {
   // Commands leave through process.exit(), which skips `finally`: the copy is
   // removed on exit too.
   process.once("exit", cleanup);
-  fs.cpSync(projectDir, dir, {
-    recursive: true,
-    filter: (src) => !SKIP.has(path.basename(src)),
-  });
+  // What git keeps, never build caches or dependencies (REQ-184); a folder
+  // outside git falls back to skipping the usual ones by name.
+  const files = copyableFiles(projectDir);
+  if (files) {
+    for (const f of files) {
+      const to = path.join(dir, f);
+      fs.mkdirSync(path.dirname(to), { recursive: true });
+      fs.copyFileSync(path.join(projectDir, f), to);
+    }
+  } else {
+    fs.cpSync(projectDir, dir, {
+      recursive: true,
+      filter: (src) => !SKIP.has(path.basename(src)),
+    });
+  }
 
   const problems: InFlightProblem[] = [];
   const repo = new DiskProjectRepository(dir);

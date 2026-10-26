@@ -67,6 +67,25 @@ export interface DoneCheckOptions {
 }
 
 /**
+ * The test command as the gate outside the harness runs it (REQ-183): `{req}`
+ * is the requirement being delivered, or empty when the whole project is
+ * checked; `{scenario}` and `{feature_file}` are always empty, since no one
+ * scenario is meant. The harness fills them per requirement; `check` used to
+ * run them as written, and a command that named the requirement broke it.
+ */
+export function gateTestCommand(testCmd: string, reqId?: string): string {
+  return testCmd
+    .split("{req}")
+    .join(reqId || "")
+    .split("{scenario}")
+    .join("")
+    .split("{feature_file}")
+    .join("")
+    .replace(/[ \t]+$/gm, "")
+    .trim();
+}
+
+/**
  * The checks `done` should run, in the order they should run.
  *
  * `validate` comes first because it is fast and its failures are the ones with
@@ -98,7 +117,7 @@ export function planDoneVerification(
   const archCmd = (opts.archCmd || "").trim();
   if (archCmd !== "") steps.push({ stage: "arch", argv: [archCmd] });
 
-  const testCmd = (opts.testCmd || "").trim();
+  const testCmd = gateTestCommand((opts.testCmd || "").trim(), opts.reqId);
   if (testCmd !== "") steps.push({ stage: "tests", argv: [testCmd] });
 
   return { steps, testsUnverified: testCmd === "" };
@@ -120,7 +139,7 @@ export function planGateCheck(
   const steps: VerificationStep[] = [{ stage: "validate", argv: [projectDir, "--strict"] }];
   const arch = (archCmd || "").trim();
   if (arch !== "") steps.push({ stage: "arch", argv: [arch] });
-  const cmd = (testCmd || "").trim();
+  const cmd = gateTestCommand((testCmd || "").trim());
   if (cmd !== "") steps.push({ stage: "tests", argv: [cmd] });
   return { steps, testsUnverified: cmd === "" };
 }

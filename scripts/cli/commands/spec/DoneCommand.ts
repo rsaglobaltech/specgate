@@ -6,6 +6,7 @@ import { DiskTraceabilityRepository } from "../../../../packages/core/src/infras
 import { UpdateRequirementStatusUseCase } from "../../../../packages/core/src/application/UpdateRequirementStatusUseCase";
 import {
   planDoneVerification,
+  gateTestCommand,
   deliveryBlocker,
   NO_TEST_COMMAND_WARNING,
 } from "../../../../packages/core/src/domain/DoneVerification";
@@ -517,7 +518,11 @@ export class DoneCommand extends BaseCommand {
       }
     }
     if (passing.length > 0 && opts.check && passing.every((id) => results.get(id)!.ok)) {
-      const cmd = (testCmd || "").trim();
+      // One requirement fills `{req}`; several run the suite for the whole project (REQ-183).
+      const cmd = gateTestCommand(
+        (testCmd || "").trim(),
+        passing.length === 1 ? passing[0] : undefined
+      );
       if (cmd === "") {
         testsUnverified = true;
       } else {

@@ -5,7 +5,11 @@
 import { test } from "node:test";
 import * as assert from "node:assert/strict";
 
-import { planDoneVerification, NO_TEST_COMMAND_WARNING } from "../../src/domain/DoneVerification";
+import {
+  planDoneVerification,
+  planGateCheck,
+  NO_TEST_COMMAND_WARNING,
+} from "../../src/domain/DoneVerification";
 
 test("without --check nothing runs — plain `done` stays a status write", () => {
   const plan = planDoneVerification("/p", { check: false, strict: false });
@@ -66,4 +70,27 @@ test("the warning says what was and was not checked", () => {
   // ADR-0035: `apply` is the daily verb; `done` is only its old name.
   assert.match(NO_TEST_COMMAND_WARNING.fix.join(" "), /`apply` and `check`/);
   assert.doesNotMatch(NO_TEST_COMMAND_WARNING.fix.join(" "), /`done`/);
+});
+
+// REQ-183 — the gate's placeholders outside the harness. `check` ran
+// `node check.mjs {req}` with the literal text `{req}`, so a test command that
+// names the requirement broke every `check` (fuhrerschein, S1).
+test("REQ-183 SCN-183a: check runs the test command for the whole project, its placeholders empty", () => {
+  const plan = planGateCheck(
+    "/p",
+    "npm test && node e2e-names.mjs {req} {scenario} {feature_file}"
+  );
+  const tests = plan.steps.find((s) => s.stage === "tests");
+  assert.equal(tests?.argv[0], "npm test && node e2e-names.mjs");
+});
+
+test("REQ-183 SCN-183b: done and apply run it for the requirement they deliver", () => {
+  const plan = planDoneVerification("/p", {
+    check: true,
+    strict: false,
+    reqId: "REQ-007",
+    testCmd: "npm test && node e2e-names.mjs {req}",
+  });
+  const tests = plan.steps.find((s) => s.stage === "tests");
+  assert.equal(tests?.argv[0], "npm test && node e2e-names.mjs REQ-007");
 });
