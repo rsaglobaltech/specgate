@@ -38,7 +38,7 @@ import { BaseCommand } from "../../../lib/command";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
 import { detectSetupCommand } from "../../../harness/init";
-import { inFlightView } from "../../../lib/in-flight";
+import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
 import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
 import { ask as askQuestion } from "../../../lib/clarification";
 import {
@@ -109,7 +109,7 @@ import {
 import { requirementReadiness } from "../../../../packages/core/src/domain/RequirementReadiness";
 import { selectProfile } from "../../../../packages/core/src/domain/ProfileMatch";
 import { parseMatrixContexts } from "../../../../packages/core/src/domain/TraceabilityFormat";
-import { RequirementPlan } from "../../../../packages/core/src/domain/RequirementPlan";
+import { RequirementPlan, withRework } from "../../../../packages/core/src/domain/RequirementPlan";
 import {
   BudgetVerdict,
   budgetVerdict,
@@ -531,6 +531,16 @@ function runPlan(projectDir: string): PlanDocument {
   } catch (err) {
     // `JSON.parse` only ever throws a SyntaxError.
     throw new Error(`plan produced invalid JSON: ${(err as Error).message}`);
+  }
+  // Read on the project itself: the judged copy has every open change
+  // archived into it, and no longer says which requirements were modified.
+  const modified = new Set(
+    inFlightRequirements(projectDir)
+      .filter((r) => r.op === "modified")
+      .map((r) => r.id)
+  );
+  if (modified.size > 0 && Array.isArray(parsed.requirements)) {
+    parsed.requirements = withRework(parsed.requirements, modified);
   }
   return parsed;
 }

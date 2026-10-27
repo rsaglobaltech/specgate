@@ -84,6 +84,18 @@ export class AgentPrompt {
       `- Production artifact: ${field("technicalArtifact", "technical_artifact") || "(none declared)"}`,
       `- Current status: ${req.status || "(none)"}`,
     ].join("\n");
+    // REQ-198: a modified requirement already has a test and code, for its old text.
+    if (req.category === "NEEDS_REWORK") {
+      parts.push(
+        AgentPrompt.section(
+          "This requirement changed",
+          "An open change modified this requirement: its tests and code exist, but for the old text. " +
+            "Bring the tests to the requirement and scenarios below first — they must fail against the " +
+            "current behaviour — then change the code until they pass. Do not leave a test that only " +
+            "checks the old behaviour."
+        )
+      );
+    }
     // Before the facts, because it is the thing being implemented and the facts
     // are only pointers to where it goes.
     if (opts.requirementText && String(opts.requirementText).trim()) {

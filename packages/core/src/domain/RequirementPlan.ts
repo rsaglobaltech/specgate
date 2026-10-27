@@ -4,7 +4,25 @@ export type PlanCategory =
   | "NEEDS_TEST"
   | "NEEDS_IMPLEMENTATION"
   | "NEEDS_STATUS_UPDATE"
+  /** Modified by an open change: its test and code exist, for the old text (REQ-198). */
+  | "NEEDS_REWORK"
   | "DONE";
+
+/**
+ * A requirement an open change modifies keeps its tests and code, so the plan
+ * reads it as NEEDS_STATUS_UPDATE and the harness would give it no new work.
+ * It needs both brought to the new text (REQ-198).
+ */
+export function withRework<T extends { requirement: string; category?: string }>(
+  items: T[],
+  modified: ReadonlySet<string>
+): T[] {
+  return items.map((it) =>
+    modified.has(it.requirement) && it.category === "NEEDS_STATUS_UPDATE"
+      ? { ...it, category: "NEEDS_REWORK" }
+      : it
+  );
+}
 
 export interface PlanItem {
   requirement: string;

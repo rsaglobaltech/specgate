@@ -210,3 +210,15 @@ test("REQ-192 SCN-192c: an unknown module is refused, and nothing is written", (
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-198 SCN-198a: the in-flight view says which requirements a change modifies", () => {
+  const dir = project();
+  try {
+    assert.equal(cli(dir, "change", "new", "gears", "--modify", "REQ-017").status, 0);
+    const { inFlightRequirements } = require("../../scripts/lib/in-flight");
+    const r17 = inFlightRequirements(dir).find((r: { id: string }) => r.id === "REQ-017");
+    assert.equal(r17.op, "modified");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
