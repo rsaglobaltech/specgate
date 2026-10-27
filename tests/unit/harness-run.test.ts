@@ -1639,9 +1639,20 @@ function cucumberProject() {
     ].join("\n"),
     "utf8"
   );
-  // A fresh worktree carries only what git tracks, so the runner needs the
-  // repository's own installed Cucumber.
-  fs.symlinkSync(path.join(REPO_ROOT, "node_modules"), path.join(projectDir, "node_modules"));
+  // A fresh worktree carries only what git tracks, so each one links the
+  // repository's own installed Cucumber before the gate runs. Not committed:
+  // git on Windows follows a junction and would add every file under it. A
+  // junction there, since a plain symlink needs admin rights.
+  const link = path.join(parent, "link-modules.js");
+  fs.writeFileSync(
+    link,
+    `require("fs").symlinkSync(${JSON.stringify(path.join(REPO_ROOT, "node_modules"))}, "node_modules", "junction");\n`
+  );
+  fs.appendFileSync(
+    path.join(projectDir, "harness.config.yaml"),
+    `\nsetup_cmd: '"${process.execPath}" "${link}"'\n`
+  );
+  fs.appendFileSync(path.join(projectDir, ".gitignore"), "\nnode_modules\n");
   const git = (...args: string[]) => spawnSync("git", args, { cwd: projectDir, encoding: "utf8" });
   git("add", "-A");
   git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "cucumber");
@@ -1653,7 +1664,8 @@ test("a filter matching nothing exits 0, and the gate no longer believes it", ()
   try {
     const r = runHarness(projectDir, minimalAgent(parent), [
       "--test-cmd",
-      "npx cucumber-js --tags '@does-not-exist'",
+      // Double quotes: cmd.exe, where the gate runs on Windows, keeps single ones.
+      'npx cucumber-js --tags "@does-not-exist"',
     ]);
     const out = r.stdout + r.stderr;
     assert.match(out, /0 passed/, `the empty run was accepted:\n${out}`);
@@ -2186,7 +2198,16 @@ test("#50: an agent out of quota fails the requirement after one attempt, not th
   // three times in 22 seconds.
   const { parent, projectDir } = greenableProject();
   try {
-    const agent = `${process.execPath} -e "console.log('You\\'ve hit your session limit · resets 11:20am'); process.exit(1)"`;
+    // A script file, its path quoted: under cmd.exe an unquoted
+    // "C:\Program Files\nodejs\node.exe" splits at the space, and inline
+    // code with quotes and "·" does not survive the shell either.
+    const file = path.join(parent, "quota-agent.js");
+    fs.writeFileSync(
+      file,
+      'console.log("You\'ve hit your session limit · resets 11:20am");\nprocess.exit(1);\n',
+      "utf8"
+    );
+    const agent = `"${process.execPath}" "${file}"`;
     const r = spawnSync(
       process.execPath,
       [

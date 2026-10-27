@@ -678,7 +678,10 @@ function runGate(
     // Where the message stream will be, if there is one to have.
     let reportPath = settings.messageReport || "";
     if (!reportPath && invokesCucumberDirectly(resolved)) {
-      reportPath = path.join(
+      // Forward slashes on every platform: Cucumber reads `message:.harness\x`
+      // on Windows as a path it does not write, and the gate then had no
+      // stream to check and passed a run of no scenarios.
+      reportPath = path.posix.join(
         ".harness",
         `messages-${req.requirement || "run"}-${crypto.randomBytes(3).toString("hex")}.ndjson`
       );
