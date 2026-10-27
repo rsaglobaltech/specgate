@@ -25,6 +25,8 @@ const HARNESS_RULES: string[] = [
   ),
   "Do not run `specgate` yourself: when you finish, the harness runs the gate and marks the " +
     "requirement. The `specgate` on your PATH may not even be this project's version.",
+  // REQ-189: the one command an agent runs — asking beats guessing.
+  'The one exception: when the requirement leaves a decision open that its statement, scenarios and assumptions do not settle, do not guess. Run `specgate ask <REQ> "<your question>"` and stop: the harness ends the attempt without spending another and asks the person.',
 ];
 
 export function buildPrompt(

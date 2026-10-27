@@ -118,6 +118,12 @@
 | REQ-185 | SCN-185a | `features/harness/REQ-185.feature` | - | - | - | - | - | tests/unit/harness-hardening.test.ts | Implemented |
 | REQ-186 | SCN-186a | `features/harness/REQ-186.feature` | - | - | - | - | - | tests/unit/harness-hardening.test.ts | Implemented |
 | REQ-183 | SCN-183a | `features/trusted-gate/REQ-183.feature` | - | - | - | - | - | packages/core/test/unit/done-verification.test.ts | Implemented |
+| REQ-190 | SCN-190a | `features/change-lifecycle/REQ-190.feature` | - | - | - | - | - | tests/unit/change-evolution.test.ts | Implemented |
+| REQ-191 | SCN-191a | `features/change-lifecycle/REQ-191.feature` | - | - | - | - | - | tests/unit/change-evolution.test.ts | Implemented |
+| REQ-192 | SCN-192a | `features/change-lifecycle/REQ-192.feature` | - | - | - | - | - | tests/unit/change-evolution.test.ts | Implemented |
+| REQ-187 | SCN-187a | `features/clarification/REQ-187.feature` | - | - | - | - | - | tests/unit/clarification-cli.test.ts | Implemented |
+| REQ-188 | SCN-188a | `features/clarification/REQ-188.feature` | - | - | - | - | - | tests/unit/clarification-cli.test.ts | Implemented |
+| REQ-189 | SCN-189a | `features/clarification/REQ-189.feature` | - | - | - | - | - | tests/unit/clarification-cli.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
