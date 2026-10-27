@@ -157,3 +157,21 @@ export function acquireRunLock(projectDir: string, reqs: string[]): (() => void)
   process.once("exit", release);
   return release;
 }
+
+/** A request to stop once the requirement in progress ends (REQ-209). */
+const STOP = path.join(".harness", "events", "stop");
+
+/** Ask the run working in this project to stop after its current requirement. */
+export function requestStop(projectDir: string): void {
+  const file = path.join(projectDir, STOP);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${new Date().toISOString()}\n`, "utf8");
+}
+
+/** Whether a stop was asked; the request is consumed. */
+export function takeStop(projectDir: string): boolean {
+  const file = path.join(projectDir, STOP);
+  if (!fs.existsSync(file)) return false;
+  fs.rmSync(file, { force: true });
+  return true;
+}

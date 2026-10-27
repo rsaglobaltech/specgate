@@ -166,3 +166,41 @@ test("in a forja project, status names the use case to add for the next requirem
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-193 SCN-193a: status names the module from the open change or the feature's folder", () => {
+  const { forjaAddCommand } = require(
+    path.join(ROOT_DIR, "dist/scripts/cli/commands/spec/StatusCommand")
+  );
+  assert.equal(
+    forjaAddCommand({
+      requirement: "REQ-022",
+      category: "NEEDS_EVERYTHING",
+      change: "draft-diario",
+    }),
+    "specgate add usecase diario/<Name> --req REQ-022"
+  );
+  assert.equal(
+    forjaAddCommand({
+      requirement: "REQ-022",
+      category: "NEEDS_EVERYTHING",
+      featureFile: "features/diario/registrar-clase.feature",
+    }),
+    "specgate add usecase diario/RegistrarClase --req REQ-022"
+  );
+});
+
+test("REQ-194 SCN-194a: DRAFTING.md gives the range as the limit, and how to grow it", () => {
+  const { draftingGuide } = require(path.join(ROOT_DIR, "dist/scripts/draft/drafting-guide"));
+  const guide = draftingGuide({
+    module: "diario",
+    changeId: "draft-diario",
+    brief: "docs/brief.md",
+    reqRange: ["REQ-002", "REQ-011"],
+    firstScenario: "SCN-002",
+    maxRequirements: 25,
+    actors: new Map(),
+  });
+  assert.match(guide, /`REQ-002` … `REQ-011`: 10 ids, no others/);
+  assert.doesNotMatch(guide, /at most 25 requirements/);
+  assert.match(guide, /specgate draft --reserve <n>/);
+});

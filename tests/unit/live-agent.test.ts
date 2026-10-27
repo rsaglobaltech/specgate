@@ -13,6 +13,17 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+
+/** Every temp folder this file makes, removed once its tests are done, with retries for Windows. */
+const madeDirs: string[] = [];
+function made(dir: string): string {
+  madeDirs.push(dir);
+  return dir;
+}
+require("node:test").after(() => {
+  for (const d of madeDirs)
+    fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+});
 const { spawnSync } = require("node:child_process");
 const { readLive } = require("../../scripts/lib/live-model");
 const { livePage } = require("../../scripts/lib/live-page");
@@ -29,7 +40,7 @@ const ROOT_DIR = require("node:path").resolve(
 const CLI_PATH = path.join(ROOT_DIR, "bin", "specgate.js");
 
 function tmp() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "specgate-live-agent-"));
+  return made(fs.mkdtempSync(path.join(os.tmpdir(), "specgate-live-agent-")));
 }
 
 function events(file: string): Array<Record<string, unknown>> {

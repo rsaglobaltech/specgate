@@ -22,12 +22,13 @@
  * The script lives inside this template literal: it uses no backticks, no
  * dollar-brace, and no backslash escapes.
  */
-export function livePage(projectName: string): string {
+export function livePage(projectName: string, token = ""): string {
   const title = String(projectName).replace(/[&<>"']/g, "");
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Harness live — ${title}</title>
+<meta name="specgate-token" content="${String(token).replace(/[^0-9a-f]/g, "")}"/>
 <style>
   :root{--bg:#f6f8fa;--panel:#ffffff;--line:#d1d9e0;--soft:#eff2f5;--ink:#1f2328;--muted:#59636e;--faint:#8c959f;
     --pass:#1a7f37;--fail:#cf222e;--run:#9a6700;--run-bg:#fff8c5;--accent:#0969da;--sel:#ddf4ff;
@@ -62,8 +63,12 @@ export function livePage(projectName: string): string {
   .summary-btn{padding-left:10px;margin-bottom:6px;font-weight:600}
   .qsec{margin:10px 0 14px} .qsec h2{display:flex;align-items:center;gap:8px;margin:0 0 4px;padding:0 10px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
   .qsec h2 .count{margin-left:auto;font-weight:400;font-variant-numeric:tabular-nums} .qsec .job{padding-left:10px;align-items:flex-start}
-  .qsec .job .ic{margin-top:3px} .job small{display:block;font-size:11.5px;color:var(--muted);font-weight:400}
+  .qsec .job .ic{margin-top:3px} .job small{display:block;font-size:11.5px;color:var(--muted);font-weight:400;white-space:normal;overflow-wrap:anywhere}
   .qsec p{margin:2px 10px 6px;font-size:12.5px} .muted{color:var(--muted)}
+  form.answer{display:flex;flex-wrap:wrap;gap:6px;margin:2px 10px 10px 30px} form.answer textarea{flex:1 1 100%;font:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);resize:vertical}
+  .oq{margin:4px 10px 12px} .oqh{font-size:12.5px} .oqh b{font-weight:600} .oqt{font-size:13px;margin:2px 0 4px;overflow-wrap:anywhere}
+  .oq form.answer{margin:0}
+  form.answer button{border:1px solid var(--line);background:var(--soft);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:12.5px} form.answer small{flex:1 1 100%}
   .now{border:1px solid var(--run);border-radius:6px;padding:4px 0 8px;background:var(--panel)}
   .kv{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px 10px;margin:4px 10px 0;font-size:12.5px} .kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
   .ctx{display:flex;flex-direction:column;gap:3px} .ctx .d{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -253,6 +258,41 @@ export function livePage(projectName: string): string {
     b.addEventListener("click", function(){ pick(r.req); });
     return b;
   }
+  /**
+   * Answer the agent's question from here (REQ-201): the same write as
+   * specgate answer, through studio's one POST, with this page's token.
+   */
+  function answerForm(q){
+    var f = el("form", "answer"), ta = el("textarea"), go = el("button", "", "Answer"), msg = el("small", "muted");
+    ta.placeholder = "Your answer to " + q.id; ta.rows = 2; go.type = "submit";
+    f.append(ta, go, msg);
+    var post = function(body){
+      var tok = (document.querySelector('meta[name="specgate-token"]') || {}).content || "";
+      return fetch("live/answer", {method:"POST", headers:{"content-type":"application/json", "x-specgate-token":tok}, body:JSON.stringify(body)})
+        .then(function(x){ return x.json(); });
+    };
+    f.addEventListener("submit", function(ev){
+      ev.preventDefault();
+      if (!ta.value.trim()) return;
+      go.disabled = true;
+      post({question:q.id, change:q.change === "project" ? undefined : q.change, answer:ta.value}).then(function(r){
+        go.disabled = false;
+        if (!r.ok) { msg.textContent = r.message || "Not answered."; return; }
+        msg.textContent = q.id + " answered; " + r.assumption + " to review" + (r.revise && r.revise.length ? " — revise " + r.revise.join(", ") : "") + ".";
+        ta.remove(); go.remove();
+        var rv = el("button", "", "Mark reviewed"); rv.type = "button";
+        rv.addEventListener("click", function(){
+          post({question:q.id, change:q.change === "project" ? undefined : q.change, reviewed:true}).then(function(x){
+            msg.textContent = x.ok ? q.id + " reviewed: the specification reflects it." : (x.message || "Not reviewed.");
+            if (x.ok) rv.remove();
+          });
+        });
+        f.appendChild(rv);
+      }).catch(function(){ go.disabled = false; msg.textContent = "Studio did not answer."; });
+    });
+    return f;
+  }
+
   function block(title, count){
     var d = el("section", "qsec"), h = el("h2"); h.append(el("span", "", title));
     if (count !== undefined) h.appendChild(el("span", "count", String(count)));
@@ -296,7 +336,7 @@ export function livePage(projectName: string): string {
     matrix.forEach(function(m){ if (m.status === "Needs Clarification" && !byReq[m.requirement] && !seenB[m.requirement]) { seenB[m.requirement] = 1;
       need.push({r:{req:m.requirement, title:m.title, state:"idle"}, note:"blocked · needs clarification", st:"idle"}); } });
     var n1 = block("Needs attention", need.length);
-    need.forEach(function(x){ n1.appendChild(jobBtn(x.r, sel, x.note, x.st)); });
+    need.forEach(function(x){ n1.appendChild(jobBtn(x.r, sel, x.note, x.st)); if (x.st === "question" && x.r.question && x.r.question.id) n1.appendChild(answerForm(x.r.question)); });
     if (!need.length) n1.appendChild(el("p", "muted", "Nothing failed or blocked."));
     box.appendChild(n1);
 
@@ -311,6 +351,26 @@ export function livePage(projectName: string): string {
     if (!next.length) n2.appendChild(el("p", "muted", (model.queue || []).length ? "The queue is done." : "No queue recorded for this run."));
     box.appendChild(n2);
 
+    // REQ-203: every open question, not only the agent's, answered from here.
+    var shown = {};
+    need.forEach(function(x){ if (x.r.question && x.r.question.id) shown[x.r.question.change + ":" + x.r.question.id] = 1; });
+    var oq = (model.questions && model.questions.open || []).filter(function(q){ return !shown[q.change + ":" + q.id]; });
+    var wq = model.questions && model.questions.waitingWithoutQuestion || [];
+    var n4 = block("Open questions", oq.length + wq.length);
+    oq.forEach(function(q){
+      var row = el("div", "oq"), h = el("div", "oqh");
+      h.append(el("b", "", q.id), el("span", "muted", " " + (q.change === "project" ? "project" : q.change) + (q.blocks.length ? " · blocks " + q.blocks.join(", ") : "")));
+      row.append(h, el("div", "oqt", q.text), answerForm(q));
+      n4.appendChild(row);
+    });
+    wq.forEach(function(r){
+      var row = el("div", "oq");
+      row.append(el("div", "oqh", r.requirement + " " + (r.title || "")), el("small", "muted", "Needs Clarification with no question: specgate ask " + r.requirement + ' "…"'));
+      n4.appendChild(row);
+    });
+    if (!oq.length && !wq.length) n4.appendChild(el("p", "muted", "Nothing waits for an answer."));
+    box.appendChild(n4);
+
     var recent = list.filter(function(r){ return r.state === "pass"; }).sort(function(a, b){ return b.updated - a.updated; }).slice(0, 5);
     var n3 = block("Finished recently");
     recent.forEach(function(r){ n3.appendChild(jobBtn(r, sel, dur(r.elapsed) + (r.usage && r.usage.cost !== null ? " · " + usd(r.usage.cost) : ""), "pass")); });
@@ -320,17 +380,18 @@ export function livePage(projectName: string): string {
   }
 
   function summary(list){
-    var p = 0, f = 0, run = 0, first = 0, last = 0;
-    list.forEach(function(r){ if (r.state === "pass") p++; else if (r.state === "fail" || r.state === "question") f++; else run++;
+    var p = 0, f = 0, run = 0, asks = 0, first = 0, last = 0;
+    // A question waits for a person: neither a failure nor work in progress (REQ-201).
+    list.forEach(function(r){ if (r.state === "pass") p++; else if (r.state === "fail") f++; else if (r.state === "question") asks++; else run++;
       if (!first || r.started < first) first = r.started; last = Math.max(last, r.state === "running" ? now() : r.updated); });
-    var state = run ? "running" : f ? "fail" : list.length ? "pass" : "running";
+    var state = run ? "running" : f ? "fail" : asks ? "running" : list.length ? "pass" : "running";
     $("runBadge").className = "badge " + state;
-    $("runState").textContent = run ? "In progress" : f ? "Failed" : list.length ? "Completed" : "Waiting";
+    $("runState").textContent = run ? "In progress" : f ? "Failed" : asks ? "Waiting for an answer" : list.length ? "Completed" : "Waiting";
     var cur = list.filter(function(r){ return r.state === "running"; })[0];
     $("runTitle").textContent = cur ? cap(cur.group) + " · " + cur.req + " " + (cur.title || "") : groups(list).map(function(g){ return cap(g.name); }).join(", ") || "Harness run";
     var box = $("progress"); box.replaceChildren();
     [["Started", first ? stamp(first) : "—"], ["Duration", first ? dur(last - first) : "—"],
-     ["Requirements", p + " passed · " + run + " running · " + f + " failed"],
+     ["Requirements", p + " passed · " + run + " running · " + f + " failed" + (asks ? " · " + asks + " waiting for an answer" : "")],
      ["Agent time", dur(list.reduce(function(a, r){ return a + elapsed(r); }, 0))]].concat(model.totals && (model.totals.input || model.totals.output) ? [
      ["Tokens", kt(model.totals.input + model.totals.cacheRead + model.totals.cacheWrite) + " in · " + kt(model.totals.output) + " out"],
      ["Cost", usd(model.totals.cost)]] : []).forEach(function(x){
@@ -365,12 +426,12 @@ export function livePage(projectName: string): string {
     ["", "Module", "Requirements", "Passed", "Time"].forEach(function(h, i){ var c = el("span", i >= 3 ? "num" : "", h); head.appendChild(c); });
     box.appendChild(head);
     order.forEach(function(g){
-      var rs = rowsBy[g], pass = 0, fail = 0, run = 0, time = 0;
+      var rs = rowsBy[g], pass = 0, fail = 0, run = 0, asked = 0, time = 0;
       var row = el("div", "mm-row"), bar = el("span", "mm-bar");
       rs.forEach(function(q){
         var ev = byReq[q.req], st = ev ? ev.state : (q.status === "Implemented" || q.status === "Verified" || q.status === "Released") ? "pass"
           : q.status === "Needs Clarification" ? "blocked" : "queued";
-        if (st === "pass") pass++; else if (st === "fail" || st === "question") fail++; else if (st === "running") run++;
+        if (st === "pass") pass++; else if (st === "fail") fail++; else if (st === "running") run++; else if (st === "question") asked++;
         if (ev) time += elapsed(ev);
         var seg = el("button", "seg " + st + (sel && sel.req === q.req ? " on" : "")); seg.type = "button";
         seg.title = q.req + " — " + (q.title || "") + " · " + (ev ? st + " · " + dur(elapsed(ev)) : st);
@@ -378,7 +439,7 @@ export function livePage(projectName: string): string {
         seg.addEventListener("click", function(){ pick(q.req); });
         bar.appendChild(seg);
       });
-      var state = fail ? "fail" : run ? "running" : pass === rs.length ? "pass" : "idle";
+      var state = fail ? "fail" : asked ? "question" : run ? "running" : pass === rs.length ? "pass" : "idle";
       if (fail) row.classList.add("has-fail"); else if (run) row.classList.add("has-run"); else if (state === "idle" && !pass) row.classList.add("queued");
       row.append(icon(state), el("b", "", cap(g === "spec" ? "" : g)), bar, el("span", "num", pass + "/" + rs.length), el("span", "num muted", time ? dur(time) : pass === rs.length ? "earlier" : "queued"));
       box.appendChild(row);

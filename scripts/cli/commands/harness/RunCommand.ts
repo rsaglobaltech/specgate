@@ -38,9 +38,10 @@ import { BaseCommand } from "../../../lib/command";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
 import { detectSetupCommand } from "../../../harness/init";
-import { inFlightView } from "../../../lib/in-flight";
+import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
 import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
 import { ask as askQuestion } from "../../../lib/clarification";
+import { e2eTestsNaming, onScreen } from "../../../lib/screen-requirements";
 import {
   acquireRunLock,
   branchMergedInto,
@@ -50,6 +51,7 @@ import {
   minFreeBytes,
   orderAsGiven,
   runLockHolder,
+  takeStop,
 } from "../../../lib/harness-guard";
 import {
   EVENTS_ATTEMPT_VAR,
@@ -109,7 +111,7 @@ import {
 import { requirementReadiness } from "../../../../packages/core/src/domain/RequirementReadiness";
 import { selectProfile } from "../../../../packages/core/src/domain/ProfileMatch";
 import { parseMatrixContexts } from "../../../../packages/core/src/domain/TraceabilityFormat";
-import { RequirementPlan } from "../../../../packages/core/src/domain/RequirementPlan";
+import { RequirementPlan, withRework } from "../../../../packages/core/src/domain/RequirementPlan";
 import {
   BudgetVerdict,
   budgetVerdict,
@@ -323,6 +325,8 @@ function usage() {
       "Runs the plan → agent → verify → done loop for every pending requirement.\n\n" +
       "  --agent <cmd>          Agent command; must contain the {prompt_file} placeholder.\n" +
       '                         e.g. --agent "claude -p < {prompt_file}"\n' +
+      "  --profile <name>       Run this profile's agent from .harness/profiles.yaml instead\n" +
+      "                         of the configured one, for this run only.\n" +
       "  --test-cmd <cmd>       Project test command run as part of the gate (optional).\n" +
       "                         Substitutes {req}, {scenario} and {feature_file}, so the\n" +
       "                         gate can run the scenario under test.\n" +
@@ -406,6 +410,7 @@ export function parseArgs(argv: string[]) {
     prCmd: "",
     setupCmd: "",
     chain: false,
+    profile: "",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
@@ -413,6 +418,8 @@ export function parseArgs(argv: string[]) {
       args.projectDir = argv[++i] || "";
     } else if (token === "--agent") {
       args.agent = argv[++i] || "";
+    } else if (token === "--profile") {
+      args.profile = argv[++i] || "";
     } else if (token === "--test-cmd") {
       args.testCmd = argv[++i] || "";
     } else if (token === "--max-attempts") {
@@ -532,6 +539,16 @@ function runPlan(projectDir: string): PlanDocument {
     // `JSON.parse` only ever throws a SyntaxError.
     throw new Error(`plan produced invalid JSON: ${(err as Error).message}`);
   }
+  // Read on the project itself: the judged copy has every open change
+  // archived into it, and no longer says which requirements were modified.
+  const modified = new Set(
+    inFlightRequirements(projectDir)
+      .filter((r) => r.op === "modified")
+      .map((r) => r.id)
+  );
+  if (modified.size > 0 && Array.isArray(parsed.requirements)) {
+    parsed.requirements = withRework(parsed.requirements, modified);
+  }
   return parsed;
 }
 
@@ -649,6 +666,22 @@ function runGate(
       hint: "",
     };
   }
+  // REQ-199: a requirement used on a screen needs an end-to-end test that
+  // names it, when the project says where those live.
+  if (settings.e2eDir && req.requirement && onScreen(worktreeDir, req.requirement)) {
+    const named = e2eTestsNaming(worktreeDir, settings.e2eDir, req.requirement);
+    report("e2e test", named.length ? "pass" : "fail");
+    if (named.length === 0) {
+      return {
+        ok: false,
+        stage: "e2e test",
+        output: `No file under ${settings.e2eDir} names ${req.requirement}.`,
+        hint:
+          `${req.requirement} is used on a screen: add an end-to-end test under ` +
+          `${settings.e2eDir} that names it, driving the screen its scenarios describe.`,
+      };
+    }
+  }
   // ADR-0028: the architecture check runs between validation and the tests,
   // and its failure goes back to the agent like any other gate failure.
   const archCmd = String(settings.archCmd || "").trim();
@@ -678,7 +711,10 @@ function runGate(
     // Where the message stream will be, if there is one to have.
     let reportPath = settings.messageReport || "";
     if (!reportPath && invokesCucumberDirectly(resolved)) {
-      reportPath = path.join(
+      // Forward slashes on every platform: Cucumber reads `message:.harness\x`
+      // on Windows as a path it does not write, and the gate then had no
+      // stream to check and passed a run of no scenarios.
+      reportPath = path.posix.join(
         ".harness",
         `messages-${req.requirement || "run"}-${crypto.randomBytes(3).toString("hex")}.ndjson`
       );
@@ -1194,6 +1230,10 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
             // commit — the precedent must be work already accepted, not a
             // sibling requirement this same run happens to be writing.
             withPrecedents: settings.promptPrecedents === true,
+            e2eDir:
+              settings.e2eDir && onScreen(worktreeDir, req.requirement)
+                ? settings.e2eDir
+                : undefined,
           })
         );
         const promptFile = path.join(
@@ -2416,6 +2456,14 @@ async function runChain(
         results.push(notAttempted(rest, rest.requirement, reason));
       }
     };
+    // REQ-209: a stop asked while the last requirement ran starts no other.
+    if (i > 0 && takeStop(projectDir)) {
+      for (const rest of pending.slice(i)) {
+        results.push(notAttempted(rest, rest.requirement, "a stop was asked"));
+      }
+      info(`stopped as asked: ${pending.length - i} requirement(s) not attempted`);
+      break;
+    }
     const [result] = await runLevels([req], ctx, {
       concurrency: 1,
       hintByReq,
@@ -2763,6 +2811,11 @@ export async function runLevels(
         // what was actually begun, so the count ceiling and the clock agree.
         mayStart: () => {
           if (stoppedBy) return false;
+          // REQ-209: a stop asked while a requirement ran starts no other.
+          if (started > 0 && takeStop(ctx.projectDir)) {
+            stoppedBy = { stop: true, code: "stop_asked", reason: "a stop was asked" };
+            return false;
+          }
           const verdict = budgetVerdict(
             limits,
             { startedAt: budgetStartedAt, started },
@@ -2832,6 +2885,8 @@ export class RunCommand extends BaseCommand {
       setJsonMode(args.format === "json");
       const projectDir = resolveProjectDir(args.projectDir, { requireSentinel: true });
 
+      // REQ-211: a profile chosen for this run is its agent, ahead of the file's.
+      if (args.profile && !args.agent) args.agent = resolveProfileAgent(projectDir, args.profile);
       const fileConfig = readHarnessConfig(projectDir);
       const settings = resolveHarnessSettings(fileConfig, args);
       // A fresh worktree has no dependencies. Unless told, install what the
@@ -2843,7 +2898,7 @@ export class RunCommand extends BaseCommand {
       // may declare profiles without ever writing a `harness.config.yaml`.
       // Reaching them through the config reader made them silently absent
       // there — the same gap the cost hints had, found the same way.
-      if (settings.profileRules.length === 0) {
+      if (settings.profileRules.length === 0 && !args.profile) {
         const rules = readProfileRules(projectDir);
         if (rules.length > 0) {
           settings.profileRules = rules;
@@ -2907,6 +2962,7 @@ export class RunCommand extends BaseCommand {
             "harness run",
             `dry run · ${pending.length} requirement(s) would be processed`
           ) +
+            (settings.agent ? ui.kv("Agent", settings.agent, 14) : "") +
             ui.kv("Setup", settings.setupCmd || "none", 14) +
             (args.chain ? ui.kv("Chain", "each green requirement merged into this branch", 14) : "")
         );
@@ -3027,6 +3083,8 @@ export class RunCommand extends BaseCommand {
               `. Wait for it to finish: its post-merge gate runs in this working copy.`
           );
         }
+        // A stop left from an earlier run is not this run's (REQ-209).
+        takeStop(projectDir);
       }
 
       // What the live view lists as up next (REQ-182).

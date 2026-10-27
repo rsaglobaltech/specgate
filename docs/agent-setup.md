@@ -39,6 +39,7 @@ the likely cause.
 | Tool | `--agent` value |
 | --- | --- |
 | Claude Code | `claude -p < {prompt_file}` |
+| Claude Code, watched live in `specgate studio` | `claude -p --output-format stream-json --verbose < {prompt_file} \| specgate harness events --from claude` |
 | Aider | `aider --yes --message-file {prompt_file}` |
 | OpenCode | `opencode run "$(cat {prompt_file})"` |
 | Cursor CLI | `cursor-agent -p "$(cat {prompt_file})"` |

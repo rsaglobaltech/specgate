@@ -36,9 +36,12 @@ import {
   highestReservedReq,
   formatReqId,
   DEFAULT_CONFIG,
+  listChangeIds,
+  listDeltas,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { templateDelta } from "../../../../packages/core/src/domain/ChangeTemplates";
 import { highestOnOtherBranches } from "../../../../packages/core/src/infrastructure/IdsAcrossBranches";
+import { resolveProfileAgent } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
 import type { ModuleCards } from "../../../draft/drafting-guide";
@@ -90,6 +93,8 @@ export interface DraftOptions {
   /** `--reserve` was given: on an open draft it grows the range (REQ-177). */
   reserveGiven?: boolean;
   agent: string;
+  /** `--profile <name>`: the agent of that profile (REQ-211). */
+  profile?: string;
   /** `--new-brief`: write docs/brief.md from the template. */
   newBrief: boolean;
   projectDir: string;
@@ -124,6 +129,7 @@ function usage(): string {
     "  --agent <cmd>    Your agent's command. It gets the drafting guide on standard input,\n" +
     "                   or in a file if the command contains {prompt_file}. Whatever it writes\n" +
     "                   outside the draft is undone.\n" +
+    "  --profile <name> The agent of that profile in .harness/profiles.yaml, instead of --agent.\n" +
     "  [--max-requirements <n>] [--project-dir <dir>] [--json]\n\n" +
     "The checklist (ADR-0029):\n" +
     "  D1 every requirement has a scenario          D5 a cited law or standard names its source\n" +
@@ -176,6 +182,7 @@ export function parseArgs(argv: string[]): DraftOptions {
       o.reserve = Number(value());
       o.reserveGiven = true;
     } else if (a === "--agent") o.agent = value();
+    else if (a === "--profile") o.profile = value();
     else if (a === "--new-brief") o.newBrief = true;
     else if (a === "--project-dir") o.projectDir = value();
     else if (a === "--json") o.json = true;
@@ -188,7 +195,10 @@ export function parseArgs(argv: string[]): DraftOptions {
   if (o.check && o.module) {
     throw new Error("give a module or --check <change-id>, not both");
   }
-  if (o.checkBrief && (o.module || o.agent || o.newBrief)) {
+  if (o.profile && o.agent) {
+    throw new Error("give --agent or --profile, not both");
+  }
+  if (o.checkBrief && (o.module || o.agent || o.profile || o.newBrief)) {
     throw new Error("--check only checks the brief: run it on its own");
   }
   if (o.module && !CHANGE_ID_RE.test(o.module)) {
@@ -744,6 +754,17 @@ export class DraftCommand extends BaseCommand {
       ]);
     }
     const opts = o!;
+    if (opts.profile) {
+      try {
+        opts.agent = resolveProfileAgent(resolveProjectDir(opts.projectDir), opts.profile);
+      } catch (err) {
+        io0.usage({ draft: null }, [
+          error("draft_profile", (err as Error).message, {
+            fix: "Name a profile .harness/profiles.yaml declares, or pass --agent.",
+          }),
+        ]);
+      }
+    }
     if (opts.checkBrief) return this.checkBrief(opts);
     if (opts.check) return this.check(opts);
     if (opts.module) return this.module(opts);
@@ -1266,9 +1287,24 @@ export class DraftCommand extends BaseCommand {
         ]);
       }
       const listed = briefModules(brief.text);
+      // Drafts opened before this one and still unwritten stop growing once it
+      // takes the next ids: only the last range can (REQ-197).
+      const waiting = unwrittenDrafts(projectDir, `draft-${opts.module}`);
       const opened = openDraft(projectDir, opts.module, brief.rel, opts);
-      const notes =
-        listed.length > 0 && !listed.includes(opts.module)
+      const ahead = waiting.length
+        ? [
+            info(
+              "draft_other_unwritten",
+              `${waiting.join(", ")} ${waiting.length === 1 ? "is" : "are"} not written yet; ${opened.changeId} now holds the last id range, so ${waiting.length === 1 ? "it" : "they"} can no longer grow.`,
+              {
+                fix: `Write ${waiting[0]} first, or before opening the next module grow it with specgate draft ${waiting[0].replace(/^draft-/, "")} --reserve <n>.`,
+              }
+            ),
+          ]
+        : [];
+      const notes = [
+        ...ahead,
+        ...(listed.length > 0 && !listed.includes(opts.module)
           ? [
               info(
                 "draft_module_not_in_brief",
@@ -1278,7 +1314,8 @@ export class DraftCommand extends BaseCommand {
                 }
               ),
             ]
-          : [];
+          : []),
+      ];
       if (opts.agent) return this.withAgent(opts, projectDir, brief.rel, opened.created);
       io.emit(
         {
@@ -1600,4 +1637,14 @@ function writeBriefFindings(findings: readonly Diagnostic[]): void {
     );
     if (d.fix) out.write(ui.fix(d.fix));
   }
+}
+
+/** Open drafts other than `except` whose deltas hold no requirement yet (REQ-197). */
+function unwrittenDrafts(projectDir: string, except: string): string[] {
+  return listChangeIds(projectDir).filter((change) => {
+    if (!change.startsWith("draft-") || change === except) return false;
+    return !listDeltas(projectDir, change).some((d) =>
+      /^###\s+Requirement:\s+REQ-\d+\s+[—–-]\s+[^<\s]/m.test(fs.readFileSync(d.file, "utf8"))
+    );
+  });
 }

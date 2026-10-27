@@ -29,6 +29,8 @@ export interface QuestionRow {
   blocks: string[];
   answered: boolean;
   line: number;
+  /** The options its author saw, as listed in "Options seen" (REQ-210). */
+  options: string[];
 }
 
 export interface AssumptionRow {
@@ -83,6 +85,7 @@ export function questionTable(md: string): QuestionRow[] {
   const textAt = col(t, "question", "pregunta");
   const blocksAt = col(t, "blocks");
   const answerAt = col(t, "answer", "respuesta");
+  const optionsAt = col(t, "options seen", "options", "opciones");
   return t.rows.map((i) => {
     const c = cells(t.lines[i]);
     const answer = answerAt >= 0 ? c[answerAt] || "" : "";
@@ -92,6 +95,10 @@ export function questionTable(md: string): QuestionRow[] {
       blocks: (blocksAt >= 0 ? c[blocksAt] || "" : "").match(/REQ-[A-Za-z0-9.]+/g) || [],
       answered: answer.length > 0 && !deferredAnswer(answer),
       line: i + 1,
+      options: (optionsAt >= 0 ? c[optionsAt] || "" : "")
+        .split(/\s*[;·]\s*/)
+        .map((o) => o.trim())
+        .filter(Boolean),
     };
   });
 }

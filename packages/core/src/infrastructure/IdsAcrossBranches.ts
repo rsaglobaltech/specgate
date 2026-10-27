@@ -36,7 +36,10 @@ export function highestOnOtherBranches(projectDir: string, prefix: "REQ" | "SCN"
         "-h",
         "-o",
         "-E",
-        `${prefix}-[0-9]+`,
+        // Only lines that define or reserve an id: a heading, a matrix row's
+        // first cells, a `req_range`. A scenario that names REQ-999 in its text
+        // pushed the next reservation to REQ-1000 (REQ-202).
+        `^(#{2,4} +([A-Za-z]+: +)?${prefix}-[0-9]+|\\|( *[^|]*\\|)? *${prefix}-[0-9]+|[a-z_]+_range:.*)`,
         ...names.slice(i, i + BATCH),
         "--",
         CHANGES,

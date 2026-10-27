@@ -292,6 +292,9 @@ export function buildEnv(scratch: string): NodeJS.ProcessEnv {
     TERM: "dumb",
     COLUMNS: String(COLS),
     CI: "1",
+    // The same reporter whatever Node records: without a TTY, Node 22 prints
+    // TAP and Node 24 the spec reporter, and the page changed with the machine.
+    NODE_OPTIONS: "--test-reporter=spec",
     GIT_CONFIG_GLOBAL: "/dev/null",
     GIT_CONFIG_SYSTEM: "/dev/null",
     GIT_AUTHOR_NAME: "specgate demo",
@@ -705,7 +708,23 @@ export function writeRecording(board: Storyboard, rec: Recording): void {
   fs.writeFileSync(INDEX_PATH, replaceBlock(index, board.block, renderFallbackHtml(rec)), "utf8");
 }
 
+/**
+ * The recordings are byte-for-byte transcripts of a POSIX shell: paths with
+ * forward slashes, a bash shim on PATH, `bash -c` beats. On Windows they
+ * cannot come out the same, and the setup used to fail with a bare
+ * "git init" error; say so instead.
+ */
+export function refuseWindows(): void {
+  if (process.platform !== "win32") return;
+  process.stderr.write(
+    "The terminal recordings are made on Linux or macOS (WSL works): they are byte-for-byte\n" +
+      "transcripts of a POSIX shell and cannot come out the same on Windows.\n"
+  );
+  process.exit(2);
+}
+
 function main(): void {
+  refuseWindows();
   const check = process.argv.includes("--check");
   const at = process.argv.indexOf("--only");
   const only = at !== -1 ? process.argv[at + 1] : null;

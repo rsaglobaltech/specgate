@@ -349,6 +349,8 @@ test("REQ-189 SCN-189c: the live view shows what the agent asked and the command
     assert.equal(r.state, "question");
     assert.deepEqual(r.question, {
       text: "¿Qué foto?",
+      id: "Q6",
+      change: "draft-examen",
       answer: 'specgate answer Q6 "…" --change draft-examen',
     });
     assert.deepEqual(r.steps, [], "the question is not a step");

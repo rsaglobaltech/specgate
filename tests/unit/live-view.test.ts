@@ -73,7 +73,13 @@ function adopted() {
   const r = cli(dir, ["init"]);
   assert.equal(r.status, 0, out(r));
   fs.writeFileSync(path.join(dir, "harness.config.yaml"), 'test_cmd: "node pass.js"\n');
-  return { parent, dir, done: () => fs.rmSync(parent, { recursive: true, force: true }) };
+  return {
+    parent,
+    dir,
+    // Retries: on Windows an indexer or a process just exited can hold a file a moment.
+    done: () =>
+      fs.rmSync(parent, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }),
+  };
 }
 
 function openChange(dir: string) {
@@ -256,12 +262,24 @@ async function studio(dir: string) {
   });
   return {
     port,
-    stop: () => {
-      try {
-        process.kill(-child.pid, "SIGTERM");
-      } catch {
-        child.kill();
+    // The whole tree, and only once it has exited: the CLI runs studio as a
+    // grandchild, and a server left running holds the temp project open, so
+    // removing it failed with EBUSY on Windows, which has no process groups.
+    stop: async () => {
+      const exited = new Promise<void>((resolve) => {
+        if (child.exitCode !== null || child.signalCode !== null) resolve();
+        else child.once("exit", () => resolve());
+      });
+      if (process.platform === "win32") {
+        spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
+      } else {
+        try {
+          process.kill(-child.pid, "SIGTERM");
+        } catch {
+          child.kill();
+        }
       }
+      await exited;
     },
   };
 }
@@ -317,7 +335,7 @@ test("REQ-131 SCN-131a: the live view shows a requirement in progress, and pushe
     );
     assert.equal(last.state, "pass");
   } finally {
-    s.stop();
+    await s.stop();
     p.done();
   }
 });
@@ -336,7 +354,7 @@ test("REQ-132 SCN-132a: studio refuses another host name and listens on loopback
     });
     if (lsof.status === 0) assert.match(lsof.stdout, /127\.0\.0\.1:/);
   } finally {
-    s.stop();
+    await s.stop();
     p.done();
   }
 });

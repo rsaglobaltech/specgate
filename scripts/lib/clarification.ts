@@ -191,6 +191,17 @@ export function reviewed(
     };
   }
   write(aFile, r.md);
+  // The decision is in the spec: what waited only for this question can be
+  // built again (REQ-210). Another open question still holds its own.
+  const all = allQuestions(projectDir);
+  const blocks = (all.find((q) => q.id === id && q.change === picked) || { blocks: [] }).blocks;
+  const stillHeld = new Set(all.filter((q) => !q.answered).flatMap((q) => q.blocks));
+  const status = new Map(liveMatrix(projectDir).map((m) => [m.requirement, m.status]));
+  for (const req of blocks) {
+    if (stillHeld.has(req) || status.get(req) !== "Needs Clarification") continue;
+    const where = definedIn(projectDir, req);
+    if (where) setStatusIn(where.file, projectDir, req, "Draft");
+  }
   return { ok: true, change: picked, ids: r.ids };
 }
 
@@ -222,14 +233,14 @@ export function definedIn(
  * A requirement of `spec.md` keeps its status in tables — the summary in
  * `spec.md` and the matrix — whose last cell is the status: set both.
  */
-function setWaitingInTables(projectDir: string, req: string): boolean {
+function setStatusInTables(projectDir: string, req: string, status: string): boolean {
   let done = false;
   for (const rel of ["spec.md", path.join("docs", "specs", "traceability.md")]) {
     const file = path.join(projectDir, rel);
     const text = read(file);
     if (!text) continue;
     const row = new RegExp(`^(\\|\\s*${req}\\s*\\|.*\\|)\\s*[^|]+?\\s*\\|\\s*$`, "gm");
-    const next = text.replace(row, (_m, head: string) => `${head} Needs Clarification |`);
+    const next = text.replace(row, (_m, head: string) => `${head} ${status} |`);
     if (next !== text) {
       write(file, next);
       done = true;
@@ -255,8 +266,19 @@ function safeDirs(dir: string): string[] {
  * statuses a delivery moves through, and this one is not.
  */
 export function setWaiting(file: string, projectDir: string, req: string): boolean {
+  return setStatusIn(file, projectDir, req, "Needs Clarification");
+}
+
+/** The requirement's trace status set in the file that defines it, the matrix refreshed. */
+export function setStatusIn(
+  file: string,
+  projectDir: string,
+  req: string,
+  status: string
+): boolean {
+  const value = /\s/.test(status) ? `"${status}"` : status;
   if (path.basename(file) === "spec.md" && path.dirname(file) === projectDir) {
-    return setWaitingInTables(projectDir, req);
+    return setStatusInTables(projectDir, req, status);
   }
   const lines = (read(file) || "").split("\n");
   const head = new RegExp(`^(?:###\\s+Requirement:|##)\\s+${req}\\b`);
@@ -265,11 +287,8 @@ export function setWaiting(file: string, projectDir: string, req: string): boole
   for (let i = start + 1; i < lines.length && !/^#{2,3}\s(?!#)/.test(lines[i]); i += 1) {
     if (!/<!--\s*specgate:trace\b/.test(lines[i])) continue;
     lines[i] = /\bstatus=/.test(lines[i])
-      ? lines[i].replace(/\bstatus=(?:"[^"]*"|[^\s"]+?)(?=\s|-->)/, 'status="Needs Clarification"')
-      : lines[i].replace(
-          /<!--\s*specgate:trace/,
-          '<!-- specgate:trace status="Needs Clarification"'
-        );
+      ? lines[i].replace(/\bstatus=(?:"[^"]*"|[^\s"]+?)(?=\s|-->)/, `status=${value}`)
+      : lines[i].replace(/<!--\s*specgate:trace/, `<!-- specgate:trace status=${value}`);
     write(file, lines.join("\n"));
     try {
       refreshDerivedMatrix(projectDir);

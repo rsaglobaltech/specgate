@@ -210,3 +210,30 @@ test("REQ-192 SCN-192c: an unknown module is refused, and nothing is written", (
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-198 SCN-198a: the in-flight view says which requirements a change modifies", () => {
+  const dir = project();
+  try {
+    assert.equal(cli(dir, "change", "new", "gears", "--modify", "REQ-017").status, 0);
+    const { inFlightRequirements } = require("../../scripts/lib/in-flight");
+    const r17 = inFlightRequirements(dir).find((r: { id: string }) => r.id === "REQ-017");
+    assert.equal(r17.op, "modified");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-202 SCN-202a: a requirement id mentioned in a scenario's text reserves nothing", () => {
+  const dir = project();
+  try {
+    fs.appendFileSync(
+      path.join(dir, "docs/specs/capabilities/fichas/spec.md"),
+      "\n#### Scenario: SCN-090 — Refused\n\n- GIVEN REQ-999 is defined nowhere\n- WHEN it is modified\n- THEN it is refused\n"
+    );
+    const r = cli(dir, "change", "new", "next", "--reserve", "2", "--json");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.deepEqual(JSON.parse(r.stdout).change.reqRange, ["REQ-019", "REQ-020"]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
