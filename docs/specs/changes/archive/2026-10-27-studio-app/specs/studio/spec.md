@@ -18,7 +18,7 @@ The system SHALL serve at studio's root a page with four sections — Home, Ques
 - WHEN an app action is posted without the page's token
 - THEN it is refused with 403
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/studio-app.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-205 — Home says what to do next
 
@@ -36,7 +36,7 @@ The system SHALL give Home the project's counts — requirements built of the to
 - WHEN Home is read each time
 - THEN the next action is review the draft, then build, then nothing left
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/studio-app.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-206 — A draft is approved by a person
 
@@ -54,7 +54,7 @@ The system SHALL, with `specgate change approve <id>`, record in the change's ch
 - WHEN it is approved
 - THEN it is refused naming the question, and change.yaml is unchanged
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/studio-app.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-207 — Asking a draft for a change in your own words
 
@@ -66,7 +66,7 @@ The system SHALL, with `specgate change note <id> "<text>" [--req <REQ>]`, appen
 - WHEN `specgate change note draft-garaje "Mejor 2 horas antes" --req REQ-212` runs
 - THEN review.md holds the note with REQ-212 and the date, and Review lists it under the draft
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/studio-app.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-208 — Build lists what is ready and starts it
 
@@ -90,7 +90,7 @@ The system SHALL list under Build the requirements left to build that wait for n
 - WHEN Build is started
 - THEN it is refused, saying how to configure one
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/studio-app.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-209 — Stopping a run after the requirement in progress
 
@@ -102,7 +102,7 @@ The system SHALL let a person ask a harness run to stop once the requirement in 
 - WHEN REQ-001 ends
 - THEN REQ-002 is not attempted, the reason says a stop was asked, and the stop request is gone
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/harness-run.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-210 — Questions in the app
 
@@ -114,4 +114,4 @@ The system SHALL list under Questions every open question with where it comes fr
 - WHEN Questions is read
 - THEN Q6 is listed with its options and form, and Q1 under the answers to confirm
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/studio-app.test.ts actor=Developer kind=functional -->

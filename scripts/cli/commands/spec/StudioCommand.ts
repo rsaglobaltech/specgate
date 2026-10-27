@@ -3,6 +3,17 @@ import * as path from "node:path";
 import * as http from "node:http";
 import * as crypto from "node:crypto";
 import { answer as answerQuestion, reviewed as reviewQuestion } from "../../../lib/clarification";
+import { approveChange, noteChange } from "../../../lib/change-review";
+import {
+  buildView,
+  drafts,
+  gate,
+  home,
+  questionsView,
+  startBuild,
+  stopBuild,
+} from "../../../lib/studio-app";
+import { studioAppPage } from "../../../lib/studio-app-page";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
@@ -271,12 +282,36 @@ export class StudioCommand extends BaseCommand {
         return;
       }
       const url = String(req.url || "/").split("?")[0];
-      // REQ-201: the one write — answering a question, or marking it reviewed.
-      if (req.method === "POST" && url === "/live/answer") {
-        const json = (code: number, body: unknown) => {
-          res.writeHead(code, { "content-type": "application/json" });
-          res.end(JSON.stringify(body));
-        };
+      const json = (code: number, body: unknown) => {
+        res.writeHead(code, { "content-type": "application/json" });
+        res.end(JSON.stringify(body));
+      };
+      // REQ-204: the app's reads, built from what the commands read.
+      const reads: Record<string, () => unknown> = {
+        "/api/home": () => home(projectDir),
+        "/api/gate": () => gate(projectDir),
+        "/api/questions": () => questionsView(projectDir),
+        "/api/drafts": () => drafts(projectDir),
+        "/api/build": () => buildView(projectDir),
+      };
+      if (req.method === "GET" && reads[url]) {
+        try {
+          json(200, reads[url]());
+        } catch (err) {
+          json(500, { ok: false, message: errorMessage(err) });
+        }
+        return;
+      }
+      // REQ-201, REQ-204: the writes — answering, approving, noting, building, stopping.
+      const WRITES = [
+        "/live/answer",
+        "/api/answer",
+        "/api/approve",
+        "/api/note",
+        "/api/build",
+        "/api/stop",
+      ];
+      if (req.method === "POST" && WRITES.includes(url)) {
         const header = (name: string) => {
           const v = req.headers[name];
           return Array.isArray(v) ? v[0] : v;
@@ -297,11 +332,46 @@ export class StudioCommand extends BaseCommand {
           if (raw.length > 16 * 1024) req.destroy();
         });
         req.on("end", () => {
-          let body: { question?: string; change?: string; answer?: string; reviewed?: boolean };
+          let body: {
+            question?: string;
+            change?: string;
+            answer?: string;
+            reviewed?: boolean;
+            req?: string;
+            text?: string;
+            reqs?: string[];
+          };
           try {
-            body = JSON.parse(raw);
+            body = JSON.parse(raw || "{}");
           } catch {
             json(400, { ok: false, message: "The body is not JSON." });
+            return;
+          }
+          const today = new Date().toISOString().slice(0, 10);
+          if (url === "/api/approve") {
+            const r = approveChange(projectDir, String(body.change || ""), today);
+            json(r.ok ? 200 : 422, r);
+            return;
+          }
+          if (url === "/api/note") {
+            const r = noteChange(
+              projectDir,
+              String(body.change || ""),
+              String(body.text || ""),
+              String(body.req || ""),
+              today
+            );
+            json(r.ok ? 200 : 422, r);
+            return;
+          }
+          if (url === "/api/build") {
+            const r = startBuild(projectDir, Array.isArray(body.reqs) ? body.reqs.map(String) : []);
+            json(r.ok ? 202 : 422, r);
+            return;
+          }
+          if (url === "/api/stop") {
+            const r = stopBuild(projectDir);
+            json(r.ok ? 200 : 422, r);
             return;
           }
           const q = String(body.question || "");
@@ -319,7 +389,13 @@ export class StudioCommand extends BaseCommand {
       }
       if (req.method !== "GET" && req.method !== "HEAD") {
         res.writeHead(405, { "content-type": "text/plain", allow: "GET, HEAD" });
-        res.end("Studio only reads, except POST /live/answer.\n");
+        res.end("Studio only reads, except its app's POST actions.\n");
+        return;
+      }
+      // REQ-204: the app at the root; the overview it replaced moves to /overview.
+      if (url === "/" || url === "/app" || url === "/app/") {
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        res.end(studioAppPage(path.basename(projectDir), token));
         return;
       }
       if (url === "/live" || url === "/live/") {

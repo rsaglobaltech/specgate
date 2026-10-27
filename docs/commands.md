@@ -95,17 +95,19 @@ scenarios. Until it is fixed, run `specgate init` and then `specgate specops add
 
 ## Changes
 
-| Command                                             | What it does                                                             | Details                                                                         |
-| --------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| `specgate change list`                              | Open changes and their task progress.                                    | [Change a shipped requirement](reviewing-changes.md)                            |
-| `specgate change show <id>`                         | A change's proposal, deltas and what they touch.                         | [Change a shipped requirement](reviewing-changes.md)                            |
-| `specgate change status [<id>]`                     | Which file of the change to write next.                                  | [Change a shipped requirement](reviewing-changes.md)                            |
-| `specgate change instructions <artifact>`           | The template and rules for one file of a change, for you or an agent.    | [Agents](agents.md#why-the-generated-files-are-thin)                            |
-| `specgate change author <id>`                       | Has an agent write one file of a change, confined to the change folder.  | [Change a shipped requirement](reviewing-changes.md#have-an-agent-draft-a-file) |
-| `specgate change validate [<id>]`                   | Checks the deltas. `specgate validate` runs it too.                      | [Change a shipped requirement](reviewing-changes.md)                            |
-| `specgate change new <id> --modify <REQ>`           | Opens a change with the requirement copied into a MODIFIED delta, Draft. | [Change a shipped requirement](reviewing-changes.md)                            |
-| `specgate change impact <REQ\|id>`                  | Spec, features, tests, files and requirements a change to it touches.    | [Change a shipped requirement](reviewing-changes.md)                            |
-| `specgate propose <id> --from-value-drift <REQ:id>` | Opens a change that updates a declared value the code disagrees with.    | [Validating](validating.md#declared-value-drift-a-report-not-a-gate)            |
+| Command                                             | What it does                                                                | Details                                                                         |
+| --------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `specgate change list`                              | Open changes and their task progress.                                       | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate change show <id>`                         | A change's proposal, deltas and what they touch.                            | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate change status [<id>]`                     | Which file of the change to write next.                                     | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate change instructions <artifact>`           | The template and rules for one file of a change, for you or an agent.       | [Agents](agents.md#why-the-generated-files-are-thin)                            |
+| `specgate change author <id>`                       | Has an agent write one file of a change, confined to the change folder.     | [Change a shipped requirement](reviewing-changes.md#have-an-agent-draft-a-file) |
+| `specgate change validate [<id>]`                   | Checks the deltas. `specgate validate` runs it too.                         | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate change new <id> --modify <REQ>`           | Opens a change with the requirement copied into a MODIFIED delta, Draft.    | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate change impact <REQ\|id>`                  | Spec, features, tests, files and requirements a change to it touches.       | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate change approve <id>`                      | A person approved the draft: Build in studio may start it.                  | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate change note <id> "<text>"`                | Asks the draft for a change in your words, kept in review.md (`--req REQ`). | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate propose <id> --from-value-drift <REQ:id>` | Opens a change that updates a declared value the code disagrees with.       | [Validating](validating.md#declared-value-drift-a-report-not-a-gate)            |
 
 ## Jira and other trackers (ALM)
 
