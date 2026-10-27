@@ -2307,3 +2307,38 @@ test(
     }
   }
 );
+
+test("REQ-209 SCN-209a: a stop asked while a requirement runs starts no other", () => {
+  const { parent, projectDir } = threeRequirementProject();
+  try {
+    const stopFile = path.join(projectDir, ".harness", "events", "stop");
+    // The agent of the first requirement asks for the stop, as a person would
+    // from studio while it runs.
+    const agentFile = path.join(parent, "stop-agent.js");
+    fs.writeFileSync(
+      agentFile,
+      [
+        'const fs = require("node:fs");',
+        `fs.mkdirSync(${JSON.stringify(path.dirname(stopFile))}, { recursive: true });`,
+        `fs.writeFileSync(${JSON.stringify(stopFile)}, "now");`,
+        'fs.writeFileSync("src-stop.ts", "export const x = 1;");',
+        "",
+      ].join("\n")
+    );
+    const r = runAll(projectDir, `"${process.execPath}" "${agentFile}" {prompt_file}`, [
+      "--req",
+      "REQ-000",
+      "--req",
+      "REQ-001",
+      "--req",
+      "REQ-002",
+      "--skip-baseline",
+    ]);
+    const out = r.stdout + r.stderr;
+    assert.match(out, /REQ-001[\s\S]*a stop was asked/, out);
+    assert.doesNotMatch(out, /REQ-001\s+attempt 1/, "REQ-001 never started");
+    assert.equal(fs.existsSync(stopFile), false, "the request is consumed");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  }
+});

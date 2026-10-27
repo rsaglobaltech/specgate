@@ -64,6 +64,7 @@ import {
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
+import { approveChange, noteChange } from "../../../lib/change-review";
 import {
   declaredSpecValues,
   declaredCodeValues,
@@ -159,7 +160,7 @@ function usage() {
   process.stdout.write(
     `\n  ${c.bold}${c.cyan}🔄 change${c.reset}  ${c.dim}— propose, review and archive a change${c.reset}\n\n` +
       `  ${c.bold}USAGE${c.reset}\n` +
-      `    ${c.cyan}specgate change${c.reset} <new|list|show|status|instructions|author|validate|impact|archive> [options]\n\n` +
+      `    ${c.cyan}specgate change${c.reset} <new|list|show|status|instructions|author|validate|impact|approve|note|archive> [options]\n\n` +
       `  ${c.bold}SUBCOMMANDS${c.reset}\n` +
       `    ${c.green}new <id>${c.reset}       ${c.dim}Scaffold a change folder (proposal, tasks, delta skeleton).${c.reset}\n` +
       `    ${c.green}list${c.reset}           ${c.dim}Active changes with task progress.${c.reset}\n` +
@@ -168,6 +169,8 @@ function usage() {
       `    ${c.green}author <id>${c.reset}    ${c.dim}Have an agent write one artefact, confined to the change.${c.reset}\n` +
       `    ${c.green}validate [id]${c.reset}  ${c.dim}Check the deltas against the capability specs.${c.reset}\n` +
       `    ${c.green}impact <REQ|id>${c.reset} ${c.dim}Spec, features, tests, files and requirements a change to it touches.${c.reset}\n` +
+      `    ${c.green}approve <id>${c.reset}   ${c.dim}A person approved the draft: Build may start it.${c.reset}\n` +
+      `    ${c.green}note <id> "<text>"${c.reset} ${c.dim}Ask the draft for a change in your words (--req REQ).${c.reset}\n` +
       `    ${c.green}archive <id>${c.reset}   ${c.dim}Once its requirements are Implemented: merge, sync traceability, archive.${c.reset}\n\n` +
       `  ${c.bold}OPTIONS${c.reset}\n` +
       `    ${c.green}--project-dir <path>${c.reset}  ${c.dim}Project root (default: auto-detected).${c.reset}\n` +
@@ -200,6 +203,8 @@ export interface ChangeOptions {
   full: boolean;
   capability: string | null;
   fromValueDrift: string | null;
+  /** `--req REQ-NNN`: the requirement a review note is about (REQ-207). */
+  req?: string;
   /** `--modify REQ-NNN`, repeatable: requirements copied into MODIFIED deltas (REQ-190). */
   modify: string[];
   schema?: string;
@@ -232,6 +237,7 @@ function parseArgs(argv: string[]): ChangeOptions {
     else if (a === "--capability" && argv[i + 1]) opts.capability = argv[++i];
     else if (a === "--from-value-drift" && argv[i + 1]) opts.fromValueDrift = argv[++i];
     else if (a === "--modify" && argv[i + 1]) opts.modify.push(argv[++i]);
+    else if (a === "--req" && argv[i + 1]) opts.req = argv[++i];
     else if (a === "--schema" && argv[i + 1]) opts.schema = argv[++i];
     else if (a === "--reserve" && argv[i + 1]) opts.reserve = parseInt(argv[++i], 10) || 3;
     else if (a === "--artifact" && argv[i + 1]) opts.artifact = argv[++i];
@@ -590,6 +596,51 @@ function cmdList(opts: ChangeOptions) {
 }
 
 // ── show ──────────────────────────────────────────────────────────────────────
+
+/** `change approve <id>` — a person approved the draft; Build waits for it (REQ-206). */
+function cmdApprove(opts: ChangeOptions) {
+  const projectDir = resolveProjectDir(opts.projectDir);
+  const id = opts.positional[0];
+  const nullShape = { approve: null };
+  const r = id
+    ? approveChange(projectDir, id, new Date().toISOString().slice(0, 10))
+    : { ok: false as const, code: "change_not_found", message: "approve needs a change id." };
+  if (!r.ok) {
+    return fail(opts, nullShape, [
+      error(r.code, r.message, {
+        target: id,
+        fix: "Answer its questions and fix what specgate draft --check reports, then approve again.",
+      }),
+    ]);
+  }
+  emit(opts, { approve: r }, () =>
+    process.stdout.write(
+      ui.header("change approve", id) + ui.ok(`${id} approved on ${r.approved}.`) + "\n"
+    )
+  );
+}
+
+/** `change note <id> "<text>" [--req REQ]` — a change asked in the reviewer's words (REQ-207). */
+function cmdNote(opts: ChangeOptions) {
+  const projectDir = resolveProjectDir(opts.projectDir);
+  const [id, ...words] = opts.positional;
+  const nullShape = { note: null };
+  const r = id
+    ? noteChange(
+        projectDir,
+        id,
+        words.join(" "),
+        opts.req || "",
+        new Date().toISOString().slice(0, 10)
+      )
+    : { ok: false as const, code: "change_not_found", message: "note needs a change id." };
+  if (!r.ok) return fail(opts, nullShape, [error(r.code, r.message, { target: id })]);
+  emit(opts, { note: r }, () =>
+    process.stdout.write(
+      ui.header("change note", id) + ui.ok(`Noted in ${id}/review.md (${r.notes} in all).`) + "\n"
+    )
+  );
+}
 
 /** `change impact <REQ|change>` — what a change to a requirement touches (REQ-191). */
 function cmdImpact(opts: ChangeOptions) {
@@ -1297,6 +1348,8 @@ export class CliCommand extends BaseCommand {
       archive: cmdArchive,
       author: cmdAuthor,
       impact: cmdImpact,
+      approve: cmdApprove,
+      note: cmdNote,
     };
 
     const handler = table[sub];

@@ -223,6 +223,8 @@ export function renderConfig(cfg: ChangeConfig): string {
   if (Array.isArray(cfg.req_range) && cfg.req_range.length === 2) {
     lines.push(`req_range: [${cfg.req_range[0]}, ${cfg.req_range[1]}]`);
   }
+  // A person's approval survives a rewrite of the file (REQ-206).
+  if (cfg.approved) lines.push(`approved: ${String(cfg.approved)}`);
   return `${lines.join("\n")}\n`;
 }
 

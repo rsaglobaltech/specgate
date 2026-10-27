@@ -51,6 +51,7 @@ import {
   minFreeBytes,
   orderAsGiven,
   runLockHolder,
+  takeStop,
 } from "../../../lib/harness-guard";
 import {
   EVENTS_ATTEMPT_VAR,
@@ -2450,6 +2451,14 @@ async function runChain(
         results.push(notAttempted(rest, rest.requirement, reason));
       }
     };
+    // REQ-209: a stop asked while the last requirement ran starts no other.
+    if (i > 0 && takeStop(projectDir)) {
+      for (const rest of pending.slice(i)) {
+        results.push(notAttempted(rest, rest.requirement, "a stop was asked"));
+      }
+      info(`stopped as asked: ${pending.length - i} requirement(s) not attempted`);
+      break;
+    }
     const [result] = await runLevels([req], ctx, {
       concurrency: 1,
       hintByReq,
@@ -2797,6 +2806,11 @@ export async function runLevels(
         // what was actually begun, so the count ceiling and the clock agree.
         mayStart: () => {
           if (stoppedBy) return false;
+          // REQ-209: a stop asked while a requirement ran starts no other.
+          if (started > 0 && takeStop(ctx.projectDir)) {
+            stoppedBy = { stop: true, code: "stop_asked", reason: "a stop was asked" };
+            return false;
+          }
           const verdict = budgetVerdict(
             limits,
             { startedAt: budgetStartedAt, started },
@@ -3061,6 +3075,8 @@ export class RunCommand extends BaseCommand {
               `. Wait for it to finish: its post-merge gate runs in this working copy.`
           );
         }
+        // A stop left from an earlier run is not this run's (REQ-209).
+        takeStop(projectDir);
       }
 
       // What the live view lists as up next (REQ-182).
