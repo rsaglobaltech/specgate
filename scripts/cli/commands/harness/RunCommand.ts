@@ -39,7 +39,17 @@ import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightView } from "../../../lib/in-flight";
-import { appendEvent, eventsFileFor } from "../../../lib/harness-events";
+import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
+import {
+  acquireRunLock,
+  branchMergedInto,
+  existingBranchAction,
+  freeBytes,
+  lowDiskMessage,
+  minFreeBytes,
+  orderAsGiven,
+  runLockHolder,
+} from "../../../lib/harness-guard";
 import {
   EVENTS_ATTEMPT_VAR,
   EVENTS_FILE_VAR,
@@ -1188,6 +1198,14 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         );
         fs.writeFileSync(promptFile, prompt, "utf8");
         archivePrompt(worktreeDir, req.requirement, attempt, step, prompt);
+        // The live view shows what the agent was told and how big it was (REQ-182).
+        keepPrompt(ctx.projectDir || worktreeDir, req.requirement, attempt, prompt);
+        event({
+          type: "prompt",
+          role: step.profile || (step.advisory ? "reviewer" : "agent"),
+          chars: prompt.length,
+          lines: prompt.split("\n").length,
+        });
 
         // D1: a profile chosen by matching this requirement, when one matches.
         // The role ladder still wins — `attempt_profiles` names a profile for
@@ -1946,14 +1964,32 @@ function processRequirement(req: HarnessRequirement, ctx: RunContext): Requireme
     `specgate-harness-${req.requirement}-${crypto.randomBytes(4).toString("hex")}`
   );
 
+  // A full disk mid-copy ended a night's chain with ENOSPC (REQ-184): stop
+  // before starting, with the reason, instead.
+  const lowDisk = lowDiskMessage(freeBytes(os.tmpdir()), minFreeBytes(), os.tmpdir());
+  if (lowDisk) {
+    return {
+      requirement: req.requirement,
+      category: req.category,
+      result: "fail",
+      attempts: 0,
+      branch,
+      error: `Not started: ${lowDisk}`,
+    };
+  }
+
   // Three ways to meet an existing branch, and until C3 there were only two:
   // skip it, or delete it with --force. After an interruption — a crash, a
   // Ctrl-C, a spend limit — neither is what anyone wants.
   let resuming = false;
-  if (branchExists(projectDir, branch)) {
-    if (ctx.resume) {
+  const exists = branchExists(projectDir, branch);
+  // A branch already merged into the base holds nothing to lose (REQ-185).
+  const merged = exists && branchMergedInto(projectDir, branch, baseRef);
+  const action = existingBranchAction({ exists, merged, resume: Boolean(ctx.resume), force });
+  if (exists) {
+    if (action === "resume") {
       resuming = true;
-    } else if (!force) {
+    } else if (action === "skip") {
       return {
         requirement: req.requirement,
         category: req.category,
@@ -1965,6 +2001,7 @@ function processRequirement(req: HarnessRequirement, ctx: RunContext): Requireme
           `or --force to recreate it from scratch.`,
       };
     } else {
+      if (merged && !force) info(`${req.requirement}: ${branch} is already merged — recreating it`);
       git(projectDir, ["branch", "-D", branch]);
     }
   } else if (ctx.resume) {
@@ -2377,7 +2414,11 @@ async function runChain(
         result: "fail",
         error: `post-merge gate: ${gate.stage}\n${String(gate.output || "").slice(-4000)}`,
       });
-      warn(`${req.requirement}: green on ${branch}, red once merged — the merge was undone`);
+      warn(
+        `${req.requirement}: green on ${branch}, red once merged — the merge was undone. ` +
+          `This gate runs in the working copy: tests or a server started there by hand ` +
+          `while the harness runs can break it.`
+      );
       stop(`the chain stopped at ${req.requirement}`);
       break;
     }
@@ -2761,7 +2802,11 @@ export class RunCommand extends BaseCommand {
       });
       if (args.reqs.length > 0) {
         const wanted = new Set(args.reqs);
-        pending = pending.filter((r) => wanted.has(r.requirement));
+        // In the order given (REQ-185): the plan's order reshuffled a chain silently.
+        pending = orderAsGiven(
+          pending.filter((r) => wanted.has(r.requirement)),
+          args.reqs
+        );
         const found = new Set(pending.map((r) => r.requirement));
         for (const want of args.reqs) {
           if (!found.has(want)) warn(`${want} is not a pending requirement — skipped.`);
@@ -2890,6 +2935,30 @@ export class RunCommand extends BaseCommand {
         strictArtifacts: args.strictArtifacts,
         verbose: args.verbose,
       };
+
+      // One run per working copy (REQ-186): the post-merge gate runs in it.
+      if (!process.env.SPECGATE_HARNESS_WORKER) {
+        const release = acquireRunLock(
+          projectDir,
+          pending.map((r) => r.requirement)
+        );
+        if (!release) {
+          const holder = runLockHolder(projectDir);
+          throw new Error(
+            `Another harness run (pid ${holder ? holder.pid : "?"}) is working in this project` +
+              (holder ? ` on ${holder.reqs.join(", ")}` : "") +
+              `. Wait for it to finish: its post-merge gate runs in this working copy.`
+          );
+        }
+      }
+
+      // What the live view lists as up next (REQ-182).
+      if (!process.env.SPECGATE_HARNESS_WORKER) {
+        writeQueue(
+          projectDir,
+          pending.map((r) => r.requirement)
+        );
+      }
 
       const startedAt = new Date().toISOString();
       const results = args.chain

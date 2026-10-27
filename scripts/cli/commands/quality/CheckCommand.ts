@@ -22,6 +22,7 @@ import { changeBaseFindings, recordBases } from "../../../lib/change-base";
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { recordCheck } from "../../../pet/pet";
+import { runLockHolder } from "../../../lib/harness-guard";
 
 const NULL_SHAPE = { check: null };
 
@@ -218,6 +219,15 @@ export class CheckCommand extends BaseCommand {
     const testCmd = testCmdFlag !== undefined ? testCmdFlag : harness.testCmd;
     const archCmd = (harness.archCmd || "").trim();
     const plan = planGateCheck(view ? view.dir : projectDir, testCmd, archCmd);
+    // The harness's post-merge gate runs in this working copy too (REQ-186).
+    const running = runLockHolder(projectDir);
+    if (running && !json && plan.steps.some((st) => st.stage === "tests")) {
+      process.stdout.write(
+        ui.warn(
+          `A harness run (pid ${running.pid}) is working in this project: tests run here now can break its post-merge gate.`
+        ) + "\n"
+      );
+    }
 
     for (const step of plan.steps) {
       const exec = () =>

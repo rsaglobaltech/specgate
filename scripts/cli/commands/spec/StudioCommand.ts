@@ -9,6 +9,8 @@ import { BaseCommand } from "../../../lib/command";
 import { c } from "../../../lib/ui";
 import { readLive, liveSignature } from "../../../lib/live-model";
 import { livePage } from "../../../lib/live-page";
+import { requirementDetail, liveMatrix } from "../../../lib/live-detail";
+import { promptFileFor } from "../../../lib/harness-events";
 
 const LOOPBACK = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
 
@@ -250,6 +252,37 @@ export class StudioCommand extends BaseCommand {
       if (url === "/live.json") {
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ schemaVersion: 1, projectDir, ...readLive(projectDir) }));
+        return;
+      }
+      // REQ-180: one requirement's details, read when the viewer opens it.
+      const reqMatch = /^\/live\/req\/(REQ-\d+)\.json$/.exec(url);
+      if (reqMatch) {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify(requirementDetail(projectDir, reqMatch[1])));
+        return;
+      }
+      // REQ-182: the prompt an attempt was given, as plain text.
+      const promptMatch = /^\/live\/req\/(REQ-\d+)\/prompt\/(\d+)\.txt$/.exec(url);
+      if (promptMatch) {
+        let text = "";
+        try {
+          text = fs.readFileSync(
+            promptFileFor(projectDir, promptMatch[1], Number(promptMatch[2])),
+            "utf8"
+          );
+        } catch {
+          res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+          res.end("No prompt kept for this attempt.\n");
+          return;
+        }
+        res.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
+        res.end(text);
+        return;
+      }
+      // REQ-181: the traceability matrix as it stands.
+      if (url === "/live/matrix.json") {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ schemaVersion: 1, rows: liveMatrix(projectDir) }));
         return;
       }
       if (url === "/live/stream") {

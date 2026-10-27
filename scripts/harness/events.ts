@@ -42,10 +42,42 @@ interface StreamContent {
 /** One line of `--output-format stream-json`, as far as this reads it. */
 interface StreamEvent {
   type?: string;
-  message?: { content?: StreamContent[] | unknown };
+  message?: { id?: string; model?: string; content?: StreamContent[] | unknown; usage?: Usage };
   result?: unknown;
   is_error?: boolean;
   subtype?: string;
+  /** `system` `init`: the session the agent runs in. */
+  model?: string;
+  claude_code_version?: string;
+  permissionMode?: string;
+  tools?: unknown[];
+  /** `result`: what the session cost. */
+  usage?: Usage;
+  total_cost_usd?: number;
+  num_turns?: number;
+  duration_api_ms?: number;
+  modelUsage?: Record<string, { contextWindow?: number }>;
+}
+
+/** Token counts as the API reports them for one message or a whole session. */
+interface Usage {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_read_input_tokens?: number;
+  cache_creation_input_tokens?: number;
+}
+
+const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+
+/** The context window a model id names: "[1m]" for the long one, 200k otherwise. */
+export function contextWindowOf(model: string): number {
+  return /\[1m\]/i.test(model) ? 1_000_000 : 200_000;
+}
+
+/** How full the context was for one message: everything it was sent, cached or not. */
+export function contextOf(u: Usage | undefined): number {
+  if (!u) return 0;
+  return n(u.input_tokens) + n(u.cache_read_input_tokens) + n(u.cache_creation_input_tokens);
 }
 
 /**
@@ -144,6 +176,11 @@ export async function main(argv: string[]): Promise<void> {
   const pending = new Map<string, { name: string; input: ToolInput; started: number }>();
   let finalResult = "";
   let failed = false;
+  // The agent's model and how full its context is, for the live view (REQ-182).
+  let model = "";
+  let ctxWindow = 0;
+  let output = 0;
+  const counted = new Set<string>();
 
   const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const raw of rl) {
@@ -156,6 +193,29 @@ export async function main(argv: string[]): Promise<void> {
       continue; // not a stream line: nothing to record
     }
     const content = (e.message && e.message.content) || [];
+    if (e.type === "system" && e.subtype === "init") {
+      model = typeof e.model === "string" ? e.model : "";
+      ctxWindow = contextWindowOf(model);
+      write({
+        type: "agent",
+        model,
+        ...(e.claude_code_version ? { version: String(e.claude_code_version) } : {}),
+        ...(e.permissionMode ? { permission: String(e.permissionMode) } : {}),
+        ...(Array.isArray(e.tools) ? { tools: e.tools.length } : {}),
+      });
+    }
+    // One usage line per message: a message streams as several lines that
+    // repeat its usage, so it is counted by its id once.
+    const msg = e.message;
+    if (e.type === "assistant" && msg && msg.usage && !counted.has(String(msg.id))) {
+      counted.add(String(msg.id));
+      if (!model && msg.model) {
+        model = msg.model;
+        ctxWindow = contextWindowOf(model);
+      }
+      output += n(msg.usage.output_tokens);
+      write({ type: "usage", context: contextOf(msg.usage), window: ctxWindow, output });
+    }
     if (e.type === "assistant" && Array.isArray(content)) {
       for (const c of content as StreamContent[]) {
         if (c.type === "text" && String(c.text || "").trim()) {
@@ -196,6 +256,22 @@ export async function main(argv: string[]): Promise<void> {
     } else if (e.type === "result") {
       finalResult = typeof e.result === "string" ? e.result : "";
       failed = e.is_error === true || Boolean(e.subtype && e.subtype !== "success");
+      const u = e.usage || {};
+      const windows = Object.values(e.modelUsage || {})
+        .map((m) => n(m && m.contextWindow))
+        .filter(Boolean);
+      write({
+        type: "usage",
+        final: true,
+        window: windows.length ? Math.max(...windows) : ctxWindow,
+        input: n(u.input_tokens),
+        output: n(u.output_tokens),
+        cacheRead: n(u.cache_read_input_tokens),
+        cacheWrite: n(u.cache_creation_input_tokens),
+        ...(typeof e.total_cost_usd === "number" ? { cost: e.total_cost_usd } : {}),
+        ...(typeof e.num_turns === "number" ? { turns: e.num_turns } : {}),
+        ...(typeof e.duration_api_ms === "number" ? { apiMs: e.duration_api_ms } : {}),
+      });
     }
   }
   if (finalResult) process.stdout.write(`${finalResult}\n`);
