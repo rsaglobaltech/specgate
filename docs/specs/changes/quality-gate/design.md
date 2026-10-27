@@ -47,6 +47,57 @@ Validation (REQ-218): unknown keys refused with the known list, as the config
 reader already does; `when` and `gate` checked; a `sarif`/report path must be
 relative; `env` names only (a value is refused, naming the risk).
 
+## 1b. Where a tool runs: installed, or in a container (REQ-232)
+
+The scanners (Semgrep, gitleaks, osv-scanner, OWASP Dependency-Check, Snyk,
+the SonarQube scanner) are separate programs a developer rarely has
+installed. Each preset names an official image, so a machine with Docker and
+none of them runs every check the same way CI does.
+
+```yaml
+checks:
+  - name: semgrep
+    run: "semgrep scan --config p/java --sarif --output {report_dir}/semgrep.sarif"
+    image: "semgrep/semgrep@sha256:<digest>"   # pinned by digest in the preset
+    runner: auto        # auto | local | docker
+    network: true       # false: --network none, for scanners that need nothing
+```
+
+- `runner: auto` (the default): the command's program on `PATH` runs it
+  locally; otherwise, when `docker` answers, the image runs it; otherwise the
+  check is reported as unavailable, naming both ways to get it (install the
+  tool, or start Docker). `local` and `docker` force one way.
+- The container: `docker run --rm -v <worktree>:/src -w /src` — the harness
+  mounts the requirement's worktree, not the main checkout; on Linux and
+  macOS `--user <uid>:<gid>`, so reports are not owned by root; Windows paths
+  converted for Docker Desktop; `{report_dir}` lives under the mount.
+- Tokens: `env:` names are forwarded as `-e NAME`, the value taken from the
+  host's environment by Docker, never written on the command line Specgate
+  prints or logs.
+- Caches: a named volume per tool where the tool has a database
+  (`specgate-dependency-check-data` for the NVD cache,
+  `specgate-semgrep-cache`), so the second run is fast.
+- Image pulls: not counted against the check's `timeout`; `specgate quality
+  doctor` lists each check as local, docker or unavailable, and `--pull`
+  fetches the images ahead of a run (CI warms them once).
+- Images by digest, refreshed with the presets in a release; a person may
+  override `image:` (a mirror for an air-gapped network, as for packs).
+
+What stays in the project's build, never in a container: JaCoCo, PIT,
+SpotBugs, PMD, Checkstyle, Error Prone and ArchUnit run through the Maven or
+Gradle wrapper (they are plugins of the build, and a container would need the
+whole JDK and dependency cache); the same for Vitest/Jest coverage, Stryker,
+ESLint, tsc and dependency-cruiser through the project's `node_modules`. A
+machine without a JDK can still set `runner: docker` with an image such as
+`maven:3.9-eclipse-temurin-21` and the `~/.m2` cache mounted — an option, not
+the default.
+
+Official images the presets name (digest pinned at implementation time,
+**(verify)** each): `semgrep/semgrep`, `ghcr.io/gitleaks/gitleaks`,
+`ghcr.io/google/osv-scanner`, `owasp/dependency-check`, `snyk/snyk:maven-3-jdk-21`
+and `snyk/snyk:node`, `sonarsource/sonar-scanner-cli`; Aikido's, if it
+publishes one.
+
 ## 2. Where checks run
 
 | Command / moment                 | `attempt` | `end` | `ci` |

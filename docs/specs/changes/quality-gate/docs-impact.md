@@ -7,7 +7,7 @@ which shipped code without its guide:
 - **A** — the visual studio (REQ-204..210, branch `feat/studio-app`)
 - **B** — the studio's route from an empty folder to the report, and
   `--profile` (REQ-211..217, branch `feat/studio-route`)
-- **C** — this change, quality and security in the gate (REQ-218..231, ADR-0040)
+- **C** — this change, quality and security in the gate (REQ-218..232, ADR-0040)
 
 Rules that apply to every page (from the repository): a guide under `docs/`
 stays at or under 300 lines (`docs-truth` test); `docs/*.md` is never run
@@ -20,7 +20,7 @@ in CI); a command a page names must exist (`docs-truth`).
 | Page | For | Contents |
 | --- | --- | --- |
 | `docs/studio.md` | A, B | What the studio is; `specgate studio` and its flags; the route's seven steps and when each opens; simple and advanced mode; Spanish and English; the new-project step and what it writes; the brief form and its markdown mode; drafting in the background, one at a time, stopping it; questions and the "the spec says it" confirmation; review, notes, approve; build, the agent picker, stopping after the current requirement; the report and its download; `/live` and `/overview`; security model (loopback only, per-start token, JSON POST, 405 on other methods); what each action runs underneath (the table of endpoint → command) |
-| `docs/quality.md` | C | Why (the failure modes of ADR-0040); `quality:` levels and what each enables (the table of design.md §5); `checks:` reference (name, run, when, gate, sarif, timeout, env, scope, baseline) and the placeholders; the stages and where each runs; the baseline: taking it, accepting, how fingerprints work, why moved code is not new; diff coverage and mutation score: thresholds, report formats read, what the agent is told; Java presets (Maven and Gradle) and Node presets, each with the plugin to declare; platform checks and their environment variables; suppressions; troubleshooting (slow PIT, missing report, a tool without SARIF). Split into `quality.md` and `quality-presets.md` if it passes 300 lines |
+| `docs/quality.md` | C | Why (the failure modes of ADR-0040); `quality:` levels and what each enables (the table of design.md §5); `checks:` reference (name, run, when, gate, sarif, timeout, env, scope, baseline) and the placeholders; the stages and where each runs; the baseline: taking it, accepting, how fingerprints work, why moved code is not new; diff coverage and mutation score: thresholds, report formats read, what the agent is told; Java presets (Maven and Gradle) and Node presets, each with the plugin to declare; platform checks and their environment variables; running scanners in Docker (`runner`, images, caches, `quality doctor --pull`, CI warm-up); suppressions; troubleshooting (slow PIT, missing report, a tool without SARIF). Split into `quality.md` and `quality-presets.md` if it passes 300 lines |
 
 ## Pages to change
 

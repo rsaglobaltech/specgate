@@ -49,7 +49,7 @@ Out of scope:
 - Languages other than Java and TypeScript/JavaScript in this change (.NET,
   Python, Go follow the same mechanism later; ADR-0040 is language-neutral).
 
-## Planned requirements (REQ-218..REQ-231)
+## Planned requirements (REQ-218..REQ-232)
 
 | Id      | Requirement                                                                                     |
 | ------- | ----------------------------------------------------------------------------------------------- |
@@ -67,6 +67,7 @@ Out of scope:
 | REQ-229 | Results in `/live` and in the studio (Calidad card, report, new-project quality level)          |
 | REQ-230 | Every preset runs against a fixture project (Maven, Gradle, npm) in the e2e suite               |
 | REQ-231 | ADR-0028's baseline and SARIF for `arch_cmd`, through the same mechanism                        |
+| REQ-232 | A scanner not installed runs from its official image when Docker is there (`runner: auto`), `quality doctor` |
 
 The range is reserved in `change.yaml`; the deltas are written requirement by
 requirement, each with its scenarios, before its code (AGENTS.md).

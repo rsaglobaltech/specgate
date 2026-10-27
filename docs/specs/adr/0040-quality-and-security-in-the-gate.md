@@ -90,6 +90,14 @@ requirement.
    writes tests that try to break it. Advisory by default, gating when the
    team says so.
 
+9. **A scanner need not be installed.** Each preset of a standalone scanner
+   (Semgrep, gitleaks, osv-scanner, OWASP Dependency-Check, Snyk, the
+   SonarQube scanner) names its official image, pinned by digest. With
+   `runner: auto` the installed program runs it, else Docker does, else the
+   check is reported unavailable with both remedies. Tools that are plugins of
+   the build (JaCoCo, PIT, SpotBugs, PMD, Checkstyle, Error Prone, ArchUnit,
+   Stryker, ESLint) run through the project's own Maven, Gradle or npm.
+
 ## Consequences
 
 - `check` gets slower by the checks a team enables; the `attempt`/`end`/`ci`
