@@ -20,11 +20,11 @@ result with the gate, not with the agent's exit code alone.
 specgate harness run --req REQ-001 --agent "claude -p < {prompt_file}"
 ```
 
-| Command                                                                 | Without `{prompt_file}`                                   |
-| ----------------------------------------------------------------------- | --------------------------------------------------------- |
-| `specgate harness run`                                                  | Refused. The harness never guesses where the prompt goes. |
-| `specgate change author`                                                | Refused, for the same reason.                             |
-| `specgate propose --from-brief`, `--from-ticket` and `specgate explore` | The prompt arrives on standard input.                     |
+| Command | Without `{prompt_file}` |
+| --- | --- |
+| `specgate harness run` | Refused. The harness never guesses where the prompt goes. |
+| `specgate change author` | Refused, for the same reason. |
+| `specgate propose --from-brief`, `--from-ticket` and `specgate explore` | The prompt arrives on standard input. |
 
 So `specgate propose --from-brief billing --agent "claude -p"` works as it
 is. In print mode Claude Code cannot write a file without permission, so for
@@ -36,14 +36,14 @@ the likely cause.
 
 ## Commands for common tools
 
-| Tool                                           | `--agent` value                                                                                            |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Claude Code                                    | `claude -p < {prompt_file}`                                                                                |
+| Tool | `--agent` value |
+| --- | --- |
+| Claude Code | `claude -p < {prompt_file}` |
 | Claude Code, watched live in `specgate studio` | `claude -p --output-format stream-json --verbose < {prompt_file} \| specgate harness events --from claude` |
-| Aider                                          | `aider --yes --message-file {prompt_file}`                                                                 |
-| OpenCode                                       | `opencode run "$(cat {prompt_file})"`                                                                      |
-| Cursor CLI                                     | `cursor-agent -p "$(cat {prompt_file})"`                                                                   |
-| Anything else                                  | `./my-agent.sh {prompt_file}` (a wrapper, below)                                                           |
+| Aider | `aider --yes --message-file {prompt_file}` |
+| OpenCode | `opencode run "$(cat {prompt_file})"` |
+| Cursor CLI | `cursor-agent -p "$(cat {prompt_file})"` |
+| Anything else | `./my-agent.sh {prompt_file}` (a wrapper, below) |
 
 The command runs in a shell, so `< {prompt_file}` and `"$(cat {prompt_file})"`
 both work. Agent tools change their flags between versions: check each tool's
@@ -162,9 +162,9 @@ attempt its own profile, and can add an advisory reviewer before each retry:
 ```yaml
 # harness.config.yaml
 attempt_profiles:
-  - implementer # attempt 1
-  - repairer # attempt 2
-  - repairer-strong # attempt 3, and any after it
+  - implementer        # attempt 1
+  - repairer           # attempt 2
+  - repairer-strong    # attempt 3, and any after it
 review_profile: reviewer
 ```
 
@@ -206,7 +206,7 @@ this setting the prompt gains one section: the most recent **Verified**
 requirement in the same bounded context, with the first forty lines of its test
 and its code. It must be Verified (someone checked it, not only Implemented),
 from the same bounded context, and earlier than the current requirement. The
-section says it shows _shape_, not behaviour, and it is left out when nothing
+section says it shows *shape*, not behaviour, and it is left out when nothing
 qualifies. It is off by default because it costs prompt space.
 
 ## Let something try to break it
@@ -242,7 +242,7 @@ discarded. The profile must declare `advisory: true`.
 
 The harness measures wall-clock time, because only the agent knows what it
 spent in tokens. A profile may declare an estimate per run, which
-`specgate harness report` multiplies out and labels _declared, not measured_:
+`specgate harness report` multiplies out and labels *declared, not measured*:
 
 ```yaml
 profiles:
