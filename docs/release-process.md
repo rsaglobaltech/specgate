@@ -4,6 +4,7 @@ How a version of Specgate is cut and published — to npm, to the container
 registry and to this documentation site — and what support it gets.
 
 <!-- specgate:note -->
+
 **GitHub Actions are switched off on the `rsaglobaltech` organisation**, to
 save the free-minutes quota — every workflow except `pages.yml`, which
 publishes this site. The process below describes what the workflows do when
@@ -13,17 +14,17 @@ a maintainer actually does meanwhile.
 
 ## What gets published
 
-| Artefact | Registry | Workflow | Status |
-|---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.25.0** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.25.0** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled between releases; newest image **0.25.0**, `linux/amd64` and `linux/arm64` |
-| MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
-| Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
-| `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
-| `specgate-gradle-plugin` | Gradle Plugin Portal or an internal repo | none yet | C7-06 |
-| `specgate-vscode` | VS Code Marketplace | none yet | C7-07 |
-| `@specgate/lsp-server` | npm | none yet | C7-08, blocked on C6-03 |
+| Artefact                             | Registry                                 | Workflow                      | Status                                                                                       |
+| ------------------------------------ | ---------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `@rsaglobaltech/specgate`            | npm, public                              | `publish-npm.yml`             | Live — **0.25.0** is `latest`                                                                |
+| `@rsaglobaltech/specgate`            | GitHub Packages                          | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.25.0**                                        |
+| CLI image                            | `ghcr.io`                                | `publish-docker.yml`          | Workflow disabled between releases; newest image **0.25.0**, `linux/amd64` and `linux/arm64` |
+| MCP server                           | inside the CLI package                   | `publish-npm.yml`             | Live: `specgate mcp serve`                                                                   |
+| Documentation site and pack registry | GitHub Pages                             | `pages.yml`                   | Live — see [Deployment of the site](#deployment-of-the-site)                                 |
+| `specgate-maven-plugin`              | Maven Central or an internal Nexus       | none yet                      | C7-05                                                                                        |
+| `specgate-gradle-plugin`             | Gradle Plugin Portal or an internal repo | none yet                      | C7-06                                                                                        |
+| `specgate-vscode`                    | VS Code Marketplace                      | none yet                      | C7-07                                                                                        |
+| `@specgate/lsp-server`               | npm                                      | none yet                      | C7-08, blocked on C6-03                                                                      |
 
 The two `@rsaglobaltech/specgate` rows are one coordinate in two registries, on
 purpose. Public npm is the default; routing the scope with
@@ -88,7 +89,7 @@ Breaking.
 `linux/arm64`. While `publish-docker.yml` is disabled, `latest` is the newest
 image that was built — **0.17.10** — not the newest npm version. A published
 tag is never rebuilt in place: re-running a workflow against an old tag checks
-out the workflow *as it was at that tag*. Pin `X.Y.Z` in CI.
+out the workflow _as it was at that tag_. Pin `X.Y.Z` in CI.
 
 ## Compatibility windows
 
@@ -96,16 +97,16 @@ Three version numbers travel with a project, and they are checked, not merely
 recorded. Both gates below were added after finding that the fields were
 written by the CLI and read by nothing.
 
-| Field | Where | This CLI supports | On mismatch |
-| --- | --- | --- | --- |
-| `schema_version` | `pack.yaml` | up to **1.5.0** | A pack declaring a newer schema is rejected with the reason and the upgrade command |
-| `specops_version` | `.specops.lock` | **1** | A lockfile from a newer CLI is rejected on read |
-| pack `version` | `.specops.lock` | any | Pinned; a content digest change fails the build — see [supply chain](supply-chain.md) |
+| Field             | Where           | This CLI supports | On mismatch                                                                           |
+| ----------------- | --------------- | ----------------- | ------------------------------------------------------------------------------------- |
+| `schema_version`  | `pack.yaml`     | up to **1.5.0**   | A pack declaring a newer schema is rejected with the reason and the upgrade command   |
+| `specops_version` | `.specops.lock` | **1**             | A lockfile from a newer CLI is rejected on read                                       |
+| pack `version`    | `.specops.lock` | any               | Pinned; a content digest change fails the build — see [supply chain](supply-chain.md) |
 
 **Older is always readable.** A pack on an older schema, or a lockfile with no
 `specops_version` at all, works unchanged — those files predate the field, and
 refusing them would strand existing projects to enforce a rule invented later.
-Only *newer than this CLI* is refused, because `schemas/pack.schema.json` sets
+Only _newer than this CLI_ is refused, because `schemas/pack.schema.json` sets
 `additionalProperties: false`: a newer minor is genuinely unreadable here, not
 merely unfamiliar. Failing at the top with "upgrade the CLI" beats failing
 twenty lines in with "unknown property".
@@ -136,7 +137,7 @@ the CLI supports, so getting this backwards fails CI rather than users.
    way, not from one that was red for the twenty minutes it took to notice.
 
    Three of `main`'s required checks (`npm audit`, `CodeQL`, `SBOM and
-   licences`) only run on pull requests, so open a PR `develop → main` first:
+licences`) only run on pull requests, so open a PR `develop → main` first:
    it runs all of them on the release commit. Then push that exact commit:
 
    ```bash
@@ -145,6 +146,7 @@ the CLI supports, so getting this backwards fails CI rather than users.
 
    **Quote the refspec: `"${R}:refs/heads/main"`.** In zsh, `$R:refs/…`
    applies the `:r` modifier and no longer names the commit. Read the output.
+
 6. **Only once `git rev-parse origin/main` is the release commit**, tag it
    `vX.Y.Z` and push the tag. On 0.10.0 the tag went out while the push to
    `main` had failed. `publish-npm.yml` fires, and publishes only after the
@@ -184,6 +186,7 @@ is how 0.19.1 shipped:
    bypass is the documented path, not an accident — step 1 ran every check
    those workflows would, on this exact commit, and the release pull request
    says which. Never push to `main` a commit step 1 did not run on.
+
 4. **Publish** — enable the publish workflows, tag, push the tag. All three
    (`publish-npm.yml`, `publish-github-packages.yml`, `publish-docker.yml`)
    trigger on the same `v*` tag:
@@ -196,6 +199,7 @@ is how 0.19.1 shipped:
 
    The tag runs the E2E journeys on Linux, macOS and Windows, then
    `test:all`, then publishes with provenance.
+
 5. **Check the registry**, then switch the workflow off again:
 
    ```bash
