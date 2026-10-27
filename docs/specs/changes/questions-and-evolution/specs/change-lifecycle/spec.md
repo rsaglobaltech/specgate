@@ -18,7 +18,7 @@ The system SHALL, with `specgate change new <id> --modify <REQ>` (repeatable), w
 - WHEN `specgate change new other --modify REQ-999` or `--modify REQ-017` runs
 - THEN it is refused, saying REQ-999 is not in a capability spec, or that gears already modifies REQ-017
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/change-evolution.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-191 — What a change to a requirement touches
 
@@ -36,7 +36,7 @@ The system SHALL list with `specgate change impact <REQ|change>` (`--json` too),
 - WHEN `specgate change impact gears` runs
 - THEN it lists the impact of REQ-017 and of REQ-018
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/change-evolution.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-192 — A new requirement for a module the brief already covers
 
@@ -52,7 +52,7 @@ The system SHALL, with `specgate brief add <module> "<text>"`, refuse a module t
 
 - GIVEN module examen has the open change draft-examen
 - WHEN `specgate brief add examen "Situaciones de noche"` runs
-- THEN draft-examen gains an ADDED requirement quoting the text, with the next id of its range or a newly reserved one
+- THEN draft-examen gains an ADDED requirement quoting the text with the next free id of its range; with the range used up, it is refused saying how to grow it
 
 #### Scenario: SCN-192c — An unknown module is refused
 
@@ -60,4 +60,4 @@ The system SHALL, with `specgate brief add <module> "<text>"`, refuse a module t
 - WHEN `specgate brief add garaje "x"` runs
 - THEN it is refused with the modules the brief lists, and nothing is written
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/change-evolution.test.ts actor=Developer kind=functional -->

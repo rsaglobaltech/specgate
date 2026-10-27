@@ -34,7 +34,7 @@ import { agentIo } from "../../../lib/agent";
 import type { AgentDocument } from "../../../lib/agent";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { ARTIFACTS, artifactState } from "../../../change/artifacts";
-import { parseDelta } from "../../../../packages/core/src/domain/SpecParser";
+import { parseDelta, renderRequirement } from "../../../../packages/core/src/domain/SpecParser";
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { changeRequirements, DELIVERED } from "../../../lib/in-flight";
 import { ArchiveChangeUseCase } from "../../../../packages/core/src/application/ArchiveChangeUseCase";
@@ -63,6 +63,7 @@ import {
 } from "../../../../packages/core/src/domain/ChangeTemplates";
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
+import { impactOf } from "../../../lib/change-impact";
 import {
   declaredSpecValues,
   declaredCodeValues,
@@ -158,7 +159,7 @@ function usage() {
   process.stdout.write(
     `\n  ${c.bold}${c.cyan}🔄 change${c.reset}  ${c.dim}— propose, review and archive a change${c.reset}\n\n` +
       `  ${c.bold}USAGE${c.reset}\n` +
-      `    ${c.cyan}specgate change${c.reset} <new|list|show|status|instructions|author|validate|archive> [options]\n\n` +
+      `    ${c.cyan}specgate change${c.reset} <new|list|show|status|instructions|author|validate|impact|archive> [options]\n\n` +
       `  ${c.bold}SUBCOMMANDS${c.reset}\n` +
       `    ${c.green}new <id>${c.reset}       ${c.dim}Scaffold a change folder (proposal, tasks, delta skeleton).${c.reset}\n` +
       `    ${c.green}list${c.reset}           ${c.dim}Active changes with task progress.${c.reset}\n` +
@@ -166,11 +167,13 @@ function usage() {
       `    ${c.green}status [id]${c.reset}    ${c.dim}Which artefact to write next.${c.reset}\n` +
       `    ${c.green}author <id>${c.reset}    ${c.dim}Have an agent write one artefact, confined to the change.${c.reset}\n` +
       `    ${c.green}validate [id]${c.reset}  ${c.dim}Check the deltas against the capability specs.${c.reset}\n` +
+      `    ${c.green}impact <REQ|id>${c.reset} ${c.dim}Spec, features, tests, files and requirements a change to it touches.${c.reset}\n` +
       `    ${c.green}archive <id>${c.reset}   ${c.dim}Once its requirements are Implemented: merge, sync traceability, archive.${c.reset}\n\n` +
       `  ${c.bold}OPTIONS${c.reset}\n` +
       `    ${c.green}--project-dir <path>${c.reset}  ${c.dim}Project root (default: auto-detected).${c.reset}\n` +
       `    ${c.green}--json${c.reset}                ${c.dim}One JSON document on stdout; prose on stderr.${c.reset}\n` +
       `    ${c.green}--capability <name>${c.reset}   ${c.dim}(new) Seed a delta for this capability.${c.reset}\n` +
+      `    ${c.green}--modify <REQ>${c.reset}        ${c.dim}(new) Copy a delivered requirement into a MODIFIED delta, Draft. Repeatable.${c.reset}\n` +
       `    ${c.green}--from-value-drift <REQ:id>${c.reset} ${c.dim}(new) Propose a spec update for a diverging` +
       ` declared value (§8.6).${c.reset}\n` +
       `    ${c.green}--full${c.reset}                ${c.dim}(new) Full rigor — also scaffold design.md.${c.reset}\n` +
@@ -197,6 +200,8 @@ export interface ChangeOptions {
   full: boolean;
   capability: string | null;
   fromValueDrift: string | null;
+  /** `--modify REQ-NNN`, repeatable: requirements copied into MODIFIED deltas (REQ-190). */
+  modify: string[];
   schema?: string;
   reserve: number;
   yes?: boolean;
@@ -217,6 +222,7 @@ function parseArgs(argv: string[]): ChangeOptions {
     full: false,
     capability: null,
     fromValueDrift: null,
+    modify: [],
     reserve: 3,
     positional: [],
   };
@@ -225,6 +231,7 @@ function parseArgs(argv: string[]): ChangeOptions {
     if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
     else if (a === "--capability" && argv[i + 1]) opts.capability = argv[++i];
     else if (a === "--from-value-drift" && argv[i + 1]) opts.fromValueDrift = argv[++i];
+    else if (a === "--modify" && argv[i + 1]) opts.modify.push(argv[++i]);
     else if (a === "--schema" && argv[i + 1]) opts.schema = argv[++i];
     else if (a === "--reserve" && argv[i + 1]) opts.reserve = parseInt(argv[++i], 10) || 3;
     else if (a === "--artifact" && argv[i + 1]) opts.artifact = argv[++i];
@@ -427,6 +434,36 @@ function cmdNew(opts: ChangeOptions) {
     valueDrift = resolved;
   }
 
+  // REQ-190: each requirement as its capability spec has it, reopened as Draft.
+  const modified = new Map<string, string[]>();
+  for (const id of opts.modify) {
+    const found = readCapabilityRequirements(projectDir).find((c) => c.req.id === id);
+    if (!found) {
+      return fail(opts, nullShape, [
+        error("modify_requirement_not_found", `${id} is not in a capability spec.`, {
+          target: id,
+          fix: "A requirement still in an open change is edited there; check the id with specgate status.",
+        }),
+      ]);
+    }
+    const owner = changeModifying(projectDir, id);
+    if (owner) {
+      return fail(opts, nullShape, [
+        error("modify_already_open", `${owner} already modifies ${id}.`, {
+          target: id,
+          fix: `Edit docs/specs/changes/${owner}, or archive it first.`,
+        }),
+      ]);
+    }
+    const text = found.req.text;
+    const reopened = renderRequirement({
+      ...found.req,
+      text: Array.isArray(text) ? text.join("\n") : text,
+      trace: { ...found.req.trace, status: "Draft" },
+    });
+    modified.set(found.capability, [...(modified.get(found.capability) || []), reopened.trim()]);
+  }
+
   const reqRange = reserveReqRange(projectDir, opts.reserve);
   const config = {
     ...DEFAULT_CONFIG,
@@ -455,6 +492,12 @@ function cmdNew(opts: ChangeOptions) {
   }
   if (valueDrift) {
     write(path.join(p.changeSpecs(changeId), valueDrift.capability, "spec.md"), valueDrift.content);
+  }
+  for (const [capability, blocks] of modified) {
+    write(
+      path.join(p.changeSpecs(changeId), capability, "spec.md"),
+      `# Delta — ${capability}\n\n## MODIFIED Requirements\n\n${blocks.join("\n\n")}\n`
+    );
   }
 
   emit(
@@ -490,6 +533,22 @@ function cmdNew(opts: ChangeOptions) {
       );
     }
   );
+}
+
+/** The open change whose delta already modifies a requirement, if one does (REQ-190). */
+function changeModifying(projectDir: string, id: string): string | null {
+  const heading = new RegExp(`^###\\s+Requirement:\\s+${id}\\b`, "m");
+  for (const change of listChangeIds(projectDir)) {
+    for (const d of listDeltas(projectDir, change)) {
+      const text = fs.readFileSync(d.file, "utf8");
+      const at = text.indexOf("## MODIFIED Requirements");
+      if (at === -1) continue;
+      const rest = text.slice(at + 3);
+      const end = rest.search(/^## /m);
+      if (heading.test(end === -1 ? rest : rest.slice(0, end))) return change;
+    }
+  }
+  return null;
 }
 
 // ── list ──────────────────────────────────────────────────────────────────────
@@ -531,6 +590,44 @@ function cmdList(opts: ChangeOptions) {
 }
 
 // ── show ──────────────────────────────────────────────────────────────────────
+
+/** `change impact <REQ|change>` — what a change to a requirement touches (REQ-191). */
+function cmdImpact(opts: ChangeOptions) {
+  const projectDir = resolveProjectDir(opts.projectDir);
+  const target = opts.positional[0];
+  const nullShape = { impact: null };
+  const impact = target ? impactOf(projectDir, target) : null;
+  if (!impact) {
+    return fail(opts, nullShape, [
+      error(
+        "impact_target_not_found",
+        target
+          ? `"${target}" is neither a requirement id nor an open change.`
+          : "impact needs a requirement or a change.",
+        { target, fix: "specgate change impact REQ-017, or specgate change impact <change-id>" }
+      ),
+    ]);
+  }
+  emit(opts, { impact }, () => {
+    process.stdout.write(ui.header("change impact", target));
+    if (impact.length === 0) {
+      process.stdout.write(ui.info(`${target} modifies or removes no requirement.`) + "\n");
+      return;
+    }
+    for (const i of impact) {
+      process.stdout.write(ui.section(i.requirement));
+      const line = (label: string, items: string[]) =>
+        process.stdout.write(
+          `  ${ui.muted(label.padEnd(10))} ${items.length ? items.join(", ") : ui.muted("none")}\n`
+        );
+      line("spec", i.spec ? [`${i.spec.file}:${i.spec.line}`] : []);
+      line("features", i.features);
+      line("tests", i.tests);
+      line("files", i.files);
+      line("named by", i.namedBy);
+    }
+  });
+}
 
 function cmdShow(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
@@ -1199,6 +1296,7 @@ export class CliCommand extends BaseCommand {
       validate: cmdValidate,
       archive: cmdArchive,
       author: cmdAuthor,
+      impact: cmdImpact,
     };
 
     const handler = table[sub];
