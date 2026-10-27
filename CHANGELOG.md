@@ -9,6 +9,28 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.26.0] — 2026-10-27
+
+A clean slate: everything a brief-to-app run left on the list, the test suite green on Windows, and the agent's questions answered from the live view.
+
+### Added
+
+- **Answer a question from the live view** (REQ-201): under each question the agent asked, Needs attention has a form to answer it and then mark it reviewed. Studio's only write, `POST /live/answer`, goes through the same code as `specgate answer` and needs the token its own page carries, a JSON body and a loopback origin; any other method than GET or HEAD gets 405.
+- **A requirement used on a screen needs an end-to-end test** (REQ-199): with `e2e_dir` in `harness.config.yaml`, a requirement whose actor uses web, mobile, tablet or desktop passes the gate only once a file there names it, and its prompt says so.
+- **A requirement an open change modifies is reworked** (REQ-198): the harness gives it `NEEDS_REWORK` instead of `NEEDS_STATUS_UPDATE`, and its prompt says the tests and code are for the old text.
+
+### Changed
+
+- **The harness template shows the streaming agent** (REQ-200): the Claude Code command that feeds studio's live view, and `e2e_dir`.
+- **Opening a module says which drafts stop growing** (REQ-197).
+- **Status names the module** of the next use case (REQ-193), and **DRAFTING.md gives the draft's real limit** with how to grow it (REQ-194).
+
+### Fixed
+
+- **The Cucumber gate on Windows** (REQ-196): the message stream went to a path Cucumber did not write, so a filter matching nothing passed. The four tests that failed only on Windows pass, tests remove their temp folders, and `docs:terminal` / `docs:journey` say they need a POSIX shell.
+- **Ids reserved from a mention** (REQ-202): "GIVEN REQ-999 is defined nowhere" in a scenario made the next change start at REQ-1000; only headings, matrix rows and `req_range` count now.
+- **No inline code split across changelog lines** (REQ-195), checked by a test.
+
 ## [0.25.0] — 2026-10-27
 
 Questions you answer with a command, and a specification that evolves without copying by hand: what taking a brief to a delivered app asked for.
