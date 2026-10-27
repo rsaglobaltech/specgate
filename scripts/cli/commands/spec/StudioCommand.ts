@@ -1,6 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as http from "node:http";
+import * as crypto from "node:crypto";
+import { answer as answerQuestion, reviewed as reviewQuestion } from "../../../lib/clarification";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
@@ -32,6 +34,29 @@ export function hostOf(header: string | undefined): string {
 export function hostAllowed(bound: string, header: string | undefined): boolean {
   if (!LOOPBACK.has(bound)) return true;
   return LOOPBACK.has(hostOf(header));
+}
+
+/**
+ * Whether a write from the live view may go through (REQ-201): studio's only
+ * write, answering a question. Same-origin JSON carrying the token this start
+ * of studio put in its page: a page on another site cannot read the token,
+ * and a form post from one cannot send JSON with a custom header.
+ */
+export function writeAllowed(
+  token: string,
+  headers: { token?: string; contentType?: string; origin?: string }
+): boolean {
+  const given = Buffer.from(String(headers.token || ""));
+  const want = Buffer.from(token);
+  if (!token || given.length !== want.length || !crypto.timingSafeEqual(given, want)) return false;
+  if (!/^application\/json\b/i.test(String(headers.contentType || ""))) return false;
+  // A browser always says where a cross-site request comes from.
+  if (!headers.origin) return true;
+  try {
+    return LOOPBACK.has(new URL(headers.origin).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 const DONE = new Set(["Implemented", "Verified", "Released"]);
@@ -237,6 +262,8 @@ export class StudioCommand extends BaseCommand {
       process.exit(0);
     }
 
+    // One per start of studio: the live page carries it, and a write needs it.
+    const token = crypto.randomBytes(24).toString("hex");
     const server = http.createServer((req, res) => {
       if (!hostAllowed(opts.host, req.headers.host)) {
         res.writeHead(403, { "content-type": "text/plain" });
@@ -244,9 +271,60 @@ export class StudioCommand extends BaseCommand {
         return;
       }
       const url = String(req.url || "/").split("?")[0];
+      // REQ-201: the one write — answering a question, or marking it reviewed.
+      if (req.method === "POST" && url === "/live/answer") {
+        const json = (code: number, body: unknown) => {
+          res.writeHead(code, { "content-type": "application/json" });
+          res.end(JSON.stringify(body));
+        };
+        const header = (name: string) => {
+          const v = req.headers[name];
+          return Array.isArray(v) ? v[0] : v;
+        };
+        if (
+          !writeAllowed(token, {
+            token: header("x-specgate-token"),
+            contentType: header("content-type"),
+            origin: header("origin"),
+          })
+        ) {
+          json(403, { ok: false, message: "Refused: not the live page of this studio." });
+          return;
+        }
+        let raw = "";
+        req.on("data", (d: Buffer) => {
+          raw += d;
+          if (raw.length > 16 * 1024) req.destroy();
+        });
+        req.on("end", () => {
+          let body: { question?: string; change?: string; answer?: string; reviewed?: boolean };
+          try {
+            body = JSON.parse(raw);
+          } catch {
+            json(400, { ok: false, message: "The body is not JSON." });
+            return;
+          }
+          const q = String(body.question || "");
+          if (!/^Q\d+$/.test(q)) {
+            json(400, { ok: false, message: "No question id." });
+            return;
+          }
+          const change = body.change ? String(body.change) : undefined;
+          const r = body.reviewed
+            ? reviewQuestion(projectDir, q, change)
+            : answerQuestion(projectDir, q, String(body.answer || "").trim(), change);
+          json(r.ok ? 200 : 422, r);
+        });
+        return;
+      }
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        res.writeHead(405, { "content-type": "text/plain", allow: "GET, HEAD" });
+        res.end("Studio only reads, except POST /live/answer.\n");
+        return;
+      }
       if (url === "/live" || url === "/live/") {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(livePage(path.basename(projectDir)));
+        res.end(livePage(path.basename(projectDir), token));
         return;
       }
       if (url === "/live.json") {

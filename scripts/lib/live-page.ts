@@ -22,12 +22,13 @@
  * The script lives inside this template literal: it uses no backticks, no
  * dollar-brace, and no backslash escapes.
  */
-export function livePage(projectName: string): string {
+export function livePage(projectName: string, token = ""): string {
   const title = String(projectName).replace(/[&<>"']/g, "");
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Harness live — ${title}</title>
+<meta name="specgate-token" content="${String(token).replace(/[^0-9a-f]/g, "")}"/>
 <style>
   :root{--bg:#f6f8fa;--panel:#ffffff;--line:#d1d9e0;--soft:#eff2f5;--ink:#1f2328;--muted:#59636e;--faint:#8c959f;
     --pass:#1a7f37;--fail:#cf222e;--run:#9a6700;--run-bg:#fff8c5;--accent:#0969da;--sel:#ddf4ff;
@@ -64,6 +65,8 @@ export function livePage(projectName: string): string {
   .qsec h2 .count{margin-left:auto;font-weight:400;font-variant-numeric:tabular-nums} .qsec .job{padding-left:10px;align-items:flex-start}
   .qsec .job .ic{margin-top:3px} .job small{display:block;font-size:11.5px;color:var(--muted);font-weight:400}
   .qsec p{margin:2px 10px 6px;font-size:12.5px} .muted{color:var(--muted)}
+  form.answer{display:flex;flex-wrap:wrap;gap:6px;margin:2px 10px 10px 30px} form.answer textarea{flex:1 1 100%;font:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);resize:vertical}
+  form.answer button{border:1px solid var(--line);background:var(--soft);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:12.5px} form.answer small{flex:1 1 100%}
   .now{border:1px solid var(--run);border-radius:6px;padding:4px 0 8px;background:var(--panel)}
   .kv{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px 10px;margin:4px 10px 0;font-size:12.5px} .kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
   .ctx{display:flex;flex-direction:column;gap:3px} .ctx .d{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -253,6 +256,41 @@ export function livePage(projectName: string): string {
     b.addEventListener("click", function(){ pick(r.req); });
     return b;
   }
+  /**
+   * Answer the agent's question from here (REQ-201): the same write as
+   * specgate answer, through studio's one POST, with this page's token.
+   */
+  function answerForm(q){
+    var f = el("form", "answer"), ta = el("textarea"), go = el("button", "", "Answer"), msg = el("small", "muted");
+    ta.placeholder = "Your answer to " + q.id; ta.rows = 2; go.type = "submit";
+    f.append(ta, go, msg);
+    var post = function(body){
+      var tok = (document.querySelector('meta[name="specgate-token"]') || {}).content || "";
+      return fetch("live/answer", {method:"POST", headers:{"content-type":"application/json", "x-specgate-token":tok}, body:JSON.stringify(body)})
+        .then(function(x){ return x.json(); });
+    };
+    f.addEventListener("submit", function(ev){
+      ev.preventDefault();
+      if (!ta.value.trim()) return;
+      go.disabled = true;
+      post({question:q.id, change:q.change === "project" ? undefined : q.change, answer:ta.value}).then(function(r){
+        go.disabled = false;
+        if (!r.ok) { msg.textContent = r.message || "Not answered."; return; }
+        msg.textContent = q.id + " answered; " + r.assumption + " to review" + (r.revise && r.revise.length ? " — revise " + r.revise.join(", ") : "") + ".";
+        ta.remove(); go.remove();
+        var rv = el("button", "", "Mark reviewed"); rv.type = "button";
+        rv.addEventListener("click", function(){
+          post({question:q.id, change:q.change === "project" ? undefined : q.change, reviewed:true}).then(function(x){
+            msg.textContent = x.ok ? q.id + " reviewed: the specification reflects it." : (x.message || "Not reviewed.");
+            if (x.ok) rv.remove();
+          });
+        });
+        f.appendChild(rv);
+      }).catch(function(){ go.disabled = false; msg.textContent = "Studio did not answer."; });
+    });
+    return f;
+  }
+
   function block(title, count){
     var d = el("section", "qsec"), h = el("h2"); h.append(el("span", "", title));
     if (count !== undefined) h.appendChild(el("span", "count", String(count)));
@@ -296,7 +334,7 @@ export function livePage(projectName: string): string {
     matrix.forEach(function(m){ if (m.status === "Needs Clarification" && !byReq[m.requirement] && !seenB[m.requirement]) { seenB[m.requirement] = 1;
       need.push({r:{req:m.requirement, title:m.title, state:"idle"}, note:"blocked · needs clarification", st:"idle"}); } });
     var n1 = block("Needs attention", need.length);
-    need.forEach(function(x){ n1.appendChild(jobBtn(x.r, sel, x.note, x.st)); });
+    need.forEach(function(x){ n1.appendChild(jobBtn(x.r, sel, x.note, x.st)); if (x.st === "question" && x.r.question && x.r.question.id) n1.appendChild(answerForm(x.r.question)); });
     if (!need.length) n1.appendChild(el("p", "muted", "Nothing failed or blocked."));
     box.appendChild(n1);
 

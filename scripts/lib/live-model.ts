@@ -51,7 +51,7 @@ export interface LiveRequirement {
   /** The prompt the attempt was given: its size, and who it was for. */
   prompt: { role: string; chars: number; lines: number; tokens: number } | null;
   /** What the agent asked, and the command that answers it once the harness recorded it. */
-  question: { text: string; answer: string } | null;
+  question: { text: string; answer: string; id?: string; change?: string } | null;
 }
 
 export interface AgentUsage {
@@ -269,10 +269,11 @@ function withAnswer(
   projectDir: string,
   req: string,
   text: string
-): { text: string; answer: string } {
+): { text: string; answer: string; id?: string; change?: string } {
   const q = waiting(projectDir).questions.find((x) => x.blocks.includes(req) && x.text === text);
   return {
     text,
+    ...(q ? { id: q.id, change: q.change } : {}),
     answer: q
       ? `specgate answer ${q.id} "…"${q.change !== "project" ? ` --change ${q.change}` : ""}`
       : "specgate questions",
