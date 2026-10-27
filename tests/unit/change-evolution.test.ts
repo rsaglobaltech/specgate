@@ -222,3 +222,18 @@ test("REQ-198 SCN-198a: the in-flight view says which requirements a change modi
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-202 SCN-202a: a requirement id mentioned in a scenario's text reserves nothing", () => {
+  const dir = project();
+  try {
+    fs.appendFileSync(
+      path.join(dir, "docs/specs/capabilities/fichas/spec.md"),
+      "\n#### Scenario: SCN-090 — Refused\n\n- GIVEN REQ-999 is defined nowhere\n- WHEN it is modified\n- THEN it is refused\n"
+    );
+    const r = cli(dir, "change", "new", "next", "--reserve", "2", "--json");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.deepEqual(JSON.parse(r.stdout).change.reqRange, ["REQ-019", "REQ-020"]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

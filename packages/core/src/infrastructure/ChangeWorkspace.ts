@@ -249,14 +249,28 @@ export function highestReservedReq(projectDir: string): number {
     }
   };
 
-  if (fs.existsSync(p.traceability)) scan(fs.readFileSync(p.traceability, "utf8"));
+  // Only the lines that define a requirement: a heading or a matrix row's first
+  // cell. A scenario that says "GIVEN REQ-999 is defined nowhere" made the next
+  // change start at REQ-1000 (REQ-202).
+  const scanDefinitions = (text: string) =>
+    scan(
+      String(text)
+        .split(/\r?\n/)
+        .filter((l) => /^(?:#{2,3}\s+(?:Requirement:\s+)?|\|\s*)REQ-\d+\b/.test(l))
+        .map((l) => (/REQ-\d+/.exec(l) || [""])[0])
+        .join("\n")
+    );
+
+  if (fs.existsSync(p.traceability)) scanDefinitions(fs.readFileSync(p.traceability, "utf8"));
 
   const walkSpecs = (dir: string) => {
     if (!fs.existsSync(dir)) return;
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walkSpecs(full);
-      else if (entry.isFile() && entry.name.endsWith(".md")) scan(fs.readFileSync(full, "utf8"));
+      else if (entry.isFile() && entry.name.endsWith(".md")) {
+        scanDefinitions(fs.readFileSync(full, "utf8"));
+      }
     }
   };
   walkSpecs(p.capabilities);

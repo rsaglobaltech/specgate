@@ -1659,7 +1659,7 @@ function cucumberProject() {
   return { parent, projectDir };
 }
 
-test("a filter matching nothing exits 0, and the gate no longer believes it", () => {
+test("REQ-196 SCN-196a: a filter matching nothing exits 0, and the gate no longer believes it", () => {
   const { parent, projectDir } = cucumberProject();
   try {
     const r = runHarness(projectDir, minimalAgent(parent), [
