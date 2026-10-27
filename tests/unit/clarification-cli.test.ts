@@ -378,3 +378,8 @@ test("REQ-188 SCN-188b: a draft waits until the answer is in its spec", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-189 SCN-189b: the harness prompt tells the agent to ask instead of guessing", () => {
+  const src = fs.readFileSync(path.join(ROOT_DIR, "scripts", "harness", "prompt.ts"), "utf8");
+  assert.match(src, /Run `specgate ask <REQ> "<your question>"` and stop/);
+});
