@@ -132,6 +132,8 @@ test("REQ-199 SCN-199c: the gate fails a screen requirement no e2e test names, a
     fs.appendFileSync(path.join(dir, "harness.config.yaml"), "\ne2e_dir: e2e\n");
     const git = (...a: string[]) => spawnSync("git", a, { cwd: dir, encoding: "utf8" });
     git("init", "-q");
+    git("config", "user.email", "t@example.com");
+    git("config", "user.name", "T");
     git("add", "-A");
     git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed");
     const agent = (files: Array<[string, string]>) => {
