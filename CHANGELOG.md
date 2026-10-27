@@ -11,11 +11,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [0.26.0] — 2026-10-27
 
-A clean slate: everything a brief-to-app run left on the list, the test suite green on Windows, and the agent's questions answered from the live view.
+The studio becomes an app: from an empty folder to the report of what was built, step by step, without the commands. And a clean slate: everything a brief-to-app run left on the list, the test suite green on Windows.
 
 ### Added
 
-- **Answer a question from the live view** (REQ-201): under each question the agent asked, Needs attention has a form to answer it and then mark it reviewed. Studio's only write, `POST /live/answer`, goes through the same code as `specgate answer` and needs the token its own page carries, a JSON body and a loopback origin; any other method than GET or HEAD gets 405.
+- **The studio is an app you use without the commands** (REQ-204): `specgate studio` opens on a route of seven steps — Project, Brief, Drafts, Questions, Review, Build, Report — each done, current or locked as the project's files say, with one next action (REQ-212). A simple mode hides the commands and an advanced one shows each action's; Spanish and English. Every write is a POST with the page's token; the overview it replaced is at `/overview`.
+- **A project from an empty folder** (REQ-213): four questions — name, web/API/mobile, stack, agent — and the studio runs `specgate init`, writes the harness configuration and the agent's profiles, a brief to fill and a first commit. A folder with files is left alone, with the command that adopts it.
+- **The brief as a form** (REQ-214): product, who uses it, and per module its rules, examples and open questions, saved into `docs/brief.md` keeping every other line; markdown in advanced mode; the brief rules come back with each save. A client's text can be pasted for the agent to structure (REQ-215).
+- **Drafting each module from the studio** (REQ-216): in the background, one at a time, with its progress and the checklist in plain words, and a way to stop it.
+- **Review and approve a draft** (REQ-206, REQ-207): `specgate change approve <id>` records that a person approved it, refused while the checklist has errors or a question is open; `specgate change note <id> "<text>" --req REQ-x` asks for a change in your words. Review in the studio does both.
+- **Build from the studio** (REQ-208, REQ-209): what is ready, an estimate, the harness started in the background, its steps in plain words, and a stop that takes effect after the requirement in progress. Answering a question releases the requirements it held (REQ-210).
+- **The agent chosen per run** (REQ-211): `harness run --profile <name>` and `propose --from-brief --profile <name>` run that profile of `.harness/profiles.yaml`; the studio lists the profiles with their cost hint and whether they stream usage.
+- **The report** (REQ-217): what was built of the total, each requirement with the scenario that proves it, what is missing and why, the decisions taken, cost and time; downloadable as one HTML page.
+- **Answer a question from the live view** (REQ-201): under each question the agent asked, Needs attention has a form to answer it and then mark it reviewed. The write, `POST /live/answer`, goes through the same code as `specgate answer` and needs the token its own page carries, a JSON body and a loopback origin; any other method than GET or HEAD gets 405.
 - **Every open question in the live view** (REQ-203): an Open questions section lists what `specgate questions` lists, each with the same form, so drafts' questions are answered from studio too; a question the agent asked shows as waiting for an answer, not as a failure.
 - **A requirement used on a screen needs an end-to-end test** (REQ-199): with `e2e_dir` in `harness.config.yaml`, a requirement whose actor uses web, mobile, tablet or desktop passes the gate only once a file there names it, and its prompt says so.
 - **A requirement an open change modifies is reworked** (REQ-198): the harness gives it `NEEDS_REWORK` instead of `NEEDS_STATUS_UPDATE`, and its prompt says the tests and code are for the old text.
@@ -28,6 +36,7 @@ A clean slate: everything a brief-to-app run left on the list, the test suite gr
 
 ### Fixed
 
+- **The dry run names the agent only when one is set**, so `harness prompt` prints no `Agent none`.
 - **The Cucumber gate on Windows** (REQ-196): the message stream went to a path Cucumber did not write, so a filter matching nothing passed. The four tests that failed only on Windows pass, tests remove their temp folders, and `docs:terminal` / `docs:journey` say they need a POSIX shell.
 - **Ids reserved from a mention** (REQ-202): "GIVEN REQ-999 is defined nowhere" in a scenario made the next change start at REQ-1000; only headings, matrix rows and `req_range` count now.
 - **No inline code split across changelog lines** (REQ-195), checked by a test.
