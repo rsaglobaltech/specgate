@@ -88,7 +88,7 @@ export function livePage(projectName: string): string {
   .seg{flex:1;min-width:6px;height:16px;border:0;border-radius:3px;padding:0;cursor:pointer;background:var(--soft)}
   .seg.pass{background:var(--pass)} .seg.fail{background:var(--fail)} .seg.queued{background:var(--soft);box-shadow:inset 0 0 0 1px var(--line)}
   .seg.running{background:repeating-linear-gradient(135deg,#bf8700 0 5px,#d4a72c 5px 10px)}
-  .seg.blocked{background:none;box-shadow:inset 0 0 0 1.5px var(--faint)}
+  .seg.blocked{background:none;box-shadow:inset 0 0 0 1.5px var(--faint)} .seg.question{background:var(--run)}
   .seg.on{outline:2px solid var(--accent);outline-offset:2px} .seg:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
   .mm-legend{display:flex;gap:16px;justify-content:flex-end;padding:10px 16px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
   .mm-legend span{display:inline-flex;align-items:center;gap:6px} .mm-legend .seg{width:14px;height:10px;flex:none;cursor:default}
@@ -212,6 +212,7 @@ export function livePage(projectName: string): string {
     else if (state === "fail") { s("circle", {cx:8, cy:8, r:7, fill:"var(--fail)"}, v); s("path", {d:"M5.5 5.5l5 5M10.5 5.5l-5 5", stroke:"#fff", "stroke-width":"1.8", "stroke-linecap":"round"}, v); }
     else if (state === "running") { s("circle", {cx:8, cy:8, r:6, fill:"none", stroke:"var(--run)", "stroke-width":"2", opacity:".25"}, v);
       s("path", {d:"M8 2a6 6 0 0 1 6 6", fill:"none", stroke:"var(--run)", "stroke-width":"2", "stroke-linecap":"round", "class":"spin"}, v); }
+    else if (state === "question") { s("circle", {cx:8, cy:8, r:7, fill:"var(--run)"}, v); var tq = s("text", {x:8, y:11.5, "text-anchor":"middle", "font-size":"10", "font-weight":"700", fill:"#fff"}, v); tq.textContent = "?"; }
     else s("circle", {cx:8, cy:8, r:6.25, fill:"none", stroke:"var(--faint)", "stroke-width":"1.5"}, v);
     return v;
   }
@@ -285,9 +286,12 @@ export function livePage(projectName: string): string {
     } else now0.appendChild(el("p", "muted", "Nothing running."));
     box.appendChild(now0);
 
-    var need = list.filter(function(r){ return r.state === "fail"; }).map(function(r){
+    // What the agent asked waits for a person first (REQ-189).
+    var need = list.filter(function(r){ return r.state === "question" && r.question; }).map(function(r){
+      return {r:r, note:"asks: " + clip(r.question.text, 90) + " · " + r.question.answer, st:"question"}; });
+    need = need.concat(list.filter(function(r){ return r.state === "fail"; }).map(function(r){
       var g = r.steps.filter(function(e){ return e.type === "gate" && e.result !== "pass"; })[0];
-      return {r:r, note:"failed · attempt " + r.attempt + (g ? " · " + clip(String(g.stage).split(":")[0], 40) : ""), st:"fail"}; });
+      return {r:r, note:"failed · attempt " + r.attempt + (g ? " · " + clip(String(g.stage).split(":")[0], 40) : ""), st:"fail"}; }));
     var seenB = {};
     matrix.forEach(function(m){ if (m.status === "Needs Clarification" && !byReq[m.requirement] && !seenB[m.requirement]) { seenB[m.requirement] = 1;
       need.push({r:{req:m.requirement, title:m.title, state:"idle"}, note:"blocked · needs clarification", st:"idle"}); } });
@@ -317,7 +321,7 @@ export function livePage(projectName: string): string {
 
   function summary(list){
     var p = 0, f = 0, run = 0, first = 0, last = 0;
-    list.forEach(function(r){ if (r.state === "pass") p++; else if (r.state === "fail") f++; else run++;
+    list.forEach(function(r){ if (r.state === "pass") p++; else if (r.state === "fail" || r.state === "question") f++; else run++;
       if (!first || r.started < first) first = r.started; last = Math.max(last, r.state === "running" ? now() : r.updated); });
     var state = run ? "running" : f ? "fail" : list.length ? "pass" : "running";
     $("runBadge").className = "badge " + state;
@@ -366,7 +370,7 @@ export function livePage(projectName: string): string {
       rs.forEach(function(q){
         var ev = byReq[q.req], st = ev ? ev.state : (q.status === "Implemented" || q.status === "Verified" || q.status === "Released") ? "pass"
           : q.status === "Needs Clarification" ? "blocked" : "queued";
-        if (st === "pass") pass++; else if (st === "fail") fail++; else if (st === "running") run++;
+        if (st === "pass") pass++; else if (st === "fail" || st === "question") fail++; else if (st === "running") run++;
         if (ev) time += elapsed(ev);
         var seg = el("button", "seg " + st + (sel && sel.req === q.req ? " on" : "")); seg.type = "button";
         seg.title = q.req + " — " + (q.title || "") + " · " + (ev ? st + " · " + dur(elapsed(ev)) : st);
@@ -380,7 +384,7 @@ export function livePage(projectName: string): string {
       box.appendChild(row);
     });
     var legend = el("div", "mm-legend");
-    [["pass", "passed"], ["running", "running"], ["fail", "failed"], ["blocked", "blocked"], ["queued", "queued"]].forEach(function(x){
+    [["pass", "passed"], ["running", "running"], ["fail", "failed"], ["question", "asks"], ["blocked", "blocked"], ["queued", "queued"]].forEach(function(x){
       var s0 = el("span"), sw = el("i", "seg " + x[0]); s0.append(sw, document.createTextNode(x[1])); legend.appendChild(s0); });
     box.appendChild(legend);
   }

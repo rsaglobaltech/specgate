@@ -333,8 +333,9 @@ export function liveMatrix(projectDir: string): MatrixRow[] {
       }
       if (!current) continue;
       if (l.includes("specgate:trace")) {
-        const st = /status="?([A-Za-z ]+?)"?(\s|-->)/.exec(l);
-        if (st) current.status = st[1];
+        // A quoted status keeps its spaces: "Needs Clarification" was read as "Needs".
+        const st = /status=(?:"([^"]*)"|([^\s"]+?))(?=\s|-->)/.exec(l);
+        if (st) current.status = st[1] || st[2];
       }
       const s = /^#{3,4}\s+Scenario:\s+(SCN-[\w.]+)/.exec(l);
       if (s) current.scenarios.push(s[1]);

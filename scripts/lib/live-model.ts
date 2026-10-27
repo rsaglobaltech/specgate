@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { EVENTS_DIR, QUEUE_FILE } from "./harness-events";
+import { waiting } from "./clarification";
 
 /**
  * The live view's model (ADR-0037): `.harness/events/*.jsonl`, one requirement
@@ -35,7 +36,8 @@ export interface LiveRequirement {
   attempt: number;
   /** `starting`, the kind of the last step, `gate`, or the attempt's result. */
   phase: string;
-  state: "running" | "pass" | "fail";
+  /** `question`: the agent asked, and the requirement waits for an answer (REQ-189). */
+  state: "running" | "pass" | "fail" | "question";
   started: number;
   updated: number;
   elapsed: number;
@@ -48,6 +50,8 @@ export interface LiveRequirement {
   usage: AgentUsage | null;
   /** The prompt the attempt was given: its size, and who it was for. */
   prompt: { role: string; chars: number; lines: number; tokens: number } | null;
+  /** What the agent asked, and the command that answers it once the harness recorded it. */
+  question: { text: string; answer: string } | null;
 }
 
 export interface AgentUsage {
@@ -63,7 +67,7 @@ export interface AgentUsage {
 }
 
 /** Events about the agent's session rather than its work: not steps. */
-const SESSION = new Set(["agent", "usage", "prompt"]);
+const SESSION = new Set(["agent", "usage", "prompt", "question"]);
 
 const num = (v: unknown) => Number(v) || 0;
 
@@ -130,10 +134,13 @@ export function foldRequirement(req: string, events: EventRecord[]): LiveRequire
   const agentEv = [...mine].reverse().find((e) => e.type === "agent");
   const promptEv = [...mine].reverse().find((e) => e.type === "prompt");
   const lastStep = [...steps].reverse().find((e) => e.type === "step" || e.type === "gate");
+  const asked = [...mine].reverse().find((e) => e.type === "question");
   const phase = end
     ? end.result === "pass"
       ? "pass"
-      : "fail"
+      : end.result === "question"
+        ? "question"
+        : "fail"
     : lastStep
       ? lastStep.type === "gate"
         ? "gate"
@@ -158,7 +165,13 @@ export function foldRequirement(req: string, events: EventRecord[]): LiveRequire
     group: "",
     attempt,
     phase,
-    state: end ? (end.result === "pass" ? "pass" : "fail") : "running",
+    state: end
+      ? end.result === "pass"
+        ? "pass"
+        : end.result === "question"
+          ? "question"
+          : "fail"
+      : "running",
     started,
     updated,
     elapsed: Math.max(0, updated - started),
@@ -174,6 +187,7 @@ export function foldRequirement(req: string, events: EventRecord[]): LiveRequire
         }
       : null,
     usage: foldUsage(mine),
+    question: asked ? { text: String(asked.text || ""), answer: "specgate questions" } : null,
     prompt: promptEv
       ? {
           role: String(promptEv.role || "agent"),
@@ -247,6 +261,24 @@ export function requirementTitles(
   return titles;
 }
 
+/**
+ * The command that answers what the agent asked: the open question the
+ * harness recorded for it, or `specgate questions` until it has (REQ-189).
+ */
+function withAnswer(
+  projectDir: string,
+  req: string,
+  text: string
+): { text: string; answer: string } {
+  const q = waiting(projectDir).questions.find((x) => x.blocks.includes(req) && x.text === text);
+  return {
+    text,
+    answer: q
+      ? `specgate answer ${q.id} "…"${q.change !== "project" ? ` --change ${q.change}` : ""}`
+      : "specgate questions",
+  };
+}
+
 /** The run's queue and when it started, as the harness wrote it; empty when there is none. */
 export function readQueue(projectDir: string): { t: number; queue: string[] } {
   try {
@@ -312,6 +344,7 @@ export function readLive(projectDir: string): {
         ...folded,
         title: known ? known.title : "",
         group: known ? known.group : "",
+        question: folded.question ? withAnswer(projectDir, folded.req, folded.question.text) : null,
       });
     }
   }

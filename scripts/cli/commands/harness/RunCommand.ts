@@ -40,6 +40,7 @@ import { buildPrompt } from "../../../harness/prompt";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightView } from "../../../lib/in-flight";
 import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
+import { ask as askQuestion } from "../../../lib/clarification";
 import {
   acquireRunLock,
   branchMergedInto,
@@ -226,11 +227,14 @@ interface AttemptContext extends RunContext {
 }
 
 /** How a requirement ended. `blocked` and `skipped` were never attempted. */
-type RequirementVerdict = "pass" | "fail" | "skipped" | "blocked";
+/** `question`: the agent asked instead of guessing, and the requirement waits for the answer (REQ-189). */
+type RequirementVerdict = "pass" | "fail" | "skipped" | "blocked" | "question";
 
 /** One requirement's line in the report, the run record and a worker's JSON. */
 export interface RequirementResult extends PublishOutcome {
   requirement: string;
+  /** The question the agent asked, when the result is `question`. */
+  question?: string;
   category?: string;
   result: RequirementVerdict;
   attempts: number;
@@ -246,7 +250,7 @@ export interface RequirementResult extends PublishOutcome {
 /** What `attemptRequirement` decides; `processRequirement` adds the rest. */
 type AttemptOutcome = Pick<
   RequirementResult,
-  "result" | "attempts" | "attemptLog" | "error" | "workPreserved" | "adversarial"
+  "result" | "attempts" | "attemptLog" | "error" | "workPreserved" | "adversarial" | "question"
 >;
 
 /** Runs one level of the schedule: in process, or through worker processes. */
@@ -1151,7 +1155,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       event({
         type: "attempt",
         state: "end",
-        result: stage === "pass" ? "pass" : "fail",
+        result: stage === "pass" ? "pass" : stage === "question" ? "question" : "fail",
         ...(stage === "pass" ? {} : { stage }),
       });
       attemptLog.push({
@@ -1289,6 +1293,22 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     }
     if (stopRetrying) break;
     if (stepFailed) continue;
+
+    // The agent asked instead of guessing (REQ-189): another attempt would
+    // meet the same question, and the gate has nothing to judge.
+    const asked = questionAsked(eventsFile, attempt, attemptStart);
+    if (asked) {
+      warn(`${req.requirement}: the agent asked — ${asked}`);
+      record("question");
+      discardWorktreeChanges(worktreeDir);
+      return {
+        result: "question",
+        attempts: attempt - firstAttempt + 1,
+        attemptLog,
+        question: asked,
+        error: `Needs clarification: ${asked}`,
+      };
+    }
 
     // Before the gate: an agent that wrote nothing cannot have implemented
     // anything, and the gate would approve it. See `producedNothing` (H19).
@@ -1477,6 +1497,56 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     workPreserved: preserved,
     attemptLog,
   };
+}
+
+/** The question the agent recorded with `specgate ask` during this attempt, if any (REQ-189). */
+function questionAsked(eventsFile: string, attempt: number, startedMs: number): string | null {
+  let text = "";
+  try {
+    text = fs.readFileSync(eventsFile, "utf8");
+  } catch {
+    return null;
+  }
+  const since = Math.floor(startedMs / 1000) - 1;
+  let asked: string | null = null;
+  for (const line of text.split("\n")) {
+    try {
+      const e = JSON.parse(line);
+      if (e.type === "question" && e.attempt === attempt && Number(e.t) >= since && e.text) {
+        asked = String(e.text);
+      }
+    } catch {
+      /* a line being written */
+    }
+  }
+  return asked;
+}
+
+/**
+ * The questions the run's agents asked, written into the project and
+ * committed (REQ-189): the agent could not edit the specification, so the
+ * harness does, in one commit per question, and the requirement waits.
+ */
+function recordQuestions(projectDir: string, results: RequirementResult[]): void {
+  for (const r of results) {
+    if (r.result !== "question" || !r.question) continue;
+    const asked = askQuestion(projectDir, r.requirement, r.question);
+    if (!asked.ok) {
+      warn(`${r.requirement}: could not record its question — ${asked.message}`);
+      continue;
+    }
+    git(projectDir, ["add", "-A", "--", "docs/specs", "spec.md"]);
+    git(projectDir, [
+      "commit",
+      "-q",
+      "-m",
+      `docs(specs): ${r.requirement} needs clarification — ${asked.question}\n\n${r.question}`,
+    ]);
+    r.error = `Needs clarification: ${asked.question} in ${asked.file} — specgate answer ${asked.question} "…"`;
+    info(
+      `${r.requirement}: ${asked.question} recorded in ${asked.file}; answer it with specgate answer`
+    );
+  }
 }
 
 /** Where a run's record lands. Local to the machine — see `writeRunRecord`. */
@@ -2192,14 +2262,21 @@ export function printReport(results: RequirementResult[], format: string, record
     fail: `${ui.c.bad}${ui.sym.fail}${ui.c.reset}`,
     blocked: `${ui.c.warn}${ui.sym.warn}${ui.c.reset}`,
     skipped: `${ui.c.muted}${ui.sym.empty}${ui.c.reset}`,
+    question: `${ui.c.warn}?${ui.c.reset}`,
   };
-  const COLOR = { pass: ui.c.ok, fail: ui.c.bad, blocked: ui.c.warn, skipped: ui.c.muted };
+  const COLOR = {
+    pass: ui.c.ok,
+    fail: ui.c.bad,
+    blocked: ui.c.warn,
+    skipped: ui.c.muted,
+    question: ui.c.warn,
+  };
   const idWidth = Math.max(9, ...results.map((r) => String(r.requirement).length));
   process.stdout.write("\n" + ui.section("Harness report"));
   for (const r of results) {
     process.stdout.write(
       `  ${MARK[r.result] || MARK.fail}  ${ui.c.bold}${ui.pad(String(r.requirement), idWidth)}${ui.c.reset} ` +
-        `${COLOR[r.result] || ""}${ui.pad(r.result, 8)}${ui.c.reset}` +
+        `${COLOR[r.result] || ""}${ui.pad(r.result, 9)}${ui.c.reset}` +
         ui.muted(`${r.attempts} attempt${r.attempts === 1 ? "" : "s"}`) +
         `   ${ui.c.accent}${ui.sym.arrow} ${r.branch}${ui.c.reset}\n`
     );
@@ -2968,6 +3045,8 @@ export class RunCommand extends BaseCommand {
             hintByReq,
             runOne: dispatchLevel,
           });
+      // What the agents asked goes into the project, once the run is done (REQ-189).
+      if (!process.env.SPECGATE_HARNESS_WORKER) recordQuestions(projectDir, results);
 
       // Only the run that a person started writes a record. A worker is one
       // slice of that run, and its own record would be a second copy of the

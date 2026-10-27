@@ -17,6 +17,9 @@ import { error, info, warning } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
 import { analyseScenario } from "./GherkinQuality";
 import { withoutComments } from "./QuotedText";
+import { assumptionsToReview, deferredAnswer } from "./Clarification";
+
+export { deferredAnswer };
 
 export const KINDS = new Set(["functional", "non-functional", "business-rule"]);
 
@@ -196,22 +199,6 @@ export function rowNamesId(row: string, id: string): boolean {
  * row", which a Markdown table cannot hold; D7 then kept an answered question
  * open and demanded its requirement stay `Needs Clarification` (#45).
  */
-/**
- * An answer that puts the decision off is not an answer. "Se decidirá con el
- * cliente antes de implementarlo" filled the Answer cell, D7 took the question
- * as answered and its requirement stopped waiting, though nobody had decided
- * anything (HealthTech, #82). A proposal ("propuesta, a validar") is an answer;
- * "pending", "TBD" or "will be decided" is not.
- */
-const DEFERRED =
-  /(?<![\p{L}])(se decidir[aá]n?|por decidir|a decidir|sin decidir|pendiente de (?:decidir|decisi[oó]n|respuesta|confirmar)|to be decided|will be decided|decide later|tbd)(?![\p{L}])/iu;
-const DEFERRED_ALONE = /^(pendiente|pending|later|tbd|todo|\?+|-+)\.?$/i;
-
-export function deferredAnswer(answer: string): boolean {
-  const text = answer.replace(/\*\*/g, "").trim();
-  return DEFERRED.test(text) || DEFERRED_ALONE.test(text);
-}
-
 /** A Blocks cell that says, on purpose, that nothing waits for the question (REQ-176). */
 const NONE_BLOCKED = /^(none|nothing|ninguno|ninguna|nada|n\/a|—|–|-)\.?$/i;
 
@@ -599,6 +586,25 @@ export function checkDraft(files: DraftFiles): DraftReport {
         }
       }
     }
+  }
+
+  // D13 — an answer written by `specgate answer` waits until its author says
+  // the spec reflects it (REQ-188): the answer alone changes no requirement.
+  for (const a of assumptionsToReview(files.assumptions || "")) {
+    const q = (/Q\d+/.exec(a.why) || [])[0];
+    status.push(
+      error(
+        "D13_assumption_to_review",
+        `Assumption ${a.id} comes from an answer${q ? ` to ${q}` : ""} the specification may not reflect yet.`,
+        {
+          file: "assumptions.md",
+          line: a.line,
+          fix: q
+            ? `Update the requirements it is used in, then run \`specgate answer ${q} --reviewed\`.`
+            : `Update the requirements it is used in, then set its Status to decided.`,
+        }
+      )
+    );
   }
 
   // D9 — every scenario passes the rules the harness gate will apply to it.

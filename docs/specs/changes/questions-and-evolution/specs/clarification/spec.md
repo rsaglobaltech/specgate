@@ -24,7 +24,7 @@ The system SHALL list with `specgate questions` every open question of every ope
 - WHEN `specgate questions` runs
 - THEN it says nothing waits for an answer and exits 0
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/clarification-cli.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-188 — Answering a question writes the answer and what it decides
 
@@ -48,11 +48,11 @@ The system SHALL, with `specgate answer <Q> "<text>"` (and `--change <id>` when 
 - WHEN `specgate answer Q2 "yes"` runs without `--change`, or `specgate answer Q6 "TBD"` runs
 - THEN the first is refused naming both changes, the second is refused as an answer that decides nothing, and nothing is written
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/clarification-cli.test.ts actor=Developer kind=functional -->
 
 ### Requirement: REQ-189 — The agent can ask instead of guessing
 
-The system SHALL, with `specgate ask <REQ> "<question>"`, add the question to the open change that defines the requirement (or to `docs/specs/questions.md` when a capability does) as an open row that blocks it, and set the requirement to `Needs Clarification`; the harness SHALL end an attempt whose agent asked as `needs clarification`, not as a failure, without spending the remaining attempts, recording an event with the question; and the live view SHALL show it under "Needs attention" with the question and the command that answers it.
+The system SHALL, with `specgate ask <REQ> "<question>"`, add the question to the open change that defines the requirement (or to `docs/specs/questions.md` when a capability does) as an open row that blocks it, and set the requirement to `Needs Clarification`; inside the harness, where the agent may not edit the specification, `ask` SHALL only record the question as an event, and the harness SHALL end that attempt as `needs clarification`, not as a failure, without spending the remaining attempts, then write the question and the status into the project and commit them; and the live view SHALL show it under "Needs attention" with the question and the command that answers it.
 
 #### Scenario: SCN-189a — Asking records the question and the requirement waits
 
@@ -64,7 +64,7 @@ The system SHALL, with `specgate ask <REQ> "<question>"`, add the question to th
 
 - GIVEN an agent that runs `specgate ask` for its requirement during attempt 1 of 3
 - WHEN the attempt ends
-- THEN the requirement's result is `needs clarification` with the question, no second attempt runs, and the events record the question
+- THEN the requirement's result is `needs clarification` with the question, no second attempt runs, the events record the question, and the project has a commit adding it to questions.md with the requirement `Needs Clarification`
 
 #### Scenario: SCN-189c — The live view shows the question
 
@@ -72,4 +72,4 @@ The system SHALL, with `specgate ask <REQ> "<question>"`, add the question to th
 - WHEN the live model is read
 - THEN REQ-049 is in "Needs attention" with its question and `specgate answer Q8 "…"`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented test=tests/unit/clarification-cli.test.ts actor=Developer kind=functional -->
