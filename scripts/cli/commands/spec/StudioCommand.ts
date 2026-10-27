@@ -14,6 +14,22 @@ import {
   stopBuild,
 } from "../../../lib/studio-app";
 import { studioAppPage } from "../../../lib/studio-app-page";
+import {
+  agentsInstalled,
+  briefForm,
+  createProject,
+  draftsRoute,
+  fillBrief,
+  profilesView,
+  report,
+  reportHtml,
+  route,
+  saveBriefForm,
+  saveBriefMarkdown,
+  startDraft,
+  stopJob,
+  type NewProject,
+} from "../../../lib/studio-route";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
@@ -293,6 +309,15 @@ export class StudioCommand extends BaseCommand {
         "/api/questions": () => questionsView(projectDir),
         "/api/drafts": () => drafts(projectDir),
         "/api/build": () => buildView(projectDir),
+        // REQ-211..217: the route from an empty folder to the report.
+        "/api/route": () => route(projectDir),
+        "/api/profiles": () => ({
+          profiles: profilesView(projectDir),
+          installed: agentsInstalled(),
+        }),
+        "/api/brief": () => briefForm(projectDir),
+        "/api/modules": () => draftsRoute(projectDir),
+        "/api/report": () => report(projectDir),
       };
       if (req.method === "GET" && reads[url]) {
         try {
@@ -310,6 +335,11 @@ export class StudioCommand extends BaseCommand {
         "/api/note",
         "/api/build",
         "/api/stop",
+        "/api/project",
+        "/api/brief",
+        "/api/brief/fill",
+        "/api/draft",
+        "/api/draft/stop",
       ];
       if (req.method === "POST" && WRITES.includes(url)) {
         const header = (name: string) => {
@@ -329,7 +359,8 @@ export class StudioCommand extends BaseCommand {
         let raw = "";
         req.on("data", (d: Buffer) => {
           raw += d;
-          if (raw.length > 16 * 1024) req.destroy();
+          // A brief, or a client's text pasted whole, is the largest body.
+          if (raw.length > 2 * 1024 * 1024) req.destroy();
         });
         req.on("end", () => {
           let body: {
@@ -340,6 +371,12 @@ export class StudioCommand extends BaseCommand {
             req?: string;
             text?: string;
             reqs?: string[];
+            profile?: string;
+            module?: string;
+            replace?: boolean;
+            markdown?: string;
+            form?: Parameters<typeof saveBriefForm>[1];
+            project?: NewProject;
           };
           try {
             body = JSON.parse(raw || "{}");
@@ -364,8 +401,50 @@ export class StudioCommand extends BaseCommand {
             json(r.ok ? 200 : 422, r);
             return;
           }
+          if (url === "/api/project") {
+            const r = createProject(projectDir, (body.project || {}) as NewProject);
+            json(r.ok ? 201 : 422, r);
+            return;
+          }
+          if (url === "/api/brief") {
+            const form =
+              typeof body.markdown === "string"
+                ? saveBriefMarkdown(projectDir, body.markdown)
+                : body.form
+                  ? saveBriefForm(projectDir, body.form)
+                  : null;
+            json(
+              form ? 200 : 400,
+              form ? { ok: true, brief: form } : { ok: false, message: "No brief." }
+            );
+            return;
+          }
+          if (url === "/api/brief/fill") {
+            const r = fillBrief(
+              projectDir,
+              String(body.text || ""),
+              String(body.profile || ""),
+              body.replace === true
+            );
+            json(r.ok ? 202 : 422, r);
+            return;
+          }
+          if (url === "/api/draft") {
+            const r = startDraft(projectDir, String(body.module || ""), String(body.profile || ""));
+            json(r.ok ? 202 : 422, r);
+            return;
+          }
+          if (url === "/api/draft/stop") {
+            const r = stopJob(projectDir);
+            json(r.ok ? 200 : 422, r);
+            return;
+          }
           if (url === "/api/build") {
-            const r = startBuild(projectDir, Array.isArray(body.reqs) ? body.reqs.map(String) : []);
+            const r = startBuild(
+              projectDir,
+              Array.isArray(body.reqs) ? body.reqs.map(String) : [],
+              String(body.profile || "")
+            );
             json(r.ok ? 202 : 422, r);
             return;
           }
@@ -396,6 +475,20 @@ export class StudioCommand extends BaseCommand {
       if (url === "/" || url === "/app" || url === "/app/") {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
         res.end(studioAppPage(path.basename(projectDir), token));
+        return;
+      }
+      // REQ-217: the report as a page of its own, to keep or send.
+      if (url === "/report.html") {
+        res.writeHead(200, {
+          "content-type": "text/html; charset=utf-8",
+          "content-disposition": `attachment; filename="${path.basename(projectDir)}-report.html"`,
+        });
+        res.end(reportHtml(report(projectDir)));
+        return;
+      }
+      if (url === "/report") {
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        res.end(reportHtml(report(projectDir)));
         return;
       }
       if (url === "/live" || url === "/live/") {

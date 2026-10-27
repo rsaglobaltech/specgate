@@ -161,6 +161,12 @@ export function questionsView(projectDir: string): QuestionsView {
   return { open, toReview };
 }
 
+/** The names `.harness/profiles.yaml` declares (REQ-211). */
+function profileNames(projectDir: string): string[] {
+  const text = read(path.join(projectDir, ".harness", "profiles.yaml")) || "";
+  return [...text.matchAll(/^ {2}([\w.-]+):\s*$/gm)].map((m) => m[1]);
+}
+
 // ── Build ───────────────────────────────────────────────────────────────────
 
 export interface BuildView {
@@ -252,9 +258,16 @@ export type StartOutcome =
   | { ok: false; code: string; message: string };
 
 /** Start a harness run on the chosen requirements, in the background (REQ-208). */
-export function startBuild(projectDir: string, reqs: string[]): StartOutcome {
+export function startBuild(projectDir: string, reqs: string[], profile = ""): StartOutcome {
   const view = buildView(projectDir);
-  if (!view.agent) {
+  if (profile && !profileNames(projectDir).includes(profile)) {
+    return {
+      ok: false,
+      code: "build_unknown_profile",
+      message: `No profile ${profile} in .harness/profiles.yaml.`,
+    };
+  }
+  if (!view.agent && !profile) {
     return {
       ok: false,
       code: "build_no_agent",
@@ -289,6 +302,7 @@ export function startBuild(projectDir: string, reqs: string[]): StartOutcome {
       "run",
       "--chain",
       ...chosen.flatMap((r) => ["--req", r]),
+      ...(profile ? ["--profile", profile] : []),
       "--project-dir",
       projectDir,
     ],

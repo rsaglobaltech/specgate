@@ -130,11 +130,11 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | Command                                 | What it does                                                                | Details                                        |
 | --------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------- |
 | `specgate harness init`                 | Writes `harness.config.yaml` and the prompt prefix. Leaves the agent unset. | [The harness](harness.md#set-it-up)            |
-| `specgate harness run`                  | Delivers pending requirements with an agent, one git worktree each.         | [The harness](harness.md)                      |
+| `specgate harness run`                  | Delivers pending requirements with an agent; `--profile` picks which one.   | [The harness](harness.md)                      |
 | `specgate harness prompt <REQ>`         | Prints the prompt an agent would get. Runs nothing.                         | [Choosing your agent](agent-setup.md)          |
 | `specgate harness report`               | First-attempt rate and time per delivered requirement.                      | [What the harness has cost](harness-report.md) |
 | `specgate harness events --from claude` | Turns Claude Code's stream into events for the live view.                   | [The harness](harness.md#watch-it-work)        |
-| `specgate studio`                       | A local, read-only view of the spec tree; `/live` shows the harness.        | `specgate studio --help`                       |
+| `specgate studio`                       | The visual app, from an empty folder to the report; `/live`: the harness.   | `specgate studio --help`                       |
 | `specgate ci init`                      | Writes the CI job for GitHub, GitLab, Azure or Jenkins.                     | [Validating](validating.md)                    |
 | `specgate verify`                       | For OpenSpec projects: fails while a done scenario has no test naming it.   | [Already on OpenSpec](openspec.md)             |
 | `specgate report`                       | A spec-coverage dashboard as one HTML file.                                 | `specgate report --help`                       |

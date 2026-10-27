@@ -325,6 +325,8 @@ function usage() {
       "Runs the plan → agent → verify → done loop for every pending requirement.\n\n" +
       "  --agent <cmd>          Agent command; must contain the {prompt_file} placeholder.\n" +
       '                         e.g. --agent "claude -p < {prompt_file}"\n' +
+      "  --profile <name>       Run this profile's agent from .harness/profiles.yaml instead\n" +
+      "                         of the configured one, for this run only.\n" +
       "  --test-cmd <cmd>       Project test command run as part of the gate (optional).\n" +
       "                         Substitutes {req}, {scenario} and {feature_file}, so the\n" +
       "                         gate can run the scenario under test.\n" +
@@ -408,6 +410,7 @@ export function parseArgs(argv: string[]) {
     prCmd: "",
     setupCmd: "",
     chain: false,
+    profile: "",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
@@ -415,6 +418,8 @@ export function parseArgs(argv: string[]) {
       args.projectDir = argv[++i] || "";
     } else if (token === "--agent") {
       args.agent = argv[++i] || "";
+    } else if (token === "--profile") {
+      args.profile = argv[++i] || "";
     } else if (token === "--test-cmd") {
       args.testCmd = argv[++i] || "";
     } else if (token === "--max-attempts") {
@@ -2880,6 +2885,8 @@ export class RunCommand extends BaseCommand {
       setJsonMode(args.format === "json");
       const projectDir = resolveProjectDir(args.projectDir, { requireSentinel: true });
 
+      // REQ-211: a profile chosen for this run is its agent, ahead of the file's.
+      if (args.profile && !args.agent) args.agent = resolveProfileAgent(projectDir, args.profile);
       const fileConfig = readHarnessConfig(projectDir);
       const settings = resolveHarnessSettings(fileConfig, args);
       // A fresh worktree has no dependencies. Unless told, install what the
@@ -2891,7 +2898,7 @@ export class RunCommand extends BaseCommand {
       // may declare profiles without ever writing a `harness.config.yaml`.
       // Reaching them through the config reader made them silently absent
       // there — the same gap the cost hints had, found the same way.
-      if (settings.profileRules.length === 0) {
+      if (settings.profileRules.length === 0 && !args.profile) {
         const rules = readProfileRules(projectDir);
         if (rules.length > 0) {
           settings.profileRules = rules;
@@ -2955,6 +2962,7 @@ export class RunCommand extends BaseCommand {
             "harness run",
             `dry run · ${pending.length} requirement(s) would be processed`
           ) +
+            ui.kv("Agent", settings.agent || "none", 14) +
             ui.kv("Setup", settings.setupCmd || "none", 14) +
             (args.chain ? ui.kv("Chain", "each green requirement merged into this branch", 14) : "")
         );

@@ -142,6 +142,13 @@
 | REQ-208 | SCN-208a | `features/studio/REQ-208.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
 | REQ-209 | SCN-209a | `features/studio/REQ-209.feature` | - | - | - | - | - | tests/unit/harness-run.test.ts | Implemented |
 | REQ-210 | SCN-210a | `features/studio/REQ-210.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-211 | SCN-211a | `features/studio/REQ-211.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
+| REQ-212 | SCN-212a | `features/studio/REQ-212.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
+| REQ-213 | SCN-213a | `features/studio/REQ-213.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
+| REQ-214 | SCN-214a | `features/studio/REQ-214.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
+| REQ-215 | SCN-215a | `features/studio/REQ-215.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
+| REQ-216 | SCN-216a | `features/studio/REQ-216.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
+| REQ-217 | SCN-217a | `features/studio/REQ-217.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

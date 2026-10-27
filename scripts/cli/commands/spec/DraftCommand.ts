@@ -41,6 +41,7 @@ import {
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { templateDelta } from "../../../../packages/core/src/domain/ChangeTemplates";
 import { highestOnOtherBranches } from "../../../../packages/core/src/infrastructure/IdsAcrossBranches";
+import { resolveProfileAgent } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
 import type { ModuleCards } from "../../../draft/drafting-guide";
@@ -92,6 +93,8 @@ export interface DraftOptions {
   /** `--reserve` was given: on an open draft it grows the range (REQ-177). */
   reserveGiven?: boolean;
   agent: string;
+  /** `--profile <name>`: the agent of that profile (REQ-211). */
+  profile?: string;
   /** `--new-brief`: write docs/brief.md from the template. */
   newBrief: boolean;
   projectDir: string;
@@ -126,6 +129,7 @@ function usage(): string {
     "  --agent <cmd>    Your agent's command. It gets the drafting guide on standard input,\n" +
     "                   or in a file if the command contains {prompt_file}. Whatever it writes\n" +
     "                   outside the draft is undone.\n" +
+    "  --profile <name> The agent of that profile in .harness/profiles.yaml, instead of --agent.\n" +
     "  [--max-requirements <n>] [--project-dir <dir>] [--json]\n\n" +
     "The checklist (ADR-0029):\n" +
     "  D1 every requirement has a scenario          D5 a cited law or standard names its source\n" +
@@ -178,6 +182,7 @@ export function parseArgs(argv: string[]): DraftOptions {
       o.reserve = Number(value());
       o.reserveGiven = true;
     } else if (a === "--agent") o.agent = value();
+    else if (a === "--profile") o.profile = value();
     else if (a === "--new-brief") o.newBrief = true;
     else if (a === "--project-dir") o.projectDir = value();
     else if (a === "--json") o.json = true;
@@ -190,7 +195,10 @@ export function parseArgs(argv: string[]): DraftOptions {
   if (o.check && o.module) {
     throw new Error("give a module or --check <change-id>, not both");
   }
-  if (o.checkBrief && (o.module || o.agent || o.newBrief)) {
+  if (o.profile && o.agent) {
+    throw new Error("give --agent or --profile, not both");
+  }
+  if (o.checkBrief && (o.module || o.agent || o.profile || o.newBrief)) {
     throw new Error("--check only checks the brief: run it on its own");
   }
   if (o.module && !CHANGE_ID_RE.test(o.module)) {
@@ -746,6 +754,17 @@ export class DraftCommand extends BaseCommand {
       ]);
     }
     const opts = o!;
+    if (opts.profile) {
+      try {
+        opts.agent = resolveProfileAgent(resolveProjectDir(opts.projectDir), opts.profile);
+      } catch (err) {
+        io0.usage({ draft: null }, [
+          error("draft_profile", (err as Error).message, {
+            fix: "Name a profile .harness/profiles.yaml declares, or pass --agent.",
+          }),
+        ]);
+      }
+    }
     if (opts.checkBrief) return this.checkBrief(opts);
     if (opts.check) return this.check(opts);
     if (opts.module) return this.module(opts);
