@@ -164,3 +164,29 @@ test("REQ-201 SCN-201c: Needs attention offers the answer form for the agent's q
   assert.ok(html.includes("Mark reviewed"));
   assert.ok(!livePage("demo", '"><script>').includes('"><script>'), "the token is only hex");
 });
+
+test("REQ-203 SCN-203a: the live model carries every open question, and the page answers each", () => {
+  const dir = project();
+  try {
+    fs.mkdirSync(path.join(dir, "docs/specs/capabilities/diario"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "docs/specs/capabilities/diario/spec.md"),
+      '# diario\n\n### Requirement: REQ-031 — Tipo\n\nThe system SHALL keep it.\n\n<!-- specgate:trace status="Needs Clarification" kind=functional -->\n'
+    );
+    const { readLive } = require("../../scripts/lib/live-model");
+    const q = readLive(dir).questions;
+    assert.deepEqual(q.open, [
+      { id: "Q6", change: "draft-examen", text: "¿Qué foto?", blocks: ["REQ-049"] },
+    ]);
+    assert.deepEqual(
+      q.waitingWithoutQuestion.map((r: { requirement: string }) => r.requirement),
+      ["REQ-031"]
+    );
+    const { livePage } = require("../../scripts/lib/live-page");
+    const html = livePage("demo", "abc");
+    assert.ok(html.includes('block("Open questions"'));
+    assert.ok(html.includes("oq.forEach(function(q){"));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

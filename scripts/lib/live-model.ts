@@ -293,6 +293,11 @@ export function readQueue(projectDir: string): { t: number; queue: string[] } {
   }
 }
 
+export interface OpenQuestions {
+  open: Array<{ id: string; change: string; text: string; blocks: string[] }>;
+  waitingWithoutQuestion: Array<{ requirement: string; title: string }>;
+}
+
 export interface LiveTotals {
   input: number;
   output: number;
@@ -308,6 +313,8 @@ export function readLive(projectDir: string): {
   queue: string[];
   queueStarted: number;
   totals: LiveTotals;
+  /** Everything waiting for an answer, as `specgate questions` lists it (REQ-203). */
+  questions: OpenQuestions;
 } {
   const requirements: LiveRequirement[] = [];
   const titles = requirementTitles(projectDir);
@@ -350,7 +357,12 @@ export function readLive(projectDir: string): {
     }
   }
   requirements.sort((a, b) => b.updated - a.updated);
-  return { requirements, queue, queueStarted: since, totals };
+  const w = waiting(projectDir);
+  const questions: OpenQuestions = {
+    open: w.questions.map((q) => ({ id: q.id, change: q.change, text: q.text, blocks: q.blocks })),
+    waitingWithoutQuestion: w.requirements,
+  };
+  return { requirements, queue, queueStarted: since, totals, questions };
 }
 
 /** Changes whenever an event file is written: size and mtime of each. */
