@@ -2962,7 +2962,7 @@ export class RunCommand extends BaseCommand {
             "harness run",
             `dry run · ${pending.length} requirement(s) would be processed`
           ) +
-            ui.kv("Agent", settings.agent || "none", 14) +
+            (settings.agent ? ui.kv("Agent", settings.agent, 14) : "") +
             ui.kv("Setup", settings.setupCmd || "none", 14) +
             (args.chain ? ui.kv("Chain", "each green requirement merged into this branch", 14) : "")
         );
