@@ -124,6 +124,16 @@
 | REQ-187 | SCN-187a | `features/clarification/REQ-187.feature` | - | - | - | - | - | tests/unit/clarification-cli.test.ts | Implemented |
 | REQ-188 | SCN-188a | `features/clarification/REQ-188.feature` | - | - | - | - | - | tests/unit/clarification-cli.test.ts | Implemented |
 | REQ-189 | SCN-189a | `features/clarification/REQ-189.feature` | - | - | - | - | - | tests/unit/clarification-cli.test.ts | Implemented |
+| REQ-202 | SCN-202a | `features/change-lifecycle/REQ-202.feature` | - | - | - | - | - | tests/unit/change-evolution.test.ts | Implemented |
+| REQ-193 | SCN-193a | `features/daily-surface/REQ-193.feature` | - | - | - | - | - | tests/unit/forja-front-door.test.ts | Implemented |
+| REQ-194 | SCN-194a | `features/daily-surface/REQ-194.feature` | - | - | - | - | - | tests/unit/forja-front-door.test.ts | Implemented |
+| REQ-195 | SCN-195a | `features/daily-surface/REQ-195.feature` | - | - | - | - | - | tests/unit/changelog-format.test.ts | Implemented |
+| REQ-197 | SCN-197a | `features/daily-surface/REQ-197.feature` | - | - | - | - | - | tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-196 | SCN-196a | `features/harness/REQ-196.feature` | - | - | - | - | - | tests/unit/harness-run.test.ts | Implemented |
+| REQ-198 | SCN-198a | `features/harness/REQ-198.feature` | - | - | - | - | - | packages/core/test/unit/rework.test.ts | Implemented |
+| REQ-199 | SCN-199a | `features/harness/REQ-199.feature` | - | - | - | - | - | tests/unit/screen-requirements.test.ts | Implemented |
+| REQ-200 | SCN-200a | `features/harness/REQ-200.feature` | - | - | - | - | - | tests/unit/harness-init.test.ts | Implemented |
+| REQ-201 | SCN-201a | `features/live-harness/REQ-201.feature` | - | - | - | - | - | tests/unit/studio-answer.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
