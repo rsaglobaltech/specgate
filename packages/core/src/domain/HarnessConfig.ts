@@ -57,6 +57,13 @@ export interface HarnessSettings {
    */
   messageReport: string;
   /**
+   * Where the project's end-to-end tests live (REQ-199). Set it and a
+   * requirement whose actor uses a screen (web, mobile, tablet, desktop) passes
+   * the gate only when a file there names it: a use case and a unit test
+   * passed twenty screen requirements that had no screen.
+   */
+  e2eDir?: string;
+  /**
    * Per-profile `cost_per_run_hint` from `.harness/profiles.yaml` (C1). A
    * declared estimate, never a measurement: an agent is any shell command and
    * only the agent knows what it spent.

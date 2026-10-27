@@ -14,6 +14,11 @@ export interface PromptRequirement {
 }
 
 export interface PromptOptions {
+  /**
+   * The project's e2e folder, when this requirement's actor uses a screen and
+   * the gate will look there for a test that names it (REQ-199).
+   */
+  e2eDir?: string;
   promptPrefix?: string;
   hint?: string;
   previousFailure?: string;
@@ -83,6 +88,11 @@ export class AgentPrompt {
       `- Test artifact (write this first — TDD): ${field("testArtifact", "test_artifact") || "(none declared)"}`,
       `- Production artifact: ${field("technicalArtifact", "technical_artifact") || "(none declared)"}`,
       `- Current status: ${req.status || "(none)"}`,
+      ...(opts.e2eDir
+        ? [
+            `- Screen requirement: its actor uses a screen, so the gate also needs an end-to-end test under \`${opts.e2eDir}\` whose name or content says ${req.requirement} — a use case and a unit test alone do not pass.`,
+          ]
+        : []),
     ].join("\n");
     // REQ-198: a modified requirement already has a test and code, for its old text.
     if (req.category === "NEEDS_REWORK") {

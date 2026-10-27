@@ -178,14 +178,9 @@ is how 0.19.1 shipped:
    not run and what was run instead.
 3. **`develop`, then `main`** — merge into `develop`, open the
    `develop → main` pull request, then fast-forward `main` to that exact
-   commit with `git push origin "${R}:refs/heads/main"`.
-
-   `main` is protected and its required status checks come from the pull
-   request workflows, which are switched off: GitHub answers the push with
-   "required status checks are expected" and lets an admin through. That
-   bypass is the documented path, not an accident — step 1 ran every check
-   those workflows would, on this exact commit, and the release pull request
-   says which. Never push to `main` a commit step 1 did not run on.
+   commit with `git push origin "${R}:refs/heads/main"`. GitHub lets an admin
+   past the switched-off required checks: step 1 ran them on this exact commit,
+   so never push to `main` one it did not run on.
 
 4. **Publish** — enable the publish workflows, tag, push the tag. All three
    (`publish-npm.yml`, `publish-github-packages.yml`, `publish-docker.yml`)

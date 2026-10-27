@@ -57,6 +57,7 @@ const KNOWN_KEYS = new Set([
   "protected_paths",
   "allow_paths",
   "message_report",
+  "e2e_dir",
   "prompt_precedents",
   "adversary_profile",
 ]);
@@ -172,6 +173,7 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
   // F5: where the runner writes its `--format message` stream, for projects
   // whose test command the harness cannot safely rewrite (`npm test` may well
   // run Cucumber, and there is no way to know from here).
+  if (parsed.e2e_dir !== undefined) config.e2eDir = String(parsed.e2e_dir).trim();
   if (parsed.message_report !== undefined) {
     config.messageReport = String(parsed.message_report);
   }
@@ -305,6 +307,8 @@ export function resolveHarnessSettings(
     protectedPaths: file.protectedPaths || [],
     allowPaths: file.allowPaths || [],
     messageReport: file.messageReport || "",
+    // From the file only: it raises the bar, and a flag would be how to lower it.
+    e2eDir: file.e2eDir || "",
     costPerRunHint: file.costPerRunHint || {},
     profileRules: file.profileRules || [],
   };

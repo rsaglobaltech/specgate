@@ -41,6 +41,7 @@ import { detectSetupCommand } from "../../../harness/init";
 import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
 import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
 import { ask as askQuestion } from "../../../lib/clarification";
+import { e2eTestsNaming, onScreen } from "../../../lib/screen-requirements";
 import {
   acquireRunLock,
   branchMergedInto,
@@ -659,6 +660,22 @@ function runGate(
       hint: "",
     };
   }
+  // REQ-199: a requirement used on a screen needs an end-to-end test that
+  // names it, when the project says where those live.
+  if (settings.e2eDir && req.requirement && onScreen(worktreeDir, req.requirement)) {
+    const named = e2eTestsNaming(worktreeDir, settings.e2eDir, req.requirement);
+    report("e2e test", named.length ? "pass" : "fail");
+    if (named.length === 0) {
+      return {
+        ok: false,
+        stage: "e2e test",
+        output: `No file under ${settings.e2eDir} names ${req.requirement}.`,
+        hint:
+          `${req.requirement} is used on a screen: add an end-to-end test under ` +
+          `${settings.e2eDir} that names it, driving the screen its scenarios describe.`,
+      };
+    }
+  }
   // ADR-0028: the architecture check runs between validation and the tests,
   // and its failure goes back to the agent like any other gate failure.
   const archCmd = String(settings.archCmd || "").trim();
@@ -1207,6 +1224,10 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
             // commit — the precedent must be work already accepted, not a
             // sibling requirement this same run happens to be writing.
             withPrecedents: settings.promptPrecedents === true,
+            e2eDir:
+              settings.e2eDir && onScreen(worktreeDir, req.requirement)
+                ? settings.e2eDir
+                : undefined,
           })
         );
         const promptFile = path.join(
