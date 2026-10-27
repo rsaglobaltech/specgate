@@ -16,6 +16,7 @@ A clean slate: everything a brief-to-app run left on the list, the test suite gr
 ### Added
 
 - **Answer a question from the live view** (REQ-201): under each question the agent asked, Needs attention has a form to answer it and then mark it reviewed. Studio's only write, `POST /live/answer`, goes through the same code as `specgate answer` and needs the token its own page carries, a JSON body and a loopback origin; any other method than GET or HEAD gets 405.
+- **Every open question in the live view** (REQ-203): an Open questions section lists what `specgate questions` lists, each with the same form, so drafts' questions are answered from studio too; a question the agent asked shows as waiting for an answer, not as a failure.
 - **A requirement used on a screen needs an end-to-end test** (REQ-199): with `e2e_dir` in `harness.config.yaml`, a requirement whose actor uses web, mobile, tablet or desktop passes the gate only once a file there names it, and its prompt says so.
 - **A requirement an open change modifies is reworked** (REQ-198): the harness gives it `NEEDS_REWORK` instead of `NEEDS_STATUS_UPDATE`, and its prompt says the tests and code are for the old text.
 
