@@ -688,3 +688,15 @@ test("a second --agent pass gets the draft's findings in its prompt", (t: TestCo
   assert.match(prompt, /Fix these findings, and only these/);
   assert.match(prompt, /D6_unlisted_value/);
 });
+
+test("REQ-197 SCN-197a: opening a module while another draft is unwritten warns that its range stops growing", (t: TestContext) => {
+  const { cli } = project(t);
+  assert.equal(cli("draft", "bookings").status, 0);
+  const r = cli("draft", "coupons", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
+  const note = doc.status.find((d: { code: string }) => d.code === "draft_other_unwritten");
+  assert.ok(note, r.stdout);
+  assert.match(note.message, /draft-bookings/);
+  assert.match(note.fix, /--reserve/);
+});
