@@ -9,6 +9,44 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.25.0] — 2026-10-27
+
+Questions you answer with a command, and a specification that evolves without copying by hand: what taking a brief to a delivered app asked for.
+
+### Added
+
+- **Everything waiting for an answer, in one list** (REQ-187):
+  `specgate questions` lists the open questions of every open change and of
+  `docs/specs/questions.md`, with what each blocks, and the requirements in
+  Needs Clarification that no question names.
+- **Answering writes the answer and what it decides** (REQ-188):
+  `specgate answer Q6 "…"` fills the question's row, adds an assumption to
+  review and names the requirements to revise. The draft checklist (D13)
+  waits until `specgate answer Q6 --reviewed` says the spec reflects it; an
+  answer that decides nothing, such as "TBD", is refused.
+- **The agent can ask instead of guessing** (REQ-189):
+  `specgate ask REQ-049 "…"` records the question where the requirement is
+  defined and sets it Needs Clarification. Inside the harness the attempt
+  ends as a question, no retry is spent, the harness commits the question,
+  and the live view shows it under Needs attention with the command that
+  answers it. The harness prompt tells the agent so.
+- **Modifying a delivered requirement starts from its text** (REQ-190):
+  `specgate change new <id> --modify REQ-017` copies the requirement into a
+  MODIFIED delta, reopened as Draft.
+- **What a change to a requirement touches** (REQ-191):
+  `specgate change impact <REQ|change>` lists its spec file and line,
+  features, tests, the files its commits changed and the requirements that
+  name it.
+- **A new requirement for a module the brief covers** (REQ-192):
+  `specgate brief add <module> "…"` appends the line to the brief and adds a
+  requirement quoting it to the module's open change, or creates
+  `<module>-additions`, even when the module is archived.
+
+### Fixed
+
+- **The live matrix reads a quoted status whole**: `status="Needs Clarification"`
+  was read as `Needs`.
+
 ## [0.24.0] — 2026-10-26
 
 A live view you can work from, and a harness that survives a night: what a twenty-requirement chain in a Next.js app ran into.
