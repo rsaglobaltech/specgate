@@ -16,41 +16,18 @@ import type { ProjectSurfaces } from "../../packages/core/src/domain/BriefCards"
 import { checkFrontMatter, frontMatter } from "./brief-setup";
 
 /**
- * What the project can show (REQ-245): forja says it in `forja.config.json`;
- * otherwise a React Native or Expo dependency in a package.json, at the root
- * or one level into apps/ or packages/. Unknown — nothing compared — when the
- * folder has no build file at all.
+ * What the project can show (REQ-245), when it says so: forja writes its
+ * platforms in `forja.config.json`. Elsewhere a mobile app may live in another
+ * repository, so nothing is compared.
  */
 export function projectSurfaces(projectDir: string): ProjectSurfaces {
-  const read = (rel: string) => {
-    try {
-      return fs.readFileSync(path.join(projectDir, rel), "utf8");
-    } catch {
-      return "";
-    }
-  };
-  const forja = read("forja.config.json");
-  if (forja) {
-    try {
-      const platforms: string[] = JSON.parse(forja).platforms || [];
-      return { mobileApp: platforms.includes("mobile") };
-    } catch {
-      /* unreadable: fall through to the dependencies */
-    }
+  try {
+    const config = JSON.parse(fs.readFileSync(path.join(projectDir, "forja.config.json"), "utf8"));
+    const platforms: string[] = Array.isArray(config.platforms) ? config.platforms : [];
+    return { mobileApp: platforms.includes("mobile") };
+  } catch {
+    return {};
   }
-  const manifests = ["package.json"];
-  for (const dir of ["apps", "packages"]) {
-    try {
-      for (const e of fs.readdirSync(path.join(projectDir, dir), { withFileTypes: true }))
-        if (e.isDirectory()) manifests.push(`${dir}/${e.name}/package.json`);
-    } catch {
-      /* no such folder */
-    }
-  }
-  const texts = manifests.map(read).filter(Boolean);
-  const builds = ["pom.xml", "build.gradle", "build.gradle.kts"].some((f) => read(f));
-  if (texts.length === 0 && !builds) return {};
-  return { mobileApp: texts.some((t) => /"(react-native|expo)"\s*:/.test(t)) };
 }
 
 /** Every finding on a brief, front matter first; `file` is the brief's path. */

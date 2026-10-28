@@ -173,7 +173,7 @@ The system SHALL not read "si" after a verb of saying, checking or deciding ("di
 
 ### Requirement: REQ-245 — The brief's shape: its size and the surfaces the project has
 
-The system SHALL warn when a brief lists more than eight modules, and when an actor uses `mobile` and the project has no mobile app (no `mobile` platform in `forja.config.json`, no React Native or Expo dependency), naming the actor.
+The system SHALL warn when a brief lists more than eight modules, and when an actor uses `mobile` in a project whose `forja.config.json` lists its platforms without `mobile`, naming the actor; elsewhere a mobile app may live in another repository, and nothing is compared.
 
 #### Scenario: SCN-245a — Ten modules and a driver on mobile, in a web project
 

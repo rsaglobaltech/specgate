@@ -20,7 +20,7 @@ Found running truck-flote again with 0.27.2 only, one documented command at a ti
 - **`status` points at a brief still to fill in** (REQ-243): right after `init --forja` it proposed `specgate new`, the adoption path; with `docs/brief.md` and no modules it now says to fill in the front matter and run `specgate draft`.
 - **`draft` explains the front matter it needs** (REQ-246): what product, surfaces, actors and modules are for, a `Customer` actor left from the template, and `specgate draft --agent` to have them proposed.
 - **The brief checks read Spanish** (REQ-244): "dice si cabe" (whether) is not a condition placed last; "lo más … posible", "cerca", "casi", "aceptable" and their English equivalents are vague words.
-- **The brief's shape** (REQ-245): more than eight modules is a warning (B12), and so is an actor on `mobile` in a project without a mobile app (B13).
+- **The brief's shape** (REQ-245): more than eight modules is a warning (B12), and so is an actor on `mobile` in a forja project generated without the mobile app (B13); elsewhere a mobile app may live in another repository, so nothing is compared.
 - **`init --yes` where code exists says what it does** (REQ-249): it scaffolds a separate project in a sub-folder, as before, and now names `specgate init` without `--yes` to adopt the folder.
 - **The forja hint names its releases** (REQ-236): forja is not on npm; the install hint pointed there.
 
