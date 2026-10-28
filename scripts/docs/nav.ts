@@ -231,7 +231,8 @@ export const NAV: readonly NavSection[] = [
       {
         slug: "quality",
         label: "Quality and security checks",
-        blurb: "Coverage and mutation of what a change adds, SAST, secrets, SonarQube — all in Docker.",
+        blurb:
+          "Coverage and mutation of what a change adds, SAST, secrets, SonarQube — all in Docker.",
       },
       {
         slug: "automation",
