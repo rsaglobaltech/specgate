@@ -55,6 +55,7 @@ test("REQ-225 SCN-225a: strict for a Maven project", () => {
   const r = sg(dir, "quality", "init", "--level", "strict", "--json");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(json(r).quality.checks, [
+    "commits",
     "secrets",
     "dependencies",
     "coverage",
@@ -65,7 +66,11 @@ test("REQ-225 SCN-225a: strict for a Maven project", () => {
   const text = config(dir);
   assert.match(text, /^quality: strict$/m);
   assert.match(text, /image: maven:3\.9-eclipse-temurin-17/);
-  assert.ok(!/^\s+runner: (local|auto)/m.test(text), "every check runs in Docker");
+  // Every check that runs a tool runs it in Docker; commits needs no tool (REQ-234).
+  const local = [...text.matchAll(/name: (\S+)\n(?:\s+\S.*\n)*?\s+runner: local/g)].map(
+    (m) => m[1]
+  );
+  assert.deepEqual(local, ["commits"], "every check that runs a tool runs in Docker");
   assert.match(text, /# Mutation needs pitest-maven/);
   assert.match(text, /^ {2}# - name: mutation$/m, "mutation is written commented");
 });
@@ -89,6 +94,7 @@ test("REQ-225 SCN-225b: a Node project with pnpm and Vitest", () => {
   const r = sg(dir, "quality", "init", "--json");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(json(r).quality.checks, [
+    "commits",
     "secrets",
     "dependencies",
     "types",

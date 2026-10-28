@@ -17,6 +17,11 @@ import {
 } from "../../packages/core/src/domain/Sarif";
 import { readBaseline } from "../../packages/core/src/infrastructure/QualityBaselineFile";
 import {
+  DEFAULT_TYPES,
+  exempt,
+  parseCommit,
+} from "../../packages/core/src/domain/ConventionalCommit";
+import {
   changedLines,
   diffCoverage,
   mutationScore,
@@ -63,6 +68,49 @@ export interface CheckOutcome {
 export interface Thresholds {
   diffCoverage: number | null;
   mutationScore: number | null;
+  /** Conventional Commits types beyond the defaults (REQ-234). */
+  commitTypes?: string[];
+  /** In CI fixup! and squash! commits are judged too: they should be gone by then. */
+  ci?: boolean;
+}
+
+/**
+ * The built-in `commits` check (REQ-234): every commit since the base, merges
+ * left out, against Conventional Commits 1.0.0.
+ */
+export function commitsOutcome(
+  projectDir: string,
+  base: string,
+  options: Thresholds
+): { ok: boolean; output: string; checked: number } {
+  if (!base || base === "HEAD")
+    return { ok: true, output: "no commits since the base", checked: 0 };
+  const r = git(projectDir, ["log", "--no-merges", "--format=%h%x00%B%x1e", `${base}..HEAD`]);
+  if (r.status !== 0) return { ok: false, output: (r.stderr || "").trim(), checked: 0 };
+  const types = [...DEFAULT_TYPES, ...(options.commitTypes || [])];
+  const broken: string[] = [];
+  let checked = 0;
+  for (const entry of (r.stdout || "").split("\x1e")) {
+    const [hash, body] = entry.replace(/^\s+/, "").split("\0");
+    if (!hash || body === undefined) continue;
+    if (exempt(body, Boolean(options.ci))) continue;
+    checked += 1;
+    const parsed = parseCommit(body, types);
+    if (parsed.problems.length) {
+      broken.push(`${hash} "${body.split("\n")[0]}": ${parsed.problems.join("; ")}`);
+    }
+  }
+  return {
+    ok: broken.length === 0,
+    checked,
+    output: broken.length
+      ? [
+          `${broken.length} of ${checked} commit(s) do not follow Conventional Commits 1.0.0:`,
+          ...broken,
+          "Reword them (git rebase -i) as type(scope): description — e.g. feat(REQ-012): cancel a booking.",
+        ].join("\n")
+      : `${checked} commit(s) follow Conventional Commits 1.0.0`,
+  };
 }
 
 /** Lines changed since the base, per file; an untracked file counts whole. */
@@ -351,6 +399,18 @@ export function runCheck(
     exit: null,
     output: "",
   };
+  if (check.run === "builtin:commits") {
+    const started = Date.now();
+    const c = commitsOutcome(projectDir, ctx.base, thresholds);
+    return {
+      ...base,
+      runner: "local",
+      ms: Date.now() - started,
+      exit: c.ok ? 0 : 1,
+      ok: c.ok,
+      output: c.output,
+    };
+  }
   const missing = check.env.filter((e) => !process.env[e]);
   if (missing.length) {
     return { ...base, skipped: `set ${missing.join(", ")} in the environment (never in a file).` };
@@ -488,6 +548,8 @@ export function runStages(
       runCheck(projectDir, check, ctx, {
         diffCoverage: config.diffCoverage,
         mutationScore: config.mutationScore,
+        commitTypes: config.commitTypes,
+        ci: stages.includes("ci"),
       });
     return onEach ? onEach(check, run) : run();
   });

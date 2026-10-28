@@ -103,7 +103,7 @@ export function harnessCommitMessage(
 ): string {
   const key = ticketKeyOf(projectDir, requirement);
   const subject = key
-    ? `${key} ${requirement}: implement via specgate harness`
+    ? `feat(${requirement}): ${key} implement via specgate harness`
     : `feat(${requirement}): implement via specgate harness`;
   return `${subject}\n\nAttempt ${attempt}/${maxAttempts}.`;
 }

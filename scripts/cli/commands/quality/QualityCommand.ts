@@ -160,6 +160,7 @@ export class QualityCommand extends BaseCommand {
       diffCoverage: null,
       mutationScore: null,
       checks: [],
+      commitTypes: [],
     };
 
     if (sub === "list" || sub === "doctor") {

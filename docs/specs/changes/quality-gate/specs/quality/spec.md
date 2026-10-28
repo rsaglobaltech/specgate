@@ -157,3 +157,27 @@ The system SHALL keep a Maven fixture project whose strict preset runs in Docker
 - THEN spotbugs fails on Discount.java:5 only, coverage fails naming the untested lines, mutation fails naming survivors on Discount.java, and pmd and semgrep pass
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-presets.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-234 — Commit messages follow Conventional Commits 1.0.0
+
+The system SHALL provide a built-in check, `run: builtin:commits`, that parses each commit since the base — merge commits left out, and `fixup!`/`squash!` ones except in CI — against Conventional Commits 1.0.0: a type from feat, fix, build, chore, ci, docs, perf, refactor, revert, style and test plus those `commit_types:` adds, an optional non-empty scope, an optional `!`, a colon, a space and a description, a blank line before any body, and `BREAKING CHANGE` in capitals; a failure SHALL name each commit by its short hash and subject with the rule it breaks; `quality init` SHALL write the check for every stack; every commit message Specgate itself writes SHALL follow the format; and the harness prompt SHALL ask the agent for it, with the requirement as scope.
+
+#### Scenario: SCN-234a — A message without a type fails the check, named
+
+- GIVEN a branch with the commits "feat(REQ-007): book a slot" and "Update stuff" since main
+- WHEN the commits check runs
+- THEN it fails naming the second by its hash and subject, saying it has no type
+
+#### Scenario: SCN-234b — The grammar's rules
+
+- GIVEN the messages "feat: x", "fix(api)!: y", "feat:no space", "feature: z", "feat(): w", a body without a blank line, and "breaking change: v" as a footer
+- WHEN each is parsed
+- THEN the first two pass, the second as breaking, and each of the others fails with its rule
+
+#### Scenario: SCN-234c — Specgate's own commits conform
+
+- GIVEN the messages the harness, the ticket opening, the studio and a contribution write
+- WHEN each is parsed
+- THEN none breaks a rule, the harness's naming the requirement as its scope
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-commits.test.ts actor=Developer kind=functional -->

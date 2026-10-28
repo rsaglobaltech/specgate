@@ -44,7 +44,12 @@ export interface QualityConfig {
   /** % of the mutants on changed lines a test kills; null: not measured. */
   mutationScore: number | null;
   checks: QualityCheck[];
+  /** Conventional Commits types the `commits` check accepts beyond the defaults (REQ-234). */
+  commitTypes: string[];
 }
+
+/** Checks Specgate runs itself, without a tool: `run: builtin:commits` (REQ-234). */
+export const BUILTINS = ["builtin:commits"];
 
 const STAGES: Stage[] = ["attempt", "end", "ci"];
 const RUNNERS: Runner[] = ["docker", "local", "auto"];
@@ -140,6 +145,12 @@ export function readQuality(parsed: Record<string, unknown>): {
     seen.add(name);
     const run = String(c.run ?? "").trim();
     if (!run) errors.push(`${where} (${name}): \`run\` is the command; it is missing.`);
+    const builtin = run.startsWith("builtin:");
+    if (builtin && !BUILTINS.includes(run)) {
+      errors.push(
+        `${where} (${name}): ${run} is not a built-in check. Known: ${BUILTINS.join(", ")}.`
+      );
+    }
     const when = String(c.when ?? "attempt") as Stage;
     if (!STAGES.includes(when)) {
       errors.push(`${where} (${name}): \`when: ${String(c.when)}\` — use attempt, end or ci.`);
@@ -151,7 +162,7 @@ export function readQuality(parsed: Record<string, unknown>): {
       );
     }
     const image = String(c.image ?? "").trim();
-    if (runner === "docker" && !image) {
+    if (runner === "docker" && !image && !builtin) {
       errors.push(`${where} (${name}): \`runner: docker\` needs \`image:\`.`);
     }
     const env = list(c.env);
@@ -216,6 +227,7 @@ export function readQuality(parsed: Record<string, unknown>): {
       diffCoverage: diffCoverage ?? defaults.diffCoverage,
       mutationScore: mutationScore ?? defaults.mutationScore,
       checks,
+      commitTypes: list(parsed.commit_types),
     },
     errors,
   };

@@ -66,6 +66,7 @@ const KNOWN_KEYS = new Set([
   "diff_coverage",
   "mutation_score",
   "checks",
+  "commit_types",
 ]);
 
 /**
@@ -95,7 +96,9 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
   const config: Partial<HarnessSettings> = {};
   if (parsed.agent !== undefined) config.agent = String(parsed.agent);
   if (
-    ["quality", "diff_coverage", "mutation_score", "checks"].some((k) => parsed[k] !== undefined)
+    ["quality", "diff_coverage", "mutation_score", "checks", "commit_types"].some(
+      (k) => parsed[k] !== undefined
+    )
   ) {
     const quality = readQuality(parsed as Record<string, unknown>);
     if (quality.errors.length > 0) {

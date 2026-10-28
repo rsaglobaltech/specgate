@@ -190,7 +190,7 @@ function commitOpening(dir: string, t: Ticket, changeId: string): string | null 
   const added = git(dir, ["add", "--", `${CHANGES}/${changeId}`]);
   const made =
     added.status === 0
-      ? git(dir, ["commit", "-q", "-m", `${t.key} docs(spec): open the change from the ticket`])
+      ? git(dir, ["commit", "-q", "-m", `docs(spec): ${t.key} open the change from the ticket`])
       : added;
   if (made.status === 0) return null;
   const why = (made.stderr || made.stdout).trim().split("\n")[0] ?? "";

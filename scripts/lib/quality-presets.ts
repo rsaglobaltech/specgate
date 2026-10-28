@@ -310,8 +310,13 @@ export function presetYaml(projectDir: string, level: Level): string {
     "# baseline once (`specgate quality baseline`) so only new findings fail.",
     `quality: ${level}`,
     "checks:",
+    // REQ-234: Specgate checks this itself — no tool, so no container either.
+    "  - name: commits",
+    '    run: "builtin:commits"',
+    "    when: attempt",
+    "    runner: local",
   ];
-  const seen = new Set<string>();
+  const seen = new Set<string>(["commits"]);
   for (const stack of stacks.length ? stacks : (["node"] as Stack[])) {
     const checks =
       stack === "maven"

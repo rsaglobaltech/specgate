@@ -1847,13 +1847,16 @@ function resumeFrom(worktreeDir: string, requirement: string): ResumeAt {
   }
 
   // Interrupted or exhausted? The two deserve different answers, and the branch
-  // says which: `preserveFailedAttempt` leaves a `wip(...): FAILED the gate`
+  // says which: `preserveFailedAttempt` leaves a `chore(...): attempt FAILED the gate`
   // commit when the attempts run out, and an interruption leaves none.
   //
   //   exhausted   → the last attempt reached a verdict → resume at the next one
   //   interrupted → it never did → re-run it, without charging the budget
   const head = git(worktreeDir, ["log", "-1", "--format=%s"]);
-  const lastCompleted = /^wip\([^)]*\): FAILED the gate/.test((head.stdout || "").trim());
+  // `chore(…): attempt FAILED` since REQ-234; `wip(…): FAILED` on branches older versions left.
+  const lastCompleted = /^(?:chore\([^)]*\): attempt|wip\([^)]*\):) FAILED the gate/.test(
+    (head.stdout || "").trim()
+  );
 
   const point = resumePoint(names, requirement, lastCompleted);
   if (!point.latest) return { attempt: 1, previousFailure: "" };
@@ -1881,7 +1884,7 @@ function preserveFailedAttempt(
   const commit = git(worktreeDir, [
     "commit",
     "-m",
-    `wip(${req.requirement}): FAILED the gate — do not merge as is\n\n` +
+    `chore(${req.requirement}): attempt FAILED the gate — do not merge as is\n\n` +
       `${firstLine}\n\n` +
       "Committed by `specgate harness run` so the attempt is reviewable rather than\n" +
       "discarded. The requirement is still Draft: `specgate apply` never ran.",

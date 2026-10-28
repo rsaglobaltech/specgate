@@ -37,7 +37,7 @@ its delta and test first.
 
 ## 4b. Commits
 
-- [ ] 4.5 REQ-234 Conventional Commits 1.0.0: native parser, built-in `commits` check (attempt in the harness, ci), `commit_types:`, every commit Specgate writes conforms, the harness prompt asks for it
+- [x] 4.5 REQ-234 Conventional Commits 1.0.0: native parser, built-in `commits` check (attempt in the harness, ci), `commit_types:`, every commit Specgate writes conforms, the harness prompt asks for it
 
 ## 5. Results
 
