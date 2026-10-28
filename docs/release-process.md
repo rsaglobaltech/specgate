@@ -15,9 +15,9 @@ a maintainer actually does meanwhile.
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.26.0** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.26.0** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled between releases; newest image **0.26.0**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.27.1** is `latest` |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.27.1** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled between releases; newest image **0.27.1**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -199,6 +199,9 @@ is how 0.19.1 shipped:
 
    Only npm gates on the E2E (Windows included): 0.19.0 failed it after the
    other two published, so it shipped as 0.19.1 — a published tag is never rebuilt.
+   0.27.0 went the same way: a Docker check passed in WSL, whose uid is the
+   image's own user, and failed on the runner's uid 1001; only its image
+   reached ghcr.io, and it shipped as 0.27.1.
 
 6. **Release notes** — `gh release create vX.Y.Z --notes-file <changelog entry>`.
 
