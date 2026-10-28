@@ -10,8 +10,8 @@ its delta and test first.
 - [x] 1.2 Proposal with the planned requirements REQ-218..REQ-231; range reserved
 - [x] 1.3 Design: configuration, stages, baseline, measures, levels, Java and Node presets, code layout
 - [x] 1.4 The person approved the scope on 2026-10-28: everything in Docker, no accounts (Snyk and Aikido deferred)
-- [ ] 1.5 Delta `specs/quality/spec.md`, requirement by requirement, as each is started
-- [ ] 1.6 `specgate change validate quality-gate`
+- [x] 1.5 Delta `specs/quality/spec.md`, requirement by requirement, as each is started
+- [x] 1.6 `specgate change validate quality-gate`
 
 ## 2. Mechanism
 
@@ -46,7 +46,7 @@ its delta and test first.
 
 ## 6. Documentation (see docs-impact.md)
 
-- [ ] 6.1 New guide `docs/quality.md`
-- [ ] 6.2 Every page listed in docs-impact.md updated
-- [ ] 6.3 ADR-0040 to Accepted; ADR-0028 status updated
-- [ ] 6.4 CHANGELOG entry; release notes
+- [x] 6.1 New guide `docs/quality.md`
+- [x] 6.2 Every page listed in docs-impact.md updated
+- [x] 6.3 ADR-0040 to Accepted; ADR-0028 status updated
+- [x] 6.4 CHANGELOG entry; release notes

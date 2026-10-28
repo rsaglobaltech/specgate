@@ -229,6 +229,11 @@ export const NAV: readonly NavSection[] = [
         blurb: "Every check the gate runs, what each status owes, and the flags behind check.",
       },
       {
+        slug: "quality",
+        label: "Quality and security checks",
+        blurb: "Coverage and mutation of what a change adds, SAST, secrets, SonarQube — all in Docker.",
+      },
+      {
         slug: "automation",
         label: "Automation",
         blurb: "Generate the gate for GitHub, GitLab, Azure or Jenkins.",
@@ -353,6 +358,11 @@ export const NAV: readonly NavSection[] = [
         slug: "harness",
         label: "The harness",
         blurb: "Unattended delivery: plan → agent → gate → apply, one worktree per requirement.",
+      },
+      {
+        slug: "studio",
+        label: "The studio",
+        blurb: "Specgate as an app: from an empty folder to the report, without the commands.",
       },
       {
         slug: "harness-report",

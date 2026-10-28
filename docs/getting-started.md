@@ -31,6 +31,9 @@ The guides write each command as `specgate` and its arguments. Type `npx`
 in front of it when Specgate is installed in the project, or
 `npx @rsaglobaltech/specgate@latest` in place of `specgate` when it is not.
 
+Prefer an app to the terminal? `specgate studio` in an empty folder walks the
+same path in your browser, step by step: [The studio](studio.md).
+
 ## 2. Where do you start?
 
 <!-- specgate:cards cols=3 -->

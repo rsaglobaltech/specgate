@@ -105,7 +105,8 @@ $ specgate check
 ```
 <!-- specgate:out-scratch-check-green:end -->
 
-`check` is `validate --strict` and then your tests. Requirements still in
+`check` is `validate --strict` and then your tests, then the
+[quality checks](../quality.md) when `quality init` wrote them. Requirements still in
 `Draft` owe nothing and are counted as exempt, so a pass never hides its own
 scope.
 

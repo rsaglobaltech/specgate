@@ -87,6 +87,13 @@ rewrites would be a merge conflict on every branch.
 
 The agent command is never recorded, because it can carry an API key.
 
+## The quality of what was delivered
+
+When [quality checks](quality.md) run, each passing requirement's run record
+keeps them — stage, verdict, findings, and the diff coverage and mutation
+score of the lines it changed — and the report adds a section with the means
+and how often each check ran. `--json` carries it as `quality`.
+
 ## Next
 
 - [The harness](harness.md)

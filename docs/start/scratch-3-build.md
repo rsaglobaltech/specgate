@@ -143,7 +143,7 @@ review is one requirement.
 | --- | --- | --- |
 | `REQ-004 is not a pending requirement — skipped.` | It is waiting for an answer, or already done | `specgate status` says which |
 | `No pending requirements. Nothing to do.` | Every requirement is done or waiting for an answer | Open the next module's draft with `specgate propose --from-brief`, or answer the open questions |
-| The harness commits `wip(…): FAILED the gate` | Out of attempts | Read the failures in the commit, fix the spec or the prompt, re-run with `--force` |
+| The harness commits `chore(…): attempt FAILED the gate` | Out of attempts | Read the failures in the commit, fix the spec or the prompt, re-run with `--force` |
 
 ## Next
 

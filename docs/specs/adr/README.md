@@ -47,7 +47,7 @@ for the policy on when and how to write an ADR.
 | [0037](0037-see-the-harness-work.md) | See the harness work: events, a live view, explore, a tour | Accepted | 2026-10-19 |
 | [0038](0038-brief-cards.md) | Brief cards: module sections with rules, examples and questions, checked before drafting | Accepted | 2026-10-20 |
 | [0039](0039-the-ticket-as-source-text.md) | The ticket as source text: a ticket with acceptance criteria opens a change checked against it; the board stays read-only | Accepted | 2026-10-20 |
-| [0040](0040-quality-and-security-in-the-gate.md) | Quality and security checks are part of the gate: the team's tools, when each runs, only new findings fail, diff coverage and mutation score computed from standard reports | Proposed | 2026-10-27 |
+| [0040](0040-quality-and-security-in-the-gate.md) | Quality and security checks are part of the gate: the team's tools, when each runs, only new findings fail, diff coverage and mutation score computed from standard reports | Accepted | 2026-10-28 |
 
 ## Template
 

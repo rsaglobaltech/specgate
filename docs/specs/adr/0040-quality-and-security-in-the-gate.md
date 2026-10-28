@@ -2,10 +2,9 @@
 
 ## Status
 
-Proposed — 2026-10-27. Extends ADR-0028 (architecture conformance) to every
+Accepted — 2026-10-28 (proposed 2026-10-27). Extends ADR-0028 (architecture conformance) to every
 check a team uses to judge code, and implements its pending points 3 and 4
-(the baseline and SARIF) for all of them. The work is planned in the change
-`quality-gate`.
+(the baseline and SARIF) for all of them. Delivered by the change `quality-gate` (REQ-218..234).
 
 ## Context
 

@@ -160,6 +160,10 @@ unattended, one git worktree per requirement. See [The harness](harness.md).
 | `agent_rewrote_gate_command`                       | The agent changed the script your test command runs     | Refused; the gate command is part of the contract                   |
 | The first attempt is spent installing dependencies | A new worktree has no `node_modules`                    | Leave the default `--setup-cmd`, or set your install command        |
 | A `harness/REQ-…` branch already exists            | An earlier run                                          | `--resume` to continue it, or `--force` to start over               |
+| `quality check: <name>` failed                     | A [quality check](quality.md) found something new       | Read its findings; take the baseline if it is old debt              |
+| `Docker is not running here`                       | A quality check runs in Docker                          | Start Docker Desktop, or the daemon                                 |
+| The studio's Build says files are uncommitted      | Work in progress outside the specification              | Commit or stash it; the studio commits only the specification       |
+| The studio says the folder holds files             | Its new-project step only uses an empty folder          | `specgate init` adopts the folder, keeping its files                |
 
 ### When another attempt cannot help
 

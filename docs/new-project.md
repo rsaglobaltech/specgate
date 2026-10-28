@@ -8,7 +8,9 @@ same twelve steps every time. Three of them are yours and cannot be delegated:
 reading the brief (1), reviewing each draft (8) and using the product (12). A
 coding agent can run the rest.
 
-The details of each step live in other guides; this one is the order.
+The details of each step live in other guides; this one is the order. The
+[studio](studio.md) walks the same order as an app, from the empty folder to
+the report.
 
 **You need:** Node.js 22 or later, git, the client's brief, and a coding agent
 if you want it to write the drafts. Commands are written as `npx specgate`,
