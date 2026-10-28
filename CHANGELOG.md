@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.7] — 2026-10-28
+
+After the sixth truck-flote run: the harness agent can write, a Docker check works in a worktree, every gate step is seen while it runs, and a reviewed draft no longer turns the branch red.
+
 ### Fixed
 
 - **The client's brief at the root goes below the front matter** (REQ-259): with `brief.md` pushed first and forja's template in `docs/brief.md`, `draft --agent` wrote the front matter over the "Paste the client's brief here" placeholder and the person pasted the text by hand. `draft` now puts the root file's text there first, keeps the root file, and says so; a body the person wrote is left alone.

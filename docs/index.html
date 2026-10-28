@@ -33,7 +33,7 @@
 
 <header class="top">
   <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
-  <span class="top__version">v0.27.6</span>
+  <span class="top__version">v0.27.7</span>
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -57,7 +57,7 @@
 <section class="mx">
   <div class="ed-wrap mx__grid">
     <div class="mx__copy">
-      <p class="mx__eyebrow">[ v0.27.6 ] — A change, a brief or a Jira ticket, to proven requirements</p>
+      <p class="mx__eyebrow">[ v0.27.7 ] — A change, a brief or a Jira ticket, to proven requirements</p>
       <h1 class="mx__title">No test,<br>no <span>done.</span></h1>
       <p class="mx__lede">
         Specgate turns a change you describe, a client's brief or a Jira story
@@ -746,10 +746,10 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
     ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
 
-  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
+  ·  No agent set for the harness and the studio's Build: specgate config set agent &quot;claude -p &lt; {prompt_file}&quot;
 
-  Next ───────────────────────────────────────────────────
-… 2 more lines
+  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
+… 4 more lines
 </code></pre>
 <!-- specgate:terminal-brief:end -->
         </figure>
@@ -903,6 +903,10 @@ max_attempts: 1
   ◆ specgate · harness run   1 requirement(s) from HEAD
 
   ◇  REQ-000   attempt 1/1
+  ◇  REQ-000   started validate --strict
+  ◇  REQ-000   passed validate --strict in 0.1 s
+  ◇  REQ-000   started test command
+  ◇  REQ-000   passed test command in 0.1 s
 
   Harness report ─────────────────────────────────────────
   ✔  REQ-000   pass     1 attempt   → harness/REQ-000
@@ -910,9 +914,7 @@ max_attempts: 1
   ████████████████████  1 of 1 passed   1 passed · 0 failed · 0 skipped
   Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — specgate harness report sums them up
 
-  Next ───────────────────────────────────────────────────
-  ➜  git diff HEAD...harness/REQ-000
-     review and merge the harness/* branches you trust
+… 3 more lines
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
  .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 108 ++++++++++++++++++++++++
@@ -947,7 +949,7 @@ max_attempts: 1
     </div>
 
     <p class="term__meta">
-      Recorded from <strong>v0.27.6</strong>. <a href="./domain-packs.html">Domain packs →</a> <a href="./tutorial.html">The harness run, explained →</a>
+      Recorded from <strong>v0.27.7</strong>. <a href="./domain-packs.html">Domain packs →</a> <a href="./tutorial.html">The harness run, explained →</a>
     </p>
   </div>
 </section>
@@ -1447,7 +1449,7 @@ npx specgate propose --from-brief</code></pre>
       <a href="./release-process.html">Releases</a>
     </nav>
   </div>
-  <p class="ed-wrap ed-foot__note">Documentation for v0.27.6. Every number on this page is checked against the repository by a test.</p>
+  <p class="ed-wrap ed-foot__note">Documentation for v0.27.7. Every number on this page is checked against the repository by a test.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>
