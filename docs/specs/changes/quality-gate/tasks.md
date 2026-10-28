@@ -17,8 +17,8 @@ its delta and test first.
 
 - [x] 2.1 REQ-218 `checks:` model, validation, `quality list`
 - [x] 2.2 REQ-219 stages in `check` and `done`
-- [ ] 2.3 REQ-220 `attempt` checks in the harness gate, findings in the next prompt
-- [ ] 2.4 REQ-221 `end` checks before merge and at the end of a chain
+- [x] 2.3 REQ-220 `attempt` checks in the harness gate, findings in the next prompt
+- [x] 2.4 REQ-221 `end` checks in the same gate once the attempt checks pass (so once for the merged attempt)
 - [x] 2.5 REQ-222 SARIF reader, fingerprints, baseline, `quality baseline [--accept]`
 - [ ] 2.6 REQ-231 the same for `arch_cmd`; ADR-0028 points 3 and 4 marked done
 
@@ -41,7 +41,7 @@ its delta and test first.
 
 ## 5. Results
 
-- [ ] 5.1 REQ-228 run record, matrix, `harness report`
+- [x] 5.1 REQ-228 run record (harness report moves to REQ-229)
 - [ ] 5.2 REQ-229 `/live`, studio Calidad card, studio report, quality level in the new-project step
 
 ## 6. Documentation (see docs-impact.md)

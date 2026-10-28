@@ -53,6 +53,8 @@ import {
   runLockHolder,
   takeStop,
 } from "../../../lib/harness-guard";
+import { gateContext, runStages, type CheckOutcome } from "../../../lib/quality-run";
+import type { Stage } from "../../../../packages/core/src/domain/QualityChecks";
 import {
   EVENTS_ATTEMPT_VAR,
   EVENTS_FILE_VAR,
@@ -188,6 +190,8 @@ interface GateResult {
   stage: string;
   output: string;
   hint?: string;
+  /** The quality checks the gate ran (ADR-0040), for the run record. */
+  checks?: CheckOutcome[];
 }
 
 /** Where a resumed requirement picks up, and what the gate said last time. */
@@ -247,12 +251,21 @@ export interface RequirementResult extends PublishOutcome {
   workPreserved?: boolean;
   attemptLog?: AttemptRecord[];
   adversarial?: ProbeOutcome;
+  /** The quality checks of the passing attempt: time, verdict, findings, measure (REQ-228). */
+  checks?: Array<Omit<CheckOutcome, "output">>;
 }
 
 /** What `attemptRequirement` decides; `processRequirement` adds the rest. */
 type AttemptOutcome = Pick<
   RequirementResult,
-  "result" | "attempts" | "attemptLog" | "error" | "workPreserved" | "adversarial" | "question"
+  | "result"
+  | "attempts"
+  | "attemptLog"
+  | "error"
+  | "workPreserved"
+  | "adversarial"
+  | "question"
+  | "checks"
 >;
 
 /** Runs one level of the schedule: in process, or through worker processes. */
@@ -646,6 +659,7 @@ function runGate(
   // The agent's tests are new evidence for a generated matrix: refresh it so
   // the gate judges the attempt, not the matrix as it was before it.
   refreshDerivedMatrix(worktreeDir);
+  let passHint = "";
   const validate = judged(worktreeDir, (dir, toProject) => {
     const validateArgs = [VALIDATE_SCRIPT, dir, "--strict"];
     if (req.requirement) validateArgs.push("--delivering", req.requirement);
@@ -786,12 +800,44 @@ function runGate(
             errors.map((e) => `  ${e.message}\n  fix: ${e.fix}`).join("\n\n"),
         };
       }
-      if (warnings.length > 0) {
-        return { ok: true, stage: "", output: "", hint: warnings[0].message };
-      }
+      if (warnings.length > 0) passHint = warnings[0].message;
     }
   }
-  return { ok: true, stage: "", output: "", hint: "" };
+  // REQ-220, REQ-221: the quality checks, after the tests — the attempt ones,
+  // then the end ones. A failure goes back to the agent like a failing test.
+  const quality = settings.quality;
+  if (quality && quality.checks.length > 0) {
+    const ctx = gateContext(worktreeDir, req.requirement || "", "");
+    const outcomes: CheckOutcome[] = [];
+    for (const stage of ["attempt", "end"] as Stage[]) {
+      for (const o of runStages(worktreeDir, quality, [stage], ctx)) {
+        outcomes.push(o);
+        report(`quality: ${o.name}`, o.ok || !!o.skipped || !o.gate ? "pass" : "fail", {
+          ms: o.ms,
+          ...(o.skipped ? { skipped: o.skipped } : {}),
+          ...(o.measure ? { value: o.measure.value } : {}),
+        });
+        if (o.gate && !o.ok && !o.skipped) {
+          return {
+            ok: false,
+            stage: `quality check: ${o.name}`,
+            output: o.output,
+            hint:
+              o.measure && o.measure.kind === "coverage"
+                ? "Write the tests that run the lines named above; do not lower the threshold."
+                : o.measure && o.measure.kind === "mutation"
+                  ? "Strengthen the tests so each surviving mutant named above would fail one."
+                  : o.name === "commits"
+                    ? "Reword the commits named above as Conventional Commits, or do not commit: the harness commits for you."
+                    : "Fix what the check found. Do not silence it: no @SuppressWarnings, eslint-disable or baseline edit.",
+            checks: outcomes,
+          };
+        }
+      }
+    }
+    return { ok: true, stage: "", output: "", hint: passHint, checks: outcomes };
+  }
+  return { ok: true, stage: "", output: "", hint: passHint };
 }
 
 /**
@@ -904,7 +950,10 @@ function runAdversarialProbe(
       return { ran: true, broke: false, detail: "The adversary wrote no test.", wrote: [] };
     }
 
-    const after = runGate(worktreeDir, settings.testCmd, timeoutMs, req, settings);
+    const after = runGate(worktreeDir, settings.testCmd, timeoutMs, req, {
+      ...settings,
+      quality: undefined,
+    });
     return {
       ran: true,
       broke: !after.ok,
@@ -1511,6 +1560,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       // The probe never changes the verdict; it travels beside it so
       // `harness report` and the run record can show what it found.
       ...(probe.ran ? { adversarial: probe } : {}),
+      ...(gate.checks ? { checks: gate.checks.map(({ output: _o, ...rest }) => rest) } : {}),
     };
   }
 
@@ -2527,7 +2577,8 @@ async function runChain(
       ctx.settings.testCmd,
       ctx.timeoutMs,
       req,
-      ctx.settings,
+      // The checks judged the branch already; the post-merge gate is the suite's.
+      { ...ctx.settings, quality: undefined },
       (stage, res, extra) =>
         appendEvent(
           eventsFile,

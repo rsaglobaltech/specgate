@@ -318,6 +318,8 @@ export function resolveHarnessSettings(
     // From the file only, like the role ladder: which agent is allowed to
     // attack the work is a repository decision, not a flag typed per run.
     adversaryProfile: file.adversaryProfile || "",
+    // ADR-0040: the quality checks are a team decision, from the file only.
+    quality: file.quality,
     // From the file only. Whether an agent is shown examples is a property of
     // the project, not of the run somebody is starting.
     promptPrecedents: file.promptPrecedents === true,

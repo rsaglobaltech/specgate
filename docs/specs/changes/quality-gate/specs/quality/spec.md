@@ -181,3 +181,45 @@ The system SHALL provide a built-in check, `run: builtin:commits`, that parses e
 - THEN none breaks a rule, the harness's naming the requirement as its scope
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-commits.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-220 — The checks run in every harness attempt
+
+The system SHALL, in the harness gate of each attempt and after the tests pass, run the attempt checks in the attempt's worktree with the requirement and the files it changed filled in; a gating check that fails SHALL fail the attempt at `quality check: <name>`, and its output — the new findings, the uncovered lines or the surviving mutants — SHALL reach the agent's next attempt with a hint that says to fix, not silence; a check that cannot run SHALL be reported and skipped; and the adversary's re-run and the gate after a merge SHALL not repeat the checks.
+
+#### Scenario: SCN-220a — A failing check fails the attempt
+
+- GIVEN a check `marker` that fails until src/ok.ts exists, and an agent that does not write it
+- WHEN the harness runs one attempt
+- THEN the requirement fails at `quality check: marker`
+
+#### Scenario: SCN-220b — The agent reads the check's output and fixes it
+
+- GIVEN the same check, and an agent that writes src/ok.ts once its prompt carries the check's output
+- WHEN the harness runs two attempts
+- THEN the second passes
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-harness.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-221 — The end checks run once the attempt checks pass
+
+The system SHALL run the end checks in the same gate after every attempt check has passed — so once for the attempt that is merged, not for those the cheaper checks already refused — their failure going back to the agent like an attempt check's.
+
+#### Scenario: SCN-221a — End after attempt
+
+- GIVEN an attempt check `marker` and an end check `final`
+- WHEN an attempt passes
+- THEN `marker` ran before `final`, and both passed
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-harness.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-228 — The run record keeps each check's outcome
+
+The system SHALL keep, in the run record of a requirement that passes, each quality check of its passing attempt — name, stage, whether it gates, runner, time, verdict, new and baselined findings, and the coverage or mutation measure with its threshold — without the check's output.
+
+#### Scenario: SCN-228a — The record of a passing requirement
+
+- GIVEN a requirement that passes with the checks `marker` and `final`
+- WHEN its run record is read
+- THEN its result lists both, in order, with their stage and verdict, and no output
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-harness.test.ts actor=Developer kind=functional -->
