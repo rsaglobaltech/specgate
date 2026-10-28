@@ -9,7 +9,7 @@ its delta and test first.
 - [x] 1.1 ADR-0040 (Proposed) and its row in the ADR index
 - [x] 1.2 Proposal with the planned requirements REQ-218..REQ-231; range reserved
 - [x] 1.3 Design: configuration, stages, baseline, measures, levels, Java and Node presets, code layout
-- [ ] 1.4 The person approves the scope (and confirms which of Sonar, Snyk, Aikido they have an account for)
+- [x] 1.4 The person approved the scope on 2026-10-28: everything in Docker, no accounts (Snyk and Aikido deferred)
 - [ ] 1.5 Delta `specs/quality/spec.md`, requirement by requirement, as each is started
 - [ ] 1.6 `specgate change validate quality-gate`
 
@@ -30,8 +30,8 @@ its delta and test first.
 ## 4. Presets
 
 - [ ] 4.1 REQ-225 levels and presets: Maven, then Gradle, then npm/pnpm; `quality init`, `harness init`, `adopt`
-- [ ] 4.1b REQ-232 runner local|docker|auto, images by digest, `quality doctor [--pull]`
-- [ ] 4.2 REQ-226 platform checks: env-only tokens, `ci` stage; Aikido's CLI verified first
+- [ ] 4.1b REQ-232 every check in Docker (runner: docker in all presets), images by digest, caches in named volumes, `quality doctor [--pull]`
+- [ ] 4.2 REQ-226 SonarQube Community in Docker (optional `end` check); Snyk and Aikido deferred: no account
 - [ ] 4.3 REQ-227 review and adversary profiles as `end` checks
 - [ ] 4.4 REQ-230 fixture projects and the e2e that runs every preset; every **(verify)** in design.md resolved
 

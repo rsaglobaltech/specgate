@@ -97,6 +97,11 @@ requirement.
    check is reported unavailable with both remedies. Tools that are plugins of
    the build (JaCoCo, PIT, SpotBugs, PMD, Checkstyle, Error Prone, ArchUnit,
    Stryker, ESLint) run through the project's own Maven, Gradle or npm.
+   *First delivery:* every preset writes `runner: docker`, the build's own
+   plugins included (the project's wrapper inside a Maven, Gradle or Node
+   image, caches in named volumes): Docker is the only thing a machine needs.
+   Only free tools are preset; SonarQube Community runs locally in Docker,
+   and Snyk and Aikido wait for an account.
 
 ## Consequences
 

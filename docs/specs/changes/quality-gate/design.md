@@ -83,14 +83,35 @@ checks:
 - Images by digest, refreshed with the presets in a release; a person may
   override `image:` (a mirror for an air-gapped network, as for packs).
 
-What stays in the project's build, never in a container: JaCoCo, PIT,
-SpotBugs, PMD, Checkstyle, Error Prone and ArchUnit run through the Maven or
-Gradle wrapper (they are plugins of the build, and a container would need the
-whole JDK and dependency cache); the same for Vitest/Jest coverage, Stryker,
-ESLint, tsc and dependency-cruiser through the project's `node_modules`. A
-machine without a JDK can still set `runner: docker` with an image such as
-`maven:3.9-eclipse-temurin-21` and the `~/.m2` cache mounted — an option, not
-the default.
+**Decision for this change (2026-10-28, the person's call): everything runs
+in Docker for now.** The presets write `runner: docker` on every check, the
+build's own plugins included, so a machine needs Docker and nothing else, and
+a run on a laptop is the run CI does. `runner: local` and `auto` stay in the
+model for later; no preset uses them yet.
+
+- Java checks run the project's Maven or Gradle wrapper inside
+  `maven:3.9-eclipse-temurin-21` / `gradle:8-jdk21` (the JDK the project
+  declares picks the tag), with the dependency cache in a named volume
+  (`specgate-m2`, `specgate-gradle`) so the second run does not download the
+  world. JaCoCo, PIT, SpotBugs+FindSecBugs, PMD/CPD, Checkstyle, Error Prone
+  and ArchUnit are plugins of that build, run in that container.
+- Node checks run in `node:22` (or the version `engines` / `.nvmrc` names)
+  with the project's lockfile: `npm ci` into a named volume for
+  `node_modules`, then tsc, ESLint, coverage, Stryker, jscpd and
+  dependency-cruiser.
+- A project already built in Docker (forja's `docker-compose.yml`) keeps it;
+  the checks only use their own containers.
+- Windows: paths converted for Docker Desktop, line endings untouched, the
+  container's user mapped so the reports belong to the person.
+
+**No accounts (the person has none): every check is a free tool.** Snyk and
+Aikido are left out of this change (REQ-226 becomes "later, with an
+account"). SonarQube is available without an account as the Community
+Edition run locally: an optional `end` check that starts `sonarqube:community`
+in a named container on first use, waits for it, creates a project token
+through its API with a password Specgate generates and keeps in the git-ignored
+`.specgate/sonar.local`, runs `sonarsource/sonar-scanner-cli` and waits for the
+quality gate. It needs about 2 GB of memory, so `strict` lists it commented.
 
 Official images the presets name (digest pinned at implementation time,
 **(verify)** each): `semgrep/semgrep`, `ghcr.io/gitleaks/gitleaks`,

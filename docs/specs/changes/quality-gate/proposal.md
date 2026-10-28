@@ -61,13 +61,13 @@ Out of scope:
 | REQ-223 | Diff coverage from JaCoCo XML, LCOV or Cobertura, against a threshold                           |
 | REQ-224 | Mutation score of the changed code from PIT or StrykerJS, against a threshold                   |
 | REQ-225 | Levels and presets for Maven, Gradle and npm/pnpm (`quality init`, `harness init`, `adopt`)     |
-| REQ-226 | Platform checks (SonarQube, Snyk, Aikido) read their token from the environment, never a file   |
+| REQ-226 | SonarQube Community in Docker as an optional check, no account; Snyk and Aikido deferred until there is one |
 | REQ-227 | The review and adversary profiles as `end` checks, advisory or gating                           |
 | REQ-228 | Results per requirement in the run record, the matrix and `harness report`                      |
 | REQ-229 | Results in `/live` and in the studio (Calidad card, report, new-project quality level)          |
 | REQ-230 | Every preset runs against a fixture project (Maven, Gradle, npm) in the e2e suite               |
 | REQ-231 | ADR-0028's baseline and SARIF for `arch_cmd`, through the same mechanism                        |
-| REQ-232 | A scanner not installed runs from its official image when Docker is there (`runner: auto`), `quality doctor` |
+| REQ-232 | Every check runs in Docker (presets write `runner: docker`), caches in named volumes, `quality doctor [--pull]` |
 
 The range is reserved in `change.yaml`; the deltas are written requirement by
 requirement, each with its scenarios, before its code (AGENTS.md).
