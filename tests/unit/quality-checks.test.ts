@@ -183,13 +183,10 @@ test("REQ-232 SCN-232a: the container's command line", () => {
   assert.equal(at("--network"), "none");
   assert.equal(at("-e"), "SONAR_TOKEN", "the name only, never a value");
   assert.ok(args.includes("specgate-cache:/cache"));
-  assert.deepEqual(args.slice(-5), [
-    "--entrypoint",
-    "sh",
-    "semgrep/semgrep",
-    "-c",
-    "semgrep scan --sarif",
-  ]);
+  assert.deepEqual(args.slice(-5, -1), ["--entrypoint", "sh", "semgrep/semgrep", "-c"]);
+  // With a cache volume on Linux and macOS the command is wrapped to hand
+  // its files back to the person; it is still the command that runs.
+  assert.ok(args[args.length - 1].includes("semgrep scan --sarif"));
   assert.ok(!args.some((a: string) => /SONAR_TOKEN=/.test(a)));
 });
 

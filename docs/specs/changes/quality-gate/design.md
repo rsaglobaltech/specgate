@@ -6,6 +6,25 @@ written from memory and must be checked against the tool's current release
 before the preset ships (REQ-230 runs every preset against a fixture, which is
 where a wrong flag is caught).
 
+## 0. Verified in Docker (2026-10-28)
+
+Run against a real Maven project (`tests/fixtures/quality-maven`) before the
+presets were written; the code follows these, not the tables below where
+they differ.
+
+| Tool | Image / coordinates | What was found |
+| --- | --- | --- |
+| JaCoCo | `org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent … :report` in `maven:3.9-eclipse-temurin-21` | Works from the command line, nothing to declare in the pom. `target/site/jacoco/jacoco.xml` |
+| PIT | `org.pitest:pitest-maven:mutationCoverage -DtargetClasses=… -DoutputFormats=XML -DtimestampedReports=false` | JUnit 5 needs `pitest-junit5-plugin` declared in the pom (not addable from the CLI). **`mutations.xml` quotes attributes with `'`**, which the reader now accepts |
+| SpotBugs | `com.github.spotbugs:spotbugs-maven-plugin:4.8.6.6:spotbugs -Dspotbugs.sarifOutput=true` | `target/spotbugsSarif.json`. **Paths are from the source root** (`com/shop/Bad.java`): resolved to the repository file by suffix |
+| PMD | `maven-pmd-plugin:3.26.0:pmd -Dformat=net.sourceforge.pmd.renderers.SarifRenderer` | `-Dformat=sarif` fails ("Can't find PMD custom format"); the renderer class works. `target/pmd.sarif.json`, paths `file:///src/…` |
+| Semgrep | `semgrep/semgrep:1.99.0`, `semgrep scan --config p/java --sarif --metrics off` | Exits 0 with findings: SARIF judges. Needs the network for the registry rules |
+| gitleaks | `ghcr.io/gitleaks/gitleaks:v8.24.3`, `gitleaks dir .` | **`partialFingerprints` all empty strings** in `dir` mode: empty ones are ignored, or every finding would share one |
+| osv-scanner | `ghcr.io/google/osv-scanner:v2.0.2` | Binary at **`/osv-scanner`** (not on PATH); needs `-L pom.xml` (a folder scan finds no Maven source); results have no line, so the fingerprint is the CVE and the file |
+
+Still to verify: the Gradle image and plugins, the Node presets in
+`node:22` with pnpm, Stryker, SonarQube Community.
+
 ## 1. Configuration
 
 `harness.config.yaml`:

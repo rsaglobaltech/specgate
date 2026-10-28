@@ -1,10 +1,16 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
+import { detectStacks, presetYaml, withPreset, type Level } from "../../../lib/quality-presets";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { error } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
 import * as ui from "../../../lib/ui";
 import { c } from "../../../lib/ui";
-import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import {
+  HARNESS_CONFIG_FILE,
+  readHarnessConfig,
+} from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import type { QualityConfig, Stage } from "../../../../packages/core/src/domain/QualityChecks";
 import {
   dockerAvailable,
@@ -28,10 +34,13 @@ const NULL_SHAPE = { quality: null };
 function usage(): void {
   process.stdout.write(
     `
-  🔍 ${c.bold}specgate quality${c.reset} <list|doctor|run|baseline> [options]
+  🔍 ${c.bold}specgate quality${c.reset} <init|list|doctor|run|baseline> [options]
 
   The quality and security checks of harness.config.yaml (ADR-0040).
 
+    init [--level basic|strict] [--force]
+                             write the checks of a level for the stack this project uses
+                             (Maven, Gradle, npm/pnpm) — all in Docker, no account needed
     list                     each check: when it runs, whether it gates, how it runs here
     doctor [--pull]          the same, with what is missing; --pull fetches the images now
     run [--stage <s>] [--req <REQ>] [--base <ref>]
@@ -63,6 +72,8 @@ export class QualityCommand extends BaseCommand {
     let base = "";
     let pull = false;
     let accept = "";
+    let level = "basic";
+    let force = false;
     for (let i = 1; i < argv.length; i += 1) {
       const a = argv[i];
       if (a === "--project-dir") projectDirArg = argv[++i] || ".";
@@ -71,6 +82,8 @@ export class QualityCommand extends BaseCommand {
       else if (a === "--base") base = argv[++i] || "";
       else if (a === "--pull") pull = true;
       else if (a === "--accept") accept = argv[++i] || "";
+      else if (a === "--level") level = argv[++i] || "";
+      else if (a === "--force") force = true;
       else if (a === "--json") continue;
       else
         io.usage(NULL_SHAPE, [
@@ -79,7 +92,7 @@ export class QualityCommand extends BaseCommand {
           }),
         ]);
     }
-    if (!["list", "doctor", "run", "baseline"].includes(sub)) {
+    if (!["init", "list", "doctor", "run", "baseline"].includes(sub)) {
       io.usage(NULL_SHAPE, [
         error("unknown_subcommand", `quality has no ${sub}.`, { fix: "specgate quality --help" }),
       ]);
@@ -100,6 +113,40 @@ export class QualityCommand extends BaseCommand {
     }
 
     const projectDir = resolveProjectDir(projectDirArg);
+
+    if (sub === "init") {
+      // REQ-225: the checks of a level, for the stack the build files give away.
+      if (level !== "basic" && level !== "strict") {
+        io.usage(NULL_SHAPE, [
+          error("quality_level", `--level is basic or strict, not ${level}.`, {
+            fix: "specgate quality init --level strict",
+          }),
+        ]);
+      }
+      const file = path.join(projectDir, HARNESS_CONFIG_FILE);
+      const current = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "harness_version: 1\n";
+      if (/^checks:/m.test(current) && !force) {
+        io.fail(NULL_SHAPE, [
+          error("quality_exists", "harness.config.yaml already lists checks.", {
+            fix: "specgate quality init --force replaces them (every other line is kept).",
+          }),
+        ]);
+      }
+      const stacks = detectStacks(projectDir);
+      fs.writeFileSync(file, withPreset(current, presetYaml(projectDir, level as Level)), "utf8");
+      const written = readHarnessConfig(projectDir) || {};
+      const checks = written.quality ? written.quality.checks.map((c) => c.name) : [];
+      io.emit({ quality: { level, stacks, checks, file: HARNESS_CONFIG_FILE } }, () => {
+        process.stdout.write(
+          ui.header("quality init", `${level} · ${stacks.join(", ") || "node"}`)
+        );
+        process.stdout.write(
+          `  ${checks.join(", ")}\n\n  ${ui.muted("All in Docker. Next: specgate quality doctor --pull, then specgate quality baseline.")}\n\n`
+        );
+      });
+      return;
+    }
+
     let quality: QualityConfig | undefined;
     try {
       quality = (readHarnessConfig(projectDir) || {}).quality;

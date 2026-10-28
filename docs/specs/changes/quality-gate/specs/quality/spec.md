@@ -121,3 +121,39 @@ The system SHALL, for a check whose `report` is PIT `mutations.xml` or StrykerJS
 - THEN it is 2 of 3, the ignored one left out
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-measures.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-225 — The checks of a level, for the project's stack
+
+The system SHALL, with `specgate quality init [--level basic|strict] [--force]`, write into harness.config.yaml the checks of the level for each stack the build files give away — Maven (pom.xml), Gradle (build.gradle) and Node (package.json, with npm, pnpm or yarn by its lockfile) — every one running in Docker with a pinned image and tools that need no account, the Java image chosen by the JDK the build declares; SHALL write commented, with what to add, a check whose tool the build lacks (PIT without pitest-maven, Vitest coverage without its provider, Stryker without its package); SHALL keep every other line of the file; and SHALL refuse to replace existing checks without `--force`.
+
+#### Scenario: SCN-225a — Strict for a Maven project
+
+- GIVEN a pom.xml declaring Java 17 and no pitest-maven
+- WHEN `specgate quality init --level strict` runs
+- THEN the file lists secrets, dependencies, coverage, spotbugs, pmd and semgrep in Docker, the Maven ones in `maven:3.9-eclipse-temurin-17`, and mutation commented with pitest-maven named
+
+#### Scenario: SCN-225b — A Node project with pnpm and Vitest
+
+- GIVEN a package.json with typescript, eslint, vitest and @vitest/coverage-v8, and a pnpm-lock.yaml
+- WHEN `specgate quality init` runs
+- THEN types, lint and coverage run in `node:22` after a pnpm install, coverage reads lcov, and dependencies scans pnpm-lock.yaml
+
+#### Scenario: SCN-225c — The rest of the file is kept, the checks are not replaced unasked
+
+- GIVEN harness.config.yaml with test_cmd and existing checks
+- WHEN `specgate quality init` runs, then with `--force`
+- THEN the first is refused and changes nothing; the second keeps test_cmd and replaces the checks
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-presets.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-230 — The presets run for real
+
+The system SHALL keep a Maven fixture project whose strict preset runs in Docker in the test suite — skipped, and said so, where Docker does not answer — proving that the coverage, SpotBugs, PMD, Semgrep and PIT checks run, that the baseline holds back the existing findings, and that a change with a new finding, an untested line and surviving mutants fails exactly those checks.
+
+#### Scenario: SCN-230a — A Maven change judged by the strict preset in Docker
+
+- GIVEN the fixture with a baseline taken, and a change adding Discount.java with a String compared with ==, a branch no test runs, and one test
+- WHEN `specgate quality run` runs
+- THEN spotbugs fails on Discount.java:5 only, coverage fails naming the untested lines, mutation fails naming survivors on Discount.java, and pmd and semgrep pass
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-presets.test.ts actor=Developer kind=functional -->

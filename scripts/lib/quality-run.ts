@@ -139,7 +139,30 @@ export function sarifFindings(projectDir: string, check: QualityCheck): Finding[
   if (!check.sarif) return null;
   const file = path.join(projectDir, check.sarif);
   if (!fs.existsSync(file)) return null;
-  return readSarif(fs.readFileSync(file, "utf8"), projectDir, linesOf(projectDir));
+  return readSarif(
+    fs.readFileSync(file, "utf8"),
+    projectDir,
+    linesOf(projectDir),
+    repositoryPath(projectDir)
+  );
+}
+
+/**
+ * A path a tool reported, as the repository file it is: itself when it
+ * exists, else the one file that ends with it (`com/shop/Order.java` is
+ * `src/main/java/com/shop/Order.java`); left as it is when none or several do.
+ */
+export function repositoryPath(projectDir: string): (p: string) => string {
+  let files: string[] | null = null;
+  return (p: string) => {
+    if (fs.existsSync(path.join(projectDir, p))) return p;
+    if (files === null) {
+      const r = git(projectDir, ["ls-files", "--cached", "--others", "--exclude-standard"]);
+      files = r.status === 0 ? (r.stdout || "").split("\n").filter(Boolean) : [];
+    }
+    const hits = files.filter((f) => f.endsWith(`/${p}`));
+    return hits.length === 1 ? hits[0] : p;
+  };
 }
 
 /** Where a check's reports go, inside the project and ignored by git. */
@@ -264,10 +287,16 @@ export function dockerArgs(
   command: string,
   container: string
 ): string[] {
-  const user =
-    process.platform !== "win32" && typeof process.getuid === "function"
-      ? ["--user", `${process.getuid()}:${process.getgid ? process.getgid() : 0}`]
-      : [];
+  const posix = process.platform !== "win32" && typeof process.getuid === "function";
+  const id = posix ? `${process.getuid!()}:${process.getgid ? process.getgid() : 0}` : "";
+  // A cache volume belongs to root inside the container, so a check with one
+  // runs as root and hands what it wrote back to the person afterwards;
+  // without one it runs as the person from the start.
+  const asRoot = posix && check.volumes.length > 0 && check.shell;
+  const user = posix && !asRoot ? ["--user", id] : [];
+  const script = asRoot
+    ? `touch /tmp/.specgate-start; ${command}; s=$?; find /src -newer /tmp/.specgate-start -user 0 -exec chown ${id} {} + 2>/dev/null; exit $s`
+    : command;
   return [
     "run",
     "--rm",
@@ -282,7 +311,7 @@ export function dockerArgs(
     ...check.env.flatMap((e) => ["-e", e]),
     ...check.volumes.flatMap((v) => ["-v", v]),
     ...(check.shell
-      ? ["--entrypoint", "sh", check.image, "-c", command]
+      ? ["--entrypoint", "sh", check.image, "-c", script]
       : [check.image, ...splitArgs(command)]),
   ];
 }

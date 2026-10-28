@@ -33,7 +33,11 @@ export interface LineCoverage {
   covered: Set<number>;
 }
 
-const attr = (tag: string, name: string) => (new RegExp(`\\b${name}="([^"]*)"`).exec(tag) || [])[1];
+/** An attribute's value, in double or single quotes: PIT writes `status='KILLED'`. */
+const attr = (tag: string, name: string) =>
+  (new RegExp(`\\b${name}=(?:"([^"]*)"|'([^']*)')`).exec(tag) || [])
+    .slice(1)
+    .find((v) => v !== undefined);
 
 /** JaCoCo XML: `package/SourceFile.java` → its lines. */
 export function readJacoco(xml: string): Map<string, LineCoverage> {

@@ -54,13 +54,15 @@ export function fingerprint(
   lines: string[] | null,
   partial?: Record<string, unknown>
 ): string {
-  const own =
-    partial && Object.keys(partial).length
-      ? Object.keys(partial)
-          .sort()
-          .map((k) => `${k}=${String(partial[k])}`)
-          .join(";")
-      : "";
+  // Only fingerprints with a value: gitleaks scanning a folder writes them all
+  // empty, which would make every finding the same one.
+  const filled = partial
+    ? Object.keys(partial).filter((k) => String(partial[k] ?? "").trim() !== "")
+    : [];
+  const own = filled
+    .sort()
+    .map((k) => `${k}=${String(partial![k])}`)
+    .join(";");
   if (own) return `${rule}|${path}|${own}`;
   const text =
     lines && line > 0
@@ -73,7 +75,8 @@ export function fingerprint(
 export function readSarif(
   text: string,
   projectDir: string,
-  linesOf: (path: string) => string[] | null
+  linesOf: (path: string) => string[] | null,
+  resolve?: (path: string) => string
 ): Finding[] {
   let doc: { runs?: Array<{ results?: unknown[] }> };
   try {
@@ -98,7 +101,10 @@ export function readSarif(
         partialFingerprints?: Record<string, unknown>;
       };
       const loc = (r.locations || [])[0]?.physicalLocation;
-      const path = relativePath(loc?.artifactLocation?.uri || "", projectDir);
+      const named = relativePath(loc?.artifactLocation?.uri || "", projectDir);
+      // SpotBugs names a file from its source root (com/shop/Order.java): the
+      // caller finds the repository file it is.
+      const path = named && resolve ? resolve(named) : named;
       const line = Number(loc?.region?.startLine) || 0;
       const rule = String(r.ruleId || r.rule?.id || "unknown");
       out.push({
