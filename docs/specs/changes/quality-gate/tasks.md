@@ -42,7 +42,7 @@ its delta and test first.
 ## 5. Results
 
 - [x] 5.1 REQ-228 run record (harness report moves to REQ-229)
-- [ ] 5.2 REQ-229 `/live`, studio Calidad card, studio report, quality level in the new-project step
+- [x] 5.2 REQ-229 `/live`, studio Calidad card, studio report, quality level in the new-project step
 
 ## 6. Documentation (see docs-impact.md)
 

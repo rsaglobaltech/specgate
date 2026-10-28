@@ -812,7 +812,15 @@ function runGate(
     for (const stage of ["attempt", "end"] as Stage[]) {
       for (const o of runStages(worktreeDir, quality, [stage], ctx)) {
         outcomes.push(o);
-        report(`quality: ${o.name}`, o.ok || !!o.skipped || !o.gate ? "pass" : "fail", {
+        // REQ-229: the step says what was measured, so /live shows it as it happens.
+        const said = o.skipped
+          ? " (not run)"
+          : o.measure && o.measure.value !== null
+            ? ` ${o.measure.value}%`
+            : o.findings
+              ? ` · ${o.findings.freshCount} new`
+              : "";
+        report(`quality: ${o.name}${said}`, o.ok || !!o.skipped || !o.gate ? "pass" : "fail", {
           ms: o.ms,
           ...(o.skipped ? { skipped: o.skipped } : {}),
           ...(o.measure ? { value: o.measure.value } : {}),

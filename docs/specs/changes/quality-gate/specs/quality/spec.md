@@ -223,3 +223,33 @@ The system SHALL keep, in the run record of a requirement that passes, each qual
 - THEN its result lists both, in order, with their stage and verdict, and no output
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-harness.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-229 — The quality is shown where the work is followed
+
+The system SHALL summarise, from the run records, the quality checks of each requirement's latest passing result — its diff coverage and mutation score, the checks that ran or were skipped — and show it in `harness report` (a section and its JSON), in the studio's report (a card with the means, and each delivered requirement's figures, also in the downloadable page) and in the studio's project page (the checks configured, how each runs on this machine, whether Docker answers, and a button to turn on the basic or strict level); SHALL name each check's measure or new findings in the gate step `/live` shows; and the studio's new-project step SHALL ask for a quality level — basic by default, strict or none — and write its checks.
+
+#### Scenario: SCN-229a — The harness report sums the quality up
+
+- GIVEN run records where REQ-002 passed with diff coverage 90% and mutation 80%, and REQ-003 with 70% and 60%
+- WHEN `specgate harness report --json` runs
+- THEN its quality says 2 measured, coverage 80, mutation 70, and each check with how often it ran
+
+#### Scenario: SCN-229b — The studio's report shows each requirement's figures
+
+- GIVEN the same records and both requirements Implemented
+- WHEN the studio's report is read and downloaded
+- THEN REQ-002 carries coverage 90 and mutation 80, the means are 80 and 70, and the page says "Quality of the code"
+
+#### Scenario: SCN-229c — A new project with a quality level, and turning it up later
+
+- GIVEN an empty folder and quality basic chosen in the new-project step
+- WHEN the project is created, then the studio turns on strict
+- THEN harness.config.yaml has `quality: basic` with the commits and secrets checks, the project page lists them, and after the switch it says strict
+
+#### Scenario: SCN-229d — /live sees each check
+
+- GIVEN a requirement whose gate runs the checks `marker` and `final`
+- WHEN its attempt passes
+- THEN its events have the gate steps `quality: marker` and `quality: final`
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-views.test.ts actor=Developer kind=functional -->

@@ -182,7 +182,15 @@ export function studioAppPage(projectName: string, token = ""): string {
       download:"Descargar informe", print:"Imprimir / PDF", rBuilt:"Construido", rExamples:"Ejemplos probados", rGate:"Calidad", rGateOk:"Pasa", rGateBad:"No pasa", rCost:"Coste del asistente",
       byModule:"Por módulo", colModule:"Módulo", colBuilt:"Hecho", colEx:"Ejemplos", colState:"Estado", complete:"Completo", waitingN:"N esperan una respuesta", notBuilt:"Sin construir",
       whatDoes:"Qué hace ya la app", provedBy:"Probado con: ", missing:"Lo que falta", missingNone:"Nada.", waitsFor:"espera la respuesta a: ", decisions:"Decisiones y supuestos",
-      decisionsP:"Q preguntas respondidas · A supuestos anotados.", nothingBuilt:"Todavía no hay nada construido."},
+      decisionsP:"Q preguntas respondidas · A supuestos anotados.", nothingBuilt:"Todavía no hay nada construido.",
+      qualTitle:"Calidad del código", qualIntro:"Comprobaciones que el asistente debe pasar en cada requisito, todas en Docker y sin cuentas.",
+      qualNone:"Sin comprobaciones de calidad todavía.", qualBasic:"Activar el nivel básico", qualStrict:"Activar el nivel estricto",
+      toBasic:"Cambiar a básico", toStrict:"Cambiar a estricto", gates:"bloquea", advises:"avisa", notRunnable:"no se puede ejecutar aquí",
+      dockerOn:"Docker responde", dockerOff:"Docker no responde: arranca Docker Desktop", thresholds:"Umbrales: cobertura de lo cambiado C % · mutación M %",
+      stAttempt:"en cada intento", stEnd:"al final", stCi:"en CI",
+      q5:"5 · ¿Qué nivel de calidad?", qlBasic:"Básico (recomendado)", qlBasicP:"Secretos, dependencias, tests que cubren lo cambiado y análisis estático. Todo en Docker.",
+      qlStrict:"Estricto", qlStrictP:"Además: tests de mutación, complejidad y SAST. Más lento, más exigente.", qlNone:"Ninguno por ahora", qlNoneP:"Se puede activar después en Proyecto.",
+      rQuality:"Calidad del código", rQualityP:"cobertura C % · mutación M %", covShort:"cobertura", mutShort:"mutación"},
     en: {route:"Route", project:"Project", brief:"Brief", drafts:"Drafts", report:"Report",
       home:"Home", questions:"Questions", review:"Review", build:"Build", simple:"Simple", adv:"Advanced",
       routeTitle:"Your project, step by step", routeIntro:"From the brief to the app built and proven. Each step opens once the one before is ready; you can go back to any.",
@@ -244,7 +252,15 @@ export function studioAppPage(projectName: string, token = ""): string {
       download:"Download the report", print:"Print / PDF", rBuilt:"Built", rExamples:"Examples proven", rGate:"Quality", rGateOk:"Passes", rGateBad:"Fails", rCost:"Assistant cost",
       byModule:"By module", colModule:"Module", colBuilt:"Built", colEx:"Examples", colState:"State", complete:"Complete", waitingN:"N wait for an answer", notBuilt:"Not built",
       whatDoes:"What the app does", provedBy:"Proven with: ", missing:"What is missing", missingNone:"Nothing.", waitsFor:"waits for the answer to: ", decisions:"Decisions and assumptions",
-      decisionsP:"Q questions answered · A assumptions recorded.", nothingBuilt:"Nothing is built yet."}
+      decisionsP:"Q questions answered · A assumptions recorded.", nothingBuilt:"Nothing is built yet.",
+      qualTitle:"Code quality", qualIntro:"Checks the assistant must pass on every requirement, all in Docker, no account needed.",
+      qualNone:"No quality checks yet.", qualBasic:"Turn on the basic level", qualStrict:"Turn on the strict level",
+      toBasic:"Switch to basic", toStrict:"Switch to strict", gates:"gates", advises:"advises", notRunnable:"cannot run here",
+      dockerOn:"Docker answers", dockerOff:"Docker does not answer: start Docker Desktop", thresholds:"Thresholds: diff coverage C % · mutation M %",
+      stAttempt:"every attempt", stEnd:"at the end", stCi:"in CI",
+      q5:"5 · Which quality level?", qlBasic:"Basic (recommended)", qlBasicP:"Secrets, dependencies, tests that cover the change and static analysis. All in Docker.",
+      qlStrict:"Strict", qlStrictP:"Also: mutation tests, complexity and SAST. Slower, stricter.", qlNone:"None for now", qlNoneP:"It can be turned on later in Project.",
+      rQuality:"Code quality", rQualityP:"coverage C % · mutation M %", covShort:"coverage", mutShort:"mutation"}
   };
   function load(k, d){ try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
   function save(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
@@ -363,7 +379,7 @@ export function studioAppPage(projectName: string, token = ""): string {
   }
 
   // ── Project (REQ-213) ───────────────────────────────────────────────────
-  var np = {name:"", kind:"web", stack:"node-react", customStack:"", customTesting:"", agent:""};
+  var np = {name:"", kind:"web", stack:"node-react", customStack:"", customTesting:"", agent:"", quality:"basic"};
   function viewProject(r, pr){
     var m = $("view"); m.replaceChildren(); m.className = "narrow";
     if (r.isProject) {
@@ -381,6 +397,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       m.appendChild(c);
       var hint = el("div", "card"); hint.append(el("span", "small muted", t("profilesHint")), el("code", "cmd", ["profiles_version: 1", "profiles:", "  my-agent:", "    agent: " + String.fromCharCode(34) + "my-agent < {prompt_file}" + String.fromCharCode(34)].join(String.fromCharCode(10))));
       m.appendChild(hint);
+      if (cache.quality) m.appendChild(qualityCard(cache.quality));
       return;
     }
     if (!r.empty) {
@@ -424,6 +441,14 @@ export function studioAppPage(projectName: string, token = ""): string {
       f4.appendChild(l);
     });
     f.appendChild(f4);
+    var fq = el("div", "field"); fq.appendChild(el("span", "lab", t("q5")));
+    var qch = el("div", "choices");
+    [["basic", "qlBasic", "qlBasicP"], ["strict", "qlStrict", "qlStrictP"], ["none", "qlNone", "qlNoneP"]].forEach(function(k){
+      var l = el("label", "choice" + (np.quality === k[0] ? " on" : "")), rr = el("input"); rr.type = "radio"; rr.name = "np-quality"; rr.checked = np.quality === k[0];
+      rr.addEventListener("change", function(){ np.quality = k[0]; render(); });
+      var h = el("span", "h"); h.append(rr, document.createTextNode(t(k[1]))); l.append(h, el("span", "small muted", t(k[2]))); qch.appendChild(l);
+    });
+    fq.appendChild(qch); f.appendChild(fq);
     var f5 = el("div", "field"); flex(f5); f5.style.justifyContent = "space-between";
     var m0 = msgEl();
     var b = button("go", t("create"), function(){
@@ -436,6 +461,37 @@ export function studioAppPage(projectName: string, token = ""): string {
     f5.append(el("span", "small muted", t("createP")), b);
     f.appendChild(f5);
     m.append(f, m0, cmd("specgate init --new · specgate harness init · specgate propose --from-brief --new-brief"));
+  }
+
+  // ── Quality: the checks configured, how each runs here (REQ-229) ──────────
+  function qualityCard(q){
+    var c = el("section", "card");
+    c.append(el("h2", "", t("qualTitle")), el("span", "small muted", t("qualIntro")));
+    var dk = el("span", "small"); dk.textContent = q.docker ? t("dockerOn") : t("dockerOff"); dk.style.color = q.docker ? "var(--pass)" : "var(--fail)";
+    c.appendChild(dk);
+    if (!q.checks.length) c.appendChild(el("span", "muted", t("qualNone")));
+    else {
+      var level = el("div"); flex(level, 8);
+      if (q.level) level.appendChild(el("span", "pill b-info", q.level));
+      level.appendChild(el("span", "small muted", fill("thresholds", {C: q.diffCoverage === null ? "—" : q.diffCoverage, M: q.mutationScore === null ? "—" : q.mutationScore})));
+      c.appendChild(level);
+      var rows = el("div", "rows");
+      q.checks.forEach(function(k){
+        var l = el("div", "line"), g = el("div", "grow");
+        g.append(el("strong", "", k.name), el("span", "small muted", ({attempt:t("stAttempt"), end:t("stEnd"), ci:t("stCi")})[k.when] + " · " + (k.gate ? t("gates") : t("advises"))));
+        l.appendChild(g);
+        if (k.unavailable) { var u = el("span", "small", t("notRunnable")); u.style.color = "var(--fail)"; u.title = k.unavailable; l.appendChild(u); }
+        else l.appendChild(el("span", "pill b-soft", k.runner));
+        rows.appendChild(l);
+      });
+      c.appendChild(rows);
+    }
+    var acts = el("div"); flex(acts); var m0 = msgEl();
+    var level0 = q.checks.length ? q.level : "";
+    if (level0 !== "basic") acts.appendChild(button(level0 ? "ghost" : "go", level0 ? t("toBasic") : t("qualBasic"), function(){ post("api/quality/init", {level:"basic"}).then(function(r){ say(m0, r); if (r.ok) { cache.quality = r.view; render(); } }); }));
+    if (level0 !== "strict") acts.appendChild(button("ghost", level0 ? t("toStrict") : t("qualStrict"), function(){ post("api/quality/init", {level:"strict"}).then(function(r){ say(m0, r); if (r.ok) { cache.quality = r.view; render(); } }); }));
+    acts.appendChild(m0); c.append(acts, cmd("specgate quality init --level basic|strict · specgate quality doctor --pull · specgate quality baseline"));
+    return c;
   }
 
   // ── Profiles: who works, picked once for Brief, Drafts and Build (REQ-211) ──
@@ -862,7 +918,7 @@ export function studioAppPage(projectName: string, token = ""): string {
     var dl = el("a", "go", t("download")); dl.href = "report.html"; dl.style.display = "inline-flex"; dl.style.alignItems = "center"; dl.style.color = "#fff";
     acts.append(pdf, dl); top.append(g, acts); m.appendChild(top);
     var s = el("section", "stats");
-    [[t("rBuilt"), r.built + " " + t("sOf") + " " + r.total, t("reqs"), ""], [t("rExamples"), String(r.scenarios), "", "var(--pass)"], [t("rGate"), r.gate.ok ? t("rGateOk") : t("rGateBad"), r.gate.findings[0] || "", r.gate.ok ? "var(--pass)" : "var(--fail)"], [t("rCost"), r.cost === null ? "—" : "$" + r.cost.toFixed(2), r.minutes + " min", ""]].forEach(function(x){
+    [[t("rBuilt"), r.built + " " + t("sOf") + " " + r.total, t("reqs"), ""], [t("rExamples"), String(r.scenarios), "", "var(--pass)"], [t("rGate"), r.gate.ok ? t("rGateOk") : t("rGateBad"), r.gate.findings[0] || "", r.gate.ok ? "var(--pass)" : "var(--fail)"], [t("rCost"), r.cost === null ? "—" : "$" + r.cost.toFixed(2), r.minutes + " min", ""]].concat(r.quality && r.quality.measured ? [[t("rQuality"), (r.quality.coverage === null ? "—" : r.quality.coverage + "%"), fill("rQualityP", {C: r.quality.coverage === null ? "—" : r.quality.coverage, M: r.quality.mutation === null ? "—" : r.quality.mutation}), "var(--pass)"]] : []).forEach(function(x){
       var d = el("div", "stat"), b = el("b", "", x[1]); if (x[3]) b.style.color = x[3]; d.append(el("span", "muted small", x[0]), b); if (x[2]) d.appendChild(el("span", "small muted", x[2])); s.appendChild(d);
     });
     m.appendChild(s);
@@ -889,6 +945,12 @@ export function studioAppPage(projectName: string, token = ""): string {
       var line = el("div", "line"), gg = el("div", "grow");
       gg.appendChild(el("strong", "", d.title));
       d.scenarios.forEach(function(sc){ var sp = el("span", "small muted", t("provedBy") + (sc.title || sc.id)); sp.appendChild(el("span", "", " · ✓")); sp.lastChild.style.color = "var(--pass)"; gg.appendChild(sp); });
+      if (d.quality && (d.quality.coverage !== null || d.quality.mutation !== null)) {
+        var qs = [];
+        if (d.quality.coverage !== null) qs.push(t("covShort") + " " + d.quality.coverage + "%");
+        if (d.quality.mutation !== null) qs.push(t("mutShort") + " " + d.quality.mutation + "%");
+        gg.appendChild(el("span", "small", qs.join(" · ")));
+      }
       line.append(gg, el("span", "small muted", adv() ? d.id : "")); wd.appendChild(line);
     });
     m.appendChild(wd);
@@ -925,6 +987,7 @@ export function studioAppPage(projectName: string, token = ""): string {
     var reads = [get("api/route").then(function(x){ cache.route = x; })];
     var isProject = !cache.route || cache.route.isProject;
     if (!cache.profiles || view === "project") reads.push(get("api/profiles").then(function(x){ cache.profiles = x; }));
+    if (view === "project" && isProject) reads.push(get("api/quality").then(function(x){ cache.quality = x; }));
     if (view === "route" && isProject) reads.push(get("api/home").then(function(x){ cache.home = x; }).catch(function(){}));
     if (view === "brief") { reads.push(get("api/modules").then(function(x){ cache.modules = x; })); if (!cache.brief || (cache.modules && cache.modules.job)) reads.push(get("api/brief").then(function(x){ cache.brief = x; })); }
     if (view === "drafts") reads.push(get("api/modules").then(function(x){ cache.modules = x; }));

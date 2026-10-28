@@ -5,7 +5,17 @@ import { spawn, spawnSync } from "node:child_process";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
 import { readBriefBody, moduleKey } from "../../packages/core/src/domain/BriefCards";
 import { briefModules } from "../../packages/core/src/domain/DraftChecklist";
-import { HARNESS_CONFIG_FILE } from "../../packages/core/src/infrastructure/HarnessConfigFile";
+import {
+  HARNESS_CONFIG_FILE,
+  readHarnessConfig,
+} from "../../packages/core/src/infrastructure/HarnessConfigFile";
+import type { QualityConfig } from "../../packages/core/src/domain/QualityChecks";
+import {
+  summariseQuality,
+  type QualitySummary,
+} from "../../packages/core/src/domain/QualitySummary";
+import { presetYaml, withPreset } from "./quality-presets";
+import { dockerAvailable, resolveRunner } from "./quality-run";
 import {
   listChangeIds,
   listArchivedIds,
@@ -345,6 +355,54 @@ export function route(projectDir: string): RouteView {
   };
 }
 
+// ── Quality on the project page (REQ-229) ──────────────────────────────────
+
+export interface QualityView {
+  level: string;
+  diffCoverage: number | null;
+  mutationScore: number | null;
+  docker: boolean;
+  checks: Array<{ name: string; when: string; gate: boolean; runner: string; unavailable: string }>;
+}
+
+/** The checks configured, and how each would run on this machine. */
+export function qualityView(projectDir: string): QualityView {
+  let q: QualityConfig | undefined;
+  try {
+    q = (readHarnessConfig(projectDir) || {}).quality;
+  } catch {
+    q = undefined;
+  }
+  const checks = (q ? q.checks : []).map((c) => {
+    const how = resolveRunner(c);
+    return {
+      name: c.name,
+      when: c.when,
+      gate: c.gate,
+      runner: "runner" in how ? how.runner : "",
+      unavailable: "skip" in how ? how.skip : "",
+    };
+  });
+  return {
+    level: q ? q.level : "",
+    diffCoverage: q ? q.diffCoverage : null,
+    mutationScore: q ? q.mutationScore : null,
+    docker: dockerAvailable(),
+    checks,
+  };
+}
+
+/** Write the checks of a level for this project's stack (REQ-225), replacing any. */
+export function initQuality(projectDir: string, level: string): Outcome<{ view: QualityView }> {
+  if (level !== "basic" && level !== "strict") {
+    return { ok: false, code: "quality_level", message: "The level is basic or strict." };
+  }
+  const cfg = path.join(projectDir, HARNESS_CONFIG_FILE);
+  const current = fs.existsSync(cfg) ? fs.readFileSync(cfg, "utf8") : "harness_version: 1\n";
+  fs.writeFileSync(cfg, withPreset(current, presetYaml(projectDir, level)), "utf8");
+  return { ok: true, view: qualityView(projectDir) };
+}
+
 // ── A new project (REQ-213) ─────────────────────────────────────────────────
 
 export interface NewProject {
@@ -354,6 +412,8 @@ export interface NewProject {
   customStack?: string;
   customTesting?: string;
   agent: "claude" | "codex" | "none";
+  /** The quality checks to write, all in Docker (REQ-225); none by default. */
+  quality?: "none" | "basic" | "strict";
 }
 
 const STACKS: Record<string, { stack: string; testing: string }> = {
@@ -487,6 +547,11 @@ export function createProject(dir: string, p: NewProject): Outcome<{ dir: string
     });
   run(["harness", "init"]);
   writeProfiles(dir, presetProfiles(p.agent));
+  if (p.quality === "basic" || p.quality === "strict") {
+    const cfg = path.join(dir, HARNESS_CONFIG_FILE);
+    const current = fs.existsSync(cfg) ? fs.readFileSync(cfg, "utf8") : "harness_version: 1\n";
+    fs.writeFileSync(cfg, withPreset(current, presetYaml(dir, p.quality)), "utf8");
+  }
   // A brief with nothing to delete: the studio's form fills it, so the
   // template's examples and blanks would only be in the way.
   const brief = path.join(dir, DEFAULT_BRIEF);
@@ -902,7 +967,11 @@ export interface ReportView {
     title: string;
     module: string;
     scenarios: Array<{ id: string; title: string }>;
+    /** What the quality checks measured on its passing attempt, when they ran. */
+    quality: { coverage: number | null; mutation: number | null } | null;
   }>;
+  /** The quality checks across what was delivered (REQ-229). */
+  quality: QualitySummary;
   missing: Array<{
     id: string;
     title: string;
@@ -976,6 +1045,7 @@ export function report(projectDir: string, withGate = true): ReportView {
       m.built += 1;
       m.scenarios += r.scenarios.length;
       delivered.push({
+        quality: null,
         id,
         title: r.title,
         module: name,
@@ -999,13 +1069,18 @@ export function report(projectDir: string, withGate = true): ReportView {
   const runs = path.join(projectDir, ".harness", "runs");
   let files: string[] = [];
   try {
-    files = fs.readdirSync(runs).filter((f) => f.endsWith(".json"));
+    files = fs
+      .readdirSync(runs)
+      .filter((f) => f.endsWith(".json"))
+      .sort();
   } catch {
     /* no runs */
   }
+  const records: Array<{ results?: Array<{ requirement: string; result: string }> }> = [];
   for (const f of files) {
     try {
       const doc = JSON.parse(fs.readFileSync(path.join(runs, f), "utf8"));
+      records.push(doc);
       for (const r of doc.results || [])
         minutes += Number(r.durationMs) > 0 ? Number(r.durationMs) / 60000 : 0;
     } catch {
@@ -1023,6 +1098,12 @@ export function report(projectDir: string, withGate = true): ReportView {
       path.join(projectDir, "docs", "specs", "changes", "archive", id, "assumptions.md")
     );
   }
+  const qualitySummary = summariseQuality(records as Parameters<typeof summariseQuality>[0]);
+  const qualityByReq = new Map(qualitySummary.requirements.map((q) => [q.requirement, q]));
+  for (const d of delivered) {
+    const q = qualityByReq.get(d.id);
+    d.quality = q ? { coverage: q.coverage, mutation: q.mutation } : null;
+  }
   return {
     project: path.basename(projectDir),
     date: new Date().toISOString().slice(0, 10),
@@ -1037,6 +1118,7 @@ export function report(projectDir: string, withGate = true): ReportView {
     missing,
     answered: questions.filter((q) => q.answered).length,
     assumptions,
+    quality: qualitySummary,
   };
 }
 
@@ -1093,6 +1175,11 @@ ul{padding-left:18px}
 <section><h2>By module</h2><table><tr><th>Module</th><th>Built</th><th>Examples</th><th></th></tr>${rows}</table></section>
 <section><h2>What the app does</h2><ul>${delivered || "<li>Nothing built yet.</li>"}</ul></section>
 <section><h2>What is missing</h2><ul>${missing || "<li>Nothing.</li>"}</ul></section>
+${
+  r.quality.measured
+    ? `<section><h2>Quality of the code</h2><p>Diff coverage ${r.quality.coverage ?? "—"}% · mutation score ${r.quality.mutation ?? "—"}% (means over ${r.quality.measured} requirement(s) the checks measured).</p><p class="m">${r.quality.checks.map((c) => `${esc(c.name)}: ${c.ran} ran${c.skipped ? `, ${c.skipped} skipped` : ""}`).join(" · ")}</p></section>`
+    : ""
+}
 <section><h2>Decisions</h2><p>${r.answered} questions answered · ${r.assumptions} assumptions recorded.</p></section>
 </main></body></html>
 `;

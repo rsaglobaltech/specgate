@@ -104,7 +104,12 @@ function render(c: PresetCheck): string[] {
 }
 
 /** The secrets and dependency checks every stack shares. */
-function shared(level: Level, depsLock: string): PresetCheck[] {
+function shared(projectDir: string, level: Level, depsLock: string): PresetCheck[] {
+  // osv-scanner reads a lockfile (or pom.xml); without one it finds nothing to
+  // scan and writes no SARIF, so the check would fail on every run.
+  const lockMissing = !fs.existsSync(path.join(projectDir, depsLock))
+    ? `Dependencies need ${depsLock}, which this project does not have yet; once it does, uncomment:`
+    : undefined;
   return [
     {
       name: "secrets",
@@ -121,6 +126,7 @@ function shared(level: Level, depsLock: string): PresetCheck[] {
       image: IMAGES.osv,
       sarif: ".specgate/quality/osv.sarif",
       scope: "all",
+      missing: lockMissing,
     },
   ];
 }
@@ -131,7 +137,7 @@ function maven(projectDir: string, level: Level): PresetCheck[] {
   const m2 = ["specgate-m2:/root/.m2"];
   const mvn = "mvn -B -q";
   const checks: PresetCheck[] = [
-    ...shared(level, "pom.xml"),
+    ...shared(projectDir, level, "pom.xml"),
     {
       name: "coverage",
       run: `${mvn} org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.12:report`,
@@ -186,13 +192,12 @@ function maven(projectDir: string, level: Level): PresetCheck[] {
 
 function gradle(projectDir: string, level: Level): PresetCheck[] {
   const build = `${read(projectDir, "build.gradle")}\n${read(projectDir, "build.gradle.kts")}`;
-  const lock = fs.existsSync(path.join(projectDir, "gradle.lockfile"))
-    ? "gradle.lockfile"
-    : "build.gradle";
+  // osv-scanner reads Gradle's lockfile, not the build script: dependency locking must be on.
+  const lock = "gradle.lockfile";
   const image = `gradle:8-jdk${javaVersion(projectDir)}`;
   const cache = ["specgate-gradle:/home/gradle/.gradle"];
   const checks: PresetCheck[] = [
-    ...shared(level, lock),
+    ...shared(projectDir, level, lock),
     {
       name: "coverage",
       run: "gradle --no-daemon -q test jacocoTestReport",
@@ -238,7 +243,7 @@ function node(projectDir: string, level: Level): PresetCheck[] {
   const inNode = (cmd: string) => `${install} && ${cmd}`;
   const tsconfig = fs.existsSync(path.join(projectDir, "tsconfig.json"));
   const runner = deps.vitest ? "vitest" : deps.jest ? "jest" : "";
-  const checks: PresetCheck[] = [...shared(level, lock)];
+  const checks: PresetCheck[] = [...shared(projectDir, level, lock)];
   if (tsconfig) {
     checks.push({
       name: "types",

@@ -136,6 +136,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate harness events --from claude` | Turns Claude Code's stream into events for the live view.                   | [The harness](harness.md#watch-it-work)        |
 | `specgate studio`                       | The visual app, from an empty folder to the report; `/live`: the harness.   | `specgate studio --help`                       |
 | `specgate ci init`                      | Writes the CI job for GitHub, GitLab, Azure or Jenkins.                     | [Validating](validating.md)                    |
+| `specgate quality init [--level]`       | Writes the checks of basic or strict for the stack, all in Docker.          | `specgate quality --help`                      |
 | `specgate quality list`                 | The quality checks of the gate: stage, gate or advise, how each runs here.  | `specgate quality --help`                      |
 | `specgate quality doctor [--pull]`      | The same, with what is missing; `--pull` fetches the Docker images now.     | `specgate quality --help`                      |
 | `specgate quality run [--stage]`        | Runs the checks of a stage: attempt, end or ci.                             | `specgate quality --help`                      |
