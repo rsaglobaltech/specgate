@@ -9,6 +9,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.1] — 2026-10-28
+
+0.27.0 reached ghcr.io only: its npm and GitHub Packages publish stopped on a quality check that failed on CI runners. This is that release, with the fix and the studio's new-project step working in an empty folder.
+
+### Fixed
+
+- **A quality check run as the person has a home it can write**: in Docker on Linux, a check runs with your uid, and Semgrep failed when that uid was not the image's own user (uid 1001 on a CI runner) because it could not create its cache in `/`. It now runs with `HOME=/tmp`.
+- **The studio stays up in an empty folder** (REQ-213): any request it does not serve, such as the browser's own `/favicon.ico`, made it read the matrix and exit when there was none, so the new-project step died on its first load. It answers 404 until the project exists. The step also says it asks five questions, not four.
+
+### Changed
+
+- **The documentation shows the quality checks and the studio**: a band for each on the landing page, the studio under Start with a screenshot of every step, and the gate's section named after the tools it runs.
+
 ## [0.27.0] — 2026-10-28
 
 Quality, not only tests: your team's checks in the gate — coverage and mutation of the lines a change adds, SpotBugs, PMD, Semgrep, secrets, dependencies, SonarQube and Conventional Commits — each in Docker, without an account, and only what a change adds fails.

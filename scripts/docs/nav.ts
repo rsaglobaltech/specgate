@@ -71,6 +71,13 @@ export const NAV: readonly NavSection[] = [
           "The six ideas behind every command, and the vocabulary: change, delta, draft, gate, matrix.",
       },
       {
+        slug: "studio",
+        group: "Begin",
+        label: "The studio — no terminal",
+        blurb:
+          "Specgate as an app: from an empty folder to the report, step by step, without the commands.",
+      },
+      {
         slug: "start/scratch-1-install",
         group: "From scratch",
         step: 1,
@@ -219,9 +226,10 @@ export const NAV: readonly NavSection[] = [
     ],
   },
   {
-    title: "The gate in CI",
+    title: "The gate and quality checks",
     icon: "server",
-    summary: "What fails a pull request, and how to wire it in.",
+    summary:
+      "What fails a pull request — tests, coverage, mutation, SonarQube, SpotBugs, secrets — and how to wire it in.",
     entries: [
       {
         slug: "validating",
@@ -230,9 +238,9 @@ export const NAV: readonly NavSection[] = [
       },
       {
         slug: "quality",
-        label: "Quality and security checks",
+        label: "Quality: Sonar, SpotBugs, coverage",
         blurb:
-          "Coverage and mutation of what a change adds, SAST, secrets, SonarQube — all in Docker.",
+          "Coverage and mutation of what a change adds, SonarQube, SpotBugs, PMD, Semgrep, secrets, dependencies — all in Docker, no account.",
       },
       {
         slug: "automation",
@@ -359,11 +367,6 @@ export const NAV: readonly NavSection[] = [
         slug: "harness",
         label: "The harness",
         blurb: "Unattended delivery: plan → agent → gate → apply, one worktree per requirement.",
-      },
-      {
-        slug: "studio",
-        label: "The studio",
-        blurb: "Specgate as an app: from an empty folder to the report, without the commands.",
       },
       {
         slug: "harness-report",

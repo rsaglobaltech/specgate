@@ -33,7 +33,7 @@
 
 <header class="top">
   <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
-  <span class="top__version">v0.27.0</span>
+  <span class="top__version">v0.27.1</span>
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -57,7 +57,7 @@
 <section class="mx">
   <div class="ed-wrap mx__grid">
     <div class="mx__copy">
-      <p class="mx__eyebrow">[ v0.27.0 ] — A change, a brief or a Jira ticket, to proven requirements</p>
+      <p class="mx__eyebrow">[ v0.27.1 ] — A change, a brief or a Jira ticket, to proven requirements</p>
       <h1 class="mx__title">No test,<br>no <span>done.</span></h1>
       <p class="mx__lede">
         Specgate turns a change you describe, a client's brief or a Jira story
@@ -68,6 +68,10 @@
       <p class="ed-actions">
         <a class="ed-btn ed-btn--primary" href="./getting-started.html">Get started</a>
         <a class="ed-btn" href="#projects">See it on six real products</a>
+      </p>
+      <p class="ed-actions">
+        <a class="ed-link" href="#quality">New: quality checks — Sonar, SpotBugs, coverage →</a>
+        <a class="ed-link" href="#studio">The studio, without the terminal →</a>
       </p>
       <figure class="code ed-install" data-lang="bash">
         <figcaption class="code__head"><span class="code__lang">Start in three commands</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
@@ -943,7 +947,7 @@ max_attempts: 1
     </div>
 
     <p class="term__meta">
-      Recorded from <strong>v0.27.0</strong>. <a href="./domain-packs.html">Domain packs →</a> <a href="./tutorial.html">The harness run, explained →</a>
+      Recorded from <strong>v0.27.1</strong>. <a href="./domain-packs.html">Domain packs →</a> <a href="./tutorial.html">The harness run, explained →</a>
     </p>
   </div>
 </section>
@@ -1183,6 +1187,51 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"</code></pre>
   </div>
 </section>
 
+<!-- ── Quality checks ───────────────────────────────────────────────────── -->
+<section class="ed-band" id="quality">
+  <div class="ed-wrap ed-split ed-split--wide">
+    <div class="ed-split__head reveal">
+      <p class="ed-eyebrow">Quality, not only tests</p>
+      <h2 class="ed-h2">Your team's tools in the gate. Only what a change adds fails.</h2>
+      <p class="ed-muted">Coverage and mutation of the lines the change touched
+         (JaCoCo, PIT, LCOV, Stryker), SonarQube, SpotBugs, PMD, Semgrep,
+         gitleaks, osv-scanner and Conventional Commits — each in its own
+         Docker image, without an account. Today's findings become a baseline,
+         so the gate holds new code to the bar without failing on old debt.</p>
+      <p class="ed-actions">
+        <a class="ed-link" href="./quality.html">Quality and security checks →</a>
+      </p>
+    </div>
+    <figure class="code reveal" data-lang="bash">
+      <figcaption class="code__head"><span class="code__lang">Maven, Gradle or Node</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
+      <pre><code class="language-bash">specgate quality init --level strict   <span class="tok tok--c"># reads pom.xml, build.gradle, package.json</span>
+specgate quality doctor --pull         <span class="tok tok--c"># how each check runs here</span>
+specgate quality baseline              <span class="tok tok--c"># today's findings are debt</span>
+specgate check                         <span class="tok tok--c"># tests, then the quality checks</span></code></pre>
+    </figure>
+  </div>
+</section>
+
+<!-- ── The studio ───────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper" id="studio">
+  <div class="ed-wrap ed-split ed-split--wide">
+    <div class="ed-split__head reveal">
+      <p class="ed-eyebrow">Without the terminal</p>
+      <h2 class="ed-h2">The whole path as an app.</h2>
+      <p class="ed-muted"><code>specgate studio</code> in an empty folder: create
+         the project, write the brief as a form, have each module drafted,
+         answer the questions, approve, build with the agent you choose, and
+         read the report. Each step runs the command you would have typed.</p>
+      <p><a class="ed-link" href="./studio.html">The studio, step by step →</a></p>
+    </div>
+    <figure class="shot reveal">
+      <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">specgate studio</span></div>
+      <img src="./assets/img/studio-0-route.webp" width="1280" height="1461" loading="lazy"
+           alt="The studio's Route page: the next step to take, then the steps from Project to Report with their state, and each module's progress.">
+    </figure>
+  </div>
+</section>
+
 <!-- ── Status ───────────────────────────────────────────────────────────── -->
 <section class="ed-band ed-band--paper">
   <div class="ed-wrap">
@@ -1398,7 +1447,7 @@ npx specgate propose --from-brief</code></pre>
       <a href="./release-process.html">Releases</a>
     </nav>
   </div>
-  <p class="ed-wrap ed-foot__note">Documentation for v0.27.0. Every number on this page is checked against the repository by a test.</p>
+  <p class="ed-wrap ed-foot__note">Documentation for v0.27.1. Every number on this page is checked against the repository by a test.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>
