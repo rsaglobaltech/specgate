@@ -54,6 +54,14 @@ import {
   takeStop,
 } from "../../../lib/harness-guard";
 import {
+  archRun,
+  gateContext,
+  runStages,
+  type AgentChecks,
+  type CheckOutcome,
+} from "../../../lib/quality-run";
+import type { QualityCheck, Stage } from "../../../../packages/core/src/domain/QualityChecks";
+import {
   EVENTS_ATTEMPT_VAR,
   EVENTS_FILE_VAR,
   EVENTS_REQ_VAR,
@@ -188,6 +196,8 @@ interface GateResult {
   stage: string;
   output: string;
   hint?: string;
+  /** The quality checks the gate ran (ADR-0040), for the run record. */
+  checks?: CheckOutcome[];
 }
 
 /** Where a resumed requirement picks up, and what the gate said last time. */
@@ -247,12 +257,21 @@ export interface RequirementResult extends PublishOutcome {
   workPreserved?: boolean;
   attemptLog?: AttemptRecord[];
   adversarial?: ProbeOutcome;
+  /** The quality checks of the passing attempt: time, verdict, findings, measure (REQ-228). */
+  checks?: Array<Omit<CheckOutcome, "output">>;
 }
 
 /** What `attemptRequirement` decides; `processRequirement` adds the rest. */
 type AttemptOutcome = Pick<
   RequirementResult,
-  "result" | "attempts" | "attemptLog" | "error" | "workPreserved" | "adversarial" | "question"
+  | "result"
+  | "attempts"
+  | "attemptLog"
+  | "error"
+  | "workPreserved"
+  | "adversarial"
+  | "question"
+  | "checks"
 >;
 
 /** Runs one level of the schedule: in process, or through worker processes. */
@@ -646,6 +665,7 @@ function runGate(
   // The agent's tests are new evidence for a generated matrix: refresh it so
   // the gate judges the attempt, not the matrix as it was before it.
   refreshDerivedMatrix(worktreeDir);
+  let passHint = "";
   const validate = judged(worktreeDir, (dir, toProject) => {
     const validateArgs = [VALIDATE_SCRIPT, dir, "--strict"];
     if (req.requirement) validateArgs.push("--delivering", req.requirement);
@@ -686,13 +706,16 @@ function runGate(
   // and its failure goes back to the agent like any other gate failure.
   const archCmd = String(settings.archCmd || "").trim();
   if (archCmd) {
-    const arch = spawnSync(archCmd, {
-      shell: true,
-      cwd: worktreeDir,
-      encoding: "utf8",
-      timeout: timeoutMs,
-      maxBuffer: SUBPROCESS_MAX_BUFFER,
-    });
+    // REQ-231: with arch_sarif, only a violation this attempt adds fails it.
+    const arch = settings.archSarif
+      ? archRun(worktreeDir, archCmd, settings.archSarif, "", req.requirement || "")
+      : spawnSync(archCmd, {
+          shell: true,
+          cwd: worktreeDir,
+          encoding: "utf8",
+          timeout: timeoutMs,
+          maxBuffer: SUBPROCESS_MAX_BUFFER,
+        });
     report(`architecture check: ${archCmd}`, arch.status === 0 ? "pass" : "fail");
     if (arch.status !== 0) {
       return {
@@ -786,12 +809,59 @@ function runGate(
             errors.map((e) => `  ${e.message}\n  fix: ${e.fix}`).join("\n\n"),
         };
       }
-      if (warnings.length > 0) {
-        return { ok: true, stage: "", output: "", hint: warnings[0].message };
-      }
+      if (warnings.length > 0) passHint = warnings[0].message;
     }
   }
-  return { ok: true, stage: "", output: "", hint: "" };
+  // REQ-220, REQ-221: the quality checks, after the tests — the attempt ones,
+  // then the end ones. A failure goes back to the agent like a failing test.
+  const quality = settings.quality;
+  if (quality && quality.checks.length > 0) {
+    const ctx = gateContext(worktreeDir, req.requirement || "", "");
+    const outcomes: CheckOutcome[] = [];
+    for (const stage of ["attempt", "end"] as Stage[]) {
+      for (const o of runStages(
+        worktreeDir,
+        quality,
+        [stage],
+        ctx,
+        undefined,
+        agentChecks(worktreeDir, req, settings, timeoutMs, testCmd)
+      )) {
+        outcomes.push(o);
+        // REQ-229: the step says what was measured, so /live shows it as it happens.
+        const said = o.skipped
+          ? " (not run)"
+          : o.measure && o.measure.value !== null
+            ? ` ${o.measure.value}%`
+            : o.findings
+              ? ` · ${o.findings.freshCount} new`
+              : "";
+        report(`quality: ${o.name}${said}`, o.ok || !!o.skipped || !o.gate ? "pass" : "fail", {
+          ms: o.ms,
+          ...(o.skipped ? { skipped: o.skipped } : {}),
+          ...(o.measure ? { value: o.measure.value } : {}),
+        });
+        if (o.gate && !o.ok && !o.skipped) {
+          return {
+            ok: false,
+            stage: `quality check: ${o.name}`,
+            output: o.output,
+            hint:
+              o.measure && o.measure.kind === "coverage"
+                ? "Write the tests that run the lines named above; do not lower the threshold."
+                : o.measure && o.measure.kind === "mutation"
+                  ? "Strengthen the tests so each surviving mutant named above would fail one."
+                  : o.name === "commits"
+                    ? "Reword the commits named above as Conventional Commits, or do not commit: the harness commits for you."
+                    : "Fix what the check found. Do not silence it: no @SuppressWarnings, eslint-disable or baseline edit.",
+            checks: outcomes,
+          };
+        }
+      }
+    }
+    return { ok: true, stage: "", output: "", hint: passHint, checks: outcomes };
+  }
+  return { ok: true, stage: "", output: "", hint: passHint };
 }
 
 /**
@@ -844,6 +914,186 @@ function discardWorktreeChanges(worktreeDir: string): void {
   // were given. Auditability is the reason the archive exists; discarding the
   // reviewer's edits must not discard the evidence.
   git(worktreeDir, ["clean", "-fd", "-e", PROMPT_ARCHIVE_DIR]);
+}
+
+/**
+ * The worktree exactly as it is, to put back after an agent that must not
+ * change it: tracked files through `git stash create` (which touches
+ * nothing), untracked ones by content. An agent check runs before the commit,
+ * so the implementer's work is uncommitted — `discardWorktreeChanges` would
+ * throw it away (REQ-227).
+ */
+function snapshotWorktree(worktreeDir: string): () => void {
+  const stash = (git(worktreeDir, ["stash", "create"]).stdout || "").trim();
+  const untracked = (
+    git(worktreeDir, ["ls-files", "--others", "--exclude-standard", "-z"]).stdout || ""
+  )
+    .split("\0")
+    .filter(Boolean);
+  const saved = new Map(
+    untracked.map((rel) => [rel, fs.readFileSync(path.join(worktreeDir, rel))] as [string, Buffer])
+  );
+  return () => {
+    git(worktreeDir, ["checkout", stash || "HEAD", "--", "."]);
+    const now = (
+      git(worktreeDir, ["ls-files", "--others", "--exclude-standard", "-z"]).stdout || ""
+    )
+      .split("\0")
+      .filter(Boolean);
+    for (const rel of now) {
+      if (!saved.has(rel) && !rel.startsWith(PROMPT_ARCHIVE_DIR)) {
+        fs.rmSync(path.join(worktreeDir, rel), { force: true });
+      }
+    }
+    for (const [rel, content] of saved) {
+      fs.mkdirSync(path.dirname(path.join(worktreeDir, rel)), { recursive: true });
+      fs.writeFileSync(path.join(worktreeDir, rel), content);
+    }
+  };
+}
+
+/** Run an agent on an instruction built into the requirement's prompt; its output. */
+function runAgentOnce(
+  worktreeDir: string,
+  command: string,
+  prompt: string,
+  timeoutMs: number,
+  tag: string
+): string {
+  const promptFile = path.join(
+    os.tmpdir(),
+    `specgate-${tag}-${crypto.randomBytes(4).toString("hex")}.md`
+  );
+  try {
+    fs.writeFileSync(promptFile, prompt, "utf8");
+    const r = spawnSync(substituteAgentCommand(command, promptFile), {
+      shell: true,
+      cwd: worktreeDir,
+      encoding: "utf8",
+      timeout: timeoutMs,
+      maxBuffer: SUBPROCESS_MAX_BUFFER,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    return `${r.stdout || ""}${r.stderr || ""}`.trim();
+  } finally {
+    fs.rmSync(promptFile, { force: true });
+  }
+}
+
+/**
+ * The agent checks of REQ-227, lent to the quality stages of a harness gate:
+ * `builtin:review` — a second agent reads the change against the requirement
+ * and answers VERDICT: PASS or FAIL; `builtin:adversary` — one writes a test
+ * that tries to break it, which is run and then removed. Neither may change
+ * the work: the worktree is put back exactly as it was.
+ */
+function agentChecks(
+  worktreeDir: string,
+  req: Partial<HarnessRequirement>,
+  settings: GateSettings,
+  timeoutMs: number,
+  testCmd: string
+): AgentChecks {
+  const commandFor = (check: QualityCheck, fallback: string) => {
+    const profile = check.profile || fallback;
+    if (!profile) return settings.agent || "";
+    const known = (settings.profileAgents || {})[profile];
+    if (known) return known;
+    try {
+      // A profile only a check names is not resolved with the others.
+      return resolveProfileAgent(worktreeDir, profile);
+    } catch {
+      return settings.agent || "";
+    }
+  };
+  const promptFor = (instruction: string) =>
+    buildPrompt(req as HarnessRequirement, worktreeDir, {
+      promptPrefix: settings.promptPrefix,
+      hint: instruction,
+      withPrecedents: settings.promptPrecedents === true,
+    });
+  return {
+    "builtin:review": (check) => {
+      const command = commandFor(check, settings.reviewProfile || "");
+      if (!command) return { ok: true, output: "no agent configured to review" };
+      const diff = (git(worktreeDir, ["diff", "HEAD"]).stdout || "").slice(0, 60000);
+      const restore = snapshotWorktree(worktreeDir);
+      let said = "";
+      try {
+        said = runAgentOnce(
+          worktreeDir,
+          command,
+          promptFor(
+            `Review only; change no file. Compare the change below with ${req.requirement}, its ` +
+              "statement and every scenario. Answer with a first line `VERDICT: PASS` when the " +
+              "change does what the requirement says and nothing it forbids, or `VERDICT: FAIL` " +
+              "followed by each reason as `- path:line — what is wrong`.\n\n```diff\n" +
+              diff +
+              "\n```"
+          ),
+          timeoutMs,
+          "review"
+        );
+      } finally {
+        restore();
+      }
+      const verdict = /VERDICT:\s*(PASS|FAIL)/i.exec(said);
+      if (!verdict) {
+        return {
+          ok: true,
+          output: `The reviewer gave no verdict:
+${said.slice(0, 2000)}`,
+        };
+      }
+      return { ok: verdict[1].toUpperCase() === "PASS", output: said.slice(0, 4000) };
+    },
+    "builtin:adversary": (check) => {
+      const command = commandFor(check, settings.adversaryProfile || "");
+      if (!command || !testCmd)
+        return { ok: true, output: "no agent or test command to probe with" };
+      const restore = snapshotWorktree(worktreeDir);
+      try {
+        const before = new Set(
+          (git(worktreeDir, ["status", "--porcelain"]).stdout || "").split("\n").filter(Boolean)
+        );
+        const said = runAgentOnce(
+          worktreeDir,
+          command,
+          promptFor(
+            `Try to **break** the implementation of ${req.requirement}: write one additional ` +
+              "test, in the project's test style, for a case it should handle and might not — an " +
+              "empty input, a boundary, a duplicate, a failure path. Write the test and nothing " +
+              "else; do not modify the implementation, the specification or any existing test."
+          ),
+          timeoutMs,
+          "adversary"
+        );
+        const wrote = (git(worktreeDir, ["status", "--porcelain"]).stdout || "")
+          .split("\n")
+          .filter((l) => l && !before.has(l) && !l.slice(3).startsWith(PROMPT_ARCHIVE_DIR));
+        if (wrote.length === 0) return { ok: true, output: "The adversary wrote no test." };
+        const test = spawnSync(substituteGateCommand(testCmd, req), {
+          shell: true,
+          cwd: worktreeDir,
+          encoding: "utf8",
+          timeout: timeoutMs,
+          maxBuffer: SUBPROCESS_MAX_BUFFER,
+        });
+        return {
+          ok: test.status === 0,
+          output: [
+            `The adversary wrote ${wrote.map((l) => l.slice(3)).join(", ")}; the tests ${test.status === 0 ? "still pass" : "fail"}.`,
+            said.slice(0, 1500),
+            test.status === 0 ? "" : `${test.stdout || ""}${test.stderr || ""}`.slice(-3000),
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
+        };
+      } finally {
+        restore();
+      }
+    },
+  };
 }
 
 /**
@@ -904,7 +1154,10 @@ function runAdversarialProbe(
       return { ran: true, broke: false, detail: "The adversary wrote no test.", wrote: [] };
     }
 
-    const after = runGate(worktreeDir, settings.testCmd, timeoutMs, req, settings);
+    const after = runGate(worktreeDir, settings.testCmd, timeoutMs, req, {
+      ...settings,
+      quality: undefined,
+    });
     return {
       ran: true,
       broke: !after.ok,
@@ -1511,6 +1764,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       // The probe never changes the verdict; it travels beside it so
       // `harness report` and the run record can show what it found.
       ...(probe.ran ? { adversarial: probe } : {}),
+      ...(gate.checks ? { checks: gate.checks.map(({ output: _o, ...rest }) => rest) } : {}),
     };
   }
 
@@ -1847,13 +2101,16 @@ function resumeFrom(worktreeDir: string, requirement: string): ResumeAt {
   }
 
   // Interrupted or exhausted? The two deserve different answers, and the branch
-  // says which: `preserveFailedAttempt` leaves a `wip(...): FAILED the gate`
+  // says which: `preserveFailedAttempt` leaves a `chore(...): attempt FAILED the gate`
   // commit when the attempts run out, and an interruption leaves none.
   //
   //   exhausted   → the last attempt reached a verdict → resume at the next one
   //   interrupted → it never did → re-run it, without charging the budget
   const head = git(worktreeDir, ["log", "-1", "--format=%s"]);
-  const lastCompleted = /^wip\([^)]*\): FAILED the gate/.test((head.stdout || "").trim());
+  // `chore(…): attempt FAILED` since REQ-234; `wip(…): FAILED` on branches older versions left.
+  const lastCompleted = /^(?:chore\([^)]*\): attempt|wip\([^)]*\):) FAILED the gate/.test(
+    (head.stdout || "").trim()
+  );
 
   const point = resumePoint(names, requirement, lastCompleted);
   if (!point.latest) return { attempt: 1, previousFailure: "" };
@@ -1881,7 +2138,7 @@ function preserveFailedAttempt(
   const commit = git(worktreeDir, [
     "commit",
     "-m",
-    `wip(${req.requirement}): FAILED the gate — do not merge as is\n\n` +
+    `chore(${req.requirement}): attempt FAILED the gate — do not merge as is\n\n` +
       `${firstLine}\n\n` +
       "Committed by `specgate harness run` so the attempt is reviewable rather than\n" +
       "discarded. The requirement is still Draft: `specgate apply` never ran.",
@@ -2524,7 +2781,8 @@ async function runChain(
       ctx.settings.testCmd,
       ctx.timeoutMs,
       req,
-      ctx.settings,
+      // The checks judged the branch already; the post-merge gate is the suite's.
+      { ...ctx.settings, quality: undefined },
       (stage, res, extra) =>
         appendEvent(
           eventsFile,

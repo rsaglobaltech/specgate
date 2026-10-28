@@ -3,7 +3,9 @@
 ## Status
 
 Accepted — 2026-10-07. Points 1 and 2 (`arch_cmd` in `check`, `done` and the
-harness gate) implemented on 2026-10-12; SARIF and the baseline (3, 4) are pending.
+harness gate) implemented on 2026-10-12; SARIF and the baseline (3, 4) on
+2026-10-28, through ADR-0040's mechanism (`arch_sarif:`, REQ-231). The baseline
+is `specgate quality baseline`, not a separate `arch baseline` command.
 
 ## Context
 

@@ -303,7 +303,7 @@ test("REQ-165 SCN-165a: opening a ticket's change publishes its reservation", ()
     const branch = "origin/feature/PET-104-walk-in-owners";
     assert.equal(
       git(mine, "log", "-1", "--format=%s", branch),
-      "PET-104 docs(spec): open the change from the ticket"
+      "docs(spec): PET-104 open the change from the ticket"
     );
     const yaml = git(
       mine,

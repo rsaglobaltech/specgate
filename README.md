@@ -89,6 +89,12 @@ you have:
 - **Unattended delivery.** `specgate harness run` hands each pending requirement
   to your coding agent in its own git worktree and keeps only what passes the
   gate. → [The harness](docs/harness.md)
+- **Quality, not only tests.** Coverage and mutation of the lines a change adds,
+  SpotBugs, PMD, Semgrep, secrets, dependencies, SonarQube and Conventional
+  Commits — each in Docker, no account, only new findings fail.
+  → [Quality and security checks](docs/quality.md)
+- **Without the commands.** `specgate studio` is the whole path as an app: from
+  an empty folder to the report of what was built. → [The studio](docs/studio.md)
 - **Domain knowledge as a dependency.** Versioned domain packs install
   requirements a team has already proved. → [Domain packs](docs/domain-packs.md)
 - **Already on OpenSpec?** `specgate verify` checks what OpenSpec calls done

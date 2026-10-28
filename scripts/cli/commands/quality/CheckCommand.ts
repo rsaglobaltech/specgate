@@ -23,18 +23,28 @@ import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { recordCheck } from "../../../pet/pet";
 import { runLockHolder } from "../../../lib/harness-guard";
+import {
+  archRun,
+  gateContext,
+  runStages,
+  stagesPassed,
+  type CheckOutcome,
+} from "../../../lib/quality-run";
+import type { Stage } from "../../../../packages/core/src/domain/QualityChecks";
 
 const NULL_SHAPE = { check: null };
 
 function usage(): void {
   process.stdout.write(
     `
-  ✅ ${c.bold}specgate check${c.reset} [dir] [--test-cmd "<command>"] [--base <branch>] [--json]
+  ✅ ${c.bold}specgate check${c.reset} [dir] [--test-cmd "<command>"] [--base <branch>] [--ci] [--json]
 
   The gate — what to run before a pull request:
     1. validate --strict   specs, scenarios, traceability, links and coverage
     2. your architecture   arch_cmd: in harness.config.yaml (ArchUnit, …), if set
     3. your tests          from --test-cmd, or test_cmd: in harness.config.yaml
+    4. your quality checks checks: in harness.config.yaml — attempt and end;
+                           --ci adds the ci ones, and a check that cannot run fails
 
   Without a test command it still passes, and says it checked the
   specification, not the code.
@@ -68,10 +78,13 @@ export class CheckCommand extends BaseCommand {
 
     let testCmdFlag: string | undefined;
     let baseFlag: string | undefined;
+    let ci = false;
     const positional: string[] = [];
     for (let i = 0; i < argv.length; i++) {
       const a = argv[i];
-      if (a === "--test-cmd") {
+      if (a === "--ci") {
+        ci = true;
+      } else if (a === "--test-cmd") {
         testCmdFlag = argv[++i];
         if (testCmdFlag === undefined) {
           io.usage(NULL_SHAPE, [
@@ -237,7 +250,9 @@ export class CheckCommand extends BaseCommand {
               [path.join(findCliRoot(__dirname), "bin", "specgate.js"), "validate", ...step.argv],
               { encoding: "utf8" }
             )
-          : spawnSync(step.argv[0], { cwd: projectDir, encoding: "utf8", shell: true });
+          : step.stage === "arch" && harness.archSarif
+            ? archRun(projectDir, step.argv[0], harness.archSarif, baseFlag || "")
+            : spawnSync(step.argv[0], { cwd: projectDir, encoding: "utf8", shell: true });
       // One line per stage, replaced by how it ended. What a stage printed is
       // shown only when it failed: on a pass it was a screen of noise between
       // the person and the verdict.
@@ -283,6 +298,55 @@ export class CheckCommand extends BaseCommand {
       ]);
     }
 
+    // ADR-0040: the team's quality and security checks, after the tests. The
+    // `attempt` and `end` stages always; `ci` with --ci.
+    const quality = harness.quality;
+    const outcomes: CheckOutcome[] = [];
+    if (quality && quality.checks.length > 0) {
+      const ctx = gateContext(projectDir, "", baseFlag || "");
+      const stages: Stage[] = ci ? ["attempt", "end", "ci"] : ["attempt", "end"];
+      outcomes.push(
+        ...runStages(projectDir, quality, stages, ctx, (check, run) => {
+          const label = `Quality         ${check.name} ${ui.muted(check.runner === "docker" ? check.image.split("@")[0] : check.run.split(/\s+/)[0])}`;
+          const o = json
+            ? run()
+            : ui.task(label, run, (x) => ({ ok: x.ok || !!x.skipped || !x.gate }));
+          if (!json && o.skipped) {
+            process.stdout.write(`  ${ui.muted(`   ${check.name}: not run — ${o.skipped}`)}\n`);
+          } else if (!json && !o.ok && o.output) {
+            process.stdout.write(
+              "\n" +
+                toProject(o.output)
+                  .split("\n")
+                  .map((l) => `     ${l}`)
+                  .join("\n") +
+                "\n\n"
+            );
+          }
+          return o;
+        })
+      );
+      if (!stagesPassed(outcomes, ci)) {
+        recordCheck(projectDir, false);
+        const failed = outcomes.filter((o) => o.gate && (o.skipped ? ci : !o.ok));
+        io.fail({ check: { quality: outcomes.map(({ output: _o, ...rest }) => rest) } }, [
+          ...ticketKeys,
+          error(
+            "check_quality_failed",
+            `The gate failed: ${failed.map((o) => o.name).join(", ")}.`,
+            {
+              fix: failed.some((o) => o.skipped)
+                ? `In CI every check must run: ${failed
+                    .filter((o) => o.skipped)
+                    .map((o) => `${o.name} — ${o.skipped}`)
+                    .join("; ")}`
+                : "Fix what the checks report above, then run `specgate check` again.",
+            }
+          ),
+        ]);
+      }
+    }
+
     // Name the command the build files give away: adoption printed "Test
     // command: npm test", and this warning then said none was configured
     // without saying which one, or how (reservas_app, #44).
@@ -315,6 +379,7 @@ export class CheckCommand extends BaseCommand {
           tests: plan.testsUnverified ? "not_configured" : "passed",
           ids: ids.state === "checked" ? `compared with ${ids.base}` : `skipped: ${ids.reason}`,
           testCommand: plan.testsUnverified ? null : testCmd,
+          quality: outcomes.map(({ output: _o, ...rest }) => rest),
         },
         status,
       },

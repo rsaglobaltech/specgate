@@ -29,6 +29,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { YamlDocument, parseYamlLite } from "../domain/YamlLite";
 import { HarnessSettings } from "../domain/HarnessConfig";
+import { readQuality } from "../domain/QualityChecks";
 
 export const HARNESS_CONFIG_FILE = "harness.config.yaml";
 
@@ -44,6 +45,8 @@ const KNOWN_KEYS = new Set([
   "agent_profile",
   "test_cmd",
   "arch_cmd",
+  // ADR-0028 points 3-4 (REQ-231): the SARIF the architecture tool writes.
+  "arch_sarif",
   "setup_cmd",
   "max_attempts",
   "concurrency",
@@ -60,6 +63,12 @@ const KNOWN_KEYS = new Set([
   "e2e_dir",
   "prompt_precedents",
   "adversary_profile",
+  // ADR-0040: the quality and security checks, and the thresholds Specgate measures.
+  "quality",
+  "diff_coverage",
+  "mutation_score",
+  "checks",
+  "commit_types",
 ]);
 
 /**
@@ -88,6 +97,19 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
 
   const config: Partial<HarnessSettings> = {};
   if (parsed.agent !== undefined) config.agent = String(parsed.agent);
+  if (
+    ["quality", "diff_coverage", "mutation_score", "checks", "commit_types"].some(
+      (k) => parsed[k] !== undefined
+    )
+  ) {
+    const quality = readQuality(parsed as Record<string, unknown>);
+    if (quality.errors.length > 0) {
+      throw new Error(
+        `${HARNESS_CONFIG_FILE}: the quality checks cannot be read:\n  ${quality.errors.join("\n  ")}`
+      );
+    }
+    config.quality = quality.config;
+  }
   // Opt-in (D2): show the agent an accepted requirement from the same bounded
   // context. Off by default because it costs prompt budget and says nothing
   // useful until a project has verified work to point at.
@@ -115,6 +137,7 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
   }
   if (parsed.test_cmd !== undefined) config.testCmd = String(parsed.test_cmd);
   if (parsed.arch_cmd !== undefined) config.archCmd = String(parsed.arch_cmd);
+  if (parsed.arch_sarif !== undefined) config.archSarif = String(parsed.arch_sarif);
   if (parsed.setup_cmd !== undefined) config.setupCmd = String(parsed.setup_cmd);
   if (parsed.max_attempts !== undefined) {
     const n = Number(parsed.max_attempts);
@@ -284,6 +307,7 @@ export function resolveHarnessSettings(
     agent: cliArgs.agent || file.agent || "",
     testCmd: cliArgs.testCmd || file.testCmd || "",
     archCmd: cliArgs.archCmd || file.archCmd || "",
+    archSarif: file.archSarif || "",
     setupCmd: cliArgs.setupCmd || file.setupCmd || "",
     maxAttempts: cliArgs.maxAttempts || file.maxAttempts || 3,
     concurrency: cliArgs.concurrency || file.concurrency || 1,
@@ -298,6 +322,8 @@ export function resolveHarnessSettings(
     // From the file only, like the role ladder: which agent is allowed to
     // attack the work is a repository decision, not a flag typed per run.
     adversaryProfile: file.adversaryProfile || "",
+    // ADR-0040: the quality checks are a team decision, from the file only.
+    quality: file.quality,
     // From the file only. Whether an agent is shown examples is a property of
     // the project, not of the run somebody is starting.
     promptPrecedents: file.promptPrecedents === true,

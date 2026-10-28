@@ -66,6 +66,10 @@ This is what makes the gate safe on old code: requirements still in `Draft`
 gate holds the code to what you have written down, and only that. Each
 requirement you apply raises the bar by one.
 
+The job runs `specgate check --ci`: with [quality checks](../quality.md), the
+CI-only ones run too, and a check that cannot run fails instead of being
+skipped.
+
 ## 3. Commit and open a pull request
 
 ```bash

@@ -3,3 +3,4 @@ dist/
 templates/
 *.tpl
 package-lock.json
+tests/fixtures/quality-*/

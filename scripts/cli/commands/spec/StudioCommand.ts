@@ -20,6 +20,8 @@ import {
   createProject,
   draftsRoute,
   fillBrief,
+  initQuality,
+  qualityView,
   profilesView,
   report,
   reportHtml,
@@ -318,6 +320,7 @@ export class StudioCommand extends BaseCommand {
         "/api/brief": () => briefForm(projectDir),
         "/api/modules": () => draftsRoute(projectDir),
         "/api/report": () => report(projectDir),
+        "/api/quality": () => qualityView(projectDir),
       };
       if (req.method === "GET" && reads[url]) {
         try {
@@ -340,6 +343,7 @@ export class StudioCommand extends BaseCommand {
         "/api/brief/fill",
         "/api/draft",
         "/api/draft/stop",
+        "/api/quality/init",
       ];
       if (req.method === "POST" && WRITES.includes(url)) {
         const header = (name: string) => {
@@ -377,6 +381,7 @@ export class StudioCommand extends BaseCommand {
             markdown?: string;
             form?: Parameters<typeof saveBriefForm>[1];
             project?: NewProject;
+            level?: string;
           };
           try {
             body = JSON.parse(raw || "{}");
@@ -432,6 +437,11 @@ export class StudioCommand extends BaseCommand {
           if (url === "/api/draft") {
             const r = startDraft(projectDir, String(body.module || ""), String(body.profile || ""));
             json(r.ok ? 202 : 422, r);
+            return;
+          }
+          if (url === "/api/quality/init") {
+            const r = initQuality(projectDir, String(body.level || ""));
+            json(r.ok ? 200 : 422, r);
             return;
           }
           if (url === "/api/draft/stop") {

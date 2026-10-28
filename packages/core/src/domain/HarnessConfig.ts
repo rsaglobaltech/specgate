@@ -1,5 +1,9 @@
+import type { QualityConfig } from "./QualityChecks";
+
 export interface HarnessSettings {
   agent: string;
+  /** The quality and security checks, by stage (ADR-0040). Absent: none configured. */
+  quality?: QualityConfig;
   testCmd: string;
   /**
    * The team's architecture check (ArchUnit, dependency-cruiser, import-linter…),
@@ -7,6 +11,11 @@ export interface HarnessSettings {
    * Empty: the architecture is not checked, and `check` says so.
    */
   archCmd?: string;
+  /**
+   * The SARIF `arch_cmd` writes, when it writes one (REQ-231): its findings
+   * are judged against the baseline, so only a violation a change adds fails.
+   */
+  archSarif?: string;
   /**
    * Run once in each fresh worktree before the agent — `npm ci`, say. The
    * worktree carries only what git tracks, so without it the agent could not

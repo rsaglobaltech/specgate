@@ -120,6 +120,15 @@ weakened by the transport.
 Both paths are worth rehearsing before you need them. A restore procedure that
 has never been run is a hope, not a procedure.
 
+## Scanners for your code
+
+The [quality checks](quality.md) scan your dependencies (osv-scanner), your
+code (Semgrep, SpotBugs, SonarQube) and your history for secrets (gitleaks),
+each in its official image, pinned. A check takes environment variable
+**names** only: a value written into `harness.config.yaml` is refused, so a
+token never lands in the repository. SonarQube's token is kept in
+`.specgate/sonar.local`, which Specgate adds to `.gitignore`.
+
 ## Credentials for Jira and GitHub
 
 Most commands never touch a credential. The ones that talk to Jira, Azure

@@ -9,7 +9,24 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.0] — 2026-10-28
+
+Quality, not only tests: your team's checks in the gate — coverage and mutation of the lines a change adds, SpotBugs, PMD, Semgrep, secrets, dependencies, SonarQube and Conventional Commits — each in Docker, without an account, and only what a change adds fails.
+
+### Added
+
+- **Quality and security checks in the gate** (REQ-218, REQ-219, ADR-0040): `checks:` in `harness.config.yaml` names your team's tools — each with `when` (attempt, end, ci), whether it gates, and how it runs (Docker by default, local or auto). `check` runs them after the tests, `check --ci` adds the CI-only ones and fails a check that cannot run, and the harness runs them per attempt and before a requirement is kept.
+- **Only what a change adds fails** (REQ-222, REQ-223): SARIF findings are compared with `.specgate/quality-baseline.json`; `specgate quality baseline --accept` records today's debt. Diff coverage (JaCoCo, LCOV, Cobertura) and mutation score (PIT, Stryker) are measured on the lines the change touched, against `diff_coverage` and `mutation_score`.
+- **Presets for Maven, Gradle and Node** (REQ-225, REQ-230): `specgate quality init [--level basic|strict]` writes the checks for the stack it detects — JaCoCo, PIT, SpotBugs, PMD, Semgrep, gitleaks, osv-scanner, Vitest/Stryker — all in pinned Docker images, with dependency caches in named volumes. `quality list`, `quality doctor [--pull]` and `quality run` show and run them.
+- **Conventional Commits** (REQ-234): `builtin:commits` checks each commit of the change against Conventional Commits 1.0.0, with `commit_types` to set the types.
+- **SonarQube without an account** (REQ-226): `builtin:sonar` starts SonarQube Community in Docker on 127.0.0.1, analyses the change and judges its issues like any SARIF; the token stays in `.specgate/sonar.local`, ignored by git.
+- **An agent that reviews** (REQ-227): `builtin:review` and `builtin:adversary` run a profile as reviewer of the diff; its verdict gates or advises.
+- **Architecture as findings** (REQ-231): with `arch_sarif:`, only an architecture violation the change adds fails.
+- **The quality of what was delivered** (REQ-220, REQ-221, REQ-228, REQ-229): each run record keeps its checks; `harness report` and the studio's report show diff coverage, mutation score and findings per requirement; the studio's Project page lists the checks and its new-project step asks for the level.
+
 ### Changed
+
+- **Commit messages follow Conventional Commits** (REQ-234): a failed attempt is committed as `chore(REQ-NNN): attempt FAILED the gate` (resume still reads the old `wip` form), a green one as `feat(REQ-NNN): …`, and the agent's prompt asks for the same.
 
 - **The studio commits the specification before a build** (REQ-233): the brief, approvals, answers and drafts the studio wrote are committed with the person's own git identity, so the harness finds the clean tree it needs. Any other uncommitted file stops the build, named, and is never committed.
 

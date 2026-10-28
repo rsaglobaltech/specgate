@@ -276,6 +276,17 @@ export const SURFACE: Command[] = [
     json: { key: "check", gate: true, args: "[dir]" },
   },
   {
+    name: "quality",
+    mcp: false,
+    script: ["quality.js"],
+    help: {
+      group: "core",
+      icon: "🔍",
+      summary: "The quality and security checks of the gate: list, doctor, run (ADR-0040).",
+    },
+    json: { key: "quality", gate: false, args: "<list|doctor|run>" },
+  },
+  {
     name: "draft",
     script: ["draft.js"],
     help: {

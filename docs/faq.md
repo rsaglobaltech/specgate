@@ -168,6 +168,18 @@ attempt, phase, files, tests and steps as the harness runs, bound to this
 machine unless `--host` says otherwise.
 → [Command reference](commands.md#customising)
 
+### Can I use it without the terminal?
+
+Yes: `specgate studio` is the whole path as an app — create the project, write
+the brief, draft, answer, approve, build and read the report — and each action
+runs the command you would have typed. → [The studio](studio.md)
+
+### Does it replace SonarQube, Snyk or SpotBugs?
+
+No: it runs them. A [quality check](quality.md) is your team's tool in its
+Docker image, judged so that only what a change adds fails; SonarQube
+Community runs locally without an account.
+
 ### What does a harness run cost?
 
 Whatever your agent costs. The harness measures wall-clock time; a profile

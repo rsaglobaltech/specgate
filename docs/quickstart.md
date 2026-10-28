@@ -124,6 +124,10 @@ command is set. Run `npx specgate config set test_cmd "npm test"` once.
 status → propose → test that names the REQ → code → apply → archive → check → pull request
 ```
 
+With [quality checks](quality.md), `check` also judges what the change adds:
+coverage, mutation, findings and its commit messages
+([Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)).
+
 ## Next
 
 - [Your team's first pull request](first-pr.md) — what the author writes, what the reviewer reads

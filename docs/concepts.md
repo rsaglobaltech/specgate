@@ -105,7 +105,8 @@ rare case it is wrong — say so in the pull request.)
 ## 6. One gate, one name
 
 There is exactly one gate: `validate --strict` on the specification, then
-your architecture check and your tests when they are configured.
+your architecture check, your tests and your [quality checks](quality.md) when
+they are configured.
 `specgate check` runs it, and so does everything else.
 
 | Where | What runs |

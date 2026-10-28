@@ -98,6 +98,10 @@ next to it:
   it until someone answers, and `status` lists it under "Waiting for an
   answer" with the question that blocks it.
 
+The same from the [studio](studio.md): its Brief page writes the brief as a
+form, and its Drafts page drafts each module in the background with the agent
+you pick (`--profile <name>` in the terminal).
+
 ## 3. Check the draft
 
 Run the same command again — on a draft that exists, it is the check:

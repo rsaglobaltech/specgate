@@ -1163,7 +1163,7 @@ test("REQ-148: the ticket's branch starts from the base, not from another ticket
     // Only the opening of KAN-13's change (REQ-165); nothing of KAN-12 comes along.
     assert.equal(
       git(dir, "log", "--format=%s", "main..HEAD"),
-      "KAN-13 docs(spec): open the change from the ticket"
+      "docs(spec): KAN-13 open the change from the ticket"
     );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -1608,7 +1608,7 @@ test("REQ-156 SCN-156a: the harness's commits name the ticket", () => {
     assert.equal(ticketKeyOf(dir, "REQ-020"), null);
     assert.match(
       harnessCommitMessage(dir, "REQ-002", 3, 3),
-      /^KAN-14 REQ-002: implement via specgate harness\n\nAttempt 3\/3\./
+      /^feat\(REQ-002\): KAN-14 implement via specgate harness\n\nAttempt 3\/3\./
     );
     assert.match(
       harnessCommitMessage(dir, "REQ-020", 1, 3),

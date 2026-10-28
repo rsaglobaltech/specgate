@@ -15,12 +15,17 @@ CI part, a repository on GitHub, GitLab, Azure DevOps or Jenkins.
 specgate check
 ```
 
-`check` runs three things, in order, and stops at the first failure:
+`check` runs four things, in order, and stops at the first failure:
 
 1. `validate --strict`: specs, scenarios, traceability, links and coverage.
 2. Your architecture check, if you set one with
    `specgate config set arch_cmd "<cmd>"` (ArchUnit, dependency-cruiser, …).
+   With `arch_sarif:` beside it, only a violation the change adds fails.
 3. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`.
+4. Your [quality checks](quality.md), if `specgate quality init` wrote them:
+   coverage and mutation of what the change adds, SAST, secrets, dependencies,
+   Conventional Commits — each in Docker. `--ci` adds the CI-only ones and
+   fails a check that cannot run.
 
 Without a test command, `check` still passes and says it checked the
 specification, not the code. Set one.
@@ -62,7 +67,7 @@ jobs:
         with: { node-version: '22' }
       # --strict is the whole specification gate, pinned so a release
       # cannot change it under you. It does not run your tests.
-      - run: npx --yes @rsaglobaltech/specgate@0.26.0 validate . --strict
+      - run: npx --yes @rsaglobaltech/specgate@0.27.0 validate . --strict
 ```
 
 `validate --strict` checks the specification only. To fail the job when the

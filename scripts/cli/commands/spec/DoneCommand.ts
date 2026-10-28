@@ -1,4 +1,5 @@
 import { resolveProjectDir } from "../../../lib/project-root";
+import { archRun } from "../../../lib/quality-run";
 import { error } from "../../../lib/diagnostics";
 import { AgentIo, agentIo, EXIT } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
@@ -504,7 +505,9 @@ export class DoneCommand extends BaseCommand {
     let testsUnverified = false;
     const archCmd = (harness.archCmd || "").trim();
     if (passing.length > 0 && opts.check && archCmd) {
-      const run = spawnSync(archCmd, { cwd: projectDir, encoding: "utf8", shell: true });
+      const run = harness.archSarif
+        ? archRun(projectDir, archCmd, harness.archSarif)
+        : spawnSync(archCmd, { cwd: projectDir, encoding: "utf8", shell: true });
       if (run.status !== 0) {
         const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
         if (detail && !opts.json) process.stderr.write(indent(detail) + "\n\n");
