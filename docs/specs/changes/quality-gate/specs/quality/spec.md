@@ -67,3 +67,21 @@ The system SHALL run a check with `runner: docker` in its image, the project mou
 - THEN it passes, and it fails in a project without it
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-checks.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-222 — Only the findings a change adds fail the gate
+
+The system SHALL read the SARIF a check writes and judge the check by its findings rather than its exit code: a finding whose fingerprint — the tool's own, or the rule, the file and the text of the flagged line with its neighbours — is in `.specgate/quality-baseline.json` is existing debt and does not fail it, and with `scope: diff` only findings in files the change touched count; `specgate quality baseline [--accept <check>]` SHALL record the current findings of every check that writes SARIF, or of one; and the gate's failure SHALL name each new finding as `path:line [rule] message`.
+
+#### Scenario: SCN-222a — Debt in the baseline passes, a new finding fails
+
+- GIVEN a check whose SARIF reports one finding in src/a.js, and a baseline taken with it
+- WHEN a second finding appears in src/a.js and the check runs
+- THEN it fails naming only the new one, as `src/a.js:<line> [rule] message`, and says one is in the baseline
+
+#### Scenario: SCN-222b — Moved code is not new code
+
+- GIVEN the baselined finding's line moved two lines down, its text unchanged
+- WHEN the check runs
+- THEN it passes
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-baseline.test.ts actor=Developer kind=functional -->

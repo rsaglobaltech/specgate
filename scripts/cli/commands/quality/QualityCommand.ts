@@ -11,16 +11,24 @@ import {
   ensureImage,
   gateContext,
   resolveRunner,
+  runCheck,
   runStages,
+  sarifFindings,
   stagesPassed,
 } from "../../../lib/quality-run";
+import { acceptFindings } from "../../../../packages/core/src/domain/Sarif";
+import {
+  QUALITY_BASELINE_FILE,
+  readBaseline,
+  writeBaseline,
+} from "../../../../packages/core/src/infrastructure/QualityBaselineFile";
 
 const NULL_SHAPE = { quality: null };
 
 function usage(): void {
   process.stdout.write(
     `
-  🔍 ${c.bold}specgate quality${c.reset} <list|doctor|run> [options]
+  🔍 ${c.bold}specgate quality${c.reset} <list|doctor|run|baseline> [options]
 
   The quality and security checks of harness.config.yaml (ADR-0040).
 
@@ -28,6 +36,10 @@ function usage(): void {
     doctor [--pull]          the same, with what is missing; --pull fetches the images now
     run [--stage <s>] [--req <REQ>] [--base <ref>]
                              run the checks of a stage (attempt, end, ci; default attempt and end)
+    baseline [--accept <check>]
+                             run every check that writes SARIF and record its findings as the
+                             debt that exists today, in .specgate/quality-baseline.json (commit
+                             it); from then on only new findings fail. --accept: that check only
 
   Options: --project-dir <dir>, --json.
 
@@ -50,6 +62,7 @@ export class QualityCommand extends BaseCommand {
     let req = "";
     let base = "";
     let pull = false;
+    let accept = "";
     for (let i = 1; i < argv.length; i += 1) {
       const a = argv[i];
       if (a === "--project-dir") projectDirArg = argv[++i] || ".";
@@ -57,6 +70,7 @@ export class QualityCommand extends BaseCommand {
       else if (a === "--req") req = argv[++i] || "";
       else if (a === "--base") base = argv[++i] || "";
       else if (a === "--pull") pull = true;
+      else if (a === "--accept") accept = argv[++i] || "";
       else if (a === "--json") continue;
       else
         io.usage(NULL_SHAPE, [
@@ -65,7 +79,7 @@ export class QualityCommand extends BaseCommand {
           }),
         ]);
     }
-    if (!["list", "doctor", "run"].includes(sub)) {
+    if (!["list", "doctor", "run", "baseline"].includes(sub)) {
       io.usage(NULL_SHAPE, [
         error("unknown_subcommand", `quality has no ${sub}.`, { fix: "specgate quality --help" }),
       ]);
@@ -154,6 +168,66 @@ export class QualityCommand extends BaseCommand {
             );
           }
           process.stdout.write("\n");
+        }
+      );
+      return;
+    }
+
+    if (sub === "baseline") {
+      // REQ-222: the debt that exists today, recorded so that only new findings fail.
+      const targets = config.checks.filter((c) => c.sarif && (!accept || c.name === accept));
+      if (accept && targets.length === 0) {
+        io.usage(NULL_SHAPE, [
+          error("quality_accept", `No check named ${accept} writes SARIF.`, {
+            fix: "specgate quality list",
+          }),
+        ]);
+      }
+      if (targets.length === 0) {
+        io.fail(NULL_SHAPE, [
+          error(
+            "quality_no_sarif",
+            "No check writes SARIF: there is nothing to take a baseline of.",
+            {
+              fix: "Add sarif: <path> to the checks whose tool writes it (ADR-0040).",
+            }
+          ),
+        ]);
+      }
+      const ctx = { ...gateContext(projectDir, "", base), changedFiles: [] };
+      let baseline = readBaseline(projectDir);
+      const taken: Array<{ name: string; findings: number | null; skipped: string }> = [];
+      if (!json) process.stdout.write(ui.header("quality baseline"));
+      for (const check of targets) {
+        const outcome = json
+          ? runCheck(projectDir, check, ctx)
+          : ui.task(
+              check.name,
+              () => runCheck(projectDir, check, ctx),
+              (o) => ({ ok: !o.skipped })
+            );
+        const findings = outcome.skipped ? null : sarifFindings(projectDir, check);
+        if (findings) baseline = acceptFindings(baseline, check.name, findings);
+        taken.push({
+          name: check.name,
+          findings: findings ? findings.length : null,
+          skipped: outcome.skipped || (findings ? "" : `it wrote no SARIF at ${check.sarif}`),
+        });
+      }
+      writeBaseline(projectDir, baseline);
+      io.emit(
+        { quality: { baseline: QUALITY_BASELINE_FILE.split("\\").join("/"), checks: taken } },
+        () => {
+          for (const t of taken) {
+            process.stdout.write(
+              t.findings === null
+                ? ui.warn(`${t.name}: not recorded — ${t.skipped}`) + "\n"
+                : `  ${t.name.padEnd(18)} ${t.findings} finding(s) accepted as existing debt\n`
+            );
+          }
+          process.stdout.write(
+            `\n  ${ui.muted(`Written to ${QUALITY_BASELINE_FILE.split("\\").join("/")}: commit it. Only new findings fail from now on.`)}\n\n`
+          );
         }
       );
       return;

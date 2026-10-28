@@ -9,6 +9,13 @@ import {
   type QualityConfig,
   type Stage,
 } from "../../packages/core/src/domain/QualityChecks";
+import {
+  findingLine,
+  newFindings,
+  readSarif,
+  type Finding,
+} from "../../packages/core/src/domain/Sarif";
+import { readBaseline } from "../../packages/core/src/infrastructure/QualityBaselineFile";
 
 /**
  * Runs the quality and security checks of a stage (ADR-0040): each in its
@@ -29,6 +36,31 @@ export interface CheckOutcome {
   exit: number | null;
   /** The last lines it printed, for a failure. */
   output: string;
+  /** With SARIF: the findings this change adds, and how many the baseline holds back. */
+  findings?: { fresh: string[]; freshCount: number; baselined: number; total: number };
+}
+
+/** The lines of a project file, for fingerprints; null when it cannot be read. */
+function linesOf(projectDir: string) {
+  const cache = new Map<string, string[] | null>();
+  return (rel: string) => {
+    if (!cache.has(rel)) {
+      try {
+        cache.set(rel, fs.readFileSync(path.join(projectDir, rel), "utf8").split(/\r?\n/));
+      } catch {
+        cache.set(rel, null);
+      }
+    }
+    return cache.get(rel)!;
+  };
+}
+
+/** Every finding of a check's SARIF, or null when it wrote none. */
+export function sarifFindings(projectDir: string, check: QualityCheck): Finding[] | null {
+  if (!check.sarif) return null;
+  const file = path.join(projectDir, check.sarif);
+  if (!fs.existsSync(file)) return null;
+  return readSarif(fs.readFileSync(file, "utf8"), projectDir, linesOf(projectDir));
 }
 
 /** Where a check's reports go, inside the project and ignored by git. */
@@ -219,6 +251,8 @@ export function runCheck(projectDir: string, check: QualityCheck, ctx: CheckCont
     const pulled = ensureImage(check.image);
     if (!pulled.ok) return { ...base, runner: "docker", skipped: pulled.message };
   }
+  // A SARIF left by an earlier run must not speak for this one.
+  if (check.sarif) fs.rmSync(path.join(projectDir, check.sarif), { force: true });
   const container = `specgate-${check.name}-${process.pid}-${Date.now()}`;
   const started = Date.now();
   const r =
@@ -240,13 +274,52 @@ export function runCheck(projectDir: string, check: QualityCheck, ctx: CheckCont
   const timedOut = r.error && (r.error as NodeJS.ErrnoException).code === "ETIMEDOUT";
   if (timedOut && how.runner === "docker") spawnSync("docker", ["rm", "-f", container]);
   const output = tail(`${r.stdout || ""}${r.stderr || ""}`);
-  return {
+  const ran = {
     ...base,
     runner: how.runner,
     ms,
     exit: r.status,
     ok: !timedOut && r.status === 0,
     output: timedOut ? `${output}\n(timed out after ${check.timeout} s)`.trim() : output,
+  };
+  if (timedOut || !check.sarif) return ran;
+  // With SARIF the findings judge, not the exit code: a tool exits 1 on debt
+  // the baseline already holds. Only what this change adds fails it.
+  let findings: Finding[] | null;
+  try {
+    findings = sarifFindings(projectDir, check);
+  } catch (err) {
+    return { ...ran, ok: false, output: `${ran.output}\n${(err as Error).message}`.trim() };
+  }
+  if (findings === null) {
+    return {
+      ...ran,
+      output: `${ran.output}\n(no SARIF at ${check.sarif}: judged by the exit code)`.trim(),
+    };
+  }
+  const { fresh, baselined } = newFindings(
+    findings,
+    readBaseline(projectDir),
+    check.name,
+    check.scope === "diff" ? ctx.changedFiles : null
+  );
+  return {
+    ...ran,
+    ok: fresh.length === 0,
+    findings: {
+      fresh: fresh.slice(0, 50).map(findingLine),
+      freshCount: fresh.length,
+      baselined,
+      total: findings.length,
+    },
+    output:
+      fresh.length > 0
+        ? [
+            `${fresh.length} new finding(s)${baselined ? `, ${baselined} in the baseline` : ""}:`,
+            ...fresh.slice(0, 20).map(findingLine),
+            ...(fresh.length > 20 ? [`… and ${fresh.length - 20} more in ${check.sarif}`] : []),
+          ].join("\n")
+        : ran.output,
   };
 }
 
