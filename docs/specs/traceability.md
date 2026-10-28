@@ -171,6 +171,7 @@
 | REQ-237 | SCN-237a | `features/quality/REQ-237.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
 | REQ-238 | SCN-238a | `features/quality/REQ-238.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
 | REQ-239 | SCN-239a | `features/quality/REQ-239.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
+| REQ-240 | SCN-240a | `features/quality/REQ-240.feature` | - | - | - | - | - | tests/unit/quality-baseline.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -11,7 +11,11 @@ import {
   HARNESS_CONFIG_FILE,
   readHarnessConfig,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
-import type { QualityConfig, Stage } from "../../../../packages/core/src/domain/QualityChecks";
+import type {
+  QualityCheck,
+  QualityConfig,
+  Stage,
+} from "../../../../packages/core/src/domain/QualityChecks";
 import {
   dockerAvailable,
   ensureImage,
@@ -253,7 +257,24 @@ export class QualityCommand extends BaseCommand {
       let baseline = readBaseline(projectDir);
       const taken: Array<{ name: string; findings: number | null; skipped: string }> = [];
       if (!json) process.stdout.write(ui.header("quality baseline"));
+      // REQ-240: what a target reads is written first — Maven's bill of
+      // materials before the scan of it — once, and not recorded itself.
+      const ran = new Set<string>();
+      const prepare = (check: QualityCheck) => {
+        const need = withArch.find((c) => c.name === check.needs);
+        if (!need || ran.has(need.name)) return;
+        prepare(need);
+        ran.add(need.name);
+        if (json) runCheck(projectDir, need, ctx);
+        else
+          ui.task(
+            need.name,
+            () => runCheck(projectDir, need, ctx),
+            (o) => ({ ok: o.ok })
+          );
+      };
       for (const check of targets) {
+        prepare(check);
         const outcome = json
           ? runCheck(projectDir, check, ctx)
           : ui.task(

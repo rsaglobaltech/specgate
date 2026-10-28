@@ -592,6 +592,7 @@ export function archCheck(archCmd: string, archSarif: string): QualityCheck {
     scope: "diff",
     profile: "",
     docker: false,
+    needs: "",
   };
 }
 

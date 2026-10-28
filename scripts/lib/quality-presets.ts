@@ -127,6 +127,8 @@ interface PresetCheck {
   timeout?: number;
   /** The host's Docker, for tests that start containers (REQ-238). */
   docker?: boolean;
+  /** The earlier check whose output it reads (REQ-240). */
+  needs?: string;
   /** Written commented, with why, when the build lacks what it needs. */
   missing?: string;
   scope?: "diff" | "all";
@@ -149,6 +151,7 @@ function render(c: PresetCheck): string[] {
     ...(c.scope ? [`    scope: ${c.scope}`] : []),
     ...(c.timeout ? [`    timeout: ${c.timeout}`] : []),
     ...(c.docker ? ["    docker: true"] : []),
+    ...(c.needs ? [`    needs: ${c.needs}`] : []),
   ];
   return c.missing ? [`  # ${c.missing}`, ...lines.map((l) => `  #${l.slice(1)}`)] : lines;
 }
@@ -235,7 +238,7 @@ function maven(projectDir: string, level: Level, dir = ""): PresetCheck[] {
       image,
       volumes: m2,
     },
-    dependencies,
+    { ...dependencies, needs: "sbom" },
     {
       name: "coverage",
       run: cdApp(

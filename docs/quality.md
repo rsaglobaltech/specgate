@@ -136,6 +136,7 @@ checks:
 | `network` | `false` runs the container with no network |
 | `profile` | For `review` and `adversary`: the profile whose agent runs it |
 | `docker` | `true` gives the container the host's Docker, for tests that start containers (Testcontainers); the Maven and Gradle presets set it when the build declares Testcontainers |
+| `needs` | An earlier check whose output this one reads (Maven's `dependencies` needs `sbom`); `quality baseline` runs it first |
 
 Placeholders in `run`: `{req}`, `{base}`, `{changed_files}`,
 `{changed_classes}` (Java, for PIT), `{changed_src}` (TypeScript, for Stryker)

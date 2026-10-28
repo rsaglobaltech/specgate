@@ -39,6 +39,8 @@ export interface QualityCheck {
   profile: string;
   /** true: the container gets the host's Docker, for tests that start containers (REQ-238). */
   docker: boolean;
+  /** An earlier check whose output this one reads; the baseline runs it first (REQ-240). */
+  needs: string;
 }
 
 export interface QualityConfig {
@@ -78,6 +80,7 @@ const CHECK_KEYS = new Set([
   "scope",
   "profile",
   "docker",
+  "needs",
 ]);
 /** The thresholds a level means when the file does not set one. */
 const LEVEL_THRESHOLDS: Record<
@@ -230,8 +233,15 @@ export function readQuality(parsed: Record<string, unknown>): {
       scope: scope === "all" ? "all" : "diff",
       profile: String(c.profile ?? "").trim(),
       docker: c.docker === true || c.docker === "true",
+      needs: String(c.needs ?? "").trim(),
     });
   }
+  // REQ-240: a check needs an earlier one, so every stage already runs it first.
+  checks.forEach((check, i) => {
+    if (check.needs && !checks.slice(0, i).some((c) => c.name === check.needs)) {
+      errors.push(`checks (${check.name}): \`needs\` names an earlier check, not ${check.needs}.`);
+    }
+  });
   return {
     config: {
       level,

@@ -224,6 +224,11 @@ test("REQ-237 SCN-237a: a Spring Boot parent manages the versions", () => {
   assert.match(deps.run, /-L target\/bom\.json/);
   assert.equal(deps.image, "ghcr.io/google/osv-scanner:v2.2.4");
   assert.equal(sbom.when, deps.when, "the bill of materials is written in the same stage");
+  assert.equal(
+    (deps as unknown as { needs: string }).needs,
+    "sbom",
+    "REQ-240: the baseline runs it first"
+  );
 });
 
 test("REQ-238 SCN-238a: the preset gives Testcontainers its Docker", () => {
