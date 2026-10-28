@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.4] — 2026-10-28
+
+The way from a client's brief to its front matter, after the third truck-flote run: the brief at the root is noticed, the agent names actors in the brief's own words, and an incomplete front matter is called that.
+
 ### Fixed
 
 Found in the third truck-flote run, with 0.27.3 and forja 1.0.3 only:
