@@ -88,6 +88,8 @@ a check that writes SARIF by its **findings**, not its exit code:
   count; `scope: all` for a project-wide check such as dependencies.
 - Outside a git repository nothing is known to have changed, so every finding
   not in the baseline counts.
+- A finding in a file git ignores — a development `.env.local` — is left out:
+  it is never part of a change or of the repository.
 
 A failure names each new finding as `path:line [rule] message`. Commit the
 baseline; it only shrinks unless someone runs `baseline --accept` on purpose.

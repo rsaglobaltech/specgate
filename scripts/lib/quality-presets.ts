@@ -215,6 +215,29 @@ function semgrep(rules: string[]): PresetCheck {
   };
 }
 
+/** The project's own group in a pom, its parent's and its dependencies' aside; "" when it names none. */
+export function pomGroup(pom: string): string {
+  const own = pom.replace(
+    /<(parent|dependencies|dependencyManagement|build|profiles|reporting|plugins|pluginRepositories|repositories)\b[\s\S]*?<\/\1>/g,
+    ""
+  );
+  return (/<groupId>\s*([\w.-]+)\s*<\/groupId>/.exec(own) || [])[1] || "";
+}
+
+/**
+ * Coverage with JaCoCo's agent on the project's classes only (REQ-250). With
+ * every class instrumented, Testcontainers' were too: its container stop ran
+ * into JaCoCo's dump at shutdown and Surefire killed the JVM after 30 s, on
+ * every run of a Spring Boot API (truck-flote, S36).
+ */
+function jacocoCoverage(mvn: string, group: string): string {
+  const report = "org.jacoco:jacoco-maven-plugin:0.8.12:report";
+  if (!group) return `${mvn} org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent test ${report}`;
+  const agent =
+    "org.apache.maven.plugins:maven-dependency-plugin:3.8.1:copy -Dartifact=org.jacoco:org.jacoco.agent:0.8.12:jar:runtime -DoutputDirectory=target/jacoco-agent -Dmdep.stripVersion=true";
+  return `${mvn} ${agent} test ${report} '-DargLine=-javaagent:target/jacoco-agent/org.jacoco.agent-runtime.jar=destfile=target/jacoco.exec,includes=${group}.*'`;
+}
+
 function maven(projectDir: string, level: Level, dir = ""): PresetCheck[] {
   const appDir = path.join(projectDir, dir);
   const pom = read(appDir, "pom.xml");
@@ -241,10 +264,7 @@ function maven(projectDir: string, level: Level, dir = ""): PresetCheck[] {
     { ...dependencies, needs: "sbom" },
     {
       name: "coverage",
-      run: cdApp(
-        dir,
-        `${mvn} org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.12:report`
-      ),
+      run: cdApp(dir, jacocoCoverage(mvn, pomGroup(pom))),
       when: "attempt",
       image,
       volumes: m2,

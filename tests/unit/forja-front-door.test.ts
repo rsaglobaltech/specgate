@@ -67,7 +67,7 @@ test("REQ-236 SCN-236a: no forja anywhere", () => {
     const r = run(dir, env, "init", "--forja", "fleet", "--backend", "spring");
     assert.notEqual(r.status, 0);
     const said = r.stdout + r.stderr;
-    assert.match(said, /npm i -g @rsaglobaltech\/forja/);
+    assert.match(said, /github\.com\/rsaglobaltech\/forja\/releases/);
     assert.match(said, /SPECGATE_FORJA_CMD/);
     assert.deepEqual(fs.readdirSync(dir), [], "nothing was generated");
   } finally {

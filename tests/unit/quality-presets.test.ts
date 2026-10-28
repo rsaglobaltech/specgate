@@ -200,6 +200,32 @@ test("REQ-235 SCN-235b: the changed files of one folder", () => {
   );
 });
 
+// ── REQ-250 ─────────────────────────────────────────────────────────────────
+
+test("REQ-250 SCN-250a: a Spring Boot API whose group is eu.truckflote", () => {
+  const dir = tmp();
+  w(dir, "package.json", "{}");
+  w(
+    dir,
+    "apps/api/pom.xml",
+    "<project><parent><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId></parent><groupId>eu.truckflote</groupId><artifactId>api</artifactId></project>"
+  );
+  assert.equal(sg(dir, "quality", "init").status, 0);
+  const { readHarnessConfig } = require("../../packages/core/src/infrastructure/HarnessConfigFile");
+  const coverage = readHarnessConfig(dir).quality.checks.find(
+    (c: { name: string }) => c.name === "coverage"
+  );
+  assert.match(
+    coverage.run,
+    /javaagent:[^ ]*org\.jacoco\.agent-runtime\.jar=destfile=target\/jacoco\.exec,includes=eu\.truckflote\.\*/
+  );
+  assert.equal(coverage.report.path, "apps/api/target/site/jacoco/jacoco.xml");
+  const bare = tmp();
+  w(bare, "pom.xml", "<project><artifactId>x</artifactId></project>");
+  assert.equal(sg(bare, "quality", "init").status, 0);
+  assert.doesNotMatch(config(bare), /includes=/, "no group: every class");
+});
+
 // ── REQ-237, REQ-238 ────────────────────────────────────────────────────────
 
 test("REQ-237 SCN-237a: a Spring Boot parent manages the versions", () => {

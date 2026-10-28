@@ -32,7 +32,7 @@ the pull request, so the spec and the code are reviewed together.
 | `specgate propose <change-id>`                  | One behaviour: you write the delta yourself.                                    | [Change a shipped requirement](reviewing-changes.md)             |
 | `specgate propose --from-brief`                 | Lists the modules of `docs/brief.md` and the next one to draft.                 | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief --new-brief`     | Writes a `docs/brief.md` for you to fill in. Never overwrites one.              | [Write the brief](start/write-the-brief.md)                      |
-| `specgate propose --from-brief --check`         | Runs the brief rules (B1–B11) on the brief. Writes nothing.                     | [Write the brief](start/write-the-brief.md#step-8-check-it)      |
+| `specgate propose --from-brief --check`         | Runs the brief rules (B1–B13) on the brief. Writes nothing.                     | [Write the brief](start/write-the-brief.md#step-8-check-it)      |
 | `specgate propose --from-brief --agent "<cmd>"` | Your agent proposes the brief's fields, then a section per module.              | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief <module>`        | Opens that module's draft change, or checks it once it exists.                  | [From a brief](from-a-brief.md#2-draft-one-module)               |
 | `specgate propose --from-ticket <KEY>`          | Opens a change from a Jira ticket, on a new `feature/<KEY>-<slug>` branch.      | [From a Jira ticket](from-a-ticket.md)                           |

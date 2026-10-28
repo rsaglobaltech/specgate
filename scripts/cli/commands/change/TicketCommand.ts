@@ -652,7 +652,10 @@ export class TicketCommand extends BaseCommand {
     }
     if (run.reverted.length > 0 && !opts.json) {
       process.stdout.write(
-        "\n" + ui.warn(`Undone — the agent wrote outside the draft: ${run.reverted.join(", ")}`)
+        "\n" +
+          ui.warn(
+            `Undone — the agent wrote outside the draft: ${run.reverted.join(", ")}${run.kept ? ` (what they held is kept in ${run.kept})` : ""}`
+          )
       );
     }
     if (!run.ok) {

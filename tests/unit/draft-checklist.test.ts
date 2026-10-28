@@ -826,3 +826,42 @@ test("#82 / D7: a deferred answer keeps the question open", () => {
   assert.equal(found.length, 1);
   assert.match(found[0].message, /puts the decision off/);
 });
+
+test("REQ-247 SCN-247a: the truck-flote assumptions", () => {
+  const axles = req("REQ-006", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-006",
+      [
+        'GIVEN vehicle "1234-BCD" is registered with no axles',
+        "WHEN the office adds axles of 7100 kg, 11500 kg and 8000 kg",
+        'THEN the vehicle shows "3 ejes" with "7100 kg", "11500 kg" and "8000 kg"',
+      ],
+    ],
+  ]);
+  const device = req("REQ-008", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-008",
+      [
+        "GIVEN a vehicle",
+        "WHEN the office links its tracker",
+        'THEN the vehicle shows "Dispositivo: TRK-0001"',
+      ],
+    ],
+  ]);
+  const rows = [
+    '| A8 | Plate "1234-BCD" | SCN-006 |',
+    "| A9 | Three axles of 7100, 11500 and 8000 kg | REQ-006, SCN-006 |",
+    "| A10 | Device identifier TRK-0001 | SCN-008 |",
+  ].join("\n");
+  const r = checkDraft({ deltas: delta(axles, device), brief: BRIEF, assumptions: rows });
+  const d6 = r.status.filter((d) => d.code === "D6_unlisted_value").map((d) => d.message);
+  assert.deepEqual(d6, [], d6.join("\n"));
+  const four = req("REQ-006", "kind=functional actor=Office", "Text.", [
+    ["SCN-006", ["GIVEN a vehicle", "WHEN it is saved", 'THEN it shows "4 ejes"']],
+  ]);
+  const still = checkDraft({ deltas: delta(four), brief: BRIEF, assumptions: rows });
+  assert.ok(
+    still.status.some((d) => d.code === "D6_unlisted_value" && d.message.includes('"4 ejes"')),
+    "a number the row does not hold is still unlisted"
+  );
+});
