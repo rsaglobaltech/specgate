@@ -190,6 +190,17 @@ test("REQ-232 SCN-232a: the container's command line", () => {
   assert.ok(!args.some((a: string) => /SONAR_TOKEN=/.test(a)));
 });
 
+test("REQ-232 SCN-232a: a check run as the person has a home it can write", () => {
+  const { config } = readQuality({
+    checks: [{ name: "semgrep", run: "semgrep scan", runner: "docker", image: "semgrep/semgrep" }],
+  });
+  const args = quality().dockerArgs(config.checks[0], "/work/app", "semgrep scan", "c1");
+  // An image's own user owns its home; anyone else, such as uid 1001 on a CI
+  // runner, gets "/" and cannot write a cache there.
+  if (args.includes("--user")) assert.ok(args.includes("HOME=/tmp"), args.join(" "));
+  else assert.ok(!args.includes("HOME=/tmp"), "the image's own user keeps its home");
+});
+
 const docker = quality().dockerAvailable();
 
 test(

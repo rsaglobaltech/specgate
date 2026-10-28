@@ -342,7 +342,10 @@ export function dockerArgs(
   // runs as root and hands what it wrote back to the person afterwards;
   // without one it runs as the person from the start.
   const asRoot = posix && check.volumes.length > 0 && check.shell;
-  const user = posix && !asRoot ? ["--user", id] : [];
+  // Run as the person, a check has no home of its own: HOME is "/", and a tool
+  // that keeps a cache there (Semgrep) fails unless the uid happens to be the
+  // image's own user.
+  const user = posix && !asRoot ? ["--user", id, "-e", "HOME=/tmp"] : [];
   const script = asRoot
     ? `touch /tmp/.specgate-start; ${command}; s=$?; find /src -newer /tmp/.specgate-start -user 0 -exec chown ${id} {} + 2>/dev/null; exit $s`
     : command;
