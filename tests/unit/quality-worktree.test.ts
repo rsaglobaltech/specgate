@@ -59,6 +59,9 @@ test("REQ-266 SCN-266a: semgrep in a harness worktree", () => {
   const repo = tmp("specgate-wt-repo-");
   fs.writeFileSync(path.join(repo, "a.txt"), "a\n");
   git(repo, "init", "-q");
+  // The harness refuses a repository with no identity; CI has none globally.
+  git(repo, "config", "user.email", "t@t");
+  git(repo, "config", "user.name", "t");
   git(repo, "add", "-A");
   git(repo, "commit", "-qm", "seed");
   const wt = path.join(tmp("specgate-wt-parent-"), "wt");
@@ -113,6 +116,9 @@ test("REQ-267 SCN-267a: a scanner that fails before it reports", () => {
     ].join("\n")
   );
   git(dir, "init", "-q");
+  // The harness refuses a repository with no identity; CI has none globally.
+  git(dir, "config", "user.email", "t@t");
+  git(dir, "config", "user.name", "t");
   git(dir, "add", "-A");
   git(dir, "commit", "-qm", "seed");
   const agentFile = path.join(parent, "agent.js");

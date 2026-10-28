@@ -70,6 +70,9 @@ function greenable() {
       .join("\n")
   );
   git(dir, "init", "-q");
+  // The harness refuses a repository with no identity; CI has none globally.
+  git(dir, "config", "user.email", "t@t");
+  git(dir, "config", "user.name", "t");
   git(dir, "add", "-A");
   git(dir, "commit", "-qm", "seed");
   return { parent, dir };
@@ -133,6 +136,9 @@ function withDraft() {
     ].join("\n")
   );
   git(dir, "init", "-q");
+  // The harness refuses a repository with no identity; CI has none globally.
+  git(dir, "config", "user.email", "t@t");
+  git(dir, "config", "user.name", "t");
   git(dir, "add", "-A");
   git(dir, "commit", "-qm", "seed");
   return dir;
