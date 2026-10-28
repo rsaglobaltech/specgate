@@ -68,10 +68,11 @@ test("REQ-266 SCN-266a: semgrep in a harness worktree", () => {
   assert.equal(git(repo, "worktree", "add", "-q", wt).status, 0);
 
   const args = dockerArgs(CHECK, wt, CHECK.run, "c1");
-  const common = fs.realpathSync(path.join(repo, ".git"));
+  // `.native`: Windows runners name the temp folder both RUNNER~1 and runneradmin.
+  const common = fs.realpathSync.native(path.join(repo, ".git"));
   const mount = args.find((a: string) => a.endsWith(":/.specgate-git:ro"));
   assert.ok(mount, args.join(" "));
-  assert.equal(fs.realpathSync(mount.slice(0, -":/.specgate-git:ro".length)), common);
+  assert.equal(fs.realpathSync.native(mount.slice(0, -":/.specgate-git:ro".length)), common);
   assert.ok(args.includes("GIT_DIR=/.specgate-git/worktrees/wt"), args.join(" "));
   assert.ok(args.includes("GIT_WORK_TREE=/src"), args.join(" "));
 
