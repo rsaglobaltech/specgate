@@ -283,9 +283,11 @@ test("REQ-213 SCN-213a: the studio stays up in an empty folder", async () => {
   const dir = tmp();
   const http = require("node:http");
   const port = 47000 + Math.floor(Math.random() * 2000);
+  // The studio runs in a process of its own: kill the group, not only the CLI.
   const child = spawn(process.execPath, [CLI, "studio", "--port", String(port)], {
     cwd: dir,
     env: { ...process.env, NO_COLOR: "1" },
+    detached: process.platform !== "win32",
   });
   try {
     await new Promise<void>((resolve, reject) => {
@@ -316,7 +318,20 @@ test("REQ-213 SCN-213a: the studio stays up in an empty folder", async () => {
     assert.equal(await get("/api/route"), 200, "still serving the new-project step");
     assert.equal(child.exitCode, null);
   } finally {
-    child.kill();
+    const exited = new Promise<void>((resolve) => {
+      if (child.exitCode !== null) resolve();
+      else child.once("exit", () => resolve());
+    });
+    if (process.platform === "win32")
+      spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
+    else {
+      try {
+        process.kill(-child.pid, "SIGTERM");
+      } catch {
+        child.kill();
+      }
+    }
+    await exited;
   }
 });
 
