@@ -11,6 +11,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **Commands that start with `./` run on Windows** (REQ-255): `./mvnw -B test` — the test command Specgate proposes for Maven — and every test, architecture, setup, agent or check command written for a POSIX shell failed in cmd.exe with "'.' is not recognized as an internal or external command". On Windows the program is now run as `.\name`, which also finds `mvnw.cmd` beside `mvnw`.
+- **`check` leaves the working tree as it was** (REQ-256): the pet's state and the `.gitignore` written beside it showed `.specgate/` as untracked after every check, and the harness wants a clean tree. It now lives in the git folder.
+- **The incomplete front matter is explained in a sentence** (REQ-257).
+
 - **Docker counts only when it runs Linux containers** (REQ-254): on Docker Desktop in Windows containers mode — and on GitHub's Windows runners — Docker answered, every check image failed to pull ("no matching manifest for windows"), and each check was reported as a skipped pull. The checks are now skipped up front, saying to switch Docker Desktop to Linux containers.
 
 ## [0.27.4] — 2026-10-28

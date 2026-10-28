@@ -666,3 +666,8 @@ test("REQ-253 SCN-253a: the guide an agent reads", () => {
   assert.match(guide, /three to eight/);
   assert.match(guide, /forja\.config\.json/);
 });
+
+test("REQ-257 SCN-257a: forja's front matter, modules empty", (t: TestContext) => {
+  const { cli } = project(t, FORJA_TEMPLATE);
+  assert.match(cli("draft").stdout, /These are the four fields\s+that tell Specgate what to draft/);
+});

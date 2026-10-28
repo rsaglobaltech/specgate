@@ -10,12 +10,13 @@
  * pipe, so the caller's `spawnSync` returns.
  */
 import { spawn, spawnSync } from "node:child_process";
+import { forShell } from "./shell-command";
 
 const command = process.env.HARNESS_CMD || "";
 const deadline = Number(process.env.HARNESS_DEADLINE_MS || "0");
 const windows = process.platform === "win32";
 
-const child = spawn(command, {
+const child = spawn(forShell(command), {
   shell: true,
   detached: !windows,
   stdio: ["ignore", "inherit", "inherit"],

@@ -95,6 +95,23 @@ test("check records what the cat needs, and the file stays out of git", () => {
   }
 });
 
+test("REQ-256 SCN-256a: a check in a clean repository", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pet-git-"));
+  try {
+    const git = (...a: string[]) =>
+      require("node:child_process").spawnSync("git", a, { cwd: dir, encoding: "utf8" });
+    git("init", "-q");
+    fs.writeFileSync(path.join(dir, "README.md"), "x\n");
+    git("add", "-A");
+    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "start");
+    recordCheck(dir, true, NOW);
+    assert.equal(git("status", "--porcelain").stdout, "", "nothing new in the working tree");
+    assert.equal(readPetState(dir).lastCheck.ok, true);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 function project(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-pet-proj-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));

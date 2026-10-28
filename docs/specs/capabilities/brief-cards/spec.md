@@ -254,3 +254,15 @@ The system SHALL write in `BRIEF-SETUP.md` that each actor is named as the brief
 - THEN it says to name actors as the brief writes them, in its language, three to eight modules, and only the surfaces `forja.config.json` lists
 
 <!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-253.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-257 — The incomplete front matter is explained in a sentence
+
+The system SHALL, when `draft` explains an incomplete front matter, say "The front matter at the top of <brief> is incomplete. These are the four fields that tell Specgate what to draft, and what to check each draft against."
+
+#### Scenario: SCN-257a — forja's front matter, modules empty
+
+- GIVEN forja's front matter with `modules: []`
+- WHEN `specgate draft` runs
+- THEN it says "These are the four fields that tell Specgate what to draft"
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-257.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->

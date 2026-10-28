@@ -295,7 +295,7 @@ export function frontMatterExplanation(brief: string, incomplete = false): strin
   return [
     // REQ-252: over one that exists, "no front matter yet" read as a bug.
     incomplete
-      ? `  The front matter at the top of ${brief} is incomplete. Its four fields`
+      ? `  The front matter at the top of ${brief} is incomplete. These are the four fields`
       : `  Your brief has no front matter yet: four fields at the very top of ${brief}`,
     "  that tell Specgate what to draft, and what to check each draft against.",
     "  Your text below them stays exactly as it is.",

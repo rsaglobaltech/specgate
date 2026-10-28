@@ -31,6 +31,7 @@ import { deriveRows, setTraceFields } from "../../../../packages/core/src/domain
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
+import { forShell } from "../../../lib/shell-command";
 
 /** A row of the generated matrix, as far as `done` reads it. Core returns them untyped. */
 interface DerivedRow {
@@ -296,7 +297,7 @@ export class DoneCommand extends BaseCommand {
               ],
               { encoding: "utf8" }
             )
-          : spawnSync(step.argv[0], {
+          : spawnSync(forShell(step.argv[0]), {
               cwd: projectDir,
               encoding: "utf8",
               shell: true,
@@ -507,7 +508,7 @@ export class DoneCommand extends BaseCommand {
     if (passing.length > 0 && opts.check && archCmd) {
       const run = harness.archSarif
         ? archRun(projectDir, archCmd, harness.archSarif)
-        : spawnSync(archCmd, { cwd: projectDir, encoding: "utf8", shell: true });
+        : spawnSync(forShell(archCmd), { cwd: projectDir, encoding: "utf8", shell: true });
       if (run.status !== 0) {
         const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
         if (detail && !opts.json) process.stderr.write(indent(detail) + "\n\n");
@@ -529,7 +530,7 @@ export class DoneCommand extends BaseCommand {
       if (cmd === "") {
         testsUnverified = true;
       } else {
-        const run = spawnSync(cmd, { cwd: projectDir, encoding: "utf8", shell: true });
+        const run = spawnSync(forShell(cmd), { cwd: projectDir, encoding: "utf8", shell: true });
         if (run.status !== 0) {
           const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
           if (detail && !opts.json) process.stderr.write(indent(detail) + "\n\n");
