@@ -611,3 +611,58 @@ test("REQ-246 SCN-246a: forja's template, modules empty", (t: TestContext) => {
   assert.match(r.stdout, /Customer/);
   assert.match(r.stdout, /specgate draft --agent/);
 });
+
+// ── REQ-251..253 (truck-flote, third run) ───────────────────────────────────
+
+const CLIENT_BRIEF = `# Proyecto: control de flota
+
+El despachador asigna cargas a los camiones en ruta.
+`;
+
+const FORJA_TEMPLATE = `---
+product: truck-flote
+surfaces: [api, web]
+actors:
+  - { name: Customer, surfaces: [api, web] }
+modules: []
+---
+
+# Brief
+
+Paste the client's brief here **as it is**, without rewriting it.
+`;
+
+test("REQ-251 SCN-251a: the client's brief pushed first, forja's template beside it", (t: TestContext) => {
+  const { dir, cli } = project(t, null);
+  fs.rmSync(path.join(dir, "spec.md"));
+  fs.writeFileSync(
+    path.join(dir, "package.json"),
+    JSON.stringify({ name: "fleet", scripts: { test: "node -e 0" } })
+  );
+  assert.equal(cli("init", "--no-capabilities").status, 0);
+  fs.writeFileSync(path.join(dir, "brief.md"), CLIENT_BRIEF);
+  fs.mkdirSync(path.join(dir, "docs"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "docs", "brief.md"), FORJA_TEMPLATE);
+  for (const args of [["status"], ["draft"]]) {
+    const r = cli(...args);
+    const said = r.stdout + r.stderr;
+    assert.match(said, /brief\.md at the root/, `${args[0]}: ${said}`);
+    assert.match(said, /docs\/brief\.md/, args[0]);
+  }
+});
+
+test("REQ-252 SCN-252a: forja's front matter, modules empty", (t: TestContext) => {
+  const { cli } = project(t, FORJA_TEMPLATE);
+  const r = cli("draft");
+  assert.doesNotMatch(r.stdout, /no front matter yet/);
+  assert.match(r.stdout, /front matter at the top of \S+ is incomplete/);
+});
+
+test("REQ-253 SCN-253a: the guide an agent reads", () => {
+  const { briefSetupGuide } = require("../../scripts/draft/brief-setup");
+  const guide = briefSetupGuide("docs/brief.md");
+  assert.match(guide, /as the brief writes (it|them)/);
+  assert.match(guide, /in the brief's language/);
+  assert.match(guide, /three to eight/);
+  assert.match(guide, /forja\.config\.json/);
+});

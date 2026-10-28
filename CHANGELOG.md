@@ -9,6 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.4] — 2026-10-28
+
+The way from a client's brief to its front matter, after the third truck-flote run: the brief at the root is noticed, the agent names actors in the brief's own words, and an incomplete front matter is called that.
+
+### Fixed
+
+Found in the third truck-flote run, with 0.27.3 and forja 1.0.3 only:
+
+- **A brief at the root is pointed at** (REQ-251): the client's `brief.md`, pushed before forja wrote its template to `docs/brief.md`, went unnoticed; `status` and `draft` now say its text goes below the front matter of `docs/brief.md`.
+- **The agent names actors as the brief does** (REQ-253): `BRIEF-SETUP.md` asks for each actor in the brief's own words and language — an agent wrote `Dispatcher` over a Spanish brief and B9 flagged all five actors — for three to eight modules, and for the surfaces `forja.config.json` lists.
+- **An incomplete front matter is called incomplete** (REQ-252): `draft` said "Your brief has no front matter yet" over forja's, which only lacked its modules.
+
 ## [0.27.3] — 2026-10-28
 
 What the second truck-flote run found, using only 0.27.2 and forja 1.0.2 one documented command at a time: Maven coverage 30 s faster on Spring Boot with Testcontainers, D6 that reads assumptions as people write them, an undo that never loses a person's edit, and a brief path that leads from `init --forja` to `draft`.

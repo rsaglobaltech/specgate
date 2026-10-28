@@ -15,6 +15,7 @@ import { readDerivationSources } from "../../../../packages/core/src/infrastruct
 import { derivedMatrixFor, refreshDerivedMatrix } from "./MatrixCommand";
 import { briefProgress, draftNextCommand, ModuleStatus, DEFAULT_BRIEF } from "./DraftCommand";
 import { briefModules } from "../../../../packages/core/src/domain/DraftChecklist";
+import { rootBrief } from "../../../draft/brief-setup";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import { findForjaProject } from "../project/Forja";
 import { inFlightView, InFlightView, unwrittenNotes } from "../../../lib/in-flight";
@@ -71,12 +72,22 @@ export interface QueueSummary {
   brief?: BriefProgress | null;
   /** The brief, when it exists and its front matter lists no module yet (REQ-243). */
   briefToFill?: string;
+  /** A brief at the root that `briefToFill` does not hold yet (REQ-251). */
+  rootBrief?: string;
 }
 
 /** What `nextCommandPlain` and `nextReason` read from a summary. */
 type NextInput = Pick<
   QueueSummary,
-  "items" | "counts" | "orphans" | "derived" | "forja" | "brief" | "tickets" | "briefToFill"
+  | "items"
+  | "counts"
+  | "orphans"
+  | "derived"
+  | "forja"
+  | "brief"
+  | "tickets"
+  | "briefToFill"
+  | "rootBrief"
 >;
 
 export interface StatusOptions {
@@ -381,6 +392,7 @@ export function nextReason({
   forja,
   tickets,
   briefToFill,
+  rootBrief,
 }: NextInput): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   if ((items || []).some((it) => it.category === "NEEDS_STATUS_UPDATE"))
@@ -396,6 +408,8 @@ export function nextReason({
   if (todo && todo.category === "NEEDS_FEATURE")
     return `${todo.requirement}'s feature file is missing — plan shows which`;
   if ((todo && onlyBaseline(items)) || (!todo && counts.total === 0)) {
+    if (briefToFill && rootBrief)
+      return `${rootBrief} at the root looks like the brief: put its text below the front matter of ${briefToFill}, then draft`;
     if (briefToFill)
       return `fill in the front matter of ${briefToFill} — product, surfaces, actors, modules — then draft`;
   }
@@ -611,7 +625,10 @@ export class StatusCommand extends BaseCommand {
       const text = fs.existsSync(path.join(projectDir, DEFAULT_BRIEF))
         ? fs.readFileSync(path.join(projectDir, DEFAULT_BRIEF), "utf8")
         : null;
-      if (text !== null && briefModules(text).length === 0) summary.briefToFill = DEFAULT_BRIEF;
+      if (text !== null && briefModules(text).length === 0) {
+        summary.briefToFill = DEFAULT_BRIEF;
+        summary.rootBrief = rootBrief(projectDir, text) || undefined;
+      }
     }
     let lock: Lockfile | null = null;
     try {
