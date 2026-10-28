@@ -9,6 +9,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.8] — 2026-10-28
+
+0.27.7 as it was meant to ship. Its publish stopped on four new tests whose repositories had no git identity on the CI runners; the Docker image 0.27.7 was published, the npm package was not.
+
+### Fixed
+
+- The tests of REQ-264, REQ-267, REQ-269 and REQ-271 give their repositories a git identity, as the other harness tests do.
+- The REQ-266 test compares real paths as Windows names them (`RUNNER~1` and `runneradmin` are one folder), and the coverage run in CI has a larger heap: on macOS it ran out once every test had passed.
+
 ## [0.27.7] — 2026-10-28
 
 After the sixth truck-flote run: the harness agent can write, a Docker check works in a worktree, every gate step is seen while it runs, and a reviewed draft no longer turns the branch red.
