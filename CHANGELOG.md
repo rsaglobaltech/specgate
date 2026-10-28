@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Every gate step is seen while it runs** (REQ-273..REQ-275): `harness run` printed `attempt 1/3` and nothing more for 19 minutes, and `/live` stayed empty, while a semgrep check hung. The setup command, `validate --strict`, the end-to-end test, the architecture check, the test command and each quality check are now a `gate-start` event and a `gate` event with its `ms`, written as each happens — the quality checks used to be reported only once every check of the stage had run — and a `started …` and `passed … in 3m 05s` line of the run, without `--verbose` and whatever the agent command is. `/live` names the step that is running, with its image and how long it has run, and the studio's Build moves to Revisa la calidad when a quality check starts.
+
 ## [0.27.6] — 2026-10-28
 
 The dependency scan counts again, after the fifth truck-flote run: a vulnerable Maven dependency fails the gate, and a quality run leaves the tree clean.
