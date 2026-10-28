@@ -181,6 +181,9 @@
 | REQ-249 | SCN-249a | `features/daily-surface/REQ-249.feature` | - | - | - | - | - | tests/unit/init-wizard.test.ts | Implemented |
 | REQ-241 | SCN-241a | `features/quality/REQ-241.feature` | - | - | - | - | - | tests/unit/quality-baseline.test.ts | Implemented |
 | REQ-250 | SCN-250a | `features/quality/REQ-250.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-251 | SCN-251a | `features/brief-cards/REQ-251.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-252 | SCN-252a | `features/brief-cards/REQ-252.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-253 | SCN-253a | `features/brief-cards/REQ-253.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

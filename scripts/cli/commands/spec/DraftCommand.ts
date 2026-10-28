@@ -61,6 +61,7 @@ import {
   BRIEF_TEMPLATE,
   briefBody,
   briefSetupGuide,
+  rootBrief,
   briefSetupPrompt,
   checkFrontMatter,
   frontMatter,
@@ -865,7 +866,16 @@ export class DraftCommand extends BaseCommand {
           for (const p of problems) out.write(ui.fail(p.message) + ui.fix(p.fix));
           // REQ-246: what each field is for, a template actor left behind, and
           // the agent that can propose them — what forja's template promises.
-          out.write("\n" + frontMatterExplanation(rel));
+          out.write("\n" + frontMatterExplanation(rel, true));
+          // REQ-251: the client's text pushed first sits at the root.
+          const atRoot = rootBrief(projectDir, brief.text);
+          if (atRoot) {
+            out.write(
+              ui.warn(
+                `${atRoot} at the root looks like the brief: its text goes below the front matter of ${rel}.`
+              ) + "\n"
+            );
+          }
           const actors = [...actorSurfaces(brief.text).keys()];
           if (actors.includes("customer") && briefModules(brief.text).length === 0) {
             out.write(

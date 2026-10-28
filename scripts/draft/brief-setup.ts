@@ -14,6 +14,8 @@
  * front matter this module accepts is one the checklist can read.
  */
 
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { actorSurfaces, briefModules } from "../../packages/core/src/domain/DraftChecklist";
 
 /** The places D3 knows how to check: an HTTP call, or a screen. */
@@ -289,9 +291,12 @@ export const FRONT_MATTER_EXAMPLE = [
 ].join("\n");
 
 /** What `specgate draft` prints when the brief has no front matter. */
-export function frontMatterExplanation(brief: string): string {
+export function frontMatterExplanation(brief: string, incomplete = false): string {
   return [
-    `  Your brief has no front matter yet: four fields at the very top of ${brief}`,
+    // REQ-252: over one that exists, "no front matter yet" read as a bug.
+    incomplete
+      ? `  The front matter at the top of ${brief} is incomplete. Its four fields`
+      : `  Your brief has no front matter yet: four fields at the very top of ${brief}`,
     "  that tell Specgate what to draft, and what to check each draft against.",
     "  Your text below them stays exactly as it is.",
     "",
@@ -410,6 +415,31 @@ Questions
 /** Where the guide for an agent proposing the front matter is written. */
 export const BRIEF_SETUP_FILE = "docs/specs/BRIEF-SETUP.md";
 
+/**
+ * A brief at the project's root that `docs/brief.md` does not hold yet
+ * (REQ-251): the client's text pushed first, forja's template written beside
+ * it. Its file name, or null.
+ */
+export function rootBrief(projectDir: string, docsBrief: string): string | null {
+  let names: string[];
+  try {
+    names = fs.readdirSync(projectDir).filter((n) => /^brief\.md$/i.test(n));
+  } catch {
+    return null;
+  }
+  for (const name of names) {
+    let text = "";
+    try {
+      text = fs.readFileSync(path.join(projectDir, name), "utf8");
+    } catch {
+      continue;
+    }
+    const first = text.split(/\r?\n/).find((l) => l.trim() !== "");
+    if (first && !docsBrief.includes(first.trim())) return name;
+  }
+  return null;
+}
+
 /** The guide an agent follows to propose a front matter. */
 export function briefSetupGuide(brief: string): string {
   return [
@@ -425,6 +455,9 @@ export function briefSetupGuide(brief: string): string {
     "- **Only what the brief states.** Never invent an actor, a surface or a module",
     "  the brief does not support. When you are unsure, still propose it, with a",
     "  `# check: …` comment on the line above saying what is uncertain.",
+    "- **Each actor as the brief writes it, in the brief's language.** A brief in",
+    '  Spanish that says "el despachador" gets `Despachador`, not `Dispatcher`:',
+    "  the checks look for the actor's name in the brief.",
     `- Write only \`${brief}\`. Anything else you write is undone.`,
     "",
     "## The fields",
@@ -443,9 +476,13 @@ export function briefSetupGuide(brief: string): string {
     "  the product; `web`, `mobile` and `desktop` are screens.",
     "- `actors`: one line each, in exactly that `{ name: …, surfaces: [...] }` form.",
     "  Every surface of an actor is also in `surfaces`.",
-    "- `modules`: lowercase words with dashes. In the order they can be built —",
-    "  what others depend on first. Each small enough to review in one sitting:",
-    "  25 requirements at most; split a large area in two.",
+    "- `modules`: lowercase words with dashes, three to eight of them. In the order",
+    "  they can be built — what others depend on first. Each small enough to review",
+    "  in one sitting: 25 requirements at most. A brief of more phases than that is",
+    "  several deliveries: keep the first ones, and say so with `# check:`.",
+    "- When `forja.config.json` lists the project's `platforms`, give actors only",
+    "  those surfaces (and `api`); note a surface the brief asks for and the project",
+    "  lacks — a mobile app, say — with `# check:` instead.",
     "",
     "## Then",
     "",
