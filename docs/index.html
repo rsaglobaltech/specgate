@@ -69,6 +69,10 @@
         <a class="ed-btn ed-btn--primary" href="./getting-started.html">Get started</a>
         <a class="ed-btn" href="#projects">See it on six real products</a>
       </p>
+      <p class="ed-actions">
+        <a class="ed-link" href="#quality">New: quality checks — Sonar, SpotBugs, coverage →</a>
+        <a class="ed-link" href="#studio">The studio, without the terminal →</a>
+      </p>
       <figure class="code ed-install" data-lang="bash">
         <figcaption class="code__head"><span class="code__lang">Start in three commands</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
         <pre><code class="language-bash">npm install --save-dev @rsaglobaltech/specgate
@@ -1180,6 +1184,51 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"</code></pre>
       <a class="ed-link" href="./harness.html">How the harness works →</a>
       <a class="ed-link" href="./agent-setup.html">Choosing your agent →</a>
     </p>
+  </div>
+</section>
+
+<!-- ── Quality checks ───────────────────────────────────────────────────── -->
+<section class="ed-band" id="quality">
+  <div class="ed-wrap ed-split ed-split--wide">
+    <div class="ed-split__head reveal">
+      <p class="ed-eyebrow">Quality, not only tests</p>
+      <h2 class="ed-h2">Your team's tools in the gate. Only what a change adds fails.</h2>
+      <p class="ed-muted">Coverage and mutation of the lines the change touched
+         (JaCoCo, PIT, LCOV, Stryker), SonarQube, SpotBugs, PMD, Semgrep,
+         gitleaks, osv-scanner and Conventional Commits — each in its own
+         Docker image, without an account. Today's findings become a baseline,
+         so the gate holds new code to the bar without failing on old debt.</p>
+      <p class="ed-actions">
+        <a class="ed-link" href="./quality.html">Quality and security checks →</a>
+      </p>
+    </div>
+    <figure class="code reveal" data-lang="bash">
+      <figcaption class="code__head"><span class="code__lang">Maven, Gradle or Node</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
+      <pre><code class="language-bash">specgate quality init --level strict   <span class="tok tok--c"># reads pom.xml, build.gradle, package.json</span>
+specgate quality doctor --pull         <span class="tok tok--c"># how each check runs here</span>
+specgate quality baseline              <span class="tok tok--c"># today's findings are debt</span>
+specgate check                         <span class="tok tok--c"># tests, then the quality checks</span></code></pre>
+    </figure>
+  </div>
+</section>
+
+<!-- ── The studio ───────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper" id="studio">
+  <div class="ed-wrap ed-split ed-split--wide">
+    <div class="ed-split__head reveal">
+      <p class="ed-eyebrow">Without the terminal</p>
+      <h2 class="ed-h2">The whole path as an app.</h2>
+      <p class="ed-muted"><code>specgate studio</code> in an empty folder: create
+         the project, write the brief as a form, have each module drafted,
+         answer the questions, approve, build with the agent you choose, and
+         read the report. Each step runs the command you would have typed.</p>
+      <p><a class="ed-link" href="./studio.html">The studio, step by step →</a></p>
+    </div>
+    <figure class="shot reveal">
+      <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">specgate studio</span></div>
+      <img src="./assets/img/studio-0-route.webp" width="1280" height="1461" loading="lazy"
+           alt="The studio's Route page: the next step to take, then the steps from Project to Report with their state, and each module's progress.">
+    </figure>
   </div>
 </section>
 

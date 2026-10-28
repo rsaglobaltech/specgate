@@ -19,6 +19,10 @@ specgate studio          # opens http://127.0.0.1:4173
 
 ## The route
 
+The screenshots come from a copy of the driving-school pilot: the interface in English, the requirements in Spanish.
+
+![The studio's Route page: the next step to take, Answer the questions, then the seven steps with their state — Project, Brief and Drafts done, one question waiting, 81 of 83 requirements built — and each module's progress.](assets/img/studio-0-route.webp)
+
 Across the top are seven steps. Each is **done** (a tick), **current** (blue),
 **open** or **locked**, read from the project's files every few seconds; the
 Route page says the one thing to do next.
@@ -39,9 +43,13 @@ being drafted.
 ## Simple and advanced, Spanish and English
 
 **Simple** shows no command. **Advanced** shows, under each action, the
-command it runs and the file it writes, and adds the brief's markdown editor.
+command it runs and the file it writes, and adds the brief's markdown editor
+(below: the Brief page in advanced mode, `specgate propose --from-brief` under
+its buttons).
 **ES · EN** switches the language. All three choices are remembered in your
 browser.
+
+![The Brief page in advanced mode: the same form, with the commands each button runs and a Form and Markdown switch.](assets/img/studio-2-brief-advanced.webp)
 
 ## 1 · A project from an empty folder
 
@@ -52,6 +60,8 @@ codes (it says which it found on this machine); and the quality level (basic,
 strict or none). Then it creates the project there, writes the agent's
 profiles and the quality checks, a brief to fill, and a first commit.
 
+![The new-project step in an empty folder: the name, a website, a service or a mobile app, the technology, which agent codes (Claude Code and Codex CLI found on this machine), and the quality level, basic recommended.](assets/img/studio-0-new.webp)
+
 A folder that already holds files is left alone: the studio names the command
 that adopts it (`specgate init`), which keeps them.
 
@@ -59,6 +69,8 @@ On an existing project, Project lists the agents (`.harness/profiles.yaml`) —
 which is the default, whether it streams tokens and cost to the live view —
 and the quality checks: when each runs, whether it gates or advises, how it
 runs on this machine, and whether Docker answers.
+
+![The Project page: three agent profiles, which is the default and which stream tokens and cost, and the Code quality card — Docker answers, the basic level, a diff coverage threshold of 70 %, and the commits, secrets, dependencies and lint checks with when each runs.](assets/img/studio-1-project.webp)
 
 ## 2 · The brief
 
@@ -73,6 +85,8 @@ The brief is the source of every requirement: what is not in it is not built.
 - **Paste the client's text**: an email, notes, a document. The agent proposes
   the product, the users and the modules from it; you correct the form after.
 
+![The Brief page as a form: a box to paste the client's text for the agent to structure, the product, who uses it and on which surfaces, the modules, and for the selected one its rules, examples and open questions; beside it, the brief's checks pass and Next: draft the modules.](assets/img/studio-2-brief.webp)
+
 Beside it, the brief's checks (B1–B11) run on every save. **Next: draft the
 modules** stays disabled while one of them is an error.
 
@@ -85,6 +99,8 @@ holds so far — requirements written, examples written, questions and
 assumptions noted — and the agent's last step when it streams. **Stop** ends
 it. A draft ready to review lists its checks (D1–D13) in plain words.
 
+![The Drafts page: eight modules, each drafted and built, with the agent that drafts chosen at the top right.](assets/img/studio-3-drafts.webp)
+
 ## 4 · Questions
 
 Everything waiting for a decision: what the brief asked, what a draft could
@@ -93,6 +109,8 @@ of the options Specgate saw or write your own answer. Once the specification
 says it, **The spec says it** confirms it, and the requirements the question
 held can be built.
 
+![The Questions page: a question the project asked, the requirement it blocks, and a box for the answer.](assets/img/studio-4-questions.webp)
+
 ## 5 · Review
 
 Each draft not yet approved, as someone on your team would read it: each
@@ -100,6 +118,8 @@ requirement's statement and its examples as Given / When / Then. **Ask for a
 change** writes your words into the draft's `review.md` for the agent; **Approve
 the draft** records that a person approved it, and is disabled while a check
 fails or a question is open.
+
+![The Review page: the Garaje draft's two requirements, each with its statement and its example as Given, When, Then, and Ask for a change under each; beside them, the checks say it is ready, and Approve the draft.](assets/img/studio-5-review.webp)
 
 ## 6 · Build
 
@@ -118,6 +138,8 @@ While it runs, the page shows the requirement in progress in four plain steps
 after this one** finishes the current requirement and stops. **Watch live**
 opens `/live`, the detailed view.
 
+![The Build page: who codes, with three agents and the estimated cost of one, then two requirements ready to build, about 30 minutes, and Build the 2.](assets/img/studio-6-build.webp)
+
 ## 7 · The report
 
 Built of the total, examples proven, whether the gate passes, the agent's cost
@@ -127,6 +149,8 @@ that proves it and its quality figures; what is missing and why (not built, or
 waiting for an answer, with the question); and the decisions taken. **Download
 the report** saves it as one HTML page that opens anywhere; **Print / PDF**
 opens it to print.
+
+![The Report page: 81 of 83 requirements built, 229 examples proven, the gate passes; then each module with what is built, and what the app does, each requirement with the examples that prove it.](assets/img/studio-7-report.webp)
 
 ## Safety
 
