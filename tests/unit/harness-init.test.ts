@@ -247,3 +247,15 @@ test("#71: harness init keeps the test_cmd that config set wrote, and adds the r
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+
+test("REQ-200 SCN-200a: the template proposes the agent that streams to the live view, and e2e_dir", () => {
+  const tpl = fs.readFileSync(
+    path.join(ROOT_DIR, "templates", "harness", "harness.config.yaml.tpl"),
+    "utf8"
+  );
+  assert.match(
+    tpl,
+    /claude -p --output-format stream-json --verbose .* \| specgate harness events --from claude/
+  );
+  assert.match(tpl, /^# e2e_dir: /m);
+});

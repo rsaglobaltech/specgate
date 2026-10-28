@@ -276,6 +276,17 @@ export const SURFACE: Command[] = [
     json: { key: "check", gate: true, args: "[dir]" },
   },
   {
+    name: "quality",
+    mcp: false,
+    script: ["quality.js"],
+    help: {
+      group: "core",
+      icon: "🔍",
+      summary: "The quality and security checks of the gate: list, doctor, run (ADR-0040).",
+    },
+    json: { key: "quality", gate: false, args: "<list|doctor|run>" },
+  },
+  {
     name: "draft",
     script: ["draft.js"],
     help: {
@@ -476,6 +487,58 @@ export const SURFACE: Command[] = [
       summary: "Open a change: an idea, or the next module of docs/brief.md.",
     },
     json: { key: "change", gate: false, args: "<id>" },
+  },
+  {
+    name: "brief",
+    subcommands: [
+      {
+        name: "add",
+        script: ["brief_add.js"],
+        editsContract: true,
+        mcp: false,
+        help: {
+          group: "core",
+          icon: "➕",
+          summary: "A new requirement for a module the brief covers, archived or not (REQ-192).",
+        },
+        json: { key: "brief", gate: false, args: "<module> <text>" },
+      },
+    ],
+  },
+  {
+    name: "questions",
+    mcp: false,
+    script: ["questions.js"],
+    help: {
+      group: "core",
+      icon: "❓",
+      summary: "Everything waiting for an answer: open questions and what they block (REQ-187).",
+    },
+    json: { key: "questions", gate: false },
+  },
+  {
+    name: "answer",
+    editsContract: true,
+    mcp: false,
+    script: ["answer.js"],
+    help: {
+      group: "core",
+      icon: "💬",
+      summary: "Answer a question: its row, an assumption to review, the requirements to revise.",
+    },
+    json: { key: "answer", gate: false, args: "<Q> <answer>" },
+  },
+  {
+    name: "ask",
+    editsContract: true,
+    mcp: false,
+    script: ["ask.js"],
+    help: {
+      group: "core",
+      icon: "🙋",
+      summary: "Ask instead of guessing: the requirement waits for the answer (REQ-189).",
+    },
+    json: { key: "ask", gate: false, args: "<REQ> <question>" },
   },
   {
     // ADR-0037: thinking with the agent before a change exists; writes nothing.

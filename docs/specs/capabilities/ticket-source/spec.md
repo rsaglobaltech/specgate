@@ -299,19 +299,19 @@ The system SHALL, on `specgate agents init --tool opencode`, and by default when
 
 ### Requirement: REQ-165 — Opening a ticket's change publishes its reservation
 
-The system SHALL, when `specgate propose --from-ticket <KEY>` has created the ticket's branch, or when it is given `--no-branch` on a branch that already names `<KEY>`, commit the opened change's folder, and nothing else, on that branch with the message `<KEY> docs(spec): open the change from the ticket`, and push that commit with the branch, unless `--no-push` is given, so the requirement and scenario ids it reserved are visible to every other clone from that moment; and SHALL commit nothing on any other branch.
+The system SHALL, when `specgate propose --from-ticket <KEY>` has created the ticket's branch, or when it is given `--no-branch` on a branch that already names `<KEY>`, commit the opened change's folder, and nothing else, on that branch with the message `docs(spec): <KEY> open the change from the ticket`, and push that commit with the branch, unless `--no-push` is given, so the requirement and scenario ids it reserved are visible to every other clone from that moment; and SHALL commit nothing on any other branch.
 
 #### Scenario: SCN-165a — A colleague sees the reservation at once
 
 - GIVEN two clones of one repository, and a colleague who has just opened PET-104 with `specgate propose --from-ticket PET-104.json --capability owners`
 - WHEN the developer, in the other clone, runs `git fetch` and looks at the colleague's branch
-- THEN that branch holds PET-104's change, with its `req_range`, in a commit "PET-104 docs(spec): open the change from the ticket"
+- THEN that branch holds PET-104's change, with its `req_range`, in a commit "docs(spec): PET-104 open the change from the ticket"
 
 #### Scenario: SCN-165b — Another tool made the branch
 
 - GIVEN a colleague on a branch `feature/clinic/PET-104` that agentkit created, with another file staged, who runs `specgate propose --from-ticket PET-104.json --capability owners --no-branch`
 - WHEN the developer, in the other clone, runs `git fetch` and looks at `feature/clinic/PET-104`
-- THEN it holds PET-104's change in a commit "PET-104 docs(spec): open the change from the ticket", and the staged file is still staged, not in that commit
+- THEN it holds PET-104's change in a commit "docs(spec): PET-104 open the change from the ticket", and the staged file is still staged, not in that commit
 
 <!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-165.feature kind=functional status=Implemented test=tests/unit/change-overlap.test.ts -->
 

@@ -791,6 +791,77 @@ test("harness run errors when no agent is configured", { skip: !hasGit() }, () =
   fs.rmSync(tempRoot, { recursive: true, force: true });
 });
 
+// REQ-175: a base the gate already fails is said once, before any agent runs.
+// An adopter's 75 requirements marked Approved before their tests failed
+// TDD-1 on the base, and all three attempts on REQ-002 were paid for nothing.
+function redBaseProject(tempRoot: string) {
+  const projectDir = makeHarnessProject(tempRoot, ["REQ-002"]);
+  const trace = path.join(projectDir, "docs", "specs", "traceability.md");
+  fs.writeFileSync(
+    trace,
+    fs
+      .readFileSync(trace, "utf8")
+      .replace(/(\| REQ-002 \|.*\| )`test\/f002\.test\.js` \| Draft \|/, "$1TBD | Approved |"),
+    "utf8"
+  );
+  gitInTest(["commit", "--quiet", "-am", "approve REQ-002 before its test"], { cwd: projectDir });
+  return projectDir;
+}
+
+test(
+  "REQ-175 SCN-175a: harness run refuses a base the gate already fails, before any agent",
+  { skip: !hasGit() },
+  () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-redbase-"));
+    const projectDir = redBaseProject(tempRoot);
+    const marker = path.join(tempRoot, "agent-ran.txt");
+    const result = runCli([
+      "harness",
+      "run",
+      "--project-dir",
+      projectDir,
+      "--req",
+      "REQ-001",
+      "--agent",
+      `node -e "require('fs').writeFileSync(process.argv[1], 'x')" ${JSON.stringify(marker)} {prompt_file}`,
+    ]);
+    assert.notEqual(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stderr, /already fails the gate/);
+    assert.match(result.stderr, /TDD-1/);
+    assert.match(result.stderr, /--skip-baseline/);
+    assert.equal(fs.existsSync(marker), false, "the agent must not run");
+    const branches = spawnSync("git", ["-C", projectDir, "branch", "--list", "harness/*"], {
+      encoding: "utf8",
+    });
+    assert.equal(branches.stdout.trim(), "");
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+);
+
+test("REQ-175 SCN-175b: --skip-baseline runs the agent on a red base", { skip: !hasGit() }, () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-skipbase-"));
+  const projectDir = redBaseProject(tempRoot);
+  const marker = path.join(tempRoot, "agent-ran.txt");
+  const result = runCli([
+    "harness",
+    "run",
+    "--project-dir",
+    projectDir,
+    "--req",
+    "REQ-001",
+    "--max-attempts",
+    "1",
+    "--setup-cmd",
+    "none",
+    "--skip-baseline",
+    "--agent",
+    `node -e "require('fs').writeFileSync(process.argv[1], 'x')" ${JSON.stringify(marker)} {prompt_file}`,
+  ]);
+  assert.doesNotMatch(result.stderr, /already fails the gate/);
+  assert.equal(fs.existsSync(marker), true, result.stdout + result.stderr);
+  fs.rmSync(tempRoot, { recursive: true, force: true });
+});
+
 test("harness run refuses a dirty working tree", { skip: !hasGit() }, () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-dirty-"));
   const projectDir = makeHarnessProject(tempRoot);

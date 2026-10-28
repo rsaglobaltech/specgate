@@ -28,6 +28,7 @@
  * disk, and it is the rule `tests/unit/architecture.test.ts` enforces.
  */
 
+import { summariseQuality, type QualitySummary, type RecordedCheck } from "./QualitySummary";
 import { estimateRunCost } from "./RunBudget";
 
 /** One attempt, as the ledger records it. */
@@ -46,6 +47,8 @@ export interface ResultRow {
   attempts: number;
   durationMs?: number;
   attemptLog?: AttemptRow[];
+  /** The quality checks of the passing attempt (REQ-228). */
+  checks?: RecordedCheck[];
 }
 
 export interface RunFile {
@@ -110,6 +113,8 @@ export interface HarnessReportSummary {
    * be the most flattering possible lie about our own gate.
    */
   realFailureRate: number | null;
+  /** What the quality checks said about the requirements delivered (REQ-229). */
+  quality: QualitySummary;
 }
 
 /** How an attempt ending is worth describing to a person. */
@@ -217,6 +222,7 @@ export function summariseRuns(
     falseFailures: falseCount,
     realFailureRate:
       failed.length > 0 && marked.size > 0 ? (failed.length - falseCount) / failed.length : null,
+    quality: summariseQuality(runs),
   };
 }
 

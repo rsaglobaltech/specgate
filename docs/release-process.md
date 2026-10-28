@@ -15,9 +15,9 @@ a maintainer actually does meanwhile.
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.22.2** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.22.2** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled between releases; newest image **0.22.2**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.26.0** is `latest` |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.26.0** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled between releases; newest image **0.26.0**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -176,7 +176,7 @@ is how 0.19.1 shipped:
    not run and what was run instead.
 3. **`develop`, then `main`** — merge into `develop`, open the
    `develop → main` pull request, then fast-forward `main` to that exact
-   commit with `git push origin "${R}:refs/heads/main"`.
+   commit with `git push origin "${R}:refs/heads/main"` (an admin bypass: only a commit step 1 ran).
 4. **Publish** — enable the publish workflows, tag, push the tag. All three
    (`publish-npm.yml`, `publish-github-packages.yml`, `publish-docker.yml`)
    trigger on the same `v*` tag:

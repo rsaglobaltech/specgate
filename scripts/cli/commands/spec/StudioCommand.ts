@@ -1,6 +1,37 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as http from "node:http";
+import * as crypto from "node:crypto";
+import { answer as answerQuestion, reviewed as reviewQuestion } from "../../../lib/clarification";
+import { approveChange, noteChange } from "../../../lib/change-review";
+import {
+  buildView,
+  drafts,
+  gate,
+  home,
+  questionsView,
+  startBuild,
+  stopBuild,
+} from "../../../lib/studio-app";
+import { studioAppPage } from "../../../lib/studio-app-page";
+import {
+  agentsInstalled,
+  briefForm,
+  createProject,
+  draftsRoute,
+  fillBrief,
+  initQuality,
+  qualityView,
+  profilesView,
+  report,
+  reportHtml,
+  route,
+  saveBriefForm,
+  saveBriefMarkdown,
+  startDraft,
+  stopJob,
+  type NewProject,
+} from "../../../lib/studio-route";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
@@ -9,6 +40,8 @@ import { BaseCommand } from "../../../lib/command";
 import { c } from "../../../lib/ui";
 import { readLive, liveSignature } from "../../../lib/live-model";
 import { livePage } from "../../../lib/live-page";
+import { requirementDetail, liveMatrix } from "../../../lib/live-detail";
+import { promptFileFor } from "../../../lib/harness-events";
 
 const LOOPBACK = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
 
@@ -30,6 +63,29 @@ export function hostOf(header: string | undefined): string {
 export function hostAllowed(bound: string, header: string | undefined): boolean {
   if (!LOOPBACK.has(bound)) return true;
   return LOOPBACK.has(hostOf(header));
+}
+
+/**
+ * Whether a write from the live view may go through (REQ-201): studio's only
+ * write, answering a question. Same-origin JSON carrying the token this start
+ * of studio put in its page: a page on another site cannot read the token,
+ * and a form post from one cannot send JSON with a custom header.
+ */
+export function writeAllowed(
+  token: string,
+  headers: { token?: string; contentType?: string; origin?: string }
+): boolean {
+  const given = Buffer.from(String(headers.token || ""));
+  const want = Buffer.from(token);
+  if (!token || given.length !== want.length || !crypto.timingSafeEqual(given, want)) return false;
+  if (!/^application\/json\b/i.test(String(headers.contentType || ""))) return false;
+  // A browser always says where a cross-site request comes from.
+  if (!headers.origin) return true;
+  try {
+    return LOOPBACK.has(new URL(headers.origin).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 const DONE = new Set(["Implemented", "Verified", "Released"]);
@@ -235,6 +291,8 @@ export class StudioCommand extends BaseCommand {
       process.exit(0);
     }
 
+    // One per start of studio: the live page carries it, and a write needs it.
+    const token = crypto.randomBytes(24).toString("hex");
     const server = http.createServer((req, res) => {
       if (!hostAllowed(opts.host, req.headers.host)) {
         res.writeHead(403, { "content-type": "text/plain" });
@@ -242,14 +300,246 @@ export class StudioCommand extends BaseCommand {
         return;
       }
       const url = String(req.url || "/").split("?")[0];
+      const json = (code: number, body: unknown) => {
+        res.writeHead(code, { "content-type": "application/json" });
+        res.end(JSON.stringify(body));
+      };
+      // REQ-204: the app's reads, built from what the commands read.
+      const reads: Record<string, () => unknown> = {
+        "/api/home": () => home(projectDir),
+        "/api/gate": () => gate(projectDir),
+        "/api/questions": () => questionsView(projectDir),
+        "/api/drafts": () => drafts(projectDir),
+        "/api/build": () => buildView(projectDir),
+        // REQ-211..217: the route from an empty folder to the report.
+        "/api/route": () => route(projectDir),
+        "/api/profiles": () => ({
+          profiles: profilesView(projectDir),
+          installed: agentsInstalled(),
+        }),
+        "/api/brief": () => briefForm(projectDir),
+        "/api/modules": () => draftsRoute(projectDir),
+        "/api/report": () => report(projectDir),
+        "/api/quality": () => qualityView(projectDir),
+      };
+      if (req.method === "GET" && reads[url]) {
+        try {
+          json(200, reads[url]());
+        } catch (err) {
+          json(500, { ok: false, message: errorMessage(err) });
+        }
+        return;
+      }
+      // REQ-201, REQ-204: the writes — answering, approving, noting, building, stopping.
+      const WRITES = [
+        "/live/answer",
+        "/api/answer",
+        "/api/approve",
+        "/api/note",
+        "/api/build",
+        "/api/stop",
+        "/api/project",
+        "/api/brief",
+        "/api/brief/fill",
+        "/api/draft",
+        "/api/draft/stop",
+        "/api/quality/init",
+      ];
+      if (req.method === "POST" && WRITES.includes(url)) {
+        const header = (name: string) => {
+          const v = req.headers[name];
+          return Array.isArray(v) ? v[0] : v;
+        };
+        if (
+          !writeAllowed(token, {
+            token: header("x-specgate-token"),
+            contentType: header("content-type"),
+            origin: header("origin"),
+          })
+        ) {
+          json(403, { ok: false, message: "Refused: not the live page of this studio." });
+          return;
+        }
+        let raw = "";
+        req.on("data", (d: Buffer) => {
+          raw += d;
+          // A brief, or a client's text pasted whole, is the largest body.
+          if (raw.length > 2 * 1024 * 1024) req.destroy();
+        });
+        req.on("end", () => {
+          let body: {
+            question?: string;
+            change?: string;
+            answer?: string;
+            reviewed?: boolean;
+            req?: string;
+            text?: string;
+            reqs?: string[];
+            profile?: string;
+            module?: string;
+            replace?: boolean;
+            markdown?: string;
+            form?: Parameters<typeof saveBriefForm>[1];
+            project?: NewProject;
+            level?: string;
+          };
+          try {
+            body = JSON.parse(raw || "{}");
+          } catch {
+            json(400, { ok: false, message: "The body is not JSON." });
+            return;
+          }
+          const today = new Date().toISOString().slice(0, 10);
+          if (url === "/api/approve") {
+            const r = approveChange(projectDir, String(body.change || ""), today);
+            json(r.ok ? 200 : 422, r);
+            return;
+          }
+          if (url === "/api/note") {
+            const r = noteChange(
+              projectDir,
+              String(body.change || ""),
+              String(body.text || ""),
+              String(body.req || ""),
+              today
+            );
+            json(r.ok ? 200 : 422, r);
+            return;
+          }
+          if (url === "/api/project") {
+            const r = createProject(projectDir, (body.project || {}) as NewProject);
+            json(r.ok ? 201 : 422, r);
+            return;
+          }
+          if (url === "/api/brief") {
+            const form =
+              typeof body.markdown === "string"
+                ? saveBriefMarkdown(projectDir, body.markdown)
+                : body.form
+                  ? saveBriefForm(projectDir, body.form)
+                  : null;
+            json(
+              form ? 200 : 400,
+              form ? { ok: true, brief: form } : { ok: false, message: "No brief." }
+            );
+            return;
+          }
+          if (url === "/api/brief/fill") {
+            const r = fillBrief(
+              projectDir,
+              String(body.text || ""),
+              String(body.profile || ""),
+              body.replace === true
+            );
+            json(r.ok ? 202 : 422, r);
+            return;
+          }
+          if (url === "/api/draft") {
+            const r = startDraft(projectDir, String(body.module || ""), String(body.profile || ""));
+            json(r.ok ? 202 : 422, r);
+            return;
+          }
+          if (url === "/api/quality/init") {
+            const r = initQuality(projectDir, String(body.level || ""));
+            json(r.ok ? 200 : 422, r);
+            return;
+          }
+          if (url === "/api/draft/stop") {
+            const r = stopJob(projectDir);
+            json(r.ok ? 200 : 422, r);
+            return;
+          }
+          if (url === "/api/build") {
+            const r = startBuild(
+              projectDir,
+              Array.isArray(body.reqs) ? body.reqs.map(String) : [],
+              String(body.profile || "")
+            );
+            json(r.ok ? 202 : 422, r);
+            return;
+          }
+          if (url === "/api/stop") {
+            const r = stopBuild(projectDir);
+            json(r.ok ? 200 : 422, r);
+            return;
+          }
+          const q = String(body.question || "");
+          if (!/^Q\d+$/.test(q)) {
+            json(400, { ok: false, message: "No question id." });
+            return;
+          }
+          const change = body.change ? String(body.change) : undefined;
+          const r = body.reviewed
+            ? reviewQuestion(projectDir, q, change)
+            : answerQuestion(projectDir, q, String(body.answer || "").trim(), change);
+          json(r.ok ? 200 : 422, r);
+        });
+        return;
+      }
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        res.writeHead(405, { "content-type": "text/plain", allow: "GET, HEAD" });
+        res.end("Studio only reads, except its app's POST actions.\n");
+        return;
+      }
+      // REQ-204: the app at the root; the overview it replaced moves to /overview.
+      if (url === "/" || url === "/app" || url === "/app/") {
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        res.end(studioAppPage(path.basename(projectDir), token));
+        return;
+      }
+      // REQ-217: the report as a page of its own, to keep or send.
+      if (url === "/report.html") {
+        res.writeHead(200, {
+          "content-type": "text/html; charset=utf-8",
+          "content-disposition": `attachment; filename="${path.basename(projectDir)}-report.html"`,
+        });
+        res.end(reportHtml(report(projectDir)));
+        return;
+      }
+      if (url === "/report") {
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        res.end(reportHtml(report(projectDir)));
+        return;
+      }
       if (url === "/live" || url === "/live/") {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(livePage(path.basename(projectDir)));
+        res.end(livePage(path.basename(projectDir), token));
         return;
       }
       if (url === "/live.json") {
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ schemaVersion: 1, projectDir, ...readLive(projectDir) }));
+        return;
+      }
+      // REQ-180: one requirement's details, read when the viewer opens it.
+      const reqMatch = /^\/live\/req\/(REQ-\d+)\.json$/.exec(url);
+      if (reqMatch) {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify(requirementDetail(projectDir, reqMatch[1])));
+        return;
+      }
+      // REQ-182: the prompt an attempt was given, as plain text.
+      const promptMatch = /^\/live\/req\/(REQ-\d+)\/prompt\/(\d+)\.txt$/.exec(url);
+      if (promptMatch) {
+        let text = "";
+        try {
+          text = fs.readFileSync(
+            promptFileFor(projectDir, promptMatch[1], Number(promptMatch[2])),
+            "utf8"
+          );
+        } catch {
+          res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+          res.end("No prompt kept for this attempt.\n");
+          return;
+        }
+        res.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
+        res.end(text);
+        return;
+      }
+      // REQ-181: the traceability matrix as it stands.
+      if (url === "/live/matrix.json") {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ schemaVersion: 1, rows: liveMatrix(projectDir) }));
         return;
       }
       if (url === "/live/stream") {

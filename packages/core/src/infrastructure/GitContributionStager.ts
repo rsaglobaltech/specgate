@@ -73,7 +73,7 @@ export function stageContribution(
       "commit",
       "--quiet",
       "-m",
-      files[0].message || "Contribute requirements from a consuming project",
+      files[0].message || "docs(spec): contribute requirements from a consuming project",
     ],
     dir
   );

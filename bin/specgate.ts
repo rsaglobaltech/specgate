@@ -368,7 +368,12 @@ function dispatchValidate(validateArgs: string[]): void {
   );
   if (positional.length !== 1) {
     error(`'validate' expects exactly one positional argument: <project_dir>`);
-    usage();
+    // The one line that answers it, not the whole CLI's help (REQ-178).
+    const flags = validateArgs.filter((a) => a.startsWith("-")).join(" ");
+    process.stderr.write(
+      `  For this folder: specgate validate .${flags ? ` ${flags}` : ""}\n` +
+        "  Every option: specgate validate --help\n"
+    );
     process.exit(2);
   }
   const VALIDATE_FLAGS = new Set([

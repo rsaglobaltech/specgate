@@ -207,7 +207,7 @@ function commitOpening(dir: string, t: Ticket, changeId: string): string | null 
           "commit",
           "-q",
           "-m",
-          `${t.key} docs(spec): open the change from the ticket`,
+          `docs(spec): ${t.key} open the change from the ticket`,
           "--",
           folder,
         ])

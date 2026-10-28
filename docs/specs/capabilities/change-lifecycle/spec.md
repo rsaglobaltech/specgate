@@ -95,3 +95,99 @@ activos" y SHALL NOT fallar por ello en ningún comando.
 - WHEN el usuario ejecuta `specgate validate .` o `specgate change list`
 - THEN el comando termina con éxito
 - AND informa de que no hay cambios activos
+
+### Requirement: REQ-177 — An open draft can reserve more ids while its range is the last
+
+The system SHALL, when `specgate propose --from-brief <module> --reserve <n>` names a draft that is already open, grow its `req_range` to n requirement ids and its `scn_range` to three scenario ids per requirement, from the same first ids, and rewrite its DRAFTING.md with the new ranges; it SHALL refuse with `draft_range_not_last` when a requirement or scenario id after the draft's range is reserved or used elsewhere, and with `draft_range_already_holds` when n is not more than the draft holds, changing nothing.
+
+#### Scenario: SCN-177a — The last draft grows
+
+- GIVEN a project whose only open draft, draft-bookings, holds REQ-001…REQ-010 and SCN-001…SCN-030
+- WHEN the developer runs `specgate propose --from-brief bookings --reserve 15`
+- THEN change.yaml holds REQ-001…REQ-015 and SCN-001…SCN-045, DRAFTING.md names REQ-015, and the next draft opened starts at REQ-016
+
+#### Scenario: SCN-177b — A draft followed by another cannot grow
+
+- GIVEN draft-bookings holds REQ-001…REQ-010 and draft-coupons was opened after it
+- WHEN the developer runs `specgate propose --from-brief bookings --reserve 15`
+- THEN the command exits 1 with draft_range_not_last naming REQ-011, and change.yaml is unchanged
+
+#### Scenario: SCN-177c — Asking for fewer than it holds
+
+- GIVEN draft-bookings holds ten ids
+- WHEN the developer runs `specgate propose --from-brief bookings --reserve 5`
+- THEN the command exits 1 saying it already holds 10, and change.yaml is unchanged
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-177.feature kind=functional status=Implemented test=tests/unit/draft-reserve-more.test.ts -->
+
+### Requirement: REQ-190 — Modifying a delivered requirement starts from its text
+
+The system SHALL, with `specgate change new <id> --modify <REQ>` (repeatable), write into the change a `MODIFIED Requirements` delta for each requirement's capability holding the requirement as the capability spec has it, its statement, scenarios and trace, with its status set to `Draft`, and SHALL refuse a requirement no capability spec defines, or one an open change already modifies, naming that change.
+
+#### Scenario: SCN-190a — The requirement copied, reopened alone
+
+- GIVEN capability fichas defines REQ-017 as Implemented with scenarios SCN-048 to SCN-050
+- WHEN `specgate change new gears --modify REQ-017` runs
+- THEN the change's fichas delta has REQ-017 under MODIFIED with its statement, SCN-048 to SCN-050 and status Draft, and no other requirement of fichas changes status
+
+#### Scenario: SCN-190b — What cannot be modified is refused
+
+- GIVEN REQ-999 is defined nowhere and change gears already modifies REQ-017
+- WHEN `specgate change new other --modify REQ-999` or `--modify REQ-017` runs
+- THEN it is refused, saying REQ-999 is not in a capability spec, or that gears already modifies REQ-017
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-190.feature kind=functional status=Implemented test=tests/unit/change-evolution.test.ts -->
+
+### Requirement: REQ-191 — What a change to a requirement touches
+
+The system SHALL list with `specgate change impact <REQ|change>` (`--json` too), for each requirement, the spec file and line that define it, its feature files, the tests that name it, the files its commits changed (commits whose message names it), and the other requirements whose text or scenarios name it; for a change, it SHALL do so for every requirement the change modifies or removes.
+
+#### Scenario: SCN-191a — The impact of one requirement
+
+- GIVEN REQ-017 is defined in capabilities/fichas, has features/fichas/REQ-017.feature, a test naming it, a commit "feat(REQ-017)" that changed FichasContent.ts, and REQ-085 names REQ-017
+- WHEN `specgate change impact REQ-017` runs
+- THEN it lists the spec file and line, the feature, the test, FichasContent.ts and REQ-085
+
+#### Scenario: SCN-191b — The impact of a change
+
+- GIVEN change gears modifies REQ-017 and REQ-018
+- WHEN `specgate change impact gears` runs
+- THEN it lists the impact of REQ-017 and of REQ-018
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-191.feature kind=functional status=Implemented test=tests/unit/change-evolution.test.ts -->
+
+### Requirement: REQ-192 — A new requirement for a module the brief already covers
+
+The system SHALL, with `specgate brief add <module> "<text>"`, refuse a module the brief's front matter does not list, append the text to the brief under "Additions" with the module and the date, and add to the module's open change (or create one, `<module>-additions`, reserving an id) an ADDED requirement whose title and statement are left for the author and whose source quotes the text, so the draft checklist asks for them.
+
+#### Scenario: SCN-192a — A module already archived gets a change
+
+- GIVEN module fichas is listed in the brief and has no open change
+- WHEN `specgate brief add fichas "Subir de marcha paso a paso"` runs
+- THEN the brief gains the line under "Additions" with fichas and the date, and change fichas-additions is created with one ADDED requirement quoting "Subir de marcha paso a paso"
+
+#### Scenario: SCN-192b — A module with an open change grows it
+
+- GIVEN module examen has the open change draft-examen
+- WHEN `specgate brief add examen "Situaciones de noche"` runs
+- THEN draft-examen gains an ADDED requirement quoting the text with the next free id of its range; with the range used up, it is refused saying how to grow it
+
+#### Scenario: SCN-192c — An unknown module is refused
+
+- GIVEN the brief lists no module "garaje"
+- WHEN `specgate brief add garaje "x"` runs
+- THEN it is refused with the modules the brief lists, and nothing is written
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-192.feature kind=functional status=Implemented test=tests/unit/change-evolution.test.ts -->
+
+### Requirement: REQ-202 — Only defined ids reserve the next ones
+
+The system SHALL take the highest reserved requirement id, on this branch and on others, only from the lines that define or reserve one — a heading, a matrix row's first cells, a `req_range` — and not from a mention in a requirement's or scenario's text.
+
+#### Scenario: SCN-202a — A mention in a scenario reserves nothing
+
+- GIVEN the highest requirement is REQ-018 and a scenario says "GIVEN REQ-999 is defined nowhere"
+- WHEN a change reserves two ids
+- THEN it gets REQ-019 and REQ-020
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-202.feature kind=functional status=Implemented test=tests/unit/change-evolution.test.ts -->

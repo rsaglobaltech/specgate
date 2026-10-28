@@ -34,6 +34,7 @@ import {
   gitInit,
   normalise,
   prepareBin,
+  refuseWindows,
   run,
   write,
   type NormaliseContext,
@@ -483,6 +484,7 @@ export function pagePath(step: JourneyStep): string {
 }
 
 function main(): void {
+  refuseWindows();
   const check = process.argv.includes("--check");
   const keep = process.argv.includes("--keep");
   const problems: string[] = [];

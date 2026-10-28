@@ -22,6 +22,17 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 
+/** Every temp folder this file makes, removed once its tests are done, with retries for Windows. */
+const madeDirs: string[] = [];
+function made(dir: string): string {
+  madeDirs.push(dir);
+  return dir;
+}
+require("node:test").after(() => {
+  for (const d of madeDirs)
+    fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+});
+
 const ROOT = path.resolve(__dirname, "../../..");
 const DOCS = path.join(ROOT, "docs");
 
@@ -37,7 +48,7 @@ interface SearchEntry {
 
 /** Build the site once; every test reads the same output. */
 function site() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-site-"));
+  const dir = made(fs.mkdtempSync(path.join(os.tmpdir(), "specgate-site-")));
   const result = buildSite(dir);
   return { dir, ...result };
 }

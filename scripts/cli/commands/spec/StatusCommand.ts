@@ -323,7 +323,13 @@ export function forjaAddCommand(todo: QueueItem): string {
       .filter(Boolean)
       .map((w) => w[0].toUpperCase() + w.slice(1))
       .join("") || "<Name>";
-  return `specgate add usecase <module>/${name} --req ${todo.requirement}`;
+  // The module from the open change (draft-diario → diario) or the feature's
+  // folder (features/diario/x.feature); "<module>" only when neither says (REQ-193).
+  const folder = (/features[/\\]([^/\\]+)[/\\][^/\\]+\.feature/.exec(
+    String(todo.featureFile || todo.feature_file || "")
+  ) || [])[1];
+  const module = todo.change ? todo.change.replace(/^draft-/, "") : folder || "<module>";
+  return `specgate add usecase ${module}/${name} --req ${todo.requirement}`;
 }
 
 const needsCode = (todo: QueueItem) =>

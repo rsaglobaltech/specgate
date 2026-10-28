@@ -1,5 +1,9 @@
+import type { QualityConfig } from "./QualityChecks";
+
 export interface HarnessSettings {
   agent: string;
+  /** The quality and security checks, by stage (ADR-0040). Absent: none configured. */
+  quality?: QualityConfig;
   testCmd: string;
   /**
    * The team's architecture check (ArchUnit, dependency-cruiser, import-linter…),
@@ -7,6 +11,11 @@ export interface HarnessSettings {
    * Empty: the architecture is not checked, and `check` says so.
    */
   archCmd?: string;
+  /**
+   * The SARIF `arch_cmd` writes, when it writes one (REQ-231): its findings
+   * are judged against the baseline, so only a violation a change adds fails.
+   */
+  archSarif?: string;
   /**
    * Run once in each fresh worktree before the agent — `npm ci`, say. The
    * worktree carries only what git tracks, so without it the agent could not
@@ -56,6 +65,13 @@ export interface HarnessSettings {
    * only to a direct `cucumber-js` invocation.
    */
   messageReport: string;
+  /**
+   * Where the project's end-to-end tests live (REQ-199). Set it and a
+   * requirement whose actor uses a screen (web, mobile, tablet, desktop) passes
+   * the gate only when a file there names it: a use case and a unit test
+   * passed twenty screen requirements that had no screen.
+   */
+  e2eDir?: string;
   /**
    * Per-profile `cost_per_run_hint` from `.harness/profiles.yaml` (C1). A
    * declared estimate, never a measurement: an agent is any shell command and

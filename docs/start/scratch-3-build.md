@@ -110,7 +110,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 #### Scenario: SCN-004 — The second booking is refused
 
 - GIVEN the centre court is booked on Monday evening
-… 85 more lines
+… 87 more lines
 ```
 <!-- specgate:out-scratch-harness-prompt:end -->
 
@@ -143,7 +143,7 @@ review is one requirement.
 | --- | --- | --- |
 | `REQ-004 is not a pending requirement — skipped.` | It is waiting for an answer, or already done | `specgate status` says which |
 | `No pending requirements. Nothing to do.` | Every requirement is done or waiting for an answer | Open the next module's draft with `specgate propose --from-brief`, or answer the open questions |
-| The harness commits `wip(…): FAILED the gate` | Out of attempts | Read the failures in the commit, fix the spec or the prompt, re-run with `--force` |
+| The harness commits `chore(…): attempt FAILED the gate` | Out of attempts | Read the failures in the commit, fix the spec or the prompt, re-run with `--force` |
 
 ## Next
 

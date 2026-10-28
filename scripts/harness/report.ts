@@ -245,6 +245,25 @@ function render(summary: HarnessReportSummary): void {
     );
   }
 
+  // REQ-229: what the quality checks said about what was delivered.
+  if (summary.quality.measured > 0) {
+    const q = summary.quality;
+    const pctOf = (v: number | null) => (v === null ? "—" : `${v}%`);
+    process.stdout.write(
+      "\n" +
+        ui.section("Quality of what was delivered") +
+        `    ${label("requirements measured")}${q.measured}\n` +
+        `    ${label("diff coverage, mean")}${pctOf(q.coverage)}\n` +
+        `    ${label("mutation score, mean")}${pctOf(q.mutation)}\n` +
+        q.checks
+          .map(
+            (k) =>
+              `    ${k.name.padEnd(26)}${k.ran} ran${k.skipped ? `  ${c.dim}${k.skipped} skipped${c.reset}` : ""}\n`
+          )
+          .join("")
+    );
+  }
+
   if (summary.worst.length > 0) {
     process.stdout.write("\n" + ui.section("Slowest"));
     for (const r of summary.worst) {

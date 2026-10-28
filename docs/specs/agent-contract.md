@@ -63,6 +63,7 @@ not run reports an `error` about itself.
 | `specgate status --json` | `status` | no |
 | `specgate alm pull --json` | `pulled` | no |
 | `specgate check [dir] --json` | `check` | yes |
+| `specgate quality <list|doctor|run> --json` | `quality` | no |
 | `specgate draft --json` | `draft` | yes |
 | `specgate verify --json` | `verify` | yes |
 | `specgate pet --json` | `pet` | no |
@@ -80,6 +81,10 @@ not run reports an `error` about itself.
 | `specgate change instructions <artifact> --json` | `instructions` | no |
 | `specgate change author <id> --json` | `change` | yes |
 | `specgate propose <id> --json` | `change` | no |
+| `specgate brief add <module> <text> --json` | `brief` | no |
+| `specgate questions --json` | `questions` | no |
+| `specgate answer <Q> <answer> --json` | `answer` | no |
+| `specgate ask <REQ> <question> --json` | `ask` | no |
 | `specgate explore [question] --json` | `explore` | no |
 | `specgate apply [REQ] --json` | `requirement` | no |
 | `specgate archive <id> --json` | `archive` | yes |
@@ -126,8 +131,11 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `change_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `conflicting_seed_flags` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `impact_target_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `invalid_change_id` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `invalid_value_drift_spec` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `modify_already_open` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `modify_requirement_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_already_matches` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_id_not_declared` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_no_code_value` | `scripts/cli/commands/change/ChangeCommand.ts` |

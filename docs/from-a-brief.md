@@ -49,12 +49,15 @@ modules: [calendario, reservas, cupones]
 ## Module: reservas
 
 Rules
+
 - A slot is booked by one Cliente at a time.
 
 Examples
+
 - The one where Ana books the 10:00 slot of "Corte de pelo".
 
 Questions
+
 - Can a Cliente book two slots in a row?
 ```
 
@@ -95,6 +98,10 @@ next to it:
   it until someone answers, and `status` lists it under "Waiting for an
   answer" with the question that blocks it.
 
+The same from the [studio](studio.md): its Brief page writes the brief as a
+form, and its Drafts page drafts each module in the background with the agent
+you pick (`--profile <name>` in the terminal).
+
 ## 3. Check the draft
 
 Run the same command again — on a draft that exists, it is the check:
@@ -114,7 +121,7 @@ any change; `--check` alone checks the brief itself.)
 | D4   | a non-functional requirement that promises a quantity states a number with a unit                                                              |
 | D5   | a rule that cites a law, standard or contract names its source (`Source:` and a link)                                                          |
 | D6   | every value in a scenario is in the brief, the project's specification, `assumptions.md`, or its own sourced obligation                        |
-| D7   | every open question blocks a requirement, and that requirement waits; "TBD" or "se decidirá" is not an answer                                  |
+| D7   | every open question blocks a requirement, and that requirement waits ("none" says it blocks nothing); "TBD" or "se decidirá" is not an answer  |
 | D8   | the draft is small enough to review (25 requirements by default)                                                                               |
 | D9   | every scenario passes the rules the harness gate will apply (titles, Given/When/Then)                                                          |
 | D10  | no requirement or scenario id another requirement already owns                                                                                 |
@@ -146,9 +153,31 @@ of the archived change that first wrote it count too.
 D6 also accepts a value the requirement's own obligation states under a
 `Source:` line: "24 characters" of a cited ISO norm needs no assumption row.
 
-An answered question gets an `Answer` column, or a line below the table such as
-`Answer (Q1): free shipping from 50 €`; the requirement it blocked then drops
-`Needs Clarification`.
+### Answering a question
+
+An answered question gets an `Answer` column (`Respuesta` works too), or a
+line below the table such as `Answer (Q1): free shipping from 50 €`:
+
+```markdown
+| #   | Question                         | Blocks  | Answer               | Status   |
+| --- | -------------------------------- | ------- | -------------------- | -------- |
+| Q1  | From what amount is it free?     | REQ-004 | From 50 €, per order | answered |
+| Q2  | Should it export a backup later? | none    |                      | open     |
+```
+
+Then, for each requirement the question blocked:
+
+1. Remove `status="Needs Clarification"` from its `specgate:trace`. Nothing
+   lifts it for you: the person who answered decides it is ready.
+2. Write the answer into its text and scenarios, and record any value the brief
+   still does not give as a row of `assumptions.md` naming the requirement.
+3. Run `specgate propose --from-brief <module>` again until **Ready to review**.
+
+An answer that puts the decision off ("TBD", "pending", "se decidirá") leaves
+the question open. A question nothing in the draft depends on says so with
+`none` (or `—`, `ninguno`) in its Blocks column: it stays in `questions.md` as
+a warning, and nothing waits for it. An empty Blocks cell is still refused. A
+`Status` column is for the reader; the checklist reads the answer.
 
 ## 4. Review, apply, then archive
 
@@ -162,6 +191,11 @@ specgate status                    # the draft's requirements, listed while it i
 specgate apply                     # the next one: refused until a test names it, then the gate
 specgate archive draft-reservas    # once every requirement in it is Implemented
 ```
+
+Leave a requirement in Draft until its test exists. Every status past Draft,
+Approved included, owes a test under TDD-1, so `apply --status Approved`
+refuses a requirement no test names; marked by hand, it would turn
+`validate --strict`, and every harness gate, red for the whole project.
 
 While the draft is open its requirements already count: `status` lists them,
 `apply`, `check` and `harness run` judge the project as it will be after

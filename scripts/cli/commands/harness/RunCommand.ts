@@ -38,8 +38,29 @@ import { BaseCommand } from "../../../lib/command";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
 import { detectSetupCommand } from "../../../harness/init";
-import { inFlightView } from "../../../lib/in-flight";
-import { appendEvent, eventsFileFor } from "../../../lib/harness-events";
+import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
+import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
+import { ask as askQuestion } from "../../../lib/clarification";
+import { e2eTestsNaming, onScreen } from "../../../lib/screen-requirements";
+import {
+  acquireRunLock,
+  branchMergedInto,
+  existingBranchAction,
+  freeBytes,
+  lowDiskMessage,
+  minFreeBytes,
+  orderAsGiven,
+  runLockHolder,
+  takeStop,
+} from "../../../lib/harness-guard";
+import {
+  archRun,
+  gateContext,
+  runStages,
+  type AgentChecks,
+  type CheckOutcome,
+} from "../../../lib/quality-run";
+import type { QualityCheck, Stage } from "../../../../packages/core/src/domain/QualityChecks";
 import {
   EVENTS_ATTEMPT_VAR,
   EVENTS_FILE_VAR,
@@ -98,7 +119,7 @@ import {
 import { requirementReadiness } from "../../../../packages/core/src/domain/RequirementReadiness";
 import { selectProfile } from "../../../../packages/core/src/domain/ProfileMatch";
 import { parseMatrixContexts } from "../../../../packages/core/src/domain/TraceabilityFormat";
-import { RequirementPlan } from "../../../../packages/core/src/domain/RequirementPlan";
+import { RequirementPlan, withRework } from "../../../../packages/core/src/domain/RequirementPlan";
 import {
   BudgetVerdict,
   budgetVerdict,
@@ -175,6 +196,8 @@ interface GateResult {
   stage: string;
   output: string;
   hint?: string;
+  /** The quality checks the gate ran (ADR-0040), for the run record. */
+  checks?: CheckOutcome[];
 }
 
 /** Where a resumed requirement picks up, and what the gate said last time. */
@@ -216,11 +239,14 @@ interface AttemptContext extends RunContext {
 }
 
 /** How a requirement ended. `blocked` and `skipped` were never attempted. */
-type RequirementVerdict = "pass" | "fail" | "skipped" | "blocked";
+/** `question`: the agent asked instead of guessing, and the requirement waits for the answer (REQ-189). */
+type RequirementVerdict = "pass" | "fail" | "skipped" | "blocked" | "question";
 
 /** One requirement's line in the report, the run record and a worker's JSON. */
 export interface RequirementResult extends PublishOutcome {
   requirement: string;
+  /** The question the agent asked, when the result is `question`. */
+  question?: string;
   category?: string;
   result: RequirementVerdict;
   attempts: number;
@@ -231,12 +257,21 @@ export interface RequirementResult extends PublishOutcome {
   workPreserved?: boolean;
   attemptLog?: AttemptRecord[];
   adversarial?: ProbeOutcome;
+  /** The quality checks of the passing attempt: time, verdict, findings, measure (REQ-228). */
+  checks?: Array<Omit<CheckOutcome, "output">>;
 }
 
 /** What `attemptRequirement` decides; `processRequirement` adds the rest. */
 type AttemptOutcome = Pick<
   RequirementResult,
-  "result" | "attempts" | "attemptLog" | "error" | "workPreserved" | "adversarial"
+  | "result"
+  | "attempts"
+  | "attemptLog"
+  | "error"
+  | "workPreserved"
+  | "adversarial"
+  | "question"
+  | "checks"
 >;
 
 /** Runs one level of the schedule: in process, or through worker processes. */
@@ -309,6 +344,8 @@ function usage() {
       "Runs the plan → agent → verify → done loop for every pending requirement.\n\n" +
       "  --agent <cmd>          Agent command; must contain the {prompt_file} placeholder.\n" +
       '                         e.g. --agent "claude -p < {prompt_file}"\n' +
+      "  --profile <name>       Run this profile's agent from .harness/profiles.yaml instead\n" +
+      "                         of the configured one, for this run only.\n" +
       "  --test-cmd <cmd>       Project test command run as part of the gate (optional).\n" +
       "                         Substitutes {req}, {scenario} and {feature_file}, so the\n" +
       "                         gate can run the scenario under test.\n" +
@@ -347,6 +384,10 @@ function usage() {
       "                         feature, an unrunnable scenario, unmet dependencies,\n" +
       "                         Deprecated or Needs Clarification. Default: warn and\n" +
       "                         run them anyway.\n" +
+      "  --skip-baseline        Run even when the base already fails `validate --strict`.\n" +
+      "                         Default: refuse before any agent runs, since every\n" +
+      "                         attempt would fail the same gate for a reason outside\n" +
+      "                         its requirement.\n" +
       "  --strict-artifacts     Fail an attempt whose diff never touches the paths the\n" +
       "                         matrix declares for the requirement (default: warn).\n" +
       "  --push                 Push each green harness/REQ-NNN branch to the remote.\n" +
@@ -380,6 +421,7 @@ export function parseArgs(argv: string[]) {
     verbose: false,
     strictArtifacts: false,
     skipNotReady: false,
+    skipBaseline: false,
     budgetSeconds: 0,
     maxRequirements: 0,
     push: false,
@@ -387,6 +429,7 @@ export function parseArgs(argv: string[]) {
     prCmd: "",
     setupCmd: "",
     chain: false,
+    profile: "",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
@@ -394,6 +437,8 @@ export function parseArgs(argv: string[]) {
       args.projectDir = argv[++i] || "";
     } else if (token === "--agent") {
       args.agent = argv[++i] || "";
+    } else if (token === "--profile") {
+      args.profile = argv[++i] || "";
     } else if (token === "--test-cmd") {
       args.testCmd = argv[++i] || "";
     } else if (token === "--max-attempts") {
@@ -444,6 +489,8 @@ export function parseArgs(argv: string[]) {
       args.strictArtifacts = true;
     } else if (token === "--skip-not-ready") {
       args.skipNotReady = true;
+    } else if (token === "--skip-baseline") {
+      args.skipBaseline = true;
     } else if (token === "--budget-seconds") {
       const n = Number(argv[++i]);
       if (!Number.isInteger(n) || n < 1) {
@@ -511,6 +558,16 @@ function runPlan(projectDir: string): PlanDocument {
     // `JSON.parse` only ever throws a SyntaxError.
     throw new Error(`plan produced invalid JSON: ${(err as Error).message}`);
   }
+  // Read on the project itself: the judged copy has every open change
+  // archived into it, and no longer says which requirements were modified.
+  const modified = new Set(
+    inFlightRequirements(projectDir)
+      .filter((r) => r.op === "modified")
+      .map((r) => r.id)
+  );
+  if (modified.size > 0 && Array.isArray(parsed.requirements)) {
+    parsed.requirements = withRework(parsed.requirements, modified);
+  }
   return parsed;
 }
 
@@ -553,6 +610,44 @@ function readGateMessages(worktreeDir: string, reportPath: string) {
   return run.parsed ? run : null;
 }
 
+/**
+ * What the base already fails that no attempt in this run can fix, or null.
+ * The gate judges the whole project, and a requirement past Draft with no test
+ * (TDD-1, TDD-2) is one the agent may not touch: its status is in the
+ * specification, and the agent works on another requirement. Findings about
+ * the requirements being run are theirs to fix (a missing feature, say), and
+ * do not count here.
+ */
+function baselineProblem(projectDir: string, running: Set<string>): string | null {
+  const run = judged(projectDir, (dir, toProject) => {
+    const r = spawnSync(process.execPath, [VALIDATE_SCRIPT, dir, "--strict"], {
+      encoding: "utf8",
+      maxBuffer: SUBPROCESS_MAX_BUFFER,
+    });
+    return { ...r, stdout: toProject(r.stdout || ""), stderr: toProject(r.stderr || "") };
+  });
+  if (run.status === 0) return null;
+  const outside = `${run.stdout}${run.stderr}`
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => /\[TDD-[12]\]/.test(l))
+    .filter((l) => {
+      const owner = /\((?:scenario|requirement): ([A-Z]+-[A-Za-z0-9.]+)\)/.exec(l);
+      return !(owner && running.has(owner[1]));
+    });
+  if (outside.length === 0) return null;
+  const shown = outside.slice(0, 12);
+  return (
+    "The base already fails the gate (`validate --strict`) on requirements outside this run, " +
+    "before any agent runs:\n" +
+    shown.map((l) => `    ${l.replace(/^✖\s*/, "")}`).join("\n") +
+    (outside.length > shown.length ? `\n    … ${outside.length - shown.length} more` : "") +
+    "\nEvery attempt would fail it too, whatever its requirement: a status past Draft owes a " +
+    "test. Write those tests or move those requirements back to Draft (`specgate check` shows " +
+    "it whole), or pass --skip-baseline."
+  );
+}
+
 /** Told about each gate stage as it ends, for the event file (ADR-0037). */
 type GateReport = (stage: string, result: "pass" | "fail", extra?: Record<string, unknown>) => void;
 
@@ -570,6 +665,7 @@ function runGate(
   // The agent's tests are new evidence for a generated matrix: refresh it so
   // the gate judges the attempt, not the matrix as it was before it.
   refreshDerivedMatrix(worktreeDir);
+  let passHint = "";
   const validate = judged(worktreeDir, (dir, toProject) => {
     const validateArgs = [VALIDATE_SCRIPT, dir, "--strict"];
     if (req.requirement) validateArgs.push("--delivering", req.requirement);
@@ -590,17 +686,36 @@ function runGate(
       hint: "",
     };
   }
+  // REQ-199: a requirement used on a screen needs an end-to-end test that
+  // names it, when the project says where those live.
+  if (settings.e2eDir && req.requirement && onScreen(worktreeDir, req.requirement)) {
+    const named = e2eTestsNaming(worktreeDir, settings.e2eDir, req.requirement);
+    report("e2e test", named.length ? "pass" : "fail");
+    if (named.length === 0) {
+      return {
+        ok: false,
+        stage: "e2e test",
+        output: `No file under ${settings.e2eDir} names ${req.requirement}.`,
+        hint:
+          `${req.requirement} is used on a screen: add an end-to-end test under ` +
+          `${settings.e2eDir} that names it, driving the screen its scenarios describe.`,
+      };
+    }
+  }
   // ADR-0028: the architecture check runs between validation and the tests,
   // and its failure goes back to the agent like any other gate failure.
   const archCmd = String(settings.archCmd || "").trim();
   if (archCmd) {
-    const arch = spawnSync(archCmd, {
-      shell: true,
-      cwd: worktreeDir,
-      encoding: "utf8",
-      timeout: timeoutMs,
-      maxBuffer: SUBPROCESS_MAX_BUFFER,
-    });
+    // REQ-231: with arch_sarif, only a violation this attempt adds fails it.
+    const arch = settings.archSarif
+      ? archRun(worktreeDir, archCmd, settings.archSarif, "", req.requirement || "")
+      : spawnSync(archCmd, {
+          shell: true,
+          cwd: worktreeDir,
+          encoding: "utf8",
+          timeout: timeoutMs,
+          maxBuffer: SUBPROCESS_MAX_BUFFER,
+        });
     report(`architecture check: ${archCmd}`, arch.status === 0 ? "pass" : "fail");
     if (arch.status !== 0) {
       return {
@@ -619,7 +734,10 @@ function runGate(
     // Where the message stream will be, if there is one to have.
     let reportPath = settings.messageReport || "";
     if (!reportPath && invokesCucumberDirectly(resolved)) {
-      reportPath = path.join(
+      // Forward slashes on every platform: Cucumber reads `message:.harness\x`
+      // on Windows as a path it does not write, and the gate then had no
+      // stream to check and passed a run of no scenarios.
+      reportPath = path.posix.join(
         ".harness",
         `messages-${req.requirement || "run"}-${crypto.randomBytes(3).toString("hex")}.ndjson`
       );
@@ -691,12 +809,59 @@ function runGate(
             errors.map((e) => `  ${e.message}\n  fix: ${e.fix}`).join("\n\n"),
         };
       }
-      if (warnings.length > 0) {
-        return { ok: true, stage: "", output: "", hint: warnings[0].message };
-      }
+      if (warnings.length > 0) passHint = warnings[0].message;
     }
   }
-  return { ok: true, stage: "", output: "", hint: "" };
+  // REQ-220, REQ-221: the quality checks, after the tests — the attempt ones,
+  // then the end ones. A failure goes back to the agent like a failing test.
+  const quality = settings.quality;
+  if (quality && quality.checks.length > 0) {
+    const ctx = gateContext(worktreeDir, req.requirement || "", "");
+    const outcomes: CheckOutcome[] = [];
+    for (const stage of ["attempt", "end"] as Stage[]) {
+      for (const o of runStages(
+        worktreeDir,
+        quality,
+        [stage],
+        ctx,
+        undefined,
+        agentChecks(worktreeDir, req, settings, timeoutMs, testCmd)
+      )) {
+        outcomes.push(o);
+        // REQ-229: the step says what was measured, so /live shows it as it happens.
+        const said = o.skipped
+          ? " (not run)"
+          : o.measure && o.measure.value !== null
+            ? ` ${o.measure.value}%`
+            : o.findings
+              ? ` · ${o.findings.freshCount} new`
+              : "";
+        report(`quality: ${o.name}${said}`, o.ok || !!o.skipped || !o.gate ? "pass" : "fail", {
+          ms: o.ms,
+          ...(o.skipped ? { skipped: o.skipped } : {}),
+          ...(o.measure ? { value: o.measure.value } : {}),
+        });
+        if (o.gate && !o.ok && !o.skipped) {
+          return {
+            ok: false,
+            stage: `quality check: ${o.name}`,
+            output: o.output,
+            hint:
+              o.measure && o.measure.kind === "coverage"
+                ? "Write the tests that run the lines named above; do not lower the threshold."
+                : o.measure && o.measure.kind === "mutation"
+                  ? "Strengthen the tests so each surviving mutant named above would fail one."
+                  : o.name === "commits"
+                    ? "Reword the commits named above as Conventional Commits, or do not commit: the harness commits for you."
+                    : "Fix what the check found. Do not silence it: no @SuppressWarnings, eslint-disable or baseline edit.",
+            checks: outcomes,
+          };
+        }
+      }
+    }
+    return { ok: true, stage: "", output: "", hint: passHint, checks: outcomes };
+  }
+  return { ok: true, stage: "", output: "", hint: passHint };
 }
 
 /**
@@ -749,6 +914,186 @@ function discardWorktreeChanges(worktreeDir: string): void {
   // were given. Auditability is the reason the archive exists; discarding the
   // reviewer's edits must not discard the evidence.
   git(worktreeDir, ["clean", "-fd", "-e", PROMPT_ARCHIVE_DIR]);
+}
+
+/**
+ * The worktree exactly as it is, to put back after an agent that must not
+ * change it: tracked files through `git stash create` (which touches
+ * nothing), untracked ones by content. An agent check runs before the commit,
+ * so the implementer's work is uncommitted — `discardWorktreeChanges` would
+ * throw it away (REQ-227).
+ */
+function snapshotWorktree(worktreeDir: string): () => void {
+  const stash = (git(worktreeDir, ["stash", "create"]).stdout || "").trim();
+  const untracked = (
+    git(worktreeDir, ["ls-files", "--others", "--exclude-standard", "-z"]).stdout || ""
+  )
+    .split("\0")
+    .filter(Boolean);
+  const saved = new Map(
+    untracked.map((rel) => [rel, fs.readFileSync(path.join(worktreeDir, rel))] as [string, Buffer])
+  );
+  return () => {
+    git(worktreeDir, ["checkout", stash || "HEAD", "--", "."]);
+    const now = (
+      git(worktreeDir, ["ls-files", "--others", "--exclude-standard", "-z"]).stdout || ""
+    )
+      .split("\0")
+      .filter(Boolean);
+    for (const rel of now) {
+      if (!saved.has(rel) && !rel.startsWith(PROMPT_ARCHIVE_DIR)) {
+        fs.rmSync(path.join(worktreeDir, rel), { force: true });
+      }
+    }
+    for (const [rel, content] of saved) {
+      fs.mkdirSync(path.dirname(path.join(worktreeDir, rel)), { recursive: true });
+      fs.writeFileSync(path.join(worktreeDir, rel), content);
+    }
+  };
+}
+
+/** Run an agent on an instruction built into the requirement's prompt; its output. */
+function runAgentOnce(
+  worktreeDir: string,
+  command: string,
+  prompt: string,
+  timeoutMs: number,
+  tag: string
+): string {
+  const promptFile = path.join(
+    os.tmpdir(),
+    `specgate-${tag}-${crypto.randomBytes(4).toString("hex")}.md`
+  );
+  try {
+    fs.writeFileSync(promptFile, prompt, "utf8");
+    const r = spawnSync(substituteAgentCommand(command, promptFile), {
+      shell: true,
+      cwd: worktreeDir,
+      encoding: "utf8",
+      timeout: timeoutMs,
+      maxBuffer: SUBPROCESS_MAX_BUFFER,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    return `${r.stdout || ""}${r.stderr || ""}`.trim();
+  } finally {
+    fs.rmSync(promptFile, { force: true });
+  }
+}
+
+/**
+ * The agent checks of REQ-227, lent to the quality stages of a harness gate:
+ * `builtin:review` — a second agent reads the change against the requirement
+ * and answers VERDICT: PASS or FAIL; `builtin:adversary` — one writes a test
+ * that tries to break it, which is run and then removed. Neither may change
+ * the work: the worktree is put back exactly as it was.
+ */
+function agentChecks(
+  worktreeDir: string,
+  req: Partial<HarnessRequirement>,
+  settings: GateSettings,
+  timeoutMs: number,
+  testCmd: string
+): AgentChecks {
+  const commandFor = (check: QualityCheck, fallback: string) => {
+    const profile = check.profile || fallback;
+    if (!profile) return settings.agent || "";
+    const known = (settings.profileAgents || {})[profile];
+    if (known) return known;
+    try {
+      // A profile only a check names is not resolved with the others.
+      return resolveProfileAgent(worktreeDir, profile);
+    } catch {
+      return settings.agent || "";
+    }
+  };
+  const promptFor = (instruction: string) =>
+    buildPrompt(req as HarnessRequirement, worktreeDir, {
+      promptPrefix: settings.promptPrefix,
+      hint: instruction,
+      withPrecedents: settings.promptPrecedents === true,
+    });
+  return {
+    "builtin:review": (check) => {
+      const command = commandFor(check, settings.reviewProfile || "");
+      if (!command) return { ok: true, output: "no agent configured to review" };
+      const diff = (git(worktreeDir, ["diff", "HEAD"]).stdout || "").slice(0, 60000);
+      const restore = snapshotWorktree(worktreeDir);
+      let said = "";
+      try {
+        said = runAgentOnce(
+          worktreeDir,
+          command,
+          promptFor(
+            `Review only; change no file. Compare the change below with ${req.requirement}, its ` +
+              "statement and every scenario. Answer with a first line `VERDICT: PASS` when the " +
+              "change does what the requirement says and nothing it forbids, or `VERDICT: FAIL` " +
+              "followed by each reason as `- path:line — what is wrong`.\n\n```diff\n" +
+              diff +
+              "\n```"
+          ),
+          timeoutMs,
+          "review"
+        );
+      } finally {
+        restore();
+      }
+      const verdict = /VERDICT:\s*(PASS|FAIL)/i.exec(said);
+      if (!verdict) {
+        return {
+          ok: true,
+          output: `The reviewer gave no verdict:
+${said.slice(0, 2000)}`,
+        };
+      }
+      return { ok: verdict[1].toUpperCase() === "PASS", output: said.slice(0, 4000) };
+    },
+    "builtin:adversary": (check) => {
+      const command = commandFor(check, settings.adversaryProfile || "");
+      if (!command || !testCmd)
+        return { ok: true, output: "no agent or test command to probe with" };
+      const restore = snapshotWorktree(worktreeDir);
+      try {
+        const before = new Set(
+          (git(worktreeDir, ["status", "--porcelain"]).stdout || "").split("\n").filter(Boolean)
+        );
+        const said = runAgentOnce(
+          worktreeDir,
+          command,
+          promptFor(
+            `Try to **break** the implementation of ${req.requirement}: write one additional ` +
+              "test, in the project's test style, for a case it should handle and might not — an " +
+              "empty input, a boundary, a duplicate, a failure path. Write the test and nothing " +
+              "else; do not modify the implementation, the specification or any existing test."
+          ),
+          timeoutMs,
+          "adversary"
+        );
+        const wrote = (git(worktreeDir, ["status", "--porcelain"]).stdout || "")
+          .split("\n")
+          .filter((l) => l && !before.has(l) && !l.slice(3).startsWith(PROMPT_ARCHIVE_DIR));
+        if (wrote.length === 0) return { ok: true, output: "The adversary wrote no test." };
+        const test = spawnSync(substituteGateCommand(testCmd, req), {
+          shell: true,
+          cwd: worktreeDir,
+          encoding: "utf8",
+          timeout: timeoutMs,
+          maxBuffer: SUBPROCESS_MAX_BUFFER,
+        });
+        return {
+          ok: test.status === 0,
+          output: [
+            `The adversary wrote ${wrote.map((l) => l.slice(3)).join(", ")}; the tests ${test.status === 0 ? "still pass" : "fail"}.`,
+            said.slice(0, 1500),
+            test.status === 0 ? "" : `${test.stdout || ""}${test.stderr || ""}`.slice(-3000),
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
+        };
+      } finally {
+        restore();
+      }
+    },
+  };
 }
 
 /**
@@ -809,7 +1154,10 @@ function runAdversarialProbe(
       return { ran: true, broke: false, detail: "The adversary wrote no test.", wrote: [] };
     }
 
-    const after = runGate(worktreeDir, settings.testCmd, timeoutMs, req, settings);
+    const after = runGate(worktreeDir, settings.testCmd, timeoutMs, req, {
+      ...settings,
+      quality: undefined,
+    });
     return {
       ran: true,
       broke: !after.ok,
@@ -1096,7 +1444,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       event({
         type: "attempt",
         state: "end",
-        result: stage === "pass" ? "pass" : "fail",
+        result: stage === "pass" ? "pass" : stage === "question" ? "question" : "fail",
         ...(stage === "pass" ? {} : { stage }),
       });
       attemptLog.push({
@@ -1135,6 +1483,10 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
             // commit — the precedent must be work already accepted, not a
             // sibling requirement this same run happens to be writing.
             withPrecedents: settings.promptPrecedents === true,
+            e2eDir:
+              settings.e2eDir && onScreen(worktreeDir, req.requirement)
+                ? settings.e2eDir
+                : undefined,
           })
         );
         const promptFile = path.join(
@@ -1143,6 +1495,14 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         );
         fs.writeFileSync(promptFile, prompt, "utf8");
         archivePrompt(worktreeDir, req.requirement, attempt, step, prompt);
+        // The live view shows what the agent was told and how big it was (REQ-182).
+        keepPrompt(ctx.projectDir || worktreeDir, req.requirement, attempt, prompt);
+        event({
+          type: "prompt",
+          role: step.profile || (step.advisory ? "reviewer" : "agent"),
+          chars: prompt.length,
+          lines: prompt.split("\n").length,
+        });
 
         // D1: a profile chosen by matching this requirement, when one matches.
         // The role ladder still wins — `attempt_profiles` names a profile for
@@ -1226,6 +1586,22 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     }
     if (stopRetrying) break;
     if (stepFailed) continue;
+
+    // The agent asked instead of guessing (REQ-189): another attempt would
+    // meet the same question, and the gate has nothing to judge.
+    const asked = questionAsked(eventsFile, attempt, attemptStart);
+    if (asked) {
+      warn(`${req.requirement}: the agent asked — ${asked}`);
+      record("question");
+      discardWorktreeChanges(worktreeDir);
+      return {
+        result: "question",
+        attempts: attempt - firstAttempt + 1,
+        attemptLog,
+        question: asked,
+        error: `Needs clarification: ${asked}`,
+      };
+    }
 
     // Before the gate: an agent that wrote nothing cannot have implemented
     // anything, and the gate would approve it. See `producedNothing` (H19).
@@ -1388,6 +1764,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       // The probe never changes the verdict; it travels beside it so
       // `harness report` and the run record can show what it found.
       ...(probe.ran ? { adversarial: probe } : {}),
+      ...(gate.checks ? { checks: gate.checks.map(({ output: _o, ...rest }) => rest) } : {}),
     };
   }
 
@@ -1414,6 +1791,56 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     workPreserved: preserved,
     attemptLog,
   };
+}
+
+/** The question the agent recorded with `specgate ask` during this attempt, if any (REQ-189). */
+function questionAsked(eventsFile: string, attempt: number, startedMs: number): string | null {
+  let text = "";
+  try {
+    text = fs.readFileSync(eventsFile, "utf8");
+  } catch {
+    return null;
+  }
+  const since = Math.floor(startedMs / 1000) - 1;
+  let asked: string | null = null;
+  for (const line of text.split("\n")) {
+    try {
+      const e = JSON.parse(line);
+      if (e.type === "question" && e.attempt === attempt && Number(e.t) >= since && e.text) {
+        asked = String(e.text);
+      }
+    } catch {
+      /* a line being written */
+    }
+  }
+  return asked;
+}
+
+/**
+ * The questions the run's agents asked, written into the project and
+ * committed (REQ-189): the agent could not edit the specification, so the
+ * harness does, in one commit per question, and the requirement waits.
+ */
+function recordQuestions(projectDir: string, results: RequirementResult[]): void {
+  for (const r of results) {
+    if (r.result !== "question" || !r.question) continue;
+    const asked = askQuestion(projectDir, r.requirement, r.question);
+    if (!asked.ok) {
+      warn(`${r.requirement}: could not record its question — ${asked.message}`);
+      continue;
+    }
+    git(projectDir, ["add", "-A", "--", "docs/specs", "spec.md"]);
+    git(projectDir, [
+      "commit",
+      "-q",
+      "-m",
+      `docs(specs): ${r.requirement} needs clarification — ${asked.question}\n\n${r.question}`,
+    ]);
+    r.error = `Needs clarification: ${asked.question} in ${asked.file} — specgate answer ${asked.question} "…"`;
+    info(
+      `${r.requirement}: ${asked.question} recorded in ${asked.file}; answer it with specgate answer`
+    );
+  }
 }
 
 /** Where a run's record lands. Local to the machine — see `writeRunRecord`. */
@@ -1674,13 +2101,16 @@ function resumeFrom(worktreeDir: string, requirement: string): ResumeAt {
   }
 
   // Interrupted or exhausted? The two deserve different answers, and the branch
-  // says which: `preserveFailedAttempt` leaves a `wip(...): FAILED the gate`
+  // says which: `preserveFailedAttempt` leaves a `chore(...): attempt FAILED the gate`
   // commit when the attempts run out, and an interruption leaves none.
   //
   //   exhausted   → the last attempt reached a verdict → resume at the next one
   //   interrupted → it never did → re-run it, without charging the budget
   const head = git(worktreeDir, ["log", "-1", "--format=%s"]);
-  const lastCompleted = /^wip\([^)]*\): FAILED the gate/.test((head.stdout || "").trim());
+  // `chore(…): attempt FAILED` since REQ-234; `wip(…): FAILED` on branches older versions left.
+  const lastCompleted = /^(?:chore\([^)]*\): attempt|wip\([^)]*\):) FAILED the gate/.test(
+    (head.stdout || "").trim()
+  );
 
   const point = resumePoint(names, requirement, lastCompleted);
   if (!point.latest) return { attempt: 1, previousFailure: "" };
@@ -1708,7 +2138,7 @@ function preserveFailedAttempt(
   const commit = git(worktreeDir, [
     "commit",
     "-m",
-    `wip(${req.requirement}): FAILED the gate — do not merge as is\n\n` +
+    `chore(${req.requirement}): attempt FAILED the gate — do not merge as is\n\n` +
       `${firstLine}\n\n` +
       "Committed by `specgate harness run` so the attempt is reviewable rather than\n" +
       "discarded. The requirement is still Draft: `specgate apply` never ran.",
@@ -1901,14 +2331,32 @@ function processRequirement(req: HarnessRequirement, ctx: RunContext): Requireme
     `specgate-harness-${req.requirement}-${crypto.randomBytes(4).toString("hex")}`
   );
 
+  // A full disk mid-copy ended a night's chain with ENOSPC (REQ-184): stop
+  // before starting, with the reason, instead.
+  const lowDisk = lowDiskMessage(freeBytes(os.tmpdir()), minFreeBytes(), os.tmpdir());
+  if (lowDisk) {
+    return {
+      requirement: req.requirement,
+      category: req.category,
+      result: "fail",
+      attempts: 0,
+      branch,
+      error: `Not started: ${lowDisk}`,
+    };
+  }
+
   // Three ways to meet an existing branch, and until C3 there were only two:
   // skip it, or delete it with --force. After an interruption — a crash, a
   // Ctrl-C, a spend limit — neither is what anyone wants.
   let resuming = false;
-  if (branchExists(projectDir, branch)) {
-    if (ctx.resume) {
+  const exists = branchExists(projectDir, branch);
+  // A branch already merged into the base holds nothing to lose (REQ-185).
+  const merged = exists && branchMergedInto(projectDir, branch, baseRef);
+  const action = existingBranchAction({ exists, merged, resume: Boolean(ctx.resume), force });
+  if (exists) {
+    if (action === "resume") {
       resuming = true;
-    } else if (!force) {
+    } else if (action === "skip") {
       return {
         requirement: req.requirement,
         category: req.category,
@@ -1920,6 +2368,7 @@ function processRequirement(req: HarnessRequirement, ctx: RunContext): Requireme
           `or --force to recreate it from scratch.`,
       };
     } else {
+      if (merged && !force) info(`${req.requirement}: ${branch} is already merged — recreating it`);
       git(projectDir, ["branch", "-D", branch]);
     }
   } else if (ctx.resume) {
@@ -2110,14 +2559,21 @@ export function printReport(results: RequirementResult[], format: string, record
     fail: `${ui.c.bad}${ui.sym.fail}${ui.c.reset}`,
     blocked: `${ui.c.warn}${ui.sym.warn}${ui.c.reset}`,
     skipped: `${ui.c.muted}${ui.sym.empty}${ui.c.reset}`,
+    question: `${ui.c.warn}?${ui.c.reset}`,
   };
-  const COLOR = { pass: ui.c.ok, fail: ui.c.bad, blocked: ui.c.warn, skipped: ui.c.muted };
+  const COLOR = {
+    pass: ui.c.ok,
+    fail: ui.c.bad,
+    blocked: ui.c.warn,
+    skipped: ui.c.muted,
+    question: ui.c.warn,
+  };
   const idWidth = Math.max(9, ...results.map((r) => String(r.requirement).length));
   process.stdout.write("\n" + ui.section("Harness report"));
   for (const r of results) {
     process.stdout.write(
       `  ${MARK[r.result] || MARK.fail}  ${ui.c.bold}${ui.pad(String(r.requirement), idWidth)}${ui.c.reset} ` +
-        `${COLOR[r.result] || ""}${ui.pad(r.result, 8)}${ui.c.reset}` +
+        `${COLOR[r.result] || ""}${ui.pad(r.result, 9)}${ui.c.reset}` +
         ui.muted(`${r.attempts} attempt${r.attempts === 1 ? "" : "s"}`) +
         `   ${ui.c.accent}${ui.sym.arrow} ${r.branch}${ui.c.reset}\n`
     );
@@ -2257,6 +2713,14 @@ async function runChain(
         results.push(notAttempted(rest, rest.requirement, reason));
       }
     };
+    // REQ-209: a stop asked while the last requirement ran starts no other.
+    if (i > 0 && takeStop(projectDir)) {
+      for (const rest of pending.slice(i)) {
+        results.push(notAttempted(rest, rest.requirement, "a stop was asked"));
+      }
+      info(`stopped as asked: ${pending.length - i} requirement(s) not attempted`);
+      break;
+    }
     const [result] = await runLevels([req], ctx, {
       concurrency: 1,
       hintByReq,
@@ -2317,7 +2781,8 @@ async function runChain(
       ctx.settings.testCmd,
       ctx.timeoutMs,
       req,
-      ctx.settings,
+      // The checks judged the branch already; the post-merge gate is the suite's.
+      { ...ctx.settings, quality: undefined },
       (stage, res, extra) =>
         appendEvent(
           eventsFile,
@@ -2332,7 +2797,11 @@ async function runChain(
         result: "fail",
         error: `post-merge gate: ${gate.stage}\n${String(gate.output || "").slice(-4000)}`,
       });
-      warn(`${req.requirement}: green on ${branch}, red once merged — the merge was undone`);
+      warn(
+        `${req.requirement}: green on ${branch}, red once merged — the merge was undone. ` +
+          `This gate runs in the working copy: tests or a server started there by hand ` +
+          `while the harness runs can break it.`
+      );
       stop(`the chain stopped at ${req.requirement}`);
       break;
     }
@@ -2600,6 +3069,11 @@ export async function runLevels(
         // what was actually begun, so the count ceiling and the clock agree.
         mayStart: () => {
           if (stoppedBy) return false;
+          // REQ-209: a stop asked while a requirement ran starts no other.
+          if (started > 0 && takeStop(ctx.projectDir)) {
+            stoppedBy = { stop: true, code: "stop_asked", reason: "a stop was asked" };
+            return false;
+          }
           const verdict = budgetVerdict(
             limits,
             { startedAt: budgetStartedAt, started },
@@ -2669,6 +3143,8 @@ export class RunCommand extends BaseCommand {
       setJsonMode(args.format === "json");
       const projectDir = resolveProjectDir(args.projectDir, { requireSentinel: true });
 
+      // REQ-211: a profile chosen for this run is its agent, ahead of the file's.
+      if (args.profile && !args.agent) args.agent = resolveProfileAgent(projectDir, args.profile);
       const fileConfig = readHarnessConfig(projectDir);
       const settings = resolveHarnessSettings(fileConfig, args);
       // A fresh worktree has no dependencies. Unless told, install what the
@@ -2680,7 +3156,7 @@ export class RunCommand extends BaseCommand {
       // may declare profiles without ever writing a `harness.config.yaml`.
       // Reaching them through the config reader made them silently absent
       // there — the same gap the cost hints had, found the same way.
-      if (settings.profileRules.length === 0) {
+      if (settings.profileRules.length === 0 && !args.profile) {
         const rules = readProfileRules(projectDir);
         if (rules.length > 0) {
           settings.profileRules = rules;
@@ -2716,7 +3192,11 @@ export class RunCommand extends BaseCommand {
       });
       if (args.reqs.length > 0) {
         const wanted = new Set(args.reqs);
-        pending = pending.filter((r) => wanted.has(r.requirement));
+        // In the order given (REQ-185): the plan's order reshuffled a chain silently.
+        pending = orderAsGiven(
+          pending.filter((r) => wanted.has(r.requirement)),
+          args.reqs
+        );
         const found = new Set(pending.map((r) => r.requirement));
         for (const want of args.reqs) {
           if (!found.has(want)) warn(`${want} is not a pending requirement — skipped.`);
@@ -2740,6 +3220,7 @@ export class RunCommand extends BaseCommand {
             "harness run",
             `dry run · ${pending.length} requirement(s) would be processed`
           ) +
+            (settings.agent ? ui.kv("Agent", settings.agent, 14) : "") +
             ui.kv("Setup", settings.setupCmd || "none", 14) +
             (args.chain ? ui.kv("Chain", "each green requirement merged into this branch", 14) : "")
         );
@@ -2789,6 +3270,25 @@ export class RunCommand extends BaseCommand {
         }
       }
 
+      // REQ-175: the gate judges the whole project, so a base it already fails
+      // fails every attempt, whatever the agent does for its requirement. Said
+      // once, here, rather than after three paid attempts per requirement.
+      // Only for the branch you are on: --base-branch names a ref this checkout
+      // does not hold, and a worker has already been through it in its parent.
+      if (!args.skipBaseline && !args.baseBranch && !process.env.SPECGATE_HARNESS_WORKER) {
+        // The ids the run owns: its requirements and their scenarios.
+        const running = new Set<string>();
+        const inRun = new Set(pending.map((r) => r.requirement));
+        for (const row of plan.requirements || []) {
+          if (!inRun.has(row.requirement)) continue;
+          running.add(row.requirement);
+          const scn = row.scenarioId || row.scenario_id;
+          if (scn) running.add(String(scn));
+        }
+        const red = baselineProblem(projectDir, running);
+        if (red) throw new Error(red);
+      }
+
       const baseRef = args.baseBranch || "HEAD";
       const concurrencyNote =
         settings.concurrency > 1 ? `, up to ${settings.concurrency} at a time` : "";
@@ -2827,6 +3327,32 @@ export class RunCommand extends BaseCommand {
         verbose: args.verbose,
       };
 
+      // One run per working copy (REQ-186): the post-merge gate runs in it.
+      if (!process.env.SPECGATE_HARNESS_WORKER) {
+        const release = acquireRunLock(
+          projectDir,
+          pending.map((r) => r.requirement)
+        );
+        if (!release) {
+          const holder = runLockHolder(projectDir);
+          throw new Error(
+            `Another harness run (pid ${holder ? holder.pid : "?"}) is working in this project` +
+              (holder ? ` on ${holder.reqs.join(", ")}` : "") +
+              `. Wait for it to finish: its post-merge gate runs in this working copy.`
+          );
+        }
+        // A stop left from an earlier run is not this run's (REQ-209).
+        takeStop(projectDir);
+      }
+
+      // What the live view lists as up next (REQ-182).
+      if (!process.env.SPECGATE_HARNESS_WORKER) {
+        writeQueue(
+          projectDir,
+          pending.map((r) => r.requirement)
+        );
+      }
+
       const startedAt = new Date().toISOString();
       const results = args.chain
         ? await runChain(pending, ctx, hintByReq)
@@ -2835,6 +3361,8 @@ export class RunCommand extends BaseCommand {
             hintByReq,
             runOne: dispatchLevel,
           });
+      // What the agents asked goes into the project, once the run is done (REQ-189).
+      if (!process.env.SPECGATE_HARNESS_WORKER) recordQuestions(projectDir, results);
 
       // Only the run that a person started writes a record. A worker is one
       // slice of that run, and its own record would be a second copy of the

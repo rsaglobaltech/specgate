@@ -39,6 +39,7 @@ the likely cause.
 | Tool | `--agent` value |
 | --- | --- |
 | Claude Code | `claude -p < {prompt_file}` |
+| Claude Code, watched live in `specgate studio` | `claude -p --output-format stream-json --verbose < {prompt_file} \| specgate harness events --from claude` |
 | Aider | `aider --yes --message-file {prompt_file}` |
 | OpenCode | `opencode run "$(cat {prompt_file})"` |
 | Cursor CLI | `cursor-agent -p "$(cat {prompt_file})"` |
@@ -104,7 +105,10 @@ only: installing there would repeat the install on every gate run.
 ## Commit the commands your team uses
 
 Typing the command on every run is how it ends up different on every machine.
-Put your team's commands in `.harness/profiles.yaml` and name one:
+Put your team's commands in `.harness/profiles.yaml` and name one. The
+[studio](studio.md) lists these profiles on its Project and Build pages, and
+its new-project step writes `claude-sonnet` and `claude-opus` (or `codex`) for
+you; `harness run --profile <name>` picks one for a single run:
 
 ```yaml
 # .harness/profiles.yaml

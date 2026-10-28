@@ -98,6 +98,7 @@ export interface AttemptRecord {
    */
   endedAt:
     | "pass"
+    | "question"
     | "agent-timeout"
     | "agent-error"
     | "write-scope"

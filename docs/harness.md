@@ -23,12 +23,14 @@ the command line. Which agent, and how to call it, is on
 2. The harness installs the project's dependencies in it, then gives the agent
    a prompt built from the requirement and its Gherkin scenario.
 3. The gate runs: `validate --strict`, a check that the agent did not edit the
-   specification, your architecture check, then your tests.
+   specification, your architecture check, your tests, then your
+   [quality checks](quality.md) — coverage of the lines it added, mutation,
+   SAST, secrets, Conventional Commits.
 4. **Green:** `specgate apply` marks the requirement Implemented and the work
-   is committed on its branch.
+   is committed on its branch as `feat(REQ-NNN): …`.
 5. **Red:** the failures go into the next attempt, up to `max_attempts`
    (default 3). After the last one the work is committed as
-   `wip(REQ-NNN): FAILED the gate` and the requirement keeps its status.
+   `chore(REQ-NNN): attempt FAILED the gate` and the requirement keeps its status.
 
 A requirement that waits for an answer (Needs Clarification) is refused.
 Without `--chain`, nothing is merged: each green requirement waits on its own
@@ -54,6 +56,10 @@ The harness writes the prompt to a temporary file and puts its path where
 `{prompt_file}` stands. A command without the placeholder is refused. The tool
 allowances, the commands for other agents and team profiles are on
 [Choosing and wiring your agent](agent-setup.md).
+
+With several agents in `.harness/profiles.yaml`, `--profile <name>` picks one
+for this run (`propose --from-brief` takes it too), and the
+[studio](studio.md)'s Build page offers the same choice.
 
 To see what would happen without paying for an agent:
 
@@ -223,18 +229,27 @@ For a nightly job that leaves branches to review:
 | `--budget-seconds <n>`   | Stops cleanly before starting a requirement once the time is spent.             |
 | `--max-requirements <n>` | Attempts at most n requirements.                                                |
 | `--skip-not-ready`       | Skips requirements an agent cannot succeed at (no feature, unmet dependencies). |
+| `--skip-baseline`        | Runs even when the base already fails `validate --strict`.                      |
 | `--push`                 | Pushes each green `harness/REQ-NNN` branch.                                     |
 | `--pr-cmd "<cmd>"`       | Runs after each push, with `{branch}` and `{req}` placeholders.                 |
 | `--verbose`              | Streams the gate's output while it runs.                                        |
 
 ## When a run fails
 
+**Before any agent runs**, the harness validates the base. The gate judges the
+whole project, so a requirement outside the run that is past Draft with no test
+(TDD-1, TDD-2), such as one marked Approved before its test, would fail every
+attempt whatever the agent did, and the agent may not change its status. The
+run stops there and lists them: write their tests or move them back to Draft,
+or pass `--skip-baseline` to run anyway. What fails on the requirements being
+run is theirs to fix, and does not stop it.
+
 The report prints the tail of the gate output and the command that failed.
 Some failures end the run after one attempt, because retrying cannot help:
 see [Troubleshooting](troubleshooting.md#when-another-attempt-cannot-help).
 
-The failed attempt is **committed on its branch** as `wip(REQ-NNN): FAILED the
-gate`, so you can read what the agent did. The requirement's status does not
+The failed attempt is **committed on its branch** as `chore(REQ-NNN): attempt
+FAILED the gate`, so you can read what the agent did. The requirement's status does not
 change, because `specgate apply` never ran.
 
 ```bash

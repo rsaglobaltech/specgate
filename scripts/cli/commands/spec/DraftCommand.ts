@@ -33,10 +33,15 @@ import {
   listArchivedIds,
   renderConfig,
   reserveReqRange,
+  highestReservedReq,
+  formatReqId,
   DEFAULT_CONFIG,
+  listChangeIds,
+  listDeltas,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { templateDelta } from "../../../../packages/core/src/domain/ChangeTemplates";
 import { highestOnOtherBranches } from "../../../../packages/core/src/infrastructure/IdsAcrossBranches";
+import { resolveProfileAgent } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
 import type { ModuleCards } from "../../../draft/drafting-guide";
@@ -85,7 +90,11 @@ export interface DraftOptions {
   maxRequirements: number;
   /** Requirement ids a new draft reserves. */
   reserve: number;
+  /** `--reserve` was given: on an open draft it grows the range (REQ-177). */
+  reserveGiven?: boolean;
   agent: string;
+  /** `--profile <name>`: the agent of that profile (REQ-211). */
+  profile?: string;
   /** `--new-brief`: write docs/brief.md from the template. */
   newBrief: boolean;
   projectDir: string;
@@ -116,9 +125,11 @@ function usage(): string {
     "  --brief <file>   Your plan or brief (default: docs/brief.md). Any markdown; a front\n" +
     "                   matter with modules, actors and surfaces lets the checklist do more.\n" +
     "  --reserve <n>    Requirement ids a new draft reserves (default 10, at most the --max-requirements).\n" +
+    "                   On an open draft whose range is the last reserved, grows it to n.\n" +
     "  --agent <cmd>    Your agent's command. It gets the drafting guide on standard input,\n" +
     "                   or in a file if the command contains {prompt_file}. Whatever it writes\n" +
     "                   outside the draft is undone.\n" +
+    "  --profile <name> The agent of that profile in .harness/profiles.yaml, instead of --agent.\n" +
     "  [--max-requirements <n>] [--project-dir <dir>] [--json]\n\n" +
     "The checklist (ADR-0029):\n" +
     "  D1 every requirement has a scenario          D5 a cited law or standard names its source\n" +
@@ -167,8 +178,11 @@ export function parseArgs(argv: string[]): DraftOptions {
       else o.check = value();
     } else if (a === "--brief") o.brief = value();
     else if (a === "--max-requirements") o.maxRequirements = Number(value());
-    else if (a === "--reserve") o.reserve = Number(value());
-    else if (a === "--agent") o.agent = value();
+    else if (a === "--reserve") {
+      o.reserve = Number(value());
+      o.reserveGiven = true;
+    } else if (a === "--agent") o.agent = value();
+    else if (a === "--profile") o.profile = value();
     else if (a === "--new-brief") o.newBrief = true;
     else if (a === "--project-dir") o.projectDir = value();
     else if (a === "--json") o.json = true;
@@ -181,7 +195,10 @@ export function parseArgs(argv: string[]): DraftOptions {
   if (o.check && o.module) {
     throw new Error("give a module or --check <change-id>, not both");
   }
-  if (o.checkBrief && (o.module || o.agent || o.newBrief)) {
+  if (o.profile && o.agent) {
+    throw new Error("give --agent or --profile, not both");
+  }
+  if (o.checkBrief && (o.module || o.agent || o.profile || o.newBrief)) {
     throw new Error("--check only checks the brief: run it on its own");
   }
   if (o.module && !CHANGE_ID_RE.test(o.module)) {
@@ -606,6 +623,95 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
   return { changeId, reqRange, created };
 }
 
+/**
+ * Grow an open draft's range to `o.reserve` requirement ids (REQ-177). Ranges
+ * are consecutive, so only the draft holding the last reserved ids can grow:
+ * the ids after any other draft already belong to someone. Its guide is
+ * rewritten with the new range; what the agent wrote is left as it is.
+ */
+function extendDraft(
+  projectDir: string,
+  module: string,
+  brief: string,
+  o: DraftOptions
+):
+  | { ok: true; reqRange: [string, string] }
+  | { ok: false; code: string; message: string; fix: string } {
+  const changeId = `draft-${module}`;
+  const dir = path.join(projectDir, CHANGES, changeId);
+  const yamlPath = path.join(dir, "change.yaml");
+  const yaml = fs.readFileSync(yamlPath, "utf8");
+  const req = /^req_range:\s*\[(REQ-\d+),\s*(REQ-\d+)\]/m.exec(yaml);
+  const scn = /^scn_range:\s*\[(SCN-\d+),\s*(SCN-\d+)\]/m.exec(yaml);
+  if (!req || !scn) {
+    return {
+      ok: false,
+      code: "draft_range_unknown",
+      message: `${changeId}/change.yaml has no req_range and scn_range to grow.`,
+      fix:
+        "Open the module again from the brief: remove the change, then run `specgate propose --from-brief " +
+        module +
+        "`.",
+    };
+  }
+  const first = Number(req[1].slice(4));
+  const last = Number(req[2].slice(4));
+  const held = last - first + 1;
+  if (o.reserve <= held) {
+    return {
+      ok: false,
+      code: "draft_range_already_holds",
+      message: `${changeId} already holds ${held} requirement ids (${req[1]}…${req[2]}).`,
+      fix: `Ask for more than ${held}: specgate propose --from-brief ${module} --reserve ${held + 5}`,
+    };
+  }
+  const scnFirst = Number(scn[1].slice(4));
+  const scnLast = Number(scn[2].slice(4));
+  const highestReq = highestReservedReq(projectDir);
+  const highestScn = Number(nextScenario(projectDir).slice(4)) - 1;
+  if (highestReq > last || highestScn > scnLast) {
+    return {
+      ok: false,
+      code: "draft_range_not_last",
+      message:
+        `${changeId} holds ${req[1]}…${req[2]}, and ${formatReqId(last + 1)} onwards is ` +
+        "already reserved or used elsewhere: ranges are consecutive, so only the last one can grow.",
+      fix:
+        "Open modules one at a time and grow each before opening the next, or put the extra " +
+        "requirements in a module of their own.",
+    };
+  }
+  const reqRange: [string, string] = [req[1], formatReqId(first + o.reserve - 1)];
+  const scnRange: [string, string] = [
+    scn[1],
+    `SCN-${String(scnFirst + o.reserve * 3 - 1).padStart(3, "0")}`,
+  ];
+  fs.writeFileSync(
+    yamlPath,
+    yaml
+      .replace(req[0], `req_range: [${reqRange[0]}, ${reqRange[1]}]`)
+      .replace(scn[0], `scn_range: [${scnRange[0]}, ${scnRange[1]}]`),
+    "utf8"
+  );
+  const briefText = fs.readFileSync(path.resolve(projectDir, brief), "utf8");
+  fs.writeFileSync(
+    path.join(dir, "DRAFTING.md"),
+    draftingGuide({
+      module,
+      changeId,
+      brief,
+      reqRange,
+      firstScenario: scnRange[0],
+      lastScenario: scnRange[1],
+      maxRequirements: o.maxRequirements,
+      actors: actorSurfaces(briefText),
+      cards: moduleCards(briefText, module),
+    }),
+    "utf8"
+  );
+  return { ok: true, reqRange };
+}
+
 const ICON: Record<ModuleState, () => string> = {
   "not started": () => ui.state("todo"),
   "not written": () => ui.state("todo"),
@@ -648,6 +754,17 @@ export class DraftCommand extends BaseCommand {
       ]);
     }
     const opts = o!;
+    if (opts.profile) {
+      try {
+        opts.agent = resolveProfileAgent(resolveProjectDir(opts.projectDir), opts.profile);
+      } catch (err) {
+        io0.usage({ draft: null }, [
+          error("draft_profile", (err as Error).message, {
+            fix: "Name a profile .harness/profiles.yaml declares, or pass --agent.",
+          }),
+        ]);
+      }
+    }
     if (opts.checkBrief) return this.checkBrief(opts);
     if (opts.check) return this.check(opts);
     if (opts.module) return this.module(opts);
@@ -1170,9 +1287,24 @@ export class DraftCommand extends BaseCommand {
         ]);
       }
       const listed = briefModules(brief.text);
+      // Drafts opened before this one and still unwritten stop growing once it
+      // takes the next ids: only the last range can (REQ-197).
+      const waiting = unwrittenDrafts(projectDir, `draft-${opts.module}`);
       const opened = openDraft(projectDir, opts.module, brief.rel, opts);
-      const notes =
-        listed.length > 0 && !listed.includes(opts.module)
+      const ahead = waiting.length
+        ? [
+            info(
+              "draft_other_unwritten",
+              `${waiting.join(", ")} ${waiting.length === 1 ? "is" : "are"} not written yet; ${opened.changeId} now holds the last id range, so ${waiting.length === 1 ? "it" : "they"} can no longer grow.`,
+              {
+                fix: `Write ${waiting[0]} first, or before opening the next module grow it with specgate draft ${waiting[0].replace(/^draft-/, "")} --reserve <n>.`,
+              }
+            ),
+          ]
+        : [];
+      const notes = [
+        ...ahead,
+        ...(listed.length > 0 && !listed.includes(opts.module)
           ? [
               info(
                 "draft_module_not_in_brief",
@@ -1182,7 +1314,8 @@ export class DraftCommand extends BaseCommand {
                 }
               ),
             ]
-          : [];
+          : []),
+      ];
       if (opts.agent) return this.withAgent(opts, projectDir, brief.rel, opened.created);
       io.emit(
         {
@@ -1232,6 +1365,29 @@ export class DraftCommand extends BaseCommand {
     }
 
     const brief = this.brief(projectDir, opts, briefOf(projectDir, changeId))!;
+    if (opts.reserveGiven) {
+      const grown = extendDraft(projectDir, opts.module, brief.rel, opts);
+      if (!grown.ok) {
+        io.fail({ draft: null }, [
+          error(grown.code, grown.message, { target: changeId, fix: grown.fix }),
+        ]);
+      } else if (opts.json) {
+        process.stdout.write(
+          `${JSON.stringify({ draft: { module: opts.module, change: changeId, reserved: grown.reqRange }, status: [] }, null, 2)}\n`
+        );
+      } else {
+        process.stdout.write(
+          ui.header(`${this.verb} ${opts.module}`, brief.rel) +
+            ui.ok(
+              `Draft ${ui.bold(changeId)} grown ` +
+                ui.muted(`· REQ ids ${grown.reqRange[0]}…${grown.reqRange[1]} reserved`)
+            ) +
+            ui.info("DRAFTING.md names the new range; nothing the agent wrote was changed.") +
+            ui.next(`specgate propose --from-brief ${opts.module}`, "check the draft again")
+        );
+      }
+      if (!opts.agent) return;
+    }
     if (opts.agent) return this.withAgent(opts, projectDir, brief.rel, []);
     this.report(opts, projectDir, brief.rel);
   }
@@ -1481,4 +1637,14 @@ function writeBriefFindings(findings: readonly Diagnostic[]): void {
     );
     if (d.fix) out.write(ui.fix(d.fix));
   }
+}
+
+/** Open drafts other than `except` whose deltas hold no requirement yet (REQ-197). */
+function unwrittenDrafts(projectDir: string, except: string): string[] {
+  return listChangeIds(projectDir).filter((change) => {
+    if (!change.startsWith("draft-") || change === except) return false;
+    return !listDeltas(projectDir, change).some((d) =>
+      /^###\s+Requirement:\s+REQ-\d+\s+[—–-]\s+[^<\s]/m.test(fs.readFileSync(d.file, "utf8"))
+    );
+  });
 }

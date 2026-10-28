@@ -217,3 +217,105 @@ editing only the change's delta, a test and the code.
 - AND no other specgate command was run
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-116.feature kind=functional status=Implemented test=tests/unit/compact-use.test.ts -->
+
+### Requirement: REQ-173 — Approved owes a test, as the strict gate says
+
+The system SHALL refuse `specgate apply` and `specgate done` with a `--status` that is not Draft, Approved, Implemented, Verified, Released or Deprecated, and SHALL refuse a status that owes a test under TDD-1 (Approved, Implemented, Verified, Released) while no test names the requirement, naming TDD-1 and the fix and writing nothing; with `--no-check` the status is written and a warning says that `validate --strict` fails TDD-1 until a test names the requirement.
+
+#### Scenario: SCN-173a — Approved before the test is refused
+
+- GIVEN a project with REQ-002 in Draft and no test that names it
+- WHEN the developer runs `specgate apply REQ-002 --status Approved`
+- THEN the command exits 1 naming TDD-1 and the fix "write a test that names REQ-002", and REQ-002 is still Draft
+
+#### Scenario: SCN-173b — Approved once a test names it
+
+- GIVEN the same project with a test that names REQ-002 and SCN-002
+- WHEN the developer runs `specgate apply REQ-002 --status Approved`
+- THEN REQ-002 is Approved
+
+#### Scenario: SCN-173c — An unknown status is refused
+
+- GIVEN the same project
+- WHEN the developer runs `specgate apply REQ-002 --status Aproved`
+- THEN the command exits 2 naming the statuses it accepts, and REQ-002 is still Draft
+
+#### Scenario: SCN-173d — `--no-check` writes it and warns
+
+- GIVEN the project with no test that names REQ-002
+- WHEN the developer runs `specgate apply REQ-002 --status Approved --no-check`
+- THEN REQ-002 is Approved and stderr warns that `validate --strict` fails TDD-1 until a test names REQ-002
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-173.feature kind=functional status=Implemented test=tests/unit/approved-needs-test.test.ts -->
+
+### Requirement: REQ-178 — Three papercuts on a first project
+
+The system SHALL not warn B9_actor_unnamed about the only declared actor of a brief written in the first person, and with several actors SHALL say in the fix that the author is to be named; `specgate harness init` SHALL keep an existing `.harness/prompt-prefix.md` that differs from the generated one, saying it was kept, unless `--force` is given; and `specgate validate` without a directory SHALL exit 2 naming `specgate validate .` with the flags it was given.
+
+#### Scenario: SCN-178a — A first-person brief with one actor
+
+- GIVEN a brief with the one actor Fahrschüler, written "Soy hispanohablante… Quiero una web personal…"
+- WHEN the brief is checked
+- THEN no B9_actor_unnamed warning is given, and with a second actor Prüfer both are warned with a fix that names the first person
+
+#### Scenario: SCN-178b — An edited prompt prefix survives harness init
+
+- GIVEN a project where `harness init` ran and `.harness/prompt-prefix.md` was then edited
+- WHEN the developer runs `specgate harness init --project-dir .`
+- THEN it exits 0, the prefix is unchanged, and the output says it was kept; with `--force` it is replaced
+
+#### Scenario: SCN-178c — Validate without a directory
+
+- GIVEN any folder
+- WHEN the developer runs `specgate validate --strict`
+- THEN it exits 2 and stderr names `specgate validate . --strict`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-178.feature kind=functional status=Implemented test=tests/unit/adopter-papercuts.test.ts -->
+
+### Requirement: REQ-193 — Status names the module of the next use case
+
+The system SHALL, in a forja project, propose for the next requirement `specgate add usecase <module>/<Name>` with the module taken from the open change that holds it (`draft-diario` → `diario`) or from its feature's folder (`features/diario/…`), and SHALL print `<module>` only when neither says.
+
+#### Scenario: SCN-193a — The module from the change or the feature's folder
+
+- GIVEN REQ-022 is in change draft-diario, or its feature is features/diario/registrar-clase.feature
+- WHEN status proposes the next command
+- THEN it is `specgate add usecase diario/<Name> --req REQ-022`, or `specgate add usecase diario/RegistrarClase --req REQ-022`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-193.feature kind=functional status=Implemented test=tests/unit/forja-front-door.test.ts -->
+
+### Requirement: REQ-194 — DRAFTING.md gives the draft's real limit
+
+The system SHALL say in DRAFTING.md how many requirement ids the draft holds — its range, never more than the review limit — and how to grow the range, instead of a review limit larger than the range.
+
+#### Scenario: SCN-194a — The range is the limit
+
+- GIVEN a draft reserving REQ-002 to REQ-011 with a review limit of 25
+- WHEN DRAFTING.md is written
+- THEN it says "`REQ-002` … `REQ-011`: 10 ids, no others" and names `specgate draft --reserve <n>`, and not "at most 25 requirements"
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-194.feature kind=functional status=Implemented test=tests/unit/forja-front-door.test.ts -->
+
+### Requirement: REQ-195 — No inline code split across lines in the changelog
+
+The system's CHANGELOG.md SHALL open and close every inline code span on one line, checked by a test.
+
+#### Scenario: SCN-195a — Every code span on one line
+
+- GIVEN CHANGELOG.md
+- WHEN its lines outside code fences are read
+- THEN none has an odd number of backticks
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-195.feature kind=non-functional status=Implemented test=tests/unit/changelog-format.test.ts -->
+
+### Requirement: REQ-197 — Opening a module says which drafts stop growing
+
+The system SHALL, when `specgate draft <module>` opens a draft while another open draft holds no requirement yet, add a note naming it, saying it can no longer grow its range, and how to avoid it.
+
+#### Scenario: SCN-197a — Opening the second module warns about the first
+
+- GIVEN draft-bookings is open and unwritten
+- WHEN `specgate draft coupons` opens a draft
+- THEN its status has draft_other_unwritten naming draft-bookings, with `--reserve` in its fix
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-197.feature kind=functional status=Implemented test=tests/unit/draft-from-brief.test.ts -->

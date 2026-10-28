@@ -92,6 +92,15 @@ function surfaceLine(actor: string, surfaces: string[]): string {
   return `- **${capitalise(actor)}** — ${each.join("; ")}`;
 }
 
+/** How many requirements the draft may hold: its range, never more than the review limit. */
+function idCount(i: DraftingGuideInput): number {
+  const n = (id: string) => Number((/(\d+)$/.exec(id) || [])[1]);
+  const range = n(i.reqRange[1]) - n(i.reqRange[0]) + 1;
+  return Number.isFinite(range) && range > 0
+    ? Math.min(range, i.maxRequirements)
+    : i.maxRequirements;
+}
+
 export function draftingGuide(i: DraftingGuideInput): string {
   const scope = `docs/specs/changes/${i.changeId}/`;
   const actor = i.actors.size > 0 ? capitalise([...i.actors.keys()][0]) : "<Actor>";
@@ -122,7 +131,9 @@ export function draftingGuide(i: DraftingGuideInput): string {
       : []),
     `- **The brief:** \`${i.brief}\` — the only source of business facts.`,
     `- **Write only inside:** \`${scope}\`.`,
-    `- **Requirement ids:** \`${i.reqRange[0]}\` … \`${i.reqRange[1]}\`, no others — at most ${i.maxRequirements} requirements.`,
+    // The range is the limit: "at most 25" next to ten ids read as room for 25 (REQ-194).
+    `- **Requirement ids:** \`${i.reqRange[0]}\` … \`${i.reqRange[1]}\`: ${idCount(i)} ids, no others. ` +
+      "More are needed? `specgate draft --reserve <n>` grows the range while this is the last draft opened.",
     i.lastScenario
       ? `- **Scenario ids:** \`${i.firstScenario}\` … \`${i.lastScenario}\`, one each, no others.`
       : `- **Scenario ids:** from \`${i.firstScenario}\` up, one each.`,

@@ -13,10 +13,13 @@
  */
 
 import type { Diagnostic } from "./Diagnostic";
-import { error, info } from "./Diagnostic";
+import { error, info, warning } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
 import { analyseScenario } from "./GherkinQuality";
 import { withoutComments } from "./QuotedText";
+import { assumptionsToReview, deferredAnswer } from "./Clarification";
+
+export { deferredAnswer };
 
 export const KINDS = new Set(["functional", "non-functional", "business-rule"]);
 
@@ -196,25 +199,17 @@ export function rowNamesId(row: string, id: string): boolean {
  * row", which a Markdown table cannot hold; D7 then kept an answered question
  * open and demanded its requirement stay `Needs Clarification` (#45).
  */
-/**
- * An answer that puts the decision off is not an answer. "Se decidirá con el
- * cliente antes de implementarlo" filled the Answer cell, D7 took the question
- * as answered and its requirement stopped waiting, though nobody had decided
- * anything (HealthTech, #82). A proposal ("propuesta, a validar") is an answer;
- * "pending", "TBD" or "will be decided" is not.
- */
-const DEFERRED =
-  /(?<![\p{L}])(se decidir[aá]n?|por decidir|a decidir|sin decidir|pendiente de (?:decidir|decisi[oó]n|respuesta|confirmar)|to be decided|will be decided|decide later|tbd)(?![\p{L}])/iu;
-const DEFERRED_ALONE = /^(pendiente|pending|later|tbd|todo|\?+|-+)\.?$/i;
+/** A Blocks cell that says, on purpose, that nothing waits for the question (REQ-176). */
+const NONE_BLOCKED = /^(none|nothing|ninguno|ninguna|nada|n\/a|—|–|-)\.?$/i;
 
-export function deferredAnswer(answer: string): boolean {
-  const text = answer.replace(/\*\*/g, "").trim();
-  return DEFERRED.test(text) || DEFERRED_ALONE.test(text);
-}
-
-function questionRows(
-  md: string
-): Array<{ row: string; blocks: string[]; line: number; answered: boolean; deferred: boolean }> {
+function questionRows(md: string): Array<{
+  row: string;
+  blocks: string[];
+  noneBlocked: boolean;
+  line: number;
+  answered: boolean;
+  deferred: boolean;
+}> {
   const lines = md.replace(/\r\n/g, "\n").split("\n");
   const header = lines.findIndex((l) => /^\|.*\bBlocks\b.*\|/i.test(l));
   if (header === -1) return [];
@@ -225,6 +220,7 @@ function questionRows(
   const out: Array<{
     row: string;
     blocks: string[];
+    noneBlocked: boolean;
     line: number;
     answered: boolean;
     deferred: boolean;
@@ -241,6 +237,7 @@ function questionRows(
     out.push({
       row,
       blocks: (cells[at] || "").match(/REQ-[A-Za-z0-9.]+/g) || [],
+      noneBlocked: NONE_BLOCKED.test((cells[at] || "").replace(/\*\*/g, "").trim()),
       line: i + 1,
       answered: answers.length > 0 && !deferred,
       deferred,
@@ -546,12 +543,28 @@ export function checkDraft(files: DraftFiles): DraftReport {
     for (const q of questionRows(files.questions)) {
       if (q.answered) continue;
       if (q.blocks.length === 0) {
+        // Said on purpose ("none"): a question for later that nothing in this
+        // draft is built around, such as a backup export nobody asked for yet.
+        // Kept in questions.md instead of dropped, and nothing waits on it
+        // (REQ-176). An empty cell is still a question someone forgot to tie.
         status.push(
-          error("D7_floating_question", `Question ${q.row} blocks no requirement.`, {
-            file: "questions.md",
-            line: q.line,
-            fix: "Name the requirements it blocks in the Blocks column — a question that blocks nothing is answered by guessing.",
-          })
+          q.noneBlocked
+            ? warning(
+                "D7_question_blocks_nothing",
+                `Question ${q.row} blocks no requirement: nothing in this draft waits for its answer.`,
+                {
+                  file: "questions.md",
+                  line: q.line,
+                  fix: "If a requirement depends on it, name it in the Blocks column and set it Needs Clarification.",
+                }
+              )
+            : error("D7_floating_question", `Question ${q.row} blocks no requirement.`, {
+                file: "questions.md",
+                line: q.line,
+                fix:
+                  "Name the requirements it blocks in the Blocks column — a question that blocks nothing is answered by guessing. " +
+                  'A question nothing here depends on says so: write "none" in its Blocks column.',
+              })
         );
         continue;
       }
@@ -573,6 +586,25 @@ export function checkDraft(files: DraftFiles): DraftReport {
         }
       }
     }
+  }
+
+  // D13 — an answer written by `specgate answer` waits until its author says
+  // the spec reflects it (REQ-188): the answer alone changes no requirement.
+  for (const a of assumptionsToReview(files.assumptions || "")) {
+    const q = (/Q\d+/.exec(a.why) || [])[0];
+    status.push(
+      error(
+        "D13_assumption_to_review",
+        `Assumption ${a.id} comes from an answer${q ? ` to ${q}` : ""} the specification may not reflect yet.`,
+        {
+          file: "assumptions.md",
+          line: a.line,
+          fix: q
+            ? `Update the requirements it is used in, then run \`specgate answer ${q} --reviewed\`.`
+            : `Update the requirements it is used in, then set its Status to decided.`,
+        }
+      )
+    );
   }
 
   // D9 — every scenario passes the rules the harness gate will apply to it.

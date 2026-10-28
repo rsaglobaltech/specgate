@@ -44,3 +44,37 @@ export function appendEvent(
     /* the view must not break the run */
   }
 }
+
+/** The run's queue, in the order it works through it (REQ-182). */
+export const QUEUE_FILE = "queue.json";
+
+/** Record which requirements this run will work on, in order; never throws. */
+export function writeQueue(
+  projectDir: string,
+  reqs: string[],
+  t = Math.floor(Date.now() / 1000)
+): void {
+  try {
+    const dir = path.dirname(eventsFileFor(projectDir, "x"));
+    fs.writeFileSync(path.join(dir, QUEUE_FILE), JSON.stringify({ t, queue: reqs }), "utf8");
+  } catch {
+    /* the view must not break the run */
+  }
+}
+
+/** Where the live view keeps the prompt an attempt was given, git-ignored with the events. */
+export function promptFileFor(projectDir: string, req: string, attempt: number): string {
+  return path.join(projectDir, EVENTS_DIR, "prompts", `${req}-${attempt}.md`);
+}
+
+/** Keep the prompt an attempt was given, for the live view; never throws. */
+export function keepPrompt(projectDir: string, req: string, attempt: number, prompt: string): void {
+  try {
+    eventsFileFor(projectDir, req);
+    const file = promptFileFor(projectDir, req, attempt);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, prompt, "utf8");
+  } catch {
+    /* the view must not break the run */
+  }
+}

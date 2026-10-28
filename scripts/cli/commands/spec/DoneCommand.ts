@@ -1,4 +1,5 @@
 import { resolveProjectDir } from "../../../lib/project-root";
+import { archRun } from "../../../lib/quality-run";
 import { error } from "../../../lib/diagnostics";
 import { AgentIo, agentIo, EXIT } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
@@ -6,6 +7,7 @@ import { DiskTraceabilityRepository } from "../../../../packages/core/src/infras
 import { UpdateRequirementStatusUseCase } from "../../../../packages/core/src/application/UpdateRequirementStatusUseCase";
 import {
   planDoneVerification,
+  gateTestCommand,
   deliveryBlocker,
   NO_TEST_COMMAND_WARNING,
 } from "../../../../packages/core/src/domain/DoneVerification";
@@ -21,6 +23,7 @@ import { isDerivedProject, writeRequirementFields } from "../../../lib/derived-w
 import { refreshDerivedMatrix } from "./MatrixCommand";
 import { inFlightView, InFlightRequirement, InFlightView, DELIVERED } from "../../../lib/in-flight";
 import { summarise, nextRequirement, QueueItem } from "./StatusCommand";
+import { parseTraceability } from "./PlanCommand";
 import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
 
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
@@ -47,6 +50,13 @@ export const ALLOWED_STATUSES = [
 
 /** Statuses that claim the behaviour exists: `done` gates them by default. */
 export const DELIVERED_STATUSES = ["Implemented", "Verified", "Released"];
+
+/**
+ * Statuses that owe a test under TDD-1: past Draft, and not Deprecated.
+ * Approved is one of them, so writing it before a test names the requirement
+ * turned the next `validate --strict` red for the whole project (REQ-173).
+ */
+export const OWES_TEST_STATUSES = ["Approved", ...DELIVERED_STATUSES];
 
 export interface DoneOptions {
   reqId: string | null;
@@ -147,6 +157,16 @@ export class DoneCommand extends BaseCommand {
       process.exit(EXIT.OK);
     }
 
+    // Any word used to be written as the status: `--status Aproved` too (REQ-173).
+    if (!ALLOWED_STATUSES.includes(opts.status)) {
+      io.usage(NULL_SHAPE, [
+        error("status_unknown", `Unknown status: ${opts.status}.`, {
+          target: opts.status,
+          fix: `Use one of: ${ALLOWED_STATUSES.join(", ")}.`,
+        }),
+      ]);
+    }
+
     if (opts.reqIds.length > 1) return this.executeMany(opts, io);
     if (opts.reqId && !/^REQ-\d+$/.test(opts.reqId)) {
       io.usage(NULL_SHAPE, [
@@ -231,26 +251,19 @@ export class DoneCommand extends BaseCommand {
       }
     }
 
-    // Test first (ADR-0035): on a generated matrix a test that names the
-    // requirement — or a `test=` in its trace — is its link, and without one
-    // there is nothing to judge. Said before the gate, with the fix, rather
-    // than as TDD-1 among everything validate finds.
-    if (gated && isDerivedProject(dir)) {
-      const rows: DerivedRow[] = deriveRows(readDerivationSources(dir)).filter(
-        (r: DerivedRow) => r.requirement === id
-      );
-      const tested = (r: DerivedRow) => {
-        const t = String(r.testArtifact || "")
-          .replace(/`/g, "")
-          .trim();
-        return t !== "" && t !== "-" && t.toUpperCase() !== "TBD";
-      };
-      if (rows.length > 0 && !rows.some(tested)) {
-        const scn = rows.map((r) => r.scenarioId).find((x) => x && x !== "-");
+    // Test first (ADR-0035): a test that names the requirement — or a `test=`
+    // in its trace — is its link, and without one there is nothing to judge.
+    // Said before the gate, with the fix, rather than as TDD-1 among everything
+    // validate finds. Approved owes it too (REQ-173): TDD-1 judges every status
+    // past Draft, so writing it first only moved the refusal to the next check.
+    const owesTest = !opts.noCheck && OWES_TEST_STATUSES.includes(opts.status);
+    if (owesTest) {
+      const missing = missingTest(dir, id);
+      if (missing) {
         io.fail(NULL_SHAPE, [
           error("apply_no_test", `${id} has no test that names it yet (TDD-1).`, {
             target: id,
-            fix: `write a test that names ${id}${scn ? ` (and its scenario ${scn})` : ""}, then run specgate ${verb} ${id}`,
+            fix: noTestFix(verb, id, opts.status, missing.scenario),
           }),
         ]);
       }
@@ -347,6 +360,7 @@ export class DoneCommand extends BaseCommand {
     }
 
     const result = writeStatus(projectDir, dir, owner, id, opts.status);
+    if (result.ok) warnUntested(opts, dir, id);
     if (!result.ok) {
       if (result.code === "traceability_not_found") {
         io.usage(NULL_SHAPE, [
@@ -438,7 +452,20 @@ export class DoneCommand extends BaseCommand {
     const gated = opts.check && DELIVERED_STATUSES.includes(opts.status);
     const tracePath = path.join(dir, TRACE);
 
+    const owesTest = !opts.noCheck && OWES_TEST_STATUSES.includes(opts.status);
+
     for (const id of ids) {
+      if (owesTest) {
+        const missing = missingTest(dir, id);
+        if (missing) {
+          results.set(id, {
+            ok: false,
+            code: "apply_no_test",
+            message: `no test names it yet (TDD-1): ${noTestFix(this.verb, id, opts.status, missing.scenario)}`,
+          });
+          continue;
+        }
+      }
       if (gated && fs.existsSync(tracePath)) {
         const blocker = deliveryBlocker(fs.readFileSync(tracePath, "utf8"), id);
         if (blocker) {
@@ -478,7 +505,9 @@ export class DoneCommand extends BaseCommand {
     let testsUnverified = false;
     const archCmd = (harness.archCmd || "").trim();
     if (passing.length > 0 && opts.check && archCmd) {
-      const run = spawnSync(archCmd, { cwd: projectDir, encoding: "utf8", shell: true });
+      const run = harness.archSarif
+        ? archRun(projectDir, archCmd, harness.archSarif)
+        : spawnSync(archCmd, { cwd: projectDir, encoding: "utf8", shell: true });
       if (run.status !== 0) {
         const detail = `${run.stdout || ""}${run.stderr || ""}`.trim();
         if (detail && !opts.json) process.stderr.write(indent(detail) + "\n\n");
@@ -492,7 +521,11 @@ export class DoneCommand extends BaseCommand {
       }
     }
     if (passing.length > 0 && opts.check && passing.every((id) => results.get(id)!.ok)) {
-      const cmd = (testCmd || "").trim();
+      // One requirement fills `{req}`; several run the suite for the whole project (REQ-183).
+      const cmd = gateTestCommand(
+        (testCmd || "").trim(),
+        passing.length === 1 ? passing[0] : undefined
+      );
       if (cmd === "") {
         testsUnverified = true;
       } else {
@@ -514,6 +547,7 @@ export class DoneCommand extends BaseCommand {
     for (const id of ids.filter((x) => results.get(x)!.ok)) {
       const owner = view ? view.requirements.find((r) => r.id === id) : undefined;
       const result = writeStatus(projectDir, dir, owner, id, opts.status);
+      if (result.ok) warnUntested(opts, dir, id);
       if (!result.ok) {
         results.set(id, {
           ok: false,
@@ -578,6 +612,53 @@ function indent(text: string): string {
 }
 
 const TRACE = path.join("docs", "specs", "traceability.md");
+
+/**
+ * The requirement's rows when none of them has a test, with the first scenario
+ * id to name in the fix; null when a test names it or the matrix has no row
+ * for it (writeStatus reports that). A generated matrix is derived from the
+ * sources, so a test written since the last regeneration counts; a hand-kept
+ * one is read as written.
+ */
+function missingTest(dir: string, id: string): { scenario?: string } | null {
+  const rows: DerivedRow[] = isDerivedProject(dir)
+    ? deriveRows(readDerivationSources(dir))
+    : fs.existsSync(path.join(dir, TRACE))
+      ? parseTraceability(readTrace(dir)).map((r) => ({
+          requirement: r.requirement || undefined,
+          scenarioId: r.scenarioId,
+          testArtifact: r.testArtifact,
+        }))
+      : [];
+  const own = rows.filter((r) => r.requirement === id);
+  const tested = (r: DerivedRow) => {
+    const t = String(r.testArtifact || "")
+      .replace(/`/g, "")
+      .trim();
+    return t !== "" && t !== "-" && t.toUpperCase() !== "TBD";
+  };
+  if (own.length === 0 || own.some(tested)) return null;
+  return { scenario: own.map((r) => r.scenarioId).find((x) => x && x !== "-") };
+}
+
+function noTestFix(verb: string, id: string, status: string, scenario?: string): string {
+  const again =
+    status === "Implemented"
+      ? `specgate ${verb} ${id}`
+      : `specgate ${verb} ${id} --status ${status}`;
+  return `write a test that names ${id}${scenario ? ` (and its scenario ${scenario})` : ""}, then run ${again}`;
+}
+
+/** `--no-check` writes what it is told; it still says what the next gate will say. */
+function warnUntested(opts: DoneOptions, dir: string, id: string): void {
+  if (!opts.noCheck || opts.json || !OWES_TEST_STATUSES.includes(opts.status)) return;
+  if (!missingTest(dir, id)) return;
+  process.stderr.write(
+    ui.warn(
+      `${id} is ${opts.status} with no test that names it: \`validate --strict\` fails TDD-1 until one does.`
+    )
+  );
+}
 
 function readTrace(dir: string): string {
   return fs.readFileSync(path.join(dir, TRACE), "utf8");

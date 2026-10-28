@@ -13,8 +13,11 @@ harness_version: 1
 #
 #   specgate harness run --req REQ-001 --agent "claude -p < {prompt_file}"
 #
-# Then uncomment the line you settled on.
+# Then uncomment the line you settled on. For Claude Code, the first line also
+# streams what the agent does to `specgate studio`'s /live view — its steps,
+# model, context and tokens; the plain form shows nothing until it ends:
 #
+# agent: "claude -p --output-format stream-json --verbose --permission-mode acceptEdits < {prompt_file} | specgate harness events --from claude"
 # agent: "claude -p < {prompt_file}"
 # agent: "cursor-agent -p < {prompt_file}"
 # agent: "aider --yes --message-file {prompt_file}"
@@ -62,6 +65,12 @@ harness_version: 1
 # only what git tracks, so this is where dependencies get installed. `check`
 # does not run it; your own checkout already has them.
 {{SETUP_CMD_LINE}}
+
+# Where the end-to-end tests live. Set it and a requirement whose actor uses a
+# screen (web, mobile, tablet, desktop) passes the gate only once a file there
+# names it: a use case and a unit test alone do not prove a screen.
+#
+# e2e_dir: apps/web/e2e
 
 # Retries per requirement, each one fed the previous failure. Past three, the
 # loop is usually stuck on something a human needs to read.

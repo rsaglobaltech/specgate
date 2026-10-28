@@ -156,6 +156,10 @@ git add -A && git commit -m "Specgate set up"
 | A new `<slug>/` folder appeared | There was no build file, so `init` scaffolded | Create the project first, then `init` inside it |
 | `command not found: specgate` | It is installed in the project, not on your PATH | Type `npx specgate` before the command, as in `npx specgate check` |
 
+**Want more than tests in the gate?** `specgate quality init` writes the
+[quality checks](../quality.md) for your stack — coverage and mutation of what
+each change adds, SAST, secrets, dependencies — each run in Docker.
+
 **Using an agent?** `specgate agents init --tool claude` (or `cursor`,
 `copilot`, `gemini`, …) installs the `/specgate:*` commands for it. See
 [Agents](../agents.md).

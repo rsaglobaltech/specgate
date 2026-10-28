@@ -441,9 +441,17 @@ export class InitCommand extends BaseCommand {
         return false;
       }
     };
+    // The prefix is the project's voice, and the next steps say to edit it: an
+    // edited one is kept, not a conflict. Re-running init to register the merge
+    // drivers used to refuse over it, and `--force` threw the edit away (REQ-178).
+    const keptPrefix =
+      !opts.force &&
+      fs.existsSync(path.join(projectDir, PREFIX_FILE)) &&
+      outputs.some((o) => o.dest === PREFIX_FILE && !same(o));
     const existing = outputs
       .filter((o) => !same(o))
       .filter((o) => !(merged && o.dest === CONFIG_FILE))
+      .filter((o) => !(keptPrefix && o.dest === PREFIX_FILE))
       .map((o) => o.dest)
       .filter((dest) => fs.existsSync(path.join(projectDir, dest)));
     if (existing.length > 0 && !opts.force) {
@@ -459,6 +467,7 @@ export class InitCommand extends BaseCommand {
     const written: string[] = [];
     for (const out of outputs) {
       if (merged && merged.length === 0 && out.dest === CONFIG_FILE) continue;
+      if (keptPrefix && out.dest === PREFIX_FILE) continue;
       const abs = path.join(projectDir, out.dest);
       fs.mkdirSync(path.dirname(abs), { recursive: true });
       fs.writeFileSync(abs, out.body, "utf8");
@@ -478,6 +487,18 @@ export class InitCommand extends BaseCommand {
                 ? `${CONFIG_FILE} already existed: its settings were kept and ${merged.join(", ")} added.`
                 : `${CONFIG_FILE} already existed and has every setting; it was left as it was.`,
               { target: CONFIG_FILE, fix: "Use --force to replace it with the generated file." }
+            ),
+          ]
+        : []),
+      ...(keptPrefix
+        ? [
+            info(
+              "harness_prefix_kept",
+              `${PREFIX_FILE.split(path.sep).join("/")} already existed with your edits: it was kept as it is.`,
+              {
+                target: PREFIX_FILE,
+                fix: "Use --force to replace it with the generated prefix.",
+              }
             ),
           ]
         : []),
@@ -523,7 +544,9 @@ export class InitCommand extends BaseCommand {
         out.write(ui.header("harness init"));
         for (const file of written) out.write(ui.fileLine("added", file));
         for (const d of status) {
-          if (d.code === "harness_config_merged") out.write(ui.info(d.message));
+          if (d.code === "harness_config_merged" || d.code === "harness_prefix_kept") {
+            out.write(ui.info(d.message));
+          }
         }
         // Warnings only reached `--json` before, so a text-mode user learned
         // that a tracked file had changed from `git status` instead of from the

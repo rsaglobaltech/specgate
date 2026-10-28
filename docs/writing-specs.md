@@ -188,7 +188,11 @@ specgate apply REQ-007 --no-check                # the status, without the gate
 ```
 
 `apply` refuses a requirement that no test names, runs the same gate as
-`specgate check`, and writes nothing when it fails. A requirement it closes is
+`specgate check`, and writes nothing when it fails. The statuses are Draft,
+Approved, Implemented, Verified, Released and Deprecated; any other word is
+refused. Every one past Draft except Deprecated owes a test (TDD-1), Approved
+included: `--status Approved` refuses a requirement no test names, since
+`validate --strict` would fail on it. A requirement it closes is
 one CI will not reopen. It changes exactly one status, and it does not commit:
 commit after it. With `validate --strict` in CI, the matrix stays a true
 record of what is delivered.

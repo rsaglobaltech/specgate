@@ -150,6 +150,10 @@ $ specgate check
 Green, with your own tests in it — and a warning that is honest: so far this
 certifies the skeleton, not the code. Phase 2 changes that.
 
+Old code has old findings. `specgate quality init` and then `specgate quality
+baseline --accept` record what is there today, so only what a change adds
+fails. See [Quality and security checks](../quality.md).
+
 ## You're done when…
 
 - `specgate check` ends with `✔  Gate passed` and your test command.

@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import { copyableFiles } from "./harness-guard";
 import * as os from "node:os";
 import * as path from "node:path";
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
@@ -34,6 +35,8 @@ export interface InFlightRequirement {
   /** The delta file, relative to the project, posix separators. */
   deltaFile: string;
   status: string;
+  /** Added by the change, or a delivered requirement it modifies (REQ-198). */
+  op: "added" | "modified";
 }
 
 /** A delta still as `propose` wrote it: placeholders only, nothing to judge. */
@@ -88,16 +91,22 @@ export function changeRequirements(projectDir: string, change: string): InFlight
     } catch {
       continue; // `change validate` reports a delta that does not parse
     }
-    for (const req of [...(parsed.added || []), ...(parsed.modified || [])]) {
-      if (!req.id) continue;
-      out.push({
-        id: req.id,
-        change,
-        capability: d.capability,
-        deltaFile: path.relative(projectDir, d.file).split(path.sep).join("/"),
-        status: String((req.trace || {}).status || "Draft"),
-      });
-    }
+    const ops: Array<[typeof parsed.added, "added" | "modified"]> = [
+      [parsed.added || [], "added"],
+      [parsed.modified || [], "modified"],
+    ];
+    for (const [list, op] of ops)
+      for (const req of list || []) {
+        if (!req.id) continue;
+        out.push({
+          op,
+          id: req.id,
+          change,
+          capability: d.capability,
+          deltaFile: path.relative(projectDir, d.file).split(path.sep).join("/"),
+          status: String((req.trace || {}).status || "Draft"),
+        });
+      }
   }
   return out;
 }
@@ -145,10 +154,21 @@ export function inFlightView(projectDir: string): InFlightView | null {
   // Commands leave through process.exit(), which skips `finally`: the copy is
   // removed on exit too.
   process.once("exit", cleanup);
-  fs.cpSync(projectDir, dir, {
-    recursive: true,
-    filter: (src) => !SKIP.has(path.basename(src)),
-  });
+  // What git keeps, never build caches or dependencies (REQ-184); a folder
+  // outside git falls back to skipping the usual ones by name.
+  const files = copyableFiles(projectDir);
+  if (files) {
+    for (const f of files) {
+      const to = path.join(dir, f);
+      fs.mkdirSync(path.dirname(to), { recursive: true });
+      fs.copyFileSync(path.join(projectDir, f), to);
+    }
+  } else {
+    fs.cpSync(projectDir, dir, {
+      recursive: true,
+      filter: (src) => !SKIP.has(path.basename(src)),
+    });
+  }
 
   const problems: InFlightProblem[] = [];
   const repo = new DiskProjectRepository(dir);
