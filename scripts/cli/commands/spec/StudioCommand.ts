@@ -576,6 +576,13 @@ export class StudioCommand extends BaseCommand {
         return;
       }
 
+      // Before `specgate init` the folder has no matrix: the app's own page
+      // offers to create the project, and anything else is not here yet.
+      if (!fs.existsSync(path.join(projectDir, "docs/specs/traceability.md"))) {
+        res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+        res.end("Not a Specgate project yet: open / to create it.");
+        return;
+      }
       const model = loadModel(projectDir);
       if (req.url === "/status.json") {
         res.writeHead(200, { "content-type": "application/json" });

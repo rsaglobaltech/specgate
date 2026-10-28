@@ -279,6 +279,47 @@ test("REQ-213 SCN-213a: a project is created in an empty folder", () => {
   assert.equal(lib().route(dir).steps[0].state, "done");
 });
 
+test("REQ-213 SCN-213a: the studio stays up in an empty folder", async () => {
+  const dir = tmp();
+  const http = require("node:http");
+  const port = 47000 + Math.floor(Math.random() * 2000);
+  const child = spawn(process.execPath, [CLI, "studio", "--port", String(port)], {
+    cwd: dir,
+    env: { ...process.env, NO_COLOR: "1" },
+  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("studio did not start")), 8000);
+      child.stdout.on("data", (d: Buffer) => {
+        if (String(d).includes("http://")) {
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
+    const get = (url: string) =>
+      new Promise<number>((resolve, reject) => {
+        http
+          .get(
+            { host: "127.0.0.1", port, path: url, headers: { host: "localhost" } },
+            (res: any) => {
+              res.resume();
+              res.on("end", () => resolve(res.statusCode || 0));
+            }
+          )
+          .on("error", reject);
+      });
+    assert.equal(await get("/"), 200);
+    // The browser asks for these by itself; the folder has no matrix yet.
+    assert.equal(await get("/favicon.ico"), 404);
+    assert.equal(await get("/status.json"), 404);
+    assert.equal(await get("/api/route"), 200, "still serving the new-project step");
+    assert.equal(child.exitCode, null);
+  } finally {
+    child.kill();
+  }
+});
+
 // ── REQ-214 ─────────────────────────────────────────────────────────────────
 
 test("REQ-214 SCN-214a: the brief round-trips through the form", () => {
