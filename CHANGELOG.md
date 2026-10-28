@@ -16,6 +16,7 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 ### Fixed
 
 - The tests of REQ-264, REQ-267, REQ-269 and REQ-271 give their repositories a git identity, as the other harness tests do.
+- The REQ-266 test compares real paths as Windows names them (`RUNNER~1` and `runneradmin` are one folder), and the coverage run in CI has a larger heap: on macOS it ran out once every test had passed.
 
 ## [0.27.7] — 2026-10-28
 
