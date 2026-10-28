@@ -49,7 +49,7 @@ export interface QualityConfig {
 }
 
 /** Checks Specgate runs itself, without a tool: `run: builtin:commits` (REQ-234). */
-export const BUILTINS = ["builtin:commits"];
+export const BUILTINS = ["builtin:commits", "builtin:sonar"];
 
 const STAGES: Stage[] = ["attempt", "end", "ci"];
 const RUNNERS: Runner[] = ["docker", "local", "auto"];

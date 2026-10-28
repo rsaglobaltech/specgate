@@ -31,7 +31,7 @@ its delta and test first.
 
 - [x] 4.1 REQ-225 levels and presets: Maven, Gradle, npm/pnpm; `quality init` (harness init and adopt only point to it: writing Docker checks into every new project unasked was judged too much)
 - [x] 4.1b REQ-232 every check in Docker (runner: docker in all presets), images by digest, caches in named volumes, `quality doctor [--pull]`
-- [ ] 4.2 REQ-226 SonarQube Community in Docker (optional `end` check); Snyk and Aikido deferred: no account
+- [x] 4.2 REQ-226 SonarQube Community in Docker (optional `end` check); Snyk and Aikido deferred: no account
 - [ ] 4.3 REQ-227 review and adversary profiles as `end` checks
 - [~] 4.4 REQ-230 (Maven done; Gradle and Node to run for real) fixture projects and the e2e that runs every preset; every **(verify)** in design.md resolved
 

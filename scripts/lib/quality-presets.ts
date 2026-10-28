@@ -321,6 +321,16 @@ export function presetYaml(projectDir: string, level: Level): string {
     "    when: attempt",
     "    runner: local",
   ];
+  const sonar = [
+    "  # SonarQube Community in Docker (REQ-226): starts a local server on first use",
+    "  # (about 2 GB of memory) at http://127.0.0.1:9123, login admin/admin. Uncomment:",
+    "  # - name: sonar",
+    '  #   run: "builtin:sonar"',
+    "  #   when: end",
+    "  #   runner: docker",
+    "  #   sarif: .specgate/quality/sonar.sarif",
+    "  #   timeout: 1800",
+  ];
   const seen = new Set<string>(["commits"]);
   for (const stack of stacks.length ? stacks : (["node"] as Stack[])) {
     const checks =
@@ -337,6 +347,7 @@ export function presetYaml(projectDir: string, level: Level): string {
       lines.push(...render({ ...c, name }));
     }
   }
+  if (level === "strict") lines.push(...sonar);
   return lines.join("\n") + "\n";
 }
 

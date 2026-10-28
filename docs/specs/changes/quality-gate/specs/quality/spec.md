@@ -253,3 +253,27 @@ The system SHALL summarise, from the run records, the quality checks of each req
 - THEN its events have the gate steps `quality: marker` and `quality: final`
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-views.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-226 — SonarQube Community in Docker, without an account
+
+The system SHALL provide a built-in check, `run: builtin:sonar`, that starts SonarQube Community in a named container on a private Docker network, published on 127.0.0.1 only, when it is not running; creates an analysis token once with the server's default login and keeps it in `.specgate/sonar.local`, added to .gitignore — never changing the person's password, and taking `SONAR_TOKEN` from the environment first; analyses the project with the scanner image (Java sources, tests and classes when the project has them); and writes the open issues as SARIF with SonarQube's line hash as the fingerprint, so the baseline and the change's files judge them like any other check's. The strict preset SHALL list it commented, saying it needs about 2 GB of memory. Snyk and Aikido wait for an account.
+
+#### Scenario: SCN-226a — SonarQube's issues as SARIF
+
+- GIVEN two SonarQube issues, one BLOCKER on line 5 of src/main/java/com/shop/Repo.java with a line hash, one MINOR without a line
+- WHEN they are written as SARIF
+- THEN they are an error and a note, in the repository's paths, the first fingerprinted by its hash
+
+#### Scenario: SCN-226b — What the scanner is told
+
+- GIVEN a Maven project with src/main/java, src/test/java and target/classes, and a Node project with neither
+- WHEN their scanner properties are built
+- THEN the first names the Java sources, tests and classes, the second the whole folder without node_modules, dist, coverage or .specgate
+
+#### Scenario: SCN-226c — A real analysis judged against the baseline
+
+- GIVEN SPECGATE_TEST_SONAR set and Docker answering, the Maven fixture with its baseline taken by the sonar check, and a change comparing Strings with ==
+- WHEN the end checks run
+- THEN sonar fails on Discount.java:5 only, the fixture's own issues held back
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-sonar.test.ts actor=Developer kind=functional -->

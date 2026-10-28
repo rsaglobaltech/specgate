@@ -16,6 +16,7 @@ import {
   type Finding,
 } from "../../packages/core/src/domain/Sarif";
 import { readBaseline } from "../../packages/core/src/infrastructure/QualityBaselineFile";
+import { runSonar } from "./sonar-local";
 import {
   DEFAULT_TYPES,
   exempt,
@@ -420,7 +421,8 @@ export function runCheck(
   fs.mkdirSync(path.join(projectDir, ctx.reportDir), { recursive: true });
   const ignore = path.join(projectDir, REPORTS, ".gitignore");
   if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
-  if (how.runner === "docker") {
+  const sonar = check.run === "builtin:sonar";
+  if (how.runner === "docker" && !sonar) {
     const pulled = ensureImage(check.image);
     if (!pulled.ok) return { ...base, runner: "docker", skipped: pulled.message };
   }
@@ -428,8 +430,9 @@ export function runCheck(
   if (check.sarif) fs.rmSync(path.join(projectDir, check.sarif), { force: true });
   const container = `specgate-${check.name}-${process.pid}-${Date.now()}`;
   const started = Date.now();
-  const r =
-    how.runner === "docker"
+  const r = sonar
+    ? runSonar(projectDir, check.timeout * 1000)
+    : how.runner === "docker"
       ? spawnSync("docker", dockerArgs(check, projectDir, base.command, container), {
           cwd: projectDir,
           encoding: "utf8",
