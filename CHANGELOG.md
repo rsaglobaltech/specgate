@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.3] — 2026-10-28
+
+What the second truck-flote run found, using only 0.27.2 and forja 1.0.2 one documented command at a time: Maven coverage 30 s faster on Spring Boot with Testcontainers, D6 that reads assumptions as people write them, an undo that never loses a person's edit, and a brief path that leads from `init --forja` to `draft`.
+
 ### Fixed
 
 Found running truck-flote again with 0.27.2 only, one documented command at a time:
