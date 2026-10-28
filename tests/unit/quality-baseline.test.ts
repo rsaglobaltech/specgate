@@ -120,8 +120,26 @@ test("REQ-240: needs names an earlier check", () => {
   );
 });
 
+/** A check named `scan` judged with this scope, in place of project()'s. */
+function scoped(dir: string, scope: "diff" | "all") {
+  fs.writeFileSync(
+    path.join(dir, "harness.config.yaml"),
+    [
+      "harness_version: 1",
+      "checks:",
+      "  - name: scan",
+      '    run: "node scan.js"',
+      "    runner: local",
+      "    sarif: .specgate/quality/scan.sarif",
+      `    scope: ${scope}`,
+      "",
+    ].join("\n")
+  );
+}
+
 test("REQ-241 SCN-241a: a development secret in .env.local", () => {
   const dir = project();
+  scoped(dir, "diff");
   // Two findings: one in a file git ignores, one in a tracked file.
   fs.writeFileSync(
     path.join(dir, "scan.js"),
@@ -141,10 +159,36 @@ process.exit(1);`
   git("init", "-q");
   git("add", "-A");
   git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "start");
+  // The change: config.ts edited. A file git ignores is never part of one.
+  fs.writeFileSync(path.join(dir, "src/config.ts"), "export const key = 'y';\n");
   const run = sg(dir, "quality", "run", "--json");
   const o = json(run).quality.outcomes[0];
   assert.equal(o.findings.total, 1, run.stdout);
   assert.deepEqual(o.findings.fresh, ["src/config.ts:1 [generic-api-key] a secret"]);
+});
+
+test("REQ-241 SCN-241b: vulnerabilities in Maven's bill of materials", () => {
+  const dir = project();
+  scoped(dir, "all");
+  fs.writeFileSync(
+    path.join(dir, "scan.js"),
+    `const fs = require("fs");
+fs.mkdirSync("apps/api/target", { recursive: true });
+fs.writeFileSync("apps/api/target/bom.json", "{}");
+fs.mkdirSync(".specgate/quality", { recursive: true });
+fs.writeFileSync(".specgate/quality/scan.sarif", JSON.stringify({ version: "2.1.0", runs: [{ results: [
+  { ruleId: "GHSA-1", level: "error", message: { text: "jackson-databind is vulnerable" },
+    locations: [{ physicalLocation: { artifactLocation: { uri: "apps/api/target/bom.json" } } }] } ] }] }));
+process.exit(1);`
+  );
+  fs.writeFileSync(path.join(dir, ".gitignore"), "target/\n");
+  const git = (...a: string[]) => spawnSync("git", a, { cwd: dir, encoding: "utf8" });
+  git("init", "-q");
+  git("add", "-A");
+  git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "start");
+  const run = sg(dir, "quality", "run", "--json");
+  assert.notEqual(run.status, 0, "a vulnerable dependency fails the check");
+  assert.equal(json(run).quality.outcomes[0].findings.total, 1, run.stdout);
 });
 
 test("REQ-222 SCN-222a: debt in the baseline passes, a new finding fails", () => {

@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
 import { detectStacks, presetYaml, withPreset, type Level } from "../../../lib/quality-presets";
+import { ensureIgnored } from "../../../lib/sonar-local";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { error } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -139,6 +140,8 @@ export class QualityCommand extends BaseCommand {
       }
       const stacks = detectStacks(projectDir);
       fs.writeFileSync(file, withPreset(current, presetYaml(projectDir, level as Level)), "utf8");
+      // REQ-258: what each check writes stays out of git; the baseline does not.
+      ensureIgnored(projectDir, ".specgate/quality/");
       const written = readHarnessConfig(projectDir) || {};
       const checks = written.quality ? written.quality.checks.map((c) => c.name) : [];
       io.emit({ quality: { level, stacks, checks, file: HARNESS_CONFIG_FILE } }, () => {
