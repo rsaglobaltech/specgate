@@ -225,6 +225,9 @@ function inRow(value: string, row: string): boolean {
   return false;
 }
 
+/** How a scenario joins values into one: a screen path, a list row (REQ-261). */
+const PART_JOIN = /\s+[›—·]\s+/;
+
 // ── Assumption rows ───────────────────────────────────────────────────────────
 
 /** `REQ-004..REQ-010`, `SCN-2…SCN-9`, `REQ-004–REQ-010`, `REQ-004 to REQ-010`, `REQ-004 a REQ-010`. */
@@ -316,6 +319,17 @@ function questionRows(md: string): Array<{
 export function openQuestions(md: string): Array<{ row: string; blocks: string[] }> {
   return questionRows(md)
     .filter((q) => !q.answered)
+    .map((q) => ({ row: q.row, blocks: q.blocks }));
+}
+
+/**
+ * The answered questions of a `questions.md`, with the requirements each
+ * blocked: `status` says such a requirement needs its spec updated, not an
+ * answer (REQ-263).
+ */
+export function answeredQuestions(md: string): Array<{ row: string; blocks: string[] }> {
+  return questionRows(md)
+    .filter((q) => q.answered)
     .map((q) => ({ row: q.row, blocks: q.blocks }));
 }
 
@@ -571,17 +585,24 @@ export function checkDraft(files: DraftFiles): DraftReport {
           for (const v of statedValues(step)) {
             if (seen.has(v)) continue;
             seen.add(v);
-            if (inText(v, briefText)) continue;
-            if (files.specText && inText(v, files.specText)) continue;
-            // A value the requirement's own obligation states, under a `Source:`
-            // line, is the cited norm's: "24 characters" and "modulo 97" of ISO
-            // 13616 had to be copied into assumptions.md (FinCore, #75).
-            if (SOURCED.test(r.text) && inText(v, r.text)) continue;
             const rows = assumptions.split("\n").concat(r.modified ? archivedRows : []);
-            const listed = rows.some(
-              (row) => inRow(v, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id))
-            );
-            if (listed) continue;
+            const known = (value: string) =>
+              inText(value, briefText) ||
+              (!!files.specText && inText(value, files.specText)) ||
+              // A value the requirement's own obligation states, under a
+              // `Source:` line, is the cited norm's: "24 characters" and
+              // "modulo 97" of ISO 13616 had to be copied into assumptions.md
+              // (FinCore, #75).
+              (SOURCED.test(r.text) && inText(value, r.text)) ||
+              rows.some(
+                (row) => inRow(value, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id))
+              );
+            if (known(v)) continue;
+            // REQ-261: a screen path or a list row joins listed values —
+            // "1234-BCD › Ejes", "Lucía Martín — E000001234567890" — and the
+            // whole was never written down as one (truck-flote, S48).
+            const parts = v.split(PART_JOIN);
+            if (parts.length > 1 && parts.every((part) => known(part.trim()))) continue;
             status.push(
               error(
                 "D6_unlisted_value",
@@ -604,7 +625,28 @@ export function checkDraft(files: DraftFiles): DraftReport {
   if (files.questions) {
     const byId = new Map(reqs.map((r) => [r.id, r]));
     for (const q of questionRows(files.questions)) {
-      if (q.answered) continue;
+      if (q.answered) {
+        // REQ-262: an answer in questions.md changes no requirement by itself;
+        // the draft said Ready to review with four requirements still blocked
+        // by answered questions (truck-flote, S49).
+        for (const id of q.blocks) {
+          const r = byId.get(id);
+          if (!r || r.trace.status !== "Needs Clarification") continue;
+          status.push(
+            error(
+              "D7_answered_still_blocked",
+              `Question ${q.row} is answered, and ${id} is still Needs Clarification.`,
+              {
+                ...at(r),
+                fix:
+                  `Fold the answer into ${id}'s text and scenarios, then drop status="Needs Clarification" from its specgate:trace — ` +
+                  "or run this command again with --agent to have your agent do it.",
+              }
+            )
+          );
+        }
+        continue;
+      }
       if (q.blocks.length === 0) {
         // Said on purpose ("none"): a question for later that nothing in this
         // draft is built around, such as a backup export nobody asked for yet.

@@ -126,7 +126,11 @@ declare. See the table in [From a client brief](from-a-brief.md#3-check-the-draf
 
 The checklist sees the shape, not the business. Read the requirements, the
 assumptions and the questions. Take the questions to the client and write
-each answer in the `Answer` column.
+each answer in the `Answer` column. An answer changes no requirement by
+itself: until the requirement's text and scenarios say it and its `Needs
+Clarification` status is gone, `propose --from-brief <module>` reports it and
+`status` lists it under "Answered — update the spec". `--agent` does that for
+you.
 
 A question that is not yours to answer stays open:
 

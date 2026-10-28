@@ -9,6 +9,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The client's brief at the root goes below the front matter** (REQ-259): with `brief.md` pushed first and forja's template in `docs/brief.md`, `draft --agent` wrote the front matter over the "Paste the client's brief here" placeholder and the person pasted the text by hand. `draft` now puts the root file's text there first, keeps the root file, and says so; a body the person wrote is left alone.
+- **`BRIEF-SETUP.md` is removed once the front matter is complete** (REQ-260): it stayed untracked, and the harness refuses a tree that is not clean.
+- **D6 reads a value made of listed parts** (REQ-261): "1234-BCD › Ejes" and "Lucía Martín — E000001234567890" were unlisted although every part was; a value joined with ` › `, ` — ` or ` · ` is listed when each part is.
+- **An answer in `questions.md` no longer leaves its requirement blocked unnoticed** (REQ-262, REQ-263): the draft said Ready to review and `status` kept four answered requirements "Waiting for an answer". The checklist now reports each answered question whose requirement is still `Needs Clarification`, with the fix and `--agent`, and `status` lists it under "Answered — update the spec".
+
 ## [0.27.6] — 2026-10-28
 
 The dependency scan counts again, after the fifth truck-flote run: a vulnerable Maven dependency fails the gate, and a quality run leaves the tree clean.

@@ -62,6 +62,7 @@ import {
   briefBody,
   briefSetupGuide,
   rootBrief,
+  withRootBrief,
   briefSetupPrompt,
   checkFrontMatter,
   frontMatter,
@@ -499,6 +500,15 @@ function writeSetupGuide(projectDir: string, brief: string): void {
   fs.writeFileSync(file, briefSetupGuide(brief), "utf8");
 }
 
+/**
+ * The guide has done its work once the front matter is complete (REQ-260):
+ * left behind, it was an untracked file nobody said to commit or delete, and
+ * the harness refuses a tree that is not clean (truck-flote, S47).
+ */
+function removeSetupGuide(projectDir: string): void {
+  fs.rmSync(path.join(projectDir, BRIEF_SETUP_FILE), { force: true });
+}
+
 /** The next free SCN number, past every scenario the project or a change uses. */
 export function nextScenario(projectDir: string): string {
   let max = 0;
@@ -813,6 +823,20 @@ export class DraftCommand extends BaseCommand {
       ]);
     }
     const brief = { rel, text: text! };
+    // REQ-259: the client's text at the root goes where the template asks
+    // for it, before anything is explained or proposed over the placeholder.
+    const moved = withRootBrief(projectDir, brief.text);
+    if (moved) {
+      fs.writeFileSync(file, moved.text, "utf8");
+      brief.text = moved.text;
+      if (!opts.json) {
+        process.stdout.write(
+          ui.info(
+            `${moved.root} at the root looked like the brief: its text is now below the front matter of ${rel}. ${moved.root} is kept.`
+          )
+        );
+      }
+    }
     if (opts.agent) return this.frontMatterWithAgent(opts, projectDir, brief);
 
     // (b) No front matter: every field, explained, and the agent to propose it.
@@ -895,6 +919,7 @@ export class DraftCommand extends BaseCommand {
       process.exitCode = 1;
       return;
     }
+    removeSetupGuide(projectDir);
 
     // (c') The body: an empty brief, a module without its section or cards.
     const findings = checkBrief(brief.text, rel, projectSurfaces(projectDir));
@@ -1138,6 +1163,7 @@ export class DraftCommand extends BaseCommand {
       ]);
     }
     const problems = checkFrontMatter(after);
+    if (problems.length === 0) removeSetupGuide(projectDir);
     io.emit(
       {
         draft: { brief: brief.rel, frontMatter: proposed, next: "specgate propose --from-brief" },
