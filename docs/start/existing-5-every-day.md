@@ -33,6 +33,8 @@ $ specgate status
     ○ REQ-002  Invoices                     its scenario
     ○ REQ-003  Customers                    its scenario
 
+  ·  No agent set for the harness and the studio's Build: specgate config set agent "claude -p < {prompt_file}"
+
   Next ───────────────────────────────────────────────────
   ➜  specgate plan
      REQ-002's feature file is missing — plan shows which

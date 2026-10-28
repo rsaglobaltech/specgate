@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.27.6",
+    "version": "0.27.7",
     "node": "v24.x",
     "platform": "linux",
     "packSource": "local"
@@ -309,9 +309,9 @@
       "surface": "harness run",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1870,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 1960,
+      "truncated": true,
+      "omitted": 3,
       "lines": [
         {
           "t": "  ◆ specgate · harness run   1 requirement(s) from HEAD",
@@ -325,6 +325,26 @@
         },
         {
           "t": "  ◇  REQ-000   attempt 1/1",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ◇  REQ-000   started validate --strict",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ◇  REQ-000   passed validate --strict in 0.1 s",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ◇  REQ-000   started test command",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ◇  REQ-000   passed test command in 0.1 s",
           "c": "out",
           "s": "out"
         },
@@ -360,21 +380,6 @@
         },
         {
           "t": "",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "  Next ───────────────────────────────────────────────────",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "  ➜  git diff HEAD...harness/REQ-000",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "     review and merge the harness/* branches you trust",
           "c": "out",
           "s": "out"
         }
