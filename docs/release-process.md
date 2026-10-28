@@ -4,11 +4,11 @@ How a version of Specgate is cut and published — to npm, to the container
 registry and to this documentation site — and what support it gets.
 
 <!-- specgate:note -->
-**GitHub Actions are switched off on the `rsaglobaltech` organisation**, to
-save the free-minutes quota — every workflow except `pages.yml`, which
-publishes this site. The process below describes what the workflows do when
-they run; [How a release is done today](#how-a-release-is-done-today) is what
-a maintainer actually does meanwhile.
+**GitHub Actions are on** (since 2026-10-28): the repository is public, so
+standard GitHub-hosted runners cost nothing. CI, E2E and Security run on every
+push to `main` and `develop` and on pull requests; the publish workflows run on
+a `v*` tag. They were off for months to save a quota that public repositories
+do not have.
 <!-- specgate:endnote -->
 
 ## What gets published
@@ -16,8 +16,8 @@ a maintainer actually does meanwhile.
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
 | `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.27.4** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.27.4** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled between releases; newest image **0.27.4**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **0.27.4** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **0.27.4**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -157,9 +157,8 @@ the CLI supports, so getting this backwards fails CI rather than users.
 
 ## How a release is done today
 
-With Actions switched off, nothing above runs by itself, so the maintainer
-runs the gate and switches on the publish workflows for exactly one tag. This
-is how 0.19.1 shipped:
+CI runs the gate on the release branch's pull request; the maintainer may run
+it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
 1. **Run everything the workflows would**, on the release branch:
 
@@ -172,29 +171,25 @@ is how 0.19.1 shipped:
    ```
 
 2. **Changelog, version, recordings** — steps 1–3 of
-   [Cutting a release](#cutting-a-release). Say in the pull request that CI did
-   not run and what was run instead.
+   [Cutting a release](#cutting-a-release).
 3. **`develop`, then `main`** — merge into `develop`, open the
    `develop → main` pull request, then fast-forward `main` to that exact
    commit with `git push origin "${R}:refs/heads/main"` (an admin bypass: only a commit step 1 ran).
-4. **Publish** — enable the publish workflows, tag, push the tag. All three
-   (`publish-npm.yml`, `publish-github-packages.yml`, `publish-docker.yml`)
-   trigger on the same `v*` tag:
+4. **Publish** — tag, push the tag. All three (`publish-npm.yml`,
+   `publish-github-packages.yml`, `publish-docker.yml`) trigger on it:
 
    ```bash
-   for f in publish-npm publish-github-packages publish-docker; do gh workflow enable $f.yml; done
    git tag -a vX.Y.Z <release-sha> -m "vX.Y.Z"
    git push origin vX.Y.Z
    ```
 
    The tag runs the E2E journeys on Linux, macOS and Windows, then
    `test:all`, then publishes with provenance.
-5. **Check the registry**, then switch the workflow off again:
+5. **Check the registry:**
 
    ```bash
    npm view @rsaglobaltech/specgate dist-tags     # latest: X.Y.Z
    npx @rsaglobaltech/specgate@X.Y.Z --version
-   for f in publish-npm publish-github-packages publish-docker; do gh workflow disable $f.yml; done
    ```
 
    Only npm gates on the E2E (Windows included): 0.19.0 failed it after the

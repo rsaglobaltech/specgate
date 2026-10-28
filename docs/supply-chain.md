@@ -173,16 +173,9 @@ with a publish token in scope, which is why the repository's workflows run
 `npm audit` and CodeQL, Dependabot watches the tree, and npm releases carry
 [provenance](https://docs.npmjs.com/generating-provenance-statements).
 
-<!-- specgate:note -->
-**Today those workflows are switched off.** GitHub Actions are disabled on the
-`rsaglobaltech` organisation, except the one that publishes this site, so the
-checks below run when a maintainer runs them locally or enables the workflow
-for a release — see [Releases & deployment](release-process.md#how-a-release-is-done-today).
-<!-- specgate:endnote -->
-
 ### SBOM
 
-With its workflow enabled, a CycloneDX SBOM is generated on every push, pull
+A CycloneDX SBOM is generated on every push, pull
 request and weekly schedule, and retained for 90 days as the `sbom-cyclonedx`
 artifact — so an audit can ask "what was in the tree that day" without
 reconstructing a historical dependency graph. Locally:
