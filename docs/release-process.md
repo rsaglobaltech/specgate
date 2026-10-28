@@ -198,10 +198,7 @@ is how 0.19.1 shipped:
    ```
 
    Only npm gates on the E2E (Windows included): 0.19.0 failed it after the
-   other two published, so it shipped as 0.19.1 — a published tag is never rebuilt.
-   0.27.0 went the same way: a Docker check passed in WSL, whose uid is the
-   image's own user, and failed on the runner's uid 1001; only its image
-   reached ghcr.io, and it shipped as 0.27.1.
+   other two published, so it shipped as 0.19.1 (0.27.0 too, as 0.27.1) — a published tag is never rebuilt.
 
 6. **Release notes** — `gh release create vX.Y.Z --notes-file <changelog entry>`.
 
