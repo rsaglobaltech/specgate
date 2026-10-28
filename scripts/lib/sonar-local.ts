@@ -153,7 +153,7 @@ export function analysisToken(
 }
 
 /** A line in the project's .gitignore, added once. */
-function ensureIgnored(projectDir: string, entry: string): void {
+export function ensureIgnored(projectDir: string, entry: string): void {
   const file = path.join(projectDir, ".gitignore");
   const text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
   if (!text.split(/\r?\n/).includes(entry)) {

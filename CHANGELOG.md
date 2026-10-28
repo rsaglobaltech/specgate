@@ -9,6 +9,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A vulnerable dependency of a Maven project fails the gate again** (REQ-241, REQ-258): since 0.27.3 the findings in files git ignores were left out of every check, and osv-scanner points each finding at the bill of materials Maven writes in `target/`, so the dependency scan reported 18 known vulnerabilities and the gate counted none. Ignored files are now left out only for a check judged on the change (`scope: diff`).
+- **A quality run leaves no untracked file** (REQ-258): `quality init` adds `.specgate/quality/`, where each check writes its reports, to `.gitignore`; the baseline stays outside it, to be committed.
+
 ## [0.27.5] — 2026-10-28
 
 Specgate on Windows, after the fourth truck-flote run and its first CI on GitHub: commands written as `./name` run in cmd.exe, Docker counts only with Linux containers, and `check` leaves the working tree clean.

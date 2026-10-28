@@ -188,6 +188,7 @@
 | REQ-257 | SCN-257a | `features/brief-cards/REQ-257.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
 | REQ-255 | SCN-255a | `features/daily-surface/REQ-255.feature` | - | - | - | - | - | tests/unit/shell-command.test.ts | Implemented |
 | REQ-256 | SCN-256a | `features/daily-surface/REQ-256.feature` | - | - | - | - | - | tests/unit/pet.test.ts | Implemented |
+| REQ-258 | SCN-258a | `features/quality/REQ-258.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

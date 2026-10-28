@@ -200,6 +200,28 @@ test("REQ-235 SCN-235b: the changed files of one folder", () => {
   );
 });
 
+// ── REQ-258 ─────────────────────────────────────────────────────────────────
+
+test("REQ-258 SCN-258a: a run after init", () => {
+  const dir = tmp();
+  w(dir, "package.json", "{}");
+  w(dir, ".gitignore", "node_modules/\n");
+  assert.equal(sg(dir, "quality", "init").status, 0);
+  assert.equal(sg(dir, "quality", "init", "--force").status, 0, "a second init adds nothing");
+  const ignore = fs.readFileSync(path.join(dir, ".gitignore"), "utf8");
+  assert.equal(
+    ignore.split("\n").filter((l: string) => l === ".specgate/quality/").length,
+    1,
+    ignore
+  );
+  git(dir, "init", "-q");
+  w(dir, ".specgate/quality/osv.sarif", "{}");
+  w(dir, ".specgate/quality-baseline.json", "{}");
+  const status = git(dir, "status", "--porcelain", "--untracked-files=all").stdout;
+  assert.doesNotMatch(status, /quality\/osv\.sarif/);
+  assert.match(status, /quality-baseline\.json/, "the baseline is to be committed");
+});
+
 // ── REQ-250 ─────────────────────────────────────────────────────────────────
 
 test("REQ-250 SCN-250a: a Spring Boot API whose group is eu.truckflote", () => {

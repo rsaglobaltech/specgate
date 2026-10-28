@@ -202,9 +202,9 @@ export function ignoredByGit(projectDir: string, paths: string[]): Set<string> {
 }
 
 /**
- * Every finding of a check's SARIF, or null when it wrote none. A finding in
- * a file git ignores (REQ-241) — a development `.env.local` — is never part
- * of a change or of the repository, so it is left out.
+ * Every finding of a check's SARIF, or null when it wrote none. For a check
+ * judged on the change, a finding in a file git ignores (REQ-241) — a
+ * development `.env.local` — is never part of it, so it is left out.
  */
 export function sarifFindings(projectDir: string, check: QualityCheck): Finding[] | null {
   if (!check.sarif) return null;
@@ -216,6 +216,11 @@ export function sarifFindings(projectDir: string, check: QualityCheck): Finding[
     linesOf(projectDir),
     repositoryPath(projectDir)
   );
+  // Only a check judged on the change: a repository-wide one reads generated
+  // files on purpose — osv-scanner points every finding at the bill of
+  // materials in target/, and leaving those out let no vulnerable dependency
+  // fail the gate (truck-flote, S44).
+  if (check.scope !== "diff") return findings;
   const ignored = ignoredByGit(projectDir, [...new Set(findings.map((f) => f.path))]);
   return ignored.size ? findings.filter((f) => !ignored.has(f.path)) : findings;
 }
