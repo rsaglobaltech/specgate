@@ -814,10 +814,12 @@ export function studioAppPage(projectName: string, token = ""): string {
 
   // ── Build (REQ-208, REQ-209, REQ-211) ───────────────────────────────────
   var picked = {};
+  // REQ-275: Programa until the gate starts, Prueba for the specification,
+  // architecture and tests, Revisa la calidad for a quality check, Guarda at the merge.
   function stageOf(r){
-    var gates = r.steps.filter(function(e){ return e.type === "gate" || e.type === "merge"; });
+    var gates = r.steps.filter(function(e){ return e.type === "gate" || e.type === "gate-start" || e.type === "merge"; });
     if (r.steps.some(function(e){ return e.type === "merge"; })) return 3;
-    if (gates.some(function(e){ return String(e.stage || "").indexOf("architecture") >= 0; })) return 2;
+    if (gates.some(function(e){ return String(e.stage || "").indexOf("quality:") === 0; })) return 2;
     if (gates.length) return 1;
     return 0;
   }
@@ -836,6 +838,7 @@ export function studioAppPage(projectName: string, token = ""): string {
         d.append(bar, el("span", i === at ? "" : "muted", name)); stg.appendChild(d);
       });
       rc.appendChild(stg);
+      if (cur.running) rc.appendChild(el("p", "small muted mono", cur.running.stage + " · " + Math.max(0, Math.round((Date.now() / 1000 - cur.running.since) / 60)) + " min"));
       var said = cur.steps.filter(function(e){ return e.type === "message"; })[0];
       if (said) { var p0 = el("p", "small", String(said.text || "")); p0.style.padding = "10px 12px"; p0.style.background = "var(--soft)"; p0.style.borderRadius = "6px"; rc.appendChild(p0); }
       var acts = el("div"); flex(acts);

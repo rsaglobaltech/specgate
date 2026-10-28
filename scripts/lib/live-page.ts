@@ -318,6 +318,7 @@ export function livePage(projectName: string, token = ""): string {
       var card = el("div", "now"); card.appendChild(jobBtn(cur, sel, "attempt " + cur.attempt + " · " + cur.phase + " · " + dur(elapsed(cur))));
       var kv = el("dl", "kv");
       var add = function(k, v){ var dd = el("dd"); if (typeof v === "string") dd.textContent = v; else dd.appendChild(v); kv.append(el("dt", "", k), dd); };
+      if (cur.running) add("Running", cur.running.stage + " · " + dur(now() - cur.running.since));
       add("Model", cur.agent ? shortModel(cur.agent.model) : "not reported");
       add("Context", ctxBar(cur.usage));
       add("Output", cur.usage ? kt(cur.usage.output) + " tokens" : "—");
@@ -453,7 +454,7 @@ export function livePage(projectName: string, token = ""): string {
   function steps(r){
     var ol = $("pipeline");
     if (!r) { ol.replaceChildren(el("li", "empty", "Each requirement opens here as the harness works on it.")); return; }
-    var events = r.steps.slice().reverse(), firstGate = events.filter(function(e){ return e.type === "gate"; })[0];
+    var events = r.steps.slice().reverse(), firstGate = events.filter(function(e){ return e.type === "gate" || e.type === "gate-start"; })[0];
     var rows = [], seen = {Specification:false, Architecture:false, Tests:false, Merge:false};
     var agentEnd = firstGate ? Number(firstGate.t) : (r.state === "running" ? now() : r.updated);
     rows.push({name:"Agent", state: firstGate ? "pass" : r.state === "running" ? "running" : r.state, d: dur(agentEnd - r.started), log: !firstGate});
@@ -463,11 +464,16 @@ export function livePage(projectName: string, token = ""): string {
       var stage = e.type === "merge" ? "merge into " + (e.into || "HEAD") : String(e.stage || "");
       var kind = e.type === "merge" || stage.indexOf("post-merge") === 0 ? "Merge" : stage.indexOf("validate") >= 0 ? "Specification" : stage.indexOf("architecture") >= 0 ? "Architecture" : "Tests";
       seen[kind] = true;
-      rows.push({name:stage, mono:true, state: e.type === "merge" || e.result === "pass" ? "pass" : "fail", d: dur(Number(e.t) - prevT)});
+      rows.push({name:stage, mono:true, state: e.type === "merge" || e.result === "pass" ? "pass" : "fail", d: e.ms !== undefined ? dur(Math.round(Number(e.ms) / 1000)) : dur(Number(e.t) - prevT)});
       prevT = Number(e.t);
     });
     var lastGate = events.filter(function(e){ return e.type === "gate"; }).slice(-1)[0];
-    if (r.state === "running" && firstGate && !(lastGate && lastGate.result !== "pass")) {
+    // REQ-274: the step that started and has not ended, by its name.
+    if (r.running) {
+      var rk = r.running.stage.indexOf("post-merge") === 0 ? "Merge" : r.running.stage.indexOf("validate") >= 0 ? "Specification" : r.running.stage.indexOf("architecture") >= 0 ? "Architecture" : "Tests";
+      seen[rk] = true;
+      rows.push({name:r.running.stage + (r.running.image ? "  · " + r.running.image : ""), mono:true, state:"running", d: dur(now() - r.running.since), log:true});
+    } else if (r.state === "running" && firstGate && !(lastGate && lastGate.result !== "pass")) {
       var next = ["Specification","Architecture","Tests","Merge"].filter(function(k){ return !seen[k]; })[0];
       if (next) { rows.push({name:next, state:"running", d: dur(now() - prevT), log:true}); seen[next] = true; }
     }
@@ -485,7 +491,7 @@ export function livePage(projectName: string, token = ""): string {
     var ul = el("ol", "feed"); ul.id = "feed";
     r.steps.slice(0, 40).slice().reverse().forEach(function(e){
       var li = el("li"), t = Number(e.ended || e.t) || 0, kind = e.type === "step" ? String(e.kind || "") : String(e.type || "");
-      var what = e.type === "message" ? e.text : e.type === "gate" ? (e.result === "pass" ? "passed  " : "failed  ") + e.stage
+      var what = e.type === "message" ? e.text : e.type === "gate-start" ? "started  " + e.stage : e.type === "gate" ? (e.result === "pass" ? "passed  " : "failed  ") + e.stage
         : e.type === "merge" ? "merged into " + (e.into || "HEAD") : (e.target || e.tool || "");
       if (e.added !== undefined || e.removed !== undefined) what += "  +" + (Number(e.added) || 0) + " −" + (Number(e.removed) || 0);
       li.append(el("span", "ts", stamp(t)), el("span", "k", e.type === "message" ? "agent" : kind),

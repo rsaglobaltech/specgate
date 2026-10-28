@@ -650,7 +650,62 @@ function baselineProblem(projectDir: string, running: Set<string>): string | nul
 }
 
 /** Told about each gate stage as it ends, for the event file (ADR-0037). */
-type GateReport = (stage: string, result: "pass" | "fail", extra?: Record<string, unknown>) => void;
+type GateReport = (
+  stage: string,
+  result: "start" | "pass" | "fail",
+  extra?: Record<string, unknown>
+) => void;
+
+/** "0.4 s", "12 s", "3m 05s": how long a gate step took. */
+function stepTime(ms: number): string {
+  if (ms < 10_000) return `${(ms / 1000).toFixed(1)} s`;
+  const secs = Math.round(ms / 1000);
+  if (secs < 60) return `${secs} s`;
+  return `${Math.floor(secs / 60)}m ${String(secs % 60).padStart(2, "0")}s`;
+}
+
+/**
+ * REQ-273: a gate step is an event when it starts and when it ends, and a line
+ * of the run's output each time. A check that hung for 15 minutes printed
+ * nothing and showed nothing in `/live` until it ended (truck-flote, S54).
+ */
+function gateReporter(
+  eventsFile: string,
+  requirement: string,
+  attempt: number | undefined,
+  prefix = ""
+): GateReport {
+  return (stage, result, extra) => {
+    const named = `${prefix}${stage}`;
+    // The line names the test step, not its command: what the command prints
+    // stays off a green run's output unless `--verbose` asks for it.
+    const shown = named.replace(/^((?:post-merge )?test command): [\s\S]*$/, "$1");
+    if (result === "start") {
+      appendEvent(
+        eventsFile,
+        { type: "gate-start", stage: named, ...(extra || {}) },
+        requirement,
+        attempt
+      );
+      const where =
+        extra && extra.image
+          ? ` (${extra.runner} ${extra.image})`
+          : extra && extra.runner
+            ? ` (${extra.runner})`
+            : "";
+      info(`${requirement}: started ${shown}${where}`);
+      return;
+    }
+    appendEvent(
+      eventsFile,
+      { type: "gate", stage: named, result, ...(extra || {}) },
+      requirement,
+      attempt
+    );
+    const ms = extra && typeof extra.ms === "number" ? ` in ${stepTime(extra.ms)}` : "";
+    info(`${requirement}: ${result === "pass" ? "passed" : "failed"} ${shown}${ms}`);
+  };
+}
 
 function runGate(
   worktreeDir: string,
@@ -667,6 +722,8 @@ function runGate(
   // the gate judges the attempt, not the matrix as it was before it.
   refreshDerivedMatrix(worktreeDir);
   let passHint = "";
+  report("validate --strict", "start");
+  const validateStart = Date.now();
   const validate = judged(worktreeDir, (dir, toProject) => {
     const validateArgs = [VALIDATE_SCRIPT, dir, "--strict"];
     if (req.requirement) validateArgs.push("--delivering", req.requirement);
@@ -678,7 +735,9 @@ function runGate(
     // The agent is told about its worktree, not about the copy it was judged in.
     return { ...run, stdout: toProject(run.stdout || ""), stderr: toProject(run.stderr || "") };
   });
-  report("validate --strict", validate.status === 0 ? "pass" : "fail");
+  report("validate --strict", validate.status === 0 ? "pass" : "fail", {
+    ms: Date.now() - validateStart,
+  });
   if (validate.status !== 0) {
     return {
       ok: false,
@@ -690,8 +749,10 @@ function runGate(
   // REQ-199: a requirement used on a screen needs an end-to-end test that
   // names it, when the project says where those live.
   if (settings.e2eDir && req.requirement && onScreen(worktreeDir, req.requirement)) {
+    report("e2e test", "start");
+    const e2eStart = Date.now();
     const named = e2eTestsNaming(worktreeDir, settings.e2eDir, req.requirement);
-    report("e2e test", named.length ? "pass" : "fail");
+    report("e2e test", named.length ? "pass" : "fail", { ms: Date.now() - e2eStart });
     if (named.length === 0) {
       return {
         ok: false,
@@ -707,6 +768,8 @@ function runGate(
   // and its failure goes back to the agent like any other gate failure.
   const archCmd = String(settings.archCmd || "").trim();
   if (archCmd) {
+    report(`architecture check: ${archCmd}`, "start");
+    const archStart = Date.now();
     // REQ-231: with arch_sarif, only a violation this attempt adds fails it.
     const arch = settings.archSarif
       ? archRun(worktreeDir, archCmd, settings.archSarif, "", req.requirement || "")
@@ -717,7 +780,9 @@ function runGate(
           timeout: timeoutMs,
           maxBuffer: SUBPROCESS_MAX_BUFFER,
         });
-    report(`architecture check: ${archCmd}`, arch.status === 0 ? "pass" : "fail");
+    report(`architecture check: ${archCmd}`, arch.status === 0 ? "pass" : "fail", {
+      ms: Date.now() - archStart,
+    });
     if (arch.status !== 0) {
       return {
         ok: false,
@@ -760,6 +825,8 @@ function runGate(
     // Stderr rather than inherited stdout, because `--format json` promises one
     // parseable document on stdout. Letting the test command write there is
     // precisely H18: prose and JSON sharing a stream.
+    report(`test command: ${maskCommand(resolved)}`, "start");
+    const testStart = Date.now();
     const test = spawnSync(forShell(resolved), {
       shell: true,
       cwd: worktreeDir,
@@ -768,11 +835,10 @@ function runGate(
       maxBuffer: SUBPROCESS_MAX_BUFFER,
       stdio: settings.verbose ? ["ignore", 2, 2] : undefined,
     });
-    report(
-      `test command: ${maskCommand(resolved)}`,
-      test.status === 0 ? "pass" : "fail",
-      testCounts(`${test.stdout || ""}${test.stderr || ""}`)
-    );
+    report(`test command: ${maskCommand(resolved)}`, test.status === 0 ? "pass" : "fail", {
+      ...testCounts(`${test.stdout || ""}${test.stderr || ""}`),
+      ms: Date.now() - testStart,
+    });
     if (test.status !== 0) {
       // Name the command. A gate that silently does the wrong thing — running
       // the whole suite because a filter did not apply, say — produces a
@@ -820,15 +886,14 @@ function runGate(
     const ctx = gateContext(worktreeDir, req.requirement || "", "");
     const outcomes: CheckOutcome[] = [];
     for (const stage of ["attempt", "end"] as Stage[]) {
-      for (const o of runStages(
-        worktreeDir,
-        quality,
-        [stage],
-        ctx,
-        undefined,
-        agentChecks(worktreeDir, req, settings, timeoutMs, testCmd)
-      )) {
-        outcomes.push(o);
+      // REQ-273: each check is reported as it starts and as it ends — the
+      // stage used to run every check before the first was reported.
+      const asItRuns = (check: QualityCheck, run: () => CheckOutcome): CheckOutcome => {
+        report(`quality: ${check.name}`, "start", {
+          runner: check.runner,
+          ...(check.image ? { image: check.image } : {}),
+        });
+        const o = run();
         // REQ-229: the step says what was measured, so /live shows it as it happens.
         const said = o.skipped
           ? " (not run)"
@@ -842,6 +907,17 @@ function runGate(
           ...(o.skipped ? { skipped: o.skipped } : {}),
           ...(o.measure ? { value: o.measure.value } : {}),
         });
+        return o;
+      };
+      for (const o of runStages(
+        worktreeDir,
+        quality,
+        [stage],
+        ctx,
+        asItRuns,
+        agentChecks(worktreeDir, req, settings, timeoutMs, testCmd)
+      )) {
+        outcomes.push(o);
         if (o.gate && !o.ok && !o.skipped) {
           return {
             ok: false,
@@ -1649,7 +1725,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       timeoutMs,
       req,
       { ...settings, verbose: ctx.verbose },
-      (stage, result, extra) => event({ type: "gate", stage, result, ...(extra || {}) })
+      gateReporter(eventsFile, req.requirement, attempt)
     );
     if (!gate.ok) {
       previousFailure =
@@ -2410,8 +2486,17 @@ function processRequirement(req: HarnessRequirement, ctx: RunContext): Requireme
   try {
     const setupCmd = String((ctx.settings && ctx.settings.setupCmd) || "").trim();
     if (setupCmd && !survivor) {
-      info(`${req.requirement}: setup — ${setupCmd}`);
+      const report = gateReporter(
+        eventsFileFor(ctx.projectDir || dir, req.requirement),
+        req.requirement,
+        undefined
+      );
+      report(`setup: ${setupCmd}`, "start");
+      const setupStart = Date.now();
       const setup = spawnSync(forShell(setupCmd), { cwd: dir, shell: true, encoding: "utf8" });
+      report(`setup: ${setupCmd}`, setup.status === 0 ? "pass" : "fail", {
+        ms: Date.now() - setupStart,
+      });
       if (setup.status !== 0) {
         return {
           requirement: req.requirement,
@@ -2784,13 +2869,7 @@ async function runChain(
       req,
       // The checks judged the branch already; the post-merge gate is the suite's.
       { ...ctx.settings, quality: undefined },
-      (stage, res, extra) =>
-        appendEvent(
-          eventsFile,
-          { type: "gate", stage: `post-merge ${stage}`, result: res, ...(extra || {}) },
-          req.requirement,
-          attempt
-        )
+      gateReporter(eventsFile, req.requirement, attempt, "post-merge ")
     );
     if (!gate.ok) {
       git(projectDir, ["reset", "-q", "--hard", "HEAD~1"]);

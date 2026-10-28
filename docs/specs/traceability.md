@@ -194,6 +194,9 @@
 | REQ-261 | SCN-261a | `features/brief-cards/REQ-261.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
 | REQ-262 | SCN-262a | `features/brief-cards/REQ-262.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
 | REQ-263 | SCN-263a | `features/brief-cards/REQ-263.feature` | - | - | - | - | - | tests/unit/done-refuses-undeliverable.test.ts | Implemented |
+| REQ-273 | SCN-273a | `features/live-harness/REQ-273.feature` | - | - | - | - | - | tests/unit/live-gate-steps.test.ts | Implemented |
+| REQ-274 | SCN-274a | `features/live-harness/REQ-274.feature` | - | - | - | - | - | tests/unit/live-gate-steps.test.ts | Implemented |
+| REQ-275 | SCN-275a | `features/studio/REQ-275.feature` | - | - | - | - | - | tests/unit/live-gate-steps.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
