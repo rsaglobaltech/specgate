@@ -1,5 +1,5 @@
 import * as readline from "node:readline/promises";
-import { FORJA_PACKAGE, runForja } from "./Forja";
+import { FORJA_PACKAGE, forjaCommand, forjaUnavailable, runForja } from "./Forja";
 import { mergeContract } from "../../../agents/contract-file";
 import { installDetectedAgents } from "../../../agents/detect";
 import * as fs from "node:fs";
@@ -1105,6 +1105,15 @@ export class InitProjectCommand extends BaseCommand {
       if (await asksForForja()) forjaArgs = [];
     }
     if (forjaArgs) {
+      const unavailable = forjaUnavailable(forjaCommand());
+      if (unavailable) {
+        logError(
+          `forja is not installed here, and npm cannot give ${FORJA_PACKAGE}: ${unavailable}`
+        );
+        logInfo(`Fix: npm i -g ${FORJA_PACKAGE}, or point SPECGATE_FORJA_CMD at a forja`);
+        logInfo("     you have, e.g. SPECGATE_FORJA_CMD=/path/to/forja/dist/cli.js.");
+        process.exit(2);
+      }
       logInfo("Generating the application with forja — it adopts Specgate when it installs.");
       const status = runForja(["init", ...forjaArgs], process.cwd());
       if (status === 127) {

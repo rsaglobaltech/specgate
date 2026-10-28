@@ -309,7 +309,14 @@ export class QualityCommand extends BaseCommand {
     }
     const ok = stagesPassed(outcomes, stages.includes("ci"));
     const shape = {
-      quality: { stages, outcomes: outcomes.map(({ output: _o, ...rest }) => rest) },
+      // REQ-239: the last lines a check printed, to read a failure without rerunning it.
+      quality: {
+        stages,
+        outcomes: outcomes.map(({ output, ...rest }) => ({
+          ...rest,
+          output: (output || "").split(/\r?\n/).slice(-30).join("\n"),
+        })),
+      },
     };
     if (!ok) {
       io.fail(shape, [

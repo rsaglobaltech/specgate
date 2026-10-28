@@ -9,6 +9,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Quality presets for each app of a monorepo** (REQ-235): `quality init` read only the root's build files, so forja's Spring Boot API in `apps/api` got no Java check at all. It now reads each app folder — one level down, or in `apps/`, `packages/` and `services/` — when the root has no build file of that stack, and runs its checks there (`cd apps/api && mvn …`) with their reports named from the root. One Semgrep scan carries every stack's rules, a renamed check writes its own SARIF, and `{changed_classes@<folder>}` and `{changed_src@<folder>}` keep one folder's files.
+- **forja is found, or you are told how to get it** (REQ-236): `init --forja` and `add` use `SPECGATE_FORJA_CMD`, then a `forja` on the PATH, then npx; when npm does not have the package, `init --forja` stops with how to install it instead of npm's 404. forja gets Specgate's version in `SPECGATE_VERSION`, so the project it generates depends on the Specgate that generated it.
+- **Maven dependencies are scanned from the build's own bill of materials** (REQ-237): an `sbom` check writes CycloneDX with Maven, in its image and cache, and `dependencies` runs osv-scanner (now 2.2.4) on it. osv-scanner could not resolve a Spring Boot 4 parent by itself (deps.dev did not have it, Maven Central answered 429), so it scanned 2 of 96 packages, or failed.
+- **Tests that start containers run in the gate** (REQ-238): `docker: true` gives a check the host's Docker and what Testcontainers needs to reach it; the Maven and Gradle presets set it on coverage and mutation when the build declares Testcontainers. forja's Spring Boot tests failed with "Could not find a valid Docker environment" before.
+- **`quality run --json` says why a check failed** (REQ-239): each outcome carries the last 30 lines the check printed.
+
 ## [0.27.1] — 2026-10-28
 
 0.27.0 reached ghcr.io only: its npm and GitHub Packages publish stopped on a quality check that failed on CI runners. This is that release, with the fix and the studio's new-project step working in an empty folder.
