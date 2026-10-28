@@ -277,3 +277,27 @@ The system SHALL provide a built-in check, `run: builtin:sonar`, that starts Son
 - THEN sonar fails on Discount.java:5 only, the fixture's own issues held back
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-sonar.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-227 — A second agent reviews or attacks the change as a check
+
+The system SHALL provide the built-in checks `builtin:review` — an agent reads the change against the requirement, its statement and scenarios, and answers `VERDICT: PASS` or `VERDICT: FAIL` with its reasons — and `builtin:adversary` — an agent writes one test that tries to break the change, and the project's tests run with it; each SHALL run the profile the check names (else the review or adversary profile, else the agent), inside the harness gate only, saying so when run elsewhere; each SHALL fail the attempt when it gates and its verdict is FAIL or its test breaks the work, and only be recorded when it does not; and neither SHALL change the implementer's work: the worktree is put back exactly as it was, files the agent added removed. The strict preset SHALL list the review, advisory.
+
+#### Scenario: SCN-227a — A reviewer's FAIL advises, and its edits are undone
+
+- GIVEN a review check with `gate: false` whose agent edits src/work.ts, adds a file, and answers VERDICT: FAIL
+- WHEN the harness delivers a requirement whose implementer wrote src/work.ts
+- THEN the requirement passes, the branch carries the implementer's src/work.ts and not the reviewer's file, and the run record keeps the review as failed and advisory
+
+#### Scenario: SCN-227b — An adversary that breaks the tests fails the attempt
+
+- GIVEN an adversary check with `gate: true` whose agent adds a case the tests fail on
+- WHEN the harness runs the requirement
+- THEN it fails at `quality check: adversary`, and the branch keeps the implementer's work without the adversary's file
+
+#### Scenario: SCN-227c — Outside the harness, said and skipped
+
+- GIVEN a review check
+- WHEN `specgate quality run` runs
+- THEN the check is skipped, saying it runs inside the harness only
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-agents.test.ts actor=Developer kind=functional -->

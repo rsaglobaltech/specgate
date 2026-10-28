@@ -330,6 +330,12 @@ export function presetYaml(projectDir: string, level: Level): string {
     "  #   runner: docker",
     "  #   sarif: .specgate/quality/sonar.sarif",
     "  #   timeout: 1800",
+    // REQ-227: a second agent reads the change against the requirement; it advises.
+    "  - name: review",
+    '    run: "builtin:review"',
+    "    when: end",
+    "    gate: false",
+    "    runner: local",
   ];
   const seen = new Set<string>(["commits"]);
   for (const stack of stacks.length ? stacks : (["node"] as Stack[])) {

@@ -35,6 +35,8 @@ export interface QualityCheck {
   report: { format: ReportFormat; path: string } | null;
   /** `diff`: only findings in the files a change touched count; `all`: every new one. */
   scope: "diff" | "all";
+  /** For `builtin:review` and `builtin:adversary`: the profile whose agent runs it. */
+  profile: string;
 }
 
 export interface QualityConfig {
@@ -49,7 +51,10 @@ export interface QualityConfig {
 }
 
 /** Checks Specgate runs itself, without a tool: `run: builtin:commits` (REQ-234). */
-export const BUILTINS = ["builtin:commits", "builtin:sonar"];
+export const BUILTINS = ["builtin:commits", "builtin:sonar", "builtin:review", "builtin:adversary"];
+
+/** Built-ins an agent performs: they run inside the harness only (REQ-227). */
+export const AGENT_BUILTINS = ["builtin:review", "builtin:adversary"];
 
 const STAGES: Stage[] = ["attempt", "end", "ci"];
 const RUNNERS: Runner[] = ["docker", "local", "auto"];
@@ -69,6 +74,7 @@ const CHECK_KEYS = new Set([
   "sarif",
   "report",
   "scope",
+  "profile",
 ]);
 /** The thresholds a level means when the file does not set one. */
 const LEVEL_THRESHOLDS: Record<
@@ -219,6 +225,7 @@ export function readQuality(parsed: Record<string, unknown>): {
       sarif,
       report,
       scope: scope === "all" ? "all" : "diff",
+      profile: String(c.profile ?? "").trim(),
     });
   }
   return {

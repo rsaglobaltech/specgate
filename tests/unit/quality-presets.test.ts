@@ -62,15 +62,18 @@ test("REQ-225 SCN-225a: strict for a Maven project", () => {
     "spotbugs",
     "pmd",
     "semgrep",
+    "review",
   ]);
   const text = config(dir);
   assert.match(text, /^quality: strict$/m);
   assert.match(text, /image: maven:3\.9-eclipse-temurin-17/);
-  // Every check that runs a tool runs it in Docker; commits needs no tool (REQ-234).
-  const local = [...text.matchAll(/name: (\S+)\n(?:\s+\S.*\n)*?\s+runner: local/g)].map(
-    (m) => m[1]
-  );
-  assert.deepEqual(local, ["commits"], "every check that runs a tool runs in Docker");
+  // Every check that runs a tool runs it in Docker; commits (REQ-234) and the
+  // review agent (REQ-227) run no tool.
+  const { readHarnessConfig } = require("../../packages/core/src/infrastructure/HarnessConfigFile");
+  const local = readHarnessConfig(dir)
+    .quality.checks.filter((c: { runner: string }) => c.runner !== "docker")
+    .map((c: { name: string }) => c.name);
+  assert.deepEqual(local, ["commits", "review"], "every check that runs a tool runs in Docker");
   assert.match(text, /# Mutation needs pitest-maven/);
   assert.match(text, /^ {2}# - name: mutation$/m, "mutation is written commented");
 });

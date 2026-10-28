@@ -382,11 +382,20 @@ export function ensureImage(image: string): { ok: true } | { ok: false; message:
 const tail = (text: string, lines = 60) => text.trim().split("\n").slice(-lines).join("\n");
 
 /** Run one check and say how it ended. */
+/** What the harness lends the checks only it can run: an agent reviewing or attacking the work. */
+export type AgentChecks = Partial<
+  Record<
+    "builtin:review" | "builtin:adversary",
+    (check: QualityCheck) => { ok: boolean; output: string }
+  >
+>;
+
 export function runCheck(
   projectDir: string,
   check: QualityCheck,
   ctx: CheckContext,
-  thresholds: Thresholds = { diffCoverage: null, mutationScore: null }
+  thresholds: Thresholds = { diffCoverage: null, mutationScore: null },
+  agents: AgentChecks = {}
 ): CheckOutcome {
   const base: CheckOutcome = {
     name: check.name,
@@ -400,6 +409,25 @@ export function runCheck(
     exit: null,
     output: "",
   };
+  if (check.run === "builtin:review" || check.run === "builtin:adversary") {
+    const perform = agents[check.run];
+    if (!perform) {
+      return {
+        ...base,
+        skipped: "an agent check runs inside the harness only (specgate harness run).",
+      };
+    }
+    const started = Date.now();
+    const done = perform(check);
+    return {
+      ...base,
+      runner: "local",
+      ms: Date.now() - started,
+      exit: done.ok ? 0 : 1,
+      ok: done.ok,
+      output: done.output,
+    };
+  }
   if (check.run === "builtin:commits") {
     const started = Date.now();
     const c = commitsOutcome(projectDir, ctx.base, thresholds);
@@ -544,16 +572,23 @@ export function runStages(
   config: QualityConfig,
   stages: Stage[],
   ctx: CheckContext,
-  onEach?: (check: QualityCheck, run: () => CheckOutcome) => CheckOutcome
+  onEach?: (check: QualityCheck, run: () => CheckOutcome) => CheckOutcome,
+  agents: AgentChecks = {}
 ): CheckOutcome[] {
   return checksFor(config, stages).map((check) => {
     const run = () =>
-      runCheck(projectDir, check, ctx, {
-        diffCoverage: config.diffCoverage,
-        mutationScore: config.mutationScore,
-        commitTypes: config.commitTypes,
-        ci: stages.includes("ci"),
-      });
+      runCheck(
+        projectDir,
+        check,
+        ctx,
+        {
+          diffCoverage: config.diffCoverage,
+          mutationScore: config.mutationScore,
+          commitTypes: config.commitTypes,
+          ci: stages.includes("ci"),
+        },
+        agents
+      );
     return onEach ? onEach(check, run) : run();
   });
 }
