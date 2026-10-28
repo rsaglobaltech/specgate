@@ -201,6 +201,37 @@ test("REQ-232 SCN-232a: a check run as the person has a home it can write", () =
   else assert.ok(!args.includes("HOME=/tmp"), "the image's own user keeps its home");
 });
 
+// ── REQ-238 ─────────────────────────────────────────────────────────────────
+
+test("REQ-238 SCN-238a: a check that reaches Docker, and one that does not", () => {
+  const { config } = readQuality({
+    checks: [
+      { name: "coverage", run: "mvn test", runner: "docker", image: "maven:3.9", docker: true },
+      { name: "pmd", run: "mvn pmd:pmd", runner: "docker", image: "maven:3.9" },
+    ],
+  });
+  const withDocker = quality().dockerArgs(config.checks[0], "/work/app", "mvn test", "c1");
+  assert.ok(withDocker.includes("/var/run/docker.sock:/var/run/docker.sock"), withDocker.join(" "));
+  assert.ok(withDocker.includes("TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal"));
+  assert.ok(withDocker.includes("host.docker.internal:host-gateway"));
+  const without = quality().dockerArgs(config.checks[1], "/work/app", "mvn pmd:pmd", "c2");
+  assert.ok(!without.some((a: string) => a.includes("docker.sock")), without.join(" "));
+});
+
+// ── REQ-239 ─────────────────────────────────────────────────────────────────
+
+test("REQ-239 SCN-239a: the JSON says why a check failed", () => {
+  const dir = project(
+    ["checks:", "  - name: noisy", '    run: "node fail.js"', "    runner: local", ""].join("\n")
+  );
+  fs.writeFileSync(path.join(dir, "fail.js"), "console.log('boom'); process.exit(1);");
+  const r = cli(dir, "quality", "run", "--json");
+  assert.notEqual(r.status, 0);
+  const outcome = json(r).quality.outcomes[0];
+  assert.equal(outcome.ok, false);
+  assert.match(outcome.output, /boom/);
+});
+
 const docker = quality().dockerAvailable();
 
 test(

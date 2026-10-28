@@ -17,7 +17,7 @@ export type Stack = "maven" | "gradle" | "node";
 export const IMAGES = {
   gitleaks: "ghcr.io/gitleaks/gitleaks:v8.24.3",
   semgrep: "semgrep/semgrep:1.99.0",
-  osv: "ghcr.io/google/osv-scanner:v2.0.2",
+  osv: "ghcr.io/google/osv-scanner:v2.2.4",
   node: "node:22",
 };
 
@@ -29,14 +29,61 @@ const read = (dir: string, rel: string) => {
   }
 };
 
+/** A stack and the folder its build file is in, relative to the root ("" for the root). */
+export interface App {
+  stack: Stack;
+  dir: string;
+}
+
+const STACKS: Stack[] = ["maven", "gradle", "node"];
+const BUILD_FILES: Record<Stack, string[]> = {
+  maven: ["pom.xml"],
+  gradle: ["build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts"],
+  node: ["package.json"],
+};
+const NOT_APPS = new Set(["node_modules", "target", "build", "dist", "docs", "features", "infra"]);
+
+/** Folders one level down, and in apps/, packages/ and services/: where a monorepo keeps its apps. */
+function appFolders(projectDir: string): string[] {
+  const children = (rel: string) => {
+    try {
+      return fs
+        .readdirSync(path.join(projectDir, rel), { withFileTypes: true })
+        .filter((e) => e.isDirectory() && !e.name.startsWith(".") && !NOT_APPS.has(e.name))
+        .map((e) => (rel ? `${rel}/${e.name}` : e.name))
+        .sort();
+    } catch {
+      return [];
+    }
+  };
+  const top = children("");
+  const nested = ["apps", "packages", "services"].flatMap((d) =>
+    top.includes(d) ? children(d) : []
+  );
+  return [...top, ...nested];
+}
+
+/**
+ * Each stack with the folder it is built in (REQ-235). The root wins: a stack
+ * whose build file is at the root covers the whole repository (a Maven
+ * reactor, npm workspaces); otherwise each folder with that build file is an
+ * app of its own, such as forja's `apps/api`.
+ */
+export function detectApps(projectDir: string): App[] {
+  const has = (rel: string) => fs.existsSync(path.join(projectDir, rel));
+  const out: App[] = [];
+  const folders = appFolders(projectDir);
+  for (const stack of STACKS) {
+    const at = (dir: string) => BUILD_FILES[stack].some((f) => has(dir ? `${dir}/${f}` : f));
+    if (at("")) out.push({ stack, dir: "" });
+    else for (const dir of folders) if (at(dir)) out.push({ stack, dir });
+  }
+  return out;
+}
+
 /** The stacks a project's build files give away, in the order presets are written. */
 export function detectStacks(projectDir: string): Stack[] {
-  const has = (rel: string) => fs.existsSync(path.join(projectDir, rel));
-  const out: Stack[] = [];
-  if (has("pom.xml")) out.push("maven");
-  if (has("build.gradle") || has("build.gradle.kts")) out.push("gradle");
-  if (has("package.json")) out.push("node");
-  return out;
+  return [...new Set(detectApps(projectDir).map((a) => a.stack))];
 }
 
 /** The JDK a Java build declares (release, source or java.version), 21 when it says none. */
@@ -78,6 +125,10 @@ interface PresetCheck {
   volumes?: string[];
   gate?: boolean;
   timeout?: number;
+  /** The host's Docker, for tests that start containers (REQ-238). */
+  docker?: boolean;
+  /** The earlier check whose output it reads (REQ-240). */
+  needs?: string;
   /** Written commented, with why, when the build lacks what it needs. */
   missing?: string;
   scope?: "diff" | "all";
@@ -99,17 +150,28 @@ function render(c: PresetCheck): string[] {
     ...(c.report ? [`    report: ${c.report}`] : []),
     ...(c.scope ? [`    scope: ${c.scope}`] : []),
     ...(c.timeout ? [`    timeout: ${c.timeout}`] : []),
+    ...(c.docker ? ["    docker: true"] : []),
+    ...(c.needs ? [`    needs: ${c.needs}`] : []),
   ];
   return c.missing ? [`  # ${c.missing}`, ...lines.map((l) => `  #${l.slice(1)}`)] : lines;
 }
 
-/** The secrets and dependency checks every stack shares. */
-function shared(projectDir: string, level: Level, depsLock: string): PresetCheck[] {
+/**
+ * The secrets and dependency checks every stack shares; `depsLock` is from the
+ * root, and `generated` when a check before it writes it (Maven's bill of materials).
+ */
+function shared(
+  projectDir: string,
+  level: Level,
+  depsLock: string,
+  generated = false
+): PresetCheck[] {
   // osv-scanner reads a lockfile (or pom.xml); without one it finds nothing to
   // scan and writes no SARIF, so the check would fail on every run.
-  const lockMissing = !fs.existsSync(path.join(projectDir, depsLock))
-    ? `Dependencies need ${depsLock}, which this project does not have yet; once it does, uncomment:`
-    : undefined;
+  const lockMissing =
+    !generated && !fs.existsSync(path.join(projectDir, depsLock))
+      ? `Dependencies need ${depsLock}, which this project does not have yet; once it does, uncomment:`
+      : undefined;
   return [
     {
       name: "secrets",
@@ -131,56 +193,103 @@ function shared(projectDir: string, level: Level, depsLock: string): PresetCheck
   ];
 }
 
-function maven(projectDir: string, level: Level): PresetCheck[] {
-  const pom = read(projectDir, "pom.xml");
-  const image = `maven:3.9-eclipse-temurin-${javaVersion(projectDir)}`;
+/** A path of an app, from the root. */
+const inApp = (dir: string, rel: string) => (dir ? `${dir}/${rel}` : rel);
+/** A command of an app, run in its folder. */
+const cdApp = (dir: string, cmd: string) => (dir ? `cd ${dir} && ${cmd}` : cmd);
+
+/** Semgrep's rules for a stack: one scan carries every stack's (REQ-235). */
+const SEMGREP_RULES: Record<Stack, string[]> = {
+  maven: ["p/java"],
+  gradle: ["p/java"],
+  node: ["p/typescript", "p/react"],
+};
+
+function semgrep(rules: string[]): PresetCheck {
+  return {
+    name: "semgrep",
+    run: `semgrep scan ${rules.map((r) => `--config ${r}`).join(" ")} --sarif --output .specgate/quality/semgrep.sarif --metrics off --quiet`,
+    when: "end",
+    image: IMAGES.semgrep,
+    sarif: ".specgate/quality/semgrep.sarif",
+  };
+}
+
+function maven(projectDir: string, level: Level, dir = ""): PresetCheck[] {
+  const appDir = path.join(projectDir, dir);
+  const pom = read(appDir, "pom.xml");
+  const image = `maven:3.9-eclipse-temurin-${javaVersion(appDir)}`;
   const m2 = ["specgate-m2:/root/.m2"];
   const mvn = "mvn -B -q";
+  // REQ-238: the tests start containers; they need the host's Docker.
+  const testcontainers = /org\.testcontainers/.test(pom);
+  // REQ-237: Maven resolves what a parent POM or a BOM manages, with its own
+  // repositories and cache; osv-scanner then reads that bill of materials.
+  const [secrets, dependencies] = shared(projectDir, level, inApp(dir, "target/bom.json"), true);
   const checks: PresetCheck[] = [
-    ...shared(projectDir, level, "pom.xml"),
+    secrets,
+    {
+      name: "sbom",
+      run: cdApp(
+        dir,
+        `${mvn} org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom -DoutputFormat=json -DoutputName=bom`
+      ),
+      when: dependencies.when,
+      image,
+      volumes: m2,
+    },
+    { ...dependencies, needs: "sbom" },
     {
       name: "coverage",
-      run: `${mvn} org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.12:report`,
+      run: cdApp(
+        dir,
+        `${mvn} org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.12:report`
+      ),
       when: "attempt",
       image,
       volumes: m2,
-      report: "jacoco:target/site/jacoco/jacoco.xml",
+      report: `jacoco:${inApp(dir, "target/site/jacoco/jacoco.xml")}`,
       timeout: 1800,
+      docker: testcontainers,
     },
     {
       name: "spotbugs",
-      run: `${mvn} compile com.github.spotbugs:spotbugs-maven-plugin:4.8.6.6:spotbugs -Dspotbugs.sarifOutput=true`,
+      run: cdApp(
+        dir,
+        `${mvn} compile com.github.spotbugs:spotbugs-maven-plugin:4.8.6.6:spotbugs -Dspotbugs.sarifOutput=true`
+      ),
       when: level === "strict" ? "attempt" : "end",
       image,
       volumes: m2,
-      sarif: "target/spotbugsSarif.json",
+      sarif: inApp(dir, "target/spotbugsSarif.json"),
     },
   ];
   if (level === "strict") {
     checks.push(
       {
         name: "pmd",
-        run: `${mvn} org.apache.maven.plugins:maven-pmd-plugin:3.26.0:pmd -Dformat=net.sourceforge.pmd.renderers.SarifRenderer -DlinkXRef=false`,
+        run: cdApp(
+          dir,
+          `${mvn} org.apache.maven.plugins:maven-pmd-plugin:3.26.0:pmd -Dformat=net.sourceforge.pmd.renderers.SarifRenderer -DlinkXRef=false`
+        ),
         when: "attempt",
         image,
         volumes: m2,
-        sarif: "target/pmd.sarif.json",
+        sarif: inApp(dir, "target/pmd.sarif.json"),
       },
-      {
-        name: "semgrep",
-        run: "semgrep scan --config p/java --sarif --output .specgate/quality/semgrep.sarif --metrics off --quiet",
-        when: "end",
-        image: IMAGES.semgrep,
-        sarif: ".specgate/quality/semgrep.sarif",
-      },
+      semgrep(SEMGREP_RULES.maven),
       {
         name: "mutation",
-        run: `${mvn} test-compile org.pitest:pitest-maven:mutationCoverage -DtargetClasses={changed_classes} -DoutputFormats=XML -DtimestampedReports=false`,
+        run: cdApp(
+          dir,
+          `${mvn} test-compile org.pitest:pitest-maven:mutationCoverage -DtargetClasses=${dir ? `{changed_classes@${dir}}` : "{changed_classes}"} -DoutputFormats=XML -DtimestampedReports=false`
+        ),
         when: "end",
         image,
         volumes: m2,
-        report: "pit:target/pit-reports/mutations.xml",
+        report: `pit:${inApp(dir, "target/pit-reports/mutations.xml")}`,
         timeout: 3600,
+        docker: testcontainers,
         missing: /pitest-maven/.test(pom)
           ? undefined
           : "Mutation needs pitest-maven with pitest-junit5-plugin declared in pom.xml (JUnit 5 cannot be added from the command line); add them and uncomment:",
@@ -190,60 +299,58 @@ function maven(projectDir: string, level: Level): PresetCheck[] {
   return checks;
 }
 
-function gradle(projectDir: string, level: Level): PresetCheck[] {
-  const build = `${read(projectDir, "build.gradle")}\n${read(projectDir, "build.gradle.kts")}`;
+function gradle(projectDir: string, level: Level, dir = ""): PresetCheck[] {
+  const appDir = path.join(projectDir, dir);
+  const build = `${read(appDir, "build.gradle")}\n${read(appDir, "build.gradle.kts")}`;
   // osv-scanner reads Gradle's lockfile, not the build script: dependency locking must be on.
-  const lock = "gradle.lockfile";
-  const image = `gradle:8-jdk${javaVersion(projectDir)}`;
+  const lock = inApp(dir, "gradle.lockfile");
+  const image = `gradle:8-jdk${javaVersion(appDir)}`;
   const cache = ["specgate-gradle:/home/gradle/.gradle"];
   const checks: PresetCheck[] = [
     ...shared(projectDir, level, lock),
     {
       name: "coverage",
-      run: "gradle --no-daemon -q test jacocoTestReport",
+      run: cdApp(dir, "gradle --no-daemon -q test jacocoTestReport"),
       when: "attempt",
       image,
       volumes: cache,
-      report: "jacoco:build/reports/jacoco/test/jacocoTestReport.xml",
+      report: `jacoco:${inApp(dir, "build/reports/jacoco/test/jacocoTestReport.xml")}`,
+      docker: /org\.testcontainers/.test(build),
       timeout: 1800,
       missing: /\bjacoco\b/.test(build)
         ? undefined
         : "Coverage needs the jacoco plugin applied, with reports { xml.required = true }; add it and uncomment:",
     },
   ];
-  if (level === "strict") {
-    checks.push({
-      name: "semgrep",
-      run: "semgrep scan --config p/java --sarif --output .specgate/quality/semgrep.sarif --metrics off --quiet",
-      when: "end",
-      image: IMAGES.semgrep,
-      sarif: ".specgate/quality/semgrep.sarif",
-    });
-  }
+  if (level === "strict") checks.push(semgrep(SEMGREP_RULES.gradle));
   return checks;
 }
 
-function node(projectDir: string, level: Level): PresetCheck[] {
+function node(projectDir: string, level: Level, dir = ""): PresetCheck[] {
+  const appDir = path.join(projectDir, dir);
   let pkg: { devDependencies?: Record<string, string>; dependencies?: Record<string, string> } = {};
   try {
-    pkg = JSON.parse(read(projectDir, "package.json") || "{}");
+    pkg = JSON.parse(read(appDir, "package.json") || "{}");
   } catch {
     pkg = {};
   }
   const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
-  const { lock, install } = nodeInstall(projectDir);
+  const { lock, install } = nodeInstall(appDir);
   const slug =
     path
-      .basename(projectDir)
+      .basename(appDir)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "project";
   // node_modules lives in a volume: the host's may hold another platform's binaries.
-  const volumes = [`specgate-nm-${slug}:/src/node_modules`, "specgate-npm:/root/.npm"];
-  const inNode = (cmd: string) => `${install} && ${cmd}`;
-  const tsconfig = fs.existsSync(path.join(projectDir, "tsconfig.json"));
+  const volumes = [
+    `specgate-nm-${slug}:/src/${inApp(dir, "node_modules")}`,
+    "specgate-npm:/root/.npm",
+  ];
+  const inNode = (cmd: string) => cdApp(dir, `${install} && ${cmd}`);
+  const tsconfig = fs.existsSync(path.join(appDir, "tsconfig.json"));
   const runner = deps.vitest ? "vitest" : deps.jest ? "jest" : "";
-  const checks: PresetCheck[] = [...shared(projectDir, level, lock)];
+  const checks: PresetCheck[] = [...shared(projectDir, level, inApp(dir, lock))];
   if (tsconfig) {
     checks.push({
       name: "types",
@@ -272,7 +379,7 @@ function node(projectDir: string, level: Level): PresetCheck[] {
     when: "attempt",
     image: IMAGES.node,
     volumes,
-    report: "lcov:coverage/lcov.info",
+    report: `lcov:${inApp(dir, "coverage/lcov.info")}`,
     timeout: 1800,
     missing: runner
       ? runner === "vitest" && !deps["@vitest/coverage-v8"] && !deps["@vitest/coverage-istanbul"]
@@ -281,34 +388,30 @@ function node(projectDir: string, level: Level): PresetCheck[] {
       : "Coverage needs Vitest or Jest; with one installed, uncomment:",
   });
   if (level === "strict") {
-    checks.push(
-      {
-        name: "semgrep",
-        run: "semgrep scan --config p/typescript --config p/react --sarif --output .specgate/quality/semgrep.sarif --metrics off --quiet",
-        when: "end",
-        image: IMAGES.semgrep,
-        sarif: ".specgate/quality/semgrep.sarif",
-      },
-      {
-        name: "mutation",
-        run: inNode("npx --no-install stryker run --mutate {changed_src} --reporters json"),
-        when: "end",
-        image: IMAGES.node,
-        volumes,
-        report: "stryker:reports/mutation/mutation.json",
-        timeout: 3600,
-        missing: deps["@stryker-mutator/core"]
-          ? undefined
-          : "Mutation needs @stryker-mutator/core and its runner in devDependencies; add them and uncomment:",
-      }
-    );
+    checks.push(semgrep(SEMGREP_RULES.node), {
+      name: "mutation",
+      run: inNode(
+        `npx --no-install stryker run --mutate ${dir ? `{changed_src@${dir}}` : "{changed_src}"} --reporters json`
+      ),
+      when: "end",
+      image: IMAGES.node,
+      volumes,
+      report: `stryker:${inApp(dir, "reports/mutation/mutation.json")}`,
+      timeout: 3600,
+      missing: deps["@stryker-mutator/core"]
+        ? undefined
+        : "Mutation needs @stryker-mutator/core and its runner in devDependencies; add them and uncomment:",
+    });
   }
   return checks;
 }
 
 /** The `quality:` block a level writes for a project, as YAML lines. */
 export function presetYaml(projectDir: string, level: Level): string {
-  const stacks = detectStacks(projectDir);
+  const found = detectApps(projectDir);
+  const apps: App[] = found.length ? found : [{ stack: "node", dir: "" }];
+  // One Semgrep scan of the repository, with the rules of every stack in it.
+  const rules = [...new Set(apps.flatMap((a) => SEMGREP_RULES[a.stack]))];
   const lines = [
     "# Quality and security checks (ADR-0040), written by `specgate quality init`.",
     "# Every check runs in Docker, with tools that need no account. Take the",
@@ -338,19 +441,28 @@ export function presetYaml(projectDir: string, level: Level): string {
     "    runner: local",
   ];
   const seen = new Set<string>(["commits"]);
-  for (const stack of stacks.length ? stacks : (["node"] as Stack[])) {
+  for (const { stack, dir } of apps) {
     const checks =
       stack === "maven"
-        ? maven(projectDir, level)
+        ? maven(projectDir, level, dir)
         : stack === "gradle"
-          ? gradle(projectDir, level)
-          : node(projectDir, level);
+          ? gradle(projectDir, level, dir)
+          : node(projectDir, level, dir);
     for (const c of checks) {
-      // One secrets scan for the whole repository; per-stack checks get the stack's name.
-      const name = seen.has(c.name) ? `${c.name}-${stack}` : c.name;
+      // One secrets and one Semgrep scan for the whole repository; per-app
+      // checks get the stack's name, then the folder's when a stack repeats.
       if (seen.has(c.name) && (c.name === "secrets" || c.name === "semgrep")) continue;
+      let name = c.name;
+      if (seen.has(name)) name = `${c.name}-${stack}`;
+      if (seen.has(name) && dir) name = `${c.name}-${path.basename(dir)}`;
       seen.add(name);
-      lines.push(...render({ ...c, name }));
+      let check = c.name === "semgrep" ? { ...semgrep(rules), name } : { ...c, name };
+      // A renamed check writes its own report: `osv.sarif` → `dependencies-node.sarif`.
+      if (name !== c.name && check.sarif && check.sarif.startsWith(".specgate/quality/")) {
+        const own = `.specgate/quality/${name}.sarif`;
+        check = { ...check, run: check.run.split(check.sarif).join(own), sarif: own };
+      }
+      lines.push(...render(check));
     }
   }
   if (level === "strict") lines.push(...sonar);

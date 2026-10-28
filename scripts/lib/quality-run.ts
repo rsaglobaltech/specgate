@@ -362,6 +362,20 @@ export function dockerArgs(
     ...(check.network ? [] : ["--network", "none"]),
     ...check.env.flatMap((e) => ["-e", e]),
     ...check.volumes.flatMap((v) => ["-v", v]),
+    // REQ-238: tests that start containers (Testcontainers) reach the host's
+    // Docker, and the containers they start through the host's address.
+    ...(check.docker
+      ? [
+          "-v",
+          "/var/run/docker.sock:/var/run/docker.sock",
+          "-e",
+          "TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal",
+          "-e",
+          "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock",
+          "--add-host",
+          "host.docker.internal:host-gateway",
+        ]
+      : []),
     ...(check.shell
       ? ["--entrypoint", "sh", check.image, "-c", script]
       : [check.image, ...splitArgs(command)]),
@@ -577,6 +591,8 @@ export function archCheck(archCmd: string, archSarif: string): QualityCheck {
     report: null,
     scope: "diff",
     profile: "",
+    docker: false,
+    needs: "",
   };
 }
 

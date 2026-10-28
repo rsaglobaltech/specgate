@@ -166,6 +166,12 @@
 | REQ-226 | SCN-226a | `features/quality/REQ-226.feature` | - | - | - | - | - | tests/unit/quality-sonar.test.ts | Implemented |
 | REQ-227 | SCN-227a | `features/quality/REQ-227.feature` | - | - | - | - | - | tests/unit/quality-agents.test.ts | Implemented |
 | REQ-231 | SCN-231a | `features/quality/REQ-231.feature` | - | - | - | - | - | tests/unit/quality-arch.test.ts | Implemented |
+| REQ-236 | SCN-236a | `features/daily-surface/REQ-236.feature` | - | - | - | - | - | tests/unit/forja-front-door.test.ts | Implemented |
+| REQ-235 | SCN-235a | `features/quality/REQ-235.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-237 | SCN-237a | `features/quality/REQ-237.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-238 | SCN-238a | `features/quality/REQ-238.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
+| REQ-239 | SCN-239a | `features/quality/REQ-239.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
+| REQ-240 | SCN-240a | `features/quality/REQ-240.feature` | - | - | - | - | - | tests/unit/quality-baseline.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -28,7 +28,10 @@ git commit -m "chore: quality checks"
 
 `quality init` reads the build files — `pom.xml`, `build.gradle`,
 `package.json` — and writes the checks of the level into
-`harness.config.yaml`, every other line kept. A check whose tool your build
+`harness.config.yaml`, every other line kept. In a monorepo it reads each
+app folder too — one level down, or in `apps/`, `packages/` and `services/` —
+when the root has no build file of that stack: forja's `apps/api/pom.xml` gets
+the Maven checks, run as `cd apps/api && mvn …`. A check whose tool your build
 lacks is written commented, with what to add (PIT needs its JUnit 5 plugin in
 the pom, Vitest coverage its provider). The studio's new-project step asks for
 the level, and its project page turns it on or up:
@@ -41,7 +44,7 @@ the level, and its project page turns it on or up:
 | --- | --- | --- | --- |
 | `commits` | Conventional Commits 1.0.0, natively | every attempt | every attempt |
 | `secrets` | gitleaks | every attempt | every attempt |
-| `dependencies` | osv-scanner on the lockfile | at the end | every attempt |
+| `dependencies` | osv-scanner on the lockfile; for Maven, on the bill of materials `sbom` writes | at the end | every attempt |
 | `coverage` | JaCoCo / Vitest / Jest, then Specgate measures the changed lines | every attempt, 70 % | every attempt, 85 % |
 | `types`, `lint` | `tsc --noEmit`, ESLint (Node) | every attempt | every attempt |
 | `spotbugs` | SpotBugs (Java) | at the end | every attempt |
@@ -132,10 +135,13 @@ checks:
 | `volumes` | Named volumes for caches, `name:/path`; a host folder is refused |
 | `network` | `false` runs the container with no network |
 | `profile` | For `review` and `adversary`: the profile whose agent runs it |
+| `docker` | `true` gives the container the host's Docker, for tests that start containers (Testcontainers); the Maven and Gradle presets set it when the build declares Testcontainers |
+| `needs` | An earlier check whose output this one reads (Maven's `dependencies` needs `sbom`); `quality baseline` runs it first |
 
 Placeholders in `run`: `{req}`, `{base}`, `{changed_files}`,
 `{changed_classes}` (Java, for PIT), `{changed_src}` (TypeScript, for Stryker)
-and `{report_dir}`.
+and `{report_dir}`. `{changed_classes@apps/api}` and `{changed_src@apps/web}`
+keep that folder's files only, relative to it.
 
 ## Docker
 

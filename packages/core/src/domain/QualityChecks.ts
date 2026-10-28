@@ -37,6 +37,10 @@ export interface QualityCheck {
   scope: "diff" | "all";
   /** For `builtin:review` and `builtin:adversary`: the profile whose agent runs it. */
   profile: string;
+  /** true: the container gets the host's Docker, for tests that start containers (REQ-238). */
+  docker: boolean;
+  /** An earlier check whose output this one reads; the baseline runs it first (REQ-240). */
+  needs: string;
 }
 
 export interface QualityConfig {
@@ -75,6 +79,8 @@ const CHECK_KEYS = new Set([
   "report",
   "scope",
   "profile",
+  "docker",
+  "needs",
 ]);
 /** The thresholds a level means when the file does not set one. */
 const LEVEL_THRESHOLDS: Record<
@@ -226,8 +232,16 @@ export function readQuality(parsed: Record<string, unknown>): {
       report,
       scope: scope === "all" ? "all" : "diff",
       profile: String(c.profile ?? "").trim(),
+      docker: c.docker === true || c.docker === "true",
+      needs: String(c.needs ?? "").trim(),
     });
   }
+  // REQ-240: a check needs an earlier one, so every stage already runs it first.
+  checks.forEach((check, i) => {
+    if (check.needs && !checks.slice(0, i).some((c) => c.name === check.needs)) {
+      errors.push(`checks (${check.name}): \`needs\` names an earlier check, not ${check.needs}.`);
+    }
+  });
   return {
     config: {
       level,
@@ -274,8 +288,22 @@ export function changedSources(files: string[]): string[] {
   );
 }
 
+/** The files under `folder`, relative to it (REQ-235: a check that runs in an app folder). */
+function under(files: string[], folder: string): string[] {
+  const prefix = `${folder.replace(/\\/g, "/").replace(/\/+$/, "")}/`;
+  return files
+    .map((f) => f.replace(/\\/g, "/"))
+    .filter((f) => f.startsWith(prefix))
+    .map((f) => f.slice(prefix.length));
+}
+
 /** The command with its placeholders filled. */
 export function expandRun(run: string, ctx: CheckContext): string {
+  // `{changed_classes@apps/api}`: only that folder's files, relative to it.
+  run = run.replace(/\{changed_(classes|src)@([^}]+)\}/g, (_m, kind: string, folder: string) => {
+    const files = under(ctx.changedFiles, folder);
+    return (kind === "classes" ? changedClasses(files) : changedSources(files)).join(",");
+  });
   const values: Record<string, string> = {
     "{req}": ctx.req,
     "{base}": ctx.base,

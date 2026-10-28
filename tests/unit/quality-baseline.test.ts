@@ -75,6 +75,51 @@ const sg = (dir: string, ...args: string[]) =>
   });
 const json = (r: { stdout: string }) => JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
 
+test("REQ-240 SCN-240a: a scan of what a build step writes", () => {
+  const dir = project();
+  // scan reads what prep builds, as osv-scanner reads Maven's bill of materials.
+  fs.writeFileSync(path.join(dir, "prep.js"), 'require("fs").writeFileSync("built.txt", "ok");');
+  fs.writeFileSync(
+    path.join(dir, "scan.js"),
+    'if (!require("fs").existsSync("built.txt")) process.exit(2);' + SCANNER
+  );
+  fs.writeFileSync(
+    path.join(dir, "harness.config.yaml"),
+    [
+      "harness_version: 1",
+      "checks:",
+      "  - name: prep",
+      '    run: "node prep.js"',
+      "    runner: local",
+      "  - name: scan",
+      '    run: "node scan.js"',
+      "    runner: local",
+      "    needs: prep",
+      "    sarif: .specgate/quality/scan.sarif",
+      "    scope: all",
+      "",
+    ].join("\n")
+  );
+  const taken = sg(dir, "quality", "baseline", "--accept", "scan", "--json");
+  assert.equal(taken.status, 0, taken.stdout + taken.stderr);
+  assert.equal(json(taken).quality.checks[0].findings, 1, taken.stdout);
+  assert.ok(fs.existsSync(path.join(dir, "built.txt")), "prep ran first");
+});
+
+test("REQ-240: needs names an earlier check", () => {
+  const { readQuality } = require("../../packages/core/src/domain/QualityChecks");
+  const { errors } = readQuality({
+    checks: [
+      { name: "scan", run: "x", runner: "local", needs: "prep" },
+      { name: "prep", run: "y", runner: "local" },
+    ],
+  });
+  assert.ok(
+    errors.some((e: string) => /needs/.test(e)),
+    errors.join("; ")
+  );
+});
+
 test("REQ-222 SCN-222a: debt in the baseline passes, a new finding fails", () => {
   const dir = project();
   const before = sg(dir, "quality", "run", "--json");

@@ -24,7 +24,7 @@ function fakeForja(dir: string, code = 0) {
   const log = path.join(dir, "forja.log");
   fs.writeFileSync(
     script,
-    `require("fs").writeFileSync(${JSON.stringify(log)}, JSON.stringify({ argv: process.argv.slice(2), cwd: process.cwd() }));\n` +
+    `require("fs").writeFileSync(${JSON.stringify(log)}, JSON.stringify({ argv: process.argv.slice(2), cwd: process.cwd(), version: process.env.SPECGATE_VERSION }));\n` +
       `process.exit(${code});\n`
   );
   return {
@@ -42,8 +42,37 @@ function tmp() {
 }
 
 test("forja is fetched with npx at a pinned major, unless SPECGATE_FORJA_CMD says otherwise", () => {
-  assert.equal(forjaCommand({}), `npx --yes ${FORJA_PACKAGE}@1`);
-  assert.equal(forjaCommand({ SPECGATE_FORJA_CMD: " forja " }), "forja");
+  assert.equal(forjaCommand({}, false), `npx --yes ${FORJA_PACKAGE}@1`);
+  assert.equal(forjaCommand({ SPECGATE_FORJA_CMD: " forja " }, false), "forja");
+});
+
+test("REQ-236: a forja on the PATH is used before npx, the override before both", () => {
+  assert.equal(forjaCommand({}, true), "forja");
+  assert.equal(forjaCommand({ SPECGATE_FORJA_CMD: "./my-forja" }, true), "./my-forja");
+});
+
+test("REQ-236 SCN-236a: no forja anywhere", () => {
+  const dir = tmp();
+  try {
+    // Only node and npm on the PATH, and a registry that answers nothing.
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      PATH: path.dirname(process.execPath),
+      Path: path.dirname(process.execPath),
+      npm_config_registry: "http://127.0.0.1:9/",
+      npm_config_fetch_retries: "0",
+      npm_config_fetch_timeout: "3000",
+    };
+    delete env.SPECGATE_FORJA_CMD;
+    const r = run(dir, env, "init", "--forja", "fleet", "--backend", "spring");
+    assert.notEqual(r.status, 0);
+    const said = r.stdout + r.stderr;
+    assert.match(said, /npm i -g @rsaglobaltech\/forja/);
+    assert.match(said, /SPECGATE_FORJA_CMD/);
+    assert.deepEqual(fs.readdirSync(dir), [], "nothing was generated");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("init --forja hands its name and flags to forja init", () => {
@@ -54,6 +83,19 @@ test("init --forja hands its name and flags to forja init", () => {
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.deepEqual(forja.calls().argv, ["init", "shop", "--backend", "spring"]);
     assert.equal(forja.calls().cwd, dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-236 SCN-236b: forja learns the Specgate that called it", () => {
+  const dir = tmp();
+  try {
+    const forja = fakeForja(dir);
+    const r = run(dir, forja.env, "init", "--forja", "shop");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const own = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "package.json"), "utf8")).version;
+    assert.equal(forja.calls().version, own);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
