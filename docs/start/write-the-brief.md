@@ -154,7 +154,8 @@ specgate propose --from-brief --check
 Errors stop a draft from opening: a field in the wrong shape, an empty module,
 a module without its section, rules without examples. Warnings are for you to
 judge: a vague word, a promise without a number, a framework named in a rule,
-a module too big, a condition placed last. On the Lingo brief the agent
+a module too big, a condition placed last, more than eight modules, an actor on
+a surface the project does not have (`mobile` with no mobile app). On the Lingo brief the agent
 proposed below:
 
 <!-- specgate:out-brief-check:begin — generated; edit the source, not this block -->

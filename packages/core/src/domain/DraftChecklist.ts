@@ -162,6 +162,69 @@ function inText(value: string, text: string): boolean {
   return norm(text).includes(norm(value));
 }
 
+/** Number words an assumption may use for a scenario's figure: "three axles" for "3 ejes". */
+const NUMBER_WORDS: Record<string, string> = {
+  one: "1",
+  two: "2",
+  three: "3",
+  four: "4",
+  five: "5",
+  six: "6",
+  seven: "7",
+  eight: "8",
+  nine: "9",
+  ten: "10",
+  eleven: "11",
+  twelve: "12",
+  uno: "1",
+  una: "1",
+  dos: "2",
+  tres: "3",
+  cuatro: "4",
+  cinco: "5",
+  seis: "6",
+  siete: "7",
+  ocho: "8",
+  nueve: "9",
+  diez: "10",
+  once: "11",
+  doce: "12",
+  eins: "1",
+  zwei: "2",
+  drei: "3",
+  vier: "4",
+  fünf: "5",
+  sechs: "6",
+  sieben: "7",
+  acht: "8",
+  neun: "9",
+  zehn: "10",
+  elf: "11",
+  zwölf: "12",
+};
+const NUMBER_WORD = new RegExp(
+  `(?<![\\p{L}])(${Object.keys(NUMBER_WORDS).join("|")})(?![\\p{L}])`,
+  "giu"
+);
+
+/**
+ * Whether a row of `assumptions.md` that names the scenario holds its value,
+ * however the row writes it (REQ-247): the number of "7100 kg" in a list that
+ * gives the unit once ("7100, 11500 and 8000 kg"), "3 ejes" as "three axles",
+ * the value inside a quoted label ("Dispositivo: TRK-0001").
+ */
+function inRow(value: string, row: string): boolean {
+  if (inText(value, row)) return true;
+  const label = /:\s*(\S.*)$/.exec(value);
+  if (label && inText(label[1], row)) return true;
+  const figure = /^(\d+(?:[.,]\d+)*)(?:\s+\S|$)/.exec(value);
+  if (figure) {
+    const words = row.replace(NUMBER_WORD, (w) => NUMBER_WORDS[w.toLowerCase()] || w);
+    return inText(figure[1], words);
+  }
+  return false;
+}
+
 // ── Assumption rows ───────────────────────────────────────────────────────────
 
 /** `REQ-004..REQ-010`, `SCN-2…SCN-9`, `REQ-004–REQ-010`, `REQ-004 to REQ-010`, `REQ-004 a REQ-010`. */
@@ -516,7 +579,7 @@ export function checkDraft(files: DraftFiles): DraftReport {
             if (SOURCED.test(r.text) && inText(v, r.text)) continue;
             const rows = assumptions.split("\n").concat(r.modified ? archivedRows : []);
             const listed = rows.some(
-              (row) => inText(v, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id))
+              (row) => inRow(v, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id))
             );
             if (listed) continue;
             status.push(

@@ -13,7 +13,8 @@ import {
 } from "../../../../packages/core/src/domain/DraftChecklist";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { derivedMatrixFor, refreshDerivedMatrix } from "./MatrixCommand";
-import { briefProgress, draftNextCommand, ModuleStatus } from "./DraftCommand";
+import { briefProgress, draftNextCommand, ModuleStatus, DEFAULT_BRIEF } from "./DraftCommand";
+import { briefModules } from "../../../../packages/core/src/domain/DraftChecklist";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import { findForjaProject } from "../project/Forja";
 import { inFlightView, InFlightView, unwrittenNotes } from "../../../lib/in-flight";
@@ -68,12 +69,14 @@ export interface QueueSummary {
   tickets?: boolean;
   /** Added by `status` itself; null when the brief cannot be read. */
   brief?: BriefProgress | null;
+  /** The brief, when it exists and its front matter lists no module yet (REQ-243). */
+  briefToFill?: string;
 }
 
 /** What `nextCommandPlain` and `nextReason` read from a summary. */
 type NextInput = Pick<
   QueueSummary,
-  "items" | "counts" | "orphans" | "derived" | "forja" | "brief" | "tickets"
+  "items" | "counts" | "orphans" | "derived" | "forja" | "brief" | "tickets" | "briefToFill"
 >;
 
 export interface StatusOptions {
@@ -343,6 +346,7 @@ export function nextCommandPlain({
   derived,
   brief,
   forja,
+  briefToFill,
 }: NextInput): string {
   const first = (cats: string[]) => (items || []).find((it) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
@@ -353,6 +357,8 @@ export function nextCommandPlain({
   const todo = firstReal(items) || first(TODO_CATEGORIES);
   if (todo) {
     if (todo.category === "NEEDS_FEATURE") return `specgate plan`;
+    // A project generated from a brief: the brief comes first (REQ-243).
+    if (onlyBaseline(items) && briefToFill) return "specgate draft";
     if (onlyBaseline(items))
       return tickets ? FROM_TICKET : 'specgate new "<a behaviour you rely on>"';
     if (forja && needsCode(todo)) return forjaAddCommand(todo);
@@ -361,6 +367,7 @@ export function nextCommandPlain({
     if (derived) return `specgate apply ${todo.requirement}`;
     return `specgate req link ${todo.requirement} --test <path>`;
   }
+  if (counts.total === 0 && briefToFill) return "specgate draft";
   if (counts.total === 0) return tickets ? FROM_TICKET : 'specgate new "<what it does>"';
   return "specgate check";
 }
@@ -373,6 +380,7 @@ export function nextReason({
   brief,
   forja,
   tickets,
+  briefToFill,
 }: NextInput): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   if ((items || []).some((it) => it.category === "NEEDS_STATUS_UPDATE"))
@@ -387,6 +395,10 @@ export function nextReason({
     firstReal(items) || (items || []).find((it) => TODO_CATEGORIES.includes(it.category));
   if (todo && todo.category === "NEEDS_FEATURE")
     return `${todo.requirement}'s feature file is missing — plan shows which`;
+  if ((todo && onlyBaseline(items)) || (!todo && counts.total === 0)) {
+    if (briefToFill)
+      return `fill in the front matter of ${briefToFill} — product, surfaces, actors, modules — then draft`;
+  }
   if (todo && onlyBaseline(items))
     return tickets
       ? "the work comes from Jira — check a ticket is ready, then open its change"
@@ -592,6 +604,14 @@ export class StatusCommand extends BaseCommand {
       summary.brief = briefProgress(projectDir);
     } catch {
       summary.brief = null;
+    }
+    // A brief that lists no module yet — forja's template, the client's text
+    // pasted below it — is what to do next, not the adoption path (REQ-243).
+    if (!summary.brief) {
+      const text = fs.existsSync(path.join(projectDir, DEFAULT_BRIEF))
+        ? fs.readFileSync(path.join(projectDir, DEFAULT_BRIEF), "utf8")
+        : null;
+      if (text !== null && briefModules(text).length === 0) summary.briefToFill = DEFAULT_BRIEF;
     }
     let lock: Lockfile | null = null;
     try {

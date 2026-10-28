@@ -87,7 +87,7 @@ The brief is the source of every requirement: what is not in it is not built.
 
 ![The Brief page as a form: a box to paste the client's text for the agent to structure, the product, who uses it and on which surfaces, the modules, and for the selected one its rules, examples and open questions; beside it, the brief's checks pass and Next: draft the modules.](assets/img/studio-2-brief.webp)
 
-Beside it, the brief's checks (B1–B11) run on every save. **Next: draft the
+Beside it, the brief's checks (B1–B13) run on every save. **Next: draft the
 modules** stays disabled while one of them is an error.
 
 ## 3 · Drafts

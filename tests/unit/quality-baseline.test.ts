@@ -120,6 +120,33 @@ test("REQ-240: needs names an earlier check", () => {
   );
 });
 
+test("REQ-241 SCN-241a: a development secret in .env.local", () => {
+  const dir = project();
+  // Two findings: one in a file git ignores, one in a tracked file.
+  fs.writeFileSync(
+    path.join(dir, "scan.js"),
+    `const fs = require("fs");
+const at = (uri) => ({ ruleId: "generic-api-key", level: "error", message: { text: "a secret" },
+  locations: [{ physicalLocation: { artifactLocation: { uri }, region: { startLine: 1 } } }] });
+fs.mkdirSync(".specgate/quality", { recursive: true });
+fs.writeFileSync(".specgate/quality/scan.sarif", JSON.stringify({ version: "2.1.0",
+  runs: [{ results: [at("apps/web/.env.local"), at("src/config.ts")] }] }));
+process.exit(1);`
+  );
+  fs.mkdirSync(path.join(dir, "apps/web"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "apps/web/.env.local"), "AUTH_SECRET=dev\n");
+  fs.writeFileSync(path.join(dir, "src/config.ts"), "export const key = 'x';\n");
+  fs.writeFileSync(path.join(dir, ".gitignore"), ".env.local\n");
+  const git = (...a: string[]) => spawnSync("git", a, { cwd: dir, encoding: "utf8" });
+  git("init", "-q");
+  git("add", "-A");
+  git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "start");
+  const run = sg(dir, "quality", "run", "--json");
+  const o = json(run).quality.outcomes[0];
+  assert.equal(o.findings.total, 1, run.stdout);
+  assert.deepEqual(o.findings.fresh, ["src/config.ts:1 [generic-api-key] a secret"]);
+});
+
 test("REQ-222 SCN-222a: debt in the baseline passes, a new finding fails", () => {
   const dir = project();
   const before = sg(dir, "quality", "run", "--json");

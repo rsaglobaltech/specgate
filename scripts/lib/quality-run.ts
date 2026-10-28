@@ -183,17 +183,40 @@ function linesOf(projectDir: string) {
   };
 }
 
-/** Every finding of a check's SARIF, or null when it wrote none. */
+/** The paths, of those given, that git ignores; none outside a repository. */
+export function ignoredByGit(projectDir: string, paths: string[]): Set<string> {
+  if (paths.length === 0) return new Set();
+  const r = spawnSync("git", ["-C", projectDir, "check-ignore", "--stdin"], {
+    input: paths.join("\n") + "\n",
+    encoding: "utf8",
+  });
+  // 0: some are ignored; 1: none are; anything else: not a repository.
+  if (r.status !== 0) return new Set();
+  return new Set(
+    String(r.stdout)
+      .split(/\r?\n/)
+      .map((l) => l.trim().replace(/\\/g, "/"))
+      .filter(Boolean)
+  );
+}
+
+/**
+ * Every finding of a check's SARIF, or null when it wrote none. A finding in
+ * a file git ignores (REQ-241) — a development `.env.local` — is never part
+ * of a change or of the repository, so it is left out.
+ */
 export function sarifFindings(projectDir: string, check: QualityCheck): Finding[] | null {
   if (!check.sarif) return null;
   const file = path.join(projectDir, check.sarif);
   if (!fs.existsSync(file)) return null;
-  return readSarif(
+  const findings = readSarif(
     fs.readFileSync(file, "utf8"),
     projectDir,
     linesOf(projectDir),
     repositoryPath(projectDir)
   );
+  const ignored = ignoredByGit(projectDir, [...new Set(findings.map((f) => f.path))]);
+  return ignored.size ? findings.filter((f) => !ignored.has(f.path)) : findings;
 }
 
 /**

@@ -82,7 +82,9 @@ npx specgate propose --from-brief <module>   # opens it, linked to the brief, wi
 ```
 
 Before the first module, `npx specgate propose --from-brief --check` checks
-the brief itself: its fields, a section per module, rules with examples
+the brief itself: its fields and, once it has `## Module:` sections, one per
+module with rules and examples. A brief in free text below its front matter is
+drafted too, each module reading the whole text
 ([Write the brief](start/write-the-brief.md)).
 
 One module per draft: a reviewer reads ten requirements, not sixty
