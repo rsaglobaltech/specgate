@@ -24,8 +24,8 @@ its delta and test first.
 
 ## 3. Measures
 
-- [ ] 3.1 REQ-223 diff coverage: diff hunks, JaCoCo XML, LCOV, Cobertura
-- [ ] 3.2 REQ-224 mutation score: PIT `mutations.xml`, Stryker `mutation.json`
+- [x] 3.1 REQ-223 diff coverage: diff hunks, JaCoCo XML, LCOV, Cobertura
+- [x] 3.2 REQ-224 mutation score: PIT `mutations.xml`, Stryker `mutation.json`
 
 ## 4. Presets
 

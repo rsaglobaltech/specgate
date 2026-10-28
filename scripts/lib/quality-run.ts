@@ -16,6 +16,16 @@ import {
   type Finding,
 } from "../../packages/core/src/domain/Sarif";
 import { readBaseline } from "../../packages/core/src/infrastructure/QualityBaselineFile";
+import {
+  changedLines,
+  diffCoverage,
+  mutationScore,
+  readCobertura,
+  readJacoco,
+  readLcov,
+  readPit,
+  readStryker,
+} from "../../packages/core/src/domain/ChangeMeasures";
 
 /**
  * Runs the quality and security checks of a stage (ADR-0040): each in its
@@ -38,6 +48,75 @@ export interface CheckOutcome {
   output: string;
   /** With SARIF: the findings this change adds, and how many the baseline holds back. */
   findings?: { fresh: string[]; freshCount: number; baselined: number; total: number };
+  /** With a coverage or mutation report: the measure over the changed lines. */
+  measure?: {
+    kind: "coverage" | "mutation";
+    value: number | null;
+    threshold: number | null;
+    total: number;
+    passed: number;
+    misses: string[];
+  };
+}
+
+/** What a stage measures against: the thresholds of the configuration. */
+export interface Thresholds {
+  diffCoverage: number | null;
+  mutationScore: number | null;
+}
+
+/** Lines changed since the base, per file; an untracked file counts whole. */
+export function changedLineMap(
+  projectDir: string,
+  base: string,
+  files: string[]
+): Map<string, Set<number>> {
+  const diff = base
+    ? git(projectDir, ["diff", "--unified=0", "--no-color", base]).stdout || ""
+    : "";
+  const map = changedLines(diff);
+  for (const f of files) {
+    if (map.has(f)) continue;
+    const tracked = git(projectDir, ["ls-files", "--error-unmatch", f]).status === 0;
+    if (tracked) continue;
+    try {
+      const n = fs.readFileSync(path.join(projectDir, f), "utf8").split(/\r?\n/).length;
+      map.set(f, new Set(Array.from({ length: n }, (_, i) => i + 1)));
+    } catch {
+      /* gone */
+    }
+  }
+  return map;
+}
+
+/** The measure a report gives over the changed lines, or why there is none. */
+export function measureReport(
+  projectDir: string,
+  check: QualityCheck,
+  ctx: CheckContext,
+  thresholds: Thresholds
+): NonNullable<CheckOutcome["measure"]> | string {
+  if (!check.report) return "no report";
+  const file = path.join(projectDir, check.report.path);
+  if (!fs.existsSync(file)) return `no report at ${check.report.path}`;
+  const text = fs.readFileSync(file, "utf8");
+  const changed = changedLineMap(projectDir, ctx.base === "HEAD" ? "" : ctx.base, ctx.changedFiles);
+  const f = check.report.format;
+  const coverage = f === "jacoco" || f === "lcov" || f === "cobertura";
+  const m = coverage
+    ? diffCoverage(
+        changed,
+        f === "jacoco" ? readJacoco(text) : f === "lcov" ? readLcov(text) : readCobertura(text)
+      )
+    : mutationScore(changed, f === "pit" ? readPit(text) : readStryker(text));
+  return {
+    kind: coverage ? "coverage" : "mutation",
+    value: m.value,
+    threshold: coverage ? thresholds.diffCoverage : thresholds.mutationScore,
+    total: m.total,
+    passed: m.passed,
+    misses: m.misses.slice(0, 20),
+  };
 }
 
 /** The lines of a project file, for fingerprints; null when it cannot be read. */
@@ -225,7 +304,12 @@ export function ensureImage(image: string): { ok: true } | { ok: false; message:
 const tail = (text: string, lines = 60) => text.trim().split("\n").slice(-lines).join("\n");
 
 /** Run one check and say how it ended. */
-export function runCheck(projectDir: string, check: QualityCheck, ctx: CheckContext): CheckOutcome {
+export function runCheck(
+  projectDir: string,
+  check: QualityCheck,
+  ctx: CheckContext,
+  thresholds: Thresholds = { diffCoverage: null, mutationScore: null }
+): CheckOutcome {
   const base: CheckOutcome = {
     name: check.name,
     when: check.when,
@@ -282,7 +366,32 @@ export function runCheck(projectDir: string, check: QualityCheck, ctx: CheckCont
     ok: !timedOut && r.status === 0,
     output: timedOut ? `${output}\n(timed out after ${check.timeout} s)`.trim() : output,
   };
-  if (timedOut || !check.sarif) return ran;
+  if (timedOut) return ran;
+  if (check.report) {
+    // REQ-223, REQ-224: the report measures the lines this change touched.
+    const m = measureReport(projectDir, check, ctx, thresholds);
+    if (typeof m === "string") {
+      return {
+        ...ran,
+        ok: false,
+        output: `${ran.output}\n(${m}: the check cannot be measured)`.trim(),
+      };
+    }
+    const below = m.value !== null && m.threshold !== null && m.value < m.threshold;
+    const what = m.kind === "coverage" ? "diff coverage" : "mutation score";
+    return {
+      ...ran,
+      measure: m,
+      ok: ran.ok && !below,
+      output: below
+        ? [
+            `${what} ${m.value}% is below ${m.threshold}% (${m.passed} of ${m.total} on the changed lines):`,
+            ...m.misses,
+          ].join("\n")
+        : ran.output,
+    };
+  }
+  if (!check.sarif) return ran;
   // With SARIF the findings judge, not the exit code: a tool exits 1 on debt
   // the baseline already holds. Only what this change adds fails it.
   let findings: Finding[] | null;
@@ -346,7 +455,11 @@ export function runStages(
   onEach?: (check: QualityCheck, run: () => CheckOutcome) => CheckOutcome
 ): CheckOutcome[] {
   return checksFor(config, stages).map((check) => {
-    const run = () => runCheck(projectDir, check, ctx);
+    const run = () =>
+      runCheck(projectDir, check, ctx, {
+        diffCoverage: config.diffCoverage,
+        mutationScore: config.mutationScore,
+      });
     return onEach ? onEach(check, run) : run();
   });
 }

@@ -85,3 +85,39 @@ The system SHALL read the SARIF a check writes and judge the check by its findin
 - THEN it passes
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-baseline.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-223 — The tests run the lines a change touched
+
+The system SHALL, for a check whose `report` is a JaCoCo XML, LCOV or Cobertura file, measure the share of the executable lines changed since the base — committed or not, an untracked file counting whole — that a test ran, fail the check below `diff_coverage` (the level's when not set), name each uncovered changed line as `path:line`, pass a change with no executable changed line, and fail a check whose report is missing.
+
+#### Scenario: SCN-223a — Below the threshold, the uncovered lines are named
+
+- GIVEN `diff_coverage: 80`, a change that adds five executable lines to src/a.js, and an LCOV report where a test ran three of them
+- WHEN the check runs
+- THEN it fails with 60%, naming the two lines no test ran
+
+#### Scenario: SCN-223b — JaCoCo's package paths match the repository's
+
+- GIVEN a change to src/main/java/com/shop/Order.java and a JaCoCo report of com/shop/Order.java where every changed line ran
+- WHEN the check runs
+- THEN it passes with 100%
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-measures.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-224 — The tests kill the mutants on the lines a change touched
+
+The system SHALL, for a check whose `report` is PIT `mutations.xml` or StrykerJS `mutation.json`, compute the mutation score over the mutants on lines changed since the base — killed and timed out counting as killed; no coverage and survived against; ignored, non-viable and errors left out — fail the check below `mutation_score` (the level's when not set), and name each surviving mutant as `path:line mutator`.
+
+#### Scenario: SCN-224a — A survivor on a changed line fails it
+
+- GIVEN `mutation_score: 70`, a change to Order.java lines 10 and 11, and a PIT report with a killed mutant on line 10, a surviving one on line 11 and a surviving one on unchanged line 30
+- WHEN the check runs
+- THEN it fails with 50%, naming the survivor on line 11 and not the one on line 30
+
+#### Scenario: SCN-224b — Stryker's statuses
+
+- GIVEN a Stryker report on the changed lines with Killed, Timeout, Survived and Ignored mutants
+- WHEN the score is computed
+- THEN it is 2 of 3, the ignored one left out
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-measures.test.ts actor=Developer kind=functional -->
