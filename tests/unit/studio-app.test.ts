@@ -223,6 +223,15 @@ test("REQ-208 SCN-208b: starting a build answers at once and runs the harness in
     path.join(dir, "harness.config.yaml"),
     'harness_version: 1\nagent: "node -e 0 {prompt_file}"\n'
   );
+  // The harness needs a repository: the studio commits the specification into it (REQ-233).
+  for (const args of [
+    ["init", "-q"],
+    ["config", "user.email", "t@example.com"],
+    ["config", "user.name", "T"],
+    ["add", "-A"],
+    ["commit", "-q", "-m", "init"],
+  ])
+    spawnSync("git", args, { cwd: dir });
   const started = Date.now();
   const r = app().startBuild(dir, ["REQ-210", "REQ-999"]);
   assert.equal(r.ok, true, JSON.stringify(r));

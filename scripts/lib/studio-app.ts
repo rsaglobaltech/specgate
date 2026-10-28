@@ -254,7 +254,7 @@ export function buildView(projectDir: string): BuildView {
 }
 
 export type StartOutcome =
-  | { ok: true; started: string[]; log: string; pid: number }
+  | { ok: true; started: string[]; saved: string[]; log: string; pid: number }
   | { ok: false; code: string; message: string };
 
 /** Start a harness run on the chosen requirements, in the background (REQ-208). */
@@ -291,6 +291,8 @@ export function startBuild(projectDir: string, reqs: string[], profile = ""): St
       message: "None of those requirements is ready to build.",
     };
   }
+  const saved = saveSpecification(projectDir);
+  if (!saved.ok) return saved;
   const log = path.join(projectDir, ".harness", "events", "studio-run.log");
   fs.mkdirSync(path.dirname(log), { recursive: true });
   const out = fs.openSync(log, "a");
@@ -317,9 +319,94 @@ export function startBuild(projectDir: string, reqs: string[], profile = ""): St
   return {
     ok: true,
     started: chosen,
+    saved: saved.committed,
     log: path.relative(projectDir, log).split(path.sep).join("/"),
     pid: child.pid || 0,
   };
+}
+
+/** What the studio and the drafting write: the specification, never code. */
+const SPECIFICATION = [
+  /^docs\/brief\.md$/,
+  /^spec\.md$/,
+  /^docs\/specs\//,
+  /^features\//,
+  /^harness\.config\.yaml$/,
+  /^\.harness\/(?:profiles\.yaml|prompt-prefix\.md)$/,
+];
+
+/** Uncommitted paths, from `git status --porcelain -z`: renames give their new path. */
+function uncommitted(projectDir: string): string[] | null {
+  const r = spawnSync("git", ["-C", projectDir, "status", "--porcelain", "-z", "-uall"], {
+    encoding: "utf8",
+  });
+  if (r.status !== 0) return null;
+  const parts = r.stdout.split("\0").filter(Boolean);
+  const out: string[] = [];
+  for (let i = 0; i < parts.length; i += 1) {
+    const status = parts[i].slice(0, 2);
+    out.push(parts[i].slice(3));
+    if (/[RC]/.test(status)) i += 1; // the old path of a rename follows
+  }
+  return out;
+}
+
+/**
+ * Commit the specification the studio wrote, so the harness finds the clean
+ * tree it needs (REQ-233). Anything else uncommitted is the person's work in
+ * progress: the build is refused and the files are named, never committed.
+ */
+export function saveSpecification(
+  projectDir: string
+): { ok: true; committed: string[] } | { ok: false; code: string; message: string } {
+  const dirty = uncommitted(projectDir);
+  if (dirty === null) {
+    return { ok: false, code: "build_no_git", message: "This folder is not a git repository." };
+  }
+  if (dirty.length === 0) return { ok: true, committed: [] };
+  const other = dirty.filter((f) => !SPECIFICATION.some((re) => re.test(f)));
+  if (other.length) {
+    return {
+      ok: false,
+      code: "build_uncommitted",
+      message:
+        `Uncommitted files that are not the specification: ${other.slice(0, 8).join(", ")}` +
+        `${other.length > 8 ? ` and ${other.length - 8} more` : ""}. Commit or stash them first.`,
+    };
+  }
+  const email = spawnSync("git", ["-C", projectDir, "config", "user.email"], { encoding: "utf8" });
+  if (!String(email.stdout || "").trim()) {
+    return {
+      ok: false,
+      code: "build_no_identity",
+      message:
+        'Git does not know who you are. Run git config --global user.name "Your Name" and git config --global user.email you@example.com.',
+    };
+  }
+  const add = spawnSync("git", ["-C", projectDir, "add", "--", ...dirty], { encoding: "utf8" });
+  const commit =
+    add.status === 0
+      ? spawnSync(
+          "git",
+          [
+            "-C",
+            projectDir,
+            "commit",
+            "-q",
+            "-m",
+            "chore(spec): save the specification from the studio",
+          ],
+          { encoding: "utf8" }
+        )
+      : add;
+  if (commit.status !== 0) {
+    return {
+      ok: false,
+      code: "build_commit_failed",
+      message: `git could not commit the specification: ${(commit.stderr || commit.stdout || "").trim()}`,
+    };
+  }
+  return { ok: true, committed: dirty };
 }
 
 /** Ask the run in progress to stop after its current requirement (REQ-209). */
