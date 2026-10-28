@@ -8,7 +8,10 @@
 # runners never need Node.js or npmjs.org access.
 
 # ── Build stage: compile TypeScript and pack the npm tarball ──────────────────
-FROM node:22-alpine AS build
+# The tarball is plain JavaScript, the same on every platform: build it once,
+# natively, instead of once per platform under emulation (arm64 under QEMU
+# made a release's image build hang for 25 minutes).
+FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 WORKDIR /src
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
