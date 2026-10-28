@@ -301,3 +301,15 @@ The system SHALL provide the built-in checks `builtin:review` — an agent reads
 - THEN the check is skipped, saying it runs inside the harness only
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-agents.test.ts actor=Developer kind=functional -->
+
+### Requirement: REQ-231 — The architecture check gets the baseline too
+
+The system SHALL, when harness.config.yaml gives `arch_sarif:` beside `arch_cmd`, judge the architecture check by the findings of that SARIF rather than by the tool's exit code — in `specgate check`, `specgate done` and the harness gate — so that a violation in the baseline does not fail it and one the change adds does, named as `path:line [rule]`; `specgate quality baseline` SHALL record its findings as the check `arch`; and outside a git repository, where what changed cannot be known, every finding not in the baseline SHALL count.
+
+#### Scenario: SCN-231a — Debt held back, a new violation caught
+
+- GIVEN an adopted project whose arch_cmd writes SARIF and exits 1 on lib/domain/order.js depending on infrastructure
+- WHEN `specgate check` runs, then `specgate quality baseline`, then `specgate check` again, then a new lib/domain/invoice.js depends on infrastructure too
+- THEN the first check fails, the baseline records one finding for arch, the second check passes, and the last fails naming lib/domain/invoice.js:1 [domain-not-to-infra]
+
+<!-- specgate:trace status=Implemented test=tests/unit/quality-arch.test.ts actor=Developer kind=functional -->

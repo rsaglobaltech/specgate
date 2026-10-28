@@ -54,6 +54,7 @@ import {
   takeStop,
 } from "../../../lib/harness-guard";
 import {
+  archRun,
   gateContext,
   runStages,
   type AgentChecks,
@@ -705,13 +706,16 @@ function runGate(
   // and its failure goes back to the agent like any other gate failure.
   const archCmd = String(settings.archCmd || "").trim();
   if (archCmd) {
-    const arch = spawnSync(archCmd, {
-      shell: true,
-      cwd: worktreeDir,
-      encoding: "utf8",
-      timeout: timeoutMs,
-      maxBuffer: SUBPROCESS_MAX_BUFFER,
-    });
+    // REQ-231: with arch_sarif, only a violation this attempt adds fails it.
+    const arch = settings.archSarif
+      ? archRun(worktreeDir, archCmd, settings.archSarif, "", req.requirement || "")
+      : spawnSync(archCmd, {
+          shell: true,
+          cwd: worktreeDir,
+          encoding: "utf8",
+          timeout: timeoutMs,
+          maxBuffer: SUBPROCESS_MAX_BUFFER,
+        });
     report(`architecture check: ${archCmd}`, arch.status === 0 ? "pass" : "fail");
     if (arch.status !== 0) {
       return {

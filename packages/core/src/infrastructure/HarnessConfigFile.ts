@@ -45,6 +45,8 @@ const KNOWN_KEYS = new Set([
   "agent_profile",
   "test_cmd",
   "arch_cmd",
+  // ADR-0028 points 3-4 (REQ-231): the SARIF the architecture tool writes.
+  "arch_sarif",
   "setup_cmd",
   "max_attempts",
   "concurrency",
@@ -135,6 +137,7 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
   }
   if (parsed.test_cmd !== undefined) config.testCmd = String(parsed.test_cmd);
   if (parsed.arch_cmd !== undefined) config.archCmd = String(parsed.arch_cmd);
+  if (parsed.arch_sarif !== undefined) config.archSarif = String(parsed.arch_sarif);
   if (parsed.setup_cmd !== undefined) config.setupCmd = String(parsed.setup_cmd);
   if (parsed.max_attempts !== undefined) {
     const n = Number(parsed.max_attempts);
@@ -304,6 +307,7 @@ export function resolveHarnessSettings(
     agent: cliArgs.agent || file.agent || "",
     testCmd: cliArgs.testCmd || file.testCmd || "",
     archCmd: cliArgs.archCmd || file.archCmd || "",
+    archSarif: file.archSarif || "",
     setupCmd: cliArgs.setupCmd || file.setupCmd || "",
     maxAttempts: cliArgs.maxAttempts || file.maxAttempts || 3,
     concurrency: cliArgs.concurrency || file.concurrency || 1,

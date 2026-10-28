@@ -530,7 +530,7 @@ export function runCheck(
     findings,
     readBaseline(projectDir),
     check.name,
-    check.scope === "diff" ? ctx.changedFiles : null
+    check.scope === "diff" && ctx.changedKnown !== false ? ctx.changedFiles : null
   );
   return {
     ...ran,
@@ -552,13 +552,56 @@ export function runCheck(
   };
 }
 
+/**
+ * `arch_cmd` as a check named `arch` (REQ-231): with `arch_sarif` its findings
+ * are judged against the baseline like any check's — only a violation the
+ * change adds fails — instead of by the tool's exit code.
+ */
+export function archCheck(archCmd: string, archSarif: string): QualityCheck {
+  return {
+    name: "arch",
+    run: archCmd,
+    when: "attempt",
+    gate: true,
+    runner: "local",
+    image: "",
+    network: true,
+    shell: true,
+    volumes: [],
+    env: [],
+    timeout: 1800,
+    sarif: archSarif,
+    report: null,
+    scope: "diff",
+    profile: "",
+  };
+}
+
+/** `arch_cmd` judged through its SARIF, shaped like spawnSync's result for the gates that run it. */
+export function archRun(
+  projectDir: string,
+  archCmd: string,
+  archSarif: string,
+  baseRef = "",
+  req = ""
+): { status: number; stdout: string; stderr: string } {
+  const o = runCheck(
+    projectDir,
+    archCheck(archCmd, archSarif),
+    gateContext(projectDir, req, baseRef)
+  );
+  return { status: o.ok ? 0 : 1, stdout: o.output, stderr: "" };
+}
+
 /** The context `check` and `done` measure from: the base branch, every file changed since. */
 export function gateContext(projectDir: string, req = "", baseRef = ""): CheckContext {
   const base = baseOf(projectDir, baseRef);
+  const inGit = git(projectDir, ["rev-parse", "--is-inside-work-tree"]).status === 0;
   return {
     req,
     base: base || "HEAD",
     changedFiles: changedFiles(projectDir, base),
+    changedKnown: inGit,
     reportDir: path
       .join(REPORTS, req || "check")
       .split(path.sep)

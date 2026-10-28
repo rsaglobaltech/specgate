@@ -23,7 +23,13 @@ import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { recordCheck } from "../../../pet/pet";
 import { runLockHolder } from "../../../lib/harness-guard";
-import { gateContext, runStages, stagesPassed, type CheckOutcome } from "../../../lib/quality-run";
+import {
+  archRun,
+  gateContext,
+  runStages,
+  stagesPassed,
+  type CheckOutcome,
+} from "../../../lib/quality-run";
 import type { Stage } from "../../../../packages/core/src/domain/QualityChecks";
 
 const NULL_SHAPE = { check: null };
@@ -244,7 +250,9 @@ export class CheckCommand extends BaseCommand {
               [path.join(findCliRoot(__dirname), "bin", "specgate.js"), "validate", ...step.argv],
               { encoding: "utf8" }
             )
-          : spawnSync(step.argv[0], { cwd: projectDir, encoding: "utf8", shell: true });
+          : step.stage === "arch" && harness.archSarif
+            ? archRun(projectDir, step.argv[0], harness.archSarif, baseFlag || "")
+            : spawnSync(step.argv[0], { cwd: projectDir, encoding: "utf8", shell: true });
       // One line per stage, replaced by how it ended. What a stage printed is
       // shown only when it failed: on a pass it was a screen of noise between
       // the person and the verdict.

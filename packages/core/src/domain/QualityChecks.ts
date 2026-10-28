@@ -253,6 +253,8 @@ export interface CheckContext {
   base: string;
   changedFiles: string[];
   reportDir: string;
+  /** false outside a git repository: what changed is unknown, so every finding counts. */
+  changedKnown?: boolean;
 }
 
 /** Java classes of changed `src/main/java` files, for PIT's targetClasses. */

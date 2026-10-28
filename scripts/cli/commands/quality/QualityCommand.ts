@@ -17,6 +17,7 @@ import {
   ensureImage,
   gateContext,
   resolveRunner,
+  archCheck,
   runCheck,
   runStages,
   sarifFindings,
@@ -223,7 +224,13 @@ export class QualityCommand extends BaseCommand {
 
     if (sub === "baseline") {
       // REQ-222: the debt that exists today, recorded so that only new findings fail.
-      const targets = config.checks.filter((c) => c.sarif && (!accept || c.name === accept));
+      // REQ-231: arch_cmd with arch_sarif is baselined as the check `arch`.
+      const harnessCfg = readHarnessConfig(projectDir) || {};
+      const withArch =
+        harnessCfg.archCmd && harnessCfg.archSarif
+          ? [...config.checks, archCheck(harnessCfg.archCmd, harnessCfg.archSarif)]
+          : config.checks;
+      const targets = withArch.filter((c) => c.sarif && (!accept || c.name === accept));
       if (accept && targets.length === 0) {
         io.usage(NULL_SHAPE, [
           error("quality_accept", `No check named ${accept} writes SARIF.`, {

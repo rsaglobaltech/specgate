@@ -20,7 +20,7 @@ its delta and test first.
 - [x] 2.3 REQ-220 `attempt` checks in the harness gate, findings in the next prompt
 - [x] 2.4 REQ-221 `end` checks in the same gate once the attempt checks pass (so once for the merged attempt)
 - [x] 2.5 REQ-222 SARIF reader, fingerprints, baseline, `quality baseline [--accept]`
-- [ ] 2.6 REQ-231 the same for `arch_cmd`; ADR-0028 points 3 and 4 marked done
+- [x] 2.6 REQ-231 the same for `arch_cmd`; ADR-0028 points 3 and 4 marked done
 
 ## 3. Measures
 

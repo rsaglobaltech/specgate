@@ -12,6 +12,11 @@ export interface HarnessSettings {
    */
   archCmd?: string;
   /**
+   * The SARIF `arch_cmd` writes, when it writes one (REQ-231): its findings
+   * are judged against the baseline, so only a violation a change adds fails.
+   */
+  archSarif?: string;
+  /**
    * Run once in each fresh worktree before the agent — `npm ci`, say. The
    * worktree carries only what git tracks, so without it the agent could not
    * run the tests it is asked to write, and a gate of `npm ci && …` made every
