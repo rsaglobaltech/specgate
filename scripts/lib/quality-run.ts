@@ -1,3 +1,4 @@
+import { forShell } from "./shell-command";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -529,7 +530,7 @@ export function runCheck(
           timeout: check.timeout * 1000,
           maxBuffer: 64 * 1024 * 1024,
         })
-      : spawnSync(base.command, {
+      : spawnSync(forShell(base.command), {
           cwd: projectDir,
           encoding: "utf8",
           shell: true,

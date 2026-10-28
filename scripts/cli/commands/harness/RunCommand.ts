@@ -148,6 +148,7 @@ import {
   substituteGateCommand,
 } from "../../../../packages/core/src/domain/HarnessRun";
 import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
+import { forShell } from "../../../lib/shell-command";
 
 /**
  * One requirement as `plan --format json` hands it to the harness.
@@ -709,7 +710,7 @@ function runGate(
     // REQ-231: with arch_sarif, only a violation this attempt adds fails it.
     const arch = settings.archSarif
       ? archRun(worktreeDir, archCmd, settings.archSarif, "", req.requirement || "")
-      : spawnSync(archCmd, {
+      : spawnSync(forShell(archCmd), {
           shell: true,
           cwd: worktreeDir,
           encoding: "utf8",
@@ -759,7 +760,7 @@ function runGate(
     // Stderr rather than inherited stdout, because `--format json` promises one
     // parseable document on stdout. Letting the test command write there is
     // precisely H18: prose and JSON sharing a stream.
-    const test = spawnSync(resolved, {
+    const test = spawnSync(forShell(resolved), {
       shell: true,
       cwd: worktreeDir,
       encoding: "utf8",
@@ -966,7 +967,7 @@ function runAgentOnce(
   );
   try {
     fs.writeFileSync(promptFile, prompt, "utf8");
-    const r = spawnSync(substituteAgentCommand(command, promptFile), {
+    const r = spawnSync(forShell(substituteAgentCommand(command, promptFile)), {
       shell: true,
       cwd: worktreeDir,
       encoding: "utf8",
@@ -1072,7 +1073,7 @@ ${said.slice(0, 2000)}`,
           .split("\n")
           .filter((l) => l && !before.has(l) && !l.slice(3).startsWith(PROMPT_ARCHIVE_DIR));
         if (wrote.length === 0) return { ok: true, output: "The adversary wrote no test." };
-        const test = spawnSync(substituteGateCommand(testCmd, req), {
+        const test = spawnSync(forShell(substituteGateCommand(testCmd, req)), {
           shell: true,
           cwd: worktreeDir,
           encoding: "utf8",
@@ -1134,7 +1135,7 @@ function runAdversarialProbe(
 
   try {
     fs.writeFileSync(promptFile, promptFor(instruction), "utf8");
-    const agent = spawnSync(substituteAgentCommand(command, promptFile), {
+    const agent = spawnSync(forShell(substituteAgentCommand(command, promptFile)), {
       shell: true,
       cwd: worktreeDir,
       encoding: "utf8",
@@ -2410,7 +2411,7 @@ function processRequirement(req: HarnessRequirement, ctx: RunContext): Requireme
     const setupCmd = String((ctx.settings && ctx.settings.setupCmd) || "").trim();
     if (setupCmd && !survivor) {
       info(`${req.requirement}: setup — ${setupCmd}`);
-      const setup = spawnSync(setupCmd, { cwd: dir, shell: true, encoding: "utf8" });
+      const setup = spawnSync(forShell(setupCmd), { cwd: dir, shell: true, encoding: "utf8" });
       if (setup.status !== 0) {
         return {
           requirement: req.requirement,
