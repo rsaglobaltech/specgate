@@ -151,6 +151,9 @@ Every preset writes `runner: docker`: the build's own plugins run through the
 project's Maven, Gradle or npm inside their image, the scanners in theirs. A
 machine needs Docker and nothing else, and a laptop runs what CI runs.
 
+- Docker must run **Linux containers**: the images are Linux images. Docker
+  Desktop on Windows containers is reported as such, and the checks are
+  skipped until it is switched.
 - The project is mounted at `/src`; on Linux and macOS the files a container
   writes are handed back to you, never left to root.
 - Dependency caches live in named volumes (`specgate-m2`, `specgate-gradle`,

@@ -277,11 +277,14 @@ test("REQ-238 SCN-238a: the preset gives Testcontainers its Docker", () => {
   assert.doesNotMatch(config(plain), /docker: true/);
 });
 
+// Linux containers only (REQ-254): the check images have no Windows manifest.
 const docker =
-  spawnSync("docker", ["version", "--format", "{{.Server.Version}}"], {
-    encoding: "utf8",
-    timeout: 15000,
-  }).status === 0;
+  String(
+    spawnSync("docker", ["version", "--format", "{{.Server.Os}}"], {
+      encoding: "utf8",
+      timeout: 15000,
+    }).stdout || ""
+  ).trim() === "linux";
 
 test(
   "REQ-230 SCN-230a: a Maven change judged by the strict preset in Docker",

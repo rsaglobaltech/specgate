@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Docker counts only when it runs Linux containers** (REQ-254): on Docker Desktop in Windows containers mode — and on GitHub's Windows runners — Docker answered, every check image failed to pull ("no matching manifest for windows"), and each check was reported as a skipped pull. The checks are now skipped up front, saying to switch Docker Desktop to Linux containers.
+
 ## [0.27.4] — 2026-10-28
 
 The way from a client's brief to its front matter, after the third truck-flote run: the brief at the root is noticed, the agent names actors in the brief's own words, and an incomplete front matter is called that.
