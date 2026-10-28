@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.6] — 2026-10-28
+
+The dependency scan counts again, after the fifth truck-flote run: a vulnerable Maven dependency fails the gate, and a quality run leaves the tree clean.
+
 ### Fixed
 
 - **A vulnerable dependency of a Maven project fails the gate again** (REQ-241, REQ-258): since 0.27.3 the findings in files git ignores were left out of every check, and osv-scanner points each finding at the bill of materials Maven writes in `target/`, so the dependency scan reported 18 known vulnerabilities and the gate counted none. Ignored files are now left out only for a check judged on the change (`scope: diff`).
