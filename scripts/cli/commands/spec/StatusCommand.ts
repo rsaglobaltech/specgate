@@ -26,6 +26,20 @@ import { c, sym } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { miniPet, petEnabled } from "../../../pet/pet";
 import { petFor } from "./PetCommand";
+import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+
+/**
+ * Whether the harness has an agent to run (REQ-271): the studio's Build said
+ * "set agent in harness.config.yaml" and nothing before it had (truck-flote, S58).
+ */
+function agentConfigured(projectDir: string): boolean {
+  try {
+    const config = readHarnessConfig(projectDir);
+    return Boolean(config && (config.agent || (config.attemptProfiles || []).length > 0));
+  } catch {
+    return true;
+  }
+}
 
 /**
  * The lockfile, as far as `status` reads it. `readLock` returns the lock's
@@ -478,6 +492,13 @@ function emitText(
   if (orphans.length > 0)
     out(
       "\n" + ui.fail(`${orphans.length} orphan feature file(s) ${ui.muted("— not in the matrix")}`)
+    );
+
+  // REQ-271: the harness and the studio's Build need an agent before they start.
+  if (items.some((it) => TODO_CATEGORIES.includes(it.category)) && !agentConfigured(projectDir))
+    out(
+      `\n  ${ui.muted("·  No agent set for the harness and the studio's Build:")} ` +
+        `specgate config set agent "claude -p < {prompt_file}"\n`
     );
 
   // Proposed, not written yet: not judged, and said, so nobody wonders why

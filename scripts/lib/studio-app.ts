@@ -17,6 +17,7 @@ import {
 } from "./change-review";
 import { requestStop, runLockHolder } from "./harness-guard";
 import { findCliRoot } from "./project-root";
+import { inFlightView } from "./in-flight";
 
 /**
  * What the visual studio shows and does (REQ-204..210): each read is built from
@@ -477,14 +478,35 @@ export function home(projectDir: string): HomeView {
   };
 }
 
-/** The specification gate, without the project's tests: quick enough for a page. */
+/**
+ * The specification gate, without the project's tests: quick enough for a page.
+ *
+ * Judged as `check` judges it (REQ-270): the project with its open changes
+ * archived into a copy (ADR-0035). The bare `validate` said "No pasa" for a
+ * reviewed draft's requirement the harness had just delivered, whose feature
+ * has no row in the written matrix until the draft is archived (truck-flote, S57).
+ */
 export function gate(projectDir: string): { ok: boolean; findings: string[] } {
-  const r = spawnSync(process.execPath, [cli(), "validate", projectDir, "--strict"], {
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, NO_COLOR: "1" },
-  });
-  const findings = `${r.stdout}${r.stderr}`
+  const view = inFlightView(projectDir);
+  if (view && view.problems.length > 0) {
+    view.cleanup();
+    return {
+      ok: false,
+      findings: view.problems.slice(0, 10).map((p) => `${p.change}: ${p.message}`),
+    };
+  }
+  let r: ReturnType<typeof spawnSync>;
+  try {
+    r = spawnSync(process.execPath, [cli(), "validate", view ? view.dir : projectDir, "--strict"], {
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      env: { ...process.env, NO_COLOR: "1" },
+    });
+  } finally {
+    if (view) view.cleanup();
+  }
+  const said = `${r.stdout}${r.stderr}`;
+  const findings = (view ? view.toProject(said) : said)
     .split("\n")
     .filter((l) => /✖/.test(l))
     .map((l) => l.replace(/^\s*✖\s*/, "").trim())

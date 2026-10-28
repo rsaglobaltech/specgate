@@ -120,6 +120,8 @@ export interface AttemptRecord {
      */
     | "spec"
     | "gate"
+    /** A quality check could not run (REQ-267): its setup, a person's to fix. */
+    | "check"
     /** Green gate, but the diff missed the declared artifacts (A2, --strict-artifacts). */
     | "artifacts"
     | "done"

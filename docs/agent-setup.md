@@ -20,30 +20,38 @@ result with the gate, not with the agent's exit code alone.
 specgate harness run --req REQ-001 --agent "claude -p < {prompt_file}"
 ```
 
-| Command | Without `{prompt_file}` |
-| --- | --- |
-| `specgate harness run` | Refused. The harness never guesses where the prompt goes. |
-| `specgate change author` | Refused, for the same reason. |
-| `specgate propose --from-brief`, `--from-ticket` and `specgate explore` | The prompt arrives on standard input. |
+| Command                                                                 | Without `{prompt_file}`                                   |
+| ----------------------------------------------------------------------- | --------------------------------------------------------- |
+| `specgate harness run`                                                  | Refused. The harness never guesses where the prompt goes. |
+| `specgate change author`                                                | Refused, for the same reason.                             |
+| `specgate propose --from-brief`, `--from-ticket` and `specgate explore` | The prompt arrives on standard input.                     |
 
 So `specgate propose --from-brief billing --agent "claude -p"` works as it
 is. In print mode Claude Code cannot write a file without permission, so for
-these drafting commands Specgate adds `--permission-mode acceptEdits` when your
-command carries no permission flag of its own, and says so. That is safe
-because Specgate undoes every write outside the draft. Other agents need their
-own auto-approve flag; if one runs and writes nothing, the command says that is
-the likely cause.
+the drafting commands and the harness Specgate adds `--permission-mode
+acceptEdits` right after `claude` when your command carries no permission flag
+of its own, and says so. That is safe because Specgate undoes every write
+outside the draft, and the harness runs the agent in a throwaway worktree.
+Other agents need their own auto-approve flag; if one runs and writes nothing,
+the harness stops that requirement after the first attempt and says that is the
+likely cause.
+
+Keep the command once, for `harness run` and the studio's Build:
+
+```bash
+specgate config set agent "claude -p < {prompt_file}"
+```
 
 ## Commands for common tools
 
-| Tool | `--agent` value |
-| --- | --- |
-| Claude Code | `claude -p < {prompt_file}` |
+| Tool                                           | `--agent` value                                                                                            |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Claude Code                                    | `claude -p < {prompt_file}` (Specgate adds `--permission-mode acceptEdits`)                                |
 | Claude Code, watched live in `specgate studio` | `claude -p --output-format stream-json --verbose < {prompt_file} \| specgate harness events --from claude` |
-| Aider | `aider --yes --message-file {prompt_file}` |
-| OpenCode | `opencode run "$(cat {prompt_file})"` |
-| Cursor CLI | `cursor-agent -p "$(cat {prompt_file})"` |
-| Anything else | `./my-agent.sh {prompt_file}` (a wrapper, below) |
+| Aider                                          | `aider --yes --message-file {prompt_file}`                                                                 |
+| OpenCode                                       | `opencode run "$(cat {prompt_file})"`                                                                      |
+| Cursor CLI                                     | `cursor-agent -p "$(cat {prompt_file})"`                                                                   |
+| Anything else                                  | `./my-agent.sh {prompt_file}` (a wrapper, below)                                                           |
 
 The command runs in a shell, so `< {prompt_file}` and `"$(cat {prompt_file})"`
 both work. Agent tools change their flags between versions: check each tool's
@@ -63,7 +71,9 @@ specgate harness run --agent "claude -p --allowedTools Read Write Edit Glob Grep
 
 Scope them rather than reaching for `--dangerously-skip-permissions`. The agent
 needs `Bash` to build and test the project, and `Bash(npm:*)` is enough for a
-Node project (`Bash(./mvnw:*)` for Maven, and so on). The harness runs it in a
+Node project (`Bash(npx:*)` too when it type-checks with `npx tsc`,
+`Bash(./mvnw:*)` for Maven, and so on). With allowances of your own, Specgate
+adds no permission flag: list `Write` and `Edit` among them. The harness runs it in a
 throwaway git worktree, which limits what a mistake can reach.
 
 ## A tool whose invocation fits none of those
@@ -165,9 +175,9 @@ attempt its own profile, and can add an advisory reviewer before each retry:
 ```yaml
 # harness.config.yaml
 attempt_profiles:
-  - implementer        # attempt 1
-  - repairer           # attempt 2
-  - repairer-strong    # attempt 3, and any after it
+  - implementer # attempt 1
+  - repairer # attempt 2
+  - repairer-strong # attempt 3, and any after it
 review_profile: reviewer
 ```
 
@@ -209,7 +219,7 @@ this setting the prompt gains one section: the most recent **Verified**
 requirement in the same bounded context, with the first forty lines of its test
 and its code. It must be Verified (someone checked it, not only Implemented),
 from the same bounded context, and earlier than the current requirement. The
-section says it shows *shape*, not behaviour, and it is left out when nothing
+section says it shows _shape_, not behaviour, and it is left out when nothing
 qualifies. It is off by default because it costs prompt space.
 
 ## Let something try to break it
@@ -245,7 +255,7 @@ discarded. The profile must declare `advisory: true`.
 
 The harness measures wall-clock time, because only the agent knows what it
 spent in tokens. A profile may declare an estimate per run, which
-`specgate harness report` multiplies out and labels *declared, not measured*:
+`specgate harness report` multiplies out and labels _declared, not measured_:
 
 ```yaml
 profiles:

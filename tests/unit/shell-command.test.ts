@@ -22,3 +22,13 @@ test("REQ-255 SCN-255a: ./mvnw -B test", () => {
     );
   }
 });
+
+test("REQ-265 SCN-265a: an agent's allowance for the Maven wrapper", () => {
+  const agent = `claude -p --allowedTools 'Bash(./mvnw:*)' "Bash(./gradlew:*)" < {prompt_file}`;
+  assert.equal(forShell(agent, "win32"), agent);
+  assert.equal(forShell("(./mvnw -q test)", "win32"), "(.\\mvnw -q test)");
+  assert.equal(
+    forShell(`./mvnw test && echo './x' | ./run.sh`, "win32"),
+    ".\\mvnw test && echo './x' | .\\run.sh"
+  );
+});

@@ -9,6 +9,17 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The harness gives Claude Code permission to write** (REQ-264): `claude -p < {prompt_file}`, the command the docs gave, wrote nothing in print mode and spent three attempts on "the agent produced no files". The harness now adds `--permission-mode acceptEdits` right after `claude`, as the drafting commands do, and says so; an attempt that writes nothing ends the requirement instead of running the same command again, pointing at `docs/agent-setup.md`.
+- **A `./` inside quotes stays as written on Windows** (REQ-265): an agent's allowance `'Bash(./mvnw:*)'` reached Claude Code as `'Bash(.\mvnw:*)'`.
+- **Docker checks work in the harness's worktrees** (REQ-266): a worktree's `.git` names a host folder the container does not have, so semgrep failed to list files and hung until its 15-minute timeout. The repository's git folder is now mounted read-only, with `GIT_DIR` and `GIT_WORK_TREE` pointing at the worktree.
+- **A check that could not run is reported to you, not to the agent** (REQ-267): a gate check that is to write SARIF and wrote none — it timed out or failed first — stops the requirement with its output, instead of telling the agent to "fix what the check found" for two more attempts.
+- **The reviewer and the adversary read a draft's requirement** (REQ-268): their prompts said `spec.md` had no section for a requirement of a reviewed, unarchived draft; they are now built from the project as the harness judges it, like the implementer's.
+- **`harness report` counts each requirement once** (REQ-269): a failed run and a passing one of the same requirement read "1 of 2 passed". The latest outcome counts, every run's time stays in the cost, and a run stopped by hand is in the ledger, its requirement reported as stopped.
+- **The studio's report judges the project as `check` does** (REQ-270): after `--chain` delivered a draft's requirement, the report said "No pasa" for a feature the written matrix has no row for until the draft is archived.
+- **The agent is kept once** (REQ-271): `specgate config set agent "<command>"` writes it to `harness.config.yaml`, with the permission above; `status` names the step while it is missing, and a `harness run --agent …` ends with the command that keeps it.
+
 ## [0.27.6] — 2026-10-28
 
 The dependency scan counts again, after the fifth truck-flote run: a vulnerable Maven dependency fails the gate, and a quality run leaves the tree clean.

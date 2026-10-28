@@ -37,6 +37,7 @@ import { BaseCommand } from "../../../lib/command";
 
 import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
+import { withAgentPermission } from "../../../lib/agent-permission";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
 import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
@@ -84,6 +85,21 @@ function judged<T>(
   } finally {
     if (view) view.cleanup();
   }
+}
+/**
+ * A prompt built from the project as the harness judges it (REQ-268).
+ *
+ * The implementer's prompt was; the reviewer's and the adversary's read the
+ * worktree as written, where a reviewed draft's requirement has no text, and
+ * the reviewer was told to stop and report that REQ-002 did not exist
+ * (truck-flote, S53).
+ */
+export function promptInFlight(
+  req: Record<string, unknown>,
+  dir: string,
+  opts: Parameters<typeof buildPrompt>[2] = {}
+): string {
+  return judged(dir, (judgedDir) => buildPrompt(req, judgedDir, opts));
 }
 import { analyseGherkinSource } from "../../../../packages/core/src/domain/GherkinQuality";
 import {
@@ -199,6 +215,8 @@ interface GateResult {
   hint?: string;
   /** The quality checks the gate ran (ADR-0040), for the run record. */
   checks?: CheckOutcome[];
+  /** A check that could not run (REQ-267): said to the person, never to the agent. */
+  couldNotRun?: string;
 }
 
 /** Where a resumed requirement picks up, and what the gate said last time. */
@@ -842,6 +860,16 @@ function runGate(
           ...(o.skipped ? { skipped: o.skipped } : {}),
           ...(o.measure ? { value: o.measure.value } : {}),
         });
+        // REQ-267: a check that could not run is not the agent's to fix.
+        if (o.gate && !o.ok && !o.skipped && o.couldNotRun) {
+          return {
+            ok: false,
+            stage: `quality check: ${o.name}`,
+            output: o.output,
+            couldNotRun: `the quality check ${o.name} could not run: it ${o.couldNotRun}`,
+            checks: outcomes,
+          };
+        }
         if (o.gate && !o.ok && !o.skipped) {
           return {
             ok: false,
@@ -1008,7 +1036,7 @@ function agentChecks(
     }
   };
   const promptFor = (instruction: string) =>
-    buildPrompt(req as HarnessRequirement, worktreeDir, {
+    promptInFlight(req as HarnessRequirement, worktreeDir, {
       promptPrefix: settings.promptPrefix,
       hint: instruction,
       withPrecedents: settings.promptPrecedents === true,
@@ -1455,6 +1483,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         totalMs: Date.now() - attemptStart,
         profiles: [...profilesUsed],
       });
+      ledgerAttempts(attemptLog);
     };
 
     // An attempt is a sequence of agent invocations, all bound to this one
@@ -1606,17 +1635,23 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
 
     // Before the gate: an agent that wrote nothing cannot have implemented
     // anything, and the gate would approve it. See `producedNothing` (H19).
+    // REQ-264: the same command writes nothing the next time either — three
+    // attempts and 7 min 40 s said so in truck-flote (S50) — so it ends here.
     if (producedNothing(worktreeDir)) {
       previousFailure =
         `You produced no files. Nothing in the worktree changed, so there is ` +
         `nothing implementing ${req.requirement}.\n\n` +
         `If you could not write, that is the problem to report — a non-interactive ` +
         `agent without tool permissions reads the prompt and cannot act on it. ` +
-        `See docs/automation.md.`;
+        `See docs/agent-setup.md, § Tool allowances.`;
       warn(`${req.requirement}: the agent produced no files — nothing to gate`);
-      warn(`  fix: check the agent's write permissions (see docs/automation.md)`);
+      warn(
+        `  fix: give the agent write permission and the tools it needs (docs/agent-setup.md, § Tool allowances)`
+      );
+      warn(`  not retrying: the same command would write nothing again`);
       record("no-op");
-      continue;
+      stopRetrying = true;
+      break;
     }
 
     // Before the gate: a scenario the agent has just loosened cannot fail, so a
@@ -1651,6 +1686,17 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       { ...settings, verbose: ctx.verbose },
       (stage, result, extra) => event({ type: "gate", stage, result, ...(extra || {}) })
     );
+    if (!gate.ok && gate.couldNotRun) {
+      // REQ-267: nothing in the code can fix the tool's own setup, and another
+      // attempt would meet it again (truck-flote S52: 15 minutes each).
+      previousFailure = `Gate stopped at: ${gate.stage}\n\n${gate.couldNotRun}\n\n${gate.output}`;
+      warn(`${req.requirement}: ${gate.couldNotRun}`);
+      for (const line of gate.output.trim().split("\n").slice(-5)) warn(`  ${line}`);
+      warn(`  not retrying: fix the check (harness.config.yaml) and run it again`);
+      record("check");
+      stopRetrying = true;
+      break;
+    }
     if (!gate.ok) {
       previousFailure =
         `Gate failed at: ${gate.stage}\n\n` + (gate.hint ? `⚠ ${gate.hint}\n\n` : "") + gate.output;
@@ -1744,7 +1790,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     ) {
       info(`${req.requirement}: probing with '${settings.adversaryProfile}'`);
       probe = runAdversarialProbe(worktreeDir, req, settings, timeoutMs, (instruction) =>
-        buildPrompt(req, worktreeDir, {
+        promptInFlight(req, worktreeDir, {
           promptPrefix: settings.promptPrefix,
           hint: instruction,
           withPrecedents: settings.promptPrecedents === true,
@@ -1858,6 +1904,33 @@ export interface RunRecord {
   /** Whether the run had a budget ceiling (C1). A short run reads differently. */
   bounded?: boolean;
   results: unknown[];
+  /** When the record was last written, while the run goes (REQ-269). */
+  updatedAt?: string;
+  /** The requirement the run is on, while it goes. */
+  running?: { requirement: string; startedAt: string; attemptLog: unknown[] };
+}
+
+/**
+ * The run's record, written as it goes (REQ-269).
+ *
+ * It used to be written once, at the end, so a run stopped by hand — the
+ * 27 minutes truck-flote spent on semgrep hanging (S52) — left no trace, and
+ * `harness report` priced the requirement without them. Now it is written when
+ * each requirement starts and each attempt ends; a killed run leaves a record
+ * whose `running` says where it stopped.
+ */
+let ledger: { projectDir: string; record: RunRecord } | null = null;
+
+function ledgerWrite(): void {
+  if (!ledger) return;
+  ledger.record.updatedAt = new Date().toISOString();
+  writeRunRecord(ledger.projectDir, ledger.record);
+}
+
+function ledgerAttempts(attemptLog: unknown[]): void {
+  if (!ledger || !ledger.record.running) return;
+  ledger.record.running.attemptLog = [...attemptLog];
+  ledgerWrite();
 }
 
 /**
@@ -2276,6 +2349,24 @@ function gitIdentityProblem(projectDir: string): string {
 }
 
 function processRequirement(req: HarnessRequirement, ctx: RunContext): RequirementResult {
+  if (ledger) {
+    ledger.record.running = {
+      requirement: req.requirement,
+      startedAt: new Date().toISOString(),
+      attemptLog: [],
+    };
+    ledgerWrite();
+  }
+  const result = processOneRequirement(req, ctx);
+  if (ledger) {
+    ledger.record.results.push(result);
+    delete ledger.record.running;
+    ledgerWrite();
+  }
+  return result;
+}
+
+function processOneRequirement(req: HarnessRequirement, ctx: RunContext): RequirementResult {
   const { projectDir, baseRef, keepWorktrees, force } = ctx;
   const branch = `harness/${req.requirement}`;
 
@@ -3170,6 +3261,26 @@ export class RunCommand extends BaseCommand {
         }
       }
 
+      // REQ-264: Claude Code in print mode writes nothing without permission.
+      let permitted = false;
+      const permit = (command: string) => {
+        const p = withAgentPermission(command);
+        permitted = permitted || p.added;
+        return p.command;
+      };
+      if (settings.agent) settings.agent = permit(settings.agent);
+      for (const name of Object.keys(settings.profileAgents || {})) {
+        settings.profileAgents[name] = permit(settings.profileAgents[name]);
+      }
+      if (permitted) {
+        info(
+          "Claude Code runs with --permission-mode acceptEdits: in print mode it cannot write " +
+            "without it, and the harness's worktree confines what it writes."
+        );
+      }
+      // REQ-271: an agent given on the command line is forgotten after the run.
+      const unkept = Boolean(args.agent) && !(fileConfig && fileConfig.agent);
+
       // A ladder of per-attempt profiles configures agents just as much as a
       // single `agent:` does, so a project that declares one is configured.
       const hasAgent = Boolean(settings.agent) || settings.attemptProfiles.length > 0;
@@ -3355,6 +3466,23 @@ export class RunCommand extends BaseCommand {
       }
 
       const startedAt = new Date().toISOString();
+      const runRecordBase = {
+        schemaVersion: 1,
+        startedAt,
+        baseRef,
+        concurrency: settings.concurrency,
+        maxAttempts: settings.maxAttempts,
+        // Whether this run had a ceiling at all. Reading the ledger later,
+        // a short run is a different thing depending on the answer.
+        bounded: hasBudget({
+          budgetSeconds: args.budgetSeconds,
+          maxRequirements: args.maxRequirements,
+        }),
+      };
+      if (!process.env.SPECGATE_HARNESS_WORKER) {
+        ledger = { projectDir, record: { ...runRecordBase, finishedAt: "", results: [] } };
+        ledgerWrite();
+      }
       const results = args.chain
         ? await runChain(pending, ctx, hintByReq)
         : await runLevels(pending, ctx, {
@@ -3372,26 +3500,24 @@ export class RunCommand extends BaseCommand {
       const recordPath = process.env.SPECGATE_HARNESS_WORKER
         ? null
         : writeRunRecord(projectDir, {
-            schemaVersion: 1,
-            startedAt,
+            ...runRecordBase,
             finishedAt: new Date().toISOString(),
-            baseRef,
-            concurrency: settings.concurrency,
-            maxAttempts: settings.maxAttempts,
-            // Whether this run had a ceiling at all. Reading the ledger later,
-            // a short run is a different thing depending on the answer.
-            bounded: hasBudget({
-              budgetSeconds: args.budgetSeconds,
-              maxRequirements: args.maxRequirements,
-            }),
             results,
           });
+      ledger = null;
 
       printReport(
         results,
         args.format,
         recordPath ? path.relative(projectDir, recordPath) : undefined
       );
+      // REQ-271: the studio's Build reads the agent from harness.config.yaml.
+      if (unkept && !jsonMode && !process.env.SPECGATE_HARNESS_WORKER) {
+        process.stdout.write(
+          `  ${ui.muted("Keep this agent for the next run and the studio's Build:")}\n` +
+            `    specgate config set agent "${args.agent.replace(/"/g, '\\"')}"\n\n`
+        );
+      }
 
       // A blocked requirement was never attempted, so it is not a pass — but it
       // is also not evidence that anything is broken beyond the failure that
