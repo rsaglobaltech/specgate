@@ -150,6 +150,22 @@
 | REQ-216 | SCN-216a | `features/studio/REQ-216.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-217 | SCN-217a | `features/studio/REQ-217.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-233 | SCN-233a | `features/studio/REQ-233.feature` | - | - | - | - | - | tests/unit/studio-commit.test.ts | Implemented |
+| REQ-218 | SCN-218a | `features/quality/REQ-218.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
+| REQ-219 | SCN-219a | `features/quality/REQ-219.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
+| REQ-232 | SCN-232a | `features/quality/REQ-232.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
+| REQ-222 | SCN-222a | `features/quality/REQ-222.feature` | - | - | - | - | - | tests/unit/quality-baseline.test.ts | Implemented |
+| REQ-223 | SCN-223a | `features/quality/REQ-223.feature` | - | - | - | - | - | tests/unit/quality-measures.test.ts | Implemented |
+| REQ-224 | SCN-224a | `features/quality/REQ-224.feature` | - | - | - | - | - | tests/unit/quality-measures.test.ts | Implemented |
+| REQ-225 | SCN-225a | `features/quality/REQ-225.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-230 | SCN-230a | `features/quality/REQ-230.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-234 | SCN-234a | `features/quality/REQ-234.feature` | - | - | - | - | - | tests/unit/quality-commits.test.ts | Implemented |
+| REQ-220 | SCN-220a | `features/quality/REQ-220.feature` | - | - | - | - | - | tests/unit/quality-harness.test.ts | Implemented |
+| REQ-221 | SCN-221a | `features/quality/REQ-221.feature` | - | - | - | - | - | tests/unit/quality-harness.test.ts | Implemented |
+| REQ-228 | SCN-228a | `features/quality/REQ-228.feature` | - | - | - | - | - | tests/unit/quality-harness.test.ts | Implemented |
+| REQ-229 | SCN-229a | `features/quality/REQ-229.feature` | - | - | - | - | - | tests/unit/quality-views.test.ts | Implemented |
+| REQ-226 | SCN-226a | `features/quality/REQ-226.feature` | - | - | - | - | - | tests/unit/quality-sonar.test.ts | Implemented |
+| REQ-227 | SCN-227a | `features/quality/REQ-227.feature` | - | - | - | - | - | tests/unit/quality-agents.test.ts | Implemented |
+| REQ-231 | SCN-231a | `features/quality/REQ-231.feature` | - | - | - | - | - | tests/unit/quality-arch.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
