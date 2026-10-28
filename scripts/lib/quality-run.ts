@@ -282,17 +282,40 @@ export function changedFiles(projectDir: string, base: string): string[] {
   return [...out].filter((f) => fs.existsSync(path.join(projectDir, f))).sort();
 }
 
-let dockerAnswered: boolean | null = null;
-/** Whether a Docker daemon answers; asked once per process. */
-export function dockerAvailable(): boolean {
-  if (dockerAnswered === null) {
-    const r = spawnSync("docker", ["version", "--format", "{{.Server.Version}}"], {
-      encoding: "utf8",
-      timeout: 15000,
-    });
-    dockerAnswered = r.status === 0 && Boolean((r.stdout || "").trim());
+/**
+ * Why Docker cannot run the checks here, or null when it can (REQ-254). The
+ * check images are Linux images: a server in Windows containers mode answers
+ * and then has no manifest to pull (GitHub's Windows runners, Docker Desktop
+ * switched to Windows containers).
+ */
+export function dockerVerdict(r: { status: number | null; stdout?: string | null }): string | null {
+  const os = String(r.stdout || "")
+    .trim()
+    .toLowerCase();
+  if (r.status !== 0 || !os)
+    return "Docker is not running here: start Docker Desktop (or the docker daemon).";
+  if (os !== "linux")
+    return `Docker runs ${os} containers here; the checks need Linux containers: switch Docker Desktop to Linux containers.`;
+  return null;
+}
+
+let dockerProblem: string | null | undefined;
+/** Why Docker cannot run the checks here, or null; asked once per process. */
+export function dockerWhyNot(): string | null {
+  if (dockerProblem === undefined) {
+    dockerProblem = dockerVerdict(
+      spawnSync("docker", ["version", "--format", "{{.Server.Os}}"], {
+        encoding: "utf8",
+        timeout: 15000,
+      })
+    );
   }
-  return dockerAnswered;
+  return dockerProblem;
+}
+
+/** Whether Docker can run the checks here: it answers, with Linux containers. */
+export function dockerAvailable(): boolean {
+  return dockerWhyNot() === null;
 }
 
 /** Whether the command's program is on this machine's PATH. */
@@ -312,9 +335,8 @@ export function resolveRunner(
 ): { runner: "docker" | "local" } | { skip: string } {
   if (check.runner === "local") return { runner: "local" };
   if (check.runner === "docker") {
-    return dockerAvailable()
-      ? { runner: "docker" }
-      : { skip: "Docker is not running here: start Docker Desktop (or the docker daemon)." };
+    const why = dockerWhyNot();
+    return why === null ? { runner: "docker" } : { skip: why };
   }
   if (hasProgram(check.run)) return { runner: "local" };
   if (check.image && dockerAvailable()) return { runner: "docker" };
@@ -689,5 +711,5 @@ export function stagesPassed(outcomes: CheckOutcome[], ci: boolean): boolean {
 
 /** For tests: forget whether Docker answered. */
 export function resetDockerProbe(value: boolean | null = null): void {
-  dockerAnswered = value;
+  dockerProblem = value === null ? undefined : value ? null : "Docker is not running here.";
 }

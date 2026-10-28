@@ -232,6 +232,16 @@ test("REQ-239 SCN-239a: the JSON says why a check failed", () => {
   assert.match(outcome.output, /boom/);
 });
 
+test("REQ-254 SCN-254a: Docker Desktop on Windows containers", () => {
+  const { dockerVerdict } = quality();
+  assert.equal(dockerVerdict({ status: 0, stdout: "linux\n" }), null);
+  assert.match(
+    String(dockerVerdict({ status: 0, stdout: "windows\n" })),
+    /switch Docker Desktop to Linux containers/
+  );
+  assert.match(String(dockerVerdict({ status: 1, stdout: "" })), /not running/);
+});
+
 const docker = quality().dockerAvailable();
 
 test(
