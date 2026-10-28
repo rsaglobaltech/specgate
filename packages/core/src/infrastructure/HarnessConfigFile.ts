@@ -29,6 +29,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { YamlDocument, parseYamlLite } from "../domain/YamlLite";
 import { HarnessSettings } from "../domain/HarnessConfig";
+import { readQuality } from "../domain/QualityChecks";
 
 export const HARNESS_CONFIG_FILE = "harness.config.yaml";
 
@@ -60,6 +61,11 @@ const KNOWN_KEYS = new Set([
   "e2e_dir",
   "prompt_precedents",
   "adversary_profile",
+  // ADR-0040: the quality and security checks, and the thresholds Specgate measures.
+  "quality",
+  "diff_coverage",
+  "mutation_score",
+  "checks",
 ]);
 
 /**
@@ -88,6 +94,17 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
 
   const config: Partial<HarnessSettings> = {};
   if (parsed.agent !== undefined) config.agent = String(parsed.agent);
+  if (
+    ["quality", "diff_coverage", "mutation_score", "checks"].some((k) => parsed[k] !== undefined)
+  ) {
+    const quality = readQuality(parsed as Record<string, unknown>);
+    if (quality.errors.length > 0) {
+      throw new Error(
+        `${HARNESS_CONFIG_FILE}: the quality checks cannot be read:\n  ${quality.errors.join("\n  ")}`
+      );
+    }
+    config.quality = quality.config;
+  }
   // Opt-in (D2): show the agent an accepted requirement from the same bounded
   // context. Off by default because it costs prompt budget and says nothing
   // useful until a project has verified work to point at.

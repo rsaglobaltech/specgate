@@ -15,8 +15,8 @@ its delta and test first.
 
 ## 2. Mechanism
 
-- [ ] 2.1 REQ-218 `checks:` model, validation, `quality list`
-- [ ] 2.2 REQ-219 stages in `check` and `done`
+- [x] 2.1 REQ-218 `checks:` model, validation, `quality list`
+- [x] 2.2 REQ-219 stages in `check` and `done`
 - [ ] 2.3 REQ-220 `attempt` checks in the harness gate, findings in the next prompt
 - [ ] 2.4 REQ-221 `end` checks before merge and at the end of a chain
 - [ ] 2.5 REQ-222 SARIF reader, fingerprints, baseline, `quality baseline [--accept]`
@@ -30,7 +30,7 @@ its delta and test first.
 ## 4. Presets
 
 - [ ] 4.1 REQ-225 levels and presets: Maven, then Gradle, then npm/pnpm; `quality init`, `harness init`, `adopt`
-- [ ] 4.1b REQ-232 every check in Docker (runner: docker in all presets), images by digest, caches in named volumes, `quality doctor [--pull]`
+- [~] 4.1b REQ-232 every check in Docker (runner: docker in all presets), images by digest, caches in named volumes, `quality doctor [--pull]`
 - [ ] 4.2 REQ-226 SonarQube Community in Docker (optional `end` check); Snyk and Aikido deferred: no account
 - [ ] 4.3 REQ-227 review and adversary profiles as `end` checks
 - [ ] 4.4 REQ-230 fixture projects and the e2e that runs every preset; every **(verify)** in design.md resolved

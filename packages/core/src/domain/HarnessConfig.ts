@@ -1,5 +1,9 @@
+import type { QualityConfig } from "./QualityChecks";
+
 export interface HarnessSettings {
   agent: string;
+  /** The quality and security checks, by stage (ADR-0040). Absent: none configured. */
+  quality?: QualityConfig;
   testCmd: string;
   /**
    * The team's architecture check (ArchUnit, dependency-cruiser, import-linter…),
