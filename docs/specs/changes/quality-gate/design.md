@@ -280,6 +280,43 @@ Run record (`.harness/runs/*.json`), per requirement:
 ]
 ```
 
+## 8b. Conventional Commits (REQ-234)
+
+Added on 2026-10-28 at the person's request: commit messages follow
+Conventional Commits 1.0.0 (https://www.conventionalcommits.org/en/v1.0.0/).
+
+- **A native check, no tool and no container.** The grammar is small and
+  exact, so Specgate parses it itself (`packages/core/src/domain/ConventionalCommit.ts`,
+  pure): `<type>[(<scope>)][!]: <description>`, a blank line before an optional
+  body, footers as `Token: value` or `Token #value`, `BREAKING CHANGE:` (or
+  `BREAKING-CHANGE:`) as a footer, `!` before the colon as the same signal.
+  The spec's rules checked one by one: a type is a noun; `feat` and `fix` are
+  required to exist as types; a scope is a noun in parentheses; the
+  description follows the colon and a space; the body begins one blank line
+  after the description; a footer token uses `-` instead of spaces, except
+  `BREAKING CHANGE`.
+- **Allowed types:** `feat`, `fix` and, as commitlint's conventional config,
+  `build`, `chore`, `ci`, `docs`, `perf`, `refactor`, `revert`, `style`, `test`.
+  The spec allows others; `harness.config.yaml` can widen the list with
+  `commit_types:`.
+- **Which commits:** those between the base and HEAD, merge commits left out
+  (git writes them; the spec does not cover them), `fixup!`/`squash!` left
+  out (they disappear in an autosquash) unless the check runs in `ci`.
+- **Where it runs:** a built-in check named `commits`, at `attempt` in the
+  harness (the agent's own commits, refused before the merge) and at `ci`.
+  `quality init` writes it for every stack; it needs no image.
+- **What a failure says:** the commit's short hash and subject, and the rule
+  it breaks, e.g. `a1b2c3d "Update stuff": no type — start with feat:, fix:, docs: …`.
+- **The commits Specgate writes follow it already** and stay checked by a
+  test: the harness's `feat(REQ-NNN): …` and its merge, the studio's
+  `chore(spec): save the specification from the studio` and `chore: start the
+  project with specgate`, `change archive`'s commit. The harness prompt tells
+  the agent the format with the requirement as scope (`feat(REQ-007): …`,
+  `test(REQ-007): …`).
+- **Later, not in this change:** a CHANGELOG section drafted from `feat`,
+  `fix` and breaking commits, and the next version suggested from them
+  (SemVer, as the spec intends).
+
 ## 9. Follow-ups outside this repository
 
 - **F4 (forja):** the generated Java project declares JaCoCo, PIT with the

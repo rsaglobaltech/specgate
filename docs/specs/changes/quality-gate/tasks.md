@@ -35,6 +35,10 @@ its delta and test first.
 - [ ] 4.3 REQ-227 review and adversary profiles as `end` checks
 - [ ] 4.4 REQ-230 fixture projects and the e2e that runs every preset; every **(verify)** in design.md resolved
 
+## 4b. Commits
+
+- [ ] 4.5 REQ-234 Conventional Commits 1.0.0: native parser, built-in `commits` check (attempt in the harness, ci), `commit_types:`, every commit Specgate writes conforms, the harness prompt asks for it
+
 ## 5. Results
 
 - [ ] 5.1 REQ-228 run record, matrix, `harness report`

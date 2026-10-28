@@ -103,6 +103,14 @@ requirement.
    Only free tools are preset; SonarQube Community runs locally in Docker,
    and Snyk and Aikido wait for an account.
 
+10. **Commit messages are checked too: Conventional Commits 1.0.0.** A
+    built-in check, `commits`, parses each commit since the base with the
+    spec's grammar — type, optional scope, `!`, description, body, footers,
+    `BREAKING CHANGE` — natively, without a tool or a container; merge commits
+    are left out. It runs in every harness attempt, so an agent's commit that
+    breaks the format is refused before the merge, and in CI. The commits
+    Specgate itself writes follow the format, and a test keeps them to it.
+
 ## Consequences
 
 - `check` gets slower by the checks a team enables; the `attempt`/`end`/`ci`

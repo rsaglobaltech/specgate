@@ -49,7 +49,7 @@ Out of scope:
 - Languages other than Java and TypeScript/JavaScript in this change (.NET,
   Python, Go follow the same mechanism later; ADR-0040 is language-neutral).
 
-## Planned requirements (REQ-218..REQ-232)
+## Planned requirements (REQ-218..REQ-234; REQ-233 went to studio-commit)
 
 | Id      | Requirement                                                                                     |
 | ------- | ----------------------------------------------------------------------------------------------- |
@@ -68,6 +68,7 @@ Out of scope:
 | REQ-230 | Every preset runs against a fixture project (Maven, Gradle, npm) in the e2e suite               |
 | REQ-231 | ADR-0028's baseline and SARIF for `arch_cmd`, through the same mechanism                        |
 | REQ-232 | Every check runs in Docker (presets write `runner: docker`), caches in named volumes, `quality doctor [--pull]` |
+| REQ-234 | Commit messages follow Conventional Commits 1.0.0: a native check, and the commits Specgate writes follow it |
 
 The range is reserved in `change.yaml`; the deltas are written requirement by
 requirement, each with its scenarios, before its code (AGENTS.md).
