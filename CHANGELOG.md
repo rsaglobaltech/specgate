@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **The studio commits the specification before a build** (REQ-233): the brief, approvals, answers and drafts the studio wrote are committed with the person's own git identity, so the harness finds the clean tree it needs. Any other uncommitted file stops the build, named, and is never committed.
+
 ## [0.26.0] — 2026-10-27
 
 The studio becomes an app: from an empty folder to the report of what was built, step by step, without the commands. And a clean slate: everything a brief-to-app run left on the list, the test suite green on Windows.

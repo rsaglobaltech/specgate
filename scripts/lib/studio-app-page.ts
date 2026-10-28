@@ -177,7 +177,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       whoCodes:"¿Quién programa?", whoCodesP:"Los asistentes de este proyecto. Se recuerda tu elección.", noEstimate:"Sin estimación todavía", perRun:"por requisito",
       readyN:"Listos para construir", minutes:"min aprox.", perReq:"por requisito", buildN:"Construir los N", build1:"Construir este", noAgent:"Falta configurar el asistente (agent en harness.config.yaml).",
       running:"En marcha", stP:"Programa", stT:"Prueba", stQ:"Revisa la calidad", stS:"Guarda", watch:"Ver en directo", stop:"Detener después de este", stopAsked:"Se detendrá al terminar este.",
-      doneToday:"Terminados", nothingReady:"No hay nada listo para construir.", started:"En marcha: ", saved:"Guardado.", err:"No se pudo: ",
+      doneToday:"Terminados", nothingReady:"No hay nada listo para construir.", started:"En marcha: ", savedGit:"la especificación quedó guardada en git (N archivos)", saved:"Guardado.", err:"No se pudo: ",
       repTitle:"Lo que está hecho", repIntro:"Cada requisito se construyó y se probó con el ejemplo que lo describe. Este informe sale de la especificación y de las pruebas.",
       download:"Descargar informe", print:"Imprimir / PDF", rBuilt:"Construido", rExamples:"Ejemplos probados", rGate:"Calidad", rGateOk:"Pasa", rGateBad:"No pasa", rCost:"Coste del asistente",
       byModule:"Por módulo", colModule:"Módulo", colBuilt:"Hecho", colEx:"Ejemplos", colState:"Estado", complete:"Completo", waitingN:"N esperan una respuesta", notBuilt:"Sin construir",
@@ -239,7 +239,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       whoCodes:"Who codes?", whoCodesP:"The assistants of this project. Your choice is remembered.", noEstimate:"No estimate yet", perRun:"per requirement",
       readyN:"Ready to build", minutes:"min approx.", perReq:"per requirement", buildN:"Build the N", build1:"Build this one", noAgent:"The assistant is not configured yet (agent in harness.config.yaml).",
       running:"Running", stP:"Codes", stT:"Tests", stQ:"Checks quality", stS:"Saves", watch:"Watch live", stop:"Stop after this one", stopAsked:"It will stop once this one ends.",
-      doneToday:"Finished", nothingReady:"Nothing is ready to build.", started:"Started: ", saved:"Saved.", err:"Could not: ",
+      doneToday:"Finished", nothingReady:"Nothing is ready to build.", started:"Started: ", savedGit:"the specification was committed to git (N files)", saved:"Saved.", err:"Could not: ",
       repTitle:"What is done", repIntro:"Each requirement was built and proven with the example that describes it. This report comes from the specification and the tests.",
       download:"Download the report", print:"Print / PDF", rBuilt:"Built", rExamples:"Examples proven", rGate:"Quality", rGateOk:"Passes", rGateBad:"Fails", rCost:"Assistant cost",
       byModule:"By module", colModule:"Module", colBuilt:"Built", colEx:"Examples", colState:"State", complete:"Complete", waitingN:"N wait for an answer", notBuilt:"Not built",
@@ -826,7 +826,7 @@ export function studioAppPage(projectName: string, token = ""): string {
     var label = function(){ var n = chosen().length; return n === 1 ? t("build1") : t("buildN").split("N").join(String(n)); };
     var hasAgent = b.agent || !!who;
     var go0 = button("go", label(), function(){
-      post("api/build", {reqs:chosen(), profile:who}).then(function(res){ m5.className = "msg " + (res.ok ? "ok" : "err"); m5.textContent = res.ok ? t("started") + res.started.join(", ") : t("err") + res.message; setTimeout(refresh, 1500); });
+      post("api/build", {reqs:chosen(), profile:who}).then(function(res){ m5.className = "msg " + (res.ok ? "ok" : "err"); m5.textContent = res.ok ? t("started") + res.started.join(", ") + (res.saved && res.saved.length ? " · " + fill("savedGit", {N:res.saved.length}) : "") : t("err") + res.message; setTimeout(refresh, 1500); });
     });
     go0.disabled = !b.ready.length || !hasAgent || !!b.running;
     hd.append(info, go0); sec.appendChild(hd);
