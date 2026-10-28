@@ -385,3 +385,15 @@ The system SHALL keep what `specgate check` records for the pet in the repositor
 - THEN `git status --porcelain` is still empty, and the pet reads the result back
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-256.feature kind=functional status=Implemented test=tests/unit/pet.test.ts -->
+
+### Requirement: REQ-265 — A ./ inside a quoted argument stays as written
+
+The system SHALL, on Windows, rewrite `./name` as `.\name` only where a command starts — at the beginning, or after `&&`, `||`, `;`, `|` or `(` — outside quotes, so an argument such as an agent's tool allowance `'Bash(./mvnw:*)'` reaches the program as written.
+
+#### Scenario: SCN-265a — An agent's allowance for the Maven wrapper
+
+- GIVEN the agent command `claude -p --allowedTools 'Bash(./mvnw:*)' "Bash(./gradlew:*)" < {prompt_file}`
+- WHEN it is run on Windows
+- THEN it runs as written, while `(./mvnw -q test)` still runs as `(.\mvnw -q test)`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-265.feature kind=functional status=Implemented test=tests/unit/shell-command.test.ts -->

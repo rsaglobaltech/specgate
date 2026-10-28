@@ -198,6 +198,14 @@
 | REQ-274 | SCN-274a | `features/live-harness/REQ-274.feature` | - | - | - | - | - | tests/unit/live-gate-steps.test.ts | Implemented |
 | REQ-275 | SCN-275a | `features/studio/REQ-275.feature` | - | - | - | - | - | tests/unit/live-gate-steps.test.ts | Implemented |
 | REQ-276 | SCN-276a | `features/quality/REQ-276.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-265 | SCN-265a | `features/daily-surface/REQ-265.feature` | - | - | - | - | - | tests/unit/shell-command.test.ts | Implemented |
+| REQ-264 | SCN-264a | `features/harness/REQ-264.feature` | - | - | - | - | - | tests/unit/harness-run6.test.ts | Implemented |
+| REQ-268 | SCN-268a | `features/harness/REQ-268.feature` | - | - | - | - | - | tests/unit/harness-run6.test.ts | Implemented |
+| REQ-269 | SCN-269a | `features/harness/REQ-269.feature` | - | - | - | - | - | tests/unit/harness-run6.test.ts | Implemented |
+| REQ-271 | SCN-271a | `features/harness/REQ-271.feature` | - | - | - | - | - | tests/unit/harness-run6.test.ts | Implemented |
+| REQ-266 | SCN-266a | `features/quality/REQ-266.feature` | - | - | - | - | - | tests/unit/quality-worktree.test.ts | Implemented |
+| REQ-267 | SCN-267a | `features/quality/REQ-267.feature` | - | - | - | - | - | tests/unit/quality-worktree.test.ts | Implemented |
+| REQ-270 | SCN-270a | `features/studio/REQ-270.feature` | - | - | - | - | - | tests/unit/studio-inflight.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
