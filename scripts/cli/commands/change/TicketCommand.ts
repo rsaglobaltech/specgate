@@ -70,7 +70,7 @@ function usage(): void {
       "  --check               Its Definition of Ready (T1–T9); writes nothing",
       "  --capability <name>   The capability, when its epic is not under epics:",
       "  --agent <cmd>         Have your agent draft it, confined to the change",
-      "  --no-branch           Do not create feature/<KEY>-<slug>",
+      "  --no-branch           Stay on this branch; committed there if it names <KEY>",
       "  --no-push             Create it, but do not push it to origin",
       "  --project-dir <path>  --json",
       "",
@@ -185,12 +185,32 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
   return { name, note: null };
 }
 
-/** Commit the opened change; a note when it could not, else null. */
+/**
+ * The branch the developer is on, when it already names the ticket: one
+ * another tool made, as agentkit does, before `--no-branch` (REQ-165).
+ */
+function givenTicketBranch(dir: string, t: Ticket): string | null {
+  const current = git(dir, ["rev-parse", "--abbrev-ref", "HEAD"]);
+  if (current.status !== 0) return null;
+  const name = current.stdout.trim();
+  return TICKET_BRANCH.exec(name)?.[1] === t.key ? name : null;
+}
+
+/** Commit the opened change, and only it; a note when it could not, else null. */
 function commitOpening(dir: string, t: Ticket, changeId: string): string | null {
-  const added = git(dir, ["add", "--", `${CHANGES}/${changeId}`]);
+  const folder = `${CHANGES}/${changeId}`;
+  const added = git(dir, ["add", "--", folder]);
+  // On a branch someone else made, other work may be staged: it stays staged.
   const made =
     added.status === 0
-      ? git(dir, ["commit", "-q", "-m", `docs(spec): ${t.key} open the change from the ticket`])
+      ? git(dir, [
+          "commit",
+          "-q",
+          "-m",
+          `docs(spec): ${t.key} open the change from the ticket`,
+          "--",
+          folder,
+        ])
       : added;
   if (made.status === 0) return null;
   const why = (made.stderr || made.stdout).trim().split("\n")[0] ?? "";
@@ -551,11 +571,14 @@ export class TicketCommand extends BaseCommand {
     // What colleagues pushed since the last fetch: their ticket branches hold
     // reserved ids this change must not reuse (REQ-163).
     const fetched = fetchOrigin(projectDir);
-    const branch = opts.branch ? ticketBranch(projectDir, ticket) : { name: null, note: null };
+    const branch = opts.branch
+      ? ticketBranch(projectDir, ticket)
+      : { name: givenTicketBranch(projectDir, ticket), note: null };
     if (fetched) branch.note = branch.note ? `${fetched} ${branch.note}` : fetched;
     const opened = openChange(projectDir, ticket, changeId, capability);
-    // On the branch it created, the opening is committed, so pushing it
-    // publishes the ids it reserved to every other clone (REQ-165).
+    // On the ticket's branch, created here or given, the opening is
+    // committed, so pushing it publishes the ids it reserved to every other
+    // clone (REQ-165).
     const committed = branch.name ? commitOpening(projectDir, ticket, changeId) : null;
     if (committed) branch.note = branch.note ? `${branch.note} ${committed}` : committed;
     const pushed = branch.name && opts.push ? pushBranch(projectDir, branch.name) : null;
@@ -753,6 +776,9 @@ export class TicketCommand extends BaseCommand {
   private check(opts: TicketOptions, ticket: Ticket): void {
     const io = agentIo(opts.json);
     const findings = [...checkTicket(ticket), ...changedSince(opts.projectDir, ticket)];
+    // Where the change would go, said before any branch exists (REQ-171).
+    const where = this.capabilityFor(opts, ticket);
+    if (where.missing) findings.push(where.missing);
     const errors = findings.filter((d) => d.severity === "error").length;
     const warnings = findings.filter((d) => d.severity === "warning").length;
     const ready = ticketReady(findings);
@@ -762,40 +788,92 @@ export class TicketCommand extends BaseCommand {
       : epic
         ? "specgate propose --from-ticket <story key> --check"
         : `specgate propose --from-ticket ${opts.ticket} --check`;
-    io.emit({ ticket: ticketJson(ticket), ready, errors, warnings, next, status: findings }, () => {
-      const out = process.stdout;
-      out.write(ui.header("propose --from-ticket --check", ticket.key));
-      out.write(
-        ui.ok(
-          `${ui.bold(ticket.key)} ${ticket.summary} ` +
-            ui.muted(
-              `· ${ticket.type || "issue"} · ${ticket.criteria.length} criteria · ` +
-                `${ticket.questions.length} open question(s)`
-            )
-        ) + (findings.length ? "\n" : "")
-      );
-      writeFindings(findings);
-      out.write(
-        "\n" +
-          (ready
-            ? ui.ok(
-                ui.bold("Ready to draft") +
-                  (warnings ? ui.muted(` — ${warnings} warning(s) for you to judge`) : "")
+    io.emit(
+      {
+        ticket: ticketJson(ticket),
+        ready,
+        capability: where.capability,
+        errors,
+        warnings,
+        next,
+        status: findings,
+      },
+      () => {
+        const out = process.stdout;
+        out.write(ui.header("propose --from-ticket --check", ticket.key));
+        out.write(
+          ui.ok(
+            `${ui.bold(ticket.key)} ${ticket.summary} ` +
+              ui.muted(
+                `· ${ticket.type || "issue"} · ${ticket.criteria.length} criteria · ` +
+                  `${ticket.questions.length} open question(s)`
               )
-            : ui.fail(
-                epic
-                  ? ui.bold("An epic is not drafted — its stories are")
-                  : `${ui.bold(`${errors} error(s) to fix in Jira before drafting`)} ${ui.muted("— each says how")}`
-              ))
-      );
-      out.write(
-        ui.next(
-          next,
-          ready ? "open the change" : epic ? "one of its stories" : "once the ticket is fixed"
-        )
-      );
-    });
+          ) + (findings.length ? "\n" : "")
+        );
+        writeFindings(findings);
+        out.write(
+          "\n" +
+            (ready
+              ? ui.ok(
+                  ui.bold("Ready to draft") +
+                    (warnings ? ui.muted(` — ${warnings} warning(s) for you to judge`) : "")
+                )
+              : ui.fail(
+                  epic
+                    ? ui.bold("An epic is not drafted — its stories are")
+                    : `${ui.bold(`${errors} error(s) to fix in Jira before drafting`)} ${ui.muted("— each says how")}`
+                ))
+        );
+        out.write(
+          ui.next(
+            next,
+            ready ? "open the change" : epic ? "one of its stories" : "once the ticket is fixed"
+          )
+        );
+      }
+    );
     process.exitCode = ready ? 0 : 1;
+  }
+
+  /**
+   * The capability a change for this ticket would be opened in: `--capability`
+   * or the epic's mapping; outside a Specgate project, or for an epic, no say.
+   */
+  private capabilityFor(
+    opts: TicketOptions,
+    ticket: Ticket
+  ): { capability: string | null; missing: Diagnostic | null } {
+    let projectDir: string;
+    try {
+      projectDir = resolveProjectDir(opts.projectDir);
+    } catch {
+      return { capability: null, missing: null };
+    }
+    const capability = opts.capability || capabilityOf(ticket, almConfig(projectDir));
+    if (capability) return { capability, missing: null };
+    if (!fs.existsSync(path.join(projectDir, "spec.md")) || /^epic$/i.test(ticket.type.trim())) {
+      return { capability: null, missing: null };
+    }
+    const root = path.join(projectDir, "docs", "specs", "capabilities");
+    const existing = fs.existsSync(root)
+      ? fs
+          .readdirSync(root, { withFileTypes: true })
+          .filter((e) => e.isDirectory())
+          .map((e) => e.name)
+          .sort()
+      : [];
+    return {
+      capability: null,
+      missing: warning(
+        "ticket_no_capability",
+        `No capability for ${ticket.key}: ${ticket.parent ? `its epic ${ticket.parent} is not mapped` : "it has no epic"}.`,
+        {
+          fix:
+            `Pass --capability <name>${existing.length ? ` (existing: ${existing.join(", ")})` : ""}, ` +
+            `or map the epic in alm.config.yaml under epics:.`,
+        }
+      ),
+    };
   }
 }
 

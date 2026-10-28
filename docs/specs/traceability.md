@@ -105,6 +105,9 @@
 | REQ-166 | SCN-166a | `features/trusted-gate/REQ-166.feature` | - | - | - | - | - | packages/core/test/unit/capability-spec-merge.test.ts | Implemented |
 | REQ-168 | SCN-168a | `features/trusted-gate/REQ-168.feature` | - | - | - | - | - | tests/unit/change-base.test.ts | Implemented |
 | REQ-169 | SCN-169a | `features/trusted-gate/REQ-169.feature` | - | - | - | - | - | tests/cli.test.ts | Implemented |
+| REQ-170 | SCN-170a | `features/ticket-source/REQ-170.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-171 | SCN-171a | `features/ticket-source/REQ-171.feature` | - | - | - | - | - | tests/unit/ticket-source.test.ts | Implemented |
+| REQ-172 | SCN-172a | `features/trusted-gate/REQ-172.feature` | - | - | - | - | - | tests/cli.test.ts | Implemented |
 | REQ-173 | SCN-173a | `features/daily-surface/REQ-173.feature` | - | - | - | - | - | tests/unit/approved-needs-test.test.ts | Implemented |
 | REQ-175 | SCN-175a | `features/live-harness/REQ-175.feature` | - | - | - | - | - | tests/cli.test.ts | Implemented |
 | REQ-176 | SCN-176a | `features/brief-cards/REQ-176.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |

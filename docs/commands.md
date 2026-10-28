@@ -41,8 +41,8 @@ the pull request, so the spec and the code are reviewed together.
 
 More options for `--from-ticket`: `--agent "<cmd>"` has your agent draft the
 change, `--capability <name>` names the capability when the ticket's epic is
-not mapped, `--no-branch` skips creating the branch, and `--no-push` creates it
-without pushing. A ticket can also be a file: `--from-ticket KAN-13.json`.
+not mapped, `--no-branch` uses the branch you are on (committed and pushed there
+when its name carries the key), and `--no-push` creates it without pushing. A ticket can also be a file: `--from-ticket KAN-13.json`.
 For `--from-brief <module>`, `--agent "<cmd>"` hands the draft to your agent and
 `--reserve <n>` sets how many REQ ids it reserves (default 10). On a draft that is
 already open, it grows the range to n, as long as no later change has reserved the
