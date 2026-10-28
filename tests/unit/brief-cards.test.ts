@@ -671,3 +671,51 @@ test("REQ-257 SCN-257a: forja's front matter, modules empty", (t: TestContext) =
   const { cli } = project(t, FORJA_TEMPLATE);
   assert.match(cli("draft").stdout, /These are the four fields\s+that tell Specgate what to draft/);
 });
+
+// ── REQ-259..260 (truck-flote, sixth run) ───────────────────────────────────
+
+test("REQ-259 SCN-259a: the client's brief pushed first, forja's template beside it", (t: TestContext) => {
+  const { dir, cli } = project(t, FORJA_TEMPLATE);
+  fs.writeFileSync(path.join(dir, "brief.md"), CLIENT_BRIEF);
+  const r = cli("draft");
+  const text = fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8");
+  const front = FORJA_TEMPLATE.slice(0, FORJA_TEMPLATE.indexOf("# Brief"));
+  assert.ok(text.startsWith(front), text);
+  assert.ok(text.includes(CLIENT_BRIEF), text);
+  assert.doesNotMatch(text, /Paste the client's brief here/);
+  assert.ok(fs.existsSync(path.join(dir, "brief.md")), "the root file is kept");
+  assert.match(r.stdout, /brief\.md at the root/);
+  assert.match(r.stdout, /now below the front matter of docs\/brief\.md/);
+});
+
+test("REQ-259 SCN-259b: a body the person wrote is left alone", (t: TestContext) => {
+  const own = FORJA_TEMPLATE.replace(
+    "Paste the client's brief here **as it is**, without rewriting it.",
+    "Our own notes: the despachador plans the day's loads."
+  );
+  const { dir, cli } = project(t, own);
+  fs.writeFileSync(path.join(dir, "brief.md"), CLIENT_BRIEF);
+  cli("draft");
+  assert.equal(fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8"), own);
+});
+
+const SETUP_STUB = `
+const fs = require("fs");
+const text = fs.readFileSync("docs/brief.md", "utf8");
+fs.writeFileSync("docs/brief.md", ${JSON.stringify(FRONT)} + text);
+`;
+
+test("REQ-260 SCN-260a: the agent's front matter needs no fix", (t: TestContext) => {
+  const p = project(t, NOTES);
+  const stub = path.join(p.dir, "..", `setup-${path.basename(p.dir)}.js`);
+  fs.writeFileSync(stub, SETUP_STUB);
+  t.after(() => fs.rmSync(stub, { force: true }));
+  const r = p.cli("draft", "--agent", `node ${stub}`);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(
+    fs.readFileSync(path.join(p.dir, "docs", "brief.md"), "utf8"),
+    /^---\nproduct: Lingo/
+  );
+  assert.ok(!fs.existsSync(path.join(p.dir, "docs", "specs", "BRIEF-SETUP.md")), r.stdout);
+  assert.equal(git(p.dir, "status", "--porcelain").trim(), "M docs/brief.md");
+});

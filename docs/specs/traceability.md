@@ -189,6 +189,11 @@
 | REQ-255 | SCN-255a | `features/daily-surface/REQ-255.feature` | - | - | - | - | - | tests/unit/shell-command.test.ts | Implemented |
 | REQ-256 | SCN-256a | `features/daily-surface/REQ-256.feature` | - | - | - | - | - | tests/unit/pet.test.ts | Implemented |
 | REQ-258 | SCN-258a | `features/quality/REQ-258.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-259 | SCN-259a | `features/brief-cards/REQ-259.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-260 | SCN-260a | `features/brief-cards/REQ-260.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-261 | SCN-261a | `features/brief-cards/REQ-261.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
+| REQ-262 | SCN-262a | `features/brief-cards/REQ-262.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
+| REQ-263 | SCN-263a | `features/brief-cards/REQ-263.feature` | - | - | - | - | - | tests/unit/done-refuses-undeliverable.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

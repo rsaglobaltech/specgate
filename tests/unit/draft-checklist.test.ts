@@ -865,3 +865,70 @@ test("REQ-247 SCN-247a: the truck-flote assumptions", () => {
     "a number the row does not hold is still unlisted"
   );
 });
+
+// ── REQ-261..262 (truck-flote, sixth run) ────────────────────────────────────
+
+test("REQ-261 SCN-261a: the truck-flote fleet module", () => {
+  const axles = req("REQ-003", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-004",
+      [
+        'GIVEN the vehicle "1234-BCD" exists',
+        'WHEN the office opens "1234-BCD › Ejes"',
+        'THEN they see the vehicle "1234-BCD"',
+      ],
+    ],
+  ]);
+  const driver = req("REQ-009", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-013",
+      [
+        "GIVEN no driver",
+        'WHEN the office registers "Lucía Martín"',
+        'THEN they see "Lucía Martín — E000001234567890" in the list',
+      ],
+    ],
+  ]);
+  const rows = [
+    '| A1 | Example vehicles "1234-BCD" | REQ-002, REQ-003 |',
+    '| A4 | Labels "Ejes", "Guardar" | REQ-002 … REQ-011 |',
+    '| A13 | Driver "Lucía Martín", card "E000001234567890" | REQ-009 |',
+  ].join("\n");
+  const r = checkDraft({ deltas: delta(axles, driver), brief: BRIEF, assumptions: rows });
+  const d6 = r.status.filter((d) => d.code === "D6_unlisted_value").map((d) => d.message);
+  assert.deepEqual(d6, [], d6.join("\n"));
+  const trailer = req("REQ-003", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-004",
+      ["GIVEN a vehicle", 'WHEN the office opens "1234-BCD › Remolque"', "THEN it opens"],
+    ],
+  ]);
+  const still = checkDraft({ deltas: delta(trailer), brief: BRIEF, assumptions: rows });
+  assert.ok(
+    still.status.some((d) => d.code === "D6_unlisted_value" && d.message.includes("Remolque")),
+    "a part that is not listed still makes the value unlisted"
+  );
+});
+
+test("REQ-262 SCN-262a: Q5 answered, REQ-010 still blocked", () => {
+  const blocked = req(
+    "REQ-010",
+    'kind=functional actor=Office status="Needs Clarification"',
+    "The system SHALL let the office assign a driver to a vehicle.",
+    [["SCN-015", ["GIVEN a vehicle", "WHEN the office assigns a driver", "THEN it is assigned"]]]
+  );
+  const q = [
+    "| # | Question | Blocks | Answer |",
+    "|---|---|---|---|",
+    "| Q5 | Two drivers per truck? | REQ-010 | Hasta dos conductores por camión |",
+  ].join("\n");
+  const r = checkDraft({ deltas: delta(blocked), brief: BRIEF, questions: q });
+  const found = r.status.find((d) => d.code === "D7_answered_still_blocked");
+  assert.ok(found, JSON.stringify(r.status, null, 2));
+  assert.equal(found!.severity, "error");
+  assert.match(found!.message, /Q5/);
+  assert.match(found!.message, /REQ-010/);
+  assert.match(String(found!.fix), /fold the answer into REQ-010/i);
+  assert.match(String(found!.fix), /Needs Clarification/);
+  assert.match(String(found!.fix), /--agent/);
+});

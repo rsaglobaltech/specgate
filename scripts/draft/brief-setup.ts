@@ -440,6 +440,30 @@ export function rootBrief(projectDir: string, docsBrief: string): string | null 
   return null;
 }
 
+/** A body that still asks for the brief to be pasted there: forja's template. */
+export function templateBody(body: string): boolean {
+  return /\bpaste\b[^\n]*\bbrief\b[^\n]*\bhere\b/i.test(body);
+}
+
+/**
+ * `docs/brief.md` with the root brief's text below its front matter, when it
+ * lists no modules and its body is still a template's (REQ-259): the client's
+ * text pushed first sat at the root while the agent proposed a front matter
+ * over forja's placeholder, and the person pasted it by hand (truck-flote,
+ * S46). Null when that is not the case — a body the person wrote is theirs.
+ */
+export function withRootBrief(
+  projectDir: string,
+  docsBrief: string
+): { text: string; root: string } | null {
+  if (briefModules(docsBrief).length > 0 || !templateBody(briefBody(docsBrief))) return null;
+  const root = rootBrief(projectDir, docsBrief);
+  if (!root) return null;
+  const m = FRONT.exec(docsBrief);
+  const head = m ? `${m[0]}\n` : "";
+  return { text: head + fs.readFileSync(path.join(projectDir, root), "utf8"), root };
+}
+
 /** The guide an agent follows to propose a front matter. */
 export function briefSetupGuide(brief: string): string {
   return [

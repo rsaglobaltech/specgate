@@ -8,6 +8,7 @@ import { BaseCommand } from "../../../lib/command";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
 import {
   openQuestions,
+  answeredQuestions,
   requirementTitles,
   specNotes,
 } from "../../../../packages/core/src/domain/DraftChecklist";
@@ -50,6 +51,8 @@ export interface QueueItem {
   featureFile?: string;
   /** The open question that blocks it, as `Q3 (docs/specs/…/questions.md)`. */
   question?: string | null;
+  /** With no open question left: the answered one its spec has to take in (REQ-263). */
+  answered?: string | null;
   /** The open change it belongs to, while that change is in flight (ADR-0035). */
   change?: string;
   [key: string]: unknown;
@@ -140,10 +143,15 @@ export function summarise(
   // A requirement waiting for an answer is not work anyone can start: listing
   // it as "a test and code" under To do invited exactly that (FinCore, #73).
   const questions = questionsByRequirement(questionsFrom);
+  const answered = questionsByRequirement(questionsFrom, answeredQuestions);
   for (const it of items) {
     if (it.status === "Needs Clarification" && it.category !== "DONE") {
       it.category = "WAITING_FOR_ANSWER";
       it.question = questions.get(it.requirement) || null;
+      // REQ-263: answered in questions.md, the requirement still says it waits
+      // — the client had answered and status kept listing it as blocked
+      // (truck-flote, S49).
+      if (!it.question) it.answered = answered.get(it.requirement) || null;
     }
   }
   const counts: Record<string, number> = {
@@ -173,9 +181,13 @@ export function summarise(
 /**
  * Requirement → the open question that blocks it, as `Q3 (docs/specs/…/questions.md)`,
  * from every `questions.md` under docs/specs/changes (archived ones included:
- * a draft is archived with its questions still open).
+ * a draft is archived with its questions still open). With `answeredQuestions`,
+ * the answered one instead.
  */
-function questionsByRequirement(projectDir: string): Map<string, string> {
+function questionsByRequirement(
+  projectDir: string,
+  pick: (md: string) => Array<{ row: string; blocks: string[] }> = openQuestions
+): Map<string, string> {
   const found = new Map<string, string>();
   const walk = (dir: string) => {
     if (!fs.existsSync(dir)) return;
@@ -184,7 +196,7 @@ function questionsByRequirement(projectDir: string): Map<string, string> {
       if (e.isDirectory()) walk(full);
       else if (e.name === "questions.md") {
         const rel = path.relative(projectDir, full).split(path.sep).join("/");
-        for (const q of openQuestions(fs.readFileSync(full, "utf8"))) {
+        for (const q of pick(fs.readFileSync(full, "utf8"))) {
           for (const req of q.blocks) if (!found.has(req)) found.set(req, `${q.row} (${rel})`);
         }
       }
@@ -251,7 +263,7 @@ const QUEUE_LIMIT = 12;
 const TODO_CATEGORIES = ["NEEDS_FEATURE", "NEEDS_EVERYTHING", "NEEDS_TEST", "NEEDS_IMPLEMENTATION"];
 
 /** What one requirement still needs, in words a person reads at a glance. */
-export function needsOf(item: Pick<QueueItem, "category" | "question">): string {
+export function needsOf(item: Pick<QueueItem, "category" | "question" | "answered">): string {
   switch (item.category) {
     case "NEEDS_FEATURE":
       return "its scenario";
@@ -264,6 +276,8 @@ export function needsOf(item: Pick<QueueItem, "category" | "question">): string 
     case "NEEDS_STATUS_UPDATE":
       return "its test is in place";
     case "WAITING_FOR_ANSWER":
+      if (item.answered)
+        return `${String(item.answered).split(" ")[0]}'s answer in its text, then no Needs Clarification`;
       return item.question ? `an answer to ${String(item.question).split(" ")[0]}` : "an answer";
     default:
       return "";
@@ -448,8 +462,14 @@ function emitText(
   out(ui.header("status", path.basename(path.resolve(projectDir))));
   out(`  ${c.bold}Requirements${c.reset}  ${ui.progress(counts.DONE, counts.total, "done")}\n`);
 
-  const queue = (title: string, cats: string[], mark: string, color: string) => {
-    const group = items.filter((it) => cats.includes(it.category));
+  const queue = (
+    title: string,
+    cats: string[],
+    mark: string,
+    color: string,
+    only: (it: QueueItem) => boolean = () => true
+  ) => {
+    const group = items.filter((it) => cats.includes(it.category) && only(it));
     if (group.length === 0) return;
     out("\n" + ui.section(title));
     const rows = group.slice(0, QUEUE_LIMIT).map((it) => {
@@ -468,7 +488,20 @@ function emitText(
   };
   queue("Ready to close", ["NEEDS_STATUS_UPDATE"], ui.state("ready"), c.ok);
   queue("To do", TODO_CATEGORIES, ui.state("todo"), c.warn);
-  queue("Waiting for an answer", ["WAITING_FOR_ANSWER"], ui.state("blocked"), c.muted);
+  queue(
+    "Answered — update the spec",
+    ["WAITING_FOR_ANSWER"],
+    ui.state("todo"),
+    c.warn,
+    (it) => !!it.answered
+  );
+  queue(
+    "Waiting for an answer",
+    ["WAITING_FOR_ANSWER"],
+    ui.state("blocked"),
+    c.muted,
+    (it) => !it.answered
+  );
   const waiting = items.filter((it) => it.category === "WAITING_FOR_ANSWER" && it.question);
   if (waiting.length > 0)
     out(
@@ -556,6 +589,7 @@ function emitJson(
           needs: needsOf(it) || null,
           ...(it.change ? { change: it.change } : {}),
           ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
+          ...(it.answered ? { answered: it.answered } : {}),
         })),
         ...(summary.brief
           ? {
