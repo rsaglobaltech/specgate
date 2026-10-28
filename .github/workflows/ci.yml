@@ -66,6 +66,10 @@ jobs:
 
       - name: Run unit tests with coverage
         run: npm run test:coverage
+        # c8 builds the report after 2,100+ tests: macOS runners' default heap
+        # (2 GB) ran out there once every test had passed.
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Run E2E tests
         run: node --test dist/tests/cli.test.js
