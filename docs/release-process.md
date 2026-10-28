@@ -15,9 +15,9 @@ a maintainer actually does meanwhile.
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.27.1** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.27.1** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled between releases; newest image **0.27.1**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.27.2** is `latest` |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Workflow disabled between releases; newest **0.27.2** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Workflow disabled between releases; newest image **0.27.2**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
