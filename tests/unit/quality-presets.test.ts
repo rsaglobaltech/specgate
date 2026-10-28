@@ -193,3 +193,75 @@ test(
     assert.equal(by.semgrep.ok, true, JSON.stringify(by.semgrep));
   }
 );
+
+/** A fixture as a repository: its base committed on main, its change committed on feature. */
+function fixtureRepo(name: string, ignore: string[], change: Array<[string, string]>) {
+  const fixture = path.join(ROOT_DIR, "tests", "fixtures", name);
+  const dir = tmp();
+  fs.cpSync(fixture, dir, {
+    recursive: true,
+    filter: (src: string) => !src.includes(`${path.sep}change`),
+  });
+  w(dir, ".gitignore", [...ignore, ".specgate/quality/", ""].join(NL));
+  git(dir, "init", "-q", "-b", "main");
+  git(dir, "config", "user.email", "t@example.com");
+  git(dir, "config", "user.name", "T");
+  assert.equal(sg(dir, "quality", "init").status, 0);
+  git(dir, "add", "-A");
+  git(dir, "commit", "-q", "-m", "chore: base");
+  git(dir, "checkout", "-q", "-b", "feature");
+  for (const [from, to] of change) {
+    fs.mkdirSync(path.dirname(path.join(dir, to)), { recursive: true });
+    fs.copyFileSync(path.join(fixture, "change", from), path.join(dir, to));
+  }
+  git(dir, "add", "-A");
+  git(dir, "commit", "-q", "-m", "feat: discounts");
+  return dir;
+}
+
+function attemptOutcomes(dir: string) {
+  const r = sg(dir, "quality", "run", "--stage", "attempt", "--json");
+  return Object.fromEntries(
+    JSON.parse(r.stdout.slice(r.stdout.indexOf("{"))).quality.outcomes.map(
+      (o: { name: string }) => [o.name, o]
+    )
+  );
+}
+
+test(
+  "REQ-230 SCN-230b: a Gradle change judged by the basic preset in Docker",
+  { skip: docker ? false : "Docker is not running on this machine", timeout: 1800000 },
+  () => {
+    const dir = fixtureRepo(
+      "quality-gradle",
+      ["build/", ".gradle/"],
+      [["main/Discount.java", "src/main/java/com/shop/Discount.java"]]
+    );
+    const by = attemptOutcomes(dir);
+    assert.equal(by.commits.ok, true);
+    assert.equal(by.secrets.ok, true, JSON.stringify(by.secrets));
+    assert.equal(by.coverage.ok, false, JSON.stringify(by.coverage));
+    assert.equal(by.coverage.measure.value, 0);
+    assert.ok(
+      by.coverage.measure.misses.every((m: string) =>
+        m.startsWith("src/main/java/com/shop/Discount.java:")
+      )
+    );
+  }
+);
+
+test(
+  "REQ-230 SCN-230c: a Node change judged by the basic preset in Docker",
+  { skip: docker ? false : "Docker is not running on this machine", timeout: 1800000 },
+  () => {
+    const dir = fixtureRepo(
+      "quality-node",
+      ["node_modules/", "coverage/"],
+      [["discount.ts", "src/discount.ts"]]
+    );
+    const by = attemptOutcomes(dir);
+    assert.equal(by.types.ok, true, JSON.stringify(by.types));
+    assert.equal(by.coverage.ok, false, JSON.stringify(by.coverage));
+    assert.ok(by.coverage.measure.misses.some((m: string) => m.startsWith("src/discount.ts:")));
+  }
+);

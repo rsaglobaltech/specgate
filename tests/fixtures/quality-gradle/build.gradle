@@ -1,0 +1,25 @@
+// The Gradle project REQ-230 runs the basic preset against, in Docker.
+plugins {
+  id 'java'
+  id 'jacoco'
+}
+
+repositories { mavenCentral() }
+
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+
+dependencies {
+  testImplementation platform('org.junit:junit-bom:5.11.3')
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// osv-scanner reads the lockfile, so dependency locking is on.
+dependencyLocking { lockAllConfigurations() }
+
+test { useJUnitPlatform() }
+
+jacocoTestReport {
+  dependsOn test
+  reports { xml.required = true }
+}

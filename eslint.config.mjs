@@ -61,6 +61,6 @@ export default [
     },
   },
   {
-    ignores: ["node_modules/", "dist/", "*.tpl", "templates/"],
+    ignores: ["node_modules/", "dist/", "*.tpl", "templates/", "tests/fixtures/quality-node/"],
   },
 ];

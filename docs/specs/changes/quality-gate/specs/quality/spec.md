@@ -148,13 +148,25 @@ The system SHALL, with `specgate quality init [--level basic|strict] [--force]`,
 
 ### Requirement: REQ-230 — The presets run for real
 
-The system SHALL keep a Maven fixture project whose strict preset runs in Docker in the test suite — skipped, and said so, where Docker does not answer — proving that the coverage, SpotBugs, PMD, Semgrep and PIT checks run, that the baseline holds back the existing findings, and that a change with a new finding, an untested line and surviving mutants fails exactly those checks.
+The system SHALL keep a fixture project per stack — Maven, Gradle and Node — whose preset runs in Docker in the test suite, skipped and said so where Docker does not answer: the Maven one at strict, proving that the coverage, SpotBugs, PMD, Semgrep and PIT checks run, that the baseline holds back the existing findings, and that a change with a new finding, an untested line and surviving mutants fails exactly those checks; the Gradle and Node ones at basic, proving that their coverage measures the lines a change adds and names those no test runs.
 
 #### Scenario: SCN-230a — A Maven change judged by the strict preset in Docker
 
 - GIVEN the fixture with a baseline taken, and a change adding Discount.java with a String compared with ==, a branch no test runs, and one test
 - WHEN `specgate quality run` runs
 - THEN spotbugs fails on Discount.java:5 only, coverage fails naming the untested lines, mutation fails naming survivors on Discount.java, and pmd and semgrep pass
+
+#### Scenario: SCN-230b — A Gradle change judged by the basic preset in Docker
+
+- GIVEN the Gradle fixture, with JaCoCo applied and dependency locking on, and a change adding Discount.java without a test
+- WHEN the attempt checks run
+- THEN commits and secrets pass and coverage fails at 0%, naming only lines of Discount.java
+
+#### Scenario: SCN-230c — A Node change judged by the basic preset in Docker
+
+- GIVEN the Node fixture with TypeScript, Vitest and its coverage provider, and a change adding src/discount.ts without a test
+- WHEN the attempt checks run
+- THEN types pass and coverage fails, naming lines of src/discount.ts
 
 <!-- specgate:trace status=Implemented test=tests/unit/quality-presets.test.ts actor=Developer kind=functional -->
 

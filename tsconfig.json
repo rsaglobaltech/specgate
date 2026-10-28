@@ -38,6 +38,7 @@
     "dist",
     "templates",
     "examples",
-    "**/*.tpl"
+    "**/*.tpl",
+    "tests/fixtures/quality-node"
   ]
 }
