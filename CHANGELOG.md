@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.0] — 2026-10-28
+
+Quality, not only tests: your team's checks in the gate — coverage and mutation of the lines a change adds, SpotBugs, PMD, Semgrep, secrets, dependencies, SonarQube and Conventional Commits — each in Docker, without an account, and only what a change adds fails.
+
 ### Added
 
 - **Quality and security checks in the gate** (REQ-218, REQ-219, ADR-0040): `checks:` in `harness.config.yaml` names your team's tools — each with `when` (attempt, end, ci), whether it gates, and how it runs (Docker by default, local or auto). `check` runs them after the tests, `check --ci` adds the CI-only ones and fails a check that cannot run, and the harness runs them per attempt and before a requirement is kept.
