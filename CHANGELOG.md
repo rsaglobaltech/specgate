@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.5] — 2026-10-28
+
+Specgate on Windows, after the fourth truck-flote run and its first CI on GitHub: commands written as `./name` run in cmd.exe, Docker counts only with Linux containers, and `check` leaves the working tree clean.
+
 ### Fixed
 
 - **Commands that start with `./` run on Windows** (REQ-255): `./mvnw -B test` — the test command Specgate proposes for Maven — and every test, architecture, setup, agent or check command written for a POSIX shell failed in cmd.exe with "'.' is not recognized as an internal or external command". On Windows the program is now run as `.\name`, which also finds `mvnw.cmd` beside `mvnw`.
