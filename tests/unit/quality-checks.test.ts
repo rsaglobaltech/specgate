@@ -124,7 +124,7 @@ const failing = (gate: boolean, when = "attempt") =>
   [
     "checks:",
     "  - name: lint",
-    `    run: "node -e process.exit(1)"`,
+    `    run: 'node -e "process.exit(1)"'`,
     "    runner: local",
     `    when: ${when}`,
     `    gate: ${gate}`,

@@ -3,10 +3,10 @@
 const CHECKS = `
 checks:
   - name: lint
-    run: "node -e process.exit(0)"
+    run: 'node -e "process.exit(0)"'
     runner: local
   - name: audit
-    run: "node -e process.exit(1)"
+    run: 'node -e "process.exit(1)"'
     runner: local
     when: ci
 `;

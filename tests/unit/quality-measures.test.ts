@@ -44,6 +44,17 @@ function changed(file: string, before: string[], after: string[], report: string
   w("spec.md", "# Spec" + NL);
   w(file, before.join(NL) + NL);
   w("report.src", report);
+  // The "tool": copies the report into place. A script, so the command has
+  // nothing a shell would read — cmd.exe and sh disagree on parentheses.
+  w(
+    "copy.js",
+    [
+      'const fs = require("fs");',
+      'const path = require("path");',
+      "fs.mkdirSync(path.dirname(process.argv[2]), { recursive: true });",
+      'fs.copyFileSync("report.src", process.argv[2]);',
+    ].join(NL)
+  );
   w("harness.config.yaml", ["harness_version: 1", check, ""].join(NL));
   git(dir, "init", "-q", "-b", "main");
   git(dir, "config", "user.email", "t@example.com");
@@ -68,7 +79,7 @@ const copyCheck = (target: string, format: string, threshold: string) =>
     threshold,
     "checks:",
     "  - name: measure",
-    `    run: "node -e require('fs').mkdirSync('${path.posix.dirname(target)}',{recursive:true});require('fs').copyFileSync('report.src','${target}')"`,
+    `    run: "node copy.js ${target}"`,
     "    runner: local",
     `    report: ${format}:${target}`,
   ].join(NL);
