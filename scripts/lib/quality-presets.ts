@@ -253,9 +253,11 @@ function maven(projectDir: string, level: Level, dir = ""): PresetCheck[] {
     secrets,
     {
       name: "sbom",
+      // REQ-276: an application whose pom skips deploy (Quarkus) still has
+      // dependencies to scan; CycloneDX otherwise writes nothing for it.
       run: cdApp(
         dir,
-        `${mvn} org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom -DoutputFormat=json -DoutputName=bom`
+        `${mvn} org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom -DoutputFormat=json -DoutputName=bom -Dcyclonedx.skipNotDeployed=false`
       ),
       when: dependencies.when,
       image,

@@ -268,6 +268,8 @@ test("REQ-237 SCN-237a: a Spring Boot parent manages the versions", () => {
   const sbom = byName.get("sbom") as { run: string; image: string; when: string };
   const deps = byName.get("dependencies") as { run: string; image: string; when: string };
   assert.match(sbom.run, /cyclonedx-maven-plugin:[\d.]+:makeBom .*-DoutputName=bom/);
+  // REQ-276 SCN-276a: a module that skips deploy still gets its bill of materials.
+  assert.match(sbom.run, /-Dcyclonedx\.skipNotDeployed=false/);
   assert.match(sbom.image, /^maven:/);
   assert.match(deps.run, /-L target\/bom\.json/);
   assert.equal(deps.image, "ghcr.io/google/osv-scanner:v2.2.4");
