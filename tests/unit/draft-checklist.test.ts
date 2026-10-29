@@ -191,7 +191,8 @@ test("D6: an assumption row names its ids one by one or as a range (#74)", () =>
 test("D6 reads numbers and quoted strings, not ids or code", () => {
   assert.deepEqual(
     statedValues('WHEN REQ-101 sends "Marcar entrada" with `CODE_42` at 07:42 and 5,707 lb'),
-    ["Marcar entrada", "07", "42", "5,707"]
+    // REQ-277: a time is one value, not its hours and minutes.
+    ["Marcar entrada", "07:42", "5,707"]
   );
 });
 
@@ -931,4 +932,18 @@ test("REQ-262 SCN-262a: Q5 answered, REQ-010 still blocked", () => {
   assert.match(String(found!.fix), /fold the answer into REQ-010/i);
   assert.match(String(found!.fix), /Needs Clarification/);
   assert.match(String(found!.fix), /--agent/);
+});
+
+// ── REQ-277 (truck-flote, seventh run) ──────────────────────────────────────
+
+test("REQ-277 SCN-277a: a position with its time", () => {
+  const values = statedValues(
+    'GIVEN truck "TRK-001" last reported 45.7640, 4.8357 at 2026-10-29 10:00:00'
+  );
+  assert.deepEqual(values, ["TRK-001", "45.7640", "4.8357", "2026-10-29 10:00:00"]);
+  assert.deepEqual(statedValues("THEN it says 2026-10-29T10:00:00Z and 09:59:30 on 2026-10-30"), [
+    "2026-10-29T10:00:00Z",
+    "09:59:30",
+    "2026-10-30",
+  ]);
 });

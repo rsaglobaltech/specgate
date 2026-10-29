@@ -58,6 +58,8 @@ both work. Agent tools change their flags between versions: check each tool's
 own documentation for the exact non-interactive flags, especially for OpenCode
 and the Cursor CLI, whose rows show the shape rather than a tested command.
 Run `specgate harness run --dry-run` to see the prompt before you pay for one.
+`specgate config set agent "claude -p < {prompt_file}"` keeps it in
+`harness.config.yaml` as the live row, so the studio shows the agent at work.
 
 ## Tool allowances
 

@@ -1,0 +1,8 @@
+specgate_change_version: 1
+schema: spec-driven
+created: 2026-10-29
+rigor: lite
+skip_specs: false
+retire_capabilities: false
+req_range: [REQ-277, REQ-278]
+based_on: [REQ-271@5756c9c94a03]

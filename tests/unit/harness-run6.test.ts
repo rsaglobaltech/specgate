@@ -300,6 +300,7 @@ test("REQ-271 SCN-271a: setting the agent once", () => {
   const set = sg(dir, "config", "set", "agent", "claude -p < {prompt_file}");
   assert.equal(set.status, 0, set.stdout + set.stderr);
   const config = fs.readFileSync(path.join(dir, "harness.config.yaml"), "utf8");
-  assert.match(config, /^agent: "claude --permission-mode acceptEdits -p < \{prompt_file\}"$/m);
+  // REQ-271 (modified by REQ-278): kept with the permission, and streamed for /live.
+  assert.match(config, /^agent: "claude .*--permission-mode acceptEdits -p < \{prompt_file\}.*"$/m);
   assert.doesNotMatch(sg(dir, "status").stdout, /specgate config set agent/);
 });
