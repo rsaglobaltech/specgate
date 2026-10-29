@@ -71,6 +71,9 @@ const KNOWN_KEYS = new Set([
   "commit_types",
   // REQ-334: behaviour changed without a specification — reported, or a gate.
   "drift",
+  // ADR-0043: who holds each role, and which layers need their approvals.
+  "roles",
+  "approvals",
 ]);
 
 /**

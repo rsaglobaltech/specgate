@@ -117,7 +117,9 @@ Each draft not yet approved, as someone on your team would read it: each
 requirement's statement and its examples as Given / When / Then. **Ask for a
 change** writes your words into the draft's `review.md` for the agent; **Approve
 the draft** records that a person approved it, and is disabled while a check
-fails or a question is open.
+fails or a question is open. Above the requirements, each layer shows who
+approved it and how many approvals it needs, with **Approve** on the layer you
+own — you are the git identity of the folder the studio serves (ADR-0043).
 
 ![The Review page: the Garaje draft's two requirements, each with its statement and its example as Given, When, Then, and Ask for a change under each; beside them, the checks say it is ready, and Approve the draft.](assets/img/studio-5-review.webp)
 

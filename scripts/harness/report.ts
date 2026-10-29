@@ -18,6 +18,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { packageUse } from "../lib/role-packages";
 
 import { resolveProjectDir } from "../lib/project-root";
 import { agentIo, wantsJson, EXIT } from "../lib/agent";
@@ -442,13 +443,23 @@ export function main(argv: string[]): void {
     /* a broken profiles file is `harness run`'s problem, not this read-only command's */
   }
 
-  const summary = summarise(
-    runs,
-    readFalseFailures(projectDir),
-    costHints,
-    gapInputFor(projectDir)
-  );
-  io.emit({ report: summary, status: [] }, () => render(summary));
+  const summary = {
+    ...summarise(runs, readFalseFailures(projectDir), costHints, gapInputFor(projectDir)),
+    // REQ-317: each role package, with the requirements it reached.
+    packages: packageUse(runs as Parameters<typeof packageUse>[0]),
+  };
+  io.emit({ report: summary, status: [] }, () => {
+    render(summary);
+    if (summary.packages.length > 0) {
+      process.stdout.write(
+        ui.section("Role packages used") +
+          summary.packages
+            .map((p) => `    ${p.id.padEnd(26)}${p.requirements} requirement(s)\n`)
+            .join("") +
+          "\n"
+      );
+    }
+  });
   process.exit(EXIT.OK);
 }
 

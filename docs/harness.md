@@ -232,6 +232,31 @@ For a nightly job that leaves branches to review:
 | `--pr-cmd "<cmd>"`       | Runs after each push, with `{branch}` and `{req}` placeholders.                 |
 | `--verbose`              | Streams the gate's output while it runs.                                        |
 
+## Approvals and role packages
+
+A requirement of a 1.0 change is built once the change is approved, each
+layer by its owner ([reviewing changes](reviewing-changes.md#a-person-approves-the-draft));
+until then the harness skips it with `harness_not_approved`.
+
+What a role asks of the work goes in `harness/<role>.md`, written once
+(ADR-0043):
+
+```markdown
+---
+role: security
+owner: sec@acme.eu
+version: 2
+applies-to:
+  capability: [payments]
+---
+Never log a card number. Validate every amount on the server.
+```
+
+It applies when every dimension it lists (`kind`, `capability`, `tag`)
+matches the requirement. The prompt gets it under "Role constraints", the
+review check gives one line of advice per package, and the live view, the
+run record and `harness report` name each package as `role@version`.
+
 ## When a run fails
 
 **Before any agent runs**, the harness validates the base. The gate judges the

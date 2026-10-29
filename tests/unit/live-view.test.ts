@@ -108,6 +108,8 @@ test("REQ-128 SCN-128a: the harness records the attempt and its gate as events",
   const p = adopted();
   try {
     openChange(p.dir);
+    // 1.0 (REQ-315): a person approves the change before the harness builds it.
+    assert.equal(cli(p.dir, ["change", "approve", "pricing"]).status, 0);
     commitAll(p.dir);
     const seen = path.join(p.parent, "seen.txt");
     const agent = path.join(p.parent, "agent.js");

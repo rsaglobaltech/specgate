@@ -26,6 +26,8 @@ import {
 import { requestStop, runLockHolder } from "./harness-guard";
 import { findCliRoot } from "./project-root";
 import { inFlightView } from "./in-flight";
+import { approvalSettings, changeApprovals, gitIdentity } from "./approvals";
+import { holdsRole, type ApprovalRecord } from "../../packages/core/src/domain/Approvals";
 
 /**
  * What the visual studio shows and does (REQ-204..210): each read is built from
@@ -60,6 +62,11 @@ export interface DraftLayer {
   owner: string;
   file: string;
   written: boolean;
+  /** REQ-319: the approvals of its current text, how many it needs, and whether the viewer owns it. */
+  approvals: ApprovalRecord[];
+  quorum: number;
+  approved: boolean;
+  mine: boolean;
 }
 
 export interface DraftView {
@@ -115,7 +122,11 @@ function draftRequirements(projectDir: string, change: string): DraftRequirement
  */
 function draftLayers(projectDir: string, change: string): DraftLayer[] {
   const dir = path.join(projectDir, "docs", "specs", "changes", change);
+  const state = changeApprovals(projectDir, change);
+  const settings = approvalSettings(projectDir);
+  const viewer = gitIdentity(projectDir);
   return LAYERS.map((l) => {
+    const a = state.layers.find((x) => x.layer === l.id)!;
     const file =
       l.id === "discover" && !fs.existsSync(path.join(dir, l.file)) ? LEGACY_DISCOVER : l.file;
     const text = read(path.join(dir, file));
@@ -124,6 +135,10 @@ function draftLayers(projectDir: string, change: string): DraftLayer[] {
       owner: l.owner,
       file,
       written: text !== undefined && !isUntouchedLayer(l.id, text, change),
+      approvals: a.approvals,
+      quorum: a.quorum,
+      approved: a.approved,
+      mine: holdsRole(settings, l.owner, viewer),
     };
   });
 }

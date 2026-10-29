@@ -40,6 +40,14 @@ import { buildPrompt } from "../../../harness/prompt";
 import { withAgentPermission } from "../../../lib/agent-permission";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
+import { missingApprovals } from "../../../lib/approvals";
+import { packagesFor, reviewAdvice } from "../../../lib/role-packages";
+
+/**
+ * REQ-317: the role packages each requirement's prompts carried in this run,
+ * recorded on its result — the report counts them across runs.
+ */
+const packagesUsed = new Map<string, Set<string>>();
 import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
 import { ask as askQuestion } from "../../../lib/clarification";
 import { e2eTestsNaming, onScreen } from "../../../lib/screen-requirements";
@@ -280,6 +288,8 @@ export interface RequirementResult extends PublishOutcome {
   adversarial?: ProbeOutcome;
   /** The quality checks of the passing attempt: time, verdict, findings, measure (REQ-228). */
   checks?: Array<Omit<CheckOutcome, "output">>;
+  /** The role packages its prompts carried, as `role@version` (REQ-317). */
+  packages?: string[];
 }
 
 /** What `attemptRequirement` decides; `processRequirement` adds the rest. */
@@ -1146,7 +1156,12 @@ function agentChecks(
             `Review only; change no file. Compare the change below with ${req.requirement}, its ` +
               "statement and every scenario. Answer with a first line `VERDICT: PASS` when the " +
               "change does what the requirement says and nothing it forbids, or `VERDICT: FAIL` " +
-              "followed by each reason as `- path:line — what is wrong`.\n\n```diff\n" +
+              "followed by each reason as `- path:line — what is wrong`." +
+              // REQ-318: one advice line per role package; it never decides the verdict.
+              reviewAdvice(
+                judged(worktreeDir, (d) => packagesFor(d, String(req.requirement || "")))
+              ) +
+              "\n\n```diff\n" +
               diff +
               "\n```"
           ),
@@ -1593,8 +1608,10 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         // implementing step that follows must see what it said. Building once
         // up front meant findings only ever reached the *next* attempt, which
         // is not what a reviewer is for.
-        const prompt = judged(worktreeDir, (dir) =>
-          buildPrompt(req, dir, {
+        let stepPackages: string[] = [];
+        const prompt = judged(worktreeDir, (dir) => {
+          stepPackages = packagesFor(dir, req.requirement).map((p) => p.id);
+          return buildPrompt(req, dir, {
             promptPrefix: settings.promptPrefix,
             hint,
             previousFailure: previousFailure || undefined,
@@ -1609,8 +1626,13 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
               settings.e2eDir && onScreen(worktreeDir, req.requirement)
                 ? settings.e2eDir
                 : undefined,
-          })
-        );
+          });
+        });
+        if (stepPackages.length > 0) {
+          const seen = packagesUsed.get(req.requirement) || new Set<string>();
+          for (const id of stepPackages) seen.add(id);
+          packagesUsed.set(req.requirement, seen);
+        }
         const promptFile = path.join(
           os.tmpdir(),
           `specgate-harness-prompt-${req.requirement}-${crypto.randomBytes(4).toString("hex")}.md`
@@ -1624,6 +1646,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           role: step.profile || (step.advisory ? "reviewer" : "agent"),
           chars: prompt.length,
           lines: prompt.split("\n").length,
+          // REQ-317: which role packages it carried.
+          ...(stepPackages.length > 0 ? { packages: stepPackages } : {}),
         });
 
         // D1: a profile chosen by matching this requirement, when one matches.
@@ -2454,6 +2478,8 @@ function processRequirement(req: HarnessRequirement, ctx: RunContext): Requireme
     ledgerWrite();
   }
   const result = processOneRequirement(req, ctx);
+  const used = packagesUsed.get(req.requirement);
+  if (used && used.size > 0) result.packages = [...used];
   if (ledger) {
     ledger.record.results.push(result);
     delete ledger.record.running;
@@ -2476,6 +2502,23 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
     category: req.category,
   });
   if (matchedProfile) info(`${req.requirement}: profile '${matchedProfile}' matched`);
+
+  // REQ-315: a requirement of an open change waits for its approvals — the 1.0
+  // default for a layered change — before any worktree or agent.
+  const owning = inFlightRequirements(projectDir).find((r) => r.id === req.requirement);
+  const unapproved = owning ? missingApprovals(projectDir, owning.change) : null;
+  if (unapproved) {
+    error(`${req.requirement}: ${unapproved.message} [harness_not_approved]`);
+    warn(`  fix: ${unapproved.fix}`);
+    return {
+      requirement: req.requirement,
+      category: req.category,
+      result: "skipped",
+      attempts: 0,
+      branch,
+      error: `harness_not_approved: ${unapproved.message} Fix: ${unapproved.fix}`,
+    };
+  }
 
   const readiness = readinessOf(projectDir, req);
   const unrunnable = readiness.blockers.find((b) => b.code === "requirement_scenario_unrunnable");

@@ -4,6 +4,7 @@ import * as http from "node:http";
 import * as crypto from "node:crypto";
 import { answer as answerQuestion, reviewed as reviewQuestion } from "../../../lib/clarification";
 import { approveChange, noteChange } from "../../../lib/change-review";
+import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
   buildView,
   drafts,
@@ -378,6 +379,8 @@ export class StudioCommand extends BaseCommand {
             req?: string;
             text?: string;
             reqs?: string[];
+            /** REQ-319: the layer an approval is of. */
+            layer?: string;
             profile?: string;
             module?: string;
             replace?: boolean;
@@ -394,7 +397,9 @@ export class StudioCommand extends BaseCommand {
           }
           const today = new Date().toISOString().slice(0, 10);
           if (url === "/api/approve") {
-            const r = approveChange(projectDir, String(body.change || ""), today);
+            // REQ-319: one layer, approved for the viewer's git identity.
+            const layer = body.layer ? (String(body.layer) as LayerId) : undefined;
+            const r = approveChange(projectDir, String(body.change || ""), today, layer);
             json(r.ok ? 200 : 422, r);
             return;
           }
