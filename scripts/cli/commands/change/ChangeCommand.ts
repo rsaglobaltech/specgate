@@ -73,7 +73,7 @@ import {
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
-import { approveChange, noteChange } from "../../../lib/change-review";
+import { approvalBlockers, approveChange, noteChange } from "../../../lib/change-review";
 import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
   declaredSpecValues,
@@ -172,7 +172,7 @@ function usage() {
       `  ${c.bold}USAGE${c.reset}\n` +
       `    ${c.cyan}specgate change${c.reset} <new|list|show|status|instructions|author|validate|impact|approve|note|archive> [options]\n\n` +
       `  ${c.bold}SUBCOMMANDS${c.reset}\n` +
-      `    ${c.green}new <id>${c.reset}       ${c.dim}Scaffold a change folder (proposal, tasks, delta skeleton).${c.reset}\n` +
+      `    ${c.green}new <id>${c.reset}       ${c.dim}Scaffold a change: discover, design, tasks and a delta (--schema spec-driven keeps 0.27's layout).${c.reset}\n` +
       `    ${c.green}list${c.reset}           ${c.dim}Active changes with task progress.${c.reset}\n` +
       `    ${c.green}show <id>${c.reset}      ${c.dim}Proposal, deltas and what they touch.${c.reset}\n` +
       `    ${c.green}status [id]${c.reset}    ${c.dim}Which artefact to write next.${c.reset}\n` +
@@ -1145,6 +1145,61 @@ function storyRewritten(projectDir: string, changeId: string) {
   );
 }
 
+/**
+ * REQ-350: what `change approve` would refuse a layered change for, said by
+ * `change validate` first. A change that validated was refused at approval
+ * for a requirement with no kind (truck-flote, MS-10): one rule set, run twice.
+ */
+function notApprovable(projectDir: string, id: string): Diagnostic[] {
+  let layeredChange = false;
+  try {
+    layeredChange = readConfig(projectDir, id).schema === LAYERED_SCHEMA;
+  } catch {
+    return [];
+  }
+  if (!layeredChange) return [];
+  return approvalBlockers(projectDir, id)
+    .filter((b) => b.code !== "draft_no_specs")
+    .map((b) =>
+      error("change_not_approvable", b.message, {
+        target: id,
+        fix: `Fix it before review: \`specgate change approve ${id}\` refuses the change until then.`,
+      })
+    );
+}
+
+/**
+ * REQ-352: requirements of one change that name the same feature file.
+ * Archiving lays one feature file per requirement, so the second replaced the
+ * first's scenarios and `check` failed far from the cause (truck-flote, MS-9).
+ */
+function sharedFeatureFiles(projectDir: string, id: string): Diagnostic[] {
+  const byFile = new Map<string, string[]>();
+  for (const d of listDeltas(projectDir, id)) {
+    const delta = parseDelta(fs.readFileSync(d.file, "utf8"));
+    for (const r of [...delta.added, ...delta.modified]) {
+      const feature = (r.trace && r.trace.feature) || "";
+      if (!feature || !r.id) continue;
+      byFile.set(feature, [...(byFile.get(feature) || []), r.id]);
+    }
+  }
+  const out: Diagnostic[] = [];
+  for (const [file, ids] of byFile) {
+    if (ids.length < 2) continue;
+    out.push(
+      error(
+        "change_feature_shared",
+        `${ids.join(", ")} all name ${file}: archiving writes one feature file per requirement, so one would replace the others' scenarios.`,
+        {
+          target: id,
+          fix: `Give each requirement a feature file of its own (feature=features/<capability>/${ids[0]}.feature, …).`,
+        }
+      )
+    );
+  }
+  return out;
+}
+
 function cmdValidate(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const requested = opts.positional[0];
@@ -1175,6 +1230,10 @@ function cmdValidate(opts: ChangeOptions) {
     );
     const rewritten = storyRewritten(projectDir, id);
     if (rewritten) result.diagnostics.push(rewritten);
+    result.diagnostics.push(
+      ...sharedFeatureFiles(projectDir, id),
+      ...notApprovable(projectDir, id)
+    );
     const failed = opts.strict ? result.diagnostics.length > 0 : hasErrors(result.diagnostics);
     // What each delta rewrites, as it reads now: on first sight, or on
     // --rebased once the delta was rewritten over a requirement that moved (REQ-168).
@@ -1229,6 +1288,12 @@ function cmdArchive(opts: ChangeOptions) {
         fix: "e.g. `specgate change archive add-dynamic-pricing`",
       }),
     ]);
+  }
+
+  // REQ-352: two requirements naming one feature file would lose scenarios.
+  if (fs.existsSync(paths(projectDir).change(changeId))) {
+    const shared = sharedFeatureFiles(projectDir, changeId);
+    if (shared.length) return fail(opts, nullShape, shared);
   }
 
   // A draft (a change opened from a brief) is archived only once its

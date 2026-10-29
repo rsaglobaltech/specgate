@@ -9,6 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Breaking
+
+- **`specgate init --yes` adopts a folder that already has code** (REQ-249, modified): it scaffolded a separate project inside it (`my-spec-driven-app/`), so a scripted `init` in a repository made a second one. `--yes` now only skips the questions; `--new`, `--out`, `--config`, `--multi-stack` and `--forja` still scaffold.
+
+### Fixed
+
+- **`change validate` reports what `change approve` refuses** (REQ-350): a layered change validated, then approval refused it for requirements with no kind. Validation now fails with `change_not_approvable` for each finding approval would block on.
+- **The agent writing a change's requirements is told what they need** (REQ-351): `kind=`, `actor=`, and a feature file of its own.
+- **Two requirements naming one feature file are reported** (REQ-352): `change validate` and `change archive` refuse with `change_feature_shared`; archiving would have kept only one's scenarios.
+- **A delivered requirement ticks its tasks** (REQ-353): `done`, which the harness runs, ticks the tasks of the open change that name the requirement.
+- **`change --help` describes the three layers** (REQ-354), and docs/migrating-to-1.0.md says how to install a candidate just published (`--prefer-online`) and how to move a forja project to it.
+
 ## [1.0.0-rc.1] — 2026-10-30
 
 The first candidate of the 1.0 line, for teams of several repositories and roles: a change in three layers with their owners, a workspace of repositories with stories across them and its own live view, approvals per layer and harness packages per role, the backlog following the phases, the two gaps measured, principles, drift and API contracts checked, and `specgate migrate 1.0` to move a 0.27 project. Published under the npm dist-tag `next`; `latest` stays 0.27. See [Migrating to 1.0](docs/migrating-to-1.0.md).

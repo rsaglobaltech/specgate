@@ -350,17 +350,23 @@ The system SHALL, when `docs/brief.md` exists and its front matter lists no modu
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-243.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
 
-### Requirement: REQ-249 — init --yes where code exists says what it does
+### Requirement: REQ-249 — init --yes where code exists adopts it
 
-The system SHALL, when `specgate init --yes` scaffolds in a folder that already has code, warn that it creates a separate project in a sub-folder and that `specgate init`, without `--yes`, adopts the folder in place.
+The system SHALL, when `specgate init --yes` runs in a folder that already has code, adopt that folder in place as plain `specgate init` does, and scaffold a separate project there only with `--new` (or `--out`, `--config`, `--multi-stack`, `--forja`, which describe the project to create).
 
 #### Scenario: SCN-249a — A package.json and --yes
 
 - GIVEN a folder with `package.json`
 - WHEN `specgate init --yes --dry-run` runs
-- THEN it warns that it scaffolds a separate project and names `specgate init` without `--yes` to adopt the folder
+- THEN it says it adopts the folder in place and writes no sub-folder project
 
-<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-249.feature kind=functional status=Implemented test=tests/unit/init-wizard.test.ts -->
+#### Scenario: SCN-249b — --new still scaffolds
+
+- GIVEN a folder with `package.json`
+- WHEN `specgate init --yes --new --dry-run` runs
+- THEN it scaffolds a separate project, as before
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-249.feature kind=functional status=Implemented test=tests/unit/rc2-change.test.ts -->
 
 ### Requirement: REQ-255 — A command that starts with ./ runs on Windows
 

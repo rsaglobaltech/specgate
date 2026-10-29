@@ -666,6 +666,26 @@ function readTrace(dir: string): string {
 }
 
 /**
+ * REQ-353: tick the tasks of the requirement's open change that name it. The
+ * harness delivered every requirement and archive still counted 11, 21 and 13
+ * unchecked tasks (truck-flote, MS-13): the Tasks layer said nothing true.
+ * `deltaFile` is `docs/specs/changes/<id>/specs/<capability>/spec.md`.
+ */
+function tickTasksOf(deltaFile: string, id: string): void {
+  const parts = deltaFile.split(/[\\/]/);
+  const at = parts.lastIndexOf("specs", parts.length - 3);
+  if (at < 1) return;
+  const tasks = path.join(parts.slice(0, at).join(path.sep), "tasks.md");
+  if (!fs.existsSync(tasks)) return;
+  const names = new RegExp(`\\b${id}\\b`);
+  const text = fs.readFileSync(tasks, "utf8");
+  const next = text.replace(/^(\s*[-*]\s*)\[ \](.*)$/gm, (line, lead, rest) =>
+    names.test(rest) ? `${lead}[x]${rest}` : line
+  );
+  if (next !== text) fs.writeFileSync(tasks, next, "utf8");
+}
+
+/**
  * Write the status to the requirement's one owner: its open change's delta
  * when it is in flight (ADR-0035), spec.md or its capability spec otherwise,
  * or the hand-kept matrix of a project that is not derived.
@@ -684,6 +704,7 @@ function writeStatus(
       return { ok: false, updated: 0, error: `${id} has no section in ${owner.deltaFile}.` };
     }
     fs.writeFileSync(file, next, "utf8");
+    if (DELIVERED_STATUSES.includes(status)) tickTasksOf(file, id);
     const rows = deriveRows(readDerivationSources(judgedDir)).filter(
       (r: DerivedRow) => r.requirement === id
     ).length;

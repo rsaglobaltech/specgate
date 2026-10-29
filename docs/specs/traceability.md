@@ -178,7 +178,7 @@
 | REQ-247 | SCN-247a | `features/brief-cards/REQ-247.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
 | REQ-248 | SCN-248a | `features/brief-cards/REQ-248.feature` | - | - | - | - | - | tests/unit/draft-from-brief.test.ts | Implemented |
 | REQ-243 | SCN-243a | `features/daily-surface/REQ-243.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
-| REQ-249 | SCN-249a | `features/daily-surface/REQ-249.feature` | - | - | - | - | - | tests/unit/init-wizard.test.ts | Implemented |
+| REQ-249 | SCN-249a | `features/daily-surface/REQ-249.feature` | - | - | - | - | - | tests/unit/rc2-change.test.ts | Implemented |
 | REQ-241 | SCN-241a | `features/quality/REQ-241.feature` | - | - | - | - | - | tests/unit/quality-baseline.test.ts | Implemented |
 | REQ-250 | SCN-250a | `features/quality/REQ-250.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
 | REQ-251 | SCN-251a | `features/brief-cards/REQ-251.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
@@ -267,6 +267,11 @@
 | REQ-316 | SCN-316a | `features/harness/REQ-316.feature` | - | - | - | - | - | tests/unit/role-packages.test.ts | Implemented |
 | REQ-317 | SCN-317a | `features/harness/REQ-317.feature` | - | - | - | - | - | tests/unit/role-packages.test.ts | Implemented |
 | REQ-318 | SCN-318a | `features/harness/REQ-318.feature` | - | - | - | - | - | tests/unit/role-packages.test.ts | Implemented |
+| REQ-350 | SCN-350a | `features/change-lifecycle/REQ-350.feature` | - | - | - | - | - | tests/unit/rc2-change.test.ts | Implemented |
+| REQ-351 | SCN-351a | `features/change-lifecycle/REQ-351.feature` | - | - | - | - | - | tests/unit/rc2-change.test.ts | Implemented |
+| REQ-352 | SCN-352a | `features/change-lifecycle/REQ-352.feature` | - | - | - | - | - | tests/unit/rc2-change.test.ts | Implemented |
+| REQ-353 | SCN-353a | `features/change-lifecycle/REQ-353.feature` | - | - | - | - | - | tests/unit/rc2-change.test.ts | Implemented |
+| REQ-354 | SCN-354a | `features/change-lifecycle/REQ-354.feature` | - | - | - | - | - | tests/unit/rc2-change.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
