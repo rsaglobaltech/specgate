@@ -66,7 +66,7 @@ not run reports an `error` about itself.
 | `specgate alm move <change> [<phase>] --json` | `move` | no |
 | `specgate check [dir] --json` | `check` | yes |
 | `specgate migrate 1.0 [--dry-run] --json` | `migrate` | no |
-| `specgate workspace <init|status|check|propose|live|harness> --json` | `workspace` | yes |
+| `specgate workspace <init|status|check|draft|propose|live|harness> --json` | `workspace` | yes |
 | `specgate drift [dir] --json` | `drift` | yes |
 | `specgate contract check [dir] --json` | `contract` | yes |
 | `specgate quality <list|doctor|run> --json` | `quality` | no |

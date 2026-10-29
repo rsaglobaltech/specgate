@@ -6,6 +6,9 @@ import { readLock } from "../../../specops/lock";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
+import { WORKSPACE_FILE } from "../../../../packages/core/src/domain/Workspace";
+import { loadWorkspace, workspaceModel } from "../../../lib/workspace";
+import { readWorkspaceStories } from "../../../lib/workspace-draft";
 import {
   openQuestions,
   answeredQuestions,
@@ -665,6 +668,11 @@ export class StatusCommand extends BaseCommand {
     }
 
     const tracePath = path.join(projectDir, "docs/specs/traceability.md");
+    // REQ-341: a workspace repository holds stories, not a matrix.
+    if (!fs.existsSync(tracePath) && fs.existsSync(path.join(projectDir, WORKSPACE_FILE))) {
+      workspaceStatus(projectDir, opts.format === "json");
+      process.exit(0);
+    }
     if (!fs.existsSync(tracePath)) {
       process.stderr.write(
         `${c.red}✖${c.reset}  docs/specs/traceability.md not found in ${projectDir}\n` +
@@ -727,4 +735,83 @@ export class StatusCommand extends BaseCommand {
     if (opts.format === "json") emitJson(projectDir, summary, lock, notes, unwritten);
     else emitText(projectDir, summary, lock, notes, unwritten);
   }
+}
+
+/**
+ * REQ-341: `status` in a workspace repository — its repositories, its
+ * stories, and the step that comes next, from the brief to the build.
+ */
+function workspaceStatus(projectDir: string, json: boolean): void {
+  const { ws, problems } = loadWorkspace(projectDir);
+  if (!ws) {
+    process.stderr.write(
+      problems.map((p) => `${c.red}✖${c.reset}  ${p.message}`).join("\n") + "\n"
+    );
+    process.exit(2);
+  }
+  const model = workspaceModel(ws);
+  const named = readWorkspaceStories(ws);
+  const drafted = new Set(model.stories.map((s) => s.id));
+  const undrafted = named.find((s) => !drafted.has(s.id));
+  const unsplit = model.stories.find((s) => s.subchanges.length === 0);
+  const building = model.stories.find(
+    (s) => !s.done && s.subchanges.some((p) => p.state === "open")
+  );
+  const next =
+    named.length === 0 && model.stories.length === 0
+      ? { command: "specgate workspace draft", why: "the client's brief, and the stories it holds" }
+      : undrafted
+        ? {
+            command: `specgate workspace draft ${undrafted.id} --agent "claude -p"`,
+            why: "its intent and criteria, from the brief",
+          }
+        : unsplit
+          ? {
+              command: `specgate workspace propose ${unsplit.id}`,
+              why: "its change in each repository it touches",
+            }
+          : building
+            ? {
+                command: `specgate workspace harness run --story ${building.id}`,
+                why: "each repository builds its part",
+              }
+            : {
+                command: "specgate workspace check",
+                why: "every repository's gate, and the links between them",
+              };
+  if (json) {
+    process.stdout.write(JSON.stringify({ workspace: model, next }, null, 2) + "\n");
+    return;
+  }
+  process.stdout.write(ui.header("status", `${model.name} · workspace`));
+  process.stdout.write(ui.section("Repositories"));
+  process.stdout.write(
+    ui.table(
+      model.repos.map((r) => [
+        r.name,
+        r.role,
+        r.requirements
+          ? `${r.requirements.done} of ${r.requirements.total} done`
+          : r.exists
+            ? "no status"
+            : "missing",
+      ])
+    ) + "\n"
+  );
+  if (model.stories.length || named.length) {
+    process.stdout.write(ui.section("Stories"));
+    for (const s of named.filter((x) => !drafted.has(x.id)))
+      process.stdout.write(
+        `    ${ui.state("todo")} ${s.id}  ${c.muted}named in the brief${c.reset}\n`
+      );
+    for (const s of model.stories) {
+      const parts = s.subchanges.length
+        ? s.subchanges.map((p) => `${p.repo} ${p.state}`).join(" · ")
+        : "not split yet";
+      process.stdout.write(
+        `    ${ui.state(s.done ? "done" : "doing")} ${s.id}  ${c.muted}${parts}${c.reset}\n`
+      );
+    }
+  }
+  process.stdout.write(`\n  ${ui.next(next.command, next.why)}\n`);
 }

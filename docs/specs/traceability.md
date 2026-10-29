@@ -272,6 +272,17 @@
 | REQ-352 | SCN-352a | `features/change-lifecycle/REQ-352.feature` | - | - | - | - | - | tests/unit/rc2-change.test.ts | Implemented |
 | REQ-353 | SCN-353a | `features/change-lifecycle/REQ-353.feature` | - | - | - | - | - | tests/unit/rc2-change.test.ts | Implemented |
 | REQ-354 | SCN-354a | `features/change-lifecycle/REQ-354.feature` | - | - | - | - | - | tests/unit/rc2-change.test.ts | Implemented |
+| REQ-339 | SCN-339a | `features/workspace/REQ-339.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-340 | SCN-340a | `features/workspace/REQ-340.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-341 | SCN-341a | `features/workspace/REQ-341.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-342 | SCN-342a | `features/workspace/REQ-342.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-343 | SCN-343a | `features/workspace/REQ-343.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-344 | SCN-344a | `features/workspace/REQ-344.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-345 | SCN-345a | `features/workspace/REQ-345.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-346 | SCN-346a | `features/workspace/REQ-346.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-347 | SCN-347a | `features/workspace/REQ-347.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-348 | SCN-348a | `features/workspace/REQ-348.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-349 | SCN-349a | `features/workspace/REQ-349.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -20,6 +20,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - **Two requirements naming one feature file are reported** (REQ-352): `change validate` and `change archive` refuse with `change_feature_shared`; archiving would have kept only one's scenarios.
 - **A delivered requirement ticks its tasks** (REQ-353): `done`, which the harness runs, ticks the tasks of the open change that name the requirement.
 - **`change --help` describes the three layers** (REQ-354), and docs/migrating-to-1.0.md says how to install a candidate just published (`--prefer-online`) and how to move a forja project to it.
+- **The workspace takes the client's brief** (REQ-339..341): `specgate workspace draft` puts a root `brief.md` below a front matter that names the brief's stories and their repositories, `workspace draft <story> --agent "<cmd>"` drafts a story's intent and criteria from the brief, confined to the story, and `specgate status` in a workspace repository shows the workspace and the next step instead of failing on a missing matrix.
+- **Every repository receives the story** (REQ-342..344): `workspace propose` takes a drafted story, copies its intent and criteria into each sub-change's `discover.md` and names the story's other repositories and how to write `depends=` and `api=`; `workspace check` warns `workspace_story_diverged` when a repository's criteria are not the story's; each harness is told the story's other parts.
+- **A story is built in dependency order** (REQ-345): `workspace harness run --story` starts a repository whose part waits on another's undelivered requirement after that repository has finished; the dry run shows the levels.
+- **The live view and the story's cost** (REQ-346, REQ-347): every JSON document of the studio says `charset=utf-8`, and a story's cost counts its archived parts.
+- **Short repository names, and the logs ignored** (REQ-348, REQ-349): `workspace init` names `truck-flote-fleet` as `fleet`, prints name, path and role in their own columns, and ignores `.specgate/workspace-runs/`.
 
 ## [1.0.0-rc.1] — 2026-10-30
 

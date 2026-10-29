@@ -20,6 +20,12 @@ import {
   listDeltas,
 } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
+import {
+  CRITERIA,
+  INTENT,
+  criteriaLines,
+  section,
+} from "../../packages/core/src/domain/WorkspaceStory";
 import { readDeclaredDependencies } from "./requirement-graph";
 import { DELIVERED, inFlightRequirements } from "./in-flight";
 import { findCliRoot } from "./project-root";
@@ -34,6 +40,9 @@ import type { Diagnostic } from "./diagnostics";
 
 /** Where `workspace check` writes its last result, for `workspace status`. */
 export const LAST_CHECK_FILE = ".specgate/workspace-check.json";
+
+/** Where `workspace harness run` keeps each repository's log and context (REQ-349). */
+export const RUNS_DIR = ".specgate/workspace-runs";
 
 export interface LoadedWorkspace {
   dir: string;
@@ -292,6 +301,8 @@ export interface CheckResult {
   ok: boolean;
   repos: Array<{ name: string; ok: boolean; problems: Diagnostic[] }>;
   problems: Diagnostic[];
+  /** What does not fail the check: a sub-change whose criteria drift (REQ-343). */
+  warnings: Diagnostic[];
 }
 
 /**
@@ -422,7 +433,178 @@ export function checkWorkspace(ws: LoadedWorkspace): CheckResult {
   }
 
   const ok = repos.every((r) => r.ok) && problems.length === 0;
-  return { ok, repos, problems };
+  return { ok, repos, problems, warnings: divergedParts(ws) };
+}
+
+/** The `discover.md` of a member's open change, or null. */
+function discoverOf(memberDir: string, change: string): string | null {
+  const file = path.join(memberDir, "docs", "specs", "changes", change, "discover.md");
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+}
+
+/**
+ * REQ-343: the story's criteria are the business's, the same in every
+ * repository; an open sub-change whose `AC-n` lines are not the story's has
+ * drifted from it.
+ */
+export function divergedParts(ws: LoadedWorkspace): Diagnostic[] {
+  const out: Diagnostic[] = [];
+  for (const s of readStories(ws.dir)) {
+    const md = path.join(s.dir, "story.md");
+    if (!fs.existsSync(md)) continue;
+    const theirs = criteriaLines(fs.readFileSync(md, "utf8"));
+    if (theirs.length === 0) continue;
+    for (const sc of s.subchanges) {
+      const dir = ws.dirs[sc.repo];
+      if (!dir || !fs.existsSync(dir)) continue;
+      const text = discoverOf(dir, sc.change);
+      if (text === null) continue;
+      const mine = criteriaLines(text);
+      const missing = theirs.filter((c) => !mine.includes(c));
+      const extra = mine.filter((c) => !theirs.includes(c));
+      if (missing.length === 0 && extra.length === 0) continue;
+      out.push(
+        warning(
+          "workspace_story_diverged",
+          `${sc.repo}'s change ${sc.change} states its criteria otherwise than the story ${s.id}` +
+            (missing.length
+              ? `: the story's "${missing[0]}" is not there`
+              : `: "${extra[0]}" is not the story's`) +
+            ".",
+          {
+            target: sc.repo,
+            file: `${sc.repo}/docs/specs/changes/${sc.change}/discover.md`,
+            fix: `Write the story's criteria as ${STORIES_DIR}/${s.id}/story.md states them, or change the story there, on purpose.`,
+          }
+        )
+      );
+    }
+  }
+  return out;
+}
+
+/**
+ * REQ-345: the order a story's repositories are built in. A repository whose
+ * part depends on a requirement another part adds, not yet delivered, comes a
+ * level after that part's repository.
+ */
+export function storyLevels(ws: LoadedWorkspace, story: Story): Record<string, number> {
+  const owner = new Map<string, string>();
+  const needs = new Map<string, Set<string>>();
+  const parts = story.subchanges.filter(
+    (sc) => ws.dirs[sc.repo] && fs.existsSync(ws.dirs[sc.repo])
+  );
+  const reqsOf = new Map<string, Array<{ id: string; depends: string[] }>>();
+  for (const sc of parts) {
+    const reqs = changeRequirements(ws.dirs[sc.repo], sc.change);
+    reqsOf.set(sc.repo, reqs);
+    for (const r of reqs) owner.set(`${sc.repo}:${r.id}`, sc.repo);
+  }
+  for (const sc of parts) {
+    const set = new Set<string>();
+    const statuses = memberStatusesCache(ws);
+    for (const r of reqsOf.get(sc.repo) || []) {
+      for (const d of r.depends) {
+        const q = splitQualified(d);
+        if (!q || q.repo === sc.repo) continue;
+        const theirs = owner.get(`${q.repo}:${q.id}`);
+        if (theirs && !DELIVERED.includes(statuses(q.repo).get(q.id) || "")) set.add(theirs);
+      }
+    }
+    needs.set(sc.repo, set);
+  }
+  const level: Record<string, number> = {};
+  const visit = (repo: string, seen: Set<string>): number => {
+    if (level[repo]) return level[repo];
+    if (seen.has(repo)) return 1; // a cycle: build them together
+    seen.add(repo);
+    const deps = [...(needs.get(repo) || [])];
+    const l = deps.length ? Math.max(...deps.map((d) => visit(d, seen))) + 1 : 1;
+    level[repo] = l;
+    return l;
+  };
+  for (const sc of parts) visit(sc.repo, new Set());
+  return level;
+}
+
+function memberStatusesCache(ws: LoadedWorkspace): (repo: string) => Map<string, string> {
+  const cache = new Map<string, Map<string, string>>();
+  return (repo) => {
+    if (!cache.has(repo))
+      cache.set(repo, ws.dirs[repo] ? memberStatuses(ws.dirs[repo]) : new Map());
+    return cache.get(repo)!;
+  };
+}
+
+/** The requirements a change adds or modifies, open or archived, with their `depends=`. */
+export function changeRequirements(
+  memberDir: string,
+  change: string
+): Array<{ id: string; title: string; depends: string[]; scenarios: string[] }> {
+  const archived = listArchivedIds(memberDir).find((a) => a === change || a.endsWith(`-${change}`));
+  const id = listChangeIds(memberDir).includes(change)
+    ? change
+    : archived
+      ? path.join("archive", archived)
+      : null;
+  if (!id) return [];
+  const out: Array<{ id: string; title: string; depends: string[]; scenarios: string[] }> = [];
+  for (const d of listDeltas(memberDir, id)) {
+    let parsed: ReturnType<typeof parseDelta>;
+    try {
+      parsed = parseDelta(fs.readFileSync(d.file, "utf8"));
+    } catch {
+      continue;
+    }
+    for (const r of [...(parsed.added || []), ...(parsed.modified || [])]) {
+      if (!r.id) continue;
+      const raw = String((r.trace || {}).depends || "");
+      out.push({
+        id: r.id.toUpperCase(),
+        title: String(r.name || ""),
+        depends: raw.split(/[,;\s]+/).filter(Boolean),
+        scenarios: r.scenarios.map((s) => s.id || "").filter(Boolean),
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * REQ-344: what a repository's harness is told of the story's other parts —
+ * each repository, its role, and the requirements its part adds with their
+ * status — so a requirement can name what it waits for.
+ */
+export function storyContext(ws: LoadedWorkspace, story: Story, repo: string): string {
+  const roleOf = (n: string) => (ws.config.repos.find((r) => r.name === n) || { role: "" }).role;
+  const statuses = memberStatusesCache(ws);
+  const lines = [
+    `## The workspace story ${ws.config.name}:${story.id} — ${story.title}`,
+    "",
+    `This requirement is ${repo}'s part of a story built across repositories. The other parts:`,
+    "",
+  ];
+  for (const sc of story.subchanges) {
+    if (sc.repo === repo || !ws.dirs[sc.repo]) continue;
+    lines.push(`- \`${sc.repo}\` (${roleOf(sc.repo)}):`);
+    const reqs = fs.existsSync(ws.dirs[sc.repo])
+      ? changeRequirements(ws.dirs[sc.repo], sc.change)
+      : [];
+    if (reqs.length === 0) lines.push("  - nothing specified yet");
+    for (const r of reqs)
+      lines.push(`  - ${sc.repo}:${r.id} — ${r.title} (${statuses(sc.repo).get(r.id) || "Draft"})`);
+  }
+  const contracts = ws.config.repos.filter((r) => r.role === "contracts").map((r) => r.name);
+  lines.push(
+    "",
+    "Call another part's requirement by its qualified id: a requirement that needs it carries `depends=<repo>:REQ-NNN` in its trace" +
+      (contracts.length
+        ? `, and an API between repositories is an operation of \`${contracts[0]}\`, cited as \`api=<file>#<operationId>\`.`
+        : "."),
+    "Do not build another repository's part here: call it through its API, or a stand-in in the tests.",
+    ""
+  );
+  return lines.join("\n");
 }
 
 export function recordCheck(dir: string, result: CheckResult): void {
@@ -440,7 +622,8 @@ export function openSubChange(
   ws: LoadedWorkspace,
   repo: string,
   story: string,
-  title: string
+  title: string,
+  carried: { storyText: string; repos: string[] } = { storyText: "", repos: [] }
 ): Diagnostic | null {
   const dir = ws.dirs[repo];
   const r = cli(["change", "new", story, "--project-dir", dir]);
@@ -460,13 +643,53 @@ export function openSubChange(
     .map((f) => path.join(changeDir, f))
     .find((f) => fs.existsSync(f));
   if (proposal) {
-    const text = fs.readFileSync(proposal, "utf8");
+    let text = fs.readFileSync(proposal, "utf8");
+    // REQ-342: the story itself, not a path this repository cannot open.
     const link =
       `\n> Part of the workspace story \`${ws.config.name}:${story}\` — ${title}. ` +
-      `The story and its other repositories: \`${STORIES_DIR}/${story}/story.md\` in the workspace repository.\n`;
-    fs.writeFileSync(proposal, text.replace(/^(# .*\n)/, `$1${link}`), "utf8");
+      "Its intent and criteria are copied below as the story states them; change them in the story, " +
+      "not here.\n";
+    text = text.replace(/^(# .*\n)/, `$1${link}`);
+    const intent = section(carried.storyText, INTENT);
+    const criteria = criteriaLines(carried.storyText);
+    if (intent) text = replaceSection(text, /context/i, intent);
+    if (criteria.length)
+      text = replaceSection(text, CRITERIA, criteria.map((c) => `- ${c}`).join("\n"));
+    text = text.trimEnd() + "\n\n" + otherRepositories(ws, repo, carried.repos) + "\n";
+    fs.writeFileSync(proposal, text, "utf8");
   }
   return null;
+}
+
+/** The body of a `##` section replaced, its heading kept. */
+function replaceSection(md: string, heading: RegExp, body: string): string {
+  const lines = md.split("\n");
+  const at = lines.findIndex((l) => /^##\s/.test(l) && heading.test(l));
+  if (at < 0) return md;
+  let end = lines.findIndex((l, i) => i > at && /^##\s/.test(l));
+  if (end < 0) end = lines.length;
+  return [...lines.slice(0, at + 1), "", body, "", ...lines.slice(end)].join("\n");
+}
+
+/** REQ-344: the story's other repositories, and how to name what this part needs from them. */
+function otherRepositories(ws: LoadedWorkspace, repo: string, repos: string[]): string {
+  const others = repos.filter((r) => r !== repo);
+  const contracts = ws.config.repos.filter((r) => r.role === "contracts").map((r) => r.name);
+  const roleOf = (n: string) => (ws.config.repos.find((r) => r.name === n) || { role: "" }).role;
+  const example = others[0] || "fleet";
+  return [
+    "## The story's other repositories",
+    "",
+    ...others.map((r) => `- \`${r}\` (${roleOf(r)})`),
+    ...contracts
+      .filter((c) => !others.includes(c) && c !== repo)
+      .map((c) => `- \`${c}\` (contracts)`),
+    "",
+    `A requirement here that needs one of their requirements names it in its trace: \`depends=${example}:REQ-NNN\`.` +
+      (contracts.length
+        ? ` An API between repositories is an operation of \`${contracts[0]}\`, cited as \`api=<file>#<operationId>\`.`
+        : ""),
+  ].join("\n");
 }
 
 export function noteNoMembers(): Diagnostic {

@@ -51,6 +51,15 @@ export default [
         "both repositories are found"
       );
 
+      // The client's brief, and the stories it holds (REQ-339).
+      t.write(ws, "brief.md", "# The product\n\nThe client follows a shipment.\n");
+      t.ok(t.sg(ws, "workspace", "draft"), "workspace draft");
+      t.expect(
+        /stories:/.test(t.read(ws, "docs/brief.md")),
+        "the brief is below a front matter naming its stories"
+      );
+      t.ok(t.sg(ws, "status"), "status in the workspace repository");
+
       t.ok(
         t.sg(
           ws,
