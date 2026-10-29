@@ -211,6 +211,11 @@
 | REQ-279 | SCN-279a | `features/harness/REQ-279.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
 | REQ-280 | SCN-280a | `features/studio/REQ-280.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
 | REQ-281 | SCN-281a | `features/trusted-gate/REQ-281.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
+| REQ-305 | SCN-305a | `features/ticket-source/REQ-305.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
+| REQ-306 | SCN-306a | `features/ticket-source/REQ-306.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
+| REQ-307 | SCN-307a | `features/ticket-source/REQ-307.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
+| REQ-308 | SCN-308a | `features/ticket-source/REQ-308.feature` | - | - | - | - | - | tests/unit/alm-conformance.test.ts | Implemented |
+| REQ-309 | SCN-309a | `features/ticket-source/REQ-309.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

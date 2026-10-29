@@ -9,6 +9,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **The board follows the change** (REQ-305): `alm sync` moves each change's ticket — its `ticket:` or `origin: alm:<key>` — to the state of its phase: `proposed`, `building` once a requirement has a `harness/REQ-NNN` branch or is Implemented, `archived`. Each provider has a default (Jira status category, Azure Boards state, a GitHub label or a closed issue, a Linear state type) and `phases:` in `alm.config.yaml` names a board's own. A move already made is not made again (`.specops/alm-phases.json`), and `--dry-run` prints each move. `mirror: false` keeps `alm sync` from creating an issue per requirement where the tickets are the source.
+- **What the ticket gains comes back as notes** (REQ-306): `alm pull` brings each open change's new comments, and a note when the ticket's description changed, into its `review.md` — never into the proposal or the delta.
+- **One sub-issue per repository** (REQ-307): a change that lists `repositories:` gets a sub-issue of its ticket for each, created once.
+- **Linear** (REQ-308), a fourth built-in provider through its GraphQL API: `team_key` and `token_env`.
+- **`alm phase` and `alm move`** (REQ-309): where a change stands, without the network, and its ticket moved there now; both are MCP tools (`specgate_alm_phase`, `specgate_alm_move`). New provider capabilities (`phase`, `subIssues`, `comments`, `readText`) are optional, so a community provider written for 0.27 still loads.
+
 ### Fixed
 
 - **A release candidate is never installed by default** (REQ-281): every publish workflow treated a pushed `v*` tag as `latest`, so a `v1.0.0-rc.1` would have become the default `npm install` and the `latest` image. A version with a prerelease part is now published under the dist-tag `next`, and its image is tagged with its version only.

@@ -385,8 +385,14 @@ export const NAV: readonly NavSection[] = [
       },
       {
         slug: "alm",
-        label: "Jira, Azure Boards, GitHub",
+        label: "Jira, Azure Boards, GitHub, Linear",
         blurb: "Mirror requirements onto a board without letting the board define them.",
+      },
+      {
+        slug: "alm-phases",
+        label: "The board follows the change",
+        blurb:
+          "Tickets move with their change, comments come back as notes, one sub-issue per repository.",
       },
     ],
   },

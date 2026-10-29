@@ -1,0 +1,77 @@
+{
+  "provider": "linear",
+  "config": {
+    "alm_version": 1,
+    "provider": "linear",
+    "base_url": "https://api.linear.app/",
+    "team_key": "ENG",
+    "token_env": "SPECGATE_CONFORMANCE_TOKEN"
+  },
+  "env": {
+    "SPECGATE_CONFORMANCE_TOKEN": "lin_api_tok"
+  },
+  "routes": [
+    {
+      "match": "/graphql",
+      "method": "POST",
+      "bodyIncludes": "issueCreate",
+      "json": {
+        "data": {
+          "issueCreate": {
+            "success": true,
+            "issue": { "identifier": "ENG-42", "url": "https://linear.app/acme/issue/ENG-42" }
+          }
+        }
+      }
+    },
+    {
+      "match": "/graphql",
+      "method": "POST",
+      "bodyIncludes": "issueUpdate",
+      "json": { "data": { "issueUpdate": { "success": true } } }
+    },
+    {
+      "match": "/graphql",
+      "method": "POST",
+      "bodyIncludes": "teams(",
+      "json": {
+        "data": {
+          "teams": {
+            "nodes": [
+              {
+                "id": "team-1",
+                "states": {
+                  "nodes": [
+                    { "id": "s1", "name": "Todo", "type": "unstarted" },
+                    { "id": "s2", "name": "In Progress", "type": "started" },
+                    { "id": "s3", "name": "Done", "type": "completed" },
+                    { "id": "s4", "name": "Canceled", "type": "canceled" }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "match": "/graphql",
+      "method": "POST",
+      "bodyIncludes": "{\"id\":\"ENG-7\"}",
+      "json": { "data": { "issue": { "id": "uuid-7", "state": { "type": "started" } } } }
+    },
+    {
+      "match": "/graphql",
+      "method": "POST",
+      "bodyIncludes": "{\"id\":\"ENG-8\"}",
+      "json": { "data": { "issue": { "id": "uuid-8", "state": { "type": "completed" } } } }
+    }
+  ],
+  "expect": {
+    "createdKey": "ENG-42",
+    "createdUrlContains": "issue/ENG-42",
+    "openIssue": "ENG-7",
+    "doneIssue": "ENG-8",
+    "closeIssue": "ENG-7"
+  }
+}

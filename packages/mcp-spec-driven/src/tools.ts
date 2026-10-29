@@ -306,6 +306,38 @@ TOOLS["specgate_alm_pull"] = new GenericCliTool(
   "flag",
   true
 );
+TOOLS["specgate_alm_phase"] = new GenericCliTool(
+  "specgate_alm_phase",
+  "Run specgate alm phase",
+  "alm phase",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+      change: { type: "string", description: "The <change> argument of `specgate alm phase`." },
+    },
+    required: ["projectDir", "change"],
+  },
+  "flag",
+  false
+);
+TOOLS["specgate_alm_move"] = new GenericCliTool(
+  "specgate_alm_move",
+  "Run specgate alm move",
+  "alm move",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+      change: { type: "string", description: "The <change> argument of `specgate alm move`." },
+    },
+    required: ["projectDir", "change"],
+  },
+  "flag",
+  false
+);
 TOOLS["specgate_check"] = new GenericCliTool(
   "specgate_check",
   "The gate: validate --strict, then your tests — before you open a PR.",

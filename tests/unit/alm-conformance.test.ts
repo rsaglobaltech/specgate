@@ -45,7 +45,14 @@ function replay(routes: any[]) {
     const method = init.method || "GET";
     seen.push({ url: String(url), method, body: init.body });
     for (const route of routes) {
-      if (String(url).includes(route.match) && (route.method || "GET") === method) {
+      // `bodyIncludes`: a GraphQL API answers every operation at one URL
+      // (Linear, REQ-308), so its routes also match on the request body.
+      const body = String(init.body || "");
+      if (
+        String(url).includes(route.match) &&
+        (route.method || "GET") === method &&
+        (!route.bodyIncludes || body.includes(route.bodyIncludes))
+      ) {
         return {
           ok: true,
           status: 200,
@@ -109,6 +116,7 @@ test("an unregistered provider is refused by name, with the list and a fix", () 
   assert.throws(() => getProvider("rally"), /alm\.config\.yaml/);
 });
 
+// REQ-308 SCN-308a: Linear runs this same suite, from tests/fixtures/alm/linear.json.
 for (const provider of PROVIDERS) {
   const id = provider.id;
 
