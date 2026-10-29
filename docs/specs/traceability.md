@@ -213,6 +213,7 @@
 | REQ-278 | SCN-278a | `features/harness/REQ-278.feature` | - | - | - | - | - | tests/unit/agent-stream.test.ts | Implemented |
 | REQ-279 | SCN-279a | `features/harness/REQ-279.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
 | REQ-280 | SCN-280a | `features/studio/REQ-280.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
+| REQ-281 | SCN-281a | `features/trusted-gate/REQ-281.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
 | REQ-420 | SCN-420a | `features/agent-integration/REQ-420.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 | REQ-421 | SCN-421a | `features/agent-integration/REQ-421.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 | REQ-422 | SCN-422a | `features/agent-integration/REQ-422.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |

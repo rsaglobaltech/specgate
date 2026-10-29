@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A release candidate is never installed by default** (REQ-281): every publish workflow treated a pushed `v*` tag as `latest`, so a `v1.0.0-rc.1` would have become the default `npm install` and the `latest` image. A version with a prerelease part is now published under the dist-tag `next`, and its image is tagged with its version only.
+
 ## [0.35.0] — 2026-11-15
 
 Both ends of the lifecycle, around the gate. Before the first requirement:
