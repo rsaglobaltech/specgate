@@ -6,7 +6,9 @@ on:
     # first and only a green `develop` reaches `main`, so the checks have to run
     # on the branch that gate depends on — a merge that lands cleanly can still
     # break a suite that neither side broke alone.
-    branches: [main, develop]
+    # `next/**`: the 1.0 line is built on its own branch and released as
+    # candidates; it needs the same checks without touching `main`.
+    branches: [main, develop, 'next/**']
   pull_request:
 
 jobs:
