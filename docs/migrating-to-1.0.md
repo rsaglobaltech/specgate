@@ -105,6 +105,20 @@ These need no migration. They are listed so the upgrade is complete:
   missing an intent or the code missing the spec
   ([Harness report](harness-report.md)).
 
+## Roles and approvals gate the harness
+
+**What changed.** A layered change is built only once each of its layers is
+approved by someone holding the layer's role — product the Discover, architect
+the Design, developer the Tasks ([ADR-0043](specs/adr/0043-roles-approvals-and-role-packages.md)).
+An approval records who signed which version; editing a layer asks for it again.
+
+**What migrate does.** Nothing it can decide for you: its report says to name the
+people under `roles:` in `harness.config.yaml` (until then a role is open to
+anyone), and that approvals now gate the harness.
+
+**By hand.** `specgate change approve <id> --layer discover|design|tasks`, or the
+studio's Review. To keep 0.27's behaviour: `approvals: { required: never }`.
+
 ## When a later candidate adds a step
 
 The migration is one ordered table of steps (`MIGRATION_1_0` in
