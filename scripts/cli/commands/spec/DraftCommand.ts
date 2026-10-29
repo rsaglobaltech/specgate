@@ -14,6 +14,11 @@
  * whoever writes it; every run after that checks it and says what is next.
  */
 
+import {
+  LAYERED_SCHEMA,
+  templateLayeredDesign,
+  templateDraftTasks,
+} from "../../../../packages/core/src/domain/ChangeLayers";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
@@ -559,20 +564,28 @@ export function pasteLine(module: string): string {
   return `Draft the ${module} module: follow ${CHANGES.split(path.sep).join("/")}/draft-${module}/DRAFTING.md`;
 }
 
-function proposalFor(module: string, changeId: string, brief: string): string {
+/** The draft's Discover (ADR-0042): product's layer, from the brief. */
+function discoverFor(module: string, changeId: string, brief: string): string {
   return [
-    `# Proposal: ${changeId}`,
+    `# Discover: ${changeId}`,
     "",
-    "## Intent",
+    "> Owner: product — what the business needs and why. No technology here: the",
+    "> design says how.",
+    "",
+    "## Context",
     "",
     `The ${module} module of the brief (\`${brief}\`), written down as requirements and`,
     "scenarios a person can review before anything is built.",
     "",
-    "## Scope",
+    `In scope: what the brief says about ${module}. Out of scope: every other module of the brief.`,
     "",
-    `In scope: what the brief says about ${module}.`,
+    "## Use case",
     "",
-    "Out of scope: every other module of the brief.",
+    "<!-- What the person does, step by step, once this exists — in the brief's words. -->",
+    "",
+    "## Acceptance criteria",
+    "",
+    "<!-- One line each, numbered: - AC-1: … The design must answer every one. -->",
     "",
   ].join("\n");
 }
@@ -596,6 +609,7 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
   const scnRange = reserveScenarioRange(projectDir, reqRange);
   const config = {
     ...DEFAULT_CONFIG,
+    schema: LAYERED_SCHEMA,
     created: new Date().toISOString().slice(0, 10),
     rigor: "lite",
     req_range: reqRange,
@@ -630,7 +644,11 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
     "change.yaml",
     `${renderConfig(config).trimEnd()}\nscn_range: [${scnRange[0]}, ${scnRange[1]}]\nbrief: ${brief}\n`
   );
-  write("proposal.md", proposalFor(module, changeId, brief));
+  // REQ-288: the three layers. The agent writes the deltas; product the
+  // Discover's criteria, the architect and the developer the rest.
+  write("discover.md", discoverFor(module, changeId, brief));
+  write("design.md", templateLayeredDesign(changeId));
+  write("tasks.md", templateDraftTasks());
   return { changeId, reqRange, created };
 }
 
@@ -1389,7 +1407,7 @@ export class DraftCommand extends BaseCommand {
           const files: Array<[string, string]> = [
             [`${dir}/DRAFTING.md`, "how to write it"],
             [`${dir}/specs/${opts.module}/spec.md`, "the requirements go here"],
-            [`${dir}/change.yaml, proposal.md`, ""],
+            [`${dir}/change.yaml, discover.md, design.md, tasks.md`, "the layers"],
           ];
           const w = Math.max(...files.map((r) => r[0].length));
           out.write(

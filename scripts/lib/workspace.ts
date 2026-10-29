@@ -454,8 +454,12 @@ export function openSubChange(
       }
     );
   }
-  const proposal = path.join(dir, "docs", "specs", "changes", story, "proposal.md");
-  if (fs.existsSync(proposal)) {
+  // A 1.0 change's Discover (ADR-0042), or a 0.27 change's proposal.
+  const changeDir = path.join(dir, "docs", "specs", "changes", story);
+  const proposal = ["discover.md", "proposal.md"]
+    .map((f) => path.join(changeDir, f))
+    .find((f) => fs.existsSync(f));
+  if (proposal) {
     const text = fs.readFileSync(proposal, "utf8");
     const link =
       `\n> Part of the workspace story \`${ws.config.name}:${story}\` — ${title}. ` +

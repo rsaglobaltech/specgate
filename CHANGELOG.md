@@ -22,6 +22,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 ### Breaking
 
 - **`depends=<repo>:REQ-NNN` is a dependency on another repository** (REQ-294): inside a repository it is no longer an `unknown_dependency`; the workspace judges it.
+### Breaking
+
+- **A change has three layers, each with its owner** (REQ-282..REQ-289, ADR-0042): `change new`, `propose`, `propose --from-brief` and `--from-ticket` write `discover.md` (product: context, use case, acceptance criteria `- AC-1: …`), `design.md` (architect) and `tasks.md` (developer) under the new `layered` schema, and no longer write `proposal.md`. `change new --schema spec-driven` keeps the 0.27 layout. A change written with 0.27 stays valid: its `proposal.md` is read as its Discover, and a missing `design.md` is a warning naming `specgate migrate 1.0`.
+
+### Added
+
+- **The layer rules** (REQ-284..REQ-287): `change validate` warns when the Discover names a technology, when the design does not answer an acceptance criterion, when a task names no requirement, and when the Discover differs from the version it was agreed at. `change validate --strict` fails on them.
+- **The layers are named where people look** (REQ-288, REQ-289): `change status` lists discover, specs, design and tasks with their owner ("Write discover.md (product)"), the drafting guides say which layer the agent writes, and the studio's review lists each layer with its owner and whether it is written.
 
 ### Fixed
 

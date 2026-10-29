@@ -135,6 +135,13 @@ archived when its code is done, on its branch, so the spec and the code land
 in one pull request ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
 → [Change a shipped requirement](reviewing-changes.md)
 
+**Layers.** A change has three, each with its owner: `discover.md`, product's —
+what the business needs, its acceptance criteria, no technology; `design.md`,
+the architect's — how, answering each criterion; `tasks.md`, the developer's —
+the work, each task naming its requirement. Product reviews the story, the
+architect the design, and the story stays put while the design changes
+([ADR-0042](specs/adr/0042-the-three-layers-of-a-change.md)).
+
 A change comes from one of three places:
 
 | Source | Command | Guide |

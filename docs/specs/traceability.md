@@ -37,7 +37,7 @@
 | REQ-013 | SCN-013 | - | - | - | - | - | `scripts/adopt_project.ts` | `tests/unit/adopt.test.ts` | Verified |
 | REQ-014 | SCN-014 | - | - | - | - | - | `scripts/doctor.ts` | `tests/unit/doctor.test.ts` | Verified |
 | REQ-015 | SCN-015 | - | - | - | - | - | `scripts/req.ts` | `tests/unit/req-commands.test.ts` | Verified |
-| REQ-100 | SCN-100a | - | - | - | - | - | - | TBD | Draft |
+| REQ-100 | SCN-100a | `features/change-lifecycle/REQ-100.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
 | REQ-101 | SCN-101a | - | - | - | - | - | - | TBD | Draft |
 | REQ-102 | SCN-102a | - | - | - | - | - | - | TBD | Draft |
 | REQ-103 | SCN-103a | - | - | - | - | - | - | TBD | Draft |
@@ -230,6 +230,14 @@
 | REQ-296 | SCN-296a | `features/workspace/REQ-296.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
 | REQ-297 | SCN-297a | `features/workspace/REQ-297.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
 | REQ-298 | SCN-298a | `features/workspace/REQ-298.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-282 | SCN-282a | `features/change-lifecycle/REQ-282.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-283 | SCN-283a | `features/change-lifecycle/REQ-283.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-284 | SCN-284a | `features/change-lifecycle/REQ-284.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-285 | SCN-285a | `features/change-lifecycle/REQ-285.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-286 | SCN-286a | `features/change-lifecycle/REQ-286.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-287 | SCN-287a | `features/change-lifecycle/REQ-287.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-288 | SCN-288a | `features/change-lifecycle/REQ-288.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-289 | SCN-289a | `features/change-lifecycle/REQ-289.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

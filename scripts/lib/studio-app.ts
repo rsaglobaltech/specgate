@@ -3,6 +3,11 @@ import * as path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { listChangeIds, listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
+import {
+  LAYERS,
+  LEGACY_DISCOVER,
+  isUntouchedLayer,
+} from "../../packages/core/src/domain/ChangeLayers";
 import { assumptionsToReview } from "../../packages/core/src/domain/Clarification";
 import { readHarnessConfig } from "../../packages/core/src/infrastructure/HarnessConfigFile";
 import type { QualityConfig } from "../../packages/core/src/domain/QualityChecks";
@@ -49,10 +54,19 @@ export interface DraftRequirement {
   scenarios: Array<{ id: string; title: string; steps: string[] }>;
 }
 
+/** One layer of a change in Review (REQ-289): who owns it and whether it is written. */
+export interface DraftLayer {
+  id: string;
+  owner: string;
+  file: string;
+  written: boolean;
+}
+
 export interface DraftView {
   change: string;
   module: string;
   requirements: DraftRequirement[];
+  layers: DraftLayer[];
   blockers: Blocker[];
   notes: ReviewNote[];
   questions: Array<{ id: string; text: string; blocks: string[] }>;
@@ -95,6 +109,25 @@ function draftRequirements(projectDir: string, change: string): DraftRequirement
   return out;
 }
 
+/**
+ * The change's layers with their owners, and whether each is written
+ * (REQ-289, ADR-0042). A 0.27 change shows its proposal as the Discover.
+ */
+function draftLayers(projectDir: string, change: string): DraftLayer[] {
+  const dir = path.join(projectDir, "docs", "specs", "changes", change);
+  return LAYERS.map((l) => {
+    const file =
+      l.id === "discover" && !fs.existsSync(path.join(dir, l.file)) ? LEGACY_DISCOVER : l.file;
+    const text = read(path.join(dir, file));
+    return {
+      id: l.id,
+      owner: l.owner,
+      file,
+      written: text !== undefined && !isUntouchedLayer(l.id, text, change),
+    };
+  });
+}
+
 /** Open changes a person has not approved yet, each as Review shows it (REQ-206). */
 export function drafts(projectDir: string): DraftView[] {
   const open = waiting(projectDir).questions;
@@ -104,6 +137,7 @@ export function drafts(projectDir: string): DraftView[] {
       change,
       module: change.replace(/^draft-/, "").replace(/-additions$/, ""),
       requirements: draftRequirements(projectDir, change),
+      layers: draftLayers(projectDir, change),
       blockers: approvalBlockers(projectDir, change),
       notes: reviewNotes(projectDir, change),
       questions: open

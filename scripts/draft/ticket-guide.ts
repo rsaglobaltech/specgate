@@ -40,6 +40,11 @@ export function ticketGuide(i: TicketGuideInput): string {
       ? `- **Scenario ids:** \`${i.firstScenario}\` … \`${i.lastScenario}\`, one each, no others.`
       : `- **Scenario ids:** from \`${i.firstScenario}\` up, one each.`,
     "",
+    // ADR-0042: the change has three layers, each with its owner.
+    "**The layers of this change.** `discover.md` is product's: the ticket's intent",
+    "and its criteria, numbered AC-1… `design.md` is the architect's and `tasks.md`",
+    "the developer's: leave the three as they are — you write the deltas.",
+    "",
     "## 0. Your scope — the acceptance criteria",
     "",
     "Each criterion becomes at least one scenario. Criteria about the same rule",

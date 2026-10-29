@@ -49,6 +49,7 @@ for the policy on when and how to write an ADR.
 | [0039](0039-the-ticket-as-source-text.md) | The ticket as source text: a ticket with acceptance criteria opens a change checked against it; the board stays read-only | Accepted | 2026-10-20 |
 | [0040](0040-quality-and-security-in-the-gate.md) | Quality and security checks are part of the gate: the team's tools, when each runs, only new findings fail, diff coverage and mutation score computed from standard reports | Accepted | 2026-10-28 |
 | [0041](0041-the-workspace.md) | A workspace of repositories: one file names them, members stay whole, ids are qualified across them, a story is split into a change per repository | Accepted | 2026-10-29 |
+| [0042](0042-the-three-layers-of-a-change.md) | The three layers of a change: Discover (product), Design (architect), Tasks (developer), each checked; a 0.27 proposal is read as the Discover | Accepted | 2026-10-29 |
 
 ## Template
 

@@ -19,6 +19,12 @@ import * as path from "node:path";
 import { paths, listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import type { ChangeConfig } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { resolveSchema } from "../schema/registry";
+import {
+  LAYERED_SCHEMA,
+  isUntouchedLayer,
+  layer,
+  type LayerId,
+} from "../../packages/core/src/domain/ChangeLayers";
 import type { SchemaArtifact } from "../schema/registry";
 
 /** The default graph, still exported for callers that predate schemas. */
@@ -48,6 +54,8 @@ export function artifactsFor(
 /** One artefact of a change, and whether it can be worked on yet. */
 export interface ArtifactStateEntry {
   id: string;
+  /** The role that writes a layer (ADR-0042); absent for the other artifacts. */
+  owner?: string;
   outputPath: string;
   status: "done" | "ready" | "blocked" | "skipped";
   requires: string[];
@@ -77,6 +85,12 @@ function outputsPresent(
       // has a .feature file — the artefact means "the scenario this change
       // adds", not "the project has scenarios".
       present[a.id] = hasAnyFile(path.join(dir, a.generates.split("*")[0]));
+    } else if (a.id === "discover" || a.id === "design" || a.id === "tasks") {
+      // REQ-288: a layer still as `change new` wrote it is not written yet.
+      const file = path.join(dir, a.generates);
+      present[a.id] =
+        fs.existsSync(file) &&
+        !isUntouchedLayer(a.id as LayerId, fs.readFileSync(file, "utf8"), changeId);
     } else {
       present[a.id] = fs.existsSync(path.join(dir, a.generates));
     }
@@ -104,7 +118,10 @@ export function artifactState(
   // creating anything — the artefact counts as done, not as missing.
   const skipped: Record<string, boolean> = { specs: config.skip_specs === true };
   // Lite rigor makes design optional in the same way.
-  if (config.rigor === "lite" && !exists.design) skipped.design = true;
+  // A layered change always has a design: it is the architect's layer.
+  if (config.rigor === "lite" && !exists.design && config.schema !== LAYERED_SCHEMA) {
+    skipped.design = true;
+  }
 
   const satisfied = (id: string) => exists[id] || skipped[id];
 
@@ -117,6 +134,10 @@ export function artifactState(
     else status = "ready";
     const entry: ArtifactStateEntry = {
       id: a.id,
+      ...(config.schema === LAYERED_SCHEMA &&
+      (a.id === "discover" || a.id === "design" || a.id === "tasks")
+        ? { owner: layer(a.id as LayerId).owner }
+        : {}),
       outputPath: a.generates,
       status,
       requires: a.requires || [],

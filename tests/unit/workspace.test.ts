@@ -259,8 +259,9 @@ test("REQ-296 SCN-296a: a story split across three repositories", () => {
   );
   assert.equal(r.status, 0, r.stdout + r.stderr);
   for (const n of ["fleet", "tracking", "web"]) {
+    // The link goes in the sub-change's Discover (ADR-0042).
     const proposal = fs.readFileSync(
-      path.join(dirs[n], "docs", "specs", "changes", "follow-shipment", "proposal.md"),
+      path.join(dirs[n], "docs", "specs", "changes", "follow-shipment", "discover.md"),
       "utf8"
     );
     assert.match(proposal, /Part of the workspace story `truck-flote:follow-shipment`/);

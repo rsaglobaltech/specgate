@@ -61,6 +61,15 @@ import {
   templateDesign,
   templateValueDriftDelta,
 } from "../../../../packages/core/src/domain/ChangeTemplates";
+import {
+  LAYERED_SCHEMA,
+  LEGACY_DISCOVER,
+  layer,
+  discoverRewritten,
+  templateDiscover,
+  templateLayeredDesign,
+  templateLayeredTasks,
+} from "../../../../packages/core/src/domain/ChangeLayers";
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
@@ -473,7 +482,8 @@ function cmdNew(opts: ChangeOptions) {
   const reqRange = reserveReqRange(projectDir, opts.reserve);
   const config = {
     ...DEFAULT_CONFIG,
-    schema: opts.schema || DEFAULT_CONFIG.schema,
+    // ADR-0042: a new change is layered unless the person names a schema.
+    schema: opts.schema || LAYERED_SCHEMA,
     created: new Date().toISOString().slice(0, 10),
     rigor: opts.full ? "full" : "lite",
     req_range: reqRange,
@@ -487,9 +497,16 @@ function cmdNew(opts: ChangeOptions) {
   };
 
   write(path.join(dir, CHANGE_CONFIG_FILE), renderConfig(config));
-  write(path.join(dir, "proposal.md"), templateProposal(changeId));
-  write(path.join(dir, "tasks.md"), templateTasks());
-  if (opts.full) write(path.join(dir, "design.md"), templateDesign(changeId));
+  if (config.schema === LAYERED_SCHEMA) {
+    // REQ-282: each layer with its owner.
+    write(path.join(dir, "discover.md"), templateDiscover(changeId));
+    write(path.join(dir, "design.md"), templateLayeredDesign(changeId));
+    write(path.join(dir, "tasks.md"), templateLayeredTasks());
+  } else {
+    write(path.join(dir, "proposal.md"), templateProposal(changeId));
+    write(path.join(dir, "tasks.md"), templateTasks());
+    if (opts.full) write(path.join(dir, "design.md"), templateDesign(changeId));
+  }
   if (opts.capability) {
     write(
       path.join(p.changeSpecs(changeId), opts.capability, "spec.md"),
@@ -706,8 +723,11 @@ function cmdShow(opts: ChangeOptions) {
     };
   });
 
-  const proposalFile = path.join(p.change(changeId), "proposal.md");
-  const proposal = fs.existsSync(proposalFile) ? fs.readFileSync(proposalFile, "utf8") : "";
+  // The Discover of a layered change, the proposal of a 0.27 one.
+  const discoverFile = ["discover.md", LEGACY_DISCOVER]
+    .map((f) => path.join(p.change(changeId), f))
+    .find((f) => fs.existsSync(f));
+  const proposal = discoverFile ? fs.readFileSync(discoverFile, "utf8") : "";
   const titleMatch = /^#\s+(.+)$/m.exec(proposal);
   const progress = taskProgress(projectDir, changeId);
 
@@ -779,7 +799,7 @@ function cmdStatus(opts: ChangeOptions) {
   const isPlanningComplete = artifacts.every((a) => a.status === "done" || a.status === "skipped");
   const nextSteps = artifacts
     .filter((a) => a.status === "ready")
-    .map((a) => `Write ${a.outputPath}`);
+    .map((a) => `Write ${a.outputPath}${a.owner ? ` (${a.owner})` : ""}`);
   if (isPlanningComplete && progress.remaining > 0) {
     nextSteps.push(`Work through tasks.md (${progress.remaining} remaining)`);
   }
@@ -1062,6 +1082,51 @@ function authorPrompt(changeId: string, artifact: string, instructions: Instruct
   return parts.join("\n");
 }
 
+/**
+ * REQ-287: a layered change's Discover as it was agreed — in the commit that
+ * recorded the approval, or else the first one that held it — against the
+ * working copy. Outside git, or before the first commit, there is nothing to
+ * compare with.
+ */
+function storyRewritten(projectDir: string, changeId: string) {
+  if (readConfig(projectDir, changeId).schema !== LAYERED_SCHEMA) return null;
+  const dir = paths(projectDir).change(changeId);
+  const file = path.join(dir, "discover.md");
+  if (!fs.existsSync(file)) return null;
+  const git = (...args: string[]) =>
+    spawnSync("git", ["-C", projectDir, ...args], { encoding: "utf8" });
+  const top = git("rev-parse", "--show-toplevel");
+  if (top.status !== 0) return null;
+  const rel = (f: string) =>
+    path
+      .relative(fs.realpathSync.native(top.stdout.trim()), fs.realpathSync.native(f))
+      .split(path.sep)
+      .join("/");
+  const earliest = (args: string[]) => {
+    const r = git("log", "--format=%h", ...args);
+    const shas = r.status === 0 ? r.stdout.trim().split(/\r?\n/).filter(Boolean) : [];
+    return shas[shas.length - 1] || "";
+  };
+  const config = path.join(dir, CHANGE_CONFIG_FILE);
+  const approved = readConfig(projectDir, changeId).approved
+    ? earliest(["-S", "approved:", "--", rel(config)])
+    : "";
+  const sha = approved || earliest(["--diff-filter=A", "--", rel(file)]);
+  if (!sha) return null;
+  const baseline = git("show", `${sha}:${rel(file)}`);
+  if (baseline.status !== 0) return null;
+  if (!discoverRewritten(baseline.stdout, fs.readFileSync(file, "utf8"))) return null;
+  return warning(
+    "layer_discover_rewritten",
+    `discover.md differs from the story agreed at ${sha}${approved ? " (approved)" : ""}.`,
+    {
+      target: changeId,
+      file: `docs/specs/changes/${changeId}/discover.md`,
+      fix: `The business story stays put while the design changes: restore it (\`git checkout ${sha} -- ${rel(file)}\`), or have ${layer("discover").owner} agree the new story.`,
+    }
+  );
+}
+
 function cmdValidate(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const requested = opts.positional[0];
@@ -1090,6 +1155,8 @@ function cmdValidate(opts: ChangeOptions) {
       id,
       opts
     );
+    const rewritten = storyRewritten(projectDir, id);
+    if (rewritten) result.diagnostics.push(rewritten);
     const failed = opts.strict ? result.diagnostics.length > 0 : hasErrors(result.diagnostics);
     // What each delta rewrites, as it reads now: on first sight, or on
     // --rebased once the delta was rewritten over a requirement that moved (REQ-168).

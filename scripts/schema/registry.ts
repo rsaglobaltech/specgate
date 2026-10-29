@@ -65,6 +65,19 @@ export const BUILT_IN: Record<string, BuiltInSchema> = {
       { id: "tasks", generates: "tasks.md", requires: ["specs", "design"] },
     ],
   },
+  // ADR-0042: what new changes follow from 1.0 on. Each layer has its owner:
+  // discover.md (product), design.md (architect), tasks.md (developer).
+  layered: {
+    name: "layered",
+    description:
+      "Discover (product), then the delta specs and the Design (architect), then the Tasks (developer). The default for new changes.",
+    artifacts: [
+      { id: "discover", generates: "discover.md", requires: [] },
+      { id: "specs", generates: "specs/**/spec.md", requires: ["discover"] },
+      { id: "design", generates: "design.md", requires: ["discover"] },
+      { id: "tasks", generates: "tasks.md", requires: ["specs", "design"] },
+    ],
+  },
   "bdd-first": {
     name: "bdd-first",
     description:

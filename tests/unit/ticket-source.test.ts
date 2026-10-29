@@ -632,8 +632,9 @@ test("REQ-147 SCN-147a: KAN-13 opens a change checked against its own words", ()
     const read = (f: string) => fs.readFileSync(path.join(change, f), "utf8");
     assert.match(read("ticket.md"), /Vehicle is already in the garage/);
     assert.match(read("ticket.md"), /As an administrator, I want to register/);
-    assert.match(read("proposal.md"), /ticket: KAN-13/);
-    assert.match(read("proposal.md"), /> As an administrator/);
+    // The ticket is the change's Discover (REQ-288).
+    assert.match(read("discover.md"), /ticket: KAN-13/);
+    assert.match(read("discover.md"), /> As an administrator/);
     const guide = read("DRAFTING.md");
     assert.equal((guide.match(/^\d\. Given /gm) || []).length, 6, guide);
     assert.match(guide, /`AB123CD`/);

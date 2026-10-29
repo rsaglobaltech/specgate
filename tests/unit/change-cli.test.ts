@@ -79,7 +79,16 @@ El sistema SHALL aplicar un recargo del 20 %.
 test("change new scaffolds the folder and reports it as JSON", () => {
   const root = mkProject();
   try {
-    const result = run(root, ["new", "add-pricing", "--capability", "pricing", "--json"]);
+    // The 0.27 layout, kept under its schema; REQ-282 covers the layered default.
+    const result = run(root, [
+      "new",
+      "add-pricing",
+      "--capability",
+      "pricing",
+      "--schema",
+      "spec-driven",
+      "--json",
+    ]);
     assert.equal(result.status, 0);
     const doc = json(result);
     assert.equal(doc.change.id, "add-pricing");
@@ -207,7 +216,7 @@ test("change show on a missing change fails with the null-shape", () => {
 test("change status reports artefacts in dependency order with next steps", () => {
   const root = mkProject();
   try {
-    run(root, ["new", "add-pricing", "--capability", "pricing"]);
+    run(root, ["new", "add-pricing", "--capability", "pricing", "--schema", "spec-driven"]);
     const doc = json(run(root, ["status", "add-pricing", "--json"]));
     assert.deepEqual(
       doc.artifacts.map((a: { id: string }) => a.id),
