@@ -136,12 +136,27 @@ export function briefModules(brief: string): string[] {
 const ID_TOKEN = /\b(?:REQ|SCN|UC|CMD|AGG|EVT|Q|A)-[A-Za-z0-9.]+\b/g;
 
 /** Numbers and double-quoted strings in a step: what a reader would take as fact. */
+/** `2026-10-29`, `10:00:00`, `07:42`, `2026-10-29 10:00:00`, `2026-10-29T10:00:00Z`. */
+const DATE_OR_TIME =
+  /(?<![\w.:-])(?:\d{4}-\d{2}-\d{2}(?:[T ]\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?|\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?)(?![\w:.-]?\d)/g;
+
 export function statedValues(step: string): string[] {
   const text = step.replace(ID_TOKEN, " ").replace(/^\s*(GIVEN|WHEN|THEN|AND|BUT)\b/i, "");
   const out: string[] = [];
   for (const q of text.matchAll(/"([^"]+)"/g)) out.push(q[1]);
-  const unquoted = text.replace(/"[^"]*"/g, " ").replace(/`[^`]*`/g, " ");
-  for (const n of unquoted.matchAll(/(?<![\w.])\d+(?:[.,]\d+)*(?![\w])/g)) out.push(n[0]);
+  let unquoted = text.replace(/"[^"]*"/g, " ").replace(/`[^`]*`/g, " ");
+  // REQ-277: a date, a time or a date-time is one value. Read as numbers,
+  // "at 2026-10-29 10:00:00" gave "29" and "00", which the agent then had to
+  // list one by one before the draft could be reviewed (truck-flote, S60).
+  // Masked with spaces of the same length, so values keep the order they are written in.
+  const found: { at: number; value: string }[] = [];
+  unquoted = unquoted.replace(DATE_OR_TIME, (m: string, at: number) => {
+    found.push({ at, value: m });
+    return " ".repeat(m.length);
+  });
+  for (const n of unquoted.matchAll(/(?<![\w.])\d+(?:[.,]\d+)*(?![\w])/g))
+    found.push({ at: n.index || 0, value: n[0] });
+  for (const f of found.sort((a, b) => a.at - b.at)) out.push(f.value);
   return out;
 }
 

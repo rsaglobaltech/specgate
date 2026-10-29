@@ -25,3 +25,24 @@ export function withAgentPermission(command: string): { command: string; added: 
     added: true,
   };
 }
+
+/**
+ * Claude Code's output streamed into the studio's live view (REQ-278).
+ *
+ * The command `status` suggests, `claude -p < {prompt_file}`, ran and the live
+ * view showed the gate and nothing of the agent: its output reaches /live only
+ * as stream-json through `specgate harness events` (truck-flote, S62). A
+ * command that already pipes or picks its own output format is the person's
+ * choice and is kept as it is.
+ */
+export function withLiveStream(command: string): string {
+  const claude = /^(\s*)claude(?=\s)/.exec(command);
+  const isPrint = /(^|\s)(-p|--print)(\s|$)/.test(command);
+  if (!claude || !isPrint || command.includes("|") || /--output-format/.test(command))
+    return command;
+  const at = claude[0].length;
+  return (
+    `${command.slice(0, at)} --output-format stream-json --verbose${command.slice(at)}`.trimEnd() +
+    " | specgate harness events --from claude"
+  );
+}

@@ -8,7 +8,7 @@ import {
   readHarnessConfig,
   writeHarnessCommand,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
-import { withAgentPermission } from "../../../lib/agent-permission";
+import { withAgentPermission, withLiveStream } from "../../../lib/agent-permission";
 
 export const CONFIG_DIR = ".specgate";
 export const CONFIG_FILE = "config.json";
@@ -206,7 +206,8 @@ export class ConfigSetCommand extends BaseCommand {
           ),
         ]);
       }
-      const kept = key === "agent" ? withAgentPermission(value).command : value;
+      // REQ-278: a bare Claude Code agent is also streamed into the live view.
+      const kept = key === "agent" ? withLiveStream(withAgentPermission(value).command) : value;
       const file = writeHarnessCommand(projectDir, key as "test_cmd" | "arch_cmd" | "agent", kept);
       io.emit({ config: { [key]: kept } }, () =>
         process.stdout.write(

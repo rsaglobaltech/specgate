@@ -9,6 +9,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **D6 reads a date or a time as one value** (REQ-277): "at 2026-10-29 10:00:00" was read as the numbers "29", "00" and so on, and the agent had to list each one in `assumptions.md` before the draft could be reviewed. An ISO date, a time and a date-time are now one value each.
+- **The agent `config set agent` keeps for Claude Code is seen live** (REQ-278): the command `status` suggests, `claude -p < {prompt_file}`, is now kept with `--output-format stream-json --verbose` and piped into `specgate harness events --from claude`, so the studio's live view shows the agent and not only the gate. A command that already pipes or sets an output format is kept as it is.
+
 ## [0.27.8] — 2026-10-28
 
 0.27.7 as it was meant to ship. Its publish stopped on four new tests whose repositories had no git identity on the CI runners; the Docker image 0.27.7 was published, the npm package was not.
