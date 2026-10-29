@@ -69,6 +69,9 @@ const KNOWN_KEYS = new Set([
   "mutation_score",
   "checks",
   "commit_types",
+  // ADR-0043: who holds each role, and which layers need their approvals.
+  "roles",
+  "approvals",
 ]);
 
 /**

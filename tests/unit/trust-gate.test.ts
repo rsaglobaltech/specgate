@@ -449,6 +449,8 @@ function chainProject(opts: ChainOptions = {}) {
     ]),
   ]);
   for (const f of opts.extraFiles || []) fs.writeFileSync(path.join(p.dir, f[0]), f[1]);
+  // 1.0 (REQ-315): a person approves the change before the harness builds it.
+  assert.equal(cli(p.dir, "change", "approve", "pricing").status, 0);
   git(p.dir, "init", "-q", "-b", "develop");
   git(p.dir, "config", "user.email", "trust@example.com");
   git(p.dir, "config", "user.name", "Trust Test");

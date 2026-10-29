@@ -105,7 +105,7 @@ scenarios. Until it is fixed, run `specgate init` and then `specgate specops add
 | `specgate change validate [<id>]`                   | Checks the deltas. `specgate validate` runs it too.                         | [Change a shipped requirement](reviewing-changes.md)                            |
 | `specgate change new <id> --modify <REQ>`           | Opens a change with the requirement copied into a MODIFIED delta, Draft.    | [Change a shipped requirement](reviewing-changes.md)                            |
 | `specgate change impact <REQ\|id>`                  | Spec, features, tests, files and requirements a change to it touches.       | [Change a shipped requirement](reviewing-changes.md)                            |
-| `specgate change approve <id>`                      | A person approved the draft: Build in studio may start it.                  | [Change a shipped requirement](reviewing-changes.md)                            |
+| `specgate change approve <id> [--layer <layer>]`    | Approve the layers you own; the harness and Build wait for all of them.     | [Change a shipped requirement](reviewing-changes.md)                            |
 | `specgate change note <id> "<text>"`                | Asks the draft for a change in your words, kept in review.md (`--req REQ`). | [Change a shipped requirement](reviewing-changes.md)                            |
 | `specgate propose <id> --from-value-drift <REQ:id>` | Opens a change that updates a declared value the code disagrees with.       | [Validating](validating.md#declared-value-drift-a-report-not-a-gate)            |
 

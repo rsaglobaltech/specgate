@@ -173,6 +173,15 @@ change note <id> "<what to change>" --req REQ-NNN` asks for a change in your
 words, in the draft's `review.md`. The [studio](studio.md)'s Review page does
 both, and Build starts only approved drafts.
 
+Each layer is approved by its owner (ADR-0043): `--layer discover` by product,
+`--layer design` by the architect, `--layer tasks` by the developer; without
+`--layer`, the layers you own. `harness.config.yaml` says who holds each role
+and how many people a layer needs — `roles: { product: [ana@acme.eu] }`,
+`approvals: { quorum: { design: 2 }, required: layered }` (`always`, or `never`
+for the 0.27 behaviour). A role nobody is named for is open to anyone. Each
+approval goes in the change's `approvals.json` with a hash of the layer; editing
+it asks for its approval again. The harness skips an unapproved 1.0 change.
+
 ## 6. Archive it
 
 Archive when every requirement the change adds or modifies is Implemented, on

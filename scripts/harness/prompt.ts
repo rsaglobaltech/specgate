@@ -9,6 +9,7 @@ import {
   PromptOptions as CorePromptOptions,
   PromptRequirement,
 } from "../../packages/core/src/domain/AgentPrompt";
+import { packagesFor, rolePromptSection } from "../lib/role-packages";
 
 export type PromptOptions = CorePromptOptions;
 
@@ -41,8 +42,11 @@ export function buildPrompt(
   const repo = new DiskHarnessConfigRepository();
   const useCase = new GenerateAgentPromptUseCase(repo);
 
-  return useCase.execute(req as PromptRequirement, projectDir, {
+  const prompt = useCase.execute(req as PromptRequirement, projectDir, {
     ...opts,
     stageRules: HARNESS_RULES,
   });
+  // REQ-316: what each role asks of this requirement, written once by that role.
+  const roles = rolePromptSection(packagesFor(projectDir, String(req.requirement || "")));
+  return roles ? `${prompt.replace(/\n*$/, "\n")}\n${roles}` : prompt;
 }

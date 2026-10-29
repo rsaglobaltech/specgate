@@ -2,6 +2,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { questionTable } from "../../packages/core/src/domain/Clarification";
 import { draftReport } from "../cli/commands/spec/DraftCommand";
+import type { LayerId } from "../../packages/core/src/domain/ChangeLayers";
+import { approveLayers, changeApprovals } from "./approvals";
 
 /**
  * A person's review of a draft change (REQ-206, REQ-207): approving it, which
@@ -22,10 +24,18 @@ function read(file: string): string | undefined {
   }
 }
 
-/** When a person approved the change, or "" when nobody has. */
+/**
+ * When the change was approved, or "" while it is not. A 1.0 change, and any
+ * change with recorded approvals, is approved only while every written layer's
+ * approvals match its text (REQ-314); a 0.27 change without any reads the
+ * `approved:` line it always had.
+ */
 export function approvedOn(projectDir: string, id: string): string {
   const yaml = read(path.join(changeDir(projectDir, id), "change.yaml")) || "";
-  return (/^approved:\s*(\S+)/m.exec(yaml) || [])[1] || "";
+  const line = (/^approved:\s*(\S+)/m.exec(yaml) || [])[1] || "";
+  const state = changeApprovals(projectDir, id);
+  if (state.schema === "layered" || state.recorded) return state.approved ? state.approvedAt : "";
+  return line;
 }
 
 export interface Blocker {
@@ -54,12 +64,20 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
 }
 
 export type ApproveOutcome =
-  | { ok: true; change: string; approved: string }
-  | { ok: false; code: string; message: string; blockers?: Blocker[] };
+  | { ok: true; change: string; approved: string; layers?: LayerId[]; pending?: LayerId[] }
+  | { ok: false; code: string; message: string; blockers?: Blocker[]; fix?: string };
 
-/** Record that a person approved the change (REQ-206). */
-export function approveChange(projectDir: string, id: string, today: string): ApproveOutcome {
-  const file = path.join(changeDir(projectDir, id), "change.yaml");
+/**
+ * Record that a person approved the change (REQ-206): the layers they own, or
+ * the one named (REQ-311). `approved` is the date once every layer is in, ""
+ * while some still wait.
+ */
+export function approveChange(
+  projectDir: string,
+  id: string,
+  today: string,
+  layer?: LayerId
+): ApproveOutcome {
   if (!fs.existsSync(changeDir(projectDir, id))) {
     return { ok: false, code: "change_not_found", message: `No open change ${id}.` };
   }
@@ -72,12 +90,7 @@ export function approveChange(projectDir: string, id: string, today: string): Ap
       blockers,
     };
   }
-  const yaml = read(file) || "";
-  const next = /^approved:/m.test(yaml)
-    ? yaml.replace(/^approved:.*$/m, `approved: ${today}`)
-    : `${yaml.replace(/\n*$/, "\n")}approved: ${today}\n`;
-  fs.writeFileSync(file, next, "utf8");
-  return { ok: true, change: id, approved: today };
+  return approveLayers(projectDir, id, layer ? [layer] : null, today);
 }
 
 export interface ReviewNote {

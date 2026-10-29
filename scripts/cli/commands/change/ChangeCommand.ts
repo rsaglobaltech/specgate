@@ -74,6 +74,7 @@ import { ValidateChangeUseCase } from "../../../../packages/core/src/application
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
 import { approveChange, noteChange } from "../../../lib/change-review";
+import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
   declaredSpecValues,
   declaredCodeValues,
@@ -178,7 +179,7 @@ function usage() {
       `    ${c.green}author <id>${c.reset}    ${c.dim}Have an agent write one artefact, confined to the change.${c.reset}\n` +
       `    ${c.green}validate [id]${c.reset}  ${c.dim}Check the deltas against the capability specs.${c.reset}\n` +
       `    ${c.green}impact <REQ|id>${c.reset} ${c.dim}Spec, features, tests, files and requirements a change to it touches.${c.reset}\n` +
-      `    ${c.green}approve <id>${c.reset}   ${c.dim}A person approved the draft: Build may start it.${c.reset}\n` +
+      `    ${c.green}approve <id>${c.reset}   ${c.dim}Approve the layers you own (--layer discover|design|tasks): Build waits for all.${c.reset}\n` +
       `    ${c.green}note <id> "<text>"${c.reset} ${c.dim}Ask the draft for a change in your words (--req REQ).${c.reset}\n` +
       `    ${c.green}archive <id>${c.reset}   ${c.dim}Once its requirements are Implemented: merge, sync traceability, archive.${c.reset}\n\n` +
       `  ${c.bold}OPTIONS${c.reset}\n` +
@@ -214,6 +215,8 @@ export interface ChangeOptions {
   fromValueDrift: string | null;
   /** `--req REQ-NNN`: the requirement a review note is about (REQ-207). */
   req?: string;
+  /** `--layer discover|design|tasks`: the layer `change approve` approves (REQ-311). */
+  layer?: string;
   /** `--modify REQ-NNN`, repeatable: requirements copied into MODIFIED deltas (REQ-190). */
   modify: string[];
   schema?: string;
@@ -247,6 +250,7 @@ function parseArgs(argv: string[]): ChangeOptions {
     else if (a === "--from-value-drift" && argv[i + 1]) opts.fromValueDrift = argv[++i];
     else if (a === "--modify" && argv[i + 1]) opts.modify.push(argv[++i]);
     else if (a === "--req" && argv[i + 1]) opts.req = argv[++i];
+    else if (a === "--layer" && argv[i + 1]) opts.layer = argv[++i];
     else if (a === "--schema" && argv[i + 1]) opts.schema = argv[++i];
     else if (a === "--reserve" && argv[i + 1]) opts.reserve = parseInt(argv[++i], 10) || 3;
     else if (a === "--artifact" && argv[i + 1]) opts.artifact = argv[++i];
@@ -614,27 +618,38 @@ function cmdList(opts: ChangeOptions) {
 
 // ── show ──────────────────────────────────────────────────────────────────────
 
-/** `change approve <id>` — a person approved the draft; Build waits for it (REQ-206). */
+/**
+ * `change approve <id> [--layer discover|design|tasks]` — a person approves the
+ * layers they own; Build waits until every layer is approved (REQ-206, REQ-311).
+ */
 function cmdApprove(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const id = opts.positional[0];
   const nullShape = { approve: null };
+  const layer = opts.layer as LayerId | undefined;
   const r = id
-    ? approveChange(projectDir, id, new Date().toISOString().slice(0, 10))
+    ? approveChange(projectDir, id, new Date().toISOString().slice(0, 10), layer)
     : { ok: false as const, code: "change_not_found", message: "approve needs a change id." };
   if (!r.ok) {
     return fail(opts, nullShape, [
       error(r.code, r.message, {
         target: id,
-        fix: "Answer its questions and fix what specgate draft --check reports, then approve again.",
+        fix:
+          r.fix ||
+          "Answer its questions and fix what specgate draft --check reports, then approve again.",
       }),
     ]);
   }
-  emit(opts, { approve: r }, () =>
+  emit(opts, { approve: r }, () => {
+    const did = r.layers && r.layers.length ? ` — ${r.layers.join(", ")}` : "";
     process.stdout.write(
-      ui.header("change approve", id) + ui.ok(`${id} approved on ${r.approved}.`) + "\n"
-    )
-  );
+      ui.header("change approve", id) +
+        (r.approved
+          ? ui.ok(`${id} approved on ${r.approved}${did}.`)
+          : ui.ok(`Recorded${did}. Still waiting: ${(r.pending || []).join(", ")}.`)) +
+        "\n"
+    );
+  });
 }
 
 /** `change note <id> "<text>" [--req REQ]` — a change asked in the reviewer's words (REQ-207). */

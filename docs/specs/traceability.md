@@ -238,6 +238,16 @@
 | REQ-287 | SCN-287a | `features/change-lifecycle/REQ-287.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
 | REQ-288 | SCN-288a | `features/change-lifecycle/REQ-288.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
 | REQ-289 | SCN-289a | `features/change-lifecycle/REQ-289.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-310 | SCN-310a | `features/change-lifecycle/REQ-310.feature` | - | - | - | - | - | tests/unit/approvals.test.ts | Implemented |
+| REQ-311 | SCN-311a | `features/change-lifecycle/REQ-311.feature` | - | - | - | - | - | tests/unit/approvals.test.ts | Implemented |
+| REQ-312 | SCN-312a | `features/change-lifecycle/REQ-312.feature` | - | - | - | - | - | tests/unit/approvals.test.ts | Implemented |
+| REQ-313 | SCN-313a | `features/change-lifecycle/REQ-313.feature` | - | - | - | - | - | tests/unit/approvals.test.ts | Implemented |
+| REQ-314 | SCN-314a | `features/change-lifecycle/REQ-314.feature` | - | - | - | - | - | tests/unit/approvals.test.ts | Implemented |
+| REQ-315 | SCN-315a | `features/change-lifecycle/REQ-315.feature` | - | - | - | - | - | tests/unit/approvals.test.ts | Implemented |
+| REQ-319 | SCN-319a | `features/change-lifecycle/REQ-319.feature` | - | - | - | - | - | tests/unit/approvals.test.ts | Implemented |
+| REQ-316 | SCN-316a | `features/harness/REQ-316.feature` | - | - | - | - | - | tests/unit/role-packages.test.ts | Implemented |
+| REQ-317 | SCN-317a | `features/harness/REQ-317.feature` | - | - | - | - | - | tests/unit/role-packages.test.ts | Implemented |
+| REQ-318 | SCN-318a | `features/harness/REQ-318.feature` | - | - | - | - | - | tests/unit/role-packages.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

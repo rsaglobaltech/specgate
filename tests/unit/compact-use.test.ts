@@ -255,6 +255,8 @@ test("REQ-109 SCN-109c: the harness delivers an open change's requirement", () =
     git("init", "-q");
     git("config", "user.email", "harness-test@example.com");
     git("config", "user.name", "Harness Test");
+    // 1.0 (REQ-315): a person approves the change before the harness builds it.
+    assert.equal(cli(p.dir, "change", "approve", "add-dynamic-pricing").status, 0);
     git("add", "-A");
     git("commit", "-qm", "seed");
 

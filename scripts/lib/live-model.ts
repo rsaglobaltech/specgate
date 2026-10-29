@@ -50,6 +50,8 @@ export interface LiveRequirement {
   usage: AgentUsage | null;
   /** The prompt the attempt was given: its size, and who it was for. */
   prompt: { role: string; chars: number; lines: number; tokens: number } | null;
+  /** The role packages the attempt's prompt carried, as `role@version` (REQ-317). */
+  packages: string[];
   /** What the agent asked, and the command that answers it once the harness recorded it. */
   question: { text: string; answer: string; id?: string; change?: string } | null;
   /** The gate step that started and has not ended: its name, since when, and where it runs (REQ-274). */
@@ -224,6 +226,7 @@ export function foldRequirement(req: string, events: EventRecord[]): LiveRequire
           tokens: Math.round(num(promptEv.chars) / 4),
         }
       : null,
+    packages: promptEv && Array.isArray(promptEv.packages) ? promptEv.packages.map(String) : [],
   };
 }
 

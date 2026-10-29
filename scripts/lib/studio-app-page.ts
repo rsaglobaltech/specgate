@@ -139,7 +139,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       s_build:"R listos · B de T construidos", s_build_locked:"Se abre cuando apruebes un borrador",
       s_report:"B de T construidos y probados", s_report_locked:"Aparece con el primer requisito construido", s_locked:"Se abre con el paso anterior",
       repeat:"Los pasos 3 a 6 se repiten por módulo: puedes construir uno mientras redactas otro.",
-      loading:"Cargando…", mods:"módulos", sOf:"de", modules:"Módulos", ready:"listo", qWait:"pregunta", draft:"borrador por revisar", reqs:"requisitos", own_product:"producto", own_architect:"arquitectura", own_developer:"desarrollo", layerDone:"escrito", layerTodo:"por escribir",
+      loading:"Cargando…", mods:"módulos", sOf:"de", modules:"Módulos", ready:"listo", qWait:"pregunta", draft:"borrador por revisar", reqs:"requisitos", own_product:"producto", own_architect:"arquitectura", own_developer:"desarrollo", layerDone:"escrito", layerTodo:"por escribir", layerApproved:"aprobado", layerWaits:"aprobaciones", approveLayer:"Aprobar", byWhom:"por",
       newTitle:"Empecemos un proyecto", newIntro:"Esta carpeta está vacía. Cinco preguntas y specgate la prepara: especificación, pruebas y el asistente que programa.",
       q1:"1 · ¿Cómo se llama?", q2:"2 · ¿Qué vas a construir?", q3:"3 · ¿Con qué tecnología?", q4:"4 · ¿Qué asistente programa?",
       kWeb:"Una web", kWebP:"Pantallas que se abren en el navegador", kApi:"Un servicio (API)", kApiP:"Datos y reglas para otras apps", kMob:"Una app móvil", kMobP:"Para el teléfono",
@@ -209,7 +209,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       s_build:"R ready · B of T built", s_build_locked:"Opens once you approve a draft",
       s_report:"B of T built and proven", s_report_locked:"Appears with the first requirement built", s_locked:"Opens with the step before",
       repeat:"Steps 3 to 6 repeat per module: you can build one while another is drafted.",
-      loading:"Loading…", mods:"modules", sOf:"of", modules:"Modules", ready:"done", qWait:"question", draft:"draft to review", reqs:"requirements", own_product:"product", own_architect:"architect", own_developer:"developer", layerDone:"written", layerTodo:"to write",
+      loading:"Loading…", mods:"modules", sOf:"of", modules:"Modules", ready:"done", qWait:"question", draft:"draft to review", reqs:"requirements", own_product:"product", own_architect:"architect", own_developer:"developer", layerDone:"written", layerTodo:"to write", layerApproved:"approved", layerWaits:"approvals", approveLayer:"Approve", byWhom:"by",
       newTitle:"Let's start a project", newIntro:"This folder is empty. Five questions and specgate prepares it: specification, tests and the assistant that codes.",
       q1:"1 · What is it called?", q2:"2 · What are you building?", q3:"3 · With which technology?", q4:"4 · Which assistant codes?",
       kWeb:"A website", kWebP:"Screens opened in the browser", kApi:"A service (API)", kApiP:"Data and rules for other apps", kMob:"A mobile app", kMobP:"For the phone",
@@ -776,13 +776,25 @@ export function studioAppPage(projectName: string, token = ""): string {
     list.forEach(function(d){
       var split = el("section", "split"), main = el("div", "main"), aside = el("aside");
       main.appendChild(el("h2", "", cap(d.module) + " · " + d.requirements.length + " " + t("reqs")));
-      // REQ-289: the change's layers, each with its owner (ADR-0042).
+      // REQ-289: the change's layers, each with its owner (ADR-0042); REQ-319:
+      // who approved each, how many it needs, and a button for the layer the viewer owns.
       if (d.layers && d.layers.length) {
-        var ly = el("div", "small muted");
-        ly.textContent = d.layers.map(function(l){
-          return l.file + " · " + t("own_" + l.owner) + " · " + (l.written ? t("layerDone") : t("layerTodo"));
-        }).join("   ");
-        main.appendChild(ly);
+        var lys = el("div", "small muted");
+        d.layers.forEach(function(l){
+          var row = el("div"), mL = msgEl();
+          var who = (l.approvals || []).map(function(a){ return a.by.name || a.by.email; }).join(", ");
+          var state = !l.written ? t("layerTodo")
+            : l.approved ? t("layerApproved") + (who ? " " + t("byWhom") + " " + who : "")
+            : t("layerDone") + " · " + (l.approvals || []).length + "/" + (l.quorum || 1) + " " + t("layerWaits");
+          row.appendChild(el("span", "", l.file + " · " + t("own_" + l.owner) + " · " + state));
+          if (l.mine && l.written && !l.approved) {
+            row.append(" ", button("ghost", t("approveLayer"), function(){
+              post("api/approve", {change:d.change, layer:l.id}).then(function(res){ say(mL, res); if (res.ok) refresh(); });
+            }), mL);
+          }
+          lys.appendChild(row);
+        });
+        main.appendChild(lys);
       }
       d.requirements.forEach(function(r){
         var waits = d.questions.filter(function(q){ return q.blocks.indexOf(r.id) >= 0; });
