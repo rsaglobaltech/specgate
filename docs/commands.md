@@ -141,6 +141,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate quality doctor [--pull]`      | The same, with what is missing; `--pull` fetches the Docker images now.     | `specgate quality --help`                      |
 | `specgate quality run [--stage]`        | Runs the checks of a stage: attempt, end or ci.                             | `specgate quality --help`                      |
 | `specgate quality baseline`             | Records today's SARIF findings as debt: only new ones fail from then on.    | `specgate quality --help`                      |
+| `specgate migrate 1.0 [--dry-run]`      | Moves a 0.27 project to 1.0: open changes into three layers, and a report.  | [Migrating to 1.0](migrating-to-1.0.md)        |
 | `specgate workspace init`               | Names the repositories of one product in `specgate.workspace.yaml`.         | [Workspace](workspace.md)                      |
 | `specgate workspace status`             | Each repository's requirements, branch and gate, and each story.            | [Workspace](workspace.md)                      |
 | `specgate workspace check`              | Every repository's gate, qualified ids and cross-repository dependencies.   | [Workspace](workspace.md)                      |

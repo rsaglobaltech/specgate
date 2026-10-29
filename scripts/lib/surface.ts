@@ -283,6 +283,19 @@ export const SURFACE: Command[] = [
     json: { key: "check", gate: true, args: "[dir]" },
   },
   {
+    name: "migrate",
+    // REQ-325: a one-time move to 1.0 a person runs and reviews; not an MCP tool.
+    mcp: false,
+    script: ["migrate.js"],
+    help: {
+      group: "core",
+      icon: "🧭",
+      summary:
+        "Move a 0.27 project to 1.0: open changes into three layers, a report of what is left.",
+    },
+    json: { key: "migrate", gate: false, args: "1.0 [--dry-run]" },
+  },
+  {
     name: "workspace",
     // ADR-0041: runs every member's own gate; a person's view, not an MCP tool yet.
     mcp: false,

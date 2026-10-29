@@ -65,6 +65,8 @@ not run reports an `error` about itself.
 | `specgate alm phase <change> --json` | `phase` | no |
 | `specgate alm move <change> [<phase>] --json` | `move` | no |
 | `specgate check [dir] --json` | `check` | yes |
+| `specgate migrate 1.0 [--dry-run] --json` | `migrate` | no |
+| `specgate workspace <init|status|check|propose> --json` | `workspace` | yes |
 | `specgate quality <list|doctor|run> --json` | `quality` | no |
 | `specgate draft --json` | `draft` | yes |
 | `specgate verify --json` | `verify` | yes |
@@ -136,6 +138,7 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `impact_target_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `invalid_change_id` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `invalid_value_drift_spec` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `layer_discover_rewritten` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `modify_already_open` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `modify_requirement_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_already_matches` | `scripts/cli/commands/change/ChangeCommand.ts` |
