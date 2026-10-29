@@ -149,6 +149,10 @@ test("REQ-331 SCN-331a: a forbidden pattern in the code", () => {
 
 test("REQ-331 SCN-331b: a principle given as advice", () => {
   const dir = project();
+  // Scripts, not `node -e process.exit(3)`: sh reads the parentheses as its own
+  // syntax, so the command failed on Linux and macOS for a reason of its own.
+  write(dir, "scripts/audit.js", "process.exit(3);\n");
+  write(dir, "scripts/lint.js", "process.exit(0);\n");
   write(
     dir,
     "docs/specs/principles.md",
@@ -158,11 +162,11 @@ test("REQ-331 SCN-331b: a principle given as advice", () => {
       [
         "## P2 — Audit runs clean",
         "",
-        '<!-- specgate:principle run="node -e process.exit(3)" level=warn -->',
+        '<!-- specgate:principle run="node scripts/audit.js" level=warn -->',
         "",
         "## P3 — Lint runs clean",
         "",
-        '<!-- specgate:principle run="node -e process.exit(0)" -->',
+        '<!-- specgate:principle run="node scripts/lint.js" -->',
         "",
       ].join("\n")
     )
