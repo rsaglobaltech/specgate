@@ -211,9 +211,13 @@ export function acceptanceCriteria(discover: string): AcceptanceCriterion[] {
   return out;
 }
 
-/** Words of how, in a layer about what: the brief's list plus the architecture's. */
+/**
+ * Words of how, in a layer about what: the brief's list plus the architecture's.
+ * Not "table": a client reads "a table of their shipments"; storage is caught
+ * by database, SQL and the brief's own list.
+ */
 const DISCOVER_TECHNICAL = new RegExp(
-  `${TECHNICAL.source}|\\b(api|apis|endpoints?|database|base de datos|sql|http|json|microservices?|microservicios?|queue|cola de mensajes|controllers?|tables?|tablas?)\\b`,
+  `${TECHNICAL.source}|\\b(api|apis|endpoints?|database|base de datos|sql|http|json|microservices?|microservicios?|queue|cola de mensajes|controllers?)\\b`,
   "i"
 );
 /** REST in capitals only: "the rest of the week" is plain English. */

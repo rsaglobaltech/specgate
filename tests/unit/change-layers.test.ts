@@ -180,6 +180,21 @@ test('REQ-284 SCN-284a: "the rest of" is not REST', () => {
   assert.ok(!diags(r).some((x: { code: string }) => x.code === "layer_discover_technical"), out(r));
 });
 
+test("REQ-284 SCN-284a: a readable table is not a database table", () => {
+  // Found in the microservices run: "a table" in business words is plain English.
+  const root = mkProject();
+  layered(
+    root,
+    DISCOVER(
+      ["AC-1: peak rate above 100 orders"],
+      " The client sees a readable table of their shipments."
+    ),
+    "# Design\n\n## Mechanisms\n\nAC-1 — a rate table.\n"
+  );
+  const r = cli(root, "change", "validate", "add-pricing", "--json");
+  assert.ok(!diags(r).some((x: { code: string }) => x.code === "layer_discover_technical"), out(r));
+});
+
 test("REQ-282: change new names the layers it wrote, not a proposal", () => {
   const root = mkProject();
   const r = cli(root, "change", "new", "add-pricing");
