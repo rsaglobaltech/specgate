@@ -102,7 +102,7 @@ Optionally install the CLI globally so `specgate` works everywhere:
 
 ```bash
 npm install -g @rsaglobaltech/specgate@latest
-specgate --version          # 0.27.9
+specgate --version          # 1.0.0-rc.1
 specgate --help             # the six you start with: init; propose, apply, status, archive; check
 specgate --help --all       # the whole surface
 ```

@@ -97,7 +97,8 @@ $ specgate propose free-courts
   ✔  Change free-courts created · lite · REQ ids REQ-012…REQ-014 reserved
 
     + docs/specs/changes/free-courts/change.yaml
-    + docs/specs/changes/free-courts/proposal.md
+    + docs/specs/changes/free-courts/discover.md
+    + docs/specs/changes/free-courts/design.md
     + docs/specs/changes/free-courts/tasks.md
     + docs/specs/changes/free-courts/specs/free-courts/spec.md
 

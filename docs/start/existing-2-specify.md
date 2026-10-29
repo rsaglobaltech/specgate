@@ -69,7 +69,8 @@ $ specgate propose invoice-rounding
   ✔  Change invoice-rounding created · lite · REQ ids REQ-004…REQ-006 reserved
 
     + docs/specs/changes/invoice-rounding/change.yaml
-    + docs/specs/changes/invoice-rounding/proposal.md
+    + docs/specs/changes/invoice-rounding/discover.md
+    + docs/specs/changes/invoice-rounding/design.md
     + docs/specs/changes/invoice-rounding/tasks.md
     + docs/specs/changes/invoice-rounding/specs/invoice-rounding/spec.md
 

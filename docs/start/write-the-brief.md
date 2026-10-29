@@ -356,9 +356,9 @@ $ specgate propose --from-brief courses
 
   ✔  Draft draft-courses opened · REQ ids REQ-002…REQ-011 reserved
 
-    + docs/specs/changes/draft-courses/DRAFTING.md                how to write it
-    + docs/specs/changes/draft-courses/specs/courses/spec.md      the requirements go here
-    + docs/specs/changes/draft-courses/change.yaml, proposal.md
+    + docs/specs/changes/draft-courses/DRAFTING.md                                     how to write it
+    + docs/specs/changes/draft-courses/specs/courses/spec.md                           the requirements go here
+    + docs/specs/changes/draft-courses/change.yaml, discover.md, design.md, tasks.md   the layers
 
   Have your agent write it ───────────────────────────────
   Paste this into Claude Code, Cursor, Codex…

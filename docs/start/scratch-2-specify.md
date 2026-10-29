@@ -87,9 +87,9 @@ $ specgate propose --from-brief bookings
 
   ✔  Draft draft-bookings opened · REQ ids REQ-002…REQ-011 reserved
 
-    + docs/specs/changes/draft-bookings/DRAFTING.md                how to write it
-    + docs/specs/changes/draft-bookings/specs/bookings/spec.md     the requirements go here
-    + docs/specs/changes/draft-bookings/change.yaml, proposal.md
+    + docs/specs/changes/draft-bookings/DRAFTING.md                                     how to write it
+    + docs/specs/changes/draft-bookings/specs/bookings/spec.md                          the requirements go here
+    + docs/specs/changes/draft-bookings/change.yaml, discover.md, design.md, tasks.md   the layers
 
   Have your agent write it ───────────────────────────────
   Paste this into Claude Code, Cursor, Codex…

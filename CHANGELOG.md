@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.1] — 2026-10-30
+
+The first candidate of the 1.0 line, for teams of several repositories and roles: a change in three layers with their owners, a workspace of repositories with stories across them and its own live view, approvals per layer and harness packages per role, the backlog following the phases, the two gaps measured, principles, drift and API contracts checked, and `specgate migrate 1.0` to move a 0.27 project. Published under the npm dist-tag `next`; `latest` stays 0.27. See [Migrating to 1.0](docs/migrating-to-1.0.md).
+
 ### Breaking
 
 - **`depends=<repo>:REQ-NNN` is a dependency on another repository** (REQ-294): inside a repository it is no longer an `unknown_dependency`; the workspace judges it.
