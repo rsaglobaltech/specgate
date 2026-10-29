@@ -306,7 +306,7 @@ export const SURFACE: Command[] = [
       summary:
         "The repositories of one product: status, check, a story across them, built and watched live (ADR-0041).",
     },
-    json: { key: "workspace", gate: true, args: "<init|status|check|propose|live|harness>" },
+    json: { key: "workspace", gate: true, args: "<init|status|check|draft|propose|live|harness>" },
   },
   {
     name: "drift",

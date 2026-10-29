@@ -2,6 +2,7 @@
  * Builds the structured prompt handed to a coding agent for one requirement.
  */
 
+import * as fs from "node:fs";
 import { STAGES } from "../change/instructions";
 import { DiskHarnessConfigRepository } from "../../packages/core/src/infrastructure/DiskHarnessConfigRepository";
 import { GenerateAgentPromptUseCase } from "../../packages/core/src/application/GenerateAgentPromptUseCase";
@@ -48,5 +49,19 @@ export function buildPrompt(
   });
   // REQ-316: what each role asks of this requirement, written once by that role.
   const roles = rolePromptSection(packagesFor(projectDir, String(req.requirement || "")));
-  return roles ? `${prompt.replace(/\n*$/, "\n")}\n${roles}` : prompt;
+  const withRoles = roles ? `${prompt.replace(/\n*$/, "\n")}\n${roles}` : prompt;
+  // REQ-344: a story's other parts, handed over by `workspace harness run`.
+  const story = storyContext();
+  return story ? `${withRoles.replace(/\n*$/, "\n")}\n${story}` : withRoles;
+}
+
+/** The workspace story this run builds a part of, when `workspace harness run` names one. */
+function storyContext(): string {
+  const file = process.env.SPECGATE_STORY_CONTEXT;
+  if (!file) return "";
+  try {
+    return fs.readFileSync(file, "utf8").trim() + "\n";
+  } catch {
+    return "";
+  }
 }

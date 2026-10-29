@@ -305,7 +305,7 @@ export class StudioCommand extends BaseCommand {
       }
       const url = String(req.url || "/").split("?")[0];
       const json = (code: number, body: unknown) => {
-        res.writeHead(code, { "content-type": "application/json" });
+        res.writeHead(code, { "content-type": "application/json; charset=utf-8" });
         res.end(JSON.stringify(body));
       };
       // REQ-204: the app's reads, built from what the commands read.
@@ -519,7 +519,7 @@ export class StudioCommand extends BaseCommand {
         return;
       }
       if (ws && url === "/live.json") {
-        res.writeHead(200, { "content-type": "application/json" });
+        res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
         res.end(JSON.stringify({ schemaVersion: 1, live: readWorkspaceLive(ws) }));
         return;
       }
@@ -551,14 +551,14 @@ export class StudioCommand extends BaseCommand {
         return;
       }
       if (url === "/live.json") {
-        res.writeHead(200, { "content-type": "application/json" });
+        res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
         res.end(JSON.stringify({ schemaVersion: 1, projectDir, ...readLive(projectDir) }));
         return;
       }
       // REQ-180: one requirement's details, read when the viewer opens it.
       const reqMatch = /^\/live\/req\/(REQ-\d+)\.json$/.exec(url);
       if (reqMatch) {
-        res.writeHead(200, { "content-type": "application/json" });
+        res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
         res.end(JSON.stringify(requirementDetail(projectDir, reqMatch[1])));
         return;
       }
@@ -582,7 +582,7 @@ export class StudioCommand extends BaseCommand {
       }
       // REQ-181: the traceability matrix as it stands.
       if (url === "/live/matrix.json") {
-        res.writeHead(200, { "content-type": "application/json" });
+        res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
         res.end(JSON.stringify({ schemaVersion: 1, rows: liveMatrix(projectDir) }));
         return;
       }
@@ -629,7 +629,7 @@ export class StudioCommand extends BaseCommand {
       }
       const model = loadModel(projectDir);
       if (req.url === "/status.json") {
-        res.writeHead(200, { "content-type": "application/json" });
+        res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
         res.end(JSON.stringify({ schemaVersion: 1, projectDir, ...model }));
         return;
       }

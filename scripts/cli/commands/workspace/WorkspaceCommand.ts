@@ -16,9 +16,20 @@ import {
   renderWorkspace,
 } from "../../../../packages/core/src/domain/Workspace";
 import type { WorkspaceRepo, WorkspaceRole } from "../../../../packages/core/src/domain/Workspace";
+import { shortNames } from "../../../../packages/core/src/domain/WorkspaceStory";
+import {
+  draftStoryWithAgent,
+  readWorkspaceStories,
+  scaffoldStory,
+  storyRel,
+  workspaceBrief,
+} from "../../../lib/workspace-draft";
 import {
   LAST_CHECK_FILE,
+  RUNS_DIR,
   checkWorkspace,
+  storyContext,
+  storyLevels,
   loadWorkspace,
   noteNoMembers,
   openSubChange,
@@ -37,7 +48,7 @@ const NULL_SHAPE = { workspace: null };
 function usage(): void {
   process.stdout.write(
     `
-  🧩 ${c.bold}specgate workspace${c.reset} <init|status|check|propose|live|harness> [options]
+  🧩 ${c.bold}specgate workspace${c.reset} <init|status|check|draft|propose|live|harness> [options]
 
   The repositories of one product, named in ${WORKSPACE_FILE} (ADR-0041).
   Inside a repository REQ-012 is the id; across the workspace it is fleet:REQ-012.
@@ -48,13 +59,17 @@ function usage(): void {
     status                   each repository (requirements done, branch, last gate) and each story
     check                    each repository's own check, then the qualified ids and the
                              dependencies between repositories; non-zero when any fails
-    propose <story> --repos <a,b,…> [--title "<title>"]
+    draft [<story>] [--agent "<cmd>"]
+                             the client's brief below a front matter naming its stories; with a
+                             story, its story.md — an agent drafts it, confined to the story
+    propose <story> [--repos <a,b,…>] [--title "<title>"]
                              a business story, and a change for it in each repository named
+                             (the brief's repos when --repos is not given), carrying the story
     live [--port <n>]        every repository's harness and every story, live (studio /live);
                              --json prints the model once
     harness run --story <id> [--dry-run] [-- <harness run options>]
-                             one harness per repository with an open part of the story, all at
-                             once; none when a repository's base already fails the gate
+                             one harness per repository with an open part of the story, in the
+                             order their dependencies ask; none when a base already fails
 
   Options: --project-dir <workspace dir>, --json.
 `
@@ -81,6 +96,7 @@ export class WorkspaceCommand extends BaseCommand {
     let force = false;
     const repoArgs: string[] = [];
     let repos = "";
+    let agent = "";
     const positional: string[] = [];
     for (let i = 1; i < argv.length; i += 1) {
       const a = argv[i];
@@ -89,6 +105,7 @@ export class WorkspaceCommand extends BaseCommand {
       else if (a === "--repo") repoArgs.push(argv[++i] || "");
       else if (a === "--repos") repos = argv[++i] || "";
       else if (a === "--title") title = argv[++i] || "";
+      else if (a === "--agent") agent = argv[++i] || "";
       else if (a === "--force") force = true;
       else if (a === "--json") continue;
       else if (!a.startsWith("-")) positional.push(a);
@@ -99,7 +116,7 @@ export class WorkspaceCommand extends BaseCommand {
           }),
         ]);
     }
-    if (!["init", "status", "check", "propose"].includes(sub)) {
+    if (!["init", "status", "check", "draft", "propose"].includes(sub)) {
       io.usage(NULL_SHAPE, [
         error("unknown_subcommand", `workspace has no ${sub}.`, {
           fix: "specgate workspace --help",
@@ -157,10 +174,12 @@ export class WorkspaceCommand extends BaseCommand {
       const config = { name: name || path.basename(dir), repos: members };
       fs.writeFileSync(file, renderWorkspace(config), "utf8");
       ensureIgnored(dir, LAST_CHECK_FILE);
+      // REQ-349: each repository's log of a story's build is not committed.
+      ensureIgnored(dir, `${RUNS_DIR}/`);
       io.emit({ workspace: { file: WORKSPACE_FILE, ...config } }, () => {
         process.stdout.write(ui.header("workspace init", config.name));
-        for (const r of members)
-          process.stdout.write(ui.kv(r.name, `${r.path}  ${c.muted}${r.role}${c.reset}`) + "\n");
+        // REQ-348: name, path and role in their own columns.
+        process.stdout.write(ui.table(members.map((r) => [r.name, r.path, r.role])) + "\n");
         process.stdout.write(
           `\n  ${ui.next("specgate workspace status", "each repository and each story")}\n`
         );
@@ -204,6 +223,106 @@ export class WorkspaceCommand extends BaseCommand {
       return;
     }
 
+    if (sub === "draft") {
+      // REQ-339..340: the client's brief, its stories, and one story drafted.
+      const brief = workspaceBrief(ws!);
+      const id = positional[0] || "";
+      if (!id) {
+        io.emit({ workspace: brief }, () => {
+          process.stdout.write(ui.header("workspace draft", ws!.config.name));
+          if (brief.created)
+            process.stdout.write(
+              ui.fileLine("added", `${brief.file}  the client's brief, below a front matter`) + "\n"
+            );
+          if (brief.stories.length === 0) {
+            process.stdout.write(
+              `\n  Name the stories of the brief in ${brief.file}'s front matter:\n` +
+                `  ${c.muted}stories:\n    - { id: follow-shipment, title: The client follows a shipment, repos: [${ws!.config.repos
+                  .slice(0, 2)
+                  .map((r) => r.name)
+                  .join(", ")}] }${c.reset}\n` +
+                `\n  ${ui.next("specgate workspace draft", "again, once they are named")}\n`
+            );
+            return;
+          }
+          process.stdout.write(ui.section("Stories"));
+          process.stdout.write(
+            ui.table(brief.stories.map((s) => [s.id, s.title, s.repos.join(", ")])) + "\n"
+          );
+          process.stdout.write(
+            `\n  ${ui.next(`specgate workspace draft ${brief.stories[0].id} --agent "claude -p"`, "its intent and criteria, from the brief")}\n`
+          );
+        });
+        return;
+      }
+      const story = brief.stories.find((s) => s.id === id);
+      if (!story) {
+        io.usage(NULL_SHAPE, [
+          error("workspace_story_unnamed", `${brief.file} names no story ${id}.`, {
+            fix: `Add - { id: ${id}, title: …, repos: [${ws!.config.repos.map((r) => r.name).join(", ")}] } under stories: in ${brief.file}.`,
+          }),
+        ]);
+      }
+      const unknownRepos = story!.repos.filter((r) => !ws!.dirs[r]);
+      if (unknownRepos.length) {
+        io.usage(NULL_SHAPE, [
+          error(
+            "workspace_story_repos",
+            `Not repos of this workspace: ${unknownRepos.join(", ")}.`,
+            {
+              fix: `repos: [${ws!.config.repos.map((r) => r.name).join(", ")}]`,
+            }
+          ),
+        ]);
+      }
+      const written = scaffoldStory(ws!, story!);
+      let ran: ReturnType<typeof draftStoryWithAgent> | null = null;
+      if (agent) {
+        ran = draftStoryWithAgent(ws!, story!, agent, !json);
+        if (!ran.ok) {
+          io.fail(NULL_SHAPE, [
+            error(
+              "workspace_draft_agent",
+              ran.problem === "no_git"
+                ? "The workspace repository is not a git repository: the agent's writes cannot be confined."
+                : `The agent failed: ${ran.detail || "no detail"}`,
+              {
+                fix:
+                  ran.problem === "no_git"
+                    ? "git init"
+                    : "Run the agent command by hand to see why.",
+              }
+            ),
+          ]);
+        }
+      }
+      io.emit(
+        {
+          workspace: {
+            story: story,
+            written,
+            agent: ran ? { wrote: ran.wrote, reverted: ran.reverted } : null,
+          },
+        },
+        () => {
+          process.stdout.write(ui.header("workspace draft", story!.id));
+          for (const f of written) process.stdout.write(ui.fileLine("added", f) + "\n");
+          if (ran) {
+            if (ran.permissionAdded)
+              process.stdout.write(
+                `  ${c.muted}edit permission added: the agent writes only ${storyRel(story!.id)}/${c.reset}\n`
+              );
+            for (const f of ran.reverted)
+              process.stdout.write(`  ${c.warn}▲${c.reset}  undone: ${f}, outside the story\n`);
+          }
+          process.stdout.write(
+            `\n  ${ui.next(`specgate workspace propose ${story!.id}`, `review ${storyRel(story!.id)}/story.md, then open its change in ${story!.repos.join(", ")}`)}\n`
+          );
+        }
+      );
+      return;
+    }
+
     if (sub === "check") {
       const result = checkWorkspace(ws!);
       recordCheck(ws!.dir, result);
@@ -223,7 +342,11 @@ export class WorkspaceCommand extends BaseCommand {
         ...result.problems,
       ];
       const payload = {
-        workspace: { ok: result.ok, repos: result.repos.map((r) => ({ name: r.name, ok: r.ok })) },
+        workspace: {
+          ok: result.ok,
+          repos: result.repos.map((r) => ({ name: r.name, ok: r.ok })),
+          warnings: result.warnings,
+        },
       };
       if (!result.ok) {
         if (json) io.fail(payload as never, diags);
@@ -236,6 +359,7 @@ export class WorkspaceCommand extends BaseCommand {
       io.emit(payload, () => {
         process.stdout.write(ui.header("workspace check", ws!.config.name));
         for (const r of result.repos) process.stdout.write(`    ${ui.state("done")} ${r.name}\n`);
+        if (result.warnings.length) printDiagnostics(result.warnings);
         process.stdout.write(
           `\n  ${c.ok}✔${c.reset}  Every repository passes, and the links between them hold.\n`
         );
@@ -256,8 +380,9 @@ export class WorkspaceCommand extends BaseCommand {
         ),
       ]);
     }
-    const names = repos
-      .split(",")
+    // REQ-342: a story drafted from the brief brings its repositories and title.
+    const fromBrief = readWorkspaceStories(ws!).find((s) => s.id === story);
+    const names = (repos ? repos.split(",") : fromBrief ? fromBrief.repos : [])
       .map((s) => s.trim())
       .filter(Boolean);
     const unknown = names.filter((n) => !ws!.dirs[n]);
@@ -273,7 +398,8 @@ export class WorkspaceCommand extends BaseCommand {
       ]);
     }
     const storyDir = path.join(ws!.dir, STORIES_DIR, story);
-    if (fs.existsSync(storyDir)) {
+    const existing = readStories(ws!.dir).find((s) => s.id === story);
+    if (existing && existing.subchanges.length > 0) {
       io.fail(NULL_SHAPE, [
         error("workspace_story_exists", `The story ${story} already exists.`, {
           fix: "specgate workspace status",
@@ -294,10 +420,16 @@ export class WorkspaceCommand extends BaseCommand {
         ),
       ]);
     }
-    const storyTitle = title || story.replace(/-/g, " ");
+    const storyTitle =
+      title ||
+      (existing && existing.title) ||
+      (fromBrief && fromBrief.title) ||
+      story.replace(/-/g, " ");
+    const storyMd = path.join(storyDir, "story.md");
+    const storyText = fs.existsSync(storyMd) ? fs.readFileSync(storyMd, "utf8") : "";
     const failed: Diagnostic[] = [];
     for (const n of names) {
-      const p = openSubChange(ws!, n, story, storyTitle);
+      const p = openSubChange(ws!, n, story, storyTitle, { storyText, repos: names });
       if (p) failed.push(p);
     }
     if (failed.length) io.fail(NULL_SHAPE, failed);
@@ -308,13 +440,15 @@ export class WorkspaceCommand extends BaseCommand {
       subchanges: names.map((n) => ({ repo: n, change: story })),
     };
     fs.writeFileSync(path.join(storyDir, "story.yaml"), renderStory(record), "utf8");
-    fs.writeFileSync(
-      path.join(storyDir, "story.md"),
-      `# Story: ${storyTitle}\n\n## Intent\n\n<!-- The business story, in the words of whoever asked for it. It stays as it is while each repository's change works out the how. -->\n\n## Repositories\n\n` +
-        names.map((n) => `- \`${n}\`: \`docs/specs/changes/${story}/\``).join("\n") +
-        "\n",
-      "utf8"
-    );
+    if (!storyText) {
+      fs.writeFileSync(
+        storyMd,
+        `# Story: ${storyTitle}\n\n## Intent\n\n<!-- The business story, in the words of whoever asked for it. It stays as it is while each repository's change works out the how. -->\n\n## Repositories\n\n` +
+          names.map((n) => `- \`${n}\`: \`docs/specs/changes/${story}/\``).join("\n") +
+          "\n",
+        "utf8"
+      );
+    }
     io.emit({ workspace: { story: record } }, () => {
       process.stdout.write(ui.header("workspace propose", story));
       for (const n of names)
@@ -359,6 +493,9 @@ function siblings(dir: string): WorkspaceRepo[] {
         : "service";
     out.push({ name: repoName, path: `../${e.name}`, role, capabilities: capabilitiesOf(full) });
   }
+  // REQ-348: truck-flote-fleet and truck-flote-web are fleet and web.
+  const short = shortNames(out.map((r) => r.name));
+  out.forEach((r, i) => (r.name = short[i]));
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -418,7 +555,12 @@ function runLiveOrHarness(argv: string[], json: boolean, io: ReturnType<typeof a
     requirements: string[];
     args: string[];
     command: string;
+    level: number;
+    context: string;
   }> = [];
+  // REQ-345: a repository waiting on another's part runs after it.
+  const levels = storyLevels(ws!, story!);
+  const logs = path.join(ws!.dir, RUNS_DIR, story!.id);
   const red: Diagnostic[] = [];
   for (const sc of story!.subchanges) {
     const memberDir = ws!.dirs[sc.repo];
@@ -447,23 +589,31 @@ function runLiveOrHarness(argv: string[], json: boolean, io: ReturnType<typeof a
       ...ids.flatMap((id) => ["--req", id]),
       ...passthrough,
     ];
+    // REQ-344: what the other repositories of the story build, for the prompt.
+    const context = path.join(logs, `${sc.repo}.context.md`);
     runs.push({
       repo: sc.repo,
       dir: memberDir,
       requirements: ids,
       args,
       command: `specgate ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(" ")}`,
+      level: levels[sc.repo] || 1,
+      context: path.relative(ws!.dir, context).split(path.sep).join("/"),
     });
   }
   if (red.length) io.fail({ harness: null } as never, red);
+  fs.mkdirSync(logs, { recursive: true });
+  for (const r of runs)
+    fs.writeFileSync(path.join(ws!.dir, r.context), storyContext(ws!, story!, r.repo), "utf8");
   const payload = {
     harness: { story: story!.id, runs: runs.map(({ dir: _d, args: _a, ...r }) => r) },
   };
+  runs.sort((a, b) => a.level - b.level || a.repo.localeCompare(b.repo));
   if (own.includes("--dry-run")) {
     io.emit(payload, () => {
       process.stdout.write(ui.header("workspace harness run", `${story!.id} · dry run`));
       for (const r of runs)
-        process.stdout.write(`    ${r.repo}  ${c.muted}${r.command}${c.reset}\n`);
+        process.stdout.write(`    ${r.level}  ${r.repo}  ${c.muted}${r.command}${c.reset}\n`);
     });
     return;
   }
@@ -471,34 +621,47 @@ function runLiveOrHarness(argv: string[], json: boolean, io: ReturnType<typeof a
     io.emit(payload, () => process.stdout.write("  Nothing open to build in this story.\n"));
     return;
   }
-  // One process per repository, all at once; each keeps its own output.
-  const logs = path.join(ws!.dir, ".specgate", "workspace-runs", story!.id);
+  // One process per repository; the repositories of a level at once, each
+  // level once the one before has finished (REQ-345).
   fs.mkdirSync(logs, { recursive: true });
   if (!json) process.stdout.write(ui.header("workspace harness run", story!.id));
-  let left = runs.length;
   let worst = 0;
   const results: Array<{ repo: string; exit: number; log: string }> = [];
-  for (const r of runs) {
-    const log = path.join(logs, `${r.repo}.log`);
-    const fd = fs.openSync(log, "w");
-    const child = spawn(process.execPath, [cli, ...r.args], {
-      stdio: ["ignore", fd, fd],
-      env: { ...process.env, NO_COLOR: "1" },
-    });
-    if (!json) process.stdout.write(`    ${r.repo}  started · ${path.relative(ws!.dir, log)}\n`);
-    child.on("close", (code) => {
-      fs.closeSync(fd);
-      const exit = code ?? 1;
-      worst = Math.max(worst, exit);
-      results.push({ repo: r.repo, exit, log });
+  const byLevel = [...new Set(runs.map((r) => r.level))].sort((a, b) => a - b);
+  const runLevel = (i: number): void => {
+    if (i >= byLevel.length) {
+      if (json)
+        process.stdout.write(JSON.stringify({ harness: { story: story!.id, results } }) + "\n");
+      process.exit(worst);
+    }
+    const now = runs.filter((r) => r.level === byLevel[i]);
+    let left = now.length;
+    for (const r of now) {
+      const log = path.join(logs, `${r.repo}.log`);
+      const fd = fs.openSync(log, "w");
+      const child = spawn(process.execPath, [cli, ...r.args], {
+        stdio: ["ignore", fd, fd],
+        env: {
+          ...process.env,
+          NO_COLOR: "1",
+          SPECGATE_STORY_CONTEXT: path.join(ws!.dir, r.context),
+        },
+      });
       if (!json)
-        process.stdout.write(`    ${ui.state(exit === 0 ? "done" : "blocked")} ${r.repo}\n`);
-      left -= 1;
-      if (left === 0) {
-        if (json)
-          process.stdout.write(JSON.stringify({ harness: { story: story!.id, results } }) + "\n");
-        process.exit(worst);
-      }
-    });
-  }
+        process.stdout.write(
+          `    ${r.level}  ${r.repo}  started · ${path.relative(ws!.dir, log)}\n`
+        );
+      child.on("close", (code) => {
+        fs.closeSync(fd);
+        const exit = code ?? 1;
+        worst = Math.max(worst, exit);
+        results.push({ repo: r.repo, exit, log });
+        if (!json)
+          process.stdout.write(`    ${ui.state(exit === 0 ? "done" : "blocked")} ${r.repo}\n`);
+        left -= 1;
+        if (left === 0) runLevel(i + 1);
+      });
+    }
+  };
+  runLevel(0);
 }

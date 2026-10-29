@@ -38,8 +38,9 @@ specgate workspace init --name truck-flote
 ```
 
 Without `--repo`, `init` names every sibling folder that holds a Specgate
-project. A name ending in `contracts` gets the role `contracts`, one ending in
-`web` the role `web`, the rest `service`. Name them yourself otherwise:
+project, without the prefix they share: `truck-flote-fleet` is `fleet`, its path
+kept (REQ-348). A name ending in `contracts` gets the role `contracts`, one
+ending in `web` the role `web`, the rest `service`. Name them yourself otherwise:
 
 ```bash
 specgate workspace init --name truck-flote \
@@ -99,6 +100,7 @@ judge, and exits non-zero when anything fails:
 | `workspace_unknown_repo` | A qualified id names a repository the workspace does not have |
 | `workspace_unknown_requirement` | A qualified id names a requirement its repository does not have |
 | `workspace_dependency_pending` | A requirement depends on another repository's that is not delivered |
+| `workspace_story_diverged` | A warning: a sub-change's criteria are not the story's (REQ-343) |
 
 The result is kept in `.specgate/workspace-check.json` (git-ignored), which
 `status` reads.
@@ -122,20 +124,49 @@ contracts:
    fix: Deliver REQ-004 in contracts first (specgate harness run --req REQ-004 there).
 ```
 
-## A story across repositories
+## From the client's brief to stories
 
-The business asks for one thing — "the client follows their shipment" — and it
-takes a change in three repositories:
+Save the client's brief as `brief.md` in the workspace repository. `specgate
+status` there says what comes next (REQ-341).
 
 ```bash
-specgate workspace propose follow-shipment \
-  --repos fleet,tracking,web --title "El cliente sigue su envío"
+specgate workspace draft
 ```
 
-- Each of the three gets the change `follow-shipment`, its proposal saying it is
-  part of the workspace story `truck-flote:follow-shipment`.
-- The workspace records the story in `docs/stories/follow-shipment/`:
-  `story.md` for the business intent, `story.yaml` for its sub-changes.
+The brief goes below a front matter in `docs/brief.md`, its text kept. Name the
+business stories it holds, each with the repositories it touches (REQ-339):
+
+```yaml
+stories:
+  - { id: follow-shipment, title: El cliente sigue su envío, repos: [fleet, tracking, web] }
+```
+
+```bash
+specgate workspace draft                                       # lists them
+specgate workspace draft follow-shipment --agent "claude -p"   # REQ-340
+```
+
+The agent reads the brief and writes the story's `docs/stories/follow-shipment/story.md`:
+its **Intent** and its **Acceptance criteria** (`AC-1`, `AC-2`…). Anything it
+writes elsewhere is undone. Without `--agent`, the file waits with its sections.
+Review it: it is the business story every repository will answer.
+
+## A story across repositories
+
+```bash
+specgate workspace propose follow-shipment
+```
+
+- Each repository the brief names (or `--repos fleet,tracking,web`) gets the
+  change `follow-shipment`. Its `discover.md` holds the story's intent and
+  criteria, copied as the story states them, and names the story
+  `truck-flote:follow-shipment` (REQ-342).
+- It also names the story's other repositories and the contracts repository,
+  and how a requirement says what it needs from them:
+  `depends=fleet:REQ-NNN`, an `api=` operation of the contracts repository
+  (REQ-344).
+- The criteria are the business's: `workspace check` warns when a repository's
+  differ from the story's (REQ-343). Change them in the story.
 
 Each repository then works its change as usual — draft, review, harness,
 archive. `workspace status` shows each sub-change open, archived or missing,
@@ -149,10 +180,14 @@ specgate workspace live          # the studio, serving the workspace's /live
 ```
 
 - `workspace harness run --story` starts one `harness run` per repository that
-  holds an open part of the story, for that part's requirements, **all at once**,
-  each its own process, its output in `.specgate/workspace-runs/<story>/`. The
-  options after a bare `--` go to every repository's harness. `--dry-run` prints the
-  commands.
+  holds an open part of the story, for that part's requirements, each its own
+  process, its output in `.specgate/workspace-runs/<story>/` (git-ignored). A
+  repository whose part depends on another part's undelivered requirement starts
+  once that repository has finished; the rest run at once (REQ-345). The
+  options after a bare `--` go to every repository's harness. `--dry-run` prints
+  the commands with their order.
+- Each harness is told the story's other parts and their requirements, so its
+  agent can name what it waits for (REQ-344).
 - It starts **none** when a repository's base already fails the gate on
   requirements outside its part, as each harness would refuse on its own
   (REQ-175) — said once, naming the repository, before anything is paid for.

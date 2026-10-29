@@ -145,9 +145,10 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate workspace init`               | Names the repositories of one product in `specgate.workspace.yaml`.         | [Workspace](workspace.md)                      |
 | `specgate workspace status`             | Each repository's requirements, branch and gate, and each story.            | [Workspace](workspace.md)                      |
 | `specgate workspace check`              | Every repository's gate, qualified ids and cross-repository dependencies.   | [Workspace](workspace.md)                      |
+| `specgate workspace draft [<story>]`    | The client's brief, its stories, and one story drafted by an agent.         | [Workspace](workspace.md)                      |
 | `specgate workspace propose <story>`    | A business story, and a change for it in each repository named.             | [Workspace](workspace.md)                      |
 | `specgate workspace live`               | Every repository's harness and every story, live, with their cost.          | [Workspace](workspace.md)                      |
-| `specgate workspace harness run`        | One harness per repository with an open part of a story, all at once.       | [Workspace](workspace.md)                      |
+| `specgate workspace harness run`        | One harness per repository with a part of a story, in dependency order.     | [Workspace](workspace.md)                      |
 | `specgate drift [--base]`               | Commits since the base that change code and name no requirement.            | [Validating](validating.md)                    |
 | `specgate contract check`               | Contracts against requirements: uncited operations, missing ones.           | [Validating](validating.md)                    |
 | `specgate check --ci`                   | The gate in CI: also the `ci` checks, and a check that cannot run fails.    | [Validating](validating.md)                    |

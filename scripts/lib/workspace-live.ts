@@ -1,12 +1,10 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
-import { parseDelta } from "../../packages/core/src/domain/SpecParser";
 import { splitQualified, STORIES_DIR } from "../../packages/core/src/domain/Workspace";
 import { liveSignature, readLive } from "./live-model";
 import type { LiveRequirement } from "./live-model";
 import { DELIVERED } from "./in-flight";
-import { memberStatuses, readStories, subChangeState } from "./workspace";
+import { changeRequirements, memberStatuses, readStories, subChangeState } from "./workspace";
 import type { LoadedWorkspace } from "./workspace";
 
 /**
@@ -66,30 +64,16 @@ export interface WorkspaceLive {
   stories: StoryLive[];
 }
 
-/** The requirements a sub-change's delta adds or modifies, with their dependencies and scenarios. */
+/** The requirements a sub-change's delta adds or modifies, open or archived, with their dependencies and scenarios. */
 export function partRequirements(
   memberDir: string,
   change: string
 ): Array<{ id: string; depends: string[]; scenarios: string[] }> {
-  const out: Array<{ id: string; depends: string[]; scenarios: string[] }> = [];
-  for (const d of listDeltas(memberDir, change)) {
-    let parsed: ReturnType<typeof parseDelta>;
-    try {
-      parsed = parseDelta(fs.readFileSync(d.file, "utf8"));
-    } catch {
-      continue;
-    }
-    for (const r of [...(parsed.added || []), ...(parsed.modified || [])]) {
-      if (!r.id) continue;
-      const raw = String((r.trace || {}).depends || "");
-      out.push({
-        id: r.id.toUpperCase(),
-        depends: raw.split(/[,;\s]+/).filter(Boolean),
-        scenarios: r.scenarios.map((s) => s.id || "").filter(Boolean),
-      });
-    }
-  }
-  return out;
+  return changeRequirements(memberDir, change).map(({ id, depends, scenarios }) => ({
+    id,
+    depends,
+    scenarios,
+  }));
 }
 
 /** Minutes the member's ledger recorded, for the requirements `only` names (all when absent). */
@@ -192,13 +176,14 @@ export function readWorkspaceLive(ws: LoadedWorkspace): WorkspaceLive {
       const dir = ws.dirs[sc.repo];
       const exists = !!dir && fs.existsSync(dir);
       const base = exists ? subChangeState(dir, sc.change) : "missing";
-      const reqs = exists && base === "open" ? partRequirements(dir, sc.change) : [];
+      // REQ-347: an archived part's requirements still count in the story's cost.
+      const reqs = exists && base !== "missing" ? partRequirements(dir, sc.change) : [];
       const ids = new Set(reqs.map((r) => r.id));
       const live = lives.get(sc.repo);
       const seen = live ? live.requirements.filter((r) => ids.has(r.req)) : [];
       const blockedBy = [
         ...new Set(
-          reqs.flatMap((r) =>
+          (base === "open" ? reqs : []).flatMap((r) =>
             r.depends.filter((d) => {
               const q = splitQualified(d);
               return !!q && !DELIVERED.includes(statusOf(q.repo, q.id));

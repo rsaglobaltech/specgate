@@ -9,6 +9,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The workspace takes the client's brief** (REQ-339..341): `specgate workspace draft` puts a root `brief.md` below a front matter that names the brief's stories and their repositories, `workspace draft <story> --agent "<cmd>"` drafts a story's intent and criteria from the brief, confined to the story, and `specgate status` in a workspace repository shows the workspace and the next step instead of failing on a missing matrix.
+- **Every repository receives the story** (REQ-342..344): `workspace propose` takes a drafted story, copies its intent and criteria into each sub-change's `discover.md` and names the story's other repositories and how to write `depends=` and `api=`; `workspace check` warns `workspace_story_diverged` when a repository's criteria are not the story's; each harness is told the story's other parts.
+- **A story is built in dependency order** (REQ-345): `workspace harness run --story` starts a repository whose part waits on another's undelivered requirement after that repository has finished; the dry run shows the levels.
+- **The live view and the story's cost** (REQ-346, REQ-347): every JSON document of the studio says `charset=utf-8`, and a story's cost counts its archived parts.
+- **Short repository names, and the logs ignored** (REQ-348, REQ-349): `workspace init` names `truck-flote-fleet` as `fleet`, prints name, path and role in their own columns, and ignores `.specgate/workspace-runs/`.
+
 ## [1.0.0-rc.1] — 2026-10-30
 
 The first candidate of the 1.0 line, for teams of several repositories and roles: a change in three layers with their owners, a workspace of repositories with stories across them and its own live view, approvals per layer and harness packages per role, the backlog following the phases, the two gaps measured, principles, drift and API contracts checked, and `specgate migrate 1.0` to move a 0.27 project. Published under the npm dist-tag `next`; `latest` stays 0.27. See [Migrating to 1.0](docs/migrating-to-1.0.md).
