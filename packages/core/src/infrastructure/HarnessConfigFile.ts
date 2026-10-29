@@ -69,6 +69,8 @@ const KNOWN_KEYS = new Set([
   "mutation_score",
   "checks",
   "commit_types",
+  // REQ-334: behaviour changed without a specification — reported, or a gate.
+  "drift",
 ]);
 
 /**
@@ -197,6 +199,13 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
   // whose test command the harness cannot safely rewrite (`npm test` may well
   // run Cucumber, and there is no way to know from here).
   if (parsed.e2e_dir !== undefined) config.e2eDir = String(parsed.e2e_dir).trim();
+  if (parsed.drift !== undefined) {
+    const drift = String(parsed.drift).trim();
+    if (drift !== "report" && drift !== "gate" && drift !== "off") {
+      throw new Error(`${HARNESS_CONFIG_FILE}: drift must be report, gate or off, not ${drift}.`);
+    }
+    config.drift = drift as "report" | "gate" | "off";
+  }
   if (parsed.message_report !== undefined) {
     config.messageReport = String(parsed.message_report);
   }

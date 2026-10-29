@@ -164,6 +164,25 @@ specgate workspace live          # the studio, serving the workspace's /live
   and each story has cost, in money and minutes.
 - `/live.json` and `workspace live --json` give that model as data
   (REQ-320..324).
+## The organization's principles
+
+`docs/specs/principles.md` holds the principles a repository follows, with
+`principles_version` and `source` in its front matter. In a workspace the source
+is the workspace repository's copy (`source: ../ws/principles.md`); shared as a
+domain pack whose `outputs.files` writes the file, it is `source: pack:<pack_id>`.
+`specgate check` names the version and warns `principles_behind` when the source
+has a newer one (REQ-330, REQ-332). A principle can carry a check the gate runs:
+
+```markdown
+## P1 — No credentials in code
+<!-- specgate:principle forbid="password\s*=\s*\"" in="src/**" -->
+
+## P2 — Dependencies audited
+<!-- specgate:principle run="npm audit --omit=dev" level=warn -->
+```
+
+A failure is `principle_failed`, which fails the gate; `level=warn` makes it
+advice (REQ-331).
 
 ## What a workspace does not do
 

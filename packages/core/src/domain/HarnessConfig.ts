@@ -73,6 +73,11 @@ export interface HarnessSettings {
    */
   e2eDir?: string;
   /**
+   * Behaviour changed without a specification (REQ-333, REQ-334): `report`
+   * (the default) warns, `gate` fails `check`, `off` does not look.
+   */
+  drift?: "report" | "gate" | "off";
+  /**
    * Per-profile `cost_per_run_hint` from `.harness/profiles.yaml` (C1). A
    * declared estimate, never a measurement: an agent is any shell command and
    * only the agent knows what it spent.

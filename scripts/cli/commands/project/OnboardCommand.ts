@@ -434,6 +434,25 @@ function splitIntoCapabilities(projectDir: string, root: string, depth = 0): Cap
  * packaging directories in two more.
  */
 export function proposeCapabilities(projectDir: string): Capability[] {
+  return proposeAllCapabilities(projectDir).slice(0, MAX_PROPOSED);
+}
+
+/** How many areas adoption proposes: what a person can review at once (REQ-338). */
+export const MAX_PROPOSED = 8;
+
+/**
+ * The areas under one path of the project (REQ-337): its children when it
+ * splits, else the path itself as one area.
+ */
+export function capabilitiesUnder(projectDir: string, scopeDir: string): Capability[] {
+  const split = splitIntoCapabilities(projectDir, scopeDir);
+  if (split) return split.sort((a, b) => b.files - a.files);
+  const one = toCapability(projectDir, scopeDir, path.basename(scopeDir));
+  return one.files > 0 ? [one] : [];
+}
+
+/** Every area the layout shows, largest first — `proposeCapabilities` keeps eight. */
+export function proposeAllCapabilities(projectDir: string): Capability[] {
   let modules = findDeclaredModules(projectDir);
 
   // A repository can hold sub-projects and still *be* a project: Loki keeps a
@@ -455,14 +474,13 @@ export function proposeCapabilities(projectDir: string): Capability[] {
       layers.find((m) => m.name.toLowerCase() === "core") ||
       layers[0];
     const split = splitIntoCapabilities(projectDir, preferred.dir);
-    if (split) return split.sort((a, b) => b.files - a.files).slice(0, 8);
+    if (split) return split.sort((a, b) => b.files - a.files);
   }
 
   if (modules.length >= 2) {
     return modules
       .map((m) => toCapability(projectDir, m.dir, m.name))
-      .sort((a, b) => b.files - a.files)
-      .slice(0, 8);
+      .sort((a, b) => b.files - a.files);
   }
 
   // One declared module (a `src/` project, a single .csproj) is the project
@@ -487,7 +505,7 @@ export function proposeCapabilities(projectDir: string): Capability[] {
   }
 
   if (!best) return [];
-  return best.split.sort((a, b) => b.files - a.files).slice(0, 8);
+  return best.split.sort((a, b) => b.files - a.files);
 }
 
 function isAdopted(projectDir: string) {

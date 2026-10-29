@@ -12,6 +12,7 @@ import * as ui from "../../../lib/ui";
 import { unwrittenChanges } from "../../../lib/in-flight";
 import { checkAgainstLock } from "../../../specops/against_lock";
 import { requirementGraphFromProject } from "../../../lib/requirement-graph";
+import { apiReferenceProblems } from "../../../lib/contracts";
 import { SHARED_PATHS } from "../../../../packages/core/src/domain/MultiStack";
 import {
   skippedScenarios,
@@ -1385,6 +1386,20 @@ export class ValidateSpecsCommand extends BaseCommand {
         }
         this.logError("Requirement dependency problems:");
         for (const d of graphProblems) process.stderr.write(`  ${formatDiagnostic(d)}\n`);
+        process.exit(1);
+      }
+    }
+
+    // REQ-335: a requirement that names an interface operation names one that exists.
+    {
+      const apiProblems = apiReferenceProblems(targetDir);
+      if (apiProblems.length > 0) {
+        if (this.agent.json) {
+          this.agent.fail({ validation: null }, apiProblems);
+          return;
+        }
+        this.logError("API references that do not resolve:");
+        for (const d of apiProblems) process.stderr.write(`  ${formatDiagnostic(d)}\n`);
         process.exit(1);
       }
     }

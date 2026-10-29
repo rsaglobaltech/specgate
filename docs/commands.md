@@ -148,6 +148,8 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate workspace propose <story>`    | A business story, and a change for it in each repository named.             | [Workspace](workspace.md)                      |
 | `specgate workspace live`               | Every repository's harness and every story, live, with their cost.          | [Workspace](workspace.md)                      |
 | `specgate workspace harness run`        | One harness per repository with an open part of a story, all at once.       | [Workspace](workspace.md)                      |
+| `specgate drift [--base]`               | Commits since the base that change code and name no requirement.            | [Validating](validating.md)                    |
+| `specgate contract check`               | Contracts against requirements: uncited operations, missing ones.           | [Validating](validating.md)                    |
 | `specgate check --ci`                   | The gate in CI: also the `ci` checks, and a check that cannot run fails.    | [Validating](validating.md)                    |
 | `specgate verify`                       | For OpenSpec projects: fails while a done scenario has no test naming it.   | [Already on OpenSpec](openspec.md)             |
 | `specgate report`                       | A spec-coverage dashboard as one HTML file.                                 | `specgate report --help`                       |

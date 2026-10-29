@@ -309,6 +309,30 @@ export const SURFACE: Command[] = [
     json: { key: "workspace", gate: true, args: "<init|status|check|propose|live|harness>" },
   },
   {
+    name: "drift",
+    // REQ-333: behaviour changed without a specification, for CI.
+    mcp: false,
+    script: ["drift.js"],
+    help: {
+      group: "core",
+      icon: "🧭",
+      summary: "Commits since the base that change code and name no requirement.",
+    },
+    json: { key: "drift", gate: true, args: "[dir]" },
+  },
+  {
+    name: "contract",
+    // REQ-336: OpenAPI and AsyncAPI contracts against the requirements citing them.
+    mcp: false,
+    script: ["contract.js"],
+    help: {
+      group: "core",
+      icon: "📜",
+      summary: "Contracts against requirements: uncited operations, missing ones.",
+    },
+    json: { key: "contract", gate: true, args: "check [dir]" },
+  },
+  {
     name: "quality",
     mcp: false,
     script: ["quality.js"],
