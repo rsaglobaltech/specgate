@@ -52,8 +52,9 @@ export default [
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
       t.ok(t.sg(dir, "change", "new", "add-coupons"), "change new");
+      // ADR-0042: a new change is layered, and starts from its Discover.
       t.expect(
-        /proposal/.test(t.sg(dir, "change", "status", "add-coupons").stdout),
+        /discover/.test(t.sg(dir, "change", "status", "add-coupons").stdout),
         "status names the next artefact"
       );
       const ins = t.json(t.sg(dir, "change", "instructions", "specs", "--json"));
