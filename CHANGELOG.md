@@ -17,6 +17,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - **One sub-issue per repository** (REQ-307): a change that lists `repositories:` gets a sub-issue of its ticket for each, created once.
 - **Linear** (REQ-308), a fourth built-in provider through its GraphQL API: `team_key` and `token_env`.
 - **`alm phase` and `alm move`** (REQ-309): where a change stands, without the network, and its ticket moved there now; both are MCP tools (`specgate_alm_phase`, `specgate_alm_move`). New provider capabilities (`phase`, `subIssues`, `comments`, `readText`) are optional, so a community provider written for 0.27 still loads.
+- **A workspace of repositories** (REQ-290..298, ADR-0041): `specgate.workspace.yaml` names the repositories of one product, and `specgate workspace init|status|check|propose` say where the product stands, run every repository's gate at once, resolve ids qualified with their repository (`tracking:REQ-012`), hold a requirement back until the one it depends on in another repository is delivered, and split a business story into a change in each repository it touches — done when every one is archived. See [docs/workspace.md](docs/workspace.md).
+
+### Breaking
+
+- **`depends=<repo>:REQ-NNN` is a dependency on another repository** (REQ-294): inside a repository it is no longer an `unknown_dependency`; the workspace judges it.
 
 ### Fixed
 

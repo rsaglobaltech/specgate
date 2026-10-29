@@ -221,6 +221,15 @@
 | REQ-307 | SCN-307a | `features/ticket-source/REQ-307.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
 | REQ-308 | SCN-308a | `features/ticket-source/REQ-308.feature` | - | - | - | - | - | tests/unit/alm-conformance.test.ts | Implemented |
 | REQ-309 | SCN-309a | `features/ticket-source/REQ-309.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
+| REQ-290 | SCN-290a | `features/workspace/REQ-290.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-291 | SCN-291a | `features/workspace/REQ-291.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-292 | SCN-292a | `features/workspace/REQ-292.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-293 | SCN-293a | `features/workspace/REQ-293.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-294 | SCN-294a | `features/workspace/REQ-294.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-295 | SCN-295a | `features/workspace/REQ-295.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-296 | SCN-296a | `features/workspace/REQ-296.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-297 | SCN-297a | `features/workspace/REQ-297.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-298 | SCN-298a | `features/workspace/REQ-298.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

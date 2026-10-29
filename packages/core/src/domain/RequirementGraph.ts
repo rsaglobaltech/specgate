@@ -57,6 +57,12 @@ export class RequirementGraph {
   readonly dependents: Readonly<Record<string, string[]>>;
   readonly unknown: readonly UnknownDependency[];
   readonly selfReferential: readonly string[];
+  /**
+   * REQ-294: `depends=contracts:REQ-003` names a requirement of another
+   * repository of the workspace. The repository cannot judge it — the
+   * workspace does (`workspace check`) — so it is neither unknown nor an edge.
+   */
+  readonly external: readonly UnknownDependency[];
 
   private readonly ids: readonly string[];
 
@@ -73,11 +79,14 @@ export class RequirementGraph {
 
     const unknown: UnknownDependency[] = [];
     const selfReferential: string[] = [];
+    const external: UnknownDependency[] = [];
 
     for (const [requirement, deps] of Object.entries(declared)) {
       if (!known.has(requirement)) continue; // declared for a REQ not in this project
       for (const dependency of deps) {
-        if (dependency === requirement) {
+        if (dependency.includes(":")) {
+          external.push({ requirement, dependency });
+        } else if (dependency === requirement) {
           selfReferential.push(requirement);
         } else if (!known.has(dependency)) {
           unknown.push({ requirement, dependency });
@@ -92,6 +101,7 @@ export class RequirementGraph {
     this.dependents = dependents;
     this.unknown = unknown;
     this.selfReferential = selfReferential;
+    this.external = external;
   }
 
   /** Build from an adjacency map the caller already has — the harness has one. */

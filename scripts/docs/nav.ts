@@ -243,6 +243,12 @@ export const NAV: readonly NavSection[] = [
           "Coverage and mutation of what a change adds, SonarQube, SpotBugs, PMD, Semgrep, secrets, dependencies — all in Docker, no account.",
       },
       {
+        slug: "workspace",
+        label: "Workspace: several repositories",
+        blurb:
+          "The repositories of one product: where it stands, one gate across them, ids like tracking:REQ-012, a story split per repository.",
+      },
+      {
         slug: "automation",
         label: "Automation",
         blurb: "Generate the gate for GitHub, GitLab, Azure or Jenkins.",
