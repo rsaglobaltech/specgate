@@ -161,7 +161,8 @@ unattended, one git worktree per requirement. See [The harness](harness.md).
 | The first attempt is spent installing dependencies | A new worktree has no `node_modules`                    | Leave the default `--setup-cmd`, or set your install command        |
 | A `harness/REQ-…` branch already exists            | An earlier run                                          | `--resume` to continue it, or `--force` to start over               |
 | `quality check: <name>` failed                     | A [quality check](quality.md) found something new       | Read its findings; take the baseline if it is old debt              |
-| `Docker is not running here`                       | A quality check runs in Docker                          | Start Docker Desktop, or the daemon                                 |
+| `Docker is not running here`                       | A quality check runs in Docker, or the tests use Testcontainers; `harness run` and the studio's Build stop before any agent | Start Docker Desktop, or the daemon                                 |
+| `the tests need Docker, which they could not reach` | Docker stopped while the tests ran                      | Start Docker Desktop and run it again: the agent is not asked       |
 | The studio's Build says files are uncommitted      | Work in progress outside the specification              | Commit or stash it; the studio commits only the specification       |
 | The studio says the folder holds files             | Its new-project step only uses an empty folder          | `specgate init` adopts the folder, keeping its files                |
 

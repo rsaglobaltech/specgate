@@ -5,6 +5,9 @@ import { listChangeIds, listDeltas } from "../../packages/core/src/infrastructur
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
 import { assumptionsToReview } from "../../packages/core/src/domain/Clarification";
 import { readHarnessConfig } from "../../packages/core/src/infrastructure/HarnessConfigFile";
+import type { QualityConfig } from "../../packages/core/src/domain/QualityChecks";
+import { dockerNeed } from "./harness-environment";
+import { dockerWhyNot } from "./quality-run";
 import { allQuestions, waiting } from "./clarification";
 import { liveMatrix } from "./live-detail";
 import { readLive } from "./live-model";
@@ -290,6 +293,17 @@ export function startBuild(projectDir: string, reqs: string[], profile = ""): St
       ok: false,
       code: "build_nothing",
       message: "None of those requirements is ready to build.",
+    };
+  }
+  // REQ-279: said here, where the person is, not in the background run's log.
+  const cfg = readHarnessConfig(projectDir) as { quality?: QualityConfig | null } | null;
+  const needsDocker = dockerNeed(projectDir, (cfg && cfg.quality) || null);
+  const noDocker = needsDocker ? dockerWhyNot() : null;
+  if (noDocker) {
+    return {
+      ok: false,
+      code: "build_no_docker",
+      message: `${noDocker} This project needs it: ${needsDocker}.`,
     };
   }
   const saved = saveSpecification(projectDir);

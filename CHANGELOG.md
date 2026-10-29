@@ -13,6 +13,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 - **D6 reads a date or a time as one value** (REQ-277): "at 2026-10-29 10:00:00" was read as the numbers "29", "00" and so on, and the agent had to list each one in `assumptions.md` before the draft could be reviewed. An ISO date, a time and a date-time are now one value each.
 - **The agent `config set agent` keeps for Claude Code is seen live** (REQ-278): the command `status` suggests, `claude -p < {prompt_file}`, is now kept with `--output-format stream-json --verbose` and piped into `specgate harness events --from claude`, so the studio's live view shows the agent and not only the gate. A command that already pipes or sets an output format is kept as it is.
+- **A stopped Docker is said before any agent runs** (REQ-279): with Docker Desktop stopped, `harness run` passed the specification and the architecture, then spent its three attempts on tests that failed in fifteen seconds with "Could not find a valid Docker environment", each handed to the agent as a failing test. `harness run` and the studio's Build now check Docker first when a quality check runs in it or the tests use Testcontainers, and refuse with the fix; a test command that cannot reach Docker stops the requirement and is told to the person, not the agent.
+- **The studio's report titles each scenario from the specification** (REQ-280): a delivered requirement of a draft showed `SCN-002 — <what happens>`, the template line of the draft's `DRAFTING.md`. Titles now come from the open changes' deltas, the capability specs and `spec.md` only.
 
 ## [0.27.8] — 2026-10-28
 

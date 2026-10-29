@@ -983,11 +983,20 @@ export interface ReportView {
   assumptions: number;
 }
 
-/** Every scenario's title, by id, from the specification's files. */
-function scenarioTitles(projectDir: string): Map<string, string> {
+/**
+ * Every scenario's title, by id, from the specification (REQ-280): open
+ * changes' deltas first — the project as it will be — then the capability
+ * specs and spec.md. Every other Markdown file is left out: a draft's
+ * DRAFTING.md holds `SCN-002 — <what happens>` as its template, and the report
+ * the client reads showed it (truck-flote S63); an archived delta holds names
+ * the specification has since changed.
+ */
+export function scenarioTitles(projectDir: string): Map<string, string> {
   const titles = new Map<string, string>();
-  const files = [path.join(projectDir, "spec.md")];
-  const walk = (d: string) => {
+  const specs = path.join(projectDir, "docs", "specs");
+  const deltas: string[] = [];
+  const settled: string[] = [];
+  const walk = (d: string, into: string[], skip: (name: string) => boolean) => {
     let entries: fs.Dirent[] = [];
     try {
       entries = fs.readdirSync(d, { withFileTypes: true });
@@ -996,11 +1005,24 @@ function scenarioTitles(projectDir: string): Map<string, string> {
     }
     for (const e of entries) {
       const full = path.join(d, e.name);
-      if (e.isDirectory()) walk(full);
-      else if (e.name.endsWith(".md")) files.push(full);
+      if (e.isDirectory()) {
+        if (!skip(e.name)) walk(full, into, skip);
+      } else if (e.name === "spec.md") into.push(full);
     }
   };
-  walk(path.join(projectDir, "docs", "specs"));
+  const changes = path.join(specs, "changes");
+  let open: string[] = [];
+  try {
+    open = fs
+      .readdirSync(changes, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && e.name !== "archive")
+      .map((e) => e.name);
+  } catch {
+    open = [];
+  }
+  for (const change of open) walk(path.join(changes, change, "specs"), deltas, () => false);
+  walk(specs, settled, (name) => name === "changes");
+  const files = [...deltas, ...settled, path.join(projectDir, "spec.md")];
   for (const f of files) {
     for (const m of (read(f) || "").matchAll(
       /^#{3,5}\s+Scenario:\s*(SCN-[\w.]+)\s*[—–-]+\s*(.+)$/gm
