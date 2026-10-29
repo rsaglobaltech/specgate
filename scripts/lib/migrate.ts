@@ -160,8 +160,33 @@ const configStep: MigrationStep = {
   },
 };
 
+/**
+ * ADR-0043: who holds each role is a person's decision, so nothing is written;
+ * the report says what to name, and that approvals now gate the harness.
+ */
+const rolesStep: MigrationStep = {
+  id: "roles",
+  title: "Roles and approvals",
+  plan(projectDir) {
+    const file = path.join(projectDir, "harness.config.yaml");
+    const text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+    const manual: string[] = [];
+    if (!/^roles:/m.test(text)) {
+      manual.push(
+        "Name who holds product, architect and developer under `roles:` in harness.config.yaml (ADR-0043); until then a role is open to anyone."
+      );
+    }
+    if (!/^approvals:/m.test(text)) {
+      manual.push(
+        "The harness now builds a layered change only once its layers are approved: `specgate change approve <id> --layer discover|design|tasks` — or set `approvals: { required: never }` to keep 0.27's behaviour."
+      );
+    }
+    return { actions: [], manual };
+  },
+};
+
 /** The 1.0 migration, in order. A later 1.0 step is appended here. */
-export const MIGRATION_1_0: MigrationStep[] = [layersStep, configStep];
+export const MIGRATION_1_0: MigrationStep[] = [layersStep, configStep, rolesStep];
 
 export interface PlannedStep extends StepPlan {
   id: string;

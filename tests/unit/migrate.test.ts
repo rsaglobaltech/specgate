@@ -167,18 +167,27 @@ test("REQ-328 SCN-328a: the report of a real run", () => {
   const m = json(r).migrate;
   assert.deepEqual(
     m.steps.map((s: { id: string }) => s.id),
-    ["layers", "config"],
+    ["layers", "config", "roles"],
     "the steps are one ordered table"
   );
   assert.ok(
     m.manual.some((x: string) => /design\.md/.test(x)),
     m.manual.join(" | ")
   );
+  // ADR-0043: the roles are named by a person, and approvals now gate the harness.
+  assert.ok(
+    m.manual.some((x: string) => /roles:/.test(x)),
+    m.manual.join(" | ")
+  );
+  assert.ok(
+    m.manual.some((x: string) => /change approve/.test(x) && /required: never/.test(x)),
+    m.manual.join(" | ")
+  );
   // The table is the one place a later 1.0 step is added.
   const { MIGRATION_1_0 } = require("../../scripts/lib/migrate");
   assert.deepEqual(
     MIGRATION_1_0.map((s: { id: string }) => s.id),
-    ["layers", "config"]
+    ["layers", "config", "roles"]
   );
 });
 
