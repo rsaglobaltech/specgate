@@ -160,7 +160,8 @@ test("REQ-108 SCN-108a: propose opens a change with a delta skeleton", () => {
     assert.equal(r.status, 0, out(r));
     const change = path.join(p.dir, "docs/specs/changes/add-dynamic-pricing");
     for (const f of [
-      "proposal.md",
+      "discover.md",
+      "design.md",
       "tasks.md",
       "change.yaml",
       "specs/add-dynamic-pricing/spec.md",

@@ -25,7 +25,8 @@ specgate propose add-dynamic-pricing --capability pricing
   ✔  Change add-dynamic-pricing created · lite · REQ ids REQ-014…REQ-016 reserved
 
     + docs/specs/changes/add-dynamic-pricing/change.yaml
-    + docs/specs/changes/add-dynamic-pricing/proposal.md
+    + docs/specs/changes/add-dynamic-pricing/discover.md
+    + docs/specs/changes/add-dynamic-pricing/design.md
     + docs/specs/changes/add-dynamic-pricing/tasks.md
     + docs/specs/changes/add-dynamic-pricing/specs/pricing/spec.md
 
@@ -34,9 +35,11 @@ specgate propose add-dynamic-pricing --capability pricing
      after you write the delta, a test that names each requirement, and the code
 ```
 
-- **`lite`** is the default level of detail: a proposal, a task list and a
-  delta. `--full` also creates a `design.md` for changes that need a written
-  design.
+- **The layers** ([ADR-0041](specs/adr/0041-the-three-layers-of-a-change.md)):
+  `discover.md` is product's (context, use case, criteria `- AC-1: …`),
+  `design.md` the architect's (it names every criterion), `tasks.md` the
+  developer's (each task names its `REQ-NNN`). `change validate` warns on each
+  rule; a 0.27 change's `proposal.md` is its Discover.
 - **The delta** is `specs/<capability>/spec.md`: only the requirements this
   change adds, modifies or removes. It is named after the change unless
   `--capability` names the capability it belongs to.

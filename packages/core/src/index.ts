@@ -10,6 +10,7 @@
 // ── Domain ───────────────────────────────────────────────────────────────────
 export * from "./domain/ArchivePlan";
 export * from "./domain/ChangeTemplates";
+export * from "./domain/ChangeLayers";
 export * from "./domain/DeltaSpec";
 export * from "./domain/CucumberMessages";
 export * from "./domain/DeclaredArtifacts";

@@ -14,6 +14,12 @@
  * caller decides how to render it.
  */
 
+import {
+  LAYERED_SCHEMA,
+  templateDiscover,
+  templateLayeredDesign,
+  templateLayeredTasks,
+} from "../../packages/core/src/domain/ChangeLayers";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -92,11 +98,41 @@ const DESIGN_RULES = [
   "Record the decision and the alternatives rejected. If it is a decision the project will be asked about later, it wants an ADR instead.",
 ];
 
+// ADR-0041: the layers of a `layered` change, each with its owner.
+const DISCOVER_RULES = [
+  "Owner: product. The business context, the use case and the acceptance criteria — what and why, never how.",
+  "Number each criterion `- AC-1: …` under `## Acceptance criteria`: the design must answer every one.",
+  "No technology: frameworks, databases, APIs and queues belong in design.md (`layer_discover_technical`).",
+  "Once agreed, the story stays put: rewriting it during the design is reported (`layer_discover_rewritten`).",
+];
+
+const LAYERED_DESIGN_RULES = [
+  "Owner: the architect. Modules, mechanisms, channels, and the ADRs this touches.",
+  "Name each acceptance criterion of discover.md where it is answered (`AC-1 — …`), or validation reports `layer_design_misses_criterion`.",
+];
+
+const LAYERED_TASKS_RULES = [
+  "Owner: the developer. Each task is verifiable and names the requirement it delivers (`REQ-NNN`).",
+  "The specification tasks under `## 1. Specification` are the process and need no requirement.",
+];
+
 const ARTIFACT_RULES: Record<string, string[]> = {
+  discover: DISCOVER_RULES,
   proposal: PROPOSAL_RULES,
   specs: DELTA_RULES,
   design: DESIGN_RULES,
   tasks: TASKS_RULES,
+};
+
+/** A layered change's own rules and templates for the layers it shares with 0.27. */
+const LAYERED_RULES: Record<string, string[]> = {
+  design: LAYERED_DESIGN_RULES,
+  tasks: LAYERED_TASKS_RULES,
+};
+const LAYER_TEMPLATES: Record<string, (changeId: string) => string> = {
+  discover: (id) => templateDiscover(id),
+  design: (id) => templateLayeredDesign(id),
+  tasks: () => templateLayeredTasks(),
 };
 
 /** Pseudo-artefacts: not files to write, but stages to carry out. */
@@ -196,14 +232,18 @@ export function buildInstructions(
   const state = states.find((s) => s.id === artifact);
 
   const context: InstructionContext = { ...projectContext(projectDir) };
-  const proposal = readIfExists(path.join(p.change(changeId), "proposal.md"));
-  // The proposal is the intent every later artefact has to stay faithful to.
-  if (proposal && artifact !== "proposal") context.proposal = proposal;
+  // The Discover (a 0.27 change's proposal) is the intent every later
+  // artefact has to stay faithful to.
+  const proposal =
+    readIfExists(path.join(p.change(changeId), "discover.md")) ||
+    readIfExists(path.join(p.change(changeId), "proposal.md"));
+  if (proposal && artifact !== "proposal" && artifact !== "discover") context.proposal = proposal;
   if (Array.isArray(config.req_range) && config.req_range.length === 2) {
     context.reservedReqRange = config.req_range;
   }
   context.rigor = config.rigor;
   context.schema = config.schema || "spec-driven";
+  const layered = config.schema === LAYERED_SCHEMA;
   context.deltasWritten = listDeltas(projectDir, changeId).length;
 
   if (stage) {
@@ -226,8 +266,13 @@ export function buildInstructions(
     state: state ? state.status : "unknown",
     requires: state ? state.requires : [],
     unlocks: unlockedBy(artifact, artifacts),
-    template: templates[artifact] ? templates[artifact](changeId, projectDir) : null,
-    rules: ARTIFACT_RULES[artifact] || [],
+    template:
+      layered && LAYER_TEMPLATES[artifact]
+        ? LAYER_TEMPLATES[artifact](changeId)
+        : templates[artifact]
+          ? templates[artifact](changeId, projectDir)
+          : null,
+    rules: (layered && LAYERED_RULES[artifact]) || ARTIFACT_RULES[artifact] || [],
     context,
     nextCommand: `specgate change validate ${changeId}`,
   };

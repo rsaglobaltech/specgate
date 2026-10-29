@@ -138,6 +138,12 @@ export function draftingGuide(i: DraftingGuideInput): string {
       ? `- **Scenario ids:** \`${i.firstScenario}\` … \`${i.lastScenario}\`, one each, no others.`
       : `- **Scenario ids:** from \`${i.firstScenario}\` up, one each.`,
     "",
+    // ADR-0041: the change has three layers, each with its owner.
+    "**The layers of this change.** `discover.md` is product's: the business",
+    "context, the use case and its acceptance criteria (`- AC-1: …`), in the brief's",
+    "words and with no technology. `design.md` is the architect's and `tasks.md` the",
+    "developer's: leave them as they are — they are written after the review.",
+    "",
     ...cardsPart(i),
     "## 1. The requirements — `specs/" + i.module + "/spec.md`",
     "",

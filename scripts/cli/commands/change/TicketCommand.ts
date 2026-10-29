@@ -7,6 +7,11 @@
  * `scripts/alm/` (ADR-0021 §1).
  */
 
+import {
+  LAYERED_SCHEMA,
+  templateLayeredDesign,
+  templateDraftTasks,
+} from "../../../../packages/core/src/domain/ChangeLayers";
 import { spawnSync } from "node:child_process";
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
@@ -290,23 +295,31 @@ function ticketCopy(t: Ticket): string {
   ].join("\n");
 }
 
-function proposalFor(t: Ticket, changeId: string, capability: string): string {
+/**
+ * The change's Discover (ADR-0041), product's layer: the ticket's intent and
+ * its acceptance criteria, numbered for the design to answer.
+ */
+function discoverFor(t: Ticket, changeId: string, capability: string): string {
   return [
-    `# Proposal: ${changeId}`,
+    `# Discover: ${changeId}`,
+    "",
+    "> Owner: product — what the business needs and why. No technology here: the",
+    "> design says how.",
     "",
     `ticket: ${t.key}`,
     ...(t.url ? [`link: ${t.url}`] : []),
     ...(t.source ? [`source: ${t.source}`] : []),
     "",
-    "## Intent",
+    "## Context",
     "",
     ...(t.intent ? t.intent.split("\n").map((l) => `> ${l}`) : [`> ${t.summary}`]),
     "",
-    "## Scope",
-    "",
     `In scope: the acceptance criteria of ${t.key}, in the \`${capability}\` capability.`,
-    "",
     `Out of scope: anything ${t.key} does not state.`,
+    "",
+    "## Acceptance criteria",
+    "",
+    ...t.criteria.map((c, i) => `- AC-${i + 1}: ${c.replace(/\s+/g, " ").trim()}`),
     "",
   ].join("\n");
 }
@@ -354,7 +367,10 @@ function openChange(projectDir: string, t: Ticket, changeId: string, capability:
     };
     const values = [...new Set(t.criteria.flatMap((c) => statedValues(c)))];
     write("ticket.md", copy);
-    write("proposal.md", proposalFor(t, changeId, capability));
+    // REQ-288: the three layers, the ticket's criteria as the Discover's.
+    write("discover.md", discoverFor(t, changeId, capability));
+    write("design.md", templateLayeredDesign(changeId));
+    write("tasks.md", templateDraftTasks());
     const questions = questionsFor(t);
     if (questions) write("questions.md", questions);
     write(
@@ -376,6 +392,7 @@ function openChange(projectDir: string, t: Ticket, changeId: string, capability:
     );
     const config = {
       ...DEFAULT_CONFIG,
+      schema: LAYERED_SCHEMA,
       created: new Date().toISOString().slice(0, 10),
       req_range: reqRange,
     };
