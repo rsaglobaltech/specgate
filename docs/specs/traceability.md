@@ -210,6 +210,7 @@
 | REQ-278 | SCN-278a | `features/harness/REQ-278.feature` | - | - | - | - | - | tests/unit/agent-stream.test.ts | Implemented |
 | REQ-279 | SCN-279a | `features/harness/REQ-279.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
 | REQ-280 | SCN-280a | `features/studio/REQ-280.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
+| REQ-281 | SCN-281a | `features/trusted-gate/REQ-281.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

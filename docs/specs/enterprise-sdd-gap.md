@@ -175,28 +175,59 @@ mueve Jira Automation desde ramas y PRs.
 - `adopt --scope <ruta>`: specs solo para la zona que se toca.
 - Aviso cuando un spec generado no cabe en una revisión (líneas, requisitos).
 
+## 11. El Live del workspace
+
+**Hoy:** `/live` muestra el harness de un repo: su cola, el paso del gate y el agente.
+
+**Falta**
+- Una vista con los harness de N repos en paralelo: por repo, el requisito, el paso
+  del gate y lo que hace su agente.
+- El estado de la historia que cruza repos: qué sub-changes van hechos, cuáles en
+  curso y cuáles bloqueados (esperando el contrato de otro repo).
+- El coste agregado por historia y por repo.
+
+## Cómo se prueba la línea 1.0
+
+Como las 0.27 se probaron en truck-flote (runs 1–8, monorepo), cada RC se prueba
+desde cero en un proyecto de **microservicios** con el mismo brief, para comparar:
+
+| Repo | Contenido |
+| --- | --- |
+| `truck-flote-workspace` | El brief, `specgate.workspace.yaml` y los principios de la organización |
+| `truck-flote-fleet` | API de flota (Spring) |
+| `truck-flote-tracking` | API de tracking y telemetría (Spring) |
+| `truck-flote-web` | Dashboard y portal del cliente (Next.js) |
+| `truck-flote-contracts` | OpenAPI y AsyncAPI compartidos (pack `contracts`) |
+
+**Criterio de parada:** una run sin problemas altos ni medios en la que una historia
+que cruza tres repos ("el cliente sigue su envío") se parte en sub-changes, cada
+repo pasa su gate, el contrato entre repos se comprueba, la historia se cierra
+cuando todos terminan, y el Live del workspace muestra los tres harness a la vez.
+
+forja genera hoy un monorepo: cada servicio se genera con su `forja init`, o forja
+gana un modo `--workspace` (forja 2.0, también en rama aparte).
+
 ## Publicar la línea 1.0 sin tocar `main`
 
 - **Rama:** `next/1.0`, cortada de develop en 0.27.9. Se trae develop cuando haya
   arreglos de 0.27.x.
 - **Versiones:** `1.0.0-rc.N`.
-- **Hace falta antes de la primera RC:** hoy un tag `v*` empujado publica en npm
-  **siempre como `latest`** (`publish-npm.yml`, `Set publish settings`). Un tag
-  `v1.0.0-rc.1` instalaría la RC a todo el mundo. La rama tiene que publicar una
-  versión con `-` bajo el dist-tag `next` (y la imagen Docker sin `latest`), o
-  publicarse solo por `workflow_dispatch` con `dist_tag: next`.
+- **Hecho (REQ-281):** un tag `v*` empujado publicaba en npm siempre como `latest`.
+  Ahora una versión con `-` se publica bajo el dist-tag `next` (npm y GitHub
+  Packages) y su imagen Docker lleva solo su versión, nunca `latest`.
 - **Migración:** `specgate migrate 1.0` para los puntos que rompen (1, 2, 3, 5),
   con `--dry-run`, y una guía `docs/migrating-to-1.0.md`.
 - **CHANGELOG:** una sección `1.0.0` con "Breaking" por cada cambio de formato.
 
 ## Orden recomendado
 
-1. **Publicar las RC con `next`** (requisito para todo lo demás).
+1. ~~**Publicar las RC con `next`**~~ — hecho, REQ-281.
 2. **Discover → Design → Tasks** (2): cambia el formato, mejor primero.
 3. **Workspace multi-repo** (1), con ids calificados.
 4. **Backlog por fases** (4) sobre el workspace.
 5. **Roles y aprobaciones** (5) y **harness por rol** (3).
 6. **Medir los dos huecos** (6): barato, da las métricas.
-7. Steering (7), deriva (8), estilos (9) y brownfield acotado (10).
+7. **Live del workspace** (11), antes de la primera prueba de microservicios.
+8. Steering (7), deriva (8), estilos (9) y brownfield acotado (10).
 
-Cada punto entra como change con sus requisitos (desde REQ-281), test primero.
+Cada punto entra como change con sus requisitos (desde REQ-282), test primero.

@@ -116,7 +116,14 @@ jobs:
         id: publish_settings
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+            # REQ-281: a release candidate (1.0.0-rc.1) is never what
+            # `npm install` gives by default; only a final version is latest.
+            VERSION="${{ steps.package_metadata.outputs.version }}"
+            if [[ "$VERSION" == *-* ]]; then
+              echo "dist_tag=next" >> "$GITHUB_OUTPUT"
+            else
+              echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+            fi
             echo "dry_run=false" >> "$GITHUB_OUTPUT"
           else
             echo "dist_tag=${{ github.event.inputs.dist_tag }}" >> "$GITHUB_OUTPUT"

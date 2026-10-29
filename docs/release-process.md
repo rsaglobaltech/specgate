@@ -199,9 +199,10 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
 ## Pre-releases
 
-Run `publish-github-packages.yml` manually (`workflow_dispatch`) with
-`dist_tag: beta` and a version like `0.2.0-beta.1`. Pre-releases never go to
-the public npm registry with the `latest` tag.
+A version with a prerelease part (`1.0.0-rc.1`, cut from the `next/1.0` branch,
+never from `main`) is tagged like any release: the workflows publish it under
+the dist-tag `next` and tag its image with the version only, never `latest`
+(REQ-281). Its GitHub release is created with `--prerelease`.
 
 ## Before you tag — the gate
 
