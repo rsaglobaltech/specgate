@@ -211,6 +211,11 @@
 | REQ-279 | SCN-279a | `features/harness/REQ-279.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
 | REQ-280 | SCN-280a | `features/studio/REQ-280.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
 | REQ-281 | SCN-281a | `features/trusted-gate/REQ-281.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
+| REQ-300 | SCN-300a | `features/harness/REQ-300.feature` | - | - | - | - | - | tests/unit/harness-gaps.test.ts | Implemented |
+| REQ-301 | SCN-301a | `features/harness/REQ-301.feature` | - | - | - | - | - | tests/unit/harness-gaps.test.ts | Implemented |
+| REQ-302 | SCN-302a | `features/harness/REQ-302.feature` | - | - | - | - | - | tests/unit/harness-gaps.test.ts | Implemented |
+| REQ-303 | SCN-303a | `features/harness/REQ-303.feature` | - | - | - | - | - | tests/unit/harness-gaps.test.ts | Implemented |
+| REQ-304 | SCN-304a | `features/studio/REQ-304.feature` | - | - | - | - | - | tests/unit/harness-gaps.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

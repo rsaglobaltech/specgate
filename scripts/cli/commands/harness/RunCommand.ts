@@ -1559,7 +1559,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     let agentMs = 0;
     /** Which roles ran this attempt, in order — the run record's answer to "who did this". */
     const profilesUsed: string[] = [];
-    const record = (stage: AttemptRecord["endedAt"]) => {
+    const record = (stage: AttemptRecord["endedAt"], gateStage?: string) => {
       event({
         type: "attempt",
         state: "end",
@@ -1572,6 +1572,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         agentMs,
         totalMs: Date.now() - attemptStart,
         profiles: [...profilesUsed],
+        // REQ-301: which stage rejected it is what says what to strengthen.
+        ...(gateStage ? { gateStage } : {}),
       });
       ledgerAttempts(attemptLog);
     };
@@ -1787,7 +1789,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           ? `  not retrying: fix the check (harness.config.yaml) and run it again`
           : `  not retrying: the agent cannot fix the machine`
       );
-      record("check");
+      record("check", gate.stage);
       stopRetrying = true;
       break;
     }
@@ -1812,11 +1814,11 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           `${req.requirement}: the failure is in ${specFiles.join(", ")}, which the agent may not edit`
         );
         warn(`  not retrying; fix the specification and run it again`);
-        record("spec");
+        record("spec", gate.stage);
         stopRetrying = true;
         break;
       }
-      record("gate");
+      record("gate", gate.stage);
       continue;
     }
 

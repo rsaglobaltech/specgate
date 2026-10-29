@@ -77,6 +77,34 @@ specgate harness report --mark-false-failure REQ-004 --reason "the test relied o
 
 The marks are kept in `.harness/false-failures.jsonl`.
 
+## Where the gap was
+
+A requirement that needed rework fell into one of two gaps:
+
+| Gap | What happened | What to strengthen |
+| --- | --- | --- |
+| **spec → implementation** | The spec was clear and the code diverged | The validation: the check that caught it |
+| **intent → spec** | The spec missed part of the use case | The elicitation: the module's questions, asked earlier |
+
+The report suggests one for each requirement from what it recorded. A
+rejection the agent fixed on a later attempt reads as spec → implementation,
+naming the stage that rejected it (`pmd`, `test command`). A requirement that
+changed after review reads as intent → spec: a question that blocked it was
+answered, a review note names it, a change modifies it, or the gate failed on
+the specification itself. When both apply, intent → spec wins.
+
+A person's word wins over any suggestion:
+
+```bash
+specgate harness report --classify REQ-010 --gap intent-spec --reason "the brief never said a truck can carry two drivers"
+```
+
+The section shows each gap's share of the requirements in the ledger, per
+module when there is more than one, and what to strengthen: the stage that
+caught most spec → implementation gaps, and the module with most intent →
+spec gaps. Classifications are kept in `.harness/gaps.jsonl`; `--json` carries
+the section as `gaps`, and the studio's report shows both shares.
+
 ## The records stay on your machine
 
 `.harness/runs/` contains its own `.gitignore` that ignores every file in the

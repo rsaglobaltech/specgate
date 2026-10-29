@@ -25,6 +25,8 @@ import { frontMatter } from "../draft/brief-setup";
 import { DEFAULT_BRIEF, draftReport, moduleStatus } from "../cli/commands/spec/DraftCommand";
 import { allQuestions, waiting } from "./clarification";
 import { liveMatrix } from "./live-detail";
+import { summariseRuns, type RunFile } from "../../packages/core/src/domain/HarnessReport";
+import { intentEvidence, readGapMarks } from "../harness/gap-evidence";
 import { readLive } from "./live-model";
 import { approvedOn } from "./change-review";
 import { buildView, drafts, gate } from "./studio-app";
@@ -981,6 +983,8 @@ export interface ReportView {
   }>;
   answered: number;
   assumptions: number;
+  /** The two gaps as `harness report` computes them, or null with no ledger (REQ-304). */
+  gaps: { specImpl: number | null; intentSpec: number | null } | null;
 }
 
 /**
@@ -1031,6 +1035,29 @@ export function scenarioTitles(projectDir: string): Map<string, string> {
     }
   }
   return titles;
+}
+
+/** Both gaps' shares, from the same ledger and evidence `harness report` reads (REQ-304). */
+function gapRates(
+  projectDir: string,
+  runs: RunFile[],
+  matrix: ReadonlyArray<{ requirement: string; group: string }>
+): ReportView["gaps"] {
+  if (runs.length === 0) return null;
+  const moduleOf: Record<string, string> = {};
+  for (const r of matrix) if (r.group) moduleOf[r.requirement] = r.group;
+  const g = summariseRuns(
+    runs,
+    [],
+    {},
+    {
+      marks: readGapMarks(projectDir),
+      evidence: intentEvidence(projectDir),
+      moduleOf,
+    }
+  ).gaps;
+  if (g.requirements === 0) return null;
+  return { specImpl: g.specImpl.rate, intentSpec: g.intentSpec.rate };
 }
 
 /** What was built, how it was proven, and what is missing (REQ-217). */
@@ -1141,6 +1168,7 @@ export function report(projectDir: string, withGate = true): ReportView {
     answered: questions.filter((q) => q.answered).length,
     assumptions,
     quality: qualitySummary,
+    gaps: gapRates(projectDir, records as RunFile[], matrix),
   };
 }
 
