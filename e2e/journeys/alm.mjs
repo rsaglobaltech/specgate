@@ -261,7 +261,7 @@ export default [
         const issue = (await jira.json("/__issues")).find((i) => i.key === seeded.key);
         t.expect(issue && issue.done, "the ticket is moved to done", phase);
       } finally {
-        await jira.close();
+        jira.stop();
       }
     },
   },
