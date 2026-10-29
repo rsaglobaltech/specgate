@@ -10,7 +10,7 @@ name: E2E
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'next/**']
   pull_request:
   workflow_dispatch:
   workflow_call:
