@@ -25,6 +25,14 @@ import { error } from "../lib/diagnostics";
 import { RUNS_DIR } from "./run";
 import { readCostHints } from "../../packages/core/src/infrastructure/HarnessConfigFile";
 import {
+  GAPS,
+  type Gap,
+  type GapInput,
+  type GapSummary,
+} from "../../packages/core/src/domain/HarnessGaps";
+import { appendGapMark, intentEvidence, readGapMarks } from "./gap-evidence";
+import { liveMatrix } from "../lib/live-detail";
+import {
   FalseFailureMark,
   HarnessReportSummary,
   RunFile,
@@ -54,6 +62,9 @@ export interface HarnessReportOptions {
   last: number | null;
   /** `--mark-false-failure REQ-NNN`: record that the gate was wrong about it. */
   markFalseFailure: string | null;
+  /** `--classify REQ-NNN --gap …`: which gap a requirement fell into (REQ-300). */
+  classify: string | null;
+  gap: Gap | null;
   reason: string;
 }
 
@@ -69,7 +80,11 @@ function usage(): void {
       `                          Record that the gate rejected good work. Nothing the\n` +
       `                          harness stores can tell a real failure from a false\n` +
       `                          one — only a person can, so the ratio stays unknown\n` +
-      `                          until somebody marks one.\n\n`
+      `                          until somebody marks one.\n` +
+      `    --classify <REQ-NNN> --gap spec-impl|intent-spec --reason "..."\n` +
+      `                          Say which gap a requirement fell into: the spec was\n` +
+      `                          clear and the code diverged (spec-impl), or the spec\n` +
+      `                          missed part of the use case (intent-spec).\n\n`
   );
 }
 
@@ -79,8 +94,11 @@ export function parseArgs(argv: string[]): HarnessReportOptions {
     json: wantsJson(argv),
     last: null,
     markFalseFailure: null,
+    classify: null,
+    gap: null,
     reason: "",
   };
+  let gapWord = "";
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
@@ -94,6 +112,12 @@ export function parseArgs(argv: string[]): HarnessReportOptions {
         throw new Error(`--mark-false-failure expects REQ-NNN, got: ${req}`);
       }
       opts.markFalseFailure = req;
+    } else if (a === "--classify" && argv[i + 1]) {
+      const req = argv[++i];
+      if (!/^REQ-\d+$/.test(req)) throw new Error(`--classify expects REQ-NNN, got: ${req}`);
+      opts.classify = req;
+    } else if (a === "--gap" && argv[i + 1]) {
+      gapWord = argv[++i];
     } else if (a === "--reason" && argv[i + 1]) {
       opts.reason = argv[++i];
     } else if (a === "--json" || a === "--format") {
@@ -109,6 +133,17 @@ export function parseArgs(argv: string[]): HarnessReportOptions {
   // of this metric is that a person looked; the reason is what they saw.
   if (opts.markFalseFailure && !opts.reason.trim()) {
     throw new Error('--mark-false-failure needs --reason "why the gate was wrong"');
+  }
+  // REQ-300: a classification is a person's judgement; the reason is what they saw.
+  if (opts.classify || gapWord) {
+    if (!opts.classify) throw new Error("--gap needs --classify REQ-NNN");
+    if (!(GAPS as readonly string[]).includes(gapWord)) {
+      throw new Error(`--gap is spec-impl or intent-spec, got: ${gapWord || "nothing"}`);
+    }
+    opts.gap = gapWord as Gap;
+    if (!opts.reason.trim()) {
+      throw new Error('--classify needs --reason "what was missed, and where"');
+    }
   }
   return opts;
 }
@@ -159,9 +194,53 @@ export function appendFalseFailure(projectDir: string, mark: FalseFailureMark): 
 export function summarise(
   runs: RunFile[],
   falseFailures: FalseFailureMark[] = [],
-  costPerRunHint: Record<string, number> = {}
+  costPerRunHint: Record<string, number> = {},
+  gapInput: GapInput = {}
 ): HarnessReportSummary {
-  return summariseRuns(runs, falseFailures, costPerRunHint);
+  return summariseRuns(runs, falseFailures, costPerRunHint, gapInput);
+}
+
+/**
+ * What the project says about the gaps: a person's classifications, what
+ * changed after review, and each requirement's module (REQ-301, REQ-302).
+ */
+export function gapInputFor(projectDir: string): GapInput {
+  const moduleOf: Record<string, string> = {};
+  try {
+    for (const r of liveMatrix(projectDir)) if (r.group) moduleOf[r.requirement] = r.group;
+  } catch {
+    /* a project with no matrix yet: every requirement reads as "spec" */
+  }
+  return { marks: readGapMarks(projectDir), evidence: intentEvidence(projectDir), moduleOf };
+}
+
+function renderGaps(g: GapSummary): string {
+  if (g.requirements === 0) return "";
+  const share = (n: { count: number; rate: number | null }) =>
+    `${String(n.count).padStart(3)}  ${c.dim}${n.rate === null ? "—" : `${Math.round(n.rate * 100)}%`} of ${g.requirements}${c.reset}`;
+  const lines = [
+    "\n" + ui.section("Where the gap was"),
+    `    ${"spec → implementation".padEnd(26)}${share(g.specImpl)}` +
+      (g.strengthen.specImpl ? `  ${c.dim}strengthen: ${g.strengthen.specImpl}${c.reset}` : "") +
+      "\n",
+    `    ${"intent → spec".padEnd(26)}${share(g.intentSpec)}` +
+      (g.strengthen.intentSpec
+        ? `  ${c.dim}strengthen: the questions of ${g.strengthen.intentSpec}${c.reset}`
+        : "") +
+      "\n",
+  ];
+  if (g.byModule.length > 1) {
+    for (const m of g.byModule) {
+      lines.push(
+        `      ${c.dim}${m.module.padEnd(24)}${m.specImpl} spec → impl · ${m.intentSpec} intent → spec of ${m.requirements}${c.reset}\n`
+      );
+    }
+  }
+  lines.push(
+    `    ${c.dim}${g.marked} classified by a person, ${g.suggested} suggested — ` +
+      `specgate harness report --classify REQ-NNN --gap spec-impl|intent-spec --reason "..."${c.reset}\n`
+  );
+  return lines.join("");
 }
 
 function human(ms: number): string {
@@ -270,6 +349,8 @@ function render(summary: HarnessReportSummary): void {
     );
   }
 
+  process.stdout.write(renderGaps(summary.gaps));
+
   if (summary.worst.length > 0) {
     process.stdout.write("\n" + ui.section("Slowest"));
     for (const r of summary.worst) {
@@ -321,6 +402,21 @@ export function main(argv: string[]): void {
     );
   }
 
+  if (opts.classify && opts.gap) {
+    appendGapMark(projectDir, {
+      requirement: opts.classify,
+      gap: opts.gap,
+      reason: opts.reason.trim(),
+      markedAt: new Date().toISOString(),
+    });
+    if (!opts.json) {
+      process.stdout.write(
+        `\n  ${c.green}✔${c.reset}  ${opts.classify} classified as ${opts.gap === "spec-impl" ? "spec → implementation" : "intent → spec"}.\n` +
+          `     ${c.dim}${opts.reason.trim()}${c.reset}\n\n`
+      );
+    }
+  }
+
   const runs = readRuns(projectDir, opts.last);
   if (runs.length === 0) {
     io.emit({ report: summarise([], []), status: [] }, () => {
@@ -346,7 +442,12 @@ export function main(argv: string[]): void {
     /* a broken profiles file is `harness run`'s problem, not this read-only command's */
   }
 
-  const summary = summarise(runs, readFalseFailures(projectDir), costHints);
+  const summary = summarise(
+    runs,
+    readFalseFailures(projectDir),
+    costHints,
+    gapInputFor(projectDir)
+  );
   io.emit({ report: summary, status: [] }, () => render(summary));
   process.exit(EXIT.OK);
 }

@@ -30,6 +30,7 @@
 
 import { summariseQuality, type QualitySummary, type RecordedCheck } from "./QualitySummary";
 import { estimateRunCost } from "./RunBudget";
+import { summariseGaps, type GapAttempt, type GapInput, type GapSummary } from "./HarnessGaps";
 
 /** One attempt, as the ledger records it. */
 export interface AttemptRow {
@@ -38,6 +39,8 @@ export interface AttemptRow {
   agentMs?: number;
   totalMs?: number;
   profiles?: string[];
+  /** The gate stage that rejected it, e.g. "quality check: pmd" (REQ-301). */
+  gateStage?: string;
 }
 
 /** One requirement's outcome within a run. */
@@ -142,6 +145,8 @@ export interface HarnessReportSummary {
   realFailureRate: number | null;
   /** What the quality checks said about the requirements delivered (REQ-229). */
   quality: QualitySummary;
+  /** Spec → implementation and intent → spec (REQ-300..REQ-303). */
+  gaps: GapSummary;
 }
 
 /** How an attempt ending is worth describing to a person. */
@@ -163,7 +168,8 @@ export const STAGE_LABELS: Readonly<Record<string, string>> = Object.freeze({
 export function summariseRuns(
   runs: readonly RunFile[],
   falseFailures: readonly FalseFailureMark[] = [],
-  costPerRunHint: Readonly<Record<string, number>> = {}
+  costPerRunHint: Readonly<Record<string, number>> = {},
+  gapInput: GapInput = {}
 ): HarnessReportSummary {
   // REQ-269: every run's time counts, each requirement once, at its latest
   // outcome. Two runs of REQ-002 — failed, then passed — read "1 of 2 passed"
@@ -267,7 +273,25 @@ export function summariseRuns(
         ? (failedRows.length - falseCount) / failedRows.length
         : null,
     quality: summariseQuality(runs),
+    gaps: summariseGaps(
+      current.map((r) => r.requirement),
+      attemptsByRequirement(rows),
+      gapInput
+    ),
   };
+}
+
+/** Each requirement's attempts across every run, oldest first. */
+function attemptsByRequirement(rows: readonly ResultRow[]): Map<string, GapAttempt[]> {
+  const out = new Map<string, GapAttempt[]>();
+  for (const row of rows) {
+    const list = out.get(row.requirement) ?? [];
+    for (const a of row.attemptLog ?? []) {
+      if (a && a.endedAt) list.push({ endedAt: a.endedAt, gateStage: a.gateStage });
+    }
+    out.set(row.requirement, list);
+  }
+  return out;
 }
 
 /** The ledger of human marks, one JSON object per line. */

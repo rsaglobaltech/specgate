@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **The two gaps** (REQ-300..REQ-304): `harness report` says, for each requirement that needed rework, whether the spec was clear and the code diverged (spec → implementation) or the spec missed part of the use case (intent → spec). It suggests one from what it recorded — a rejection the agent fixed, naming the check that caught it; an answered question, a review note or a modified delta — and a person sets it with `--classify REQ-NNN --gap spec-impl|intent-spec --reason "..."`. The report shows both shares overall and per module and what to strengthen; the studio's report shows both shares. The run ledger now records the gate stage that rejected each attempt.
+
 ### Fixed
 
 - **A release candidate is never installed by default** (REQ-281): every publish workflow treated a pushed `v*` tag as `latest`, so a `v1.0.0-rc.1` would have become the default `npm install` and the `latest` image. A version with a prerelease part is now published under the dist-tag `next`, and its image is tagged with its version only.

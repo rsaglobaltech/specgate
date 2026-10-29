@@ -190,7 +190,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       stAttempt:"en cada intento", stEnd:"al final", stCi:"en CI",
       q5:"5 · ¿Qué nivel de calidad?", qlBasic:"Básico (recomendado)", qlBasicP:"Secretos, dependencias, tests que cubren lo cambiado y análisis estático. Todo en Docker.",
       qlStrict:"Estricto", qlStrictP:"Además: tests de mutación, complejidad y SAST. Más lento, más exigente.", qlNone:"Ninguno por ahora", qlNoneP:"Se puede activar después en Proyecto.",
-      rQuality:"Calidad del código", rQualityP:"cobertura C % · mutación M %", covShort:"cobertura", mutShort:"mutación"},
+      rQuality:"Calidad del código", rQualityP:"cobertura C % · mutación M %", covShort:"cobertura", mutShort:"mutación", rGaps:"Dónde se desvió", rGapsP:"spec → código S % · intención → spec I %"},
     en: {route:"Route", project:"Project", brief:"Brief", drafts:"Drafts", report:"Report",
       home:"Home", questions:"Questions", review:"Review", build:"Build", simple:"Simple", adv:"Advanced",
       routeTitle:"Your project, step by step", routeIntro:"From the brief to the app built and proven. Each step opens once the one before is ready; you can go back to any.",
@@ -260,7 +260,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       stAttempt:"every attempt", stEnd:"at the end", stCi:"in CI",
       q5:"5 · Which quality level?", qlBasic:"Basic (recommended)", qlBasicP:"Secrets, dependencies, tests that cover the change and static analysis. All in Docker.",
       qlStrict:"Strict", qlStrictP:"Also: mutation tests, complexity and SAST. Slower, stricter.", qlNone:"None for now", qlNoneP:"It can be turned on later in Project.",
-      rQuality:"Code quality", rQualityP:"coverage C % · mutation M %", covShort:"coverage", mutShort:"mutation"}
+      rQuality:"Code quality", rQualityP:"coverage C % · mutation M %", covShort:"coverage", mutShort:"mutation", rGaps:"Where it diverged", rGapsP:"spec → code S % · intent → spec I %"}
   };
   function load(k, d){ try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
   function save(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
@@ -911,6 +911,9 @@ export function studioAppPage(projectName: string, token = ""): string {
   }
 
   // ── Report (REQ-217) ────────────────────────────────────────────────────
+  // REQ-304: the two gaps, as harness report computes them.
+  function pctNum(v){ return v === null || v === undefined ? "—" : String(Math.round(v * 100)); }
+  function pctOrDash(v){ return v === null || v === undefined ? "—" : Math.round(v * 100) + "%"; }
   function viewReport(r){
     var m = $("view"); m.replaceChildren();
     var top = el("section"); flex(top); top.style.alignItems = "flex-end"; top.style.justifyContent = "space-between";
@@ -921,7 +924,7 @@ export function studioAppPage(projectName: string, token = ""): string {
     var dl = el("a", "go", t("download")); dl.href = "report.html"; dl.style.display = "inline-flex"; dl.style.alignItems = "center"; dl.style.color = "#fff";
     acts.append(pdf, dl); top.append(g, acts); m.appendChild(top);
     var s = el("section", "stats");
-    [[t("rBuilt"), r.built + " " + t("sOf") + " " + r.total, t("reqs"), ""], [t("rExamples"), String(r.scenarios), "", "var(--pass)"], [t("rGate"), r.gate.ok ? t("rGateOk") : t("rGateBad"), r.gate.findings[0] || "", r.gate.ok ? "var(--pass)" : "var(--fail)"], [t("rCost"), r.cost === null ? "—" : "$" + r.cost.toFixed(2), r.minutes + " min", ""]].concat(r.quality && r.quality.measured ? [[t("rQuality"), (r.quality.coverage === null ? "—" : r.quality.coverage + "%"), fill("rQualityP", {C: r.quality.coverage === null ? "—" : r.quality.coverage, M: r.quality.mutation === null ? "—" : r.quality.mutation}), "var(--pass)"]] : []).forEach(function(x){
+    [[t("rBuilt"), r.built + " " + t("sOf") + " " + r.total, t("reqs"), ""], [t("rExamples"), String(r.scenarios), "", "var(--pass)"], [t("rGate"), r.gate.ok ? t("rGateOk") : t("rGateBad"), r.gate.findings[0] || "", r.gate.ok ? "var(--pass)" : "var(--fail)"], [t("rCost"), r.cost === null ? "—" : "$" + r.cost.toFixed(2), r.minutes + " min", ""]].concat(r.quality && r.quality.measured ? [[t("rQuality"), (r.quality.coverage === null ? "—" : r.quality.coverage + "%"), fill("rQualityP", {C: r.quality.coverage === null ? "—" : r.quality.coverage, M: r.quality.mutation === null ? "—" : r.quality.mutation}), "var(--pass)"]] : []).concat(r.gaps ? [[t("rGaps"), pctOrDash(r.gaps.specImpl) + " · " + pctOrDash(r.gaps.intentSpec), fill("rGapsP", {S: pctNum(r.gaps.specImpl), I: pctNum(r.gaps.intentSpec)}), ""]] : []).forEach(function(x){
       var d = el("div", "stat"), b = el("b", "", x[1]); if (x[3]) b.style.color = x[3]; d.append(el("span", "muted small", x[0]), b); if (x[2]) d.appendChild(el("span", "small muted", x[2])); s.appendChild(d);
     });
     m.appendChild(s);

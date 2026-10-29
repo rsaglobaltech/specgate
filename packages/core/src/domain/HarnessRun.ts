@@ -138,6 +138,8 @@ export interface AttemptRecord {
    * the project.
    */
   profiles?: string[];
+  /** The gate stage that rejected it, for `gate`, `spec` and `check` (REQ-301). */
+  gateStage?: string;
 }
 
 /**
