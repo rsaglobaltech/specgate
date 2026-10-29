@@ -9,6 +9,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **A workspace of repositories** (REQ-290..298, ADR-0041): `specgate.workspace.yaml` names the repositories of one product, and `specgate workspace init|status|check|propose` say where the product stands, run every repository's gate at once, resolve ids qualified with their repository (`tracking:REQ-012`), hold a requirement back until the one it depends on in another repository is delivered, and split a business story into a change in each repository it touches — done when every one is archived. See [docs/workspace.md](docs/workspace.md).
+
+### Breaking
+
+- **`depends=<repo>:REQ-NNN` is a dependency on another repository** (REQ-294): inside a repository it is no longer an `unknown_dependency`; the workspace judges it.
+
 ### Fixed
 
 - **A release candidate is never installed by default** (REQ-281): every publish workflow treated a pushed `v*` tag as `latest`, so a `v1.0.0-rc.1` would have become the default `npm install` and the `latest` image. A version with a prerelease part is now published under the dist-tag `next`, and its image is tagged with its version only.

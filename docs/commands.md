@@ -141,6 +141,10 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate quality doctor [--pull]`      | The same, with what is missing; `--pull` fetches the Docker images now.     | `specgate quality --help`                      |
 | `specgate quality run [--stage]`        | Runs the checks of a stage: attempt, end or ci.                             | `specgate quality --help`                      |
 | `specgate quality baseline`             | Records today's SARIF findings as debt: only new ones fail from then on.    | `specgate quality --help`                      |
+| `specgate workspace init`               | Names the repositories of one product in `specgate.workspace.yaml`.         | [Workspace](workspace.md)                      |
+| `specgate workspace status`             | Each repository's requirements, branch and gate, and each story.            | [Workspace](workspace.md)                      |
+| `specgate workspace check`              | Every repository's gate, qualified ids and cross-repository dependencies.   | [Workspace](workspace.md)                      |
+| `specgate workspace propose <story>`    | A business story, and a change for it in each repository named.             | [Workspace](workspace.md)                      |
 | `specgate check --ci`                   | The gate in CI: also the `ci` checks, and a check that cannot run fails.    | [Validating](validating.md)                    |
 | `specgate verify`                       | For OpenSpec projects: fails while a done scenario has no test naming it.   | [Already on OpenSpec](openspec.md)             |
 | `specgate report`                       | A spec-coverage dashboard as one HTML file.                                 | `specgate report --help`                       |

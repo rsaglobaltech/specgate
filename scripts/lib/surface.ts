@@ -276,6 +276,18 @@ export const SURFACE: Command[] = [
     json: { key: "check", gate: true, args: "[dir]" },
   },
   {
+    name: "workspace",
+    // ADR-0041: runs every member's own gate; a person's view, not an MCP tool yet.
+    mcp: false,
+    script: ["workspace.js"],
+    help: {
+      group: "core",
+      icon: "🧩",
+      summary: "The repositories of one product: status, check, a story across them (ADR-0041).",
+    },
+    json: { key: "workspace", gate: true, args: "<init|status|check|propose>" },
+  },
+  {
     name: "quality",
     mcp: false,
     script: ["quality.js"],

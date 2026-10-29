@@ -211,6 +211,15 @@
 | REQ-279 | SCN-279a | `features/harness/REQ-279.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
 | REQ-280 | SCN-280a | `features/studio/REQ-280.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
 | REQ-281 | SCN-281a | `features/trusted-gate/REQ-281.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
+| REQ-290 | SCN-290a | `features/workspace/REQ-290.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-291 | SCN-291a | `features/workspace/REQ-291.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-292 | SCN-292a | `features/workspace/REQ-292.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-293 | SCN-293a | `features/workspace/REQ-293.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-294 | SCN-294a | `features/workspace/REQ-294.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-295 | SCN-295a | `features/workspace/REQ-295.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-296 | SCN-296a | `features/workspace/REQ-296.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-297 | SCN-297a | `features/workspace/REQ-297.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
+| REQ-298 | SCN-298a | `features/workspace/REQ-298.feature` | - | - | - | - | - | tests/unit/workspace.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
