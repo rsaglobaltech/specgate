@@ -11,6 +11,7 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Added
 
+- **`specgate migrate 1.0`** (REQ-325..REQ-329): on a committed 0.27 project, moves each open change into the three layers — `proposal.md` to `discover.md` word for word, a `design.md` drafted from it, `tasks.md` kept, `schema: layered` — never touching the archive, and writes `docs/specs/migration-1.0.md` with what it did and what is left to a person. `--dry-run` changes nothing and prints the same report; a second run does nothing; a dirty tree is refused. `specgate status` names the command while an open change is still written for 0.27. Every breaking change, and how to stay on 0.27: [Migrating to 1.0](docs/migrating-to-1.0.md).
 - **The two gaps** (REQ-300..REQ-304): `harness report` says, for each requirement that needed rework, whether the spec was clear and the code diverged (spec → implementation) or the spec missed part of the use case (intent → spec). It suggests one from what it recorded — a rejection the agent fixed, naming the check that caught it; an answered question, a review note or a modified delta — and a person sets it with `--classify REQ-NNN --gap spec-impl|intent-spec --reason "..."`. The report shows both shares overall and per module and what to strengthen; the studio's report shows both shares. The run ledger now records the gate stage that rejected each attempt.
 - **The board follows the change** (REQ-305): `alm sync` moves each change's ticket — its `ticket:` or `origin: alm:<key>` — to the state of its phase: `proposed`, `building` once a requirement has a `harness/REQ-NNN` branch or is Implemented, `archived`. Each provider has a default (Jira status category, Azure Boards state, a GitHub label or a closed issue, a Linear state type) and `phases:` in `alm.config.yaml` names a board's own. A move already made is not made again (`.specops/alm-phases.json`), and `--dry-run` prints each move. `mirror: false` keeps `alm sync` from creating an issue per requirement where the tickets are the source.
 - **What the ticket gains comes back as notes** (REQ-306): `alm pull` brings each open change's new comments, and a note when the ticket's description changed, into its `review.md` — never into the proposal or the delta.
@@ -18,18 +19,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 - **Linear** (REQ-308), a fourth built-in provider through its GraphQL API: `team_key` and `token_env`.
 - **`alm phase` and `alm move`** (REQ-309): where a change stands, without the network, and its ticket moved there now; both are MCP tools (`specgate_alm_phase`, `specgate_alm_move`). New provider capabilities (`phase`, `subIssues`, `comments`, `readText`) are optional, so a community provider written for 0.27 still loads.
 - **A workspace of repositories** (REQ-290..298, ADR-0041): `specgate.workspace.yaml` names the repositories of one product, and `specgate workspace init|status|check|propose` say where the product stands, run every repository's gate at once, resolve ids qualified with their repository (`tracking:REQ-012`), hold a requirement back until the one it depends on in another repository is delivered, and split a business story into a change in each repository it touches — done when every one is archived. See [docs/workspace.md](docs/workspace.md).
+- **The layer rules** (REQ-284..REQ-287): `change validate` warns when the Discover names a technology, when the design does not answer an acceptance criterion, when a task names no requirement, and when the Discover differs from the version it was agreed at. `change validate --strict` fails on them.
+- **The layers are named where people look** (REQ-288, REQ-289): `change status` lists discover, specs, design and tasks with their owner ("Write discover.md (product)"), the drafting guides say which layer the agent writes, and the studio's review lists each layer with its owner and whether it is written.
 
 ### Breaking
 
 - **`depends=<repo>:REQ-NNN` is a dependency on another repository** (REQ-294): inside a repository it is no longer an `unknown_dependency`; the workspace judges it.
-### Breaking
-
 - **A change has three layers, each with its owner** (REQ-282..REQ-289, ADR-0042): `change new`, `propose`, `propose --from-brief` and `--from-ticket` write `discover.md` (product: context, use case, acceptance criteria `- AC-1: …`), `design.md` (architect) and `tasks.md` (developer) under the new `layered` schema, and no longer write `proposal.md`. `change new --schema spec-driven` keeps the 0.27 layout. A change written with 0.27 stays valid: its `proposal.md` is read as its Discover, and a missing `design.md` is a warning naming `specgate migrate 1.0`.
-
-### Added
-
-- **The layer rules** (REQ-284..REQ-287): `change validate` warns when the Discover names a technology, when the design does not answer an acceptance criterion, when a task names no requirement, and when the Discover differs from the version it was agreed at. `change validate --strict` fails on them.
-- **The layers are named where people look** (REQ-288, REQ-289): `change status` lists discover, specs, design and tasks with their owner ("Write discover.md (product)"), the drafting guides say which layer the agent writes, and the studio's review lists each layer with its owner and whether it is written.
 
 ### Fixed
 

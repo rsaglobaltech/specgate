@@ -238,6 +238,11 @@
 | REQ-287 | SCN-287a | `features/change-lifecycle/REQ-287.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
 | REQ-288 | SCN-288a | `features/change-lifecycle/REQ-288.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
 | REQ-289 | SCN-289a | `features/change-lifecycle/REQ-289.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-325 | SCN-325a | `features/change-lifecycle/REQ-325.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
+| REQ-326 | SCN-326a | `features/change-lifecycle/REQ-326.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
+| REQ-327 | SCN-327a | `features/change-lifecycle/REQ-327.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
+| REQ-328 | SCN-328a | `features/change-lifecycle/REQ-328.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
+| REQ-329 | SCN-329a | `features/change-lifecycle/REQ-329.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

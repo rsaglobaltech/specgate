@@ -28,11 +28,18 @@ import * as ui from "../../../lib/ui";
 import { miniPet, petEnabled } from "../../../pet/pet";
 import { petFor } from "./PetCommand";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import { changesToMigrate } from "../../../lib/migrate";
 
 /**
  * Whether the harness has an agent to run (REQ-271): the studio's Build said
  * "set agent in harness.config.yaml" and nothing before it had (truck-flote, S58).
  */
+/** `migrate` for `status --json` while open changes are written for 0.27 (REQ-329). */
+function migrateHint(projectDir: string): { migrate?: { changes: string[]; command: string } } {
+  const changes = changesToMigrate(projectDir);
+  return changes.length > 0 ? { migrate: { changes, command: "specgate migrate 1.0" } } : {};
+}
+
 function agentConfigured(projectDir: string): boolean {
   try {
     const config = readHarnessConfig(projectDir);
@@ -534,6 +541,13 @@ function emitText(
         `specgate config set agent "claude -p < {prompt_file}"\n`
     );
 
+  // REQ-329: a project with changes written for 0.27, opened with 1.0.
+  const toMigrate = changesToMigrate(projectDir);
+  if (toMigrate.length > 0)
+    out(
+      `\n  ${ui.muted(`·  ${toMigrate.length} open change(s) written for 0.27:`)} specgate migrate 1.0\n`
+    );
+
   // Proposed, not written yet: not judged, and said, so nobody wonders why
   // the change is missing from the queue (ADR-0035).
   if (unwritten.length > 0) out("\n");
@@ -624,6 +638,8 @@ function emitJson(
             }
           : {}),
         nextCommand: nextCommandPlain(summary),
+        // REQ-329: only while an open change is still written for 0.27.
+        ...migrateHint(projectDir),
         status: [...notes, ...unwritten],
       },
       null,
