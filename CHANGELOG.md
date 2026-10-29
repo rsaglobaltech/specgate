@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.9] — 2026-10-29
+
+After the seventh truck-flote run: the harness checks Docker before it starts, the report names scenarios as the spec does, a date is one value, and the kept agent is seen live.
+
 ### Fixed
 
 - **D6 reads a date or a time as one value** (REQ-277): "at 2026-10-29 10:00:00" was read as the numbers "29", "00" and so on, and the agent had to list each one in `assumptions.md` before the draft could be reviewed. An ISO date, a time and a date-time are now one value each.
