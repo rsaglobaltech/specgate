@@ -551,7 +551,10 @@ function cmdNew(opts: ChangeOptions) {
               )
             : ui.next(
                 `specgate change validate ${changeId}`,
-                "after you write the proposal, then the delta"
+                // ADR-0042: a layered change starts from its Discover.
+                config.schema === LAYERED_SCHEMA
+                  ? "after you write discover.md, the delta, then design.md and tasks.md"
+                  : "after you write the proposal, then the delta"
               ))
       );
     }

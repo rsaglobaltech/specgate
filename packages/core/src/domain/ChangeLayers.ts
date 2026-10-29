@@ -213,9 +213,11 @@ export function acceptanceCriteria(discover: string): AcceptanceCriterion[] {
 
 /** Words of how, in a layer about what: the brief's list plus the architecture's. */
 const DISCOVER_TECHNICAL = new RegExp(
-  `${TECHNICAL.source}|\\b(api|apis|endpoints?|database|base de datos|sql|rest|http|json|microservices?|microservicios?|queue|cola de mensajes|controllers?|tables?|tablas?)\\b`,
+  `${TECHNICAL.source}|\\b(api|apis|endpoints?|database|base de datos|sql|http|json|microservices?|microservicios?|queue|cola de mensajes|controllers?|tables?|tablas?)\\b`,
   "i"
 );
+/** REST in capitals only: "the rest of the week" is plain English. */
+const DISCOVER_REST = /\bREST(?:ful)?\b/;
 
 export interface LayerFiles {
   changeId: string;
@@ -262,7 +264,7 @@ export function checkLayers(files: LayerFiles): Diagnostic[] {
   if (legacy || !discover) return out;
 
   // REQ-284: the Discover is the business story.
-  const tech = DISCOVER_TECHNICAL.exec(discover);
+  const tech = DISCOVER_TECHNICAL.exec(discover) || DISCOVER_REST.exec(discover);
   if (tech) {
     out.push(
       warning("layer_discover_technical", `discover.md names ${tech[0]}: how, not what.`, {

@@ -168,6 +168,26 @@ test("REQ-284 SCN-284a: a database in the business story", () => {
   assert.match(d.message, /PostgreSQL/i);
 });
 
+test('REQ-284 SCN-284a: "the rest of" is not REST', () => {
+  // Found migrating a 0.27 change: the word, in lower case, is plain English.
+  const root = mkProject();
+  layered(
+    root,
+    DISCOVER(["AC-1: peak rate above 100 orders"], " The rest of the week keeps the normal rate."),
+    "# Design\n\n## Mechanisms\n\nAC-1 — a rate table.\n"
+  );
+  const r = cli(root, "change", "validate", "add-pricing", "--json");
+  assert.ok(!diags(r).some((x: { code: string }) => x.code === "layer_discover_technical"), out(r));
+});
+
+test("REQ-282: change new names the layers it wrote, not a proposal", () => {
+  const root = mkProject();
+  const r = cli(root, "change", "new", "add-pricing");
+  assert.equal(r.status, 0, out(r));
+  assert.doesNotMatch(out(r), /write the proposal/);
+  assert.match(out(r), /discover/);
+});
+
 // ── REQ-285 ──────────────────────────────────────────────────────────────────
 
 test("REQ-285 SCN-285a: a criterion the design forgot", () => {
