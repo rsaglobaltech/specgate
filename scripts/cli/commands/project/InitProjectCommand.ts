@@ -170,8 +170,8 @@ function usage() {
       "                 [--no-git] [--no-sample-req] [--multi-stack <a,b,c>] [--new]\n\n" +
       "In a repository that already has code (a pom.xml, build.gradle, package.json,\n" +
       "go.mod, pyproject.toml, Cargo.toml or .csproj), plain `specgate init` adopts\n" +
-      "it in place — the same as `specgate adopt`, touching no code. Anywhere else,\n" +
-      "or with --new, it scaffolds a new project.\n\n" +
+      "it in place — the same as `specgate adopt`, touching no code; with --yes too.\n" +
+      "Anywhere else, or with --new, it scaffolds a new project.\n\n" +
       "Options:\n" +
       "  --new             Scaffold a new project even where code already exists\n" +
       "  --keep-matrix     Keep traceability.md hand-maintained instead of generated\n" +
@@ -1028,10 +1028,14 @@ function renderMultiStackReadme(
   );
 }
 
-/** True when plain `init` should adopt the current repository instead of scaffolding. */
+/**
+ * True when `init` should adopt the current repository instead of scaffolding.
+ * `--yes` only skips the questions (REQ-249): a scripted `init` in a folder with
+ * code made a second project inside it (truck-flote, MS-1). The flags that
+ * describe the project to create still scaffold.
+ */
 export function adoptsInstead(opts: ReturnType<typeof parseArgs>, cwd: string): boolean {
-  if (opts.newProject || opts.config || opts.out || opts.yes || opts.multiStack || opts.forja)
-    return false;
+  if (opts.newProject || opts.config || opts.out || opts.multiStack || opts.forja) return false;
   return detectStack(cwd).detected !== "none";
 }
 
@@ -1069,20 +1073,6 @@ export class InitProjectCommand extends BaseCommand {
     // second project inside an existing one is never what anybody wanted.
     // Any flag that describes a scaffold keeps the old behaviour, so no script
     // that calls `init` today changes what it does.
-    // REQ-249: `--yes` keeps scaffolding where code exists (scripts rely on
-    // it), but a second project inside the first is never a surprise.
-    if (
-      opts.yes &&
-      !opts.newProject &&
-      !opts.out &&
-      !opts.forja &&
-      detectStack(process.cwd()).detected !== "none"
-    ) {
-      logWarn(
-        `This folder already has code (${detectStack(process.cwd()).detected}): --yes scaffolds a separate project in a sub-folder.`
-      );
-      logInfo("To adopt this folder in place instead, run specgate init without --yes.");
-    }
     if (adoptsInstead(opts, process.cwd())) {
       if (fs.existsSync(path.join(process.cwd(), "spec.md"))) {
         // Running `init` twice is not a mistake worth an error.

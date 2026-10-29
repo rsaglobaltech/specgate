@@ -16,6 +16,13 @@ A candidate is published under the dist-tag `next`, never `latest`, and its
 Docker image carries only its version (REQ-281): nothing moves to 1.0 unless you
 ask for it.
 
+- **"No matching version found for @rsaglobaltech/specgate@next"** just after a
+  candidate is published: npm still has the list of versions from before it.
+  Add `--prefer-online`.
+- **A project forja generated** depends on the 0.27 it was made with; inside it
+  `npx specgate` is 0.27. Run the first line above in it — `npm i -D
+  @rsaglobaltech/specgate@next` — then `npx specgate --version` says the candidate.
+
 ## The migration, in one command
 
 On a committed project:

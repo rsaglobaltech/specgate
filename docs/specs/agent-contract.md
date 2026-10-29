@@ -132,8 +132,10 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `author_tree_dirty` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_error` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_exists` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `change_feature_shared` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_id_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_name_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `change_not_approvable` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `conflicting_seed_flags` | `scripts/cli/commands/change/ChangeCommand.ts` |

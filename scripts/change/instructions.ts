@@ -124,8 +124,17 @@ const ARTIFACT_RULES: Record<string, string[]> = {
   tasks: TASKS_RULES,
 };
 
+// REQ-351: what approval and the harness will ask of each requirement, said
+// to whoever writes them — an agent left them out (truck-flote, MS-10, MS-9).
+const LAYERED_DELTA_RULES = [
+  ...DELTA_RULES,
+  "Every requirement's `<!-- specgate:trace … -->` carries `kind=` (functional, non-functional or business-rule) and `actor=` (who uses it): `change approve` refuses a requirement without them, and `change validate` says so (`change_not_approvable`).",
+  "Give each requirement a feature file of its own (`feature=features/<capability>/<REQ-NNN>.feature`): one feature file per requirement, or archiving replaces one's scenarios with another's (`change_feature_shared`).",
+];
+
 /** A layered change's own rules and templates for the layers it shares with 0.27. */
 const LAYERED_RULES: Record<string, string[]> = {
+  specs: LAYERED_DELTA_RULES,
   design: LAYERED_DESIGN_RULES,
   tasks: LAYERED_TASKS_RULES,
 };

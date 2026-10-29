@@ -30,7 +30,11 @@ function writeChange(dir, t, id, capability, reqId, featureRel) {
       "- WHEN a 10% coupon is applied",
       "- THEN the total is 45 EUR",
       "",
-      featureRel ? `<!-- specgate:trace uc=UC-100 feature=${featureRel} -->` : "",
+      // A 1.0 change validates only when approval would accept it (REQ-350):
+      // every requirement says its kind and who uses it.
+      featureRel
+        ? `<!-- specgate:trace kind=functional actor=Customer uc=UC-100 feature=${featureRel} -->`
+        : "<!-- specgate:trace kind=functional actor=Customer -->",
       "",
     ].join("\n")
   );

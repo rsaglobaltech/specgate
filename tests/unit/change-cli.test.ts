@@ -70,8 +70,9 @@ El sistema SHALL aplicar un recargo del 20 %.
 - WHEN se calcula la tarifa
 - THEN el importe incluye un recargo del 20 %
 
-<!-- specgate:trace status=Implemented uc=UC-007 feature=features/billing/dynamic.feature -->
+<!-- specgate:trace status=Implemented kind=functional actor=Customer uc=UC-007 feature=features/billing/dynamic.feature -->
 `;
+// A 1.0 change must be approvable to validate (REQ-350): kind and actor.
 // Delivered (status=Implemented): a change is archived when its code is done (ADR-0035).
 
 // ── new ───────────────────────────────────────────────────────────────────────
