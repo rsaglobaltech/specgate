@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.2] — 2026-10-30
+
+After the first microservices run of truck-flote (five repositories, one story across three of them, nine requirements delivered in parallel): the workspace takes the client's brief and drafts its stories, a story's intent and criteria reach every repository, the story is built in the order of its dependencies, and `init --yes` adopts the folder it is run in.
+
 ### Breaking
 
 - **`specgate init --yes` adopts a folder that already has code** (REQ-249, modified): it scaffolded a separate project inside it (`my-spec-driven-app/`), so a scripted `init` in a repository made a second one. `--yes` now only skips the questions; `--new`, `--out`, `--config`, `--multi-stack` and `--forja` still scaffold.
