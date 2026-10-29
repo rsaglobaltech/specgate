@@ -23,15 +23,21 @@ import {
   noteNoMembers,
   openSubChange,
   recordCheck,
+  readStories,
+  subChangeState,
   workspaceModel,
 } from "../../../lib/workspace";
+import { partRequirements, readWorkspaceLive } from "../../../lib/workspace-live";
+import { baselineProblem } from "../harness/RunCommand";
+import { spawn, spawnSync } from "node:child_process";
+import { findCliRoot } from "../../../lib/project-root";
 
 const NULL_SHAPE = { workspace: null };
 
 function usage(): void {
   process.stdout.write(
     `
-  🧩 ${c.bold}specgate workspace${c.reset} <init|status|check|propose> [options]
+  🧩 ${c.bold}specgate workspace${c.reset} <init|status|check|propose|live|harness> [options]
 
   The repositories of one product, named in ${WORKSPACE_FILE} (ADR-0041).
   Inside a repository REQ-012 is the id; across the workspace it is fleet:REQ-012.
@@ -44,6 +50,11 @@ function usage(): void {
                              dependencies between repositories; non-zero when any fails
     propose <story> --repos <a,b,…> [--title "<title>"]
                              a business story, and a change for it in each repository named
+    live [--port <n>]        every repository's harness and every story, live (studio /live);
+                             --json prints the model once
+    harness run --story <id> [--dry-run] [-- <harness run options>]
+                             one harness per repository with an open part of the story, all at
+                             once; none when a repository's base already fails the gate
 
   Options: --project-dir <workspace dir>, --json.
 `
@@ -60,6 +71,10 @@ export class WorkspaceCommand extends BaseCommand {
     const json = wantsJson(argv);
     const io = agentIo(json);
     const sub = argv[0];
+    if (sub === "live" || sub === "harness") {
+      runLiveOrHarness(argv, json, io);
+      return;
+    }
     let dirArg = ".";
     let name = "";
     let title = "";
@@ -345,4 +360,145 @@ function siblings(dir: string): WorkspaceRepo[] {
     out.push({ name: repoName, path: `../${e.name}`, role, capabilities: capabilitiesOf(full) });
   }
   return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The value after a flag, or "". */
+function flag(argv: string[], name: string): string {
+  const i = argv.indexOf(name);
+  return i >= 0 ? argv[i + 1] || "" : "";
+}
+
+/**
+ * `workspace live` (REQ-323) and `workspace harness run --story` (REQ-324):
+ * the workspace's live view, and the build that gives it something to show.
+ */
+function runLiveOrHarness(argv: string[], json: boolean, io: ReturnType<typeof agentIo>): void {
+  const sep = argv.indexOf("--");
+  const own = sep >= 0 ? argv.slice(0, sep) : argv;
+  const passthrough = sep >= 0 ? argv.slice(sep + 1) : [];
+  const dir = path.resolve(flag(own, "--project-dir") || ".");
+  const { ws, problems } = loadWorkspace(dir);
+  if (!ws) io.fail(NULL_SHAPE, problems);
+  const cli = path.join(findCliRoot(__dirname), "bin", "specgate.js");
+
+  if (own[0] === "live") {
+    if (json) {
+      io.emit({ live: readWorkspaceLive(ws!) }, () => undefined);
+      return;
+    }
+    // The studio serves the workspace's /live when it runs in its repository.
+    const port = flag(own, "--port");
+    const r = spawnSync(
+      process.execPath,
+      [cli, "studio", "--project-dir", ws!.dir, ...(port ? ["--port", port] : [])],
+      { stdio: "inherit" }
+    );
+    process.exit(r.status ?? 1);
+  }
+
+  if (own[1] !== "run") {
+    io.usage(NULL_SHAPE, [
+      error("unknown_subcommand", "workspace harness has run only.", {
+        fix: "specgate workspace harness run --story <id>",
+      }),
+    ]);
+  }
+  const storyId = flag(own, "--story");
+  const story = readStories(ws!.dir).find((s) => s.id === storyId);
+  if (!story) {
+    io.usage(NULL_SHAPE, [
+      error("workspace_story_unknown", `No story ${storyId || "(none given)"} in this workspace.`, {
+        fix: "specgate workspace status lists the stories.",
+      }),
+    ]);
+  }
+  const runs: Array<{
+    repo: string;
+    dir: string;
+    requirements: string[];
+    args: string[];
+    command: string;
+  }> = [];
+  const red: Diagnostic[] = [];
+  for (const sc of story!.subchanges) {
+    const memberDir = ws!.dirs[sc.repo];
+    if (!memberDir || !fs.existsSync(memberDir)) continue;
+    if (subChangeState(memberDir, sc.change) !== "open") continue;
+    const reqs = partRequirements(memberDir, sc.change);
+    if (reqs.length === 0) continue;
+    const ids = reqs.map((r) => r.id);
+    // REQ-175, judged as the member's own harness judges it: a base red outside
+    // this part fails every attempt, so no repository starts.
+    const owned = new Set<string>([...ids, ...reqs.flatMap((r) => r.scenarios)]);
+    const problem = baselineProblem(memberDir, owned);
+    if (problem) {
+      red.push(
+        error("workspace_base_red", `${sc.repo}: ${problem.split("\n")[0]}`, {
+          target: sc.repo,
+          fix: `Run specgate check in ${sc.repo}, and make its base pass first.`,
+        })
+      );
+    }
+    const args = [
+      "harness",
+      "run",
+      "--project-dir",
+      memberDir,
+      ...ids.flatMap((id) => ["--req", id]),
+      ...passthrough,
+    ];
+    runs.push({
+      repo: sc.repo,
+      dir: memberDir,
+      requirements: ids,
+      args,
+      command: `specgate ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(" ")}`,
+    });
+  }
+  if (red.length) io.fail({ harness: null } as never, red);
+  const payload = {
+    harness: { story: story!.id, runs: runs.map(({ dir: _d, args: _a, ...r }) => r) },
+  };
+  if (own.includes("--dry-run")) {
+    io.emit(payload, () => {
+      process.stdout.write(ui.header("workspace harness run", `${story!.id} · dry run`));
+      for (const r of runs)
+        process.stdout.write(`    ${r.repo}  ${c.muted}${r.command}${c.reset}\n`);
+    });
+    return;
+  }
+  if (runs.length === 0) {
+    io.emit(payload, () => process.stdout.write("  Nothing open to build in this story.\n"));
+    return;
+  }
+  // One process per repository, all at once; each keeps its own output.
+  const logs = path.join(ws!.dir, ".specgate", "workspace-runs", story!.id);
+  fs.mkdirSync(logs, { recursive: true });
+  if (!json) process.stdout.write(ui.header("workspace harness run", story!.id));
+  let left = runs.length;
+  let worst = 0;
+  const results: Array<{ repo: string; exit: number; log: string }> = [];
+  for (const r of runs) {
+    const log = path.join(logs, `${r.repo}.log`);
+    const fd = fs.openSync(log, "w");
+    const child = spawn(process.execPath, [cli, ...r.args], {
+      stdio: ["ignore", fd, fd],
+      env: { ...process.env, NO_COLOR: "1" },
+    });
+    if (!json) process.stdout.write(`    ${r.repo}  started · ${path.relative(ws!.dir, log)}\n`);
+    child.on("close", (code) => {
+      fs.closeSync(fd);
+      const exit = code ?? 1;
+      worst = Math.max(worst, exit);
+      results.push({ repo: r.repo, exit, log });
+      if (!json)
+        process.stdout.write(`    ${ui.state(exit === 0 ? "done" : "blocked")} ${r.repo}\n`);
+      left -= 1;
+      if (left === 0) {
+        if (json)
+          process.stdout.write(JSON.stringify({ harness: { story: story!.id, results } }) + "\n");
+        process.exit(worst);
+      }
+    });
+  }
 }

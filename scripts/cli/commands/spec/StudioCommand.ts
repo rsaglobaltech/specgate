@@ -40,6 +40,9 @@ import { BaseCommand } from "../../../lib/command";
 import { c } from "../../../lib/ui";
 import { readLive, liveSignature } from "../../../lib/live-model";
 import { livePage } from "../../../lib/live-page";
+import { loadWorkspace } from "../../../lib/workspace";
+import { readWorkspaceLive, workspaceLiveSignature } from "../../../lib/workspace-live";
+import { workspaceLivePage } from "../../../lib/workspace-live-page";
 import { requirementDetail, liveMatrix } from "../../../lib/live-detail";
 import { promptFileFor } from "../../../lib/harness-events";
 
@@ -499,6 +502,42 @@ export class StudioCommand extends BaseCommand {
       if (url === "/report") {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
         res.end(reportHtml(report(projectDir)));
+        return;
+      }
+      // REQ-323: in a workspace repository, the live view is the workspace's.
+      const ws = fs.existsSync(path.join(projectDir, "specgate.workspace.yaml"))
+        ? loadWorkspace(projectDir).ws
+        : null;
+      if (ws && (url === "/live" || url === "/live/")) {
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        res.end(workspaceLivePage(ws.config.name));
+        return;
+      }
+      if (ws && url === "/live.json") {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ schemaVersion: 1, live: readWorkspaceLive(ws) }));
+        return;
+      }
+      if (ws && url === "/live/stream") {
+        res.writeHead(200, {
+          "content-type": "text/event-stream",
+          "cache-control": "no-cache",
+          connection: "keep-alive",
+        });
+        let last = "";
+        const push = () => {
+          const sig = workspaceLiveSignature(ws);
+          if (sig === last) return;
+          last = sig;
+          res.write(`event: live\ndata: ${JSON.stringify(readWorkspaceLive(ws))}\n\n`);
+        };
+        push();
+        const timer = setInterval(push, 1000);
+        const beat = setInterval(() => res.write(": keep-alive\n\n"), 15000);
+        req.on("close", () => {
+          clearInterval(timer);
+          clearInterval(beat);
+        });
         return;
       }
       if (url === "/live" || url === "/live/") {

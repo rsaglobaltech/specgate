@@ -141,6 +141,30 @@ Each repository then works its change as usual — draft, review, harness,
 archive. `workspace status` shows each sub-change open, archived or missing,
 and the story **done only when every repository has archived its part**.
 
+## Build a story, and watch it
+
+```bash
+specgate workspace harness run --story follow-shipment
+specgate workspace live          # the studio, serving the workspace's /live
+```
+
+- `workspace harness run --story` starts one `harness run` per repository that
+  holds an open part of the story, for that part's requirements, **all at once**,
+  each its own process, its output in `.specgate/workspace-runs/<story>/`. The
+  options after a bare `--` go to every repository's harness. `--dry-run` prints the
+  commands.
+- It starts **none** when a repository's base already fails the gate on
+  requirements outside its part, as each harness would refuse on its own
+  (REQ-175) — said once, naming the repository, before anything is paid for.
+- `specgate studio` started in the workspace repository serves the workspace's
+  live view at `/live`: a panel per repository with the requirement in flight,
+  the gate step it is on and since when, and its agent's last step; each story
+  with its parts open, building, archived or missing, and the parts waiting on
+  another repository's undelivered requirement named; and what each repository
+  and each story has cost, in money and minutes.
+- `/live.json` and `workspace live --json` give that model as data
+  (REQ-320..324).
+
 ## What a workspace does not do
 
 - It never writes a repository's specification. It asks each repository through
