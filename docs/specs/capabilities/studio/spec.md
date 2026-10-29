@@ -277,6 +277,7 @@ The system SHALL place the running requirement of the studio's Build in Programa
 - THEN its Build reads `gate-start` events, puts a `quality:` step in the third stage, and shows the running step's name
 
 <!-- specgate:trace actor=Developer feature=features/studio/REQ-275.feature kind=functional status=Implemented test=tests/unit/live-gate-steps.test.ts -->
+
 ### Requirement: REQ-270 — The studio's report judges the project as check does
 
 The system SHALL judge the specification gate of the studio's report against the project as it will be after its open changes are archived, as `specgate check` does, so a requirement of a reviewed draft that the harness delivered — its feature file written, its row not yet in the written matrix — does not make the report fail.
@@ -288,3 +289,15 @@ The system SHALL judge the specification gate of the studio's report against the
 - THEN the gate passes, while the bare `validate --strict` still names the feature missing from the matrix
 
 <!-- specgate:trace actor=Developer feature=features/studio/REQ-270.feature kind=functional status=Implemented test=tests/unit/studio-inflight.test.ts -->
+
+### Requirement: REQ-280 — The report titles a scenario from the specification
+
+The system SHALL take the title of each scenario in the studio's report from the specification only — `spec.md`, the capability specs and the deltas of open changes, a delta first — and never from a draft's `DRAFTING.md`, a proposal, or an archived change.
+
+#### Scenario: SCN-280a — A delivered requirement of a draft
+
+- GIVEN REQ-002 is in the open change `draft-fleet-tracking`, whose delta names `SCN-002 — A registered tracker reports a position` and whose `DRAFTING.md` shows `SCN-002 — <what happens>`
+- WHEN the studio's report lists REQ-002's scenarios
+- THEN SCN-002 is titled "A registered tracker reports a position"
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-280.feature kind=functional status=Implemented test=tests/unit/harness-run7.test.ts -->

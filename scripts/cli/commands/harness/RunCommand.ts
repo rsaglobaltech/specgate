@@ -56,11 +56,13 @@ import {
 } from "../../../lib/harness-guard";
 import {
   archRun,
+  dockerWhyNot,
   gateContext,
   runStages,
   type AgentChecks,
   type CheckOutcome,
 } from "../../../lib/quality-run";
+import { dockerNeed, environmentFailure } from "../../../lib/harness-environment";
 import type { QualityCheck, Stage } from "../../../../packages/core/src/domain/QualityChecks";
 import {
   EVENTS_ATTEMPT_VAR,
@@ -857,6 +859,18 @@ function runGate(
       ...testCounts(`${test.stdout || ""}${test.stderr || ""}`),
       ms: Date.now() - testStart,
     });
+    // REQ-279: a test command that could not reach Docker failed for the
+    // machine, not the code; the person starts Docker, the agent cannot.
+    const missing =
+      test.status !== 0 ? environmentFailure(`${test.stdout || ""}${test.stderr || ""}`) : null;
+    if (missing) {
+      return {
+        ok: false,
+        stage: `test command: ${resolved}`,
+        output: `${test.stdout || ""}${test.stderr || ""}`,
+        couldNotRun: missing,
+      };
+    }
     if (test.status !== 0) {
       // Name the command. A gate that silently does the wrong thing — running
       // the whole suite because a filter did not apply, say — produces a
@@ -1768,7 +1782,11 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       previousFailure = `Gate stopped at: ${gate.stage}\n\n${gate.couldNotRun}\n\n${gate.output}`;
       warn(`${req.requirement}: ${gate.couldNotRun}`);
       for (const line of gate.output.trim().split("\n").slice(-5)) warn(`  ${line}`);
-      warn(`  not retrying: fix the check (harness.config.yaml) and run it again`);
+      warn(
+        gate.stage.startsWith("quality check")
+          ? `  not retrying: fix the check (harness.config.yaml) and run it again`
+          : `  not retrying: the agent cannot fix the machine`
+      );
       record("check");
       stopRetrying = true;
       break;
@@ -3449,6 +3467,11 @@ export class RunCommand extends BaseCommand {
       // `Author identity unknown` at the commit step of every requirement.
       const identity = gitIdentityProblem(projectDir);
       if (identity) throw new Error(identity);
+      // REQ-279: a stopped Docker fails every attempt in the tests or the
+      // checks, and the agent cannot start it (truck-flote S61: three attempts).
+      const needsDocker = dockerNeed(projectDir, settings.quality || null);
+      const noDocker = needsDocker ? dockerWhyNot() : null;
+      if (noDocker) throw new Error(`${noDocker} This project needs it: ${needsDocker}.`);
       if (args.chain) {
         if (args.baseBranch) {
           throw new Error(

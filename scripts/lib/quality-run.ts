@@ -315,11 +315,17 @@ let dockerProblem: string | null | undefined;
 /** Why Docker cannot run the checks here, or null; asked once per process. */
 export function dockerWhyNot(): string | null {
   if (dockerProblem === undefined) {
+    // SPECGATE_DOCKER names another docker CLI; the tests point it at one that
+    // is not there, to be Docker Desktop stopped on any machine.
     dockerProblem = dockerVerdict(
-      spawnSync("docker", ["version", "--format", "{{.Server.Os}}"], {
-        encoding: "utf8",
-        timeout: 15000,
-      })
+      spawnSync(
+        process.env.SPECGATE_DOCKER || "docker",
+        ["version", "--format", "{{.Server.Os}}"],
+        {
+          encoding: "utf8",
+          timeout: 15000,
+        }
+      )
     );
   }
   return dockerProblem;
