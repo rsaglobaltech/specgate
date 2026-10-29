@@ -243,6 +243,11 @@
 | REQ-327 | SCN-327a | `features/change-lifecycle/REQ-327.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
 | REQ-328 | SCN-328a | `features/change-lifecycle/REQ-328.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
 | REQ-329 | SCN-329a | `features/change-lifecycle/REQ-329.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
+| REQ-320 | SCN-320a | `features/workspace/REQ-320.feature` | - | - | - | - | - | tests/unit/workspace-live.test.ts | Implemented |
+| REQ-321 | SCN-321a | `features/workspace/REQ-321.feature` | - | - | - | - | - | tests/unit/workspace-live.test.ts | Implemented |
+| REQ-322 | SCN-322a | `features/workspace/REQ-322.feature` | - | - | - | - | - | tests/unit/workspace-live.test.ts | Implemented |
+| REQ-323 | SCN-323a | `features/workspace/REQ-323.feature` | - | - | - | - | - | tests/unit/workspace-live.test.ts | Implemented |
+| REQ-324 | SCN-324a | `features/workspace/REQ-324.feature` | - | - | - | - | - | tests/unit/workspace-live.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

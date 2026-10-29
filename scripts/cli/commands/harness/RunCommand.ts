@@ -639,7 +639,7 @@ function readGateMessages(worktreeDir: string, reportPath: string) {
  * the requirements being run are theirs to fix (a missing feature, say), and
  * do not count here.
  */
-function baselineProblem(projectDir: string, running: Set<string>): string | null {
+export function baselineProblem(projectDir: string, running: Set<string>): string | null {
   const run = judged(projectDir, (dir, toProject) => {
     const r = spawnSync(process.execPath, [VALIDATE_SCRIPT, dir, "--strict"], {
       encoding: "utf8",

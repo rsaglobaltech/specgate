@@ -303,9 +303,10 @@ export const SURFACE: Command[] = [
     help: {
       group: "core",
       icon: "🧩",
-      summary: "The repositories of one product: status, check, a story across them (ADR-0041).",
+      summary:
+        "The repositories of one product: status, check, a story across them, built and watched live (ADR-0041).",
     },
-    json: { key: "workspace", gate: true, args: "<init|status|check|propose>" },
+    json: { key: "workspace", gate: true, args: "<init|status|check|propose|live|harness>" },
   },
   {
     name: "quality",
