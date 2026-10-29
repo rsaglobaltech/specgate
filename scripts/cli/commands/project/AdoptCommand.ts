@@ -54,7 +54,7 @@ function fail(msg: string, exitCode = 1): never {
 function usage() {
   process.stdout.write(
     "Usage:\n" +
-      "  specgate adopt [--project-dir <dir>] [--dry-run] [--monorepo]\n" +
+      "  specgate adopt [--project-dir <dir>] [--dry-run] [--monorepo] [--scope <path>]\n" +
       "                 [--no-capabilities] [--var KEY=VALUE]...\n\n" +
       "Installs Spec-Driven Development on an existing repository:\n" +
       "- detects the stack from pom.xml / build.gradle / package.json / go.mod\n" +
@@ -67,6 +67,8 @@ function usage() {
       "  --dry-run            Print what would be written without writing\n" +
       "  --monorepo           Adopt every module the repository declares and write\n" +
       "                       the specops.config.yaml that `validate` reads\n" +
+      "  --scope <path>       Specify only the area you are touching: proposals and the\n" +
+      "                       baseline scenario limited to that path\n" +
       "  --no-capabilities    Do not seed proposed requirements — skeleton only\n  --keep-matrix        Keep traceability.md hand-maintained instead of generated\n  --no-agents          Do not install the /specgate:* commands for the agents found here\n" +
       "  --var KEY=VALUE      Override a detected value (PROJECT_NAME, PROJECT_SLUG,\n" +
       "                       DOMAIN, STACK, API_STYLE, TESTING, TEST_CMD)\n"
@@ -81,6 +83,7 @@ export function parseArgs(argv: string[]) {
     noCapabilities: false,
     keepMatrix: false,
     noAgents: false,
+    scope: "",
     vars: {} as Record<string, string>,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -97,6 +100,8 @@ export function parseArgs(argv: string[]) {
       opts.keepMatrix = true;
     } else if (a === "--no-agents") {
       opts.noAgents = true;
+    } else if (a === "--scope" && argv[i + 1]) {
+      opts.scope = argv[++i].replace(/\\/g, "/").replace(/\/+$/, "");
     } else if (a === "--var" && argv[i + 1]) {
       const pair = argv[++i];
       const eq = pair.indexOf("=");
@@ -427,7 +432,33 @@ interface AdoptOptions {
   monorepo: boolean;
   noCapabilities: boolean;
   noAgents?: boolean;
+  /** REQ-337: the one area being specified, relative to the repository. */
+  scope?: string;
   vars: Record<string, string>;
+}
+
+/**
+ * What `--scope` changes in a generated file (REQ-337): spec.md says which area
+ * it specifies, and the baseline scenario pins that area's behaviour.
+ */
+function scoped(dst: string, text: string, scope: string): string {
+  if (!scope) return text;
+  if (dst === "spec.md") {
+    return text.replace(
+      /^(# .*\n)/,
+      `$1\n> Scope: \`${scope}\` — only this area is specified so far (\`specgate adopt --scope ${scope}\`). ` +
+        `The rest of the repository is adopted as it is, and specified when it is touched.\n`
+    );
+  }
+  if (dst === "features/adoption/baseline.feature") {
+    return text
+      .replace(
+        "Feature: Existing behaviour is preserved",
+        `Feature: Existing behaviour of ${scope} is preserved`
+      )
+      .replace("Then every existing test passes", `Then every existing test of ${scope} passes`);
+  }
+  return text;
 }
 
 /** Adopt one directory. */
@@ -438,9 +469,21 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
 
   // Required lazily: OnboardCommand imports detectStack from this file, and a
   // top-level import would close the cycle.
-  const capabilities: Capability[] = opts.noCapabilities
+  const onboard = require("./OnboardCommand") as typeof import("./OnboardCommand");
+  const found: Capability[] = opts.noCapabilities
     ? []
-    : (require("./OnboardCommand") as typeof import("./OnboardCommand")).proposeCapabilities(dir);
+    : opts.scope
+      ? onboard.capabilitiesUnder(dir, path.join(dir, opts.scope))
+      : onboard.proposeAllCapabilities(dir);
+  const capabilities = found.slice(0, onboard.MAX_PROPOSED);
+  // REQ-338: more areas than a person can review is said, with the way out.
+  if (found.length > capabilities.length && !quiet) {
+    const left = found.slice(capabilities.length).map((c) => c.id);
+    logWarn(
+      `[adopt_too_big] ${found.length} areas found, ${capabilities.length} proposed: ${left.length} left out (${left.join(", ")}). ` +
+        `A specification this size is not reviewed: specify the part you are touching with specgate adopt --scope <area>.`
+    );
+  }
   const proposed = buildProposedRequirements(capabilities);
 
   // A string map, not a literal: `opts.vars` (`--var KEY=VALUE`) may override any key.
@@ -476,7 +519,11 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
       skipped++;
       continue;
     }
-    const rendered = renderTemplate(fs.readFileSync(path.join(ADOPT_TEMPLATES, tpl), "utf8"), vars);
+    const rendered = scoped(
+      dst,
+      renderTemplate(fs.readFileSync(path.join(ADOPT_TEMPLATES, tpl), "utf8"), vars),
+      opts.scope || ""
+    );
     if (opts.dryRun) {
       say(`[dry-run] write ${dst}`);
     } else {
@@ -625,6 +672,13 @@ export class AdoptProjectCommand extends BaseCommand {
 
     if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
       fail(`Directory not found: ${dir}`, 2);
+    }
+
+    if (opts.scope) {
+      const scopeDir = path.join(dir, opts.scope);
+      if (!fs.existsSync(scopeDir) || !fs.statSync(scopeDir).isDirectory()) {
+        fail(`--scope ${opts.scope}: no such folder in ${dir}. Nothing was written.`, 2);
+      }
     }
 
     if (opts.monorepo) adoptMonorepo(dir, opts);

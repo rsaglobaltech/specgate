@@ -238,6 +238,15 @@
 | REQ-287 | SCN-287a | `features/change-lifecycle/REQ-287.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
 | REQ-288 | SCN-288a | `features/change-lifecycle/REQ-288.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
 | REQ-289 | SCN-289a | `features/change-lifecycle/REQ-289.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Implemented |
+| REQ-335 | SCN-335a | `features/contracts/REQ-335.feature` | - | - | - | - | - | tests/unit/org-steering.test.ts | Implemented |
+| REQ-336 | SCN-336a | `features/contracts/REQ-336.feature` | - | - | - | - | - | tests/unit/org-steering.test.ts | Implemented |
+| REQ-337 | SCN-337a | `features/daily-surface/REQ-337.feature` | - | - | - | - | - | tests/unit/org-steering.test.ts | Implemented |
+| REQ-338 | SCN-338a | `features/daily-surface/REQ-338.feature` | - | - | - | - | - | tests/unit/org-steering.test.ts | Implemented |
+| REQ-330 | SCN-330a | `features/steering/REQ-330.feature` | - | - | - | - | - | tests/unit/org-steering.test.ts | Implemented |
+| REQ-331 | SCN-331a | `features/steering/REQ-331.feature` | - | - | - | - | - | tests/unit/org-steering.test.ts | Implemented |
+| REQ-332 | SCN-332a | `features/steering/REQ-332.feature` | - | - | - | - | - | tests/unit/org-steering.test.ts | Implemented |
+| REQ-333 | SCN-333a | `features/steering/REQ-333.feature` | - | - | - | - | - | tests/unit/org-steering.test.ts | Implemented |
+| REQ-334 | SCN-334a | `features/steering/REQ-334.feature` | - | - | - | - | - | tests/unit/org-steering.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

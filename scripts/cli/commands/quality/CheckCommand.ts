@@ -32,6 +32,8 @@ import {
 } from "../../../lib/quality-run";
 import type { Stage } from "../../../../packages/core/src/domain/QualityChecks";
 import { forShell } from "../../../lib/shell-command";
+import { steering } from "../../../lib/steering";
+import { driftFindings, driftSince } from "../../../lib/drift";
 
 const NULL_SHAPE = { check: null };
 
@@ -151,15 +153,43 @@ export class CheckCommand extends BaseCommand {
     // On a ticket's branch, commits that do not name the ticket (ADR-0039);
     // and requirements another open change rewrites too (REQ-160).
     // Said whatever the gate decides: a failed gate is fixed on the same branch.
+    // REQ-330..334: the organization's principles this repository follows, and
+    // behaviour changed without a specification. A failed principle and drift
+    // in a project that gates on it fail below, with the other findings.
+    const harnessEarly: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
+    const steer = steering(projectDir);
+    const driftMode = harnessEarly.drift || "report";
+    const drift =
+      driftMode === "off" ? { base: "", commits: [] } : driftSince(projectDir, baseFlag || "");
     const ticketKeys = [
       ...ticketKeyFindings(projectDir, baseFlag),
       ...changeOverlaps(projectDir),
       ...changeBaseFindings(projectDir, baseFlag),
+      ...steer.findings,
+      ...driftFindings(drift, driftMode === "gate"),
     ];
     // After the comparison, so the first sight of a change records, not warns (REQ-168).
     recordBases(projectDir);
     if (!json) {
       for (const d of ticketKeys) process.stdout.write(ui.warn(d.message) + ui.fix(d.fix ?? ""));
+      if (steer.principles) {
+        process.stdout.write(
+          `  ${ui.muted(`·  Principles     ${steer.principles.version || "no version"}${steer.principles.source ? ` from ${steer.principles.source}` : ""}`)}
+`
+        );
+      }
+    }
+    const blocking = ticketKeys.filter((d) => d.severity === "error");
+    if (blocking.length > 0) {
+      recordCheck(projectDir, false);
+      io.fail(NULL_SHAPE, [
+        ...ticketKeys,
+        error(
+          "check_steering_failed",
+          `The gate failed: ${[...new Set(blocking.map((d) => d.code))].join(", ")}.`,
+          { fix: "Fix what is reported above, then run `specgate check` again." }
+        ),
+      ]);
     }
 
     // Two branches allocate ids as max+1 over their own checkout; the
@@ -381,6 +411,8 @@ export class CheckCommand extends BaseCommand {
           ids: ids.state === "checked" ? `compared with ${ids.base}` : `skipped: ${ids.reason}`,
           testCommand: plan.testsUnverified ? null : testCmd,
           quality: outcomes.map(({ output: _o, ...rest }) => rest),
+          principles: steer.principles,
+          drift: { mode: driftMode, commits: drift.commits.length },
         },
         status,
       },

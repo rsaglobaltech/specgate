@@ -115,6 +115,13 @@ The whole gate. CI runs the same command.
 The words used here (change, delta, gate, traceability matrix) are defined in
 [Concepts](concepts.md#vocabulary).
 
+## A large repository: one area first
+
+`specgate adopt --scope src/billing` specifies only the area you are touching:
+the proposed requirements come from under that path, and spec.md and the
+baseline scenario name it (REQ-337). Adoption proposes eight areas at most; when
+it finds more it warns `adopt_too_big` with the ones it left out (REQ-338).
+
 ## The two journeys side by side
 
 | Step | A new project | Existing code |
