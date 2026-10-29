@@ -62,6 +62,8 @@ not run reports an `error` about itself.
 | `specgate doctor --json` | `doctor` | yes |
 | `specgate status --json` | `status` | no |
 | `specgate alm pull --json` | `pulled` | no |
+| `specgate alm phase <change> --json` | `phase` | no |
+| `specgate alm move <change> [<phase>] --json` | `move` | no |
 | `specgate check [dir] --json` | `check` | yes |
 | `specgate quality <list|doctor|run> --json` | `quality` | no |
 | `specgate draft --json` | `draft` | yes |

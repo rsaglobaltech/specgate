@@ -28,3 +28,6 @@ export const azureClient = (cfg: AlmConfig, fetchImpl?: FetchLike): AlmClient =>
 
 export const githubClient = (cfg: AlmConfig, fetchImpl?: FetchLike): AlmClient =>
   getProvider("github").create(cfg, fetchImpl);
+
+export const linearClient = (cfg: AlmConfig, fetchImpl?: FetchLike): AlmClient =>
+  getProvider("linear").create(cfg, fetchImpl);

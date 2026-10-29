@@ -1,6 +1,7 @@
 import { jiraProvider } from "./jira";
 import { azureProvider } from "./azure";
 import { githubProvider } from "./github";
+import { linearProvider } from "./linear";
 import { checkProviderDeclaration } from "../port";
 import type { AlmProvider } from "../port";
 
@@ -11,7 +12,12 @@ import type { AlmProvider } from "../port";
  * The conformance kit iterates this list, so a provider that is registered is
  * a provider that is tested — there is no way to add one quietly.
  */
-export const PROVIDERS: readonly AlmProvider[] = [jiraProvider, azureProvider, githubProvider];
+export const PROVIDERS: readonly AlmProvider[] = [
+  jiraProvider,
+  azureProvider,
+  githubProvider,
+  linearProvider,
+];
 
 const BY_ID: ReadonlyMap<string, AlmProvider> = new Map(PROVIDERS.map((p) => [p.id, p]));
 
@@ -25,7 +31,7 @@ export const providerIds = (): string[] => PROVIDERS.map((p) => p.id);
 // them here would make this repository's release cadence hostage to six
 // vendors. Refusing them all would make the tool useless to a team on YouTrack.
 //
-// So: `jira`, `azure` and `github` are core — maintained here, exercised by the
+// So: `jira`, `azure`, `github` and `linear` are core — maintained here, exercised by the
 // conformance kit in CI. Anything else is resolved by package name:
 //
 //     provider: npm:specgate-alm-youtrack

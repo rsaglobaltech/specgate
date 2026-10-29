@@ -1,7 +1,7 @@
-# Jira, Azure Boards and GitHub
+# Jira, Azure Boards, GitHub and Linear
 
 This page is the reference for connecting Specgate to a work tracker (an ALM:
-Jira, Azure Boards or GitHub Issues) and to GitHub pull requests. It covers
+Jira, Azure Boards, GitHub Issues or Linear) and to GitHub pull requests. It covers
 the two ways to connect Jira, every key of `alm.config.yaml`, and the
 `specgate alm` commands. For a step-by-step setup with Jira, read
 [From a Jira ticket](from-a-ticket.md) first.
@@ -50,13 +50,16 @@ Which keys a provider reads is the provider's own declaration:
 
 <!-- specgate:alm-provider-table — checked by tests/unit/alm-conformance.test.ts -->
 
-| Provider | Required                               | Optional                                                          |
-| -------- | -------------------------------------- | ----------------------------------------------------------------- |
-| `jira`   | `base_url`, `project_key`, `token_env` | `user_env`, `issue_type`, `cloud_id`, `acceptance_field`, `epics` |
-| `azure`  | `base_url`, `project_key`, `token_env` | `issue_type`, `done_state`                                        |
-| `github` | `repo`, `token_env`                    | `base_url`                                                        |
+| Provider | Required                               | Optional                                                                          |
+| -------- | -------------------------------------- | --------------------------------------------------------------------------------- |
+| `jira`   | `base_url`, `project_key`, `token_env` | `user_env`, `issue_type`, `subtask_type`, `cloud_id`, `acceptance_field`, `epics` |
+| `azure`  | `base_url`, `project_key`, `token_env` | `issue_type`, `done_state`                                                        |
+| `github` | `repo`, `token_env`                    | `base_url`                                                                        |
+| `linear` | `team_key`, `token_env`                | `base_url`                                                                        |
 
-`alm_version`, `provider` and `pr` are read for every provider. A key the
+`alm_version`, `provider`, `pr`, `phases` and `mirror` are read for every
+provider — the last two make the board follow each change: see
+[The board follows the change](alm-phases.md). A key the
 configured provider does not read is reported as `alm_config_unread_key`, with
 the provider that would have read it.
 
@@ -178,9 +181,9 @@ Pulling twice is safe: a change that already exists is skipped. Azure cannot
 search by label (it searches with WIQL), so `alm pull` says so on Azure instead
 of failing.
 
-## Providers: three core, more from the community
+## Providers: four core, more from the community
 
-`jira`, `azure` and `github` are **core**: maintained in this repository and
+`jira`, `azure`, `github` and `linear` are **core**: maintained in this repository and
 tested against recorded responses on every CI run. Any other tracker can be
 added as a package:
 
@@ -210,9 +213,10 @@ instead of failing. `scripts/alm/port.ts` documents every field.
 To add a core provider, put one module under `scripts/alm/providers/`, register
 it in that folder's `index.ts`, and add a recorded fixture in
 `tests/fixtures/alm/<id>.json`. `tests/unit/alm-conformance.test.ts` then runs
-the same suite against it as against the three core providers.
+the same suite against it as against the four core providers.
 
 ## Next
 
+- [The board follows the change](alm-phases.md)
 - [From a Jira ticket](from-a-ticket.md)
 - [Automation](automation.md)

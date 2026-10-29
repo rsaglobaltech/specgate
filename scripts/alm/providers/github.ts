@@ -4,13 +4,16 @@ import type {
   AlmConfig,
   AlmProvider,
   FetchLike,
+  IssueComment,
   IssueRef,
   IssueStatus,
   IssueSummary,
+  Phase,
 } from "../port";
 
 /** The slices of GitHub's issue responses this connector reads. */
 interface GitHubIssue {
+  readonly id?: number;
   readonly number: number;
   readonly title?: string;
   readonly body?: string | null;
@@ -49,12 +52,7 @@ const API_VERSION = "2022-11-28";
  * which is what ADR-0021 asks for.
  */
 class GitHubClient extends HttpAlmClient {
-  readonly capabilities: AlmCapabilities = {
-    create: true,
-    readStatus: true,
-    close: true,
-    listIssues: true,
-  };
+  readonly capabilities: AlmCapabilities = GITHUB_CAPABILITIES;
 
   private readonly headers: Readonly<Record<string, string>>;
   private readonly repo: string;
@@ -142,6 +140,79 @@ class GitHubClient extends HttpAlmClient {
       }));
   }
 
+  /**
+   * REQ-305: GitHub has two states, so a phase short of archived is a label —
+   * `specgate:proposed`, `specgate:building`, or the one `phases:` names — and
+   * the other phase's label comes off. Archived closes the issue.
+   */
+  async setPhase(issueKey: string, phase: Phase, state?: string): Promise<string> {
+    const n = issueNumber(issueKey);
+    if (phase === "archived") {
+      await this.closeIssue(n);
+      return "closed";
+    }
+    const label = state ?? `specgate:${phase}`;
+    const other = phase === "proposed" ? "specgate:building" : "specgate:proposed";
+    await this.request(`/repos/${this.repo}/issues/${n}/labels`, `GitHub label issue ${n}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({ labels: [label] }),
+    });
+    // The other phase's label may never have been set: a 404 is the answer
+    // that it is not there, which is what removing it wanted.
+    await this.fetchImpl(
+      `${this.baseUrl}/repos/${this.repo}/issues/${n}/labels/${encodeURIComponent(other)}`,
+      { method: "DELETE", headers: this.headers }
+    );
+    return label;
+  }
+
+  /** REQ-307: a new issue, attached to its parent as a sub-issue. */
+  async createSubIssue(parentKey: string, title: string): Promise<IssueRef> {
+    const parent = issueNumber(parentKey);
+    const created = await this.requestJson<GitHubIssue>(
+      `/repos/${this.repo}/issues`,
+      `GitHub create a sub-issue of #${parent}`,
+      {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({ title, labels: ["spec-driven"] }),
+      }
+    );
+    await this.request(
+      `/repos/${this.repo}/issues/${parent}/sub_issues`,
+      `GitHub attach #${created.number} to #${parent}`,
+      { method: "POST", headers: this.headers, body: JSON.stringify({ sub_issue_id: created.id }) }
+    );
+    return { key: String(created.number), url: created.html_url ?? null };
+  }
+
+  /** REQ-306: the issue's comments, oldest first. */
+  async listComments(issueKey: string): Promise<IssueComment[]> {
+    const comments = await this.requestJson<
+      { id: number; user?: { login?: string }; body?: string | null }[]
+    >(
+      `/repos/${this.repo}/issues/${issueNumber(issueKey)}/comments?per_page=100`,
+      `GitHub read the comments of #${issueKey}`,
+      { headers: this.headers }
+    );
+    return (comments || []).map((c) => ({
+      id: String(c.id),
+      author: String(c.user?.login ?? ""),
+      body: String(c.body ?? ""),
+    }));
+  }
+
+  /** REQ-306: the issue's title and body. */
+  async readIssueText(issueKey: string): Promise<{ title: string; body: string }> {
+    const issue = await this.requestJson<GitHubIssue>(
+      `/repos/${this.repo}/issues/${issueNumber(issueKey)}`,
+      `GitHub read issue #${issueKey}`,
+      { headers: this.headers }
+    );
+    return { title: String(issue.title ?? ""), body: String(issue.body ?? "") };
+  }
+
   async closeIssue(issueKey: string): Promise<void> {
     await this.request(`/repos/${this.repo}/issues/${issueKey}`, `GitHub close issue ${issueKey}`, {
       method: "PATCH",
@@ -153,6 +224,24 @@ class GitHubClient extends HttpAlmClient {
   }
 }
 
+/** An issue number as a path segment. */
+function issueNumber(key: string): string {
+  const n = String(key).replace(/^#/, "");
+  if (!/^\d+$/.test(n)) throw new Error(`GitHub: '${key}' is not an issue number.`);
+  return n;
+}
+
+const GITHUB_CAPABILITIES: AlmCapabilities = {
+  create: true,
+  readStatus: true,
+  close: true,
+  listIssues: true,
+  phase: true,
+  subIssues: true,
+  comments: true,
+  readText: true,
+};
+
 export const githubProvider: AlmProvider = {
   id: "github",
   label: "GitHub Issues",
@@ -161,7 +250,7 @@ export const githubProvider: AlmProvider = {
     // Only GitHub Enterprise Server needs a base URL; github.com is the default.
     optional: ["base_url"],
   },
-  capabilities: { create: true, readStatus: true, close: true, listIssues: true },
+  capabilities: GITHUB_CAPABILITIES,
   create: (cfg, fetchImpl) => new GitHubClient(cfg, fetchImpl),
 };
 

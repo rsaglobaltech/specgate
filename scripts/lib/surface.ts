@@ -255,6 +255,13 @@ export const SURFACE: Command[] = [
       { name: "link" },
       { name: "status" },
       { name: "pull", editsContract: true, json: { key: "pulled", gate: false } },
+      // REQ-309: an agent reads where a change stands, and moves its ticket there.
+      { name: "phase", json: { key: "phase", gate: false, args: "<change>" } },
+      {
+        name: "move",
+        mcpArg: "change",
+        json: { key: "move", gate: false, args: "<change> [<phase>]" },
+      },
       // Pushes a branch and opens a pull request: a person's step, not an MCP tool.
       { name: "pr", mcp: false },
     ],

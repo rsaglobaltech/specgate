@@ -216,6 +216,11 @@
 | REQ-302 | SCN-302a | `features/harness/REQ-302.feature` | - | - | - | - | - | tests/unit/harness-gaps.test.ts | Implemented |
 | REQ-303 | SCN-303a | `features/harness/REQ-303.feature` | - | - | - | - | - | tests/unit/harness-gaps.test.ts | Implemented |
 | REQ-304 | SCN-304a | `features/studio/REQ-304.feature` | - | - | - | - | - | tests/unit/harness-gaps.test.ts | Implemented |
+| REQ-305 | SCN-305a | `features/ticket-source/REQ-305.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
+| REQ-306 | SCN-306a | `features/ticket-source/REQ-306.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
+| REQ-307 | SCN-307a | `features/ticket-source/REQ-307.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
+| REQ-308 | SCN-308a | `features/ticket-source/REQ-308.feature` | - | - | - | - | - | tests/unit/alm-conformance.test.ts | Implemented |
+| REQ-309 | SCN-309a | `features/ticket-source/REQ-309.feature` | - | - | - | - | - | tests/unit/alm-phases.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
