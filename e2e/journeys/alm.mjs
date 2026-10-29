@@ -219,4 +219,50 @@ export default [
       }
     },
   },
+  {
+    name: "alm phase reads a change's phase offline, and alm move moves its ticket",
+    covers: ["alm phase", "alm move"],
+    async run(dir, t) {
+      const jira = await startFake("jira");
+      process.env.FAKE_JIRA_USER = "e2e@example.com";
+      process.env.FAKE_JIRA_TOKEN = "not-a-real-token";
+      try {
+        t.nodeRepo(dir);
+        t.ok(t.sg(dir, "init"), "init");
+        t.write(
+          dir,
+          "alm.config.yaml",
+          [
+            "provider: jira",
+            `base_url: ${jira.url}`,
+            "project_key: SHOP",
+            "user_env: FAKE_JIRA_USER",
+            "token_env: FAKE_JIRA_TOKEN",
+            "",
+          ].join("\n")
+        );
+        const seeded = await jira.json("/__seed", {
+          method: "POST",
+          body: JSON.stringify({ summary: "Invoices as PDF", labels: [] }),
+        });
+        t.ok(t.sg(dir, "change", "new", "invoices-pdf"), "change new");
+        const yaml = "docs/specs/changes/invoices-pdf/change.yaml";
+        t.write(dir, yaml, t.read(dir, yaml).trimEnd() + `\nticket: ${seeded.key}\n`);
+
+        const phase = t.sg(dir, "alm", "phase", "invoices-pdf", "--json");
+        t.ok(phase, "alm phase");
+        t.expect(
+          phase.stdout.includes("proposed") && phase.stdout.includes(seeded.key),
+          "an open change is proposed, with its ticket",
+          phase
+        );
+
+        t.ok(t.sg(dir, "alm", "move", "invoices-pdf", "archived"), "alm move");
+        const issue = (await jira.json("/__issues")).find((i) => i.key === seeded.key);
+        t.expect(issue && issue.done, "the ticket is moved to done", phase);
+      } finally {
+        await jira.close();
+      }
+    },
+  },
 ];
