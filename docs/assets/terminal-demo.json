@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.27.9",
+    "version": "0.27.10",
     "node": "v24.x",
     "platform": "linux",
     "packSource": "local"
   },
-  "recordedAt": "2026-10-29",
+  "recordedAt": "2026-10-30",
   "title": "smart-parking — a pack, then the harness",
   "cols": 88,
   "streamsMerged": false,
