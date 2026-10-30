@@ -20,6 +20,7 @@ import * as path from "node:path";
 import * as os from "node:os";
 import { spawnSync } from "node:child_process";
 import { isInScope } from "../../packages/core/src/domain/AuthoringScope";
+import { removeTempFile } from "../lib/temp-file";
 
 export interface ConfinedRun {
   ok: boolean;
@@ -143,7 +144,7 @@ export function runConfinedAgent(o: {
       stdio: ["pipe", o.showOutput ? 1 : "pipe", o.showOutput ? 2 : "pipe"],
     });
   } finally {
-    fs.rmSync(promptFile, { force: true });
+    removeTempFile(promptFile);
   }
 
   const after = dirtyPaths(o.projectDir) || [];

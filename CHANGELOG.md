@@ -9,6 +9,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A delivered requirement no longer un-approves its change** (REQ-370, REQ-371): delivering a requirement ticks its task in `tasks.md` (REQ-353), and the tick changed the hash the tasks' approval was bound to, so the harness refused the change's second requirement as "not approved: tasks". A layer is now hashed with every task box read as open: a tick, by the harness or a person, keeps the approval, and any other edit still asks for it again. Approvals recorded by 1.0.0-rc.1 and rc.2 keep counting.
+- **A prompt file Windows still holds never fails the command** (REQ-372): four `change author` runs side by side ended in `EBUSY … unlink` after their agents had written their layers. Removing a prompt file now retries briefly and then leaves it to the system — in `change author`, the drafting agents and the harness.
+
 ## [1.0.0-rc.2] — 2026-10-30
 
 After the first microservices run of truck-flote (five repositories, one story across three of them, nine requirements delivered in parallel): the workspace takes the client's brief and drafts its stories, a story's intent and criteria reach every repository, the story is built in the order of its dependencies, and `init --yes` adopts the folder it is run in.
