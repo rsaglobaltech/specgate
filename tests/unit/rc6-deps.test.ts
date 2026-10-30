@@ -100,7 +100,15 @@ function change(design: string) {
 
 test("REQ-390 SCN-390a: the architect is told to carry a dependency into the trace", () => {
   const root = change("");
-  const r = sg(root, ["change", "instructions", "design", "panel", "--project-dir", root, "--json"]);
+  const r = sg(root, [
+    "change",
+    "instructions",
+    "design",
+    "panel",
+    "--project-dir",
+    root,
+    "--json",
+  ]);
   assert.equal(r.status, 0, out(r));
   const doc = JSON.parse(r.stdout);
   const rules: string[] = doc.instructions.rules;
