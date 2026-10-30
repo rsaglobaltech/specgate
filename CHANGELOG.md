@@ -9,6 +9,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The design carries its dependencies into the traces (REQ-390).** The specs of a layered change are written before its design, so an architect who decided that a requirement waits for `contracts:REQ-002` wrote it only in design.md, and the story harness, which orders the parts from the traces, built them all at once (truck-flote, MS5-1). The rules of `change instructions design`, and so the prompt of `change author design`, now say that a `depends=` or `api=` the design decides goes into the requirement's `specgate:trace` under `specs/` too, and the story context of a sub-change's design says the same.
+- **A placeholder operation is no citation (REQ-391).** A design quoting `api=contracts/fleet.openapi.yaml#<operationId>` as guidance was reported as `layer_design_dependency_untraced`; an `api=` whose operation is a placeholder is now guidance (MS5-2).
+
 ## [1.0.0-rc.5] — 2026-10-30
 
 After the fourth microservices run of truck-flote: a contract cited by a requirement not yet built is a warning until it is delivered, so the contracts repository builds its requirements one by one, and a service or web requirement of a story that cites nothing of the contracts repository is pointed out.

@@ -248,7 +248,8 @@ function crossReferences(text: string): string[] {
     }
   }
   for (const m of text.matchAll(/\bapi=([^\s`|<>]+)/g)) {
-    if (/#/.test(m[1])) refs.push(`api=${m[1].replace(/[.,;:)]+$/, "")}`);
+    // REQ-391: `#<operationId>` stops the match at `<` and leaves a bare `#`.
+    if (/#[^#\s]/.test(m[1])) refs.push(`api=${m[1].replace(/[.,;:)]+$/, "")}`);
   }
   return refs;
 }
