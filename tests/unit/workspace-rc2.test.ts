@@ -259,7 +259,12 @@ test("REQ-344 SCN-344a: tracking is told of fleet", () => {
   const { ws, tracking } = split();
   const text = discover(tracking);
   assert.match(text, /`fleet`/);
-  assert.match(text, /depends=fleet:REQ-NNN/);
+  // REQ-365: the guidance is the design's, not the Discover's.
+  const design = fs.readFileSync(
+    path.join(tracking, "docs", "specs", "changes", "follow-shipment", "design.md"),
+    "utf8"
+  );
+  assert.match(design, /depends=fleet:REQ-NNN/);
 
   const r = sg(ws, [
     "workspace",

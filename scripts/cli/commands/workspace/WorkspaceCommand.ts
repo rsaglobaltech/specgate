@@ -17,8 +17,10 @@ import {
 } from "../../../../packages/core/src/domain/Workspace";
 import type { WorkspaceRepo, WorkspaceRole } from "../../../../packages/core/src/domain/Workspace";
 import { shortNames } from "../../../../packages/core/src/domain/WorkspaceStory";
+import { openQuestions } from "../../../../packages/core/src/domain/DraftChecklist";
 import {
   draftStoryWithAgent,
+  proposeStoriesWithAgent,
   readWorkspaceStories,
   scaffoldStory,
   storyRel,
@@ -33,6 +35,7 @@ import {
   loadWorkspace,
   noteNoMembers,
   openSubChange,
+  readyRequirements,
   recordCheck,
   readStories,
   subChangeState,
@@ -60,11 +63,13 @@ function usage(): void {
     check                    each repository's own check, then the qualified ids and the
                              dependencies between repositories; non-zero when any fails
     draft [<story>] [--agent "<cmd>"]
-                             the client's brief below a front matter naming its stories; with a
-                             story, its story.md — an agent drafts it, confined to the story
-    propose <story> [--repos <a,b,…>] [--title "<title>"]
+                             the client's brief below a front matter naming its stories (an agent
+                             proposes them); with a story, its story.md and questions.md — an agent
+                             drafts them, confined to the story
+    propose <story> [--repos <a,b,…>] [--title "<title>"] [--allow-open-questions]
                              a business story, and a change for it in each repository named
-                             (the brief's repos when --repos is not given), carrying the story
+                             (the brief's repos when --repos is not given), carrying the story;
+                             refused while a question of the story is open
     live [--port <n>]        every repository's harness and every story, live (studio /live);
                              --json prints the model once
     harness run --story <id> [--dry-run] [-- <harness run options>]
@@ -94,6 +99,7 @@ export class WorkspaceCommand extends BaseCommand {
     let name = "";
     let title = "";
     let force = false;
+    let allowOpenQuestions = false;
     const repoArgs: string[] = [];
     let repos = "";
     let agent = "";
@@ -107,6 +113,7 @@ export class WorkspaceCommand extends BaseCommand {
       else if (a === "--title") title = argv[++i] || "";
       else if (a === "--agent") agent = argv[++i] || "";
       else if (a === "--force") force = true;
+      else if (a === "--allow-open-questions") allowOpenQuestions = true;
       else if (a === "--json") continue;
       else if (!a.startsWith("-")) positional.push(a);
       else
@@ -225,8 +232,41 @@ export class WorkspaceCommand extends BaseCommand {
 
     if (sub === "draft") {
       // REQ-339..340: the client's brief, its stories, and one story drafted.
-      const brief = workspaceBrief(ws!);
+      let brief = workspaceBrief(ws!);
       const id = positional[0] || "";
+      let proposed: ReturnType<typeof proposeStoriesWithAgent> | null = null;
+      if (!id && agent) {
+        // REQ-360: the agent proposes the stories — never --agent ignored.
+        if (brief.stories.length) {
+          io.usage(NULL_SHAPE, [
+            error(
+              "workspace_draft_agent_story",
+              `${brief.file} already names its stories: --agent drafts one of them.`,
+              {
+                fix: `specgate workspace draft ${brief.stories[0].id} --agent "${agent}"`,
+              }
+            ),
+          ]);
+        }
+        proposed = proposeStoriesWithAgent(ws!, agent, !json);
+        if (!proposed.ok) {
+          io.fail(NULL_SHAPE, [
+            error(
+              "workspace_draft_agent",
+              proposed.problem === "no_git"
+                ? "The workspace repository is not a git repository: the agent's writes cannot be confined."
+                : `The agent failed: ${proposed.detail || "no detail"}`,
+              {
+                fix:
+                  proposed.problem === "no_git"
+                    ? "git init"
+                    : "Run the agent command by hand to see why.",
+              }
+            ),
+          ]);
+        }
+        brief = { ...brief, stories: readWorkspaceStories(ws!) };
+      }
       if (!id) {
         io.emit({ workspace: brief }, () => {
           process.stdout.write(ui.header("workspace draft", ws!.config.name));
@@ -234,6 +274,16 @@ export class WorkspaceCommand extends BaseCommand {
             process.stdout.write(
               ui.fileLine("added", `${brief.file}  the client's brief, below a front matter`) + "\n"
             );
+          if (proposed) {
+            if (proposed.permissionAdded)
+              process.stdout.write(
+                `  ${c.muted}edit permission added: the agent writes only ${brief.file}${c.reset}\n`
+              );
+            if (proposed.textRestored)
+              process.stdout.write(
+                `  ${c.warn}▲${c.reset}  the client's text below the front matter was put back as it was\n`
+              );
+          }
           if (brief.stories.length === 0) {
             process.stdout.write(
               `\n  Name the stories of the brief in ${brief.file}'s front matter:\n` +
@@ -427,6 +477,24 @@ export class WorkspaceCommand extends BaseCommand {
       story.replace(/-/g, " ");
     const storyMd = path.join(storyDir, "story.md");
     const storyText = fs.existsSync(storyMd) ? fs.readFileSync(storyMd, "utf8") : "";
+    // REQ-363: the client answers first.
+    const questionsFile = path.join(storyDir, "questions.md");
+    const open = fs.existsSync(questionsFile)
+      ? openQuestions(fs.readFileSync(questionsFile, "utf8"))
+      : [];
+    if (open.length && !allowOpenQuestions) {
+      io.fail(NULL_SHAPE, [
+        error(
+          "workspace_story_questions_open",
+          `The story ${story} has ${open.length} open question(s): ${open.map((q) => q.row).join(", ")}.`,
+          {
+            target: story,
+            file: `${STORIES_DIR}/${story}/questions.md`,
+            fix: `Answer them in ${STORIES_DIR}/${story}/questions.md, or propose anyway with --allow-open-questions.`,
+          }
+        ),
+      ]);
+    }
     const failed: Diagnostic[] = [];
     for (const n of names) {
       const p = openSubChange(ws!, n, story, storyTitle, { storyText, repos: names });
@@ -627,14 +695,49 @@ function runLiveOrHarness(argv: string[], json: boolean, io: ReturnType<typeof a
   if (!json) process.stdout.write(ui.header("workspace harness run", story!.id));
   let worst = 0;
   const results: Array<{ repo: string; exit: number; log: string }> = [];
+  const waiting: Array<{ repo: string; requirement: string; on: string[] }> = [];
   const byLevel = [...new Set(runs.map((r) => r.level))].sort((a, b) => a - b);
   const runLevel = (i: number): void => {
     if (i >= byLevel.length) {
+      // REQ-367: a requirement left waiting is not a delivered story.
+      if (waiting.length) worst = Math.max(worst, 1);
       if (json)
-        process.stdout.write(JSON.stringify({ harness: { story: story!.id, results } }) + "\n");
+        process.stdout.write(
+          JSON.stringify({ harness: { story: story!.id, results, waiting } }) + "\n"
+        );
       process.exit(worst);
     }
-    const now = runs.filter((r) => r.level === byLevel[i]);
+    // REQ-367: at each level, only the requirements whose dependencies are
+    // delivered start; the others are named, waiting.
+    const now = runs
+      .filter((r) => r.level === byLevel[i])
+      .flatMap((r) => {
+        const sc = story!.subchanges.find((x) => x.repo === r.repo)!;
+        const { ready, waiting: left } = readyRequirements(ws!, r.repo, sc.change);
+        const go = r.requirements.filter((id) => ready.includes(id));
+        for (const w of left.filter((x) => r.requirements.includes(x.id))) {
+          waiting.push({ repo: r.repo, requirement: w.id, on: w.on });
+          if (!json)
+            process.stdout.write(
+              `    ${ui.state("blocked")} ${r.repo}:${w.id} waiting on ${w.on.join(", ")}\n`
+            );
+        }
+        if (go.length === 0) return [];
+        const drop = new Set(r.requirements.filter((id) => !go.includes(id)));
+        const args: string[] = [];
+        for (let k = 0; k < r.args.length; k += 1) {
+          if (r.args[k] === "--req" && drop.has(r.args[k + 1])) {
+            k += 1;
+            continue;
+          }
+          args.push(r.args[k]);
+        }
+        return [{ ...r, args, requirements: go }];
+      });
+    if (now.length === 0) {
+      runLevel(i + 1);
+      return;
+    }
     let left = now.length;
     for (const r of now) {
       const log = path.join(logs, `${r.repo}.log`);

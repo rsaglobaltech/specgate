@@ -24,6 +24,8 @@ import {
   CRITERIA,
   INTENT,
   criteriaLines,
+  criterionIds,
+  storyCriteria,
   section,
 } from "../../packages/core/src/domain/WorkspaceStory";
 import { readDeclaredDependencies } from "./requirement-graph";
@@ -433,7 +435,7 @@ export function checkWorkspace(ws: LoadedWorkspace): CheckResult {
   }
 
   const ok = repos.every((r) => r.ok) && problems.length === 0;
-  return { ok, repos, problems, warnings: divergedParts(ws) };
+  return { ok, repos, problems, warnings: [...divergedParts(ws), ...criteriaWarnings(ws)] };
 }
 
 /** The `discover.md` of a member's open change, or null. */
@@ -656,9 +658,64 @@ export function openSubChange(
     if (criteria.length)
       text = replaceSection(text, CRITERIA, criteria.map((c) => `- ${c}`).join("\n"));
     text = text.trimEnd() + "\n\n" + otherRepositories(ws, repo, carried.repos) + "\n";
+    const part = repositoryPart(repo, carried.repos, storyCriteria(carried.storyText));
+    if (part) text = text.trimEnd() + "\n\n" + part + "\n";
     fs.writeFileSync(proposal, text, "utf8");
   }
+  // REQ-365: how to name what this part needs is the design's, not the Discover's.
+  const design = path.join(changeDir, "design.md");
+  if (fs.existsSync(design)) {
+    fs.writeFileSync(
+      design,
+      fs.readFileSync(design, "utf8").trimEnd() +
+        "\n\n" +
+        acrossRepositories(ws, repo, carried.repos) +
+        "\n",
+      "utf8"
+    );
+  }
+  // REQ-366: where the story's workspace is, for whoever writes this part.
+  if (fs.existsSync(changeDir)) {
+    const link: StoryLink = {
+      workspace: path.relative(dir, ws.dir).split(path.sep).join("/") || ".",
+      story,
+      repo,
+    };
+    fs.writeFileSync(
+      path.join(changeDir, STORY_LINK),
+      JSON.stringify(link, null, 2) + "\n",
+      "utf8"
+    );
+  }
   return null;
+}
+
+/** The file of a sub-change that names its story's workspace (REQ-366). */
+export const STORY_LINK = "story.json";
+
+export interface StoryLink {
+  /** The workspace repository, relative to the member. */
+  workspace: string;
+  story: string;
+  /** This member's name in the workspace. */
+  repo: string;
+}
+
+/** REQ-361: the criteria this repository answers, and those the others do. */
+function repositoryPart(repo: string, repos: string[], map: Record<string, string[]>): string {
+  if (Object.keys(map).length === 0) return "";
+  const mine = map[repo] || [];
+  const others = repos.filter((r) => r !== repo && (map[r] || []).length);
+  return [
+    "## This repository's part",
+    "",
+    mine.length
+      ? `This repository answers ${mine.join(", ")}.`
+      : "The story gives this repository none of its criteria.",
+    ...(others.length
+      ? ["", "The others:", "", ...others.map((r) => `- \`${r}\`: ${map[r].join(", ")}`)]
+      : []),
+  ].join("\n");
 }
 
 /** The body of a `##` section replaced, its heading kept. */
@@ -671,12 +728,11 @@ function replaceSection(md: string, heading: RegExp, body: string): string {
   return [...lines.slice(0, at + 1), "", body, "", ...lines.slice(end)].join("\n");
 }
 
-/** REQ-344: the story's other repositories, and how to name what this part needs from them. */
+/** REQ-344: the story's other repositories, by name and role — business words only (REQ-365). */
 function otherRepositories(ws: LoadedWorkspace, repo: string, repos: string[]): string {
   const others = repos.filter((r) => r !== repo);
   const contracts = ws.config.repos.filter((r) => r.role === "contracts").map((r) => r.name);
   const roleOf = (n: string) => (ws.config.repos.find((r) => r.name === n) || { role: "" }).role;
-  const example = others[0] || "fleet";
   return [
     "## The story's other repositories",
     "",
@@ -684,12 +740,91 @@ function otherRepositories(ws: LoadedWorkspace, repo: string, repos: string[]): 
     ...contracts
       .filter((c) => !others.includes(c) && c !== repo)
       .map((c) => `- \`${c}\` (contracts)`),
+  ].join("\n");
+}
+
+/** REQ-344, REQ-365: in the design, how a requirement names what it needs from the others. */
+function acrossRepositories(ws: LoadedWorkspace, repo: string, repos: string[]): string {
+  const others = repos.filter((r) => r !== repo);
+  const contracts = ws.config.repos.filter((r) => r.role === "contracts").map((r) => r.name);
+  const example = others[0] || "fleet";
+  return [
+    "## Across repositories",
     "",
     `A requirement here that needs one of their requirements names it in its trace: \`depends=${example}:REQ-NNN\`.` +
       (contracts.length
         ? ` An API between repositories is an operation of \`${contracts[0]}\`, cited as \`api=<file>#<operationId>\`.`
         : ""),
   ].join("\n");
+}
+
+/**
+ * REQ-362: a story that maps its criteria to repositories leaves none to no
+ * repository and gives none to two.
+ */
+export function criteriaWarnings(ws: LoadedWorkspace): Diagnostic[] {
+  const out: Diagnostic[] = [];
+  for (const s of readStories(ws.dir)) {
+    const md = path.join(s.dir, "story.md");
+    if (!fs.existsSync(md)) continue;
+    const text = fs.readFileSync(md, "utf8");
+    const map = storyCriteria(text);
+    if (Object.keys(map).length === 0) continue;
+    const file = `${STORIES_DIR}/${s.id}/story.md`;
+    for (const id of criterionIds(text)) {
+      const by = Object.keys(map).filter((r) => map[r].includes(id));
+      if (by.length === 0) {
+        out.push(
+          warning(
+            "workspace_criterion_unanswered",
+            `${id} of the story ${s.id} is answered by no repository.`,
+            {
+              target: s.id,
+              file,
+              fix: `Name the repository that answers ${id} under ## Repositories in ${file}.`,
+            }
+          )
+        );
+      } else if (by.length > 1) {
+        out.push(
+          warning(
+            "workspace_criterion_shared",
+            `${id} of the story ${s.id} is claimed by ${by.join(" and ")}.`,
+            {
+              target: s.id,
+              file,
+              fix: `Give ${id} to one repository, or split it into a criterion for each, in ${file}.`,
+            }
+          )
+        );
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * REQ-367: a part's requirements split into those whose every `depends=` on
+ * another repository is delivered, and those still waiting, with what for.
+ */
+export function readyRequirements(
+  ws: LoadedWorkspace,
+  repo: string,
+  change: string
+): { ready: string[]; waiting: Array<{ id: string; on: string[] }> } {
+  const statuses = memberStatusesCache(ws);
+  const ready: string[] = [];
+  const waiting: Array<{ id: string; on: string[] }> = [];
+  for (const r of changeRequirements(ws.dirs[repo], change)) {
+    const on = r.depends.filter((d) => {
+      const q = splitQualified(d);
+      if (!q || q.repo === repo || !ws.dirs[q.repo]) return false;
+      return !DELIVERED.includes(statuses(q.repo).get(q.id) || "");
+    });
+    if (on.length) waiting.push({ id: r.id, on });
+    else ready.push(r.id);
+  }
+  return { ready, waiting };
 }
 
 export function noteNoMembers(): Diagnostic {

@@ -9,6 +9,16 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **An agent proposes the brief's stories** (REQ-360): `workspace draft --agent` with no story named ran no agent and said nothing; the agent now fills the front matter's `stories:`, writing only `docs/brief.md`, and the client's text is put back if it moved. With stories named, `--agent` without a story id is refused.
+- **Each criterion names its repositories** (REQ-361, REQ-362): a story's `## Repositories` lists the criteria each answers (`- fleet: AC-1, AC-2`); each Discover says which are its own and which the others', and `workspace check` warns about a criterion no repository answers or two claim.
+- **A story's questions wait for their answers** (REQ-363): they go in `docs/stories/<id>/questions.md`; `workspace propose` refuses while one is open, unless `--allow-open-questions`.
+- **A drafted story keeps none of its form's hints** (REQ-364).
+- **The Discover stays business** (REQ-365, REQ-344): the guidance on `depends=` and `api=` that tripped `layer_discover_technical` in every repository moves to the sub-change's `design.md`.
+- **`change author` hears of the story** (REQ-366): `story.json` in each sub-change names its workspace, and the prompt for any layer carries the story's other parts and their requirements.
+- **A requirement waits for what it depends on** (REQ-367): `workspace harness run --story` starts only the requirements whose dependencies are delivered, names the others waiting, and exits 1.
+
 ## [1.0.0-rc.2] — 2026-10-30
 
 After the first microservices run of truck-flote (five repositories, one story across three of them, nine requirements delivered in parallel): the workspace takes the client's brief and drafts its stories, a story's intent and criteria reach every repository, the story is built in the order of its dependencies, and `init --yes` adopts the folder it is run in.

@@ -134,7 +134,10 @@ specgate workspace draft
 ```
 
 The brief goes below a front matter in `docs/brief.md`, its text kept. Name the
-business stories it holds, each with the repositories it touches (REQ-339):
+business stories it holds, each with the repositories it touches (REQ-339) — or
+let an agent propose them, with a `# check:` comment where it is unsure:
+`specgate workspace draft --agent "claude -p"` writes only the front matter, and
+puts back the client's text if it moved (REQ-360).
 
 ```yaml
 stories:
@@ -147,9 +150,12 @@ specgate workspace draft follow-shipment --agent "claude -p"   # REQ-340
 ```
 
 The agent reads the brief and writes the story's `docs/stories/follow-shipment/story.md`:
-its **Intent** and its **Acceptance criteria** (`AC-1`, `AC-2`…). Anything it
-writes elsewhere is undone. Without `--agent`, the file waits with its sections.
-Review it: it is the business story every repository will answer.
+its **Intent**, its **Acceptance criteria** (`AC-1`, `AC-2`…) and, under
+**Repositories**, the criteria each repository answers (`- fleet: AC-1, AC-2`,
+REQ-361); the form's hints go once it has written (REQ-364). What only the client
+can decide goes in `questions.md`, a row each, with an `Answer` column (REQ-363).
+Anything it writes elsewhere is undone. Without `--agent`, the files wait with
+their sections. Review them: this is the business story every repository answers.
 
 ## A story across repositories
 
@@ -161,12 +167,18 @@ specgate workspace propose follow-shipment
   change `follow-shipment`. Its `discover.md` holds the story's intent and
   criteria, copied as the story states them, and names the story
   `truck-flote:follow-shipment` (REQ-342).
-- It also names the story's other repositories and the contracts repository,
-  and how a requirement says what it needs from them:
-  `depends=fleet:REQ-NNN`, an `api=` operation of the contracts repository
-  (REQ-344).
+- It refuses while a question in `questions.md` has no answer, naming it;
+  `--allow-open-questions` proposes anyway (REQ-363).
+- The Discover names the story's other repositories, and — when the story maps
+  its criteria — the ones this repository answers and the others' (REQ-361).
+  How a requirement says what it needs from them, `depends=fleet:REQ-NNN` and an
+  `api=` operation of the contracts repository, is in the sub-change's
+  `design.md`: the Discover stays business (REQ-344, REQ-365).
+- `story.json` in the sub-change names the workspace, so `change author` tells
+  the agent writing any layer of it the story's other parts (REQ-366).
 - The criteria are the business's: `workspace check` warns when a repository's
-  differ from the story's (REQ-343). Change them in the story.
+  differ from the story's (REQ-343), and when a criterion is answered by no
+  repository or claimed by two (REQ-362). Change them in the story.
 
 Each repository then works its change as usual — draft, review, harness,
 archive. `workspace status` shows each sub-change open, archived or missing,
@@ -183,7 +195,9 @@ specgate workspace live          # the studio, serving the workspace's /live
   holds an open part of the story, for that part's requirements, each its own
   process, its output in `.specgate/workspace-runs/<story>/` (git-ignored). A
   repository whose part depends on another part's undelivered requirement starts
-  once that repository has finished; the rest run at once (REQ-345). The
+  once that repository has finished; the rest run at once (REQ-345). Even then,
+  only its requirements whose dependencies are delivered start: the others are
+  named, waiting, and the run exits 1 (REQ-367). The
   options after a bare `--` go to every repository's harness. `--dry-run` prints
   the commands with their order.
 - Each harness is told the story's other parts and their requirements, so its

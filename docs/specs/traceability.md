@@ -283,6 +283,14 @@
 | REQ-347 | SCN-347a | `features/workspace/REQ-347.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
 | REQ-348 | SCN-348a | `features/workspace/REQ-348.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
 | REQ-349 | SCN-349a | `features/workspace/REQ-349.feature` | - | - | - | - | - | tests/unit/workspace-rc2.test.ts | Implemented |
+| REQ-360 | SCN-360a | `features/workspace/REQ-360.feature` | - | - | - | - | - | tests/unit/workspace-rc3.test.ts | Implemented |
+| REQ-361 | SCN-361a | `features/workspace/REQ-361.feature` | - | - | - | - | - | tests/unit/workspace-rc3.test.ts | Implemented |
+| REQ-362 | SCN-362a | `features/workspace/REQ-362.feature` | - | - | - | - | - | tests/unit/workspace-rc3.test.ts | Implemented |
+| REQ-363 | SCN-363a | `features/workspace/REQ-363.feature` | - | - | - | - | - | tests/unit/workspace-rc3.test.ts | Implemented |
+| REQ-364 | SCN-364a | `features/workspace/REQ-364.feature` | - | - | - | - | - | tests/unit/workspace-rc3.test.ts | Implemented |
+| REQ-365 | SCN-365a | `features/workspace/REQ-365.feature` | - | - | - | - | - | tests/unit/workspace-rc3.test.ts | Implemented |
+| REQ-366 | SCN-366a | `features/workspace/REQ-366.feature` | - | - | - | - | - | tests/unit/workspace-rc3.test.ts | Implemented |
+| REQ-367 | SCN-367a | `features/workspace/REQ-367.feature` | - | - | - | - | - | tests/unit/workspace-rc3.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

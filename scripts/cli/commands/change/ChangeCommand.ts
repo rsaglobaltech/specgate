@@ -11,6 +11,7 @@
  */
 
 import * as fs from "node:fs";
+import { withStoryContext } from "../../../lib/story-part";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
 
@@ -942,7 +943,12 @@ function cmdAuthor(opts: ChangeOptions) {
   }
 
   const instructions = buildInstructions(projectDir, artifact, changeId, TEMPLATES);
-  const prompt = authorPrompt(changeId, artifact, instructions);
+  // REQ-366: a part of a workspace story hears of the story's other parts.
+  const prompt = withStoryContext(
+    authorPrompt(changeId, artifact, instructions),
+    projectDir,
+    changeId
+  );
 
   if (opts.dryRun) {
     return emit(opts, { change: changeId, artifact, wrote: [], reverted: [], prompt }, () =>

@@ -1,0 +1,32 @@
+[
+  {
+    "layer": "discover",
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "product",
+    "hash": "sha256:97161db6e026c4e640eb1bd452eceacda91cc30fe59265496b757593bfd9b66b",
+    "at": "2026-10-30"
+  },
+  {
+    "layer": "design",
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "architect",
+    "hash": "sha256:643ce8662fe3d1ae68ff3f6494478f0007ee8c80b2f300d3d48c1e8da0d24090",
+    "at": "2026-10-30"
+  },
+  {
+    "layer": "tasks",
+    "by": {
+      "name": "Raul Alejandro Salas",
+      "email": "alejandrosalas0891@gmail.com"
+    },
+    "role": "developer",
+    "hash": "sha256:f137a03914b80ade6fc4dd635a4245b48e8b4fdc51de660029e324e7b49d04f6",
+    "at": "2026-10-30"
+  }
+]
