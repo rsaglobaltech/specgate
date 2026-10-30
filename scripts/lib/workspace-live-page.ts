@@ -1,7 +1,8 @@
 /**
  * The workspace's live page (REQ-323): one panel per repository — the
  * requirement in flight, its gate step and the agent's last step — then each
- * story with its parts, and the cost. Filled from `/live.json`, kept current by
+ * story with its parts, and the cost. Each panel's name opens that
+ * repository's own live view (REQ-411). Filled from `/live.json`, kept current by
  * `/live/stream`; every value is set with textContent, never as HTML.
  *
  * The script lives inside this template literal: it uses no backticks, no
@@ -27,7 +28,7 @@ export function workspaceLivePage(workspaceName: string): string {
   h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 8px}
   .repos{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
-  .card h3{margin:0 0 6px;font-size:15px} .role{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
+  .card h3{margin:0 0 6px;font-size:15px} .card h3 a{color:var(--accent);text-decoration:none} .card h3 a:hover{text-decoration:underline} .role{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
   .idle{color:var(--muted)} .req{font-family:var(--mono)} .step{color:var(--run)} .agent{color:var(--muted);font-family:var(--mono);font-size:12px;word-break:break-all}
   .cost{margin-top:8px;color:var(--muted);font-size:12px}
   table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:8px}
@@ -49,7 +50,7 @@ export function workspaceLivePage(workspaceName: string): string {
   function render(m){
     var repos = document.getElementById("repos"); repos.textContent = "";
     m.repos.forEach(function(r){
-      var c = el("div", "card"); var h = el("h3", "", r.name); h.appendChild(el("span", "role", r.role)); c.appendChild(h);
+      var c = el("div", "card"); var h = el("h3"); var a = el("a", "", r.name); a.href = "/live/repo/" + encodeURIComponent(r.name) + "/"; a.title = "Open " + r.name + "'s live view"; h.appendChild(a); h.appendChild(el("span", "role", r.role)); c.appendChild(h);
       if (!r.exists) c.appendChild(el("div", "idle", "folder missing"));
       else if (!r.inFlight) c.appendChild(el("div", "idle", r.queue.length ? "queued: " + r.queue.join(", ") : "idle"));
       else {

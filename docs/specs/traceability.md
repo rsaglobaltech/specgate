@@ -308,6 +308,9 @@
 | REQ-400 | SCN-400a | `features/docs-site/REQ-400.feature` | - | - | - | - | - | tests/unit/rc8-site.test.ts | Implemented |
 | REQ-401 | SCN-401a | `features/docs-site/REQ-401.feature` | - | - | - | - | - | tests/unit/rc8-site.test.ts | Implemented |
 | REQ-402 | SCN-402a | `features/docs-site/REQ-402.feature` | - | - | - | - | - | tests/unit/rc8-site.test.ts | Implemented |
+| REQ-410 | SCN-410a | `features/workspace/REQ-410.feature` | - | - | - | - | - | tests/unit/rc9-live.test.ts | Implemented |
+| REQ-411 | SCN-411a | `features/workspace/REQ-411.feature` | - | - | - | - | - | tests/unit/rc9-live.test.ts | Implemented |
+| REQ-412 | SCN-412a | `features/workspace/REQ-412.feature` | - | - | - | - | - | tests/unit/rc9-live.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -19,11 +19,28 @@
  * `/live/req/<id>.json`; and a second view shows the traceability matrix as it
  * stands, from `/live/matrix.json`.
  *
+ * REQ-410: served by a workspace's studio for one of its repositories, the
+ * header names the repository's role and leads back to the workspace.
+ *
  * The script lives inside this template literal: it uses no backticks, no
  * dollar-brace, and no backslash escapes.
  */
-export function livePage(projectName: string, token = ""): string {
-  const title = String(projectName).replace(/[&<>"']/g, "");
+export interface LivePageContext {
+  /** The repository's role in its workspace. */
+  readonly role?: string;
+  /** Where the workspace's live view is. */
+  readonly back?: string;
+  readonly workspace?: string;
+}
+
+export function livePage(projectName: string, token = "", context: LivePageContext = {}): string {
+  const clean = (v: unknown) => String(v).replace(/[&<>"']/g, "");
+  const title = clean(projectName);
+  const crumbs = context.back
+    ? `<a href="${clean(context.back)}">&larr; ${clean(context.workspace || "workspace")}</a>` +
+      `<span class="sep">/</span><a href="#">${title}</a>` +
+      (context.role ? `<span class="role">${clean(context.role)}</span>` : "")
+    : `<a href="#">${title}</a>`;
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -43,6 +60,7 @@ export function livePage(projectName: string, token = ""): string {
   .top{position:sticky;top:0;z-index:20;height:var(--top);display:flex;align-items:center;gap:10px;padding:0 24px;
     background:var(--panel);border-bottom:1px solid var(--line)}
   .top svg{width:22px;height:22px;flex:none} .sep{color:var(--faint)}
+  .role{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:0 8px}
   .views{display:flex;gap:4px;margin-left:24px}
   .views button{border:1px solid transparent;background:none;border-radius:6px;padding:4px 12px;cursor:pointer;color:var(--muted)}
   .views button[aria-pressed="true"]{border-color:var(--line);background:var(--soft);color:var(--ink);font-weight:600}
@@ -143,7 +161,7 @@ export function livePage(projectName: string, token = ""): string {
 <body>
 <div class="top">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
-  <a href="#">${title}</a><span class="sep">/</span><b>Harness live</b>
+  ${crumbs}<span class="sep">/</span><b>Harness live</b>
   <div class="views" role="group" aria-label="View">
     <button type="button" id="vRun" aria-pressed="true">Run</button>
     <button type="button" id="vMatrix" aria-pressed="false">Traceability</button>

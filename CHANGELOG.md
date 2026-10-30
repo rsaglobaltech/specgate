@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **Each repository's live view, from the workspace (REQ-410..412).** The workspace's live view showed each repository's requirement in flight, its step and its cost, but to see a repository's queue, console, attempts and gate the viewer had to start that repository's own studio (truck-flote, MS7-2). In a workspace's studio each repository's name now opens `/live/repo/<name>/`: the same live view the repository's studio serves at `/live`, read from its folder and kept current by its own stream, naming its role and leading back to the workspace. It is read-only; a repository the workspace does not have, or whose folder is missing, is a 404 saying so.
+
 ## [1.0.0-rc.8] — 2026-10-30
 
 The documentation site carries both versions, with a picker at the top left and a page of what 1.0 adds; the pipelines are fewer and clearer — one CI, one release, one scheduled workflow — and npm audit and the licence check pass again.
