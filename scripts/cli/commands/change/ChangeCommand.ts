@@ -11,7 +11,7 @@
  */
 
 import * as fs from "node:fs";
-import { withStoryContext } from "../../../lib/story-part";
+import { contractCitationWarnings, withStoryContext } from "../../../lib/story-part";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
 
@@ -1239,7 +1239,8 @@ function cmdValidate(opts: ChangeOptions) {
     if (rewritten) result.diagnostics.push(rewritten);
     result.diagnostics.push(
       ...sharedFeatureFiles(projectDir, id),
-      ...notApprovable(projectDir, id)
+      ...notApprovable(projectDir, id),
+      ...contractCitationWarnings(projectDir, id)
     );
     const failed = opts.strict ? result.diagnostics.length > 0 : hasErrors(result.diagnostics);
     // What each delta rewrites, as it reads now: on first sight, or on

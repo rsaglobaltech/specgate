@@ -185,6 +185,87 @@ function member(root: string, folder: string): string {
   return dir;
 }
 
+/** A workspace whose story track-fleet gives AC-1 to contracts and tracking, proposed to both. */
+function storyOfTwo(): { contracts: string; tracking: string } {
+  const root = tmp();
+  const tracking = member(root, "tracking");
+  const contracts = member(root, "contracts");
+  const ws = path.join(root, "ws");
+  fs.mkdirSync(ws);
+  gitRepo(ws);
+  put(path.join(ws, "brief.md"), "# Proyecto\n\nEl despachador ve su flota en un mapa.\n");
+  let r = sg(ws, [
+    "workspace",
+    "init",
+    "--name",
+    "truck-flote",
+    "--repo",
+    "tracking=../tracking",
+    "--repo",
+    "contracts=../contracts:contracts",
+  ]);
+  assert.equal(r.status, 0, out(r));
+  commit(ws, "the workspace");
+  assert.equal(sg(ws, ["workspace", "draft"]).status, 0);
+  const brief = path.join(ws, "docs", "brief.md");
+  fs.writeFileSync(
+    brief,
+    fs
+      .readFileSync(brief, "utf8")
+      .replace(
+        /^stories:.*$/m,
+        "stories:\n  - { id: track-fleet, title: El despachador sigue su flota, repos: [contracts, tracking] }"
+      ),
+    "utf8"
+  );
+  assert.equal(sg(ws, ["workspace", "draft", "track-fleet"]).status, 0);
+  const story = path.join(ws, "docs", "stories", "track-fleet", "story.md");
+  fs.writeFileSync(
+    story,
+    fs
+      .readFileSync(story, "utf8")
+      .replace(/## Intent\n\n<!--[^]*?-->\n/, "## Intent\n\nEl despachador ve su flota.\n")
+      .replace(
+        /## Acceptance criteria\n\n<!--[^]*?-->\n(- AC-1:\n)?/,
+        "## Acceptance criteria\n\n- AC-1: El despachador ve dónde está cada camión.\n"
+      )
+      .replace(
+        /## Repositories\n[^]*$/,
+        "## Repositories\n\n- `contracts`: AC-1\n- `tracking`: AC-1\n"
+      ),
+    "utf8"
+  );
+  commit(ws, "the story");
+  r = sg(ws, ["workspace", "propose", "track-fleet"]);
+  assert.equal(r.status, 0, out(r));
+  for (const d of [tracking, contracts, ws]) commit(d, "track-fleet");
+  return { contracts, tracking };
+}
+
+function contractWarnings(dir: string, trace: string) {
+  const changeDir = path.join(dir, "docs", "specs", "changes", "track-fleet");
+  put(path.join(changeDir, "specs", "panel", "spec.md"), delta(trace));
+  const r = sg(dir, ["change", "validate", "track-fleet", "--json", "--project-dir", dir]);
+  const j = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
+  return (j.items || [])
+    .flatMap((i: { issues?: unknown[] }) => i.issues || [])
+    .filter((d: { code: string }) => d.code === "layer_no_contract_cited");
+}
+
+test("REQ-386 SCN-386a: the tracking part cites nothing of the contracts", () => {
+  const { tracking, contracts } = storyOfTwo();
+  const found = contractWarnings(tracking, "");
+  assert.equal(found.length, 1, JSON.stringify(found));
+  assert.equal(found[0].severity, "warning");
+  assert.equal(found[0].target, "REQ-002");
+  assert.match(found[0].fix, /depends=contracts:REQ-NNN/);
+  // Citing the contracts member, by requirement or by operation, answers it.
+  assert.deepEqual(contractWarnings(tracking, " depends=contracts:REQ-002"), []);
+  assert.deepEqual(contractWarnings(tracking, " api=contracts/fleet.yaml#listFleet"), []);
+  // The contracts member is not asked to cite itself.
+  assert.deepEqual(contractWarnings(contracts, ""), []);
+});
+
 test("REQ-382 SCN-382a: writing the contracts part, then the panel's", () => {
   const root = tmp();
   const tracking = member(root, "tracking");

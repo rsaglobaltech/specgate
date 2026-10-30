@@ -17,12 +17,15 @@ import {
   type ApiOperation,
 } from "../../packages/core/src/domain/ApiContract";
 import { parseTraceComment } from "../../packages/core/src/domain/SpecParser";
+import { DELIVERED_STATUS } from "../../packages/core/src/domain/TraceabilityFormat";
 import { CAPABILITIES_DIR } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { error, warning, type Diagnostic } from "./diagnostics";
 
 export interface ApiCitation {
   requirement: string;
   ref: string;
+  /** The `status=` of the requirement's trace, when it says one. */
+  status?: string;
 }
 
 const SKIP = new Set([
@@ -60,13 +63,14 @@ export function apiCitations(projectDir: string): ApiCitation[] {
       if (!requirement || !/<!--\s*specgate:trace\b/.test(lines[i])) continue;
       let comment = lines[i];
       while (!comment.includes("-->") && i + 1 < lines.length) comment += `\n${lines[++i]}`;
-      const api = parseTraceComment(comment).api;
+      const trace = parseTraceComment(comment);
+      const api = trace.api;
       if (!api) continue;
       for (const ref of api
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)) {
-        out.push({ requirement, ref });
+        out.push({ requirement, ref, ...(trace.status ? { status: trace.status } : {}) });
       }
     }
   }
@@ -114,28 +118,51 @@ export function projectContracts(
   return found;
 }
 
-/** `validate`'s findings: each reference that does not resolve (REQ-335). */
-export function apiReferenceProblems(projectDir: string): Diagnostic[] {
+export interface ApiCheckOptions {
+  /** `--delivering REQ-NNN`: held to its citations as a delivered requirement. */
+  delivering?: string;
+  /** A requirement's status as the matrix gives it, when its trace says none. */
+  statusOf?: (requirement: string) => string | undefined;
+}
+
+/**
+ * `validate`'s findings: each reference that does not resolve (REQ-335).
+ *
+ * REQ-385: only a delivered requirement — or the one being delivered — owes a
+ * citation that resolves. A contracts repository writes its contract one
+ * requirement at a time, and its later operations' files do not exist yet:
+ * failing on them refused its first requirement (truck-flote, MS4-2). A
+ * pending one is a warning, the same code, saying when it becomes an error.
+ */
+export function apiReferenceProblems(projectDir: string, opts: ApiCheckOptions = {}): Diagnostic[] {
   const cited = apiCitations(projectDir);
   if (cited.length === 0) return [];
   const contracts = projectContracts(projectDir, cited);
+  const owed = (c: ApiCitation) => {
+    if (opts.delivering && c.requirement === opts.delivering) return true;
+    const statuses = [c.status, opts.statusOf ? opts.statusOf(c.requirement) : undefined];
+    return statuses.some((s) => DELIVERED_STATUS.has(String(s || "").trim()));
+  };
   const problems: Diagnostic[] = [];
   for (const c of cited) {
     const r = resolveApiRef(c.ref, contracts);
     if (r.ok) continue;
+    const held = owed(c);
+    const raise = held ? error : warning;
+    const later = held ? "" : " It must resolve once it is delivered.";
     problems.push(
       r.reason === "contract_missing"
-        ? error(
+        ? raise(
             "api_contract_missing",
-            `${c.requirement} cites api=${c.ref}, and ${r.file} is not a contract in this project.`,
+            `${c.requirement} cites api=${c.ref}, and ${r.file} is not a contract in this project.${later}`,
             {
               target: c.requirement,
               fix: `Correct the path in ${c.requirement}'s specgate:trace comment, or add the contract.`,
             }
           )
-        : error(
+        : raise(
             "api_operation_missing",
-            `${c.requirement} cites api=${c.ref}, which is not an operation of ${r.file || "any contract in this project"}.`,
+            `${c.requirement} cites api=${c.ref}, which is not an operation of ${r.file || "any contract in this project"}.${later}`,
             {
               target: c.requirement,
               fix: `Correct the operation in ${c.requirement}'s specgate:trace comment, or add it to the contract.`,

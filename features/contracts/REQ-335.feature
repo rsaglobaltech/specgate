@@ -8,6 +8,6 @@ Feature: A requirement points at an API operation
 
   @REQ-335 @SCN-335b
   Scenario: The operation is not in the contract
-    Given REQ-002 says `api=reportSpeed` and no contract has that operationId
+    Given REQ-002, delivered, says `api=reportSpeed` and no contract has that operationId
     When the developer runs `specgate validate . --strict --json`
     Then it fails with `api_operation_missing` naming REQ-002 and reportSpeed
