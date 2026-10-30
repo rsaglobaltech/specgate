@@ -9,6 +9,22 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **Node.js 24 for the image and the single jobs.** The October 21, 2026 Node.js security release fixed ten CVEs, among them a remote code execution in the bundled Brotli decoder. The CLI image is now built on `node:24-alpine`, and lint, packaging, publishing, the site, E2E and the security jobs run on Node 24; the test matrix keeps Node 22 and 24, the floor `package.json` still declares (`>=22`). On Node 22, use 22.23.4 or later. Also in 0.27.10.
+- **typescript-eslint 8.72.** The lint toolchain moves from 8.71.2 to 8.72.1, in the lockfile only.
+
+### Added
+
+- **Each repository's live view, from the workspace (REQ-410..412).** The workspace's live view showed each repository's requirement in flight, its step and its cost, but to see a repository's queue, console, attempts and gate the viewer had to start that repository's own studio (truck-flote, MS7-2). In a workspace's studio each repository's name now opens `/live/repo/<name>/`: the same live view the repository's studio serves at `/live`, read from its folder and kept current by its own stream, naming its role and leading back to the workspace. It is read-only; a repository the workspace does not have, or whose folder is missing, is a 404 saying so.
+
+### Fixed
+
+- **An operation of another repository's contract (REQ-405).** In the seventh microservices run of truck-flote the contracts were built first and complete, and tracking served `/api/fleet/positions` while the contract said `/fleet/status`, and web called an API of its own (MS7-1): the parts cited `depends=contracts:REQ-NNN`, never an operation, and a service citing the contracts' file failed its own `validate`, the file being in another repository. `api=contracts:contracts/fleet.openapi.yaml#getFleetStatus` now names an operation of the workspace repository `contracts`: a member's `validate` leaves it to `workspace check`, which resolves it there — `workspace_api_unresolved`, an error once the requirement is delivered.
+- **A part that waits for the contracts cites their operation (REQ-406).** `change validate` warns `layer_no_operation_cited` for a requirement whose `depends=` names a contracts requirement and whose trace has no `api=`, naming that requirement's operations; the story's context and the design's rules ask for the qualified `api=` and say the provider serves and the consumer calls exactly that method and path.
+- **The prompt quotes the operation (REQ-407).** The harness prompt of a requirement citing `api=` names each operation, its method and path, and quotes it as the contract writes it; `workspace harness run` tells each harness where the workspace is (`SPECGATE_WORKSPACE`), so an operation of the contracts repository is found from a member.
+- **The operation is in the code (REQ-408).** `workspace check` and `contract check` warn `contract_operation_not_found` for a delivered requirement citing an HTTP operation whose path no source file of its repository serves or calls — tests, `contracts/`, `docs/` and `features/` aside, a parameter written `{id}`, `:id`, `[id]`, `<id>` or `${…}`, any prefix such as `/api`. A warning: a route mounted in two pieces is not seen.
+
 ## [1.0.0-rc.8] — 2026-10-30
 
 The documentation site carries both versions, with a picker at the top left and a page of what 1.0 adds; the pipelines are fewer and clearer — one CI, one release, one scheduled workflow — and npm audit and the licence check pass again.

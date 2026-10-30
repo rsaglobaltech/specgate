@@ -52,7 +52,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -62,11 +62,37 @@ jobs:
         # Both generators are TypeScript; tsc emits them under dist/.
         run: npm run build
 
+      - name: Check out the 1.0 candidate's line
+        # The site carries both versions: the stable documentation at the root,
+        # the candidate's under next/, and a picker between them on every page.
+        # Pages deploys from main only, so main's workflow builds both; a push
+        # to next/1.0 reaches the site with `gh workflow run pages.yml --ref main`.
+        uses: actions/checkout@v7
+        with:
+          ref: next/1.0
+          path: next-src
+
+      - name: Name both versions
+        id: versions
+        run: |
+          echo "stable=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "next=$(node -p "require('./next-src/package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Render the documentation site
         # Was `cp -R docs/. _site/`, which published twenty markdown files as
         # text/markdown — a reader who followed a link got the source. This
         # renders them, with a sidebar, search and working internal links.
-        run: node dist/scripts/docs/build-site.js --out _site
+        run: >-
+          node dist/scripts/docs/build-site.js --out _site --channel stable
+          --versions stable=${{ steps.versions.outputs.stable }},next=${{ steps.versions.outputs.next }}
+
+      - name: Render the candidate's documentation under next/
+        # With that line's own generator: its pages and its navigation are its own.
+        working-directory: next-src
+        run: |
+          npm ci
+          npm run build
+          node dist/scripts/docs/build-site.js --out ../_site/next --channel next --versions stable=${{ steps.versions.outputs.stable }},next=${{ steps.versions.outputs.next }}
 
       - name: Publish this repository's own spec-coverage report
         # P2: the one artefact a product owner would actually read — done,

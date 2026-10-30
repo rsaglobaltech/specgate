@@ -19,6 +19,8 @@ function usage(): void {
   that cite it with \`api=\` in their specgate:trace comment (REQ-336):
     - an operation no requirement cites      a warning
     - a requirement citing a missing one     an error (exit 1)
+    - a delivered requirement whose code     a warning (REQ-408)
+      neither serves nor calls the path
 `
   );
 }

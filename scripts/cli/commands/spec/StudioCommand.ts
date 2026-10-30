@@ -246,6 +246,78 @@ function getMermaidPath() {
   return path.join(__dirname, "../../../vendor/mermaid.min.js");
 }
 
+/**
+ * The single project's live reads (REQ-180..182): its model, one requirement's
+ * details and prompts, the matrix and the stream. Shared by the studio's own
+ * project and, under `/live/repo/<name>/`, each workspace member (REQ-410).
+ */
+function projectLive(
+  projectDir: string,
+  url: string,
+  req: http.IncomingMessage,
+  res: http.ServerResponse
+): boolean {
+  if (url === "/live.json") {
+    res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ schemaVersion: 1, projectDir, ...readLive(projectDir) }));
+    return true;
+  }
+  // REQ-180: one requirement's details, read when the viewer opens it.
+  const reqMatch = /^\/live\/req\/(REQ-\d+)\.json$/.exec(url);
+  if (reqMatch) {
+    res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify(requirementDetail(projectDir, reqMatch[1])));
+    return true;
+  }
+  // REQ-182: the prompt an attempt was given, as plain text.
+  const promptMatch = /^\/live\/req\/(REQ-\d+)\/prompt\/(\d+)\.txt$/.exec(url);
+  if (promptMatch) {
+    let text = "";
+    try {
+      text = fs.readFileSync(
+        promptFileFor(projectDir, promptMatch[1], Number(promptMatch[2])),
+        "utf8"
+      );
+    } catch {
+      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+      res.end("No prompt kept for this attempt.\n");
+      return true;
+    }
+    res.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
+    res.end(text);
+    return true;
+  }
+  // REQ-181: the traceability matrix as it stands.
+  if (url === "/live/matrix.json") {
+    res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ schemaVersion: 1, rows: liveMatrix(projectDir) }));
+    return true;
+  }
+  if (url === "/live/stream") {
+    res.writeHead(200, {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+      connection: "keep-alive",
+    });
+    let last = "";
+    const push = () => {
+      const sig = liveSignature(projectDir);
+      if (sig === last) return;
+      last = sig;
+      res.write(`event: live\ndata: ${JSON.stringify(readLive(projectDir))}\n\n`);
+    };
+    push();
+    const timer = setInterval(push, 500);
+    const beat = setInterval(() => res.write(": keep-alive\n\n"), 15000);
+    req.on("close", () => {
+      clearInterval(timer);
+      clearInterval(beat);
+    });
+    return true;
+  }
+  return false;
+}
+
 function loadModel(projectDir: string) {
   const tracePath = path.join(projectDir, "docs/specs/traceability.md");
   if (!fs.existsSync(tracePath)) {
@@ -513,6 +585,55 @@ export class StudioCommand extends BaseCommand {
       const ws = fs.existsSync(path.join(projectDir, "specgate.workspace.yaml"))
         ? loadWorkspace(projectDir).ws
         : null;
+      // REQ-410..412: each repository's own live view, from the workspace's studio.
+      const repoMatch = ws ? /^\/live\/repo\/([^/]+)(\/.*)?$/.exec(url) : null;
+      if (ws && repoMatch) {
+        const name = decodeURIComponent(repoMatch[1]);
+        const member = ws.config.repos.find((r) => r.name === name);
+        const text = (code: number, body: string) => {
+          res.writeHead(code, { "content-type": "text/plain; charset=utf-8" });
+          res.end(body);
+        };
+        if (!member) {
+          text(
+            404,
+            `The workspace ${ws.config.name} has no repository ${name}: it has ` +
+              `${ws.config.repos.map((r) => r.name).join(", ")}.
+`
+          );
+          return;
+        }
+        const dir = ws.dirs[name];
+        if (!dir || !fs.existsSync(dir)) {
+          text(
+            404,
+            `${name}'s folder is missing: ${member.path}.
+`
+          );
+          return;
+        }
+        const rest = repoMatch[2];
+        if (rest === undefined) {
+          res.writeHead(301, { location: `/live/repo/${encodeURIComponent(name)}/` });
+          res.end();
+          return;
+        }
+        if (rest === "/") {
+          res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          // No token: the member's view reads, its own studio writes.
+          res.end(
+            livePage(name, "", { role: member.role, back: "/live", workspace: ws.config.name })
+          );
+          return;
+        }
+        if (req.method === "GET" && projectLive(dir, rest, req, res)) return;
+        text(
+          404,
+          `No such page in ${name}'s live view.
+`
+        );
+        return;
+      }
       if (ws && (url === "/live" || url === "/live/")) {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
         res.end(workspaceLivePage(ws.config.name));
@@ -550,64 +671,7 @@ export class StudioCommand extends BaseCommand {
         res.end(livePage(path.basename(projectDir), token));
         return;
       }
-      if (url === "/live.json") {
-        res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-        res.end(JSON.stringify({ schemaVersion: 1, projectDir, ...readLive(projectDir) }));
-        return;
-      }
-      // REQ-180: one requirement's details, read when the viewer opens it.
-      const reqMatch = /^\/live\/req\/(REQ-\d+)\.json$/.exec(url);
-      if (reqMatch) {
-        res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-        res.end(JSON.stringify(requirementDetail(projectDir, reqMatch[1])));
-        return;
-      }
-      // REQ-182: the prompt an attempt was given, as plain text.
-      const promptMatch = /^\/live\/req\/(REQ-\d+)\/prompt\/(\d+)\.txt$/.exec(url);
-      if (promptMatch) {
-        let text = "";
-        try {
-          text = fs.readFileSync(
-            promptFileFor(projectDir, promptMatch[1], Number(promptMatch[2])),
-            "utf8"
-          );
-        } catch {
-          res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-          res.end("No prompt kept for this attempt.\n");
-          return;
-        }
-        res.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
-        res.end(text);
-        return;
-      }
-      // REQ-181: the traceability matrix as it stands.
-      if (url === "/live/matrix.json") {
-        res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-        res.end(JSON.stringify({ schemaVersion: 1, rows: liveMatrix(projectDir) }));
-        return;
-      }
-      if (url === "/live/stream") {
-        res.writeHead(200, {
-          "content-type": "text/event-stream",
-          "cache-control": "no-cache",
-          connection: "keep-alive",
-        });
-        let last = "";
-        const push = () => {
-          const sig = liveSignature(projectDir);
-          if (sig === last) return;
-          last = sig;
-          res.write(`event: live\ndata: ${JSON.stringify(readLive(projectDir))}\n\n`);
-        };
-        push();
-        const timer = setInterval(push, 500);
-        const beat = setInterval(() => res.write(": keep-alive\n\n"), 15000);
-        req.on("close", () => {
-          clearInterval(timer);
-          clearInterval(beat);
-        });
-        return;
-      }
+      if (projectLive(projectDir, url, req, res)) return;
       if (req.url === "/mermaid.min.js") {
         const mermaidPath = getMermaidPath();
         if (fs.existsSync(mermaidPath)) {

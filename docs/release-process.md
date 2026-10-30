@@ -76,7 +76,8 @@ paragraph in a release and say so under Breaking — not to quietly stop.
 
 **Node.js.** `package.json` declares `>=22` and CI tests Node 22 and 24 across
 Linux, macOS and Windows — the floor and the current LTS, so a break at either
-end shows up. Raising the floor is **breaking** for the CLI, never a quiet
+end shows up. The jobs that run once — lint, packaging, publishing, the site —
+and the Docker image use Node 24. Raising the floor is **breaking** for the CLI, never a quiet
 minor: an `npx` invocation that used to work and now refuses to run is breaking,
 whatever the changelog calls it.
 
