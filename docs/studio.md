@@ -160,7 +160,9 @@ Studio answers on `127.0.0.1` only, and refuses another host name. Every
 action that writes is a `POST` with a JSON body, a token the page receives
 when studio starts, and a loopback origin; any other method is refused. The
 app's reads are under `/api/*`; the overview it replaced is at `/overview`,
-the live view at `/live`.
+the live view at `/live`. In a workspace repository `/live` is the
+workspace's, and `/live/repo/<name>/` each repository's, read-only
+([Workspace](workspace.md)).
 
 ## Next
 

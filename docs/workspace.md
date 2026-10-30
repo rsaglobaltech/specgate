@@ -238,6 +238,12 @@ specgate workspace live          # the studio, serving the workspace's /live
   and each story has cost, in money and minutes.
 - `/live.json` and `workspace live --json` give that model as data
   (REQ-320..324).
+- Each repository's name opens its own live view at `/live/repo/<name>/` —
+  the work queue, the agent's console, each attempt and the gate step, the same
+  page that repository's studio serves at `/live` — kept current as its harness
+  writes, with its role and a link back to the workspace. It reads: answer a
+  question from that repository's studio. A repository the workspace does not
+  have, or whose folder is missing, is a 404 saying so (REQ-410..412).
 ## The organization's principles
 
 `docs/specs/principles.md` holds the principles a repository follows, with
