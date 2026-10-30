@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
+        with: { node-version: '24' }
       # --strict is the whole specification gate, pinned so a release
       # cannot change it under you. It does not run your tests.
       - run: npx --yes @rsaglobaltech/specgate@1.0.0-rc.8 validate . --strict
