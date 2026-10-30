@@ -124,6 +124,85 @@ export function criteriaLines(md: string): string[] {
     .map((l) => l.replace(/^[-*]\s*/, "").replace(/\s+/g, " "));
 }
 
+/** The `AC-n` ids of a story's criteria, in order. */
+export function criterionIds(md: string): string[] {
+  return criteriaLines(md)
+    .map((l) => (/^(AC-\d+)/.exec(l) || [])[1])
+    .filter((x): x is string => Boolean(x));
+}
+
+/** `AC-1, AC-3..AC-5` (or `AC-3–AC-5`) as the ids it names. */
+function idsIn(text: string): string[] {
+  const out: string[] = [];
+  for (const m of text.matchAll(/AC-(\d+)(?:\s*(?:\.\.|–|—|-|to|a)\s*(?:AC-)?(\d+))?/g)) {
+    const from = Number(m[1]);
+    const to = m[2] ? Number(m[2]) : from;
+    for (let n = Math.min(from, to); n <= Math.max(from, to); n += 1) out.push(`AC-${n}`);
+  }
+  return [...new Set(out)];
+}
+
+/**
+ * REQ-361: which criteria each repository answers, from the story's
+ * `## Repositories` section — `` - `fleet`: AC-1, AC-2 ``. A repository listed
+ * with no criteria answers none yet; an empty map means the story maps nothing.
+ */
+export function storyCriteria(md: string): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const line of section(md, /repositor/i).split(/\r?\n/)) {
+    const m = /^\s*[-*]\s*`?([a-z][a-z0-9-]*)`?\s*(?::|—|–|-)?\s*(.*)$/.exec(line);
+    if (!m) continue;
+    const ids = idsIn(m[2]);
+    if (ids.length) out[m[1]] = ids;
+  }
+  return out;
+}
+
+/** REQ-363: a story's questions for the client, in a draft's format (D7). */
+export function storyQuestionsTemplate(id: string): string {
+  return [
+    `# Questions — ${id}`,
+    "",
+    "What only the client can decide. The story is not split across its",
+    "repositories while one is open (`workspace propose --allow-open-questions`",
+    "to split it anyway).",
+    "",
+    "| # | Question | Blocks | Answer |",
+    "|---|---|---|---|",
+    "",
+  ].join("\n");
+}
+
+/**
+ * REQ-364: the form's `<!-- … -->` hint of every `##` section that now holds
+ * text, removed; a section still empty keeps its hint.
+ */
+export function withoutFilledHints(md: string): string {
+  const lines = md.replace(/\r\n/g, "\n").split("\n");
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (!/^##\s/.test(lines[i])) {
+      out.push(lines[i]);
+      i += 1;
+      continue;
+    }
+    let end = i + 1;
+    while (end < lines.length && !/^##\s/.test(lines[end])) end += 1;
+    const body = lines.slice(i + 1, end).join("\n");
+    const filled = body
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .split("\n")
+      .some((l) => l.trim() && !/^[-*]\s*AC-\d+\s*:?\s*$/.test(l.trim()));
+    const kept = filled
+      ? body.replace(/[ \t]*<!--[\s\S]*?-->[ \t]*\n?/g, "").replace(/^\n{2,}/, "\n")
+      : body;
+    out.push(lines[i], ...kept.split("\n"));
+    i = end;
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
 /** The `story.md` `workspace draft <id>` writes for a person, or an agent, to fill. */
 export function storyTemplate(title: string, repos: string[]): string {
   return [
@@ -140,7 +219,8 @@ export function storyTemplate(title: string, repos: string[]): string {
     "",
     "## Repositories",
     "",
-    ...repos.map((r) => `- \`${r}\``),
+    "<!-- Each repository with the criteria it answers: - `fleet`: AC-1, AC-2 (REQ-361). -->",
+    ...repos.map((r) => `- \`${r}\`:`),
     "",
   ].join("\n");
 }

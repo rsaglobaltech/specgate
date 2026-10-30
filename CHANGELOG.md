@@ -13,6 +13,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 - **A delivered requirement no longer un-approves its change** (REQ-370, REQ-371): delivering a requirement ticks its task in `tasks.md` (REQ-353), and the tick changed the hash the tasks' approval was bound to, so the harness refused the change's second requirement as "not approved: tasks". A layer is now hashed with every task box read as open: a tick, by the harness or a person, keeps the approval, and any other edit still asks for it again. Approvals recorded by 1.0.0-rc.1 and rc.2 keep counting.
 - **A prompt file Windows still holds never fails the command** (REQ-372): four `change author` runs side by side ended in `EBUSY … unlink` after their agents had written their layers. Removing a prompt file now retries briefly and then leaves it to the system — in `change author`, the drafting agents and the harness.
+- **An agent proposes the brief's stories** (REQ-360): `workspace draft --agent` with no story named ran no agent and said nothing; the agent now fills the front matter's `stories:`, writing only `docs/brief.md`, and the client's text is put back if it moved. With stories named, `--agent` without a story id is refused.
+- **Each criterion names its repositories** (REQ-361, REQ-362): a story's `## Repositories` lists the criteria each answers (`- fleet: AC-1, AC-2`); each Discover says which are its own and which the others', and `workspace check` warns about a criterion no repository answers or two claim.
+- **A story's questions wait for their answers** (REQ-363): they go in `docs/stories/<id>/questions.md`; `workspace propose` refuses while one is open, unless `--allow-open-questions`.
+- **A drafted story keeps none of its form's hints** (REQ-364).
+- **The Discover stays business** (REQ-365, REQ-344): the guidance on `depends=` and `api=` that tripped `layer_discover_technical` in every repository moves to the sub-change's `design.md`.
+- **`change author` hears of the story** (REQ-366): `story.json` in each sub-change names its workspace, and the prompt for any layer carries the story's other parts and their requirements.
+- **A requirement waits for what it depends on** (REQ-367): `workspace harness run --story` starts only the requirements whose dependencies are delivered, names the others waiting, and exits 1.
 
 ## [1.0.0-rc.2] — 2026-10-30
 
