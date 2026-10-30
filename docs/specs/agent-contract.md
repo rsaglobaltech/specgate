@@ -127,6 +127,7 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `archive_spec_update_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_agent_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_agent_unset` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `author_contracts_first` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_needs_git` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_out_of_scope` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_tree_dirty` | `scripts/cli/commands/change/ChangeCommand.ts` |

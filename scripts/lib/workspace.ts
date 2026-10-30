@@ -384,8 +384,16 @@ export function checkWorkspace(ws: LoadedWorkspace): CheckResult {
   }
 
   // REQ-295: a requirement that depends on another repo's waits for it.
+  // REQ-396: one still in an open change waits too, and the story harness
+  // builds in that order: a warning, not a failure, until it is delivered.
+  const waiting: Diagnostic[] = [];
   for (const r of ws.config.repos) {
     if (!known.has(r.name)) continue;
+    const open = new Set(
+      inFlightRequirements(ws.dirs[r.name])
+        .filter((x) => !DELIVERED.includes(x.status))
+        .map((x) => x.id)
+    );
     for (const [req, deps] of Object.entries(memberDependencies(ws.dirs[r.name]))) {
       for (const dep of deps) {
         const q = splitQualified(dep);
@@ -419,8 +427,8 @@ export function checkWorkspace(ws: LoadedWorkspace): CheckResult {
             )
           );
         } else if (!DELIVERED.includes(status)) {
-          problems.push(
-            error(
+          (open.has(req) ? waiting : problems).push(
+            (open.has(req) ? warning : error)(
               "workspace_dependency_pending",
               `${r.name}:${req} depends on ${q.repo}:${q.id}, which is ${status}, not delivered.`,
               {
@@ -435,7 +443,12 @@ export function checkWorkspace(ws: LoadedWorkspace): CheckResult {
   }
 
   const ok = repos.every((r) => r.ok) && problems.length === 0;
-  return { ok, repos, problems, warnings: [...divergedParts(ws), ...criteriaWarnings(ws)] };
+  return {
+    ok,
+    repos,
+    problems,
+    warnings: [...waiting, ...divergedParts(ws), ...criteriaWarnings(ws)],
+  };
 }
 
 /** The `discover.md` of a member's open change, or null. */

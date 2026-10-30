@@ -9,6 +9,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A part is written after the contracts it uses (REQ-395).** The parts of a story were written at the same time, and tracking, finding nothing in contracts, designed an API of its own that web then used directly (truck-flote, MS6-1). `change author` now refuses the specs, design or tasks of a part that shares a criterion with the contracts repository while the contracts' part specifies nothing (`author_contracts_first`); `--force` writes it anyway.
+- **A waiting requirement of an open change is the build order (REQ-396).** Before the build, `workspace check` failed with `workspace_dependency_pending` for every requirement waiting for another repository, though the story harness builds them in that order (MS6-2). For a requirement still in an open change it is now a warning; a delivered requirement whose dependency is not still fails.
+
 ## [1.0.0-rc.6] — 2026-10-30
 
 After the fifth microservices run of truck-flote: the architect who decides that a requirement waits for another repository writes it into the requirement, so the story harness builds the parts in order, and a quoted placeholder operation is no longer taken for a citation.
