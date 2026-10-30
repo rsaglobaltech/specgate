@@ -223,6 +223,34 @@ const attributesWithoutStatus = (line: string): string => {
  * harness's own instruction broke. Any other change to the line, or to any
  * other line, is still an edit to the contract.
  */
+/** `- [ ] 2.1 …` with its box read as open, or null for a line that is no task. */
+const openTask = (line: string): string | null =>
+  /^\s*[-*]\s+\[[ xX]\]\s/.test(line) ? line.replace(/\[[xX]\]/, "[ ]") : null;
+
+/**
+ * Whether a unified diff (`git diff -U0`) of a change's tasks.md changes
+ * nothing but the box of its tasks — what delivering a requirement does
+ * (REQ-353), by the harness or by the agent told to close its work.
+ *
+ * Write-scope refused an attempt whose agent ticked the task it had just
+ * delivered (truck-flote microservices run 3, MS3-4): every attempt failed the
+ * same way. A task reworded, added or removed is still an edit of the contract.
+ */
+export function onlyTaskTicksChanged(diff: string): boolean {
+  const removed: string[] = [];
+  const added: string[] = [];
+  for (const line of diff.split("\n")) {
+    if (/^(---|\+\+\+|@@|diff |index )/.test(line)) continue;
+    if (line.startsWith("-")) removed.push(line.slice(1));
+    else if (line.startsWith("+")) added.push(line.slice(1));
+  }
+  if (removed.length === 0 || removed.length !== added.length) return false;
+  return removed.every((r, i) => {
+    const before = openTask(r);
+    return before !== null && before === openTask(added[i]);
+  });
+}
+
 export function onlyTraceStatusChanged(diff: string): boolean {
   const removed: string[] = [];
   const added: string[] = [];

@@ -297,6 +297,8 @@
 | REQ-380 | SCN-380a | `features/change-lifecycle/REQ-380.feature` | - | - | - | - | - | tests/unit/rc4-deps.test.ts | Implemented |
 | REQ-381 | SCN-381a | `features/change-lifecycle/REQ-381.feature` | - | - | - | - | - | tests/unit/rc4-deps.test.ts | Implemented |
 | REQ-382 | SCN-382a | `features/workspace/REQ-382.feature` | - | - | - | - | - | tests/unit/rc4-deps.test.ts | Implemented |
+| REQ-375 | SCN-375a | `features/harness/REQ-375.feature` | - | - | - | - | - | tests/unit/rc4-ticks.test.ts | Implemented |
+| REQ-376 | SCN-376a | `features/workspace/REQ-376.feature` | - | - | - | - | - | tests/unit/rc4-ticks.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
