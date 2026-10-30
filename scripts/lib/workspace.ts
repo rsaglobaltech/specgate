@@ -764,7 +764,7 @@ function acrossRepositories(ws: LoadedWorkspace, repo: string, repos: string[]):
   return [
     "## Across repositories",
     "",
-    `A requirement here that needs one of their requirements names it in its trace: \`depends=${example}:REQ-NNN\`.` +
+    `A requirement here that needs one of their requirements names it in its trace, in the delta under \`specs/\` and not only here: \`depends=${example}:REQ-NNN\`.` +
       (contracts.length
         ? ` An API between repositories is an operation of \`${contracts[0]}\`, cited as \`api=<file>#<operationId>\`.`
         : ""),
