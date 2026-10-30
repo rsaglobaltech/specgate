@@ -603,9 +603,22 @@ export function storyContext(ws: LoadedWorkspace, story: Story, repo: string): s
       (contracts.length
         ? `, and an API between repositories is an operation of \`${contracts[0]}\`, cited as \`api=<file>#<operationId>\`.`
         : "."),
-    "Do not build another repository's part here: call it through its API, or a stand-in in the tests.",
-    ""
+    "Do not build another repository's part here: call it through its API, or a stand-in in the tests."
   );
+  // REQ-382: the contracts repository writes the contracts; the others cite them.
+  if (contracts.length && roleOf(repo) === "contracts") {
+    lines.push(
+      "This repository holds the contracts between the others. Write the OpenAPI (HTTP) or AsyncAPI (events) file " +
+        "each requirement describes under `contracts/`, and cite each operation in its requirement's trace as " +
+        "`api=contracts/<file>#<operationId>`; a requirement here describes an operation, the file is the operation."
+    );
+  } else if (contracts.length) {
+    lines.push(
+      `A requirement that uses an operation of \`${contracts[0]}\` carries \`depends=${contracts[0]}:REQ-NNN\` in its trace, ` +
+        `and \`api=<file>#<operationId>\` once ${contracts[0]}'s contract file exists — in the trace, not only in design.md.`
+    );
+  }
+  lines.push("");
   return lines.join("\n");
 }
 

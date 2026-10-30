@@ -9,6 +9,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **What a design says a requirement waits for reaches its trace** (REQ-380, REQ-381): in the third microservices run the panel's design named `depends=contracts:REQ-002`, `depends=tracking:REQ-002` and the operations it uses, its traces carried none, and `change validate` said ✔. Each `depends=` or `api=` design.md names and no `specgate:trace` carries is now a `layer_design_dependency_untraced` warning, naming the requirement on that line.
+- **The contracts repository writes its contracts** (REQ-382): its agent described them in requirements and wrote no file, so nothing could cite an operation. The story context now asks the contracts member for the OpenAPI or AsyncAPI file under `contracts/` and `api=contracts/<file>#<operationId>` on each requirement, and the other members to cite it with `depends=` and `api=`.
+
 ## [1.0.0-rc.3] — 2026-10-30
 
 After the second microservices run of truck-flote: a tick in tasks.md no longer withdraws an approval, so a change is built past its first requirement; the workspace's agent proposes the stories, a story says which criteria each repository answers and keeps its questions, the agents that write a sub-change see the whole story, and the story is built only as far as its dependencies are delivered.
