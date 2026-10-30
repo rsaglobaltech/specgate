@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "1.0.0-rc.9",
+    "version": "1.0.0-rc.10",
     "node": "v24.x",
     "platform": "linux",
     "packSource": "local"

@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.10] — 2026-10-30
+
+After the eighth microservices run of truck-flote: a part cites the contracts' operation exactly as the story lists it, or approval refuses it; the code serves or calls what it cites, or the harness does not pass it; a rule citing a law names its source; an agent that wrote nothing once is retried.
+
 ### Fixed
 
 - **A part cites the operation as the story lists it (REQ-415).** In the eighth microservices run of truck-flote, web cited `api=contracts:contracts/tracking.yaml#…` for the contract `tracking-api.yaml`, tracking cited no operation, and both were approved and built with a warning each (MS8-2). The story's context now lists, under each requirement of the contracts, the `depends=… api=…` line to copy with the operation's method and path; `change validate` fails with `layer_api_unresolved` for a citation of the contracts repository that resolves to none of its operations, listing those that exist, and `layer_no_operation_cited` is an error once the contracts' requirement cites an operation (REQ-406). `change approve` refuses both.
