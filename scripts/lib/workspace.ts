@@ -676,8 +676,20 @@ export function storyContext(ws: LoadedWorkspace, story: Story, repo: string): s
       ? changeRequirements(ws.dirs[sc.repo], sc.change)
       : [];
     if (reqs.length === 0) lines.push("  - nothing specified yet");
-    for (const r of reqs)
+    // REQ-415: the contracts' operations, as the trace cites them, to copy.
+    // In run 8 web made up contracts/tracking.yaml for tracking-api.yaml (MS8-2).
+    const cites =
+      roleOf(sc.repo) === "contracts" && reqs.length ? memberCitations(ws.dirs[sc.repo]) : [];
+    for (const r of reqs) {
       lines.push(`  - ${sc.repo}:${r.id} — ${r.title} (${statuses(sc.repo).get(r.id) || "Draft"})`);
+      for (const c of cites.filter((x) => x.requirement === r.id)) {
+        const ref = /^[A-Za-z][A-Za-z0-9-]*:/.test(c.ref) ? c.ref : `${sc.repo}:${c.ref}`;
+        const op = citedOperation(ref, (n) => ws.dirs[n], ws.dirs[sc.repo]);
+        lines.push(
+          `    - \`depends=${sc.repo}:${r.id} api=${ref}\`${op ? ` — ${op.operation.label}` : ""}`
+        );
+      }
+    }
   }
   const contracts = ws.config.repos.filter((r) => r.role === "contracts").map((r) => r.name);
   lines.push(
@@ -701,6 +713,7 @@ export function storyContext(ws: LoadedWorkspace, story: Story, repo: string): s
     lines.push(
       `A requirement that serves or calls an operation of \`${contracts[0]}\` carries both in its trace, not only in design.md: ` +
         `\`depends=${contracts[0]}:REQ-NNN\` and \`api=${contracts[0]}:contracts/<file>#<operationId>\`. ` +
+        "Copy the `api=` of each operation exactly as listed above — the file and the operationId; `change approve` refuses one that does not resolve. " +
         "The provider serves exactly that method and path and the consumer calls exactly it: no API of its own, no other prefix."
     );
   }

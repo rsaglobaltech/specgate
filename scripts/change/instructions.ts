@@ -131,6 +131,8 @@ const ARTIFACT_RULES: Record<string, string[]> = {
 const LAYERED_DELTA_RULES = [
   ...DELTA_RULES,
   "Every requirement's `<!-- specgate:trace … -->` carries `kind=` (functional, non-functional or business-rule) and `actor=` (who uses it): `change approve` refuses a requirement without them, and `change validate` says so (`change_not_approvable`).",
+  // REQ-416: a rule that cites a law was refused at approval (truck-flote, MS8-1).
+  "A `kind=business-rule` requirement that cites a law, regulation, standard or contract carries a `Source:` line naming it — the act and its articles, or a link (`Source: Regulation (EC) No 561/2006, Articles 6 and 7`): `change approve` refuses it without one (`D5_unsourced_rule`).",
   "Give each requirement a feature file of its own (`feature=features/<capability>/<REQ-NNN>.feature`): one feature file per requirement, or archiving replaces one's scenarios with another's (`change_feature_shared`).",
 ];
 

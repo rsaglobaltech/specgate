@@ -191,16 +191,24 @@ specgate workspace propose follow-shipment
   `depends=contracts:REQ-002 api=contracts:contracts/fleet.openapi.yaml#getFleetStatus`
   — the repository's name before the file, as in a qualified id. Its own
   `validate` leaves that citation to `workspace check`, which resolves it in the
-  contracts repository (REQ-405). `change validate` warns `layer_no_operation_cited`
-  for a `depends=` on the contracts with no `api=`, naming the operations it could
-  cite (REQ-406). The harness prompt quotes each cited operation as the contract
-  writes it, and says to serve or call exactly that method and path (REQ-407).
+  contracts repository (REQ-405). The story's context lists, under each requirement
+  of the contracts, the exact `depends=… api=…` line to copy, with the operation's
+  method and path (REQ-415). `change validate` fails with `layer_no_operation_cited`
+  for a `depends=` on the contracts with no `api=` once that requirement cites an
+  operation (REQ-406), and with `layer_api_unresolved` for an `api=` of the
+  contracts repository that names none of its operations, listing those it has;
+  `change approve` refuses both (REQ-415). The harness prompt quotes each cited
+  operation as the contract writes it, and says to serve or call exactly that
+  method and path (REQ-407).
 - Once a requirement is delivered, `workspace check` and `contract check` warn
   `contract_operation_not_found` when no source file of its repository — tests,
   `contracts/`, `docs/` and `features/` aside — has the operation's path; a
   parameter may be written `{id}`, `:id`, `[id]`, `<id>` or `${…}`, and anything may
   come before the path. A route mounted in two pieces is not seen, so it is a
-  warning (REQ-408).
+  warning (REQ-408). The harness is stricter: an attempt whose requirement cites
+  another repository's operation fails after a green gate while no source file
+  has its path, whole or in pieces — a prefix on the class, the rest on the
+  method — and the next attempt is told the method and path (REQ-418).
 - The criteria are the business's: `workspace check` warns when a repository's
   differ from the story's (REQ-343), and when a criterion is answered by no
   repository or claimed by two (REQ-362). Change them in the story.

@@ -315,6 +315,10 @@
 | REQ-410 | SCN-410a | `features/workspace/REQ-410.feature` | - | - | - | - | - | tests/unit/rc9-live.test.ts | Implemented |
 | REQ-411 | SCN-411a | `features/workspace/REQ-411.feature` | - | - | - | - | - | tests/unit/rc9-live.test.ts | Implemented |
 | REQ-412 | SCN-412a | `features/workspace/REQ-412.feature` | - | - | - | - | - | tests/unit/rc9-live.test.ts | Implemented |
+| REQ-416 | SCN-416a | `features/change-lifecycle/REQ-416.feature` | - | - | - | - | - | tests/unit/rc10-contract.test.ts | Implemented |
+| REQ-415 | SCN-415a | `features/contracts/REQ-415.feature` | - | - | - | - | - | tests/unit/rc10-contract.test.ts | Implemented |
+| REQ-418 | SCN-418a | `features/contracts/REQ-418.feature` | - | - | - | - | - | tests/unit/rc10-contract.test.ts | Implemented |
+| REQ-417 | SCN-417a | `features/harness/REQ-417.feature` | - | - | - | - | - | tests/unit/harness-run.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

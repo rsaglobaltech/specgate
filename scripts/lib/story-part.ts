@@ -6,8 +6,8 @@ import type { StoryLink } from "./workspace";
 import { storyCriteria } from "../../packages/core/src/domain/WorkspaceStory";
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
 import { listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
-import { warning, type Diagnostic } from "./diagnostics";
-import { memberCitations } from "./contracts";
+import { error, warning, type Diagnostic } from "./diagnostics";
+import { citedOperation, memberCitations, projectContracts } from "./contracts";
 
 /**
  * REQ-366: the story a member's change is a part of, told to whoever writes
@@ -81,6 +81,36 @@ export function contractCitationWarnings(projectDir: string, changeId: string): 
           id: m[1],
         }))
       );
+      // REQ-415: an api= of a contracts repository resolves to one of its
+      // operations. In run 8 web cited contracts/tracking.yaml, a file that does
+      // not exist, and was approved and built (truck-flote, MS8-2).
+      const unresolved = api
+        .split(",")
+        .map((s) => s.trim())
+        .filter((ref) => {
+          const q = /^([A-Za-z][A-Za-z0-9-]*):/.exec(ref);
+          const repo = q ? q[1].toLowerCase() : "";
+          if (!shared.includes(repo) || !ws.dirs[repo] || !fs.existsSync(ws.dirs[repo]))
+            return false;
+          return !citedOperation(ref, (n) => ws.dirs[n], projectDir);
+        });
+      for (const ref of unresolved) {
+        const repo = ref.split(":")[0].toLowerCase();
+        const ops = operationsOf(ws.dirs[repo]);
+        // While the contracts repository has no contract yet, nothing can resolve.
+        const known = Object.keys(ops).length > 0;
+        out.push(
+          (known ? error : warning)(
+            "layer_api_unresolved",
+            `${r.id} cites api=${ref}, which is not an operation of ${repo}'s contracts.` +
+              (known ? ` Its operations: ${listOperations(repo, ops)}.` : ""),
+            {
+              target: r.id,
+              fix: `Copy the api= of the operation ${r.id} serves or calls exactly as the story lists it: api=${repo}:<file>#<operationId>, with the file ${repo} has.`,
+            }
+          )
+        );
+      }
       if (api === "" && used.length > 0) {
         // REQ-406: a requirement of the contracts is not its operation. In run 7
         // tracking and web cited contracts:REQ-NNN and served paths of their own.
@@ -95,8 +125,11 @@ export function contractCitationWarnings(projectDir: string, changeId: string): 
             )
           ),
         ];
+        // REQ-415: once the contracts' requirement cites its operation, the
+        // part cites it too: approval refuses it, the warning was not enough
+        // (truck-flote, MS8-2: tracking cited none and served paths of its own).
         out.push(
-          warning(
+          (ops.length ? error : warning)(
             "layer_no_operation_cited",
             `${r.id} depends on ${used.map((u) => `${u.repo}:${u.id}`).join(", ")} and cites none of its operations: ` +
               `the service serves, and the web calls, exactly the operation the contract says.` +
@@ -124,6 +157,28 @@ export function contractCitationWarnings(projectDir: string, changeId: string): 
     }
   }
   return out;
+}
+
+/** The operations of a repository's contracts, by file. */
+function operationsOf(dir: string): Record<string, Array<{ operationId?: string; label: string }>> {
+  try {
+    return projectContracts(dir, []);
+  } catch {
+    return {};
+  }
+}
+
+/** `api=` lines for every operation, to say what a reference could have been. */
+function listOperations(
+  repo: string,
+  ops: Record<string, Array<{ operationId?: string; label: string }>>
+): string {
+  return Object.entries(ops)
+    .flatMap(([file, list]) =>
+      list.filter((o) => o.operationId).map((o) => `api=${repo}:${file}#${o.operationId}`)
+    )
+    .slice(0, 8)
+    .join(", ");
 }
 
 /**

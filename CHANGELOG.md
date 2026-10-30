@@ -9,6 +9,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A part cites the operation as the story lists it (REQ-415).** In the eighth microservices run of truck-flote, web cited `api=contracts:contracts/tracking.yaml#…` for the contract `tracking-api.yaml`, tracking cited no operation, and both were approved and built with a warning each (MS8-2). The story's context now lists, under each requirement of the contracts, the `depends=… api=…` line to copy with the operation's method and path; `change validate` fails with `layer_api_unresolved` for a citation of the contracts repository that resolves to none of its operations, listing those that exist, and `layer_no_operation_cited` is an error once the contracts' requirement cites an operation (REQ-406). `change approve` refuses both.
+- **A rule citing a law names its source (REQ-416).** The driving-time rule cited the EU regulation and named no source, and `change approve` refused it with a generic fix (MS8-1). The specs rules now ask for a `Source:` line, with an example, and `approve_blocked` gives each blocker's own fix, prefixed with its requirement: `REQ-004: Add a "Source:" line…`.
+- **An empty attempt after a written one is retried once (REQ-417).** Tracking's REQ-004 wrote nothing after REQ-002 and REQ-003 had passed in the same run, and was not retried (MS8-3). An agent that wrote earlier in the run can write, so an empty attempt is now retried once, told it wrote nothing; an agent that never wrote still stops at once (REQ-264).
+- **The code serves or calls the operation it cites (REQ-418).** In runs 7 and 8 tracking passed every test serving no route of the contract and web called none, and `contract_operation_not_found` stayed a warning (MS7-1). A harness attempt whose requirement cites another repository's operation now fails, after a green gate, while no source file has its path — whole, or in pieces as a class's prefix and a method's rest — and the next attempt is told the method and path.
+
 ## [1.0.0-rc.9] — 2026-10-30
 
 After the seventh microservices run of truck-flote: a part cites the contract's operation, its agent reads it and its code is checked against it, and the workspace's live view opens each repository's own; Node.js 24 for the image and the single jobs.

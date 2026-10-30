@@ -41,6 +41,8 @@ import { withAgentPermission } from "../../../lib/agent-permission";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
 import { missingApprovals } from "../../../lib/approvals";
+import { citedOperation, conformanceWarnings, memberCitations } from "../../../lib/contracts";
+import { workspaceMemberDirs } from "../../../lib/story-part";
 import { packagesFor, reviewAdvice } from "../../../lib/role-packages";
 
 /**
@@ -1549,6 +1551,37 @@ function checkDeclaredArtifactsInWorktree(
   return findings.length > 0 ? findings : null;
 }
 
+/** REQ-418: the operations `requirement` cites whose path no source file of the worktree has. */
+export function contractNotMet(worktreeDir: string, projectDir: string, requirement: string) {
+  const dirOf = workspaceMemberDirs(projectDir);
+  // Another repository's operation: the contracts repository cites its own
+  // operations unqualified, and serves none of them.
+  const cited = memberCitations(worktreeDir).filter(
+    (c) => c.requirement === requirement && /^[A-Za-z][A-Za-z0-9-]*:[^#]+#/.test(c.ref)
+  );
+  if (cited.length === 0) return [];
+  return conformanceWarnings(
+    worktreeDir,
+    "",
+    cited,
+    (c) => citedOperation(c.ref, dirOf, worktreeDir)?.operation || null,
+    () => "Implemented",
+    true
+  );
+}
+
+/**
+ * REQ-417: set once an attempt in this run wrote files. The agent can write,
+ * so an empty attempt after that is a lapse, not a missing permission
+ * (truck-flote, MS8-3: REQ-002 and REQ-003 passed, REQ-004 wrote nothing).
+ */
+let agentWroteThisRun = false;
+
+/** For tests run in one process. */
+export function resetAgentWrote(wrote = false): void {
+  agentWroteThisRun = wrote;
+}
+
 function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): AttemptOutcome {
   const { worktreeDir, settings, timeoutMs, hint } = ctx;
   /**
@@ -1575,6 +1608,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
   const firstAttempt = Math.max(1, (ctx.resumeAt && ctx.resumeAt.attempt) || 1);
   /** Set when another attempt cannot change the outcome (#50). */
   let stopRetrying = false;
+  /** An empty attempt was retried once already (REQ-417). */
+  let retriedEmpty = false;
 
   // The live view's file (ADR-0037), in the project, not the worktree.
   const eventsFile = eventsFileFor(ctx.projectDir || worktreeDir, req.requirement);
@@ -1767,6 +1802,19 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     // REQ-264: the same command writes nothing the next time either — three
     // attempts and 7 min 40 s said so in truck-flote (S50) — so it ends here.
     if (producedNothing(worktreeDir)) {
+      // REQ-417: the agent wrote for another requirement of this run, so it
+      // can write; one more attempt, told so, before giving up.
+      if (agentWroteThisRun && !retriedEmpty && attempt < settings.maxAttempts) {
+        retriedEmpty = true;
+        previousFailure =
+          `You produced no files. Nothing in the worktree changed, so there is ` +
+          `nothing implementing ${req.requirement}. Write its test first, then the ` +
+          `code that makes it pass, in this worktree.`;
+        warn(`${req.requirement}: the agent produced no files — retrying once`);
+        warn(`  it wrote files for another requirement of this run, so it can write`);
+        record("no-op");
+        continue;
+      }
       previousFailure =
         `You produced no files. Nothing in the worktree changed, so there is ` +
         `nothing implementing ${req.requirement}.\n\n` +
@@ -1782,6 +1830,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       stopRetrying = true;
       break;
     }
+
+    agentWroteThisRun = true;
 
     // Before the gate: a scenario the agent has just loosened cannot fail, so a
     // green gate proves nothing. See `checkWriteScopeInWorktree`.
@@ -1880,6 +1930,24 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         record("artifacts");
         continue;
       }
+    }
+
+    // REQ-418: green, but a requirement citing an operation serves or calls
+    // its path. In runs 7 and 8 tracking served no route of the contract and
+    // web called none, and every requirement passed (truck-flote, MS7-1).
+    const missing = contractNotMet(worktreeDir, ctx.projectDir || worktreeDir, req.requirement);
+    if (missing.length) {
+      previousFailure =
+        `The gate passed, but the code does not serve or call the operation ` +
+        `${req.requirement} cites:\n\n` +
+        missing.map((d) => `  ${d.message}\n  fix: ${d.fix}`).join("\n\n");
+      for (const d of missing) {
+        warn(`${req.requirement}: ${d.message} [${d.code}]`);
+        if (d.fix) warn(`  fix: ${d.fix}`);
+      }
+      discardWorktreeChanges(worktreeDir);
+      record("gate", "contract operation");
+      continue;
     }
 
     // Close the loop inside the worktree. The gate above is the check; `done`

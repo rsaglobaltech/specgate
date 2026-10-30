@@ -259,7 +259,8 @@ test("REQ-406 SCN-406a: tracking names the requirement, not the operation", () =
   specs(tracking, " depends=contracts:REQ-002");
   const found = operationWarnings(tracking);
   assert.equal(found.length, 1, JSON.stringify(found));
-  assert.equal(found[0].severity, "warning");
+  // REQ-415: an error once the contracts' requirement cites its operation.
+  assert.equal(found[0].severity, "error");
   assert.match(found[0].message, /api=contracts:contracts\/fleet\.openapi\.yaml#getFleetStatus/);
 
   specs(
