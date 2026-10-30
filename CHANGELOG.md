@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.6] — 2026-10-30
+
+After the fifth microservices run of truck-flote: the architect who decides that a requirement waits for another repository writes it into the requirement, so the story harness builds the parts in order, and a quoted placeholder operation is no longer taken for a citation.
+
 ### Fixed
 
 - **The design carries its dependencies into the traces (REQ-390).** The specs of a layered change are written before its design, so an architect who decided that a requirement waits for `contracts:REQ-002` wrote it only in design.md, and the story harness, which orders the parts from the traces, built them all at once (truck-flote, MS5-1). The rules of `change instructions design`, and so the prompt of `change author design`, now say that a `depends=` or `api=` the design decides goes into the requirement's `specgate:trace` under `specs/` too, and the story context of a sub-change's design says the same.
