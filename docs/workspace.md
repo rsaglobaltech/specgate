@@ -101,6 +101,8 @@ judge, and exits non-zero when anything fails:
 | `workspace_unknown_requirement` | A qualified id names a requirement its repository does not have |
 | `workspace_dependency_pending` | A requirement depends on another repository's that is not delivered; a warning while the requirement is itself in an open change, since the story harness builds in that order (REQ-396) |
 | `workspace_story_diverged` | A warning: a sub-change's criteria are not the story's (REQ-343) |
+| `workspace_api_unresolved` | `api=<repo>:<file>#<operationId>` names no operation of that repository's contracts; a warning until the requirement is delivered (REQ-405) |
+| `contract_operation_not_found` | A warning: a delivered requirement cites an HTTP operation whose path no source file of its repository serves or calls (REQ-408) |
 
 The result is kept in `.specgate/workspace-check.json` (git-ignored), which
 `status` reads.
@@ -184,6 +186,21 @@ specgate workspace propose follow-shipment
   tasks of a part that shares a criterion with the contracts repository while the
   contracts' part specifies nothing (`author_contracts_first`; `--force` writes it
   anyway): a part written beside an empty contract designs an API of its own (REQ-395).
+- Cite the operation, not only the requirement that wrote it. A service or web
+  requirement that serves or calls the contract carries both in its trace:
+  `depends=contracts:REQ-002 api=contracts:contracts/fleet.openapi.yaml#getFleetStatus`
+  — the repository's name before the file, as in a qualified id. Its own
+  `validate` leaves that citation to `workspace check`, which resolves it in the
+  contracts repository (REQ-405). `change validate` warns `layer_no_operation_cited`
+  for a `depends=` on the contracts with no `api=`, naming the operations it could
+  cite (REQ-406). The harness prompt quotes each cited operation as the contract
+  writes it, and says to serve or call exactly that method and path (REQ-407).
+- Once a requirement is delivered, `workspace check` and `contract check` warn
+  `contract_operation_not_found` when no source file of its repository — tests,
+  `contracts/`, `docs/` and `features/` aside — has the operation's path; a
+  parameter may be written `{id}`, `:id`, `[id]`, `<id>` or `${…}`, and anything may
+  come before the path. A route mounted in two pieces is not seen, so it is a
+  warning (REQ-408).
 - The criteria are the business's: `workspace check` warns when a repository's
   differ from the story's (REQ-343), and when a criterion is answered by no
   repository or claimed by two (REQ-362). Change them in the story.

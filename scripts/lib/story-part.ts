@@ -7,6 +7,7 @@ import { storyCriteria } from "../../packages/core/src/domain/WorkspaceStory";
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
 import { listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { warning, type Diagnostic } from "./diagnostics";
+import { memberCitations } from "./contracts";
 
 /**
  * REQ-366: the story a member's change is a part of, told to whoever writes
@@ -73,9 +74,42 @@ export function contractCitationWarnings(projectDir: string, changeId: string): 
       if (!r.id) continue;
       const trace = (r.trace || {}) as Record<string, string>;
       const depends = String(trace.depends || "");
-      const cites =
-        String(trace.api || "").trim() !== "" ||
-        shared.some((c) => new RegExp(`(^|,)\\s*${c}:REQ-\\d+`).test(depends));
+      const api = String(trace.api || "").trim();
+      const used = shared.flatMap((c) =>
+        [...depends.matchAll(new RegExp(`(?:^|,)\\s*${c}:(REQ-\\d+)`, "g"))].map((m) => ({
+          repo: c,
+          id: m[1],
+        }))
+      );
+      if (api === "" && used.length > 0) {
+        // REQ-406: a requirement of the contracts is not its operation. In run 7
+        // tracking and web cited contracts:REQ-NNN and served paths of their own.
+        const ops = [
+          ...new Set(
+            used.flatMap((u) =>
+              ws.dirs[u.repo] && fs.existsSync(ws.dirs[u.repo])
+                ? memberCitations(ws.dirs[u.repo])
+                    .filter((c) => c.requirement === u.id)
+                    .map((c) => `api=${u.repo}:${c.ref}`)
+                : []
+            )
+          ),
+        ];
+        out.push(
+          warning(
+            "layer_no_operation_cited",
+            `${r.id} depends on ${used.map((u) => `${u.repo}:${u.id}`).join(", ")} and cites none of its operations: ` +
+              `the service serves, and the web calls, exactly the operation the contract says.` +
+              (ops.length ? ` It could cite ${ops.join(", ")}.` : ""),
+            {
+              target: r.id,
+              fix: `Add ${ops[0] || `api=${used[0].repo}:contracts/<file>#<operationId>`} to ${r.id}'s specgate:trace.`,
+            }
+          )
+        );
+        continue;
+      }
+      const cites = api !== "" || used.length > 0;
       if (cites) continue;
       out.push(
         warning(
@@ -83,7 +117,7 @@ export function contractCitationWarnings(projectDir: string, changeId: string): 
           `${r.id} shares a criterion of the story ${story.id} with ${shared.join(", ")}, and cites none of its requirements or operations.`,
           {
             target: r.id,
-            fix: `Add depends=${shared[0]}:REQ-NNN (the requirement of ${shared[0]} it uses) or api=<file>#<operationId> to ${r.id}'s specgate:trace.`,
+            fix: `Add depends=${shared[0]}:REQ-NNN (the requirement of ${shared[0]} it uses) and api=${shared[0]}:contracts/<file>#<operationId> to ${r.id}'s specgate:trace.`,
           }
         )
       );
@@ -126,6 +160,38 @@ export function contractsNotYetSpecified(projectDir: string, changeId: string): 
       return dir && fs.existsSync(dir) && changeRequirements(dir, sc.change).length === 0;
     })
     .map((sc) => sc.repo);
+}
+
+/**
+ * REQ-407: the folder of each repository of the workspace this project is a
+ * member of, read from the `story.json` its open changes keep; nothing when no
+ * open change is a story's part.
+ */
+export function workspaceMemberDirs(projectDir: string): (repo: string) => string | undefined {
+  // `workspace harness run` names it: the harness may read a copy of the project.
+  if (process.env.SPECGATE_WORKSPACE) {
+    const { ws } = loadWorkspace(process.env.SPECGATE_WORKSPACE);
+    if (ws) return (repo) => ws.dirs[repo];
+  }
+  const changes = path.join(projectDir, "docs", "specs", "changes");
+  let ids: string[] = [];
+  try {
+    ids = fs.readdirSync(changes);
+  } catch {
+    return () => undefined;
+  }
+  for (const id of ids) {
+    const file = path.join(changes, id, STORY_LINK);
+    if (!fs.existsSync(file)) continue;
+    try {
+      const link: StoryLink = JSON.parse(fs.readFileSync(file, "utf8"));
+      const { ws } = loadWorkspace(path.resolve(projectDir, link.workspace || "."));
+      if (ws) return (repo) => ws.dirs[repo];
+    } catch {
+      continue;
+    }
+  }
+  return () => undefined;
 }
 
 /** A prompt with the story's context after it, when its change is part of a story. */

@@ -748,6 +748,8 @@ function runLiveOrHarness(argv: string[], json: boolean, io: ReturnType<typeof a
           ...process.env,
           NO_COLOR: "1",
           SPECGATE_STORY_CONTEXT: path.join(ws!.dir, r.context),
+          // REQ-407: where the contracts an `api=<repo>:…` names are.
+          SPECGATE_WORKSPACE: ws!.dir,
         },
       });
       if (!json)

@@ -11,6 +11,8 @@ import {
   PromptRequirement,
 } from "../../packages/core/src/domain/AgentPrompt";
 import { packagesFor, rolePromptSection } from "../lib/role-packages";
+import { operationsSection } from "../lib/contracts";
+import { workspaceMemberDirs } from "../lib/story-part";
 
 export type PromptOptions = CorePromptOptions;
 
@@ -50,9 +52,16 @@ export function buildPrompt(
   // REQ-316: what each role asks of this requirement, written once by that role.
   const roles = rolePromptSection(packagesFor(projectDir, String(req.requirement || "")));
   const withRoles = roles ? `${prompt.replace(/\n*$/, "\n")}\n${roles}` : prompt;
+  // REQ-407: each operation it cites, as the contract writes it.
+  const ops = operationsSection(
+    projectDir,
+    String(req.requirement || ""),
+    workspaceMemberDirs(projectDir)
+  );
+  const withOps = ops ? `${withRoles.replace(/\n*$/, "\n")}\n${ops}` : withRoles;
   // REQ-344: a story's other parts, handed over by `workspace harness run`.
   const story = storyContext();
-  return story ? `${withRoles.replace(/\n*$/, "\n")}\n${story}` : withRoles;
+  return story ? `${withOps.replace(/\n*$/, "\n")}\n${story}` : withOps;
 }
 
 /** The workspace story this run builds a part of, when `workspace harness run` names one. */
