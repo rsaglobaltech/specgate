@@ -9,6 +9,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **The site carries both versions (REQ-400, REQ-401).** The documentation site showed only the stable line, so a reader had no way to see that a 1.0 candidate existed or what it adds. Built with `--channel stable|next --versions stable=…,next=…`, every page and the landing page have a version picker at the top left: the stable entry opens the stable docs, the candidate's opens what 1.0 adds. The candidate's pages, published under `next/`, say they document a candidate, lead back to the stable docs and edit `next/1.0`. Built without `--versions`, the badge is as it was.
+- **What is new in 1.0 (REQ-402).** [docs/whats-new-1.0.md](docs/whats-new-1.0.md) explains each feature of 1.0 with its commands, and names every candidate; a test fails when a candidate in this changelog is missing from it.
+
 ## [1.0.0-rc.7] — 2026-10-30
 
 After the sixth microservices run of truck-flote: a part that uses the contracts is written after them, and a requirement still being drafted that waits for another repository is the order the story is built in, not a failure of the workspace check.

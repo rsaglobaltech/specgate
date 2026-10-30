@@ -243,6 +243,12 @@ export const NAV: readonly NavSection[] = [
           "Coverage and mutation of what a change adds, SonarQube, SpotBugs, PMD, Semgrep, secrets, dependencies — all in Docker, no account.",
       },
       {
+        slug: "whats-new-1.0",
+        label: "What is new in 1.0",
+        blurb:
+          "The 1.0 candidate, feature by feature: layers and approvals, a workspace of repositories, stories built in order, contracts, the live view — and each candidate.",
+      },
+      {
         slug: "migrating-to-1.0",
         label: "Migrating to 1.0",
         blurb:
