@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.4] — 2026-10-30
+
+After the third microservices run of truck-flote: an agent that ticks its own task is no longer refused for touching the specification, the dependencies and operations a design names are checked against the traces, and the contracts repository's agent writes the contract its requirements describe.
+
 ### Fixed
 
 - **What a design says a requirement waits for reaches its trace** (REQ-380, REQ-381): in the third microservices run the panel's design named `depends=contracts:REQ-002`, `depends=tracking:REQ-002` and the operations it uses, its traces carried none, and `change validate` said ✔. Each `depends=` or `api=` design.md names and no `specgate:trace` carries is now a `layer_design_dependency_untraced` warning, naming the requirement on that line.
