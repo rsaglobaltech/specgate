@@ -105,9 +105,23 @@ export function rolesHeld(settings: ApprovalSettings, who: Identity): string[] {
   return [...roles].filter((r) => holdsRole(settings, r, who)).sort();
 }
 
-/** The hash an approval is of: line endings do not count, the text does. */
+const sha = (text: string) =>
+  `sha256:${createHash("sha256").update(text.replace(/\r\n/g, "\n")).digest("hex")}`;
+
+/**
+ * The hash an approval is of: line endings do not count, the text does, and a
+ * task box counts as open whether it is ticked or not (REQ-370). Delivering a
+ * requirement ticks its task (REQ-353); hashing the tick made the harness
+ * refuse a change's second requirement as "not approved: tasks" (truck-flote,
+ * MS2-8). Any other edit still changes the hash (REQ-314).
+ */
 export function contentHash(text: string): string {
-  return `sha256:${createHash("sha256").update(text.replace(/\r\n/g, "\n")).digest("hex")}`;
+  return sha(text.replace(/^(\s*[-*+]\s*)\[[xX]\]/gm, "$1[ ]"));
+}
+
+/** The hash of the text as written: what 1.0.0-rc.1 and rc.2 recorded (REQ-371). */
+export function rawContentHash(text: string): string {
+  return sha(text);
 }
 
 export interface LayerApproval {
@@ -134,17 +148,20 @@ export function layerApprovals(
 ): LayerApproval[] {
   return layers.map((l) => {
     const hash = l.text === null ? "" : contentHash(l.text);
+    // REQ-371: a record of an earlier candidate hashed the text as written.
+    const raw = l.text === null ? "" : rawContentHash(l.text);
+    const matches = (r: ApprovalRecord) => r.hash === hash || r.hash === raw;
     const mine = records.filter((r) => r.layer === l.id);
     const current: ApprovalRecord[] = [];
     const seen = new Set<string>();
     for (const r of mine) {
-      if (r.hash !== hash) continue;
+      if (!matches(r)) continue;
       const key = personKey(r.by);
       if (seen.has(key)) continue;
       seen.add(key);
       current.push(r);
     }
-    const stale = mine.filter((r) => r.hash !== hash);
+    const stale = mine.filter((r) => !matches(r));
     const quorum = settings.quorum[l.id] || 1;
     return {
       layer: l.id,

@@ -175,6 +175,7 @@ import {
 } from "../../../../packages/core/src/domain/HarnessRun";
 import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
 import { forShell } from "../../../lib/shell-command";
+import { removeTempFile } from "../../../lib/temp-file";
 
 /**
  * One requirement as `plan --format json` hands it to the harness.
@@ -1105,7 +1106,7 @@ function runAgentOnce(
     });
     return `${r.stdout || ""}${r.stderr || ""}`.trim();
   } finally {
-    fs.rmSync(promptFile, { force: true });
+    removeTempFile(promptFile);
   }
 }
 
@@ -1306,7 +1307,7 @@ function runAdversarialProbe(
     return NO_PROBE;
   } finally {
     try {
-      fs.rmSync(promptFile, { force: true });
+      removeTempFile(promptFile);
     } catch {
       /* a temp file nobody will read again */
     }
@@ -1682,7 +1683,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         agentMs += Date.now() - agentStart;
         profilesUsed.push(profile ?? (step.advisory ? "reviewer" : "agent"));
 
-        fs.rmSync(promptFile, { force: true });
+        removeTempFile(promptFile);
         const agentError = agent.error as NodeJS.ErrnoException | undefined;
         if (agentError?.code === "ETIMEDOUT") {
           if (step.advisory) {
@@ -3001,7 +3002,7 @@ async function runChain(
       .filter(Boolean);
     if (prompts.length > 0) {
       git(projectDir, ["rm", "-q", "--cached", "--", ...prompts]);
-      for (const f of prompts) fs.rmSync(path.join(projectDir, f), { force: true });
+      for (const f of prompts) removeTempFile(path.join(projectDir, f));
     }
     const title = String(req.title || req.use_case || req.useCase || "").replace(/^UC-\d+\s*/, "");
     const mergeKey = ticketKeyOf(projectDir, req.requirement);

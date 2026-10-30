@@ -101,6 +101,7 @@ export const TEMPLATES = {
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
+import { removeTempFile } from "../../../lib/temp-file";
 
 // The artefact graph. Dependencies are enablers, not gates: `requires` says
 // what makes an artefact *possible*, never what the author must do next.
@@ -973,7 +974,7 @@ function cmdAuthor(opts: ChangeOptions) {
       ]);
     }
   } finally {
-    fs.rmSync(promptFile, { force: true });
+    removeTempFile(promptFile);
   }
 
   const touched = spawnSync("git", ["-C", projectDir, "status", "--porcelain"], {
