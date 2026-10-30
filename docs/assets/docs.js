@@ -701,3 +701,19 @@
   }
 
 })();
+
+// The version picker is a <details>, so it opens without this; a click outside
+// it or Escape closes it (REQ-400).
+(function () {
+  var picker = document.querySelector("details.top__version");
+  if (!picker) return;
+  document.addEventListener("click", function (e) {
+    if (picker.open && !picker.contains(e.target)) picker.open = false;
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && picker.open) {
+      picker.open = false;
+      picker.querySelector("summary").focus();
+    }
+  });
+})();

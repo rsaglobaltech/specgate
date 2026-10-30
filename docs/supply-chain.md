@@ -206,10 +206,12 @@ copyleft. `npm run licenses` prints the current count:
 | BSD-2-Clause | 7 |
 | BlueOak-1.0.0 | 5 |
 | MIT OR CC0-1.0 | 3 |
-| Python-2.0 · CC-BY-4.0 · CC-BY-3.0 · CC0-1.0 · 0BSD | 1 each |
+| PSF-2.0 · CC-BY-4.0 · CC-BY-3.0 · CC0-1.0 · 0BSD | 1 each |
 
 The unusual four are worth naming, because "we allow CC-BY" reads alarming
-without them: `argparse` is Python-2.0, `caniuse-lite` is CC-BY-4.0 over a
+without them: `argparse` is PSF-2.0 since version 3 (Python-2.0 before; both
+are the Python Software Foundation's permissive terms: keep the notice, nothing
+more), `caniuse-lite` is CC-BY-4.0 over a
 browser-support **dataset**, and `spdx-exceptions` / `spdx-license-ids` are
 CC-BY-3.0 and CC0-1.0 over lists of licence identifiers. All four are data or
 tooling, none imposes an obligation on distributing this CLI.
