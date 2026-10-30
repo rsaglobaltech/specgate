@@ -16,6 +16,7 @@ import {
   operationSource,
   parseApiRef,
   resolveApiRef,
+  routeInPieces,
   routePattern,
   type ApiOperation,
 } from "../../packages/core/src/domain/ApiContract";
@@ -387,7 +388,9 @@ export function conformanceWarnings(
   repo: string,
   cited: ApiCitation[],
   resolve: (c: ApiCitation) => ApiOperation | null,
-  statusOf: (requirement: string) => string | undefined
+  statusOf: (requirement: string) => string | undefined,
+  /** REQ-418: a route mounted in pieces counts too (`routeInPieces`). */
+  pieces = false
 ): Diagnostic[] {
   const delivered = cited.filter((c) =>
     [c.status, statusOf(c.requirement)].some((s) => DELIVERED_STATUS.has(String(s || "").trim()))
@@ -409,7 +412,7 @@ export function conformanceWarnings(
       });
     }
     const re = routePattern(route.path);
-    if (texts.some((t) => re.test(t))) continue;
+    if (texts.some((t) => re.test(t) || (pieces && routeInPieces(route.path, t)))) continue;
     const who = repo ? `${repo}:${c.requirement}` : c.requirement;
     out.push(
       warning(

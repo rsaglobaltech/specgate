@@ -260,6 +260,19 @@ export function operationRoute(op: ApiOperation): { method: string; path: string
  * the end of the string, a query or a fragment. A route a router mounts in two
  * pieces is not found: the check is a warning for that reason.
  */
+/**
+ * REQ-418: a route mounted in pieces — `@RequestMapping("/trucks")` on the
+ * class, `@GetMapping("/{truckId}/status")` on the method, a router under a
+ * prefix — is in a text that quotes each literal segment of the path. Looser
+ * than `routePattern`, for a check that fails a requirement.
+ */
+export function routeInPieces(route: string, text: string): boolean {
+  const literals = route.split("/").filter((seg) => seg && !/^\{[^}]+\}$/.test(seg));
+  if (literals.length === 0) return false;
+  const quoted = [...text.matchAll(/(["'`])((?:(?!\1)[^\n\\]|\\.)*)\1/g)].map((m) => m[2]);
+  return literals.every((seg) => quoted.some((q) => q.split(/[/?#]/).includes(seg)));
+}
+
 export function routePattern(route: string): RegExp {
   const PARAM = String.raw`(?:\{[^}/]+\}|:[A-Za-z_]\w*|\[[^\]/]+\]|<[^>/]+>|\$\{[^}]+\}|\*)`;
   const body = route

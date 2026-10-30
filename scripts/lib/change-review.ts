@@ -4,6 +4,7 @@ import { questionTable } from "../../packages/core/src/domain/Clarification";
 import { draftReport } from "../cli/commands/spec/DraftCommand";
 import type { LayerId } from "../../packages/core/src/domain/ChangeLayers";
 import { approveLayers, changeApprovals } from "./approvals";
+import { contractCitationWarnings } from "./story-part";
 
 /**
  * A person's review of a draft change (REQ-206, REQ-207): approving it, which
@@ -41,6 +42,9 @@ export function approvedOn(projectDir: string, id: string): string {
 export interface Blocker {
   code: string;
   message: string;
+  /** What to do about it, as the rule that found it says, and where. */
+  fix?: string;
+  target?: string;
 }
 
 /** What stops a change from being approved: checklist errors and open questions. */
@@ -51,13 +55,33 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
     out.push({ code: r.failure.code, message: r.failure.message });
   } else {
     for (const d of r.report.status) {
-      if (d.severity === "error") out.push({ code: d.code, message: d.message });
+      if (d.severity === "error")
+        out.push({
+          code: d.code,
+          message: d.message,
+          ...(d.fix ? { fix: d.fix } : {}),
+          ...(d.target ? { target: d.target } : {}),
+        });
     }
+  }
+  // REQ-415: a part of a story cites the contracts' operations as they are.
+  for (const d of contractCitationWarnings(projectDir, id)) {
+    if (d.severity === "error")
+      out.push({
+        code: d.code,
+        message: d.message,
+        ...(d.fix ? { fix: d.fix } : {}),
+        ...(d.target ? { target: d.target } : {}),
+      });
   }
   const questions = read(path.join(changeDir(projectDir, id), "questions.md"));
   for (const q of questions ? questionTable(questions) : []) {
     if (!q.answered && !out.some((b) => b.message.includes(q.id))) {
-      out.push({ code: "approve_question_open", message: `${q.id} is open: ${q.text}` });
+      out.push({
+        code: "approve_question_open",
+        message: `${q.id} is open: ${q.text}`,
+        fix: `Answer ${q.id} in questions.md.`,
+      });
     }
   }
   return out;
@@ -88,6 +112,11 @@ export function approveChange(
       code: "approve_blocked",
       message: `${id} cannot be approved yet: ${blockers.map((b) => b.message).join("; ")}`,
       blockers,
+      // REQ-416: each blocker's own fix, not a generic one (truck-flote, MS8-1).
+      fix: blockers
+        .filter((b) => b.fix)
+        .map((b) => (b.target ? `${b.target}: ${b.fix}` : b.fix))
+        .join(" "),
     };
   }
   return approveLayers(projectDir, id, layer ? [layer] : null, today);

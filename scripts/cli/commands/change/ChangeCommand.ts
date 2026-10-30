@@ -1184,14 +1184,20 @@ function notApprovable(projectDir: string, id: string): Diagnostic[] {
     return [];
   }
   if (!layeredChange) return [];
-  return approvalBlockers(projectDir, id)
-    .filter((b) => b.code !== "draft_no_specs")
-    .map((b) =>
-      error("change_not_approvable", b.message, {
-        target: id,
-        fix: `Fix it before review: \`specgate change approve ${id}\` refuses the change until then.`,
-      })
-    );
+  return (
+    approvalBlockers(projectDir, id)
+      // The contract citations are said by contractCitationWarnings itself.
+      .filter(
+        (b) =>
+          !["draft_no_specs", "layer_api_unresolved", "layer_no_operation_cited"].includes(b.code)
+      )
+      .map((b) =>
+        error("change_not_approvable", b.message, {
+          target: id,
+          fix: `Fix it before review: \`specgate change approve ${id}\` refuses the change until then.`,
+        })
+      )
+  );
 }
 
 /**

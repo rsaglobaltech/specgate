@@ -129,13 +129,17 @@ A repository with the role `contracts` writes the OpenAPI or AsyncAPI files unde
 - A service or web requirement cites the operation it serves or calls, with the
   contracts repository's name before the file:
   `api=contracts:contracts/fleet.openapi.yaml#getFleetStatus`. `workspace check`
-  resolves it there, and `change validate` warns `layer_no_operation_cited` for a
-  `depends=` on the contracts with no `api=`.
+  resolves it there. The story's context lists the exact line to copy for each
+  operation, and `change approve` refuses a part whose `api=` names none of the
+  contracts' operations (`layer_api_unresolved`) or that names none where the
+  contracts cite one (`layer_no_operation_cited`).
 - The harness prompt quotes each cited operation as the contract writes it: serve
   or call exactly that method and path.
 - `specgate contract check` lists the operations no requirement cites, and with
   `workspace check` warns `contract_operation_not_found` when a delivered
-  requirement's code neither serves nor calls the operation's path.
+  requirement's code neither serves nor calls the operation's path. In the
+  harness that is a failed attempt: the code serves or calls the operation it
+  cites, whole or in pieces, or the requirement does not pass.
 
 ## The story, built in order
 
