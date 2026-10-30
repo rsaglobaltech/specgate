@@ -31,6 +31,7 @@ import {
 import { readDeclaredDependencies } from "./requirement-graph";
 import { DELIVERED, inFlightRequirements } from "./in-flight";
 import { findCliRoot } from "./project-root";
+import { citedOperation, conformanceWarnings, memberCitations } from "./contracts";
 import { error, warning } from "./diagnostics";
 import type { Diagnostic } from "./diagnostics";
 
@@ -442,13 +443,82 @@ export function checkWorkspace(ws: LoadedWorkspace): CheckResult {
     }
   }
 
+  const { problems: apiProblems, warnings: apiWarnings } = contractCitations(ws, known, statuses);
+  problems.push(...apiProblems);
+
   const ok = repos.every((r) => r.ok) && problems.length === 0;
   return {
     ok,
     repos,
     problems,
-    warnings: [...waiting, ...divergedParts(ws), ...criteriaWarnings(ws)],
+    warnings: [...waiting, ...apiWarnings, ...divergedParts(ws), ...criteriaWarnings(ws)],
   };
+}
+
+/**
+ * REQ-405: an `api=<repo>:<file>#<operationId>` names another repository's
+ * contract; each member's own `validate` leaves it to the workspace, which
+ * resolves it in that repository — an error for a delivered requirement, a
+ * warning until then. REQ-408: and each delivered requirement's operation is
+ * served or called somewhere in its repository's code (a warning).
+ */
+function contractCitations(
+  ws: LoadedWorkspace,
+  known: Map<string, Set<string>>,
+  statuses: Map<string, Map<string, string>>
+): { problems: Diagnostic[]; warnings: Diagnostic[] } {
+  const problems: Diagnostic[] = [];
+  const warnings: Diagnostic[] = [];
+  const dirOf = (repo: string) => ws.dirs[repo];
+  for (const r of ws.config.repos) {
+    if (!known.has(r.name)) continue;
+    const dir = ws.dirs[r.name];
+    const mine = statuses.get(r.name) || new Map<string, string>();
+    const cited = memberCitations(dir);
+    const delivered = (c: { requirement: string; status?: string }) =>
+      [c.status, mine.get(c.requirement)].some((s) => DELIVERED.includes(String(s || "").trim()));
+    for (const c of cited) {
+      const q = /^([A-Za-z][A-Za-z0-9-]*):/.exec(c.ref);
+      if (!q || !c.ref.includes("#")) continue;
+      const repo = q[1].toLowerCase();
+      const who = `${r.name}:${c.requirement}`;
+      if (!ws.dirs[repo]) {
+        problems.push(
+          error(
+            "workspace_unknown_repo",
+            `${who} cites api=${c.ref}, and ${repo} is not a repo of this workspace.`,
+            {
+              target: who,
+              fix: `Add ${repo} to ${WORKSPACE_FILE}, or correct api= in ${c.requirement}.`,
+            }
+          )
+        );
+        continue;
+      }
+      if (citedOperation(c.ref, dirOf, dir)) continue;
+      const held = delivered(c);
+      (held ? problems : warnings).push(
+        (held ? error : warning)(
+          "workspace_api_unresolved",
+          `${who} cites api=${c.ref}, which is not an operation of ${repo}'s contracts.${held ? "" : " It must resolve once it is delivered."}`,
+          {
+            target: who,
+            fix: `Correct api= in ${c.requirement}, or write the operation in ${repo}'s contract.`,
+          }
+        )
+      );
+    }
+    warnings.push(
+      ...conformanceWarnings(
+        dir,
+        r.name,
+        cited,
+        (c) => citedOperation(c.ref, dirOf, dir)?.operation || null,
+        (id) => mine.get(id)
+      )
+    );
+  }
+  return { problems, warnings };
 }
 
 /** The `discover.md` of a member's open change, or null. */
@@ -614,7 +684,7 @@ export function storyContext(ws: LoadedWorkspace, story: Story, repo: string): s
     "",
     "Call another part's requirement by its qualified id: a requirement that needs it carries `depends=<repo>:REQ-NNN` in its trace" +
       (contracts.length
-        ? `, and an API between repositories is an operation of \`${contracts[0]}\`, cited as \`api=<file>#<operationId>\`.`
+        ? `, and an API between repositories is an operation of \`${contracts[0]}\`, cited as \`api=${contracts[0]}:contracts/<file>#<operationId>\`.`
         : "."),
     "Do not build another repository's part here: call it through its API, or a stand-in in the tests."
   );
@@ -626,9 +696,12 @@ export function storyContext(ws: LoadedWorkspace, story: Story, repo: string): s
         "`api=contracts/<file>#<operationId>`; a requirement here describes an operation, the file is the operation."
     );
   } else if (contracts.length) {
+    // REQ-406: the operation, not only the requirement: in run 7 tracking and
+    // web cited contracts:REQ-NNN, then served and called paths of their own.
     lines.push(
-      `A requirement that uses an operation of \`${contracts[0]}\` carries \`depends=${contracts[0]}:REQ-NNN\` in its trace, ` +
-        `and \`api=<file>#<operationId>\` once ${contracts[0]}'s contract file exists — in the trace, not only in design.md.`
+      `A requirement that serves or calls an operation of \`${contracts[0]}\` carries both in its trace, not only in design.md: ` +
+        `\`depends=${contracts[0]}:REQ-NNN\` and \`api=${contracts[0]}:contracts/<file>#<operationId>\`. ` +
+        "The provider serves exactly that method and path and the consumer calls exactly it: no API of its own, no other prefix."
     );
   }
   lines.push("");
@@ -778,9 +851,11 @@ function acrossRepositories(ws: LoadedWorkspace, repo: string, repos: string[]):
     "## Across repositories",
     "",
     `A requirement here that needs one of their requirements names it in its trace, in the delta under \`specs/\` and not only here: \`depends=${example}:REQ-NNN\`.` +
-      (contracts.length
-        ? ` An API between repositories is an operation of \`${contracts[0]}\`, cited as \`api=<file>#<operationId>\`.`
-        : ""),
+      (!contracts.length
+        ? ""
+        : contracts.includes(repo)
+          ? ` An API between repositories is an operation of this repository's contract, cited as \`api=contracts/<file>#<operationId>\`.`
+          : ` An API between repositories is an operation of \`${contracts[0]}\`, cited as \`api=${contracts[0]}:contracts/<file>#<operationId>\`: this repository serves or calls exactly that method and path (REQ-406).`),
   ].join("\n");
 }
 

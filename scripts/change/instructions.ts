@@ -110,7 +110,7 @@ const LAYERED_DESIGN_RULES = [
   "Owner: the architect. Modules, mechanisms, channels, and the ADRs this touches.",
   "Name each acceptance criterion of discover.md where it is answered (`AC-1 — …`), or validation reports `layer_design_misses_criterion`.",
   // REQ-390: the specs are written before the design, and the harness reads the traces.
-  "What this design decides a requirement needs from another repository — `depends=<repo>:REQ-NNN`, `api=<file>#<operationId>` — goes into that requirement's `<!-- specgate:trace … -->` in the delta under `specs/` as well: the harness orders the parts and checks the contracts from the traces, never from design.md (`layer_design_dependency_untraced`).",
+  "What this design decides a requirement needs from another repository — `depends=<repo>:REQ-NNN`, `api=<repo>:<file>#<operationId>` for an operation of another repository's contract (REQ-406) — goes into that requirement's `<!-- specgate:trace … -->` in the delta under `specs/` as well: the harness orders the parts and checks the contracts from the traces, never from design.md (`layer_design_dependency_untraced`).",
 ];
 
 const LAYERED_TASKS_RULES = [
