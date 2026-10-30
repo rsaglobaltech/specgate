@@ -46,7 +46,10 @@ export class ValidateChangeUseCase {
           fix: `Create ${path.join("docs/specs/changes", changeId, wanted)}.`,
         })
       );
-    } else {
+    }
+
+    const deltas = this.projectRepo.listDeltas(changeId);
+    if (discover !== null) {
       diagnostics.push(
         ...checkLayers({
           changeId,
@@ -54,11 +57,11 @@ export class ValidateChangeUseCase {
           discoverFile,
           design: read("design.md"),
           tasks: read("tasks.md"),
+          // REQ-380: what the traces carry, against what the design names.
+          deltas: deltas.map((d) => this.projectRepo.readFile(d.file) || "").join("\n"),
         })
       );
     }
-
-    const deltas = this.projectRepo.listDeltas(changeId);
     if (deltas.length === 0 && !config.skip_specs) {
       diagnostics.push(
         warning("no_deltas", `Change "${changeId}" carries no delta specs.`, {

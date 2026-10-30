@@ -176,6 +176,10 @@ specgate workspace propose follow-shipment
   `design.md`: the Discover stays business (REQ-344, REQ-365).
 - `story.json` in the sub-change names the workspace, so `change author` tells
   the agent writing any layer of it the story's other parts (REQ-366).
+- The contracts repository's agent is asked to write the OpenAPI or AsyncAPI file
+  under `contracts/` and cite each operation as `api=`; the others, to cite it with
+  `depends=`. A `depends=` or `api=` the design names and no trace carries is a
+  `layer_design_dependency_untraced` warning: the gate reads the traces (REQ-380..382).
 - The criteria are the business's: `workspace check` warns when a repository's
   differ from the story's (REQ-343), and when a criterion is answered by no
   repository or claimed by two (REQ-362). Change them in the story.

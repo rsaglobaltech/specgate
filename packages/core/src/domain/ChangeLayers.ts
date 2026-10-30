@@ -231,6 +231,35 @@ export interface LayerFiles {
   discoverFile: string;
   design: string | null;
   tasks: string | null;
+  /** The change's delta specs, joined: what its traces carry (REQ-380). */
+  deltas?: string;
+}
+
+/**
+ * REQ-380, REQ-381: the references a text makes to another repository — a
+ * `depends=<repo>:REQ-NNN` or an `api=<file>#<operation>`. A placeholder
+ * (`REQ-NNN`, `<file>`) is guidance, not a reference.
+ */
+function crossReferences(text: string): string[] {
+  const refs: string[] = [];
+  for (const m of text.matchAll(/\bdepends=([^\s`|<>]+)/g)) {
+    for (const part of m[1].split(",")) {
+      if (/^[\w.-]+:REQ-\d+$/.test(part)) refs.push(`depends=${part}`);
+    }
+  }
+  for (const m of text.matchAll(/\bapi=([^\s`|<>]+)/g)) {
+    if (/#/.test(m[1])) refs.push(`api=${m[1].replace(/[.,;:)]+$/, "")}`);
+  }
+  return refs;
+}
+
+/** The references the traces of a delta carry. */
+function tracedReferences(deltas: string): Set<string> {
+  const carried = new Set<string>();
+  for (const m of deltas.matchAll(/<!--\s*specgate:trace\b([^]*?)-->/g)) {
+    for (const r of crossReferences(m[1])) carried.add(r);
+  }
+  return carried;
 }
 
 /**
@@ -293,6 +322,39 @@ export function checkLayers(files: LayerFiles): Diagnostic[] {
               target: c.id,
               file: `${dir}/design.md`,
               fix: `Say in design.md how ${c.id} is met, naming it ("${c.id} — …").`,
+            }
+          )
+        );
+      }
+    }
+  }
+
+  // REQ-380, REQ-381: what the design says a requirement waits for, or uses,
+  // is carried by a trace — the gate reads the traces, not the design. A
+  // warning: a design may discuss a dependency it then rejects.
+  if (files.design !== null && files.deltas !== undefined) {
+    const carried = tracedReferences(files.deltas);
+    const seen = new Set<string>();
+    for (const line of withoutComments(files.design).split(/\r?\n/)) {
+      for (const ref of crossReferences(line)) {
+        // The requirement of this line: an id of this repository, not a qualified one.
+        const own = /(?<![\w:-])(REQ-\d+)\b/.exec(line);
+        const req = own ? own[1] : "";
+        const key = `${ref} ${req}`;
+        if (carried.has(ref) || seen.has(key)) continue;
+        seen.add(key);
+        out.push(
+          warning(
+            "layer_design_dependency_untraced",
+            req
+              ? `design.md says ${req} uses ${ref}, and no trace carries it.`
+              : `design.md names ${ref}, and no trace of the change carries it.`,
+            {
+              target: req || files.changeId,
+              file: `${dir}/design.md`,
+              fix: req
+                ? `Add ${ref} to ${req}'s specgate:trace.`
+                : `Add ${ref} to the specgate:trace of the requirement that needs it.`,
             }
           )
         );
