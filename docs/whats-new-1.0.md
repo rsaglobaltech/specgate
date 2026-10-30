@@ -197,4 +197,4 @@ found. The full notes are in the
 | 1.0.0-rc.5 | A contract is built one requirement at a time; a part sharing a criterion with the contracts cites them. |
 | 1.0.0-rc.6 | The design carries its dependencies into the traces, so the parts are built in order; a placeholder operation is no citation. |
 | 1.0.0-rc.7 | A part is written after the contracts it uses; a requirement still being drafted that waits for another repository is the build order, not a failure. |
-| 1.0.0-rc.8 | The site carries both versions: this page, and the picker at the top left. |
+| 1.0.0-rc.8 | The site carries both versions: this page, and the picker at the top left. Fewer, clearer pipelines: one CI, one release, one scheduled workflow. |

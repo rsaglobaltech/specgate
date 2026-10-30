@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.8] — 2026-10-30
+
+The documentation site carries both versions, with a picker at the top left and a page of what 1.0 adds; the pipelines are fewer and clearer — one CI, one release, one scheduled workflow — and npm audit and the licence check pass again.
+
 ### Added
 
 - **The site carries both versions (REQ-400, REQ-401).** The documentation site showed only the stable line, so a reader had no way to see that a 1.0 candidate existed or what it adds. Built with `--channel stable|next --versions stable=…,next=…`, every page and the landing page have a version picker at the top left: the stable entry opens the stable docs, the candidate's opens what 1.0 adds. The candidate's pages, published under `next/`, say they document a candidate, lead back to the stable docs and edit `next/1.0`. Built without `--versions`, the badge is as it was.
