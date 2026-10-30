@@ -9,6 +9,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.11] — 2026-10-30
+
+After the ninth microservices run of truck-flote, where all nine requirements were built and served or called the contracts' operations: the workspace check judges that code as the harness does.
+
+### Fixed
+
+- **The workspace check judges the code as the harness does (REQ-419).** In the ninth microservices run of truck-flote, tracking served `GET /fleet/positions` and `GET /drivers/{driverId}/driving-time` as Spring maps them — a prefix on the class, the rest on the method — and the harness passed them (REQ-418); `workspace check` still warned `contract_operation_not_found` for both, and for the contracts repository, which serves none of its own operations (MS9-1). It now counts a route in pieces and skips a member whose role is `contracts`; a missing segment is still reported.
+
 ## [1.0.0-rc.10] — 2026-10-30
 
 After the eighth microservices run of truck-flote: a part cites the contracts' operation exactly as the story lists it, or approval refuses it; the code serves or calls what it cites, or the harness does not pass it; a rule citing a law names its source; an agent that wrote nothing once is retried.

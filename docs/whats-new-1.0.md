@@ -213,3 +213,4 @@ found. The full notes are in the
 | 1.0.0-rc.8 | The site carries both versions: this page, and the picker at the top left. Fewer, clearer pipelines: one CI, one release, one scheduled workflow. |
 | 1.0.0-rc.9 | A part cites the contract's operation (`api=contracts:<file>#<operationId>`), its agent reads the operation and its code is checked against it (`contract_operation_not_found`); the workspace's live view opens each repository's own at `/live/repo/<name>/`; Node.js 24. |
 | 1.0.0-rc.10 | A part cites the contracts' operation as the story lists it, or approval refuses it (`layer_api_unresolved`); the harness fails a requirement whose code serves or calls none of the operation's path; a rule citing a law names its source; an empty attempt after a written one is retried once. |
+| 1.0.0-rc.11 | `workspace check` judges a part's code as the harness does: a route mounted in pieces counts, and the contracts repository is not asked to serve its own operations. |
