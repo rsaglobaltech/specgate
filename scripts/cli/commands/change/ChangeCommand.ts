@@ -11,7 +11,11 @@
  */
 
 import * as fs from "node:fs";
-import { contractCitationWarnings, withStoryContext } from "../../../lib/story-part";
+import {
+  contractCitationWarnings,
+  contractsNotYetSpecified,
+  withStoryContext,
+} from "../../../lib/story-part";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
 
@@ -199,7 +203,7 @@ function usage() {
       `    ${c.green}--strict${c.reset}              ${c.dim}(validate) Treat advisory warnings as failures.${c.reset}\n` +
       `    ${c.green}--rebased${c.reset}             ${c.dim}(validate <id>) The delta was rewritten over requirements that moved; record them as they read now.${c.reset}\n` +
       `    ${c.green}--dry-run${c.reset}             ${c.dim}(archive) Print the plan, write nothing.${c.reset}\n` +
-      `    ${c.green}--force${c.reset}               ${c.dim}(archive) Archive with unchecked tasks or a draft whose checklist fails; overwrite features.${c.reset}\n` +
+      `    ${c.green}--force${c.reset}               ${c.dim}(archive) Archive with unchecked tasks or a draft whose checklist fails; overwrite features. (author) Write a part before the contracts it uses.${c.reset}\n` +
       `                          ${c.dim}Never without its requirements delivered (ADR-0035).${c.reset}\n\n`
   );
 }
@@ -940,6 +944,21 @@ function cmdAuthor(opts: ChangeOptions) {
       error("author_tree_dirty", "The working tree has uncommitted changes.", {
         fix: "Commit or stash first. The scope is enforced by reverting what the agent wrote outside the change, and on a dirty tree that would take your work with it.",
       }),
+    ]);
+  }
+
+  // REQ-395: a part that uses the contracts is written once they say something.
+  const waitingFor = contractsNotYetSpecified(projectDir, changeId);
+  if (waitingFor.length && artifact !== "discover" && !opts.dryRun && !opts.force) {
+    return fail(opts, NULL_SHAPE, [
+      error(
+        "author_contracts_first",
+        `${changeId} shares a criterion with ${waitingFor.join(", ")}, whose part of the story specifies nothing yet.`,
+        {
+          target: changeId,
+          fix: `Write the ${waitingFor[0]} part first (specgate change author ${changeId} --artifact specs there), or pass --force.`,
+        }
+      ),
     ]);
   }
 

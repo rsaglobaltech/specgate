@@ -99,7 +99,7 @@ judge, and exits non-zero when anything fails:
 | `workspace_repo_missing` | A repository is not at its path (`url` says from where to clone it) |
 | `workspace_unknown_repo` | A qualified id names a repository the workspace does not have |
 | `workspace_unknown_requirement` | A qualified id names a requirement its repository does not have |
-| `workspace_dependency_pending` | A requirement depends on another repository's that is not delivered |
+| `workspace_dependency_pending` | A requirement depends on another repository's that is not delivered; a warning while the requirement is itself in an open change, since the story harness builds in that order (REQ-396) |
 | `workspace_story_diverged` | A warning: a sub-change's criteria are not the story's (REQ-343) |
 
 The result is kept in `.specgate/workspace-check.json` (git-ignored), which
@@ -180,6 +180,10 @@ specgate workspace propose follow-shipment
   under `contracts/` and cite each operation as `api=`; the others, to cite it with
   `depends=`. A `depends=` or `api=` the design names and no trace carries is a
   `layer_design_dependency_untraced` warning: the gate reads the traces (REQ-380..382).
+- Write the contracts part first. `change author` refuses the specs, design or
+  tasks of a part that shares a criterion with the contracts repository while the
+  contracts' part specifies nothing (`author_contracts_first`; `--force` writes it
+  anyway): a part written beside an empty contract designs an API of its own (REQ-395).
 - The criteria are the business's: `workspace check` warns when a repository's
   differ from the story's (REQ-343), and when a criterion is answered by no
   repository or claimed by two (REQ-362). Change them in the story.

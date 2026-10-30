@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { STORY_LINK, loadWorkspace, readStories, storyContext } from "./workspace";
+import { changeRequirements } from "./in-flight";
 import type { StoryLink } from "./workspace";
 import { storyCriteria } from "../../packages/core/src/domain/WorkspaceStory";
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
@@ -89,6 +90,42 @@ export function contractCitationWarnings(projectDir: string, changeId: string): 
     }
   }
   return out;
+}
+
+/**
+ * REQ-395: the contracts repositories a part shares a criterion with whose own
+ * part has no requirement yet. The parts of a story were written at the same
+ * time, and tracking, finding nothing in contracts, designed its own API
+ * (truck-flote, MS6-1): a part is written after the contracts it uses.
+ */
+export function contractsNotYetSpecified(projectDir: string, changeId: string): string[] {
+  const file = path.join(projectDir, "docs", "specs", "changes", changeId, STORY_LINK);
+  if (!fs.existsSync(file)) return [];
+  let link: StoryLink;
+  try {
+    link = JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return [];
+  }
+  const { ws } = loadWorkspace(path.resolve(projectDir, link.workspace || "."));
+  if (!ws) return [];
+  const story = readStories(ws.dir).find((s) => s.id === link.story);
+  if (!story) return [];
+  const roleOf = (n: string) => (ws.config.repos.find((r) => r.name === n) || { role: "" }).role;
+  if (roleOf(link.repo) === "contracts") return [];
+  const md = path.join(story.dir, "story.md");
+  const map = fs.existsSync(md) ? storyCriteria(fs.readFileSync(md, "utf8")) : {};
+  const mine = map[link.repo] || [];
+  return story.subchanges
+    .filter((sc) => sc.repo !== link.repo && roleOf(sc.repo) === "contracts")
+    .filter(
+      (sc) => !Object.keys(map).length || (map[sc.repo] || []).some((ac) => mine.includes(ac))
+    )
+    .filter((sc) => {
+      const dir = ws.dirs[sc.repo];
+      return dir && fs.existsSync(dir) && changeRequirements(dir, sc.change).length === 0;
+    })
+    .map((sc) => sc.repo);
 }
 
 /** A prompt with the story's context after it, when its change is part of a story. */
