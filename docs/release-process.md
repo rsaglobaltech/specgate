@@ -15,9 +15,9 @@ do not have.
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.27.9** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **0.27.9** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **0.27.9**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.27.10** is `latest` |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **0.27.10** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **0.27.10**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -74,7 +74,8 @@ paragraph in a release and say so under Breaking — not to quietly stop.
 
 **Node.js.** `package.json` declares `>=22` and CI tests Node 22 and 24 across
 Linux, macOS and Windows — the floor and the current LTS, so a break at either
-end shows up. Raising the floor is **breaking** for the CLI, never a quiet
+end shows up. The jobs that run once — lint, packaging, publishing, the site —
+and the Docker image use Node 24. Raising the floor is **breaking** for the CLI, never a quiet
 minor: an `npx` invocation that used to work and now refuses to run is breaking,
 whatever the changelog calls it.
 

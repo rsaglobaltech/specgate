@@ -9,6 +9,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.27.10] — 2026-10-30
+
+Node.js 24 where Specgate runs once, after the October 2026 Node.js security release; the site carries both versions; npm audit and the licence check pass again.
+
+### Changed
+
+- **Node.js 24 for the image and the single jobs.** The October 21, 2026 Node.js security release fixed ten CVEs, among them a remote code execution in the bundled Brotli decoder. The CLI image is now built on `node:24-alpine`, and lint, packaging, publishing, the site and the security jobs run on Node 24; the test matrix keeps Node 22 and 24, the floor `package.json` still declares (`>=22`). On Node 22, use 22.23.4 or later.
+- **typescript-eslint 8.72.** The lint toolchain moves from 8.71.2 to 8.72.1, in the lockfile only.
+
+### Fixed
+
+- **npm audit and the licence check pass again** (#379): zod, fast-uri and qs updated; argparse 3's PSF-2.0 licence allowed and explained in docs/supply-chain.md.
+
 ### Added
 
 - **The site carries the stable docs and the 1.0 candidate's.** Every page has a version picker at the top left: the stable entry opens these docs, the candidate's opens what 1.0 adds, under `next/`. The Pages workflow checks out `next/1.0` and builds it there with that line's own generator; built without `--versions`, the badge is as it was.

@@ -21,7 +21,7 @@ that names it, or when your test suite fails.
 
 ## ⚡ Install
 
-You need **Node.js 22 or later**.
+You need **Node.js 22 or later**; 24 is the one to use (the current LTS). On 22, take 22.23.4 or later: it carries the October 2026 security fixes.
 
 ```bash
 npm install --save-dev @rsaglobaltech/specgate   # in a project with a package.json
