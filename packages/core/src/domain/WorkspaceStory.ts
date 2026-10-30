@@ -24,12 +24,23 @@ export function briefText(text: string): string {
   return (m ? text.slice(m[0].length) : text).replace(/^(?:[ \t]*\r?\n)+/, "");
 }
 
-/** `a, b, [c, d]` split on the commas outside brackets. */
+/**
+ * `a, b, [c, d]` split on the commas outside brackets and quotes: a title the
+ * agent quoted, "Optimización de rutas, con restricciones …", was cut at its
+ * comma and printed with its opening quote (REQ-376).
+ */
 function topLevel(s: string): string[] {
   const out: string[] = [];
   let depth = 0;
+  let quote = "";
   let cur = "";
   for (const ch of s) {
+    if (quote) {
+      if (ch === quote) quote = "";
+      cur += ch;
+      continue;
+    }
+    if (ch === '"' || ch === "'") quote = ch;
     if (ch === "[") depth += 1;
     if (ch === "]") depth -= 1;
     if (ch === "," && depth === 0) {

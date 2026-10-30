@@ -9,6 +9,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Ticking a task is not an edit of the contract** (REQ-375): an agent that marked the task it had just delivered was refused as `agent_touched_protected_path`, every attempt, though the harness writes the same tick itself (truck-flote microservices run 3). A change to a change's `tasks.md` that only changes the box of its tasks is now accepted; any other edit of it is still refused, and the prompt says the harness ticks the tasks.
+- **A quoted story title is read whole** (REQ-376): `workspace draft` listed `"Optimización de rutas` — the front matter was split at the comma inside the quotes.
+
 ## [1.0.0-rc.3] — 2026-10-30
 
 After the second microservices run of truck-flote: a tick in tasks.md no longer withdraws an approval, so a change is built past its first requirement; the workspace's agent proposes the stories, a story says which criteria each repository answers and keeps its questions, the agents that write a sub-change see the whole story, and the story is built only as far as its dependencies are delivered.

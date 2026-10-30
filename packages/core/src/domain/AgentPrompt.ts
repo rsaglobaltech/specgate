@@ -236,6 +236,9 @@ export class AgentPrompt {
         "does not exist yet is not modifying one, and the gate allows it: an agent asked " +
         "to write a missing scenario is not being asked to break this rule.",
       "The harness will run `validate . --strict` and the project test command. Both must pass.",
+      // REQ-375: an agent that ticked its task was refused as editing the contract.
+      "The harness ticks this requirement's tasks in the change's `tasks.md` itself once it is " +
+        "delivered: leave that file as it is.",
     ];
     parts.push(
       AgentPrompt.section(

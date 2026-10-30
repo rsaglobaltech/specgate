@@ -127,6 +127,7 @@ import {
   WriteScopeChanges,
   protectingPattern,
   onlyTraceStatusChanged,
+  onlyTaskTicksChanged,
 } from "../../../../packages/core/src/domain/WriteScope";
 import {
   agentUnavailable,
@@ -1408,13 +1409,24 @@ function isStatusOnlyEdit(worktreeDir: string, rel: string): boolean {
   return d.status === 0 && onlyTraceStatusChanged(d.stdout || "");
 }
 
+/** REQ-375: a change's tasks.md whose tasks only changed their box. */
+function isTaskTickOnlyEdit(worktreeDir: string, rel: string): boolean {
+  if (!/(^|\/)docs\/specs\/changes\/[^/]+\/tasks\.md$/.test(rel.split(path.sep).join("/")))
+    return false;
+  const d = git(worktreeDir, ["diff", "-U0", "HEAD", "--", rel]);
+  return d.status === 0 && onlyTaskTicksChanged(d.stdout || "");
+}
+
 function checkWriteScopeInWorktree(worktreeDir: string, settings: HarnessSettings) {
   const all = worktreeChanges(worktreeDir);
   if (!all) return null;
   const changes = {
     ...all,
     modified: all.modified.filter(
-      (p) => !isRegeneratedMatrix(worktreeDir, p) && !isStatusOnlyEdit(worktreeDir, p)
+      (p) =>
+        !isRegeneratedMatrix(worktreeDir, p) &&
+        !isStatusOnlyEdit(worktreeDir, p) &&
+        !isTaskTickOnlyEdit(worktreeDir, p)
     ),
   };
 

@@ -415,3 +415,15 @@ The system SHALL start, on `workspace harness run --story`, at each level only t
 - THEN tracking's harness is started for REQ-006 only, REQ-005 is reported waiting on fleet:REQ-003, and the run exits 1
 
 <!-- specgate:trace actor=Developer feature=features/workspace/REQ-367.feature kind=functional status=Implemented test=tests/unit/workspace-rc3.test.ts -->
+
+### Requirement: REQ-376 — A quoted story title is read whole
+
+The system SHALL read a story of the workspace brief's front matter whose title is quoted and holds a comma as that whole title, without its quotes, wherever the stories are listed.
+
+#### Scenario: SCN-376a — A quoted story title in the stories table
+
+- GIVEN `stories:` holds `{ id: plan-route, title: "Optimización de rutas, con restricciones de vehículo pesado", repos: [fleet] }`
+- WHEN a person runs `specgate workspace draft`
+- THEN the table shows plan-route with "Optimización de rutas", and no quote
+
+<!-- specgate:trace actor=Developer feature=features/workspace/REQ-376.feature kind=functional status=Implemented test=tests/unit/rc4-ticks.test.ts -->
