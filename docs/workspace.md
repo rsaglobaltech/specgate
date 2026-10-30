@@ -237,6 +237,10 @@ has a newer one (REQ-330, REQ-332). A principle can carry a check the gate runs:
 A failure is `principle_failed`, which fails the gate; `level=warn` makes it
 advice (REQ-331).
 
+A requirement that shares a criterion with the contracts repository cites it: `change validate` warns
+`layer_no_contract_cited` when it carries neither `depends=contracts:REQ-NNN` nor an `api=` (REQ-386), and
+a citation of a contract file not written yet is a warning until the requirement is delivered (REQ-385).
+
 ## What a workspace does not do
 
 - It never writes a repository's specification. It asks each repository through

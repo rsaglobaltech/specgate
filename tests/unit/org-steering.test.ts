@@ -277,7 +277,7 @@ const OPENAPI = [
   "",
 ].join("\n");
 
-function withApi(api: string): string {
+function withApi(api: string, status = ""): string {
   const dir = project();
   write(dir, "openapi.yaml", OPENAPI);
   assert.equal(sg(dir, "new", "Report a position").status, 0);
@@ -285,7 +285,10 @@ function withApi(api: string): string {
   const text = fs.readFileSync(spec, "utf8");
   fs.writeFileSync(
     spec,
-    text.replace(/(## REQ-001 — Report a position\n)/, `$1\n<!-- specgate:trace api=${api} -->\n`)
+    text.replace(
+      /(## REQ-001 — Report a position\n)/,
+      `$1\n<!-- specgate:trace api=${api}${status ? ` status=${status}` : ""} -->\n`
+    )
   );
   commitAll(dir, "api");
   return dir;
@@ -306,7 +309,8 @@ test("REQ-335 SCN-335a: the operation exists", () => {
 });
 
 test("REQ-335 SCN-335b: the operation is not in the contract", () => {
-  const dir = withApi("reportSpeed");
+  // Delivered: a requirement still Draft is only warned about (REQ-385).
+  const dir = withApi("reportSpeed", "Implemented");
   const r = sg(dir, "validate", ".", "--strict", "--json");
   assert.equal(r.status, 1, r.stdout + r.stderr);
   const missing = json(r).status.find((d: { code: string }) => d.code === "api_operation_missing");
@@ -324,6 +328,79 @@ test("REQ-336 SCN-336a: one operation without a requirement", () => {
   assert.equal(c.file, "openapi.yaml");
   assert.deepEqual(c.uncited, ["GET /positions/{id}"]);
   assert.ok(codes(doc).includes("api_operation_uncited"), r.stdout);
+});
+
+// ── REQ-385: a contract written one requirement at a time ───────────────────
+
+/** Three requirements: the first cites the OpenAPI file, the others a file not written yet. */
+function contractsInProgress(): string {
+  const dir = project();
+  write(dir, "openapi.yaml", OPENAPI);
+  for (const t of ["Report a position", "Stream vehicle telemetry", "Stream tachograph events"]) {
+    assert.equal(sg(dir, "new", t).status, 0);
+  }
+  const spec = path.join(dir, "spec.md");
+  const cite: Record<string, string> = {
+    "Report a position": "openapi.yaml#reportPosition",
+    "Stream vehicle telemetry": "asyncapi.yaml#receiveTelemetry",
+    "Stream tachograph events": "asyncapi.yaml#receiveTachographEvent",
+  };
+  let text = fs.readFileSync(spec, "utf8");
+  for (const [title, api] of Object.entries(cite)) {
+    text = text.replace(
+      new RegExp(`(## (REQ-\\d+) — ${title}\\n)`),
+      `$1\n<!-- specgate:trace api=${api} -->\n`
+    );
+  }
+  fs.writeFileSync(spec, text);
+  commitAll(dir, "three operations, one contract written");
+  return dir;
+}
+
+test("REQ-385 SCN-385a: the contracts repository delivers its first operation", () => {
+  const dir = contractsInProgress();
+  const r = sg(dir, "validate", ".", "--strict", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const pending = json(r).status.filter((d: { code: string }) => d.code === "api_contract_missing");
+  assert.equal(pending.length, 2, r.stdout);
+  for (const d of pending) {
+    assert.equal(d.severity, "warning");
+    assert.match(d.message, /once it is delivered/);
+  }
+  // The requirement being delivered is held to its citation, the others are not.
+  const { apiReferenceProblems } = require("../../scripts/lib/contracts");
+  const asFirst = apiReferenceProblems(dir, { delivering: "REQ-001" });
+  assert.ok(
+    asFirst.every((d: { severity: string }) => d.severity === "warning"),
+    JSON.stringify(asFirst)
+  );
+  const asSecond = apiReferenceProblems(dir, { delivering: "REQ-002" });
+  const held = asSecond.filter((d: { severity: string }) => d.severity === "error");
+  assert.equal(held.length, 1, JSON.stringify(asSecond));
+  assert.equal(held[0].target, "REQ-002");
+});
+
+test("REQ-385 SCN-385b: delivered, its contract still missing", () => {
+  const dir = contractsInProgress();
+  const spec = path.join(dir, "spec.md");
+  fs.writeFileSync(
+    spec,
+    fs
+      .readFileSync(spec, "utf8")
+      .replace(
+        "api=asyncapi.yaml#receiveTelemetry -->",
+        "api=asyncapi.yaml#receiveTelemetry status=Implemented -->"
+      )
+  );
+  commitAll(dir, "REQ-002 delivered");
+  const r = sg(dir, "validate", ".", "--strict", "--json");
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  const missing = json(r).status.find(
+    (d: { code: string; severity: string }) =>
+      d.code === "api_contract_missing" && d.severity === "error"
+  );
+  assert.ok(missing, r.stdout);
+  assert.equal(missing.target, "REQ-002");
 });
 
 // ── REQ-337 / REQ-338 ────────────────────────────────────────────────────────

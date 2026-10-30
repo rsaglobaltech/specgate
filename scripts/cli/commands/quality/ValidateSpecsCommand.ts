@@ -1391,8 +1391,23 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
 
     // REQ-335: a requirement that names an interface operation names one that exists.
+    // REQ-385: once delivered, or while being delivered; before that, a warning.
+    let apiPending: typeof lockAdvisories = [];
     {
-      const apiProblems = apiReferenceProblems(targetDir);
+      const matrixStatus = new Map<string, string>();
+      try {
+        for (const row of parseTraceabilityRows(traceContent).rows || []) {
+          if (row.requirement) matrixStatus.set(row.requirement, String(row.status || ""));
+        }
+      } catch {
+        // A matrix that does not parse has been reported above.
+      }
+      const found = apiReferenceProblems(targetDir, {
+        delivering,
+        statusOf: (id) => matrixStatus.get(id),
+      });
+      apiPending = found.filter((d) => d.severity !== "error");
+      const apiProblems = found.filter((d) => d.severity === "error");
       if (apiProblems.length > 0) {
         if (this.agent.json) {
           this.agent.fail({ validation: null }, apiProblems);
@@ -1405,18 +1420,20 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
 
     const skeletonOnly = this.isAdoptionSkeletonOnly(targetDir, featureFiles);
-    const advisories = skeletonOnly
-      ? lockAdvisories.concat([
-          {
-            severity: "warning",
-            code: "adoption_not_retrofilled",
-            message:
-              "The only scenario in this project is the adoption baseline. Nothing the codebase actually does is specified yet.",
-            target: "features/adoption/baseline.feature",
-            fix: 'Retro-fill one requirement you already rely on: specgate new "<behaviour>", then a test that mentions it, then specgate apply.',
-          },
-        ])
-      : lockAdvisories;
+    const advisories = (
+      skeletonOnly
+        ? lockAdvisories.concat([
+            {
+              severity: "warning",
+              code: "adoption_not_retrofilled",
+              message:
+                "The only scenario in this project is the adoption baseline. Nothing the codebase actually does is specified yet.",
+              target: "features/adoption/baseline.feature",
+              fix: 'Retro-fill one requirement you already rely on: specgate new "<behaviour>", then a test that mentions it, then specgate apply.',
+            },
+          ])
+        : lockAdvisories
+    ).concat(apiPending);
 
     if (this.agent.json) {
       this.agent.emit({

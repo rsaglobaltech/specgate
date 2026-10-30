@@ -9,6 +9,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A contract is written one requirement at a time** (REQ-385, REQ-335): `validate` failed `api_contract_missing` for a requirement still Draft that cites a contract file it will write, so the contracts repository's first requirement was refused for its later ones (truck-flote, MS4-2). A citation that does not resolve is now an error only for a delivered requirement or the one being delivered, and a warning otherwise.
+- **A part that shares a criterion with the contracts cites them** (REQ-386): in a story with a contracts repository, `change validate` warns `layer_no_contract_cited` for a requirement of another repository that cites none of its requirements or operations (MS4-1).
+
 ## [1.0.0-rc.4] — 2026-10-30
 
 After the third microservices run of truck-flote: an agent that ticks its own task is no longer refused for touching the specification, the dependencies and operations a design names are checked against the traces, and the contracts repository's agent writes the contract its requirements describe.

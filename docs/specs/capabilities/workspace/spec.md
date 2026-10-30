@@ -427,6 +427,7 @@ The system SHALL tell whoever writes a part of a story in the repository whose r
 - THEN the contracts prompt asks for the contract file under contracts/ and `api=contracts/`, and the tracking prompt asks to cite `depends=contracts:REQ-NNN`
 
 <!-- specgate:trace actor=Architect feature=features/workspace/REQ-382.feature kind=functional status=Implemented test=tests/unit/rc4-deps.test.ts -->
+
 ### Requirement: REQ-376 — A quoted story title is read whole
 
 The system SHALL read a story of the workspace brief's front matter whose title is quoted and holds a comma as that whole title, without its quotes, wherever the stories are listed.
@@ -438,3 +439,15 @@ The system SHALL read a story of the workspace brief's front matter whose title 
 - THEN the table shows plan-route with "Optimización de rutas", and no quote
 
 <!-- specgate:trace actor=Developer feature=features/workspace/REQ-376.feature kind=functional status=Implemented test=tests/unit/rc4-ticks.test.ts -->
+
+### Requirement: REQ-386 — A part that shares a criterion with the contracts cites them
+
+The system SHALL warn, with `layer_no_contract_cited` on `change validate`, for each requirement of a story's sub-change in a repository that is not the contracts repository and shares a criterion of the story with it, when the requirement's trace carries neither `depends=<contracts>:REQ-NNN` nor an `api=` citation; a story that maps no criteria to repositories shares them all, and the contracts repository is not asked to cite itself.
+
+#### Scenario: SCN-386a — The tracking part cites nothing of the contracts
+
+- GIVEN the story track-fleet gives AC-1 to contracts and to tracking, and tracking's REQ-002 cites nothing
+- WHEN the developer runs `specgate change validate track-fleet --json` in tracking
+- THEN it warns `layer_no_contract_cited` for REQ-002, with a fix naming `depends=contracts:REQ-NNN`, and no longer once the trace carries `depends=contracts:REQ-002` or an `api=`
+
+<!-- specgate:trace actor=Developer feature=features/workspace/REQ-386.feature kind=functional status=Implemented test=tests/unit/rc4-deps.test.ts -->
