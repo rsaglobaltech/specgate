@@ -1,0 +1,122 @@
+# Scheduled — the slow checks that report a trend or an outside change, and
+# never gate a pull request.
+#
+# Weekly (Monday 04:17 UTC) and by hand (workflow_dispatch). A schedule only
+# fires on the default branch. Three independent jobs, so one failing does not
+# hide the others; only rsaglobaltech/specgate runs them, not forks.
+#
+# - recording: `npm run docs:terminal:check` re-runs the real CLI in a scratch
+#   tree and diffs the result against docs/assets/terminal-*.json — the only
+#   thing that can prove the landing page's "this is what it actually prints"
+#   is still true. Not on pull requests: a template or CLI change genuinely
+#   changes the output, so there it would fail on exactly the correct pull
+#   requests, and "re-run and commit" would become a reflex nobody reads. The
+#   cheap invariants in tests/unit/docs-terminal.test.ts run on every commit.
+# - mutation: the Stryker pilot (~5 minutes). Its score is a trend to watch,
+#   not a gate: `break: 0` in stryker.config.mjs is deliberate.
+# - openspec: does `specgate verify` still read what the current OpenSpec
+#   writes? (ADR-0030) OpenSpec releases weekly; a format change the reader
+#   does not understand would read as zero scenarios — every claim green,
+#   silently. Not on pull requests: a new OpenSpec release must not turn an
+#   unrelated pull request red.
+#
+# Replaces docs-nightly.yml, mutation.yml and openspec-compat.yml.
+name: Scheduled checks
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '@fission-ai/openspec version to test (default: latest)'
+        required: false
+        default: 'latest'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  recording:
+    name: Docs — is the recorded terminal still true?
+    if: github.repository == 'rsaglobaltech/specgate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+      # The recordings carry the Node major they were made with
+      # (`recordedWith.node`, e.g. "v24.x"), and the check compares it: run on
+      # any other major and every recording reads as out of date. That is why
+      # docs-nightly.yml failed every night on Node 22 against recordings made
+      # on Node 24.
+      - name: Read the Node major the recordings were made with
+        id: recorded
+        run: |
+          RECORDED="$(node -p "require('./docs/assets/terminal-demo.json').recordedWith.node")"
+          MAJOR="${RECORDED#v}"
+          MAJOR="${MAJOR%%.*}"
+          echo "Recordings were made on Node ${MAJOR}."
+          echo "node=${MAJOR}" >> "$GITHUB_OUTPUT"
+      - name: Set up Node.js ${{ steps.recorded.outputs.node }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ steps.recorded.outputs.node }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build TypeScript
+        run: npm run build
+      - name: Re-record and diff
+        run: npm run docs:terminal:check
+
+  mutation:
+    name: Mutation testing (Stryker pilot)
+    if: github.repository == 'rsaglobaltech/specgate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run the mutation pilot
+        run: npm run mutation:pilot
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          retention-days: 30
+
+  openspec:
+    name: OpenSpec — does verify still read it?
+    if: github.repository == 'rsaglobaltech/specgate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OPENSPEC_VERSION: ${{ inputs.version || 'latest' }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build TypeScript
+        run: npm run build
+      - name: Verify against OpenSpec ${{ inputs.version || 'latest' }}
+        run: node e2e/openspec-compat.mjs --version "$OPENSPEC_VERSION"

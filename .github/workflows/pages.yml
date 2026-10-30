@@ -1,3 +1,10 @@
+# Pages — builds the documentation site, this repository's own spec-coverage
+# report and the pack registry, and deploys them to GitHub Pages.
+#
+# Deploys on a push to `main` that touches anything the site is built from, or
+# by hand (workflow_dispatch). On a pull request that touches the docs, their
+# generators or the packs it only builds the site, so a broken page fails the
+# pull request instead of the deploy; nothing is uploaded or deployed.
 name: Deploy Docs + Pack Registry to GitHub Pages
 
 on:
@@ -14,26 +21,30 @@ on:
       - 'schemas/**'
       - '.github/workflows/pages.yml'
       - 'README.md'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'scripts/docs/**'
+      - 'packs/**'
+      - 'packages/pack-registry/**'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 # Deployed with GitHub's Pages actions, not to a branch: the repository keeps
 # only `main` and `develop`, and nothing outside them holds the built site.
+# `pages: write` and `id-token: write` are granted to the deploy job only.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: 'docs-pages'
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
+    name: Build the site
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -69,6 +80,7 @@ jobs:
         # og:image has to be a PNG — no major link scraper renders SVG. The SVG
         # is the source of truth and is versioned; the PNG is generated here so
         # the repository keeps shipping no binaries.
+        timeout-minutes: 5
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends librsvg2-bin fonts-dejavu-core
@@ -85,19 +97,35 @@ jobs:
 
       - name: Add CNAME (optional — used when packs.spec-driven.dev is configured)
         # Safe to commit even before DNS is pointed; GH Pages reads CNAME from the deployed branch
+        env:
+          SITE_CNAME: ${{ vars.SITE_CNAME }}
         run: |
-          # Only emit CNAME if the env var is set in the repo's secrets/vars
+          # Only emit CNAME if the variable is set in the repo's vars
           # (avoids accidentally claiming a domain that's not yours)
-          if [ -n "${{ vars.SITE_CNAME }}" ]; then
-            echo "${{ vars.SITE_CNAME }}" > _site/CNAME
-            echo "Wrote CNAME for ${{ vars.SITE_CNAME }}"
+          if [ -n "$SITE_CNAME" ]; then
+            echo "$SITE_CNAME" > _site/CNAME
+            echo "Wrote CNAME for $SITE_CNAME"
           fi
 
       - name: Upload the site
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5
         with:
           path: ./_site
 
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

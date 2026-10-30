@@ -1,0 +1,278 @@
+# Release — publishes a version to npm and its CLI image to ghcr.io.
+#
+# Runs on a pushed `v*` tag, or by hand (workflow_dispatch, dry run by
+# default). The whole CI workflow runs first on the tagged commit (`verify`,
+# which includes the E2E journeys on all three platforms); nothing publishes
+# unless it passes. Then `setup` resolves the version and the dist-tag once,
+# `npm` publishes with provenance, and `docker` builds and pushes the image
+# (tag pushes only).
+#
+# REQ-281: a version with a prerelease part (1.0.0-rc.1) is published under the
+# dist-tag `next` and its image tagged with the version only — never `latest`.
+#
+# Replaces publish-npm.yml, publish-docker.yml and publish-github-packages.yml
+# (the GitHub Packages copy is no longer published).
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      package_version:
+        description: 'Package version to publish, for example 0.1.0-beta.3. Leave empty to use package.json.'
+        required: false
+        default: ''
+        type: string
+      dist_tag:
+        description: 'npm dist-tag to publish under'
+        required: true
+        default: 'beta'
+        type: choice
+        options:
+          - beta
+          - latest
+      dry_run:
+        description: 'Run npm publish in dry-run mode'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  # A release is never cancelled half-way: a second tag waits for the first.
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # The full CI workflow on the tagged commit: lint, the test matrix, the
+  # repository checks, the plugins, the package smoke test and the E2E
+  # journeys. A tag that breaks a user's first `init` must not reach the
+  # registry.
+  verify:
+    name: Verify
+    uses: ./.github/workflows/ci.yml
+
+  setup:
+    name: Resolve version and dist-tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      name: ${{ steps.package_metadata.outputs.name }}
+      version: ${{ steps.package_metadata.outputs.version }}
+      dist_tag: ${{ steps.publish_settings.outputs.dist_tag }}
+      dry_run: ${{ steps.publish_settings.outputs.dry_run }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Resolve package metadata
+        id: package_metadata
+        # The tag on a push, the `package_version` input on a dispatch, or
+        # package.json when that input is empty.
+        env:
+          TAG_VERSION_RAW: ${{ github.ref_name }}
+          INPUT_PACKAGE_VERSION: ${{ inputs.package_version }}
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            RAW="$TAG_VERSION_RAW"
+          else
+            RAW="$INPUT_PACKAGE_VERSION"
+          fi
+          if [[ -z "$RAW" ]]; then
+            VERSION="$(node -p "require('./package.json').version")"
+          else
+            VERSION="${RAW#v}"
+          fi
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version: ${RAW:-$VERSION}" >&2
+            exit 2
+          fi
+          echo "name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Set publish settings
+        id: publish_settings
+        env:
+          VERSION: ${{ steps.package_metadata.outputs.version }}
+          INPUT_DIST_TAG: ${{ inputs.dist_tag }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            # REQ-281: a release candidate (1.0.0-rc.1) is never what
+            # `npm install` gives by default; only a final version is latest.
+            if [[ "$VERSION" == *-* ]]; then
+              echo "dist_tag=next" >> "$GITHUB_OUTPUT"
+            else
+              echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+            fi
+            echo "dry_run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "dist_tag=${INPUT_DIST_TAG}" >> "$GITHUB_OUTPUT"
+            echo "dry_run=${INPUT_DRY_RUN}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 0.1.4 sat unreleased for three months with no notes. A version nobody
+      # wrote down is a version nobody can audit.
+      - name: Check the changelog mentions this version
+        env:
+          VERSION: ${{ steps.package_metadata.outputs.version }}
+        run: |
+          # A prerelease is documented by the release it leads to: requiring an
+          # entry per beta would be noise, and would push people to skip betas.
+          RELEASE="${VERSION%%-*}"
+          if ! grep -qF "$RELEASE" CHANGELOG.md; then
+            echo "CHANGELOG.md has no entry for $RELEASE." >&2
+            echo "Add one before releasing — see docs/release-process.md." >&2
+            exit 1
+          fi
+          echo "CHANGELOG.md mentions $RELEASE (publishing $VERSION)."
+
+      - name: Publish summary
+        env:
+          PACKAGE: ${{ steps.package_metadata.outputs.name }}
+          VERSION: ${{ steps.package_metadata.outputs.version }}
+          DIST_TAG: ${{ steps.publish_settings.outputs.dist_tag }}
+          DRY_RUN: ${{ steps.publish_settings.outputs.dry_run }}
+        run: |
+          {
+            echo "### Release"
+            echo "- Package: \`$PACKAGE\`"
+            echo "- Version: \`$VERSION\`"
+            echo "- Dist tag: \`$DIST_TAG\`"
+            echo "- Dry run: \`$DRY_RUN\`"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+  npm:
+    name: Publish to npm
+    needs: [verify, setup]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PACKAGE: ${{ needs.setup.outputs.name }}
+      VERSION: ${{ needs.setup.outputs.version }}
+      DIST_TAG: ${{ needs.setup.outputs.dist_tag }}
+      DRY_RUN: ${{ needs.setup.outputs.dry_run }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Apply the release version
+        run: |
+          CURRENT_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "$CURRENT_VERSION" == "$VERSION" ]]; then
+            echo "package.json is already at $VERSION; skipping npm version."
+            exit 0
+          fi
+          npm version "$VERSION" --no-git-tag-version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure executable permissions
+        run: |
+          find bin -maxdepth 1 -type f -name "*.js" -exec chmod +x {} +
+          find scripts -maxdepth 1 -type f -name "*.cjs" -exec chmod +x {} +
+
+      # The suites ran in `verify`; this checks the tarball that is published.
+      # `prepack` builds dist/ first.
+      - name: Validate npm package contents
+        run: npm run pack:dry-run
+
+      - name: Check package version availability
+        if: env.DRY_RUN != 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if npm view "${PACKAGE}@${VERSION}" version >/dev/null 2>&1; then
+            echo "${PACKAGE}@${VERSION} already exists on npm. Choose a new package_version." >&2
+            exit 1
+          fi
+
+      - name: Publish (dry run)
+        if: env.DRY_RUN == 'true'
+        run: npm publish --tag "$DIST_TAG" --access public --provenance --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish
+        if: env.DRY_RUN != 'true'
+        run: npm publish --tag "$DIST_TAG" --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # Tag pushes only: the image tags come from the semver tag, and a dispatch
+  # (a dry run by default) must not push an image.
+  docker:
+    name: Publish Docker image
+    needs: npm
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # A hung build fails here instead of holding a release for six hours.
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # buildx alone cannot cross-build to arm64 on an amd64 runner.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/specgate
+          # Images published under the old name stay where they are — a published
+          # tag is never rebuilt in place (see the Docker note in
+          # docs/release-process.md). New tags land under `specgate`.
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            # REQ-281: a release candidate is tagged with its version only.
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: Dockerfile.cli
+          push: true
+          # amd64 only meant the image would not run on an Apple Silicon
+          # laptop or an ARM CI runner — and the README tells people to use it.
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test the pushed image
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/specgate
+          IMAGE_VERSION: ${{ steps.meta.outputs.version }}
+        run: docker run --rm "${IMAGE}:${IMAGE_VERSION}" --version

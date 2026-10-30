@@ -259,6 +259,64 @@ a:hover { text-decoration: underline; }
   padding: 1px var(--space-2);
 }
 
+/* Two lines of the docs in one site (REQ-400): the badge opens a menu of both. */
+details.top__version { position: relative; padding: 0; }
+details.top__version > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 1px var(--space-2);
+  min-height: 1.75rem;
+}
+details.top__version > summary::-webkit-details-marker { display: none; }
+details.top__version > summary::after { content: "▾"; color: var(--fg-faint); }
+details.top__version[open] > summary,
+details.top__version > summary:hover { color: var(--fg); }
+.top__version-tag {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.top__version-menu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 50;
+  display: grid;
+  min-width: 18rem;
+  padding: var(--space-2);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.top__version-menu a {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  color: var(--fg);
+  text-decoration: none;
+}
+.top__version-menu a:hover,
+.top__version-menu a:focus-visible { background: var(--bg-soft); }
+.top__version-menu a[aria-current="page"] { box-shadow: inset 2px 0 0 var(--accent); }
+.top__version-menu span { font-family: var(--sans, inherit); color: var(--fg-soft); }
+
+/* Over every page of the candidate's docs (REQ-401). */
+.candidate-banner {
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  font-size: var(--text-sm, 0.9rem);
+}
+
 /* The search trigger sits where a docs reader reaches for it: middle of the
  * bar, always visible, with its own shortcut printed on it. */
 .top__search {
@@ -929,7 +987,8 @@ a:hover { text-decoration: underline; }
   .top__links { display: none; }
   .top__search { min-width: 2.75rem; min-height: 2.75rem; justify-content: center; }
   .top__search-label, .top__kbd { display: none; }
-  .top__version { display: none; }
+  span.top__version, .top__version-tag { display: none; }
+  .top__version-menu { position: fixed; left: var(--space-4); right: var(--space-4); min-width: 0; }
 
   /* A drawer, not a column: it overlays rather than pushing the text. */
   .side {

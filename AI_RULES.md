@@ -45,7 +45,7 @@ document lie is worse than no change at all.
 | `bin/specgate.ts` | The only dispatcher. It never implements logic — it spawns a script from `dist/scripts/`. |
 | `scripts/` | One file per command. `scripts/lib/` holds shared helpers. |
 | `templates/` | `{{VARIABLE}}` interpolation only. **Never put logic in a template** — the renderer has no conditionals. Compute in TypeScript and pass the result in. |
-| `packs/` | The 11 shipped domain packs. `npm run registry:build` lints every one in CI. |
+| `packs/` | The 18 shipped domain packs (7 proven, 11 starters). `npm run registry:build` lints every one in CI. |
 | `docs/specs/adr/` | One ADR per non-trivial decision. See `CONTRIBUTING.md` §3. |
 | `mejoras/plan-cierre-enterprise.md` | The live backlog. Read it before starting work; tick tasks in the same session you finish them. |
 

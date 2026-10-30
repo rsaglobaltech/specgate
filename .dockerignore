@@ -4,7 +4,7 @@
 # includes tests/**, features/** and packages/**/test/** because the same
 # config also drives `npm run test:unit` outside Docker. Issue #121: the
 # 0.6.0 → 0.7.0 cycle added ~290 files / 35k lines, nearly all of it tests,
-# and the arm64 leg of publish-docker.yml (built under real QEMU emulation on
+# and the arm64 leg of the Docker image build (built under real QEMU emulation on
 # an amd64 runner, not Rosetta) went from 3 minutes to a 28-minute cancel.
 # Compiling a test suite that never reaches the image should not be on that
 # critical path at all, let alone under an emulation penalty.

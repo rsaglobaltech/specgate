@@ -5,9 +5,10 @@ registry and to this documentation site — and what support it gets.
 
 <!-- specgate:note -->
 **GitHub Actions are on** (since 2026-10-28): the repository is public, so
-standard GitHub-hosted runners cost nothing. CI, E2E and Security run on every
-push to `main` and `develop` and on pull requests; the publish workflows run on
-a `v*` tag. They were off for months to save a quota that public repositories
+standard GitHub-hosted runners cost nothing. CI (`ci.yml`, which calls the E2E
+journeys in `e2e.yml`) runs on every push to `main`, `develop` and `next/**` and
+on pull requests, Security on `main`, `next/**` and pull requests; `release.yml`
+runs on a `v*` tag; `scheduled.yml` holds the weekly checks that never gate. They were off for months to save a quota that public repositories
 do not have.
 <!-- specgate:endnote -->
 
@@ -15,19 +16,20 @@ do not have.
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.27.9** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **0.27.9** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **0.27.9**, `linux/amd64` and `linux/arm64` |
-| MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
+| `@rsaglobaltech/specgate` | npm, public | `release.yml` (job `npm`) | Live — **0.27.9** is `latest` |
+| `@rsaglobaltech/specgate` | GitHub Packages | none — no longer published | Newest **0.27.9**, the last one |
+| CLI image | `ghcr.io` | `release.yml` (job `docker`) | Live — newest image **0.27.9**, `linux/amd64` and `linux/arm64` |
+| MCP server | inside the CLI package | `release.yml` (job `npm`) | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
 | `specgate-gradle-plugin` | Gradle Plugin Portal or an internal repo | none yet | C7-06 |
 | `specgate-vscode` | VS Code Marketplace | none yet | C7-07 |
 | `@specgate/lsp-server` | npm | none yet | C7-08, blocked on C6-03 |
 
-The two `@rsaglobaltech/specgate` rows are one coordinate in two registries, on
-purpose. Public npm is the default; routing the scope with
-`@rsaglobaltech:registry=https://npm.pkg.github.com` gets the GitHub copy.
+The two `@rsaglobaltech/specgate` rows were one coordinate in two registries.
+The GitHub Packages copy stopped with 0.27.9: its versions stay installable by
+routing the scope with `@rsaglobaltech:registry=https://npm.pkg.github.com`,
+but new versions are on public npm only.
 
 ## The Specgate rename — done, and what it left behind
 
@@ -49,7 +51,7 @@ are all `specgate`.
 Semantic versioning. The CLI and the companion packages version independently;
 a CLI release does not force a bump of the VS Code extension.
 
-**Tags are `vX.Y.Z`.** The publish workflows trigger on `v*`, and the two tags
+**Tags are `vX.Y.Z`.** The release workflow triggers on `v*`, and the two tags
 that predate this document (`0.1.0-beta.1`, `0.1.4`) have no `v` prefix, which
 is why the tag-triggered path had never once fired. Do not create unprefixed
 tags.
@@ -84,9 +86,9 @@ nothing. The rule from here: **the floor is a maintained LTS.** When one leaves
 maintenance the floor moves in the next release, and the changelog says so under
 Breaking.
 
-**Docker.** Images are tagged `X.Y.Z` and `latest`, for `linux/amd64` and
-`linux/arm64`. While `publish-docker.yml` is disabled, `latest` is the newest
-image that was built — **0.17.10** — not the newest npm version. A published
+**Docker.** Images are tagged `X.Y.Z`, `X.Y` and `latest`, for `linux/amd64`
+and `linux/arm64`; a prerelease gets its version tag only, so `latest` is the
+newest final version (REQ-281). A published
 tag is never rebuilt in place: re-running a workflow against an old tag checks
 out the workflow *as it was at that tag*. Pin `X.Y.Z` in CI.
 
@@ -147,8 +149,8 @@ the CLI supports, so getting this backwards fails CI rather than users.
    applies the `:r` modifier and no longer names the commit. Read the output.
 6. **Only once `git rev-parse origin/main` is the release commit**, tag it
    `vX.Y.Z` and push the tag. On 0.10.0 the tag went out while the push to
-   `main` had failed. `publish-npm.yml` fires, and publishes only after the
-   E2E workflow passes on all three platforms.
+   `main` had failed. `release.yml` fires, and publishes only after the whole
+   of `ci.yml` — E2E on all three platforms included — passes on the tag.
 7. Write the GitHub release notes from the changelog entry.
 8. Run the E2E against what the registry serves:
    `curl -sfLO https://registry.npmjs.org/@rsaglobaltech/specgate/-/specgate-X.Y.Z.tgz && npm run e2e -- --tarball specgate-X.Y.Z.tgz`.
@@ -163,11 +165,11 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 1. **Run everything the workflows would**, on the release branch:
 
    ```bash
-   npm run build && npm run test:all       # the gate publish-npm.yml runs
+   npm run build && npm run test:all       # the suites release.yml's verify job runs
    npm run lint && npm run format:check
    npm run docs:terminal:check && npm run docs:journey:check
    npm run pack:dry-run
-   node e2e/run.mjs                        # the E2E the npm workflow gates on
+   node e2e/run.mjs                        # the E2E the release gates on
    ```
 
 2. **Changelog, version, recordings** — steps 1–3 of
@@ -175,16 +177,15 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 3. **`develop`, then `main`** — merge into `develop`, open the
    `develop → main` pull request, then fast-forward `main` to that exact
    commit with `git push origin "${R}:refs/heads/main"` (an admin bypass: only a commit step 1 ran).
-4. **Publish** — tag, push the tag. All three (`publish-npm.yml`,
-   `publish-github-packages.yml`, `publish-docker.yml`) trigger on it:
+4. **Publish** — tag, push the tag. `release.yml` triggers on it:
 
    ```bash
    git tag -a vX.Y.Z <release-sha> -m "vX.Y.Z"
    git push origin vX.Y.Z
    ```
 
-   The tag runs the E2E journeys on Linux, macOS and Windows, then
-   `test:all`, then publishes with provenance.
+   The tag runs `ci.yml` (job `Verify`, E2E on all three platforms included),
+   then npm with provenance, then the image: wait for the one `Release` run.
 5. **Check the registry:**
 
    ```bash
@@ -192,8 +193,9 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
    npx @rsaglobaltech/specgate@X.Y.Z --version
    ```
 
-   Only npm gates on the E2E (Windows included): 0.19.0 failed it after the
-   other two published, so it shipped as 0.19.1 (0.27.0 too, as 0.27.1) — a published tag is never rebuilt.
+   The image waits for npm, npm for the E2E. Before `release.yml` only npm
+   did: 0.19.0 failed the E2E after the other two published, so it shipped as
+   0.19.1 (0.27.0 too, as 0.27.1) — a published tag is never rebuilt.
 
 6. **Release notes** — `gh release create vX.Y.Z --notes-file <changelog entry>`.
 
@@ -206,7 +208,7 @@ the dist-tag `next` and tag its image with the version only, never `latest`
 
 ## Before you tag — the gate
 
-`publish-npm.yml` gates on `npm run test:all` and a `pack:dry-run`, so a broken
+`release.yml` gates on the whole of `ci.yml` and a `pack:dry-run`, so a broken
 tag cannot publish. Run the same things locally first — finding it here costs a
 commit, finding it in the workflow costs a version number:
 
@@ -222,9 +224,9 @@ npm pack --dry-run    # inspect the tarball contents
 empty directory and runs the journeys a team takes against the installed
 binary: adopt, `new` → test → `done --strict`, a stale matrix, a hand-kept
 matrix migrated, `ci init`, the harness, and an upgrade from the last published
-version (`--skip-network` leaves that one out). It is also the `E2E` workflow,
-on every pull request and on all three platforms, and **`publish-npm.yml` will
-not publish a tag unless it passes**.
+version (`--skip-network` leaves that one out). It is also the `E2E` job of
+`ci.yml` (`e2e.yml`), on every pull request and on all three platforms, and
+**`release.yml` will not publish a tag unless it passes**.
 
 Check the tarball carries what `files` in `package.json` lists — `bin/`,
 `dist/bin/`, `dist/scripts/`, `dist/packages/core/`,
@@ -247,12 +249,13 @@ Write the GitHub release notes from the changelog entry, leave an empty
 
 ## Deployment of the site
 
-`pages.yml` is the one workflow that stays on: the repository is public, so it
-costs no minutes. It deploys with GitHub's Pages actions (no `gh-pages` branch) on every push to `main`
+`pages.yml` deploys with GitHub's Pages actions (no `gh-pages` branch) on every push to `main`
 that touches any of `docs/**`, `packs/**`, `packages/pack-registry/**`,
 `scripts/docs/**`, `package.json`, `schemas/**`, `.github/workflows/pages.yml`
 or `README.md` — a fix to how the site renders changes no file under `docs/`.
-It can also be run by hand (`workflow_dispatch`).
+It can also be run by hand (`workflow_dispatch`). On a pull request that
+touches `docs/**`, `scripts/docs/**`, `packs/**` or `packages/pack-registry/**`
+it builds the site without uploading or deploying it.
 
 A run builds the TypeScript, then writes into `_site/`:
 

@@ -217,16 +217,19 @@ BREAKING CHANGE: --engine=shell now emits a deprecation warning.
 
 ## 7. Releasing
 
-Releases are automated via GitHub Actions (`publish-npm.yml`). To cut a release:
+Releases are automated via GitHub Actions (`release.yml`). To cut a release:
 
 1. Update `version` in `package.json` (follow SemVer).
 2. Update `CHANGELOG.md` with the release notes.
 3. Open a PR targeting `main` with the version bump.
-4. After merge, tag `vX.Y.Z` on `main` — the publish workflow fires automatically.
+4. After merge, tag `vX.Y.Z` on `main` — the release workflow fires automatically:
+   it runs the whole of `ci.yml` (E2E included) on the tag, then publishes to npm
+   and pushes the image.
 
-**Pre-release versions** (`0.x.x-beta.N`) are published from a feature branch by
-running the `publish-github-packages.yml` workflow manually (`workflow_dispatch`)
-with `dist_tag: beta`.
+**Pre-release versions** (`1.0.0-rc.N`) are tagged like any release and published
+under the dist-tag `next` (REQ-281). A one-off build can be published from any
+branch by running `release.yml` by hand (`workflow_dispatch`, a dry run by
+default) with `dist_tag: beta`.
 
 Full detail — what gets published where, the tag convention, and the checks to
 run before tagging — is in [`docs/release-process.md`](docs/release-process.md).

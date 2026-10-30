@@ -1,8 +1,12 @@
+# Security — npm audit, the SBOM with its licence policy, and CodeQL.
+#
+# Runs on pushes to `main` and `next/**`, on every pull request, and weekly,
+# so a vulnerability disclosed after a merge still surfaces.
 name: Security
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'next/**']
   pull_request:
   schedule:
     # Weekly, so a vulnerability disclosed after a merge still surfaces.
@@ -11,17 +15,25 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   audit:
     name: npm audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - name: Check out the repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
       # The published package has no runtime dependencies, so a high-severity
       # finding is in the toolchain — which still runs on CI with a publish
       # token in scope. `--audit-level=high` keeps this a signal, not noise.
@@ -31,23 +43,31 @@ jobs:
   sbom:
     name: SBOM and licences
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - name: Check out the repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
-      - run: npm run build
+      - name: Install dependencies
+        run: npm ci
+      - name: Build TypeScript
+        run: npm run build
       # CycloneDX from npm itself — no extra dependency for a project whose
       # whole pitch is zero runtime dependencies.
       - name: Generate SBOM
         run: npm sbom --sbom-format cyclonedx > sbom.cyclonedx.json
+      # The policy is ALLOWED in scripts/cli/commands/quality/LicenseCheckCommand.ts;
+      # a new licence is added there and explained in docs/supply-chain.md.
       - name: Check licence policy
         run: node dist/scripts/license_check.js --sbom sbom.cyclonedx.json
       - name: Licence summary
         if: always()
-        run: node dist/scripts/license_check.js --sbom sbom.cyclonedx.json --markdown >> "$GITHUB_STEP_SUMMARY"
+        # Only the report: the step above is the one that fails the job.
+        run: node dist/scripts/license_check.js --sbom sbom.cyclonedx.json --markdown >> "$GITHUB_STEP_SUMMARY" || true
       # Retained so an auditor can answer "what was in the tree on that day"
       # without rebuilding a historical dependency graph.
       - name: Upload SBOM
@@ -61,20 +81,21 @@ jobs:
   codeql:
     name: CodeQL
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       security-events: write
       actions: read
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [javascript-typescript]
     steps:
-      - uses: actions/checkout@v7
-      - uses: github/codeql-action/init@v4
+      - name: Check out the repository
+        uses: actions/checkout@v7
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
-          languages: ${{ matrix.language }}
-      - uses: github/codeql-action/autobuild@v4
-      - uses: github/codeql-action/analyze@v4
+          languages: javascript-typescript
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+      - name: Analyse
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
-          category: /language:${{ matrix.language }}
+          category: /language:javascript-typescript

@@ -46,6 +46,16 @@ const REPO = "https://github.com/rsaglobaltech/specgate";
 // a different voice.
 const VERBATIM = ["index.html", "assets"];
 
+/**
+ * Which documentation a build is (REQ-400, REQ-401). The stable line is
+ * published at the root and the 1.0 candidate's under `next/`, one site built
+ * twice; with both versions named, every page carries a picker between them.
+ */
+export interface SiteOptions {
+  readonly channel?: "stable" | "next";
+  readonly versions?: { readonly stable?: string; readonly next?: string };
+}
+
 interface Page {
   /** `harness`, `case-studies/case-1` — the path without extension. */
   slug: string;
@@ -352,7 +362,49 @@ function onThisPage(headings: Page["headings"]): string {
   );
 }
 
-function pageShell(page: Page, version: string): string {
+/**
+ * The version at the top left: a plain badge, or — when the site carries both
+ * lines — a picker whose stable entry opens the stable docs and whose candidate
+ * entry opens what the candidate adds (REQ-400). `up` climbs to this build's root.
+ */
+function versionBadge(version: string, up: string, opts: SiteOptions): string {
+  const { stable, next } = opts.versions || {};
+  if (!stable || !next) return `<span class="top__version">v${escapeHtml(version)}</span>`;
+  const onNext = opts.channel === "next";
+  const stableRoot = onNext ? `${up}../` : up;
+  const nextRoot = onNext ? up : `${up}next/`;
+  const entry = (href: string, v: string, note: string, current: boolean) =>
+    `<a href="${href}"${current ? ' aria-current="page"' : ""}>` +
+    `<strong>v${escapeHtml(v)}</strong><span>${note}</span></a>`;
+  return (
+    `<details class="top__version">` +
+    `<summary aria-label="Documentation version">v${escapeHtml(onNext ? next : stable)}` +
+    `<span class="top__version-tag">${onNext ? "candidate" : "stable"}</span></summary>` +
+    `<div class="top__version-menu">` +
+    entry(
+      `${stableRoot}docs.html`,
+      stable,
+      "Stable — what <code>npm install</code> gives",
+      !onNext
+    ) +
+    entry(`${nextRoot}whats-new-1.0.html`, next, "Release candidate — what is new in 1.0", onNext) +
+    `</div></details>`
+  );
+}
+
+/** Over every page of the candidate's docs: what it is, and the way back (REQ-401). */
+function candidateBanner(up: string, opts: SiteOptions): string {
+  const { stable, next } = opts.versions || {};
+  if (opts.channel !== "next" || !stable || !next) return "";
+  return (
+    `<div class="candidate-banner" role="note">You are reading the documentation of ` +
+    `<strong>v${escapeHtml(next)}</strong>, a release candidate — ` +
+    `<code>npm i -D @rsaglobaltech/specgate@next</code>. ` +
+    `<a href="${up}../docs.html">The stable documentation, v${escapeHtml(stable)} →</a></div>`
+  );
+}
+
+function pageShell(page: Page, version: string, opts: SiteOptions = {}): string {
   const entry = navEntry(page.slug);
   const { prev, next } = neighbours(page.slug);
   const depth = page.slug.split("/").length - 1;
@@ -400,7 +452,7 @@ function pageShell(page: Page, version: string): string {
     <span aria-hidden="true">☰</span>
   </button>
   <a class="top__brand" href="${up}index.html"><span aria-hidden="true">⬡</span> specgate<span class="top__brand-sub">/docs</span></a>
-  <span class="top__version">v${escapeHtml(version)}</span>
+  ${versionBadge(version, up, opts)}
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     ${icon("search", "icon")}
@@ -422,6 +474,7 @@ function pageShell(page: Page, version: string): string {
   </aside>
 
   <main class="content" id="content">
+    ${candidateBanner(up, opts)}
     ${breadcrumbs(page.slug, up)}
     ${stepper(page.slug, up)}
     <article class="prose">
@@ -430,7 +483,7 @@ ${page.html}
     <nav class="pager" aria-label="Neighbouring pages">${pager}</nav>
     <footer class="page-foot">
       <p class="page-foot__ask">Was this page useful?</p>
-      <a href="${REPO}/edit/main/docs/${escapeHtml(page.slug)}.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <a href="${REPO}/edit/${opts.channel === "next" ? "next/1.0" : "main"}/docs/${escapeHtml(page.slug)}.md" target="_blank" rel="noreferrer">Edit this page</a>
       <span aria-hidden="true">·</span>
       <a href="${REPO}/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
     </footer>
@@ -488,14 +541,22 @@ function markdownFiles(dir: string, prefix = ""): string[] {
  * stale between them — unlike the terminal recording, which needs the CLI to
  * regenerate and is therefore committed into the file rather than injected here.
  */
-function copyVerbatim(outDir: string, available: Map<string, string>): void {
+function copyVerbatim(
+  outDir: string,
+  available: Map<string, string>,
+  version: string,
+  opts: SiteOptions
+): void {
   for (const name of VERBATIM) {
     const from = path.join(DOCS, name);
     if (!fs.existsSync(from)) continue;
     if (name === "index.html") {
       fs.writeFileSync(
         path.join(outDir, name),
-        inlineDiagrams(fs.readFileSync(from, "utf8"), available),
+        inlineDiagrams(fs.readFileSync(from, "utf8"), available).replace(
+          /<span class="top__version">[^<]*<\/span>/,
+          () => versionBadge(version, "", opts)
+        ),
         "utf8"
       );
       continue;
@@ -512,7 +573,7 @@ function copyVerbatim(outDir: string, available: Map<string, string>): void {
  * existed. Generated rather than hand-written, so a page added to `NAV` appears
  * here without anybody remembering to add it twice.
  */
-function docsHome(version: string): string {
+function docsHome(version: string, opts: SiteOptions): string {
   const groups = NAV.map((section) => {
     const cards = section.entries
       .map(
@@ -552,7 +613,7 @@ function docsHome(version: string): string {
       `</figure>` +
       `<div class="home">${groups}</div>`,
   };
-  return pageShell(page, version);
+  return pageShell(page, version, opts);
 }
 
 /** Markdown reduced to prose: no fences, no marker punctuation. */
@@ -600,7 +661,10 @@ function sectionChunks(
   return out;
 }
 
-export function buildSite(outDir: string): { pages: number; orphans: string[] } {
+export function buildSite(
+  outDir: string,
+  opts: SiteOptions = {}
+): { pages: number; orphans: string[] } {
   const version = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
 
   fs.rmSync(outDir, { recursive: true, force: true });
@@ -646,7 +710,7 @@ export function buildSite(outDir: string): { pages: number; orphans: string[] } 
 
     const target = path.join(outDir, `${slug}.html`);
     fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, pageShell(page, version), "utf8");
+    fs.writeFileSync(target, pageShell(page, version, opts), "utf8");
 
     index.push({ slug, title: page.title, text: page.text });
     for (const chunk of sectionChunks(cleaned, headings)) {
@@ -654,11 +718,11 @@ export function buildSite(outDir: string): { pages: number; orphans: string[] } 
     }
   }
 
-  fs.writeFileSync(path.join(outDir, "docs.html"), docsHome(version), "utf8");
+  fs.writeFileSync(path.join(outDir, "docs.html"), docsHome(version, opts), "utf8");
 
   fs.mkdirSync(path.join(outDir, "assets"), { recursive: true });
   fs.writeFileSync(path.join(outDir, "assets", "search-index.json"), JSON.stringify(index), "utf8");
-  copyVerbatim(outDir, available);
+  copyVerbatim(outDir, available, version, opts);
   fs.writeFileSync(path.join(outDir, ".nojekyll"), "", "utf8");
 
   // Depth used to exempt a page, which is how `articles/` and `case-studies/`
@@ -672,7 +736,20 @@ export function buildSite(outDir: string): { pages: number; orphans: string[] } 
 if (require.main === module) {
   const at = process.argv.indexOf("--out");
   const outDir = at !== -1 ? process.argv[at + 1] : path.join(ROOT, "_site");
-  const { pages, orphans } = buildSite(path.resolve(outDir));
+  // `--channel next --versions stable=0.27.9,next=1.0.0-rc.8`: what pages.yml
+  // passes to each of the two builds of the site (REQ-400, REQ-401).
+  const arg = (name: string) => {
+    const i = process.argv.indexOf(name);
+    return i !== -1 ? process.argv[i + 1] : undefined;
+  };
+  const versions = Object.fromEntries(
+    (arg("--versions") || "")
+      .split(",")
+      .map((pair) => pair.split("="))
+      .filter((pair) => pair.length === 2 && pair[1])
+  );
+  const channel = arg("--channel") === "next" ? "next" : "stable";
+  const { pages, orphans } = buildSite(path.resolve(outDir), { channel, versions });
   process.stdout.write(`ℹ️  [docs] rendered ${pages} page(s) into ${outDir}\n`);
   if (orphans.length > 0) {
     process.stdout.write(

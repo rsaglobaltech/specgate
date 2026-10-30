@@ -9,6 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **The site carries both versions (REQ-400, REQ-401).** The documentation site showed only the stable line, so a reader had no way to see that a 1.0 candidate existed or what it adds. Built with `--channel stable|next --versions stable=…,next=…`, every page and the landing page have a version picker at the top left: the stable entry opens the stable docs, the candidate's opens what 1.0 adds. The candidate's pages, published under `next/`, say they document a candidate, lead back to the stable docs and edit `next/1.0`. Built without `--versions`, the badge is as it was.
+- **What is new in 1.0 (REQ-402).** [docs/whats-new-1.0.md](docs/whats-new-1.0.md) explains each feature of 1.0 with its commands, and names every candidate; a test fails when a candidate in this changelog is missing from it.
+
+### Changed
+
+- **One release workflow.** `release.yml` replaces `publish-npm.yml`, `publish-docker.yml` and `publish-github-packages.yml`: a `v*` tag runs the whole of `ci.yml` on the tagged commit, then publishes to npm with provenance, then pushes the image, which now waits for npm instead of publishing on its own. The version and the dist-tag are decided once; a prerelease is still published under `next` and its image tagged with the version only (REQ-281). New versions are no longer published to GitHub Packages; the versions there stay installable.
+- **CI calls the E2E journeys, and runs the OS-independent checks once.** `e2e.yml` is now only called (by `ci.yml`, and so by the release) or run by hand. The agent-contract check, the self-validation, the registry build and the snapshot tests run once on Ubuntu instead of on all six matrix legs, and the core unit suite no longer runs a second time after the coverage run that already includes it.
+- **The weekly checks are one workflow.** `scheduled.yml` replaces `docs-nightly.yml`, `mutation.yml` and `openspec-compat.yml`, runs only in this repository, not in forks, and checks the terminal recordings on the Node major they were made with: on Node 22 against recordings made on Node 24, every recording read as out of date, which is why the nightly check failed every night.
+- **The workflows follow one set of rules.** Read-only permissions unless a job needs more, one concurrency group per workflow and ref, a timeout on every job, third-party actions pinned to a commit (Dependabot bumps them). Security also runs on `next/**`, and its SBOM job no longer fails on `argparse` 3, whose PSF-2.0 licence is now allowed; overrides for `qs`, `fast-uri` and `zod` clear `npm audit`. On a pull request that touches the docs, `pages.yml` builds the site without deploying it.
+
 ## [1.0.0-rc.7] — 2026-10-30
 
 After the sixth microservices run of truck-flote: a part that uses the contracts is written after them, and a requirement still being drafted that waits for another repository is the order the story is built in, not a failure of the workspace check.
