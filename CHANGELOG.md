@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.3] — 2026-10-30
+
+After the second microservices run of truck-flote: a tick in tasks.md no longer withdraws an approval, so a change is built past its first requirement; the workspace's agent proposes the stories, a story says which criteria each repository answers and keeps its questions, the agents that write a sub-change see the whole story, and the story is built only as far as its dependencies are delivered.
+
 ### Fixed
 
 - **A delivered requirement no longer un-approves its change** (REQ-370, REQ-371): delivering a requirement ticks its task in `tasks.md` (REQ-353), and the tick changed the hash the tasks' approval was bound to, so the harness refused the change's second requirement as "not approved: tasks". A layer is now hashed with every task box read as open: a tick, by the harness or a person, keeps the approval, and any other edit still asks for it again. Approvals recorded by 1.0.0-rc.1 and rc.2 keep counting.
