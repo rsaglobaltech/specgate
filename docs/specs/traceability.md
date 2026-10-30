@@ -319,6 +319,7 @@
 | REQ-415 | SCN-415a | `features/contracts/REQ-415.feature` | - | - | - | - | - | tests/unit/rc10-contract.test.ts | Implemented |
 | REQ-418 | SCN-418a | `features/contracts/REQ-418.feature` | - | - | - | - | - | tests/unit/rc10-contract.test.ts | Implemented |
 | REQ-417 | SCN-417a | `features/harness/REQ-417.feature` | - | - | - | - | - | tests/unit/harness-run.test.ts | Implemented |
+| REQ-419 | SCN-419a | `features/contracts/REQ-419.feature` | - | - | - | - | - | tests/unit/rc9-contract.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

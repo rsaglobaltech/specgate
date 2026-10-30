@@ -2,7 +2,8 @@
  * After the seventh microservices run of 1.0.0-rc.8 (REQ-405..REQ-408): a part
  * that serves or calls a contract cites the operation, not only the contracts'
  * requirement; its agent reads the operation as the contract writes it; and a
- * delivered part whose code has no such path is pointed out.
+ * delivered part whose code has no such path is pointed out. REQ-419 (run 9):
+ * the workspace check judges that code as the harness does.
  *
  * Every test builds real folders in a temp directory, each git repository with
  * its own identity (CI runners have none), and drives the CLI.
@@ -319,4 +320,35 @@ test("REQ-408 SCN-408a: tracking serves a path of its own", () => {
   assert.equal(missing[0].severity, "warning");
   assert.match(missing[0].message, /tracking:REQ-002/);
   assert.match(missing[0].message, /GET \/vehicles\/\{vehicleId\}\/tachograph/);
+});
+
+// ── REQ-419: the workspace check applies the harness's rule ─────────────────
+
+test("REQ-419 SCN-419a: tracking serves the path in Spring pieces", () => {
+  const { tracking, contracts } = storyOfTwo();
+  contractsPart(contracts);
+  // The contracts repository cites its own operation, delivered, and serves none.
+  specs(contracts, " api=contracts/fleet.openapi.yaml#getTachograph status=Implemented");
+  specs(
+    tracking,
+    " depends=contracts:REQ-002 api=contracts:contracts/fleet.openapi.yaml#getTachograph status=Implemented"
+  );
+  const controller = path.join(tracking, "src", "main", "java", "TachographController.java");
+  put(
+    controller,
+    '@RequestMapping("/vehicles")\nclass TachographController {\n  @GetMapping("/{vehicleId}/tachograph")\n  Tachograph get() { return null; }\n}\n'
+  );
+  commit(tracking, "serves the contract in pieces");
+  let c = workspaceCheck(tracking);
+  assert.deepEqual(codes(c.warnings, "contract_operation_not_found"), [], out(c.r));
+
+  put(
+    controller,
+    '@RequestMapping("/vehicles")\nclass TachographController {\n  @GetMapping("/{vehicleId}")\n  Tachograph get() { return null; }\n}\n'
+  );
+  commit(tracking, "drops the last segment");
+  c = workspaceCheck(tracking);
+  const missing = codes(c.warnings, "contract_operation_not_found");
+  assert.equal(missing.length, 1, out(c.r));
+  assert.match(missing[0].message, /^tracking:REQ-002/);
 });

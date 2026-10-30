@@ -508,13 +508,17 @@ function contractCitations(
         )
       );
     }
+    // REQ-419: the harness's rule (REQ-418) — a route in pieces counts, and
+    // the contracts repository serves none of its own operations.
+    if (r.role === "contracts") continue;
     warnings.push(
       ...conformanceWarnings(
         dir,
         r.name,
         cited,
         (c) => citedOperation(c.ref, dirOf, dir)?.operation || null,
-        (id) => mine.get(id)
+        (id) => mine.get(id),
+        true
       )
     );
   }
