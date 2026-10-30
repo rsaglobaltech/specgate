@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **The site carries the stable docs and the 1.0 candidate's.** Every page has a version picker at the top left: the stable entry opens these docs, the candidate's opens what 1.0 adds, under `next/`. The Pages workflow checks out `next/1.0` and builds it there with that line's own generator; built without `--versions`, the badge is as it was.
+
 ## [0.27.9] — 2026-10-29
 
 After the seventh truck-flote run: the harness checks Docker before it starts, the report names scenarios as the spec does, a date is one value, and the kept agent is seen live.
