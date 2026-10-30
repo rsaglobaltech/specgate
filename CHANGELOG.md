@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.9] — 2026-10-30
+
+After the seventh microservices run of truck-flote: a part cites the contract's operation, its agent reads it and its code is checked against it, and the workspace's live view opens each repository's own; Node.js 24 for the image and the single jobs.
+
 ### Changed
 
 - **Node.js 24 for the image and the single jobs.** The October 21, 2026 Node.js security release fixed ten CVEs, among them a remote code execution in the bundled Brotli decoder. The CLI image is now built on `node:24-alpine`, and lint, packaging, publishing, the site, E2E and the security jobs run on Node 24; the test matrix keeps Node 22 and 24, the floor `package.json` still declares (`>=22`). On Node 22, use 22.23.4 or later. Also in 0.27.10.
