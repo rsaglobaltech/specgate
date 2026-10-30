@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.7] — 2026-10-30
+
+After the sixth microservices run of truck-flote: a part that uses the contracts is written after them, and a requirement still being drafted that waits for another repository is the order the story is built in, not a failure of the workspace check.
+
 ### Fixed
 
 - **A part is written after the contracts it uses (REQ-395).** The parts of a story were written at the same time, and tracking, finding nothing in contracts, designed an API of its own that web then used directly (truck-flote, MS6-1). `change author` now refuses the specs, design or tasks of a part that shares a criterion with the contracts repository while the contracts' part specifies nothing (`author_contracts_first`); `--force` writes it anyway.

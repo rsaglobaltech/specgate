@@ -44,12 +44,12 @@ add a `package.json` just for Specgate. Run it with `npx` and a pinned version
 instead, and use the same version in CI:
 
 ```bash
-npx @rsaglobaltech/specgate@1.0.0-rc.6 init --dry-run
-npx @rsaglobaltech/specgate@1.0.0-rc.6 init
+npx @rsaglobaltech/specgate@1.0.0-rc.7 init --dry-run
+npx @rsaglobaltech/specgate@1.0.0-rc.7 init
 ```
 
 The commands below write `npx specgate`; in a repository without a
-`package.json`, read it as `npx @rsaglobaltech/specgate@1.0.0-rc.6`.
+`package.json`, read it as `npx @rsaglobaltech/specgate@1.0.0-rc.7`.
 
 In a repository that already has a `pom.xml`, `build.gradle`, `package.json`
 or similar, `specgate init` adopts the project in place; it is the same as
