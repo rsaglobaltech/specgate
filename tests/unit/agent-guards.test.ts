@@ -386,3 +386,59 @@ test("REQ-423: the repository is a Claude Code marketplace for its plugin", () =
   assert.equal(entry.source, "./packages/claude-plugin");
   assert.ok(fs.existsSync(path.join(ROOT_DIR, "packages", "claude-plugin", ".claude-plugin", "plugin.json")));
 });
+
+// ── REQ-424: the guards run on Windows ──
+
+const state = require("../../scripts/plugin/project-state");
+
+test("REQ-424 SCN-424a: the CLI is started without a shell where it can be, and safely where it cannot", () => {
+  // npx is npx.cmd on Windows; Node refuses to spawn a .cmd without a shell
+  // (CVE-2024-27980), and the gate hook's ENOENT let every stop through.
+  assert.deepEqual(state.specgateCommand("darwin"), { command: "npx", shell: false });
+  assert.deepEqual(state.specgateCommand("linux"), { command: "npx", shell: false });
+  assert.deepEqual(state.specgateCommand("win32"), { command: "npx.cmd", shell: true });
+  // With a shell, nothing from outside reaches the command line: the project is the cwd.
+  const calls: { command: string; args: string[]; options: { cwd: string; shell: boolean } }[] = [];
+  const fake = (command: string, args: string[], options: { cwd: string; shell: boolean }) => {
+    calls.push({ command, args, options });
+    return { status: 0, stdout: '{"status":[]}', stderr: "" };
+  };
+  state.runSpecgate(["validate", ".", "--strict", "--json"], "C:\\Users\\a b\\proj & calc", { platform: "win32", spawn: fake });
+  assert.equal(calls[0].command, "npx.cmd");
+  assert.deepEqual(calls[0].args, ["--no-install", "specgate", "validate", ".", "--strict", "--json"]);
+  assert.equal(calls[0].options.cwd, "C:\\Users\\a b\\proj & calc");
+  assert.equal(calls[0].options.shell, true);
+});
+
+test("REQ-424: every plugin script starts the CLI through runSpecgate, never npx by hand", () => {
+  const dir = path.join(ROOT_DIR, "scripts", "plugin");
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".ts"))) {
+    const text = fs.readFileSync(path.join(dir, file), "utf8");
+    if (file === "project-state.ts") continue;
+    assert.doesNotMatch(text, /spawnSync\(\s*"npx"/, `${file} spawns npx itself`);
+  }
+  const gate = fs.readFileSync(path.join(dir, "gate-hook.ts"), "utf8");
+  assert.match(gate, /runSpecgate\(/);
+});
+
+test("REQ-424: paths are compared after resolving them", () => {
+  // The project as the tool names it, the file as the OS resolves it — /var and
+  // /private/var on macOS, a short and a long name on Windows.
+  const root = gitProject(ALL_PENDING);
+  const realRoot = fs.realpathSync.native(root);
+  const d = guard.decide(
+    { cwd: root, tool_name: "Write", tool_input: { file_path: path.join(realRoot, "src", "core", "map", "scan.ts") } },
+    {}
+  );
+  assert.equal(d.allow, false, "the same project, however its path is spelled");
+  assert.equal(state.needsTest("src\\core\\map\\scan.ts"), true);
+  assert.equal(state.needsTest("src\\test\\java\\InvoiceTest.java"), false);
+});
+
+test("REQ-424: CI runs the unit tests, the guards' among them, on Windows, macOS and Linux", () => {
+  const ci = fs.readFileSync(path.join(ROOT_DIR, ".github", "workflows", "ci.yml"), "utf8");
+  assert.match(ci, /os: \[ubuntu-latest, macos-latest, windows-latest\]/);
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "package.json"), "utf8"));
+  assert.match(ci, /npm run test:coverage/);
+  assert.match(pkg.scripts["test:coverage"], /dist\/tests\/unit/);
+});

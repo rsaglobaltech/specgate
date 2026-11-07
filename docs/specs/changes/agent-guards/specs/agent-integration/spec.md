@@ -66,7 +66,7 @@ Every hook and plugin script SHALL start the `specgate` CLI without a shell and 
 - WHEN the agent tries to end its session
 - THEN the stop is blocked with the gate's findings, as on macOS and Linux
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-425 — The plugin's version is the CLI's
 

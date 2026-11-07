@@ -137,3 +137,36 @@ export function changedFiles(root: string): string[] | null {
   }
   return out;
 }
+
+/**
+ * How to start the CLI on this platform (REQ-424). On Windows `npx` is
+ * `npx.cmd`, which Node will only spawn through a shell (CVE-2024-27980);
+ * the arguments are fixed words and the project goes in as the working
+ * directory, so nothing from outside reaches that command line.
+ */
+export function specgateCommand(platform: string = process.platform): { command: string; shell: boolean } {
+  return platform === "win32" ? { command: "npx.cmd", shell: true } : { command: "npx", shell: false };
+}
+
+type Spawn = (
+  command: string,
+  args: string[],
+  options: { cwd: string; shell: boolean; encoding: "utf8"; timeout: number; maxBuffer: number }
+) => { status: number | null; stdout: string; stderr: string; error?: Error };
+
+/** Run `specgate <args>` in `cwd`, as installed in the project or on the PATH. */
+export function runSpecgate(
+  args: string[],
+  cwd: string,
+  opts: { platform?: string; spawn?: Spawn; timeout?: number } = {}
+): { status: number | null; stdout: string; stderr: string; error?: Error } {
+  const { command, shell } = specgateCommand(opts.platform);
+  const spawn: Spawn = opts.spawn ?? (spawnSync as unknown as Spawn);
+  return spawn(command, ["--no-install", "specgate", ...args], {
+    cwd,
+    shell,
+    encoding: "utf8",
+    timeout: opts.timeout ?? 120_000,
+    maxBuffer: 16 * 1024 * 1024,
+  });
+}

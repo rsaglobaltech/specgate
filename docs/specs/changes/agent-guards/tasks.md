@@ -12,5 +12,5 @@
 - [x] 2.2 REQ-421 — `PreToolUse` guard: no source edit before a test names the requirement
 - [x] 2.3 REQ-422 — the OpenCode plugin: context, guard, gate
 - [x] 2.4 REQ-423 — `agents install --global`, `.claude-plugin/marketplace.json`
-- [ ] 2.5 REQ-424 — no shell, `.cmd` on Windows, real paths; CI on three systems
+- [x] 2.5 REQ-424 — no shell, `.cmd` on Windows, real paths; CI on three systems
 - [ ] 2.6 REQ-425 — plugin version from the CLI, and its test

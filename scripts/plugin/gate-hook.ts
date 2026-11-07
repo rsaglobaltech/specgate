@@ -27,7 +27,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { spawnSync } from "node:child_process";
+import { runSpecgate } from "./project-state";
 
 /** What the hook is handed on stdin. Only the fields this hook reads. */
 export interface StopHookInput {
@@ -119,15 +119,10 @@ export function runValidate(cwd: string): { ok: boolean; diagnostics: GateDiagno
   // The agent's tests are new evidence for a generated matrix: regenerate it
   // first, or the hook would block the session over a stale cache instead of
   // judging the work. A no-op on a hand-kept matrix.
-  spawnSync("npx", ["--no-install", "specgate", "matrix", "--project-dir", cwd], {
-    encoding: "utf8",
-    timeout: 60_000,
-  });
-  const r = spawnSync("npx", ["--no-install", "specgate", "validate", cwd, "--strict", "--json"], {
-    encoding: "utf8",
-    timeout: 120_000,
-    maxBuffer: 16 * 1024 * 1024,
-  });
+  // The project is the working directory, never an argument: on Windows the
+  // CLI starts through a shell (REQ-424).
+  runSpecgate(["matrix", "--project-dir", "."], cwd, { timeout: 60_000 });
+  const r = runSpecgate(["validate", ".", "--strict", "--json"], cwd);
   if (r.error || typeof r.status !== "number") throw new Error("could not run specgate");
 
   let parsed: { status?: GateDiagnostic[] };
