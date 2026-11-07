@@ -137,15 +137,17 @@ test("an unknown tool is a usage error listing the supported ones", () => {
 });
 
 test("--tool defaults to every tool that belongs inside a project", () => {
-  // Not quite every tool: `claude-plugin` produces an installable artefact,
-  // and scattering one into every project that ran `agents init` is not what
-  // anybody asked for. It is opt-in, and still selectable by name.
+  // Not quite every tool: `claude-plugin` and `opencode-plugin` put code in
+  // the agent's loop, and scattering that into every project that ran
+  // `agents init` is not what anybody asked for. They are opt-in, and still
+  // selectable by name.
   assert.deepEqual(parseArgs([]).tools, DEFAULT_TOOLS);
   assert.ok(DEFAULT_TOOLS.length > 0);
   assert.deepEqual(
     ALL_TOOLS.filter((t: string) => !DEFAULT_TOOLS.includes(t)),
-    ["claude-plugin"]
+    ["claude-plugin", "opencode-plugin"]
   );
+  assert.deepEqual(parseArgs(["--tool", "opencode-plugin"]).tools, ["opencode-plugin"]);
   assert.deepEqual(parseArgs(["--tool", "claude, cursor"]).tools, ["claude", "cursor"]);
   assert.deepEqual(parseArgs(["--tool", "claude-plugin"]).tools, ["claude-plugin"]);
 });

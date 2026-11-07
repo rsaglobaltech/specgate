@@ -774,6 +774,17 @@ export const SURFACE: Command[] = [
           summary: "Wire the loop into Claude, Cursor, Copilot, Aider and more.",
         },
       },
+      {
+        name: "install",
+        script: ["agents", "install.js"],
+        // It writes into the user's home, not the project: no agent calls it as a tool.
+        mcp: false,
+        help: {
+          group: "dx",
+          icon: "🛡",
+          summary: "The agent guards for every project: --global, Claude Code and OpenCode.",
+        },
+      },
     ],
   },
   {

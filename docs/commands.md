@@ -151,6 +151,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | Command                                | What it does                                                          | Details                  |
 | -------------------------------------- | --------------------------------------------------------------------- | ------------------------ |
 | `specgate agents init`                 | Slash commands and instruction files for your agent tools.            | [Agents](agents.md)      |
+| `specgate agents install --global`     | The agent guards for every project: OpenCode's plugin, Claude Code's. | [Agents](agents.md)      |
 | `specgate update`                      | Refreshes those generated files after an upgrade, keeping your edits. | [Agents](agents.md)      |
 | `specgate mcp install --client claude` | Writes the MCP server configuration for Claude Desktop or Cursor.     | [The MCP server](mcp.md) |
 | `specgate mcp serve`                   | Runs the MCP server over stdio. The client starts it; you do not.     | [The MCP server](mcp.md) |

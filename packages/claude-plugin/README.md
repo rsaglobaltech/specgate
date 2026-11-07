@@ -9,8 +9,17 @@ wired from, so editing here makes them drift.
 - **9 slash commands** — `/specgate:explore`, `/specgate:draft`, `/specgate:propose`, `/specgate:new`, `/specgate:apply`, `/specgate:check`, `/specgate:archive`, `/specgate:done`, `/specgate:onboard`.
 - **The spec tree over MCP** — read specs, list requirements and run
   `validate` as tools rather than by scraping terminal output.
+- **The open change at session start** — a `SessionStart` hook tells the
+  session the project is spec-driven, the open change and its next requirement.
+- **The test before the code** — a `PreToolUse` hook refuses a write to a
+  source file until a test new or changed in the working tree names a
+  requirement of an open change (`specgate config set agent_guard off` to turn
+  it off for a project, `SPECGATE_GUARD=off` for a session).
 - **The gate as a `Stop` hook** — `specgate validate --strict` runs when the
   session is about to end, and refuses the stop while it is red.
+
+Install it once for every project: `specgate agents install --global` prints
+the two `/plugin` commands.
 
 ## The hook, and why it does not trap you
 

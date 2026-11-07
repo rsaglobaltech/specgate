@@ -32,7 +32,7 @@ specgate agents init --tool claude-plugin --project-dir ./specgate-plugin
 
 That writes a complete plugin: `.claude-plugin/plugin.json`, nine slash
 commands under `commands/specgate/`, an `.mcp.json` that starts the MCP server,
-and `hooks/hooks.json` with the gate.
+and `hooks/hooks.json` with the gate and the two guards (see [Agents](agents.md#the-guards)).
 
 **The hook is what no instruction file can do.** Other agent tools get text an
 agent may or may not follow. A plugin gets a `Stop` hook, which runs whatever
