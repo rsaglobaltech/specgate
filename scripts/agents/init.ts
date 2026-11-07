@@ -153,18 +153,14 @@ function claudePluginFiles(version: string) {
     homepage: "https://rsaglobaltech.github.io/specgate/",
   };
 
+  const run = (script: string) => [
+    { hooks: [{ type: "command", command: `node "\${CLAUDE_PLUGIN_ROOT}/scripts/${script}"` }] },
+  ];
   const hooks = {
     hooks: {
-      Stop: [
-        {
-          hooks: [
-            {
-              type: "command",
-              command: `node "\${CLAUDE_PLUGIN_ROOT}/scripts/gate-hook.js"`,
-            },
-          ],
-        },
-      ],
+      // A new session is told the open change and what comes next (REQ-420).
+      SessionStart: run("session-hook.js"),
+      Stop: run("gate-hook.js"),
     },
   };
 
@@ -178,7 +174,10 @@ function claudePluginFiles(version: string) {
       path: path.join("commands", AGENT_NAMESPACE, `${s.name}.md`),
       contents: slashCommandBody(s),
     })),
-    { path: path.join("scripts", "gate-hook.js"), contents: gateHookSource() },
+    ...PLUGIN_SCRIPTS.map((name) => ({
+      path: path.join("scripts", name),
+      contents: pluginScriptSource(name),
+    })),
     { path: "README.md", contents: pluginReadme() },
   ];
 }
@@ -192,16 +191,19 @@ function claudePluginFiles(version: string) {
  * out again here, because a second copy of this logic is a second thing to keep
  * correct.
  */
-function gateHookSource(): string {
-  const compiled = path.resolve(__dirname, "..", "plugin", "gate-hook.js");
+function pluginScriptSource(name: string): string {
+  const compiled = path.resolve(__dirname, "..", "plugin", name);
   if (!fs.existsSync(compiled)) {
     throw new Error(
-      `The gate hook is not built: ${compiled} is missing.\n` +
+      `The plugin's ${name} is not built: ${compiled} is missing.\n` +
         "Fix: run `npm run build` before generating the plugin."
     );
   }
   return fs.readFileSync(compiled, "utf8");
 }
+
+/** The compiled scripts the plugin carries: the hooks, and the helper they share. */
+const PLUGIN_SCRIPTS = ["gate-hook.js", "session-hook.js", "project-state.js"];
 
 const json = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 

@@ -4,15 +4,17 @@
 
 ### Requirement: REQ-420 — A new session starts knowing the project is spec-driven
 
-The Claude Code plugin SHALL register a `SessionStart` hook that, in a folder with `spec.md` and a `specgate` CLI it can run, adds to the agent's context: that the project is spec-driven and its contract is `spec.md`, `features/` and `docs/specs/`; each open change with its requirements still to apply; the next requirement and the command `specgate status` names for it; and the loop's rules — the test before the code, naming the requirement; `specgate apply` to close it; never archive without the reviewer. The text SHALL stay under 2,000 characters. Without `spec.md`, without the CLI, or on any error, the hook SHALL add nothing and exit 0.
+The Claude Code plugin SHALL register a `SessionStart` hook that, in a folder with `spec.md` and a `specgate` CLI it can run, adds to the agent's context: that the project is spec-driven and its contract is `spec.md`, `features/` and `docs/specs/`; each open change with its requirements still to apply; the next of them and the command that closes it (`specgate apply REQ-NNN`, after its test); and the loop's rules — the test before the code, naming the requirement; `specgate apply` to close it; never archive without the reviewer. The text SHALL stay under 2,000 characters. Without `spec.md`, or on any error, the hook SHALL add nothing and exit 0. It SHALL read the changes from `docs/specs/changes/` itself, so a session starts as fast with or without the CLI.
 
-#### Scenario: Status in a fresh session
+> Amended 2026-11-07, while implementing, before any code: `specgate status`'s `nextCommand` is project-wide — in agentkit it named REQ-136 while `module-map` was the open change — so the hook names the open change's next requirement instead.
+
+#### Scenario: SCN-420a — Status in a fresh session
 
 - GIVEN a spec-driven project with the open change `module-map` whose next requirement is REQ-312
 - WHEN the developer starts a new Claude Code session there with the plugin installed
 - THEN the agent's context holds "spec-driven", `module-map`, "REQ-312" and "write the test first"; in a folder without `spec.md` it holds nothing from specgate
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-421 — An edit to source code waits for a test that names the requirement
 
@@ -20,7 +22,7 @@ The Claude Code plugin SHALL register a `PreToolUse` hook on the tools that writ
 
 > Session 2026-11-07: the agent ran `propose` and `change validate`, then wrote the implementation before a test named the requirement. The `Stop` gate came after the code.
 
-#### Scenario: Code before its test is refused
+#### Scenario: SCN-421a — Code before its test is refused
 
 - GIVEN a spec-driven project with the open change `module-map` (REQ-311…REQ-318) and no test in the working tree naming any of them
 - WHEN the agent tries to write `src/core/map/scan.ts`
@@ -32,7 +34,7 @@ The Claude Code plugin SHALL register a `PreToolUse` hook on the tools that writ
 
 `specgate agents init --tool opencode-plugin` SHALL write an OpenCode plugin that gives OpenCode REQ-420's context (through `experimental.chat.system.transform`), REQ-421's guard (throwing from `tool.execute.before` for `write`, `edit` and `patch`, with the same message), and the gate: when the session goes idle with the gate red, it SHALL send the findings back to the session once per user message, as the Claude Code `Stop` hook does. It SHALL do nothing outside a spec-driven project.
 
-#### Scenario: OpenCode refuses code before its test
+#### Scenario: SCN-422a — OpenCode refuses code before its test
 
 - GIVEN the project of REQ-421's scenario with the OpenCode plugin installed
 - WHEN OpenCode's agent calls `write` on `src/core/map/scan.ts`
@@ -44,7 +46,7 @@ The Claude Code plugin SHALL register a `PreToolUse` hook on the tools that writ
 
 `specgate agents install --global` SHALL install the guards for every project of the user: for Claude Code by printing the two commands that add this repository's marketplace and install the `specgate` plugin from it (the repository SHALL ship `.claude-plugin/marketplace.json` naming `packages/claude-plugin`), and for OpenCode by writing the plugin into OpenCode's global plugin folder. `--tool claude-plugin` or `--tool opencode-plugin` SHALL limit it to one tool. Running it again SHALL change nothing; a project without `spec.md` SHALL see no context, no denial and no gate from them.
 
-#### Scenario: One install, every repository
+#### Scenario: SCN-423a — One install, every repository
 
 - GIVEN a developer with two repositories, one spec-driven and one without `spec.md`
 - WHEN the developer runs `specgate agents install --global` and starts OpenCode in each
@@ -58,7 +60,7 @@ Every hook and plugin script SHALL start the `specgate` CLI without a shell and 
 
 > Today's `scripts/plugin/gate-hook.ts` spawns `npx` with no shell; on Windows that fails with ENOENT and the hook, by design, allows the stop — the gate is silently off.
 
-#### Scenario: The gate on Windows
+#### Scenario: SCN-424a — The gate on Windows
 
 - GIVEN a spec-driven project with a failing gate on Windows
 - WHEN the agent tries to end its session
@@ -70,7 +72,7 @@ Every hook and plugin script SHALL start the `specgate` CLI without a shell and 
 
 `specgate agents init --tool claude-plugin` SHALL write the CLI's own version into `plugin.json`, and a test SHALL fail when `packages/claude-plugin/.claude-plugin/plugin.json` and `package.json` disagree, so a release cannot ship a plugin that names another version.
 
-#### Scenario: A stale plugin manifest fails the build
+#### Scenario: SCN-425a — A stale plugin manifest fails the build
 
 - GIVEN `package.json` at 0.28.0 and the shipped plugin manifest at 0.19.1
 - WHEN the maintainer runs `npm test`
