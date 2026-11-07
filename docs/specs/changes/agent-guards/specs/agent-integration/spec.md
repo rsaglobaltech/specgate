@@ -40,7 +40,7 @@ The Claude Code plugin SHALL register a `PreToolUse` hook on the tools that writ
 - WHEN OpenCode's agent calls `write` on `src/core/map/scan.ts`
 - THEN the tool call fails with "write the test for REQ-311 first", and a new session's system prompt names `module-map` and REQ-311
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-423 — Installed once per user, quiet where there are no specs
 

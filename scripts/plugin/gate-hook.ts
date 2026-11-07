@@ -113,7 +113,7 @@ export function decide(
   return { block: true, message: findings };
 }
 
-function runValidate(cwd: string): { ok: boolean; diagnostics: GateDiagnostic[] } {
+export function runValidate(cwd: string): { ok: boolean; diagnostics: GateDiagnostic[] } {
   if (!fs.existsSync(path.join(cwd, "spec.md"))) throw new Error("not a spec-driven project");
 
   // The agent's tests are new evidence for a generated matrix: regenerate it

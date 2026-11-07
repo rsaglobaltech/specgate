@@ -229,3 +229,112 @@ test("REQ-421: the hook's exit code and message, and its place in the plugin", (
   const { KEYS } = require("../../scripts/config_set");
   assert.deepEqual(KEYS.agent_guard.values, ["on", "off"]);
 });
+
+// ── REQ-422: OpenCode gets the same three guards ──
+
+const bridge = require("../../scripts/plugin/opencode-bridge");
+
+/** A stand-in for OpenCode's client: records what the plugin sends back to a session. */
+function fakeClient() {
+  const sent: { id: string; text: string }[] = [];
+  return {
+    sent,
+    session: {
+      prompt: async (o: { path: { id: string }; body: { parts: { text: string }[] } }) => {
+        sent.push({ id: o.path.id, text: o.body.parts.map((p) => p.text).join("") });
+      },
+    },
+  };
+}
+
+test("REQ-422 SCN-422a: OpenCode refuses code before its test, and a new session hears the open change", async () => {
+  const root = gitProject(ALL_PENDING);
+  const client = fakeClient();
+  const hooks = bridge.createHooks({ directory: root, client }, { env: {} });
+
+  await assert.rejects(
+    hooks["tool.execute.before"]({ tool: "write", sessionID: "s", callID: "c" }, { args: { filePath: path.join(root, "src/core/map/scan.ts") } }),
+    /write the test for REQ-311 first/
+  );
+  await assert.rejects(
+    hooks["tool.execute.before"](
+      { tool: "apply_patch", sessionID: "s", callID: "c" },
+      { args: { patchText: "*** Begin Patch\n*** Add File: src/core/map/scan.ts\n+x\n*** End Patch" } }
+    ),
+    /write the test for REQ-311 first/
+  );
+  // A test, and anything that is not a write, goes through.
+  await hooks["tool.execute.before"]({ tool: "edit", sessionID: "s", callID: "c" }, { args: { filePath: "test/module-map.test.ts" } });
+  await hooks["tool.execute.before"]({ tool: "read", sessionID: "s", callID: "c" }, { args: { filePath: "src/core/map/scan.ts" } });
+
+  const system = { system: [] as string[] };
+  await hooks["experimental.chat.system.transform"]({ sessionID: "s" }, system);
+  assert.match(system.system.join("\n"), /module-map/);
+  assert.match(system.system.join("\n"), /REQ-311/);
+});
+
+test("REQ-422: a red gate is sent back once per user message when the session goes idle", async () => {
+  const root = gitProject(ALL_PENDING);
+  const client = fakeClient();
+  let red = true;
+  const hooks = bridge.createHooks(
+    { directory: root, client },
+    {
+      env: {},
+      runValidate: () =>
+        red
+          ? { ok: false, diagnostics: [{ code: "TDD-1", message: "REQ-311 has no test", fix: "write it" }] }
+          : { ok: true, diagnostics: [] },
+    }
+  );
+  const idle = () => hooks.event({ event: { type: "session.idle", properties: { sessionID: "s1" } } });
+  await hooks["chat.message"]({ sessionID: "s1", messageID: "m1" }, { message: {}, parts: [] });
+  await idle();
+  assert.equal(client.sent.length, 1);
+  assert.match(client.sent[0].text, /TDD-1/);
+  await idle();
+  assert.equal(client.sent.length, 1, "told once per user message, never looped");
+  await hooks["chat.message"]({ sessionID: "s1", messageID: "m2" }, { message: {}, parts: [] });
+  red = false;
+  await idle();
+  assert.equal(client.sent.length, 1, "a green gate says nothing");
+});
+
+test("REQ-422: outside a spec-driven project the plugin does nothing", async () => {
+  const root = project({}, { spec: false });
+  const client = fakeClient();
+  const hooks = bridge.createHooks(
+    { directory: root, client },
+    { env: {}, runValidate: () => ({ ok: false, diagnostics: [{ code: "x" }] }) }
+  );
+  await hooks["tool.execute.before"]({ tool: "write", sessionID: "s", callID: "c" }, { args: { filePath: "src/a.ts" } });
+  const system = { system: [] as string[] };
+  await hooks["experimental.chat.system.transform"]({ sessionID: "s" }, system);
+  assert.deepEqual(system.system, []);
+  await hooks.event({ event: { type: "session.idle", properties: { sessionID: "s" } } });
+  assert.equal(client.sent.length, 0);
+});
+
+test("REQ-422: agents init --tool opencode-plugin writes the plugin and the scripts it loads", () => {
+  const files = TOOLS["opencode-plugin"].files();
+  const paths = files.map((f: { path: string }) => f.path.split(path.sep).join("/"));
+  for (const p of [
+    ".opencode/plugin/specgate.js",
+    ".opencode/specgate/opencode-bridge.cjs",
+    ".opencode/specgate/guard-hook.cjs",
+    ".opencode/specgate/session-hook.cjs",
+    ".opencode/specgate/gate-hook.cjs",
+    ".opencode/specgate/project-state.cjs",
+  ]) {
+    assert.ok(paths.includes(p), `${p} missing:\n${paths.join("\n")}`);
+  }
+  const plugin = files.find((f: { path: string }) => f.path.endsWith("specgate.js")).contents;
+  assert.match(plugin, /createRequire\(import\.meta\.url\)/);
+  assert.match(plugin, /\.\.\/specgate\/opencode-bridge\.cjs/);
+  assert.match(plugin, /export const Specgate = async/);
+  // The copies load each other by their .cjs names, whatever package.json says about modules.
+  for (const f of files.filter((x: { path: string }) => x.path.endsWith(".cjs"))) {
+    assert.doesNotMatch(f.contents, /require\("\.\/[\w-]+"\)/, f.path);
+  }
+  assert.equal(TOOLS["opencode-plugin"].optIn, true);
+});
