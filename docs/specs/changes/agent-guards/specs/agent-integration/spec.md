@@ -78,4 +78,4 @@ Every hook and plugin script SHALL start the `specgate` CLI without a shell and 
 - WHEN the maintainer runs `npm test`
 - THEN a test fails naming both versions and `specgate agents init --tool claude-plugin` as the fix
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

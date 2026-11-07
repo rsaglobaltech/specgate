@@ -146,7 +146,7 @@ function claudePluginFiles(version: string) {
     displayName: "Spec-Driven Development",
     description:
       "Specs as executable contracts: the daily loop as commands, the spec tree over MCP, " +
-      "and the gate as a hook that runs before the session can end.",
+      "the test before the code, and the gate as a hook that runs before the session can end.",
     version,
     license: "MIT",
     keywords: ["spec-driven-development", "sdd", "gherkin", "traceability"],
@@ -226,7 +226,10 @@ export function opencodePluginFiles(base: string): AgentFile[] {
     { path: path.join(base, "plugin", `${AGENT_NAMESPACE}.js`), contents: plugin },
     ...OPENCODE_SCRIPTS.map((name) => ({
       path: path.join(base, AGENT_NAMESPACE, name.replace(/\.js$/, ".cjs")),
-      contents: pluginScriptSource(name).replace(/require\("\.\/([\w-]+)"\)/g, 'require("./$1.cjs")'),
+      contents: pluginScriptSource(name).replace(
+        /require\("\.\/([\w-]+)"\)/g,
+        'require("./$1.cjs")'
+      ),
     })),
   ];
 }
@@ -258,8 +261,17 @@ function pluginReadme(): string {
     `- **${STEPS.length} slash commands** — ${STEPS.map((s) => `\`/${AGENT_NAMESPACE}:${s.name}\``).join(", ")}.`,
     "- **The spec tree over MCP** — read specs, list requirements and run",
     "  `validate` as tools rather than by scraping terminal output.",
+    "- **The open change at session start** — a `SessionStart` hook tells the",
+    "  session the project is spec-driven, the open change and its next requirement.",
+    "- **The test before the code** — a `PreToolUse` hook refuses a write to a",
+    "  source file until a test new or changed in the working tree names a",
+    "  requirement of an open change (`specgate config set agent_guard off` to turn",
+    "  it off for a project, `SPECGATE_GUARD=off` for a session).",
     "- **The gate as a `Stop` hook** — `specgate validate --strict` runs when the",
     "  session is about to end, and refuses the stop while it is red.",
+    "",
+    "Install it once for every project: `specgate agents install --global` prints",
+    "the two `/plugin` commands.",
     "",
     "## The hook, and why it does not trap you",
     "",

@@ -34,7 +34,9 @@ export function sessionContext(cwd: string): string {
       );
     } else {
       for (const c of changes) {
-        const left = c.pending.length ? c.pending.join(", ") : "none — ready for review and archive";
+        const left = c.pending.length
+          ? c.pending.join(", ")
+          : "none — ready for review and archive";
         lines.push(`Open change \`${c.id}\` — still to apply: ${left}.`);
       }
       const next = changes.flatMap((c) => c.pending)[0];

@@ -99,7 +99,9 @@ test("REQ-420: a folder without spec.md, or any error, adds nothing", () => {
 
 test("REQ-420: the plugin registers the SessionStart hook and ships its scripts", () => {
   const files = TOOLS["claude-plugin"].files();
-  const hooks = JSON.parse(files.find((f: { path: string }) => f.path.endsWith("hooks.json")).contents);
+  const hooks = JSON.parse(
+    files.find((f: { path: string }) => f.path.endsWith("hooks.json")).contents
+  );
   const command = hooks.hooks.SessionStart[0].hooks[0].command;
   assert.equal(command, 'node "${CLAUDE_PLUGIN_ROOT}/scripts/session-hook.js"');
   const paths = files.map((f: { path: string }) => f.path.split(path.sep).join("/"));
@@ -150,13 +152,19 @@ test("REQ-421 SCN-421a: code before its test is refused, allowed once a test nam
   // The test itself is never refused.
   assert.equal(edit(root, "test/module-map.test.ts").allow, true);
   fs.mkdirSync(path.join(root, "test"));
-  fs.writeFileSync(path.join(root, "test", "module-map.test.ts"), "test('REQ-311: a map', () => {});\n");
+  fs.writeFileSync(
+    path.join(root, "test", "module-map.test.ts"),
+    "test('REQ-311: a map', () => {});\n"
+  );
   assert.equal(edit(root, "src/core/map/scan.ts").allow, true);
 });
 
 test("REQ-421: a test that names no requirement of an open change does not count", () => {
   const root = gitProject(ALL_PENDING);
-  fs.writeFileSync(path.join(root, "src", "other.test.ts"), "test('REQ-001 elsewhere', () => {});\n");
+  fs.writeFileSync(
+    path.join(root, "src", "other.test.ts"),
+    "test('REQ-001 elsewhere', () => {});\n"
+  );
   assert.equal(edit(root, "src/core/map/scan.ts").allow, false);
   // A committed test is not new work: only new or modified files count.
   assert.equal(edit(root, "src/index.ts").allow, false);
@@ -204,8 +212,10 @@ test("REQ-421: off by setting or variable, and silent outside a spec-driven git 
   assert.equal(edit(noGit, "src/index.ts").allow, true, "no git: the working tree is unknown");
   const root2 = gitProject({});
   assert.equal(
-    guard.decide({ cwd: root2, tool_name: "Write", tool_input: { file_path: path.join(os.tmpdir(), "x.ts") } }, {})
-      .allow,
+    guard.decide(
+      { cwd: root2, tool_name: "Write", tool_input: { file_path: path.join(os.tmpdir(), "x.ts") } },
+      {}
+    ).allow,
     true,
     "a file outside the project"
   );
@@ -223,9 +233,14 @@ test("REQ-421: the hook's exit code and message, and its place in the plugin", (
   assert.equal(guard.main("not json", {}), 0);
 
   const files = TOOLS["claude-plugin"].files();
-  const hooks = JSON.parse(files.find((f: { path: string }) => f.path.endsWith("hooks.json")).contents);
+  const hooks = JSON.parse(
+    files.find((f: { path: string }) => f.path.endsWith("hooks.json")).contents
+  );
   assert.equal(hooks.hooks.PreToolUse[0].matcher, "Write|Edit|MultiEdit|NotebookEdit");
-  assert.equal(hooks.hooks.PreToolUse[0].hooks[0].command, 'node "${CLAUDE_PLUGIN_ROOT}/scripts/guard-hook.js"');
+  assert.equal(
+    hooks.hooks.PreToolUse[0].hooks[0].command,
+    'node "${CLAUDE_PLUGIN_ROOT}/scripts/guard-hook.js"'
+  );
   const { KEYS } = require("../../scripts/config_set");
   assert.deepEqual(KEYS.agent_guard.values, ["on", "off"]);
 });
@@ -253,19 +268,32 @@ test("REQ-422 SCN-422a: OpenCode refuses code before its test, and a new session
   const hooks = bridge.createHooks({ directory: root, client }, { env: {} });
 
   await assert.rejects(
-    hooks["tool.execute.before"]({ tool: "write", sessionID: "s", callID: "c" }, { args: { filePath: path.join(root, "src/core/map/scan.ts") } }),
+    hooks["tool.execute.before"](
+      { tool: "write", sessionID: "s", callID: "c" },
+      { args: { filePath: path.join(root, "src/core/map/scan.ts") } }
+    ),
     /write the test for REQ-311 first/
   );
   await assert.rejects(
     hooks["tool.execute.before"](
       { tool: "apply_patch", sessionID: "s", callID: "c" },
-      { args: { patchText: "*** Begin Patch\n*** Add File: src/core/map/scan.ts\n+x\n*** End Patch" } }
+      {
+        args: {
+          patchText: "*** Begin Patch\n*** Add File: src/core/map/scan.ts\n+x\n*** End Patch",
+        },
+      }
     ),
     /write the test for REQ-311 first/
   );
   // A test, and anything that is not a write, goes through.
-  await hooks["tool.execute.before"]({ tool: "edit", sessionID: "s", callID: "c" }, { args: { filePath: "test/module-map.test.ts" } });
-  await hooks["tool.execute.before"]({ tool: "read", sessionID: "s", callID: "c" }, { args: { filePath: "src/core/map/scan.ts" } });
+  await hooks["tool.execute.before"](
+    { tool: "edit", sessionID: "s", callID: "c" },
+    { args: { filePath: "test/module-map.test.ts" } }
+  );
+  await hooks["tool.execute.before"](
+    { tool: "read", sessionID: "s", callID: "c" },
+    { args: { filePath: "src/core/map/scan.ts" } }
+  );
 
   const system = { system: [] as string[] };
   await hooks["experimental.chat.system.transform"]({ sessionID: "s" }, system);
@@ -283,11 +311,15 @@ test("REQ-422: a red gate is sent back once per user message when the session go
       env: {},
       runValidate: () =>
         red
-          ? { ok: false, diagnostics: [{ code: "TDD-1", message: "REQ-311 has no test", fix: "write it" }] }
+          ? {
+              ok: false,
+              diagnostics: [{ code: "TDD-1", message: "REQ-311 has no test", fix: "write it" }],
+            }
           : { ok: true, diagnostics: [] },
     }
   );
-  const idle = () => hooks.event({ event: { type: "session.idle", properties: { sessionID: "s1" } } });
+  const idle = () =>
+    hooks.event({ event: { type: "session.idle", properties: { sessionID: "s1" } } });
   await hooks["chat.message"]({ sessionID: "s1", messageID: "m1" }, { message: {}, parts: [] });
   await idle();
   assert.equal(client.sent.length, 1);
@@ -307,7 +339,10 @@ test("REQ-422: outside a spec-driven project the plugin does nothing", async () 
     { directory: root, client },
     { env: {}, runValidate: () => ({ ok: false, diagnostics: [{ code: "x" }] }) }
   );
-  await hooks["tool.execute.before"]({ tool: "write", sessionID: "s", callID: "c" }, { args: { filePath: "src/a.ts" } });
+  await hooks["tool.execute.before"](
+    { tool: "write", sessionID: "s", callID: "c" },
+    { args: { filePath: "src/a.ts" } }
+  );
   const system = { system: [] as string[] };
   await hooks["experimental.chat.system.transform"]({ sessionID: "s" }, system);
   assert.deepEqual(system.system, []);
@@ -346,7 +381,12 @@ import { runCli, ROOT_DIR } from "../helpers/cli";
 /** A home folder of its own, so a test never writes into the developer's. */
 function home(): { dir: string; env: NodeJS.ProcessEnv } {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-guards-home-"));
-  const env = { ...process.env, HOME: dir, USERPROFILE: dir, XDG_CONFIG_HOME: path.join(dir, ".config") };
+  const env = {
+    ...process.env,
+    HOME: dir,
+    USERPROFILE: dir,
+    XDG_CONFIG_HOME: path.join(dir, ".config"),
+  };
   return { dir, env };
 }
 
@@ -370,7 +410,10 @@ test("REQ-423 SCN-423a: one install for every repository; a second run changes n
 
 test("REQ-423: --tool limits the install to one tool; without --global it says what it does", () => {
   const { dir, env } = home();
-  const claude = runCli(["agents", "install", "--global", "--tool", "claude-plugin"], { cwd: dir, env });
+  const claude = runCli(["agents", "install", "--global", "--tool", "claude-plugin"], {
+    cwd: dir,
+    env,
+  });
   assert.equal(claude.status, 0, claude.stderr);
   assert.ok(!fs.existsSync(path.join(dir, ".config", "opencode")), "OpenCode left alone");
   const local = runCli(["agents", "install"], { cwd: dir, env });
@@ -380,11 +423,15 @@ test("REQ-423: --tool limits the install to one tool; without --global it says w
 });
 
 test("REQ-423: the repository is a Claude Code marketplace for its plugin", () => {
-  const market = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, ".claude-plugin", "marketplace.json"), "utf8"));
+  const market = JSON.parse(
+    fs.readFileSync(path.join(ROOT_DIR, ".claude-plugin", "marketplace.json"), "utf8")
+  );
   assert.equal(market.name, "specgate");
   const entry = market.plugins.find((p: { name: string }) => p.name === "specgate");
   assert.equal(entry.source, "./packages/claude-plugin");
-  assert.ok(fs.existsSync(path.join(ROOT_DIR, "packages", "claude-plugin", ".claude-plugin", "plugin.json")));
+  assert.ok(
+    fs.existsSync(path.join(ROOT_DIR, "packages", "claude-plugin", ".claude-plugin", "plugin.json"))
+  );
 });
 
 // ── REQ-424: the guards run on Windows ──
@@ -403,9 +450,19 @@ test("REQ-424 SCN-424a: the CLI is started without a shell where it can be, and 
     calls.push({ command, args, options });
     return { status: 0, stdout: '{"status":[]}', stderr: "" };
   };
-  state.runSpecgate(["validate", ".", "--strict", "--json"], "C:\\Users\\a b\\proj & calc", { platform: "win32", spawn: fake });
+  state.runSpecgate(["validate", ".", "--strict", "--json"], "C:\\Users\\a b\\proj & calc", {
+    platform: "win32",
+    spawn: fake,
+  });
   assert.equal(calls[0].command, "npx.cmd");
-  assert.deepEqual(calls[0].args, ["--no-install", "specgate", "validate", ".", "--strict", "--json"]);
+  assert.deepEqual(calls[0].args, [
+    "--no-install",
+    "specgate",
+    "validate",
+    ".",
+    "--strict",
+    "--json",
+  ]);
   assert.equal(calls[0].options.cwd, "C:\\Users\\a b\\proj & calc");
   assert.equal(calls[0].options.shell, true);
 });
@@ -427,7 +484,11 @@ test("REQ-424: paths are compared after resolving them", () => {
   const root = gitProject(ALL_PENDING);
   const realRoot = fs.realpathSync.native(root);
   const d = guard.decide(
-    { cwd: root, tool_name: "Write", tool_input: { file_path: path.join(realRoot, "src", "core", "map", "scan.ts") } },
+    {
+      cwd: root,
+      tool_name: "Write",
+      tool_input: { file_path: path.join(realRoot, "src", "core", "map", "scan.ts") },
+    },
     {}
   );
   assert.equal(d.allow, false, "the same project, however its path is spelled");
@@ -441,4 +502,41 @@ test("REQ-424: CI runs the unit tests, the guards' among them, on Windows, macOS
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "package.json"), "utf8"));
   assert.match(ci, /npm run test:coverage/);
   assert.match(pkg.scripts["test:coverage"], /dist\/tests\/unit/);
+});
+
+// ── REQ-425: the plugin's version is the CLI's ──
+
+test("REQ-425 SCN-425a: the shipped plugin names the CLI's version, and the generator writes it", () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "package.json"), "utf8"));
+  const shipped = JSON.parse(
+    fs.readFileSync(
+      path.join(ROOT_DIR, "packages", "claude-plugin", ".claude-plugin", "plugin.json"),
+      "utf8"
+    )
+  );
+  assert.equal(
+    shipped.version,
+    pkg.version,
+    `packages/claude-plugin says ${shipped.version}, the CLI is ${pkg.version} — fix: ` +
+      "specgate agents init --tool claude-plugin --project-dir packages/claude-plugin --force"
+  );
+  const generated = TOOLS["claude-plugin"]
+    .files()
+    .find((f: { path: string }) => f.path.endsWith("plugin.json"));
+  assert.equal(JSON.parse(generated.contents).version, pkg.version);
+});
+
+test("REQ-425: the shipped plugin carries every hook and script the generator writes", () => {
+  // The marketplace installs packages/claude-plugin as it is: a hook added to
+  // the generator and not regenerated there never reaches anyone.
+  for (const f of TOOLS["claude-plugin"].files() as { path: string; contents: string }[]) {
+    if (!/^(hooks|scripts)[\\/]/.test(f.path)) continue;
+    const shipped = path.join(ROOT_DIR, "packages", "claude-plugin", f.path);
+    assert.ok(fs.existsSync(shipped), `${f.path} is not in packages/claude-plugin`);
+    assert.equal(
+      fs.readFileSync(shipped, "utf8"),
+      f.contents,
+      `${f.path} is stale in packages/claude-plugin`
+    );
+  }
 });

@@ -29,7 +29,8 @@ export const CLAUDE_INSTALL = [
 
 /** OpenCode's global config folder: `$XDG_CONFIG_HOME/opencode`, else `~/.config/opencode` — on Windows too. */
 export function opencodeGlobalDir(env: NodeJS.ProcessEnv = process.env): string {
-  const base = env.XDG_CONFIG_HOME || path.join(env.HOME || env.USERPROFILE || os.homedir(), ".config");
+  const base =
+    env.XDG_CONFIG_HOME || path.join(env.HOME || env.USERPROFILE || os.homedir(), ".config");
   return path.join(base, "opencode");
 }
 
@@ -71,7 +72,9 @@ function usage(): void {
 }
 
 /** Write the OpenCode plugin under `dir`, each file with what happened to it. */
-export function installOpencode(dir: string): { path: string; action: "create" | "update" | "unchanged" }[] {
+export function installOpencode(
+  dir: string
+): { path: string; action: "create" | "update" | "unchanged" }[] {
   return opencodePluginFiles(".").map((f) => {
     const target = path.join(dir, f.path);
     const before = fs.existsSync(target) ? fs.readFileSync(target, "utf8") : null;
@@ -102,9 +105,13 @@ export function main(argv: string[]): void {
   }
   if (!opts.global) {
     io.usage(NULL_SHAPE, [
-      error("install_needs_global", "`agents install` installs for every project of this user: pass --global.", {
-        fix: "specgate agents install --global — or, for this project only, `specgate agents init --tool opencode-plugin` / `--tool claude-plugin`.",
-      }),
+      error(
+        "install_needs_global",
+        "`agents install` installs for every project of this user: pass --global.",
+        {
+          fix: "specgate agents install --global — or, for this project only, `specgate agents init --tool opencode-plugin` / `--tool claude-plugin`.",
+        }
+      ),
     ]);
   }
   const unknown = opts.tools.filter((t) => !GLOBAL_TOOLS.includes(t));
@@ -124,7 +131,9 @@ export function main(argv: string[]): void {
     if (files.length) {
       process.stdout.write(`  ${c.bold}OpenCode${c.reset}  ${ui.muted(opencodeGlobalDir())}\n`);
       for (const f of files) {
-        process.stdout.write(`    ${f.action === "unchanged" ? ui.muted(`= ${f.path}`) : `+ ${f.path}`}\n`);
+        process.stdout.write(
+          `    ${f.action === "unchanged" ? ui.muted(`= ${f.path}`) : `+ ${f.path}`}\n`
+        );
       }
       process.stdout.write("\n");
     }

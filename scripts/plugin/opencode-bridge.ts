@@ -13,7 +13,11 @@
  * so the logic is the same compiled code the Claude Code hooks run.
  */
 
-import { decide as gateDecide, runValidate as realValidate, type GateDiagnostic } from "./gate-hook";
+import {
+  decide as gateDecide,
+  runValidate as realValidate,
+  type GateDiagnostic,
+} from "./gate-hook";
 import { decide as guardDecide } from "./guard-hook";
 import { isSpecDriven } from "./project-state";
 import { sessionContext } from "./session-hook";
@@ -23,7 +27,10 @@ export interface OpencodeContext {
   directory: string;
   client: {
     session: {
-      prompt: (o: { path: { id: string }; body: { parts: { type: "text"; text: string }[] } }) => Promise<unknown>;
+      prompt: (o: {
+        path: { id: string };
+        body: { parts: { type: "text"; text: string }[] };
+      }) => Promise<unknown>;
     };
   };
 }
@@ -44,7 +51,8 @@ export function patchFiles(patchText: string): string[] {
 
 /** The files a tool call writes, or none for a tool that does not write. */
 function writtenFiles(tool: string, args: Record<string, unknown>): string[] {
-  if ((tool === "write" || tool === "edit") && typeof args.filePath === "string") return [args.filePath];
+  if ((tool === "write" || tool === "edit") && typeof args.filePath === "string")
+    return [args.filePath];
   if ((tool === "apply_patch" || tool === "patch") && typeof args.patchText === "string") {
     return patchFiles(args.patchText);
   }
@@ -66,9 +74,15 @@ export function createHooks(ctx: OpencodeContext, deps: BridgeDeps = {}) {
       if (text) output.system.push(text);
     },
 
-    "tool.execute.before": async (input: { tool: string }, output: { args: Record<string, unknown> }) => {
+    "tool.execute.before": async (
+      input: { tool: string },
+      output: { args: Record<string, unknown> }
+    ) => {
       for (const file of writtenFiles(input.tool, output.args ?? {})) {
-        const d = guardDecide({ cwd: dir, tool_name: "Write", tool_input: { file_path: file } }, env);
+        const d = guardDecide(
+          { cwd: dir, tool_name: "Write", tool_input: { file_path: file } },
+          env
+        );
         if (!d.allow) throw new Error(d.message);
       }
     },

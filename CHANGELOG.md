@@ -9,6 +9,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **The agent guards** (REQ-420…REQ-423). The Claude Code plugin tells a new session the open change and its next requirement (`SessionStart`), and refuses a write to source code until a test new or changed in the working tree names a requirement of an open change (`PreToolUse`) — tests, specs, docs and configuration are never refused; `specgate config set agent_guard off` turns it off for a project. `specgate agents init --tool opencode-plugin` gives OpenCode the same three guards, the gate on `session.idle`. `specgate agents install --global` installs them once for every project; this repository is now a Claude Code marketplace for its plugin.
+
+### Fixed
+
+- **The gate hook on Windows** (REQ-424). It spawned `npx` without a shell, which fails on Windows, and by design let the stop through: the gate was silently off there. The plugin's scripts now start the CLI through `npx.cmd` and a shell on Windows, with fixed arguments.
+- **The shipped plugin's version** (REQ-425). `packages/claude-plugin` said 0.19.1; it is regenerated, and a test fails when it falls behind the generator or the CLI's version.
+
 ## [0.27.10] — 2026-10-30
 
 Node.js 24 where Specgate runs once, after the October 2026 Node.js security release; the site carries both versions; npm audit and the licence check pass again.

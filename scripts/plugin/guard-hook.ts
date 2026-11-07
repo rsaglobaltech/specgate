@@ -18,7 +18,14 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { changedFiles, guardOff, isSpecDriven, isTestFile, needsTest, openChanges } from "./project-state";
+import {
+  changedFiles,
+  guardOff,
+  isSpecDriven,
+  isTestFile,
+  needsTest,
+  openChanges,
+} from "./project-state";
 
 /** The tools that write a file, and where each names it. */
 const WRITERS: Record<string, string> = {
@@ -74,7 +81,10 @@ export function decide(input: GuardInput, env: Record<string, string | undefined
     if (!isSpecDriven(cwd) || guardOff(cwd, env)) return ALLOW;
 
     const root = real(cwd);
-    const rel = path.relative(root, real(path.isAbsolute(target) ? target : path.join(cwd, target)));
+    const rel = path.relative(
+      root,
+      real(path.isAbsolute(target) ? target : path.join(cwd, target))
+    );
     if (rel.startsWith("..") || path.isAbsolute(rel) || !needsTest(rel)) return ALLOW;
 
     const changed = changedFiles(cwd);

@@ -46,9 +46,10 @@ export function deltaRequirements(text: string): { id: string; status: string }[
   for (const block of text.split(/^(?=### Requirement: )/m)) {
     const id = /^### Requirement: (REQ-\d+)/.exec(block)?.[1];
     if (!id) continue;
-    const status = /<!--\s*specgate:trace[^>]*\bstatus=([A-Za-z]+(?: [A-Za-z]+)*?)(?=\s+\w+=|\s*-->)/.exec(
-      block
-    )?.[1];
+    const status =
+      /<!--\s*specgate:trace[^>]*\bstatus=([A-Za-z]+(?: [A-Za-z]+)*?)(?=\s+\w+=|\s*-->)/.exec(
+        block
+      )?.[1];
     out.push({ id, status: status ?? "Draft" });
   }
   return out;
@@ -102,7 +103,8 @@ export function isTestFile(rel: string): boolean {
 }
 
 /** Code the guard holds back until a test names the requirement: these extensions, outside the docs. */
-const SOURCE = /\.([cm]?[jt]sx?|java|kt|kts|scala|groovy|py|go|rb|cs|php|rs|swift|c|cc|cpp|h|hpp|vue|svelte)$/;
+const SOURCE =
+  /\.([cm]?[jt]sx?|java|kt|kts|scala|groovy|py|go|rb|cs|php|rs|swift|c|cc|cpp|h|hpp|vue|svelte)$/;
 
 /** Does an edit to `rel` (from the project root) wait for a test? */
 export function needsTest(rel: string): boolean {
@@ -144,8 +146,13 @@ export function changedFiles(root: string): string[] | null {
  * the arguments are fixed words and the project goes in as the working
  * directory, so nothing from outside reaches that command line.
  */
-export function specgateCommand(platform: string = process.platform): { command: string; shell: boolean } {
-  return platform === "win32" ? { command: "npx.cmd", shell: true } : { command: "npx", shell: false };
+export function specgateCommand(platform: string = process.platform): {
+  command: string;
+  shell: boolean;
+} {
+  return platform === "win32"
+    ? { command: "npx.cmd", shell: true }
+    : { command: "npx", shell: false };
 }
 
 type Spawn = (
