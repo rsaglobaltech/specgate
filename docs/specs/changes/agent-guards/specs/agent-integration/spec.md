@@ -28,7 +28,7 @@ The Claude Code plugin SHALL register a `PreToolUse` hook on the tools that writ
 - WHEN the agent tries to write `src/core/map/scan.ts`
 - THEN the edit is denied with "write the test for REQ-311 first"; once `test/module-map.test.ts` naming REQ-311 is in the working tree, the same edit is allowed; an edit to `test/module-map.test.ts` itself is never denied
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-422 — OpenCode gets the same three guards
 

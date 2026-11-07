@@ -10,6 +10,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { spawnSync } from "node:child_process";
 
 /** An open change and its requirements, in the order its deltas declare them. */
 export interface OpenChange {
@@ -72,4 +73,67 @@ export function openChanges(root: string): OpenChange[] {
         pending: reqs.filter((r) => !DONE.has(r.status)).map((r) => r.id),
       };
     });
+}
+
+/** Is the guard turned off — by `SPECGATE_GUARD=off`, or `agent_guard: off` in `.specgate/config.json`? */
+export function guardOff(root: string, env: Record<string, string | undefined>): boolean {
+  if ((env.SPECGATE_GUARD ?? "").toLowerCase() === "off") return true;
+  try {
+    const config = JSON.parse(fs.readFileSync(path.join(root, ".specgate", "config.json"), "utf8"));
+    return String(config.agent_guard ?? "").toLowerCase() === "off";
+  } catch {
+    return false;
+  }
+}
+
+/** Files a test runner picks up, in the conventions of the stacks Specgate serves. */
+export function isTestFile(rel: string): boolean {
+  const p = rel.replace(/\\/g, "/");
+  const name = p.slice(p.lastIndexOf("/") + 1);
+  return (
+    /(^|\/)(tests?|__tests__|spec|e2e)\//.test(p) ||
+    /\.(test|spec|e2e)\.[cm]?[jt]sx?$/.test(name) ||
+    /(Test|Tests|IT|TestCase|Spec)\.(java|kt|scala|groovy|cs)$/.test(name) ||
+    /^test_.*\.py$|_test\.py$/.test(name) ||
+    /_test\.go$/.test(name) ||
+    /_spec\.rb$/.test(name) ||
+    /\.feature$/.test(name)
+  );
+}
+
+/** Code the guard holds back until a test names the requirement: these extensions, outside the docs. */
+const SOURCE = /\.([cm]?[jt]sx?|java|kt|kts|scala|groovy|py|go|rb|cs|php|rs|swift|c|cc|cpp|h|hpp|vue|svelte)$/;
+
+/** Does an edit to `rel` (from the project root) wait for a test? */
+export function needsTest(rel: string): boolean {
+  const p = rel.replace(/\\/g, "/");
+  if (p === "spec.md" || /^(features|docs)\//.test(p) || /(^|\/)\./.test(p)) return false;
+  return SOURCE.test(p) && !isTestFile(p);
+}
+
+/**
+ * The files new or modified in the working tree, from the project root — or
+ * null when git cannot say (no repository, no git), and the guard stands aside.
+ */
+export function changedFiles(root: string): string[] | null {
+  const r = spawnSync("git", ["status", "--porcelain", "--untracked-files=all", "-z"], {
+    cwd: root,
+    encoding: "utf8",
+    timeout: 10_000,
+  });
+  if (r.error || r.status !== 0) return null;
+  const prefix = spawnSync("git", ["rev-parse", "--show-prefix"], { cwd: root, encoding: "utf8" });
+  const under = prefix.status === 0 ? (prefix.stdout ?? "").trim() : "";
+  const out: string[] = [];
+  const entries = r.stdout.split("\0").filter(Boolean);
+  for (let i = 0; i < entries.length; i++) {
+    const status = entries[i].slice(0, 2);
+    const file = entries[i].slice(3);
+    // A rename is followed by its old name, which is not a file any more.
+    if (status.includes("R") || status.includes("C")) i++;
+    if (status.includes("D")) continue;
+    if (under && !file.startsWith(under)) continue;
+    out.push(file.slice(under.length));
+  }
+  return out;
 }

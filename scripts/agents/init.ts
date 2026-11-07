@@ -160,6 +160,8 @@ function claudePluginFiles(version: string) {
     hooks: {
       // A new session is told the open change and what comes next (REQ-420).
       SessionStart: run("session-hook.js"),
+      // An edit to source code waits for a test that names the requirement (REQ-421).
+      PreToolUse: [{ matcher: "Write|Edit|MultiEdit|NotebookEdit", ...run("guard-hook.js")[0] }],
       Stop: run("gate-hook.js"),
     },
   };
@@ -203,7 +205,7 @@ function pluginScriptSource(name: string): string {
 }
 
 /** The compiled scripts the plugin carries: the hooks, and the helper they share. */
-const PLUGIN_SCRIPTS = ["gate-hook.js", "session-hook.js", "project-state.js"];
+const PLUGIN_SCRIPTS = ["gate-hook.js", "session-hook.js", "guard-hook.js", "project-state.js"];
 
 const json = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 

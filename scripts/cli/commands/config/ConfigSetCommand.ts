@@ -26,6 +26,11 @@ export const KEYS: Record<string, { values: string[] | null; describe: string }>
     values: ["on", "off"],
     describe: "Whether Gato, the cat that keeps the gate, shows up at the end of `status`.",
   },
+  agent_guard: {
+    values: ["on", "off"],
+    describe:
+      "Whether the agent plugins refuse an edit to source code until a test names the requirement.",
+  },
   test_cmd: {
     values: null,
     describe: `The command \`check\` and \`done\` run as your tests. Kept in ${HARNESS_CONFIG_FILE}.`,
