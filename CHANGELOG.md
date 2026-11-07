@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.28.0] — 2026-11-07
+
+The agent guards: the open change at session start, the test before the code and the gate, for Claude Code and OpenCode, installed once per user; and the gate hook on Windows.
+
 ### Added
 
 - **The agent guards** (REQ-420…REQ-423). The Claude Code plugin tells a new session the open change and its next requirement (`SessionStart`), and refuses a write to source code until a test new or changed in the working tree names a requirement of an open change (`PreToolUse`) — tests, specs, docs and configuration are never refused; `specgate config set agent_guard off` turns it off for a project. `specgate agents init --tool opencode-plugin` gives OpenCode the same three guards, the gate on `session.idle`. `specgate agents install --global` installs them once for every project; this repository is now a Claude Code marketplace for its plugin.
