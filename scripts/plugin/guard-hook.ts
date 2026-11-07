@@ -61,7 +61,11 @@ function real(p: string): string {
 
 /** Does any of these files, read from `root`, name one of the ids? */
 function namesAny(root: string, files: string[], ids: string[]): boolean {
-  const pattern = new RegExp(`\\b(${ids.map((i) => i.replace(/-/g, "\\-")).join("|")})\\b`);
+  // Requirement ids are `REQ-` and digits: nothing in them needs escaping, and
+  // anything else is not a requirement id.
+  const valid = ids.filter((i) => /^REQ-\d+$/.test(i));
+  if (!valid.length) return false;
+  const pattern = new RegExp(`\\b(${valid.join("|")})\\b`);
   return files.some((f) => {
     try {
       return pattern.test(fs.readFileSync(path.join(root, f), "utf8"));
