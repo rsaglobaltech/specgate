@@ -52,7 +52,7 @@ The Claude Code plugin SHALL register a `PreToolUse` hook on the tools that writ
 - WHEN the developer runs `specgate agents install --global` and starts OpenCode in each
 - THEN the developer sees the plugin in OpenCode's global plugin folder, the guards working in the spec-driven repository and nothing from specgate in the other; a second run reports nothing changed
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-424 — The guards run on Windows
 

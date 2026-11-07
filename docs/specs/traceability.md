@@ -213,6 +213,7 @@
 | REQ-420 | SCN-420a | `features/agent-integration/REQ-420.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 | REQ-421 | SCN-421a | `features/agent-integration/REQ-421.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 | REQ-422 | SCN-422a | `features/agent-integration/REQ-422.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
+| REQ-423 | SCN-423a | `features/agent-integration/REQ-423.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

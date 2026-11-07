@@ -338,3 +338,51 @@ test("REQ-422: agents init --tool opencode-plugin writes the plugin and the scri
   }
   assert.equal(TOOLS["opencode-plugin"].optIn, true);
 });
+
+// ── REQ-423: installed once per user, quiet where there are no specs ──
+
+import { runCli, ROOT_DIR } from "../helpers/cli";
+
+/** A home folder of its own, so a test never writes into the developer's. */
+function home(): { dir: string; env: NodeJS.ProcessEnv } {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-guards-home-"));
+  const env = { ...process.env, HOME: dir, USERPROFILE: dir, XDG_CONFIG_HOME: path.join(dir, ".config") };
+  return { dir, env };
+}
+
+test("REQ-423 SCN-423a: one install for every repository; a second run changes nothing", () => {
+  const { dir, env } = home();
+  const first = runCli(["agents", "install", "--global"], { cwd: dir, env });
+  assert.equal(first.status, 0, first.stderr);
+  const pluginDir = path.join(dir, ".config", "opencode");
+  assert.ok(fs.existsSync(path.join(pluginDir, "plugin", "specgate.js")), first.stdout);
+  assert.ok(fs.existsSync(path.join(pluginDir, "specgate", "guard-hook.cjs")));
+  // Claude Code installs plugins itself: the two commands, from this repository's marketplace.
+  assert.match(first.stdout, /\/plugin marketplace add rsaglobaltech\/specgate/);
+  assert.match(first.stdout, /\/plugin install specgate@specgate/);
+
+  const again = runCli(["agents", "install", "--global", "--json"], { cwd: dir, env });
+  assert.equal(again.status, 0, again.stderr);
+  const files = JSON.parse(again.stdout).files as { path: string; action: string }[];
+  assert.ok(files.length > 0);
+  assert.deepEqual([...new Set(files.map((f) => f.action))], ["unchanged"]);
+});
+
+test("REQ-423: --tool limits the install to one tool; without --global it says what it does", () => {
+  const { dir, env } = home();
+  const claude = runCli(["agents", "install", "--global", "--tool", "claude-plugin"], { cwd: dir, env });
+  assert.equal(claude.status, 0, claude.stderr);
+  assert.ok(!fs.existsSync(path.join(dir, ".config", "opencode")), "OpenCode left alone");
+  const local = runCli(["agents", "install"], { cwd: dir, env });
+  assert.notEqual(local.status, 0);
+  assert.match(local.stderr + local.stdout, /--global/);
+  assert.match(local.stderr + local.stdout, /agents init --tool opencode-plugin/);
+});
+
+test("REQ-423: the repository is a Claude Code marketplace for its plugin", () => {
+  const market = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, ".claude-plugin", "marketplace.json"), "utf8"));
+  assert.equal(market.name, "specgate");
+  const entry = market.plugins.find((p: { name: string }) => p.name === "specgate");
+  assert.equal(entry.source, "./packages/claude-plugin");
+  assert.ok(fs.existsSync(path.join(ROOT_DIR, "packages", "claude-plugin", ".claude-plugin", "plugin.json")));
+});

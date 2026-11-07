@@ -1,0 +1,17 @@
+{
+  "name": "specgate",
+  "owner": {
+    "name": "rsaglobaltech"
+  },
+  "metadata": {
+    "description": "Spec-driven development for Claude Code: the loop as commands, the spec tree over MCP, and guards that keep the test before the code and the gate before the end."
+  },
+  "plugins": [
+    {
+      "name": "specgate",
+      "source": "./packages/claude-plugin",
+      "description": "The daily loop as slash commands, the spec tree over MCP, and the agent guards as hooks.",
+      "homepage": "https://rsaglobaltech.github.io/specgate/"
+    }
+  ]
+}

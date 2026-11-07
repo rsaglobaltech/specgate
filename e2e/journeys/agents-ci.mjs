@@ -49,6 +49,21 @@ export default [
     },
   },
   {
+    name: "agents install --global puts the guards where OpenCode and Claude Code find them",
+    covers: ["agents install"],
+    run(dir, t) {
+      const home = path.join(dir, "home");
+      const env = { HOME: home, USERPROFILE: home, XDG_CONFIG_HOME: path.join(home, ".config") };
+      const r = t.sgEnv(dir, env, "agents", "install", "--global");
+      t.ok(r, "agents install --global");
+      t.expect(
+        fs.existsSync(path.join(home, ".config", "opencode", "plugin", "specgate.js")),
+        "the OpenCode plugin in its global folder"
+      );
+      t.expect(/\/plugin install specgate@specgate/.test(r.stdout), "Claude Code is told how to install the plugin");
+    },
+  },
+  {
     name: "update refreshes generated agent files and keeps a team's edit",
     covers: ["update"],
     run(dir, t) {
