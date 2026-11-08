@@ -90,7 +90,7 @@ Every action of the studio SHALL be reachable and usable with the keyboard, with
 - WHEN the viewer moves with Tab to Q1's answer, types it and presses Enter
 - THEN the answer is saved, the focus stays on Q1, and a notice is announced once
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-436 — The studio is tested in a browser on the three systems
 
