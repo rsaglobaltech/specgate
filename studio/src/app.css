@@ -2128,3 +2128,18 @@ code.block {
 .content > section.card {
   flex: 0 0 auto;
 }
+
+/* ── The command the studio runs (REQ-438) ── */
+.command {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.term-out {
+  height: auto;
+  max-height: 360px;
+  min-height: 80px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}

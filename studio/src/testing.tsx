@@ -22,6 +22,8 @@ import {
 export { matrixByModule, pipeline, summary, workQueue, dur } from "./sections/live/model";
 export { stageOf } from "./sections/Build";
 import { Trace } from "./sections/live/Trace";
+import { Command } from "./ui/Command";
+import type { ActionRun } from "./core/useAction";
 import { Settings, type QualityView, type SettingsProfile } from "./sections/Settings";
 import { Report, type ReportData } from "./sections/Report";
 import { Brief, type BriefData } from "./sections/Brief";
@@ -182,4 +184,8 @@ export function renderStates(lang: Lang, notices: Notice[] = [], error = ""): st
 
 export function renderTrace(lang: Lang, rows: MatrixRow[]): string {
   return render(<Trace lang={lang} rows={rows} />);
+}
+
+export function renderCommand(lang: Lang, run: ActionRun | null, output: string): string {
+  return render(<Command lang={lang} run={run} output={output} />);
 }

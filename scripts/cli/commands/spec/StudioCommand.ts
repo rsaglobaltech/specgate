@@ -35,6 +35,7 @@ import {
 } from "../../../lib/studio-route";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { studioAsset, studioShell } from "../../../lib/studio-shell";
+import { actionView, runAction } from "../../../lib/studio-actions";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
@@ -311,6 +312,8 @@ export class StudioCommand extends BaseCommand {
         // It carries the token, as the page does: a studio started again has a
         // new one, and the page that reconnects needs it to write (REQ-201).
         "/api/ping": () => ({ ok: true, token }),
+        // REQ-438: what the studio's command runs, and its output so far.
+        "/api/action": () => actionView(projectDir),
         "/api/home": () => home(projectDir),
         "/api/gate": () => gate(projectDir),
         "/api/questions": () => questionsView(projectDir),
@@ -352,6 +355,7 @@ export class StudioCommand extends BaseCommand {
         "/api/draft/stop",
         "/api/quality/init",
         "/api/agent",
+        "/api/action",
       ];
       if (req.method === "POST" && WRITES.includes(url)) {
         const header = (name: string) => {
@@ -393,6 +397,8 @@ export class StudioCommand extends BaseCommand {
             kind?: string;
             command?: string;
             now?: boolean;
+            action?: string;
+            args?: Record<string, unknown>;
           };
           try {
             body = JSON.parse(raw || "{}");
@@ -448,6 +454,18 @@ export class StudioCommand extends BaseCommand {
           if (url === "/api/draft") {
             const r = startDraft(projectDir, String(body.module || ""), String(body.profile || ""));
             json(r.ok ? 202 : 422, r);
+            return;
+          }
+          // REQ-438: one of the commands the studio offers — checked, never anything else.
+          if (url === "/api/action") {
+            const r = runAction(
+              projectDir,
+              String(body.action || ""),
+              body.args && typeof body.args === "object" && !Array.isArray(body.args)
+                ? body.args
+                : {}
+            );
+            json(r.ok ? 202 : r.code === "action_running" ? 409 : 422, r);
             return;
           }
           // REQ-431: the agent chosen in the studio.
