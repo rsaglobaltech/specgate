@@ -64,7 +64,7 @@ The system SHALL show in Settings the project's preferences as `specgate config 
 
 ### Requirement: REQ-443 — A repository that has code, adopted from the studio
 
-The system SHALL offer, in a folder with files and no Specgate project, to adopt it: first a preview of every file `specgate init` would write, then the adoption, which writes those files and changes no other.
+The system SHALL offer, in a folder with files and no Specgate project, to adopt it in place with `specgate adopt`: first a preview of every file it would write, then the adoption, which writes those files, overwrites none and changes no other.
 
 #### Scenario: SCN-443a — Adopting a repository with a README and code
 

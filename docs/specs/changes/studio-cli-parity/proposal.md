@@ -31,8 +31,9 @@ In scope:
   project (`agents init --tool claude-plugin` / `opencode-plugin`) and the
   agent integrations (`agents init`). `agents install`, which installs the
   guards for every project of the user, stays in the terminal.
-- A repository that has code and no Specgate: adopted from the studio after a
-  preview of every file it would write, touching nothing else.
+- A repository that has code and no Specgate: adopted in place from the studio
+  (`specgate adopt`) after a preview of every file it would write, touching
+  nothing else.
 - ALM, last: the requirement ↔ issue mapping, a sync previewed then run; the
   token stays in the environment, never asked in the browser.
 

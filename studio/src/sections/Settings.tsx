@@ -8,6 +8,7 @@ import { t, type Key, type Lang } from "../core/i18n";
 import { Busy, type Result } from "../ui/Busy";
 import { AgentForm, type AgentKind } from "../ui/AgentForm";
 import { Preferences, type PreferencesProps } from "./settings/Preferences";
+import { Command } from "../ui/Command";
 
 export interface NewProject {
   name: string;
@@ -167,6 +168,44 @@ function Quality({
           </span>
         ) : null}
       </div>
+    </section>
+  );
+}
+
+/**
+ * A folder that has files, adopted in place (REQ-443): first what `specgate
+ * adopt` would write, then the adoption — which overwrites no file and touches
+ * no code.
+ */
+function Adopt({
+  lang,
+  run,
+  output,
+  onAction,
+}: Omit<PreferencesProps, "lang" | "prefs"> & { lang: Lang }) {
+  const mine = !!run && (run.action === "adopt-preview" || run.action === "adopt");
+  const previewed = !!run && run.action === "adopt-preview" && run.exit === 0;
+  return (
+    <section class="card" aria-labelledby="adopt-h">
+      <div>
+        <h2 id="adopt-h">{t(lang, "adoptTitle")}</h2>
+        <p class="faint">{t(lang, "adoptIntro")}</p>
+      </div>
+      <div class="row">
+        <Busy
+          class={previewed ? "btn-ghost" : "btn-primary"}
+          busyLabel={t(lang, "starting")}
+          onRun={() => onAction("adopt-preview", {})}
+        >
+          {t(lang, "adoptPreview")}
+        </Busy>
+        {previewed ? (
+          <Busy busyLabel={t(lang, "adopting")} onRun={() => onAction("adopt", {})}>
+            {t(lang, "adoptNow")}
+          </Busy>
+        ) : null}
+      </div>
+      {mine ? <Command lang={lang} run={run} output={output} /> : null}
     </section>
   );
 }
@@ -363,9 +402,13 @@ export function Settings({
           <h1>{t(lang, "notEmpty")}</h1>
           <p class="lead">{t(lang, "notEmptyP")}</p>
         </header>
-        <section class="card">
-          <code class="cmd">specgate init</code>
-        </section>
+        {preferences ? (
+          <Adopt lang={lang} {...preferences} />
+        ) : (
+          <section class="card">
+            <code class="cmd">specgate adopt</code>
+          </section>
+        )}
       </>
     );
   }

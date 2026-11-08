@@ -585,3 +585,54 @@ test("REQ-442: the guards are installed for this project, never for every projec
   assert.equal(planAction(dir, "agents-guards", { tool: "cursor" }).ok, false);
   assert.equal(planAction(dir, "agents-install", {}).ok, false, "agents install is not offered");
 });
+
+// ── REQ-443: a repository that has code, adopted from the studio ─────────
+test("REQ-443 SCN-443a: adopting a repository with a README and code — previewed, then adopted, nothing else changed", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sg-adopt-"));
+  fs.writeFileSync(path.join(dir, "README.md"), "# Shop\n");
+  fs.mkdirSync(path.join(dir, "src"));
+  fs.writeFileSync(path.join(dir, "src", "index.js"), "console.log(1)\n");
+  fs.writeFileSync(
+    path.join(dir, "package.json"),
+    '{"name":"shop","scripts":{"test":"node -e 0"}}\n'
+  );
+  assert.deepEqual(planAction(dir, "adopt-preview", {}), {
+    ok: true,
+    argv: ["adopt", "--dry-run"],
+  });
+
+  assert.equal(runAction(dir, "adopt-preview", {}).ok, true);
+  const preview = await ended(dir);
+  assert.equal(preview.last!.exit, 0, preview.output);
+  assert.match(preview.output, /\+ spec\.md/);
+  assert.ok(!fs.existsSync(path.join(dir, "spec.md")), "a preview writes nothing");
+
+  assert.equal(runAction(dir, "adopt", {}).ok, true);
+  const adopted = await ended(dir);
+  assert.equal(adopted.last!.exit, 0, adopted.output);
+  assert.ok(fs.existsSync(path.join(dir, "spec.md")));
+  assert.equal(fs.readFileSync(path.join(dir, "README.md"), "utf8"), "# Shop\n");
+  assert.equal(fs.readFileSync(path.join(dir, "src", "index.js"), "utf8"), "console.log(1)\n");
+});
+
+test("REQ-443: a folder with files offers the preview, then the adoption", () => {
+  const ui = studioUi();
+  const html: string = ui.renderSettings("en", { isProject: false, empty: false });
+  assert.match(html, /This folder already holds files/);
+  assert.match(html, />See what adopt writes</);
+  assert.doesNotMatch(html, /<button[^>]*>Adopt this folder</, "adoption comes after the preview");
+  const previewed: string = ui.renderSettings(
+    "en",
+    { isProject: false, empty: false },
+    [],
+    { claude: true, codex: false },
+    null,
+    null,
+    {
+      run: { action: "adopt-preview", argv: ["adopt", "--dry-run"], pid: 1, started: 0, exit: 0 },
+      output: "+ spec.md   dry run\n",
+    }
+  );
+  assert.match(previewed, /<button[^>]*class="btn-primary"[^>]*>Adopt this folder</);
+  assert.match(previewed, /\+ spec\.md/);
+});

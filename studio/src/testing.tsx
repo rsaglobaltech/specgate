@@ -142,7 +142,8 @@ export function renderSettings(
   profiles: SettingsProfile[] = [],
   installed = { claude: true, codex: false },
   quality: QualityView | null = null,
-  agent: string | null = null
+  agent: string | null = null,
+  action: { run: ActionRun | null; output: string } | null = null
 ): string {
   const none = async () => ({ ok: true });
   return render(
@@ -155,6 +156,12 @@ export function renderSettings(
       quality={quality}
       agent={agent}
       onAgent={none}
+      preferences={{
+        prefs: [],
+        run: action?.run || null,
+        output: action?.output || "",
+        onAction: none,
+      }}
       onCreate={none}
       onQuality={none}
     />

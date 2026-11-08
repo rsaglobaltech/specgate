@@ -13,6 +13,6 @@
 - [x] 2.3 REQ-440 — the gate and the doctor from Home and Report
 - [x] 2.4 REQ-441 — apply for a requirement coded by hand
 - [x] 2.5 REQ-442 — Settings: preferences, agent guards, integrations
-- [ ] 2.6 REQ-443 — adopting a repository that has code
+- [x] 2.6 REQ-443 — adopting a repository that has code
 - [ ] 2.7 REQ-444 — ALM: mapping, sync previewed, sync
 - [ ] 2.8 The browser journey extended; docs/studio.md and its screenshots

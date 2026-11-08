@@ -568,7 +568,8 @@ test("REQ-213 SCN-213a: the new Settings — an empty folder: five questions, th
 test("REQ-213 SCN-213b: the new Settings — a folder with files is adopted from a terminal, never overwritten", () => {
   const html: string = studio.renderSettings("en", { isProject: false, empty: false });
   assert.match(html, /This folder already holds files/);
-  assert.match(html, /<code class="cmd">specgate init<\/code>/);
+  // Adopted in place, never a project created over its files (REQ-443 offers the adoption).
+  assert.match(html, /specgate adopt/);
   assert.doesNotMatch(html, /Create project/);
 });
 

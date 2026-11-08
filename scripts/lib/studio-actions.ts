@@ -118,8 +118,9 @@ const ACTIONS: Record<string, Action> = {
     argv: (a) => ["agents", "init", "--tool", a.tool],
   },
   "agents-init": { args: {}, argv: () => ["agents", "init"] },
-  "adopt-preview": { args: {}, argv: () => ["init", "--dry-run", "--yes"], inFolder: true },
-  adopt: { args: {}, argv: () => ["init", "--yes"], inFolder: true },
+  // In place, overwriting no file and touching no code: adopt — init --yes would scaffold a sub-folder.
+  "adopt-preview": { args: {}, argv: () => ["adopt", "--dry-run"] },
+  adopt: { args: {}, argv: () => ["adopt"] },
   "alm-status": { args: {}, argv: () => ["alm", "status"] },
   "alm-sync-preview": { args: {}, argv: () => ["alm", "sync", "--dry-run"] },
   "alm-sync": { args: {}, argv: () => ["alm", "sync"] },
