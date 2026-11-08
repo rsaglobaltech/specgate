@@ -1398,3 +1398,185 @@ select.text-plain {
   color: var(--fg-faint);
   border-color: var(--line);
 }
+
+/* ── Live ── */
+.live {
+  display: grid;
+  grid-template-columns: 1fr minmax(260px, 320px);
+  gap: 20px;
+  align-items: start;
+}
+.live-main,
+.live-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.live-main > .card,
+.live-side > .card {
+  flex: 0 0 auto;
+}
+.now h2 {
+  font: 700 22px/1.2 var(--display);
+  margin: 2px 0 0;
+}
+.clock {
+  font: 600 28px var(--mono);
+  color: var(--fg);
+}
+.conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.conn i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--fg-faint);
+}
+.conn-open i {
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+.conn-lost {
+  color: var(--red);
+  border-color: var(--red);
+}
+.conn-lost i {
+  background: var(--red);
+  animation: sgblink 1s steps(2) infinite;
+}
+.conn-connecting i {
+  background: var(--amber);
+}
+@keyframes sgblink {
+  50% {
+    opacity: 0.2;
+  }
+}
+/* The log is a terminal in both themes. */
+.term-wrap {
+  position: relative;
+}
+.term {
+  margin: 0;
+  padding: 14px 16px;
+  list-style: none;
+  height: 380px;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  background: #0d0e11;
+  border: 1px solid #2a2c33;
+  color: #e9e4dc;
+  font: 12.5px/1.6 var(--mono);
+}
+.term:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.term li {
+  display: grid;
+  grid-template-columns: 64px 84px minmax(0, 1fr);
+  gap: 10px;
+}
+.term .t-ts {
+  color: #7d786f;
+}
+.term .t-k {
+  color: #ff6a2b;
+}
+.term .t-x {
+  overflow-wrap: anywhere;
+}
+.term .ok .t-x {
+  color: #8fd4a8;
+}
+.term .bad .t-x {
+  color: #ff8f7a;
+}
+.term .say .t-x {
+  color: #cfc8bc;
+  font-style: italic;
+}
+.term-empty {
+  color: #7d786f;
+  display: block !important;
+}
+.follow {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  background: #15161a;
+  color: #e9e4dc;
+  border-color: #383b42;
+}
+.queue {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.queue li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.queue .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid var(--line-strong);
+  flex: none;
+}
+.q-running .dot {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.q-pass .dot {
+  background: var(--green);
+  border-color: var(--green);
+}
+.q-fail .dot {
+  background: var(--red);
+  border-color: var(--red);
+}
+.q-question .dot {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+.queue li[aria-current="step"] {
+  font-weight: 600;
+}
+.stats.one {
+  grid-template-columns: 1fr 1fr;
+}
+.files {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+.ask {
+  border-color: var(--amber);
+}
+.stop {
+  padding-top: 4px;
+}
+@media (max-width: 900px) {
+  .live {
+    grid-template-columns: 1fr;
+  }
+  .term {
+    height: 300px;
+  }
+}

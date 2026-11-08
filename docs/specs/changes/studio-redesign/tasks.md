@@ -12,7 +12,7 @@
 - [x] 2.2 REQ-204 — the sidebar, an address per section, themes, simple/advanced, ES/EN
 - [x] 2.3 REQ-212 — Home with the route and the next step (canvas: Inicio)
 - [x] 2.4 Brief, Changes, Questions, Build, Report, Settings on the new design (canvas: Preguntas, Cambios, Construir), their behaviour as today
-- [ ] 2.5 REQ-433 — Live in the app over server-sent events; `/live` opens it
+- [x] 2.5 REQ-433 — Live in the app over server-sent events; `/live` opens it
 - [ ] 2.6 REQ-434 — skeleton, busy buttons, notices, connection state, section errors (canvas: Estados)
 - [ ] 2.7 REQ-435 — keyboard, focus, roles and names, reduced motion
 - [ ] 2.8 REQ-436 — browser tests in CI on the three systems

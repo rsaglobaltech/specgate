@@ -15,10 +15,16 @@ export const SECTIONS = [
 
 export type Section = (typeof SECTIONS)[number];
 
-/** The section an address names; Home for anything else. */
-export function sectionOf(hash: string): Section {
+const isSection = (id: string): id is Section => (SECTIONS as readonly string[]).includes(id);
+
+/**
+ * The section an address names; with none named, the one the page opens on
+ * (`/live` opens Live, REQ-433), else Home.
+ */
+export function sectionOf(hash: string, opensOn = ""): Section {
   const id = hash.replace(/^#\/?/, "").split(/[/?]/)[0];
-  return (SECTIONS as readonly string[]).includes(id) ? (id as Section) : "home";
+  if (isSection(id)) return id;
+  return !id && isSection(opensOn) ? opensOn : "home";
 }
 
 /** The address of a section. */

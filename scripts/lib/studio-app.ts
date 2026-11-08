@@ -21,7 +21,7 @@ import {
 import { requestStop, runLockHolder } from "./harness-guard";
 import { findCliRoot } from "./project-root";
 import { cachedBySpecs } from "./studio-cache";
-import { studioLog } from "./harness-events";
+import { appendEvent, eventsFileFor, studioLog } from "./harness-events";
 import { withQueue } from "../cli/commands/spec/StatusCommand";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { requirementTitles } from "../../packages/core/src/domain/DraftChecklist";
@@ -489,11 +489,37 @@ export function saveSpecification(
 
 /** Ask the run in progress to stop after its current requirement (REQ-209). */
 export function stopBuild(
-  projectDir: string
+  projectDir: string,
+  now = false
 ): { ok: true } | { ok: false; code: string; message: string } {
-  if (!runLockHolder(projectDir))
-    return { ok: false, code: "build_not_running", message: "No run is working." };
+  const lock = runLockHolder(projectDir);
+  if (!lock) return { ok: false, code: "build_not_running", message: "No run is working." };
   requestStop(projectDir);
+  if (!now) return { ok: true };
+  // At once (REQ-433): the run and every process it started, then each attempt
+  // it left open is ended, so Live does not show it running forever.
+  if (process.platform === "win32") {
+    spawnSync("taskkill", ["/pid", String(lock.pid), "/T", "/F"], { windowsHide: true });
+  } else {
+    try {
+      process.kill(-lock.pid, "SIGTERM");
+    } catch {
+      try {
+        process.kill(lock.pid, "SIGTERM");
+      } catch {
+        /* already gone */
+      }
+    }
+  }
+  for (const r of readLive(projectDir).requirements) {
+    if (r.state !== "running") continue;
+    appendEvent(
+      eventsFileFor(projectDir, r.req),
+      { type: "attempt", state: "end", result: "fail", stage: "stopped" },
+      r.req,
+      r.attempt
+    );
+  }
   return { ok: true };
 }
 

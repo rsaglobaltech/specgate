@@ -9,6 +9,7 @@ import type { Prefs } from "./core/prefs";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
+import { Live, logLine, type Connection, type LiveData } from "./sections/Live";
 import { Settings, type QualityView, type SettingsProfile } from "./sections/Settings";
 import { Report, type ReportData } from "./sections/Report";
 import { Brief, type BriefData } from "./sections/Brief";
@@ -120,5 +121,19 @@ export function renderSettings(
       onCreate={none}
       onQuality={none}
     />
+  );
+}
+
+export { logLine };
+
+export function renderLive(
+  lang: Lang,
+  data: LiveData,
+  connection: Connection = "open",
+  now = 1_800_000_000
+): string {
+  const none = async () => ({ ok: true });
+  return render(
+    <Live lang={lang} data={data} connection={connection} now={now} onAnswer={none} onStop={none} />
   );
 }

@@ -14,8 +14,11 @@ const escape = (s: string) =>
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string
   );
 
-/** The page: the token for writes (REQ-201), the project's name, the app's script and styles. */
-export function studioShell(projectName: string, token: string): string {
+/**
+ * The page: the token for writes (REQ-201), the project's name, the app's
+ * script and styles; with a section, the one it opens on — `/live` opens Live (REQ-433).
+ */
+export function studioShell(projectName: string, token: string, section = ""): string {
   return [
     "<!doctype html>",
     '<html lang="es">',
@@ -24,6 +27,7 @@ export function studioShell(projectName: string, token: string): string {
     '<meta name="viewport" content="width=device-width, initial-scale=1"/>',
     `<meta name="specgate-token" content="${escape(token)}"/>`,
     `<meta name="specgate-project" content="${escape(projectName)}"/>`,
+    ...(section ? [`<meta name="specgate-section" content="${escape(section)}"/>`] : []),
     `<title>Specgate Studio — ${escape(projectName)}</title>`,
     '<link rel="stylesheet" href="/studio/app.css"/>',
     "</head>",

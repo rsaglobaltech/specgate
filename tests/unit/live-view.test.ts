@@ -307,7 +307,11 @@ test("REQ-131 SCN-131a: the live view shows a requirement in progress, and pushe
     assert.deepEqual(r.files, ["src/a.ts"]);
     assert.deepEqual(r.tests, { pass: 3, fail: 0 });
     assert.equal(r.steps[0].kind, "test", "newest first");
-    assert.match((await get(s.port, "/live")).body, /Harness live/);
+    // REQ-433: the live view is the studio app, opened on its Live section.
+    assert.match(
+      (await get(s.port, "/live")).body,
+      /<meta name="specgate-section" content="live"\/>/
+    );
 
     // The stream: the current state, then the change, without a reload.
     const pushed = await new Promise<string[]>((resolve, reject) => {

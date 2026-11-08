@@ -684,3 +684,92 @@ test("REQ-204: the sidebar folds to its icons — each section still named, the 
     /href="#\/questions" aria-current="page" title="Questions"><svg[^]*?<span class="label">Questions<\/span>/
   );
 });
+
+const liveData = (now: number, extra: Record<string, unknown> = {}) => ({
+  requirements: [
+    {
+      req: "REQ-025",
+      title: "Cancel an order",
+      group: "orders",
+      attempt: 2,
+      phase: "gate",
+      state: "running",
+      started: now - 125,
+      updated: now,
+      elapsed: 125,
+      tests: { pass: 3, fail: 1 },
+      files: ["src/orders.ts"],
+      steps: [
+        { type: "gate", stage: "tests", result: "fail", pass: 3, fail: 1, t: now },
+        { type: "gate-start", stage: "tests", t: now - 10 },
+        { type: "step", kind: "edit", target: "src/orders.ts", t: now - 40 },
+      ],
+      usage: null,
+      question: null,
+    },
+  ],
+  queue: ["REQ-025", "REQ-026"],
+  queueStarted: now - 200,
+  totals: { input: 12000, output: 3000, cost: 0.42, turns: 9 },
+  questions: { open: [] },
+  ...extra,
+});
+
+test("REQ-433 SCN-433a: the new Live — the test result in the log, Tests the current stage, REQ-026 queued", () => {
+  const now = 1_800_000_000;
+  const html: string = studio.renderLive("en", liveData(now), "open", now);
+  assert.match(html, /<li class="now" aria-current="step"><i><\/i>Test<\/li>/);
+  // The log reads top to bottom: the edit, the start, then the result.
+  const log = html.slice(html.indexOf('class="term"'));
+  assert.ok(log.indexOf("src/orders.ts") < log.indexOf("started  tests"));
+  assert.ok(log.indexOf("started  tests") < log.indexOf("failed  tests  (3 ✓ 1 ✗)"));
+  assert.match(
+    html,
+    /<li class="q-queued"><span class="dot" aria-hidden="true"><\/span><span class="grow"><span class="id">REQ-026<\/span>/
+  );
+  assert.match(
+    html,
+    /aria-current="step"><span class="dot"[^>]*><\/span><span class="grow"><span class="id">REQ-025/
+  );
+  assert.match(html, /\[ REQ-025 · attempt 2 \]/);
+  assert.match(html, />2:05</);
+  assert.match(html, /\$0\.42/);
+  assert.match(html, /1 files touched/);
+  assert.match(html, />Stop after this requirement</);
+  assert.match(html, />Stop now</);
+  assert.match(html, /role="status"><i aria-hidden="true"><\/i>Connected/);
+});
+
+test("REQ-433: the new Live — a question the agent asked is answered there; a lost stream is said", () => {
+  const now = 1_800_000_000;
+  const data = liveData(now, {
+    questions: {
+      open: [
+        { id: "Q4", change: "draft-orders", text: "Refund to the card?", blocks: ["REQ-025"] },
+      ],
+    },
+  });
+  data.requirements[0].state = "question";
+  (data.requirements[0] as { question: unknown }).question = { text: "Refund to the card?" };
+  const html: string = studio.renderLive("es", data, "lost", now);
+  assert.match(html, /\[ El asistente pregunta \]/);
+  assert.match(html, /<span class="id">Q4<\/span> Refund to the card\?/);
+  assert.match(html, /<label for="live-answer-draft-orders-Q4"/);
+  assert.match(html, /Sin conexión · reintentando/);
+  assert.match(
+    studio.renderLive("es", { ...liveData(now), requirements: [] }, "open", now),
+    /No hay nada en marcha ahora\./
+  );
+});
+
+test("REQ-433: /live opens the app on Live, and an address still wins", () => {
+  assert.equal(studio.sectionOf("", "live"), "live");
+  assert.equal(studio.sectionOf("#/questions", "live"), "questions");
+  assert.equal(studio.sectionOf("", "nope"), "home");
+  const { studioShell } = require("../../scripts/lib/studio-shell");
+  assert.match(
+    studioShell("shop", "ab12", "live"),
+    /<meta name="specgate-section" content="live"\/>/
+  );
+  assert.doesNotMatch(studioShell("shop", "ab12"), /specgate-section/);
+});

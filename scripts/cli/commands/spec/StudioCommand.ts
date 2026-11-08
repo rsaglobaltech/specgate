@@ -41,7 +41,6 @@ import { BaseCommand } from "../../../lib/command";
 
 import { c } from "../../../lib/ui";
 import { readLive, liveSignature } from "../../../lib/live-model";
-import { livePage } from "../../../lib/live-page";
 import { requirementDetail, liveMatrix } from "../../../lib/live-detail";
 import { promptFileFor } from "../../../lib/harness-events";
 
@@ -387,6 +386,7 @@ export class StudioCommand extends BaseCommand {
             level?: string;
             kind?: string;
             command?: string;
+            now?: boolean;
           };
           try {
             body = JSON.parse(raw || "{}");
@@ -476,7 +476,8 @@ export class StudioCommand extends BaseCommand {
             return;
           }
           if (url === "/api/stop") {
-            const r = stopBuild(projectDir);
+            // REQ-433: after the current requirement, or at once.
+            const r = stopBuild(projectDir, body.now === true);
             json(r.ok ? 200 : 422, r);
             return;
           }
@@ -535,9 +536,10 @@ export class StudioCommand extends BaseCommand {
         res.end(reportHtml(report(projectDir)));
         return;
       }
+      // REQ-433: the live view is the app's Live section.
       if (url === "/live" || url === "/live/") {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(livePage(path.basename(projectDir), token));
+        res.end(studioShell(path.basename(projectDir), token, "live"));
         return;
       }
       if (url === "/live.json") {

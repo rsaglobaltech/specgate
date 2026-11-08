@@ -19,6 +19,8 @@ import {
 import { Brief, type BriefData, type Saved } from "./sections/Brief";
 import { Report, type ReportData } from "./sections/Report";
 import { Settings, type QualityView } from "./sections/Settings";
+import { Live } from "./sections/Live";
+import { useLive } from "./core/useLive";
 import { post } from "./core/api";
 import type { Result } from "./ui/Busy";
 
@@ -45,10 +47,16 @@ function applyTheme(p: Prefs): void {
 export function App() {
   const project =
     document.querySelector('meta[name="specgate-project"]')?.getAttribute("content") || "";
-  const [section, setSection] = useState<Section>(sectionOf(location.hash));
+  // `/live` serves this page opened on Live (REQ-433): that becomes its address.
+  const opensOn =
+    document.querySelector('meta[name="specgate-section"]')?.getAttribute("content") || "";
+  const [section, setSection] = useState<Section>(sectionOf(location.hash, opensOn));
+  useEffect(() => {
+    if (!location.hash && opensOn) history.replaceState(null, "", `#/${sectionOf("", opensOn)}`);
+  }, []);
   const [prefs, setPrefs] = useState<Prefs>(readPrefs(storage()));
   useEffect(() => {
-    const on = () => setSection(sectionOf(location.hash));
+    const on = () => setSection(sectionOf(location.hash, opensOn));
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
@@ -80,6 +88,7 @@ export function App() {
   useEffect(() => {
     if (onBrief && !readingBrief) brief.reload();
   }, [readingBrief]);
+  const stream = useLive(section === "live");
   const report = useRead<ReportData>(section === "report" ? "/api/report" : null);
   const onBuild = section === "build";
   const onSettings = section === "settings";
@@ -136,6 +145,16 @@ export function App() {
           onConfirm={(change, question) =>
             write({ question, change: changeOf(change), reviewed: true })
           }
+        />
+      ) : section === "live" && stream.data ? (
+        <Live
+          lang={prefs.lang}
+          data={stream.data}
+          connection={stream.connection}
+          onAnswer={(question, change, answer) =>
+            write({ question, change: changeOf(change), answer })
+          }
+          onStop={(now) => send("/api/stop", { now })}
         />
       ) : onSettings && route.data && profiles.data ? (
         <Settings
