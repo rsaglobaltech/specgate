@@ -9,6 +9,7 @@ import type { Prefs } from "./core/prefs";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
+import { Brief, type BriefData } from "./sections/Brief";
 import { Build, type BuildData, type LiveRequirement, type Profile } from "./sections/Build";
 import type { HomeData, RouteData } from "./core/route";
 import type { Lang } from "./core/i18n";
@@ -67,6 +68,29 @@ export function renderBuild(
       onBuild={none}
       onStop={none}
       onAgent={none}
+    />
+  );
+}
+
+export { keyOf } from "./sections/Brief";
+
+export function renderBrief(
+  lang: Lang,
+  data: BriefData,
+  opts: { advanced?: boolean; profile?: string; job?: { kind: string } | null } = {}
+): string {
+  const none = async () => ({ ok: true });
+  return render(
+    <Brief
+      lang={lang}
+      advanced={!!opts.advanced}
+      data={data}
+      profile={opts.profile ?? "claude"}
+      job={opts.job ?? null}
+      step=""
+      onSave={none}
+      onFill={none}
+      onStop={none}
     />
   );
 }

@@ -16,6 +16,7 @@ import {
   type LiveRequirement,
   type Profile,
 } from "./sections/Build";
+import { Brief, type BriefData, type Saved } from "./sections/Brief";
 import { post } from "./core/api";
 import type { Result } from "./ui/Busy";
 
@@ -58,21 +59,29 @@ export function App() {
   const home = useRead<HomeData>(section === "home" ? "/api/home" : null);
   const questions = useRead<QuestionsData>(section === "questions" ? "/api/questions" : null);
   const onChanges = section === "changes";
-  const modules = useRead<ModulesData>(onChanges ? "/api/modules" : null);
+  const onBrief = section === "brief";
+  const modules = useRead<ModulesData>(onChanges || onBrief ? "/api/modules" : null);
+  const brief = useRead<BriefData>(onBrief ? "/api/brief" : null);
   const drafts = useRead<DraftView[]>(onChanges ? "/api/drafts" : null);
   // While a module is being drafted, its progress is read again every few seconds.
-  const drafting = onChanges && !!modules.data?.job;
+  const drafting = (onChanges || onBrief) && !!modules.data?.job;
   useEffect(() => {
     if (!drafting) return;
     const timer = setInterval(() => {
       modules.reload();
-      drafts.reload();
+      if (onChanges) drafts.reload();
     }, 3000);
     return () => clearInterval(timer);
-  }, [drafting]);
+  }, [drafting, onChanges]);
+  // When the assistant ends reading a brief, the brief it wrote is read.
+  const readingBrief = onBrief && modules.data?.job?.kind === "brief";
+  useEffect(() => {
+    if (onBrief && !readingBrief) brief.reload();
+  }, [readingBrief]);
   const onBuild = section === "build";
+  const needsProfiles = onBuild || onBrief;
   const build = useRead<BuildData>(onBuild ? "/api/build" : null);
-  const profiles = useRead<{ profiles: Profile[] }>(onBuild ? "/api/profiles" : null);
+  const profiles = useRead<{ profiles: Profile[] }>(needsProfiles ? "/api/profiles" : null);
   const live = useRead<{ requirements: LiveRequirement[] }>(onBuild ? "/live.json" : null);
   // While something is built, what runs is read again every few seconds.
   const building = onBuild && !!build.data?.running;
@@ -94,6 +103,7 @@ export function App() {
         build.reload();
         live.reload();
       }
+      if (onBrief) modules.reload();
       if (onChanges) {
         modules.reload();
         drafts.reload();
@@ -118,6 +128,30 @@ export function App() {
           onConfirm={(change, question) =>
             write({ question, change: changeOf(change), reviewed: true })
           }
+        />
+      ) : onBrief && brief.data ? (
+        <Brief
+          key={`${brief.data.exists}-${modules.data?.job?.kind || ""}`}
+          lang={prefs.lang}
+          advanced={prefs.mode === "advanced"}
+          data={brief.data}
+          profile={(profiles.data?.profiles.find((p) => p.default) || { name: "" }).name}
+          job={modules.data?.job || null}
+          step={modules.data?.step || ""}
+          onSave={async (body) => {
+            const r = await post<Saved>("/api/brief", body);
+            if (r.ok && !brief.data?.exists) brief.reload();
+            if (r.ok) route.reload();
+            return r;
+          }}
+          onFill={(text, replace) =>
+            send("/api/brief/fill", {
+              text,
+              replace,
+              profile: (profiles.data?.profiles.find((p) => p.default) || { name: "" }).name,
+            })
+          }
+          onStop={() => send("/api/draft/stop", {})}
         />
       ) : onBuild && build.data ? (
         <Build

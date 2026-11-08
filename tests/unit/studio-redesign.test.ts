@@ -391,3 +391,85 @@ test("REQ-209 SCN-209a: the new Build — what runs, its stage, a way to watch i
   assert.match(html, />Stop</);
   assert.match(html, /disabled[^>]*>Build 2 requirements →/);
 });
+
+const briefData = (extra: Record<string, unknown> = {}) => ({
+  exists: true,
+  product: "Tienda",
+  actors: [{ name: "Customer", surfaces: ["api"] }],
+  modules: [
+    {
+      key: "orders",
+      name: "Orders",
+      prose: "",
+      rules: ["An order has items"],
+      examples: [],
+      questions: [],
+    },
+    { key: "users", name: "Users", prose: "", rules: [], examples: [], questions: [] },
+  ],
+  markdown: "---\nproduct: Tienda\n---\n",
+  findings: [],
+  ...extra,
+});
+
+test("REQ-214 SCN-214a: the new Brief — the form: product, who uses it, each module's cards", () => {
+  const html: string = studio.renderBrief("es", briefData());
+  assert.match(html, /<label for="bf-product" class="label">El producto, en una frase<\/label>/);
+  assert.match(html, /value="Tienda"/);
+  assert.match(html, /value="Customer" aria-label="Tipo de usuario 1"/);
+  assert.match(html, /type="checkbox" checked[^>]*\/> API/);
+  assert.match(html, /role="tab" class="chip-btn" aria-selected="true"[^>]*>Orders/);
+  assert.match(html, /value="An order has items" aria-label="Reglas 1"/);
+  assert.match(html, /\+ Regla/);
+  assert.match(html, /Todo en orden/);
+  assert.match(html, /<a class="btn-primary" href="#\/changes">Siguiente: redactar los módulos →/);
+  // The markdown tab is the advanced mode's.
+  assert.doesNotMatch(html, />Markdown</);
+  assert.match(studio.renderBrief("es", briefData(), { advanced: true }), />Markdown</);
+});
+
+test("REQ-214 SCN-214b: the new Brief — a finding is shown, an error keeps the drafts waiting", () => {
+  const html: string = studio.renderBrief(
+    "en",
+    briefData({
+      findings: [
+        { severity: "warning", code: "B5", message: "Module users has no example." },
+        { severity: "error", code: "B1", message: "No product." },
+        { severity: "info", code: "B3", message: "an info only" },
+      ],
+    })
+  );
+  assert.match(html, /Module users has no example\./);
+  assert.match(html, /No product\./);
+  assert.doesNotMatch(html, /an info only/);
+  assert.match(html, />Users · !</);
+  assert.match(html, /aria-disabled="true">Next: draft the modules →/);
+  assert.match(html, /Fix what is marked in red first\./);
+});
+
+test("REQ-215 SCN-215a: the new Brief — no brief yet: paste it for the assistant, or start from scratch", () => {
+  const empty = briefData({ exists: false, product: "", actors: [], modules: [] });
+  const html: string = studio.renderBrief("en", empty);
+  assert.match(html, /Have the client's text, an email or notes\?/);
+  assert.match(html, /Let the assistant structure it/);
+  assert.match(html, /Start from scratch/);
+  assert.doesNotMatch(html, /Replace the current brief/);
+  // Without an assistant, the paste says where to set one up.
+  assert.match(
+    studio.renderBrief("en", empty, { profile: "" }),
+    /Needs an assistant: <a href="#\/build">/
+  );
+});
+
+test("REQ-215 SCN-215b: the new Brief — an existing brief is replaced only when asked", () => {
+  const html: string = studio.renderBrief("en", briefData());
+  assert.match(html, /<input type="checkbox"\/> Replace the current brief/);
+  const reading: string = studio.renderBrief("en", briefData(), { job: { kind: "brief" } });
+  assert.match(reading, /The assistant is reading the text…/);
+  assert.match(reading, />Stop</);
+});
+
+test("REQ-214 SCN-214a: a module's key comes from its name", () => {
+  assert.equal(studio.keyOf("Pedidos y envíos"), "pedidos-y-envios");
+  assert.equal(studio.keyOf("  "), "");
+});
