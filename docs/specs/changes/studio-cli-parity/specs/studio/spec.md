@@ -36,7 +36,7 @@ The system SHALL run `specgate check` from the studio with the project's test co
 - WHEN the gate is run from the studio
 - THEN Specification is shown passed, Tests failed with the command's output, and the gate as not passed
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-441 — A requirement coded by hand, delivered from the studio
 
