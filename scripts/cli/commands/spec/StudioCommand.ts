@@ -5,6 +5,7 @@ import * as crypto from "node:crypto";
 import { answer as answerQuestion, reviewed as reviewQuestion } from "../../../lib/clarification";
 import { approveChange, noteChange } from "../../../lib/change-review";
 import {
+  changesView,
   buildView,
   drafts,
   gate,
@@ -318,6 +319,8 @@ export class StudioCommand extends BaseCommand {
         "/api/gate": () => gate(projectDir),
         "/api/questions": () => questionsView(projectDir),
         "/api/drafts": () => drafts(projectDir),
+        // REQ-439: every open change, not only the brief's drafts.
+        "/api/changes": () => changesView(projectDir),
         "/api/build": () => buildView(projectDir),
         // REQ-211..217: the route from an empty folder to the report.
         "/api/route": () => route(projectDir),

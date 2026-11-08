@@ -8,6 +8,8 @@ import { useState } from "preact/hooks";
 import { t, type Key, type Lang } from "../core/i18n";
 import { Busy, type Result } from "../ui/Busy";
 import { sayFinding } from "../core/serverText";
+import { ChangePanel, NewChange, type ActionProps, type ChangeView } from "./changes/ChangePanel";
+export type { ChangeView } from "./changes/ChangePanel";
 
 export type ModuleStage = "todo" | "drafting" | "review" | "approved" | "archived" | "stopped";
 
@@ -64,6 +66,10 @@ export interface ChangesProps {
   onApprove: (change: string) => Promise<Result>;
   onNote: (change: string, requirement: string, text: string) => Promise<Result>;
   onConfirm: (change: string, question: string) => Promise<Result>;
+  /** Every open change (REQ-439), and whether an ALM is configured. */
+  changes?: ChangeView[];
+  alm?: boolean;
+  action?: ActionProps;
 }
 
 const STAGE_KEY: Record<ModuleStage, Key> = {
@@ -332,13 +338,23 @@ export function Changes({
   onApprove,
   onNote,
   onConfirm,
+  changes = [],
+  alm = false,
+  action,
 }: ChangesProps) {
   const list = modules.modules;
   const first =
     list.find((m) => m.stage === "drafting") || list.find((m) => m.stage === "review") || list[0];
   const [chosen, setChosen] = useState<string>("");
   const [said, setSaid] = useState<Result | null>(null);
-  const m = list.find((x) => x.key === chosen) || first;
+  // A change that is not one of the brief's modules is chosen as `c:<id>`.
+  const others = changes.filter((c) => !c.module || !list.some((x) => x.key === c.module));
+  const pickedChange = chosen.startsWith("c:")
+    ? others.find((c) => `c:${c.id}` === chosen)
+    : undefined;
+  const [adding, setAdding] = useState(false);
+  const m = pickedChange ? undefined : list.find((x) => x.key === chosen) || first;
+  const moduleChange = m ? changes.find((c) => c.module === m.key) : undefined;
   const draft = m ? drafts.find((d) => d.module === m.key) : undefined;
   const busy = !!modules.job;
   const next = list.find((x) => x.stage === "todo" || x.stage === "stopped");
@@ -349,25 +365,39 @@ export function Changes({
           <h1>{t(lang, "changes")}</h1>
           <p class="lead">{t(lang, "changesIntro")}</p>
         </div>
-        {next ? (
-          <Busy
-            busyLabel={t(lang, "starting")}
-            disabled={busy}
-            onRun={() => onDraft(next.key)}
-            onDone={setSaid}
-          >
-            {t(lang, "draftNext")} →
-          </Busy>
-        ) : null}
+        <div class="row">
+          {action ? (
+            <button
+              type="button"
+              class="btn-ghost"
+              aria-expanded={adding}
+              onClick={() => setAdding(!adding)}
+            >
+              + {t(lang, "newChange")}
+            </button>
+          ) : null}
+          {next ? (
+            <Busy
+              busyLabel={t(lang, "starting")}
+              disabled={busy}
+              onRun={() => onDraft(next.key)}
+              onDone={setSaid}
+            >
+              {t(lang, "draftNext")} →
+            </Busy>
+          ) : null}
+        </div>
       </header>
+      {adding && action ? <NewChange lang={lang} alm={alm} {...action} /> : null}
       <Said lang={lang} r={said && !said.ok ? said : null} />
-      {!modules.brief ? (
+      {!modules.brief && !others.length ? (
         <div class="card empty">
           {t(lang, "noBrief")} <a href="#/brief">{t(lang, "brief")} →</a>
         </div>
       ) : (
         <div class="master">
           <nav class="list" aria-label={t(lang, "changesList")}>
+            {!modules.brief ? <p class="faint">{t(lang, "noBrief")}</p> : null}
             {list.map((x) => (
               <a
                 href={`#/changes`}
@@ -386,7 +416,35 @@ export function Changes({
                 </span>
               </a>
             ))}
+            {others.length ? <h3 class="list-head">{t(lang, "otherChanges")}</h3> : null}
+            {others.map((c) => (
+              <a
+                href="#/changes"
+                aria-current={pickedChange && pickedChange.id === c.id ? "true" : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setChosen(`c:${c.id}`);
+                }}
+              >
+                <span class="name">{c.id}</span>
+                <span class={`faint ${c.canArchive ? "stage-approved" : ""}`}>
+                  {c.canArchive
+                    ? t(lang, "readyToArchive")
+                    : t(lang, "reqsDelivered")
+                        .replace("{D}", String(c.delivered))
+                        .replace("{T}", String(c.requirements.length))}
+                </span>
+              </a>
+            ))}
           </nav>
+          {pickedChange && action ? (
+            <section class="detail" aria-labelledby="change-h">
+              <div class="detail-head">
+                <h2 id="change-h">{pickedChange.id}</h2>
+              </div>
+              <ChangePanel lang={lang} change={pickedChange} {...action} />
+            </section>
+          ) : null}
           {m ? (
             <section class="detail" aria-labelledby="change-h">
               <div class="detail-head">
@@ -438,6 +496,9 @@ export function Changes({
                   ) : null}
                 </div>
               )}
+              {moduleChange && action ? (
+                <ChangePanel lang={lang} change={moduleChange} {...action} />
+              ) : null}
               {m.findings.length && m.stage !== "drafting" ? (
                 <div class="card">
                   <h3>{t(lang, "draftChecks")}</h3>

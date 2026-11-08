@@ -8,7 +8,8 @@ import { useRead } from "./core/useRead";
 import type { HomeData, RouteData } from "./core/route";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
-import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
+import { Changes, type ChangeView, type DraftView, type ModulesData } from "./sections/Changes";
+import { useAction } from "./core/useAction";
 import {
   Build,
   type AgentKind,
@@ -109,6 +110,30 @@ export function App() {
   const modules = useRead<ModulesData>(onChanges || onBrief ? "/api/modules" : null);
   const brief = useRead<BriefData>(onBrief ? "/api/brief" : null);
   const drafts = useRead<DraftView[]>(onChanges ? "/api/drafts" : null);
+  const changes = useRead<{ changes: ChangeView[]; alm: boolean }>(
+    onChanges ? "/api/changes" : null
+  );
+  // REQ-438: the command the studio runs; when it ends, what it changed is read again.
+  const command = useAction((run) => {
+    route.reload();
+    if (onChanges) {
+      modules.reload();
+      drafts.reload();
+      changes.reload();
+    }
+    notify({
+      kind: run.exit === 0 ? "ok" : "err",
+      text: `specgate ${run.argv.join(" ")} · ${t(prefs.lang, run.exit === 0 ? "cmdOk" : "cmdFailed").replace("{N}", String(run.exit))}`,
+    });
+  });
+  useEffect(() => {
+    void command.refresh();
+  }, [section]);
+  const runCommand = async (action: string, args: Record<string, unknown>) => {
+    const r = await command.start(action, args);
+    if (!r.ok) notify({ kind: "err", text: `${t(prefs.lang, "errorPrefix")} ${r.message || ""}` });
+    return { ok: r.ok, message: r.message };
+  };
   // While a module is being drafted, its progress is read again every few seconds.
   const drafting = (onChanges || onBrief) && !!modules.data?.job;
   useEffect(() => {
@@ -233,6 +258,13 @@ export function App() {
             onConfirm={(change, question) =>
               write({ question, change: changeOf(change), reviewed: true })
             }
+            changes={changes.data?.changes || []}
+            alm={!!changes.data?.alm}
+            action={{
+              run: command.view?.last || null,
+              output: command.view?.output || "",
+              onAction: runCommand,
+            }}
           />
         ) : section === "live" && stream.data ? (
           <Live

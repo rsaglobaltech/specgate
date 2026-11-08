@@ -8,7 +8,8 @@ import type { Section } from "./core/routes";
 import type { Prefs } from "./core/prefs";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
-import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
+import { Changes, type ChangeView, type DraftView, type ModulesData } from "./sections/Changes";
+import { ChangePanel, NewChange } from "./sections/changes/ChangePanel";
 import { Notices, type Notice } from "./ui/Notices";
 import { Offline, SectionError, Skeleton } from "./ui/States";
 import {
@@ -51,7 +52,18 @@ export function renderQuestions(lang: Lang, data: QuestionsData): string {
   return render(<Questions lang={lang} data={data} onAnswer={none} onConfirm={none} />);
 }
 
-export function renderChanges(lang: Lang, modules: ModulesData, drafts: DraftView[]): string {
+export function renderChanges(
+  lang: Lang,
+  modules: ModulesData,
+  drafts: DraftView[],
+  extra: {
+    changes?: ChangeView[];
+    alm?: boolean;
+    run?: ActionRun | null;
+    output?: string;
+    chosen?: string;
+  } = {}
+): string {
   const none = async () => ({ ok: true });
   return render(
     <Changes
@@ -63,6 +75,9 @@ export function renderChanges(lang: Lang, modules: ModulesData, drafts: DraftVie
       onApprove={none}
       onNote={none}
       onConfirm={none}
+      changes={extra.changes || []}
+      alm={!!extra.alm}
+      action={{ run: extra.run || null, output: extra.output || "", onAction: none }}
     />
   );
 }
@@ -188,4 +203,21 @@ export function renderTrace(lang: Lang, rows: MatrixRow[]): string {
 
 export function renderCommand(lang: Lang, run: ActionRun | null, output: string): string {
   return render(<Command lang={lang} run={run} output={output} />);
+}
+
+export function renderChangePanel(
+  lang: Lang,
+  change: ChangeView,
+  run: ActionRun | null = null,
+  output = ""
+): string {
+  const none = async () => ({ ok: true });
+  return render(
+    <ChangePanel lang={lang} change={change} run={run} output={output} onAction={none} />
+  );
+}
+
+export function renderNewChange(lang: Lang, alm: boolean): string {
+  const none = async () => ({ ok: true });
+  return render(<NewChange lang={lang} alm={alm} run={null} output="" onAction={none} />);
 }

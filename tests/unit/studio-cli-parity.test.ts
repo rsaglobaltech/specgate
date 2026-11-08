@@ -213,3 +213,186 @@ test("REQ-438 SCN-438a: the page shows the very command, its output, and how it 
   assert.match(studio.renderCommand("en", { ...run, exit: 0 }, ""), /Ended well/);
   assert.equal(studio.renderCommand("en", null, ""), "");
 });
+
+// ── REQ-439: every change, from proposal to archive ───────────────────────
+/** The browser tests' project, with a second change `checkout` whose one requirement is delivered. */
+async function twoChanges(): Promise<string> {
+  const { makeProject } = await import(
+    path.join(__dirname, "..", "..", "..", "e2e", "studio", "fixture.mjs")
+  );
+  const dir: string = makeProject();
+  const c = path.join(dir, "docs", "specs", "changes", "checkout");
+  fs.mkdirSync(path.join(c, "specs", "checkout"), { recursive: true });
+  fs.writeFileSync(
+    path.join(c, "change.yaml"),
+    "specgate_change_version: 1\nschema: spec-driven\nrigor: lite\nreq_range: [REQ-011, REQ-011]\n"
+  );
+  fs.writeFileSync(
+    path.join(c, "proposal.md"),
+    "# Proposal: checkout\n\n## Intent\n\nPay for an order.\n"
+  );
+  fs.writeFileSync(path.join(c, "tasks.md"), "# Tasks\n\n- [x] 1.1 The delta\n- [ ] 2.1 REQ-011\n");
+  fs.writeFileSync(
+    path.join(c, "specs", "checkout", "spec.md"),
+    "# Delta — checkout\n\n## ADDED Requirements\n\n### Requirement: REQ-011 — Pay an order\n\nThe system SHALL let a customer pay a placed order.\n\n#### Scenario: SCN-011 — A paid order\n\n- GIVEN a placed order\n- WHEN the customer pays it\n- THEN it is paid\n\n<!-- specgate:trace status=Implemented actor=Customer kind=functional feature=features/checkout/REQ-011.feature test=tests/checkout.test.js -->\n"
+  );
+  fs.mkdirSync(path.join(dir, "features", "checkout"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "features", "checkout", "REQ-011.feature"),
+    "Feature: Pay\n\n  @REQ-011 @SCN-011\n  Scenario: A paid order\n    Given a placed order\n    When the customer pays it\n    Then it is paid\n"
+  );
+  fs.mkdirSync(path.join(dir, "tests"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "tests", "checkout.test.js"), "// REQ-011 SCN-011\n");
+  return dir;
+}
+
+test("REQ-439 SCN-439a: Changes lists every open change with its progress; only a delivered one can be archived", async () => {
+  const { changesView } = require("../../scripts/lib/studio-app");
+  const dir = await twoChanges();
+  const v = changesView(dir);
+  const ids = v.changes.map((c: { id: string }) => c.id).sort();
+  assert.deepEqual(ids, ["checkout", "draft-orders"]);
+  const checkout = v.changes.find((c: { id: string }) => c.id === "checkout");
+  assert.deepEqual(
+    {
+      delivered: checkout.delivered,
+      total: checkout.requirements.length,
+      tasks: [checkout.tasks.done, checkout.tasks.total],
+    },
+    { delivered: 1, total: 1, tasks: [1, 2] }
+  );
+  assert.equal(checkout.canArchive, true);
+  assert.match(checkout.proposal, /Pay for an order\./);
+  assert.equal(checkout.module, null);
+  const orders = v.changes.find((c: { id: string }) => c.id === "draft-orders");
+  assert.equal(orders.canArchive, false);
+  assert.equal(orders.module, "orders");
+  assert.equal(v.alm, false);
+});
+
+test("REQ-439 SCN-439a: archiving checkout from the studio moves it to the archive", async () => {
+  const dir = await twoChanges();
+  assert.equal(runAction(dir, "archive", { change: "checkout" }).ok, true);
+  const v = await ended(dir);
+  assert.equal(v.last!.exit, 0, v.output);
+  const archive = path.join(dir, "docs", "specs", "changes", "archive");
+  assert.ok(
+    fs.readdirSync(archive).some((d) => d.endsWith("-checkout")),
+    v.output
+  );
+  assert.ok(!fs.existsSync(path.join(dir, "docs", "specs", "changes", "checkout")));
+  // The undelivered one is refused by archive itself.
+  assert.equal(runAction(dir, "archive", { change: "draft-orders" }).ok, true);
+  assert.notEqual((await ended(dir)).last!.exit, 0);
+});
+
+const studioUi = () => require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+const checkoutView = (extra: Record<string, unknown> = {}) => ({
+  id: "checkout",
+  module: null,
+  approved: "",
+  requirements: [{ id: "REQ-011", title: "Pay an order", status: "Implemented" }],
+  delivered: 1,
+  tasks: {
+    done: 1,
+    total: 2,
+    items: [
+      { text: "1.1 The delta", done: true },
+      { text: "2.1 REQ-011", done: false },
+    ],
+  },
+  proposal: "# Proposal: checkout\n\n## Intent\n\nPay for an order.\n",
+  canArchive: true,
+  ...extra,
+});
+
+test("REQ-439 SCN-439a: Changes lists the changes that are not brief modules, each with its progress", () => {
+  const html: string = studioUi().renderChanges(
+    "en",
+    {
+      brief: true,
+      modules: [
+        {
+          key: "orders",
+          stage: "review",
+          requirements: 3,
+          scenarios: 3,
+          questions: 0,
+          findings: [],
+          progress: null,
+        },
+      ],
+      job: null,
+      step: "",
+    },
+    [],
+    {
+      changes: [
+        checkoutView(),
+        {
+          ...checkoutView({
+            id: "draft-orders",
+            module: "orders",
+            canArchive: false,
+            delivered: 0,
+          }),
+        },
+      ],
+    }
+  );
+  assert.match(html, /<h3 class="list-head">Other changes<\/h3>/);
+  assert.match(
+    html,
+    /<span class="name">checkout<\/span><span class="faint stage-approved">Ready to archive/
+  );
+  // The draft of a module is that module's, not listed twice.
+  assert.equal((html.match(/<span class="name">orders<\/span>/g) || []).length, 1);
+  assert.doesNotMatch(html, /<span class="name">draft-orders<\/span>/);
+  assert.match(html, /\+ New change/);
+});
+
+test("REQ-439 SCN-439a: a delivered change is archived only after its preview; one still to deliver says when", () => {
+  const ui = studioUi();
+  const fresh: string = ui.renderChangePanel("en", checkoutView());
+  assert.match(fresh, /1 of 1 requirements delivered · 1 of 2 tasks/);
+  assert.match(fresh, /REQ-011<\/span> Pay an order <span class="chip ok-chip">Implemented/);
+  assert.match(fresh, />See what archive writes</);
+  assert.doesNotMatch(fresh, />Archive</, "no archive before the preview");
+  assert.match(fresh, /<summary>Proposal<\/summary><pre class="doc-text"># Proposal: checkout/);
+  const previewed: string = ui.renderChangePanel(
+    "en",
+    checkoutView(),
+    {
+      action: "archive-preview",
+      argv: ["archive", "checkout", "--dry-run"],
+      pid: 1,
+      started: 0,
+      exit: 0,
+    },
+    "Archive plan\n~ docs/specs/capabilities/checkout/spec.md\n"
+  );
+  assert.match(previewed, /<button type="button" class="btn-primary">Archive<\/button>/);
+  assert.match(previewed, /specgate archive checkout --dry-run/);
+  assert.match(previewed, /docs\/specs\/capabilities\/checkout\/spec\.md/);
+  const pending: string = ui.renderChangePanel(
+    "en",
+    checkoutView({ canArchive: false, delivered: 0 })
+  );
+  assert.match(pending, /It is archived once every requirement in it is delivered\./);
+  assert.doesNotMatch(pending, /See what archive writes/);
+});
+
+test("REQ-439 SCN-439a: a new change from an idea; from a ticket only when an ALM is configured", () => {
+  const ui = studioUi();
+  const plain: string = ui.renderNewChange("en", false);
+  assert.match(
+    plain,
+    /<label for="new-change-id" class="label">The change&#39;s id<\/label>|<label for="new-change-id" class="label">The change’s id<\/label>|The change's id/
+  );
+  assert.match(plain, /disabled[^>]*>Propose</);
+  assert.doesNotMatch(plain, /From a ticket/);
+  assert.match(
+    ui.renderNewChange("en", true),
+    /<label for="new-change-ticket" class="label">From a ticket<\/label>/
+  );
+});

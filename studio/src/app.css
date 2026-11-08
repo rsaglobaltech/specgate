@@ -2143,3 +2143,43 @@ code.block {
   overflow-wrap: anywhere;
   margin: 0;
 }
+
+/* ── Every change (REQ-439) ── */
+.list-head {
+  margin: 14px 0 4px;
+  font-size: 15px;
+}
+.req-states {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+.doc-text {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 13px/1.5 var(--mono);
+  max-height: 360px;
+  overflow: auto;
+}
+.task-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.task-list .done {
+  color: var(--fg-faint);
+}
+.change-panel details summary {
+  cursor: pointer;
+}
