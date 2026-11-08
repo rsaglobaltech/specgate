@@ -146,7 +146,10 @@ export function questionsView(projectDir: string): QuestionsView {
         "agent" | "draft" | "project",
     }));
   const toReview: QuestionsView["toReview"] = [];
-  const texts = new Map(allQuestions(projectDir).map((q) => [`${q.change}:${q.id}`, q.text]));
+  const questions = allQuestions(projectDir);
+  const texts = new Map(questions.map((q) => [`${q.change}:${q.id}`, q.text]));
+  // One row per question, however often it was answered (REQ-210).
+  const listed = new Set<string>();
   for (const change of [...listChangeIds(projectDir), "project"]) {
     const file =
       change === "project"
@@ -154,6 +157,8 @@ export function questionsView(projectDir: string): QuestionsView {
         : path.join(projectDir, "docs", "specs", "changes", change, "assumptions.md");
     for (const a of assumptionsToReview(read(file) || "")) {
       const q = (/Q\d+/.exec(a.why) || [""])[0];
+      if (listed.has(`${change}:${q}`)) continue;
+      listed.add(`${change}:${q}`);
       toReview.push({
         change,
         assumption: a.id,
@@ -161,6 +166,19 @@ export function questionsView(projectDir: string): QuestionsView {
         text: texts.get(`${change}:${q}`) || "",
       });
     }
+  }
+  // Answers written by hand: answered, not yet confirmed, still holding a requirement.
+  const waiting = new Set(
+    liveMatrix(projectDir)
+      .filter((m) => m.status === "Needs Clarification")
+      .map((m) => m.requirement)
+  );
+  for (const q of questions) {
+    const key = `${q.change}:${q.id}`;
+    if (!q.answered || q.status === "reviewed" || listed.has(key)) continue;
+    if (!q.blocks.some((b) => waiting.has(b))) continue;
+    listed.add(key);
+    toReview.push({ change: q.change, assumption: "", question: q.id, text: q.text });
   }
   return { open, toReview };
 }

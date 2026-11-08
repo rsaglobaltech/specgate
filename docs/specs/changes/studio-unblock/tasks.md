@@ -9,7 +9,7 @@
 ## 2. Implementation
 
 - [x] 2.1 REQ-429 — one way to write and read an answer
-- [ ] 2.2 REQ-210 — answers written whatever the columns, one to confirm per question, hand answers confirmed
+- [x] 2.2 REQ-210 — answers written whatever the columns, one to confirm per question, hand answers confirmed
 - [ ] 2.3 REQ-206 — every blocker with its action; exact question ids
 - [ ] 2.4 REQ-431 — the agent chosen in the studio; `{prompt_file}` quoted
 - [ ] 2.5 REQ-208 — Build offers the agent instead of naming a command

@@ -52,3 +52,119 @@ test("REQ-429: the drafting guide asks for the Answer and Status columns", () =>
   assert.match(guide, /\| # \| Question \| Blocks \| Options seen \| Answer \| Status \|/);
   assert.doesNotMatch(guide, /\| # \| Question \| Blocks \| Options seen \|\n/);
 });
+
+// ── REQ-210: answers written whatever the table, confirmed whoever wrote them ──
+
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { answer, reviewed } from "../../scripts/lib/clarification";
+import { questionsView } from "../../scripts/lib/studio-app";
+
+/** A project with draft-pedidos: Q1 open and Q2 answered by hand, both blocking a requirement. */
+function pedidos(questions: string): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "studio-unblock-"));
+  const w = (rel: string, text: string) => {
+    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+    fs.writeFileSync(path.join(dir, rel), text);
+  };
+  w("spec.md", "# Spec\n\n## Requirements\n");
+  w("docs/specs/traceability.md", "# Traceability\n");
+  w("docs/specs/changes/draft-pedidos/change.yaml", "specgate_change_version: 1\n");
+  w("docs/specs/changes/draft-pedidos/questions.md", questions);
+  const req = (id: string, title: string) =>
+    [
+      `### Requirement: ${id} — ${title}`,
+      "",
+      "The system SHALL do it.",
+      "",
+      `#### Scenario: SCN-${id.slice(4)}a — it`,
+      "",
+      "- GIVEN a",
+      "- WHEN b",
+      "- THEN c",
+      "",
+      '<!-- specgate:trace status="Needs Clarification" actor=Cliente kind=functional -->',
+      "",
+    ].join("\n");
+  w(
+    "docs/specs/changes/draft-pedidos/specs/pedidos/spec.md",
+    [
+      "# Delta — pedidos",
+      "",
+      "## ADDED Requirements",
+      "",
+      req("REQ-031", "Aprobación manual"),
+      req("REQ-032", "Devoluciones"),
+    ].join("\n")
+  );
+  return dir;
+}
+
+const FOUR_COLUMNS_CRLF = [
+  "# Questions — draft-pedidos",
+  "",
+  "| # | Question | Blocks | Options seen |",
+  "|---|---|---|---|",
+  "| Q1 | ¿Desde qué importe se aprueba a mano? | REQ-031 | Siempre; 500 € |",
+  "| Q2 | ¿Cuántos días para devolver? | REQ-032 |  |",
+  "",
+].join("\r\n");
+
+const questionsOf = (dir: string) =>
+  fs.readFileSync(path.join(dir, "docs/specs/changes/draft-pedidos/questions.md"), "utf8");
+
+test("REQ-210 SCN-210b: an answer into a table without an Answer column, twice", () => {
+  const dir = pedidos(FOUR_COLUMNS_CRLF);
+  const first = answer(dir, "Q1", "Más de 300 €", "draft-pedidos");
+  assert.equal(first.ok, true, JSON.stringify(first));
+  const second = answer(dir, "Q1", "Más de 500 €", "draft-pedidos");
+  assert.equal(second.ok, true, JSON.stringify(second));
+  const md = questionsOf(dir);
+  assert.match(md, /\| # \| Question \| Blocks \| Options seen \| Answer \| Status \|/);
+  assert.match(md, /\| Q1 \|[^\r\n]*\| Más de 500 € \| answered \|/);
+  assert.doesNotMatch(md, /300 €/, "the second answer replaces the first");
+  assert.ok(!/[^\r]\n/.test(md), "CRLF line endings kept");
+  const q1 = questionTable(md).find((q) => q.id === "Q1");
+  assert.equal(q1?.answered, true);
+  // One answer to confirm for Q1, however often it was answered.
+  const toReview = questionsView(dir).toReview.filter((x) => x.question === "Q1");
+  assert.equal(toReview.length, 1, JSON.stringify(toReview));
+});
+
+test("REQ-210: an answer that writes nothing fails, saying why", () => {
+  const dir = pedidos("# Questions — draft-pedidos\n\nNo table here.\n");
+  const r = answer(dir, "Q1", "Más de 500 €", "draft-pedidos");
+  assert.equal(r.ok, false);
+});
+
+test("REQ-210 SCN-210c: confirming an answer given by hand", () => {
+  const handAnswered = [
+    "# Questions — draft-pedidos",
+    "",
+    "| # | Question | Blocks | Options seen | Answer |",
+    "|---|---|---|---|---|",
+    "| Q1 | ¿Desde qué importe se aprueba a mano? | REQ-031 | Siempre; 500 € |  |",
+    "| Q2 | ¿Cuántos días para devolver? | REQ-032 |  | 30 días |",
+    "",
+  ].join("\n");
+  const dir = pedidos(handAnswered);
+  // Listed to confirm, though no assumption was ever written for it.
+  assert.ok(questionsView(dir).toReview.some((x) => x.question === "Q2"));
+  const r = reviewed(dir, "Q2", "draft-pedidos");
+  assert.equal(r.ok, true, JSON.stringify(r));
+  const delta = fs.readFileSync(
+    path.join(dir, "docs/specs/changes/draft-pedidos/specs/pedidos/spec.md"),
+    "utf8"
+  );
+  const req032 = delta.slice(delta.indexOf("REQ-032"));
+  assert.doesNotMatch(req032, /Needs Clarification/);
+  assert.match(
+    delta.slice(0, delta.indexOf("REQ-032")),
+    /Needs Clarification/,
+    "REQ-031 still waits for Q1"
+  );
+  assert.ok(!questionsView(dir).toReview.some((x) => x.question === "Q2"), "no longer to confirm");
+  // An open question cannot be confirmed.
+  assert.equal(reviewed(dir, "Q1", "draft-pedidos").ok, false);
+});

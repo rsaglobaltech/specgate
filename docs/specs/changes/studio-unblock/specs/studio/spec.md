@@ -78,7 +78,7 @@ The system SHALL list under Questions every open question with where it comes fr
 - WHEN Q2 is confirmed in the studio
 - THEN Q2 is reviewed, REQ-215 no longer says `Needs Clarification`, and Q2 no longer blocks approval
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ## ADDED Requirements
 
