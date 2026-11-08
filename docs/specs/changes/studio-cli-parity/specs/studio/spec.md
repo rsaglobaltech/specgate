@@ -84,4 +84,4 @@ The system SHALL show in Settings, when `alm.config.yaml` exists, the requiremen
 - WHEN the sync is previewed
 - THEN the preview says an issue would be created for REQ-007, nothing is written, and no field asks for a token
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
