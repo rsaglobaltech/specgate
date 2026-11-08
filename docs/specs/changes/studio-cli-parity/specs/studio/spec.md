@@ -60,7 +60,7 @@ The system SHALL show in Settings the project's preferences as `specgate config 
 - WHEN Settings sets it to `npm run test:unit`
 - THEN `specgate config get test_cmd` answers `npm run test:unit`, and an unknown key is refused
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-443 — A repository that has code, adopted from the studio
 
