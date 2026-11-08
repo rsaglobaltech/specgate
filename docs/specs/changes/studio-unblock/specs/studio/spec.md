@@ -110,7 +110,7 @@ The studio SHALL read the project's state without starting a CLI process, reusin
 - WHEN Questions refreshes
 - THEN the page says it could not read it, why, and offers to retry
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-431 — The agent is chosen in the studio
 

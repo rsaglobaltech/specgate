@@ -252,3 +252,49 @@ test("REQ-208 SCN-208c: no agent, no build — and the agents found are offered"
   assert.match(r.ok === false ? r.message : "", /Choose one in Build/);
   assert.doesNotMatch(r.ok === false ? r.message : "", /harness init writes it/);
 });
+
+// ── REQ-430: reads without a process, cached until a spec file changes; nothing fails in silence ──
+
+// The module object itself, which the studio calls through and a test can watch.
+ 
+const childProcess = require("node:child_process") as typeof import("node:child_process");
+import { studioAppPage } from "../../scripts/lib/studio-app-page";
+
+test("REQ-430 SCN-430a: a refresh starts no process and reuses what nothing changed", () => {
+  const dir = pedidos(FOUR_COLUMNS_CRLF);
+  fs.writeFileSync(
+    path.join(dir, "docs/specs/traceability.md"),
+    "# Traceability\n\n| Requirement | Scenario | Feature | UC | Domain | API | UI | DB | Test | Status |\n|---|---|---|---|---|---|---|---|---|---|\n"
+  );
+  chooseAgent(dir, { kind: "custom", command: "my-agent {prompt_file}" });
+  const real = childProcess.spawnSync;
+  const calls: string[] = [];
+  (childProcess as { spawnSync: unknown }).spawnSync = (
+    cmd: string,
+    args: string[],
+    o: unknown
+  ) => {
+    calls.push([cmd, ...(args || [])].join(" "));
+    return real(cmd, args, o as never);
+  };
+  try {
+    buildView(dir);
+    buildView(dir);
+  } finally {
+    (childProcess as { spawnSync: unknown }).spawnSync = real;
+  }
+  const cliCalls = calls.filter((c) => c.startsWith(process.execPath));
+  assert.deepEqual(cliCalls, [], "no specgate process started for a read");
+});
+
+test("REQ-430 SCN-430b: the page says when a read fails, keeps a button busy while it posts, and redraws only on change", () => {
+  const html = studioAppPage("p", "t");
+  // A failed read is shown with its reason and a retry, never swallowed.
+  assert.doesNotMatch(html, /Promise\.all\(reads\)\.then\(render\)\.catch\(function\(\)\{\}\)/);
+  assert.match(html, /readFailed/);
+  assert.match(html, /retry/);
+  // The button that posted stays busy until the answer.
+  assert.match(html, /aria-busy/);
+  // The view is drawn again only when what it shows changed.
+  assert.match(html, /lastShown/);
+});

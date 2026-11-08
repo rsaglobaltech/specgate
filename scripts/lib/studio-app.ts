@@ -20,6 +20,10 @@ import {
 } from "./change-review";
 import { requestStop, runLockHolder } from "./harness-guard";
 import { findCliRoot } from "./project-root";
+import { cachedBySpecs } from "./studio-cache";
+import { withQueue } from "../cli/commands/spec/StatusCommand";
+import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
+import { requirementTitles } from "../../packages/core/src/domain/DraftChecklist";
 import { inFlightView } from "./in-flight";
 
 /**
@@ -211,17 +215,43 @@ export interface BuildView {
   estimate: { minutes: number | null; costPerRequirement: number | null };
 }
 
+/**
+ * What `specgate status --json` lists, read in this process and kept until a
+ * spec file changes (REQ-430); each requirement with the title its spec gives it.
+ */
 function plan(projectDir: string): Array<{ id: string; title: string; category: string }> {
-  const r = spawnSync(process.execPath, [cli(), "status", "--json", "--project-dir", projectDir], {
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
+  return cachedBySpecs(projectDir, "plan", () => {
+    try {
+      return withQueue(
+        projectDir,
+        (summary, dir) => {
+          let titles = new Map<string, string>();
+          try {
+            const sources = readDerivationSources(dir);
+            titles = requirementTitles([
+              { path: "spec.md", source: sources.spec },
+              ...(sources.capabilities || []),
+            ]);
+          } catch {
+            /* titles from the matrix only */
+          }
+          return summary.items.map((it) => {
+            const own = String(it.title || "")
+              .replace(/^UC-\d+\s*/, "")
+              .trim();
+            return {
+              id: it.requirement,
+              title: own && own !== "-" ? own : titles.get(it.requirement) || it.requirement,
+              category: it.category,
+            };
+          });
+        },
+        { write: false }
+      );
+    } catch {
+      return [];
+    }
   });
-  try {
-    const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
-    return doc.requirements || [];
-  } catch {
-    return [];
-  }
 }
 
 /** The median of past passing requirements' durations, and their mean reported cost. */
