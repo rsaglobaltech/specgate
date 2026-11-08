@@ -72,7 +72,7 @@ The system SHALL offer, in a folder with files and no Specgate project, to adopt
 - WHEN Settings previews the adoption and then adopts it
 - THEN the preview lists spec.md among the files to write, and afterwards spec.md exists while README.md and src/index.js are unchanged
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-444 — Jira and Azure Boards from the studio
 
