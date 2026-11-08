@@ -995,3 +995,41 @@ test("REQ-436 SCN-436a: the browser journey runs in CI on Windows, macOS and Lin
   }
   assert.match(spec, /pageerror/);
 });
+
+test("REQ-216 SCN-216b: stopping a draft ends its agent too, though it runs in a group of its own", async () => {
+  const { stopJob } = require("../../scripts/lib/studio-route");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sg-stop-draft-"));
+  const agentPidFile = path.join(dir, "agent.pid");
+  const jobScript = [
+    "const cp = require('node:child_process');",
+    "const a = cp.spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });",
+    `require('node:fs').writeFileSync(${JSON.stringify(agentPidFile)}, String(a.pid));`,
+    "setInterval(() => {}, 1000);",
+  ].join("\n");
+  const job = cp.spawn(process.execPath, ["-e", jobScript], {
+    detached: true,
+    stdio: "ignore",
+    windowsHide: true,
+  });
+  job.unref();
+  for (let i = 0; i < 50 && !fs.existsSync(agentPidFile); i++)
+    await new Promise((ok) => setTimeout(ok, 100));
+  const agentPid = Number(fs.readFileSync(agentPidFile, "utf8"));
+  fs.mkdirSync(path.join(dir, ".harness", "events"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, ".harness", "events", "studio-job.json"),
+    JSON.stringify({
+      kind: "draft",
+      module: "orders",
+      profile: "",
+      pid: job.pid,
+      started: 0,
+      log: "",
+    })
+  );
+  assert.equal(stopJob(dir).ok, true);
+  for (let i = 0; i < 40 && (aliveNow(job.pid!) || aliveNow(agentPid)); i++)
+    await new Promise((ok) => setTimeout(ok, 100));
+  assert.equal(aliveNow(job.pid!), false, "the draft's job is gone");
+  assert.equal(aliveNow(agentPid), false, "and its agent");
+});

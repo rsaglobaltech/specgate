@@ -27,6 +27,7 @@ import { DEFAULT_BRIEF, draftReport, moduleStatus } from "../cli/commands/spec/D
 import { allQuestions, waiting } from "./clarification";
 import { liveMatrix } from "./live-detail";
 import { readLive } from "./live-model";
+import { killTree } from "./kill-tree";
 import { approvedOn } from "./change-review";
 import { studioLog } from "./harness-events";
 import { buildView, drafts, gate } from "./studio-app";
@@ -212,15 +213,8 @@ function startJob(
 export function stopJob(projectDir: string): Outcome {
   const job = currentJob(projectDir);
   if (!job) return { ok: false, code: "job_not_running", message: "Nothing is being drafted." };
-  if (process.platform === "win32") {
-    spawnSync("taskkill", ["/pid", String(job.pid), "/T", "/F"]);
-  } else {
-    try {
-      process.kill(-job.pid, "SIGTERM");
-    } catch {
-      /* already gone */
-    }
-  }
+  // With its agent, which runs in a process group of its own (REQ-216).
+  killTree(job.pid);
   return { ok: true };
 }
 
