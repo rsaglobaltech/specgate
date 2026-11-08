@@ -24,7 +24,7 @@ The system SHALL list in the studio's Changes every open change with its task pr
 - WHEN Changes is opened
 - THEN both are listed with their progress, `checkout` offers Archive with its preview and `orders` does not, and archiving `checkout` moves it to the archive
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-440 — The gate and the doctor from the studio
 
