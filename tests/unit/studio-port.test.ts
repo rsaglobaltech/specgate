@@ -108,7 +108,8 @@ test("REQ-445 SCN-445a: the same project's studio already running is named, with
 
 test("REQ-445: a port taken by something else, with no --port given, moves to the next free one", async () => {
   const dir = project();
-  const blocker = net.createServer();
+  // Something that is not a studio: it hangs up on whoever connects.
+  const blocker = net.createServer((socket) => socket.destroy());
   const port = await new Promise<number>((resolve) => {
     // The default port taken by anything that is not a studio.
     blocker.listen(4173, "127.0.0.1", () => resolve(4173)).on("error", () => resolve(0));
@@ -130,7 +131,8 @@ test("REQ-445: a port taken by something else, with no --port given, moves to th
 
 test("REQ-445: --port names a port something else holds — refused, saying it is taken", async () => {
   const dir = project();
-  const blocker = net.createServer();
+  // Something that is not a studio: it hangs up on whoever connects.
+  const blocker = net.createServer((socket) => socket.destroy());
   const port = await new Promise<number>((resolve) =>
     blocker.listen(0, "127.0.0.1", () => resolve((blocker.address() as net.AddressInfo).port))
   );
