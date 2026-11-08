@@ -7,4 +7,4 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-445 — the test first, then the studio's start
+- [x] 2.1 REQ-445 — the test first, then the studio's start
