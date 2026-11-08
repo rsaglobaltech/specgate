@@ -78,7 +78,7 @@ The studio SHALL show the shape of a section while its first read is under way; 
 - WHEN its server stops and starts again
 - THEN the page says it is reconnecting, keeps the questions shown, and says it is connected once the server answers
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-435 — The studio is used with the keyboard and a screen reader
 
