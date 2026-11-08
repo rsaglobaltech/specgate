@@ -33,6 +33,18 @@ esbuild.buildSync({
   external: ["/studio/fonts/*"],
   logLevel: "warning",
 });
+// The tests' entry: the pure core and the views rendered to text — not packed (files lists dist/studio/ only).
+esbuild.buildSync({
+  entryPoints: [path.join(root, "studio", "src", "testing.tsx")],
+  outfile: path.join(root, "dist", "studio-test", "studio.cjs"),
+  bundle: true,
+  platform: "node",
+  format: "cjs",
+  target: ["node20"],
+  jsx: "automatic",
+  jsxImportSource: "preact",
+  logLevel: "warning",
+});
 const fonts = path.join(root, "studio", "fonts");
 if (fs.existsSync(fonts)) {
   fs.mkdirSync(path.join(out, "fonts"), { recursive: true });

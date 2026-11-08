@@ -44,3 +44,66 @@ test("REQ-432: the studio serves its own files, and nothing outside them", () =>
     assert.equal(studioAsset(bad), null, bad);
   }
 });
+
+// ── REQ-204: one app, a sidebar of sections, an address for each ──
+
+const studio = require(path.join(ROOT_DIR, "dist", "studio-test", "studio.cjs"));
+
+test("REQ-204 SCN-204a: the app lists its sections, each at its own address", () => {
+  assert.deepEqual(studio.SECTIONS, [
+    "home",
+    "brief",
+    "changes",
+    "questions",
+    "build",
+    "live",
+    "report",
+    "settings",
+  ]);
+  // Reloading or following a link opens the same section.
+  assert.equal(studio.sectionOf("#/questions"), "questions");
+  assert.equal(studio.sectionOf("#/questions?q=Q1"), "questions");
+  assert.equal(studio.sectionOf("#/nope"), "home");
+  assert.equal(studio.sectionOf(""), "home");
+  const html: string = studio.renderShell("questions", studio.DEFAULTS);
+  for (const s of studio.SECTIONS) assert.match(html, new RegExp(`href="#/${s}"`), s);
+  assert.match(html, /href="#\/questions" aria-current="page"/);
+  assert.equal((html.match(/aria-current="page"/g) || []).length, 1);
+  for (const word of [
+    "Inicio",
+    "Brief",
+    "Cambios",
+    "Preguntas",
+    "Construir",
+    "En vivo",
+    "Informe",
+    "Ajustes",
+  ]) {
+    assert.match(html, new RegExp(word), word);
+  }
+  assert.match(studio.renderShell("home", { ...studio.DEFAULTS, lang: "en" }), /Changes/);
+});
+
+test("REQ-204: Spanish and English say every word; the viewer's choices are remembered, and a refusing storage is no error", () => {
+  assert.deepEqual(Object.keys(studio.TEXTS.en).sort(), Object.keys(studio.TEXTS.es).sort());
+  const kept = new Map<string, string>();
+  const storage = {
+    getItem: (k: string) => kept.get(k) ?? null,
+    setItem: (k: string, v: string) => void kept.set(k, v),
+  };
+  assert.deepEqual(studio.readPrefs(storage), { mode: "simple", lang: "es", theme: "system" });
+  studio.writePrefs(storage, { mode: "advanced", lang: "en", theme: "dark" });
+  assert.deepEqual(studio.readPrefs(storage), { mode: "advanced", lang: "en", theme: "dark" });
+  kept.set("sg-studio-prefs", "{not json");
+  assert.deepEqual(studio.readPrefs(storage), studio.DEFAULTS);
+  const refusing = {
+    getItem: () => {
+      throw new Error("blocked");
+    },
+    setItem: () => {
+      throw new Error("blocked");
+    },
+  };
+  assert.deepEqual(studio.readPrefs(refusing), studio.DEFAULTS);
+  assert.doesNotThrow(() => studio.writePrefs(refusing, studio.DEFAULTS));
+});

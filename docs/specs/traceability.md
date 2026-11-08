@@ -135,7 +135,7 @@
 | REQ-200 | SCN-200a | `features/harness/REQ-200.feature` | - | - | - | - | - | tests/unit/harness-init.test.ts | Implemented |
 | REQ-201 | SCN-201a | `features/live-harness/REQ-201.feature` | - | - | - | - | - | tests/unit/studio-answer.test.ts | Implemented |
 | REQ-203 | SCN-203a | `features/live-harness/REQ-203.feature` | - | - | - | - | - | tests/unit/studio-answer.test.ts | Implemented |
-| REQ-204 | SCN-204a | `features/studio/REQ-204.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-204 | SCN-204a | `features/studio/REQ-204.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-205 | SCN-205a | `features/studio/REQ-205.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
 | REQ-206 | SCN-206a | `features/studio/REQ-206.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-207 | SCN-207a | `features/studio/REQ-207.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
@@ -143,7 +143,7 @@
 | REQ-209 | SCN-209a | `features/studio/REQ-209.feature` | - | - | - | - | - | tests/unit/harness-run.test.ts | Implemented |
 | REQ-210 | SCN-210a | `features/studio/REQ-210.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-211 | SCN-211a | `features/studio/REQ-211.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
-| REQ-212 | SCN-212a | `features/studio/REQ-212.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
+| REQ-212 | SCN-212a | `features/studio/REQ-212.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts, tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-213 | SCN-213a | `features/studio/REQ-213.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-214 | SCN-214a | `features/studio/REQ-214.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-215 | SCN-215a | `features/studio/REQ-215.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |

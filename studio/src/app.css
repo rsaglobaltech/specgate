@@ -138,3 +138,153 @@ a:hover {
     transition: none !important;
   }
 }
+
+/* ── The frame: the sidebar of the approved design, the section beside it ── */
+.app {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+}
+.side {
+  flex: 1 1 240px;
+  max-width: 264px;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--raised);
+  border-right: 1px solid var(--line);
+}
+.brand {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  padding: 6px 10px 18px;
+  align-items: center;
+}
+.brand .mark {
+  grid-row: span 2;
+  color: var(--accent);
+  font-weight: 700;
+}
+.brand .name {
+  font: 800 16px/1.1 var(--display);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.brand .accent {
+  color: var(--accent);
+}
+.brand .project {
+  font-size: 12px;
+  color: var(--fg-faint);
+}
+.nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius);
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 14px;
+}
+.nav a:hover {
+  background: var(--soft);
+  color: var(--fg);
+}
+.nav a[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+.badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.prefs {
+  margin-top: auto;
+  padding: 12px 10px 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.prefs [role="group"] {
+  display: flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.prefs button {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-soft);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.prefs [role="group"] button + button {
+  border-left: 1px solid var(--line-strong);
+}
+.prefs button[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 600;
+}
+.prefs .theme {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  min-width: 40px;
+}
+.main {
+  flex: 999 1 560px;
+  min-width: 0;
+  padding: 28px 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.main h1 {
+  margin: 0;
+  font: 700 32px/1.15 var(--display);
+  letter-spacing: -0.03em;
+}
+@media (max-width: 760px) {
+  .app {
+    flex-direction: column;
+  }
+  .side {
+    flex: none;
+  }
+  .prefs {
+    margin-top: 8px;
+  }
+  .side {
+    max-width: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .main {
+    padding: 20px 16px 40px;
+  }
+}

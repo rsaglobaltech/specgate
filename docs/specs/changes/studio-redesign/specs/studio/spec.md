@@ -20,7 +20,7 @@ The system SHALL serve at studio's root one app with the sections Home, Brief, C
 - WHEN an app action is posted without the page's token
 - THEN it is refused with 403
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-212 — The route says where the project is
 
