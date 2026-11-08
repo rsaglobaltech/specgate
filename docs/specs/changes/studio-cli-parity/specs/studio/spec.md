@@ -12,7 +12,7 @@ The system SHALL let the studio run a Specgate command only from a fixed list of
 - WHEN the page asks to preview archiving `draft-orders`, and then to run `rm -rf .` and to archive a change id with `../` in it
 - THEN the preview runs `specgate archive draft-orders --dry-run` and its output is shown, and the other two are refused, naming why, and run nothing
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-439 — Every change, from proposal to archive
 
