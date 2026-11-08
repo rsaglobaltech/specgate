@@ -17,7 +17,7 @@ import { error, info, warning } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
 import { analyseScenario } from "./GherkinQuality";
 import { withoutComments } from "./QuotedText";
-import { assumptionsToReview, deferredAnswer } from "./Clarification";
+import { answerLines, assumptionsToReview, deferredAnswer, isAnswered } from "./Clarification";
 
 export { deferredAnswer };
 
@@ -297,7 +297,6 @@ function questionRows(md: string): Array<{
   const cols = lines[header].split("|").map((c) => c.trim().toLowerCase());
   const at = cols.indexOf("blocks");
   const answerCol = cols.findIndex((c) => c === "answer" || c === "respuesta");
-  const answerLines = lines.filter((l) => /^\s*(?:[-*]\s*)?\**(answer|respuesta)\b/i.test(l));
   const out: Array<{
     row: string;
     blocks: string[];
@@ -309,10 +308,10 @@ function questionRows(md: string): Array<{
   for (let i = header + 2; i < lines.length && /^\|/.test(lines[i]); i += 1) {
     const cells = lines[i].split("|").map((c) => c.trim());
     const row = cells[1] || `row ${i + 1}`;
-    const named = new RegExp(`(^|[^A-Za-z0-9])${escapeRegExp(row)}(?![A-Za-z0-9])`);
+    // The same reading as the studio's and `specgate questions` (REQ-429).
     const answers = [
       ...(answerCol > 0 && (cells[answerCol] || "").length > 0 ? [cells[answerCol]] : []),
-      ...answerLines.filter((l) => named.test(l)).map((l) => l.replace(/^[^:]*:\s*/, "")),
+      ...answerLines(md, row),
     ];
     const deferred = answers.length > 0 && answers.every(deferredAnswer);
     out.push({
@@ -320,7 +319,7 @@ function questionRows(md: string): Array<{
       blocks: (cells[at] || "").match(/REQ-[A-Za-z0-9.]+/g) || [],
       noneBlocked: NONE_BLOCKED.test((cells[at] || "").replace(/\*\*/g, "").trim()),
       line: i + 1,
-      answered: answers.length > 0 && !deferred,
+      answered: isAnswered(answers),
       deferred,
     });
   }

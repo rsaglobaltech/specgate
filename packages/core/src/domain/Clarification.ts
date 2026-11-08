@@ -23,6 +23,33 @@ export function deferredAnswer(answer: string): boolean {
   return DEFERRED.test(text) || DEFERRED_ALONE.test(text);
 }
 
+/**
+ * The answers lines of a `questions.md` give a row, as in `Answer (Q1): …`
+ * under the table (REQ-429). The studio, `specgate questions` and the draft
+ * checklist read them alike: an answer one of them counts, all of them count.
+ */
+export function answerLines(md: string, row: string): string[] {
+  const named = new RegExp(
+    `(^|[^A-Za-z0-9])${row.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z0-9])`
+  );
+  return md
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .filter((l) => /^\s*(?:[-*]\s*)?\**(answer|respuesta)\b/i.test(l) && named.test(l))
+    .map((l) =>
+      l
+        .replace(/^[^:]*:\s*/, "")
+        .replace(/\*\*/g, "")
+        .trim()
+    );
+}
+
+/** Answered: some answer is given, and not every one puts the decision off. */
+export function isAnswered(answers: string[]): boolean {
+  const given = answers.filter((a) => a.length > 0);
+  return given.length > 0 && !given.every(deferredAnswer);
+}
+
 export interface QuestionRow {
   id: string;
   text: string;
@@ -89,11 +116,12 @@ export function questionTable(md: string): QuestionRow[] {
   return t.rows.map((i) => {
     const c = cells(t.lines[i]);
     const answer = answerAt >= 0 ? c[answerAt] || "" : "";
+    const id = c[0] || "";
     return {
-      id: c[0] || "",
+      id,
       text: textAt >= 0 ? c[textAt] || "" : "",
       blocks: (blocksAt >= 0 ? c[blocksAt] || "" : "").match(/REQ-[A-Za-z0-9.]+/g) || [],
-      answered: answer.length > 0 && !deferredAnswer(answer),
+      answered: isAnswered([answer, ...(id ? answerLines(md, id) : [])]),
       line: i + 1,
       options: (optionsAt >= 0 ? c[optionsAt] || "" : "")
         .split(/\s*[;·]\s*/)

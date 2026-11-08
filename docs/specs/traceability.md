@@ -218,6 +218,9 @@
 | REQ-425 | SCN-425a | `features/agent-integration/REQ-425.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 | REQ-426 | SCN-426a | `features/agent-integration/REQ-426.feature` | - | - | - | - | - | tests/unit/guard-next-requirement.test.ts | Draft |
 | REQ-427 | SCN-427a | `features/agent-integration/REQ-427.feature` | - | - | - | - | - | tests/unit/guard-next-requirement.test.ts | Draft |
+| REQ-429 | SCN-429a | `features/studio/REQ-429.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Draft |
+| REQ-430 | SCN-430a | `features/studio/REQ-430.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Draft |
+| REQ-431 | SCN-431a | `features/studio/REQ-431.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Draft |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
