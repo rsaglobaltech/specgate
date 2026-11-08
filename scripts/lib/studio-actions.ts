@@ -45,11 +45,15 @@ const ticket: Check = (v) =>
     ? null
     : "a ticket is named like KAN-13";
 
+/** Whether a string holds a control character: a newline, a NUL, an escape. */
+const hasControl = (v: string) =>
+  [...v].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127);
+
 /** One line of text, without a control character: what a preference or an idea holds. */
 const text =
   (max: number): Check =>
   (v) =>
-    typeof v === "string" && v.trim() && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v)
+    typeof v === "string" && v.trim() && v.length <= max && !hasControl(v)
       ? null
       : `a line of at most ${max} characters`;
 
