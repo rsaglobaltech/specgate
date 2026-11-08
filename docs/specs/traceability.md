@@ -226,6 +226,13 @@
 | REQ-434 | SCN-434a | `features/studio/REQ-434.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-435 | SCN-435a | `features/studio/REQ-435.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-436 | SCN-436a | `features/studio/REQ-436.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts, e2e/studio/studio.spec.mjs | Implemented |
+| REQ-438 | SCN-438a | `features/studio/REQ-438.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Draft |
+| REQ-439 | SCN-439a | `features/studio/REQ-439.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Draft |
+| REQ-440 | SCN-440a | `features/studio/REQ-440.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Draft |
+| REQ-441 | SCN-441a | `features/studio/REQ-441.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Draft |
+| REQ-442 | SCN-442a | `features/studio/REQ-442.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Draft |
+| REQ-443 | SCN-443a | `features/studio/REQ-443.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Draft |
+| REQ-444 | SCN-444a | `features/studio/REQ-444.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Draft |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
