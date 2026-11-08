@@ -113,14 +113,21 @@ test("REQ-436 SCN-436a: from an open question to a run followed in Live", async 
   await notice("Construcción en marcha");
   await page.goto(`${base}/live`);
   await expect(page.locator(".conn")).toContainText("Conectado");
-  await expect(page.locator(".now h2")).toBeVisible({ timeout: 60_000 });
+  await expect(page.locator(".run-badge")).toContainText("En marcha", { timeout: 60_000 });
   await expect(page.locator(".term")).toContainText("src/orders.ts", { timeout: 60_000 });
-  await expect(page.locator(".stages [aria-current=step]")).toBeVisible();
+  await expect(page.locator(".pipeline [aria-current=step]")).toBeVisible();
+  await expect(page.locator(".mm .seg-running")).toHaveCount(1);
+  await page.getByRole("tab", { name: "Agente" }).click();
+  await expect(page.getByRole("tabpanel")).toContainText("Modelo");
+  await page.getByRole("button", { name: "Trazabilidad" }).click();
+  await expect(page.locator(".trace")).toContainText("REQ-002");
+  await page.getByRole("button", { name: "Ejecución" }).click();
 
   // Stop it at once, and nothing runs any more.
   await page.getByRole("button", { name: "Parar ya" }).click();
   await expect(page.locator("#stop-now-sure")).toBeFocused();
   await page.locator("#stop-now-sure").click();
-  await expect(page.getByText("No hay nada en marcha ahora.")).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator(".run-badge")).not.toContainText("En marcha", { timeout: 30_000 });
+  await expect(page.locator(".wq[aria-label=Ahora]")).toContainText("No hay nada en marcha ahora.");
   expect(errors).toEqual([]);
 });

@@ -728,53 +728,6 @@ const liveData = (now: number, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
-test("REQ-433 SCN-433a: the new Live — the test result in the log, Tests the current stage, REQ-026 queued", () => {
-  const now = 1_800_000_000;
-  const html: string = studio.renderLive("en", liveData(now), "open", now);
-  assert.match(html, /<li class="now" aria-current="step"><i><\/i>Test<\/li>/);
-  // The log reads top to bottom: the edit, the start, then the result.
-  const log = html.slice(html.indexOf('class="term"'));
-  assert.ok(log.indexOf("src/orders.ts") < log.indexOf("started  tests"));
-  assert.ok(log.indexOf("started  tests") < log.indexOf("failed  tests  (3 ✓ 1 ✗)"));
-  assert.match(
-    html,
-    /<li class="q-queued"><span class="dot" aria-hidden="true"><\/span><span class="grow"><span class="id">REQ-026<\/span>/
-  );
-  assert.match(
-    html,
-    /aria-current="step"><span class="dot"[^>]*><\/span><span class="grow"><span class="id">REQ-025/
-  );
-  assert.match(html, /\[ REQ-025 · attempt 2 \]/);
-  assert.match(html, />2:05</);
-  assert.match(html, /\$0\.42/);
-  assert.match(html, /1 files touched/);
-  assert.match(html, />Stop after this requirement</);
-  assert.match(html, />Stop now</);
-  assert.match(html, /role="status"><i aria-hidden="true"><\/i>Connected/);
-});
-
-test("REQ-433: the new Live — a question the agent asked is answered there; a lost stream is said", () => {
-  const now = 1_800_000_000;
-  const data = liveData(now, {
-    questions: {
-      open: [
-        { id: "Q4", change: "draft-orders", text: "Refund to the card?", blocks: ["REQ-025"] },
-      ],
-    },
-  });
-  data.requirements[0].state = "question";
-  (data.requirements[0] as { question: unknown }).question = { text: "Refund to the card?" };
-  const html: string = studio.renderLive("es", data, "lost", now);
-  assert.match(html, /\[ El asistente pregunta \]/);
-  assert.match(html, /<span class="id">Q4<\/span> Refund to the card\?/);
-  assert.match(html, /<label for="live-answer-draft-orders-Q4"/);
-  assert.match(html, /Sin conexión · reintentando/);
-  assert.match(
-    studio.renderLive("es", { ...liveData(now), requirements: [] }, "open", now),
-    /No hay nada en marcha ahora\./
-  );
-});
-
 test("REQ-433: /live opens the app on Live, and an address still wins", () => {
   assert.equal(studio.sectionOf("", "live"), "live");
   assert.equal(studio.sectionOf("#/questions", "live"), "questions");
@@ -1032,4 +985,280 @@ test("REQ-216 SCN-216b: stopping a draft ends its agent too, though it runs in a
     await new Promise((ok) => setTimeout(ok, 100));
   assert.equal(aliveNow(job.pid!), false, "the draft's job is gone");
   assert.equal(aliveNow(agentPid), false, "and its agent");
+});
+
+const liveMatrix = [
+  {
+    requirement: "REQ-025",
+    title: "Cancel an order",
+    scenario: "SCN-025",
+    group: "orders",
+    feature: "features/orders/REQ-025.feature",
+    tests: ["tests/orders.test.ts"],
+    status: "Draft",
+    source: "change",
+  },
+  {
+    requirement: "REQ-026",
+    title: "Refund",
+    scenario: "SCN-026",
+    group: "orders",
+    feature: "",
+    tests: [],
+    status: "Draft",
+    source: "change",
+  },
+  {
+    requirement: "REQ-031",
+    title: "Invoice",
+    scenario: "",
+    group: "billing",
+    feature: "",
+    tests: [],
+    status: "Needs Clarification",
+    source: "change",
+  },
+  {
+    requirement: "REQ-002",
+    title: "Health",
+    scenario: "SCN-002",
+    group: "spec",
+    feature: "features/core/health.feature",
+    tests: ["tests/health.test.ts"],
+    status: "Implemented",
+    source: "spec",
+  },
+] as const;
+
+test("REQ-433 SCN-433a: the new Live — the test result in the log, Tests the step running, REQ-026 queued", () => {
+  const now = 1_800_000_000;
+  const data = liveData(now);
+  Object.assign(data.requirements[0], {
+    running: {
+      stage: "tests",
+      since: now - 10,
+      runner: "host",
+      image: "",
+    },
+  });
+  data.requirements[0].steps = data.requirements[0].steps.filter((e) => e.type !== "gate");
+  data.requirements[0].steps.unshift({
+    type: "step",
+    kind: "test",
+    target: "npm test",
+    pass: 3,
+    fail: 1,
+    t: now,
+  } as never);
+  const html: string = studio.renderLive("en", data, "open", now, [...liveMatrix]);
+  assert.match(
+    html,
+    /<li class="pl pl-running" aria-current="step">[^]*?tests<\/span><span class="faint">10 s<\/span><\/li>/
+  );
+  const log = html.slice(html.indexOf('class="term"'));
+  assert.ok(log.indexOf("src/orders.ts") < log.indexOf("started  tests"));
+  assert.ok(log.indexOf("started  tests") < log.indexOf("npm test"));
+  assert.match(
+    html,
+    /<section class="wq" aria-label="Up next">[^]*?<span class="id">REQ-026<\/span> Refund/
+  );
+  assert.match(html, /\$0\.42/);
+  assert.match(html, />Stop after this requirement</);
+  assert.match(html, />Stop now</);
+  assert.match(html, /role="status"><i aria-hidden="true"><\/i>Connected/);
+});
+
+test("REQ-179 SCN-179b + REQ-181 SCN-181a: Live reads like a CI run — a header kept in view with the run's figures, the steps Agent to Merge", () => {
+  const now = 1_800_000_000;
+  const data = liveData(now);
+  const html: string = studio.renderLive("en", data, "open", now, [...liveMatrix]);
+  assert.match(html, /<header class="live-head">/);
+  assert.match(html, /<dl class="run-sum" aria-label="Summary">[^]*?1 passed|0 passed/);
+  for (const step of ["Agent", "Specification", "Architecture", "Merge"])
+    assert.match(html, new RegExp(`>${step}<`));
+  assert.match(html, /tests<\/span><span class="faint">/, "a gate stage by its name");
+  const css = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.css"), "utf8");
+  assert.match(css, /\.live-head\{[^}]*position:\s*sticky/);
+  // Nothing from another host; no event read as HTML.
+  // Our code never sets HTML: every value goes in as text (the bundled library may support it; we do not use it).
+  const src = path.join(__dirname, "..", "..", "..", "studio", "src");
+  const files: string[] = [];
+  const walk = (d: string) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      if (e.isDirectory()) walk(path.join(d, e.name));
+      else if (/\.tsx?$/.test(e.name)) files.push(path.join(d, e.name));
+    }
+  };
+  walk(src);
+  for (const f of files)
+    assert.doesNotMatch(
+      fs.readFileSync(f, "utf8"),
+      /dangerouslySetInnerHTML|innerHTML|insertAdjacentHTML/,
+      f
+    );
+  assert.doesNotMatch(
+    studio.renderLive("en", data, "open", now, [...liveMatrix]),
+    /<script|https?:\/\//
+  );
+});
+
+test("REQ-181 SCN-181c: the run as a matrix by module — a row per module, a segment per requirement, those not reached included", () => {
+  const now = 1_800_000_000;
+  const rows = studio.matrixByModule(liveData(now).requirements, [...liveMatrix], now);
+  assert.deepEqual(
+    rows.map((r: { group: string; reqs: Array<{ req: string; state: string }> }) => [
+      r.group,
+      r.reqs.map((q) => `${q.req}:${q.state}`),
+    ]),
+    [
+      // What the run touched first on top; the rest in id order.
+      ["orders", ["REQ-025:running", "REQ-026:queued"]],
+      ["spec", ["REQ-002:pass"]],
+      ["billing", ["REQ-031:blocked"]],
+    ]
+  );
+  const html: string = studio.renderLive("en", liveData(now), "open", now, [...liveMatrix]);
+  assert.match(html, /id="chain" role="group"/);
+  for (const w of ["passed", "running", "failed", "asks", "blocked", "queued"])
+    assert.match(html, new RegExp(`<\\/span> ${w}<\\/li>`));
+  assert.match(
+    html,
+    /class="seg seg-blocked" aria-pressed="false" aria-label="REQ-031 — Invoice · blocked"/
+  );
+});
+
+test("REQ-181 SCN-181b: the Traceability view — every row, from the spec and from a change, by module, with its tests and status", () => {
+  const html: string = studio.renderTrace("en", [...liveMatrix]);
+  assert.match(html, /<details open><summary><strong>orders<\/strong>/);
+  assert.match(html, /<details open><summary><strong>spec<\/strong>/);
+  assert.match(
+    html,
+    /REQ-002<\/span> Health<\/th><td>SCN-002<\/td><td><code>features\/core\/health.feature<\/code><\/td><td><code class="block">tests\/health.test.ts<\/code><\/td><td>Implemented <span class="faint">· in the spec/
+  );
+  assert.match(html, /REQ-025<\/span> Cancel an order[^]*?Draft <span class="faint">· in a change/);
+  assert.match(html, /type="search"[^>]*aria-label="Filter: requirement, scenario, module…"/);
+});
+
+test("REQ-181 SCN-181a + REQ-182 SCN-182d: the requirement opens in its tabs — Steps, Requirement, Tests and files, Attempts, Agent", () => {
+  const now = 1_800_000_000;
+  const html: string = studio.renderLive("en", liveData(now), "open", now, [...liveMatrix]);
+  assert.match(html, /role="tablist" aria-label="The requirement in detail"/);
+  for (const tab of ["Steps", "Requirement", "Tests and files", "Attempts", "Agent"]) {
+    assert.match(html, new RegExp(`role="tab"[^>]*>${tab}<`));
+  }
+  assert.match(
+    html,
+    /role="tab" id="tab-steps" class="chip-btn" aria-selected="true"[^>]*tabindex="0"/i
+  );
+});
+
+test("REQ-182 SCN-182d: the sidebar is the run's work queue — Now with model, context and output; Needs attention; Up next; Finished recently", () => {
+  const now = 1_800_000_000;
+  const data = liveData(now);
+  Object.assign(data.requirements[0], {
+    agent: {
+      model: "claude-sonnet-4-5-20250929",
+      version: "2.1",
+      permission: "acceptEdits",
+      tools: 12,
+    },
+    usage: {
+      context: 42000,
+      peak: 50000,
+      window: 200000,
+      input: 9000,
+      output: 3100,
+      cacheRead: 0,
+      cacheWrite: 0,
+      cost: 0.12,
+      turns: 4,
+    },
+  });
+  const html: string = studio.renderLive("en", data, "open", now, [...liveMatrix]);
+  for (const block of [
+    "Now",
+    "Needs attention",
+    "Up next",
+    "Open questions",
+    "Finished recently",
+  ]) {
+    assert.match(html, new RegExp(`<section class="wq" aria-label="${block}">`));
+  }
+  assert.match(html, /<dt>Model<\/dt><dd>sonnet-4-5<\/dd>/);
+  assert.match(html, /42k \/ 200k/);
+  assert.match(html, /<dt>Output<\/dt><dd>3.1k tokens<\/dd>/);
+  assert.match(
+    html,
+    /REQ-031<\/span> Invoice<\/span><span class="faint">blocked · needs clarification/
+  );
+});
+
+test("REQ-274 SCN-274a: the step that runs, by its name and how long — in the steps and in Now", () => {
+  const now = 1_800_000_000;
+  const r = liveData(now).requirements[0];
+  Object.assign(r, {
+    running: { stage: "quality: coverage", since: now - 180, runner: "docker", image: "maven:3.9" },
+  });
+  const rows = studio.pipeline(r, now);
+  const running = rows.find((x: { state: string }) => x.state === "running");
+  assert.equal(running.name, "quality: coverage");
+  assert.equal(running.seconds, 180);
+  assert.equal(running.image, "maven:3.9");
+  const data = liveData(now);
+  data.requirements[0] = r;
+  const html: string = studio.renderLive("en", data, "open", now, []);
+  assert.match(html, /<dt>Running<\/dt><dd><code>quality: coverage<\/code> · 3 min 00 s<\/dd>/);
+  assert.match(
+    html,
+    /quality: coverage<span class="faint"> · maven:3.9<\/span><\/span><span class="faint">3 min 00 s/
+  );
+});
+
+test("REQ-189 SCN-189c + REQ-201 SCN-201c: what the agent asked waits under Needs attention, with the form that answers it and marks it reviewed", () => {
+  const now = 1_800_000_000;
+  const data = liveData(now, {
+    questions: {
+      open: [
+        { id: "Q4", change: "draft-orders", text: "Refund to the card?", blocks: ["REQ-025"] },
+      ],
+    },
+  });
+  data.requirements[0].state = "question";
+  (data.requirements[0] as { question: unknown }).question = { text: "Refund to the card?" };
+  const html: string = studio.renderLive("es", data, "lost", now, [...liveMatrix]);
+  assert.match(
+    html,
+    /<section class="wq" aria-label="Necesita atención">[^]*?pregunta: Refund to the card\?/
+  );
+  assert.match(html, /<label for="live-answer-draft-orders-Q4"/);
+  assert.match(html, />Marcar como revisada</);
+  assert.match(
+    html,
+    /<span class="seg seg-question" aria-hidden="true"><\/span> pregunta/,
+    "the legend names it"
+  );
+  assert.match(html, /Sin conexión · reintentando/);
+  // Asked by the agent, it is not listed again under Open questions.
+  assert.doesNotMatch(
+    html.slice(html.indexOf('aria-label="Preguntas abiertas"')),
+    /Refund to the card/
+  );
+});
+
+test("REQ-203 SCN-203a: every open question in Live, each with the form that answers it; a waiting requirement with the command that asks", () => {
+  const now = 1_800_000_000;
+  const data = liveData(now, {
+    questions: {
+      open: [{ id: "Q6", change: "draft-billing", text: "Which tax?", blocks: ["REQ-031"] }],
+      waitingWithoutQuestion: [{ requirement: "REQ-040", title: "Export" }],
+    },
+  });
+  const html: string = studio.renderLive("en", data, "open", now, []);
+  const block = html.slice(html.indexOf('aria-label="Open questions"'));
+  assert.match(
+    block,
+    /<span class="id">Q6<\/span> <span class="faint">draft-billing · Blocks REQ-031<\/span>/
+  );
+  assert.match(block, /<label for="live-answer-draft-billing-Q6"/);
+  assert.match(block, /REQ-040<\/span> Export[^]*?specgate ask REQ-040/);
 });

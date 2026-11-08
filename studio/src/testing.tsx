@@ -11,7 +11,16 @@ import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
 import { Notices, type Notice } from "./ui/Notices";
 import { Offline, SectionError, Skeleton } from "./ui/States";
-import { Live, logLine, type Connection, type LiveData } from "./sections/Live";
+import {
+  Live,
+  logLine,
+  type Connection,
+  type LiveData,
+  type MatrixRow,
+  type RequirementDetail,
+} from "./sections/Live";
+export { matrixByModule, pipeline, summary, workQueue, dur } from "./sections/live/model";
+import { Trace } from "./sections/live/Trace";
 import { Settings, type QualityView, type SettingsProfile } from "./sections/Settings";
 import { Report, type ReportData } from "./sections/Report";
 import { Brief, type BriefData } from "./sections/Brief";
@@ -133,11 +142,25 @@ export function renderLive(
   lang: Lang,
   data: LiveData,
   connection: Connection = "open",
-  now = 1_800_000_000
+  now = 1_800_000_000,
+  matrix: MatrixRow[] = [],
+  initial?: { id: string; detail: RequirementDetail | null }
 ): string {
   const none = async () => ({ ok: true });
   return render(
-    <Live lang={lang} data={data} connection={connection} now={now} onAnswer={none} onStop={none} />
+    <Live
+      lang={lang}
+      data={data}
+      matrix={matrix}
+      connection={connection}
+      now={now}
+      onAnswer={none}
+      onReviewed={none}
+      onStop={none}
+      detailOf={async () => null}
+      promptOf={async () => ""}
+      initial={initial}
+    />
   );
 }
 
@@ -150,4 +173,8 @@ export function renderStates(lang: Lang, notices: Notice[] = [], error = ""): st
       <Notices lang={lang} list={notices} onClose={() => undefined} />
     </div>
   );
+}
+
+export function renderTrace(lang: Lang, rows: MatrixRow[]): string {
+  return render(<Trace lang={lang} rows={rows} />);
 }

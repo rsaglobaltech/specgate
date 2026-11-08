@@ -1,199 +1,48 @@
 /**
- * Live (REQ-433): the run in progress, followed through server-sent events —
- * the requirement and its stages with the current one marked, its log as it
- * streams, the queue, the time and the cost so far; a question the agent asked
- * answered here; the run stopped after this requirement, or at once.
+ * Live (REQ-433, REQ-179, REQ-181, REQ-182, REQ-203, REQ-274): the run as it
+ * happens, through server-sent events. A header that stays in view with the
+ * run's figures; the run as a matrix by module, or the traceability matrix as
+ * it stands; the work queue beside it — now, what needs a person, what is
+ * next, every open question, what finished; and the requirement opened in its
+ * tabs. The run is stopped after this requirement, or at once.
  */
-import { useEffect, useRef, useState } from "preact/hooks";
-import { t, type Key, type Lang } from "../core/i18n";
+import { useEffect, useState } from "preact/hooks";
+import { t, type Lang } from "../core/i18n";
 import { Busy, type Result } from "../ui/Busy";
-import { stageOf } from "./Build";
+import { Detail, type RequirementDetail } from "./live/Detail";
+import { Matrix } from "./live/Matrix";
+import { Sidebar } from "./live/Sidebar";
+import { Trace } from "./live/Trace";
+import {
+  dur,
+  kt,
+  matrixByModule,
+  summary,
+  workQueue,
+  type LiveData,
+  type MatrixRow,
+} from "./live/model";
 
-export interface LiveStep {
-  type?: string;
-  kind?: string;
-  t?: number;
-  ended?: number;
-  stage?: string;
-  result?: string;
-  target?: string;
-  tool?: string;
-  text?: string;
-  into?: string;
-  pass?: number;
-  fail?: number;
-}
-
-export interface LiveReq {
-  req: string;
-  title: string;
-  group: string;
-  attempt: number;
-  phase: string;
-  state: "running" | "pass" | "fail" | "question";
-  started: number;
-  updated: number;
-  elapsed: number;
-  tests: { pass: number; fail: number } | null;
-  files: string[];
-  steps: LiveStep[];
-  usage: { cost: number | null } | null;
-  question: { text: string } | null;
-}
-
-export interface LiveData {
-  requirements: LiveReq[];
-  queue: string[];
-  queueStarted: number;
-  totals: { input: number; output: number; cost: number | null; turns: number };
-  questions: { open: Array<{ id: string; change: string; text: string; blocks: string[] }> };
-}
+export { logLine } from "./live/Log";
+export type { LiveData, LiveReq, LiveStep, MatrixRow } from "./live/model";
+export type { RequirementDetail } from "./live/Detail";
 
 export type Connection = "connecting" | "open" | "lost";
 
 export interface LiveProps {
   lang: Lang;
   data: LiveData;
+  matrix: MatrixRow[];
   connection: Connection;
   /** Seconds since the epoch; the clock's own time when not given (a test gives it). */
   now?: number;
   onAnswer: (question: string, change: string, answer: string) => Promise<Result>;
+  onReviewed: (question: string, change: string) => Promise<Result>;
   onStop: (now: boolean) => Promise<Result>;
-}
-
-const STAGES: Key[] = ["stProgram", "stTest", "stQuality", "stSave"];
-
-const clock = (s: number) => {
-  const m = Math.floor(Math.max(0, s) / 60);
-  const sec = Math.floor(Math.max(0, s) % 60);
-  return `${m}:${String(sec).padStart(2, "0")}`;
-};
-const stamp = (t: number) => (t ? new Date(t * 1000).toTimeString().slice(0, 8) : "");
-const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
-
-/** One event as one log line: when, what kind, what it did. */
-export function logLine(e: LiveStep): { ts: string; kind: string; what: string; tone: string } {
-  const kind =
-    e.type === "step"
-      ? String(e.kind || "")
-      : e.type === "message"
-        ? "agent"
-        : String(e.type || "");
-  const what =
-    e.type === "message"
-      ? String(e.text || "")
-      : e.type === "gate-start"
-        ? `started  ${e.stage || ""}`
-        : e.type === "gate"
-          ? `${e.result === "pass" ? "passed" : "failed"}  ${e.stage || ""}${
-              e.pass !== undefined || e.fail !== undefined
-                ? `  (${e.pass || 0} ✓ ${e.fail || 0} ✗)`
-                : ""
-            }`
-          : e.type === "merge"
-            ? `merged into ${e.into || "HEAD"}`
-            : String(e.target || e.tool || "");
-  const tone =
-    e.type === "message"
-      ? "say"
-      : e.type === "gate"
-        ? e.result === "pass"
-          ? "ok"
-          : "bad"
-        : e.type === "merge"
-          ? "ok"
-          : "";
-  return { ts: stamp(Number(e.ended || e.t) || 0), kind, what: clip(what, 400), tone };
-}
-
-function Log({ lang, steps }: { lang: Lang; steps: LiveStep[] }) {
-  const box = useRef<HTMLOListElement>(null);
-  const [follow, setFollow] = useState(true);
-  // The model keeps the newest first; the log reads top to bottom.
-  const lines = steps.slice(0, 200).slice().reverse();
-  useEffect(() => {
-    const el = box.current;
-    if (el && follow) el.scrollTop = el.scrollHeight;
-  }, [lines.length, follow]);
-  return (
-    <div class="term-wrap">
-      <ol
-        class="term"
-        ref={box}
-        tabIndex={0}
-        aria-label={t(lang, "logLabel")}
-        aria-live="polite"
-        aria-relevant="additions"
-        onScroll={(e) => {
-          const el = e.target as HTMLOListElement;
-          setFollow(el.scrollHeight - el.scrollTop - el.clientHeight < 24);
-        }}
-      >
-        {!lines.length ? <li class="term-empty">{t(lang, "logEmpty")}</li> : null}
-        {lines.map((e) => {
-          const l = logLine(e);
-          return (
-            <li class={l.tone}>
-              <span class="t-ts">{l.ts}</span>
-              <span class="t-k">{l.kind}</span>
-              <span class="t-x">{l.what}</span>
-            </li>
-          );
-        })}
-      </ol>
-      {!follow ? (
-        <button type="button" class="btn-ghost follow" onClick={() => setFollow(true)}>
-          ↓ {t(lang, "followLog")}
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
-function Ask({
-  lang,
-  q,
-  onAnswer,
-}: {
-  lang: Lang;
-  q: { id: string; change: string; text: string };
-  onAnswer: LiveProps["onAnswer"];
-}) {
-  const [text, setText] = useState("");
-  const [said, setSaid] = useState<Result | null>(null);
-  const field = `live-answer-${q.change}-${q.id}`;
-  return (
-    <section class="card ask" aria-labelledby={`${field}-h`}>
-      <span class="eyebrow">[ {t(lang, "agentAsks")} ]</span>
-      <h2 id={`${field}-h`}>
-        <span class="id">{q.id}</span> {q.text}
-      </h2>
-      <label for={field} class="label">
-        {t(lang, "yourAnswer")}
-      </label>
-      <textarea
-        id={field}
-        rows={2}
-        value={text}
-        onInput={(e) => setText((e.target as HTMLTextAreaElement).value)}
-      />
-      <div class="row">
-        <Busy
-          busyLabel={t(lang, "saving")}
-          disabled={!text.trim()}
-          onRun={() => onAnswer(q.id, q.change, text.trim())}
-          onDone={setSaid}
-        >
-          {t(lang, "saveAnswer")} →
-        </Busy>
-        {said ? (
-          <span class={said.ok ? "ok" : "err"}>
-            {said.ok ? t(lang, "savedTo") : `${t(lang, "errorPrefix")} ${said.message || ""}`}
-          </span>
-        ) : null}
-      </div>
-    </section>
-  );
+  detailOf: (id: string) => Promise<RequirementDetail | null>;
+  promptOf: (id: string, attempt: number) => Promise<string>;
+  /** What a test opens, with its details, instead of reading them. */
+  initial?: { id: string; detail: RequirementDetail | null };
 }
 
 function Stop({ lang, onStop }: { lang: Lang; onStop: LiveProps["onStop"] }) {
@@ -245,7 +94,20 @@ function Stop({ lang, onStop }: { lang: Lang; onStop: LiveProps["onStop"] }) {
   );
 }
 
-export function Live({ lang, data, connection, now: given, onAnswer, onStop }: LiveProps) {
+export function Live(props: LiveProps) {
+  const {
+    lang,
+    data,
+    matrix,
+    connection,
+    now: given,
+    onAnswer,
+    onReviewed,
+    onStop,
+    detailOf,
+    promptOf,
+    initial,
+  } = props;
   // The clocks move every second, between the stream's pushes.
   const [, tick] = useState(0);
   useEffect(() => {
@@ -254,145 +116,135 @@ export function Live({ lang, data, connection, now: given, onAnswer, onStop }: L
     return () => clearInterval(timer);
   }, [given]);
   const now = given ?? Date.now() / 1000;
-  const current = data.requirements.find((r) => r.state === "running" || r.state === "question");
-  const byId = new Map(data.requirements.map((r) => [r.req, r]));
-  const startedRun = data.queueStarted || 0;
-  const inRun = (r?: LiveReq) => !!r && r.updated >= startedRun;
-  const queue = data.queue.map((id) => {
-    const r = byId.get(id);
-    const state = !r || !inRun(r) ? "queued" : r.state;
-    return { id, title: r?.title || id, state, elapsed: r && inRun(r) ? r.elapsed : 0 };
-  });
-  const asked = current
-    ? data.questions.open.find((q) => current.question && q.text === current.question.text) ||
-      (current.question ? { id: "", change: "", text: current.question.text } : null)
-    : null;
-  const at = current ? stageOf(current) : -1;
-  const cost = data.totals.cost;
+  const [view, setView] = useState<"run" | "trace">("run");
+  const [picked, setPicked] = useState(initial?.id || "");
+  const queue = workQueue(data, matrix);
+  const rows = matrixByModule(data.requirements, matrix, now);
+  const sum = summary(data, now);
+  // What is open: the viewer's choice, else what runs, what needs a person, the first of the run.
+  const selected =
+    picked ||
+    queue.now?.req ||
+    queue.attention[0]?.req ||
+    data.requirements[0]?.req ||
+    rows[0]?.reqs[0]?.req ||
+    "";
+  const r = data.requirements.find((x) => x.req === selected) || null;
+  const stateWord = {
+    running: "runInProgress",
+    fail: "runFailed",
+    asks: "runWaitsAnswer",
+    pass: "runCompleted",
+    idle: "runWaiting",
+  } as const;
   return (
-    <>
-      <header class="head head-row">
-        <div>
-          <h1>{t(lang, "live")}</h1>
-          <p class="lead">{t(lang, "liveIntro")}</p>
+    <div class="live-page">
+      <header class="live-head">
+        <div class="row spread">
+          <div>
+            <h1>{t(lang, "live")}</h1>
+            <p class="lead">
+              <span class={`run-badge run-${sum.state}`}>{t(lang, stateWord[sum.state])}</span>{" "}
+              {queue.now ? `${queue.now.req} ${queue.now.title}` : ""}
+            </p>
+          </div>
+          <div class="row">
+            <div class="seg-switch" role="group" aria-label={t(lang, "liveView")}>
+              <button type="button" aria-pressed={view === "run"} onClick={() => setView("run")}>
+                {t(lang, "viewRun")}
+              </button>
+              <button
+                type="button"
+                aria-pressed={view === "trace"}
+                onClick={() => setView("trace")}
+              >
+                {t(lang, "traceability")}
+              </button>
+            </div>
+            <span class={`conn conn-${connection}`} role="status">
+              <i aria-hidden="true" />
+              {t(
+                lang,
+                connection === "open"
+                  ? "connOpen"
+                  : connection === "lost"
+                    ? "connLost"
+                    : "connConnecting"
+              )}
+            </span>
+          </div>
         </div>
-        <span class={`conn conn-${connection}`} role="status">
-          <i aria-hidden="true" />
-          {t(
-            lang,
-            connection === "open"
-              ? "connOpen"
-              : connection === "lost"
-                ? "connLost"
-                : "connConnecting"
-          )}
-        </span>
+        <dl class="run-sum" aria-label={t(lang, "summary")}>
+          <div>
+            <dt>{t(lang, "sumLabel")}</dt>
+            <dd>
+              {t(lang, "sumReqs")
+                .replace("{P}", String(sum.pass))
+                .replace("{R}", String(sum.running))
+                .replace("{F}", String(sum.fail))}
+              {sum.asks ? ` · ${t(lang, "sumAsks").replace("{A}", String(sum.asks))}` : ""}
+            </dd>
+          </div>
+          <div>
+            <dt>{t(lang, "runTime")}</dt>
+            <dd>{sum.started ? dur(sum.duration) : "—"}</dd>
+          </div>
+          <div>
+            <dt>{t(lang, "agentTime")}</dt>
+            <dd>{dur(sum.agentTime)}</dd>
+          </div>
+          <div>
+            <dt>Tokens</dt>
+            <dd>
+              {sum.tokensIn || sum.tokensOut
+                ? `${kt(sum.tokensIn)} ${t(lang, "tokIn")} · ${kt(sum.tokensOut)} ${t(lang, "tokOut")}`
+                : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt>{t(lang, "costSoFar")}</dt>
+            <dd>{sum.cost === null ? "—" : `$${sum.cost.toFixed(2)}`}</dd>
+          </div>
+        </dl>
+        {queue.now ? <Stop lang={lang} onStop={onStop} /> : null}
       </header>
-      {!current ? (
-        <section class="card empty">
-          <p>{t(lang, "nothingRunning")}</p>
-          <a class="btn-ghost" href="#/build">
-            {t(lang, "build")} →
-          </a>
-        </section>
+      {view === "trace" ? (
+        <Trace lang={lang} rows={matrix} />
       ) : (
         <div class="live">
           <div class="live-main">
-            <section class="card now" aria-labelledby="now-h">
-              <div class="row spread">
-                <div>
-                  <span class="eyebrow">
-                    [ {current.req} · {t(lang, "attemptN").replace("{N}", String(current.attempt))}{" "}
-                    ]
-                  </span>
-                  <h2 id="now-h">{current.title || current.req}</h2>
-                </div>
-                <span class="clock" aria-label={t(lang, "elapsed")}>
-                  {clock(now - current.started)}
-                </span>
-              </div>
-              <ol class="stages" aria-label={t(lang, "stages")}>
-                {STAGES.map((k, i) => (
-                  <li
-                    class={i < at ? "done" : i === at ? "now" : "todo"}
-                    aria-current={i === at ? "step" : undefined}
-                  >
-                    <i />
-                    {t(lang, k)}
-                  </li>
-                ))}
-              </ol>
-              {current.tests ? (
-                <span class="faint">
-                  {t(lang, "testsSoFar")} · <span class="ok">{current.tests.pass} ✓</span>{" "}
-                  <span class={current.tests.fail ? "err" : "faint"}>{current.tests.fail} ✗</span>
-                </span>
-              ) : null}
-              {current.files.length ? (
-                <details>
-                  <summary class="faint">
-                    {t(lang, "filesTouched").replace("{N}", String(current.files.length))}
-                  </summary>
-                  <ul class="files">
-                    {current.files.map((f) => (
-                      <li>
-                        <code>{f}</code>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              ) : null}
-              <Stop lang={lang} onStop={onStop} />
-            </section>
-            {asked && current.state === "question" ? (
-              <Ask lang={lang} q={asked} onAnswer={onAnswer} />
-            ) : null}
-            <Log lang={lang} steps={current.steps} />
+            <Matrix lang={lang} rows={rows} selected={selected} onSelect={setPicked} />
+            {selected ? (
+              <Detail
+                key={selected}
+                lang={lang}
+                id={selected}
+                r={r}
+                now={now}
+                detailOf={detailOf}
+                promptOf={promptOf}
+                initial={initial && initial.id === selected ? initial.detail : null}
+              />
+            ) : (
+              <section class="card empty">
+                <p>{t(lang, "nothingRunning")}</p>
+                <a class="btn-ghost" href="#/build">
+                  {t(lang, "build")} →
+                </a>
+              </section>
+            )}
           </div>
-          <aside class="live-side">
-            <section class="card" aria-labelledby="queue-h">
-              <h2 id="queue-h">{t(lang, "queue")}</h2>
-              <ol class="queue">
-                {queue.map((x) => (
-                  <li
-                    class={`q-${x.state}`}
-                    aria-current={current.req === x.id ? "step" : undefined}
-                  >
-                    <span class="dot" aria-hidden="true" />
-                    <span class="grow">
-                      <span class="id">{x.id}</span> {x.title !== x.id ? x.title : ""}
-                    </span>
-                    <span class="faint">
-                      {x.state === "queued"
-                        ? t(lang, "queued")
-                        : x.state === "running"
-                          ? clock(now - (byId.get(x.id)?.started || now))
-                          : x.state === "pass"
-                            ? `✓ ${clock(x.elapsed)}`
-                            : x.state === "question"
-                              ? t(lang, "waitsAnswer")
-                              : "✗"}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </section>
-            <section class="stats one" aria-label={t(lang, "summary")}>
-              <div class="stat">
-                <span class="faint">{t(lang, "runTime")}</span>
-                <b>{clock(now - (startedRun || current.started))}</b>
-              </div>
-              <div class="stat">
-                <span class="faint">{t(lang, "costSoFar")}</span>
-                <b>{cost === null ? "—" : `$${cost.toFixed(2)}`}</b>
-                <span class="faint">
-                  {Math.round((data.totals.input + data.totals.output) / 1000)}k tokens
-                </span>
-              </div>
-            </section>
-          </aside>
+          <Sidebar
+            lang={lang}
+            queue={queue}
+            now={now}
+            selected={selected}
+            onSelect={setPicked}
+            onAnswer={onAnswer}
+            onReviewed={onReviewed}
+          />
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -19,12 +19,12 @@ import {
 import { Brief, type BriefData, type Saved } from "./sections/Brief";
 import { Report, type ReportData } from "./sections/Report";
 import { Settings, type QualityView } from "./sections/Settings";
-import { Live } from "./sections/Live";
+import { Live, type MatrixRow, type RequirementDetail } from "./sections/Live";
 import { useLive } from "./core/useLive";
 import { Notices, type Notice } from "./ui/Notices";
 import { Offline, SectionError, Skeleton } from "./ui/States";
 import { useConnection } from "./core/useConnection";
-import { post } from "./core/api";
+import { get, post } from "./core/api";
 import type { Result } from "./ui/Busy";
 
 /** What a write did, said in a notice once it is done (REQ-434). */
@@ -125,6 +125,14 @@ export function App() {
     if (onBrief && !readingBrief) brief.reload();
   }, [readingBrief]);
   const stream = useLive(section === "live");
+  const liveMatrix = useRead<{ rows: MatrixRow[] }>(
+    section === "live" ? "/live/matrix.json" : null
+  );
+  // The matrix is read again when a requirement of the run changes state, not on every push.
+  const states = (stream.data?.requirements || []).map((r) => `${r.req}:${r.state}`).join(",");
+  useEffect(() => {
+    if (section === "live" && states) liveMatrix.reload();
+  }, [states]);
   const report = useRead<ReportData>(section === "report" ? "/api/report" : null);
   const onBuild = section === "build";
   const onSettings = section === "settings";
@@ -232,7 +240,17 @@ export function App() {
             onAnswer={(question, change, answer) =>
               write({ question, change: changeOf(change), answer })
             }
+            matrix={liveMatrix.data?.rows || []}
+            onReviewed={(question, change) =>
+              write({ question, change: changeOf(change), reviewed: true })
+            }
             onStop={(now) => send("/api/stop", { now })}
+            detailOf={(id) => get<RequirementDetail | null>(`/live/req/${id}.json`)}
+            promptOf={async (id, attempt) => {
+              const r = await fetch(`/live/req/${id}/prompt/${attempt}.txt`);
+              if (!r.ok) throw new Error(String(r.status));
+              return r.text();
+            }}
           />
         ) : onSettings && route.data && profiles.data ? (
           <Settings
