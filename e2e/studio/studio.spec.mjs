@@ -131,3 +131,55 @@ test("REQ-436 SCN-436a: from an open question to a run followed in Live", async 
   await expect(page.locator(".wq[aria-label=Ahora]")).toContainText("No hay nada en marcha ahora.");
   expect(errors).toEqual([]);
 });
+
+// studio-cli-parity: what the CLI does, from the studio (REQ-438 … REQ-443).
+test("REQ-439 SCN-439a + REQ-440 + REQ-441 + REQ-442: the gate, a new change, a delivery refused, a preference — from the studio", async ({
+  page,
+}) => {
+  const errors = watch(page);
+  const notice = (text) =>
+    expect(page.locator(".notice", { hasText: text }).last()).toBeVisible({ timeout: 60_000 });
+
+  // The gate from Home: its stages, said.
+  await page.goto(`${base}/#/home`);
+  await page.getByRole("button", { name: "Comprobar ahora" }).click();
+  await expect(page.locator(".gate p.ok, .gate p.err")).toBeVisible({ timeout: 120_000 });
+  await expect(page.locator(".gate-list")).toContainText("Especificación");
+
+  // A new change from an idea: it is listed among the other changes.
+  await page.goto(`${base}/#/changes`);
+  await page.getByRole("button", { name: "+ Nuevo cambio" }).click();
+  await page.locator("#new-change-id").fill("add-coupons");
+  await page.getByRole("button", { name: "Proponer", exact: true }).click();
+  await notice("specgate propose add-coupons");
+  await expect(page.locator(".list a", { hasText: "add-coupons" })).toBeVisible();
+
+  // Delivering a requirement no test names: refused, and why.
+  await page.locator(".list a", { hasText: "orders" }).click();
+  await page.locator(".change-panel").getByRole("button", { name: "Entregar" }).first().click();
+  await expect(page.locator(".change-panel .gate")).toContainText(
+    "todavía no tiene una prueba que lo nombre",
+    { timeout: 120_000 }
+  );
+
+  // A preference changed in Settings.
+  await page.goto(`${base}/#/settings`);
+  await page.locator("#pref-pet").selectOption("off");
+  await page
+    .locator(".pref", { has: page.locator("#pref-pet") })
+    .getByRole("button", { name: "Guardar" })
+    .click();
+  await notice("specgate config set pet off");
+  expect(errors).toEqual([]);
+  // A command the list does not name is refused by the server, even with the page's token.
+  const refused = await page.evaluate(async () => {
+    const token = (await (await fetch("/api/ping")).json()).token;
+    const r = await fetch("/api/action", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-specgate-token": token },
+      body: JSON.stringify({ action: "rm -rf .", args: {} }),
+    });
+    return r.status;
+  });
+  expect(refused).toBe(422);
+});

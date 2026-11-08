@@ -46,6 +46,26 @@ const shot = async (name) => {
   fs.writeFileSync(path.join(out, `studio-${name}.webp`), Buffer.from(data, "base64"));
   console.log("studio-" + name + ".webp");
 };
+/** One card, cut out of the page. */
+const shotOf = async (locator, name) => {
+  // A notice is a moment, not part of the card.
+  await page.evaluate(() => document.querySelectorAll(".notice").forEach((n) => n.remove()));
+  await locator.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(400);
+  const box = await locator.boundingBox();
+  // The box is measured from the viewport; the capture takes page coordinates.
+  const scroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+  box.x += scroll.x;
+  box.y += scroll.y;
+  const { data } = await cdp.send("Page.captureScreenshot", {
+    format: "webp",
+    quality: 82,
+    captureBeyondViewport: true,
+    clip: { x: box.x, y: box.y, width: box.width, height: box.height, scale: 1 },
+  });
+  fs.writeFileSync(path.join(out, `studio-${name}.webp`), Buffer.from(data, "base64"));
+  console.log("studio-" + name + ".webp");
+};
 const go = async (hash) => {
   await page.goto(`${base}/#/${hash}`);
   await page.locator("#main h1").first().waitFor();
@@ -132,8 +152,17 @@ await page.evaluate(() => {
 await page.setViewportSize({ width: 1280, height: 820 });
 await go("report");
 await shot("report");
+// The gate, run from the studio (REQ-440).
+await page.getByRole("button", { name: t("Comprobar ahora", "Check now") }).click();
+await page.locator(".gate p.ok, .gate p.err").waitFor({ timeout: 120_000 });
+await shotOf(page.locator("section", { has: page.locator("#gate-h") }), "gate");
+// The change of a module, with its requirements and actions (REQ-439, REQ-441).
+await go("changes");
+await page.locator(".list a").first().click();
+await shotOf(page.locator(".change-panel"), "change-panel");
 await go("settings");
 await shot("settings");
+await shotOf(page.locator("section", { has: page.locator("#prefs-h") }), "preferences");
 
 await browser.close();
 if (process.platform === "win32") spawnSync("taskkill", ["/pid", String(studio.pid), "/T", "/F"]);

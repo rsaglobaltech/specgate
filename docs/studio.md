@@ -30,14 +30,19 @@ The sidebar holds eight sections, each at its own address (`/#/questions`,
 
 | Section | What you do there | What it runs |
 | --- | --- | --- |
-| Home | See the next step and the route | `specgate status` |
+| Home | See the next step and the route; run the gate and the doctor | `specgate status`, `check`, `doctor` |
 | Brief | Write what the app must do, or paste the client's text | `propose --from-brief` (with the agent) |
-| Changes | Have each module drafted, review it, ask for changes, approve it | `propose --from-brief <module>`, `change note`, `change approve` |
+| Changes | Every change: draft a module, review, approve, deliver a requirement, validate, archive; a new change from an idea or a ticket | `propose`, `change note`, `change approve`, `apply`, `change validate`, `archive` |
 | Questions | Decide what the brief left open, confirm the spec says it | `specgate answer`, `answer --reviewed` |
 | Build | Choose who codes, pick what is ready, start | `config set agent`, `harness run --chain` |
 | Live | Follow the run, answer the agent, stop it | the harness's events, `harness` stop |
-| Report | What was built, how it was proven, what is missing | `specgate report` |
-| Settings | Create the project; see its agents and quality checks | `specgate init`, `quality init` |
+| Report | What was built, how it was proven, what is missing; the gate | `specgate report`, `check` |
+| Settings | Create or adopt the project; its agents, preferences, quality checks and ALM | `init`, `adopt`, `config set`, `agents init`, `quality init`, `alm sync` |
+
+Every action runs a `specgate` command from a fixed list, its arguments
+checked; the studio shows the very command, its output as it grows, and how
+it ended. Anything outside that list is refused, even from the studio's own
+page.
 
 **Simple** shows no command; **Advanced** adds the brief's markdown editor,
 the ids and each agent's command. **ES · EN** switches the language, the
@@ -52,14 +57,33 @@ React, Java and Spring Boot, Python and FastAPI, or your own); which agent
 codes — the one found on this machine is already chosen; and the quality
 level. Then it creates the project there, with a brief to fill.
 
-A folder that already holds files is left alone: the studio names the command
-that adopts it (`specgate init`), which keeps them. On a project, Settings
+A folder that already holds code is adopted in place, never scaffolded over:
+**See what adopt writes** lists every file `specgate adopt` would add, then
+**Adopt this folder** writes them — no file overwritten, no code touched.
+
+On a project, Settings
 lists the agents — the profiles of `.harness/profiles.yaml`, which is the
 default and which streams tokens and cost, and a command of your own set in
 `harness.config.yaml` — with **Change the assistant**; and the quality checks:
 when each runs, whether it gates or advises, and whether Docker answers.
 
 ![Settings on a project: the agent command harness.config.yaml holds, Change the assistant, and how to add a profile; then Code quality — Docker does not answer here — with the basic and strict levels to turn on.](assets/img/studio-settings.webp)
+
+Below, **the project's preferences** as `specgate config` keeps them — the
+tests the gate runs, the architecture check, the help profile, the language,
+the agent guard, Gato — each saved with `config set`, an unknown key or value
+refused. **The agents** installs the guards for this project, for Claude Code
+or OpenCode (`agents init --tool claude-plugin`), and wires the agent tools
+(`agents init`). The guards for every project of yours stay in a terminal:
+`specgate agents install --global`.
+
+![The project's preferences: the test and architecture commands, the help profile, the language, the agent guard and Gato, each with Save.](assets/img/studio-preferences.webp)
+
+With an `alm.config.yaml`, a **Jira / Azure Boards** card shows the provider,
+the project, and whether the token's variable — say `JIRA_TOKEN` — is set in
+the environment studio was started from. It never asks for the token, shows
+it or keeps it. **See the mapping** (`alm status`), **See what sync would do**
+(`alm sync --dry-run`), then **Sync**.
 
 ## Brief
 
@@ -74,7 +98,7 @@ draft the modules** waits while one of them is an error.
 
 ![The Brief: a box to paste the client's text, the product, who uses it and on which surfaces, the modules and the selected one's rules; beside it, the checks are all in order and Next: draft the modules.](assets/img/studio-brief.webp)
 
-## Changes · draft, review, approve
+## Changes · every change, to its archive
 
 The brief's modules on the left, each with where it stands — to draft, being
 drafted, draft to review, approved, archived. **Draft** hands one to the agent
@@ -89,6 +113,19 @@ missing instead of staying grey without a reason. Below, each requirement
 with its examples as Given / When / Then, and **Ask for a change** under each.
 
 ![Changes: the orders draft to review, two open questions each with Answer, Approve the draft waiting with "2 things missing", and the draft's requirements with their examples.](assets/img/studio-changes.webp)
+
+Every change of the project is here, not only the brief's: the others are
+listed under **Other changes**, each with how many of its requirements are
+delivered. A change opens into its requirements and their status, its
+proposal and its tasks. **Deliver** runs `specgate apply` on a requirement
+coded by hand — its test first, then the gate, then Implemented — or says why
+it was refused (no test names it yet, a stage that failed). **Validate** checks
+its deltas. Once every requirement is delivered, **See what archive writes**
+previews the archive, and only then **Archive** merges it into the spec.
+**+ New change** opens one from an idea, by its id, or — with an ALM
+configured — from a ticket's key.
+
+![A change: its three requirements, each Draft with Deliver, the proposal, Validate, and the archive waiting until every requirement is delivered.](assets/img/studio-change-panel.webp)
 
 ## Questions
 
@@ -161,6 +198,12 @@ proves each requirement, what is missing and why, and the decisions taken.
 **Print / PDF** opens it to print.
 
 ![The Report: the figures, the table by module, and what the app does.](assets/img/studio-report.webp)
+
+**The gate** — on Report and on Home — runs `specgate check` as CI would: each
+stage passed, failed or not configured, and under what failed the fix it
+ships. **Doctor** runs `specgate doctor` the same way.
+
+![The gate run from the studio: Ids not compared, Specification passed, Architecture not checked, Tests not configured, and the gate passes.](assets/img/studio-gate.webp)
 
 ## Saying what it does
 
