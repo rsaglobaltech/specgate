@@ -1,5 +1,5 @@
 /**
- * What the viewer chose — mode, language, theme — remembered in their browser
+ * What the viewer chose — mode, language, theme, the sidebar folded or not — remembered in their browser
  * (REQ-204). Storage can be missing or refuse; the studio works without it.
  */
 import type { Lang } from "./i18n";
@@ -11,9 +11,11 @@ export interface Prefs {
   mode: Mode;
   lang: Lang;
   theme: Theme;
+  /** The sidebar folded to its icons. */
+  folded: boolean;
 }
 
-export const DEFAULTS: Prefs = { mode: "simple", lang: "es", theme: "system" };
+export const DEFAULTS: Prefs = { mode: "simple", lang: "es", theme: "system", folded: false };
 
 const KEY = "sg-studio-prefs";
 
@@ -25,6 +27,7 @@ export function readPrefs(storage: Pick<Storage, "getItem"> | null | undefined):
       mode: raw.mode === "advanced" ? "advanced" : "simple",
       lang: raw.lang === "en" ? "en" : "es",
       theme: raw.theme === "light" || raw.theme === "dark" ? raw.theme : "system",
+      folded: raw.folded === true,
     };
   } catch {
     return { ...DEFAULTS };

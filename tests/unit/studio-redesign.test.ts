@@ -7,6 +7,7 @@ import test = require("node:test");
 import assert = require("node:assert/strict");
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as os from "node:os";
 import { studioShell, studioAsset } from "../../scripts/lib/studio-shell";
 
 const ROOT_DIR = path.resolve(
@@ -91,9 +92,19 @@ test("REQ-204: Spanish and English say every word; the viewer's choices are reme
     getItem: (k: string) => kept.get(k) ?? null,
     setItem: (k: string, v: string) => void kept.set(k, v),
   };
-  assert.deepEqual(studio.readPrefs(storage), { mode: "simple", lang: "es", theme: "system" });
-  studio.writePrefs(storage, { mode: "advanced", lang: "en", theme: "dark" });
-  assert.deepEqual(studio.readPrefs(storage), { mode: "advanced", lang: "en", theme: "dark" });
+  assert.deepEqual(studio.readPrefs(storage), {
+    mode: "simple",
+    lang: "es",
+    theme: "system",
+    folded: false,
+  });
+  studio.writePrefs(storage, { mode: "advanced", lang: "en", theme: "dark", folded: true });
+  assert.deepEqual(studio.readPrefs(storage), {
+    mode: "advanced",
+    lang: "en",
+    theme: "dark",
+    folded: true,
+  });
   kept.set("sg-studio-prefs", "{not json");
   assert.deepEqual(studio.readPrefs(storage), studio.DEFAULTS);
   const refusing = {
@@ -602,4 +613,74 @@ test("REQ-211 SCN-211c: the new Settings — the profiles, which is the default 
   assert.match(html, /title="Docker is not running">cannot run here/);
   assert.match(html, />Switch to strict</);
   assert.doesNotMatch(html, />Switch to basic</);
+});
+
+// ── REQ-433: Live — stopping a run at once ─────────────────────────────────
+import * as cp from "node:child_process";
+import { stopBuild } from "../../scripts/lib/studio-app";
+import { readLive } from "../../scripts/lib/live-model";
+
+const aliveNow = (pid: number) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+test("REQ-433 SCN-433a: stopping at once ends the run and its requirement, not after the current one", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sg-stop-now-"));
+  // A run as the studio starts it: detached, so it leads its own processes.
+  const run = cp.spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], {
+    detached: true,
+    stdio: "ignore",
+    windowsHide: true,
+  });
+  run.unref();
+  const events = path.join(dir, ".harness", "events");
+  fs.mkdirSync(events, { recursive: true });
+  const t = Math.floor(Date.now() / 1000);
+  fs.writeFileSync(
+    path.join(events, "run.lock"),
+    JSON.stringify({ pid: run.pid, started: t, reqs: ["REQ-025"] })
+  );
+  fs.writeFileSync(
+    path.join(events, "REQ-025.jsonl"),
+    `${JSON.stringify({ type: "attempt", state: "start", req: "REQ-025", attempt: 1, t })}\n` +
+      `${JSON.stringify({ type: "gate-start", stage: "tests", req: "REQ-025", attempt: 1, t })}\n`
+  );
+  assert.equal(readLive(dir).requirements[0].state, "running");
+
+  const r = stopBuild(dir, true);
+  assert.equal(r.ok, true);
+  for (let i = 0; i < 40 && aliveNow(run.pid!); i++) await new Promise((ok) => setTimeout(ok, 100));
+  assert.equal(aliveNow(run.pid!), false, "the run's process is gone");
+  const req = readLive(dir).requirements[0];
+  assert.equal(req.state, "fail", "the attempt is ended, not left running");
+  assert.match(fs.readFileSync(path.join(events, "REQ-025.jsonl"), "utf8"), /"stage":"stopped"/);
+  // Nothing runs now: a second stop says so.
+  assert.equal(stopBuild(dir, true).ok, false);
+});
+
+test("REQ-204: the sidebar folds to its icons — each section still named, the choice a button that says it", () => {
+  const open: string = studio.renderShell("questions", { ...studio.DEFAULTS });
+  assert.match(open, /<div class="app">/);
+  assert.match(
+    open,
+    /class="fold" aria-controls="side" aria-expanded="true" aria-label="Plegar la barra lateral"/
+  );
+  assert.equal((open.match(/<svg class="icon"/g) || []).length, 8);
+  const folded: string = studio.renderShell("questions", {
+    ...studio.DEFAULTS,
+    folded: true,
+    lang: "en",
+  });
+  assert.match(folded, /<div class="app folded">/);
+  assert.match(folded, /aria-expanded="false" aria-label="Unfold the sidebar"/);
+  // Folded, a link keeps its name for a screen reader and gives it as a tooltip.
+  assert.match(
+    folded,
+    /href="#\/questions" aria-current="page" title="Questions"><svg[^]*?<span class="label">Questions<\/span>/
+  );
 });

@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-204 — Studio is an app you use without the commands
 
-The system SHALL serve at studio's root one app with the sections Home, Brief, Changes, Questions, Build, Live, Report and Settings, each running a specgate command underneath and each with its own address, so that Back, Forward, reloading and a link open the same section; SHALL offer a simple mode (the default) and an advanced one that shows each action's command and what is written, Spanish and English, and a light and a dark theme that follow the system until one is chosen, all remembered in the viewer's browser; and SHALL accept its writes only through POST with the token its own page carries, as REQ-201.
+The system SHALL serve at studio's root one app with the sections Home, Brief, Changes, Questions, Build, Live, Report and Settings, each running a specgate command underneath and each with its own address, so that Back, Forward, reloading and a link open the same section; SHALL offer a simple mode (the default) and an advanced one that shows each action's command and what is written, Spanish and English, a light and a dark theme that follow the system until one is chosen, and a sidebar that folds to its icons, all remembered in the viewer's browser; and SHALL accept its writes only through POST with the token its own page carries, as REQ-201.
 
 > Amended by studio-redesign: four sections in one page without addresses become the sidebar of one app, each section at its own address.
 
