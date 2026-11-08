@@ -233,7 +233,7 @@
 | REQ-442 | SCN-442a | `features/studio/REQ-442.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
 | REQ-443 | SCN-443a | `features/studio/REQ-443.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
 | REQ-444 | SCN-444a | `features/studio/REQ-444.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
-| REQ-445 | SCN-445a | `features/studio/REQ-445.feature` | - | - | - | - | - | tests/unit/studio-port.test.ts | Draft |
+| REQ-445 | SCN-445a | `features/studio/REQ-445.feature` | - | - | - | - | - | tests/unit/studio-port.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
