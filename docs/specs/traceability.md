@@ -221,7 +221,7 @@
 | REQ-429 | SCN-429a | `features/studio/REQ-429.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-430 | SCN-430a | `features/studio/REQ-430.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-431 | SCN-431a | `features/studio/REQ-431.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
-| REQ-437 | SCN-437a | `features/studio/REQ-437.feature` | - | - | - | - | - | tests/unit/brief-plain-sections.test.ts | Draft |
+| REQ-437 | SCN-437a | `features/studio/REQ-437.feature` | - | - | - | - | - | tests/unit/brief-plain-sections.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
