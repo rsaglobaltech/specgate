@@ -66,7 +66,7 @@ The system SHALL show, in the studio's Live section, the run in progress — the
 - WHEN the Live section is open and the run writes a test result
 - THEN the result appears in the log without a reload, Tests is the current stage, and REQ-026 is listed as queued
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-434 — The studio says what it is doing and what went wrong
 
