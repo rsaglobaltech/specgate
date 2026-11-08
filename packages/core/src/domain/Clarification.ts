@@ -29,9 +29,7 @@ export function deferredAnswer(answer: string): boolean {
  * checklist read them alike: an answer one of them counts, all of them count.
  */
 export function answerLines(md: string, row: string): string[] {
-  const named = new RegExp(
-    `(^|[^A-Za-z0-9])${row.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z0-9])`
-  );
+  const named = namedBy(row);
   return md
     .replace(/\r\n/g, "\n")
     .split("\n")
@@ -42,6 +40,16 @@ export function answerLines(md: string, row: string): string[] {
         .replace(/\*\*/g, "")
         .trim()
     );
+}
+
+/** A regular expression's text that matches `text` literally: an id from a request is data, never a pattern. */
+export function literal(text: string): string {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Matches a text naming `id` as a whole word: `Q1`, and not `Q10`. */
+export function namedBy(id: string): RegExp {
+  return new RegExp(`(^|[^A-Za-z0-9])${literal(id)}(?![A-Za-z0-9])`);
 }
 
 /** Answered: some answer is given, and not every one puts the decision off. */
@@ -286,7 +294,7 @@ export function upsertAssumption(
   a: { text: string; usedIn: string[]; why: string }
 ): { md: string; id: string } {
   const { t, rows } = assumptionRows(md || "");
-  const named = new RegExp(`(^|[^A-Za-z0-9])${a.why}(?![A-Za-z0-9])`);
+  const named = namedBy(a.why);
   const waiting = rows.find((r) => r.status === TO_REVIEW && named.test(r.why));
   if (!t || !waiting) return addAssumption(md, change, a);
   const textAt = col(t, "assumption", "supuesto");
@@ -319,7 +327,7 @@ export function reviewAssumptions(md: string, question: string): { md: string; i
   const { t, rows } = assumptionRows(md);
   if (!t) return { md, ids: [] };
   const statusAt = col(t, "status", "estado");
-  const named = new RegExp(`(^|[^A-Za-z0-9])${question}(?![A-Za-z0-9])`);
+  const named = namedBy(question);
   const ids: string[] = [];
   for (const a of rows) {
     if (a.status !== TO_REVIEW || !named.test(a.why)) continue;

@@ -6,7 +6,7 @@
 
 import test = require("node:test");
 import assert = require("node:assert/strict");
-import { questionTable } from "../../packages/core/src/domain/Clarification";
+import { answerLines, questionTable } from "../../packages/core/src/domain/Clarification";
 import { openQuestions, answeredQuestions } from "../../packages/core/src/domain/DraftChecklist";
 import { draftingGuide } from "../../scripts/draft/drafting-guide";
 
@@ -256,7 +256,7 @@ test("REQ-208 SCN-208c: no agent, no build — and the agents found are offered"
 // ── REQ-430: reads without a process, cached until a spec file changes; nothing fails in silence ──
 
 // The module object itself, which the studio calls through and a test can watch.
- 
+
 const childProcess = require("node:child_process") as typeof import("node:child_process");
 import { studioAppPage } from "../../scripts/lib/studio-app-page";
 
@@ -297,4 +297,14 @@ test("REQ-430 SCN-430b: the page says when a read fails, keeps a button busy whi
   assert.match(html, /aria-busy/);
   // The view is drawn again only when what it shows changed.
   assert.match(html, /lastShown/);
+});
+
+test("REQ-210: a question id is data, never a pattern", () => {
+  const dir = pedidos(FOUR_COLUMNS_CRLF);
+  for (const id of ["Q1(", "Q.*", "(a+)+$"]) {
+    const r = answer(dir, id, "x", "draft-pedidos");
+    assert.equal(r.ok, false, id);
+    assert.equal(reviewed(dir, id, "draft-pedidos").ok, false, id);
+  }
+  assert.equal(answerLines("Answer (Q.*): yes\n", "Q1").length, 0);
 });

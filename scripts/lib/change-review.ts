@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { questionTable } from "../../packages/core/src/domain/Clarification";
+import { namedBy, questionTable } from "../../packages/core/src/domain/Clarification";
 import { draftReport } from "../cli/commands/spec/DraftCommand";
 
 /**
@@ -42,8 +42,7 @@ export interface Blocker {
 }
 
 /** Does a message name this question — `Q1`, and not `Q10`? */
-const names = (message: string, id: string) =>
-  new RegExp(`(^|[^A-Za-z0-9])${id}(?![A-Za-z0-9])`).test(message);
+const names = (message: string, id: string) => namedBy(id).test(message);
 
 /** What stops a change from being approved: checklist errors and open questions, each with its action. */
 export function approvalBlockers(projectDir: string, id: string): Blocker[] {
