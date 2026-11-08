@@ -2123,3 +2123,8 @@ code.block {
     flex-wrap: nowrap;
   }
 }
+/* Inside the content wrapper (REQ-434) a card keeps its own height too. */
+.content > .card,
+.content > section.card {
+  flex: 0 0 auto;
+}
