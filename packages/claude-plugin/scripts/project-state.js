@@ -44,6 +44,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isSpecDriven = isSpecDriven;
 exports.deltaRequirements = deltaRequirements;
+exports.taskOrder = taskOrder;
 exports.openChanges = openChanges;
 exports.guardOff = guardOff;
 exports.isTestFile = isTestFile;
@@ -86,6 +87,30 @@ function deltaRequirements(text) {
     }
     return out;
 }
+/** The requirements the unchecked lines of a change's `tasks.md` name, in the file's order (REQ-426). */
+function taskOrder(text) {
+    const out = [];
+    for (const line of text.split(/\r?\n/)) {
+        if (!/^\s*[-*]\s+\[ \]/.test(line))
+            continue;
+        for (const m of line.matchAll(/\bREQ-\d+\b/g))
+            if (!out.includes(m[0]))
+                out.push(m[0]);
+    }
+    return out;
+}
+/** `pending` as the tasks order it: those an unchecked task names first, the rest in the delta's order. */
+function byTasks(pending, tasksFile) {
+    let tasks = [];
+    try {
+        tasks = taskOrder(fs.readFileSync(tasksFile, "utf8"));
+    }
+    catch {
+        return pending;
+    }
+    const first = tasks.filter((id) => pending.includes(id));
+    return [...first, ...pending.filter((id) => !first.includes(id))];
+}
 /** The changes open under `docs/specs/changes/`, the archive left out. */
 function openChanges(root) {
     const dir = path.join(root, "docs", "specs", "changes");
@@ -101,7 +126,7 @@ function openChanges(root) {
         return {
             id,
             requirements: reqs.map((r) => r.id),
-            pending: reqs.filter((r) => !DONE.has(r.status)).map((r) => r.id),
+            pending: byTasks(reqs.filter((r) => !DONE.has(r.status)).map((r) => r.id), path.join(dir, id, "tasks.md")),
         };
     });
 }

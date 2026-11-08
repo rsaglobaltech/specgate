@@ -16,7 +16,7 @@ import { spawnSync } from "node:child_process";
 export interface OpenChange {
   id: string;
   requirements: string[];
-  /** Those not yet Implemented (or later). */
+  /** Those not yet Implemented (or later), in the order the change's tasks put them (REQ-426). */
   pending: string[];
 }
 
@@ -55,6 +55,28 @@ export function deltaRequirements(text: string): { id: string; status: string }[
   return out;
 }
 
+/** The requirements the unchecked lines of a change's `tasks.md` name, in the file's order (REQ-426). */
+export function taskOrder(text: string): string[] {
+  const out: string[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    if (!/^\s*[-*]\s+\[ \]/.test(line)) continue;
+    for (const m of line.matchAll(/\bREQ-\d+\b/g)) if (!out.includes(m[0])) out.push(m[0]);
+  }
+  return out;
+}
+
+/** `pending` as the tasks order it: those an unchecked task names first, the rest in the delta's order. */
+function byTasks(pending: string[], tasksFile: string): string[] {
+  let tasks: string[] = [];
+  try {
+    tasks = taskOrder(fs.readFileSync(tasksFile, "utf8"));
+  } catch {
+    return pending;
+  }
+  const first = tasks.filter((id) => pending.includes(id));
+  return [...first, ...pending.filter((id) => !first.includes(id))];
+}
+
 /** The changes open under `docs/specs/changes/`, the archive left out. */
 export function openChanges(root: string): OpenChange[] {
   const dir = path.join(root, "docs", "specs", "changes");
@@ -71,7 +93,10 @@ export function openChanges(root: string): OpenChange[] {
       return {
         id,
         requirements: reqs.map((r) => r.id),
-        pending: reqs.filter((r) => !DONE.has(r.status)).map((r) => r.id),
+        pending: byTasks(
+          reqs.filter((r) => !DONE.has(r.status)).map((r) => r.id),
+          path.join(dir, id, "tasks.md")
+        ),
       };
     });
 }
