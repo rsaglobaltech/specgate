@@ -636,3 +636,86 @@ test("REQ-443: a folder with files offers the preview, then the adoption", () =>
   assert.match(previewed, /<button[^>]*class="btn-primary"[^>]*>Adopt this folder</);
   assert.match(previewed, /\+ spec\.md/);
 });
+
+// ── REQ-444: Jira and Azure Boards from the studio ───────────────────────
+const ALM =
+  "alm_version: 1\nprovider: jira\nbase_url: http://127.0.0.1:9\nproject_key: SHOP\ntoken_env: JIRA_TOKEN\nuser_env: JIRA_USER\n";
+
+test("REQ-444 SCN-444a: a sync previewed — an issue would be created for the unlinked requirement, nothing written, no token asked", async () => {
+  const { almView } = require("../../scripts/lib/studio-actions");
+  const { makeProject } = await import(
+    path.join(__dirname, "..", "..", "..", "e2e", "studio", "fixture.mjs")
+  );
+  const dir: string = makeProject();
+  assert.equal(almView(dir).configured, false);
+  fs.writeFileSync(path.join(dir, "alm.config.yaml"), ALM);
+  const saved = { token: process.env.JIRA_TOKEN, user: process.env.JIRA_USER };
+  process.env.JIRA_TOKEN = "s3cret-token";
+  process.env.JIRA_USER = "me@example.com";
+  try {
+    const view = almView(dir);
+    assert.deepEqual(view, {
+      configured: true,
+      provider: "jira",
+      project: "SHOP",
+      tokenEnv: "JIRA_TOKEN",
+      tokenSet: true,
+    });
+    assert.doesNotMatch(
+      JSON.stringify(view),
+      /s3cret/,
+      "the token's value never leaves the environment"
+    );
+    // What git sees: the studio keeps its own log in the ignored events folder.
+    const cp = require("node:child_process");
+    const status = () =>
+      cp.execFileSync("git", ["-C", dir, "status", "--porcelain"], { encoding: "utf8" });
+    const before = status();
+    assert.equal(runAction(dir, "alm-sync-preview", {}).ok, true);
+    const v = await ended(dir);
+    assert.equal(v.last!.exit, 0, v.output);
+    assert.match(v.output, /would-create REQ-000/);
+    assert.doesNotMatch(v.output, /s3cret/);
+    assert.equal(status(), before, "a preview writes nothing");
+  } finally {
+    if (saved.token === undefined) delete process.env.JIRA_TOKEN;
+    else process.env.JIRA_TOKEN = saved.token;
+    if (saved.user === undefined) delete process.env.JIRA_USER;
+    else process.env.JIRA_USER = saved.user;
+  }
+});
+
+test("REQ-444: the ALM card names the token's variable and whether it is set — it has no field for it", () => {
+  const ui = studioUi();
+  const missing: string = ui.renderAlm("en", {
+    configured: true,
+    provider: "jira",
+    project: "SHOP",
+    tokenEnv: "JIRA_TOKEN",
+    tokenSet: false,
+  });
+  assert.match(missing, /<code>JIRA_TOKEN<\/code>/);
+  assert.match(missing, /is not set in the environment studio was started from/);
+  assert.doesNotMatch(missing, /<input/);
+  assert.match(missing, /disabled[^>]*>See what sync would do</);
+  const ready: string = ui.renderAlm("en", {
+    configured: true,
+    provider: "jira",
+    project: "SHOP",
+    tokenEnv: "JIRA_TOKEN",
+    tokenSet: true,
+  });
+  assert.match(ready, />See the mapping</);
+  assert.doesNotMatch(ready, /disabled[^>]*>See what sync would do</);
+  assert.doesNotMatch(ready, /<button[^>]*>Sync now</, "sync comes after its preview");
+  assert.equal(
+    ui.renderAlm("en", {
+      configured: false,
+      provider: "",
+      project: "",
+      tokenEnv: "",
+      tokenSet: false,
+    }),
+    ""
+  );
+});

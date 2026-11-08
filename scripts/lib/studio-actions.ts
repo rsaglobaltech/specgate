@@ -294,3 +294,35 @@ export function preferencesView(
     options: CONFIG_KEYS[key],
   }));
 }
+
+/**
+ * The ALM as the studio shows it (REQ-444): whether alm.config.yaml exists, its
+ * provider and project, the variable that holds the token and whether that
+ * variable is set in the environment studio runs in — never the token itself,
+ * which the browser neither asks for nor sees.
+ */
+export function almView(projectDir: string): {
+  configured: boolean;
+  provider: string;
+  project: string;
+  tokenEnv: string;
+  tokenSet: boolean;
+} {
+  let text = "";
+  try {
+    text = fs.readFileSync(path.join(projectDir, "alm.config.yaml"), "utf8");
+  } catch {
+    return { configured: false, provider: "", project: "", tokenEnv: "", tokenSet: false };
+  }
+  const field = (name: string) =>
+    (new RegExp(`^${name}:\\s*["']?([^"'#\\n]+?)["']?\\s*(?:#.*)?$`, "m").exec(text) || [])[1] ||
+    "";
+  const tokenEnv = field("token_env");
+  return {
+    configured: true,
+    provider: field("provider"),
+    project: field("project_key"),
+    tokenEnv,
+    tokenSet: !!tokenEnv && !!process.env[tokenEnv],
+  };
+}

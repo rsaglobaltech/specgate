@@ -9,6 +9,7 @@ import { Busy, type Result } from "../ui/Busy";
 import { AgentForm, type AgentKind } from "../ui/AgentForm";
 import { Preferences, type PreferencesProps } from "./settings/Preferences";
 import { Command } from "../ui/Command";
+import { Alm, type AlmData } from "./settings/Alm";
 
 export interface NewProject {
   name: string;
@@ -53,6 +54,8 @@ export interface SettingsProps {
   onAgent?: (kind: AgentKind, command: string) => Promise<Result>;
   /** The preferences and the command runner (REQ-442); absent, the card is not shown. */
   preferences?: Omit<PreferencesProps, "lang">;
+  /** The ALM, when alm.config.yaml exists (REQ-444). */
+  alm?: AlmData | null;
   onCreate: (p: NewProject) => Promise<Result>;
   onQuality: (level: "basic" | "strict") => Promise<Result & { view?: QualityView }>;
 }
@@ -390,6 +393,7 @@ export function Settings({
   agent = null,
   onAgent,
   preferences,
+  alm = null,
   onCreate,
   onQuality,
 }: SettingsProps) {
@@ -471,6 +475,15 @@ export function Settings({
       </section>
       {quality ? <Quality lang={lang} quality={quality} onQuality={onQuality} /> : null}
       {preferences ? <Preferences lang={lang} {...preferences} /> : null}
+      {alm && preferences ? (
+        <Alm
+          lang={lang}
+          alm={alm}
+          run={preferences.run}
+          output={preferences.output}
+          onAction={preferences.onAction}
+        />
+      ) : null}
     </>
   );
 }

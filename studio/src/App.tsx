@@ -171,6 +171,13 @@ export function App() {
   const preferences = useRead<
     Array<{ key: string; value: string | null; options: string[] | null }>
   >(onSettings && route.data?.isProject ? "/api/preferences" : null);
+  const alm = useRead<{
+    configured: boolean;
+    provider: string;
+    project: string;
+    tokenEnv: string;
+    tokenSet: boolean;
+  }>(onSettings && route.data?.isProject ? "/api/alm" : null);
   const quality = useRead<QualityView>(onSettings && route.data?.isProject ? "/api/quality" : null);
   const build = useRead<BuildData>(onBuild ? "/api/build" : null);
   const profiles = useRead<{
@@ -312,6 +319,7 @@ export function App() {
             installed={profiles.data.installed}
             quality={quality.data}
             agent={profiles.data.agent}
+            alm={alm.data}
             preferences={{
               prefs: preferences.data || [],
               run: command.view?.last || null,

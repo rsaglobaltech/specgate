@@ -25,6 +25,7 @@ export { stageOf } from "./sections/Build";
 import { Trace } from "./sections/live/Trace";
 import { Command } from "./ui/Command";
 import { Gate } from "./ui/Gate";
+import { Alm, type AlmData } from "./sections/settings/Alm";
 import { Preferences, type Preference } from "./sections/settings/Preferences";
 export { readCliResult } from "./core/cliResult";
 import type { ActionRun } from "./core/useAction";
@@ -239,4 +240,9 @@ export function renderGate(lang: Lang, run: ActionRun | null, output: string): s
 export function renderPreferences(lang: Lang, prefs: Preference[]): string {
   const none = async () => ({ ok: true });
   return render(<Preferences lang={lang} prefs={prefs} run={null} output="" onAction={none} />);
+}
+
+export function renderAlm(lang: Lang, alm: AlmData): string {
+  const none = async () => ({ ok: true });
+  return render(<Alm lang={lang} alm={alm} onAction={none} />);
 }
