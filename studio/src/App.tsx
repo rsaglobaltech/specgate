@@ -7,6 +7,13 @@ import { t } from "./core/i18n";
 import { useRead } from "./core/useRead";
 import type { HomeData, RouteData } from "./core/route";
 import { Home } from "./sections/Home";
+import { Questions, type QuestionsData } from "./sections/Questions";
+import { post } from "./core/api";
+import type { Result } from "./ui/Busy";
+
+/** The change an answer goes to: none for the project's own questions. */
+const changeOf = (change: string): string | undefined =>
+  change === "project" ? undefined : change;
 
 const storage = (): Storage | null => {
   try {
@@ -41,10 +48,29 @@ export function App() {
   };
   const route = useRead<RouteData>("/api/route");
   const home = useRead<HomeData>(section === "home" ? "/api/home" : null);
+  const questions = useRead<QuestionsData>(section === "questions" ? "/api/questions" : null);
+  /** A write, then the section read again so it shows what the file now says. */
+  const write = async (body: Record<string, unknown>): Promise<Result> => {
+    const r = await post<Result>("/api/answer", body);
+    if (r.ok) {
+      questions.reload();
+      route.reload();
+    }
+    return r;
+  };
   return (
     <Shell project={project} section={section} prefs={prefs} onPrefs={choose}>
       {section === "home" && route.data ? (
         <Home lang={prefs.lang} route={route.data} home={home.data} />
+      ) : section === "questions" && questions.data ? (
+        <Questions
+          lang={prefs.lang}
+          data={questions.data}
+          onAnswer={(q, answer) => write({ question: q.id, change: changeOf(q.change), answer })}
+          onConfirm={(change, question) =>
+            write({ question, change: changeOf(change), reviewed: true })
+          }
+        />
       ) : (
         <h1>{t(prefs.lang, section)}</h1>
       )}

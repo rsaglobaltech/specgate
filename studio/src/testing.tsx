@@ -7,6 +7,7 @@ import { Shell } from "./ui/Shell";
 import type { Section } from "./core/routes";
 import type { Prefs } from "./core/prefs";
 import { Home } from "./sections/Home";
+import { Questions, type QuestionsData } from "./sections/Questions";
 import type { HomeData, RouteData } from "./core/route";
 import type { Lang } from "./core/i18n";
 
@@ -22,4 +23,9 @@ export function renderShell(section: Section, prefs: Prefs, project = "shop"): s
 
 export function renderHome(lang: Lang, route: RouteData, home: HomeData | null): string {
   return render(<Home lang={lang} route={route} home={home} />);
+}
+
+export function renderQuestions(lang: Lang, data: QuestionsData): string {
+  const none = async () => ({ ok: true });
+  return render(<Questions lang={lang} data={data} onAnswer={none} onConfirm={none} />);
 }

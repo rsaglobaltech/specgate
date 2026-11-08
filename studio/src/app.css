@@ -486,3 +486,137 @@ a.step-name:hover {
 .step-locked .step-name {
   color: var(--fg-faint);
 }
+
+/* ── Questions ── */
+.question h2 {
+  font-size: 18px;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.id {
+  font: 500 13px var(--mono);
+  color: var(--fg-faint);
+}
+.chip {
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.chip.warn {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.chip-btn[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-soft);
+}
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  resize: vertical;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.ok {
+  color: var(--green);
+  font-size: 14px;
+}
+.err {
+  color: var(--red);
+  font-size: 14px;
+}
+.empty {
+  color: var(--fg-faint);
+  text-align: center;
+  padding: 32px;
+}
+.confirm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.grow {
+  flex: 1 1 280px;
+}
+.btn-primary[disabled],
+.btn-dark[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.btn-dark {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--fg);
+  color: var(--bg);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary {
+  gap: 10px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+}
+.spin {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  animation: sgspin 0.8s linear infinite;
+}
+@keyframes sgspin {
+  to {
+    transform: rotate(360deg);
+  }
+}

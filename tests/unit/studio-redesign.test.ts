@@ -173,3 +173,35 @@ test("REQ-212 SCN-212b: a folder that is not a project — the next step is the 
   assert.match(html, /class="btn-primary" href="#\/settings"/);
   assert.equal((html.match(/data-state="locked"/g) || []).length, 6);
 });
+
+test("REQ-210 SCN-210a: the new Questions — each open question to answer, one row per answer to confirm", () => {
+  const html: string = studio.renderQuestions("es", {
+    open: [
+      {
+        id: "Q2",
+        change: "draft-orders",
+        text: "¿Se puede cancelar un pedido ya enviado?",
+        blocks: ["REQ-012"],
+        options: ["No", "Sí, con coste"],
+        from: "draft",
+      },
+    ],
+    toReview: [{ change: "project", assumption: "A1", question: "Q1", text: "¿Moneda?" }],
+  });
+  assert.match(html, /¿Se puede cancelar un pedido ya enviado\?/);
+  assert.match(html, /Bloquea REQ-012/);
+  assert.match(html, /del borrador orders/);
+  // Options are chips that fill the answer; the answer has a label.
+  assert.equal((html.match(/class="chip-btn"/g) || []).length, 2);
+  assert.match(html, /<label for="answer-draft-orders-Q2"/);
+  assert.match(html, /Guardar respuesta →/);
+  // Saving needs an answer: an empty one cannot be sent.
+  assert.match(html, /<button type="button" class="btn-primary" disabled/);
+  assert.equal((html.match(/class="confirm-row"/g) || []).length, 1);
+  assert.match(html, /Ya está en la spec/);
+});
+
+test("REQ-210 SCN-210a: nothing open — Questions says so instead of an empty page", () => {
+  const html: string = studio.renderQuestions("en", { open: [], toReview: [] });
+  assert.match(html, /No question is open\./);
+});
