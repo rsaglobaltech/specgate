@@ -701,6 +701,34 @@ function moduleSectionText(
   return parts.join("\n\n");
 }
 
+/**
+ * A section under a plain `## <name>` heading whose name is the module's
+ * (REQ-437): `## orders` written by hand, not `## Module: orders`. Its text runs
+ * to the next `##` heading; `## Context` and the like name no module.
+ */
+function plainSection(
+  body: string,
+  key: string
+): { source: string; name: string; prose: string } | null {
+  const lines = body.split("\n");
+  const at = lines.findIndex((l) => {
+    const h = /^##[ \t]+(.+?)[ \t]*$/.exec(l);
+    return !!h && !/^module:/i.test(h[1]) && moduleKey(h[1]) === key;
+  });
+  if (at < 0) return null;
+  let end = at + 1;
+  while (end < lines.length && !/^##\s/.test(lines[end])) end += 1;
+  const source = lines.slice(at, end).join("\n");
+  return {
+    source,
+    name: lines[at].replace(/^##[ \t]+/, "").trim(),
+    prose: lines
+      .slice(at + 1, end)
+      .join("\n")
+      .trim(),
+  };
+}
+
 /** The form written back into docs/brief.md, keeping every other line (REQ-214). */
 export function saveBriefForm(
   projectDir: string,
@@ -742,8 +770,16 @@ export function saveBriefForm(
     const key = moduleKey(m.key || m.name);
     const existing = byKey.get(key);
     const hasCards = m.rules.length || m.examples.length || m.questions.length || m.prose.trim();
+    const plain = existing ? null : plainSection(body, key);
     if (existing) body = body.replace(existing.source, moduleSectionText(m, cards));
-    else if (hasCards) body = `${body.trimEnd()}\n\n${moduleSectionText(m, cards)}\n`;
+    else if (plain) {
+      // REQ-437: `## orders` written by hand becomes the module's section, its prose in it.
+      const section = moduleSectionText(
+        { ...m, name: plain.name, prose: m.prose.trim() || plain.prose },
+        cards
+      );
+      body = body.replace(plain.source, `${section}\n\n`).replace(/\n{3,}/g, "\n\n");
+    } else if (hasCards) body = `${body.trimEnd()}\n\n${moduleSectionText(m, cards)}\n`;
   }
   const out = `---\n${fm.replace(/^\n+/, "")}\n---\n${body.startsWith("\n") ? "" : "\n"}${body.trimEnd()}\n`;
   fs.mkdirSync(path.dirname(file), { recursive: true });
