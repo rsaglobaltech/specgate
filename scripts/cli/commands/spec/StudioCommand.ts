@@ -34,6 +34,7 @@ import {
   chooseAgent,
 } from "../../../lib/studio-route";
 import { resolveProjectDir } from "../../../lib/project-root";
+import { studioAsset, studioShell } from "../../../lib/studio-shell";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
@@ -495,6 +496,23 @@ export class StudioCommand extends BaseCommand {
       if (req.method !== "GET" && req.method !== "HEAD") {
         res.writeHead(405, { "content-type": "text/plain", allow: "GET, HEAD" });
         res.end("Studio only reads, except its app's POST actions.\n");
+        return;
+      }
+      // REQ-432: the new studio, built from studio/src, and the files it loads from Specgate itself.
+      if (url === "/next" || url === "/next/") {
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        res.end(studioShell(path.basename(projectDir), token));
+        return;
+      }
+      if (url.startsWith("/studio/")) {
+        const asset = studioAsset(url);
+        if (!asset) {
+          res.writeHead(404, { "content-type": "text/plain" });
+          res.end("Not found.\n");
+          return;
+        }
+        res.writeHead(200, { "content-type": asset.type, "cache-control": "no-cache" });
+        res.end(asset.body);
         return;
       }
       // REQ-204: the app at the root; the overview it replaced moves to /overview.

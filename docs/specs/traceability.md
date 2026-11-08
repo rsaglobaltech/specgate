@@ -221,6 +221,11 @@
 | REQ-429 | SCN-429a | `features/studio/REQ-429.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-430 | SCN-430a | `features/studio/REQ-430.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-431 | SCN-431a | `features/studio/REQ-431.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
+| REQ-432 | SCN-432a | `features/studio/REQ-432.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Draft |
+| REQ-433 | SCN-433a | `features/studio/REQ-433.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Draft |
+| REQ-434 | SCN-434a | `features/studio/REQ-434.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Draft |
+| REQ-435 | SCN-435a | `features/studio/REQ-435.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Draft |
+| REQ-436 | SCN-436a | `features/studio/REQ-436.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Draft |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
