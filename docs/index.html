@@ -1114,8 +1114,8 @@ max_attempts: 1
          green. It does not merge — the branch is yours to merge or throw away —
          unless you run a <code>--chain</code>, which merges each green requirement
          and stops at the first red one. The agent is any shell command; there is
-         no runtime or SDK. <code>specgate studio</code> shows the run at
-         <code>/live</code>, as it happens (<a class="ed-link" href="./harness.html">the harness</a>).</p>
+         no runtime or SDK. <code>specgate studio</code> shows the run in its Live section
+         (<code>/live</code>), as it happens (<a class="ed-link" href="./harness.html">the harness</a>).</p>
     </div>
 
     <figure class="hz__board reveal" data-hz aria-labelledby="hz-cap">
@@ -1222,14 +1222,23 @@ specgate check                         <span class="tok tok--c"># tests, then th
       <h2 class="ed-h2">The whole path as an app.</h2>
       <p class="ed-muted"><code>specgate studio</code> in an empty folder: create
          the project, write the brief as a form, have each module drafted,
-         answer the questions, approve, build with the agent you choose, and
-         read the report. Each step runs the command you would have typed.</p>
-      <p><a class="ed-link" href="./studio.html">The studio, step by step →</a></p>
+         answer the questions, approve with every blocker and its fix in view,
+         build with the agent you choose, follow the run live — the matrix by
+         module, the step running, the agent's log, its questions answered on
+         the spot — and read the report. Each step runs the command you would
+         have typed.</p>
+      <ul class="ed-muted">
+        <li>One app, a section per step, each at its own address.</li>
+        <li>Light and dark, Spanish and English, a sidebar that folds.</li>
+        <li>Used with the keyboard and a screen reader; it says what it is doing, and when the server is away.</li>
+        <li>Tested in a real browser on Windows, macOS and Linux.</li>
+      </ul>
+      <p><a class="ed-link" href="./studio.html">The studio, section by section →</a></p>
     </div>
     <figure class="shot reveal">
-      <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">specgate studio</span></div>
-      <img src="./assets/img/studio-0-route.webp" width="1280" height="1461" loading="lazy"
-           alt="The studio's Route page: the next step to take, then the steps from Project to Report with their state, and each module's progress.">
+      <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">specgate studio · /live</span></div>
+      <img src="./assets/img/studio-live.webp" width="1280" height="1100" loading="lazy"
+           alt="The studio's Live section: a requirement running, the run's figures, the matrix by module, the requirement's steps and the work queue.">
     </figure>
   </div>
 </section>

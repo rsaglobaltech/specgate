@@ -16,4 +16,4 @@
 - [x] 2.6 REQ-434 — skeleton, busy buttons, notices, connection state, section errors (canvas: Estados)
 - [x] 2.7 REQ-435 — keyboard, focus, roles and names, reduced motion
 - [x] 2.8 REQ-436 — browser tests in CI on the three systems
-- [ ] 2.9 Remove the old page and `/overview`; documentation and screenshots on GitHub Pages; the landing page's studio section
+- [x] 2.9 Remove the old page and `/overview`; documentation and screenshots on GitHub Pages; the landing page's studio section

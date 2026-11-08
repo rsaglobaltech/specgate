@@ -1001,8 +1001,8 @@ specgate harness run --agent 'opencode run "$(cat {prompt_file})"' --test-cmd "m
 great for trying one first), `--max-attempts <n>`, `--base-branch <ref>`,
 `--timeout <seconds>`, `--keep-worktrees`, `--force` (recreate existing
 `harness/*` branches), `--setup-cmd <cmd|none>` (the install each new worktree
-runs), `--format json`. To watch a run as it happens, `specgate studio` serves
-a live view at `/live` — see [The harness](harness.md).
+runs), `--format json`. To watch a run as it happens, `specgate studio` shows
+it in its Live section (`/live`) — see [The studio](studio.md#live).
 
 The command exits non-zero if any requirement did not pass, so CI can gate
 on it. Each result is a branch you can check out, inspect, and merge — or
