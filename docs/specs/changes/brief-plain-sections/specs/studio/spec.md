@@ -12,4 +12,4 @@ The system SHALL, when the studio saves the brief form, write a module whose bri
 - WHEN the form is saved with the rule "An order has at least one item" for orders
 - THEN the brief has one `## Module: orders` section holding that prose and the rule, no `## orders` heading, and the `## Context` section unchanged
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

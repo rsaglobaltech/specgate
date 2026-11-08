@@ -7,4 +7,4 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-437 — the test first, then `saveBriefForm`
+- [x] 2.1 REQ-437 — the test first, then `saveBriefForm`
