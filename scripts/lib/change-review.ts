@@ -28,26 +28,51 @@ export function approvedOn(projectDir: string, id: string): string {
   return (/^approved:\s*(\S+)/m.exec(yaml) || [])[1] || "";
 }
 
+/** What clears a blocker: answer a question, confirm the spec says its answer, or open a requirement (REQ-206). */
+export interface BlockerAction {
+  kind: "answer" | "confirm" | "open";
+  question?: string;
+  requirement?: string;
+}
+
 export interface Blocker {
   code: string;
   message: string;
+  action?: BlockerAction;
 }
 
-/** What stops a change from being approved: checklist errors and open questions. */
+/** Does a message name this question — `Q1`, and not `Q10`? */
+const names = (message: string, id: string) =>
+  new RegExp(`(^|[^A-Za-z0-9])${id}(?![A-Za-z0-9])`).test(message);
+
+/** What stops a change from being approved: checklist errors and open questions, each with its action. */
 export function approvalBlockers(projectDir: string, id: string): Blocker[] {
   const out: Blocker[] = [];
+  const questionsMd = read(path.join(changeDir(projectDir, id), "questions.md"));
+  const questions = questionsMd ? questionTable(questionsMd) : [];
+  const actionFor = (code: string, message: string): BlockerAction | undefined => {
+    const q = questions.find((x) => names(message, x.id));
+    if (q && code === "D7_answered_still_blocked") return { kind: "confirm", question: q.id };
+    if (q && !q.answered) return { kind: "answer", question: q.id };
+    const req = (/REQ-[A-Za-z0-9.]+/.exec(message) || [])[0];
+    return req ? { kind: "open", requirement: req } : undefined;
+  };
   const r = draftReport(projectDir, id);
   if ("failure" in r) {
     out.push({ code: r.failure.code, message: r.failure.message });
   } else {
     for (const d of r.report.status) {
-      if (d.severity === "error") out.push({ code: d.code, message: d.message });
+      if (d.severity !== "error") continue;
+      out.push({ code: d.code, message: d.message, action: actionFor(d.code, d.message) });
     }
   }
-  const questions = read(path.join(changeDir(projectDir, id), "questions.md"));
-  for (const q of questions ? questionTable(questions) : []) {
-    if (!q.answered && !out.some((b) => b.message.includes(q.id))) {
-      out.push({ code: "approve_question_open", message: `${q.id} is open: ${q.text}` });
+  for (const q of questions) {
+    if (!q.answered && !out.some((b) => names(b.message, q.id))) {
+      out.push({
+        code: "approve_question_open",
+        message: `${q.id} is open: ${q.text}`,
+        action: { kind: "answer", question: q.id },
+      });
     }
   }
   return out;

@@ -794,7 +794,18 @@ export function studioAppPage(projectName: string, token = ""): string {
       });
       var ch = el("section", "card"); ch.appendChild(el("h2", "", t("checks")));
       if (!d.blockers.length) { var ok = el("div", "check"); ok.append(dot("var(--pass)"), el("span", "", t("allGood"))); ch.appendChild(ok); }
-      d.blockers.forEach(function(b){ var x = el("div", "check"); x.append(dot("#d4a72c"), el("span", "small", b.message)); ch.appendChild(x); });
+      d.blockers.forEach(function(b){
+        var x = el("div", "check"); x.append(dot("#d4a72c"), el("span", "small", b.message));
+        // Each blocker with the action that clears it (REQ-206).
+        var a = b.action, mb = msgEl();
+        if (a && a.kind === "answer") x.append(button("ghost", t("answer") + " " + a.question, function(){ go("questions"); }));
+        if (a && a.kind === "confirm") x.append(button("ghost", t("inSpec"), function(ev){
+          var btn = ev.target; btn.disabled = true;
+          post("api/answer", {question:a.question, change:d.change, reviewed:true}).then(function(res){ btn.disabled = false; say(mb, res); if (res.ok) refresh(); });
+        }));
+        if (a && a.kind === "open") x.append(cmd(a.requirement + " · docs/specs/changes/" + d.change));
+        x.append(mb); ch.appendChild(x);
+      });
       aside.appendChild(ch);
       var act = el("section", "card"), m3 = msgEl();
       var ap = button("go", t("approve"), function(){ post("api/approve", {change:d.change}).then(function(res){ say(m3, res); if (res.ok) refresh(); }); });

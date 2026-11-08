@@ -168,3 +168,30 @@ test("REQ-210 SCN-210c: confirming an answer given by hand", () => {
   // An open question cannot be confirmed.
   assert.equal(reviewed(dir, "Q1", "draft-pedidos").ok, false);
 });
+
+// ── REQ-206: every blocker of an approval with the action that clears it ──
+
+import { approvalBlockers } from "../../scripts/lib/change-review";
+
+test("REQ-206 SCN-206c: every blocker with its action, each question once and by its exact id", () => {
+  const questions = [
+    "# Questions — draft-pedidos",
+    "",
+    "| # | Question | Blocks | Options seen | Answer | Status |",
+    "|---|---|---|---|---|---|",
+    "| Q1 | ¿Desde qué importe se aprueba a mano? | REQ-031 |  |  | open |",
+    "| Q10 | ¿Cuántos días para devolver? | REQ-032 |  | 30 días | answered |",
+    "",
+  ].join("\n");
+  const dir = pedidos(questions);
+  const blockers = approvalBlockers(dir, "draft-pedidos");
+  const q1 = blockers.filter((b) => /\bQ1\b/.test(b.message));
+  const q10 = blockers.filter((b) => /\bQ10\b/.test(b.message));
+  assert.equal(q1.length, 1, JSON.stringify(blockers, null, 2));
+  assert.equal(q10.length, 1, JSON.stringify(blockers, null, 2));
+  assert.deepEqual(q1[0].action, { kind: "answer", question: "Q1" });
+  assert.deepEqual(q10[0].action, { kind: "confirm", question: "Q10" });
+  // Once Q10 is confirmed, it no longer blocks.
+  assert.equal(reviewed(dir, "Q10", "draft-pedidos").ok, true);
+  assert.ok(!approvalBlockers(dir, "draft-pedidos").some((b) => /\bQ10\b/.test(b.message)));
+});
