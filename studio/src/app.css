@@ -2183,3 +2183,50 @@ code.block {
 .change-panel details summary {
   cursor: pointer;
 }
+
+/* ── The gate and the doctor (REQ-440) ── */
+.gate {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gate-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.gate-item {
+  display: grid;
+  grid-template-columns: 18px auto 1fr;
+  gap: 4px 10px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.gate-item > span[aria-hidden] {
+  font-weight: 700;
+}
+.gate-pass > span[aria-hidden] {
+  color: var(--green);
+}
+.gate-fail > span[aria-hidden] {
+  color: var(--red);
+}
+.gate-warn > span[aria-hidden] {
+  color: var(--amber);
+}
+.gate-skip {
+  color: var(--fg-faint);
+}
+.gate-item code {
+  font: 13px var(--mono);
+  overflow-wrap: anywhere;
+}
+.gate-item .fix {
+  grid-column: 2 / -1;
+  color: var(--fg-soft);
+  font-size: 13px;
+}

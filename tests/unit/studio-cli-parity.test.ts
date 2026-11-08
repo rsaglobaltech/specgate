@@ -396,3 +396,79 @@ test("REQ-439 SCN-439a: a new change from an idea; from a ticket only when an AL
     /<label for="new-change-ticket" class="label">From a ticket<\/label>/
   );
 });
+
+// ── REQ-440: the gate and the doctor from the studio ─────────────────────
+const CHECK_FAILED = `
+  ◆ specgate · check   my-spec-driven-app
+
+  ·  Ids            not compared with a base — no base branch (pass --base <branch>)
+  ✔  Specification   validate --strict
+  ✖  Tests           node -e "process.exit(1)"
+  ✖  The gate failed: \`node -e "process.exit(1)"\`.  [check_tests_failed]
+     fix: Make \`node -e "process.exit(1)"\` pass, then run \`specgate check\` again.
+`;
+
+test("REQ-440 SCN-440a: the gate's output read as its stages and findings, each finding with its fix", () => {
+  const ui = studioUi();
+  const r = ui.readCliResult(CHECK_FAILED);
+  assert.deepEqual(
+    r.items.map((x: { mark: string; name: string }) => `${x.mark} ${x.name}`),
+    [
+      "skip Ids",
+      "pass Specification",
+      "fail Tests",
+      'fail The gate failed: `node -e "process.exit(1)"`.',
+    ]
+  );
+  const finding = r.items[3];
+  assert.equal(finding.code, "check_tests_failed");
+  assert.match(finding.fix, /^Make `node -e "process.exit\(1\)"` pass/);
+  assert.equal(r.items[2].detail, 'node -e "process.exit(1)"');
+});
+
+test("REQ-440: the doctor's findings, a detail on two lines, each with its fix", () => {
+  const ui = studioUi();
+  const r = ui.readCliResult(`
+  ✔  specgate             v0.28.0 — local checkout
+                          /Users/me/specgate
+  ✖  features/            directory does not exist
+                          fix: Create features/ and add at least one .feature file.
+  ✔  changes              1 active, 0 archived
+
+  ███████████████░░░░░  9 of 12 checks passed   3 error(s) · 0 warning(s)
+`);
+  assert.equal(r.items.length, 3);
+  assert.equal(r.items[0].detail, "v0.28.0 — local checkout /Users/me/specgate");
+  assert.deepEqual(
+    [r.items[1].mark, r.items[1].name, r.items[1].fix],
+    ["fail", "features/", "Create features/ and add at least one .feature file."]
+  );
+  assert.match(r.summary, /9 of 12 checks passed/);
+});
+
+test("REQ-440 SCN-440a: the gate run from the studio — Specification passed, Tests failed with the command, not passed", async () => {
+  const { makeProject } = await import(
+    path.join(__dirname, "..", "..", "..", "e2e", "studio", "fixture.mjs")
+  );
+  const dir: string = makeProject();
+  assert.equal(
+    runAction(dir, "config-set", { key: "test_cmd", value: 'node -e "process.exit(1)"' }).ok,
+    true
+  );
+  await ended(dir);
+  assert.equal(runAction(dir, "check", {}).ok, true);
+  const v = await ended(dir);
+  assert.notEqual(v.last!.exit, 0);
+  const ui = studioUi();
+  const html: string = ui.renderGate("en", v.last, v.output);
+  assert.match(
+    html,
+    /<li class="gate-item gate-pass"><span[^>]*>✓<\/span><strong>Specification<\/strong>/
+  );
+  assert.match(
+    html,
+    /<li class="gate-item gate-fail"><span[^>]*>✗<\/span><strong>Tests<\/strong> <code>node -e &quot;process.exit\(1\)&quot;<\/code>/
+  );
+  assert.match(html, /The gate does not pass/);
+  assert.match(html, /fix: Make/);
+});

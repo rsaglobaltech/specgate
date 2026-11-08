@@ -24,6 +24,8 @@ export { matrixByModule, pipeline, summary, workQueue, dur } from "./sections/li
 export { stageOf } from "./sections/Build";
 import { Trace } from "./sections/live/Trace";
 import { Command } from "./ui/Command";
+import { Gate } from "./ui/Gate";
+export { readCliResult } from "./core/cliResult";
 import type { ActionRun } from "./core/useAction";
 import { Settings, type QualityView, type SettingsProfile } from "./sections/Settings";
 import { Report, type ReportData } from "./sections/Report";
@@ -220,4 +222,8 @@ export function renderChangePanel(
 export function renderNewChange(lang: Lang, alm: boolean): string {
   const none = async () => ({ ok: true });
   return render(<NewChange lang={lang} alm={alm} run={null} output="" onAction={none} />);
+}
+
+export function renderGate(lang: Lang, run: ActionRun | null, output: string): string {
+  return render(<Gate lang={lang} run={run} output={output} />);
 }

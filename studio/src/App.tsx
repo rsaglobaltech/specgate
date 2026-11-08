@@ -10,6 +10,7 @@ import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type ChangeView, type DraftView, type ModulesData } from "./sections/Changes";
 import { useAction } from "./core/useAction";
+import { GateCard } from "./ui/Gate";
 import {
   Build,
   type AgentKind,
@@ -116,6 +117,7 @@ export function App() {
   // REQ-438: the command the studio runs; when it ends, what it changed is read again.
   const command = useAction((run) => {
     route.reload();
+    if (section === "report") report.reload();
     if (onChanges) {
       modules.reload();
       drafts.reload();
@@ -245,7 +247,15 @@ export function App() {
           <SectionError lang={prefs.lang} message={failed.error || ""} onRetry={retryAll} />
         ) : null}
         {section === "home" && route.data ? (
-          <Home lang={prefs.lang} route={route.data} home={home.data} />
+          <>
+            <Home lang={prefs.lang} route={route.data} home={home.data} />
+            <GateCard
+              lang={prefs.lang}
+              run={command.view?.last || null}
+              output={command.view?.output || ""}
+              onAction={runCommand}
+            />
+          </>
         ) : onChanges && modules.data && drafts.data ? (
           <Changes
             lang={prefs.lang}
@@ -304,7 +314,15 @@ export function App() {
             onQuality={(level) => post("/api/quality/init", { level })}
           />
         ) : section === "report" && report.data ? (
-          <Report lang={prefs.lang} advanced={prefs.mode === "advanced"} data={report.data} />
+          <>
+            <Report lang={prefs.lang} advanced={prefs.mode === "advanced"} data={report.data} />
+            <GateCard
+              lang={prefs.lang}
+              run={command.view?.last || null}
+              output={command.view?.output || ""}
+              onAction={runCommand}
+            />
+          </>
         ) : onBrief && brief.data ? (
           <Brief
             key={`${brief.data.exists}-${modules.data?.job?.kind || ""}`}

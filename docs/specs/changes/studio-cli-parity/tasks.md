@@ -10,7 +10,7 @@
 
 - [x] 2.1 REQ-438 — the allowlist runner: actions, argument checks, one job at a time, output as it grows
 - [x] 2.2 REQ-439 — Changes: every change, its detail, validate, archive after a preview, new from an idea or a ticket
-- [ ] 2.3 REQ-440 — the gate and the doctor from Home and Report
+- [x] 2.3 REQ-440 — the gate and the doctor from Home and Report
 - [ ] 2.4 REQ-441 — apply for a requirement coded by hand
 - [ ] 2.5 REQ-442 — Settings: preferences, agent guards, integrations
 - [ ] 2.6 REQ-443 — adopting a repository that has code
