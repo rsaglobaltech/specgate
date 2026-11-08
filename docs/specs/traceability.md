@@ -226,6 +226,7 @@
 | REQ-434 | SCN-434a | `features/studio/REQ-434.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-435 | SCN-435a | `features/studio/REQ-435.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-436 | SCN-436a | `features/studio/REQ-436.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts, e2e/studio/studio.spec.mjs | Implemented |
+| REQ-437 | SCN-437a | `features/studio/REQ-437.feature` | - | - | - | - | - | tests/unit/brief-plain-sections.test.ts | Implemented |
 | REQ-438 | SCN-438a | `features/studio/REQ-438.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
 | REQ-439 | SCN-439a | `features/studio/REQ-439.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
 | REQ-440 | SCN-440a | `features/studio/REQ-440.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |

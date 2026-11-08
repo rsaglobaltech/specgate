@@ -9,6 +9,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.28.1] — 2026-11-08
+
+The studio unblocked: answers saved, a draft that can be approved, the agent chosen in the studio, and fast on Windows — found by a team that used it on a real project; and the agent guards name the right next requirement.
+
+### Fixed
+
+- **Answers are saved** (REQ-210, REQ-429). An answer from the studio was lost when `questions.md` had no `Answer` column — the table the drafting guide wrote. The studio now adds the `Answer` and `Status` columns when they are missing, keeps the file's line endings (CRLF included), lists each answered question once to confirm, and confirms an answer written by hand too.
+- **A draft can be approved** (REQ-206). Every blocker of the approval comes with the action that clears it — answer the question, confirm the spec says it, open the requirement — instead of a button that stayed grey; a question id is matched exactly (`Q1` is not `Q10`), and a requirement id at the end of a sentence is read whole.
+- **The agent is chosen in the studio** (REQ-208, REQ-431). Build no longer stops at "no agent configured": it offers Claude Code, Codex or a command of your own, the ones found on this machine first, and writes the choice to `harness.config.yaml`. A prompt file whose path has a space reaches the agent quoted, as one argument.
+- **The studio is fast, and says when a read fails** (REQ-430). Its reads run in the studio's own process and are kept until a spec file changes — no `specgate` process per refresh, which made it slow on Windows; buttons stay busy while their request runs, a failed read is shown with its reason, and the page is drawn again only when something changed. Build's run log is kept out of git, so the harness finds a clean tree and starts.
+- **A module written under a plain heading stays one section** (REQ-437). Saving the brief form turned `## orders` written by hand into a second section beside `## Module: orders`, and the draft never read what was written there; it now becomes the module's section, its text kept in it.
+- **The agent guards name the next requirement** (REQ-426, REQ-427) as the change's tasks order it, and none once every requirement is applied — they named a requirement that was already done.
+
 ## [0.28.0] — 2026-11-07
 
 The agent guards: the open change at session start, the test before the code and the gate, for Claude Code and OpenCode, installed once per user; and the gate hook on Windows.

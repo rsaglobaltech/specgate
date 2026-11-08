@@ -190,8 +190,9 @@ export const RULES: ReadonlyArray<{
     apply: (s) =>
       s
         .replace(/duration_ms [\d.]+/g, "duration_ms 1.234")
-        .replace(/\b\d+(\.\d+)?ms\b/g, "12ms")
-        .replace(/\b\d+\.\d+s\b/g, "1.2s"),
+        // With or without the space the harness now writes: "in 0.1 s", "37 ms".
+        .replace(/\b\d+(\.\d+)?( ?)ms\b/g, "12$2ms")
+        .replace(/\b\d+\.\d+( ?)s\b/g, "1.2$1s"),
   },
   {
     id: "nodever",

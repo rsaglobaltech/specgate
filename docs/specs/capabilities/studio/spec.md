@@ -438,6 +438,18 @@ The repository SHALL test the studio in a real browser on Windows, macOS and Lin
 
 <!-- specgate:trace actor=Developer feature=features/studio/REQ-436.feature kind=functional status=Implemented -->
 
+### Requirement: REQ-437 — A module written under a plain heading stays one section
+
+The system SHALL, when the studio saves the brief form, write a module whose brief has no `## Module: <name>` section but a plain `## <name>` heading for a module the front matter lists as that module's `## Module: <name>` section in the heading's place, keeping the heading's prose inside it, so the brief holds one section for the module; and SHALL leave a plain heading that names no listed module as it is.
+
+#### Scenario: SCN-437a — A hand-written module section is kept as the module's
+
+- GIVEN `docs/brief.md` listing `modules: [orders]`, with a `## Context` section and a `## orders` section whose prose says "Shipping is free above some amount."
+- WHEN the form is saved with the rule "An order has at least one item" for orders
+- THEN the brief has one `## Module: orders` section holding that prose and the rule, no `## orders` heading, and the `## Context` section unchanged
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-437.feature kind=functional status=Implemented -->
+
 ### Requirement: REQ-438 — The studio runs the commands it offers, and only those
 
 The system SHALL let the studio run a Specgate command only from a fixed list of actions, each naming the command it runs and the arguments it accepts, checked before anything runs; SHALL refuse any other action or argument, even with the page's token; SHALL run one such command at a time, in the project folder, keeping its output in the git-ignored events folder; and SHALL show that output as it grows and say, when it ends, whether it succeeded.
@@ -533,3 +545,4 @@ The system SHALL, when the studio's port is taken, ask what answers there: when 
 - THEN it says a studio of this project is already running at http://localhost:4173 with that studio's process id, ends with exit code 0, and starts no second server
 
 <!-- specgate:trace actor=Developer feature=features/studio/REQ-445.feature kind=functional status=Implemented -->
+
