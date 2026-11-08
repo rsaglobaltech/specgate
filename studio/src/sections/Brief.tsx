@@ -68,7 +68,7 @@ export const keyOf = (name: string): string =>
 function Said({ lang, r }: { lang: Lang; r: Result | null }) {
   if (!r) return null;
   return (
-    <span role="status" class={r.ok ? "ok" : "err"}>
+    <span class={r.ok ? "ok" : "err"}>
       {r.ok ? t(lang, "done") : `${t(lang, "errorPrefix")} ${r.message || ""}`}
     </span>
   );
@@ -305,13 +305,11 @@ export function Brief({
       {head}
       <Paste lang={lang} exists profile={profile} onFill={onFill} />
       {advanced ? (
-        <div class="tabs" role="tablist">
+        <div class="tabs">
           {(["form", "md"] as const).map((k) => (
             <button
               type="button"
-              role="tab"
               class="chip-btn"
-              aria-selected={tab === k}
               aria-pressed={tab === k}
               onClick={() => setTab(k)}
             >
@@ -412,13 +410,11 @@ export function Brief({
                 <legend>
                   <strong>{t(lang, "modsTitle")}</strong>
                 </legend>
-                <div class="chips" role="tablist">
+                <div class="chips">
                   {form.modules.map((m) => (
                     <button
                       type="button"
-                      role="tab"
                       class="chip-btn"
-                      aria-selected={mod?.key === m.key}
                       aria-pressed={mod?.key === m.key}
                       onClick={() => setChosen(m.key)}
                     >
@@ -454,7 +450,7 @@ export function Brief({
                   </span>
                 </div>
                 {mod ? (
-                  <div class="module-box" role="tabpanel">
+                  <div class="module-box">
                     <ListEditor
                       lang={lang}
                       label={t(lang, "rules")}
@@ -519,7 +515,6 @@ export function Brief({
           </section>
           <section class="card">
             <span
-              role="status"
               class={status === "saved" ? "ok" : status && status !== "saving" ? "err" : "faint"}
             >
               {status === "saving"

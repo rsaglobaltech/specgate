@@ -139,13 +139,12 @@ export function Report({
         <div class="row spread">
           <h2 id="does-h">{t(lang, "whatDoes")}</h2>
           {built.length > 1 ? (
-            <div class="chips" role="tablist">
+            <div class="chips">
               {built.map((name) => (
                 <button
                   type="button"
-                  role="tab"
                   class="chip-btn"
-                  aria-selected={shown === name}
+                  aria-pressed={shown === name}
                   onClick={() => setChosen(name)}
                 >
                   {cap(name)}

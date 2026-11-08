@@ -11,6 +11,7 @@ export interface Result {
 }
 
 export interface BusyProps {
+  id?: string;
   class?: string;
   busyLabel: string;
   disabled?: boolean;
@@ -20,6 +21,7 @@ export interface BusyProps {
 }
 
 export function Busy({
+  id,
   class: cls = "btn-primary",
   busyLabel,
   disabled,
@@ -30,6 +32,7 @@ export function Busy({
   const [busy, setBusy] = useState(false);
   return (
     <button
+      id={id}
       type="button"
       class={cls}
       disabled={disabled || busy}

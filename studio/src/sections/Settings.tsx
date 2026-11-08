@@ -326,7 +326,7 @@ function NewProjectForm({
         </Busy>
       </div>
       {said && !said.ok ? (
-        <span role="status" class="err">
+        <span class="err">
           {t(lang, "errorPrefix")} {said.message}
         </span>
       ) : null}

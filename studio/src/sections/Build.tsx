@@ -64,7 +64,7 @@ const STAGES: Key[] = ["stProgram", "stTest", "stQuality", "stSave"];
 function Said({ lang, r, ok }: { lang: Lang; r: Result | null; ok?: string }) {
   if (!r) return null;
   return (
-    <span role="status" class={r.ok ? "ok" : "err"}>
+    <span class={r.ok ? "ok" : "err"}>
       {r.ok ? ok || t(lang, "done") : `${t(lang, "errorPrefix")} ${r.message || ""}`}
     </span>
   );

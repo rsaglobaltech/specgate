@@ -3,7 +3,7 @@
  * blocks and the options seen, the form that answers it; and the answers the
  * spec must still say, one per question — the approved design's Preguntas.
  */
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { t, type Lang } from "../core/i18n";
 import { Busy, type Result } from "../ui/Busy";
 
@@ -80,7 +80,18 @@ function Question({
         value={text}
         placeholder={t(lang, "answerPlaceholder")}
         onInput={(e) => setText((e.target as HTMLTextAreaElement).value)}
+        onKeyDown={(e) => {
+          // Enter saves, as a one-line answer expects; Shift+Enter is a new line (REQ-435).
+          if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+          e.preventDefault();
+          const card = (e.currentTarget as HTMLElement).closest("article");
+          (card?.querySelector(".btn-primary") as HTMLButtonElement | null)?.click();
+        }}
+        aria-describedby={`${field}-hint`}
       />
+      <span id={`${field}-hint`} class="faint hint">
+        {t(lang, "enterSaves")}
+      </span>
       <div class="row">
         <Busy
           busyLabel={t(lang, "saving")}
@@ -91,7 +102,7 @@ function Question({
           {t(lang, "saveAnswer")} →
         </Busy>
         {said ? (
-          <span role="status" class={said.ok ? "ok" : "err"}>
+          <span class={said.ok ? "ok" : "err"}>
             {said.ok ? t(lang, "savedTo") : `${t(lang, "errorPrefix")} ${said.message || ""}`}
           </span>
         ) : null}
@@ -103,11 +114,24 @@ function Question({
 export function Questions({ lang, data, onAnswer, onConfirm }: QuestionsProps) {
   // A saved answer leaves the list, its card with it: the section says it was kept.
   const [saved, setSaved] = useState("");
+  // Once saved, Q1 leaves the open ones: the focus follows it to its row to confirm (REQ-435).
+  const [follow, setFollow] = useState("");
   const answer: QuestionsProps["onAnswer"] = async (q, text) => {
     const r = await onAnswer(q, text);
-    if (r.ok) setSaved(q.id);
+    if (r.ok) {
+      setSaved(q.id);
+      setFollow(`${q.change}:${q.id}`);
+    }
     return r;
   };
+  useEffect(() => {
+    if (!follow || typeof document === "undefined") return;
+    const row = document.querySelector<HTMLElement>(`[data-q="${follow}"]`);
+    if (row) {
+      row.focus();
+      setFollow("");
+    }
+  }, [data, follow]);
   return (
     <>
       <header class="head">
@@ -115,7 +139,7 @@ export function Questions({ lang, data, onAnswer, onConfirm }: QuestionsProps) {
         <p class="lead">{t(lang, "questionsIntro")}</p>
       </header>
       {saved ? (
-        <p role="status" class="ok">
+        <p class="ok">
           {saved} · {t(lang, "savedTo")}
         </p>
       ) : null}
@@ -132,7 +156,12 @@ export function Questions({ lang, data, onAnswer, onConfirm }: QuestionsProps) {
             <p class="faint">{t(lang, "toConfirmHint")}</p>
           </div>
           {data.toReview.map((x) => (
-            <div class="confirm-row" key={`${x.change}:${x.question}`}>
+            <div
+              class="confirm-row"
+              key={`${x.change}:${x.question}`}
+              data-q={`${x.change}:${x.question}`}
+              tabIndex={-1}
+            >
               <span class="id">{x.question}</span>
               <span class="grow">{x.text || x.question}</span>
               <Busy

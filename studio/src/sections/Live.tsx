@@ -187,7 +187,7 @@ function Ask({
           {t(lang, "saveAnswer")} →
         </Busy>
         {said ? (
-          <span role="status" class={said.ok ? "ok" : "err"}>
+          <span class={said.ok ? "ok" : "err"}>
             {said.ok ? t(lang, "savedTo") : `${t(lang, "errorPrefix")} ${said.message || ""}`}
           </span>
         ) : null}
@@ -198,6 +198,10 @@ function Ask({
 
 function Stop({ lang, onStop }: { lang: Lang; onStop: LiveProps["onStop"] }) {
   const [sure, setSure] = useState(false);
+  // Asked to stop now, the focus goes to the button that confirms it (REQ-435).
+  useEffect(() => {
+    if (sure) document.getElementById("stop-now-sure")?.focus();
+  }, [sure]);
   const [said, setSaid] = useState<Result | null>(null);
   return (
     <div class="row stop">
@@ -232,7 +236,7 @@ function Stop({ lang, onStop }: { lang: Lang; onStop: LiveProps["onStop"] }) {
         </>
       )}
       {said ? (
-        <span role="status" class={said.ok ? "ok" : "err"}>
+        <span class={said.ok ? "ok" : "err"}>
           {said.ok ? t(lang, "stopAsked") : `${t(lang, "errorPrefix")} ${said.message || ""}`}
         </span>
       ) : null}

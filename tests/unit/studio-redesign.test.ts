@@ -429,7 +429,7 @@ test("REQ-214 SCN-214a: the new Brief — the form: product, who uses it, each m
   assert.match(html, /value="Tienda"/);
   assert.match(html, /value="Customer" aria-label="Tipo de usuario 1"/);
   assert.match(html, /type="checkbox" checked[^>]*\/> API/);
-  assert.match(html, /role="tab" class="chip-btn" aria-selected="true"[^>]*>Orders/);
+  assert.match(html, /class="chip-btn" aria-pressed="true">Orders/);
   assert.match(html, /value="An order has items" aria-label="Reglas 1"/);
   assert.match(html, /\+ Regla/);
   assert.match(html, /Todo en orden/);
@@ -904,4 +904,44 @@ test("REQ-434: what the checks say comes in Spanish with the same ids — and as
   );
   assert.equal(say("es", "B4_no_example", "Something new."), "Something new.");
   assert.equal(say("es", "X_unknown", "Q1 is open: x"), "Q1 is open: x");
+});
+
+test("REQ-435 SCN-435a: the keyboard — a skip to the content, Enter saves the answer, Q1's row can take the focus", () => {
+  const shell: string = studio.renderShell("questions", { ...studio.DEFAULTS });
+  assert.match(shell, /^<div class="app"><a class="skip" href="#main">Saltar al contenido<\/a>/);
+  assert.match(shell, /<main class="main" id="main" tabindex="-1">/i);
+  const html: string = studio.renderQuestions("es", {
+    open: [
+      {
+        id: "Q2",
+        change: "draft-orders",
+        text: "¿Hasta cuándo?",
+        blocks: [],
+        options: [],
+        from: "draft",
+      },
+    ],
+    toReview: [
+      { change: "draft-orders", assumption: "A1", question: "Q1", text: "¿Desde cuánto?" },
+    ],
+  });
+  assert.match(html, /aria-describedby="answer-draft-orders-Q2-hint"/);
+  assert.match(
+    html,
+    /id="answer-draft-orders-Q2-hint" class="faint hint">Enter guarda · Mayús\+Enter, nueva línea/
+  );
+  assert.match(html, /<div class="confirm-row" data-q="draft-orders:Q1" tabindex="-1">/i);
+});
+
+test("REQ-435: a result is announced once — by the notice, not again inside the section; no tabs without arrow keys", () => {
+  for (const html of [
+    studio.renderQuestions("es", { open: [], toReview: [] }),
+    studio.renderBrief("en", briefData(), { advanced: true }),
+    studio.renderReport("en", reportData()),
+  ]) {
+    assert.doesNotMatch(html, /role="tab/);
+  }
+  const css = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.css"), "utf8");
+  assert.match(css, /:focus-visible/);
+  assert.match(css, /prefers-reduced-motion:\s*reduce\)\s*\{[^@]*animation:\s*none\s*!important/);
 });

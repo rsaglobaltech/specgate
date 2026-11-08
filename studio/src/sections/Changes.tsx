@@ -115,7 +115,7 @@ function Step({ lang, step }: { lang: Lang; step: string }) {
 function Said({ lang, r }: { lang: Lang; r: Result | null }) {
   if (!r) return null;
   return (
-    <span role="status" class={r.ok ? "ok" : "err"}>
+    <span class={r.ok ? "ok" : "err"}>
       {r.ok ? t(lang, "done") : `${t(lang, "errorPrefix")} ${r.message || ""}`}
     </span>
   );

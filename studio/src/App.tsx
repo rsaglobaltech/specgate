@@ -1,5 +1,5 @@
 /** The studio's app (REQ-204): the shell, the section the address names, the viewer's preferences. */
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { Shell } from "./ui/Shell";
 import { sectionOf, type Section } from "./core/routes";
 import { readPrefs, writePrefs, type Prefs } from "./core/prefs";
@@ -78,6 +78,25 @@ export function App() {
     return () => window.removeEventListener("hashchange", on);
   }, []);
   useEffect(() => applyTheme(prefs), [prefs]);
+  // A new section takes the focus to its title, so a screen reader says where it is (REQ-435).
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    let tries = 0;
+    const timer = setInterval(() => {
+      const h1 = document.querySelector<HTMLElement>("#main h1");
+      if (h1 || ++tries > 20) {
+        clearInterval(timer);
+        const target = h1 || document.getElementById("main");
+        if (h1) h1.tabIndex = -1;
+        target?.focus();
+      }
+    }, 50);
+    return () => clearInterval(timer);
+  }, [section]);
   const choose = (p: Prefs) => {
     setPrefs(p);
     writePrefs(storage(), p);

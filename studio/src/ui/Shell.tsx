@@ -43,6 +43,17 @@ export function Shell({ project, section, prefs, onPrefs, badges = {}, children 
     prefs.theme === "light" ? "themeLight" : prefs.theme === "dark" ? "themeDark" : "themeSystem";
   return (
     <div class={`app${prefs.folded ? " folded" : ""}`}>
+      <a
+        class="skip"
+        href="#main"
+        onClick={(e) => {
+          // The address names the section: the skip moves the focus, not the hash.
+          e.preventDefault();
+          document.getElementById("main")?.focus();
+        }}
+      >
+        {t(lang, "skipToContent")}
+      </a>
       <nav class="side" id="side" aria-label={t(lang, "sections")}>
         <button
           type="button"
@@ -113,7 +124,7 @@ export function Shell({ project, section, prefs, onPrefs, badges = {}, children 
           </button>
         </div>
       </nav>
-      <main class="main" id="main">
+      <main class="main" id="main" tabIndex={-1}>
         {children}
       </main>
     </div>
