@@ -21,6 +21,7 @@ import {
 import { requestStop, runLockHolder } from "./harness-guard";
 import { findCliRoot } from "./project-root";
 import { cachedBySpecs } from "./studio-cache";
+import { studioLog } from "./harness-events";
 import { withQueue } from "../cli/commands/spec/StatusCommand";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { requirementTitles } from "../../packages/core/src/domain/DraftChecklist";
@@ -371,8 +372,7 @@ export function startBuild(projectDir: string, reqs: string[], profile = ""): St
   }
   const saved = saveSpecification(projectDir);
   if (!saved.ok) return saved;
-  const log = path.join(projectDir, ".harness", "events", "studio-run.log");
-  fs.mkdirSync(path.dirname(log), { recursive: true });
+  const log = studioLog(projectDir, "run");
   const out = fs.openSync(log, "a");
   const child = spawn(
     process.execPath,

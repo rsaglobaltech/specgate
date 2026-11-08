@@ -28,6 +28,7 @@ import { allQuestions, waiting } from "./clarification";
 import { liveMatrix } from "./live-detail";
 import { readLive } from "./live-model";
 import { approvedOn } from "./change-review";
+import { studioLog } from "./harness-events";
 import { buildView, drafts, gate } from "./studio-app";
 import { findCliRoot } from "./project-root";
 
@@ -179,11 +180,7 @@ function startJob(
           : "The agent is working on the brief. Wait for it, or stop it.",
     };
   }
-  const dir = path.join(projectDir, ".harness", "events");
-  fs.mkdirSync(dir, { recursive: true });
-  const ignore = path.join(dir, ".gitignore");
-  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
-  const log = path.join(dir, `studio-${kind}.log`);
+  const log = studioLog(projectDir, kind);
   fs.writeFileSync(log, "", "utf8");
   const out = fs.openSync(log, "a");
   const child = spawn(process.execPath, [cli(), ...args, "--project-dir", projectDir], {
@@ -194,7 +191,7 @@ function startJob(
       ...process.env,
       NO_COLOR: "1",
       // A streaming agent reports what it does; the page shows its last step.
-      AGENT_EVENTS_FILE: path.join(dir, `studio-${kind}.jsonl`),
+      AGENT_EVENTS_FILE: path.join(path.dirname(log), `studio-${kind}.jsonl`),
     },
   });
   child.unref();

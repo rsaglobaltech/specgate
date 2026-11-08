@@ -308,3 +308,32 @@ test("REQ-210: a question id is data, never a pattern", () => {
   }
   assert.equal(answerLines("Answer (Q.*): yes\n", "Q1").length, 0);
 });
+
+test("REQ-206: an answer's assumption to review is confirmed from Review; a requirement at the end of a sentence is named whole", async () => {
+  const { approvalBlockers: blockers } = await import("../../scripts/lib/change-review");
+  const dir = pedidos(FOUR_COLUMNS_CRLF);
+  assert.equal(answer(dir, "Q1", "Más de 500 €", "draft-pedidos").ok, true);
+  const all = blockers(dir, "draft-pedidos");
+  for (const b of all.filter((x) => /\bQ1\b/.test(x.message))) {
+    assert.deepEqual(b.action, { kind: "confirm", question: "Q1" }, JSON.stringify(b));
+  }
+  for (const b of all.filter((x) => x.action?.kind === "open")) {
+    assert.match(String(b.action?.requirement), /^REQ-\d+$/, JSON.stringify(b));
+  }
+});
+
+test("REQ-208 SCN-208b: the studio's run log leaves the working tree clean, so the harness can start", async () => {
+  const { studioLog } = await import("../../scripts/lib/harness-events");
+  const dir = pedidos(FOUR_COLUMNS_CRLF);
+  const git = (...a: string[]) =>
+    childProcess.spawnSync("git", ["-c", "user.name=T", "-c", "user.email=t@example.com", ...a], {
+      cwd: dir,
+      encoding: "utf8",
+    });
+  git("init", "-q");
+  git("add", "-A");
+  git("commit", "-qm", "init");
+  const log = studioLog(dir, "run");
+  fs.writeFileSync(log, "started\n");
+  assert.equal(git("status", "--porcelain").stdout, "", "no .harness file shows as a change");
+});

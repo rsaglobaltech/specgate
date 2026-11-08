@@ -49,11 +49,13 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
   const out: Blocker[] = [];
   const questionsMd = read(path.join(changeDir(projectDir, id), "questions.md"));
   const questions = questionsMd ? questionTable(questionsMd) : [];
-  const actionFor = (code: string, message: string): BlockerAction | undefined => {
+  const actionFor = (message: string): BlockerAction | undefined => {
+    // An answered question still holding something — D7, or D13's assumption to review — is confirmed.
     const q = questions.find((x) => names(message, x.id));
-    if (q && code === "D7_answered_still_blocked") return { kind: "confirm", question: q.id };
-    if (q && !q.answered) return { kind: "answer", question: q.id };
-    const req = (/REQ-[A-Za-z0-9.]+/.exec(message) || [])[0];
+    if (q)
+      return q.answered ? { kind: "confirm", question: q.id } : { kind: "answer", question: q.id };
+    // `REQ-001.` ends a sentence: the id is REQ-001.
+    const req = (/REQ-[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*/.exec(message) || [])[0];
     return req ? { kind: "open", requirement: req } : undefined;
   };
   const r = draftReport(projectDir, id);
@@ -62,7 +64,7 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
   } else {
     for (const d of r.report.status) {
       if (d.severity !== "error") continue;
-      out.push({ code: d.code, message: d.message, action: actionFor(d.code, d.message) });
+      out.push({ code: d.code, message: d.message, action: actionFor(d.message) });
     }
   }
   for (const q of questions) {
