@@ -205,3 +205,116 @@ test("REQ-210 SCN-210a: nothing open — Questions says so instead of an empty p
   const html: string = studio.renderQuestions("en", { open: [], toReview: [] });
   assert.match(html, /No question is open\./);
 });
+
+const mod = (key: string, stage: string, extra: Record<string, unknown> = {}) => ({
+  key,
+  stage,
+  requirements: 2,
+  scenarios: 2,
+  questions: 0,
+  findings: [],
+  progress: null,
+  ...extra,
+});
+const draft = (blockers: unknown[]) => ({
+  change: "draft-orders",
+  module: "orders",
+  requirements: [
+    {
+      id: "REQ-002",
+      title: "Free shipping",
+      statement: "The system SHALL not charge shipping above the amount.",
+      status: "Needs Clarification",
+      scenarios: [
+        { id: "SCN-002", title: "Above", steps: ["GIVEN a cart above it", "THEN shipping is 0"] },
+      ],
+    },
+  ],
+  blockers,
+  notes: [],
+  questions: [{ id: "Q1", text: "From what amount?", blocks: ["REQ-002"] }],
+});
+
+test("REQ-206 SCN-206c: the new Changes — every blocker with its action, approval said why it waits", () => {
+  const html: string = studio.renderChanges(
+    "es",
+    {
+      brief: true,
+      modules: [mod("orders", "review", { questions: 1 }), mod("users", "todo")],
+      job: null,
+      step: "",
+    },
+    [
+      draft([
+        {
+          code: "approve_question_open",
+          message: "Q1 is open",
+          action: { kind: "answer", question: "Q1" },
+        },
+        { code: "D13", message: "A1 to review", action: { kind: "confirm", question: "Q3" } },
+        {
+          code: "D2",
+          message: "REQ-004 has no scenario",
+          action: { kind: "open", requirement: "REQ-004" },
+        },
+      ]),
+    ]
+  );
+  assert.match(html, /<a class="btn-ghost" href="#\/questions">Responder Q1<\/a>/);
+  assert.match(html, /Ya está en la spec/);
+  assert.match(html, /REQ-004 · docs\/specs\/changes\/draft-orders/);
+  assert.match(html, /disabled[^>]*>Aprobar el borrador/);
+  assert.match(html, /Faltan 3 cosas\./);
+  assert.match(html, /<b class="kw">Dado<\/b> a cart above it/);
+  assert.match(html, /Espera Q1/);
+  assert.match(html, /aria-current="true"[^>]*><span class="name">orders/);
+});
+
+test("REQ-206 SCN-206a: the new Changes — a draft with nothing missing can be approved", () => {
+  const html: string = studio.renderChanges(
+    "en",
+    { brief: true, modules: [mod("orders", "review")], job: null, step: "" },
+    [draft([])]
+  );
+  assert.match(html, /Nothing stops it/);
+  assert.doesNotMatch(html, /disabled[^>]*>Approve the draft/);
+  assert.match(html, />Approve the draft</);
+});
+
+test("REQ-216 SCN-216b: the new Changes — while one module is drafted, no other starts", () => {
+  const html: string = studio.renderChanges(
+    "en",
+    {
+      brief: true,
+      modules: [
+        mod("orders", "drafting", {
+          progress: {
+            seconds: 90,
+            requirements: 2,
+            scenarios: 0,
+            notes: false,
+            lastStep: "writing REQ-002",
+          },
+        }),
+        mod("users", "todo"),
+      ],
+      job: { kind: "draft", module: "orders" },
+      step: "",
+    },
+    []
+  );
+  assert.match(html, /Drafting · 2 min/);
+  assert.match(html, /writing REQ-002/);
+  assert.match(html, />Stop</);
+  assert.match(html, /disabled[^>]*>Draft the next one/);
+});
+
+test("REQ-216 SCN-216a: the new Changes — no brief yet sends the reader to Brief", () => {
+  const html: string = studio.renderChanges(
+    "en",
+    { brief: false, modules: [], job: null, step: "" },
+    []
+  );
+  assert.match(html, /No brief yet/);
+  assert.match(html, /href="#\/brief"/);
+});

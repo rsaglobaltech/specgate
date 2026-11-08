@@ -8,6 +8,7 @@ import { useRead } from "./core/useRead";
 import type { HomeData, RouteData } from "./core/route";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
+import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
 import { post } from "./core/api";
 import type { Result } from "./ui/Busy";
 
@@ -49,19 +50,50 @@ export function App() {
   const route = useRead<RouteData>("/api/route");
   const home = useRead<HomeData>(section === "home" ? "/api/home" : null);
   const questions = useRead<QuestionsData>(section === "questions" ? "/api/questions" : null);
-  /** A write, then the section read again so it shows what the file now says. */
-  const write = async (body: Record<string, unknown>): Promise<Result> => {
-    const r = await post<Result>("/api/answer", body);
+  const onChanges = section === "changes";
+  const modules = useRead<ModulesData>(onChanges ? "/api/modules" : null);
+  const drafts = useRead<DraftView[]>(onChanges ? "/api/drafts" : null);
+  // While a module is being drafted, its progress is read again every few seconds.
+  const drafting = onChanges && !!modules.data?.job;
+  useEffect(() => {
+    if (!drafting) return;
+    const timer = setInterval(() => {
+      modules.reload();
+      drafts.reload();
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [drafting]);
+  /** A write, then what it changed read again so the page shows what the files now say. */
+  const send = async (url: string, body: Record<string, unknown>): Promise<Result> => {
+    const r = await post<Result>(url, body);
     if (r.ok) {
-      questions.reload();
       route.reload();
+      if (section === "questions") questions.reload();
+      if (onChanges) {
+        modules.reload();
+        drafts.reload();
+      }
     }
     return r;
   };
+  const write = (body: Record<string, unknown>) => send("/api/answer", body);
   return (
     <Shell project={project} section={section} prefs={prefs} onPrefs={choose}>
       {section === "home" && route.data ? (
         <Home lang={prefs.lang} route={route.data} home={home.data} />
+      ) : onChanges && modules.data && drafts.data ? (
+        <Changes
+          lang={prefs.lang}
+          modules={modules.data}
+          drafts={drafts.data}
+          onDraft={(module) => send("/api/draft", { module, profile: "" })}
+          onStopDraft={() => send("/api/draft/stop", {})}
+          onApprove={(change) => send("/api/approve", { change })}
+          onNote={(change, req, text) => send("/api/note", { change, req, text })}
+          onConfirm={(change, question) =>
+            write({ question, change: changeOf(change), reviewed: true })
+          }
+        />
       ) : section === "questions" && questions.data ? (
         <Questions
           lang={prefs.lang}

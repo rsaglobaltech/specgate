@@ -8,6 +8,7 @@ import type { Section } from "./core/routes";
 import type { Prefs } from "./core/prefs";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
+import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
 import type { HomeData, RouteData } from "./core/route";
 import type { Lang } from "./core/i18n";
 
@@ -28,4 +29,20 @@ export function renderHome(lang: Lang, route: RouteData, home: HomeData | null):
 export function renderQuestions(lang: Lang, data: QuestionsData): string {
   const none = async () => ({ ok: true });
   return render(<Questions lang={lang} data={data} onAnswer={none} onConfirm={none} />);
+}
+
+export function renderChanges(lang: Lang, modules: ModulesData, drafts: DraftView[]): string {
+  const none = async () => ({ ok: true });
+  return render(
+    <Changes
+      lang={lang}
+      modules={modules}
+      drafts={drafts}
+      onDraft={none}
+      onStopDraft={none}
+      onApprove={none}
+      onNote={none}
+      onConfirm={none}
+    />
+  );
 }
