@@ -102,4 +102,4 @@ The repository SHALL test the studio in a real browser on Windows, macOS and Lin
 - WHEN its browser tests run
 - THEN each section opens without a script error and the journey from an open question to a run in Live passes
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
