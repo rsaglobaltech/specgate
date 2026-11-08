@@ -14,6 +14,7 @@ import {
   stopBuild,
 } from "../../../lib/studio-app";
 import {
+  configuredAgent,
   agentsInstalled,
   briefForm,
   createProject,
@@ -320,6 +321,8 @@ export class StudioCommand extends BaseCommand {
         "/api/profiles": () => ({
           profiles: profilesView(projectDir),
           installed: agentsInstalled(),
+          // REQ-431: an agent set as a command of its own, not a profile.
+          agent: configuredAgent(projectDir),
         }),
         "/api/brief": () => briefForm(projectDir),
         "/api/modules": () => draftsRoute(projectDir),

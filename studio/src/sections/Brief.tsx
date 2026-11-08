@@ -44,6 +44,8 @@ export interface BriefProps {
   data: BriefData;
   /** The profile the assistant runs with, "" when none is set up. */
   profile: string;
+  /** The agent command harness.config.yaml holds, used when there is no profile (REQ-431). */
+  agent?: string;
   /** A brief being read by the assistant now, and what it did last. */
   job: { kind: string } | null;
   step: string;
@@ -180,6 +182,7 @@ export function Brief({
   advanced,
   data,
   profile,
+  agent = "",
   job,
   step,
   onSave,
@@ -255,7 +258,7 @@ export function Brief({
     return (
       <>
         {head}
-        <Paste lang={lang} exists={false} profile={profile} onFill={onFill} />
+        <Paste lang={lang} exists={false} profile={profile || agent} onFill={onFill} />
         <section class="card" aria-labelledby="scratch-h">
           <div>
             <h2 id="scratch-h">{t(lang, "fromScratch")}</h2>
@@ -303,7 +306,7 @@ export function Brief({
   return (
     <>
       {head}
-      <Paste lang={lang} exists profile={profile} onFill={onFill} />
+      <Paste lang={lang} exists profile={profile || agent} onFill={onFill} />
       {advanced ? (
         <div class="tabs">
           {(["form", "md"] as const).map((k) => (

@@ -7,6 +7,8 @@
 import { useState } from "preact/hooks";
 import { t, type Key, type Lang } from "../core/i18n";
 import { Busy, type Result } from "../ui/Busy";
+import { AgentForm, type AgentKind } from "../ui/AgentForm";
+export type { AgentKind } from "../ui/AgentForm";
 
 export interface BuildData {
   ready: Array<{ id: string; title: string; module: string }>;
@@ -33,8 +35,6 @@ export interface LiveRequirement {
   elapsed: number;
   steps: Array<{ type?: string; stage?: string }>;
 }
-
-export type AgentKind = "claude" | "codex" | "custom";
 
 export interface BuildProps {
   lang: Lang;
@@ -67,76 +67,6 @@ function Said({ lang, r, ok }: { lang: Lang; r: Result | null; ok?: string }) {
     <span class={r.ok ? "ok" : "err"}>
       {r.ok ? ok || t(lang, "done") : `${t(lang, "errorPrefix")} ${r.message || ""}`}
     </span>
-  );
-}
-
-function AgentForm({
-  lang,
-  installed,
-  onAgent,
-}: {
-  lang: Lang;
-  installed: BuildData["installed"];
-  onAgent: BuildProps["onAgent"];
-}) {
-  const found = installed || { claude: false, codex: false };
-  const [kind, setKind] = useState<AgentKind>(
-    found.claude ? "claude" : found.codex ? "codex" : "custom"
-  );
-  const [command, setCommand] = useState("");
-  const [said, setSaid] = useState<Result | null>(null);
-  const options: Array<[AgentKind, string, boolean]> = [
-    ["claude", "Claude Code", found.claude],
-    ["codex", "Codex", found.codex],
-    ["custom", t(lang, "ownCommand"), false],
-  ];
-  return (
-    <section class="card agent" aria-labelledby="agent-h">
-      <div>
-        <h2 id="agent-h">{t(lang, "chooseAgent")}</h2>
-        <p class="faint">{t(lang, "chooseAgentHint")}</p>
-      </div>
-      <div class="choices" role="radiogroup" aria-labelledby="agent-h">
-        {options.map(([k, name, on]) => (
-          <label class={`choice${kind === k ? " on" : ""}`}>
-            <input
-              type="radio"
-              name="agent-kind"
-              checked={kind === k}
-              onChange={() => setKind(k)}
-            />
-            <span class="name">{name}</span>
-            {on ? <span class="chip ok-chip">{t(lang, "found")}</span> : null}
-          </label>
-        ))}
-      </div>
-      {kind === "custom" ? (
-        <>
-          <label for="agent-cmd" class="label">
-            {t(lang, "ownCommand")}
-          </label>
-          <input
-            id="agent-cmd"
-            class="text"
-            type="text"
-            value={command}
-            placeholder="my-agent run {prompt_file}"
-            onInput={(e) => setCommand((e.target as HTMLInputElement).value)}
-          />
-        </>
-      ) : null}
-      <div class="row">
-        <Busy
-          busyLabel={t(lang, "saving")}
-          disabled={kind === "custom" && !command.includes("{prompt_file}")}
-          onRun={() => onAgent(kind, command)}
-          onDone={setSaid}
-        >
-          {t(lang, "useAgent")}
-        </Busy>
-        <Said lang={lang} r={said} />
-      </div>
-    </section>
   );
 }
 

@@ -6,6 +6,7 @@
 import { useState } from "preact/hooks";
 import { t, type Key, type Lang } from "../core/i18n";
 import { Busy, type Result } from "../ui/Busy";
+import { AgentForm, type AgentKind } from "../ui/AgentForm";
 
 export interface NewProject {
   name: string;
@@ -45,6 +46,9 @@ export interface SettingsProps {
   profiles: SettingsProfile[];
   installed: { claude: boolean; codex: boolean };
   quality: QualityView | null;
+  /** The agent command harness.config.yaml holds, when it is not a profile (REQ-431). */
+  agent?: string | null;
+  onAgent?: (kind: AgentKind, command: string) => Promise<Result>;
   onCreate: (p: NewProject) => Promise<Result>;
   onQuality: (level: "basic" | "strict") => Promise<Result & { view?: QualityView }>;
 }
@@ -341,9 +345,13 @@ export function Settings({
   profiles,
   installed,
   quality,
+  agent = null,
+  onAgent,
   onCreate,
   onQuality,
 }: SettingsProps) {
+  const [changing, setChanging] = useState(false);
+  const none = !profiles.length && !agent;
   if (!isProject && !empty) {
     return (
       <>
@@ -376,10 +384,15 @@ export function Settings({
       </header>
       <section class="card" aria-labelledby="assistants-h">
         <h2 id="assistants-h">{t(lang, "assistants")}</h2>
-        {!profiles.length ? (
-          <p class="faint">
-            {t(lang, "noProfiles")} <a href="#/build">{t(lang, "chooseInBuild")} →</a>
-          </p>
+        {none ? <p class="faint">{t(lang, "noProfiles")}</p> : null}
+        {agent ? (
+          <div class="check">
+            <span aria-hidden="true">●</span>
+            <span>
+              <strong>agent</strong> <code class="where">{agent}</code>
+            </span>
+            <span class="faint">harness.config.yaml</span>
+          </div>
         ) : null}
         {profiles.map((p) => (
           <div class="check">
@@ -395,6 +408,15 @@ export function Settings({
             </span>
           </div>
         ))}
+        {onAgent && (none || changing) ? (
+          <AgentForm lang={lang} installed={installed} onAgent={onAgent} />
+        ) : onAgent ? (
+          <div class="row">
+            <button type="button" class="btn-ghost" onClick={() => setChanging(true)}>
+              {t(lang, "changeAgent")}
+            </button>
+          </div>
+        ) : null}
         <p class="faint">{t(lang, "profilesHint")}</p>
         <pre class="cmd">
           {'profiles_version: 1\nprofiles:\n  my-agent:\n    agent: "my-agent < {prompt_file}"'}

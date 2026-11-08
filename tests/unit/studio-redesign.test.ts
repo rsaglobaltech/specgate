@@ -1262,3 +1262,55 @@ test("REQ-203 SCN-203a: every open question in Live, each with the form that ans
   assert.match(block, /<label for="live-answer-draft-billing-Q6"/);
   assert.match(block, /REQ-040<\/span> Export[^]*?specgate ask REQ-040/);
 });
+
+test("REQ-431 SCN-431a: an agent chosen as a command of its own is shown in Settings, which can change it", () => {
+  const html: string = studio.renderSettings(
+    "en",
+    { isProject: true, empty: false },
+    [],
+    { claude: true, codex: false },
+    null,
+    "node stub-agent.mjs {prompt_file}"
+  );
+  assert.doesNotMatch(html, /No assistant is configured yet/);
+  assert.match(
+    html,
+    /<strong>agent<\/strong> <code class="where">node stub-agent.mjs \{prompt_file\}<\/code>/
+  );
+  assert.match(html, /harness\.config\.yaml/);
+  assert.match(html, />Change the assistant</);
+  // Nothing configured: Settings offers the form itself, the agent found already chosen.
+  const none: string = studio.renderSettings(
+    "en",
+    { isProject: true, empty: false },
+    [],
+    { claude: true, codex: false },
+    null,
+    null
+  );
+  assert.match(none, /No assistant is configured yet/);
+  assert.match(
+    none,
+    /class="choice on"><input type="radio" name="agent-kind" checked[^>]*\/><span class="name">Claude Code/
+  );
+});
+
+test("REQ-215 SCN-215a: the brief can be pasted for an agent set as a command, not only as a profile", () => {
+  const empty = briefData({ exists: false, product: "", actors: [], modules: [] });
+  assert.doesNotMatch(
+    studio.renderBrief("en", empty, { profile: "", agent: "node a.mjs {prompt_file}" }),
+    /Needs an assistant/
+  );
+  assert.match(studio.renderBrief("en", empty, { profile: "", agent: "" }), /Needs an assistant/);
+});
+
+test("REQ-211 SCN-211c: /api/profiles names the agent command harness.config.yaml holds", () => {
+  const { configuredAgent } = require("../../scripts/lib/studio-route");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sg-agent-cmd-"));
+  assert.equal(configuredAgent(dir), null);
+  fs.writeFileSync(
+    path.join(dir, "harness.config.yaml"),
+    'test_cmd: npm test\nagent: "node stub-agent.mjs {prompt_file}"\n'
+  );
+  assert.equal(configuredAgent(dir), "node stub-agent.mjs {prompt_file}");
+});

@@ -54,11 +54,12 @@ level. Then it creates the project there, with a brief to fill.
 
 A folder that already holds files is left alone: the studio names the command
 that adopts it (`specgate init`), which keeps them. On a project, Settings
-lists the agent profiles of `.harness/profiles.yaml` — which is the default,
-which streams tokens and cost — and the quality checks: when each runs,
-whether it gates or advises, and whether Docker answers.
+lists the agents — the profiles of `.harness/profiles.yaml`, which is the
+default and which streams tokens and cost, and a command of your own set in
+`harness.config.yaml` — with **Change the assistant**; and the quality checks:
+when each runs, whether it gates or advises, and whether Docker answers.
 
-![Settings on a project: the assistants, with how to add one in .harness/profiles.yaml; then Code quality — Docker does not answer here — with the basic and strict levels to turn on.](assets/img/studio-settings.webp)
+![Settings on a project: the agent command harness.config.yaml holds, Change the assistant, and how to add a profile; then Code quality — Docker does not answer here — with the basic and strict levels to turn on.](assets/img/studio-settings.webp)
 
 ## Brief
 

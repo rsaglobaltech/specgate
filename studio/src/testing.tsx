@@ -93,7 +93,7 @@ export { keyOf } from "./sections/Brief";
 export function renderBrief(
   lang: Lang,
   data: BriefData,
-  opts: { advanced?: boolean; profile?: string; job?: { kind: string } | null } = {}
+  opts: { advanced?: boolean; profile?: string; agent?: string; job?: { kind: string } | null } = {}
 ): string {
   const none = async () => ({ ok: true });
   return render(
@@ -102,6 +102,7 @@ export function renderBrief(
       advanced={!!opts.advanced}
       data={data}
       profile={opts.profile ?? "claude"}
+      agent={opts.agent ?? ""}
       job={opts.job ?? null}
       step=""
       onSave={none}
@@ -120,7 +121,8 @@ export function renderSettings(
   state: { isProject: boolean; empty: boolean },
   profiles: SettingsProfile[] = [],
   installed = { claude: true, codex: false },
-  quality: QualityView | null = null
+  quality: QualityView | null = null,
+  agent: string | null = null
 ): string {
   const none = async () => ({ ok: true });
   return render(
@@ -131,6 +133,8 @@ export function renderSettings(
       profiles={profiles}
       installed={installed}
       quality={quality}
+      agent={agent}
+      onAgent={none}
       onCreate={none}
       onQuality={none}
     />

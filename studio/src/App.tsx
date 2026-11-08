@@ -139,9 +139,11 @@ export function App() {
   const needsProfiles = onBuild || onBrief || onSettings;
   const quality = useRead<QualityView>(onSettings && route.data?.isProject ? "/api/quality" : null);
   const build = useRead<BuildData>(onBuild ? "/api/build" : null);
-  const profiles = useRead<{ profiles: Profile[]; installed: { claude: boolean; codex: boolean } }>(
-    needsProfiles ? "/api/profiles" : null
-  );
+  const profiles = useRead<{
+    profiles: Profile[];
+    installed: { claude: boolean; codex: boolean };
+    agent: string | null;
+  }>(needsProfiles ? "/api/profiles" : null);
   const live = useRead<{ requirements: LiveRequirement[] }>(onBuild ? "/live.json" : null);
   // While something is built, what runs is read again every few seconds.
   const building = onBuild && !!build.data?.running;
@@ -260,6 +262,8 @@ export function App() {
             profiles={profiles.data.profiles}
             installed={profiles.data.installed}
             quality={quality.data}
+            agent={profiles.data.agent}
+            onAgent={(kind, command) => send("/api/agent", { kind, command })}
             onCreate={async (project) => {
               const r = await send("/api/project", { project });
               if (r.ok) location.hash = "#/brief";
@@ -276,6 +280,7 @@ export function App() {
             advanced={prefs.mode === "advanced"}
             data={brief.data}
             profile={(profiles.data?.profiles.find((p) => p.default) || { name: "" }).name}
+            agent={profiles.data?.agent || ""}
             job={modules.data?.job || null}
             step={modules.data?.step || ""}
             onSave={async (body) => {

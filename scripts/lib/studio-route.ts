@@ -111,13 +111,8 @@ export function profilesView(projectDir: string): ProfileView[] {
   return out;
 }
 
-/** The arguments that run an agent: the profile picked, else the configured one. */
-function agentArgs(projectDir: string, profile: string): string[] | null {
-  if (profile) {
-    return profilesView(projectDir).some((p) => p.name === profile) ? ["--profile", profile] : null;
-  }
-  const chosen = profilesView(projectDir).find((p) => p.default);
-  if (chosen) return ["--profile", chosen.name];
+/** The agent command `harness.config.yaml` holds — what Build's own command writes — or null (REQ-431). */
+export function configuredAgent(projectDir: string): string | null {
   const cfg = read(path.join(projectDir, HARNESS_CONFIG_FILE)) || "";
   const m = /^agent:\s*(.+)$/m.exec(cfg);
   if (!m) return null;
@@ -130,6 +125,17 @@ function agentArgs(projectDir: string, profile: string): string[] | null {
       agent = raw.slice(1, -1);
     }
   } else if (raw.startsWith("'")) agent = raw.slice(1, -1).replace(/''/g, "'");
+  return agent || null;
+}
+
+/** The arguments that run an agent: the profile picked, else the default profile, else the configured command. */
+function agentArgs(projectDir: string, profile: string): string[] | null {
+  if (profile) {
+    return profilesView(projectDir).some((p) => p.name === profile) ? ["--profile", profile] : null;
+  }
+  const chosen = profilesView(projectDir).find((p) => p.default);
+  if (chosen) return ["--profile", chosen.name];
+  const agent = configuredAgent(projectDir);
   return agent ? ["--agent", agent] : null;
 }
 

@@ -301,6 +301,7 @@ export const TEXTS = {
     stEnd: "al final",
     stCi: "en CI",
     assistants: "Asistentes",
+    changeAgent: "Cambiar el asistente",
     chooseInBuild: "Elegir uno en Construir",
     repTitle: "Lo que está hecho",
     repIntro:
@@ -700,6 +701,7 @@ export const TEXTS = {
     stEnd: "at the end",
     stCi: "in CI",
     assistants: "Assistants",
+    changeAgent: "Change the assistant",
     chooseInBuild: "Choose one in Build",
     repTitle: "What is done",
     repIntro:
