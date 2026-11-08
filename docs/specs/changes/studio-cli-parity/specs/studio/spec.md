@@ -48,7 +48,7 @@ The system SHALL offer, for a requirement that is not delivered, to deliver it w
 - WHEN it is delivered from the studio
 - THEN it stays Draft, and the studio says no test names REQ-001 yet
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-442 — The project's preferences and the agents, in Settings
 
