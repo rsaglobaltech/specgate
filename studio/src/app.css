@@ -2235,3 +2235,10 @@ code.block {
   padding: 0 10px;
   font-size: 13px;
 }
+.pref {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}

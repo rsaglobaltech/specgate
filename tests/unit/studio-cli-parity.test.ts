@@ -520,3 +520,68 @@ test("REQ-441: each requirement still to deliver offers Deliver; a delivered one
   assert.equal((html.match(/>Deliver</g) || []).length, 1);
   assert.match(html, /REQ-012<\/span> Refund <span class="chip">Draft<\/span>[^]*?>Deliver</);
 });
+
+// ── REQ-442: the project's preferences and the agents, in Settings ───────
+test("REQ-442 SCN-442a: the test command changed in Settings — config get answers it; an unknown key is refused", async () => {
+  const { preferencesView } = require("../../scripts/lib/studio-actions");
+  const { makeProject, CLI } = await import(
+    path.join(__dirname, "..", "..", "..", "e2e", "studio", "fixture.mjs")
+  );
+  const dir: string = makeProject();
+  const cp = require("node:child_process");
+  cp.execFileSync(
+    process.execPath,
+    [CLI, "config", "set", "test_cmd", "npm test", "--project-dir", dir],
+    { env: { ...process.env, NO_COLOR: "1" } }
+  );
+  const before = preferencesView(dir);
+  assert.equal(before.find((p: { key: string }) => p.key === "test_cmd").value, "npm test");
+  assert.deepEqual(before.find((p: { key: string }) => p.key === "pet").options, ["on", "off"]);
+  assert.equal(
+    runAction(dir, "config-set", { key: "test_cmd", value: "npm run test:unit" }).ok,
+    true
+  );
+  assert.equal((await ended(dir)).last!.exit, 0);
+  const got = cp.execFileSync(
+    process.execPath,
+    [CLI, "config", "get", "test_cmd", "--project-dir", dir],
+    { encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } }
+  );
+  assert.match(got, /test_cmd = npm run test:unit/);
+  assert.equal(
+    preferencesView(dir).find((p: { key: string }) => p.key === "test_cmd").value,
+    "npm run test:unit"
+  );
+  const unknown = runAction(dir, "config-set", { key: "telemetry", value: "on" });
+  assert.equal(unknown.ok, false);
+});
+
+test("REQ-442: Settings shows each preference with its value, and the agents' guards and integrations", () => {
+  const ui = studioUi();
+  const html: string = ui.renderPreferences("en", [
+    { key: "test_cmd", value: "npm test", options: null },
+    { key: "pet", value: null, options: ["on", "off"] },
+    { key: "profile", value: "full", options: ["core", "full"] },
+  ]);
+  assert.match(
+    html,
+    /<label for="pref-test_cmd"[^>]*>The tests the gate runs <code class="where">test_cmd<\/code><\/label>/
+  );
+  assert.match(html, /<input id="pref-test_cmd"[^>]*value="npm test"/);
+  assert.match(html, /<select id="pref-pet"[^>]*>/);
+  assert.match(html, /<option value selected>\(default\)<\/option>/);
+  assert.match(html, /<option value="full" selected>full<\/option>/);
+  assert.match(html, />Guards for Claude Code</);
+  assert.match(html, />For OpenCode</);
+  assert.match(html, />Wire the assistants</);
+});
+
+test("REQ-442: the guards are installed for this project, never for every project of the user", () => {
+  const dir = project();
+  assert.deepEqual(planAction(dir, "agents-guards", { tool: "claude-plugin" }), {
+    ok: true,
+    argv: ["agents", "init", "--tool", "claude-plugin"],
+  });
+  assert.equal(planAction(dir, "agents-guards", { tool: "cursor" }).ok, false);
+  assert.equal(planAction(dir, "agents-install", {}).ok, false, "agents install is not offered");
+});

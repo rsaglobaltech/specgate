@@ -52,7 +52,7 @@ The system SHALL offer, for a requirement that is not delivered, to deliver it w
 
 ### Requirement: REQ-442 — The project's preferences and the agents, in Settings
 
-The system SHALL show in Settings the project's preferences as `specgate config list` gives them and let each be changed with `config set`, checked against the keys and values Specgate knows; and SHALL install the agent guards for the project with `agents install` and the integrations for the chosen agents with `agents init`, saying what each wrote.
+The system SHALL show in Settings the project's preferences as `specgate config list` gives them and let each be changed with `config set`, checked against the keys and values Specgate knows; and SHALL install the agent guards for this project — Claude Code's or OpenCode's, with `agents init --tool claude-plugin` or `--tool opencode-plugin`, never `agents install`, which installs them for every project of the user — and the integrations for the agent tools with `agents init`, saying what each wrote.
 
 #### Scenario: SCN-442a — The test command changed in Settings
 

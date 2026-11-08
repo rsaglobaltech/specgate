@@ -27,8 +27,10 @@ In scope:
   finding with its fix.
 - A requirement coded by hand delivered with `apply`: its test first, the
   gate, Implemented — or the reason it was refused.
-- Settings: the project's preferences (`config`), the agent guards
-  (`agents install`) and the agent integrations (`agents init`).
+- Settings: the project's preferences (`config`), the agent guards for this
+  project (`agents init --tool claude-plugin` / `opencode-plugin`) and the
+  agent integrations (`agents init`). `agents install`, which installs the
+  guards for every project of the user, stays in the terminal.
 - A repository that has code and no Specgate: adopted from the studio after a
   preview of every file it would write, touching nothing else.
 - ALM, last: the requirement ↔ issue mapping, a sync previewed then run; the

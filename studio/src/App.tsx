@@ -118,6 +118,10 @@ export function App() {
   const command = useAction((run) => {
     route.reload();
     if (section === "report") report.reload();
+    if (section === "settings") {
+      preferences.reload();
+      profiles.reload();
+    }
     if (onChanges) {
       modules.reload();
       drafts.reload();
@@ -164,6 +168,9 @@ export function App() {
   const onBuild = section === "build";
   const onSettings = section === "settings";
   const needsProfiles = onBuild || onBrief || onSettings;
+  const preferences = useRead<
+    Array<{ key: string; value: string | null; options: string[] | null }>
+  >(onSettings && route.data?.isProject ? "/api/preferences" : null);
   const quality = useRead<QualityView>(onSettings && route.data?.isProject ? "/api/quality" : null);
   const build = useRead<BuildData>(onBuild ? "/api/build" : null);
   const profiles = useRead<{
@@ -305,6 +312,12 @@ export function App() {
             installed={profiles.data.installed}
             quality={quality.data}
             agent={profiles.data.agent}
+            preferences={{
+              prefs: preferences.data || [],
+              run: command.view?.last || null,
+              output: command.view?.output || "",
+              onAction: runCommand,
+            }}
             onAgent={(kind, command) => send("/api/agent", { kind, command })}
             onCreate={async (project) => {
               const r = await send("/api/project", { project });

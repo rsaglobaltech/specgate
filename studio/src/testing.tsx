@@ -25,6 +25,7 @@ export { stageOf } from "./sections/Build";
 import { Trace } from "./sections/live/Trace";
 import { Command } from "./ui/Command";
 import { Gate } from "./ui/Gate";
+import { Preferences, type Preference } from "./sections/settings/Preferences";
 export { readCliResult } from "./core/cliResult";
 import type { ActionRun } from "./core/useAction";
 import { Settings, type QualityView, type SettingsProfile } from "./sections/Settings";
@@ -226,4 +227,9 @@ export function renderNewChange(lang: Lang, alm: boolean): string {
 
 export function renderGate(lang: Lang, run: ActionRun | null, output: string): string {
   return render(<Gate lang={lang} run={run} output={output} />);
+}
+
+export function renderPreferences(lang: Lang, prefs: Preference[]): string {
+  const none = async () => ({ ok: true });
+  return render(<Preferences lang={lang} prefs={prefs} run={null} output="" onAction={none} />);
 }

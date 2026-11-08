@@ -15,6 +15,8 @@ import { spawn } from "node:child_process";
 import { listChangeIds } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { studioLog } from "./harness-events";
 import { findCliRoot } from "./project-root";
+import { read as readProjectConfig } from "../cli/commands/config/ConfigSetCommand";
+import { readHarnessConfig } from "../../packages/core/src/infrastructure/HarnessConfigFile";
 
 const cli = () => path.join(findCliRoot(__dirname), "bin", "specgate.js");
 
@@ -105,7 +107,16 @@ const ACTIONS: Record<string, Action> = {
       return null;
     },
   },
-  "agents-install": { args: {}, argv: () => ["agents", "install"], inFolder: true },
+  // The guards for this project; `agents install` would install them for every project of the user.
+  "agents-guards": {
+    args: {
+      tool: (v) =>
+        v === "claude-plugin" || v === "opencode-plugin"
+          ? null
+          : "claude-plugin or opencode-plugin",
+    },
+    argv: (a) => ["agents", "init", "--tool", a.tool],
+  },
   "agents-init": { args: {}, argv: () => ["agents", "init"] },
   "adopt-preview": { args: {}, argv: () => ["init", "--dry-run", "--yes"], inFolder: true },
   adopt: { args: {}, argv: () => ["init", "--yes"], inFolder: true },
@@ -252,4 +263,33 @@ export function runAction(projectDir: string, name: string, args: Args = {}): St
   child.on("error", () => undefined);
   child.unref();
   return { ok: true, run };
+}
+
+/**
+ * The project's preferences as `specgate config list` gives them (REQ-442):
+ * each key the studio can set, its value — null at its default — and the
+ * values a closed key takes. The agent is set in its own form, not here.
+ */
+export function preferencesView(
+  projectDir: string
+): Array<{ key: string; value: string | null; options: string[] | null }> {
+  const config = readProjectConfig(projectDir);
+  let harness: { testCmd?: string; archCmd?: string } = {};
+  try {
+    harness = (readHarnessConfig(projectDir) || {}) as typeof harness;
+  } catch {
+    /* no harness.config.yaml yet */
+  }
+  const value = (key: string): string | null => {
+    if (key === "test_cmd") return harness.testCmd ?? null;
+    if (key === "arch_cmd") return harness.archCmd ?? null;
+    const v = config[key];
+    return v === undefined || v === null ? null : String(v);
+  };
+  // What a project changes most first: the commands the gate runs.
+  return ["test_cmd", "arch_cmd", "profile", "language", "agent_guard", "pet"].map((key) => ({
+    key,
+    value: value(key),
+    options: CONFIG_KEYS[key],
+  }));
 }

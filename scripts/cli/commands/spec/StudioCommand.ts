@@ -36,7 +36,7 @@ import {
 } from "../../../lib/studio-route";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { studioAsset, studioShell } from "../../../lib/studio-shell";
-import { actionView, runAction } from "../../../lib/studio-actions";
+import { actionView, preferencesView, runAction } from "../../../lib/studio-actions";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
@@ -315,6 +315,8 @@ export class StudioCommand extends BaseCommand {
         "/api/ping": () => ({ ok: true, token }),
         // REQ-438: what the studio's command runs, and its output so far.
         "/api/action": () => actionView(projectDir),
+        // REQ-442: the project's preferences, as config list gives them.
+        "/api/preferences": () => preferencesView(projectDir),
         "/api/home": () => home(projectDir),
         "/api/gate": () => gate(projectDir),
         "/api/questions": () => questionsView(projectDir),

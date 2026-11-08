@@ -7,6 +7,7 @@ import { useState } from "preact/hooks";
 import { t, type Key, type Lang } from "../core/i18n";
 import { Busy, type Result } from "../ui/Busy";
 import { AgentForm, type AgentKind } from "../ui/AgentForm";
+import { Preferences, type PreferencesProps } from "./settings/Preferences";
 
 export interface NewProject {
   name: string;
@@ -49,6 +50,8 @@ export interface SettingsProps {
   /** The agent command harness.config.yaml holds, when it is not a profile (REQ-431). */
   agent?: string | null;
   onAgent?: (kind: AgentKind, command: string) => Promise<Result>;
+  /** The preferences and the command runner (REQ-442); absent, the card is not shown. */
+  preferences?: Omit<PreferencesProps, "lang">;
   onCreate: (p: NewProject) => Promise<Result>;
   onQuality: (level: "basic" | "strict") => Promise<Result & { view?: QualityView }>;
 }
@@ -347,6 +350,7 @@ export function Settings({
   quality,
   agent = null,
   onAgent,
+  preferences,
   onCreate,
   onQuality,
 }: SettingsProps) {
@@ -423,6 +427,7 @@ export function Settings({
         </pre>
       </section>
       {quality ? <Quality lang={lang} quality={quality} onQuality={onQuality} /> : null}
+      {preferences ? <Preferences lang={lang} {...preferences} /> : null}
     </>
   );
 }
