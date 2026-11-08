@@ -1580,3 +1580,120 @@ select.text-plain {
     height: 300px;
   }
 }
+
+/* ── States: shape while loading, notices, a failed read, no connection (REQ-434) ── */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.content.stale {
+  opacity: 0.6;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sk {
+  display: block;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--line) 25%, var(--raised) 50%, var(--line) 75%);
+  background-size: 300% 100%;
+  animation: sgshimmer 1.3s ease-in-out infinite;
+}
+.sk-title {
+  width: 220px;
+  height: 34px;
+}
+.sk-line {
+  width: 70%;
+  height: 14px;
+}
+.sk-line.short {
+  width: 30%;
+}
+.sk-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--raised);
+}
+@keyframes sgshimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+.notices {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(420px, calc(100vw - 32px));
+}
+.notices > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--raised);
+  box-shadow: 4px 4px 0 var(--fg);
+  font-size: 14px;
+}
+.notice-ok {
+  border-color: var(--green);
+}
+.notice-ok > span[aria-hidden] {
+  color: var(--green);
+  font-weight: 700;
+}
+.notice-err {
+  border-color: var(--red);
+  box-shadow: 4px 4px 0 var(--red);
+}
+.notice-err > span[aria-hidden] {
+  color: var(--red);
+  font-weight: 700;
+}
+.section-error {
+  border-color: var(--red);
+}
+.offline {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  background: var(--amber-soft);
+  color: var(--fg);
+  font-size: 14px;
+}

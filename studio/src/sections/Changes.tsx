@@ -7,6 +7,7 @@
 import { useState } from "preact/hooks";
 import { t, type Key, type Lang } from "../core/i18n";
 import { Busy, type Result } from "../ui/Busy";
+import { sayFinding } from "../core/serverText";
 
 export type ModuleStage = "todo" | "drafting" | "review" | "approved" | "archived" | "stopped";
 
@@ -214,7 +215,7 @@ function Review({
         {draft.blockers.map((b) => (
           <div class="check warn-line">
             <span aria-hidden="true">!</span>
-            <span class="grow">{b.message}</span>
+            <span class="grow">{sayFinding(lang, b.code, b.message)}</span>
             {b.action?.kind === "answer" ? (
               <a class="btn-ghost" href="#/questions">
                 {t(lang, "answerQ")} {b.action.question}
@@ -443,7 +444,7 @@ export function Changes({
                   {m.findings.map((f) => (
                     <div class={`check ${f.severity === "error" ? "err-line" : "warn-line"}`}>
                       <span aria-hidden="true">!</span>
-                      <span>{f.message}</span>
+                      <span>{sayFinding(lang, f.code, f.message)}</span>
                     </div>
                   ))}
                 </div>

@@ -773,3 +773,135 @@ test("REQ-433: /live opens the app on Live, and an address still wins", () => {
   );
   assert.doesNotMatch(studioShell("shop", "ab12"), /specgate-section/);
 });
+
+test("REQ-434 SCN-434a: the server away — the page says it is reconnecting and that what it shows may be old", () => {
+  const html: string = studio.renderStates("es");
+  assert.match(html, /<div class="offline" role="status">/);
+  assert.match(html, /Sin conexión con el studio · reintentando\./);
+  assert.match(html, /Lo que ves puede estar desactualizado\./);
+  assert.match(studio.TEXTS.es.backOnline, /Conectado de nuevo/);
+});
+
+test("REQ-434: a section's shape while it is read; a failed read inside it, with the way to read again", () => {
+  const html: string = studio.renderStates("en", [], "/api/questions · 500");
+  assert.match(html, /<div class="skeleton" aria-busy="true" aria-label="Loading…">/);
+  assert.match(
+    html,
+    /<section class="card section-error" role="alert"><h2>This section could not be read<\/h2><p class="faint">\/api\/questions · 500/
+  );
+  assert.match(html, />Read it again</);
+});
+
+test("REQ-434: a success goes by itself; a failure stays, in an alert, with the action that retries it", () => {
+  const html: string = studio.renderStates("en", [
+    { id: 1, kind: "ok", text: "Draft approved." },
+    { id: 2, kind: "err", text: "Could not: the draft is blocked", retry: () => undefined },
+  ]);
+  assert.match(html, /<div aria-live="polite"><div class="notice notice-ok">/);
+  assert.match(
+    html,
+    /<div role="alert"><div class="notice notice-err">[^]*Could not: the draft is blocked[^]*>Try again<\/button>/
+  );
+  assert.equal((html.match(/aria-label="Close"/g) || []).length, 2);
+});
+
+test("REQ-434 SCN-434a: the heartbeat answers with the studio's current token, so a page that reconnects can write", async () => {
+  const http = require("node:http");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sg-ping-"));
+  const CLI = path.join(__dirname, "..", "..", "bin", "specgate.js");
+  const start = (port: number) =>
+    cp.spawn(process.execPath, [CLI, "studio", "--port", String(port)], {
+      cwd: dir,
+      env: { ...process.env, NO_COLOR: "1" },
+      detached: process.platform !== "win32",
+    });
+  const get = (port: number, url: string) =>
+    new Promise<string>((resolve, reject) => {
+      http
+        .get(
+          { host: "127.0.0.1", port, path: url, headers: { host: "localhost" } },
+          (res: import("node:http").IncomingMessage) => {
+            let data = "";
+            res.on("data", (d: Buffer) => (data += d));
+            res.on("end", () => resolve(data));
+          }
+        )
+        .on("error", reject);
+    });
+  const up = (child: import("node:child_process").ChildProcess) =>
+    new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("studio did not start")), 8000);
+      child.stdout!.on("data", (d: Buffer) => {
+        if (String(d).includes("http://")) {
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
+  const stop = (child: import("node:child_process").ChildProcess) => {
+    try {
+      if (process.platform === "win32")
+        cp.spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
+      else process.kill(-child.pid!, "SIGTERM");
+    } catch {
+      /* gone */
+    }
+  };
+  const port = 45000 + Math.floor(Math.random() * 2000);
+  const tokenOf = async () => {
+    const page = await get(port, "/next");
+    const ping = JSON.parse(await get(port, "/api/ping"));
+    return { page: (/name="specgate-token" content="([0-9a-f]+)"/.exec(page) || [])[1], ping };
+  };
+  let child = start(port);
+  try {
+    await up(child);
+    const first = await tokenOf();
+    assert.equal(first.ping.ok, true);
+    assert.equal(first.ping.token, first.page, "the heartbeat carries the page's token");
+    stop(child);
+    await new Promise((ok) => setTimeout(ok, 500));
+    child = start(port);
+    await up(child);
+    const second = await tokenOf();
+    assert.notEqual(second.ping.token, first.ping.token, "a studio started again has a new token");
+    assert.equal(second.ping.token, second.page);
+  } finally {
+    stop(child);
+  }
+});
+
+test("REQ-434: what the checks say comes in Spanish with the same ids — and as written when it is not known", () => {
+  const say = studio.sayFinding;
+  assert.equal(
+    say(
+      "es",
+      "D7_answered_still_blocked",
+      "Question Q1 is answered, and REQ-002 is still Needs Clarification."
+    ),
+    "Q1 está respondida y REQ-002 sigue en «Needs Clarification»: confirma que la spec ya lo dice."
+  );
+  assert.equal(
+    say(
+      "es",
+      "D13_assumption_to_review",
+      "Assumption A92 comes from an answer to Q1 the specification may not reflect yet."
+    ),
+    "El supuesto A92 sale de la respuesta a Q1: puede que la spec aún no lo diga."
+  );
+  assert.equal(
+    say("es", "approve_question_open", "Q2 is open: Until when?"),
+    "Q2 sin responder: Until when?"
+  );
+  assert.equal(
+    say("es", "B4_no_example", "The orders section has rules and no example."),
+    "La sección orders tiene reglas y ningún ejemplo."
+  );
+  // English stays English; an unknown sentence is shown as written.
+  assert.equal(
+    say("en", "B4_no_example", "The orders section has rules and no example."),
+    "The orders section has rules and no example."
+  );
+  assert.equal(say("es", "B4_no_example", "Something new."), "Something new.");
+  assert.equal(say("es", "X_unknown", "Q1 is open: x"), "Q1 is open: x");
+});

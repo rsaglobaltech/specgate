@@ -9,6 +9,8 @@ import type { Prefs } from "./core/prefs";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
+import { Notices, type Notice } from "./ui/Notices";
+import { Offline, SectionError, Skeleton } from "./ui/States";
 import { Live, logLine, type Connection, type LiveData } from "./sections/Live";
 import { Settings, type QualityView, type SettingsProfile } from "./sections/Settings";
 import { Report, type ReportData } from "./sections/Report";
@@ -20,6 +22,7 @@ import type { Lang } from "./core/i18n";
 export * from "./core/routes";
 export * from "./core/i18n";
 export * from "./core/prefs";
+export { sayFinding } from "./core/serverText";
 
 export function renderShell(section: Section, prefs: Prefs, project = "shop"): string {
   return render(
@@ -135,5 +138,16 @@ export function renderLive(
   const none = async () => ({ ok: true });
   return render(
     <Live lang={lang} data={data} connection={connection} now={now} onAnswer={none} onStop={none} />
+  );
+}
+
+export function renderStates(lang: Lang, notices: Notice[] = [], error = ""): string {
+  return render(
+    <div>
+      <Offline lang={lang} />
+      <Skeleton lang={lang} />
+      {error ? <SectionError lang={lang} message={error} onRetry={() => undefined} /> : null}
+      <Notices lang={lang} list={notices} onClose={() => undefined} />
+    </div>
   );
 }

@@ -307,6 +307,10 @@ export class StudioCommand extends BaseCommand {
       };
       // REQ-204: the app's reads, built from what the commands read.
       const reads: Record<string, () => unknown> = {
+        // REQ-434: the page's heartbeat, to say when the studio cannot be reached.
+        // It carries the token, as the page does: a studio started again has a
+        // new one, and the page that reconnects needs it to write (REQ-201).
+        "/api/ping": () => ({ ok: true, token }),
         "/api/home": () => home(projectDir),
         "/api/gate": () => gate(projectDir),
         "/api/questions": () => questionsView(projectDir),

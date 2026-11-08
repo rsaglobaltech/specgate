@@ -3,7 +3,7 @@ import { useEffect, useState } from "preact/hooks";
 import { Shell } from "./ui/Shell";
 import { sectionOf, type Section } from "./core/routes";
 import { readPrefs, writePrefs, type Prefs } from "./core/prefs";
-import { t } from "./core/i18n";
+import { t, type Key } from "./core/i18n";
 import { useRead } from "./core/useRead";
 import type { HomeData, RouteData } from "./core/route";
 import { Home } from "./sections/Home";
@@ -21,8 +21,25 @@ import { Report, type ReportData } from "./sections/Report";
 import { Settings, type QualityView } from "./sections/Settings";
 import { Live } from "./sections/Live";
 import { useLive } from "./core/useLive";
+import { Notices, type Notice } from "./ui/Notices";
+import { Offline, SectionError, Skeleton } from "./ui/States";
+import { useConnection } from "./core/useConnection";
 import { post } from "./core/api";
 import type { Result } from "./ui/Busy";
+
+/** What a write did, said in a notice once it is done (REQ-434). */
+const DONE: Record<string, Key> = {
+  "/api/answer": "didAnswer",
+  "/api/approve": "didApprove",
+  "/api/note": "didNote",
+  "/api/build": "didBuild",
+  "/api/stop": "didStop",
+  "/api/project": "didProject",
+  "/api/brief/fill": "didFill",
+  "/api/draft": "didDraft",
+  "/api/draft/stop": "didStop",
+  "/api/agent": "didAgent",
+};
 
 /** The change an answer goes to: none for the project's own questions. */
 const changeOf = (change: string): string | undefined =>
@@ -109,9 +126,25 @@ export function App() {
     }, 3000);
     return () => clearInterval(timer);
   }, [building]);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const close = (id: number) => setNotices((l) => l.filter((n) => n.id !== id));
+  const notify = (n: Omit<Notice, "id">) => {
+    const id = Date.now() + Math.random();
+    setNotices((l) => [...l.slice(-3), { ...n, id }]);
+    // A success goes by itself; a failure stays until it is closed.
+    if (n.kind !== "err") setTimeout(() => close(id), 5000);
+  };
   /** A write, then what it changed read again so the page shows what the files now say. */
   const send = async (url: string, body: Record<string, unknown>): Promise<Result> => {
     const r = await post<Result>(url, body);
+    const done: Key = url === "/api/answer" && body.reviewed ? "didConfirm" : DONE[url] || "done";
+    if (r.ok) notify({ kind: "ok", text: t(prefs.lang, done) });
+    else
+      notify({
+        kind: "err",
+        text: `${t(prefs.lang, "errorPrefix")} ${r.message || ""}`,
+        retry: () => void send(url, body),
+      });
     if (r.ok) {
       route.reload();
       if (section === "questions") questions.reload();
@@ -129,98 +162,125 @@ export function App() {
     return r;
   };
   const write = (body: Record<string, unknown>) => send("/api/answer", body);
+  /** What each section reads: its shape until they answer, their failure inside it. */
+  const reads: Record<Section, Array<{ error: string | null; reload: () => void }>> = {
+    home: [route, home],
+    brief: [brief, modules, profiles],
+    changes: [modules, drafts],
+    questions: [questions],
+    build: [build, profiles, live],
+    live: [],
+    report: [report],
+    settings: [route, profiles],
+  };
+  const online = useConnection(() => {
+    notify({ kind: "ok", text: t(prefs.lang, "backOnline") });
+    route.reload();
+    for (const r of reads[section]) r.reload();
+  });
+  const failed = reads[section].find((r) => r.error);
+  const retryAll = () => {
+    for (const r of reads[section]) r.reload();
+  };
   return (
     <Shell project={project} section={section} prefs={prefs} onPrefs={choose}>
-      {section === "home" && route.data ? (
-        <Home lang={prefs.lang} route={route.data} home={home.data} />
-      ) : onChanges && modules.data && drafts.data ? (
-        <Changes
-          lang={prefs.lang}
-          modules={modules.data}
-          drafts={drafts.data}
-          onDraft={(module) => send("/api/draft", { module, profile: "" })}
-          onStopDraft={() => send("/api/draft/stop", {})}
-          onApprove={(change) => send("/api/approve", { change })}
-          onNote={(change, req, text) => send("/api/note", { change, req, text })}
-          onConfirm={(change, question) =>
-            write({ question, change: changeOf(change), reviewed: true })
-          }
-        />
-      ) : section === "live" && stream.data ? (
-        <Live
-          lang={prefs.lang}
-          data={stream.data}
-          connection={stream.connection}
-          onAnswer={(question, change, answer) =>
-            write({ question, change: changeOf(change), answer })
-          }
-          onStop={(now) => send("/api/stop", { now })}
-        />
-      ) : onSettings && route.data && profiles.data ? (
-        <Settings
-          lang={prefs.lang}
-          isProject={route.data.isProject}
-          empty={!!route.data.empty}
-          profiles={profiles.data.profiles}
-          installed={profiles.data.installed}
-          quality={quality.data}
-          onCreate={async (project) => {
-            const r = await send("/api/project", { project });
-            if (r.ok) location.hash = "#/brief";
-            return r;
-          }}
-          onQuality={(level) => post("/api/quality/init", { level })}
-        />
-      ) : section === "report" && report.data ? (
-        <Report lang={prefs.lang} advanced={prefs.mode === "advanced"} data={report.data} />
-      ) : onBrief && brief.data ? (
-        <Brief
-          key={`${brief.data.exists}-${modules.data?.job?.kind || ""}`}
-          lang={prefs.lang}
-          advanced={prefs.mode === "advanced"}
-          data={brief.data}
-          profile={(profiles.data?.profiles.find((p) => p.default) || { name: "" }).name}
-          job={modules.data?.job || null}
-          step={modules.data?.step || ""}
-          onSave={async (body) => {
-            const r = await post<Saved>("/api/brief", body);
-            if (r.ok && !brief.data?.exists) brief.reload();
-            if (r.ok) route.reload();
-            return r;
-          }}
-          onFill={(text, replace) =>
-            send("/api/brief/fill", {
-              text,
-              replace,
-              profile: (profiles.data?.profiles.find((p) => p.default) || { name: "" }).name,
-            })
-          }
-          onStop={() => send("/api/draft/stop", {})}
-        />
-      ) : onBuild && build.data ? (
-        <Build
-          lang={prefs.lang}
-          advanced={prefs.mode === "advanced"}
-          data={build.data}
-          profiles={profiles.data?.profiles || []}
-          live={live.data?.requirements || []}
-          now={Date.now() / 1000}
-          onBuild={(reqs, profile) => send("/api/build", { reqs, profile })}
-          onStop={() => send("/api/stop", {})}
-          onAgent={(kind: AgentKind, command) => send("/api/agent", { kind, command })}
-        />
-      ) : section === "questions" && questions.data ? (
-        <Questions
-          lang={prefs.lang}
-          data={questions.data}
-          onAnswer={(q, answer) => write({ question: q.id, change: changeOf(q.change), answer })}
-          onConfirm={(change, question) =>
-            write({ question, change: changeOf(change), reviewed: true })
-          }
-        />
-      ) : (
-        <h1>{t(prefs.lang, section)}</h1>
-      )}
+      {!online ? <Offline lang={prefs.lang} /> : null}
+      <Notices lang={prefs.lang} list={notices} onClose={close} />
+      <div class={online ? "content" : "content stale"}>
+        {failed && online ? (
+          <SectionError lang={prefs.lang} message={failed.error || ""} onRetry={retryAll} />
+        ) : null}
+        {section === "home" && route.data ? (
+          <Home lang={prefs.lang} route={route.data} home={home.data} />
+        ) : onChanges && modules.data && drafts.data ? (
+          <Changes
+            lang={prefs.lang}
+            modules={modules.data}
+            drafts={drafts.data}
+            onDraft={(module) => send("/api/draft", { module, profile: "" })}
+            onStopDraft={() => send("/api/draft/stop", {})}
+            onApprove={(change) => send("/api/approve", { change })}
+            onNote={(change, req, text) => send("/api/note", { change, req, text })}
+            onConfirm={(change, question) =>
+              write({ question, change: changeOf(change), reviewed: true })
+            }
+          />
+        ) : section === "live" && stream.data ? (
+          <Live
+            lang={prefs.lang}
+            data={stream.data}
+            connection={stream.connection}
+            onAnswer={(question, change, answer) =>
+              write({ question, change: changeOf(change), answer })
+            }
+            onStop={(now) => send("/api/stop", { now })}
+          />
+        ) : onSettings && route.data && profiles.data ? (
+          <Settings
+            lang={prefs.lang}
+            isProject={route.data.isProject}
+            empty={!!route.data.empty}
+            profiles={profiles.data.profiles}
+            installed={profiles.data.installed}
+            quality={quality.data}
+            onCreate={async (project) => {
+              const r = await send("/api/project", { project });
+              if (r.ok) location.hash = "#/brief";
+              return r;
+            }}
+            onQuality={(level) => post("/api/quality/init", { level })}
+          />
+        ) : section === "report" && report.data ? (
+          <Report lang={prefs.lang} advanced={prefs.mode === "advanced"} data={report.data} />
+        ) : onBrief && brief.data ? (
+          <Brief
+            key={`${brief.data.exists}-${modules.data?.job?.kind || ""}`}
+            lang={prefs.lang}
+            advanced={prefs.mode === "advanced"}
+            data={brief.data}
+            profile={(profiles.data?.profiles.find((p) => p.default) || { name: "" }).name}
+            job={modules.data?.job || null}
+            step={modules.data?.step || ""}
+            onSave={async (body) => {
+              const r = await post<Saved>("/api/brief", body);
+              if (r.ok && !brief.data?.exists) brief.reload();
+              if (r.ok) route.reload();
+              return r;
+            }}
+            onFill={(text, replace) =>
+              send("/api/brief/fill", {
+                text,
+                replace,
+                profile: (profiles.data?.profiles.find((p) => p.default) || { name: "" }).name,
+              })
+            }
+            onStop={() => send("/api/draft/stop", {})}
+          />
+        ) : onBuild && build.data ? (
+          <Build
+            lang={prefs.lang}
+            advanced={prefs.mode === "advanced"}
+            data={build.data}
+            profiles={profiles.data?.profiles || []}
+            live={live.data?.requirements || []}
+            now={Date.now() / 1000}
+            onBuild={(reqs, profile) => send("/api/build", { reqs, profile })}
+            onStop={() => send("/api/stop", {})}
+            onAgent={(kind: AgentKind, command) => send("/api/agent", { kind, command })}
+          />
+        ) : section === "questions" && questions.data ? (
+          <Questions
+            lang={prefs.lang}
+            data={questions.data}
+            onAnswer={(q, answer) => write({ question: q.id, change: changeOf(q.change), answer })}
+            onConfirm={(change, question) =>
+              write({ question, change: changeOf(change), reviewed: true })
+            }
+          />
+        ) : failed ? null : (
+          <Skeleton lang={prefs.lang} />
+        )}
+      </div>
     </Shell>
   );
 }

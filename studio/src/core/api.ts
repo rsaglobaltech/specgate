@@ -2,7 +2,15 @@
  * The studio's reads and writes: `/api/*` as before. Writes carry the page's
  * token (REQ-201); a failed request says why instead of failing in silence.
  */
+let current = "";
+
+/** The token a reconnected page was given: a studio started again has a new one (REQ-434). */
+export function setToken(t: string): void {
+  current = t;
+}
+
 const token = (): string =>
+  current ||
   (typeof document !== "undefined" &&
     document.querySelector('meta[name="specgate-token"]')?.getAttribute("content")) ||
   "";

@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { t, type Lang } from "../core/i18n";
 import { Busy, type Result } from "../ui/Busy";
+import { sayFinding } from "../core/serverText";
 
 export interface BriefModule {
   key: string;
@@ -510,7 +511,7 @@ export function Brief({
               <div class={`check ${f.severity === "error" ? "err-line" : "warn-line"}`}>
                 <span aria-hidden="true">!</span>
                 <span>
-                  {f.message}
+                  {sayFinding(lang, f.code, f.message)}
                   {advanced && f.fix ? ` — ${f.fix}` : ""}
                 </span>
               </div>
