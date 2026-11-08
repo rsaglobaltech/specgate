@@ -9,6 +9,32 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.29.0] — 2026-11-08
+
+The studio rebuilt as one app, and it does what the CLI does: every change to its archive, the gate, apply, preferences and agents, adopting a repository, Jira and Azure Boards.
+
+### Added
+
+- **The studio is one app** (REQ-432, REQ-204, REQ-212). Built from typed source (Preact) into static files Specgate serves itself — still no runtime dependency. Home, Brief, Changes, Questions, Build, Live, Report and Settings, each at its own address; Back, Forward and links work. Light and dark, Spanish and English, simple and advanced, a sidebar that folds to its icons — remembered in your browser.
+- **Live inside the studio** (REQ-433, REQ-179, REQ-181, REQ-182, REQ-203, REQ-274). The run as a matrix by module, a Traceability view filtered as you type, the work queue — now, needs attention, up next with an estimate, every open question answered in place, finished — and each requirement in tabs: its steps with the one running by name and time, the agent's log, the requirement, its tests and files, its attempts, the agent's session and prompt. Stop after this requirement, or at once.
+- **The studio says what it is doing** (REQ-434): a section's shape while it loads, notices that say what happened and retry what failed, a failed read inside its own section, the server away and back again. The checks' findings come in Spanish too.
+- **Keyboard and screen readers** (REQ-435): a skip to the content, a focus always seen, Enter saves an answer, each result announced once; motion stops when the system asks.
+- **Every change in the studio** (REQ-439): its progress, requirements, proposal and tasks; validated; archived once delivered, after a preview of what archive writes; a new change from an idea or a ticket.
+- **The gate and the doctor from the studio** (REQ-440), each finding with its fix; **a requirement coded by hand delivered** with `apply` (REQ-441), or the reason it was refused.
+- **Settings** (REQ-442, REQ-443, REQ-444): the project's preferences (`config set`, checked); the agent guards for this project and the agent integrations; a repository that has code adopted in place with `specgate adopt`, previewed first; Jira and Azure Boards — the mapping, a sync previewed then run, the token's variable named and whether it is set, never the token.
+- **Only the commands the studio offers run** (REQ-438): a fixed list, every argument checked, one at a time, the very command shown with its output as it grows.
+- **The studio is tested in a browser** (REQ-436): Playwright on Windows, macOS and Linux in CI (`npm run e2e:studio`).
+
+### Changed
+
+- **The studio's old page and its separate live view are gone.** The studio is served at `/`; `/live` opens its Live section; `/overview` leads to `/`.
+- **A studio already running is found, not fought** (REQ-445). When its port is taken by a studio of the same project, `specgate studio` says where it is and how to stop it, and ends; when something else holds the port, it serves on the next free one.
+
+### Fixed
+
+- **Stopping a run at once, or a draft, ends its agent too** on macOS and Linux — the agent runs in a process group of its own and was left running.
+- **An agent set as a command of its own** (not a profile) is shown in Settings, and the brief can be pasted for it.
+
 ## [0.28.1] — 2026-11-08
 
 The studio unblocked: answers saved, a draft that can be approved, the agent chosen in the studio, and fast on Windows — found by a team that used it on a real project; and the agent guards name the right next requirement.
