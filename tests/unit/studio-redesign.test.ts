@@ -318,3 +318,76 @@ test("REQ-216 SCN-216a: the new Changes — no brief yet sends the reader to Bri
   assert.match(html, /No brief yet/);
   assert.match(html, /href="#\/brief"/);
 });
+
+const buildData = (extra: Record<string, unknown> = {}) => ({
+  ready: [
+    { id: "REQ-001", title: "Place an order", module: "orders" },
+    { id: "REQ-002", title: "Free shipping", module: "orders" },
+  ],
+  agent: true,
+  running: null,
+  estimate: { minutes: 6, costPerRequirement: 0.4 },
+  ...extra,
+});
+
+test("REQ-208 SCN-208a: the new Build — what is ready, each picked, the button says how many", () => {
+  const html: string = studio.renderBuild("es", buildData());
+  assert.match(html, /Listos para construir · 2/);
+  assert.equal((html.match(/type="checkbox" checked/g) || []).length, 2);
+  assert.match(html, />Construir 2 requisitos →</);
+  assert.match(html, /6 min · \$0\.40 por requisito/);
+  assert.doesNotMatch(html, /Elige el asistente/);
+});
+
+test("REQ-208 SCN-208c: the new Build — no agent, no build, and Claude Code found is offered first", () => {
+  const html: string = studio.renderBuild(
+    "en",
+    buildData({ agent: false, installed: { claude: true, codex: false } })
+  );
+  assert.match(html, /Choose the assistant that codes/);
+  assert.match(
+    html,
+    /class="choice on"><input type="radio" name="agent-kind" checked[^>]*\/><span class="name">Claude Code<\/span><span class="chip ok-chip">found/
+  );
+  assert.match(html, /disabled[^>]*>Build 2 requirements →/);
+  assert.match(html, /Choose an assistant above to build\./);
+});
+
+test("REQ-431 SCN-431a: the new Build — nothing installed, the own command is picked", () => {
+  const html: string = studio.renderBuild(
+    "en",
+    buildData({ agent: false, installed: { claude: false, codex: false } })
+  );
+  assert.match(
+    html,
+    /class="choice on"><input type="radio" name="agent-kind" checked[^>]*\/><span class="name">My own command/
+  );
+  assert.match(html, /placeholder="my-agent run \{prompt_file\}"/);
+});
+
+test("REQ-209 SCN-209a: the new Build — what runs, its stage, a way to watch it and to stop it", () => {
+  const now = 1_800_000_000;
+  const html: string = studio.renderBuild(
+    "en",
+    buildData({ running: { pid: 7, reqs: ["REQ-001"] } }),
+    [],
+    [
+      {
+        req: "REQ-001",
+        title: "Place an order",
+        state: "running",
+        started: now - 300,
+        updated: now,
+        elapsed: 300,
+        steps: [{ type: "gate-start", stage: "tests" }],
+      },
+    ],
+    now
+  );
+  assert.match(html, /Running/);
+  assert.match(html, /5 min/);
+  assert.match(html, /<li class="now" aria-current="step"><i><\/i>Test<\/li>/);
+  assert.match(html, /href="#\/live"/);
+  assert.match(html, />Stop</);
+  assert.match(html, /disabled[^>]*>Build 2 requirements →/);
+});

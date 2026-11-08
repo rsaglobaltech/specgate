@@ -9,6 +9,7 @@ import type { Prefs } from "./core/prefs";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
+import { Build, type BuildData, type LiveRequirement, type Profile } from "./sections/Build";
 import type { HomeData, RouteData } from "./core/route";
 import type { Lang } from "./core/i18n";
 
@@ -43,6 +44,29 @@ export function renderChanges(lang: Lang, modules: ModulesData, drafts: DraftVie
       onApprove={none}
       onNote={none}
       onConfirm={none}
+    />
+  );
+}
+
+export function renderBuild(
+  lang: Lang,
+  data: BuildData,
+  profiles: Profile[] = [],
+  live: LiveRequirement[] = [],
+  now = 1_800_000_000
+): string {
+  const none = async () => ({ ok: true });
+  return render(
+    <Build
+      lang={lang}
+      advanced={false}
+      data={data}
+      profiles={profiles}
+      live={live}
+      now={now}
+      onBuild={none}
+      onStop={none}
+      onAgent={none}
     />
   );
 }

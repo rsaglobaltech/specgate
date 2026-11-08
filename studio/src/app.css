@@ -910,3 +910,117 @@ textarea {
 .card > a.btn-ghost {
   align-self: flex-start;
 }
+
+/* ── Build ── */
+.spread {
+  justify-content: space-between;
+}
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  cursor: pointer;
+}
+.choice.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 3px 3px 0 var(--accent);
+}
+.choice .name {
+  font-weight: 600;
+}
+.choice input {
+  accent-color: var(--accent);
+}
+.ok-chip {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.text {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px var(--mono);
+}
+.picks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.picks li label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+.picks input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+.running {
+  border-color: var(--amber);
+}
+.stages {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  color: var(--fg-faint);
+}
+.stages li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stages i {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+}
+.stages .done i {
+  background: var(--green);
+}
+.stages .now {
+  color: var(--fg);
+  font-weight: 600;
+}
+.stages .now i {
+  background: linear-gradient(90deg, var(--accent) 40%, var(--accent-soft) 40%);
+  background-size: 200% 100%;
+  animation: sgrun 1.4s linear infinite;
+}
+@keyframes sgrun {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+.chip .spin {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+  display: inline-block;
+  vertical-align: -1px;
+}

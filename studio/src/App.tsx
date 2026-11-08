@@ -9,6 +9,13 @@ import type { HomeData, RouteData } from "./core/route";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
+import {
+  Build,
+  type AgentKind,
+  type BuildData,
+  type LiveRequirement,
+  type Profile,
+} from "./sections/Build";
 import { post } from "./core/api";
 import type { Result } from "./ui/Busy";
 
@@ -63,12 +70,30 @@ export function App() {
     }, 3000);
     return () => clearInterval(timer);
   }, [drafting]);
+  const onBuild = section === "build";
+  const build = useRead<BuildData>(onBuild ? "/api/build" : null);
+  const profiles = useRead<{ profiles: Profile[] }>(onBuild ? "/api/profiles" : null);
+  const live = useRead<{ requirements: LiveRequirement[] }>(onBuild ? "/live.json" : null);
+  // While something is built, what runs is read again every few seconds.
+  const building = onBuild && !!build.data?.running;
+  useEffect(() => {
+    if (!building) return;
+    const timer = setInterval(() => {
+      build.reload();
+      live.reload();
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [building]);
   /** A write, then what it changed read again so the page shows what the files now say. */
   const send = async (url: string, body: Record<string, unknown>): Promise<Result> => {
     const r = await post<Result>(url, body);
     if (r.ok) {
       route.reload();
       if (section === "questions") questions.reload();
+      if (onBuild) {
+        build.reload();
+        live.reload();
+      }
       if (onChanges) {
         modules.reload();
         drafts.reload();
@@ -93,6 +118,18 @@ export function App() {
           onConfirm={(change, question) =>
             write({ question, change: changeOf(change), reviewed: true })
           }
+        />
+      ) : onBuild && build.data ? (
+        <Build
+          lang={prefs.lang}
+          advanced={prefs.mode === "advanced"}
+          data={build.data}
+          profiles={profiles.data?.profiles || []}
+          live={live.data?.requirements || []}
+          now={Date.now() / 1000}
+          onBuild={(reqs, profile) => send("/api/build", { reqs, profile })}
+          onStop={() => send("/api/stop", {})}
+          onAgent={(kind: AgentKind, command) => send("/api/agent", { kind, command })}
         />
       ) : section === "questions" && questions.data ? (
         <Questions
