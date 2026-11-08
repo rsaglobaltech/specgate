@@ -115,14 +115,18 @@ export interface StudioOptions {
   host: string;
   json: boolean;
   out?: string;
+  /** --port was given: a taken port is refused rather than moved from (REQ-445). */
+  portGiven?: boolean;
 }
 
 export function parseArgs(argv: string[]) {
   const opts: StudioOptions = { projectDir: ".", port: 4173, host: "127.0.0.1", json: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--port" && argv[i + 1]) opts.port = Number(argv[++i]);
-    else if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
+    if (a === "--port" && argv[i + 1]) {
+      opts.port = Number(argv[++i]);
+      opts.portGiven = true;
+    } else if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
     else if (a === "--out" && argv[i + 1]) opts.out = argv[++i];
     else if (a === "--host" && argv[i + 1]) opts.host = argv[++i];
     else if (a === "--json") opts.json = true;
@@ -312,7 +316,8 @@ export class StudioCommand extends BaseCommand {
         // REQ-434: the page's heartbeat, to say when the studio cannot be reached.
         // It carries the token, as the page does: a studio started again has a
         // new one, and the page that reconnects needs it to write (REQ-201).
-        "/api/ping": () => ({ ok: true, token }),
+        // REQ-445: which project and process this is, so a second studio finds it.
+        "/api/ping": () => ({ ok: true, token, project: projectDir, pid: process.pid }),
         // REQ-438: what the studio's command runs, and its output so far.
         "/api/action": () => actionView(projectDir),
         // REQ-442: the project's preferences, as config list gives them.
@@ -661,17 +666,83 @@ export class StudioCommand extends BaseCommand {
       res.end(renderHtml(projectDir, model));
     });
 
-    server.listen(opts.port, opts.host, () => {
+    const announce = () => {
+      // The port it got: a taken one may have moved it (REQ-445).
+      const port = (server.address() as import("node:net").AddressInfo).port;
       const shown = LOOPBACK.has(opts.host) ? "localhost" : opts.host;
       process.stdout.write(
         `\n  ${c.bold}🎨 specgate studio${c.reset} serving ${c.dim}${projectDir}${c.reset}\n` +
-          `  ${c.green}▶ http://${shown}:${opts.port}${c.reset}  ${c.dim}(Ctrl-C to stop · /status.json for the model)${c.reset}\n` +
-          `  ${c.green}▶ http://${shown}:${opts.port}/live${c.reset}  ${c.dim}the harness at work${c.reset}\n\n`
+          `  ${c.green}▶ http://${shown}:${port}${c.reset}  ${c.dim}(Ctrl-C to stop · /status.json for the model)${c.reset}\n` +
+          `  ${c.green}▶ http://${shown}:${port}/live${c.reset}  ${c.dim}the harness at work${c.reset}\n\n`
       );
-    });
-    server.on("error", (err: unknown) => {
-      process.stderr.write(`${c.red}✖${c.reset}  Could not start server: ${errorMessage(err)}\n`);
-      process.exit(1);
-    });
+    };
+    // REQ-445: a taken port is asked what holds it — the same project's studio is
+    // named and left alone; anything else is moved from, unless --port named it.
+    const first = opts.port;
+    const tryPort = (port: number) => {
+      server.once("error", async (err: NodeJS.ErrnoException) => {
+        if (err.code !== "EADDRINUSE") {
+          process.stderr.write(
+            `${c.red}✖${c.reset}  Could not start server: ${errorMessage(err)}\n`
+          );
+          process.exit(1);
+        }
+        const holder = await studioOn(port);
+        if (holder && path.resolve(holder.project) === path.resolve(projectDir)) {
+          process.stdout.write(
+            `\n  ${c.green}✔${c.reset}  A studio of this project is already running: ${c.green}http://localhost:${port}${c.reset}\n` +
+              `     ${c.dim}Open it, or stop it: ${process.platform === "win32" ? `taskkill /pid ${holder.pid} /F` : `kill ${holder.pid}`} (process ${holder.pid}).${c.reset}\n\n`
+          );
+          process.exit(0);
+        }
+        const who = holder ? `a studio of ${holder.project}` : "another program";
+        if (opts.portGiven || port - first >= 10) {
+          process.stderr.write(
+            `${c.red}✖${c.reset}  Port ${port} is taken by ${who}. Pass another one: --port <n>.\n`
+          );
+          process.exit(1);
+        }
+        process.stdout.write(
+          `  ${c.yellow}▲${c.reset}  Port ${port} is taken by ${who}; trying ${port + 1}.\n`
+        );
+        tryPort(port + 1);
+      });
+      server.listen(port, opts.host);
+    };
+    server.once("listening", announce);
+    tryPort(first);
   }
+}
+
+/** What answers /api/ping on a local port, when it is a studio: its project and process. */
+function studioOn(port: number): Promise<{ project: string; pid: number } | null> {
+  return new Promise((resolve) => {
+    const req = http.get(
+      {
+        host: "127.0.0.1",
+        port,
+        path: "/api/ping",
+        headers: { host: `localhost:${port}` },
+        timeout: 1500,
+      },
+      (res) => {
+        let body = "";
+        res.on("data", (d: Buffer) => (body += d));
+        res.on("end", () => {
+          try {
+            const j = JSON.parse(body) as { ok?: boolean; project?: string; pid?: number };
+            resolve(
+              j.ok && typeof j.project === "string" && Number.isInteger(j.pid)
+                ? { project: j.project, pid: j.pid! }
+                : null
+            );
+          } catch {
+            resolve(null);
+          }
+        });
+      }
+    );
+    req.on("timeout", () => req.destroy());
+    req.on("error", () => resolve(null));
+  });
 }
