@@ -1176,3 +1176,104 @@ textarea:focus,
 .split-side > .card {
   flex: 0 0 auto;
 }
+
+/* ── Report ── */
+.eyebrow {
+  font: 600 12px var(--mono);
+  letter-spacing: 0.08em;
+  color: var(--accent-hover);
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--raised);
+  font-size: 13px;
+}
+.stat b {
+  font: 700 26px/1.1 var(--display);
+  color: var(--fg);
+}
+.stat b.good {
+  color: var(--green);
+}
+.stat b.bad {
+  color: var(--red);
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
+.table thead th {
+  border-top: 0;
+  color: var(--fg-faint);
+  font-weight: 500;
+  font-size: 13px;
+}
+.table tbody th {
+  font-weight: 600;
+}
+.warn-text {
+  color: var(--amber);
+}
+.delivered {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.two > .card {
+  flex: 0 0 auto;
+}
+.head-row .row a {
+  text-decoration: none;
+}
+
+/* ── Settings ── */
+.choice .hint {
+  flex-basis: 100%;
+  font-size: 13px;
+}
+.cmd {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--fg);
+  color: var(--bg);
+  font: 13px/1.5 var(--mono);
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+select.text-plain {
+  appearance: auto;
+}
+.chip:not(.warn):not(.ok-chip) {
+  background: var(--line);
+  color: var(--fg-soft);
+}

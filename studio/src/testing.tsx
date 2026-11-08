@@ -9,6 +9,8 @@ import type { Prefs } from "./core/prefs";
 import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type DraftView, type ModulesData } from "./sections/Changes";
+import { Settings, type QualityView, type SettingsProfile } from "./sections/Settings";
+import { Report, type ReportData } from "./sections/Report";
 import { Brief, type BriefData } from "./sections/Brief";
 import { Build, type BuildData, type LiveRequirement, type Profile } from "./sections/Build";
 import type { HomeData, RouteData } from "./core/route";
@@ -91,6 +93,32 @@ export function renderBrief(
       onSave={none}
       onFill={none}
       onStop={none}
+    />
+  );
+}
+
+export function renderReport(lang: Lang, data: ReportData, advanced = false): string {
+  return render(<Report lang={lang} advanced={advanced} data={data} />);
+}
+
+export function renderSettings(
+  lang: Lang,
+  state: { isProject: boolean; empty: boolean },
+  profiles: SettingsProfile[] = [],
+  installed = { claude: true, codex: false },
+  quality: QualityView | null = null
+): string {
+  const none = async () => ({ ok: true });
+  return render(
+    <Settings
+      lang={lang}
+      isProject={state.isProject}
+      empty={state.empty}
+      profiles={profiles}
+      installed={installed}
+      quality={quality}
+      onCreate={none}
+      onQuality={none}
     />
   );
 }

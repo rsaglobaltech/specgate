@@ -17,6 +17,8 @@ import {
   type Profile,
 } from "./sections/Build";
 import { Brief, type BriefData, type Saved } from "./sections/Brief";
+import { Report, type ReportData } from "./sections/Report";
+import { Settings, type QualityView } from "./sections/Settings";
 import { post } from "./core/api";
 import type { Result } from "./ui/Busy";
 
@@ -78,10 +80,15 @@ export function App() {
   useEffect(() => {
     if (onBrief && !readingBrief) brief.reload();
   }, [readingBrief]);
+  const report = useRead<ReportData>(section === "report" ? "/api/report" : null);
   const onBuild = section === "build";
-  const needsProfiles = onBuild || onBrief;
+  const onSettings = section === "settings";
+  const needsProfiles = onBuild || onBrief || onSettings;
+  const quality = useRead<QualityView>(onSettings && route.data?.isProject ? "/api/quality" : null);
   const build = useRead<BuildData>(onBuild ? "/api/build" : null);
-  const profiles = useRead<{ profiles: Profile[] }>(needsProfiles ? "/api/profiles" : null);
+  const profiles = useRead<{ profiles: Profile[]; installed: { claude: boolean; codex: boolean } }>(
+    needsProfiles ? "/api/profiles" : null
+  );
   const live = useRead<{ requirements: LiveRequirement[] }>(onBuild ? "/live.json" : null);
   // While something is built, what runs is read again every few seconds.
   const building = onBuild && !!build.data?.running;
@@ -104,6 +111,7 @@ export function App() {
         live.reload();
       }
       if (onBrief) modules.reload();
+      if (needsProfiles) profiles.reload();
       if (onChanges) {
         modules.reload();
         drafts.reload();
@@ -129,6 +137,23 @@ export function App() {
             write({ question, change: changeOf(change), reviewed: true })
           }
         />
+      ) : onSettings && route.data && profiles.data ? (
+        <Settings
+          lang={prefs.lang}
+          isProject={route.data.isProject}
+          empty={!!route.data.empty}
+          profiles={profiles.data.profiles}
+          installed={profiles.data.installed}
+          quality={quality.data}
+          onCreate={async (project) => {
+            const r = await send("/api/project", { project });
+            if (r.ok) location.hash = "#/brief";
+            return r;
+          }}
+          onQuality={(level) => post("/api/quality/init", { level })}
+        />
+      ) : section === "report" && report.data ? (
+        <Report lang={prefs.lang} advanced={prefs.mode === "advanced"} data={report.data} />
       ) : onBrief && brief.data ? (
         <Brief
           key={`${brief.data.exists}-${modules.data?.job?.kind || ""}`}

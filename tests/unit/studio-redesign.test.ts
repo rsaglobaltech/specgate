@@ -473,3 +473,133 @@ test("REQ-214 SCN-214a: a module's key comes from its name", () => {
   assert.equal(studio.keyOf("Pedidos y envíos"), "pedidos-y-envios");
   assert.equal(studio.keyOf("  "), "");
 });
+
+const reportData = () => ({
+  project: "shop",
+  date: "2026-11-08",
+  built: 2,
+  total: 3,
+  scenarios: 2,
+  gate: { ok: true, findings: [] },
+  cost: 1.25,
+  minutes: 14,
+  modules: [{ name: "orders", built: 2, total: 3, waiting: 1, scenarios: 2 }],
+  delivered: [
+    {
+      id: "REQ-001",
+      title: "Place an order",
+      module: "orders",
+      scenarios: [{ id: "SCN-001", title: "A customer places an order" }],
+    },
+    {
+      id: "REQ-003",
+      title: "Cancel an order",
+      module: "orders",
+      scenarios: [{ id: "SCN-003", title: "A customer cancels" }],
+    },
+  ],
+  missing: [
+    {
+      id: "REQ-002",
+      title: "Free shipping",
+      module: "orders",
+      why: "waiting",
+      question: "From what amount?",
+    },
+  ],
+  answered: 1,
+  assumptions: 2,
+  quality: { measured: 0, coverage: null, mutation: null },
+});
+
+test("REQ-217 SCN-217a: the new Report — 2 built of 3, both with their scenario, the one waiting with its question", () => {
+  const html: string = studio.renderReport("en", reportData());
+  assert.match(html, /<b>2 of 3<\/b>/);
+  assert.match(html, /Proven with: A customer places an order/);
+  assert.match(html, /Proven with: A customer cancels/);
+  assert.match(html, /Orders · Free shipping — Waits for From what amount\?/);
+  assert.match(html, /1 wait for an answer/);
+  assert.match(html, /\$1\.25/);
+  assert.match(html, /1 questions answered · 2 assumptions recorded\./);
+  assert.match(html, /href="#\/questions"/);
+});
+
+test("REQ-217 SCN-217b: the new Report — the page to print and the file to download", () => {
+  const html: string = studio.renderReport("es", reportData());
+  assert.match(
+    html,
+    /<a class="btn-ghost" href="\/report" target="_blank" rel="noopener">Imprimir \/ PDF<\/a>/
+  );
+  assert.match(html, /<a class="btn-primary" href="\/report.html" download>Descargar informe<\/a>/);
+  assert.match(html, /\[ 2026-11-08 \]/);
+});
+
+test("REQ-213 SCN-213a: the new Settings — an empty folder: five questions, the agent found already picked", () => {
+  const html: string = studio.renderSettings("es", { isProject: false, empty: true });
+  assert.match(html, /Empecemos un proyecto/);
+  for (const q of [
+    "1 · ¿Cómo se llama\\?",
+    "2 · ¿Qué vas a construir\\?",
+    "3 · ¿Con qué tecnología\\?",
+    "4 · ¿Qué asistente programa\\?",
+    "5 · ¿Qué nivel de calidad\\?",
+  ]) {
+    assert.match(html, new RegExp(q));
+  }
+  assert.match(
+    html,
+    /class="choice on"><input type="radio" name="np-agent" checked[^>]*\/><span class="name">Claude Code<\/span><span class="faint">· encontrado/
+  );
+  // A name is needed before it can be created.
+  assert.match(html, /disabled[^>]*>Crear proyecto →/);
+});
+
+test("REQ-213 SCN-213b: the new Settings — a folder with files is adopted from a terminal, never overwritten", () => {
+  const html: string = studio.renderSettings("en", { isProject: false, empty: false });
+  assert.match(html, /This folder already holds files/);
+  assert.match(html, /<code class="cmd">specgate init<\/code>/);
+  assert.doesNotMatch(html, /Create project/);
+});
+
+test("REQ-211 SCN-211c: the new Settings — the profiles, which is the default and which streams usage", () => {
+  const html: string = studio.renderSettings(
+    "en",
+    { isProject: true, empty: false },
+    [
+      {
+        name: "fast",
+        agent: "claude -p < {prompt_file} | specgate harness events --from claude",
+        default: true,
+        streams: true,
+      },
+      { name: "deep", agent: "codex exec {prompt_file}", default: false, streams: false },
+    ],
+    { claude: true, codex: true },
+    {
+      level: "basic",
+      diffCoverage: 80,
+      mutationScore: null,
+      docker: false,
+      checks: [
+        {
+          name: "secrets",
+          when: "attempt",
+          gate: true,
+          runner: "docker",
+          unavailable: "Docker is not running",
+        },
+      ],
+    }
+  );
+  assert.match(html, /<strong>fast<\/strong>/);
+  assert.match(
+    html,
+    /<span class="chip">default<\/span><span class="chip ok-chip">live tokens and cost<\/span>/
+  );
+  assert.match(html, /<strong>deep<\/strong>[\s\S]*steps only/);
+  assert.match(html, /Docker does not answer/);
+  assert.match(html, /diff coverage 80 % · mutation — %/);
+  assert.match(html, /title="Docker is not running">cannot run here/);
+  assert.match(html, />Switch to strict</);
+  assert.doesNotMatch(html, />Switch to basic</);
+});

@@ -7,6 +7,8 @@ export type StepState = "done" | "current" | "open" | "locked";
 export interface RouteData {
   project: string;
   isProject: boolean;
+  /** A folder with no files: a project can be created in it (REQ-213). */
+  empty?: boolean;
   steps: Array<{ key: StepKey; state: StepState; counts: Record<string, number> }>;
   next: StepKey | null;
 }
