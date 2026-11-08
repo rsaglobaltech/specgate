@@ -11,8 +11,8 @@
 - [x] 2.1 REQ-429 — one way to write and read an answer
 - [x] 2.2 REQ-210 — answers written whatever the columns, one to confirm per question, hand answers confirmed
 - [x] 2.3 REQ-206 — every blocker with its action; exact question ids
-- [ ] 2.4 REQ-431 — the agent chosen in the studio; `{prompt_file}` quoted
-- [ ] 2.5 REQ-208 — Build offers the agent instead of naming a command
+- [x] 2.4 REQ-431 — the agent chosen in the studio; `{prompt_file}` quoted
+- [x] 2.5 REQ-208 — Build offers the agent instead of naming a command
 - [ ] 2.6 REQ-430 — reads without a process, busy buttons, failed reads said, no needless redraw
 - [ ] 2.7 Regenerate the shipped plugin if a hook script changed
 - [ ] 2.8 Documentation on GitHub Pages: `docs/studio.md` and the pages on answering questions and configuring the agent (the landing page's studio section comes with the new studio, phase 3)

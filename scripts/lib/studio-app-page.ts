@@ -175,7 +175,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       given:"Dado", when:"Cuando", then:"Entonces", and:"Y", waitsAnswer:"espera una respuesta",
       bTitle:"Construir", bIntro:"El asistente programa cada requisito, lo prueba y solo lo guarda si todo pasa. Puedes cerrar la página: sigue solo.",
       whoCodes:"¿Quién programa?", whoCodesP:"Los asistentes de este proyecto. Se recuerda tu elección.", noEstimate:"Sin estimación todavía", perRun:"por requisito",
-      readyN:"Listos para construir", minutes:"min aprox.", perReq:"por requisito", buildN:"Construir los N", build1:"Construir este", noAgent:"Falta configurar el asistente (agent en harness.config.yaml).",
+      readyN:"Listos para construir", minutes:"min aprox.", perReq:"por requisito", buildN:"Construir los N", build1:"Construir este", noAgent:"Falta configurar el asistente (agent en harness.config.yaml).", chooseAgent:"Elige quién programa. Se guarda en harness.config.yaml.", ownCommand:"Comando propio", found:"encontrado en este equipo", useAgent:"Usar este asistente",
       running:"En marcha", stP:"Programa", stT:"Prueba", stQ:"Revisa la calidad", stS:"Guarda", watch:"Ver en directo", stop:"Detener después de este", stopAsked:"Se detendrá al terminar este.",
       doneToday:"Terminados", nothingReady:"No hay nada listo para construir.", started:"En marcha: ", savedGit:"la especificación quedó guardada en git (N archivos)", saved:"Guardado.", err:"No se pudo: ",
       repTitle:"Lo que está hecho", repIntro:"Cada requisito se construyó y se probó con el ejemplo que lo describe. Este informe sale de la especificación y de las pruebas.",
@@ -245,7 +245,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       given:"Given", when:"When", then:"Then", and:"And", waitsAnswer:"waits for an answer",
       bTitle:"Build", bIntro:"The assistant codes each requirement, tests it and only saves it when everything passes. You can close the page: it goes on.",
       whoCodes:"Who codes?", whoCodesP:"The assistants of this project. Your choice is remembered.", noEstimate:"No estimate yet", perRun:"per requirement",
-      readyN:"Ready to build", minutes:"min approx.", perReq:"per requirement", buildN:"Build the N", build1:"Build this one", noAgent:"The assistant is not configured yet (agent in harness.config.yaml).",
+      readyN:"Ready to build", minutes:"min approx.", perReq:"per requirement", buildN:"Build the N", build1:"Build this one", noAgent:"The assistant is not configured yet (agent in harness.config.yaml).", chooseAgent:"Choose who writes the code. It is kept in harness.config.yaml.", ownCommand:"A command of your own", found:"found on this machine", useAgent:"Use this assistant",
       running:"Running", stP:"Codes", stT:"Tests", stQ:"Checks quality", stS:"Saves", watch:"Watch live", stop:"Stop after this one", stopAsked:"It will stop once this one ends.",
       doneToday:"Finished", nothingReady:"Nothing is ready to build.", started:"Started: ", savedGit:"the specification was committed to git (N files)", saved:"Saved.", err:"Could not: ",
       repTitle:"What is done", repIntro:"Each requirement was built and proven with the example that describes it. This report comes from the specification and the tests.",
@@ -900,7 +900,27 @@ export function studioAppPage(projectName: string, token = ""): string {
     });
     go0.disabled = !b.ready.length || !hasAgent || !!b.running;
     hd.append(info, go0); sec.appendChild(hd);
-    if (!hasAgent) { var na = el("div", "msg err", t("noAgent")); na.style.padding = "10px 20px"; sec.appendChild(na); }
+    if (!hasAgent) {
+      // Choose the agent here, the one found on this machine first (REQ-431).
+      var ag = el("div"); ag.style.padding = "10px 20px";
+      ag.appendChild(el("div", "small", t("chooseAgent")));
+      var inst = b.installed || {claude:false, codex:false};
+      var pick = inst.claude ? "claude" : inst.codex ? "codex" : "custom";
+      var opts = el("div"); flex(opts);
+      var own = el("input"); own.type = "text"; own.placeholder = "my-agent run {prompt_file}"; own.hidden = pick !== "custom";
+      [["claude", "Claude Code", inst.claude], ["codex", "Codex", inst.codex], ["custom", t("ownCommand"), false]].forEach(function(o){
+        var l = el("label", "opt"), r = el("input"); r.type = "radio"; r.name = "agent-pick"; r.checked = o[0] === pick;
+        r.addEventListener("change", function(){ pick = o[0]; own.hidden = pick !== "custom"; });
+        l.append(r, document.createTextNode(" " + o[1] + (o[2] ? " · " + t("found") : ""))); opts.appendChild(l);
+      });
+      var ma = msgEl();
+      var use = button("go", t("useAgent"), function(){
+        use.disabled = true;
+        post("api/agent", {kind:pick, command:own.value}).then(function(res){ use.disabled = false; say(ma, res); if (res.ok) refresh(); });
+      });
+      ag.append(opts, own, use, ma, cmd("specgate config set agent " + String.fromCharCode(34) + "claude -p < {prompt_file}" + String.fromCharCode(34)));
+      sec.appendChild(ag);
+    }
     m5.style.padding = "0 20px"; sec.appendChild(m5);
     if (!b.ready.length) sec.appendChild(el("div", "empty", t("nothingReady")));
     b.ready.forEach(function(r){

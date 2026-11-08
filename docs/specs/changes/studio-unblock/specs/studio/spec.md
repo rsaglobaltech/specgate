@@ -52,7 +52,7 @@ The system SHALL list under Build the requirements left to build that wait for n
 - WHEN Build is read and started
 - THEN the start is refused, and Build offers Claude Code as the agent to choose
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-210 — Questions in the app
 
@@ -128,4 +128,4 @@ The studio SHALL offer, where no agent is configured, Claude Code, Codex and a c
 - WHEN the command is built
 - THEN the path reaches it quoted, as one argument
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

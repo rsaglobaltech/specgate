@@ -3,6 +3,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
+import { writeHarnessCommand } from "../../packages/core/src/infrastructure/HarnessConfigFile";
 import { readBriefBody, moduleKey } from "../../packages/core/src/domain/BriefCards";
 import { briefModules } from "../../packages/core/src/domain/DraftChecklist";
 import {
@@ -441,12 +442,38 @@ export function presetProfiles(agent: NewProject["agent"]): Array<{ name: string
   return [];
 }
 
-/** Which agent CLIs this machine has on its PATH. */
-export function agentsInstalled(): { claude: boolean; codex: boolean } {
-  const has = (cmd: string) =>
-    spawnSync(process.platform === "win32" ? "where" : "which", [cmd], { encoding: "utf8" })
-      .status === 0;
-  return { claude: has("claude"), codex: has("codex") };
+/** Which agent CLIs this machine has on its PATH (kept in studio-app, which Build reads). */
+export { agentsInstalled } from "./studio-app";
+
+export type AgentChoice = { kind: "claude" | "codex" } | { kind: "custom"; command: string };
+
+/**
+ * The agent chosen in the studio, written as `specgate config set agent` and
+ * the new-project step write it (REQ-431): Claude Code and Codex as their
+ * profiles, a command of one's own as `agent:`.
+ */
+export function chooseAgent(
+  projectDir: string,
+  choice: AgentChoice
+): { ok: true; agent: string } | { ok: false; code: string; message: string } {
+  if (choice.kind === "custom") {
+    const command = String(choice.command || "").trim();
+    if (!command.includes("{prompt_file}")) {
+      return {
+        ok: false,
+        code: "agent_without_prompt_file",
+        message: "The command must name {prompt_file}, where the prompt is handed over.",
+      };
+    }
+    writeHarnessCommand(projectDir, "agent", command);
+    return { ok: true, agent: command };
+  }
+  const profiles = presetProfiles(choice.kind);
+  if (!profiles.length) {
+    return { ok: false, code: "agent_unknown", message: `No preset for ${String(choice.kind)}.` };
+  }
+  writeProfiles(projectDir, profiles);
+  return { ok: true, agent: profiles[0].agent };
 }
 
 const slugOf = (name: string) =>

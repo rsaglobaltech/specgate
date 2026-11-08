@@ -195,3 +195,60 @@ test("REQ-206 SCN-206c: every blocker with its action, each question once and by
   assert.equal(reviewed(dir, "Q10", "draft-pedidos").ok, true);
   assert.ok(!approvalBlockers(dir, "draft-pedidos").some((b) => /\bQ10\b/.test(b.message)));
 });
+
+// ── REQ-431: the agent chosen in the studio; the prompt's path quoted ──
+
+import { buildView } from "../../scripts/lib/studio-app";
+import { chooseAgent } from "../../scripts/lib/studio-route";
+import { substituteAgentCommand } from "../../packages/core/src/domain/HarnessRun";
+import { agentInvocation } from "../../scripts/draft/confined-agent";
+import { readHarnessConfig } from "../../packages/core/src/infrastructure/HarnessConfigFile";
+
+test("REQ-431 SCN-431a: Claude Code chosen from the studio", () => {
+  const dir = pedidos(FOUR_COLUMNS_CRLF);
+  assert.equal(buildView(dir).agent, false);
+  const r = chooseAgent(dir, { kind: "claude" });
+  assert.equal(r.ok, true, JSON.stringify(r));
+  const cfg = readHarnessConfig(dir) as { agent?: string };
+  assert.match(String(cfg?.agent ?? ""), /^claude -p .*\{prompt_file\}/);
+  assert.equal(buildView(dir).agent, true, "Build can start");
+});
+
+test("REQ-431: a command of one's own must name {prompt_file}", () => {
+  const dir = pedidos(FOUR_COLUMNS_CRLF);
+  assert.equal(chooseAgent(dir, { kind: "custom", command: "my-agent run" }).ok, false);
+  const ok = chooseAgent(dir, { kind: "custom", command: "my-agent run {prompt_file}" });
+  assert.equal(ok.ok, true, JSON.stringify(ok));
+  assert.equal((readHarnessConfig(dir) as { agent?: string }).agent, "my-agent run {prompt_file}");
+});
+
+test("REQ-431 SCN-431b: a temporary folder with a space reaches the agent as one argument", () => {
+  const file = "C:\\Users\\Juan Perez\\AppData\\Local\\Temp\\prompt-1.md";
+  assert.equal(substituteAgentCommand("claude -p < {prompt_file}", file), `claude -p < "${file}"`);
+  // Quoted already by its author: not quoted twice.
+  assert.equal(
+    substituteAgentCommand('claude -p < "{prompt_file}"', file),
+    `claude -p < "${file}"`
+  );
+  assert.equal(
+    agentInvocation("codex exec - < {prompt_file}", file).command,
+    `codex exec - < "${file}"`
+  );
+});
+
+// ── REQ-208: without an agent, Build offers one instead of naming a command ──
+
+import { startBuild } from "../../scripts/lib/studio-app";
+
+test("REQ-208 SCN-208c: no agent, no build — and the agents found are offered", () => {
+  const dir = pedidos(FOUR_COLUMNS_CRLF);
+  const view = buildView(dir);
+  assert.equal(view.agent, false);
+  assert.ok(view.installed, "the agents on the PATH come with the view");
+  assert.equal(typeof view.installed?.claude, "boolean");
+  const r = startBuild(dir, ["REQ-031"]);
+  assert.equal(r.ok, false);
+  assert.equal(r.ok === false && r.code, "build_no_agent");
+  assert.match(r.ok === false ? r.message : "", /Choose one in Build/);
+  assert.doesNotMatch(r.ok === false ? r.message : "", /harness init writes it/);
+});

@@ -191,9 +191,22 @@ function profileNames(projectDir: string): string[] {
 
 // ── Build ───────────────────────────────────────────────────────────────────
 
+let installed: { claude: boolean; codex: boolean } | null = null;
+
+/** Which agent CLIs this machine has on its PATH — looked up once per studio. */
+export function agentsInstalled(): { claude: boolean; codex: boolean } {
+  const has = (cmd: string) =>
+    spawnSync(process.platform === "win32" ? "where" : "which", [cmd], { encoding: "utf8" })
+      .status === 0;
+  installed ??= { claude: has("claude"), codex: has("codex") };
+  return installed;
+}
+
 export interface BuildView {
   ready: Array<{ id: string; title: string; module: string }>;
   agent: boolean;
+  /** Without an agent: the agent CLIs found on the PATH, to offer (REQ-431). */
+  installed?: { claude: boolean; codex: boolean };
   running: { pid: number; reqs: string[] } | null;
   estimate: { minutes: number | null; costPerRequirement: number | null };
 }
@@ -263,10 +276,12 @@ export function buildView(projectDir: string): BuildView {
   };
   const est = estimateFrom(projectDir);
   const holder = runLockHolder(projectDir);
+  const agent =
+    Boolean(cfg.agent) || (Array.isArray(cfg.attemptProfiles) && cfg.attemptProfiles.length > 0);
   return {
     ready,
-    agent:
-      Boolean(cfg.agent) || (Array.isArray(cfg.attemptProfiles) && cfg.attemptProfiles.length > 0),
+    agent,
+    ...(agent ? {} : { installed: agentsInstalled() }),
     running: holder ? { pid: holder.pid, reqs: holder.reqs } : null,
     estimate: {
       minutes: est.minutesEach === null ? null : est.minutesEach * ready.length,
@@ -294,7 +309,7 @@ export function startBuild(projectDir: string, reqs: string[], profile = ""): St
       ok: false,
       code: "build_no_agent",
       message:
-        "No agent is configured. Set agent: in harness.config.yaml (specgate harness init writes it).",
+        'No agent is configured. Choose one in Build, or run: specgate config set agent "claude -p < {prompt_file}" (it is kept in harness.config.yaml).',
     };
   }
   if (view.running) {
