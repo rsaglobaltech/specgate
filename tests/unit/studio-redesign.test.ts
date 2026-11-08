@@ -632,12 +632,23 @@ const aliveNow = (pid: number) => {
 test("REQ-433 SCN-433a: stopping at once ends the run and its requirement, not after the current one", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sg-stop-now-"));
   // A run as the studio starts it: detached, so it leads its own processes.
-  const run = cp.spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], {
+  // It starts its agent detached, as the harness does: a process group of its own.
+  const agentPidFile = path.join(dir, "agent.pid");
+  const runScript = [
+    "const cp = require('node:child_process');",
+    "const a = cp.spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });",
+    `require('node:fs').writeFileSync(${JSON.stringify(agentPidFile)}, String(a.pid));`,
+    "setInterval(() => {}, 1000);",
+  ].join("\n");
+  const run = cp.spawn(process.execPath, ["-e", runScript], {
     detached: true,
     stdio: "ignore",
     windowsHide: true,
   });
   run.unref();
+  for (let i = 0; i < 50 && !fs.existsSync(agentPidFile); i++)
+    await new Promise((ok) => setTimeout(ok, 100));
+  const agentPid = Number(fs.readFileSync(agentPidFile, "utf8"));
   const events = path.join(dir, ".harness", "events");
   fs.mkdirSync(events, { recursive: true });
   const t = Math.floor(Date.now() / 1000);
@@ -656,6 +667,8 @@ test("REQ-433 SCN-433a: stopping at once ends the run and its requirement, not a
   assert.equal(r.ok, true);
   for (let i = 0; i < 40 && aliveNow(run.pid!); i++) await new Promise((ok) => setTimeout(ok, 100));
   assert.equal(aliveNow(run.pid!), false, "the run's process is gone");
+  for (let i = 0; i < 40 && aliveNow(agentPid); i++) await new Promise((ok) => setTimeout(ok, 100));
+  assert.equal(aliveNow(agentPid), false, "and the agent it started, in its own process group");
   const req = readLive(dir).requirements[0];
   assert.equal(req.state, "fail", "the attempt is ended, not left running");
   assert.match(fs.readFileSync(path.join(events, "REQ-025.jsonl"), "utf8"), /"stage":"stopped"/);
@@ -944,4 +957,41 @@ test("REQ-435: a result is announced once — by the notice, not again inside th
   const css = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.css"), "utf8");
   assert.match(css, /:focus-visible/);
   assert.match(css, /prefers-reduced-motion:\s*reduce\)\s*\{[^@]*animation:\s*none\s*!important/);
+});
+
+test("REQ-435: the button that confirms a stop now can take the focus", () => {
+  const src = fs.readFileSync(
+    path.join(__dirname, "..", "..", "..", "studio", "src", "sections", "Live.tsx"),
+    "utf8"
+  );
+  assert.match(src, /<Busy\s+id="stop-now-sure"/);
+});
+
+test("REQ-436 SCN-436a: the browser journey runs in CI on Windows, macOS and Linux", () => {
+  const root = path.join(__dirname, "..", "..", "..");
+  const yaml = require("yaml");
+  const wf = yaml.parse(
+    fs.readFileSync(path.join(root, ".github", "workflows", "e2e.yml"), "utf8")
+  );
+  const job = wf.jobs.studio;
+  assert.deepEqual([...job.strategy.matrix.os].sort(), [
+    "macos-latest",
+    "ubuntu-latest",
+    "windows-latest",
+  ]);
+  const runs = job.steps.map((s: { run?: string }) => s.run || "").join("\n");
+  assert.match(runs, /playwright install --with-deps chromium/);
+  assert.match(runs, /npm run e2e:studio/);
+  const spec = fs.readFileSync(path.join(root, "e2e", "studio", "studio.spec.mjs"), "utf8");
+  for (const step of [
+    "Guardar respuesta",
+    "Ya está en la spec",
+    "Aprobar el borrador",
+    "Usar este asistente",
+    "/live",
+    "Parar ya",
+  ]) {
+    assert.ok(spec.includes(step), `the journey goes through ${step}`);
+  }
+  assert.match(spec, /pageerror/);
 });

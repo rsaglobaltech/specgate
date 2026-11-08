@@ -15,5 +15,5 @@
 - [x] 2.5 REQ-433 — Live in the app over server-sent events; `/live` opens it
 - [x] 2.6 REQ-434 — skeleton, busy buttons, notices, connection state, section errors (canvas: Estados)
 - [x] 2.7 REQ-435 — keyboard, focus, roles and names, reduced motion
-- [ ] 2.8 REQ-436 — browser tests in CI on the three systems
+- [x] 2.8 REQ-436 — browser tests in CI on the three systems
 - [ ] 2.9 Remove the old page and `/overview`; documentation and screenshots on GitHub Pages; the landing page's studio section

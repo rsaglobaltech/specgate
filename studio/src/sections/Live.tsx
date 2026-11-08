@@ -223,6 +223,7 @@ function Stop({ lang, onStop }: { lang: Lang; onStop: LiveProps["onStop"] }) {
             {t(lang, "stopNowWhy")}
           </span>
           <Busy
+            id="stop-now-sure"
             class="btn-danger"
             busyLabel={t(lang, "stopping")}
             onRun={() => onStop(true)}

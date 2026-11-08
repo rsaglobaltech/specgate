@@ -488,6 +488,42 @@ export function saveSpecification(
 }
 
 /** Ask the run in progress to stop after its current requirement (REQ-209). */
+/**
+ * A process and everything it started. Windows follows the tree itself. On
+ * macOS and Linux the harness starts its agent in a process group of its own,
+ * which a signal to the run's group does not reach: the descendants are read
+ * from `ps` first — once the run is gone they belong to no one — and each is
+ * ended with its group.
+ */
+function killTree(pid: number): void {
+  if (process.platform === "win32") {
+    spawnSync("taskkill", ["/pid", String(pid), "/T", "/F"], { windowsHide: true });
+    return;
+  }
+  const children = new Map<number, number[]>();
+  const ps = spawnSync("ps", ["-A", "-o", "pid=,ppid="], { encoding: "utf8" });
+  for (const line of String(ps.stdout || "").split("\n")) {
+    const [child, parent] = line.trim().split(/\s+/).map(Number);
+    if (!child || !parent) continue;
+    children.set(parent, [...(children.get(parent) || []), child]);
+  }
+  const tree: number[] = [];
+  const walk = (p: number) => {
+    tree.push(p);
+    for (const c of children.get(p) || []) walk(c);
+  };
+  walk(pid);
+  for (const p of tree) {
+    for (const target of [-p, p]) {
+      try {
+        process.kill(target, "SIGTERM");
+      } catch {
+        /* not a group leader, or already gone */
+      }
+    }
+  }
+}
+
 export function stopBuild(
   projectDir: string,
   now = false
@@ -498,19 +534,7 @@ export function stopBuild(
   if (!now) return { ok: true };
   // At once (REQ-433): the run and every process it started, then each attempt
   // it left open is ended, so Live does not show it running forever.
-  if (process.platform === "win32") {
-    spawnSync("taskkill", ["/pid", String(lock.pid), "/T", "/F"], { windowsHide: true });
-  } else {
-    try {
-      process.kill(-lock.pid, "SIGTERM");
-    } catch {
-      try {
-        process.kill(lock.pid, "SIGTERM");
-      } catch {
-        /* already gone */
-      }
-    }
-  }
+  killTree(lock.pid);
   for (const r of readLive(projectDir).requirements) {
     if (r.state !== "running") continue;
     appendEvent(

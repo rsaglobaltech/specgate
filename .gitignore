@@ -34,3 +34,7 @@ packages/gradle-plugin/bin/
 # Local agent and tool state
 .claude/
 .local/
+
+# The studio browser tests (REQ-436)
+playwright-report/
+test-results/
