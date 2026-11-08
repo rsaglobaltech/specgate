@@ -332,7 +332,6 @@ test("REQ-189 SCN-189c: the live view shows what the agent asked and the command
   const dir = project();
   try {
     const { readLive } = require("../../scripts/lib/live-model");
-    const { livePage } = require("../../scripts/lib/live-page");
     const events = path.join(dir, ".harness", "events");
     fs.mkdirSync(events, { recursive: true });
     fs.writeFileSync(
@@ -354,9 +353,11 @@ test("REQ-189 SCN-189c: the live view shows what the agent asked and the command
       answer: 'specgate answer Q6 "…" --change draft-examen',
     });
     assert.deepEqual(r.steps, [], "the question is not a step");
-    const html = livePage("demo");
-    assert.ok(html.includes('"asks: "'), "Needs attention shows the question");
-    assert.ok(html.includes('["question", "asks"]'), "the legend names it");
+    // Live in the app, drawn from that model: Needs attention shows it, and the legend names it.
+    const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+    const html: string = studio.renderLive("en", readLive(dir), "open", 30, []);
+    assert.match(html, /aria-label="Needs attention">[^]*?asks: ¿Qué foto\?/);
+    assert.match(html, /<span class="seg seg-question" aria-hidden="true"><\/span> asks<\/li>/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

@@ -815,7 +815,7 @@ test("REQ-434 SCN-434a: the heartbeat answers with the studio's current token, s
   };
   const port = 45000 + Math.floor(Math.random() * 2000);
   const tokenOf = async () => {
-    const page = await get(port, "/next");
+    const page = await get(port, "/");
     const ping = JSON.parse(await get(port, "/api/ping"));
     return { page: (/name="specgate-token" content="([0-9a-f]+)"/.exec(page) || [])[1], ping };
   };

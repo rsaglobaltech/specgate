@@ -16,7 +16,6 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { requirementDetail } = require("../../scripts/lib/live-detail");
-const { livePage } = require("../../scripts/lib/live-page");
 
 function project() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-live-detail-"));
@@ -109,6 +108,38 @@ function project() {
   return dir;
 }
 
+// The new studio's Live, rendered to text (REQ-433): the live view the old page was.
+const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+const NOW = 1_800_000_000;
+const liveModel = (reqs: unknown[] = [], extra: Record<string, unknown> = {}) => ({
+  requirements: reqs,
+  queue: [],
+  queueStarted: 0,
+  totals: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: null, turns: 0 },
+  questions: { open: [], waitingWithoutQuestion: [] },
+  ...extra,
+});
+const running = (extra: Record<string, unknown> = {}) => ({
+  req: "REQ-022",
+  title: "Registrar una clase",
+  group: "diario",
+  attempt: 1,
+  phase: "gate",
+  state: "running",
+  started: NOW - 120,
+  updated: NOW,
+  elapsed: 120,
+  tests: null,
+  files: [],
+  steps: [{ type: "gate-start", stage: "tests", t: NOW - 20 }],
+  agent: null,
+  usage: null,
+  prompt: null,
+  question: null,
+  running: { stage: "tests", since: NOW - 20, runner: "host", image: "" },
+  ...extra,
+});
+
 test("REQ-180 SCN-180a: the requirement's text, scenarios and where they live", () => {
   const dir = project();
   try {
@@ -184,15 +215,35 @@ test("REQ-180: an id that is not a requirement id is refused", () => {
 });
 
 test("REQ-181 SCN-181a: a sticky header, modules that fold, and the requirement's tabs", () => {
-  const html = livePage("fuhrerschein-app");
-  assert.match(html, /position:\s*sticky/);
-  for (const tab of ["Steps", "Requirement", "Tests and files", "Attempts", "Traceability"]) {
-    assert.ok(html.includes(tab), tab);
+  const html: string = studio.renderLive("en", liveModel([running()]), "open", NOW, []);
+  const css = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.css"), "utf8");
+  assert.match(
+    css,
+    /\.live-head\{[^}]*position:\s*sticky/,
+    "the header and the summary stay in view"
+  );
+  for (const tab of ["Steps", "Requirement", "Tests and files", "Attempts", "Agent"]) {
+    assert.match(html, new RegExp(`role="tab"[^>]*>${tab}<`), tab);
   }
-  assert.match(html, /live\/req\//, "details are fetched per requirement");
-  assert.ok(html.includes('el("details"'), "modules fold, as accordions");
-  assert.doesNotMatch(html, /innerHTML|insertAdjacentHTML|outerHTML/);
-  assert.doesNotMatch(html, /<script src=|<link /);
+  assert.match(html, />Traceability</);
+  // Modules fold, as accordions, in the Traceability view.
+  const trace: string = studio.renderTrace("en", [
+    {
+      requirement: "REQ-022",
+      title: "Registrar",
+      scenario: "SCN-022",
+      group: "diario",
+      feature: "",
+      tests: [],
+      status: "Draft",
+      source: "change",
+    },
+  ]);
+  assert.match(trace, /<details open><summary><strong>diario<\/strong>/);
+  // The details are read per requirement when it is opened.
+  const app = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.js"), "utf8");
+  assert.match(app, /\/live\/req\//);
+  assert.doesNotMatch(html, /<script|<link /);
 });
 
 test("REQ-181 SCN-181b: the traceability matrix as it stands, delivered and in flight", () => {
@@ -265,19 +316,58 @@ test("REQ-180 SCN-180c: a later run's attempt 1 is the last attempt, not an earl
 });
 
 test("REQ-181 SCN-181c: the run as a matrix by module, not a graph of jobs", () => {
-  const html = livePage("demo");
+  const html: string = studio.renderLive("en", liveModel([running()]), "open", NOW, [
+    {
+      requirement: "REQ-023",
+      title: "Otra",
+      scenario: "",
+      group: "diario",
+      feature: "",
+      tests: [],
+      status: "Needs Clarification",
+      source: "change",
+    },
+    {
+      requirement: "REQ-024",
+      title: "Más",
+      scenario: "",
+      group: "diario",
+      feature: "",
+      tests: [],
+      status: "Draft",
+      source: "change",
+    },
+  ]);
   assert.ok(html.includes('id="chain" role="group"'), "the centre is a group of rows");
-  assert.ok(html.includes("function modules(list, sel)"));
-  for (const want of ["mm-row", "mm-legend", '"blocked"', '"queued"']) {
-    assert.ok(html.includes(want), `page has ${want}`);
+  assert.match(
+    html,
+    /<div class="mm-row"><span class="mm-name">diario<\/span><span class="mm-bar">(<button[^>]*class="seg seg-(running|blocked|queued)"[^>]*><\/button>){3}/
+  );
+  for (const w of ["passed", "running", "failed", "blocked", "queued"]) {
+    assert.match(html, new RegExp(`<\\/span> ${w}<\\/li>`), `the legend names ${w}`);
   }
-  assert.ok(!html.includes("function graph("), "no graph of jobs");
+  assert.doesNotMatch(html, /<svg[^>]*class="graph"/, "no graph of jobs");
 });
 
 test("REQ-181 SCN-181b: opening the Traceability view draws the matrix already read for the run", () => {
-  // The run view reads the matrix first; switching views must draw it, not
-  // wait for a change that may never come.
-  const html = livePage("demo");
-  const setView = html.slice(html.indexOf("function setView("), html.indexOf("function draw()"));
-  assert.match(setView, /v === "matrix"\) \{ drawMatrix\(\); refreshMatrix\(\); \}/);
+  // The view switch draws the rows Live already holds: nothing waits for a change.
+  const rows = [
+    {
+      requirement: "REQ-002",
+      title: "La tarjeta",
+      scenario: "SCN-002",
+      group: "mi-tarjeta",
+      feature: "",
+      tests: ["tests/a.test.ts"],
+      status: "Implemented",
+      source: "spec",
+    },
+  ];
+  const html: string = studio.renderTrace("en", rows);
+  assert.match(html, /REQ-002<\/span> La tarjeta<\/th><td>SCN-002<\/td>/);
+  const live = fs.readFileSync(
+    path.join(__dirname, "..", "..", "..", "studio", "src", "sections", "Live.tsx"),
+    "utf8"
+  );
+  assert.match(live, /view === "trace" \? \(\s*<Trace lang=\{lang\} rows=\{matrix\} \/>/);
 });

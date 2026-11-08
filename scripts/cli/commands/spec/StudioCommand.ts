@@ -13,7 +13,6 @@ import {
   startBuild,
   stopBuild,
 } from "../../../lib/studio-app";
-import { studioAppPage } from "../../../lib/studio-app-page";
 import {
   agentsInstalled,
   briefForm,
@@ -503,10 +502,17 @@ export class StudioCommand extends BaseCommand {
         res.end("Studio only reads, except its app's POST actions.\n");
         return;
       }
-      // REQ-432: the new studio, built from studio/src, and the files it loads from Specgate itself.
-      if (url === "/next" || url === "/next/") {
+      // REQ-204, REQ-432: the studio at its root — the app built from studio/src.
+      // `/app` and `/next` named it while the old page lived; they still open it.
+      if (url === "/" || url === "/app" || url === "/app/" || url === "/next" || url === "/next/") {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
         res.end(studioShell(path.basename(projectDir), token));
+        return;
+      }
+      // The overview the app replaced: its address leads into the app.
+      if (url === "/overview" || url === "/overview/") {
+        res.writeHead(302, { location: "/" });
+        res.end();
         return;
       }
       if (url.startsWith("/studio/")) {
@@ -518,12 +524,6 @@ export class StudioCommand extends BaseCommand {
         }
         res.writeHead(200, { "content-type": asset.type, "cache-control": "no-cache" });
         res.end(asset.body);
-        return;
-      }
-      // REQ-204: the app at the root; the overview it replaced moves to /overview.
-      if (url === "/" || url === "/app" || url === "/app/") {
-        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(studioAppPage(path.basename(projectDir), token));
         return;
       }
       // REQ-217: the report as a page of its own, to keep or send.

@@ -20,6 +20,7 @@ import {
   type RequirementDetail,
 } from "./sections/Live";
 export { matrixByModule, pipeline, summary, workQueue, dur } from "./sections/live/model";
+export { stageOf } from "./sections/Build";
 import { Trace } from "./sections/live/Trace";
 import { Settings, type QualityView, type SettingsProfile } from "./sections/Settings";
 import { Report, type ReportData } from "./sections/Report";

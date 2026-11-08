@@ -61,7 +61,7 @@ function watch(page) {
 test("REQ-436 SCN-436a: each section opens without a script error", async ({ page }) => {
   const errors = watch(page);
   for (const s of SECTIONS) {
-    await page.goto(`${base}/next#/${s}`);
+    await page.goto(`${base}/#/${s}`);
     await expect(page.locator("#main h1").first()).toBeVisible();
     await expect(page.locator(".skeleton")).toHaveCount(0);
   }
@@ -73,7 +73,7 @@ test("REQ-436 SCN-436a: from an open question to a run followed in Live", async 
   const notice = (text) => expect(page.locator(".notice", { hasText: text }).last()).toBeVisible();
 
   // Answer both questions, one with an option, one typed and saved with Enter.
-  await page.goto(`${base}/next#/questions`);
+  await page.goto(`${base}/#/questions`);
   const q1 = page.locator("article.question", { hasText: "From what amount is shipping free?" });
   await q1.getByRole("button", { name: "50 €" }).click();
   await q1.getByRole("button", { name: /Guardar respuesta/ }).click();
@@ -92,14 +92,14 @@ test("REQ-436 SCN-436a: from an open question to a run followed in Live", async 
   }
 
   // Approve the draft: nothing stops it now.
-  await page.goto(`${base}/next#/changes`);
+  await page.goto(`${base}/#/changes`);
   await expect(page.getByText("Nada lo impide: se puede aprobar.")).toBeVisible();
   await page.getByRole("button", { name: "Aprobar el borrador" }).click();
   await notice("Borrador aprobado");
   await expect(page.locator(".list a", { hasText: "orders" })).toContainText("Aprobado");
 
   // Choose the agent in Build: the test's own command.
-  await page.goto(`${base}/next#/build`);
+  await page.goto(`${base}/#/build`);
   await page.getByRole("radio", { name: /Mi propio comando/ }).check();
   await page.locator("#agent-cmd").fill("node stub-agent.mjs {prompt_file}");
   await page.getByRole("button", { name: "Usar este asistente" }).click();
