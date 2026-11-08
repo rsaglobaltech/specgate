@@ -36,7 +36,7 @@ lacks is written commented, with what to add (PIT needs its JUnit 5 plugin in
 the pom, Vitest coverage its provider). The studio's new-project step asks for
 the level, and its project page turns it on or up:
 
-![The studio's Code quality card: Docker answers, the basic level with a diff coverage threshold of 70 %, and four checks — commits run locally, secrets, dependencies and lint in Docker — each with when it runs and whether it gates.](assets/img/studio-1-project.webp)
+![The studio's Code quality card: Docker answers, the basic level with a diff coverage threshold of 70 %, and its checks — commits run locally, secrets in Docker — each with when it runs and whether it gates.](assets/img/studio-quality.webp)
 
 ## The two levels
 

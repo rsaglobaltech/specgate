@@ -1,6 +1,7 @@
 // The studio guide's screenshots (docs/studio.md, the landing page): the test
 // project driven through the studio as a person would, each section captured
-// as WebP. Run after `npm run build`: node e2e/studio/screenshots.mjs [--lang es|en]
+// as WebP. Run after `npm run build`: node e2e/studio/screenshots.mjs [--lang es|en] [--quality]
+// (--quality also captures the quality card, which needs Docker running).
 import { chromium } from "@playwright/test";
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -163,6 +164,18 @@ await shotOf(page.locator(".change-panel"), "change-panel");
 await go("settings");
 await shot("settings");
 await shotOf(page.locator("section", { has: page.locator("#prefs-h") }), "preferences");
+// The quality card with the basic level on, for docs/quality.md: it needs Docker running.
+if (process.argv.includes("--quality")) {
+  await page
+    .getByRole("button", { name: t("Activar el nivel básico", "Turn on the basic level") })
+    .click();
+  await page
+    .locator("section", { has: page.locator("#quality-h") })
+    .locator(".check")
+    .first()
+    .waitFor({ timeout: 120_000 });
+  await shotOf(page.locator("section", { has: page.locator("#quality-h") }), "quality");
+}
 
 await browser.close();
 if (process.platform === "win32") spawnSync("taskkill", ["/pid", String(studio.pid), "/T", "/F"]);
