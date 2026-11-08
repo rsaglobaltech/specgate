@@ -10,7 +10,7 @@
 
 - [x] 2.1 REQ-432 — `studio/src` in TSX, esbuild in `npm run build`, the HTML shell; no runtime dependency
 - [x] 2.2 REQ-204 — the sidebar, an address per section, themes, simple/advanced, ES/EN
-- [ ] 2.3 REQ-212 — Home with the route and the next step (canvas: Inicio)
+- [x] 2.3 REQ-212 — Home with the route and the next step (canvas: Inicio)
 - [ ] 2.4 Brief, Changes, Questions, Build, Report, Settings on the new design (canvas: Preguntas, Cambios, Construir), their behaviour as today
 - [ ] 2.5 REQ-433 — Live in the app over server-sent events; `/live` opens it
 - [ ] 2.6 REQ-434 — skeleton, busy buttons, notices, connection state, section errors (canvas: Estados)

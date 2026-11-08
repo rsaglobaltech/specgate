@@ -57,6 +57,8 @@
   --display: "Syne", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --next-bg: #15161a;
+  --next-fg: #f3efe8;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -81,6 +83,8 @@
     --red: #ff8f7a;
     --red-soft: #2a1512;
     --shadow-block: 12px 12px 0 rgb(255 91 31 / 14%);
+    --next-bg: #1a1c21;
+    --next-fg: #e9e4dc;
     color-scheme: dark;
   }
 }
@@ -105,6 +109,8 @@
   --red: #ff8f7a;
   --red-soft: #2a1512;
   --shadow-block: 12px 12px 0 rgb(255 91 31 / 14%);
+  --next-bg: #1a1c21;
+  --next-fg: #e9e4dc;
   color-scheme: dark;
 }
 
@@ -287,4 +293,196 @@ a:hover {
   .main {
     padding: 20px 16px 40px;
   }
+}
+
+/* ── Home: the next step, the figures, the route, the modules ── */
+.head .lead {
+  margin: 4px 0 0;
+  color: var(--fg-soft);
+}
+.next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  padding: 26px 30px;
+  border-radius: var(--radius-lg);
+  background: var(--next-bg);
+  color: var(--next-fg);
+  box-shadow: var(--shadow-block);
+}
+.next-text {
+  flex: 1 1 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.eyebrow {
+  font: 600 12px/1.4 var(--mono);
+  letter-spacing: 0.14em;
+  color: var(--accent-hover);
+}
+.next .eyebrow {
+  color: #ff9466;
+}
+.next-title {
+  font: 700 26px/1.2 var(--display);
+  letter-spacing: -0.02em;
+}
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.btn-primary:hover {
+  color: var(--on-brand);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--fg);
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+.tile {
+  padding: 18px 20px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tile-label {
+  font-size: 13px;
+  color: var(--fg-faint);
+}
+.tile b {
+  font: 700 30px/1.1 var(--display);
+}
+.tile small {
+  font: 400 14px var(--sans);
+  color: var(--fg-faint);
+}
+.cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+.card {
+  flex: 1 1 360px;
+  padding: 22px 24px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.card h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.step {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+}
+.step-n {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 12px var(--mono);
+  border: 1px solid var(--line-strong);
+}
+.step-done .step-n {
+  background: var(--green-soft);
+  color: var(--green);
+  border-color: transparent;
+}
+.step-current .step-n {
+  background: var(--brand);
+  color: var(--on-brand);
+  border-color: transparent;
+}
+.step-locked {
+  color: var(--fg-faint);
+}
+.step-locked .step-n {
+  border-style: dashed;
+}
+.step-state {
+  font: 12px var(--mono);
+  color: var(--fg-faint);
+}
+.step-current .step-name {
+  font-weight: 600;
+}
+.module {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.module-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.module-name {
+  font-weight: 500;
+}
+.faint {
+  color: var(--fg-faint);
+}
+.bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--soft);
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  height: 8px;
+  background: var(--accent);
+}
+
+.step-name {
+  color: var(--fg);
+  text-decoration: none;
+}
+a.step-name:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.next {
+  border: 1px solid var(--line-strong);
+}
+.step-locked .step-name {
+  color: var(--fg-faint);
 }

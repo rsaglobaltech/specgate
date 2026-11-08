@@ -107,3 +107,69 @@ test("REQ-204: Spanish and English say every word; the viewer's choices are reme
   assert.deepEqual(studio.readPrefs(refusing), studio.DEFAULTS);
   assert.doesNotThrow(() => studio.writePrefs(refusing, studio.DEFAULTS));
 });
+
+// ── REQ-212: Home shows the route, and its next step opens the section that does it ──
+
+const step = (key: string, state: string, counts: Record<string, number> = {}) => ({
+  key,
+  state,
+  counts,
+});
+
+test("REQ-212 SCN-212a: a project with a brief and no draft — the next step opens Changes", () => {
+  const route = {
+    project: "shop",
+    isProject: true,
+    steps: [
+      step("project", "done"),
+      step("brief", "done", { modules: 3 }),
+      step("drafts", "current", { done: 0, total: 3 }),
+      step("questions", "open"),
+      step("review", "open"),
+      step("build", "locked"),
+      step("report", "locked"),
+    ],
+    next: "drafts",
+  };
+  const html: string = studio.renderHome("es", route, {
+    built: 0,
+    total: 0,
+    questions: 0,
+    drafts: 0,
+    ready: 0,
+    modules: [{ name: "orders", done: 0, total: 3, waiting: 0, draft: true }],
+  });
+  assert.match(html, /\[ SIGUIENTE PASO \]/);
+  assert.match(html, /Redacta los módulos del brief/);
+  assert.match(html, /class="btn-primary" href="#\/changes"/);
+  for (const [key, state] of [
+    ["project", "done"],
+    ["drafts", "current"],
+    ["build", "locked"],
+    ["report", "locked"],
+  ]) {
+    assert.match(html, new RegExp(`class="step step-${state}" data-state="${state}"`), key);
+  }
+  // A locked step is no link; an open one is.
+  assert.doesNotMatch(html, /<a class="step-name" href="#\/build">/);
+  assert.match(html, /<a class="step-name" href="#\/questions">/);
+  assert.match(html, /aria-valuenow="0"/);
+});
+
+test("REQ-212 SCN-212b: a folder that is not a project — the next step is the project, in Settings", () => {
+  const route = {
+    project: "empty",
+    isProject: false,
+    steps: [
+      step("project", "current"),
+      ...["brief", "drafts", "questions", "review", "build", "report"].map((k) =>
+        step(k, "locked")
+      ),
+    ],
+    next: "project",
+  };
+  const html: string = studio.renderHome("en", route, null);
+  assert.match(html, /Create the project/);
+  assert.match(html, /class="btn-primary" href="#\/settings"/);
+  assert.equal((html.match(/data-state="locked"/g) || []).length, 6);
+});

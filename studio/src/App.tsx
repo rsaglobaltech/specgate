@@ -4,6 +4,9 @@ import { Shell } from "./ui/Shell";
 import { sectionOf, type Section } from "./core/routes";
 import { readPrefs, writePrefs, type Prefs } from "./core/prefs";
 import { t } from "./core/i18n";
+import { useRead } from "./core/useRead";
+import type { HomeData, RouteData } from "./core/route";
+import { Home } from "./sections/Home";
 
 const storage = (): Storage | null => {
   try {
@@ -36,9 +39,15 @@ export function App() {
     setPrefs(p);
     writePrefs(storage(), p);
   };
+  const route = useRead<RouteData>("/api/route");
+  const home = useRead<HomeData>(section === "home" ? "/api/home" : null);
   return (
     <Shell project={project} section={section} prefs={prefs} onPrefs={choose}>
-      <h1>{t(prefs.lang, section)}</h1>
+      {section === "home" && route.data ? (
+        <Home lang={prefs.lang} route={route.data} home={home.data} />
+      ) : (
+        <h1>{t(prefs.lang, section)}</h1>
+      )}
     </Shell>
   );
 }

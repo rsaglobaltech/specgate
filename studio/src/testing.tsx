@@ -6,6 +6,9 @@ import { render } from "preact-render-to-string";
 import { Shell } from "./ui/Shell";
 import type { Section } from "./core/routes";
 import type { Prefs } from "./core/prefs";
+import { Home } from "./sections/Home";
+import type { HomeData, RouteData } from "./core/route";
+import type { Lang } from "./core/i18n";
 
 export * from "./core/routes";
 export * from "./core/i18n";
@@ -15,4 +18,8 @@ export function renderShell(section: Section, prefs: Prefs, project = "shop"): s
   return render(
     <Shell project={project} section={section} prefs={prefs} onPrefs={() => undefined} />
   );
+}
+
+export function renderHome(lang: Lang, route: RouteData, home: HomeData | null): string {
+  return render(<Home lang={lang} route={route} home={home} />);
 }

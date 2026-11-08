@@ -40,7 +40,7 @@ The system SHALL show on Home a route of seven steps — Project, Brief, Drafts,
 - WHEN the route is read
 - THEN Project is current and every other step is locked
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ## ADDED Requirements
 
