@@ -12,4 +12,4 @@ The system SHALL, when the studio's port is taken, ask what answers there: when 
 - WHEN `specgate studio` is run again in that project
 - THEN it says a studio of this project is already running at http://localhost:4173 with that studio's process id, ends with exit code 0, and starts no second server
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
