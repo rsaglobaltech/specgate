@@ -4,6 +4,7 @@
  */
 import { t, type Key, type Lang } from "../core/i18n";
 import { readCliResult } from "../core/cliResult";
+import { sayFinding } from "../core/serverText";
 import type { ActionRun } from "../core/useAction";
 import { Busy, type Result } from "./Busy";
 
@@ -19,7 +20,7 @@ const ICON = { pass: "✓", fail: "✗", warn: "!", skip: "·" } as const;
 
 /** What the last check or doctor found. */
 export function Gate({ lang, run, output }: { lang: Lang; run: ActionRun | null; output: string }) {
-  if (!run || (run.action !== "check" && run.action !== "doctor")) return null;
+  if (!run || !["check", "doctor", "apply"].includes(run.action)) return null;
   const { items, summary } = readCliResult(output);
   const running = run.exit === null;
   return (
@@ -27,21 +28,36 @@ export function Gate({ lang, run, output }: { lang: Lang; run: ActionRun | null;
       <p class={running ? "faint" : run.exit === 0 ? "ok" : "err"} role="status">
         {running ? <span class="spin" aria-hidden="true" /> : null}{" "}
         {running
-          ? t(lang, run.action === "check" ? "gateRunning" : "doctorRunning")
+          ? t(
+              lang,
+              run.action === "check"
+                ? "gateRunning"
+                : run.action === "apply"
+                  ? "applyRunning"
+                  : "doctorRunning"
+            )
           : run.action === "check"
             ? t(lang, run.exit === 0 ? "gatePasses" : "gateFails")
-            : t(lang, run.exit === 0 ? "doctorOk" : "doctorFound")}
+            : run.action === "apply"
+              ? t(lang, run.exit === 0 ? "applyOk" : "applyRefused")
+              : t(lang, run.exit === 0 ? "doctorOk" : "doctorFound")}
         {summary ? <span class="faint"> · {summary}</span> : null}
       </p>
       <ul class="gate-list">
         {items.map((x) => (
           <li class={`gate-item gate-${x.mark}`}>
             <span aria-hidden="true">{ICON[x.mark]}</span>
-            <strong>{STAGES[x.name] ? t(lang, STAGES[x.name]) : x.name}</strong>
+            <strong>
+              {STAGES[x.name]
+                ? t(lang, STAGES[x.name])
+                : x.code && !x.detail
+                  ? sayFinding(lang, x.code, x.name)
+                  : x.name}
+            </strong>
             {x.detail ? (
               <>
                 {" "}
-                <code>{x.detail}</code>
+                <code>{x.code ? sayFinding(lang, x.code, x.detail) : x.detail}</code>
               </>
             ) : null}
             {x.fix ? <span class="fix">fix: {x.fix}</span> : null}

@@ -11,6 +11,19 @@ type Rule = [code: string, english: RegExp, spanish: string];
 const ES: Rule[] = [
   ["approve_question_open", /^(Q\d+) is open: (.*)$/s, "$1 sin responder: $2"],
   [
+    "apply_no_test",
+    /^(REQ-\d+) has no test that names it yet \(TDD-1\)\.$/,
+    "$1 todavía no tiene una prueba que lo nombre (TDD-1).",
+  ],
+  ["done_validate_failed", /^validation failed$/, "la validación de la spec falló"],
+  ["done_arch_failed", /^the architecture check failed$/, "la comprobación de arquitectura falló"],
+  ["done_tests_failed", /^the project's tests failed$/, "las pruebas del proyecto fallaron"],
+  [
+    "change_invalid",
+    /^(REQ-\d+)'s change '(.+)' does not validate\.$/,
+    "El cambio «$2» de $1 no valida.",
+  ],
+  [
     "D1_no_scenario",
     /^(\S+) has no scenario: nothing would verify it\.$/,
     "$1 no tiene escenario: nada lo comprobaría.",

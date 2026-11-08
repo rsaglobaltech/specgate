@@ -8,6 +8,7 @@ import { t, type Lang } from "../../core/i18n";
 import type { ActionRun } from "../../core/useAction";
 import { Busy, type Result } from "../../ui/Busy";
 import { Command } from "../../ui/Command";
+import { Gate } from "../../ui/Gate";
 
 export interface ChangeView {
   id: string;
@@ -43,6 +44,9 @@ export function ChangePanel({
   const [sure, setSure] = useState(false);
   const previewed = about(run, ["archive-preview"], change.id) && run!.exit === 0;
   const mine = about(run, ["change-validate", "archive-preview", "archive"], change.id);
+  // apply names the requirement, not the change: it is this change's when it is one of its own.
+  const applied =
+    !!run && run.action === "apply" && change.requirements.some((r) => run.argv.includes(r.id));
   return (
     <div class="card change-panel" aria-labelledby={`chg-${change.id}`}>
       <div class="row spread">
@@ -68,6 +72,18 @@ export function ChangePanel({
               >
                 {r.status}
               </span>
+              {!DONE.has(r.status) ? (
+                <>
+                  {" "}
+                  <Busy
+                    class="btn-ghost btn-small"
+                    busyLabel={t(lang, "applying")}
+                    onRun={() => onAction("apply", { req: r.id })}
+                  >
+                    {t(lang, "deliver")}
+                  </Busy>
+                </>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -130,6 +146,7 @@ export function ChangePanel({
         ) : null}
       </div>
       {mine ? <Command lang={lang} run={run} output={output} /> : null}
+      {applied ? <Gate lang={lang} run={run} output={output} /> : null}
     </div>
   );
 }

@@ -2230,3 +2230,8 @@ code.block {
   color: var(--fg-soft);
   font-size: 13px;
 }
+.btn-small {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+}

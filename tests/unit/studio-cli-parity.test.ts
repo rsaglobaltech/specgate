@@ -472,3 +472,51 @@ test("REQ-440 SCN-440a: the gate run from the studio — Specification passed, T
   assert.match(html, /The gate does not pass/);
   assert.match(html, /fix: Make/);
 });
+
+// ── REQ-441: a requirement coded by hand, delivered from the studio ──────
+test("REQ-441 SCN-441a: apply refused because no test names REQ-001 — it stays Draft, and the studio says why", async () => {
+  const { makeProject } = await import(
+    path.join(__dirname, "..", "..", "..", "e2e", "studio", "fixture.mjs")
+  );
+  const dir: string = makeProject();
+  const delta = path.join(
+    dir,
+    "docs",
+    "specs",
+    "changes",
+    "draft-orders",
+    "specs",
+    "orders",
+    "spec.md"
+  );
+  const before = fs.readFileSync(delta, "utf8");
+  assert.equal(runAction(dir, "apply", { req: "REQ-001" }).ok, true);
+  const v = await ended(dir);
+  assert.notEqual(v.last!.exit, 0);
+  assert.equal(fs.readFileSync(delta, "utf8"), before, "REQ-001 stays as it was: Draft");
+  const ui = studioUi();
+  const es: string = ui.renderGate("es", v.last, v.output);
+  assert.match(es, /No se entregó/);
+  assert.match(es, /REQ-001 todavía no tiene una prueba que lo nombre \(TDD-1\)\./);
+  assert.match(es, /fix: write a test that names REQ-001/);
+  assert.match(
+    ui.renderGate("en", v.last, v.output),
+    /REQ-001 has no test that names it yet \(TDD-1\)\./
+  );
+});
+
+test("REQ-441: each requirement still to deliver offers Deliver; a delivered one does not", () => {
+  const html: string = studioUi().renderChangePanel(
+    "en",
+    checkoutView({
+      requirements: [
+        { id: "REQ-011", title: "Pay an order", status: "Implemented" },
+        { id: "REQ-012", title: "Refund", status: "Draft" },
+      ],
+      delivered: 1,
+      canArchive: false,
+    })
+  );
+  assert.equal((html.match(/>Deliver</g) || []).length, 1);
+  assert.match(html, /REQ-012<\/span> Refund <span class="chip">Draft<\/span>[^]*?>Deliver</);
+});
