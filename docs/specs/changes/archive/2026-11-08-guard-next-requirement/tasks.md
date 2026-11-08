@@ -4,7 +4,7 @@
 
 - [x] 1.1 Write the delta spec for each affected capability
 - [x] 1.2 Run `specgate change validate`
-- [ ] 1.3 Review of the proposal by the person who owns the change
+- [x] 1.3 Review of the proposal by the person who owns the change (approved 2026-11-08)
 
 ## 2. Implementation
 
