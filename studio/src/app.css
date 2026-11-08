@@ -1172,3 +1172,7 @@ textarea:focus,
     position: static;
   }
 }
+.split-main > .card,
+.split-side > .card {
+  flex: 0 0 auto;
+}
