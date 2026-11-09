@@ -72,7 +72,8 @@ test.beforeAll(async () => {
   // The branch agentkit makes for the ticket, before anything is opened.
   git("checkout", "-q", "-b", "feature/parking/KAN-13");
 
-  const port = 49000 + Math.floor(Math.random() * 2000);
+  // Below 49152: Windows hands out and reserves ports above it (Hyper-V, WSL).
+  const port = 45000 + Math.floor(Math.random() * 2000);
   studio = spawn(process.execPath, [CLI, "studio", "--port", String(port)], {
     cwd: dir,
     env: {
@@ -89,7 +90,12 @@ test.beforeAll(async () => {
     stdio: ["ignore", "pipe", "pipe"],
   });
   await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("the studio did not start")), 20_000);
+    let said = "";
+    studio.stderr.on("data", (d) => (said += String(d)));
+    const timer = setTimeout(
+      () => reject(new Error(`the studio did not start${said ? `: ${said.trim()}` : ""}`)),
+      30_000
+    );
     studio.stdout.on("data", (d) => {
       if (String(d).includes("http://")) {
         clearTimeout(timer);
