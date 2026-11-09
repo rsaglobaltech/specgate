@@ -1,0 +1,9 @@
+specgate_change_version: 1
+schema: spec-driven
+created: 2026-11-08
+rigor: lite
+skip_specs: false
+retire_capabilities: false
+req_range: [REQ-001, REQ-010]
+scn_range: [SCN-001, SCN-030]
+brief: docs/brief.md

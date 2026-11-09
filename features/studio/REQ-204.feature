@@ -3,8 +3,8 @@ Feature: Studio is an app you use without the commands
   @REQ-204 @SCN-204a
   Scenario: The app and its sections
     Given studio is running
-    When its root is opened
-    Then the page has Home, Questions, Review and Build, a simple/advanced switch and a Spanish/English switch, and carries its token
+    When its root is opened, then Questions is chosen, then the page is reloaded
+    Then the page lists Home, Brief, Changes, Questions, Build, Live, Report and Settings, carries its token, and opens Questions again after the reload
 
   @REQ-204 @SCN-204b
   Scenario: Writes need the token

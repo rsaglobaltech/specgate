@@ -1,11 +1,11 @@
 # The studio
 
 **Studio** is Specgate as an app in your browser: from an empty folder to the
-report of what was built, step by step, without typing a command. Everything
-it does runs the same specgate command you would, so the app and the terminal
-never disagree. At the end of this page you can open it on a new folder, write
-the brief, have the modules drafted, answer the questions, approve, build and
-read the report.
+report of what was built, without typing a command. Everything it does runs
+the same specgate command you would, so the app and the terminal never
+disagree. At the end of this page you can open it on a new folder, write the
+brief, have the modules drafted, answer the questions, approve, build, follow
+the run live and read the report.
 
 **You need:** Specgate installed (`npm i -g @rsaglobaltech/specgate`), git, and
 for drafting and building an agent you can run from the command line (Claude
@@ -17,169 +17,230 @@ cd my-new-project        # an empty folder, or a specgate project
 specgate studio          # opens http://127.0.0.1:4173
 ```
 
-## The route
+The screenshots come from a small demo shop: one `orders` module with two open
+questions, built by a test agent.
 
-The screenshots come from a copy of the driving-school pilot: the interface in English, the requirements in Spanish.
+## One app, a section per step
 
-![The studio's Route page: the next step to take, Answer the questions, then the seven steps with their state — Project, Brief and Drafts done, one question waiting, 81 of 83 requirements built — and each module's progress.](assets/img/studio-0-route.webp)
+![The studio's Home: the sidebar with its eight sections, the next step to take — Draft the brief's modules — the project in figures, the seven steps of the route with their state, and each module's progress.](assets/img/studio-home.webp)
 
-Across the top are seven steps. Each is **done** (a tick), **current** (blue),
-**open** or **locked**, read from the project's files every few seconds; the
-Route page says the one thing to do next.
+The sidebar holds eight sections, each at its own address (`/#/questions`,
+`/#/live`…), so Back, Forward, reloading and a link open the same place.
+**Home** says the one thing to do next and where the project stands.
 
-| Step | What you do there | What it runs |
+| Section | What you do there | What it runs |
 | --- | --- | --- |
-| 1 · Project | Create it, or see its agents and quality checks | `specgate init`, `harness init`, `quality init` |
-| 2 · Brief | Write what the app must do, or paste the client's text | `propose --from-brief` (with the agent) |
-| 3 · Drafts | Have each module turned into requirements with examples | `propose --from-brief <module>` |
-| 4 · Questions | Decide what the brief left open | `specgate answer` |
-| 5 · Review | Read each draft, ask for changes, approve it | `change note`, `change approve` |
-| 6 · Build | Pick who codes and what, start, follow, stop | `harness run --chain --profile` |
-| 7 · Report | What was built, how it was proven, what is missing | — |
+| Home | See the next step and the route; run the gate and the doctor | `specgate status`, `check`, `doctor` |
+| Brief | Write what the app must do, or paste the client's text | `propose --from-brief` (with the agent) |
+| Changes | Every change: draft a module, review, approve, deliver a requirement, validate, archive; a new change from an idea or a ticket | `propose`, `change note`, `change approve`, `apply`, `change validate`, `archive` |
+| Questions | Decide what the brief left open, confirm the spec says it | `specgate answer`, `answer --reviewed` |
+| Build | Choose who codes, pick what is ready, start | `config set agent`, `harness run --chain` |
+| Live | Follow the run, answer the agent, stop it | the harness's events, `harness` stop |
+| Report | What was built, how it was proven, what is missing; the gate | `specgate report`, `check` |
+| Settings | Create or adopt the project; its agents, preferences, quality checks and ALM | `init`, `adopt`, `config set`, `agents init`, `quality init`, `alm sync` |
 
-Steps 3 to 6 repeat per module: you can build one module while another is
-being drafted.
+Every action runs a `specgate` command from a fixed list, its arguments
+checked; the studio shows the very command, its output as it grows, and how
+it ended. Anything outside that list is refused, even from the studio's own
+page.
 
-## Simple and advanced, Spanish and English
+**Simple** shows no command; **Advanced** adds the brief's markdown editor,
+the ids and each agent's command. **ES · EN** switches the language, the
+sun and moon the theme (it follows the system until you choose), and **‹**
+folds the sidebar to its icons. All of it is remembered in your browser.
 
-**Simple** shows no command. **Advanced** shows, under each action, the
-command it runs and the file it writes, and adds the brief's markdown editor
-(below: the Brief page in advanced mode, `specgate propose --from-brief` under
-its buttons).
-**ES · EN** switches the language. All three choices are remembered in your
-browser.
-
-![The Brief page in advanced mode: the same form, with the commands each button runs and a Form and Markdown switch.](assets/img/studio-2-brief-advanced.webp)
-
-## 1 · A project from an empty folder
+## Settings · a project from an empty folder
 
 In an empty folder the studio asks five questions: the name; what you are
 building (a website, a service or a mobile app); the technology (Node.js and
 React, Java and Spring Boot, Python and FastAPI, or your own); which agent
-codes (it says which it found on this machine); and the quality level (basic,
-strict or none). Then it creates the project there, writes the agent's
-profiles and the quality checks, a brief to fill, and a first commit.
+codes — the one found on this machine is already chosen; and the quality
+level. Then it creates the project there, with a brief to fill.
 
-![The new-project step in an empty folder: the name, a website, a service or a mobile app, the technology, which agent codes (Claude Code and Codex CLI found on this machine), and the quality level, basic recommended.](assets/img/studio-0-new.webp)
+A folder that already holds code is adopted in place, never scaffolded over:
+**See what adopt writes** lists every file `specgate adopt` would add, then
+**Adopt this folder** writes them — no file overwritten, no code touched.
 
-A folder that already holds files is left alone: the studio names the command
-that adopts it (`specgate init`), which keeps them.
+On a project, Settings
+lists the agents — the profiles of `.harness/profiles.yaml`, which is the
+default and which streams tokens and cost, and a command of your own set in
+`harness.config.yaml` — with **Change the assistant**; and the quality checks:
+when each runs, whether it gates or advises, and whether Docker answers.
 
-On an existing project, Project lists the agents (`.harness/profiles.yaml`) —
-which is the default, whether it streams tokens and cost to the live view —
-and the quality checks: when each runs, whether it gates or advises, how it
-runs on this machine, and whether Docker answers.
+![Settings on a project: the agent command harness.config.yaml holds, Change the assistant, and how to add a profile; then Code quality — Docker does not answer here — with the basic and strict levels to turn on.](assets/img/studio-settings.webp)
 
-![The Project page: three agent profiles, which is the default and which stream tokens and cost, and the Code quality card — Docker answers, the basic level, a diff coverage threshold of 70 %, and the commits, secrets, dependencies and lint checks with when each runs.](assets/img/studio-1-project.webp)
+Below, **the project's preferences** as `specgate config` keeps them — the
+tests the gate runs, the architecture check, the help profile, the language,
+the agent guard, Gato — each saved with `config set`, an unknown key or value
+refused. **The agents** installs the guards for this project, for Claude Code
+or OpenCode (`agents init --tool claude-plugin`), and wires the agent tools
+(`agents init`). The guards for every project of yours stay in a terminal:
+`specgate agents install --global`.
 
-## 2 · The brief
+![The project's preferences: the test and architecture commands, the help profile, the language, the agent guard and Gato, each with Save.](assets/img/studio-preferences.webp)
+
+With an `alm.config.yaml`, a **Jira / Azure Boards** card shows the provider,
+the project, and whether the token's variable — say `JIRA_TOKEN` — is set in
+the environment studio was started from. It never asks for the token, shows
+it or keeps it. **See the mapping** (`alm status`), **See what sync would do**
+(`alm sync --dry-run`), then **Sync**.
+
+## Brief
 
 The brief is the source of every requirement: what is not in it is not built.
+The form — the product in one sentence, who uses it and where, the modules
+with their **rules**, **examples** and **open questions** — saves itself into
+`docs/brief.md` as you type, keeping every other line of the file. A module
+written by hand under `## orders` becomes its `## Module: orders` section, its
+text kept in it. Or paste the client's email or notes and let the agent
+propose the form. Beside it the brief's checks run on every save, and **Next:
+draft the modules** waits while one of them is an error.
 
-- **The form** (simple mode): the product in one sentence, who uses it and
-  where (web, API, mobile), and the modules — each with its **rules** (what
-  always holds), **examples** (a concrete case, with names and numbers) and
-  **open questions**. It saves as you type into `docs/brief.md`, keeping every
-  other line of the file.
-- **Markdown** (advanced mode): the file itself.
-- **Paste the client's text**: an email, notes, a document. The agent proposes
-  the product, the users and the modules from it; you correct the form after.
+![The Brief: a box to paste the client's text, the product, who uses it and on which surfaces, the modules and the selected one's rules; beside it, the checks are all in order and Next: draft the modules.](assets/img/studio-brief.webp)
 
-![The Brief page as a form: a box to paste the client's text for the agent to structure, the product, who uses it and on which surfaces, the modules, and for the selected one its rules, examples and open questions; beside it, the brief's checks pass and Next: draft the modules.](assets/img/studio-2-brief.webp)
+## Changes · every change, to its archive
 
-Beside it, the brief's checks (B1–B13) run on every save. **Next: draft the
-modules** stays disabled while one of them is an error.
+The brief's modules on the left, each with where it stands — to draft, being
+drafted, draft to review, approved, archived. **Draft** hands one to the agent
+in the background, one at a time, with its progress as it writes; **Stop**
+ends it, with every process the agent started.
 
-## 3 · Drafts
+A draft to review shows its cycle, then **To approve**: everything that holds
+it, each with the action that clears it — **Answer Q1** for an open question,
+**The spec says it** for an answer the requirement does not reflect yet, the
+file to open for a check that fails. **Approve the draft** says what is still
+missing instead of staying grey without a reason. Below, each requirement
+with its examples as Given / When / Then, and **Ask for a change** under each.
 
-Each module of the brief, with where it stands: not drafted, being drafted,
-to review, approved, built. **Draft** hands the module to the agent you pick,
-in the background, one module at a time; its progress shows what the draft
-holds so far — requirements written, examples written, questions and
-assumptions noted — and the agent's last step when it streams. **Stop** ends
-it. A draft ready to review lists its checks (D1–D13) in plain words.
+![Changes: the orders draft to review, two open questions each with Answer, Approve the draft waiting with "2 things missing", and the draft's requirements with their examples.](assets/img/studio-changes.webp)
 
-![The Drafts page: eight modules, each drafted and built, with the agent that drafts chosen at the top right.](assets/img/studio-3-drafts.webp)
+Every change of the project is here, not only the brief's: the others are
+listed under **Other changes**, each with how many of its requirements are
+delivered. A change opens into its requirements and their status, its
+proposal and its tasks. **Deliver** runs `specgate apply` on a requirement
+coded by hand — its test first, then the gate, then Implemented — or says why
+it was refused (no test names it yet, a stage that failed). **Validate** checks
+its deltas. Once every requirement is delivered, **See what archive writes**
+previews the archive, and only then **Archive** merges it into the spec.
+**+ New change** opens one from an idea, by its id, or — with an ALM
+configured — from a ticket's key.
 
-## 4 · Questions
+![A change: its three requirements, each Draft with Deliver, the proposal, Validate, and the archive waiting until every requirement is delivered.](assets/img/studio-change-panel.webp)
+
+## Questions
 
 Everything waiting for a decision: what the brief asked, what a draft could
-not settle, what the agent asked instead of guessing while it built. Pick one
-of the options Specgate saw or write your own answer. The answer goes into the
-question's row of `questions.md` — the studio adds the `Answer` and `Status`
-columns when the table has none, and keeps the file's line endings. Answering
-again corrects the answer; it never adds a second one to confirm.
+not settle, what the agent asked while it built. Pick one of the options
+Specgate saw or write your own; **Enter** saves it into the question's row of
+`questions.md` — the studio adds the `Answer` and `Status` columns when the
+table has none, and keeps the file's line endings.
 
-Under **Answered, the spec still has to say it** each answered question appears
-once, whether you answered it here or by hand in `questions.md`. Once the
-requirement's text says the answer, **The spec says it** confirms it: the
-question is marked reviewed, `Needs Clarification` comes off the requirements
-it held, and they can be approved and built.
+![Questions: each open question with the requirement it blocks, its options, and the answer box.](assets/img/studio-questions.webp)
 
-![The Questions page: a question the project asked, the requirement it blocks, and a box for the answer.](assets/img/studio-4-questions.webp)
+An answered question moves to **Answered · confirm the spec says it**, once,
+whether you answered it here or by hand. When the requirement's text says the
+answer, **The spec says it** marks it reviewed and lifts `Needs Clarification`
+from the requirements it held.
 
-## 5 · Review
+![The answered questions, one row each, with The spec says it.](assets/img/studio-questions-confirm.webp)
 
-Each draft not yet approved, as someone on your team would read it: each
-requirement's statement and its examples as Given / When / Then. **Ask for a
-change** writes your words into the draft's `review.md` for the agent; **Approve
-the draft** records that a person approved it, and is disabled while a check
-fails or a question is open. Each thing that holds it is listed with the action
-that clears it: **Answer** for an open question, **The spec says it** for an
-answer the requirement does not reflect yet, and the requirement to open for a
-check that fails.
+## Build
 
-![The Review page: the Garaje draft's two requirements, each with its statement and its example as Given, When, Then, and Ask for a change under each; beside them, the checks say it is ready, and Approve the draft.](assets/img/studio-5-review.webp)
+In a project with no agent yet, Build offers Claude Code, Codex or a command of
+your own, the one found on this machine already chosen; **Use this assistant**
+writes it to `harness.config.yaml`. Then what is ready to build — approved,
+waiting for no answer — each picked, with an estimate, and **Build** starts
+the harness in the background. Before it starts, the studio commits the
+specification it wrote (the brief, approvals, answers) with your git
+identity; any other uncommitted file stops the build, named.
 
-## 6 · Build
+![Build with no agent yet: Claude Code, Codex or your own command, and Use this assistant.](assets/img/studio-build-agent.webp)
 
-**Who codes?** lists the agents, each with its estimated cost per requirement
-and whether it streams tokens and cost; your choice is remembered. In a project
-with no agent yet, Build offers Claude Code, Codex or a command of your own —
-the ones found on this machine marked, the first of them chosen — and **Use
-this assistant** writes it to `harness.config.yaml`, as
-`specgate config set agent` does. Then the
-requirements ready to build — approved, not waiting for an answer — with an
-estimate, and **Build** starts the harness in the background, chained.
+![Build with an agent: the requirement ready to build, picked, and Build 1 requirement.](assets/img/studio-build.webp)
 
-Before it starts, the studio commits the specification it wrote (the brief,
-approvals, answers) with your git identity, because the harness needs a clean
-tree. Any other uncommitted file stops the build, named; it is never committed
-for you.
+## Live
 
-While it runs, the page shows the requirement in progress in four plain steps
-— codes, tests, checks quality, saves — and what the agent last said. **Stop
-after this one** finishes the current requirement and stops. **Watch live**
-opens `/live`, the detailed view.
+The run as it happens, pushed by the server: no reload. The header stays in
+view with the run's figures — passed, running, failed, the time, the tokens
+and the cost — and **Stop after this requirement** or **Stop now**, which asks
+first: what the agent has half done is not kept.
 
-![The Build page: who codes, with three agents and the estimated cost of one, then two requirements ready to build, about 30 minutes, and Build the 2.](assets/img/studio-6-build.webp)
+- **By module**: a row per module, a square per requirement — passed,
+  running, failed, asking, blocked or queued — those the run has not reached
+  included. A square opens its requirement.
+- **The requirement**, in tabs: **Steps** — the agent, then each gate step by
+  its name, the one running with how long it has run, the ones still to
+  come — and the agent's log, which follows the end until you scroll up;
+  **Requirement**; **Tests and files**; **Attempts**; **Agent** — the model,
+  its context against its window, the tokens, and the prompt it was given.
+- **The work queue**: **Now**, **Needs attention** — the agent's question,
+  answered right there, failures, blocked requirements — **Up next** with an
+  estimate, **Open questions**, each with its answer form, and **Finished
+  recently**.
+- **Traceability**: the matrix as it stands, a fold per module, each scenario
+  with its feature, its tests and its status, filtered as you type.
 
-## 7 · The report
+![Live: a requirement running, the run's figures, the matrix by module, the requirement's steps and the work queue.](assets/img/studio-live.webp)
+
+![Live in the dark theme, the sidebar folded to its icons, and the agent's log below the steps.](assets/img/studio-live-dark.webp)
+
+![Traceability: each module's scenarios with their feature, tests and status, filtered as you type.](assets/img/studio-live-trace.webp)
+
+`/live` opens this section directly.
+
+## Report
 
 Built of the total, examples proven, whether the gate passes, the agent's cost
-and time and, when the quality checks ran, the code's diff coverage and
-mutation score. Then each module, and for each built requirement the example
-that proves it and its quality figures; what is missing and why (not built, or
-waiting for an answer, with the question); and the decisions taken. **Download
-the report** saves it as one HTML page that opens anywhere; **Print / PDF**
-opens it to print.
+and time and, when the quality checks ran, the code's coverage and mutation
+score. Then each module, what the app does already and the example that
+proves each requirement, what is missing and why, and the decisions taken.
+**Download the report** saves it as one HTML page that opens anywhere;
+**Print / PDF** opens it to print.
 
-![The Report page: 81 of 83 requirements built, 229 examples proven, the gate passes; then each module with what is built, and what the app does, each requirement with the examples that prove it.](assets/img/studio-7-report.webp)
+![The Report: the figures, the table by module, and what the app does.](assets/img/studio-report.webp)
+
+**The gate** — on Report and on Home — runs `specgate check` as CI would: each
+stage passed, failed or not configured, and under what failed the fix it
+ships. **Doctor** runs `specgate doctor` the same way.
+
+![The gate run from the studio: Ids not compared, Specification passed, Architecture not checked, Tests not configured, and the gate passes.](assets/img/studio-gate.webp)
+
+## Saying what it does
+
+- While a section is read for the first time you see its shape, not a blank
+  page.
+- A button stays busy while its request runs and cannot be pressed twice;
+  then a notice says what happened. A success goes by itself; a failure stays
+  until you close it, with **Try again**.
+- A read that fails says why inside its own section, with **Read it again**;
+  the rest of the page keeps working.
+- If the studio's server stops answering, the page says it is reconnecting and
+  marks what it shows as possibly out of date; when the server answers again
+  it says so and reads the section again. A studio started again has a new
+  write token, and the page takes it.
+- What the checks say comes in your language, with the same ids.
+
+## Keyboard and screen readers
+
+**Skip to the content** is the first thing Tab reaches; the focus is always
+visible; a section you open takes the focus to its title; an answered question
+keeps the focus on its row; each result is announced once, by its notice. The
+requirement's tabs move with the arrow keys. With reduced motion asked by the
+system, nothing moves.
 
 ## Speed
 
 The studio reads the project's state in its own process and keeps it until a
 file of the specification changes, so a refresh costs milliseconds, also on
-Windows. A button stays busy while its request runs; a read that fails says
-why, with **Retry**, and the page is drawn again only when something changed.
+Windows.
 
 ## Safety
 
 Studio answers on `127.0.0.1` only, and refuses another host name. Every
-action that writes is a `POST` with a JSON body, a token the page receives
+action that writes is a `POST` with a JSON body, the token the page receives
 when studio starts, and a loopback origin; any other method is refused. The
-app's reads are under `/api/*`; the overview it replaced is at `/overview`,
-the live view at `/live`.
+app loads nothing from another host, and nothing a project or an event holds
+is ever read as HTML.
 
 ## Next
 

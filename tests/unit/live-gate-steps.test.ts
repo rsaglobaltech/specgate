@@ -15,8 +15,6 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { foldRequirement } = require("../../scripts/lib/live-model");
-const { livePage } = require("../../scripts/lib/live-page");
-const { studioAppPage } = require("../../scripts/lib/studio-app-page");
 
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
@@ -153,14 +151,34 @@ test("REQ-274 SCN-274a: a check that has run for three minutes", () => {
   ]);
   assert.equal(ended.running, null, "an ended step is not running");
 
-  const page = livePage("demo");
-  assert.match(page, /gate-start/);
-  assert.match(page, /r\.running/);
+  // Live in the app draws the running step by its name and how long it has run, in the steps and in Now.
+  const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+  const page: string = studio.renderLive(
+    "en",
+    {
+      requirements: [r],
+      queue: [],
+      queueStarted: 0,
+      totals: { input: 0, output: 0, cost: null, turns: 0 },
+      questions: { open: [] },
+    },
+    "open",
+    now,
+    []
+  );
+  assert.match(page, /<dt>Running<\/dt><dd><code>quality: coverage<\/code> · 3 min 00 s<\/dd>/);
+  assert.match(
+    page,
+    /<li class="pl pl-running" aria-current="step">[^]*?quality: coverage<span class="faint"> · maven:3.9/
+  );
 });
 
 test("REQ-275 SCN-275a: building while a quality check runs", () => {
-  const html = studioAppPage("demo", "abc123");
-  assert.match(html, /gate-start/);
-  assert.match(html, /indexOf\("quality:"\)/);
-  assert.match(html, /cur\.running/);
+  // Build in the app: Programa until the gate, Prueba for it, Revisa la calidad while a quality check runs, Guarda at the merge.
+  const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+  const r = (steps: unknown[]) => ({ steps });
+  assert.equal(studio.stageOf(r([])), 0);
+  assert.equal(studio.stageOf(r([{ type: "gate-start", stage: "tests" }])), 1);
+  assert.equal(studio.stageOf(r([{ type: "gate-start", stage: "quality: coverage" }])), 2);
+  assert.equal(studio.stageOf(r([{ type: "merge" }])), 3);
 });

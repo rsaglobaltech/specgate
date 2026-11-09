@@ -251,35 +251,36 @@ test("REQ-208 SCN-208b: starting a build answers at once and runs the harness in
 });
 
 test("REQ-204 SCN-204a: the app page has its four sections, both modes and both languages", () => {
-  const { studioAppPage } = require("../../scripts/lib/studio-app-page");
-  const html = studioAppPage("demo", "abc123");
-  assert.match(html, /<meta name="specgate-token" content="abc123"\/>/);
+  // The app at the root (REQ-432): the shell with the token, the sections, both modes, both languages.
+  const { studioShell } = require("../../scripts/lib/studio-shell");
+  assert.match(studioShell("demo", "abc123"), /<meta name="specgate-token" content="abc123"\/>/);
+  const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+  const es: string = studio.renderShell("home", studio.DEFAULTS);
   for (const want of [
-    'home:"Inicio"',
-    'questions:"Preguntas"',
-    'review:"Revisión"',
-    'build:"Construir"',
-    'home:"Home"',
-    'id="mSimple"',
-    'id="mAdv"',
-    'id="lEs"',
-    'id="lEn"',
+    "Inicio",
+    "Preguntas",
+    "Cambios",
+    "Construir",
+    "Simple",
+    "Avanzado",
+    ">ES<",
+    ">EN<",
   ]) {
-    assert.ok(html.includes(want), want);
+    assert.ok(es.includes(want), want);
   }
+  assert.ok(studio.renderShell("home", { ...studio.DEFAULTS, lang: "en" }).includes(">Home<"));
+  const app = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.js"), "utf8");
   for (const api of [
-    '"api/home"',
-    '"api/questions"',
-    '"api/drafts"',
-    '"api/build"',
-    '"api/approve"',
-    '"api/note"',
-    '"api/stop"',
+    "/api/home",
+    "/api/questions",
+    "/api/drafts",
+    "/api/build",
+    "/api/approve",
+    "/api/note",
+    "/api/stop",
   ]) {
-    assert.ok(html.includes(api), api);
+    assert.ok(app.includes(api), api);
   }
-  const script = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
-  assert.doesNotThrow(() => new Function(script));
 });
 
 test("REQ-204 SCN-204b: the app's writes need the page's token", async () => {

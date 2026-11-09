@@ -167,8 +167,8 @@ the next requirement `status` names. `apply` does not commit: commit after it.
 `specgate change approve <id>` records that a person read and approved it,
 refused while its checklist has an error or a question is open; `specgate
 change note <id> "<what to change>" --req REQ-NNN` asks for a change in your
-words, in the draft's `review.md`. The [studio](studio.md)'s Review page does
-both, and Build starts only approved drafts.
+words, in the draft's `review.md`. The [studio](studio.md)'s Changes section does
+both, each blocker with the action that clears it, and Build starts only approved drafts.
 
 ## 6. Archive it
 

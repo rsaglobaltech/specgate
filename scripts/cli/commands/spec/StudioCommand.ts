@@ -5,6 +5,7 @@ import * as crypto from "node:crypto";
 import { answer as answerQuestion, reviewed as reviewQuestion } from "../../../lib/clarification";
 import { approveChange, noteChange } from "../../../lib/change-review";
 import {
+  changesView,
   buildView,
   drafts,
   gate,
@@ -13,8 +14,8 @@ import {
   startBuild,
   stopBuild,
 } from "../../../lib/studio-app";
-import { studioAppPage } from "../../../lib/studio-app-page";
 import {
+  configuredAgent,
   agentsInstalled,
   briefForm,
   createProject,
@@ -34,13 +35,14 @@ import {
   chooseAgent,
 } from "../../../lib/studio-route";
 import { resolveProjectDir } from "../../../lib/project-root";
+import { studioAsset, studioShell } from "../../../lib/studio-shell";
+import { actionView, almView, preferencesView, runAction } from "../../../lib/studio-actions";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
 
 import { c } from "../../../lib/ui";
 import { readLive, liveSignature } from "../../../lib/live-model";
-import { livePage } from "../../../lib/live-page";
 import { requirementDetail, liveMatrix } from "../../../lib/live-detail";
 import { promptFileFor } from "../../../lib/harness-events";
 
@@ -113,14 +115,18 @@ export interface StudioOptions {
   host: string;
   json: boolean;
   out?: string;
+  /** --port was given: a taken port is refused rather than moved from (REQ-445). */
+  portGiven?: boolean;
 }
 
 export function parseArgs(argv: string[]) {
   const opts: StudioOptions = { projectDir: ".", port: 4173, host: "127.0.0.1", json: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--port" && argv[i + 1]) opts.port = Number(argv[++i]);
-    else if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
+    if (a === "--port" && argv[i + 1]) {
+      opts.port = Number(argv[++i]);
+      opts.portGiven = true;
+    } else if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
     else if (a === "--out" && argv[i + 1]) opts.out = argv[++i];
     else if (a === "--host" && argv[i + 1]) opts.host = argv[++i];
     else if (a === "--json") opts.json = true;
@@ -307,16 +313,31 @@ export class StudioCommand extends BaseCommand {
       };
       // REQ-204: the app's reads, built from what the commands read.
       const reads: Record<string, () => unknown> = {
+        // REQ-434: the page's heartbeat, to say when the studio cannot be reached.
+        // It carries the token, as the page does: a studio started again has a
+        // new one, and the page that reconnects needs it to write (REQ-201).
+        // REQ-445: which project and process this is, so a second studio finds it.
+        "/api/ping": () => ({ ok: true, token, project: projectDir, pid: process.pid }),
+        // REQ-438: what the studio's command runs, and its output so far.
+        "/api/action": () => actionView(projectDir),
+        // REQ-442: the project's preferences, as config list gives them.
+        "/api/preferences": () => preferencesView(projectDir),
+        // REQ-444: the ALM — the token's variable and whether it is set, never its value.
+        "/api/alm": () => almView(projectDir),
         "/api/home": () => home(projectDir),
         "/api/gate": () => gate(projectDir),
         "/api/questions": () => questionsView(projectDir),
         "/api/drafts": () => drafts(projectDir),
+        // REQ-439: every open change, not only the brief's drafts.
+        "/api/changes": () => changesView(projectDir),
         "/api/build": () => buildView(projectDir),
         // REQ-211..217: the route from an empty folder to the report.
         "/api/route": () => route(projectDir),
         "/api/profiles": () => ({
           profiles: profilesView(projectDir),
           installed: agentsInstalled(),
+          // REQ-431: an agent set as a command of its own, not a profile.
+          agent: configuredAgent(projectDir),
         }),
         "/api/brief": () => briefForm(projectDir),
         "/api/modules": () => draftsRoute(projectDir),
@@ -346,6 +367,7 @@ export class StudioCommand extends BaseCommand {
         "/api/draft/stop",
         "/api/quality/init",
         "/api/agent",
+        "/api/action",
       ];
       if (req.method === "POST" && WRITES.includes(url)) {
         const header = (name: string) => {
@@ -386,6 +408,9 @@ export class StudioCommand extends BaseCommand {
             level?: string;
             kind?: string;
             command?: string;
+            now?: boolean;
+            action?: string;
+            args?: Record<string, unknown>;
           };
           try {
             body = JSON.parse(raw || "{}");
@@ -443,6 +468,18 @@ export class StudioCommand extends BaseCommand {
             json(r.ok ? 202 : 422, r);
             return;
           }
+          // REQ-438: one of the commands the studio offers — checked, never anything else.
+          if (url === "/api/action") {
+            const r = runAction(
+              projectDir,
+              String(body.action || ""),
+              body.args && typeof body.args === "object" && !Array.isArray(body.args)
+                ? body.args
+                : {}
+            );
+            json(r.ok ? 202 : r.code === "action_running" ? 409 : 422, r);
+            return;
+          }
           // REQ-431: the agent chosen in the studio.
           if (url === "/api/agent") {
             const kind = String(body.kind || "");
@@ -475,7 +512,8 @@ export class StudioCommand extends BaseCommand {
             return;
           }
           if (url === "/api/stop") {
-            const r = stopBuild(projectDir);
+            // REQ-433: after the current requirement, or at once.
+            const r = stopBuild(projectDir, body.now === true);
             json(r.ok ? 200 : 422, r);
             return;
           }
@@ -497,10 +535,28 @@ export class StudioCommand extends BaseCommand {
         res.end("Studio only reads, except its app's POST actions.\n");
         return;
       }
-      // REQ-204: the app at the root; the overview it replaced moves to /overview.
-      if (url === "/" || url === "/app" || url === "/app/") {
+      // REQ-204, REQ-432: the studio at its root — the app built from studio/src.
+      // `/app` and `/next` named it while the old page lived; they still open it.
+      if (url === "/" || url === "/app" || url === "/app/" || url === "/next" || url === "/next/") {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(studioAppPage(path.basename(projectDir), token));
+        res.end(studioShell(path.basename(projectDir), token));
+        return;
+      }
+      // The overview the app replaced: its address leads into the app.
+      if (url === "/overview" || url === "/overview/") {
+        res.writeHead(302, { location: "/" });
+        res.end();
+        return;
+      }
+      if (url.startsWith("/studio/")) {
+        const asset = studioAsset(url);
+        if (!asset) {
+          res.writeHead(404, { "content-type": "text/plain" });
+          res.end("Not found.\n");
+          return;
+        }
+        res.writeHead(200, { "content-type": asset.type, "cache-control": "no-cache" });
+        res.end(asset.body);
         return;
       }
       // REQ-217: the report as a page of its own, to keep or send.
@@ -517,9 +573,10 @@ export class StudioCommand extends BaseCommand {
         res.end(reportHtml(report(projectDir)));
         return;
       }
+      // REQ-433: the live view is the app's Live section.
       if (url === "/live" || url === "/live/") {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(livePage(path.basename(projectDir), token));
+        res.end(studioShell(path.basename(projectDir), token, "live"));
         return;
       }
       if (url === "/live.json") {
@@ -609,17 +666,83 @@ export class StudioCommand extends BaseCommand {
       res.end(renderHtml(projectDir, model));
     });
 
-    server.listen(opts.port, opts.host, () => {
+    const announce = () => {
+      // The port it got: a taken one may have moved it (REQ-445).
+      const port = (server.address() as import("node:net").AddressInfo).port;
       const shown = LOOPBACK.has(opts.host) ? "localhost" : opts.host;
       process.stdout.write(
         `\n  ${c.bold}🎨 specgate studio${c.reset} serving ${c.dim}${projectDir}${c.reset}\n` +
-          `  ${c.green}▶ http://${shown}:${opts.port}${c.reset}  ${c.dim}(Ctrl-C to stop · /status.json for the model)${c.reset}\n` +
-          `  ${c.green}▶ http://${shown}:${opts.port}/live${c.reset}  ${c.dim}the harness at work${c.reset}\n\n`
+          `  ${c.green}▶ http://${shown}:${port}${c.reset}  ${c.dim}(Ctrl-C to stop · /status.json for the model)${c.reset}\n` +
+          `  ${c.green}▶ http://${shown}:${port}/live${c.reset}  ${c.dim}the harness at work${c.reset}\n\n`
       );
-    });
-    server.on("error", (err: unknown) => {
-      process.stderr.write(`${c.red}✖${c.reset}  Could not start server: ${errorMessage(err)}\n`);
-      process.exit(1);
-    });
+    };
+    // REQ-445: a taken port is asked what holds it — the same project's studio is
+    // named and left alone; anything else is moved from, unless --port named it.
+    const first = opts.port;
+    const tryPort = (port: number) => {
+      server.once("error", async (err: NodeJS.ErrnoException) => {
+        if (err.code !== "EADDRINUSE") {
+          process.stderr.write(
+            `${c.red}✖${c.reset}  Could not start server: ${errorMessage(err)}\n`
+          );
+          process.exit(1);
+        }
+        const holder = await studioOn(port);
+        if (holder && path.resolve(holder.project) === path.resolve(projectDir)) {
+          process.stdout.write(
+            `\n  ${c.green}✔${c.reset}  A studio of this project is already running: ${c.green}http://localhost:${port}${c.reset}\n` +
+              `     ${c.dim}Open it, or stop it: ${process.platform === "win32" ? `taskkill /pid ${holder.pid} /F` : `kill ${holder.pid}`} (process ${holder.pid}).${c.reset}\n\n`
+          );
+          process.exit(0);
+        }
+        const who = holder ? `a studio of ${holder.project}` : "another program";
+        if (opts.portGiven || port - first >= 10) {
+          process.stderr.write(
+            `${c.red}✖${c.reset}  Port ${port} is taken by ${who}. Pass another one: --port <n>.\n`
+          );
+          process.exit(1);
+        }
+        process.stdout.write(
+          `  ${c.yellow}▲${c.reset}  Port ${port} is taken by ${who}; trying ${port + 1}.\n`
+        );
+        tryPort(port + 1);
+      });
+      server.listen(port, opts.host);
+    };
+    server.once("listening", announce);
+    tryPort(first);
   }
+}
+
+/** What answers /api/ping on a local port, when it is a studio: its project and process. */
+function studioOn(port: number): Promise<{ project: string; pid: number } | null> {
+  return new Promise((resolve) => {
+    const req = http.get(
+      {
+        host: "127.0.0.1",
+        port,
+        path: "/api/ping",
+        headers: { host: `localhost:${port}` },
+        timeout: 1500,
+      },
+      (res) => {
+        let body = "";
+        res.on("data", (d: Buffer) => (body += d));
+        res.on("end", () => {
+          try {
+            const j = JSON.parse(body) as { ok?: boolean; project?: string; pid?: number };
+            resolve(
+              j.ok && typeof j.project === "string" && Number.isInteger(j.pid)
+                ? { project: j.project, pid: j.pid! }
+                : null
+            );
+          } catch {
+            resolve(null);
+          }
+        });
+      }
+    );
+    req.on("timeout", () => req.destroy());
+    req.on("error", () => resolve(null));
+  });
 }

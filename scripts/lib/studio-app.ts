@@ -21,7 +21,8 @@ import {
 import { requestStop, runLockHolder } from "./harness-guard";
 import { findCliRoot } from "./project-root";
 import { cachedBySpecs } from "./studio-cache";
-import { studioLog } from "./harness-events";
+import { appendEvent, eventsFileFor, studioLog } from "./harness-events";
+import { killTree } from "./kill-tree";
 import { withQueue } from "../cli/commands/spec/StatusCommand";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { requirementTitles } from "../../packages/core/src/domain/DraftChecklist";
@@ -116,6 +117,52 @@ export function drafts(projectDir: string): DraftView[] {
         .map((q) => ({ id: q.id, text: q.text, blocks: q.blocks })),
     }))
     .filter((d) => d.requirements.length > 0);
+}
+
+// ── Every change (REQ-439) ──────────────────────────────────────────────────
+
+export interface ChangeView {
+  id: string;
+  /** The brief's module a draft is for (`draft-orders` → `orders`), or null. */
+  module: string | null;
+  /** When a person approved it, or "". */
+  approved: string;
+  requirements: Array<{ id: string; title: string; status: string }>;
+  delivered: number;
+  tasks: { done: number; total: number; items: Array<{ text: string; done: boolean }> };
+  proposal: string;
+  /** Every requirement in it delivered: archive takes it. */
+  canArchive: boolean;
+}
+
+/** Each open change with its progress, its proposal and tasks — not only the brief's drafts (REQ-439). */
+export function changesView(projectDir: string): { changes: ChangeView[]; alm: boolean } {
+  const changes = listChangeIds(projectDir).map((id): ChangeView => {
+    const dir = path.join(projectDir, "docs", "specs", "changes", id);
+    const requirements = draftRequirements(projectDir, id).map((r) => ({
+      id: r.id,
+      title: r.title,
+      status: r.status,
+    }));
+    const delivered = requirements.filter((r) => DELIVERED.has(r.status)).length;
+    const items = (read(path.join(dir, "tasks.md")) || "")
+      .split(/\r?\n/)
+      .map((l) => /^\s*[-*]\s+\[([ xX])\]\s+(.*)$/.exec(l))
+      .filter((m): m is RegExpExecArray => !!m)
+      .map((m) => ({ text: m[2].trim(), done: m[1] !== " " }));
+    const proposal = read(path.join(dir, "proposal.md")) || "";
+    return {
+      id,
+      module: id.startsWith("draft-") ? id.replace(/^draft-/, "").replace(/-additions$/, "") : null,
+      approved: approvedOn(projectDir, id),
+      requirements,
+      delivered,
+      tasks: { done: items.filter((t) => t.done).length, total: items.length, items },
+      proposal: proposal.length > 20000 ? `${proposal.slice(0, 20000)}\n…` : proposal,
+      canArchive: requirements.length > 0 && delivered === requirements.length,
+    };
+  });
+  return { changes, alm: fs.existsSync(path.join(projectDir, "alm.config.yaml")) };
 }
 
 // ── Questions ───────────────────────────────────────────────────────────────
@@ -489,11 +536,25 @@ export function saveSpecification(
 
 /** Ask the run in progress to stop after its current requirement (REQ-209). */
 export function stopBuild(
-  projectDir: string
+  projectDir: string,
+  now = false
 ): { ok: true } | { ok: false; code: string; message: string } {
-  if (!runLockHolder(projectDir))
-    return { ok: false, code: "build_not_running", message: "No run is working." };
+  const lock = runLockHolder(projectDir);
+  if (!lock) return { ok: false, code: "build_not_running", message: "No run is working." };
   requestStop(projectDir);
+  if (!now) return { ok: true };
+  // At once (REQ-433): the run and every process it started, then each attempt
+  // it left open is ended, so Live does not show it running forever.
+  killTree(lock.pid);
+  for (const r of readLive(projectDir).requirements) {
+    if (r.state !== "running") continue;
+    appendEvent(
+      eventsFileFor(projectDir, r.req),
+      { type: "attempt", state: "end", result: "fail", stage: "stopped" },
+      r.req,
+      r.attempt
+    );
+  }
   return { ok: true };
 }
 

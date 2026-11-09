@@ -4,13 +4,15 @@
 
 ### Requirement: REQ-204 — Studio is an app you use without the commands
 
-The system SHALL serve at studio's root a page with four sections — Home, Questions, Review and Build — each running a specgate command underneath; SHALL offer a simple mode (the default) and an advanced one that shows each action's command and what is written, and Spanish and English, both remembered in the viewer's browser; and SHALL accept its writes only through POST with the token its own page carries, as REQ-201.
+The system SHALL serve at studio's root one app with the sections Home, Brief, Changes, Questions, Build, Live, Report and Settings, each running a specgate command underneath and each with its own address, so that Back, Forward, reloading and a link open the same section; SHALL offer a simple mode (the default) and an advanced one that shows each action's command and what is written, Spanish and English, a light and a dark theme that follow the system until one is chosen, and a sidebar that folds to its icons, all remembered in the viewer's browser; and SHALL accept its writes only through POST with the token its own page carries, as REQ-201.
+
+> Amended by studio-redesign: four sections in one page without addresses become the sidebar of one app, each section at its own address.
 
 #### Scenario: SCN-204a — The app and its sections
 
 - GIVEN studio is running
-- WHEN its root is opened
-- THEN the page has Home, Questions, Review and Build, a simple/advanced switch and a Spanish/English switch, and carries its token
+- WHEN its root is opened, then Questions is chosen, then the page is reloaded
+- THEN the page lists Home, Brief, Changes, Questions, Build, Live, Report and Settings, carries its token, and opens Questions again after the reload
 
 #### Scenario: SCN-204b — Writes need the token
 
@@ -18,7 +20,7 @@ The system SHALL serve at studio's root a page with four sections — Home, Ques
 - WHEN an app action is posted without the page's token
 - THEN it is refused with 403
 
-<!-- specgate:trace actor=Developer feature=features/studio/REQ-204.feature kind=functional status=Implemented test=tests/unit/studio-app.test.ts -->
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-204.feature kind=functional status=Implemented -->
 
 ### Requirement: REQ-205 — Home says what to do next
 
@@ -166,7 +168,9 @@ The system SHALL accept `--profile <name>` on `specgate harness run` and on `spe
 
 ### Requirement: REQ-212 — The route says where the project is
 
-The system SHALL give the studio a route of seven steps — Project, Brief, Drafts, Questions, Review, Build, Report — each done, current, open or locked as the project's files say, with a one-line summary, and one next action: the first step not done that is not locked.
+The system SHALL show on Home a route of seven steps — Project, Brief, Drafts, Questions, Review, Build, Report — each done, current, open or locked as the project's files say, with a one-line summary, and one next action: the first step not done that is not locked, as a link to the section where it is done.
+
+> Amended by studio-redesign: the route moves from the header to Home, and its next action opens the section that does it.
 
 #### Scenario: SCN-212a — A project with a brief and no draft
 
@@ -180,7 +184,7 @@ The system SHALL give the studio a route of seven steps — Project, Brief, Draf
 - WHEN the route is read
 - THEN Project is current and every other step is locked
 
-<!-- specgate:trace actor=Developer feature=features/studio/REQ-212.feature kind=functional status=Implemented test=tests/unit/studio-route.test.ts -->
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-212.feature kind=functional status=Implemented -->
 
 ### Requirement: REQ-213 — A project is created from an empty folder
 
@@ -374,6 +378,66 @@ The studio SHALL offer, where no agent is configured, Claude Code, Codex and a c
 
 <!-- specgate:trace actor=Developer feature=features/studio/REQ-431.feature kind=functional status=Implemented -->
 
+### Requirement: REQ-432 — The studio is built from typed source and carries no runtime dependency
+
+The studio's page SHALL be built from typed source at build time into static files Specgate serves from its own package; installing Specgate SHALL add no runtime dependency; and the page SHALL work without a network beyond the studio itself.
+
+#### Scenario: SCN-432a — What the package ships
+
+- GIVEN Specgate built and packed
+- WHEN its package is read
+- THEN it holds the studio's script and styles, its `dependencies` are empty, and the page loads nothing from another host
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-432.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-433 — Live is a section of the studio
+
+The system SHALL show, in the studio's Live section, the run in progress — the requirement, its stages (codes, tests, checks quality, saves) with the current one marked, its log as it streams, the queue, the time and the cost so far — updated through server-sent events without reloading; SHALL let the viewer answer there a question the agent asked and stop the run after the current requirement or at once; and `/live` SHALL open that section.
+
+#### Scenario: SCN-433a — A run followed live
+
+- GIVEN a harness run on REQ-025 in its tests stage
+- WHEN the Live section is open and the run writes a test result
+- THEN the result appears in the log without a reload, Tests is the current stage, and REQ-026 is listed as queued
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-433.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-434 — The studio says what it is doing and what went wrong
+
+The studio SHALL show the shape of a section while its first read is under way; SHALL mark a button busy, refusing a second press, while its request runs, and then say in a notice what happened; SHALL keep a notice that reports a failure until it is closed, with the action that retries; SHALL say when it cannot reach the studio's server and when it reaches it again, keeping what it showed marked as possibly old; and SHALL show a failed read inside its own section, the rest of the page still usable.
+
+#### Scenario: SCN-434a — The server goes away and comes back
+
+- GIVEN the studio open on Questions
+- WHEN its server stops and starts again
+- THEN the page says it is reconnecting, keeps the questions shown, and says it is connected once the server answers
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-434.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-435 — The studio is used with the keyboard and a screen reader
+
+Every action of the studio SHALL be reachable and usable with the keyboard, with a visible focus; its sections, forms and notices SHALL carry the roles and names a screen reader announces; a refresh SHALL not announce the whole page again; and its motion SHALL stop when the system asks for reduced motion.
+
+#### Scenario: SCN-435a — Answering with the keyboard
+
+- GIVEN the studio open on Questions with Q1 open
+- WHEN the viewer moves with Tab to Q1's answer, types it and presses Enter
+- THEN the answer is saved, the focus stays on Q1, and a notice is announced once
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-435.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-436 — The studio is tested in a browser on the three systems
+
+The repository SHALL test the studio in a real browser on Windows, macOS and Linux in CI, against a project made for the test: opening each section, answering a question, confirming it, approving a draft, choosing an agent, and following a run in Live.
+
+#### Scenario: SCN-436a — The studio's journey in CI
+
+- GIVEN the CI workflow on Windows, macOS and Linux
+- WHEN its browser tests run
+- THEN each section opens without a script error and the journey from an open question to a run in Live passes
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-436.feature kind=functional status=Implemented -->
+
 ### Requirement: REQ-437 — A module written under a plain heading stays one section
 
 The system SHALL, when the studio saves the brief form, write a module whose brief has no `## Module: <name>` section but a plain `## <name>` heading for a module the front matter lists as that module's `## Module: <name>` section in the heading's place, keeping the heading's prose inside it, so the brief holds one section for the module; and SHALL leave a plain heading that names no listed module as it is.
@@ -385,3 +449,100 @@ The system SHALL, when the studio saves the brief form, write a module whose bri
 - THEN the brief has one `## Module: orders` section holding that prose and the rule, no `## orders` heading, and the `## Context` section unchanged
 
 <!-- specgate:trace actor=Developer feature=features/studio/REQ-437.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-438 — The studio runs the commands it offers, and only those
+
+The system SHALL let the studio run a Specgate command only from a fixed list of actions, each naming the command it runs and the arguments it accepts, checked before anything runs; SHALL refuse any other action or argument, even with the page's token; SHALL run one such command at a time, in the project folder, keeping its output in the git-ignored events folder; and SHALL show that output as it grows and say, when it ends, whether it succeeded.
+
+#### Scenario: SCN-438a — An offered command runs, anything else is refused
+
+- GIVEN a studio open on a project with the change `draft-orders`
+- WHEN the page asks to preview archiving `draft-orders`, and then to run `rm -rf .` and to archive a change id with `../` in it
+- THEN the preview runs `specgate archive draft-orders --dry-run` and its output is shown, and the other two are refused, naming why, and run nothing
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-438.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-439 — Every change, from proposal to archive
+
+The system SHALL list in the studio's Changes every open change with its task progress — not only the brief's drafts — and open each into its proposal, its deltas and its tasks; SHALL validate a change and show each finding; SHALL archive a change only once every requirement in it is delivered, after showing what the archive would write; and SHALL open a new change from an idea, or from a ticket key when an ALM is configured.
+
+#### Scenario: SCN-439a — A delivered change archived from the studio
+
+- GIVEN the change `checkout` with every requirement Implemented, and the change `orders` with one still Draft
+- WHEN Changes is opened
+- THEN both are listed with their progress, `checkout` offers Archive with its preview and `orders` does not, and archiving `checkout` moves it to the archive
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-439.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-440 — The gate and the doctor from the studio
+
+The system SHALL run `specgate check` from the studio with the project's test command and show each stage — specification, tests, architecture, quality — passed or failed with its findings; and SHALL run `specgate doctor` and show each finding with the fix it ships.
+
+#### Scenario: SCN-440a — The gate fails on a test, and says so
+
+- GIVEN a project whose test command fails
+- WHEN the gate is run from the studio
+- THEN Specification is shown passed, Tests failed with the command's output, and the gate as not passed
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-440.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-441 — A requirement coded by hand, delivered from the studio
+
+The system SHALL offer, for a requirement that is not delivered, to deliver it with `specgate apply`: its test first, then the gate, then Implemented; and SHALL show, when apply refuses, the reason and the step it stopped at.
+
+#### Scenario: SCN-441a — Apply refused because no test names the requirement
+
+- GIVEN REQ-001 with no test that names it
+- WHEN it is delivered from the studio
+- THEN it stays Draft, and the studio says no test names REQ-001 yet
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-441.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-442 — The project's preferences and the agents, in Settings
+
+The system SHALL show in Settings the project's preferences as `specgate config list` gives them and let each be changed with `config set`, checked against the keys and values Specgate knows; and SHALL install the agent guards for this project — Claude Code's or OpenCode's, with `agents init --tool claude-plugin` or `--tool opencode-plugin`, never `agents install`, which installs them for every project of the user — and the integrations for the agent tools with `agents init`, saying what each wrote.
+
+#### Scenario: SCN-442a — The test command changed in Settings
+
+- GIVEN a project whose `test_cmd` is `npm test`
+- WHEN Settings sets it to `npm run test:unit`
+- THEN `specgate config get test_cmd` answers `npm run test:unit`, and an unknown key is refused
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-442.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-443 — A repository that has code, adopted from the studio
+
+The system SHALL offer, in a folder with files and no Specgate project, to adopt it in place with `specgate adopt`: first a preview of every file it would write, then the adoption, which writes those files, overwrites none and changes no other.
+
+#### Scenario: SCN-443a — Adopting a repository with a README and code
+
+- GIVEN a folder with a README.md and src/index.js and no spec.md
+- WHEN Settings previews the adoption and then adopts it
+- THEN the preview lists spec.md among the files to write, and afterwards spec.md exists while README.md and src/index.js are unchanged
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-443.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-444 — Jira and Azure Boards from the studio
+
+The system SHALL show in Settings, when `alm.config.yaml` exists, the requirement ↔ issue mapping as `specgate alm status` gives it, a sync previewed with `alm sync --dry-run`, and the sync itself; and SHALL never ask for, show or store the ALM token, which stays in the environment variable the config names.
+
+#### Scenario: SCN-444a — A sync previewed, then run
+
+- GIVEN `alm.config.yaml` naming `JIRA_TOKEN`, and REQ-007 not linked to an issue
+- WHEN the sync is previewed
+- THEN the preview says an issue would be created for REQ-007, nothing is written, and no field asks for a token
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-444.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-445 — A studio already running is found, not fought
+
+The system SHALL, when the studio's port is taken, ask what answers there: when it is a studio of the same project, say it is already running with its address and its process id and end without an error; when it is anything else and no `--port` was given, serve on the next free port among the ten that follow and say which; and when `--port` named the port, refuse naming what holds it.
+
+#### Scenario: SCN-445a — The same project's studio is already running
+
+- GIVEN a studio of the project serving on port 4173
+- WHEN `specgate studio` is run again in that project
+- THEN it says a studio of this project is already running at http://localhost:4173 with that studio's process id, ends with exit code 0, and starts no second server
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-445.feature kind=functional status=Implemented -->
+

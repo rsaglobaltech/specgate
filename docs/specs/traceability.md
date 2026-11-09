@@ -135,7 +135,7 @@
 | REQ-200 | SCN-200a | `features/harness/REQ-200.feature` | - | - | - | - | - | tests/unit/harness-init.test.ts | Implemented |
 | REQ-201 | SCN-201a | `features/live-harness/REQ-201.feature` | - | - | - | - | - | tests/unit/studio-answer.test.ts | Implemented |
 | REQ-203 | SCN-203a | `features/live-harness/REQ-203.feature` | - | - | - | - | - | tests/unit/studio-answer.test.ts | Implemented |
-| REQ-204 | SCN-204a | `features/studio/REQ-204.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-204 | SCN-204a | `features/studio/REQ-204.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-205 | SCN-205a | `features/studio/REQ-205.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
 | REQ-206 | SCN-206a | `features/studio/REQ-206.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-207 | SCN-207a | `features/studio/REQ-207.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
@@ -143,7 +143,7 @@
 | REQ-209 | SCN-209a | `features/studio/REQ-209.feature` | - | - | - | - | - | tests/unit/harness-run.test.ts | Implemented |
 | REQ-210 | SCN-210a | `features/studio/REQ-210.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-211 | SCN-211a | `features/studio/REQ-211.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
-| REQ-212 | SCN-212a | `features/studio/REQ-212.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
+| REQ-212 | SCN-212a | `features/studio/REQ-212.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts, tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-213 | SCN-213a | `features/studio/REQ-213.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-214 | SCN-214a | `features/studio/REQ-214.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-215 | SCN-215a | `features/studio/REQ-215.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
@@ -221,7 +221,20 @@
 | REQ-429 | SCN-429a | `features/studio/REQ-429.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-430 | SCN-430a | `features/studio/REQ-430.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-431 | SCN-431a | `features/studio/REQ-431.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
+| REQ-432 | SCN-432a | `features/studio/REQ-432.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
+| REQ-433 | SCN-433a | `features/studio/REQ-433.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
+| REQ-434 | SCN-434a | `features/studio/REQ-434.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
+| REQ-435 | SCN-435a | `features/studio/REQ-435.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
+| REQ-436 | SCN-436a | `features/studio/REQ-436.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts, e2e/studio/studio.spec.mjs | Implemented |
 | REQ-437 | SCN-437a | `features/studio/REQ-437.feature` | - | - | - | - | - | tests/unit/brief-plain-sections.test.ts | Implemented |
+| REQ-438 | SCN-438a | `features/studio/REQ-438.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-439 | SCN-439a | `features/studio/REQ-439.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-440 | SCN-440a | `features/studio/REQ-440.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-441 | SCN-441a | `features/studio/REQ-441.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-442 | SCN-442a | `features/studio/REQ-442.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-443 | SCN-443a | `features/studio/REQ-443.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-444 | SCN-444a | `features/studio/REQ-444.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-445 | SCN-445a | `features/studio/REQ-445.feature` | - | - | - | - | - | tests/unit/studio-port.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
