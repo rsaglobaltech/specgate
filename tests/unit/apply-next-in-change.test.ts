@@ -7,6 +7,7 @@ import assert = require("node:assert/strict");
 import { nextAfter } from "../../scripts/cli/commands/spec/DoneCommand";
 import type { QueueItem } from "../../scripts/cli/commands/spec/StatusCommand";
 import type { InFlightRequirement, InFlightView } from "../../scripts/lib/in-flight";
+import { strip as plain } from "../../scripts/lib/ui";
 
 const CHANGE = "draft-specgate-port";
 
@@ -32,8 +33,6 @@ function studio(rest: QueueItem) {
   const items: QueueItem[] = [{ requirement: "REQ-000", category: "NEEDS_TEST" }, rest];
   return { items, owner: requirements[2], view };
 }
-
-const plain = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
 
 test("REQ-465 SCN-465a: after apply REQ-016 the next step is the change's REQ-014, not the project's REQ-000", () => {
   const { items, owner, view } = studio({
