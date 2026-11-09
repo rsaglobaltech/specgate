@@ -73,7 +73,7 @@ test("REQ-455 SCN-455a: a new project gets spec-gate.yml running a pinned `check
     const dir = init(parent, { PROJECT_TYPE: "backend" });
     assert.ok(exists(dir, GATE), "spec-gate.yml written");
     assert.ok(!exists(dir, OLD), "no specs.yml");
-    assert.match(read(dir, GATE), new RegExp(`npx ${PINNED.replace(/[.@/]/g, "\\$&")} check \\.`));
+    assert.ok(read(dir, GATE).includes(`npx ${PINNED} check .`), "the gate runs the pinned check");
     assert.doesNotMatch(read(dir, GATE), /@latest/);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
