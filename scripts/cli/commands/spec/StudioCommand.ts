@@ -31,6 +31,7 @@ import {
   startDraft,
   stopJob,
   type NewProject,
+  chooseAgent,
 } from "../../../lib/studio-route";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability } from "./PlanCommand";
@@ -344,6 +345,7 @@ export class StudioCommand extends BaseCommand {
         "/api/draft",
         "/api/draft/stop",
         "/api/quality/init",
+        "/api/agent",
       ];
       if (req.method === "POST" && WRITES.includes(url)) {
         const header = (name: string) => {
@@ -382,6 +384,8 @@ export class StudioCommand extends BaseCommand {
             form?: Parameters<typeof saveBriefForm>[1];
             project?: NewProject;
             level?: string;
+            kind?: string;
+            command?: string;
           };
           try {
             body = JSON.parse(raw || "{}");
@@ -437,6 +441,18 @@ export class StudioCommand extends BaseCommand {
           if (url === "/api/draft") {
             const r = startDraft(projectDir, String(body.module || ""), String(body.profile || ""));
             json(r.ok ? 202 : 422, r);
+            return;
+          }
+          // REQ-431: the agent chosen in the studio.
+          if (url === "/api/agent") {
+            const kind = String(body.kind || "");
+            const r = chooseAgent(
+              projectDir,
+              kind === "custom"
+                ? { kind: "custom", command: String(body.command || "") }
+                : { kind: kind === "codex" ? "codex" : "claude" }
+            );
+            json(r.ok ? 200 : 422, r);
             return;
           }
           if (url === "/api/quality/init") {

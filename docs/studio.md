@@ -105,9 +105,16 @@ it. A draft ready to review lists its checks (D1–D13) in plain words.
 
 Everything waiting for a decision: what the brief asked, what a draft could
 not settle, what the agent asked instead of guessing while it built. Pick one
-of the options Specgate saw or write your own answer. Once the specification
-says it, **The spec says it** confirms it, and the requirements the question
-held can be built.
+of the options Specgate saw or write your own answer. The answer goes into the
+question's row of `questions.md` — the studio adds the `Answer` and `Status`
+columns when the table has none, and keeps the file's line endings. Answering
+again corrects the answer; it never adds a second one to confirm.
+
+Under **Answered, the spec still has to say it** each answered question appears
+once, whether you answered it here or by hand in `questions.md`. Once the
+requirement's text says the answer, **The spec says it** confirms it: the
+question is marked reviewed, `Needs Clarification` comes off the requirements
+it held, and they can be approved and built.
 
 ![The Questions page: a question the project asked, the requirement it blocks, and a box for the answer.](assets/img/studio-4-questions.webp)
 
@@ -117,14 +124,21 @@ Each draft not yet approved, as someone on your team would read it: each
 requirement's statement and its examples as Given / When / Then. **Ask for a
 change** writes your words into the draft's `review.md` for the agent; **Approve
 the draft** records that a person approved it, and is disabled while a check
-fails or a question is open.
+fails or a question is open. Each thing that holds it is listed with the action
+that clears it: **Answer** for an open question, **The spec says it** for an
+answer the requirement does not reflect yet, and the requirement to open for a
+check that fails.
 
 ![The Review page: the Garaje draft's two requirements, each with its statement and its example as Given, When, Then, and Ask for a change under each; beside them, the checks say it is ready, and Approve the draft.](assets/img/studio-5-review.webp)
 
 ## 6 · Build
 
 **Who codes?** lists the agents, each with its estimated cost per requirement
-and whether it streams tokens and cost; your choice is remembered. Then the
+and whether it streams tokens and cost; your choice is remembered. In a project
+with no agent yet, Build offers Claude Code, Codex or a command of your own —
+the ones found on this machine marked, the first of them chosen — and **Use
+this assistant** writes it to `harness.config.yaml`, as
+`specgate config set agent` does. Then the
 requirements ready to build — approved, not waiting for an answer — with an
 estimate, and **Build** starts the harness in the background, chained.
 
@@ -151,6 +165,13 @@ the report** saves it as one HTML page that opens anywhere; **Print / PDF**
 opens it to print.
 
 ![The Report page: 81 of 83 requirements built, 229 examples proven, the gate passes; then each module with what is built, and what the app does, each requirement with the examples that prove it.](assets/img/studio-7-report.webp)
+
+## Speed
+
+The studio reads the project's state in its own process and keeps it until a
+file of the specification changes, so a refresh costs milliseconds, also on
+Windows. A button stays busy while its request runs; a read that fails says
+why, with **Retry**, and the page is drawn again only when something changed.
 
 ## Safety
 

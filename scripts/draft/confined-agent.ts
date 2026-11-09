@@ -15,6 +15,7 @@
  * agent's footprint is found at all.
  */
 
+import { withPromptFile } from "../../packages/core/src/domain/HarnessRun";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -76,7 +77,7 @@ export function agentInvocation(
   promptFile: string
 ): { command: string; stdin: boolean } {
   return command.includes("{prompt_file}")
-    ? { command: command.split("{prompt_file}").join(promptFile), stdin: false }
+    ? { command: withPromptFile(command, promptFile), stdin: false }
     : { command, stdin: true };
 }
 

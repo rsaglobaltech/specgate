@@ -137,11 +137,11 @@
 | REQ-203 | SCN-203a | `features/live-harness/REQ-203.feature` | - | - | - | - | - | tests/unit/studio-answer.test.ts | Implemented |
 | REQ-204 | SCN-204a | `features/studio/REQ-204.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
 | REQ-205 | SCN-205a | `features/studio/REQ-205.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
-| REQ-206 | SCN-206a | `features/studio/REQ-206.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-206 | SCN-206a | `features/studio/REQ-206.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-207 | SCN-207a | `features/studio/REQ-207.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
-| REQ-208 | SCN-208a | `features/studio/REQ-208.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-208 | SCN-208a | `features/studio/REQ-208.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-209 | SCN-209a | `features/studio/REQ-209.feature` | - | - | - | - | - | tests/unit/harness-run.test.ts | Implemented |
-| REQ-210 | SCN-210a | `features/studio/REQ-210.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-210 | SCN-210a | `features/studio/REQ-210.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-211 | SCN-211a | `features/studio/REQ-211.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-212 | SCN-212a | `features/studio/REQ-212.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-213 | SCN-213a | `features/studio/REQ-213.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
@@ -216,6 +216,12 @@
 | REQ-423 | SCN-423a | `features/agent-integration/REQ-423.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 | REQ-424 | SCN-424a | `features/agent-integration/REQ-424.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 | REQ-425 | SCN-425a | `features/agent-integration/REQ-425.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
+| REQ-426 | SCN-426a | `features/agent-integration/REQ-426.feature` | - | - | - | - | - | tests/unit/guard-next-requirement.test.ts | Implemented |
+| REQ-427 | SCN-427a | `features/agent-integration/REQ-427.feature` | - | - | - | - | - | tests/unit/guard-next-requirement.test.ts | Implemented |
+| REQ-429 | SCN-429a | `features/studio/REQ-429.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
+| REQ-430 | SCN-430a | `features/studio/REQ-430.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
+| REQ-431 | SCN-431a | `features/studio/REQ-431.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
+| REQ-437 | SCN-437a | `features/studio/REQ-437.feature` | - | - | - | - | - | tests/unit/brief-plain-sections.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

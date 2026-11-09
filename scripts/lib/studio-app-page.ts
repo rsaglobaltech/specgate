@@ -175,7 +175,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       given:"Dado", when:"Cuando", then:"Entonces", and:"Y", waitsAnswer:"espera una respuesta",
       bTitle:"Construir", bIntro:"El asistente programa cada requisito, lo prueba y solo lo guarda si todo pasa. Puedes cerrar la página: sigue solo.",
       whoCodes:"¿Quién programa?", whoCodesP:"Los asistentes de este proyecto. Se recuerda tu elección.", noEstimate:"Sin estimación todavía", perRun:"por requisito",
-      readyN:"Listos para construir", minutes:"min aprox.", perReq:"por requisito", buildN:"Construir los N", build1:"Construir este", noAgent:"Falta configurar el asistente (agent en harness.config.yaml).",
+      readyN:"Listos para construir", minutes:"min aprox.", perReq:"por requisito", buildN:"Construir los N", build1:"Construir este", noAgent:"Falta configurar el asistente (agent en harness.config.yaml).", readFailed:"No se pudo leer el estado del proyecto.", retry:"Reintentar", chooseAgent:"Elige quién programa. Se guarda en harness.config.yaml.", ownCommand:"Comando propio", found:"encontrado en este equipo", useAgent:"Usar este asistente",
       running:"En marcha", stP:"Programa", stT:"Prueba", stQ:"Revisa la calidad", stS:"Guarda", watch:"Ver en directo", stop:"Detener después de este", stopAsked:"Se detendrá al terminar este.",
       doneToday:"Terminados", nothingReady:"No hay nada listo para construir.", started:"En marcha: ", savedGit:"la especificación quedó guardada en git (N archivos)", saved:"Guardado.", err:"No se pudo: ",
       repTitle:"Lo que está hecho", repIntro:"Cada requisito se construyó y se probó con el ejemplo que lo describe. Este informe sale de la especificación y de las pruebas.",
@@ -245,7 +245,7 @@ export function studioAppPage(projectName: string, token = ""): string {
       given:"Given", when:"When", then:"Then", and:"And", waitsAnswer:"waits for an answer",
       bTitle:"Build", bIntro:"The assistant codes each requirement, tests it and only saves it when everything passes. You can close the page: it goes on.",
       whoCodes:"Who codes?", whoCodesP:"The assistants of this project. Your choice is remembered.", noEstimate:"No estimate yet", perRun:"per requirement",
-      readyN:"Ready to build", minutes:"min approx.", perReq:"per requirement", buildN:"Build the N", build1:"Build this one", noAgent:"The assistant is not configured yet (agent in harness.config.yaml).",
+      readyN:"Ready to build", minutes:"min approx.", perReq:"per requirement", buildN:"Build the N", build1:"Build this one", noAgent:"The assistant is not configured yet (agent in harness.config.yaml).", readFailed:"The project's state could not be read.", retry:"Retry", chooseAgent:"Choose who writes the code. It is kept in harness.config.yaml.", ownCommand:"A command of your own", found:"found on this machine", useAgent:"Use this assistant",
       running:"Running", stP:"Codes", stT:"Tests", stQ:"Checks quality", stS:"Saves", watch:"Watch live", stop:"Stop after this one", stopAsked:"It will stop once this one ends.",
       doneToday:"Finished", nothingReady:"Nothing is ready to build.", started:"Started: ", savedGit:"the specification was committed to git (N files)", saved:"Saved.", err:"Could not: ",
       repTitle:"What is done", repIntro:"Each requirement was built and proven with the example that describes it. This report comes from the specification and the tests.",
@@ -276,10 +276,21 @@ export function studioAppPage(projectName: string, token = ""): string {
   function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
   function adv(){ return mode === "adv"; }
   function cmd(text){ var c = el("code", "cmd", text); c.hidden = !adv(); c.setAttribute("data-adv", "1"); return c; }
-  function get(url){ return fetch(url).then(function(r){ return r.json(); }); }
+  function get(url){
+    return fetch(url).then(function(r){
+      if (!r.ok) return r.json().catch(function(){ return {}; }).then(function(b){ throw new Error(url + " · " + (b.message || r.status)); });
+      return r.json();
+    });
+  }
+  // The button that posted stays busy until the answer comes: no second click (REQ-430).
   function post(url, body){
+    var b = document.activeElement;
+    var busy = b && b.tagName === "BUTTON" && !b.disabled ? b : null;
+    if (busy) { busy.disabled = true; busy.setAttribute("aria-busy", "true"); }
+    var done = function(){ if (busy) { busy.disabled = false; busy.removeAttribute("aria-busy"); } };
     return fetch(url, {method:"POST", headers:{"content-type":"application/json", "x-specgate-token":token}, body:JSON.stringify(body || {})})
-      .then(function(r){ return r.json(); });
+      .then(function(r){ return r.json(); })
+      .then(function(x){ done(); return x; }, function(e){ done(); return {ok:false, message:String(e && e.message || e)}; });
   }
   function msgEl(){ return el("span", "msg"); }
   function say(m, r){ m.className = "msg " + (r.ok ? "ok" : "err"); m.textContent = r.ok ? t("saved") : t("err") + (r.message || ""); }
@@ -794,7 +805,18 @@ export function studioAppPage(projectName: string, token = ""): string {
       });
       var ch = el("section", "card"); ch.appendChild(el("h2", "", t("checks")));
       if (!d.blockers.length) { var ok = el("div", "check"); ok.append(dot("var(--pass)"), el("span", "", t("allGood"))); ch.appendChild(ok); }
-      d.blockers.forEach(function(b){ var x = el("div", "check"); x.append(dot("#d4a72c"), el("span", "small", b.message)); ch.appendChild(x); });
+      d.blockers.forEach(function(b){
+        var x = el("div", "check"); x.append(dot("#d4a72c"), el("span", "small", b.message));
+        // Each blocker with the action that clears it (REQ-206).
+        var a = b.action, mb = msgEl();
+        if (a && a.kind === "answer") x.append(button("ghost", t("answer") + " " + a.question, function(){ go("questions"); }));
+        if (a && a.kind === "confirm") x.append(button("ghost", t("inSpec"), function(ev){
+          var btn = ev.target; btn.disabled = true;
+          post("api/answer", {question:a.question, change:d.change, reviewed:true}).then(function(res){ btn.disabled = false; say(mb, res); if (res.ok) refresh(); });
+        }));
+        if (a && a.kind === "open") x.append(cmd(a.requirement + " · docs/specs/changes/" + d.change));
+        x.append(mb); ch.appendChild(x);
+      });
       aside.appendChild(ch);
       var act = el("section", "card"), m3 = msgEl();
       var ap = button("go", t("approve"), function(){ post("api/approve", {change:d.change}).then(function(res){ say(m3, res); if (res.ok) refresh(); }); });
@@ -889,7 +911,27 @@ export function studioAppPage(projectName: string, token = ""): string {
     });
     go0.disabled = !b.ready.length || !hasAgent || !!b.running;
     hd.append(info, go0); sec.appendChild(hd);
-    if (!hasAgent) { var na = el("div", "msg err", t("noAgent")); na.style.padding = "10px 20px"; sec.appendChild(na); }
+    if (!hasAgent) {
+      // Choose the agent here, the one found on this machine first (REQ-431).
+      var ag = el("div"); ag.style.padding = "10px 20px";
+      ag.appendChild(el("div", "small", t("chooseAgent")));
+      var inst = b.installed || {claude:false, codex:false};
+      var pick = inst.claude ? "claude" : inst.codex ? "codex" : "custom";
+      var opts = el("div"); flex(opts);
+      var own = el("input"); own.type = "text"; own.placeholder = "my-agent run {prompt_file}"; own.hidden = pick !== "custom";
+      [["claude", "Claude Code", inst.claude], ["codex", "Codex", inst.codex], ["custom", t("ownCommand"), false]].forEach(function(o){
+        var l = el("label", "opt"), r = el("input"); r.type = "radio"; r.name = "agent-pick"; r.checked = o[0] === pick;
+        r.addEventListener("change", function(){ pick = o[0]; own.hidden = pick !== "custom"; });
+        l.append(r, document.createTextNode(" " + o[1] + (o[2] ? " · " + t("found") : ""))); opts.appendChild(l);
+      });
+      var ma = msgEl();
+      var use = button("go", t("useAgent"), function(){
+        use.disabled = true;
+        post("api/agent", {kind:pick, command:own.value}).then(function(res){ use.disabled = false; say(ma, res); if (res.ok) refresh(); });
+      });
+      ag.append(opts, own, use, ma, cmd("specgate config set agent " + String.fromCharCode(34) + "claude -p < {prompt_file}" + String.fromCharCode(34)));
+      sec.appendChild(ag);
+    }
     m5.style.padding = "0 20px"; sec.appendChild(m5);
     if (!b.ready.length) sec.appendChild(el("div", "empty", t("nothingReady")));
     b.ready.forEach(function(r){
@@ -986,6 +1028,16 @@ export function studioAppPage(projectName: string, token = ""): string {
     else if (view === "report" && cache.report) viewReport(cache.report);
     else m.replaceChildren(el("div", "card empty", t("loading")));
   }
+  var lastShown = "";
+  function failed(e){
+    var old = $("readFailed");
+    if (!e) { if (old) old.remove(); return; }
+    var box = old || el("div", "card warn");
+    box.id = "readFailed"; box.setAttribute("role", "alert"); box.textContent = "";
+    var r = button("ghost", t("retry"), function(){ refresh(); });
+    box.append(el("strong", "", t("readFailed")), el("span", "small muted", String(e && e.message || e)), r);
+    if (!old) $("view").prepend(box);
+  }
   function refresh(){
     var reads = [get("api/route").then(function(x){ cache.route = x; })];
     var isProject = !cache.route || cache.route.isProject;
@@ -998,7 +1050,13 @@ export function studioAppPage(projectName: string, token = ""): string {
     if (view === "review") reads.push(get("api/drafts").then(function(x){ cache.drafts = x; }));
     if (view === "build") { reads.push(get("api/build").then(function(x){ cache.build = x; })); reads.push(get("live.json").then(function(x){ cache.live = x; })); }
     if (view === "report") reads.push(get("api/report").then(function(x){ cache.report = x; }));
-    Promise.all(reads).then(render).catch(function(){});
+    // Drawn again only when what it shows changed; a failed read is said, with a retry (REQ-430).
+    Promise.all(reads).then(function(){
+      failed(null);
+      var shown = view + "|" + lang + "|" + mode + "|" + JSON.stringify(cache);
+      if (shown === lastShown) return;
+      lastShown = shown; render();
+    }).catch(function(e){ failed(e); });
   }
   function go(v){
     var k = {brief:"brief", drafts:"modules", questions:"questions", review:"drafts", build:"build", report:"report"}[v];

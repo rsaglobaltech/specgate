@@ -119,12 +119,22 @@ function decide(input, env) {
         if (ids.length && namesAny(cwd, changed.filter(project_state_1.isTestFile), ids))
             return ALLOW;
         const owner = changes.find((c) => c.pending.length) ?? changes[0];
-        const next = owner.pending[0] ?? owner.requirements[0];
+        // The next requirement as the change's tasks order it (REQ-426).
+        const next = owner.pending[0];
+        if (!next && owner.requirements.length) {
+            // Everything applied: no requirement to name (REQ-427).
+            return {
+                allow: false,
+                message: `specgate: every requirement of \`${owner.id}\` is applied, so ${rel} has no requirement to answer to. ` +
+                    `The change is ready for its reviewer: \`specgate archive ${owner.id}\` once they agree. ` +
+                    "New work opens a change: `specgate propose <change-id>`, its delta, then the test, then this code.",
+            };
+        }
         return {
             allow: false,
             message: next
-                ? `specgate: write the test for ${next} first — change \`${owner.id}\`. ` +
-                    `A test file new or changed in the working tree that names ${next} is the link; then ${rel} is allowed, then \`specgate apply ${next}\`.`
+                ? `specgate: write the test for ${next} first — change \`${owner.id}\`, next in its tasks. ` +
+                    `The link is a test that names any requirement of \`${owner.id}\`, new or changed in the working tree; then ${rel} is allowed, then \`specgate apply\` for that requirement.`
                 : `specgate: change \`${owner.id}\` has no requirement yet. Write its delta first (\`specgate change instructions specs ${owner.id}\`), then the test, then ${rel}.`,
         };
     }

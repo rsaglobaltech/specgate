@@ -1,11 +1,12 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {
-  addAssumption,
   addQuestion,
   answerQuestion,
+  markQuestionReviewed,
   questionTable,
   reviewAssumptions,
+  upsertAssumption,
   type QuestionRow,
 } from "../../packages/core/src/domain/Clarification";
 import { listChangeIds } from "../../packages/core/src/infrastructure/ChangeWorkspace";
@@ -162,8 +163,16 @@ export function answer(
           : `${picked} has no question ${id}.`,
     };
   }
+  // Never "saved" without it: the question must read as answered afterwards (REQ-210).
+  if (!questionTable(written.md).find((q) => q.id === id)?.answered) {
+    return {
+      ok: false,
+      code: "answer_not_written",
+      message: `${id}'s answer could not be written into ${path.relative(projectDir, qFile)}.`,
+    };
+  }
   const aFile = assumptionsFile(projectDir, picked);
-  const added = addAssumption(read(aFile), picked, {
+  const added = upsertAssumption(read(aFile), picked, {
     text,
     usedIn: written.blocks,
     why: id,
@@ -183,14 +192,19 @@ export function reviewed(
   if (typeof picked !== "string") return picked as { ok: false; code: string; message: string };
   const aFile = assumptionsFile(projectDir, picked);
   const r = reviewAssumptions(read(aFile) || "", id);
-  if (r.ids.length === 0) {
+  // An answer written by hand has no assumption to review, and is confirmed all the same (REQ-210).
+  const question = allQuestions(projectDir).find((q) => q.id === id && q.change === picked);
+  if (r.ids.length === 0 && !question?.answered) {
     return {
       ok: false,
       code: "nothing_to_review",
-      message: `No assumption from ${id} is waiting for review in ${picked}.`,
+      message: `${id} in ${picked} has no answer to confirm yet: answer it first.`,
     };
   }
-  write(aFile, r.md);
+  if (r.ids.length) write(aFile, r.md);
+  const qFile = questionsFile(projectDir, picked);
+  const qText = read(qFile);
+  if (qText) write(qFile, markQuestionReviewed(qText, id));
   // The decision is in the spec: what waited only for this question can be
   // built again (REQ-210). Another open question still holds its own.
   const all = allQuestions(projectDir);

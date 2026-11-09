@@ -97,6 +97,8 @@ drafting checklist that runs on it, D1 to D12; each is explained in
 | D6: a value is not in the brief                     | The draft uses a number or a name its source does not state | Ask the client, or record it in `assumptions.md`                      |
 | D7: an open question                                | A question no requirement waits for                         | Make the requirement it blocks wait for it, or answer it              |
 | `draft_agent_failed`                                | The agent command did not run or failed                     | Run the command on its own first; or paste the prompt into your agent |
+| Studio: an answer said "Saved" and nothing changed (0.27 and earlier) | `questions.md` had no `Answer` column | Upgrade to 0.28.1, or add `Answer` and `Status` columns to the table |
+| Studio: **Approve the draft** never enables | A question is open, or answered while its requirement still waits | 0.28.1 lists each blocker with its action; on 0.27, remove `status="Needs Clarification"` and write the answer into the requirement |
 | `draft_agent_needs_git`                             | `--agent` works only in a git repository                    | `git init`, or paste the prompt into your agent                       |
 | "Undone — the agent wrote outside the draft"        | The agent changed files outside the change                  | Nothing to do: Specgate reverted them                                 |
 | `draft_brief_text_lost`, `draft_brief_body_changed` | The agent changed the brief's own text                      | Nothing to do: Specgate restored it; try again, or write it yourself  |
@@ -192,6 +194,8 @@ tests with a broken build do not count as delivered.
 | The agent does not know the `/specgate:*` commands | They were not installed for that tool | `specgate agents init --tool <name>`                                |
 | `agents init` left a file as it was                | Existing files are never overwritten  | `specgate agents init --force`, after checking what you would lose  |
 | The agent edits the spec or a test to get to green | It treats the contract as code        | Point it at `AGENTS.md`; the harness refuses such an attempt anyway |
+| Studio Build: "The assistant is not configured" | No `agent` in `harness.config.yaml` | Choose one in Build (0.28.1), or `specgate config set agent "claude -p < {prompt_file}"` |
+| The agent cannot read the prompt on Windows | A temp folder with a space (0.27) | 0.28.1 quotes such a path; or set `TEMP` to a folder without spaces |
 
 See [Agents](agents.md) and [Choosing and wiring your agent](agent-setup.md).
 

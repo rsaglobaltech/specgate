@@ -3,6 +3,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
+import { writeHarnessCommand } from "../../packages/core/src/infrastructure/HarnessConfigFile";
 import { readBriefBody, moduleKey } from "../../packages/core/src/domain/BriefCards";
 import { briefModules } from "../../packages/core/src/domain/DraftChecklist";
 import {
@@ -27,6 +28,7 @@ import { allQuestions, waiting } from "./clarification";
 import { liveMatrix } from "./live-detail";
 import { readLive } from "./live-model";
 import { approvedOn } from "./change-review";
+import { studioLog } from "./harness-events";
 import { buildView, drafts, gate } from "./studio-app";
 import { findCliRoot } from "./project-root";
 
@@ -178,11 +180,7 @@ function startJob(
           : "The agent is working on the brief. Wait for it, or stop it.",
     };
   }
-  const dir = path.join(projectDir, ".harness", "events");
-  fs.mkdirSync(dir, { recursive: true });
-  const ignore = path.join(dir, ".gitignore");
-  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
-  const log = path.join(dir, `studio-${kind}.log`);
+  const log = studioLog(projectDir, kind);
   fs.writeFileSync(log, "", "utf8");
   const out = fs.openSync(log, "a");
   const child = spawn(process.execPath, [cli(), ...args, "--project-dir", projectDir], {
@@ -193,7 +191,7 @@ function startJob(
       ...process.env,
       NO_COLOR: "1",
       // A streaming agent reports what it does; the page shows its last step.
-      AGENT_EVENTS_FILE: path.join(dir, `studio-${kind}.jsonl`),
+      AGENT_EVENTS_FILE: path.join(path.dirname(log), `studio-${kind}.jsonl`),
     },
   });
   child.unref();
@@ -441,12 +439,38 @@ export function presetProfiles(agent: NewProject["agent"]): Array<{ name: string
   return [];
 }
 
-/** Which agent CLIs this machine has on its PATH. */
-export function agentsInstalled(): { claude: boolean; codex: boolean } {
-  const has = (cmd: string) =>
-    spawnSync(process.platform === "win32" ? "where" : "which", [cmd], { encoding: "utf8" })
-      .status === 0;
-  return { claude: has("claude"), codex: has("codex") };
+/** Which agent CLIs this machine has on its PATH (kept in studio-app, which Build reads). */
+export { agentsInstalled } from "./studio-app";
+
+export type AgentChoice = { kind: "claude" | "codex" } | { kind: "custom"; command: string };
+
+/**
+ * The agent chosen in the studio, written as `specgate config set agent` and
+ * the new-project step write it (REQ-431): Claude Code and Codex as their
+ * profiles, a command of one's own as `agent:`.
+ */
+export function chooseAgent(
+  projectDir: string,
+  choice: AgentChoice
+): { ok: true; agent: string } | { ok: false; code: string; message: string } {
+  if (choice.kind === "custom") {
+    const command = String(choice.command || "").trim();
+    if (!command.includes("{prompt_file}")) {
+      return {
+        ok: false,
+        code: "agent_without_prompt_file",
+        message: "The command must name {prompt_file}, where the prompt is handed over.",
+      };
+    }
+    writeHarnessCommand(projectDir, "agent", command);
+    return { ok: true, agent: command };
+  }
+  const profiles = presetProfiles(choice.kind);
+  if (!profiles.length) {
+    return { ok: false, code: "agent_unknown", message: `No preset for ${String(choice.kind)}.` };
+  }
+  writeProfiles(projectDir, profiles);
+  return { ok: true, agent: profiles[0].agent };
 }
 
 const slugOf = (name: string) =>
@@ -677,6 +701,34 @@ function moduleSectionText(
   return parts.join("\n\n");
 }
 
+/**
+ * A section under a plain `## <name>` heading whose name is the module's
+ * (REQ-437): `## orders` written by hand, not `## Module: orders`. Its text runs
+ * to the next `##` heading; `## Context` and the like name no module.
+ */
+function plainSection(
+  body: string,
+  key: string
+): { source: string; name: string; prose: string } | null {
+  const lines = body.split("\n");
+  const at = lines.findIndex((l) => {
+    const h = /^##[ \t]+(.+?)[ \t]*$/.exec(l);
+    return !!h && !/^module:/i.test(h[1]) && moduleKey(h[1]) === key;
+  });
+  if (at < 0) return null;
+  let end = at + 1;
+  while (end < lines.length && !/^##\s/.test(lines[end])) end += 1;
+  const source = lines.slice(at, end).join("\n");
+  return {
+    source,
+    name: lines[at].replace(/^##[ \t]+/, "").trim(),
+    prose: lines
+      .slice(at + 1, end)
+      .join("\n")
+      .trim(),
+  };
+}
+
 /** The form written back into docs/brief.md, keeping every other line (REQ-214). */
 export function saveBriefForm(
   projectDir: string,
@@ -718,8 +770,16 @@ export function saveBriefForm(
     const key = moduleKey(m.key || m.name);
     const existing = byKey.get(key);
     const hasCards = m.rules.length || m.examples.length || m.questions.length || m.prose.trim();
+    const plain = existing ? null : plainSection(body, key);
     if (existing) body = body.replace(existing.source, moduleSectionText(m, cards));
-    else if (hasCards) body = `${body.trimEnd()}\n\n${moduleSectionText(m, cards)}\n`;
+    else if (plain) {
+      // REQ-437: `## orders` written by hand becomes the module's section, its prose in it.
+      const section = moduleSectionText(
+        { ...m, name: plain.name, prose: m.prose.trim() || plain.prose },
+        cards
+      );
+      body = body.replace(plain.source, `${section}\n\n`).replace(/\n{3,}/g, "\n\n");
+    } else if (hasCards) body = `${body.trimEnd()}\n\n${moduleSectionText(m, cards)}\n`;
   }
   const out = `---\n${fm.replace(/^\n+/, "")}\n---\n${body.startsWith("\n") ? "" : "\n"}${body.trimEnd()}\n`;
   fs.mkdirSync(path.dirname(file), { recursive: true });
