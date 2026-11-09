@@ -241,6 +241,9 @@
 | REQ-446 | SCN-446a | `features/studio/REQ-446.feature` | - | - | - | - | - | tests/unit/studio-ticket.test.ts | Implemented |
 | REQ-447 | SCN-447a | `features/studio/REQ-447.feature` | - | - | - | - | - | tests/unit/studio-ticket.test.ts | Implemented |
 | REQ-448 | SCN-448a | `features/studio/REQ-448.feature` | - | - | - | - | - | tests/unit/studio-ticket.test.ts | Implemented |
+| REQ-452 | SCN-452a | `features/studio/REQ-452.feature` | - | - | - | - | - | tests/unit/studio-help.test.ts | Draft |
+| REQ-453 | SCN-453a | `features/studio/REQ-453.feature` | - | - | - | - | - | tests/unit/studio-help.test.ts | Draft |
+| REQ-454 | SCN-454a | `features/studio/REQ-454.feature` | - | - | - | - | - | tests/unit/studio-help.test.ts | Draft |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
