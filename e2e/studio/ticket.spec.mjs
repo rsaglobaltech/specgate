@@ -30,6 +30,8 @@ let jiraUrl;
 let base;
 let dir;
 let origin;
+/** The branch the project was made on: main or master, as git defaults. */
+let start;
 
 const git = (...args) => execFileSync("git", args, { cwd: dir, encoding: "utf8" }).trim();
 
@@ -66,6 +68,7 @@ test.beforeAll(async () => {
   origin = fs.mkdtempSync(path.join(os.tmpdir(), "sg-studio-origin-"));
   execFileSync("git", ["init", "-q", "--bare"], { cwd: origin });
   git("remote", "add", "origin", origin);
+  start = git("rev-parse", "--abbrev-ref", "HEAD");
   // The branch agentkit makes for the ticket, before anything is opened.
   git("checkout", "-q", "-b", "feature/parking/KAN-13");
 
@@ -162,10 +165,9 @@ test("REQ-446 SCN-446a + REQ-447 SCN-447a + REQ-448 SCN-448a: KAN-13 reviewed, o
 
   // On the branch agentkit made, the change's commit, and nothing pushed.
   expect(git("rev-parse", "--abbrev-ref", "HEAD")).toBe("feature/parking/KAN-13");
-  expect(git("branch", "--format=%(refname:short)").split("\n").sort()).toEqual([
-    "feature/parking/KAN-13",
-    "main",
-  ]);
+  expect(git("branch", "--format=%(refname:short)").split("\n").sort()).toEqual(
+    ["feature/parking/KAN-13", start].sort()
+  );
   for (const f of git("show", "--name-only", "--format=", "HEAD").split("\n")) {
     expect(f).toMatch(/^docs\/specs\/changes\/kan-13-register-vehicle-entry\//);
   }
