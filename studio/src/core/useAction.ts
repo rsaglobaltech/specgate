@@ -17,6 +17,8 @@ export interface ActionView {
   running: ActionRun | null;
   last: ActionRun | null;
   output: string;
+  /** What an action whose stdout is JSON printed, once it ended. */
+  json?: unknown;
 }
 
 export interface Started {

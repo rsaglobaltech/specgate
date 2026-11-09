@@ -36,7 +36,13 @@ import {
 } from "../../../lib/studio-route";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { studioAsset, studioShell } from "../../../lib/studio-shell";
-import { actionView, almView, preferencesView, runAction } from "../../../lib/studio-actions";
+import {
+  actionView,
+  almView,
+  preferencesView,
+  runAction,
+  ticketBranchView,
+} from "../../../lib/studio-actions";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
@@ -324,6 +330,7 @@ export class StudioCommand extends BaseCommand {
         "/api/preferences": () => preferencesView(projectDir),
         // REQ-444: the ALM — the token's variable and whether it is set, never its value.
         "/api/alm": () => almView(projectDir),
+        "/api/branch": () => ticketBranchView(projectDir),
         "/api/home": () => home(projectDir),
         "/api/gate": () => gate(projectDir),
         "/api/questions": () => questionsView(projectDir),

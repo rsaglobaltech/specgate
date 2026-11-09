@@ -69,6 +69,8 @@ export interface ChangesProps {
   /** Every open change (REQ-439), and whether an ALM is configured. */
   changes?: ChangeView[];
   alm?: boolean;
+  /** The project's capabilities, for a change from a ticket. */
+  capabilities?: string[];
   action?: ActionProps;
 }
 
@@ -340,6 +342,7 @@ export function Changes({
   onConfirm,
   changes = [],
   alm = false,
+  capabilities = [],
   action,
 }: ChangesProps) {
   const list = modules.modules;
@@ -388,7 +391,9 @@ export function Changes({
           ) : null}
         </div>
       </header>
-      {adding && action ? <NewChange lang={lang} alm={alm} {...action} /> : null}
+      {adding && action ? (
+        <NewChange lang={lang} alm={alm} capabilities={capabilities} {...action} />
+      ) : null}
       <Said lang={lang} r={said && !said.ok ? said : null} />
       {!modules.brief && !others.length ? (
         <div class="card empty">

@@ -30,9 +30,9 @@ The sidebar holds eight sections, each at its own address (`/#/questions`,
 
 | Section | What you do there | What it runs |
 | --- | --- | --- |
-| Home | See the next step and the route; run the gate and the doctor | `specgate status`, `check`, `doctor` |
+| Home | See the next step and the route, and the ticket the branch names; run the gate and the doctor | `specgate status`, `check`, `doctor` |
 | Brief | Write what the app must do, or paste the client's text | `propose --from-brief` (with the agent) |
-| Changes | Every change: draft a module, review, approve, deliver a requirement, validate, archive; a new change from an idea or a ticket | `propose`, `change note`, `change approve`, `apply`, `change validate`, `archive` |
+| Changes | Every change: draft a module, review, approve, deliver a requirement, validate, archive; a new change from an idea or a ticket | `propose`, `propose --from-ticket`, `change note`, `change approve`, `apply`, `change validate`, `archive` |
 | Questions | Decide what the brief left open, confirm the spec says it | `specgate answer`, `answer --reviewed` |
 | Build | Choose who codes, pick what is ready, start | `config set agent`, `harness run --chain` |
 | Live | Follow the run, answer the agent, stop it | the harness's events, `harness` stop |
@@ -126,6 +126,27 @@ previews the archive, and only then **Archive** merges it into the spec.
 configured — from a ticket's key.
 
 ![A change: its three requirements, each Draft with Deliver, the proposal, Validate, and the archive waiting until every requirement is delivered.](assets/img/studio-change-panel.webp)
+
+### A change from a ticket
+
+With an `alm.config.yaml`, **+ New change** takes a ticket's key — `KAN-13`.
+**Review the ticket** runs `specgate propose --from-ticket KAN-13 --check`,
+which writes nothing: whether the ticket is ready, each finding with its fix,
+and the capability the change goes into. When the ticket's epic names none,
+pick one of the project's capabilities; a ticket that is not ready cannot be
+opened — fix it in Jira and review it again.
+
+Before it opens anything, the studio says what it will do: the branch — the
+one you are on when it names the ticket, as `feature/KAN-13` or
+`feature/parking/KAN-13` from agentkit (then `--no-branch`, and no other
+branch is made), or the one it will create — and that it commits the change's
+folder and nothing else, then pushes the branch to `origin`. **Don't push
+yet** keeps it local (`--no-push`). **Open the change** asks once more; only
+then it runs.
+
+Home names the ticket and the team when the branch you are on names a
+ticket, and a change opened from one shows its key in Changes, linked to the
+ticket when `base_url` is Jira's.
 
 ## Questions
 

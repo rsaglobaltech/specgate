@@ -27,6 +27,7 @@ import { withQueue } from "../cli/commands/spec/StatusCommand";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { requirementTitles } from "../../packages/core/src/domain/DraftChecklist";
 import { inFlightView } from "./in-flight";
+import { capabilitiesOf } from "./studio-actions";
 
 /**
  * What the visual studio shows and does (REQ-204..210): each read is built from
@@ -133,10 +134,26 @@ export interface ChangeView {
   proposal: string;
   /** Every requirement in it delivered: archive takes it. */
   canArchive: boolean;
+  /** The ticket it was opened from, and its address on the ALM when that is known (REQ-447). */
+  ticket: string | null;
+  ticketUrl: string | null;
 }
 
 /** Each open change with its progress, its proposal and tasks — not only the brief's drafts (REQ-439). */
-export function changesView(projectDir: string): { changes: ChangeView[]; alm: boolean } {
+/** A Jira ticket's address, from `base_url` in alm.config.yaml; null for another ALM or none. */
+function ticketUrlOf(projectDir: string, key: string): string | null {
+  const alm = read(path.join(projectDir, "alm.config.yaml")) || "";
+  const field = (name: string) =>
+    (new RegExp(`^${name}:\\s*["']?([^"'#\\s]+)["']?`, "m").exec(alm) || [])[1] || "";
+  const base = field("base_url").replace(/\/+$/, "");
+  return field("provider") === "jira" && /^https?:\/\//.test(base) ? `${base}/browse/${key}` : null;
+}
+
+export function changesView(projectDir: string): {
+  changes: ChangeView[];
+  alm: boolean;
+  capabilities: string[];
+} {
   const changes = listChangeIds(projectDir).map((id): ChangeView => {
     const dir = path.join(projectDir, "docs", "specs", "changes", id);
     const requirements = draftRequirements(projectDir, id).map((r) => ({
@@ -151,6 +168,10 @@ export function changesView(projectDir: string): { changes: ChangeView[]; alm: b
       .filter((m): m is RegExpExecArray => !!m)
       .map((m) => ({ text: m[2].trim(), done: m[1] !== " " }));
     const proposal = read(path.join(dir, "proposal.md")) || "";
+    const ticket =
+      /^ticket:\s*([A-Z][A-Z0-9_]*-\d+)\s*$/m.exec(
+        read(path.join(dir, "change.yaml")) || ""
+      )?.[1] || null;
     return {
       id,
       module: id.startsWith("draft-") ? id.replace(/^draft-/, "").replace(/-additions$/, "") : null,
@@ -160,9 +181,15 @@ export function changesView(projectDir: string): { changes: ChangeView[]; alm: b
       tasks: { done: items.filter((t) => t.done).length, total: items.length, items },
       proposal: proposal.length > 20000 ? `${proposal.slice(0, 20000)}\n…` : proposal,
       canArchive: requirements.length > 0 && delivered === requirements.length,
+      ticket,
+      ticketUrl: ticket ? ticketUrlOf(projectDir, ticket) : null,
     };
   });
-  return { changes, alm: fs.existsSync(path.join(projectDir, "alm.config.yaml")) };
+  return {
+    changes,
+    alm: fs.existsSync(path.join(projectDir, "alm.config.yaml")),
+    capabilities: capabilitiesOf(projectDir),
+  };
 }
 
 // ── Questions ───────────────────────────────────────────────────────────────

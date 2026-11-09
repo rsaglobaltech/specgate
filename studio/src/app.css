@@ -2242,3 +2242,30 @@ code.block {
   padding: 10px 0;
   border-top: 1px solid var(--line);
 }
+.branch-line {
+  margin: 0;
+  color: var(--fg-soft);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.branch-line code {
+  font: 13px var(--mono);
+}
+.ticket-review {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ticket-review p {
+  margin: 0;
+}
+.ticket-publish code {
+  font: 13px var(--mono);
+  overflow-wrap: anywhere;
+}
+.ticket-hold {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+}
