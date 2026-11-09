@@ -251,6 +251,10 @@
 | REQ-462 | SCN-462a | `features/project-setup/REQ-462.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
 | REQ-463 | SCN-463a | `features/project-setup/REQ-463.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
 | REQ-464 | SCN-464a | `features/project-setup/REQ-464.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-466 | SCN-466a | `features/api/REQ-466.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Draft |
+| REQ-467 | SCN-467a | `features/api/REQ-467.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Draft |
+| REQ-468 | SCN-468a | `features/api/REQ-468.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Draft |
+| REQ-469 | SCN-469a | `features/api/REQ-469.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Draft |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
