@@ -47,6 +47,25 @@ const ticket: Check = (v) =>
     ? null
     : "a ticket is named like KAN-13";
 
+/** The project's capabilities: the folders under docs/specs/capabilities. */
+export function capabilitiesOf(projectDir: string): string[] {
+  try {
+    return fs
+      .readdirSync(path.join(projectDir, "docs", "specs", "capabilities"), { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name)
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/** One of the project's capabilities, by its name (REQ-446). */
+const capability: Check = (v, dir) =>
+  typeof v === "string" && capabilitiesOf(dir).includes(v)
+    ? null
+    : "one of the project's capabilities";
+
 /** Whether a string holds a control character: a newline, a NUL, an escape. */
 const hasControl = (v: string) =>
   [...v].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127);
@@ -80,6 +99,8 @@ interface Action {
   argv: (a: Record<string, string>) => string[];
   /** It reads the project from the folder it runs in: `check`, `init` and `agents install` take no --project-dir. */
   inFolder?: boolean;
+  /** Its stdout is JSON, kept apart from the prose it writes on stderr (REQ-446). */
+  json?: boolean;
   /** A further check across the arguments. */
   check?: (a: Record<string, string>) => string | null;
 }
@@ -91,7 +112,22 @@ const ACTIONS: Record<string, Action> = {
   "archive-preview": { args: { change }, argv: (a) => ["archive", a.change, "--dry-run"] },
   archive: { args: { change }, argv: (a) => ["archive", a.change] },
   "propose-idea": { args: { change: newChange }, argv: (a) => ["propose", a.change] },
-  "propose-ticket": { args: { ticket }, argv: (a) => ["propose", "--from-ticket", a.ticket] },
+  // The ticket's Definition of Ready, before anything is written (REQ-446).
+  "ticket-check": {
+    args: { ticket },
+    argv: (a) => ["propose", "--from-ticket", a.ticket, "--check", "--json"],
+    json: true,
+  },
+  "propose-ticket": {
+    args: { ticket, capability },
+    optional: ["capability"],
+    argv: (a) => [
+      "propose",
+      "--from-ticket",
+      a.ticket,
+      ...(a.capability ? ["--capability", a.capability] : []),
+    ],
+  },
   check: { args: {}, argv: () => ["check"], inFolder: true },
   doctor: { args: {}, argv: () => ["doctor"] },
   apply: { args: { req }, argv: (a) => ["apply", a.req] },
@@ -173,6 +209,10 @@ export interface ActionRun {
 }
 
 const RECORD = "studio-action.json";
+/** The stdout of an action whose stdout is JSON. */
+const STDOUT = "studio-action.stdout.json";
+const stdoutFile = (projectDir: string) =>
+  path.join(path.dirname(studioLog(projectDir, "action")), STDOUT);
 const recordFile = (projectDir: string) =>
   path.join(path.dirname(studioLog(projectDir, "action")), RECORD);
 
@@ -208,10 +248,25 @@ export function actionView(projectDir: string): {
   running: ActionRun | null;
   last: ActionRun | null;
   output: string;
+  /** What an action whose stdout is JSON printed, once it ended; else null. */
+  json: unknown;
 } {
   const last = readRecord(projectDir);
   const running = last && last.exit === null && alive(last.pid) ? last : null;
-  return { running, last, output: last ? output(projectDir) : "" };
+  return {
+    running,
+    last,
+    output: last ? output(projectDir) : "",
+    json: last && !running && ACTIONS[last.action]?.json ? stdoutJson(projectDir) : null,
+  };
+}
+
+function stdoutJson(projectDir: string): unknown {
+  try {
+    return JSON.parse(fs.readFileSync(stdoutFile(projectDir), "utf8"));
+  } catch {
+    return null;
+  }
 }
 
 export type Started = { ok: true; run: ActionRun } | { ok: false; code: string; message: string };
@@ -231,6 +286,9 @@ export function runAction(projectDir: string, name: string, args: Args = {}): St
   const log = studioLog(projectDir, "action");
   fs.writeFileSync(log, `$ specgate ${planned.argv.join(" ")}\n`, "utf8");
   const out = fs.openSync(log, "a");
+  const json = !!ACTIONS[name].json;
+  fs.rmSync(stdoutFile(projectDir), { force: true });
+  const stdout = json ? fs.openSync(stdoutFile(projectDir), "w") : out;
   // Arguments go as an array, never through a shell: a value is a value.
   const child = spawn(
     process.execPath,
@@ -238,12 +296,13 @@ export function runAction(projectDir: string, name: string, args: Args = {}): St
     {
       cwd: projectDir,
       detached: true,
-      stdio: ["ignore", out, out],
+      stdio: ["ignore", stdout, out],
       windowsHide: true,
       env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" },
     }
   );
   fs.closeSync(out);
+  if (json) fs.closeSync(stdout);
   const run: ActionRun = {
     action: name,
     argv: planned.argv,

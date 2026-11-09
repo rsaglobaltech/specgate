@@ -111,7 +111,7 @@ export function App() {
   const modules = useRead<ModulesData>(onChanges || onBrief ? "/api/modules" : null);
   const brief = useRead<BriefData>(onBrief ? "/api/brief" : null);
   const drafts = useRead<DraftView[]>(onChanges ? "/api/drafts" : null);
-  const changes = useRead<{ changes: ChangeView[]; alm: boolean }>(
+  const changes = useRead<{ changes: ChangeView[]; alm: boolean; capabilities: string[] }>(
     onChanges ? "/api/changes" : null
   );
   // REQ-438: the command the studio runs; when it ends, what it changed is read again.
@@ -284,9 +284,11 @@ export function App() {
             }
             changes={changes.data?.changes || []}
             alm={!!changes.data?.alm}
+            capabilities={changes.data?.capabilities || []}
             action={{
               run: command.view?.last || null,
               output: command.view?.output || "",
+              json: command.view?.json,
               onAction: runCommand,
             }}
           />

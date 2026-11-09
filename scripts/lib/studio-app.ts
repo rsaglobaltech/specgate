@@ -27,6 +27,7 @@ import { withQueue } from "../cli/commands/spec/StatusCommand";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { requirementTitles } from "../../packages/core/src/domain/DraftChecklist";
 import { inFlightView } from "./in-flight";
+import { capabilitiesOf } from "./studio-actions";
 
 /**
  * What the visual studio shows and does (REQ-204..210): each read is built from
@@ -136,7 +137,11 @@ export interface ChangeView {
 }
 
 /** Each open change with its progress, its proposal and tasks — not only the brief's drafts (REQ-439). */
-export function changesView(projectDir: string): { changes: ChangeView[]; alm: boolean } {
+export function changesView(projectDir: string): {
+  changes: ChangeView[];
+  alm: boolean;
+  capabilities: string[];
+} {
   const changes = listChangeIds(projectDir).map((id): ChangeView => {
     const dir = path.join(projectDir, "docs", "specs", "changes", id);
     const requirements = draftRequirements(projectDir, id).map((r) => ({
@@ -162,7 +167,11 @@ export function changesView(projectDir: string): { changes: ChangeView[]; alm: b
       canArchive: requirements.length > 0 && delivered === requirements.length,
     };
   });
-  return { changes, alm: fs.existsSync(path.join(projectDir, "alm.config.yaml")) };
+  return {
+    changes,
+    alm: fs.existsSync(path.join(projectDir, "alm.config.yaml")),
+    capabilities: capabilitiesOf(projectDir),
+  };
 }
 
 // ── Questions ───────────────────────────────────────────────────────────────

@@ -12,7 +12,7 @@ The system SHALL, when the studio is given a ticket key to open a change from, f
 - WHEN PAY-123 is reviewed in the studio
 - THEN it is shown ready, with no capability, `billing` and `orders` offered, and opening it in `orders` runs `propose --from-ticket PAY-123 --capability orders`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-447 — The ticket's branch, known before the change is opened
 

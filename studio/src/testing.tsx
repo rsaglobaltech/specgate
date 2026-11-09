@@ -10,6 +10,7 @@ import { Home } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type ChangeView, type DraftView, type ModulesData } from "./sections/Changes";
 import { ChangePanel, NewChange } from "./sections/changes/ChangePanel";
+import { FromTicket, type TicketReview } from "./sections/changes/FromTicket";
 import { Notices, type Notice } from "./ui/Notices";
 import { Offline, SectionError, Skeleton } from "./ui/States";
 import {
@@ -231,6 +232,25 @@ export function renderChangePanel(
 export function renderNewChange(lang: Lang, alm: boolean): string {
   const none = async () => ({ ok: true });
   return render(<NewChange lang={lang} alm={alm} run={null} output="" onAction={none} />);
+}
+
+export { ticketOpenArgs } from "./sections/changes/FromTicket";
+
+export function renderFromTicket(
+  lang: Lang,
+  opts: { review: TicketReview | null; capabilities?: string[] }
+): string {
+  const none = async () => ({ ok: true });
+  return render(
+    <FromTicket
+      lang={lang}
+      review={opts.review}
+      capabilities={opts.capabilities || []}
+      run={null}
+      output=""
+      onAction={none}
+    />
+  );
 }
 
 export function renderGate(lang: Lang, run: ActionRun | null, output: string): string {
