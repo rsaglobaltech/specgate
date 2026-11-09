@@ -724,6 +724,13 @@ html:not(.js) .jn__panel + .jn__panel { margin-top: var(--space-16); }
 .gal__phone figcaption { color: #b9b3a9; border: 0; text-align: center; font-size: var(--text-xs); }
 .gal__note { margin: 0 0 var(--space-8); font-size: var(--text-sm); }
 
+/* The studio's screens, under its band: three at a glance. */
+.studio-gal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-8); }
+.studio-gal .shot img { aspect-ratio: auto; }
+.studio-gal figcaption { padding: 0.7rem 1rem; font-size: var(--text-sm); color: var(--fg-soft); border-top: 1px solid var(--line); }
+.studio-gal figcaption strong { color: var(--fg); font-weight: 600; }
+@media (max-width: 900px) { .studio-gal { grid-template-columns: minmax(0, 1fr); } }
+
 /* ── Screenshot frame ────────────────────────────────────────────────────── */
 
 .shot { margin: 0; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--line-strong); background: var(--bg-raised); box-shadow: 14px 14px 0 color-mix(in srgb, var(--fg) 10%, transparent); }
