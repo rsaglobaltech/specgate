@@ -9,6 +9,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.29.1] — 2026-11-09
+
+The CLI image for 0.29: the npm package of 0.29.0 was complete; its Docker image was not built.
+
+### Fixed
+
+- **The Docker image builds again.** Its build stage did not copy the studio's source, new in 0.29.0, so building the CLI inside the image failed and no `ghcr.io/rsaglobaltech/specgate:0.29.0` image was published. A test now fails when the build reads a folder the image does not copy.
+
 ## [0.29.0] — 2026-11-08
 
 The studio rebuilt as one app, and it does what the CLI does: every change to its archive, the gate, apply, preferences and agents, adopting a repository, Jira and Azure Boards.

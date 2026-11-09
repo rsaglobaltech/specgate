@@ -22,6 +22,7 @@ COPY packages ./packages
 COPY templates ./templates
 COPY examples ./examples
 COPY schemas ./schemas
+COPY studio ./studio
 COPY README.md ./
 RUN mkdir -p /out && npm run build && npm pack --pack-destination /out
 
