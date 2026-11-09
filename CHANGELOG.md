@@ -9,8 +9,28 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.30.0] — 2026-11-09
+
+A change from a Jira ticket, from the studio as from the terminal: reviewed
+first, on the branch agentkit made, its publishing said and confirmed.
+
 ### Added
 
+- **A ticket reviewed in the studio before its change is opened**
+  (REQ-446): Changes → New change → **Review the ticket** runs
+  `propose --from-ticket <KEY> --check --json` and shows whether it is ready,
+  each finding with its fix, and the capability; when the epic names none,
+  the project's capabilities are offered. A ticket that is not ready is not
+  opened.
+- **The ticket's branch, known before the change is opened** (REQ-447):
+  Home names the ticket and the team when the branch does
+  (`feature/parking/KAN-13`); on that branch the change opens with
+  `--no-branch`, elsewhere the studio names the branch it will create. A
+  change opened from a ticket shows its key in Changes, linked to Jira.
+- **Publishing a ticket's change, said and confirmed** (REQ-448): before
+  opening, the studio names the folder it commits — and nothing else — and
+  the branch it pushes; it opens only once confirmed. **Don't push yet**
+  adds `--no-push`.
 - **A clone registers the merge drivers alone** (REQ-172):
   `specgate harness init --merge-drivers` registers them in the clone's git
   config and writes no other file; `harness init` also wrote
