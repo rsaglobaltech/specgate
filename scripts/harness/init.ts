@@ -236,6 +236,8 @@ function usage() {
       "    --test-cmd <cmd>     The gate. Detected from the build files if omitted.\n" +
       "    --force              Overwrite files that already exist.\n" +
       "    --stdout             Print both files instead of writing them.\n" +
+      "    --merge-drivers      Only register the merge drivers in this clone's git config;\n" +
+      "                         every developer's clone needs them once. Writes no other file.\n" +
       "    --json               Machine-readable output.\n" +
       "    -h, --help           Show this help.\n\n"
   );
@@ -247,6 +249,8 @@ export interface HarnessInitOptions {
   testCmd: string | null;
   force: boolean;
   stdout: boolean;
+  /** Only register the merge drivers in this clone (REQ-172). */
+  mergeDrivers: boolean;
   json: boolean;
 }
 
@@ -256,6 +260,7 @@ function parseArgs(argv: string[]): HarnessInitOptions {
     testCmd: null,
     force: false,
     stdout: false,
+    mergeDrivers: false,
     json: wantsJson(argv),
   };
   for (let i = 0; i < argv.length; i++) {
@@ -264,6 +269,7 @@ function parseArgs(argv: string[]): HarnessInitOptions {
     else if (a === "--test-cmd" && argv[i + 1]) opts.testCmd = argv[++i];
     else if (a === "--force") opts.force = true;
     else if (a === "--stdout") opts.stdout = true;
+    else if (a === "--merge-drivers") opts.mergeDrivers = true;
     else if (a === "--json") continue;
     else if (a === "--format" && argv[i + 1] === "json") i++;
     else if (a === "--help" || a === "-h") {
@@ -363,6 +369,29 @@ export class InitCommand extends BaseCommand {
           fix: "Run from inside a spec-driven project, or pass --project-dir <path>.",
         }),
       ]);
+      return;
+    }
+
+    // A developer's clone needs the drivers, not the harness files (REQ-172).
+    if (opts.mergeDrivers) {
+      const problem = installMergeDriver(projectDir);
+      const status = problem
+        ? [problem]
+        : [
+            info(
+              "merge_driver_registered",
+              "Parallel branches no longer collide on the traceability matrix or on capability specs: the drivers are in this clone's git config.",
+              { target: ".gitattributes" }
+            ),
+          ];
+      io.emit({ projectDir, testCmd: null, files: [], status }, () => {
+        process.stdout.write(ui.header("harness init --merge-drivers"));
+        for (const d of status) {
+          const say = d.severity === "warning" ? ui.warn : ui.ok;
+          process.stdout.write(say(d.message));
+          if (d.fix) process.stdout.write(ui.fix(d.fix));
+        }
+      });
       return;
     }
 
@@ -485,7 +514,7 @@ export class InitCommand extends BaseCommand {
           "Parallel branches no longer collide on the traceability matrix or on capability specs: the rules are in .gitattributes, the drivers in this clone's git config.",
           {
             target: ".gitattributes",
-            fix: "Commit .gitattributes. Every other clone and CI runs `specgate harness init` once to register the driver in its own git config.",
+            fix: "Commit .gitattributes. Every other clone and CI runs `specgate harness init --merge-drivers` once to register the drivers in its own git config.",
           }
         )
       );
@@ -614,7 +643,7 @@ export function driverCommand(file: string, args: string[] = []): string {
     "o=$1; a=$2; b=$3; f=$4; shift 3; " +
     'if [ -f "$f" ]; then exec node "$@" "$o" "$a" "$b"; fi; ' +
     'echo "specgate: merge driver $f not found, so this file was merged by lines. ' +
-    'Fix: run specgate harness init." >&2; ' +
+    'Fix: run specgate harness init --merge-drivers." >&2; ' +
     'exec git merge-file -L ours -L base -L theirs "$a" "$o" "$b"';
   return `sh -c '${script}' specgate-merge %O %A %B ${[file, ...args].join(" ")}`;
 }
@@ -758,7 +787,7 @@ export function installMergeDriver(projectDir: string) {
         fix:
           "`.gitattributes` is committed and names the driver; the driver itself is " +
           "local git config, so every other clone and CI runner must run `specgate " +
-          "harness init` once or git falls back to its built-in merge (safe, just " +
+          "harness init --merge-drivers` once or git falls back to its built-in merge (safe, just " +
           "noisier on parallel branches).\n" +
           "To make it reproducible instead, add specgate to the project: " +
           "`npm i -D @rsaglobaltech/specgate` and re-run this — the driver is then " +

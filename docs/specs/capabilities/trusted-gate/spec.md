@@ -283,6 +283,18 @@ The system SHALL register each merge driver so that, when the specgate file it r
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-169.feature kind=functional status=Implemented test=tests/cli.test.ts -->
 
+### Requirement: REQ-172 — A clone registers the merge drivers alone
+
+The system SHALL, on `specgate harness init --merge-drivers`, register the merge drivers in the clone's git config, adding their rules to `.gitattributes` only when they are missing, and write no other file; and the messages that tell a clone to register the drivers SHALL name `specgate harness init --merge-drivers`.
+
+#### Scenario: SCN-172a — A developer's fresh clone
+
+- GIVEN a clone whose committed `.gitattributes` routes the capability specs and the matrix to the drivers, with a committed `harness.config.yaml`, and no driver in its git config
+- WHEN the developer runs `specgate harness init --merge-drivers`
+- THEN `merge.specgate-spec.driver` and `merge.specgate-matrix.driver` are set in its git config, and `git status --porcelain` is empty
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-172.feature kind=functional status=Implemented test=tests/cli.test.ts -->
+
 ### Requirement: REQ-183 — The gate fills the test command's placeholders outside the harness
 
 The system SHALL run the test command of `specgate check` with `{req}`, `{scenario}` and `{feature_file}` empty, as the gate of the whole project, and the one of `apply` and `done` for a single requirement with `{req}` set to it; several requirements at once run it with `{req}` empty.

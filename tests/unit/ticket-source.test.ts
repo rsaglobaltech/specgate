@@ -446,6 +446,49 @@ function story(key: string, criteria: string[], extra: Record<string, unknown> =
 const codes = (issue: unknown) =>
   (checkTicket(readTicket(issue)) as Array<{ code: string }>).map((d) => d.code);
 
+test("REQ-171 SCN-171a: the check says where the change will go", () => {
+  // Found handing a ticket over from agentkit: ready, branch made, and only
+  // then "No capability for PAY-123".
+  const dir = project(JIRA);
+  try {
+    fs.mkdirSync(path.join(dir, "docs", "specs", "capabilities", "billing"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "docs", "specs", "capabilities", "billing", "spec.md"),
+      "# Billing\n\n## Requirements\n"
+    );
+    const file = exported(
+      dir,
+      "PAY-123.json",
+      story("PAY-123", ["Given an invoice, when it is shown, then it shows the total."])
+    );
+    const read = (args: string[]) => {
+      const run = runPropose(dir, ["--from-ticket", file, "--check", "--json", ...args]);
+      return {
+        run,
+        doc: JSON.parse(run.stdout) as {
+          ready: boolean;
+          capability: string | null;
+          status: Array<{ code: string; severity: string; message: string; fix?: string }>;
+        },
+      };
+    };
+
+    const none = read([]);
+    assert.equal(none.doc.ready, true, none.run.stdout);
+    assert.equal(none.doc.capability, null);
+    const warned = none.doc.status.find((d) => d.code === "ticket_no_capability");
+    assert.ok(warned, none.run.stdout);
+    assert.equal(warned.severity, "warning");
+    assert.match(`${warned.message} ${warned.fix ?? ""}`, /billing/);
+
+    const given = read(["--capability", "billing"]);
+    assert.equal(given.doc.capability, "billing");
+    assert.ok(!given.doc.status.some((d) => d.code === "ticket_no_capability"), given.run.stdout);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("REQ-146 SCN-146a: no criteria is T1, nothing is written", () => {
   const dir = project(JIRA);
   try {
@@ -788,6 +831,30 @@ test("REQ-148 SCN-148b: check warns for each commit that does not name the ticke
   const dir = repo();
   try {
     git(dir, "checkout", "-q", "-b", "feature/KAN-13-register-vehicle-entry");
+    fs.writeFileSync(path.join(dir, "a.txt"), "a");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "KAN-13 REQ-151: normalize plates");
+    fs.writeFileSync(path.join(dir, "b.txt"), "b");
+    git(dir, "add", "-A");
+    git(dir, "commit", "-qm", "fix typo");
+    const run = spawnSync(process.execPath, [CLI, "check", dir, "--json"], {
+      encoding: "utf8",
+      env: { ...process.env, NO_COLOR: "1" },
+    });
+    const doc = JSON.parse(run.stdout) as { status: Array<{ code: string; message: string }> };
+    const missing = doc.status.filter((d) => d.code === "ticket_key_missing");
+    assert.equal(missing.length, 1, run.stdout);
+    assert.match(missing[0].message, /fix typo/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-170 SCN-170a: a team's branch is still the ticket's", () => {
+  // agentkit names a ticket's branch feature/<team>/<KEY>, across repositories.
+  const dir = repo();
+  try {
+    git(dir, "checkout", "-q", "-b", "feature/parking/KAN-13");
     fs.writeFileSync(path.join(dir, "a.txt"), "a");
     git(dir, "add", "-A");
     git(dir, "commit", "-qm", "KAN-13 REQ-151: normalize plates");

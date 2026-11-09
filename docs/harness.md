@@ -139,7 +139,8 @@ git add .gitattributes && git commit -m "merge the matrix by row"
 ```
 
 The driver is local git configuration, so every clone and every CI job needs
-`specgate harness init` once. Until then git falls back to its normal merge,
+`specgate harness init --merge-drivers` once: it registers the drivers and
+writes no other file. Until then git falls back to its normal merge,
 and `specgate doctor` reports the gap.
 
 It still **conflicts** when two branches set the same row to different values.
@@ -166,7 +167,8 @@ delete the marker lines, and run `specgate check`.
 run this machine's copy of specgate. If that copy goes away (an `npx` cache
 cleared, a global install removed), the drivers say so and git merges these
 files by lines, with its usual conflict markers, and `specgate doctor` warns.
-Run `specgate harness init` again to point them at the copy you have now.
+Run `specgate harness init --merge-drivers` again to point them at the copy you
+have now.
 
 ## Run more than one requirement at a time
 
