@@ -9,6 +9,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.31.0] — 2026-11-09
+
+A project checked by CI from its first push: `init` and `adopt` install the
+full spec gate, which validates more by default and says, step by step, what
+it checks and how to remove it.
+
 ### Added
 
 - **A new project is checked by CI from its first push** (REQ-455):
