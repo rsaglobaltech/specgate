@@ -2242,3 +2242,12 @@ code.block {
   padding: 10px 0;
   border-top: 1px solid var(--line);
 }
+.branch-line {
+  margin: 0;
+  color: var(--fg-soft);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.branch-line code {
+  font: 13px var(--mono);
+}

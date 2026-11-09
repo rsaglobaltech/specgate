@@ -24,7 +24,7 @@ The system SHALL read the branch the project is on and, when it names a ticket â
 - WHEN Home is opened, and KAN-13 is then opened from Changes
 - THEN Home says the branch is KAN-13's, of the team parking, and the change is opened on `feature/parking/KAN-13` with `--no-branch`, no other branch created
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-448 â€” Publishing a ticket's change, said and confirmed
 

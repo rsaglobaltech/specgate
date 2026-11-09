@@ -20,6 +20,9 @@ export interface ChangeView {
   tasks: { done: number; total: number; items: Array<{ text: string; done: boolean }> };
   proposal: string;
   canArchive: boolean;
+  /** The ticket it was opened from, and its address on the ALM (REQ-447). */
+  ticket?: string | null;
+  ticketUrl?: string | null;
 }
 
 export interface ActionProps {
@@ -55,6 +58,18 @@ export function ChangePanel({
       <div class="row spread">
         <h3 id={`chg-${change.id}`}>
           {t(lang, "theChange")} <code class="where">{change.id}</code>
+          {change.ticket ? (
+            <>
+              {" · "}
+              {change.ticketUrl ? (
+                <a href={change.ticketUrl} target="_blank" rel="noopener noreferrer">
+                  {change.ticket}
+                </a>
+              ) : (
+                <span>{change.ticket}</span>
+              )}
+            </>
+          ) : null}
         </h3>
         <span class="faint">
           {t(lang, "reqsDelivered")

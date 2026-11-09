@@ -10,9 +10,17 @@ export interface HomeProps {
   lang: Lang;
   route: RouteData;
   home: HomeData | null;
+  /** The branch the project is on, and the ticket and team it names (REQ-447). */
+  branch?: BranchView | null;
 }
 
-export function Home({ lang, route, home }: HomeProps) {
+export interface BranchView {
+  branch: string | null;
+  ticket: string | null;
+  team: string | null;
+}
+
+export function Home({ lang, route, home, branch }: HomeProps) {
   const next = route.next;
   return (
     <>
@@ -31,6 +39,18 @@ export function Home({ lang, route, home }: HomeProps) {
           </a>
         ) : null}
       </section>
+      {branch?.ticket ? (
+        <p class="branch-line">
+          {t(lang, "onBranch")} <code>{branch.branch}</code> ·{" "}
+          {branch.team ? (
+            <>
+              {t(lang, "branchOfTeam").replace("{T}", branch.ticket)} <strong>{branch.team}</strong>
+            </>
+          ) : (
+            t(lang, "branchOf").replace("{T}", branch.ticket)
+          )}
+        </p>
+      ) : null}
       {home ? (
         <section class="tiles" aria-label={t(lang, "home")}>
           <div class="tile">

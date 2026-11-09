@@ -11,7 +11,12 @@ import type { AddressInfo } from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
-import { actionView, planAction, runAction } from "../../scripts/lib/studio-actions";
+import {
+  actionView,
+  planAction,
+  runAction,
+  ticketBranchView,
+} from "../../scripts/lib/studio-actions";
 import { changesView } from "../../scripts/lib/studio-app";
 
 const studioUi = () => require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
@@ -223,4 +228,132 @@ test("REQ-446: a ticket that is not ready shows its errors with their fix, and c
   assert.match(html, /Add them in Jira as Given \/ When \/ Then\./);
   assert.doesNotMatch(html, /id="ticket-open"/);
   assert.doesNotMatch(html, /ticket-capability/);
+});
+
+// ── REQ-447: the ticket's branch, known before the change is opened ──────
+
+test("REQ-447 SCN-447a: the branch agentkit made is read as KAN-13's, of the team parking", () => {
+  const dir = project("http://127.0.0.1:9", "KAN");
+  try {
+    assert.deepEqual(ticketBranchView(dir), { branch: "develop", ticket: null, team: null });
+    git(dir, "checkout", "-q", "-b", "feature/parking/KAN-13");
+    assert.deepEqual(ticketBranchView(dir), {
+      branch: "feature/parking/KAN-13",
+      ticket: "KAN-13",
+      team: "parking",
+    });
+    git(dir, "checkout", "-q", "-b", "bugfix/KAN-14-wrong-fee");
+    assert.deepEqual(ticketBranchView(dir), {
+      branch: "bugfix/KAN-14-wrong-fee",
+      ticket: "KAN-14",
+      team: null,
+    });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-447 SCN-447a: on the ticket's branch it opens with --no-branch; elsewhere it names the branch it creates", async () => {
+  const board = await jira([story("KAN-13", "Register vehicle entry")]);
+  const dir = project(board.url, "KAN");
+  try {
+    // On develop: the review names the branch propose will create.
+    assert.equal(runAction(dir, "ticket-check", { ticket: "KAN-13" }).ok, true);
+    let review = (await ended(dir)).json as { opens: unknown };
+    assert.deepEqual(review.opens, {
+      branch: "feature/KAN-13-register-vehicle-entry",
+      existing: false,
+      folder: "docs/specs/changes/kan-13-register-vehicle-entry",
+    });
+    assert.deepEqual(planAction(dir, "propose-ticket", { ticket: "KAN-13" }), {
+      ok: true,
+      argv: ["propose", "--from-ticket", "KAN-13"],
+    });
+    // On the branch agentkit made: that one, and no other.
+    git(dir, "checkout", "-q", "-b", "feature/parking/KAN-13");
+    assert.equal(runAction(dir, "ticket-check", { ticket: "KAN-13" }).ok, true);
+    review = (await ended(dir)).json as { opens: unknown };
+    assert.deepEqual(review.opens, {
+      branch: "feature/parking/KAN-13",
+      existing: true,
+      folder: "docs/specs/changes/kan-13-register-vehicle-entry",
+    });
+    const started = runAction(dir, "propose-ticket", { ticket: "KAN-13", capability: "orders" });
+    assert.deepEqual(started.ok && started.run.argv, [
+      "propose",
+      "--from-ticket",
+      "KAN-13",
+      "--capability",
+      "orders",
+      "--no-branch",
+    ]);
+    const v = await ended(dir);
+    assert.equal(v.last?.exit, 0, v.output);
+    assert.equal(
+      git(dir, "rev-parse", "--abbrev-ref", "HEAD").stdout.trim(),
+      "feature/parking/KAN-13"
+    );
+    assert.deepEqual(
+      git(dir, "branch", "--format=%(refname:short)").stdout.trim().split("\n").sort(),
+      ["develop", "feature/parking/KAN-13"]
+    );
+    // Changes shows the ticket of the change, linked to it.
+    const opened = changesView(dir).changes.find((c) => c.id === "kan-13-register-vehicle-entry");
+    assert.equal(opened?.ticket, "KAN-13");
+    assert.equal(opened?.ticketUrl, `${board.url}/browse/KAN-13`);
+  } finally {
+    board.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-447 SCN-447a: Home says whose branch it is; the review says which branch it opens on", () => {
+  const ui = studioUi();
+  const home: string = ui.renderHome("en", { next: null, steps: [] }, null, {
+    branch: "feature/parking/KAN-13",
+    ticket: "KAN-13",
+    team: "parking",
+  });
+  assert.match(home, /feature\/parking\/KAN-13/);
+  assert.match(home, /KAN-13’s branch, of the team <strong>parking<\/strong>/);
+  assert.doesNotMatch(ui.renderHome("en", { next: null, steps: [] }, null, null), /branch/i);
+  const opens = (existing: boolean) =>
+    ui.renderFromTicket("en", {
+      review: {
+        ...READY,
+        capability: "orders",
+        opens: {
+          branch: existing ? "feature/parking/KAN-13" : "feature/PAY-123-refund-an-order",
+          existing,
+          folder: "docs/specs/changes/pay-123-refund-an-order",
+        },
+      },
+    });
+  assert.match(
+    opens(true),
+    /On the branch <code>feature\/parking\/KAN-13<\/code>, which names the ticket/
+  );
+  assert.match(opens(false), /Creates the branch <code>feature\/PAY-123-refund-an-order<\/code>/);
+});
+
+test("REQ-447: a change opened from a ticket shows the ticket in Changes, linked to it", () => {
+  const ui = studioUi();
+  const change = {
+    id: "kan-13-register-vehicle-entry",
+    module: null,
+    approved: "",
+    requirements: [],
+    delivered: 0,
+    tasks: { done: 0, total: 0, items: [] },
+    proposal: "",
+    canArchive: false,
+    ticket: "KAN-13",
+    ticketUrl: "https://example.atlassian.net/browse/KAN-13",
+  };
+  const html: string = ui.renderChangePanel("en", change);
+  assert.match(
+    html,
+    /<a href="https:\/\/example\.atlassian\.net\/browse\/KAN-13" target="_blank" rel="noopener noreferrer">KAN-13<\/a>/
+  );
+  assert.match(ui.renderChangePanel("en", { ...change, ticketUrl: null }), /KAN-13/);
 });

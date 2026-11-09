@@ -142,7 +142,13 @@ function git(dir: string, args: string[]) {
   return spawnSync("git", ["-C", dir, ...args], { encoding: "utf8" });
 }
 
-const isBug = (t: Ticket) => /^(bug|defect|fehler|incidencia|error)$/i.test(t.type.trim());
+const isBug = (t: Pick<Ticket, "type">) =>
+  /^(bug|defect|fehler|incidencia|error)$/i.test(t.type.trim());
+
+/** The branch `propose --from-ticket` creates for a ticket: `feature/KAN-13-register-vehicle-entry`. */
+export function ticketBranchName(t: Pick<Ticket, "key" | "summary" | "type">): string {
+  return `${isBug(t) ? "bugfix" : "feature"}/${t.key}${changeIdFor(t).slice(t.key.length)}`;
+}
 
 /**
  * `feature/KAN-13-register-vehicle-entry`, or `bugfix/…` for a bug: the key is
@@ -154,7 +160,7 @@ function ticketBranch(dir: string, t: Ticket): { name: string | null; note: stri
   if (git(dir, ["rev-parse", "--is-inside-work-tree"]).status !== 0) {
     return { name: null, note: null };
   }
-  const name = `${isBug(t) ? "bugfix" : "feature"}/${t.key}${changeIdFor(t).slice(t.key.length)}`;
+  const name = ticketBranchName(t);
   if (git(dir, ["status", "--porcelain"]).stdout.trim()) {
     return {
       name: null,
@@ -260,7 +266,7 @@ function readIf(file: string): string | undefined {
 }
 
 /** `kan-13-register-vehicle-entry`: the key, then the summary's first words. */
-export function changeIdFor(t: Ticket): string {
+export function changeIdFor(t: Pick<Ticket, "key" | "summary">): string {
   // "Groß" is "gross", "Ärzte" "aerzte" (REQ-161); other accents drop.
   const slug = t.summary
     .replace(/ß/g, "ss")

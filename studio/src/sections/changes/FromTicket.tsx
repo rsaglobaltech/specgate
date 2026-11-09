@@ -19,6 +19,8 @@ export interface TicketReview {
   errors: number;
   warnings: number;
   status: Array<{ severity: string; code: string; message: string; fix?: string }>;
+  /** The branch and folder it would be opened on: the one that names the ticket, or the one created (REQ-447). */
+  opens?: { branch: string; existing: boolean; folder: string };
 }
 
 export interface OpenChoice {
@@ -137,6 +139,20 @@ export function FromTicket({
                   </select>
                 </>
               )}
+              {review.opens ? (
+                <p>
+                  {review.opens.existing ? (
+                    <>
+                      {t(lang, "ticketOnBranch")} <code>{review.opens.branch}</code>
+                      {t(lang, "ticketOnBranchWhy")}
+                    </>
+                  ) : (
+                    <>
+                      {t(lang, "ticketCreatesBranch")} <code>{review.opens.branch}</code>
+                    </>
+                  )}
+                </p>
+              ) : null}
               <div class="row">
                 <Busy
                   id="ticket-open"
