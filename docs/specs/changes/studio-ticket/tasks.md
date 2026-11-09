@@ -10,5 +10,5 @@
 
 - [x] 2.1 REQ-446 — review the ticket: check --json read, findings, capability chosen
 - [x] 2.2 REQ-447 — the ticket's branch: read endpoint, Home, --no-branch, the ticket in Changes
-- [ ] 2.3 REQ-448 — publishing said and confirmed; --no-push
+- [x] 2.3 REQ-448 — publishing said and confirmed; --no-push
 - [ ] 2.4 The browser journey against a mock Jira; docs/studio.md

@@ -33,6 +33,8 @@ export interface OpenChoice {
 export function ticketOpenArgs(review: TicketReview, choice: OpenChoice): Record<string, string> {
   const args: Record<string, string> = { ticket: review.ticket.key };
   if (!review.capability && choice.capability) args.capability = choice.capability;
+  // Pushed by default (REQ-448): "Don't push yet" holds it back.
+  if (!choice.push) args.push = "no";
   return args;
 }
 
@@ -42,6 +44,8 @@ export function FromTicket({
   lang,
   capabilities,
   review: given,
+  confirming: asking = false,
+  push: pushing = true,
   run,
   output,
   json,
@@ -51,7 +55,12 @@ export function FromTicket({
   capabilities: string[];
   /** The review to show; else the one the last `ticket-check` printed. */
   review?: TicketReview | null;
+  /** Where it starts: asking to confirm, and whether it pushes. */
+  confirming?: boolean;
+  push?: boolean;
 } & ActionProps) {
+  const [confirming, setConfirming] = useState(asking);
+  const [push, setPush] = useState(pushing);
   const [key, setKey] = useState("");
   const [chosen, setChosen] = useState("");
   const valid = /^[A-Z][A-Z0-9_]{0,19}-\d{1,9}$/.test(key);
@@ -153,18 +162,52 @@ export function FromTicket({
                   )}
                 </p>
               ) : null}
-              <div class="row">
-                <Busy
-                  id="ticket-open"
-                  busyLabel={t(lang, "starting")}
-                  disabled={!capability}
-                  onRun={() =>
-                    onAction("propose-ticket", ticketOpenArgs(review, { capability, push: true }))
-                  }
-                >
-                  {t(lang, "ticketOpen")}
-                </Busy>
-              </div>
+              {review.opens ? (
+                <p class="ticket-publish">
+                  {t(lang, "ticketCommits")} <code>{`${review.opens.folder}/`}</code>{" "}
+                  {t(lang, "ticketNothingElse")} <code>{review.opens.branch}</code>
+                  {t(lang, push ? "ticketThenPush" : "ticketNoPush")}
+                </p>
+              ) : null}
+              <label class="ticket-hold">
+                <input
+                  id="ticket-no-push"
+                  type="checkbox"
+                  checked={!push}
+                  onChange={(e) => setPush(!(e.target as HTMLInputElement).checked)}
+                />{" "}
+                {t(lang, "ticketDontPush")}
+              </label>
+              {confirming ? (
+                <div class="row" role="group" aria-label={t(lang, "ticketOpen")}>
+                  <Busy
+                    id="ticket-confirm"
+                    busyLabel={t(lang, "starting")}
+                    disabled={!capability}
+                    onRun={() =>
+                      onAction("propose-ticket", ticketOpenArgs(review, { capability, push }))
+                    }
+                    onDone={() => setConfirming(false)}
+                  >
+                    {t(lang, push ? "ticketConfirmPush" : "ticketConfirmNoPush")}
+                  </Busy>
+                  <button type="button" class="btn-ghost" onClick={() => setConfirming(false)}>
+                    {t(lang, "cancel")}
+                  </button>
+                </div>
+              ) : (
+                <div class="row">
+                  <button
+                    id="ticket-open"
+                    type="button"
+                    class="btn-primary"
+                    disabled={!capability}
+                    onClick={() => setConfirming(true)}
+                  >
+                    {t(lang, "ticketOpen")}
+                  </button>
+                </div>
+              )}
             </>
           ) : null}
         </div>

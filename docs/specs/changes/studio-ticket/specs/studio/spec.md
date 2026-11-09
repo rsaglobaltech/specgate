@@ -36,4 +36,4 @@ The system SHALL say, before a ticket's change is opened, that it will commit th
 - WHEN it is opened with "Don't push yet" and confirmed
 - THEN the command run is `propose --from-ticket KAN-13 --no-branch --no-push`, the branch holds the change's commit, and nothing was pushed
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

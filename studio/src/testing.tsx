@@ -243,13 +243,20 @@ export { ticketOpenArgs } from "./sections/changes/FromTicket";
 
 export function renderFromTicket(
   lang: Lang,
-  opts: { review: TicketReview | null; capabilities?: string[] }
+  opts: {
+    review: TicketReview | null;
+    capabilities?: string[];
+    confirming?: boolean;
+    push?: boolean;
+  }
 ): string {
   const none = async () => ({ ok: true });
   return render(
     <FromTicket
       lang={lang}
       review={opts.review}
+      confirming={opts.confirming}
+      push={opts.push}
       capabilities={opts.capabilities || []}
       run={null}
       output=""

@@ -357,3 +357,126 @@ test("REQ-447: a change opened from a ticket shows the ticket in Changes, linked
   );
   assert.match(ui.renderChangePanel("en", { ...change, ticketUrl: null }), /KAN-13/);
 });
+
+// ── REQ-448: publishing a ticket's change, said and confirmed ─────────────
+
+/** KAN-13 in the epic KAN-6, which alm.config.yaml maps to `orders`; the project on its branch, with an origin. */
+async function onKan13(): Promise<{ dir: string; origin: string; close: () => void }> {
+  const board = await jira([
+    story("KAN-13", "Register vehicle entry", { parent: { key: "KAN-6" } }),
+  ]);
+  const dir = project(board.url, "KAN");
+  fs.appendFileSync(path.join(dir, "alm.config.yaml"), "epics:\n  KAN-6: orders\n");
+  git(dir, "commit", "-q", "-am", "epics");
+  const origin = fs.mkdtempSync(path.join(os.tmpdir(), "sg-origin-"));
+  git(origin, "init", "-q", "--bare");
+  git(dir, "remote", "add", "origin", origin);
+  git(dir, "checkout", "-q", "-b", "feature/parking/KAN-13");
+  return {
+    dir,
+    origin,
+    close: () => {
+      board.close();
+      fs.rmSync(dir, { recursive: true, force: true });
+      fs.rmSync(origin, { recursive: true, force: true });
+    },
+  };
+}
+
+const remoteBranches = (origin: string) =>
+  git(origin, "for-each-ref", "--format=%(refname:short)", "refs/heads").stdout.trim();
+
+test("REQ-448 SCN-448a: opened with Don't push yet — --no-push, the change committed on its branch, nothing pushed", async () => {
+  const kan = await onKan13();
+  try {
+    assert.equal(runAction(kan.dir, "ticket-check", { ticket: "KAN-13" }).ok, true);
+    const review = (await ended(kan.dir)).json as { ready: boolean; capability: string };
+    assert.equal(review.ready, true);
+    assert.equal(review.capability, "orders");
+    const args = studioUi().ticketOpenArgs(review, { capability: "", push: false });
+    const started = runAction(kan.dir, "propose-ticket", args);
+    assert.deepEqual(started.ok && started.run.argv, [
+      "propose",
+      "--from-ticket",
+      "KAN-13",
+      "--no-branch",
+      "--no-push",
+    ]);
+    const v = await ended(kan.dir);
+    assert.equal(v.last?.exit, 0, v.output);
+    // The branch holds the change's commit, and only the change's folder.
+    const files = git(kan.dir, "show", "--name-only", "--format=", "HEAD")
+      .stdout.trim()
+      .split("\n");
+    assert.ok(files.length > 0);
+    for (const f of files)
+      assert.match(f, /^docs\/specs\/changes\/kan-13-register-vehicle-entry\//);
+    assert.equal(remoteBranches(kan.origin), "");
+  } finally {
+    kan.close();
+  }
+});
+
+test("REQ-448: by default the ticket's branch is pushed once the change is opened", async () => {
+  const kan = await onKan13();
+  try {
+    const args = studioUi().ticketOpenArgs(
+      { ticket: { key: "KAN-13", summary: "", type: "Story" }, capability: "orders" },
+      { capability: "", push: true }
+    );
+    assert.deepEqual(args, { ticket: "KAN-13" });
+    assert.equal(runAction(kan.dir, "propose-ticket", args).ok, true);
+    const v = await ended(kan.dir);
+    assert.equal(v.last?.exit, 0, v.output);
+    assert.equal(remoteBranches(kan.origin), "feature/parking/KAN-13");
+  } finally {
+    kan.close();
+  }
+});
+
+test("REQ-448: push takes only no", () => {
+  const dir = project("http://127.0.0.1:9");
+  try {
+    assert.deepEqual(planAction(dir, "propose-ticket", { ticket: "PAY-1", push: "no" }), {
+      ok: true,
+      argv: ["propose", "--from-ticket", "PAY-1", "--no-push"],
+    });
+    for (const push of ["yes", "--force", true]) {
+      const refused = planAction(dir, "propose-ticket", { ticket: "PAY-1", push });
+      assert.equal(!refused.ok && refused.code, "argument_invalid", String(push));
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-448 SCN-448a: before opening, the studio says what it commits and pushes, and asks", () => {
+  const ui = studioUi();
+  const review = {
+    ...READY,
+    ticket: { key: "KAN-13", summary: "Register vehicle entry", type: "Story", url: "" },
+    capability: "orders",
+    status: [],
+    opens: {
+      branch: "feature/parking/KAN-13",
+      existing: true,
+      folder: "docs/specs/changes/kan-13-register-vehicle-entry",
+    },
+  };
+  const said: string = ui.renderFromTicket("en", { review });
+  assert.match(
+    said,
+    /Commits <code>docs\/specs\/changes\/kan-13-register-vehicle-entry\/<\/code> and nothing else on <code>feature\/parking\/KAN-13<\/code>, then pushes the branch to origin\./
+  );
+  assert.match(said, /<input id="ticket-no-push" type="checkbox"/);
+  assert.match(said, /Don’t push yet/);
+  // Opening asks first; nothing runs until it is confirmed.
+  assert.match(said, /id="ticket-open"[^>]*>Open the change</);
+  assert.doesNotMatch(said, /id="ticket-confirm"/);
+  const asking: string = ui.renderFromTicket("en", { review, confirming: true });
+  assert.match(asking, /id="ticket-confirm"[^>]*>Yes, commit and push</);
+  assert.match(asking, /Cancel/);
+  const held: string = ui.renderFromTicket("en", { review, confirming: true, push: false });
+  assert.match(held, /and does not push it: push it when you are ready\./);
+  assert.match(held, /id="ticket-confirm"[^>]*>Yes, commit without pushing</);
+});

@@ -121,8 +121,9 @@ const ACTIONS: Record<string, Action> = {
     json: true,
   },
   "propose-ticket": {
-    args: { ticket, capability },
-    optional: ["capability"],
+    // Pushed by default, as the CLI does; "no" holds it back (REQ-448).
+    args: { ticket, capability, push: (v) => (v === "no" ? null : 'only "no"') },
+    optional: ["capability", "push"],
     // On the branch that names the ticket — one agentkit made — that branch, and no other (REQ-447).
     argv: (a, dir) => [
       "propose",
@@ -130,6 +131,7 @@ const ACTIONS: Record<string, Action> = {
       a.ticket,
       ...(a.capability ? ["--capability", a.capability] : []),
       ...(ticketBranchView(dir).ticket === a.ticket ? ["--no-branch"] : []),
+      ...(a.push === "no" ? ["--no-push"] : []),
     ],
   },
   check: { args: {}, argv: () => ["check"], inFolder: true },
