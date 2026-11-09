@@ -15,6 +15,16 @@ const ES: Rule[] = [
     /^(REQ-\d+) has no test that names it yet \(TDD-1\)\.$/,
     "$1 todavía no tiene una prueba que lo nombre (TDD-1).",
   ],
+  [
+    "ticket_no_capability",
+    /^No capability for ([A-Z][A-Z0-9_]*-\d+): it has no epic\.$/,
+    "Sin capacidad para $1: no tiene épica.",
+  ],
+  [
+    "ticket_no_capability",
+    /^No capability for ([A-Z][A-Z0-9_]*-\d+): its epic (\S+) is not mapped\.$/,
+    "Sin capacidad para $1: su épica $2 no está asignada a ninguna.",
+  ],
   ["done_validate_failed", /^validation failed$/, "la validación de la spec falló"],
   ["done_arch_failed", /^the architecture check failed$/, "la comprobación de arquitectura falló"],
   ["done_tests_failed", /^the project's tests failed$/, "las pruebas del proyecto fallaron"],

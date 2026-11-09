@@ -480,3 +480,27 @@ test("REQ-448 SCN-448a: before opening, the studio says what it commits and push
   assert.match(held, /and does not push it: push it when you are ready\./);
   assert.match(held, /id="ticket-confirm"[^>]*>Yes, commit without pushing</);
 });
+
+test("REQ-446: in Spanish, the review's findings are said in Spanish, with the same code", () => {
+  const ui = studioUi();
+  const html: string = ui.renderFromTicket("es", {
+    review: READY,
+    capabilities: ["billing", "orders"],
+  });
+  assert.match(html, /Listo para abrir/);
+  assert.match(html, /Sin capacidad para PAY-123: no tiene épica\./);
+  assert.match(
+    ui.renderFromTicket("es", {
+      review: {
+        ...READY,
+        status: [
+          {
+            ...READY.status[0],
+            message: "No capability for PAY-123: its epic PAY-6 is not mapped.",
+          },
+        ],
+      },
+    }),
+    /Sin capacidad para PAY-123: su épica PAY-6 no está asignada a ninguna\./
+  );
+});
