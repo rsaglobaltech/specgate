@@ -138,15 +138,15 @@
 | REQ-200 | SCN-200a | `features/harness/REQ-200.feature` | - | - | - | - | - | tests/unit/harness-init.test.ts | Implemented |
 | REQ-201 | SCN-201a | `features/live-harness/REQ-201.feature` | - | - | - | - | - | tests/unit/studio-answer.test.ts | Implemented |
 | REQ-203 | SCN-203a | `features/live-harness/REQ-203.feature` | - | - | - | - | - | tests/unit/studio-answer.test.ts | Implemented |
-| REQ-204 | SCN-204a | `features/studio/REQ-204.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-204 | SCN-204a | `features/studio/REQ-204.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-205 | SCN-205a | `features/studio/REQ-205.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
-| REQ-206 | SCN-206a | `features/studio/REQ-206.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-206 | SCN-206a | `features/studio/REQ-206.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-207 | SCN-207a | `features/studio/REQ-207.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
-| REQ-208 | SCN-208a | `features/studio/REQ-208.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-208 | SCN-208a | `features/studio/REQ-208.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-209 | SCN-209a | `features/studio/REQ-209.feature` | - | - | - | - | - | tests/unit/harness-run.test.ts | Implemented |
-| REQ-210 | SCN-210a | `features/studio/REQ-210.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts | Implemented |
+| REQ-210 | SCN-210a | `features/studio/REQ-210.feature` | - | - | - | - | - | tests/unit/studio-app.test.ts, tests/unit/studio-unblock.test.ts | Implemented |
 | REQ-211 | SCN-211a | `features/studio/REQ-211.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
-| REQ-212 | SCN-212a | `features/studio/REQ-212.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
+| REQ-212 | SCN-212a | `features/studio/REQ-212.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts, tests/unit/studio-redesign.test.ts | Implemented |
 | REQ-213 | SCN-213a | `features/studio/REQ-213.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-214 | SCN-214a | `features/studio/REQ-214.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
 | REQ-215 | SCN-215a | `features/studio/REQ-215.feature` | - | - | - | - | - | tests/unit/studio-route.test.ts | Implemented |
@@ -169,6 +169,75 @@
 | REQ-226 | SCN-226a | `features/quality/REQ-226.feature` | - | - | - | - | - | tests/unit/quality-sonar.test.ts | Implemented |
 | REQ-227 | SCN-227a | `features/quality/REQ-227.feature` | - | - | - | - | - | tests/unit/quality-agents.test.ts | Implemented |
 | REQ-231 | SCN-231a | `features/quality/REQ-231.feature` | - | - | - | - | - | tests/unit/quality-arch.test.ts | Implemented |
+| REQ-236 | SCN-236a | `features/daily-surface/REQ-236.feature` | - | - | - | - | - | tests/unit/forja-front-door.test.ts | Implemented |
+| REQ-235 | SCN-235a | `features/quality/REQ-235.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-237 | SCN-237a | `features/quality/REQ-237.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-238 | SCN-238a | `features/quality/REQ-238.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
+| REQ-239 | SCN-239a | `features/quality/REQ-239.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
+| REQ-240 | SCN-240a | `features/quality/REQ-240.feature` | - | - | - | - | - | tests/unit/quality-baseline.test.ts | Implemented |
+| REQ-244 | SCN-244a | `features/brief-cards/REQ-244.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-245 | SCN-245a | `features/brief-cards/REQ-245.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-246 | SCN-246a | `features/brief-cards/REQ-246.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-247 | SCN-247a | `features/brief-cards/REQ-247.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
+| REQ-248 | SCN-248a | `features/brief-cards/REQ-248.feature` | - | - | - | - | - | tests/unit/draft-from-brief.test.ts | Implemented |
+| REQ-243 | SCN-243a | `features/daily-surface/REQ-243.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-249 | SCN-249a | `features/daily-surface/REQ-249.feature` | - | - | - | - | - | tests/unit/init-wizard.test.ts | Implemented |
+| REQ-241 | SCN-241a | `features/quality/REQ-241.feature` | - | - | - | - | - | tests/unit/quality-baseline.test.ts | Implemented |
+| REQ-250 | SCN-250a | `features/quality/REQ-250.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-251 | SCN-251a | `features/brief-cards/REQ-251.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-252 | SCN-252a | `features/brief-cards/REQ-252.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-253 | SCN-253a | `features/brief-cards/REQ-253.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-254 | SCN-254a | `features/quality/REQ-254.feature` | - | - | - | - | - | tests/unit/quality-checks.test.ts | Implemented |
+| REQ-257 | SCN-257a | `features/brief-cards/REQ-257.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-255 | SCN-255a | `features/daily-surface/REQ-255.feature` | - | - | - | - | - | tests/unit/shell-command.test.ts | Implemented |
+| REQ-256 | SCN-256a | `features/daily-surface/REQ-256.feature` | - | - | - | - | - | tests/unit/pet.test.ts | Implemented |
+| REQ-258 | SCN-258a | `features/quality/REQ-258.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-259 | SCN-259a | `features/brief-cards/REQ-259.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-260 | SCN-260a | `features/brief-cards/REQ-260.feature` | - | - | - | - | - | tests/unit/brief-cards.test.ts | Implemented |
+| REQ-261 | SCN-261a | `features/brief-cards/REQ-261.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
+| REQ-262 | SCN-262a | `features/brief-cards/REQ-262.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
+| REQ-263 | SCN-263a | `features/brief-cards/REQ-263.feature` | - | - | - | - | - | tests/unit/done-refuses-undeliverable.test.ts | Implemented |
+| REQ-273 | SCN-273a | `features/live-harness/REQ-273.feature` | - | - | - | - | - | tests/unit/live-gate-steps.test.ts | Implemented |
+| REQ-274 | SCN-274a | `features/live-harness/REQ-274.feature` | - | - | - | - | - | tests/unit/live-gate-steps.test.ts | Implemented |
+| REQ-275 | SCN-275a | `features/studio/REQ-275.feature` | - | - | - | - | - | tests/unit/live-gate-steps.test.ts | Implemented |
+| REQ-276 | SCN-276a | `features/quality/REQ-276.feature` | - | - | - | - | - | tests/unit/quality-presets.test.ts | Implemented |
+| REQ-265 | SCN-265a | `features/daily-surface/REQ-265.feature` | - | - | - | - | - | tests/unit/shell-command.test.ts | Implemented |
+| REQ-264 | SCN-264a | `features/harness/REQ-264.feature` | - | - | - | - | - | tests/unit/harness-run6.test.ts | Implemented |
+| REQ-268 | SCN-268a | `features/harness/REQ-268.feature` | - | - | - | - | - | tests/unit/harness-run6.test.ts | Implemented |
+| REQ-269 | SCN-269a | `features/harness/REQ-269.feature` | - | - | - | - | - | tests/unit/harness-run6.test.ts | Implemented |
+| REQ-271 | SCN-271a | `features/harness/REQ-271.feature` | - | - | - | - | - | tests/unit/harness-run6.test.ts | Implemented |
+| REQ-266 | SCN-266a | `features/quality/REQ-266.feature` | - | - | - | - | - | tests/unit/quality-worktree.test.ts | Implemented |
+| REQ-267 | SCN-267a | `features/quality/REQ-267.feature` | - | - | - | - | - | tests/unit/quality-worktree.test.ts | Implemented |
+| REQ-270 | SCN-270a | `features/studio/REQ-270.feature` | - | - | - | - | - | tests/unit/studio-inflight.test.ts | Implemented |
+| REQ-277 | SCN-277a | `features/brief-cards/REQ-277.feature` | - | - | - | - | - | tests/unit/draft-checklist.test.ts | Implemented |
+| REQ-278 | SCN-278a | `features/harness/REQ-278.feature` | - | - | - | - | - | tests/unit/agent-stream.test.ts | Implemented |
+| REQ-279 | SCN-279a | `features/harness/REQ-279.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
+| REQ-280 | SCN-280a | `features/studio/REQ-280.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
+| REQ-420 | SCN-420a | `features/agent-integration/REQ-420.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
+| REQ-421 | SCN-421a | `features/agent-integration/REQ-421.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
+| REQ-422 | SCN-422a | `features/agent-integration/REQ-422.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
+| REQ-423 | SCN-423a | `features/agent-integration/REQ-423.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
+| REQ-424 | SCN-424a | `features/agent-integration/REQ-424.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
+| REQ-425 | SCN-425a | `features/agent-integration/REQ-425.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
+| REQ-426 | SCN-426a | `features/agent-integration/REQ-426.feature` | - | - | - | - | - | tests/unit/guard-next-requirement.test.ts | Implemented |
+| REQ-427 | SCN-427a | `features/agent-integration/REQ-427.feature` | - | - | - | - | - | tests/unit/guard-next-requirement.test.ts | Implemented |
+| REQ-429 | SCN-429a | `features/studio/REQ-429.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
+| REQ-430 | SCN-430a | `features/studio/REQ-430.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
+| REQ-431 | SCN-431a | `features/studio/REQ-431.feature` | - | - | - | - | - | tests/unit/studio-unblock.test.ts | Implemented |
+| REQ-432 | SCN-432a | `features/studio/REQ-432.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
+| REQ-433 | SCN-433a | `features/studio/REQ-433.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
+| REQ-434 | SCN-434a | `features/studio/REQ-434.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
+| REQ-435 | SCN-435a | `features/studio/REQ-435.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts | Implemented |
+| REQ-436 | SCN-436a | `features/studio/REQ-436.feature` | - | - | - | - | - | tests/unit/studio-redesign.test.ts, e2e/studio/studio.spec.mjs | Implemented |
+| REQ-437 | SCN-437a | `features/studio/REQ-437.feature` | - | - | - | - | - | tests/unit/brief-plain-sections.test.ts | Implemented |
+| REQ-438 | SCN-438a | `features/studio/REQ-438.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-439 | SCN-439a | `features/studio/REQ-439.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-440 | SCN-440a | `features/studio/REQ-440.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-441 | SCN-441a | `features/studio/REQ-441.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-442 | SCN-442a | `features/studio/REQ-442.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-443 | SCN-443a | `features/studio/REQ-443.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-444 | SCN-444a | `features/studio/REQ-444.feature` | - | - | - | - | - | tests/unit/studio-cli-parity.test.ts | Implemented |
+| REQ-445 | SCN-445a | `features/studio/REQ-445.feature` | - | - | - | - | - | tests/unit/studio-port.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

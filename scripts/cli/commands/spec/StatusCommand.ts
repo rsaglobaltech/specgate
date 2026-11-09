@@ -8,12 +8,15 @@ import { BaseCommand } from "../../../lib/command";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
 import {
   openQuestions,
+  answeredQuestions,
   requirementTitles,
   specNotes,
 } from "../../../../packages/core/src/domain/DraftChecklist";
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { derivedMatrixFor, refreshDerivedMatrix } from "./MatrixCommand";
-import { briefProgress, draftNextCommand, ModuleStatus } from "./DraftCommand";
+import { briefProgress, draftNextCommand, ModuleStatus, DEFAULT_BRIEF } from "./DraftCommand";
+import { briefModules } from "../../../../packages/core/src/domain/DraftChecklist";
+import { rootBrief } from "../../../draft/brief-setup";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import { findForjaProject } from "../project/Forja";
 import { inFlightView, InFlightView, unwrittenNotes } from "../../../lib/in-flight";
@@ -24,6 +27,20 @@ import { c, sym } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { miniPet, petEnabled } from "../../../pet/pet";
 import { petFor } from "./PetCommand";
+import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+
+/**
+ * Whether the harness has an agent to run (REQ-271): the studio's Build said
+ * "set agent in harness.config.yaml" and nothing before it had (truck-flote, S58).
+ */
+function agentConfigured(projectDir: string): boolean {
+  try {
+    const config = readHarnessConfig(projectDir);
+    return Boolean(config && (config.agent || (config.attemptProfiles || []).length > 0));
+  } catch {
+    return true;
+  }
+}
 
 /**
  * The lockfile, as far as `status` reads it. `readLock` returns the lock's
@@ -48,6 +65,8 @@ export interface QueueItem {
   featureFile?: string;
   /** The open question that blocks it, as `Q3 (docs/specs/…/questions.md)`. */
   question?: string | null;
+  /** With no open question left: the answered one its spec has to take in (REQ-263). */
+  answered?: string | null;
   /** The open change it belongs to, while that change is in flight (ADR-0035). */
   change?: string;
   [key: string]: unknown;
@@ -68,12 +87,24 @@ export interface QueueSummary {
   tickets?: boolean;
   /** Added by `status` itself; null when the brief cannot be read. */
   brief?: BriefProgress | null;
+  /** The brief, when it exists and its front matter lists no module yet (REQ-243). */
+  briefToFill?: string;
+  /** A brief at the root that `briefToFill` does not hold yet (REQ-251). */
+  rootBrief?: string;
 }
 
 /** What `nextCommandPlain` and `nextReason` read from a summary. */
 type NextInput = Pick<
   QueueSummary,
-  "items" | "counts" | "orphans" | "derived" | "forja" | "brief" | "tickets"
+  | "items"
+  | "counts"
+  | "orphans"
+  | "derived"
+  | "forja"
+  | "brief"
+  | "tickets"
+  | "briefToFill"
+  | "rootBrief"
 >;
 
 export interface StatusOptions {
@@ -126,10 +157,15 @@ export function summarise(
   // A requirement waiting for an answer is not work anyone can start: listing
   // it as "a test and code" under To do invited exactly that (FinCore, #73).
   const questions = questionsByRequirement(questionsFrom);
+  const answered = questionsByRequirement(questionsFrom, answeredQuestions);
   for (const it of items) {
     if (it.status === "Needs Clarification" && it.category !== "DONE") {
       it.category = "WAITING_FOR_ANSWER";
       it.question = questions.get(it.requirement) || null;
+      // REQ-263: answered in questions.md, the requirement still says it waits
+      // — the client had answered and status kept listing it as blocked
+      // (truck-flote, S49).
+      if (!it.question) it.answered = answered.get(it.requirement) || null;
     }
   }
   const counts: Record<string, number> = {
@@ -159,9 +195,13 @@ export function summarise(
 /**
  * Requirement → the open question that blocks it, as `Q3 (docs/specs/…/questions.md)`,
  * from every `questions.md` under docs/specs/changes (archived ones included:
- * a draft is archived with its questions still open).
+ * a draft is archived with its questions still open). With `answeredQuestions`,
+ * the answered one instead.
  */
-function questionsByRequirement(projectDir: string): Map<string, string> {
+function questionsByRequirement(
+  projectDir: string,
+  pick: (md: string) => Array<{ row: string; blocks: string[] }> = openQuestions
+): Map<string, string> {
   const found = new Map<string, string>();
   const walk = (dir: string) => {
     if (!fs.existsSync(dir)) return;
@@ -170,7 +210,7 @@ function questionsByRequirement(projectDir: string): Map<string, string> {
       if (e.isDirectory()) walk(full);
       else if (e.name === "questions.md") {
         const rel = path.relative(projectDir, full).split(path.sep).join("/");
-        for (const q of openQuestions(fs.readFileSync(full, "utf8"))) {
+        for (const q of pick(fs.readFileSync(full, "utf8"))) {
           for (const req of q.blocks) if (!found.has(req)) found.set(req, `${q.row} (${rel})`);
         }
       }
@@ -237,7 +277,7 @@ const QUEUE_LIMIT = 12;
 const TODO_CATEGORIES = ["NEEDS_FEATURE", "NEEDS_EVERYTHING", "NEEDS_TEST", "NEEDS_IMPLEMENTATION"];
 
 /** What one requirement still needs, in words a person reads at a glance. */
-export function needsOf(item: Pick<QueueItem, "category" | "question">): string {
+export function needsOf(item: Pick<QueueItem, "category" | "question" | "answered">): string {
   switch (item.category) {
     case "NEEDS_FEATURE":
       return "its scenario";
@@ -250,6 +290,8 @@ export function needsOf(item: Pick<QueueItem, "category" | "question">): string 
     case "NEEDS_STATUS_UPDATE":
       return "its test is in place";
     case "WAITING_FOR_ANSWER":
+      if (item.answered)
+        return `${String(item.answered).split(" ")[0]}'s answer in its text, then no Needs Clarification`;
       return item.question ? `an answer to ${String(item.question).split(" ")[0]}` : "an answer";
     default:
       return "";
@@ -343,6 +385,7 @@ export function nextCommandPlain({
   derived,
   brief,
   forja,
+  briefToFill,
 }: NextInput): string {
   const first = (cats: string[]) => (items || []).find((it) => cats.includes(it.category));
   if (orphans.length > 0) return "specgate fix";
@@ -353,6 +396,8 @@ export function nextCommandPlain({
   const todo = firstReal(items) || first(TODO_CATEGORIES);
   if (todo) {
     if (todo.category === "NEEDS_FEATURE") return `specgate plan`;
+    // A project generated from a brief: the brief comes first (REQ-243).
+    if (onlyBaseline(items) && briefToFill) return "specgate draft";
     if (onlyBaseline(items))
       return tickets ? FROM_TICKET : 'specgate new "<a behaviour you rely on>"';
     if (forja && needsCode(todo)) return forjaAddCommand(todo);
@@ -361,6 +406,7 @@ export function nextCommandPlain({
     if (derived) return `specgate apply ${todo.requirement}`;
     return `specgate req link ${todo.requirement} --test <path>`;
   }
+  if (counts.total === 0 && briefToFill) return "specgate draft";
   if (counts.total === 0) return tickets ? FROM_TICKET : 'specgate new "<what it does>"';
   return "specgate check";
 }
@@ -373,6 +419,8 @@ export function nextReason({
   brief,
   forja,
   tickets,
+  briefToFill,
+  rootBrief,
 }: NextInput): string {
   if (orphans.length > 0) return `${orphans.length} orphan feature file(s) not in the matrix`;
   if ((items || []).some((it) => it.category === "NEEDS_STATUS_UPDATE"))
@@ -387,6 +435,12 @@ export function nextReason({
     firstReal(items) || (items || []).find((it) => TODO_CATEGORIES.includes(it.category));
   if (todo && todo.category === "NEEDS_FEATURE")
     return `${todo.requirement}'s feature file is missing — plan shows which`;
+  if ((todo && onlyBaseline(items)) || (!todo && counts.total === 0)) {
+    if (briefToFill && rootBrief)
+      return `${rootBrief} at the root looks like the brief: put its text below the front matter of ${briefToFill}, then draft`;
+    if (briefToFill)
+      return `fill in the front matter of ${briefToFill} — product, surfaces, actors, modules — then draft`;
+  }
   if (todo && onlyBaseline(items))
     return tickets
       ? "the work comes from Jira — check a ticket is ready, then open its change"
@@ -422,8 +476,14 @@ function emitText(
   out(ui.header("status", path.basename(path.resolve(projectDir))));
   out(`  ${c.bold}Requirements${c.reset}  ${ui.progress(counts.DONE, counts.total, "done")}\n`);
 
-  const queue = (title: string, cats: string[], mark: string, color: string) => {
-    const group = items.filter((it) => cats.includes(it.category));
+  const queue = (
+    title: string,
+    cats: string[],
+    mark: string,
+    color: string,
+    only: (it: QueueItem) => boolean = () => true
+  ) => {
+    const group = items.filter((it) => cats.includes(it.category) && only(it));
     if (group.length === 0) return;
     out("\n" + ui.section(title));
     const rows = group.slice(0, QUEUE_LIMIT).map((it) => {
@@ -442,7 +502,20 @@ function emitText(
   };
   queue("Ready to close", ["NEEDS_STATUS_UPDATE"], ui.state("ready"), c.ok);
   queue("To do", TODO_CATEGORIES, ui.state("todo"), c.warn);
-  queue("Waiting for an answer", ["WAITING_FOR_ANSWER"], ui.state("blocked"), c.muted);
+  queue(
+    "Answered — update the spec",
+    ["WAITING_FOR_ANSWER"],
+    ui.state("todo"),
+    c.warn,
+    (it) => !!it.answered
+  );
+  queue(
+    "Waiting for an answer",
+    ["WAITING_FOR_ANSWER"],
+    ui.state("blocked"),
+    c.muted,
+    (it) => !it.answered
+  );
   const waiting = items.filter((it) => it.category === "WAITING_FOR_ANSWER" && it.question);
   if (waiting.length > 0)
     out(
@@ -452,6 +525,13 @@ function emitText(
   if (orphans.length > 0)
     out(
       "\n" + ui.fail(`${orphans.length} orphan feature file(s) ${ui.muted("— not in the matrix")}`)
+    );
+
+  // REQ-271: the harness and the studio's Build need an agent before they start.
+  if (items.some((it) => TODO_CATEGORIES.includes(it.category)) && !agentConfigured(projectDir))
+    out(
+      `\n  ${ui.muted("·  No agent set for the harness and the studio's Build:")} ` +
+        `specgate config set agent "claude -p < {prompt_file}"\n`
     );
 
   // Proposed, not written yet: not judged, and said, so nobody wonders why
@@ -530,6 +610,7 @@ function emitJson(
           needs: needsOf(it) || null,
           ...(it.change ? { change: it.change } : {}),
           ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
+          ...(it.answered ? { answered: it.answered } : {}),
         })),
         ...(summary.brief
           ? {
@@ -592,6 +673,17 @@ export class StatusCommand extends BaseCommand {
       summary.brief = briefProgress(projectDir);
     } catch {
       summary.brief = null;
+    }
+    // A brief that lists no module yet — forja's template, the client's text
+    // pasted below it — is what to do next, not the adoption path (REQ-243).
+    if (!summary.brief) {
+      const text = fs.existsSync(path.join(projectDir, DEFAULT_BRIEF))
+        ? fs.readFileSync(path.join(projectDir, DEFAULT_BRIEF), "utf8")
+        : null;
+      if (text !== null && briefModules(text).length === 0) {
+        summary.briefToFill = DEFAULT_BRIEF;
+        summary.rootBrief = rootBrief(projectDir, text) || undefined;
+      }
     }
     let lock: Lockfile | null = null;
     try {

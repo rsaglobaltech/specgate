@@ -17,7 +17,7 @@ import { error, info, warning } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
 import { analyseScenario } from "./GherkinQuality";
 import { withoutComments } from "./QuotedText";
-import { assumptionsToReview, deferredAnswer } from "./Clarification";
+import { answerLines, assumptionsToReview, deferredAnswer, isAnswered } from "./Clarification";
 
 export { deferredAnswer };
 
@@ -136,12 +136,27 @@ export function briefModules(brief: string): string[] {
 const ID_TOKEN = /\b(?:REQ|SCN|UC|CMD|AGG|EVT|Q|A)-[A-Za-z0-9.]+\b/g;
 
 /** Numbers and double-quoted strings in a step: what a reader would take as fact. */
+/** `2026-10-29`, `10:00:00`, `07:42`, `2026-10-29 10:00:00`, `2026-10-29T10:00:00Z`. */
+const DATE_OR_TIME =
+  /(?<![\w.:-])(?:\d{4}-\d{2}-\d{2}(?:[T ]\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?|\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?)(?![\w:.-]?\d)/g;
+
 export function statedValues(step: string): string[] {
   const text = step.replace(ID_TOKEN, " ").replace(/^\s*(GIVEN|WHEN|THEN|AND|BUT)\b/i, "");
   const out: string[] = [];
   for (const q of text.matchAll(/"([^"]+)"/g)) out.push(q[1]);
-  const unquoted = text.replace(/"[^"]*"/g, " ").replace(/`[^`]*`/g, " ");
-  for (const n of unquoted.matchAll(/(?<![\w.])\d+(?:[.,]\d+)*(?![\w])/g)) out.push(n[0]);
+  let unquoted = text.replace(/"[^"]*"/g, " ").replace(/`[^`]*`/g, " ");
+  // REQ-277: a date, a time or a date-time is one value. Read as numbers,
+  // "at 2026-10-29 10:00:00" gave "29" and "00", which the agent then had to
+  // list one by one before the draft could be reviewed (truck-flote, S60).
+  // Masked with spaces of the same length, so values keep the order they are written in.
+  const found: { at: number; value: string }[] = [];
+  unquoted = unquoted.replace(DATE_OR_TIME, (m: string, at: number) => {
+    found.push({ at, value: m });
+    return " ".repeat(m.length);
+  });
+  for (const n of unquoted.matchAll(/(?<![\w.])\d+(?:[.,]\d+)*(?![\w])/g))
+    found.push({ at: n.index || 0, value: n[0] });
+  for (const f of found.sort((a, b) => a.at - b.at)) out.push(f.value);
   return out;
 }
 
@@ -161,6 +176,72 @@ function inText(value: string, text: string): boolean {
   }
   return norm(text).includes(norm(value));
 }
+
+/** Number words an assumption may use for a scenario's figure: "three axles" for "3 ejes". */
+const NUMBER_WORDS: Record<string, string> = {
+  one: "1",
+  two: "2",
+  three: "3",
+  four: "4",
+  five: "5",
+  six: "6",
+  seven: "7",
+  eight: "8",
+  nine: "9",
+  ten: "10",
+  eleven: "11",
+  twelve: "12",
+  uno: "1",
+  una: "1",
+  dos: "2",
+  tres: "3",
+  cuatro: "4",
+  cinco: "5",
+  seis: "6",
+  siete: "7",
+  ocho: "8",
+  nueve: "9",
+  diez: "10",
+  once: "11",
+  doce: "12",
+  eins: "1",
+  zwei: "2",
+  drei: "3",
+  vier: "4",
+  fünf: "5",
+  sechs: "6",
+  sieben: "7",
+  acht: "8",
+  neun: "9",
+  zehn: "10",
+  elf: "11",
+  zwölf: "12",
+};
+const NUMBER_WORD = new RegExp(
+  `(?<![\\p{L}])(${Object.keys(NUMBER_WORDS).join("|")})(?![\\p{L}])`,
+  "giu"
+);
+
+/**
+ * Whether a row of `assumptions.md` that names the scenario holds its value,
+ * however the row writes it (REQ-247): the number of "7100 kg" in a list that
+ * gives the unit once ("7100, 11500 and 8000 kg"), "3 ejes" as "three axles",
+ * the value inside a quoted label ("Dispositivo: TRK-0001").
+ */
+function inRow(value: string, row: string): boolean {
+  if (inText(value, row)) return true;
+  const label = /:\s*(\S.*)$/.exec(value);
+  if (label && inText(label[1], row)) return true;
+  const figure = /^(\d+(?:[.,]\d+)*)(?:\s+\S|$)/.exec(value);
+  if (figure) {
+    const words = row.replace(NUMBER_WORD, (w) => NUMBER_WORDS[w.toLowerCase()] || w);
+    return inText(figure[1], words);
+  }
+  return false;
+}
+
+/** How a scenario joins values into one: a screen path, a list row (REQ-261). */
+const PART_JOIN = /\s+[›—·]\s+/;
 
 // ── Assumption rows ───────────────────────────────────────────────────────────
 
@@ -216,7 +297,6 @@ function questionRows(md: string): Array<{
   const cols = lines[header].split("|").map((c) => c.trim().toLowerCase());
   const at = cols.indexOf("blocks");
   const answerCol = cols.findIndex((c) => c === "answer" || c === "respuesta");
-  const answerLines = lines.filter((l) => /^\s*(?:[-*]\s*)?\**(answer|respuesta)\b/i.test(l));
   const out: Array<{
     row: string;
     blocks: string[];
@@ -228,10 +308,10 @@ function questionRows(md: string): Array<{
   for (let i = header + 2; i < lines.length && /^\|/.test(lines[i]); i += 1) {
     const cells = lines[i].split("|").map((c) => c.trim());
     const row = cells[1] || `row ${i + 1}`;
-    const named = new RegExp(`(^|[^A-Za-z0-9])${escapeRegExp(row)}(?![A-Za-z0-9])`);
+    // The same reading as the studio's and `specgate questions` (REQ-429).
     const answers = [
       ...(answerCol > 0 && (cells[answerCol] || "").length > 0 ? [cells[answerCol]] : []),
-      ...answerLines.filter((l) => named.test(l)).map((l) => l.replace(/^[^:]*:\s*/, "")),
+      ...answerLines(md, row),
     ];
     const deferred = answers.length > 0 && answers.every(deferredAnswer);
     out.push({
@@ -239,7 +319,7 @@ function questionRows(md: string): Array<{
       blocks: (cells[at] || "").match(/REQ-[A-Za-z0-9.]+/g) || [],
       noneBlocked: NONE_BLOCKED.test((cells[at] || "").replace(/\*\*/g, "").trim()),
       line: i + 1,
-      answered: answers.length > 0 && !deferred,
+      answered: isAnswered(answers),
       deferred,
     });
   }
@@ -253,6 +333,17 @@ function questionRows(md: string): Array<{
 export function openQuestions(md: string): Array<{ row: string; blocks: string[] }> {
   return questionRows(md)
     .filter((q) => !q.answered)
+    .map((q) => ({ row: q.row, blocks: q.blocks }));
+}
+
+/**
+ * The answered questions of a `questions.md`, with the requirements each
+ * blocked: `status` says such a requirement needs its spec updated, not an
+ * answer (REQ-263).
+ */
+export function answeredQuestions(md: string): Array<{ row: string; blocks: string[] }> {
+  return questionRows(md)
+    .filter((q) => q.answered)
     .map((q) => ({ row: q.row, blocks: q.blocks }));
 }
 
@@ -508,17 +599,24 @@ export function checkDraft(files: DraftFiles): DraftReport {
           for (const v of statedValues(step)) {
             if (seen.has(v)) continue;
             seen.add(v);
-            if (inText(v, briefText)) continue;
-            if (files.specText && inText(v, files.specText)) continue;
-            // A value the requirement's own obligation states, under a `Source:`
-            // line, is the cited norm's: "24 characters" and "modulo 97" of ISO
-            // 13616 had to be copied into assumptions.md (FinCore, #75).
-            if (SOURCED.test(r.text) && inText(v, r.text)) continue;
             const rows = assumptions.split("\n").concat(r.modified ? archivedRows : []);
-            const listed = rows.some(
-              (row) => inText(v, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id))
-            );
-            if (listed) continue;
+            const known = (value: string) =>
+              inText(value, briefText) ||
+              (!!files.specText && inText(value, files.specText)) ||
+              // A value the requirement's own obligation states, under a
+              // `Source:` line, is the cited norm's: "24 characters" and
+              // "modulo 97" of ISO 13616 had to be copied into assumptions.md
+              // (FinCore, #75).
+              (SOURCED.test(r.text) && inText(value, r.text)) ||
+              rows.some(
+                (row) => inRow(value, row) && (rowNamesId(row, s.id) || rowNamesId(row, r.id))
+              );
+            if (known(v)) continue;
+            // REQ-261: a screen path or a list row joins listed values —
+            // "1234-BCD › Ejes", "Lucía Martín — E000001234567890" — and the
+            // whole was never written down as one (truck-flote, S48).
+            const parts = v.split(PART_JOIN);
+            if (parts.length > 1 && parts.every((part) => known(part.trim()))) continue;
             status.push(
               error(
                 "D6_unlisted_value",
@@ -541,7 +639,28 @@ export function checkDraft(files: DraftFiles): DraftReport {
   if (files.questions) {
     const byId = new Map(reqs.map((r) => [r.id, r]));
     for (const q of questionRows(files.questions)) {
-      if (q.answered) continue;
+      if (q.answered) {
+        // REQ-262: an answer in questions.md changes no requirement by itself;
+        // the draft said Ready to review with four requirements still blocked
+        // by answered questions (truck-flote, S49).
+        for (const id of q.blocks) {
+          const r = byId.get(id);
+          if (!r || r.trace.status !== "Needs Clarification") continue;
+          status.push(
+            error(
+              "D7_answered_still_blocked",
+              `Question ${q.row} is answered, and ${id} is still Needs Clarification.`,
+              {
+                ...at(r),
+                fix:
+                  `Fold the answer into ${id}'s text and scenarios, then drop status="Needs Clarification" from its specgate:trace — ` +
+                  "or run this command again with --agent to have your agent do it.",
+              }
+            )
+          );
+        }
+        continue;
+      }
       if (q.blocks.length === 0) {
         // Said on purpose ("none"): a question for later that nothing in this
         // draft is built around, such as a backup export nobody asked for yet.

@@ -700,3 +700,47 @@ test("REQ-197 SCN-197a: opening a module while another draft is unwritten warns 
   assert.match(note.message, /draft-bookings/);
   assert.match(note.fix, /--reserve/);
 });
+
+test("REQ-248 SCN-248a: a log edited by hand while the agent drafts", () => {
+  const { runConfinedAgent } = require("../../scripts/draft/confined-agent");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-undone-"));
+  try {
+    const git = (...a: string[]) => spawnSync("git", a, { cwd: dir, encoding: "utf8" });
+    git("init", "-q");
+    fs.mkdirSync(path.join(dir, "docs"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "docs", "notes.md"), "before\n");
+    git("add", "-A");
+    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "start");
+    // The "agent" writes its draft, and the notes change while it runs.
+    const script = path.join(dir, "agent.js");
+    fs.writeFileSync(
+      script,
+      'const fs=require("fs");fs.mkdirSync("docs/specs/changes/draft-x",{recursive:true});' +
+        'fs.writeFileSync("docs/specs/changes/draft-x/spec.md","x");' +
+        'fs.writeFileSync("docs/notes.md","edited by hand\\n");'
+    );
+    git("add", "agent.js");
+    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "agent");
+    const run = runConfinedAgent({
+      projectDir: dir,
+      changeId: "draft-x",
+      command: `"${process.execPath}" agent.js`,
+      prompt: "draft",
+      showOutput: false,
+    });
+    assert.deepEqual(run.reverted, ["docs/notes.md"]);
+    // git may check it out with CRLF on Windows.
+    const back = fs.readFileSync(path.join(dir, "docs", "notes.md"), "utf8").replace(/\r\n/g, "\n");
+    assert.equal(back, "before\n");
+    assert.ok(run.kept, "where the removed content went");
+    assert.equal(
+      fs.readFileSync(path.join(dir, run.kept, "docs", "notes.md"), "utf8"),
+      "edited by hand\n"
+    );
+    assert.match(run.kept, /^\.git\/specgate-undone\//);
+    // Only the draft the agent was allowed to write is new: no copy, no .gitignore line.
+    assert.equal(git("status", "--porcelain").stdout.trim(), "?? docs/specs/");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10 });
+  }
+});

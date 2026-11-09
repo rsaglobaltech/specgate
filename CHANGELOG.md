@@ -32,6 +32,202 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   only it, and pushes it, as when Specgate creates the branch. On any other
   branch it still commits nothing.
 
+## [0.29.1] — 2026-11-09
+
+The CLI image for 0.29: the npm package of 0.29.0 was complete; its Docker image was not built.
+
+### Fixed
+
+- **The Docker image builds again.** Its build stage did not copy the studio's source, new in 0.29.0, so building the CLI inside the image failed and no `ghcr.io/rsaglobaltech/specgate:0.29.0` image was published. A test now fails when the build reads a folder the image does not copy.
+
+## [0.29.0] — 2026-11-08
+
+The studio rebuilt as one app, and it does what the CLI does: every change to its archive, the gate, apply, preferences and agents, adopting a repository, Jira and Azure Boards.
+
+### Added
+
+- **The studio is one app** (REQ-432, REQ-204, REQ-212). Built from typed source (Preact) into static files Specgate serves itself — still no runtime dependency. Home, Brief, Changes, Questions, Build, Live, Report and Settings, each at its own address; Back, Forward and links work. Light and dark, Spanish and English, simple and advanced, a sidebar that folds to its icons — remembered in your browser.
+- **Live inside the studio** (REQ-433, REQ-179, REQ-181, REQ-182, REQ-203, REQ-274). The run as a matrix by module, a Traceability view filtered as you type, the work queue — now, needs attention, up next with an estimate, every open question answered in place, finished — and each requirement in tabs: its steps with the one running by name and time, the agent's log, the requirement, its tests and files, its attempts, the agent's session and prompt. Stop after this requirement, or at once.
+- **The studio says what it is doing** (REQ-434): a section's shape while it loads, notices that say what happened and retry what failed, a failed read inside its own section, the server away and back again. The checks' findings come in Spanish too.
+- **Keyboard and screen readers** (REQ-435): a skip to the content, a focus always seen, Enter saves an answer, each result announced once; motion stops when the system asks.
+- **Every change in the studio** (REQ-439): its progress, requirements, proposal and tasks; validated; archived once delivered, after a preview of what archive writes; a new change from an idea or a ticket.
+- **The gate and the doctor from the studio** (REQ-440), each finding with its fix; **a requirement coded by hand delivered** with `apply` (REQ-441), or the reason it was refused.
+- **Settings** (REQ-442, REQ-443, REQ-444): the project's preferences (`config set`, checked); the agent guards for this project and the agent integrations; a repository that has code adopted in place with `specgate adopt`, previewed first; Jira and Azure Boards — the mapping, a sync previewed then run, the token's variable named and whether it is set, never the token.
+- **Only the commands the studio offers run** (REQ-438): a fixed list, every argument checked, one at a time, the very command shown with its output as it grows.
+- **The studio is tested in a browser** (REQ-436): Playwright on Windows, macOS and Linux in CI (`npm run e2e:studio`).
+
+### Changed
+
+- **The studio's old page and its separate live view are gone.** The studio is served at `/`; `/live` opens its Live section; `/overview` leads to `/`.
+- **A studio already running is found, not fought** (REQ-445). When its port is taken by a studio of the same project, `specgate studio` says where it is and how to stop it, and ends; when something else holds the port, it serves on the next free one.
+
+### Fixed
+
+- **Stopping a run at once, or a draft, ends its agent too** on macOS and Linux — the agent runs in a process group of its own and was left running.
+- **An agent set as a command of its own** (not a profile) is shown in Settings, and the brief can be pasted for it.
+
+## [0.28.1] — 2026-11-08
+
+The studio unblocked: answers saved, a draft that can be approved, the agent chosen in the studio, and fast on Windows — found by a team that used it on a real project; and the agent guards name the right next requirement.
+
+### Fixed
+
+- **Answers are saved** (REQ-210, REQ-429). An answer from the studio was lost when `questions.md` had no `Answer` column — the table the drafting guide wrote. The studio now adds the `Answer` and `Status` columns when they are missing, keeps the file's line endings (CRLF included), lists each answered question once to confirm, and confirms an answer written by hand too.
+- **A draft can be approved** (REQ-206). Every blocker of the approval comes with the action that clears it — answer the question, confirm the spec says it, open the requirement — instead of a button that stayed grey; a question id is matched exactly (`Q1` is not `Q10`), and a requirement id at the end of a sentence is read whole.
+- **The agent is chosen in the studio** (REQ-208, REQ-431). Build no longer stops at "no agent configured": it offers Claude Code, Codex or a command of your own, the ones found on this machine first, and writes the choice to `harness.config.yaml`. A prompt file whose path has a space reaches the agent quoted, as one argument.
+- **The studio is fast, and says when a read fails** (REQ-430). Its reads run in the studio's own process and are kept until a spec file changes — no `specgate` process per refresh, which made it slow on Windows; buttons stay busy while their request runs, a failed read is shown with its reason, and the page is drawn again only when something changed. Build's run log is kept out of git, so the harness finds a clean tree and starts.
+- **A module written under a plain heading stays one section** (REQ-437). Saving the brief form turned `## orders` written by hand into a second section beside `## Module: orders`, and the draft never read what was written there; it now becomes the module's section, its text kept in it.
+- **The agent guards name the next requirement** (REQ-426, REQ-427) as the change's tasks order it, and none once every requirement is applied — they named a requirement that was already done.
+
+## [0.28.0] — 2026-11-07
+
+The agent guards: the open change at session start, the test before the code and the gate, for Claude Code and OpenCode, installed once per user; and the gate hook on Windows.
+
+### Added
+
+- **The agent guards** (REQ-420…REQ-423). The Claude Code plugin tells a new session the open change and its next requirement (`SessionStart`), and refuses a write to source code until a test new or changed in the working tree names a requirement of an open change (`PreToolUse`) — tests, specs, docs and configuration are never refused; `specgate config set agent_guard off` turns it off for a project. `specgate agents init --tool opencode-plugin` gives OpenCode the same three guards, the gate on `session.idle`. `specgate agents install --global` installs them once for every project; this repository is now a Claude Code marketplace for its plugin.
+
+### Fixed
+
+- **The gate hook on Windows** (REQ-424). It spawned `npx` without a shell, which fails on Windows, and by design let the stop through: the gate was silently off there. The plugin's scripts now start the CLI through `npx.cmd` and a shell on Windows, with fixed arguments.
+- **The shipped plugin's version** (REQ-425). `packages/claude-plugin` said 0.19.1; it is regenerated, and a test fails when it falls behind the generator or the CLI's version.
+
+## [0.27.10] — 2026-10-30
+
+Node.js 24 where Specgate runs once, after the October 2026 Node.js security release; the site carries both versions; npm audit and the licence check pass again.
+
+### Changed
+
+- **Node.js 24 for the image and the single jobs.** The October 21, 2026 Node.js security release fixed ten CVEs, among them a remote code execution in the bundled Brotli decoder. The CLI image is now built on `node:24-alpine`, and lint, packaging, publishing, the site and the security jobs run on Node 24; the test matrix keeps Node 22 and 24, the floor `package.json` still declares (`>=22`). On Node 22, use 22.23.4 or later.
+- **typescript-eslint 8.72.** The lint toolchain moves from 8.71.2 to 8.72.1, in the lockfile only.
+
+### Fixed
+
+- **npm audit and the licence check pass again** (#379): zod, fast-uri and qs updated; argparse 3's PSF-2.0 licence allowed and explained in docs/supply-chain.md.
+
+### Added
+
+- **The site carries the stable docs and the 1.0 candidate's.** Every page has a version picker at the top left: the stable entry opens these docs, the candidate's opens what 1.0 adds, under `next/`. The Pages workflow checks out `next/1.0` and builds it there with that line's own generator; built without `--versions`, the badge is as it was.
+
+## [0.27.9] — 2026-10-29
+
+After the seventh truck-flote run: the harness checks Docker before it starts, the report names scenarios as the spec does, a date is one value, and the kept agent is seen live.
+
+### Fixed
+
+- **D6 reads a date or a time as one value** (REQ-277): "at 2026-10-29 10:00:00" was read as the numbers "29", "00" and so on, and the agent had to list each one in `assumptions.md` before the draft could be reviewed. An ISO date, a time and a date-time are now one value each.
+- **The agent `config set agent` keeps for Claude Code is seen live** (REQ-278): the command `status` suggests, `claude -p < {prompt_file}`, is now kept with `--output-format stream-json --verbose` and piped into `specgate harness events --from claude`, so the studio's live view shows the agent and not only the gate. A command that already pipes or sets an output format is kept as it is.
+- **A stopped Docker is said before any agent runs** (REQ-279): with Docker Desktop stopped, `harness run` passed the specification and the architecture, then spent its three attempts on tests that failed in fifteen seconds with "Could not find a valid Docker environment", each handed to the agent as a failing test. `harness run` and the studio's Build now check Docker first when a quality check runs in it or the tests use Testcontainers, and refuse with the fix; a test command that cannot reach Docker stops the requirement and is told to the person, not the agent.
+- **The studio's report titles each scenario from the specification** (REQ-280): a delivered requirement of a draft showed `SCN-002 — <what happens>`, the template line of the draft's `DRAFTING.md`. Titles now come from the open changes' deltas, the capability specs and `spec.md` only.
+
+## [0.27.8] — 2026-10-28
+
+0.27.7 as it was meant to ship. Its publish stopped on four new tests whose repositories had no git identity on the CI runners; the Docker image 0.27.7 was published, the npm package was not.
+
+### Fixed
+
+- The tests of REQ-264, REQ-267, REQ-269 and REQ-271 give their repositories a git identity, as the other harness tests do.
+- The REQ-266 test compares real paths as Windows names them (`RUNNER~1` and `runneradmin` are one folder), and the coverage run in CI has a larger heap: on macOS it ran out once every test had passed.
+
+## [0.27.7] — 2026-10-28
+
+After the sixth truck-flote run: the harness agent can write, a Docker check works in a worktree, every gate step is seen while it runs, and a reviewed draft no longer turns the branch red.
+
+### Fixed
+
+- **The client's brief at the root goes below the front matter** (REQ-259): with `brief.md` pushed first and forja's template in `docs/brief.md`, `draft --agent` wrote the front matter over the "Paste the client's brief here" placeholder and the person pasted the text by hand. `draft` now puts the root file's text there first, keeps the root file, and says so; a body the person wrote is left alone.
+- **`BRIEF-SETUP.md` is removed once the front matter is complete** (REQ-260): it stayed untracked, and the harness refuses a tree that is not clean.
+- **D6 reads a value made of listed parts** (REQ-261): "1234-BCD › Ejes" and "Lucía Martín — E000001234567890" were unlisted although every part was; a value joined with ` › `, ` — ` or ` · ` is listed when each part is.
+- **An answer in `questions.md` no longer leaves its requirement blocked unnoticed** (REQ-262, REQ-263): the draft said Ready to review and `status` kept four answered requirements "Waiting for an answer". The checklist now reports each answered question whose requirement is still `Needs Clarification`, with the fix and `--agent`, and `status` lists it under "Answered — update the spec".
+- **The `sbom` check writes the bill of materials of a Quarkus application** (REQ-276): its pom skips deploy, and CycloneDX then wrote nothing ("Skipping CycloneDX goal, because module skips deploy"), so the dependency scan had nothing to read. It now runs with `-Dcyclonedx.skipNotDeployed=false`.
+- **Every gate step is seen while it runs** (REQ-273..REQ-275): `harness run` printed `attempt 1/3` and nothing more for 19 minutes, and `/live` stayed empty, while a semgrep check hung. The setup command, `validate --strict`, the end-to-end test, the architecture check, the test command and each quality check are now a `gate-start` event and a `gate` event with its `ms`, written as each happens — the quality checks used to be reported only once every check of the stage had run — and a `started …` and `passed … in 3m 05s` line of the run, without `--verbose` and whatever the agent command is. `/live` names the step that is running, with its image and how long it has run, and the studio's Build moves to Revisa la calidad when a quality check starts.
+- **The harness gives Claude Code permission to write** (REQ-264): `claude -p < {prompt_file}`, the command the docs gave, wrote nothing in print mode and spent three attempts on "the agent produced no files". The harness now adds `--permission-mode acceptEdits` right after `claude`, as the drafting commands do, and says so; an attempt that writes nothing ends the requirement instead of running the same command again, pointing at `docs/agent-setup.md`.
+- **A `./` inside quotes stays as written on Windows** (REQ-265): an agent's allowance `'Bash(./mvnw:*)'` reached Claude Code as `'Bash(.\mvnw:*)'`.
+- **Docker checks work in the harness's worktrees** (REQ-266): a worktree's `.git` names a host folder the container does not have, so semgrep failed to list files and hung until its 15-minute timeout. The repository's git folder is now mounted read-only, with `GIT_DIR` and `GIT_WORK_TREE` pointing at the worktree.
+- **A check that could not run is reported to you, not to the agent** (REQ-267): a gate check that is to write SARIF and wrote none — it timed out or failed first — stops the requirement with its output, instead of telling the agent to "fix what the check found" for two more attempts.
+- **The reviewer and the adversary read a draft's requirement** (REQ-268): their prompts said `spec.md` had no section for a requirement of a reviewed, unarchived draft; they are now built from the project as the harness judges it, like the implementer's.
+- **`harness report` counts each requirement once** (REQ-269): a failed run and a passing one of the same requirement read "1 of 2 passed". The latest outcome counts, every run's time stays in the cost, and a run stopped by hand is in the ledger, its requirement reported as stopped.
+- **The studio's report judges the project as `check` does** (REQ-270): after `--chain` delivered a draft's requirement, the report said "No pasa" for a feature the written matrix has no row for until the draft is archived.
+- **The agent is kept once** (REQ-271): `specgate config set agent "<command>"` writes it to `harness.config.yaml`, with the permission above; `status` names the step while it is missing, and a `harness run --agent …` ends with the command that keeps it.
+
+## [0.27.6] — 2026-10-28
+
+The dependency scan counts again, after the fifth truck-flote run: a vulnerable Maven dependency fails the gate, and a quality run leaves the tree clean.
+
+### Fixed
+
+- **A vulnerable dependency of a Maven project fails the gate again** (REQ-241, REQ-258): since 0.27.3 the findings in files git ignores were left out of every check, and osv-scanner points each finding at the bill of materials Maven writes in `target/`, so the dependency scan reported 18 known vulnerabilities and the gate counted none. Ignored files are now left out only for a check judged on the change (`scope: diff`).
+- **A quality run leaves no untracked file** (REQ-258): `quality init` adds `.specgate/quality/`, where each check writes its reports, to `.gitignore`; the baseline stays outside it, to be committed.
+
+## [0.27.5] — 2026-10-28
+
+Specgate on Windows, after the fourth truck-flote run and its first CI on GitHub: commands written as `./name` run in cmd.exe, Docker counts only with Linux containers, and `check` leaves the working tree clean.
+
+### Fixed
+
+- **Commands that start with `./` run on Windows** (REQ-255): `./mvnw -B test` — the test command Specgate proposes for Maven — and every test, architecture, setup, agent or check command written for a POSIX shell failed in cmd.exe with "'.' is not recognized as an internal or external command". On Windows the program is now run as `.\name`, which also finds `mvnw.cmd` beside `mvnw`.
+- **`check` leaves the working tree as it was** (REQ-256): the pet's state and the `.gitignore` written beside it showed `.specgate/` as untracked after every check, and the harness wants a clean tree. It now lives in the git folder.
+- **The incomplete front matter is explained in a sentence** (REQ-257).
+
+- **Docker counts only when it runs Linux containers** (REQ-254): on Docker Desktop in Windows containers mode — and on GitHub's Windows runners — Docker answered, every check image failed to pull ("no matching manifest for windows"), and each check was reported as a skipped pull. The checks are now skipped up front, saying to switch Docker Desktop to Linux containers.
+
+## [0.27.4] — 2026-10-28
+
+The way from a client's brief to its front matter, after the third truck-flote run: the brief at the root is noticed, the agent names actors in the brief's own words, and an incomplete front matter is called that.
+
+### Fixed
+
+Found in the third truck-flote run, with 0.27.3 and forja 1.0.3 only:
+
+- **A brief at the root is pointed at** (REQ-251): the client's `brief.md`, pushed before forja wrote its template to `docs/brief.md`, went unnoticed; `status` and `draft` now say its text goes below the front matter of `docs/brief.md`.
+- **The agent names actors as the brief does** (REQ-253): `BRIEF-SETUP.md` asks for each actor in the brief's own words and language — an agent wrote `Dispatcher` over a Spanish brief and B9 flagged all five actors — for three to eight modules, and for the surfaces `forja.config.json` lists.
+- **An incomplete front matter is called incomplete** (REQ-252): `draft` said "Your brief has no front matter yet" over forja's, which only lacked its modules.
+
+## [0.27.3] — 2026-10-28
+
+What the second truck-flote run found, using only 0.27.2 and forja 1.0.2 one documented command at a time: Maven coverage 30 s faster on Spring Boot with Testcontainers, D6 that reads assumptions as people write them, an undo that never loses a person's edit, and a brief path that leads from `init --forja` to `draft`.
+
+### Fixed
+
+Found running truck-flote again with 0.27.2 only, one documented command at a time:
+
+- **Maven coverage no longer waits 30 s for a killed JVM** (REQ-250): JaCoCo instrumented every class, Testcontainers' too, and its dump at shutdown ran into Spring stopping the test container; Surefire killed the JVM after 30 s on every run of a Spring Boot API. The coverage check now instruments the project's own group only (`includes=<groupId>.*`, from the pom): 45 s instead of 79 s on truck-flote, the same report.
+- **D6 reads a value however the assumption writes it** (REQ-247): a list that gives the unit once ("7100, 11500 and 8000 kg"), a number in words ("three axles" for "3 ejes"), the value inside a quoted label ("Dispositivo: TRK-0001"). Each was reported as unlisted though `assumptions.md` listed it.
+- **The undo after an agent run keeps what it removes** (REQ-248): a file changed outside the draft while the agent ran — a person's edit too — is saved in `.git/specgate-undone/<run>/` before it is put back — outside the working tree, which is left exactly as it was — and the message says where.
+- **A finding in a file git ignores is left out** (REQ-241): a development secret in `apps/web/.env.local` reached the baseline.
+- **`status` points at a brief still to fill in** (REQ-243): right after `init --forja` it proposed `specgate new`, the adoption path; with `docs/brief.md` and no modules it now says to fill in the front matter and run `specgate draft`.
+- **`draft` explains the front matter it needs** (REQ-246): what product, surfaces, actors and modules are for, a `Customer` actor left from the template, and `specgate draft --agent` to have them proposed.
+- **The brief checks read Spanish** (REQ-244): "dice si cabe" (whether) is not a condition placed last; "lo más … posible", "cerca", "casi", "aceptable" and their English equivalents are vague words.
+- **The brief's shape** (REQ-245): more than eight modules is a warning (B12), and so is an actor on `mobile` in a forja project generated without the mobile app (B13); elsewhere a mobile app may live in another repository, so nothing is compared.
+- **`init --yes` where code exists says what it does** (REQ-249): it scaffolds a separate project in a sub-folder, as before, and now names `specgate init` without `--yes` to adopt the folder.
+- **The forja hint names its releases** (REQ-236): forja is not on npm; the install hint pointed there.
+
+## [0.27.2] — 2026-10-28
+
+The quality checks on a real Spring Boot and Next.js monorepo generated by forja: Java checks for `apps/api`, dependencies read from Maven's own bill of materials, Testcontainers inside the coverage check, and forja found where it is installed.
+
+### Fixed
+
+- **Quality presets for each app of a monorepo** (REQ-235): `quality init` read only the root's build files, so forja's Spring Boot API in `apps/api` got no Java check at all. It now reads each app folder — one level down, or in `apps/`, `packages/` and `services/` — when the root has no build file of that stack, and runs its checks there (`cd apps/api && mvn …`) with their reports named from the root. One Semgrep scan carries every stack's rules, a renamed check writes its own SARIF, and `{changed_classes@<folder>}` and `{changed_src@<folder>}` keep one folder's files.
+- **forja is found, or you are told how to get it** (REQ-236): `init --forja` and `add` use `SPECGATE_FORJA_CMD`, then a `forja` on the PATH, then npx; when npm does not have the package, `init --forja` stops with how to install it instead of npm's 404. forja gets Specgate's version in `SPECGATE_VERSION`, so the project it generates depends on the Specgate that generated it.
+- **Maven dependencies are scanned from the build's own bill of materials** (REQ-237): an `sbom` check writes CycloneDX with Maven, in its image and cache, and `dependencies` runs osv-scanner (now 2.2.4) on it. osv-scanner could not resolve a Spring Boot 4 parent by itself (deps.dev did not have it, Maven Central answered 429), so it scanned 2 of 96 packages, or failed.
+- **Tests that start containers run in the gate** (REQ-238): `docker: true` gives a check the host's Docker and what Testcontainers needs to reach it; the Maven and Gradle presets set it on coverage and mutation when the build declares Testcontainers. forja's Spring Boot tests failed with "Could not find a valid Docker environment" before.
+- **The baseline runs what a check needs first** (REQ-240): `needs: <check>` names an earlier check whose output a check reads; `quality baseline` ran only the SARIF checks, so Maven's `dependencies` found no bill of materials and its debt was not recorded.
+- **`quality run --json` says why a check failed** (REQ-239): each outcome carries the last 30 lines the check printed.
+
+## [0.27.1] — 2026-10-28
+
+0.27.0 reached ghcr.io only: its npm and GitHub Packages publish stopped on a quality check that failed on CI runners. This is that release, with the fix and the studio's new-project step working in an empty folder.
+
+### Fixed
+
+- **A quality check run as the person has a home it can write**: in Docker on Linux, a check runs with your uid, and Semgrep failed when that uid was not the image's own user (uid 1001 on a CI runner) because it could not create its cache in `/`. It now runs with `HOME=/tmp`.
+- **The studio stays up in an empty folder** (REQ-213): any request it does not serve, such as the browser's own `/favicon.ico`, made it read the matrix and exit when there was none, so the new-project step died on its first load. It answers 404 until the project exists. The step also says it asks five questions, not four.
+
+### Changed
+
+- **The documentation shows the quality checks and the studio**: a band for each on the landing page, the studio under Start with a screenshot of every step, and the gate's section named after the tools it runs.
+
 ## [0.27.0] — 2026-10-28
 
 Quality, not only tests: your team's checks in the gate — coverage and mutation of the lines a change adds, SpotBugs, PMD, Semgrep, secrets, dependencies, SonarQube and Conventional Commits — each in Docker, without an account, and only what a change adds fails.

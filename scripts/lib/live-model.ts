@@ -52,6 +52,30 @@ export interface LiveRequirement {
   prompt: { role: string; chars: number; lines: number; tokens: number } | null;
   /** What the agent asked, and the command that answers it once the harness recorded it. */
   question: { text: string; answer: string; id?: string; change?: string } | null;
+  /** The gate step that started and has not ended: its name, since when, and where it runs (REQ-274). */
+  running: { stage: string; since: number; runner: string; image: string } | null;
+}
+
+/**
+ * The gate step that is running: the last `gate-start` with no `gate` after it.
+ * An ended step's name may carry what it measured ("quality: coverage 91%"),
+ * so the end is matched by its name's start.
+ */
+function runningStep(events: EventRecord[]): LiveRequirement["running"] {
+  const i = events.map((e) => e.type === "gate-start").lastIndexOf(true);
+  if (i < 0) return null;
+  const start = events[i];
+  const stage = String(start.stage || "");
+  const ended = events
+    .slice(i + 1)
+    .some((e) => e.type === "gate" && String(e.stage || "").startsWith(stage));
+  if (ended) return null;
+  return {
+    stage,
+    since: Number(start.t) || 0,
+    runner: String(start.runner || ""),
+    image: String(start.image || ""),
+  };
 }
 
 export interface AgentUsage {
@@ -133,7 +157,9 @@ export function foldRequirement(req: string, events: EventRecord[]): LiveRequire
   const steps = mine.filter((e) => e.type !== "attempt" && !SESSION.has(String(e.type)));
   const agentEv = [...mine].reverse().find((e) => e.type === "agent");
   const promptEv = [...mine].reverse().find((e) => e.type === "prompt");
-  const lastStep = [...steps].reverse().find((e) => e.type === "step" || e.type === "gate");
+  const lastStep = [...steps]
+    .reverse()
+    .find((e) => e.type === "step" || e.type === "gate" || e.type === "gate-start");
   const asked = [...mine].reverse().find((e) => e.type === "question");
   const phase = end
     ? end.result === "pass"
@@ -142,7 +168,7 @@ export function foldRequirement(req: string, events: EventRecord[]): LiveRequire
         ? "question"
         : "fail"
     : lastStep
-      ? lastStep.type === "gate"
+      ? lastStep.type === "gate" || lastStep.type === "gate-start"
         ? "gate"
         : String(lastStep.kind || "other")
       : "starting";
@@ -188,6 +214,7 @@ export function foldRequirement(req: string, events: EventRecord[]): LiveRequire
       : null,
     usage: foldUsage(mine),
     question: asked ? { text: String(asked.text || ""), answer: "specgate questions" } : null,
+    running: end ? null : runningStep(mine),
     prompt: promptEv
       ? {
           role: String(promptEv.role || "agent"),

@@ -102,7 +102,7 @@ Optionally install the CLI globally so `specgate` works everywhere:
 
 ```bash
 npm install -g @rsaglobaltech/specgate@latest
-specgate --version          # 0.27.0
+specgate --version          # 0.29.1
 specgate --help             # the six you start with: init; propose, apply, status, archive; check
 specgate --help --all       # the whole surface
 ```
@@ -1001,8 +1001,8 @@ specgate harness run --agent 'opencode run "$(cat {prompt_file})"' --test-cmd "m
 great for trying one first), `--max-attempts <n>`, `--base-branch <ref>`,
 `--timeout <seconds>`, `--keep-worktrees`, `--force` (recreate existing
 `harness/*` branches), `--setup-cmd <cmd|none>` (the install each new worktree
-runs), `--format json`. To watch a run as it happens, `specgate studio` serves
-a live view at `/live` — see [The harness](harness.md).
+runs), `--format json`. To watch a run as it happens, `specgate studio` shows
+it in its Live section (`/live`) — see [The studio](studio.md#live).
 
 The command exits non-zero if any requirement did not pass, so CI can gate
 on it. Each result is a branch you can check out, inspect, and merge — or

@@ -14,6 +14,6 @@ Feature: Build lists what is ready and starts it
 
   @REQ-208 @SCN-208c
   Scenario: No agent, no build
-    Given no agent is configured
-    When Build is started
-    Then it is refused, saying how to configure one
+    Given no agent is configured and `claude` is on the PATH
+    When Build is read and started
+    Then the start is refused, and Build offers Claude Code as the agent to choose

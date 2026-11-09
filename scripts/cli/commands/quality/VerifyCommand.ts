@@ -23,6 +23,7 @@ import {
   readOpenSpec,
 } from "../../../../packages/core/src/domain/OpenSpecReader";
 import { verifyClaims, type VerifyResult } from "../../../../packages/core/src/domain/VerifyClaims";
+import { forShell } from "../../../lib/shell-command";
 
 const LOCK = path.join(".specgate", "verify.lock");
 const FORMATS = ["openspec"] as const;
@@ -289,7 +290,7 @@ export class VerifyCommand extends BaseCommand {
           })
         );
       } else {
-        const r = spawnSync(cmd, {
+        const r = spawnSync(forShell(cmd), {
           cwd: projectDir,
           shell: true,
           stdio: io.json ? "pipe" : "inherit",

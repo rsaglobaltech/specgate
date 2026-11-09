@@ -9,12 +9,16 @@
  *
  * Everything is derived on the spot except two facts no file records: how the
  * last `check` ended, and how many days in a row it has ended green. Those live
- * in `.specgate/pet.json`, which is ignored by git — the pet is yours, not the
- * team's.
+ * in the repository's git folder (`.git/specgate/pet.json`), so a check leaves
+ * the working tree as it was (REQ-256): `.specgate/pet.json` and the
+ * `.gitignore` beside it showed up in `git status` after every check, and the
+ * harness wants a clean tree. Outside a repository, `.specgate/pet.json`,
+ * ignored there. The pet is yours, not the team's.
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { spawnSync } from "node:child_process";
 import { c, sym, progress, ASCII } from "../lib/ui";
 
 export const PET_NAME = "Gato";
@@ -30,12 +34,30 @@ export interface PetState {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
+/** The repository's git folder, absolute; null outside a repository. */
+function gitDir(projectDir: string): string | null {
+  const r = spawnSync("git", ["-C", projectDir, "rev-parse", "--git-dir"], { encoding: "utf8" });
+  if (r.status !== 0 || !String(r.stdout || "").trim()) return null;
+  return path.resolve(projectDir, String(r.stdout).trim());
+}
+
+/** Where the pet's state lives: the git folder, else `.specgate/`. */
+function stateDir(projectDir: string): { dir: string; inGit: boolean } {
+  const git = gitDir(projectDir);
+  return git
+    ? { dir: path.join(git, "specgate"), inGit: true }
+    : { dir: path.join(projectDir, STATE_DIR), inGit: false };
+}
+
 export function readPetState(projectDir: string): PetState {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(projectDir, STATE_DIR, STATE_FILE), "utf8"));
-  } catch {
-    return {};
+  for (const dir of [stateDir(projectDir).dir, path.join(projectDir, STATE_DIR)]) {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(dir, STATE_FILE), "utf8"));
+    } catch {
+      /* not there: an older place, or nothing yet */
+    }
   }
+  return {};
 }
 
 /** A calendar day, local time: a streak is about days you worked, not UTC. */
@@ -60,14 +82,16 @@ export function nextStreak(prev: PetState["streak"], ok: boolean, now: Date): Pe
  */
 export function recordCheck(projectDir: string, ok: boolean, now = new Date()): void {
   try {
-    const dir = path.join(projectDir, STATE_DIR);
+    const { dir, inGit } = stateDir(projectDir);
     fs.mkdirSync(dir, { recursive: true });
-    // `.specgate/config.json` is the team's and may be committed; the pet is
-    // not. Ignore only the pet, and only once.
-    const ignore = path.join(dir, ".gitignore");
-    const lines = fs.existsSync(ignore) ? fs.readFileSync(ignore, "utf8") : "";
-    if (!/^pet\.json$/m.test(lines)) {
-      fs.writeFileSync(ignore, `${lines}${lines && !lines.endsWith("\n") ? "\n" : ""}pet.json\n`);
+    if (!inGit) {
+      // `.specgate/config.json` is the team's and may be committed; the pet is
+      // not. Ignore only the pet, and only once.
+      const ignore = path.join(dir, ".gitignore");
+      const lines = fs.existsSync(ignore) ? fs.readFileSync(ignore, "utf8") : "";
+      if (!/^pet\.json$/m.test(lines)) {
+        fs.writeFileSync(ignore, `${lines}${lines && !lines.endsWith("\n") ? "\n" : ""}pet.json\n`);
+      }
     }
     const prev = readPetState(projectDir);
     const state: PetState = {

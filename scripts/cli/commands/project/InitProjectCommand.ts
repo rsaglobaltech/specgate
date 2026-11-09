@@ -1,5 +1,5 @@
 import * as readline from "node:readline/promises";
-import { FORJA_PACKAGE, runForja } from "./Forja";
+import { FORJA_PACKAGE, forjaCommand, forjaUnavailable, runForja } from "./Forja";
 import { mergeContract } from "../../../agents/contract-file";
 import { installDetectedAgents } from "../../../agents/detect";
 import * as fs from "node:fs";
@@ -1069,6 +1069,20 @@ export class InitProjectCommand extends BaseCommand {
     // second project inside an existing one is never what anybody wanted.
     // Any flag that describes a scaffold keeps the old behaviour, so no script
     // that calls `init` today changes what it does.
+    // REQ-249: `--yes` keeps scaffolding where code exists (scripts rely on
+    // it), but a second project inside the first is never a surprise.
+    if (
+      opts.yes &&
+      !opts.newProject &&
+      !opts.out &&
+      !opts.forja &&
+      detectStack(process.cwd()).detected !== "none"
+    ) {
+      logWarn(
+        `This folder already has code (${detectStack(process.cwd()).detected}): --yes scaffolds a separate project in a sub-folder.`
+      );
+      logInfo("To adopt this folder in place instead, run specgate init without --yes.");
+    }
     if (adoptsInstead(opts, process.cwd())) {
       if (fs.existsSync(path.join(process.cwd(), "spec.md"))) {
         // Running `init` twice is not a mistake worth an error.
@@ -1105,6 +1119,17 @@ export class InitProjectCommand extends BaseCommand {
       if (await asksForForja()) forjaArgs = [];
     }
     if (forjaArgs) {
+      const unavailable = forjaUnavailable(forjaCommand());
+      if (unavailable) {
+        logError(
+          `forja is not installed here, and npm cannot give ${FORJA_PACKAGE}: ${unavailable}`
+        );
+        // forja ships as a tarball on its GitHub releases, not on npm (yet).
+        logInfo("Fix: install it from https://github.com/rsaglobaltech/forja/releases —");
+        logInfo("     npm i -g <the .tgz of the latest release> — or point SPECGATE_FORJA_CMD");
+        logInfo("     at a forja you have, e.g. SPECGATE_FORJA_CMD=/path/to/forja/dist/cli.js.");
+        process.exit(2);
+      }
       logInfo("Generating the application with forja — it adopts Specgate when it installs.");
       const status = runForja(["init", ...forjaArgs], process.cwd());
       if (status === 127) {

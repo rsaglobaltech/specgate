@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
 import { detectStacks, presetYaml, withPreset, type Level } from "../../../lib/quality-presets";
+import { ensureIgnored } from "../../../lib/sonar-local";
 import { agentIo, wantsJson } from "../../../lib/agent";
 import { error } from "../../../lib/diagnostics";
 import { resolveProjectDir } from "../../../lib/project-root";
@@ -11,7 +12,11 @@ import {
   HARNESS_CONFIG_FILE,
   readHarnessConfig,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
-import type { QualityConfig, Stage } from "../../../../packages/core/src/domain/QualityChecks";
+import type {
+  QualityCheck,
+  QualityConfig,
+  Stage,
+} from "../../../../packages/core/src/domain/QualityChecks";
 import {
   dockerAvailable,
   ensureImage,
@@ -135,6 +140,8 @@ export class QualityCommand extends BaseCommand {
       }
       const stacks = detectStacks(projectDir);
       fs.writeFileSync(file, withPreset(current, presetYaml(projectDir, level as Level)), "utf8");
+      // REQ-258: what each check writes stays out of git; the baseline does not.
+      ensureIgnored(projectDir, ".specgate/quality/");
       const written = readHarnessConfig(projectDir) || {};
       const checks = written.quality ? written.quality.checks.map((c) => c.name) : [];
       io.emit({ quality: { level, stacks, checks, file: HARNESS_CONFIG_FILE } }, () => {
@@ -253,7 +260,24 @@ export class QualityCommand extends BaseCommand {
       let baseline = readBaseline(projectDir);
       const taken: Array<{ name: string; findings: number | null; skipped: string }> = [];
       if (!json) process.stdout.write(ui.header("quality baseline"));
+      // REQ-240: what a target reads is written first — Maven's bill of
+      // materials before the scan of it — once, and not recorded itself.
+      const ran = new Set<string>();
+      const prepare = (check: QualityCheck) => {
+        const need = withArch.find((c) => c.name === check.needs);
+        if (!need || ran.has(need.name)) return;
+        prepare(need);
+        ran.add(need.name);
+        if (json) runCheck(projectDir, need, ctx);
+        else
+          ui.task(
+            need.name,
+            () => runCheck(projectDir, need, ctx),
+            (o) => ({ ok: o.ok })
+          );
+      };
       for (const check of targets) {
+        prepare(check);
         const outcome = json
           ? runCheck(projectDir, check, ctx)
           : ui.task(
@@ -309,7 +333,14 @@ export class QualityCommand extends BaseCommand {
     }
     const ok = stagesPassed(outcomes, stages.includes("ci"));
     const shape = {
-      quality: { stages, outcomes: outcomes.map(({ output: _o, ...rest }) => rest) },
+      // REQ-239: the last lines a check printed, to read a failure without rerunning it.
+      quality: {
+        stages,
+        outcomes: outcomes.map(({ output, ...rest }) => ({
+          ...rest,
+          output: (output || "").split(/\r?\n/).slice(-30).join("\n"),
+        })),
+      },
     };
     if (!ok) {
       io.fail(shape, [

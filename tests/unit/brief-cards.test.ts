@@ -498,3 +498,224 @@ test("REQ-142: explore prints a project snapshot, not a brief", () => {
   assert.doesNotMatch(src, /\bbrief\b/i);
   assert.match(src, /project snapshot/);
 });
+
+// ── REQ-243..246 (truck-flote, second run) ──────────────────────────────────
+
+const FORJA_BRIEF = `---
+product: truck-flote
+surfaces: [api, web]
+actors:
+  - { name: Customer, surfaces: [api, web] }
+modules: []
+---
+
+# Proyecto: control de flota
+
+El despachador asigna cargas a los camiones en ruta.
+`;
+
+test("REQ-243 SCN-243a: status points at a brief still to fill in", (t: TestContext) => {
+  const { dir, cli } = project(t, null);
+  fs.writeFileSync(
+    path.join(dir, "package.json"),
+    JSON.stringify({ name: "fleet", scripts: { test: "node -e 0" } })
+  );
+  // The helper's spec.md would read as "already spec-driven": adopt for real.
+  fs.rmSync(path.join(dir, "spec.md"));
+  assert.equal(cli("init", "--no-capabilities").status, 0);
+  fs.mkdirSync(path.join(dir, "docs"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "docs", "brief.md"), FORJA_BRIEF);
+  const r = cli("status");
+  assert.match(r.stdout, /docs\/brief\.md/, r.stdout);
+  assert.match(r.stdout, /specgate draft/, r.stdout);
+  assert.doesNotMatch(r.stdout, /specgate new/, r.stdout);
+});
+
+test('REQ-244 SCN-244a: "dice si cabe" and "un desvío aceptable"', () => {
+  const text = `${FRONT.replace("modules: [courses, lessons]", "modules: [carga]")}
+${NOTES}
+## Module: carga
+
+Rules
+- El sistema dice en menos de 1 s si cabe la carga.
+- Un camión es candidato con un desvío aceptable.
+
+Examples
+- The one where una carga de 4 palés cabe en el camión.
+- The one where un desvío de 20 km es aceptable.
+`;
+  const found = checkBrief(text, "docs/brief.md");
+  const b11 = found.filter((d: { code: string }) => d.code === "B11_condition_last");
+  assert.deepEqual(b11, [], '"si" after "dice" is whether, not a condition');
+  const b5 = found.filter((d: { code: string }) => d.code === "B5_vague");
+  assert.ok(
+    b5.some((d: { message: string }) => /aceptable/.test(d.message)),
+    JSON.stringify(found)
+  );
+  for (const vague of [
+    "lo más cerca posible",
+    "cerca del punto",
+    "casi vacío",
+    "as close as possible",
+    "almost full",
+  ]) {
+    const one = text.replace("con un desvío aceptable", vague);
+    assert.ok(
+      checkBrief(one, "docs/brief.md").some((d: { code: string }) => d.code === "B5_vague"),
+      vague
+    );
+  }
+});
+
+test("REQ-245 SCN-245a: ten modules and a driver on mobile, in a web project", () => {
+  const modules = "[a, b, c, d, e, f, g, h, i, j]";
+  const text = `---
+product: truck-flote
+surfaces: [api, web, mobile]
+actors:
+  - { name: Despachador, surfaces: [web] }
+  - { name: Conductor, surfaces: [mobile] }
+modules: ${modules}
+---
+
+El Despachador asigna cargas; el Conductor las ve en su teléfono.
+`;
+  const web = checkBrief(text, "docs/brief.md", { mobileApp: false });
+  assert.ok(
+    web.some(
+      (d: { code: string; message: string }) =>
+        d.code === "B12_too_many_modules" && /10/.test(d.message)
+    )
+  );
+  assert.ok(
+    web.some(
+      (d: { code: string; message: string }) =>
+        d.code === "B13_surface_missing" && /Conductor/.test(d.message) && /mobile/.test(d.message)
+    )
+  );
+  const mobile = checkBrief(text, "docs/brief.md", { mobileApp: true });
+  assert.ok(!mobile.some((d: { code: string }) => d.code === "B13_surface_missing"));
+  const unknown = checkBrief(text, "docs/brief.md");
+  assert.ok(
+    !unknown.some((d: { code: string }) => d.code === "B13_surface_missing"),
+    "no project, no comparison"
+  );
+});
+
+test("REQ-246 SCN-246a: forja's template, modules empty", (t: TestContext) => {
+  const { cli } = project(t, FORJA_BRIEF);
+  const r = cli("draft");
+  assert.notEqual(r.status, 0);
+  for (const field of ["product", "surfaces", "actors", "modules"])
+    assert.match(r.stdout, new RegExp(field), field);
+  assert.match(r.stdout, /Customer/);
+  assert.match(r.stdout, /specgate draft --agent/);
+});
+
+// ── REQ-251..253 (truck-flote, third run) ───────────────────────────────────
+
+const CLIENT_BRIEF = `# Proyecto: control de flota
+
+El despachador asigna cargas a los camiones en ruta.
+`;
+
+const FORJA_TEMPLATE = `---
+product: truck-flote
+surfaces: [api, web]
+actors:
+  - { name: Customer, surfaces: [api, web] }
+modules: []
+---
+
+# Brief
+
+Paste the client's brief here **as it is**, without rewriting it.
+`;
+
+test("REQ-251 SCN-251a: the client's brief pushed first, forja's template beside it", (t: TestContext) => {
+  const { dir, cli } = project(t, null);
+  fs.rmSync(path.join(dir, "spec.md"));
+  fs.writeFileSync(
+    path.join(dir, "package.json"),
+    JSON.stringify({ name: "fleet", scripts: { test: "node -e 0" } })
+  );
+  assert.equal(cli("init", "--no-capabilities").status, 0);
+  fs.writeFileSync(path.join(dir, "brief.md"), CLIENT_BRIEF);
+  fs.mkdirSync(path.join(dir, "docs"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "docs", "brief.md"), FORJA_TEMPLATE);
+  for (const args of [["status"], ["draft"]]) {
+    const r = cli(...args);
+    const said = r.stdout + r.stderr;
+    assert.match(said, /brief\.md at the root/, `${args[0]}: ${said}`);
+    assert.match(said, /docs\/brief\.md/, args[0]);
+  }
+});
+
+test("REQ-252 SCN-252a: forja's front matter, modules empty", (t: TestContext) => {
+  const { cli } = project(t, FORJA_TEMPLATE);
+  const r = cli("draft");
+  assert.doesNotMatch(r.stdout, /no front matter yet/);
+  assert.match(r.stdout, /front matter at the top of \S+ is incomplete/);
+});
+
+test("REQ-253 SCN-253a: the guide an agent reads", () => {
+  const { briefSetupGuide } = require("../../scripts/draft/brief-setup");
+  const guide = briefSetupGuide("docs/brief.md");
+  assert.match(guide, /as the brief writes (it|them)/);
+  assert.match(guide, /in the brief's language/);
+  assert.match(guide, /three to eight/);
+  assert.match(guide, /forja\.config\.json/);
+});
+
+test("REQ-257 SCN-257a: forja's front matter, modules empty", (t: TestContext) => {
+  const { cli } = project(t, FORJA_TEMPLATE);
+  assert.match(cli("draft").stdout, /These are the four fields\s+that tell Specgate what to draft/);
+});
+
+// ── REQ-259..260 (truck-flote, sixth run) ───────────────────────────────────
+
+test("REQ-259 SCN-259a: the client's brief pushed first, forja's template beside it", (t: TestContext) => {
+  const { dir, cli } = project(t, FORJA_TEMPLATE);
+  fs.writeFileSync(path.join(dir, "brief.md"), CLIENT_BRIEF);
+  const r = cli("draft");
+  const text = fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8");
+  const front = FORJA_TEMPLATE.slice(0, FORJA_TEMPLATE.indexOf("# Brief"));
+  assert.ok(text.startsWith(front), text);
+  assert.ok(text.includes(CLIENT_BRIEF), text);
+  assert.doesNotMatch(text, /Paste the client's brief here/);
+  assert.ok(fs.existsSync(path.join(dir, "brief.md")), "the root file is kept");
+  assert.match(r.stdout, /brief\.md at the root/);
+  assert.match(r.stdout, /now below the front matter of docs\/brief\.md/);
+});
+
+test("REQ-259 SCN-259b: a body the person wrote is left alone", (t: TestContext) => {
+  const own = FORJA_TEMPLATE.replace(
+    "Paste the client's brief here **as it is**, without rewriting it.",
+    "Our own notes: the despachador plans the day's loads."
+  );
+  const { dir, cli } = project(t, own);
+  fs.writeFileSync(path.join(dir, "brief.md"), CLIENT_BRIEF);
+  cli("draft");
+  assert.equal(fs.readFileSync(path.join(dir, "docs", "brief.md"), "utf8"), own);
+});
+
+const SETUP_STUB = `
+const fs = require("fs");
+const text = fs.readFileSync("docs/brief.md", "utf8");
+fs.writeFileSync("docs/brief.md", ${JSON.stringify(FRONT)} + text);
+`;
+
+test("REQ-260 SCN-260a: the agent's front matter needs no fix", (t: TestContext) => {
+  const p = project(t, NOTES);
+  const stub = path.join(p.dir, "..", `setup-${path.basename(p.dir)}.js`);
+  fs.writeFileSync(stub, SETUP_STUB);
+  t.after(() => fs.rmSync(stub, { force: true }));
+  const r = p.cli("draft", "--agent", `node ${stub}`);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(
+    fs.readFileSync(path.join(p.dir, "docs", "brief.md"), "utf8"),
+    /^---\nproduct: Lingo/
+  );
+  assert.ok(!fs.existsSync(path.join(p.dir, "docs", "specs", "BRIEF-SETUP.md")), r.stdout);
+  assert.equal(git(p.dir, "status", "--porcelain").trim(), "M docs/brief.md");
+});

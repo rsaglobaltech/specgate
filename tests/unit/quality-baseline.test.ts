@@ -75,6 +75,122 @@ const sg = (dir: string, ...args: string[]) =>
   });
 const json = (r: { stdout: string }) => JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
 
+test("REQ-240 SCN-240a: a scan of what a build step writes", () => {
+  const dir = project();
+  // scan reads what prep builds, as osv-scanner reads Maven's bill of materials.
+  fs.writeFileSync(path.join(dir, "prep.js"), 'require("fs").writeFileSync("built.txt", "ok");');
+  fs.writeFileSync(
+    path.join(dir, "scan.js"),
+    'if (!require("fs").existsSync("built.txt")) process.exit(2);' + SCANNER
+  );
+  fs.writeFileSync(
+    path.join(dir, "harness.config.yaml"),
+    [
+      "harness_version: 1",
+      "checks:",
+      "  - name: prep",
+      '    run: "node prep.js"',
+      "    runner: local",
+      "  - name: scan",
+      '    run: "node scan.js"',
+      "    runner: local",
+      "    needs: prep",
+      "    sarif: .specgate/quality/scan.sarif",
+      "    scope: all",
+      "",
+    ].join("\n")
+  );
+  const taken = sg(dir, "quality", "baseline", "--accept", "scan", "--json");
+  assert.equal(taken.status, 0, taken.stdout + taken.stderr);
+  assert.equal(json(taken).quality.checks[0].findings, 1, taken.stdout);
+  assert.ok(fs.existsSync(path.join(dir, "built.txt")), "prep ran first");
+});
+
+test("REQ-240: needs names an earlier check", () => {
+  const { readQuality } = require("../../packages/core/src/domain/QualityChecks");
+  const { errors } = readQuality({
+    checks: [
+      { name: "scan", run: "x", runner: "local", needs: "prep" },
+      { name: "prep", run: "y", runner: "local" },
+    ],
+  });
+  assert.ok(
+    errors.some((e: string) => /needs/.test(e)),
+    errors.join("; ")
+  );
+});
+
+/** A check named `scan` judged with this scope, in place of project()'s. */
+function scoped(dir: string, scope: "diff" | "all") {
+  fs.writeFileSync(
+    path.join(dir, "harness.config.yaml"),
+    [
+      "harness_version: 1",
+      "checks:",
+      "  - name: scan",
+      '    run: "node scan.js"',
+      "    runner: local",
+      "    sarif: .specgate/quality/scan.sarif",
+      `    scope: ${scope}`,
+      "",
+    ].join("\n")
+  );
+}
+
+test("REQ-241 SCN-241a: a development secret in .env.local", () => {
+  const dir = project();
+  scoped(dir, "diff");
+  // Two findings: one in a file git ignores, one in a tracked file.
+  fs.writeFileSync(
+    path.join(dir, "scan.js"),
+    `const fs = require("fs");
+const at = (uri) => ({ ruleId: "generic-api-key", level: "error", message: { text: "a secret" },
+  locations: [{ physicalLocation: { artifactLocation: { uri }, region: { startLine: 1 } } }] });
+fs.mkdirSync(".specgate/quality", { recursive: true });
+fs.writeFileSync(".specgate/quality/scan.sarif", JSON.stringify({ version: "2.1.0",
+  runs: [{ results: [at("apps/web/.env.local"), at("src/config.ts")] }] }));
+process.exit(1);`
+  );
+  fs.mkdirSync(path.join(dir, "apps/web"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "apps/web/.env.local"), "AUTH_SECRET=dev\n");
+  fs.writeFileSync(path.join(dir, "src/config.ts"), "export const key = 'x';\n");
+  fs.writeFileSync(path.join(dir, ".gitignore"), ".env.local\n");
+  const git = (...a: string[]) => spawnSync("git", a, { cwd: dir, encoding: "utf8" });
+  git("init", "-q");
+  git("add", "-A");
+  git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "start");
+  // The change: config.ts edited. A file git ignores is never part of one.
+  fs.writeFileSync(path.join(dir, "src/config.ts"), "export const key = 'y';\n");
+  const run = sg(dir, "quality", "run", "--json");
+  const o = json(run).quality.outcomes[0];
+  assert.equal(o.findings.total, 1, run.stdout);
+  assert.deepEqual(o.findings.fresh, ["src/config.ts:1 [generic-api-key] a secret"]);
+});
+
+test("REQ-241 SCN-241b: vulnerabilities in Maven's bill of materials", () => {
+  const dir = project();
+  scoped(dir, "all");
+  fs.writeFileSync(
+    path.join(dir, "scan.js"),
+    `const fs = require("fs");
+fs.mkdirSync("apps/api/target", { recursive: true });
+fs.writeFileSync("apps/api/target/bom.json", "{}");
+fs.mkdirSync(".specgate/quality", { recursive: true });
+fs.writeFileSync(".specgate/quality/scan.sarif", JSON.stringify({ version: "2.1.0", runs: [{ results: [
+  { ruleId: "GHSA-1", level: "error", message: { text: "jackson-databind is vulnerable" },
+    locations: [{ physicalLocation: { artifactLocation: { uri: "apps/api/target/bom.json" } } }] } ] }] }));
+process.exit(1);`
+  );
+  fs.writeFileSync(path.join(dir, ".gitignore"), "target/\n");
+  const git = (...a: string[]) => spawnSync("git", a, { cwd: dir, encoding: "utf8" });
+  git("init", "-q");
+  git("add", "-A");
+  git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "start");
+  const run = sg(dir, "quality", "run", "--json");
+  assert.notEqual(run.status, 0, "a vulnerable dependency fails the check");
+  assert.equal(json(run).quality.outcomes[0].findings.total, 1, run.stdout);
+});
+
 test("REQ-222 SCN-222a: debt in the baseline passes, a new finding fails", () => {
   const dir = project();
   const before = sg(dir, "quality", "run", "--json");

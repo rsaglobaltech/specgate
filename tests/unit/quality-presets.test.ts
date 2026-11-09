@@ -57,6 +57,7 @@ test("REQ-225 SCN-225a: strict for a Maven project", () => {
   assert.deepEqual(json(r).quality.checks, [
     "commits",
     "secrets",
+    "sbom",
     "dependencies",
     "coverage",
     "spotbugs",
@@ -138,11 +139,176 @@ test("REQ-225 SCN-225c: the rest of the file is kept, the checks are not replace
   assert.match(text, /name: spotbugs/);
 });
 
+// ── REQ-235 ─────────────────────────────────────────────────────────────────
+
+test("REQ-235 SCN-235a: a Spring Boot API in apps/api beside a Node root", () => {
+  const dir = tmp();
+  w(dir, "package.json", JSON.stringify({ devDependencies: { eslint: "9" } }));
+  w(dir, "package-lock.json", "{}");
+  w(
+    dir,
+    "apps/api/pom.xml",
+    "<project><properties><java.version>21</java.version></properties></project>"
+  );
+  w(dir, "apps/web/package.json", "{}");
+  const r = sg(dir, "quality", "init", "--level", "strict", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const checks: string[] = json(r).quality.checks;
+  for (const name of ["coverage", "spotbugs", "pmd", "lint", "dependencies-node"])
+    assert.ok(checks.includes(name), `${name} in ${checks.join(", ")}`);
+  assert.equal(checks.filter((c) => c.startsWith("semgrep")).length, 1, "one Semgrep scan");
+  const { readHarnessConfig } = require("../../packages/core/src/infrastructure/HarnessConfigFile");
+  const byName = new Map(
+    readHarnessConfig(dir).quality.checks.map((c: { name: string }) => [c.name, c])
+  );
+  for (const name of ["coverage", "spotbugs", "pmd"]) {
+    const c = byName.get(name) as { run: string; image: string };
+    assert.match(c.run, /^cd apps\/api && mvn /, `${name}: ${c.run}`);
+    assert.equal(c.image, "maven:3.9-eclipse-temurin-21");
+  }
+  const coverage = byName.get("coverage") as { report: { path: string } };
+  assert.equal(coverage.report.path, "apps/api/target/site/jacoco/jacoco.xml");
+  const spotbugs = byName.get("spotbugs") as { sarif: string };
+  assert.equal(spotbugs.sarif, "apps/api/target/spotbugsSarif.json");
+  const semgrep = byName.get("semgrep") as { run: string };
+  assert.match(semgrep.run, /--config p\/java/);
+  assert.match(semgrep.run, /--config p\/typescript/);
+  assert.equal(json(r).quality.stacks.join(","), "maven,node");
+  // Two dependency scans, two reports: one must not overwrite the other.
+  const deps = ["dependencies", "dependencies-node"].map(
+    (n) => byName.get(n) as { run: string; sarif: string }
+  );
+  assert.notEqual(deps[0].sarif, deps[1].sarif);
+  for (const d of deps) assert.ok(d.run.includes(`--output ${d.sarif}`), d.run);
+});
+
+test("REQ-235 SCN-235b: the changed files of one folder", () => {
+  const { expandRun } = require("../../packages/core/src/domain/QualityChecks");
+  const ctx = {
+    req: "REQ-001",
+    base: "main",
+    reportDir: ".specgate/quality",
+    changedFiles: ["apps/api/src/main/java/eu/fleet/Truck.java", "apps/web/src/map.ts"],
+  };
+  assert.equal(expandRun("{changed_classes@apps/api}", ctx), "eu.fleet.Truck");
+  assert.equal(expandRun("{changed_src@apps/web}", ctx), "src/map.ts");
+  assert.equal(expandRun("{changed_src@apps/api}", ctx), "", "nothing of another folder");
+  assert.equal(
+    expandRun("{changed_classes}", ctx),
+    "eu.fleet.Truck",
+    "the plain form is unchanged"
+  );
+});
+
+// ── REQ-258 ─────────────────────────────────────────────────────────────────
+
+test("REQ-258 SCN-258a: a run after init", () => {
+  const dir = tmp();
+  w(dir, "package.json", "{}");
+  w(dir, ".gitignore", "node_modules/\n");
+  assert.equal(sg(dir, "quality", "init").status, 0);
+  assert.equal(sg(dir, "quality", "init", "--force").status, 0, "a second init adds nothing");
+  const ignore = fs.readFileSync(path.join(dir, ".gitignore"), "utf8");
+  assert.equal(
+    ignore.split("\n").filter((l: string) => l === ".specgate/quality/").length,
+    1,
+    ignore
+  );
+  git(dir, "init", "-q");
+  w(dir, ".specgate/quality/osv.sarif", "{}");
+  w(dir, ".specgate/quality-baseline.json", "{}");
+  const status = git(dir, "status", "--porcelain", "--untracked-files=all").stdout;
+  assert.doesNotMatch(status, /quality\/osv\.sarif/);
+  assert.match(status, /quality-baseline\.json/, "the baseline is to be committed");
+});
+
+// ── REQ-250 ─────────────────────────────────────────────────────────────────
+
+test("REQ-250 SCN-250a: a Spring Boot API whose group is eu.truckflote", () => {
+  const dir = tmp();
+  w(dir, "package.json", "{}");
+  w(
+    dir,
+    "apps/api/pom.xml",
+    "<project><parent><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId></parent><groupId>eu.truckflote</groupId><artifactId>api</artifactId></project>"
+  );
+  assert.equal(sg(dir, "quality", "init").status, 0);
+  const { readHarnessConfig } = require("../../packages/core/src/infrastructure/HarnessConfigFile");
+  const coverage = readHarnessConfig(dir).quality.checks.find(
+    (c: { name: string }) => c.name === "coverage"
+  );
+  assert.match(
+    coverage.run,
+    /javaagent:[^ ]*org\.jacoco\.agent-runtime\.jar=destfile=target\/jacoco\.exec,includes=eu\.truckflote\.\*/
+  );
+  assert.equal(coverage.report.path, "apps/api/target/site/jacoco/jacoco.xml");
+  const bare = tmp();
+  w(bare, "pom.xml", "<project><artifactId>x</artifactId></project>");
+  assert.equal(sg(bare, "quality", "init").status, 0);
+  assert.doesNotMatch(config(bare), /includes=/, "no group: every class");
+});
+
+// ── REQ-237, REQ-238 ────────────────────────────────────────────────────────
+
+test("REQ-237 SCN-237a: a Spring Boot parent manages the versions", () => {
+  const dir = tmp();
+  w(
+    dir,
+    "pom.xml",
+    "<project><parent><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId><version>4.1.1</version></parent></project>"
+  );
+  const r = sg(dir, "quality", "init", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const checks: string[] = json(r).quality.checks;
+  assert.ok(checks.indexOf("sbom") >= 0 && checks.indexOf("sbom") < checks.indexOf("dependencies"));
+  const { readHarnessConfig } = require("../../packages/core/src/infrastructure/HarnessConfigFile");
+  const byName = new Map(
+    readHarnessConfig(dir).quality.checks.map((c: { name: string }) => [c.name, c])
+  );
+  const sbom = byName.get("sbom") as { run: string; image: string; when: string };
+  const deps = byName.get("dependencies") as { run: string; image: string; when: string };
+  assert.match(sbom.run, /cyclonedx-maven-plugin:[\d.]+:makeBom .*-DoutputName=bom/);
+  // REQ-276 SCN-276a: a module that skips deploy still gets its bill of materials.
+  assert.match(sbom.run, /-Dcyclonedx\.skipNotDeployed=false/);
+  assert.match(sbom.image, /^maven:/);
+  assert.match(deps.run, /-L target\/bom\.json/);
+  assert.equal(deps.image, "ghcr.io/google/osv-scanner:v2.2.4");
+  assert.equal(sbom.when, deps.when, "the bill of materials is written in the same stage");
+  assert.equal(
+    (deps as unknown as { needs: string }).needs,
+    "sbom",
+    "REQ-240: the baseline runs it first"
+  );
+});
+
+test("REQ-238 SCN-238a: the preset gives Testcontainers its Docker", () => {
+  const dir = tmp();
+  w(
+    dir,
+    "pom.xml",
+    "<project><dependencies><dependency><groupId>org.testcontainers</groupId><artifactId>postgresql</artifactId></dependency></dependencies></project>"
+  );
+  assert.equal(sg(dir, "quality", "init", "--level", "strict").status, 0);
+  const { readHarnessConfig } = require("../../packages/core/src/infrastructure/HarnessConfigFile");
+  const byName = new Map(
+    readHarnessConfig(dir).quality.checks.map((c: { name: string }) => [c.name, c])
+  );
+  assert.equal((byName.get("coverage") as { docker: boolean }).docker, true);
+  assert.equal((byName.get("pmd") as { docker: boolean }).docker, false, "PMD starts nothing");
+  const plain = tmp();
+  w(plain, "pom.xml", "<project/>");
+  assert.equal(sg(plain, "quality", "init").status, 0);
+  assert.doesNotMatch(config(plain), /docker: true/);
+});
+
+// Linux containers only (REQ-254): the check images have no Windows manifest.
 const docker =
-  spawnSync("docker", ["version", "--format", "{{.Server.Version}}"], {
-    encoding: "utf8",
-    timeout: 15000,
-  }).status === 0;
+  String(
+    spawnSync("docker", ["version", "--format", "{{.Server.Os}}"], {
+      encoding: "utf8",
+      timeout: 15000,
+    }).stdout || ""
+  ).trim() === "linux";
 
 test(
   "REQ-230 SCN-230a: a Maven change judged by the strict preset in Docker",

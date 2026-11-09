@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
       - run: npm ci
       - name: Build
@@ -40,3 +40,40 @@ jobs:
         run: node e2e/run.mjs --coverage --list
       - name: Pack, install and run the journeys
         run: node e2e/run.mjs
+
+  studio:
+    # REQ-436: the studio in a real browser, against a project made for the
+    # test — every section, and the journey from an open question to a run
+    # followed in Live (e2e/studio/).
+    name: Studio in a browser (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "npm"
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Git identity for the harness run
+        run: |
+          git config --global user.email "e2e@example.com"
+          git config --global user.name "E2E"
+      - name: Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: The studio's browser tests
+        run: npm run e2e:studio
+      - name: The report, when they fail
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: studio-playwright-${{ matrix.os }}
+          path: |
+            playwright-report/
+            test-results/studio/
+          retention-days: 7

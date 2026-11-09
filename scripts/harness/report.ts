@@ -179,7 +179,13 @@ function render(summary: HarnessReportSummary): void {
       `    ${label("requirements attempted")}${summary.requirementsAttempted}\n` +
       `    ${c.ok}${label("passed")}${c.reset}${summary.passed}\n` +
       `    ${c.bad}${label("failed")}${c.reset}${summary.failed}\n` +
-      `    ${c.warn}${label("blocked")}${c.reset}${summary.blocked}\n\n` +
+      `    ${c.warn}${label("blocked")}${c.reset}${summary.blocked}\n` +
+      // REQ-269: a run stopped by hand is in the ledger too.
+      (summary.stopped.length > 0
+        ? `    ${c.warn}${label("stopped")}${c.reset}${summary.stopped.length}` +
+          `  ${c.dim}${summary.stopped.join(", ")} — the run was stopped on it${c.reset}\n`
+        : "") +
+      "\n" +
       `    ${c.bold}${label("first attempt worked")}${c.reset}${pct(summary.firstAttemptRate)}` +
       `  ${c.dim}(${summary.firstAttemptPasses} of ${summary.passed} passes)${c.reset}\n` +
       `    ${c.bold}${label("cost per delivered REQ")}${c.reset}` +

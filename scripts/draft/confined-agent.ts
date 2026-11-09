@@ -15,6 +15,7 @@
  * agent's footprint is found at all.
  */
 
+import { withPromptFile } from "../../packages/core/src/domain/HarnessRun";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -28,6 +29,23 @@ export interface ConfinedRun {
   detail?: string;
   wrote: string[];
   reverted: string[];
+  /**
+   * Where what was put back is kept, relative to the project (REQ-248): a
+   * person may have edited one of those files while the agent ran.
+   */
+  kept?: string;
+}
+
+/**
+ * Where what an undo removed is kept: inside the repository's git folder, so
+ * the working tree is left exactly as it was and nothing new shows in status.
+ */
+function undoneDir(projectDir: string): string {
+  const r = spawnSync("git", ["-C", projectDir, "rev-parse", "--git-dir"], { encoding: "utf8" });
+  const gitDir = String(r.stdout || ".git").trim() || ".git";
+  const abs = path.resolve(projectDir, gitDir);
+  const rel = path.relative(projectDir, abs).split(path.sep).join("/");
+  return `${rel || ".git"}/specgate-undone`;
 }
 
 /** Every path git sees as changed or untracked, one file per entry. */
@@ -59,7 +77,7 @@ export function agentInvocation(
   promptFile: string
 ): { command: string; stdin: boolean } {
   return command.includes("{prompt_file}")
-    ? { command: command.split("{prompt_file}").join(promptFile), stdin: false }
+    ? { command: withPromptFile(command, promptFile), stdin: false }
     : { command, stdin: true };
 }
 
@@ -132,6 +150,17 @@ export function runConfinedAgent(o: {
   const after = dirtyPaths(o.projectDir) || [];
   const wrote: string[] = [];
   const reverted: string[] = [];
+  // Before a file is put back, what it held is kept (REQ-248).
+  const runDir = `${undoneDir(o.projectDir)}/${new Date().toISOString().replace(/[:.]/g, "-")}`;
+  let keptAny = false;
+  const keep = (rel: string) => {
+    const full = path.join(o.projectDir, rel);
+    if (!fs.existsSync(full) || !fs.statSync(full).isFile()) return;
+    const dest = path.join(o.projectDir, runDir, rel);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(full, dest);
+    keptAny = true;
+  };
   for (const rel of after) {
     if (inScope(rel)) {
       if (!before.includes(rel)) wrote.push(rel);
@@ -144,6 +173,7 @@ export function runConfinedAgent(o: {
       const now = fs.existsSync(full) && fs.statSync(full).isFile() ? fs.readFileSync(full) : null;
       if (was === null && now === null) continue;
       if (was !== null && now !== null && was.equals(now)) continue;
+      keep(rel);
       if (was === null) fs.rmSync(full, { recursive: true, force: true });
       else fs.writeFileSync(full, was);
       reverted.push(rel);
@@ -153,6 +183,7 @@ export function runConfinedAgent(o: {
         spawnSync("git", ["-C", o.projectDir, "ls-files", "--error-unmatch", "--", rel], {
           encoding: "utf8",
         }).status === 0;
+      keep(rel);
       if (tracked) spawnSync("git", ["-C", o.projectDir, "checkout", "--", rel]);
       else fs.rmSync(full, { recursive: true, force: true });
       reverted.push(rel);
@@ -169,6 +200,7 @@ export function runConfinedAgent(o: {
     }
   }
 
+  const kept = keptAny ? runDir : undefined;
   if (agent.status !== 0) {
     const tail = `${agent.stdout || ""}${agent.stderr || ""}`.trim().slice(-500);
     return {
@@ -177,7 +209,8 @@ export function runConfinedAgent(o: {
       detail: `exited ${agent.status ?? "on a signal"}${tail ? `: ${tail}` : ""}`,
       wrote,
       reverted,
+      kept,
     };
   }
-  return { ok: true, wrote, reverted };
+  return { ok: true, wrote, reverted, kept };
 }

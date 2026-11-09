@@ -133,3 +133,25 @@ test("status lists a requirement waiting for an answer apart, naming the questio
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+
+test("REQ-263 SCN-263a: the client answered Q5", () => {
+  const { parent, dir } = project(true);
+  try {
+    fs.mkdirSync(path.join(dir, "docs/specs/changes/draft-totals"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "docs/specs/changes/draft-totals/questions.md"),
+      "# Questions\n\n| # | Question | Blocks | Answer |\n|---|---|---|---|\n" +
+        "| Q5 | Half-up or banker's rounding? | REQ-002 | Half-up, always |\n"
+    );
+    const text = cli("status", "--project-dir", dir).stdout;
+    assert.match(text, /Answered — update the spec/);
+    assert.match(text, /REQ-002.*Q5/);
+    assert.doesNotMatch(text, /Waiting for an answer/);
+
+    const doc = JSON.parse(cli("status", "--project-dir", dir, "--json").stdout);
+    const req = doc.requirements.find((r: { id: string }) => r.id === "REQ-002");
+    assert.match(req.answered, /^Q5 \(docs\/specs\/changes\/draft-totals\/questions\.md\)$/);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});

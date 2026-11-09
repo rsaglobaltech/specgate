@@ -61,13 +61,15 @@ import {
   BRIEF_TEMPLATE,
   briefBody,
   briefSetupGuide,
+  rootBrief,
+  withRootBrief,
   briefSetupPrompt,
   checkFrontMatter,
   frontMatter,
   frontMatterExplanation,
   noBriefExplanation,
 } from "../../../draft/brief-setup";
-import { checkBrief, briefReady } from "../../../draft/brief-check";
+import { checkBrief, briefReady, projectSurfaces } from "../../../draft/brief-check";
 import {
   cardValues,
   moduleSection,
@@ -118,7 +120,7 @@ function usage(): string {
     "  specgate draft <module>              open that module's draft — or check it, once it exists\n" +
     '  specgate draft <module> --agent "claude -p"\n' +
     "                                       have your agent write it, then check it\n" +
-    "  specgate draft --check               the brief rules (B1–B11) on the brief, before drafting\n" +
+    "  specgate draft --check               the brief rules (B1–B13) on the brief, before drafting\n" +
     "  specgate draft --check <change-id>   the checklist on any change\n" +
     "  specgate draft --new-brief           write docs/brief.md to fill in, when you have none\n" +
     '  specgate draft --agent "claude -p"   have your agent propose the brief\'s front matter\n\n' +
@@ -498,6 +500,15 @@ function writeSetupGuide(projectDir: string, brief: string): void {
   fs.writeFileSync(file, briefSetupGuide(brief), "utf8");
 }
 
+/**
+ * The guide has done its work once the front matter is complete (REQ-260):
+ * left behind, it was an untracked file nobody said to commit or delete, and
+ * the harness refuses a tree that is not clean (truck-flote, S47).
+ */
+function removeSetupGuide(projectDir: string): void {
+  fs.rmSync(path.join(projectDir, BRIEF_SETUP_FILE), { force: true });
+}
+
 /** The next free SCN number, past every scenario the project or a change uses. */
 export function nextScenario(projectDir: string): string {
   let max = 0;
@@ -812,6 +823,20 @@ export class DraftCommand extends BaseCommand {
       ]);
     }
     const brief = { rel, text: text! };
+    // REQ-259: the client's text at the root goes where the template asks
+    // for it, before anything is explained or proposed over the placeholder.
+    const moved = withRootBrief(projectDir, brief.text);
+    if (moved) {
+      fs.writeFileSync(file, moved.text, "utf8");
+      brief.text = moved.text;
+      if (!opts.json) {
+        process.stdout.write(
+          ui.info(
+            `${moved.root} at the root looked like the brief: its text is now below the front matter of ${rel}. ${moved.root} is kept.`
+          )
+        );
+      }
+    }
     if (opts.agent) return this.frontMatterWithAgent(opts, projectDir, brief);
 
     // (b) No front matter: every field, explained, and the agent to propose it.
@@ -863,15 +888,41 @@ export class DraftCommand extends BaseCommand {
             `  The front matter at the top of ${rel} needs ${problems.length} fix(es):\n\n`
           );
           for (const p of problems) out.write(ui.fail(p.message) + ui.fix(p.fix));
+          // REQ-246: what each field is for, a template actor left behind, and
+          // the agent that can propose them — what forja's template promises.
+          out.write("\n" + frontMatterExplanation(rel, true));
+          // REQ-251: the client's text pushed first sits at the root.
+          const atRoot = rootBrief(projectDir, brief.text);
+          if (atRoot) {
+            out.write(
+              ui.warn(
+                `${atRoot} at the root looks like the brief: its text goes below the front matter of ${rel}.`
+              ) + "\n"
+            );
+          }
+          const actors = [...actorSurfaces(brief.text).keys()];
+          if (actors.includes("customer") && briefModules(brief.text).length === 0) {
+            out.write(
+              ui.warn(
+                "The actor Customer looks like the template's: name the people the brief describes."
+              ) + "\n"
+            );
+          }
+          out.write(
+            "\n" +
+              ui.section("Or let your agent propose them") +
+              `  ${ui.cmd('specgate draft --agent "claude -p"')}  ${ui.muted("— then review what it wrote")}\n`
+          );
           out.write(ui.next("specgate propose --from-brief", `once they are fixed in ${rel}`));
         }
       );
       process.exitCode = 1;
       return;
     }
+    removeSetupGuide(projectDir);
 
     // (c') The body: an empty brief, a module without its section or cards.
-    const findings = checkBrief(brief.text, rel);
+    const findings = checkBrief(brief.text, rel, projectSurfaces(projectDir));
     const errors = findings.filter((d) => d.severity === "error");
     if (errors.length > 0) {
       io.emit(
@@ -934,7 +985,7 @@ export class DraftCommand extends BaseCommand {
     const io = agentIo(opts.json);
     const projectDir = resolveProjectDir(opts.projectDir);
     const brief = this.brief(projectDir, opts)!;
-    const findings = checkBrief(brief.text, brief.rel);
+    const findings = checkBrief(brief.text, brief.rel, projectSurfaces(projectDir));
     const errors = findings.filter((d) => d.severity === "error").length;
     const warnings = findings.filter((d) => d.severity === "warning").length;
     const first = briefModules(brief.text).find(
@@ -1112,6 +1163,7 @@ export class DraftCommand extends BaseCommand {
       ]);
     }
     const problems = checkFrontMatter(after);
+    if (problems.length === 0) removeSetupGuide(projectDir);
     io.emit(
       {
         draft: { brief: brief.rel, frontMatter: proposed, next: "specgate propose --from-brief" },
@@ -1213,7 +1265,7 @@ export class DraftCommand extends BaseCommand {
         }),
       ]);
     }
-    const findings = checkBrief(after, brief.rel);
+    const findings = checkBrief(after, brief.rel, projectSurfaces(projectDir));
     const next = "specgate propose --from-brief --check";
     io.emit({ draft: { brief: brief.rel, sections: added, next }, status: findings }, () => {
       const out = process.stdout;
@@ -1275,7 +1327,7 @@ export class DraftCommand extends BaseCommand {
       const brief = this.brief(projectDir, opts)!;
       // A brief that is plain markdown, with no front matter, still drafts:
       // only the rules that apply to what it does say stop it.
-      const blocking = checkBrief(brief.text, brief.rel).filter(
+      const blocking = checkBrief(brief.text, brief.rel, projectSurfaces(projectDir)).filter(
         (d) => d.code !== "brief_no_front_matter"
       );
       if (!briefReady(blocking)) {
@@ -1433,7 +1485,7 @@ export class DraftCommand extends BaseCommand {
       process.stdout.write(
         "\n" +
           ui.warn(
-            `${sym.undo} Undone — the agent wrote outside the draft: ${run.reverted.join(", ")}`
+            `${sym.undo} Undone — the agent wrote outside the draft: ${run.reverted.join(", ")}${run.kept ? ` (what they held is kept in ${run.kept})` : ""}`
           )
       );
     }

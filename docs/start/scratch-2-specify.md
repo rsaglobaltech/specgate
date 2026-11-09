@@ -227,6 +227,8 @@ $ specgate status
     ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
 
+  ·  No agent set for the harness and the studio's Build: specgate config set agent "claude -p < {prompt_file}"
+
   Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 
   Next ───────────────────────────────────────────────────

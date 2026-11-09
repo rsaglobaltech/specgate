@@ -39,6 +39,9 @@ export const ALLOWED = new Set([
   "ISC",
   "MIT",
   "MIT-0",
+  // argparse 3 (through js-yaml 5) moved from Python-2.0 to the PSF licence
+  // itself: the same permissive terms, see docs/supply-chain.md.
+  "PSF-2.0",
   "Python-2.0",
   "Unlicense",
   "WTFPL",

@@ -209,29 +209,32 @@ test("REQ-212 SCN-212a: a project with a brief and no draft is at Drafts", () =>
 });
 
 test("REQ-212: the page shows the seven steps and reads the route's APIs", () => {
-  const { studioAppPage } = require("../../scripts/lib/studio-app-page");
-  const html = studioAppPage("demo", "abc123");
-  for (const want of [
-    'project:"Proyecto"',
-    'brief:"Brief"',
-    'drafts:"Borradores"',
-    'report:"Informe"',
-    'project:"Project"',
-    '"api/route"',
-    '"api/profiles"',
-    '"api/brief"',
-    '"api/brief/fill"',
-    '"api/modules"',
-    '"api/draft"',
-    '"api/project"',
-    '"api/report"',
-    '"report.html"',
+  const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+  for (const k of [
+    "step_project",
+    "step_brief",
+    "step_drafts",
+    "step_questions",
+    "step_review",
+    "step_build",
+    "step_report",
   ]) {
-    assert.ok(html.includes(want), want);
+    assert.ok(studio.TEXTS.es[k] && studio.TEXTS.en[k], k);
   }
-  const script = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
-  assert.doesNotThrow(() => new Function(script));
-  assert.doesNotMatch(script, /innerHTML|insertAdjacentHTML|outerHTML/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.js"), "utf8");
+  for (const api of [
+    "/api/route",
+    "/api/profiles",
+    "/api/brief",
+    "/api/brief/fill",
+    "/api/modules",
+    "/api/draft",
+    "/api/project",
+    "/api/report",
+    "/report.html",
+  ]) {
+    assert.ok(app.includes(api), api);
+  }
 });
 
 test("REQ-212 SCN-212b: a folder that is not a project starts at Project", () => {
@@ -277,6 +280,62 @@ test("REQ-213 SCN-213a: a project is created in an empty folder", () => {
     /claude-sonnet:\n\s+agent: "claude -p --model sonnet/
   );
   assert.equal(lib().route(dir).steps[0].state, "done");
+});
+
+test("REQ-213 SCN-213a: the studio stays up in an empty folder", async () => {
+  const dir = tmp();
+  const http = require("node:http");
+  const port = 47000 + Math.floor(Math.random() * 2000);
+  // The studio runs in a process of its own: kill the group, not only the CLI.
+  const child = spawn(process.execPath, [CLI, "studio", "--port", String(port)], {
+    cwd: dir,
+    env: { ...process.env, NO_COLOR: "1" },
+    detached: process.platform !== "win32",
+  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("studio did not start")), 8000);
+      child.stdout.on("data", (d: Buffer) => {
+        if (String(d).includes("http://")) {
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
+    const get = (url: string) =>
+      new Promise<number>((resolve, reject) => {
+        http
+          .get(
+            { host: "127.0.0.1", port, path: url, headers: { host: "localhost" } },
+            (res: any) => {
+              res.resume();
+              res.on("end", () => resolve(res.statusCode || 0));
+            }
+          )
+          .on("error", reject);
+      });
+    assert.equal(await get("/"), 200);
+    // The browser asks for these by itself; the folder has no matrix yet.
+    assert.equal(await get("/favicon.ico"), 404);
+    assert.equal(await get("/status.json"), 404);
+    assert.equal(await get("/api/route"), 200, "still serving the new-project step");
+    assert.equal(child.exitCode, null);
+  } finally {
+    const exited = new Promise<void>((resolve) => {
+      if (child.exitCode !== null) resolve();
+      else child.once("exit", () => resolve());
+    });
+    if (process.platform === "win32")
+      spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
+    else {
+      try {
+        process.kill(-child.pid, "SIGTERM");
+      } catch {
+        child.kill();
+      }
+    }
+    await exited;
+  }
 });
 
 // ── REQ-214 ─────────────────────────────────────────────────────────────────

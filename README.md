@@ -21,7 +21,7 @@ that names it, or when your test suite fails.
 
 ## ⚡ Install
 
-You need **Node.js 22 or later**.
+You need **Node.js 22 or later**; 24 is the one to use (the current LTS). On 22, take 22.23.4 or later: it carries the October 2026 security fixes.
 
 ```bash
 npm install --save-dev @rsaglobaltech/specgate   # in a project with a package.json
@@ -85,7 +85,10 @@ you have:
   as an assumption. → [From a client brief](docs/from-a-brief.md)
 - **Your agent works the same loop.** `specgate agents init` installs the loop
   as slash commands for Claude Code, Cursor, Copilot and other agent tools; an
-  MCP server ships in the package. → [Agent tools](docs/agents.md)
+  MCP server ships in the package. For Claude Code and OpenCode, the guards
+  hold the agent to it: the open change at session start, no source edit before
+  a test names the requirement, the gate before the session ends —
+  `specgate agents install --global` once. → [Agent tools](docs/agents.md)
 - **Unattended delivery.** `specgate harness run` hands each pending requirement
   to your coding agent in its own git worktree and keeps only what passes the
   gate. → [The harness](docs/harness.md)

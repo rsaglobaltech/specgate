@@ -8,6 +8,7 @@ import {
   readHarnessConfig,
   writeHarnessCommand,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import { withAgentPermission, withLiveStream } from "../../../lib/agent-permission";
 
 export const CONFIG_DIR = ".specgate";
 export const CONFIG_FILE = "config.json";
@@ -25,6 +26,11 @@ export const KEYS: Record<string, { values: string[] | null; describe: string }>
     values: ["on", "off"],
     describe: "Whether Gato, the cat that keeps the gate, shows up at the end of `status`.",
   },
+  agent_guard: {
+    values: ["on", "off"],
+    describe:
+      "Whether the agent plugins refuse an edit to source code until a test names the requirement.",
+  },
   test_cmd: {
     values: null,
     describe: `The command \`check\` and \`done\` run as your tests. Kept in ${HARNESS_CONFIG_FILE}.`,
@@ -33,6 +39,10 @@ export const KEYS: Record<string, { values: string[] | null; describe: string }>
     values: null,
     describe: `Your architecture check (ArchUnit, dependency-cruiser…), run by the gate before the tests. Kept in ${HARNESS_CONFIG_FILE}.`,
   },
+  agent: {
+    values: null,
+    describe: `The agent \`harness run\` and the studio's Build hand each requirement to, with {prompt_file}. Kept in ${HARNESS_CONFIG_FILE}.`,
+  },
 };
 
 /**
@@ -40,11 +50,12 @@ export const KEYS: Record<string, { values: string[] | null; describe: string }>
  * harness already read it there, and a second home would be two answers to
  * "which tests does the gate run" (#68).
  */
-const HARNESS_KEYS = new Set(["test_cmd", "arch_cmd"]);
+const HARNESS_KEYS = new Set(["test_cmd", "arch_cmd", "agent"]);
 
 function harnessCommand(projectDir: string, key: string): string | null {
   try {
     const harness = readHarnessConfig(projectDir) || {};
+    if (key === "agent") return harness.agent ?? null;
     return (key === "arch_cmd" ? harness.archCmd : harness.testCmd) ?? null;
   } catch {
     return null;
@@ -188,11 +199,27 @@ export class ConfigSetCommand extends BaseCommand {
           }),
         ]);
       }
-      const file = writeHarnessCommand(projectDir, key as "test_cmd" | "arch_cmd", value);
-      io.emit({ config: { [key]: value } }, () =>
+      // REQ-271: the agent, with the permission the harness would add (REQ-264).
+      if (key === "agent" && !value.includes("{prompt_file}")) {
+        io.usage(NULL_SHAPE, [
+          error(
+            "config_value_invalid",
+            "The agent command needs {prompt_file}: the prompt goes there.",
+            {
+              fix: 'specgate config set agent "claude -p < {prompt_file}"',
+            }
+          ),
+        ]);
+      }
+      // REQ-278: a bare Claude Code agent is also streamed into the live view.
+      const kept = key === "agent" ? withLiveStream(withAgentPermission(value).command) : value;
+      const file = writeHarnessCommand(projectDir, key as "test_cmd" | "arch_cmd" | "agent", kept);
+      io.emit({ config: { [key]: kept } }, () =>
         process.stdout.write(
-          `  ✔  ${key} = ${value}\n     ${path.relative(process.cwd(), file) || file}\n` +
-            "     `check` and `apply` now run it.\n"
+          `  ✔  ${key} = ${kept}\n     ${path.relative(process.cwd(), file) || file}\n` +
+            (key === "agent"
+              ? "     `harness run` and the studio's Build now run it.\n"
+              : "     `check` and `apply` now run it.\n")
         )
       );
       process.exit(EXIT.OK);

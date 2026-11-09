@@ -40,7 +40,22 @@ export function substituteAgentCommand(template: string, promptFile: string): st
         '--agent "claude -p < {prompt_file}"'
     );
   }
-  return template.split("{prompt_file}").join(promptFile);
+  return withPromptFile(template, promptFile);
+}
+
+/**
+ * The template with the prompt file's path in place of `{prompt_file}`. A path
+ * with a space (`C:\Users\Juan Perez\…`) goes in double quotes, so it reaches
+ * the agent as one argument (REQ-431); a placeholder its author already quoted
+ * is not quoted twice, and a path without one is written as it always was.
+ */
+export function withPromptFile(template: string, promptFile: string): string {
+  if (!/\s/.test(promptFile)) return template.split("{prompt_file}").join(promptFile);
+  const quoted = `"${promptFile}"`;
+  return template
+    .replace(/(["'])\{prompt_file\}\1/g, () => quoted)
+    .split("{prompt_file}")
+    .join(quoted);
 }
 
 /** Run the gate (validate --strict-tdd, then the optional test command). */
@@ -120,6 +135,8 @@ export interface AttemptRecord {
      */
     | "spec"
     | "gate"
+    /** A quality check could not run (REQ-267): its setup, a person's to fix. */
+    | "check"
     /** Green gate, but the diff missed the declared artifacts (A2, --strict-artifacts). */
     | "artifacts"
     | "done"

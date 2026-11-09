@@ -14,17 +14,32 @@ import {
 
 export const EVENTS_DIR = path.join(".harness", "events");
 
+/** The events directory, created, with a `.gitignore` that keeps everything in it out of git. */
+function eventsDir(projectDir: string): string {
+  const dir = path.join(projectDir, EVENTS_DIR);
+  fs.mkdirSync(dir, { recursive: true });
+  const ignore = path.join(dir, ".gitignore");
+  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
+  return dir;
+}
+
+/**
+ * A log the studio writes for a job it starts — `studio-run.log` and the like —
+ * in the ignored events directory. Written anywhere git sees it, the harness
+ * found the tree not clean and refused to run (REQ-208).
+ */
+export function studioLog(projectDir: string, kind: string): string {
+  return path.join(eventsDir(projectDir), `studio-${kind}.log`);
+}
+
 /** The events file of one requirement, its directory created and ignored by git. */
 export function eventsFileFor(projectDir: string, req: string): string {
-  const dir = path.join(projectDir, EVENTS_DIR);
   try {
-    fs.mkdirSync(dir, { recursive: true });
-    const ignore = path.join(dir, ".gitignore");
-    if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
+    return path.join(eventsDir(projectDir), `${req}.jsonl`);
   } catch {
     /* the view is optional; the run is not */
+    return path.join(projectDir, EVENTS_DIR, `${req}.jsonl`);
   }
-  return path.join(dir, `${req}.jsonl`);
 }
 
 /** Append one event as one line, masked; never throws. */

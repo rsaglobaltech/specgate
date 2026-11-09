@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "recordedWith": {
-    "version": "0.27.0",
+    "version": "0.29.1",
     "node": "v24.x",
-    "platform": "linux",
+    "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-10-28",
+  "recordedAt": "2026-11-09",
   "title": "smart-parking — a pack, then the harness",
   "cols": 88,
   "streamsMerged": false,
@@ -309,9 +309,9 @@
       "surface": "harness run",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1870,
-      "truncated": false,
-      "omitted": 0,
+      "holdMs": 1960,
+      "truncated": true,
+      "omitted": 3,
       "lines": [
         {
           "t": "  ◆ specgate · harness run   1 requirement(s) from HEAD",
@@ -325,6 +325,26 @@
         },
         {
           "t": "  ◇  REQ-000   attempt 1/1",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ◇  REQ-000   started validate --strict",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ◇  REQ-000   passed validate --strict in 1.2 s",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ◇  REQ-000   started test command",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ◇  REQ-000   passed test command in 1.2 s",
           "c": "out",
           "s": "out"
         },
@@ -360,21 +380,6 @@
         },
         {
           "t": "",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "  Next ───────────────────────────────────────────────────",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "  ➜  git diff HEAD...harness/REQ-000",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "     review and merge the harness/* branches you trust",
           "c": "out",
           "s": "out"
         }

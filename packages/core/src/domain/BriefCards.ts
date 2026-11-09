@@ -15,7 +15,7 @@
  *   Questions
  *   - Can a student be in two courses at once?
  *
- * B2 to B11 are decidable, like the D-rules over a draft: they say what the
+ * B2 to B13 are decidable, like the D-rules over a draft: they say what the
  * brief does not say, never whether a rule is right. B1 — the front matter's
  * shapes — lives with the rest of the front matter's checks
  * (`scripts/draft/brief-setup.ts`). Pure: the caller hands the text in.
@@ -202,7 +202,7 @@ export function cardValues(section: ModuleSection): string[] {
  * often written in it.
  */
 export const VAGUE =
-  /(?<![\p{L}])(fast|quick(?:ly)?|easy|easily|simple|user[- ]friendly|intuitive(?:ly)?|secure(?:ly)?|robust|flexible|efficient(?:ly)?|appropriate(?:ly)?|adequate(?:ly)?|seamless(?:ly)?|as needed|as soon as possible|asap|etc\.?|and so on|tbd|r[aá]pid[oa]s?|r[aá]pidamente|f[aá]cil(?:es|mente)?|sencill[oa]s?|intuitiv[oa]s?|amigable|robust[oa]s?|eficiente(?:s|mente)?|adecuad[oa]s?|lo antes posible|etc[eé]tera|por definir|schnell(?:e[nrs]?)?|z[uü]gig|einfach(?:e[nrs]?)?|benutzerfreundlich(?:e[nrs]?)?|intuitiv(?:e[nrs]?)?|flexibel|effizient(?:e[nrs]?)?|angemessen(?:e[nrs]?)?|nahtlos|zeitnah|m[oö]glichst bald|usw\.?)(?![\p{L}])/iu;
+  /(?<![\p{L}])(fast|quick(?:ly)?|easy|easily|simple|user[- ]friendly|intuitive(?:ly)?|secure(?:ly)?|robust|flexible|efficient(?:ly)?|appropriate(?:ly)?|adequate(?:ly)?|seamless(?:ly)?|as needed|as soon as possible|as close as possible|nearby|almost|acceptable|asap|etc\.?|and so on|tbd|r[aá]pid[oa]s?|r[aá]pidamente|f[aá]cil(?:es|mente)?|sencill[oa]s?|intuitiv[oa]s?|amigable|robust[oa]s?|eficiente(?:s|mente)?|adecuad[oa]s?|lo antes posible|lo m[aá]s \p{L}+ posible|cerca|casi|aceptables?|etc[eé]tera|por definir|schnell(?:e[nrs]?)?|z[uü]gig|einfach(?:e[nrs]?)?|benutzerfreundlich(?:e[nrs]?)?|intuitiv(?:e[nrs]?)?|flexibel|effizient(?:e[nrs]?)?|angemessen(?:e[nrs]?)?|nahtlos|zeitnah|m[oö]glichst bald|usw\.?)(?![\p{L}])/iu;
 
 /** Frameworks, databases, libraries: how, in a brief about what. */
 export const TECHNICAL =
@@ -214,24 +214,72 @@ const OPENS_WITH_CONDITION =
 /** A condition placed after the obligation: "Joining is refused if the course is full". */
 const LATE_CONDITION = /\s(if|when|whenever|unless|while|once|cuando|si|mientras|salvo que)\s/i;
 
+/**
+ * "si" and "if" after a verb of saying, checking or deciding mean "whether":
+ * "el sistema dice en menos de 1 s si cabe" states no condition (REQ-244).
+ */
+const WHETHER =
+  /\b(dice|dicen|decir|indica|indican|comprueba|comprueban|comprobar|decide|deciden|decidir|sabe|saber|pregunta|preguntar|responde|muestra|calcula|verifica|says|say|tells|tell|checks|check|decides|decide|asks|ask|knows|know|shows|show)\b([^.;:]{0,40}?)\s(si|if)\s/giu;
+const withoutWhether = (text: string) =>
+  text.replace(WHETHER, (_m, verb: string, between: string) => `${verb}${between} whether `);
+
 /** The author speaking as "I", in English or Spanish (B9, REQ-178). */
 const FIRST_PERSON =
   /(?<![\p{L}])(?:I|I'm|I've|my|soy|estoy|quiero|tengo|necesito|uso|yo|mi|mis|me)(?![\p{L}'])/gu;
 
 const MAX_RULES = 7;
+/** More modules than this and the brief is a roadmap, not one delivery (REQ-245). */
+const MAX_MODULES = 8;
+
+/** What the project can show, when the caller knows: B13 compares the actors' surfaces with it. */
+export interface ProjectSurfaces {
+  /** false: no mobile app in the project; undefined: not known, nothing compared. */
+  mobileApp?: boolean;
+}
 const MAX_QUESTIONS = 3;
 
 const nameRe = (name: string) =>
   new RegExp(`(?<![\\p{L}])${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "iu");
 
 /**
- * Rules B2 to B11 over a brief. Errors stop a draft: what it would get wrong.
+ * Rules B2 to B13 over a brief. Errors stop a draft: what it would get wrong.
  * Warnings are for the person: wording a test cannot check.
  */
-export function checkBriefBody(brief: string): Diagnostic[] {
+export function checkBriefBody(brief: string, project: ProjectSurfaces = {}): Diagnostic[] {
   const out: Diagnostic[] = [];
   const body = readBriefBody(brief);
   const listed = briefModules(brief);
+
+  // B12 — a brief of more than eight modules is several deliveries (REQ-245).
+  if (listed.length > MAX_MODULES) {
+    out.push(
+      warning(
+        "B12_too_many_modules",
+        `The brief lists ${listed.length} modules; a delivery is three to ${MAX_MODULES}.`,
+        {
+          fix: "Merge the modules that change together, or move the later phases to a second brief.",
+        }
+      )
+    );
+  }
+
+  // B13 — an actor on a surface the project does not have (REQ-245): every
+  // draft would owe scenarios nobody can build yet.
+  if (project.mobileApp === false) {
+    for (const m of brief.matchAll(/\{\s*name:\s*([^,}]+?)\s*,\s*surfaces:\s*\[([^\]]*)\]\s*\}/g)) {
+      if (!/\bmobile\b/i.test(m[2])) continue;
+      out.push(
+        warning(
+          "B13_surface_missing",
+          `${m[1].trim()} uses mobile, and the project has no mobile app.`,
+          {
+            target: m[1].trim(),
+            fix: "Give the actor the surfaces the project has (web), or add the mobile app before drafting their scenarios.",
+          }
+        )
+      );
+    }
+  }
   const plain = withoutComments(body.text);
 
   // B2 — the body says something.
@@ -364,7 +412,10 @@ export function checkBriefBody(brief: string): Diagnostic[] {
           })
         );
       }
-      if (!OPENS_WITH_CONDITION.test(bare.trim()) && LATE_CONDITION.test(` ${bare} `)) {
+      if (
+        !OPENS_WITH_CONDITION.test(bare.trim()) &&
+        LATE_CONDITION.test(` ${withoutWhether(bare)} `)
+      ) {
         out.push(
           warning("B11_condition_last", `"${r.text}" puts its condition after what must happen.`, {
             ...where,

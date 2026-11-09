@@ -54,9 +54,34 @@ export interface ResultRow {
 export interface RunFile {
   startedAt: string;
   finishedAt?: string;
+  /** When the ledger was last written; a run stopped by hand ends there (REQ-269). */
+  updatedAt?: string;
   concurrency?: number;
   maxAttempts?: number;
   results?: ResultRow[];
+  /** The requirement the run was on when it was last written, if any. */
+  running?: { requirement: string; startedAt: string; attemptLog?: AttemptRow[] };
+}
+
+/**
+ * A run's rows, with the requirement it was on reported as stopped when the
+ * run never finished: killed, its record still says what it was doing.
+ */
+function rowsOf(run: RunFile): ResultRow[] {
+  const rows = [...(run.results ?? [])];
+  if (run.running && !run.finishedAt) {
+    const log = run.running.attemptLog ?? [];
+    const since = Date.parse(run.running.startedAt);
+    const until = Date.parse(run.updatedAt || run.running.startedAt);
+    rows.push({
+      requirement: run.running.requirement,
+      result: "stopped",
+      attempts: log.length,
+      durationMs: Number.isFinite(until - since) ? Math.max(0, until - since) : 0,
+      attemptLog: log,
+    });
+  }
+  return rows;
 }
 
 /**
@@ -88,6 +113,8 @@ export interface HarnessReportSummary {
   passed: number;
   failed: number;
   blocked: number;
+  /** Requirements whose latest run was stopped before it finished (REQ-269). */
+  stopped: string[];
   firstAttemptPasses: number;
   firstAttemptRate: number | null;
   totalMs: number;
@@ -126,6 +153,8 @@ export const STAGE_LABELS: Readonly<Record<string, string>> = Object.freeze({
   "agent-unavailable": "agent out of quota or rate-limited",
   spec: "the specification fails the gate",
   gate: "gate rejected the work",
+  check: "a quality check could not run",
+  stopped: "the run was stopped",
   artifacts: "diff missed the declared artifacts",
   done: "`specgate done` failed",
   commit: "commit failed",
@@ -136,11 +165,22 @@ export function summariseRuns(
   falseFailures: readonly FalseFailureMark[] = [],
   costPerRunHint: Readonly<Record<string, number>> = {}
 ): HarnessReportSummary {
-  const rows = runs.flatMap((r) => r.results ?? []);
-  const passed = rows.filter((r) => r.result === "pass");
-  const failed = rows.filter((r) => r.result === "fail");
+  // REQ-269: every run's time counts, each requirement once, at its latest
+  // outcome. Two runs of REQ-002 — failed, then passed — read "1 of 2 passed"
+  // and listed REQ-002 as delivering nothing (truck-flote, S55).
+  const byStart = [...runs].sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)));
+  const rows = byStart.flatMap(rowsOf);
+  const latest = new Map<string, ResultRow>();
+  for (const row of rows) latest.set(row.requirement, row);
+  const current = [...latest.values()];
+  const passed = current.filter((r) => r.result === "pass");
+  const failed = current.filter((r) => r.result === "fail");
+  const failedRows = rows.filter((r) => r.result === "fail");
   const totalMs = rows.reduce((n, r) => n + (r.durationMs ?? 0), 0);
-  const firstAttemptPasses = passed.filter((r) => r.attempts === 1).length;
+  const runsOf = (id: string) => rows.filter((r) => r.requirement === id).length;
+  const firstAttemptPasses = passed.filter(
+    (r) => r.attempts === 1 && runsOf(r.requirement) === 1
+  ).length;
 
   const worst = [...rows]
     .filter((r) => (r.durationMs ?? 0) > 0)
@@ -173,7 +213,8 @@ export function summariseRuns(
   for (const run of runs) {
     const ceiling = run.maxAttempts ?? 0;
     for (const row of run.results ?? []) {
-      if (row.result === "fail" && ceiling > 0 && row.attempts >= ceiling) {
+      const delivered = latest.get(row.requirement)?.result === "pass";
+      if (row.result === "fail" && ceiling > 0 && row.attempts >= ceiling && !delivered) {
         exhausted.push({
           requirement: row.requirement,
           attempts: row.attempts,
@@ -198,18 +239,19 @@ export function summariseRuns(
   // Only marks naming a requirement that actually failed count. A mark for
   // something that passed is a typo, and letting it improve the number would
   // make the metric worse than not having it.
-  const failedIds = new Set(failed.map((r) => r.requirement));
+  const failedIds = new Set(failedRows.map((r) => r.requirement));
   const marked = new Set(
     falseFailures.filter((m) => failedIds.has(m.requirement)).map((m) => m.requirement)
   );
-  const falseCount = failed.filter((r) => marked.has(r.requirement)).length;
+  const falseCount = failedRows.filter((r) => marked.has(r.requirement)).length;
 
   return {
     runs: runs.length,
-    requirementsAttempted: rows.length,
+    requirementsAttempted: current.length,
     passed: passed.length,
     failed: failed.length,
-    blocked: rows.filter((r) => r.result === "blocked").length,
+    blocked: current.filter((r) => r.result === "blocked").length,
+    stopped: current.filter((r) => r.result === "stopped").map((r) => r.requirement),
     firstAttemptPasses,
     firstAttemptRate: passed.length > 0 ? firstAttemptPasses / passed.length : null,
     totalMs,
@@ -221,7 +263,9 @@ export function summariseRuns(
     estimatedCost: estimateRunCost(attemptProfiles, costPerRunHint),
     falseFailures: falseCount,
     realFailureRate:
-      failed.length > 0 && marked.size > 0 ? (failed.length - falseCount) / failed.length : null,
+      failedRows.length > 0 && marked.size > 0
+        ? (failedRows.length - falseCount) / failedRows.length
+        : null,
     quality: summariseQuality(runs),
   };
 }

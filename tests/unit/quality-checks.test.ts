@@ -190,6 +190,58 @@ test("REQ-232 SCN-232a: the container's command line", () => {
   assert.ok(!args.some((a: string) => /SONAR_TOKEN=/.test(a)));
 });
 
+test("REQ-232 SCN-232a: a check run as the person has a home it can write", () => {
+  const { config } = readQuality({
+    checks: [{ name: "semgrep", run: "semgrep scan", runner: "docker", image: "semgrep/semgrep" }],
+  });
+  const args = quality().dockerArgs(config.checks[0], "/work/app", "semgrep scan", "c1");
+  // An image's own user owns its home; anyone else, such as uid 1001 on a CI
+  // runner, gets "/" and cannot write a cache there.
+  if (args.includes("--user")) assert.ok(args.includes("HOME=/tmp"), args.join(" "));
+  else assert.ok(!args.includes("HOME=/tmp"), "the image's own user keeps its home");
+});
+
+// ── REQ-238 ─────────────────────────────────────────────────────────────────
+
+test("REQ-238 SCN-238a: a check that reaches Docker, and one that does not", () => {
+  const { config } = readQuality({
+    checks: [
+      { name: "coverage", run: "mvn test", runner: "docker", image: "maven:3.9", docker: true },
+      { name: "pmd", run: "mvn pmd:pmd", runner: "docker", image: "maven:3.9" },
+    ],
+  });
+  const withDocker = quality().dockerArgs(config.checks[0], "/work/app", "mvn test", "c1");
+  assert.ok(withDocker.includes("/var/run/docker.sock:/var/run/docker.sock"), withDocker.join(" "));
+  assert.ok(withDocker.includes("TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal"));
+  assert.ok(withDocker.includes("host.docker.internal:host-gateway"));
+  const without = quality().dockerArgs(config.checks[1], "/work/app", "mvn pmd:pmd", "c2");
+  assert.ok(!without.some((a: string) => a.includes("docker.sock")), without.join(" "));
+});
+
+// ── REQ-239 ─────────────────────────────────────────────────────────────────
+
+test("REQ-239 SCN-239a: the JSON says why a check failed", () => {
+  const dir = project(
+    ["checks:", "  - name: noisy", '    run: "node fail.js"', "    runner: local", ""].join("\n")
+  );
+  fs.writeFileSync(path.join(dir, "fail.js"), "console.log('boom'); process.exit(1);");
+  const r = cli(dir, "quality", "run", "--json");
+  assert.notEqual(r.status, 0);
+  const outcome = json(r).quality.outcomes[0];
+  assert.equal(outcome.ok, false);
+  assert.match(outcome.output, /boom/);
+});
+
+test("REQ-254 SCN-254a: Docker Desktop on Windows containers", () => {
+  const { dockerVerdict } = quality();
+  assert.equal(dockerVerdict({ status: 0, stdout: "linux\n" }), null);
+  assert.match(
+    String(dockerVerdict({ status: 0, stdout: "windows\n" })),
+    /switch Docker Desktop to Linux containers/
+  );
+  assert.match(String(dockerVerdict({ status: 1, stdout: "" })), /not running/);
+});
+
 const docker = quality().dockerAvailable();
 
 test(

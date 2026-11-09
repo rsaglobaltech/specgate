@@ -82,7 +82,9 @@ npx specgate propose --from-brief <module>   # opens it, linked to the brief, wi
 ```
 
 Before the first module, `npx specgate propose --from-brief --check` checks
-the brief itself: its fields, a section per module, rules with examples
+the brief itself: its fields and, once it has `## Module:` sections, one per
+module with rules and examples. A brief in free text below its front matter is
+drafted too, each module reading the whole text
 ([Write the brief](start/write-the-brief.md)).
 
 One module per draft: a reviewer reads ten requirements, not sixty
@@ -124,7 +126,11 @@ declare. See the table in [From a client brief](from-a-brief.md#3-check-the-draf
 
 The checklist sees the shape, not the business. Read the requirements, the
 assumptions and the questions. Take the questions to the client and write
-each answer in the `Answer` column.
+each answer in the `Answer` column. An answer changes no requirement by
+itself: until the requirement's text and scenarios say it and its `Needs
+Clarification` status is gone, `propose --from-brief <module>` reports it and
+`status` lists it under "Answered — update the spec". `--agent` does that for
+you.
 
 A question that is not yours to answer stays open:
 

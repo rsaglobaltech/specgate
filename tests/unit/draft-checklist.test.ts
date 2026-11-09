@@ -191,7 +191,8 @@ test("D6: an assumption row names its ids one by one or as a range (#74)", () =>
 test("D6 reads numbers and quoted strings, not ids or code", () => {
   assert.deepEqual(
     statedValues('WHEN REQ-101 sends "Marcar entrada" with `CODE_42` at 07:42 and 5,707 lb'),
-    ["Marcar entrada", "07", "42", "5,707"]
+    // REQ-277: a time is one value, not its hours and minutes.
+    ["Marcar entrada", "07:42", "5,707"]
   );
 });
 
@@ -825,4 +826,124 @@ test("#82 / D7: a deferred answer keeps the question open", () => {
   }).status.filter((d) => d.code === "D7_floating_question");
   assert.equal(found.length, 1);
   assert.match(found[0].message, /puts the decision off/);
+});
+
+test("REQ-247 SCN-247a: the truck-flote assumptions", () => {
+  const axles = req("REQ-006", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-006",
+      [
+        'GIVEN vehicle "1234-BCD" is registered with no axles',
+        "WHEN the office adds axles of 7100 kg, 11500 kg and 8000 kg",
+        'THEN the vehicle shows "3 ejes" with "7100 kg", "11500 kg" and "8000 kg"',
+      ],
+    ],
+  ]);
+  const device = req("REQ-008", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-008",
+      [
+        "GIVEN a vehicle",
+        "WHEN the office links its tracker",
+        'THEN the vehicle shows "Dispositivo: TRK-0001"',
+      ],
+    ],
+  ]);
+  const rows = [
+    '| A8 | Plate "1234-BCD" | SCN-006 |',
+    "| A9 | Three axles of 7100, 11500 and 8000 kg | REQ-006, SCN-006 |",
+    "| A10 | Device identifier TRK-0001 | SCN-008 |",
+  ].join("\n");
+  const r = checkDraft({ deltas: delta(axles, device), brief: BRIEF, assumptions: rows });
+  const d6 = r.status.filter((d) => d.code === "D6_unlisted_value").map((d) => d.message);
+  assert.deepEqual(d6, [], d6.join("\n"));
+  const four = req("REQ-006", "kind=functional actor=Office", "Text.", [
+    ["SCN-006", ["GIVEN a vehicle", "WHEN it is saved", 'THEN it shows "4 ejes"']],
+  ]);
+  const still = checkDraft({ deltas: delta(four), brief: BRIEF, assumptions: rows });
+  assert.ok(
+    still.status.some((d) => d.code === "D6_unlisted_value" && d.message.includes('"4 ejes"')),
+    "a number the row does not hold is still unlisted"
+  );
+});
+
+// ── REQ-261..262 (truck-flote, sixth run) ────────────────────────────────────
+
+test("REQ-261 SCN-261a: the truck-flote fleet module", () => {
+  const axles = req("REQ-003", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-004",
+      [
+        'GIVEN the vehicle "1234-BCD" exists',
+        'WHEN the office opens "1234-BCD › Ejes"',
+        'THEN they see the vehicle "1234-BCD"',
+      ],
+    ],
+  ]);
+  const driver = req("REQ-009", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-013",
+      [
+        "GIVEN no driver",
+        'WHEN the office registers "Lucía Martín"',
+        'THEN they see "Lucía Martín — E000001234567890" in the list',
+      ],
+    ],
+  ]);
+  const rows = [
+    '| A1 | Example vehicles "1234-BCD" | REQ-002, REQ-003 |',
+    '| A4 | Labels "Ejes", "Guardar" | REQ-002 … REQ-011 |',
+    '| A13 | Driver "Lucía Martín", card "E000001234567890" | REQ-009 |',
+  ].join("\n");
+  const r = checkDraft({ deltas: delta(axles, driver), brief: BRIEF, assumptions: rows });
+  const d6 = r.status.filter((d) => d.code === "D6_unlisted_value").map((d) => d.message);
+  assert.deepEqual(d6, [], d6.join("\n"));
+  const trailer = req("REQ-003", "kind=functional actor=Office", "Text.", [
+    [
+      "SCN-004",
+      ["GIVEN a vehicle", 'WHEN the office opens "1234-BCD › Remolque"', "THEN it opens"],
+    ],
+  ]);
+  const still = checkDraft({ deltas: delta(trailer), brief: BRIEF, assumptions: rows });
+  assert.ok(
+    still.status.some((d) => d.code === "D6_unlisted_value" && d.message.includes("Remolque")),
+    "a part that is not listed still makes the value unlisted"
+  );
+});
+
+test("REQ-262 SCN-262a: Q5 answered, REQ-010 still blocked", () => {
+  const blocked = req(
+    "REQ-010",
+    'kind=functional actor=Office status="Needs Clarification"',
+    "The system SHALL let the office assign a driver to a vehicle.",
+    [["SCN-015", ["GIVEN a vehicle", "WHEN the office assigns a driver", "THEN it is assigned"]]]
+  );
+  const q = [
+    "| # | Question | Blocks | Answer |",
+    "|---|---|---|---|",
+    "| Q5 | Two drivers per truck? | REQ-010 | Hasta dos conductores por camión |",
+  ].join("\n");
+  const r = checkDraft({ deltas: delta(blocked), brief: BRIEF, questions: q });
+  const found = r.status.find((d) => d.code === "D7_answered_still_blocked");
+  assert.ok(found, JSON.stringify(r.status, null, 2));
+  assert.equal(found!.severity, "error");
+  assert.match(found!.message, /Q5/);
+  assert.match(found!.message, /REQ-010/);
+  assert.match(String(found!.fix), /fold the answer into REQ-010/i);
+  assert.match(String(found!.fix), /Needs Clarification/);
+  assert.match(String(found!.fix), /--agent/);
+});
+
+// ── REQ-277 (truck-flote, seventh run) ──────────────────────────────────────
+
+test("REQ-277 SCN-277a: a position with its time", () => {
+  const values = statedValues(
+    'GIVEN truck "TRK-001" last reported 45.7640, 4.8357 at 2026-10-29 10:00:00'
+  );
+  assert.deepEqual(values, ["TRK-001", "45.7640", "4.8357", "2026-10-29 10:00:00"]);
+  assert.deepEqual(statedValues("THEN it says 2026-10-29T10:00:00Z and 09:59:30 on 2026-10-30"), [
+    "2026-10-29T10:00:00Z",
+    "09:59:30",
+    "2026-10-30",
+  ]);
 });

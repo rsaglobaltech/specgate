@@ -325,3 +325,158 @@ The system SHALL, when harness.config.yaml gives `arch_sarif:` beside `arch_cmd`
 - THEN the first check fails, the baseline records one finding for arch, the second check passes, and the last fails naming lib/domain/invoice.js:1 [domain-not-to-infra]
 
 <!-- specgate:trace actor=Developer feature=features/quality/REQ-231.feature kind=functional status=Implemented test=tests/unit/quality-arch.test.ts -->
+
+### Requirement: REQ-235 — Quality presets for each application folder
+
+The system SHALL, on `specgate quality init`, write the checks of a stack for each application folder that has its own build file — the root, a folder one level down, or a folder in `apps/`, `packages/` or `services/` — when the root has no build file of that stack; each such check SHALL run in its folder, with its report and SARIF paths written from the root; one Semgrep scan SHALL carry the rules of every stack found; and `{changed_classes@<folder>}` and `{changed_src@<folder>}` SHALL give only the changed files under that folder, relative to it.
+
+#### Scenario: SCN-235a — A Spring Boot API in apps/api beside a Node root
+
+- GIVEN a repository with `package.json` and `package-lock.json` at the root, and `apps/api/pom.xml` declaring Java 21
+- WHEN `specgate quality init --level strict` runs
+- THEN its checks include `coverage`, `spotbugs` and `pmd`, each running `cd apps/api && mvn` in `maven:3.9-eclipse-temurin-21`, coverage reads `apps/api/target/site/jacoco/jacoco.xml`, and one `semgrep` check carries both `p/java` and `p/typescript`
+
+#### Scenario: SCN-235b — The changed files of one folder
+
+- GIVEN the changed files `apps/api/src/main/java/eu/fleet/Truck.java` and `apps/web/src/map.ts`
+- WHEN a check's command uses `{changed_classes@apps/api}` and `{changed_src@apps/web}`
+- THEN they become `eu.fleet.Truck` and `src/map.ts`
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-235.feature kind=functional status=Implemented test=tests/unit/quality-presets.test.ts -->
+
+### Requirement: REQ-237 — Maven dependencies are scanned from the build's own bill of materials
+
+The system SHALL, in the Maven preset, scan dependencies from a CycloneDX bill of materials that Maven writes in the project's image (`sbom`, then `dependencies` reading `target/bom.json` with osv-scanner), so the versions a parent POM or a BOM manages are the ones scanned, with Maven's own repositories and cache.
+
+#### Scenario: SCN-237a — A Spring Boot parent manages the versions
+
+- GIVEN a Maven project whose dependencies take their versions from `spring-boot-starter-parent`
+- WHEN `specgate quality init` writes its checks
+- THEN an `sbom` check runs the CycloneDX Maven plugin to `target/bom.json` before `dependencies`, which runs osv-scanner on `target/bom.json`
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-237.feature kind=functional status=Implemented test=tests/unit/quality-presets.test.ts -->
+
+### Requirement: REQ-238 — A check may reach Docker, for tests that start containers
+
+The system SHALL accept `docker: true` on a check run in Docker, giving its container the host's Docker socket and what Testcontainers needs to reach the containers it starts; and the Maven and Gradle presets SHALL set it on the checks that run the tests when the build declares Testcontainers.
+
+#### Scenario: SCN-238a — Spring Boot tests with Testcontainers
+
+- GIVEN a `pom.xml` that declares `org.testcontainers`
+- WHEN the coverage check's container command line is built
+- THEN it mounts `/var/run/docker.sock` and sets `TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal`, and a check without `docker: true` mounts no socket
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-238.feature kind=functional status=Implemented test=tests/unit/quality-checks.test.ts -->
+
+### Requirement: REQ-239 — The JSON of a quality run says why a check failed
+
+The system SHALL include, in each outcome of `specgate quality run --json`, the last lines of what the check printed, so a failure can be read without running the tool again.
+
+#### Scenario: SCN-239a — A check that exits 1
+
+- GIVEN a check whose command prints "boom" and exits 1
+- WHEN `specgate quality run --json` runs it
+- THEN its outcome has `ok: false` and an `output` that contains "boom"
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-239.feature kind=functional status=Implemented test=tests/unit/quality-checks.test.ts -->
+
+### Requirement: REQ-240 — The baseline runs what a check needs first
+
+The system SHALL accept `needs: <check>` on a check, naming an earlier check whose output it reads, refusing a name that is not an earlier check; and `specgate quality baseline`, with `--accept <check>` too, SHALL run a check's needs, once each, before it; and the Maven preset's `dependencies` SHALL need `sbom`.
+
+#### Scenario: SCN-240a — A scan of what a build step writes
+
+- GIVEN a check `prep` that writes `built.txt`, and a check `scan` with `needs: prep` that writes SARIF from `built.txt` and writes none without it
+- WHEN `specgate quality baseline --accept scan` runs on a fresh tree
+- THEN `prep` runs first and `scan`'s finding is recorded in the baseline
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-240.feature kind=functional status=Implemented test=tests/unit/quality-baseline.test.ts -->
+
+### Requirement: REQ-241 — A finding in a file git ignores is not the change's
+
+The system SHALL leave out of the findings of a check judged on the change (`scope: diff`), and of its baseline, the findings in files that git ignores, since they are never part of a change; and SHALL keep them for a repository-wide check (`scope: all`), which reads generated files on purpose — a dependency scan reads the bill of materials Maven writes in `target/`.
+
+#### Scenario: SCN-241a — A development secret in .env.local
+
+- GIVEN `.gitignore` lists `.env.local`, a secrets scan judged on the change, and `src/config.ts` changed
+- WHEN the scan reports a finding in `apps/web/.env.local` and one in `src/config.ts`
+- THEN only the finding in `src/config.ts` is counted
+
+#### Scenario: SCN-241b — Vulnerabilities in Maven's bill of materials
+
+- GIVEN `.gitignore` lists `target/`, and a dependency scan with `scope: all` that reports a finding in `apps/api/target/bom.json`
+- WHEN the check's SARIF is read
+- THEN the finding is counted, and fails the check until the baseline holds it
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-241.feature kind=functional status=Implemented test=tests/unit/quality-baseline.test.ts -->
+
+### Requirement: REQ-250 — Maven coverage instruments the project's own classes
+
+The system SHALL, in the Maven preset, run the coverage check with JaCoCo's agent instrumenting only the classes of the project's group (`includes=<groupId>.*`), taken from its `pom.xml`, so libraries such as Testcontainers are not instrumented; and SHALL fall back to every class when the pom names no group.
+
+#### Scenario: SCN-250a — A Spring Boot API whose group is eu.truckflote
+
+- GIVEN `apps/api/pom.xml` with `<groupId>eu.truckflote</groupId>` below its Spring Boot `<parent>`
+- WHEN `specgate quality init` writes the coverage check
+- THEN its command loads JaCoCo's agent with `includes=eu.truckflote.*`, and its report is still `apps/api/target/site/jacoco/jacoco.xml`
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-250.feature kind=functional status=Implemented test=tests/unit/quality-presets.test.ts -->
+
+### Requirement: REQ-254 — Docker counts only when it runs Linux containers
+
+The system SHALL treat Docker as available for the quality checks only when its server runs Linux containers, and SHALL, when it runs Windows containers, skip a Docker check saying to switch Docker Desktop to Linux containers, instead of pulling an image that has no manifest for Windows.
+
+#### Scenario: SCN-254a — Docker Desktop on Windows containers
+
+- GIVEN a Docker server that reports `windows` as its operating system
+- WHEN a check that runs in Docker is resolved
+- THEN it is skipped, saying to switch Docker Desktop to Linux containers, and no image is pulled
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-254.feature kind=functional status=Implemented test=tests/unit/quality-checks.test.ts -->
+
+### Requirement: REQ-258 — The quality reports are not committed
+
+The system SHALL, on `specgate quality init`, add `.specgate/quality/` — where each check writes its SARIF and reports — to the project's `.gitignore`, once, so a quality run leaves no untracked file behind; the baseline, `.specgate/quality-baseline.json`, stays outside it, to be committed.
+
+#### Scenario: SCN-258a — A run after init
+
+- GIVEN a project where `specgate quality init` ran and its result is committed
+- WHEN a quality run writes `.specgate/quality/osv.sarif`
+- THEN `.gitignore` lists `.specgate/quality/`, the report is not shown by `git status`, and `.specgate/quality-baseline.json` is not ignored
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-258.feature kind=functional status=Implemented test=tests/unit/quality-presets.test.ts -->
+
+### Requirement: REQ-276 — The bill of materials of a module that is not deployed
+
+The system SHALL write the `sbom` check of a Maven project so that CycloneDX writes the bill of materials of a module whose pom skips the deploy phase — `-Dcyclonedx.skipNotDeployed=false` — since an application is scanned whether it is published or not.
+
+#### Scenario: SCN-276a — A Quarkus application
+
+- GIVEN a Maven project whose pom sets `maven.deploy.skip`
+- WHEN `specgate quality init` writes the checks
+- THEN the `sbom` check's command carries `-Dcyclonedx.skipNotDeployed=false`
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-276.feature kind=functional status=Implemented test=tests/unit/quality-presets.test.ts -->
+### Requirement: REQ-266 — A Docker check sees the repository of a worktree
+
+The system SHALL, when it runs a Docker check in a git worktree — whose `.git` is a file pointing into the main repository — mount the repository's git folder in the container read-only and point `GIT_DIR` and `GIT_WORK_TREE` at the worktree, so a tool that lists files with git, as semgrep does, works in the harness's worktrees as in the main tree.
+
+#### Scenario: SCN-266a — semgrep in a harness worktree
+
+- GIVEN a worktree `wt` of a repository, and a Docker check
+- WHEN its `docker run` is built
+- THEN it mounts the repository's git folder at `/.specgate-git` read-only and sets `GIT_DIR=/.specgate-git/worktrees/wt` and `GIT_WORK_TREE=/src`
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-266.feature kind=functional status=Implemented test=tests/unit/quality-worktree.test.ts -->
+
+### Requirement: REQ-267 — A check that could not run is the person's
+
+The system SHALL treat a gate check that is to write a SARIF report and wrote none — it timed out, or exited non-zero before reporting — as a check that could not run: the harness says so to the person with the check's output, does not hand it to the agent as findings to fix, and spends no further attempt on the requirement.
+
+#### Scenario: SCN-267a — A scanner that fails before it reports
+
+- GIVEN a gate check with `sarif:` whose command exits 2 and writes nothing, an agent that writes a file, and three attempts allowed
+- WHEN `harness run` reaches the check
+- THEN it makes one attempt, and says the check could not run, without "Fix what the check found"
+
+<!-- specgate:trace actor=Developer feature=features/quality/REQ-267.feature kind=functional status=Implemented test=tests/unit/quality-worktree.test.ts -->

@@ -32,7 +32,7 @@ the pull request, so the spec and the code are reviewed together.
 | `specgate propose <change-id>`                  | One behaviour: you write the delta yourself.                                    | [Change a shipped requirement](reviewing-changes.md)             |
 | `specgate propose --from-brief`                 | Lists the modules of `docs/brief.md` and the next one to draft.                 | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief --new-brief`     | Writes a `docs/brief.md` for you to fill in. Never overwrites one.              | [Write the brief](start/write-the-brief.md)                      |
-| `specgate propose --from-brief --check`         | Runs the brief rules (B1–B11) on the brief. Writes nothing.                     | [Write the brief](start/write-the-brief.md#step-8-check-it)      |
+| `specgate propose --from-brief --check`         | Runs the brief rules (B1–B13) on the brief. Writes nothing.                     | [Write the brief](start/write-the-brief.md#step-8-check-it)      |
 | `specgate propose --from-brief --agent "<cmd>"` | Your agent proposes the brief's fields, then a section per module.              | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief <module>`        | Opens that module's draft change, or checks it once it exists.                  | [From a brief](from-a-brief.md#2-draft-one-module)               |
 | `specgate propose --from-ticket <KEY>`          | Opens a change from a Jira ticket, on a new `feature/<KEY>-<slug>` branch.      | [From a Jira ticket](from-a-ticket.md)                           |
@@ -151,6 +151,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | Command                                | What it does                                                          | Details                  |
 | -------------------------------------- | --------------------------------------------------------------------- | ------------------------ |
 | `specgate agents init`                 | Slash commands and instruction files for your agent tools.            | [Agents](agents.md)      |
+| `specgate agents install --global`     | The agent guards for every project: OpenCode's plugin, Claude Code's. | [Agents](agents.md)      |
 | `specgate update`                      | Refreshes those generated files after an upgrade, keeping your edits. | [Agents](agents.md)      |
 | `specgate mcp install --client claude` | Writes the MCP server configuration for Claude Desktop or Cursor.     | [The MCP server](mcp.md) |
 | `specgate mcp serve`                   | Runs the MCP server over stdio. The client starts it; you do not.     | [The MCP server](mcp.md) |

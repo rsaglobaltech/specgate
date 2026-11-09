@@ -158,3 +158,189 @@ The system SHALL treat an open question of a draft's `questions.md` whose Blocks
 - THEN D7_floating_question is an error whose fix names "none"
 
 <!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-176.feature kind=functional status=Implemented test=tests/unit/draft-checklist.test.ts -->
+
+### Requirement: REQ-244 — The brief checks read Spanish as written
+
+The system SHALL not read "si" after a verb of saying, checking or deciding ("dice si", "comprueba si", "decide si") — nor "if" after "say", "check", "tell", "decide" — as a condition placed last (B11); and SHALL warn under B5 for "lo más … posible", "cerca", "casi", "aceptable", "as close as possible", "nearby", "almost" and "acceptable".
+
+#### Scenario: SCN-244a — "dice si cabe" and "un desvío aceptable"
+
+- GIVEN the rules "El sistema dice en menos de 1 s si cabe la carga." and "Un camión es candidato con un desvío aceptable."
+- WHEN the brief is checked
+- THEN the first has no B11 warning and the second has a B5 warning naming "aceptable"
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-244.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-245 — The brief's shape: its size and the surfaces the project has
+
+The system SHALL warn when a brief lists more than eight modules, and when an actor uses `mobile` in a project whose `forja.config.json` lists its platforms without `mobile`, naming the actor; elsewhere a mobile app may live in another repository, and nothing is compared.
+
+#### Scenario: SCN-245a — Ten modules and a driver on mobile, in a web project
+
+- GIVEN a front matter with ten modules and `{ name: Conductor, surfaces: [mobile] }`, in a project whose `forja.config.json` has `platforms: ["web"]`
+- WHEN the brief is checked
+- THEN it warns that ten modules is more than eight, and that Conductor uses mobile with no mobile app in the project
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-245.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-246 — draft explains the front matter it needs
+
+The system SHALL, when `specgate draft` finds the front matter incomplete, say what each of product, surfaces, actors and modules is for, flag an actor left from the template (`Customer`), and name `specgate draft --agent "<cmd>"` as the way to have an agent propose them.
+
+#### Scenario: SCN-246a — forja's template, modules empty
+
+- GIVEN `docs/brief.md` with forja's front matter: actor `Customer` and `modules: []`, and the client's text below
+- WHEN `specgate draft` runs
+- THEN it explains the four fields, says `Customer` looks like the template's, and names `specgate draft --agent`
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-246.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-247 — D6 reads a value however the assumption writes it
+
+The system SHALL count a scenario's value as listed when a row of `assumptions.md` that names the scenario or its requirement holds its number — also inside a list that writes the unit once ("7100, 11500 and 8000 kg"), or as a number word ("three", "tres", "drei") — and, for a quoted label with a colon ("Dispositivo: TRK-0001"), when it holds the value after the colon.
+
+#### Scenario: SCN-247a — The truck-flote assumptions
+
+- GIVEN scenario values "3 ejes", "7100 kg", "11500 kg" and "Dispositivo: TRK-0001", and rows "Three axles of 7100, 11500 and 8000 kg" for SCN-006 and "Device identifier TRK-0001" for SCN-008
+- WHEN the draft is checked
+- THEN none of them is a D6 finding, and "4 ejes" still is
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-247.feature kind=functional status=Implemented test=tests/unit/draft-checklist.test.ts -->
+
+### Requirement: REQ-248 — The undo after an agent run keeps what it removes
+
+The system SHALL, before putting back a file the agent run changed outside the draft, keep its content in the repository's git folder, `.git/specgate-undone/<run>/<path>`, and name that folder in the message, so a person's edit made during the run is never lost and the working tree is left exactly as it was.
+
+#### Scenario: SCN-248a — A log edited by hand while the agent drafts
+
+- GIVEN `docs/notes.md` changed while an agent run writes the draft
+- WHEN the run ends and the change is undone
+- THEN `docs/notes.md` is back as it was before the run, its changed content is in `.git/specgate-undone/<run>/docs/notes.md`, and `git status` shows nothing new
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-248.feature kind=functional status=Implemented test=tests/unit/draft-from-brief.test.ts -->
+
+### Requirement: REQ-251 — A brief at the root is pointed at
+
+The system SHALL, when `docs/brief.md` lists no modules and a `brief.md` at the project's root holds text that `docs/brief.md` does not, say in `status` and `draft` that the root file looks like the brief and that its text goes below the front matter of `docs/brief.md`.
+
+#### Scenario: SCN-251a — The client's brief pushed first, forja's template beside it
+
+- GIVEN `brief.md` at the root with the client's text, and `docs/brief.md` with forja's front matter and template body
+- WHEN `specgate status` and `specgate draft` run
+- THEN both name `brief.md` at the root and `docs/brief.md` as where its text goes
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-251.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-252 — An incomplete front matter is called incomplete
+
+The system SHALL, when `draft` explains the four fields over a front matter that exists but needs fixes, say the front matter is incomplete, and say "no front matter yet" only when there is none.
+
+#### Scenario: SCN-252a — forja's front matter, modules empty
+
+- GIVEN forja's front matter with `modules: []`
+- WHEN `specgate draft` runs
+- THEN it says the front matter is incomplete and does not say "no front matter yet"
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-252.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-253 — The setup guide asks for the brief's own names
+
+The system SHALL write in `BRIEF-SETUP.md` that each actor is named as the brief writes it, in the brief's language; that a brief has three to eight modules; and that, when `forja.config.json` lists the project's platforms, actors get only those surfaces, the others noted with `# check:`.
+
+#### Scenario: SCN-253a — The guide an agent reads
+
+- GIVEN any brief
+- WHEN `specgate draft --agent` writes `docs/specs/BRIEF-SETUP.md`
+- THEN it says to name actors as the brief writes them, in its language, three to eight modules, and only the surfaces `forja.config.json` lists
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-253.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-257 — The incomplete front matter is explained in a sentence
+
+The system SHALL, when `draft` explains an incomplete front matter, say "The front matter at the top of <brief> is incomplete. These are the four fields that tell Specgate what to draft, and what to check each draft against."
+
+#### Scenario: SCN-257a — forja's front matter, modules empty
+
+- GIVEN forja's front matter with `modules: []`
+- WHEN `specgate draft` runs
+- THEN it says "These are the four fields that tell Specgate what to draft"
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-257.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-259 — The root brief's text goes below the front matter
+
+The system SHALL, on `specgate draft` with or without `--agent`, when `docs/brief.md` lists no modules, its body is still a template's — it asks for the brief to be pasted there — and a `brief.md` at the project's root holds text `docs/brief.md` does not (REQ-251), put the root file's text below the front matter as it is, keep the root file, and say so, before the four fields are explained or the agent proposes them.
+
+#### Scenario: SCN-259a — The client's brief pushed first, forja's template beside it
+
+- GIVEN `brief.md` at the root with the client's text, and `docs/brief.md` with forja's front matter and its "Paste the client's brief here" body
+- WHEN `specgate draft` runs
+- THEN `docs/brief.md` holds forja's front matter followed by the client's text, `brief.md` is still at the root, and the output says the text was put there
+
+#### Scenario: SCN-259b — A body the person wrote is left alone
+
+- GIVEN `brief.md` at the root, and `docs/brief.md` whose body is a brief the person wrote
+- WHEN `specgate draft` runs
+- THEN `docs/brief.md` is unchanged
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-259.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-260 — The guide is removed once the front matter is complete
+
+The system SHALL remove `docs/specs/BRIEF-SETUP.md`, the guide written for an agent to propose the front matter, once `specgate draft` finds the front matter complete — after `draft --agent` proposes one with no fix left, or on a later `draft` — so the working tree holds nothing the person must commit or delete.
+
+#### Scenario: SCN-260a — The agent's front matter needs no fix
+
+- GIVEN `docs/brief.md` without a front matter, and an agent that writes a complete one
+- WHEN `specgate draft --agent` runs
+- THEN `docs/specs/BRIEF-SETUP.md` does not exist
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-260.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
+
+### Requirement: REQ-261 — D6 reads a value made of listed parts
+
+The system SHALL count a scenario's quoted value as listed when it is made of parts joined by ` › `, ` — ` or ` · ` — a screen path, a list row — and each part is in the brief, in the specification, or in a row of `assumptions.md` that names the scenario or its requirement.
+
+#### Scenario: SCN-261a — The truck-flote fleet module
+
+- GIVEN scenario values "1234-BCD › Ejes" and "Lucía Martín — E000001234567890", and rows listing "1234-BCD", "Ejes", "Lucía Martín" and "E000001234567890" for their requirements
+- WHEN the draft is checked
+- THEN neither is a D6 finding, and "1234-BCD › Remolque" still is
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-261.feature kind=functional status=Implemented test=tests/unit/draft-checklist.test.ts -->
+
+### Requirement: REQ-262 — An answered question its requirement does not reflect is a finding
+
+The system SHALL report, for each question of `questions.md` that has an answer and blocks a requirement still `Needs Clarification`, a finding naming the question and the requirement, whose fix says to fold the answer into the requirement's text and scenarios and drop the status, or to have the agent do it; the draft is not ready to review while one is left.
+
+#### Scenario: SCN-262a — Q5 answered, REQ-010 still blocked
+
+- GIVEN `questions.md` where Q5 blocks REQ-010 and its Answer cell says "Hasta dos conductores por camión", and REQ-010 still `Needs Clarification`
+- WHEN the draft is checked
+- THEN a finding names Q5 and REQ-010 and says to fold the answer into REQ-010 and drop its status
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-262.feature kind=functional status=Implemented test=tests/unit/draft-checklist.test.ts -->
+
+### Requirement: REQ-263 — `status` says when the answer is in and the spec is not
+
+The system SHALL, in `specgate status`, list a `Needs Clarification` requirement whose blocking questions are all answered under "Answered — update the spec", naming the question, instead of under "Waiting for an answer".
+
+#### Scenario: SCN-263a — The client answered Q5
+
+- GIVEN REQ-010 `Needs Clarification`, blocked by Q5 only, and Q5 answered in its `questions.md`
+- WHEN `specgate status` runs
+- THEN REQ-010 is under "Answered — update the spec" with Q5, and not under "Waiting for an answer"
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-263.feature kind=functional status=Implemented test=tests/unit/done-refuses-undeliverable.test.ts -->
+
+### Requirement: REQ-277 — D6 reads a date or a time as one value
+
+The system SHALL read, in a scenario step, an ISO date (`2026-10-29`), a time (`10:00:00`, `07:42`) and a date-time (`2026-10-29 10:00:00`, `2026-10-29T10:00:00Z`) as one stated value each, never as the numbers inside them.
+
+#### Scenario: SCN-277a — A position with its time
+
+- GIVEN the step "GIVEN truck TRK-001 last reported 45.7640, 4.8357 at 2026-10-29 10:00:00"
+- WHEN D6 reads its values
+- THEN they are 45.7640, 4.8357 and 2026-10-29 10:00:00, and none is 29 or 00
+
+<!-- specgate:trace actor=Developer feature=features/brief-cards/REQ-277.feature kind=functional status=Implemented test=tests/unit/draft-checklist.test.ts -->

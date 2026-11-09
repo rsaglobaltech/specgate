@@ -430,7 +430,7 @@ function isAdvisoryProfile(projectDir: string, profileName: string): boolean {
  */
 export function writeHarnessCommand(
   projectDir: string,
-  key: "test_cmd" | "arch_cmd",
+  key: "test_cmd" | "arch_cmd" | "agent",
   value: string
 ): string {
   const filePath = path.join(projectDir, HARNESS_CONFIG_FILE);

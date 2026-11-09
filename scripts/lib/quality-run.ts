@@ -1,3 +1,4 @@
+import { forShell } from "./shell-command";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -54,6 +55,12 @@ export interface CheckOutcome {
   output: string;
   /** With SARIF: the findings this change adds, and how many the baseline holds back. */
   findings?: { fresh: string[]; freshCount: number; baselined: number; total: number };
+  /**
+   * Set when the check could not run (REQ-267): it is to write a SARIF report
+   * and wrote none, because it timed out or failed before reporting. The tool's
+   * own setup is the person's to fix, not findings for the agent.
+   */
+  couldNotRun?: string;
   /** With a coverage or mutation report: the measure over the changed lines. */
   measure?: {
     kind: "coverage" | "mutation";
@@ -183,17 +190,45 @@ function linesOf(projectDir: string) {
   };
 }
 
-/** Every finding of a check's SARIF, or null when it wrote none. */
+/** The paths, of those given, that git ignores; none outside a repository. */
+export function ignoredByGit(projectDir: string, paths: string[]): Set<string> {
+  if (paths.length === 0) return new Set();
+  const r = spawnSync("git", ["-C", projectDir, "check-ignore", "--stdin"], {
+    input: paths.join("\n") + "\n",
+    encoding: "utf8",
+  });
+  // 0: some are ignored; 1: none are; anything else: not a repository.
+  if (r.status !== 0) return new Set();
+  return new Set(
+    String(r.stdout)
+      .split(/\r?\n/)
+      .map((l) => l.trim().replace(/\\/g, "/"))
+      .filter(Boolean)
+  );
+}
+
+/**
+ * Every finding of a check's SARIF, or null when it wrote none. For a check
+ * judged on the change, a finding in a file git ignores (REQ-241) — a
+ * development `.env.local` — is never part of it, so it is left out.
+ */
 export function sarifFindings(projectDir: string, check: QualityCheck): Finding[] | null {
   if (!check.sarif) return null;
   const file = path.join(projectDir, check.sarif);
   if (!fs.existsSync(file)) return null;
-  return readSarif(
+  const findings = readSarif(
     fs.readFileSync(file, "utf8"),
     projectDir,
     linesOf(projectDir),
     repositoryPath(projectDir)
   );
+  // Only a check judged on the change: a repository-wide one reads generated
+  // files on purpose — osv-scanner points every finding at the bill of
+  // materials in target/, and leaving those out let no vulnerable dependency
+  // fail the gate (truck-flote, S44).
+  if (check.scope !== "diff") return findings;
+  const ignored = ignoredByGit(projectDir, [...new Set(findings.map((f) => f.path))]);
+  return ignored.size ? findings.filter((f) => !ignored.has(f.path)) : findings;
 }
 
 /**
@@ -259,17 +294,46 @@ export function changedFiles(projectDir: string, base: string): string[] {
   return [...out].filter((f) => fs.existsSync(path.join(projectDir, f))).sort();
 }
 
-let dockerAnswered: boolean | null = null;
-/** Whether a Docker daemon answers; asked once per process. */
-export function dockerAvailable(): boolean {
-  if (dockerAnswered === null) {
-    const r = spawnSync("docker", ["version", "--format", "{{.Server.Version}}"], {
-      encoding: "utf8",
-      timeout: 15000,
-    });
-    dockerAnswered = r.status === 0 && Boolean((r.stdout || "").trim());
+/**
+ * Why Docker cannot run the checks here, or null when it can (REQ-254). The
+ * check images are Linux images: a server in Windows containers mode answers
+ * and then has no manifest to pull (GitHub's Windows runners, Docker Desktop
+ * switched to Windows containers).
+ */
+export function dockerVerdict(r: { status: number | null; stdout?: string | null }): string | null {
+  const os = String(r.stdout || "")
+    .trim()
+    .toLowerCase();
+  if (r.status !== 0 || !os)
+    return "Docker is not running here: start Docker Desktop (or the docker daemon).";
+  if (os !== "linux")
+    return `Docker runs ${os} containers here; the checks need Linux containers: switch Docker Desktop to Linux containers.`;
+  return null;
+}
+
+let dockerProblem: string | null | undefined;
+/** Why Docker cannot run the checks here, or null; asked once per process. */
+export function dockerWhyNot(): string | null {
+  if (dockerProblem === undefined) {
+    // SPECGATE_DOCKER names another docker CLI; the tests point it at one that
+    // is not there, to be Docker Desktop stopped on any machine.
+    dockerProblem = dockerVerdict(
+      spawnSync(
+        process.env.SPECGATE_DOCKER || "docker",
+        ["version", "--format", "{{.Server.Os}}"],
+        {
+          encoding: "utf8",
+          timeout: 15000,
+        }
+      )
+    );
   }
-  return dockerAnswered;
+  return dockerProblem;
+}
+
+/** Whether Docker can run the checks here: it answers, with Linux containers. */
+export function dockerAvailable(): boolean {
+  return dockerWhyNot() === null;
 }
 
 /** Whether the command's program is on this machine's PATH. */
@@ -289,9 +353,8 @@ export function resolveRunner(
 ): { runner: "docker" | "local" } | { skip: string } {
   if (check.runner === "local") return { runner: "local" };
   if (check.runner === "docker") {
-    return dockerAvailable()
-      ? { runner: "docker" }
-      : { skip: "Docker is not running here: start Docker Desktop (or the docker daemon)." };
+    const why = dockerWhyNot();
+    return why === null ? { runner: "docker" } : { skip: why };
   }
   if (hasProgram(check.run)) return { runner: "local" };
   if (check.image && dockerAvailable()) return { runner: "docker" };
@@ -325,6 +388,45 @@ export function splitArgs(command: string): string[] {
   return out;
 }
 
+/** Where a worktree's repository is mounted in a check's container (REQ-266). */
+const CONTAINER_GIT = "/.specgate-git";
+
+/**
+ * The git folder of a worktree, for a container (REQ-266).
+ *
+ * A harness worktree's `.git` is a file naming a folder of the main repository
+ * by its host path — `D:/projects/truck-flote/.git/worktrees/…` — which does not
+ * exist in the container, so semgrep's `git ls-files` failed and the check hung
+ * until its timeout (truck-flote, S52). The repository's git folder is mounted
+ * read-only and git is pointed at the worktree's entry in it; `commondir` there
+ * leads back to the repository by a relative path, which holds inside too.
+ */
+function worktreeGit(projectDir: string): string[] {
+  const dotGit = path.join(projectDir, ".git");
+  let pointer = "";
+  try {
+    if (!fs.statSync(dotGit).isFile()) return [];
+    pointer = /^gitdir:\s*(.+)$/m.exec(fs.readFileSync(dotGit, "utf8"))?.[1]?.trim() || "";
+  } catch {
+    return [];
+  }
+  if (!pointer) return [];
+  const gitDir = path.resolve(projectDir, pointer);
+  const common = git(projectDir, ["rev-parse", "--git-common-dir"]);
+  if (common.status !== 0) return [];
+  const commonDir = path.resolve(projectDir, (common.stdout || "").trim());
+  const inside = path.relative(commonDir, gitDir).split(path.sep).join("/");
+  if (!inside || inside.startsWith("..")) return [];
+  return [
+    "-v",
+    `${commonDir}:${CONTAINER_GIT}:ro`,
+    "-e",
+    `GIT_DIR=${CONTAINER_GIT}/${inside}`,
+    "-e",
+    "GIT_WORK_TREE=/src",
+  ];
+}
+
 /**
  * `docker run` for a check: the project mounted at /src, its user on Linux and
  * macOS so reports are not root's, the environment names forwarded by name
@@ -342,7 +444,10 @@ export function dockerArgs(
   // runs as root and hands what it wrote back to the person afterwards;
   // without one it runs as the person from the start.
   const asRoot = posix && check.volumes.length > 0 && check.shell;
-  const user = posix && !asRoot ? ["--user", id] : [];
+  // Run as the person, a check has no home of its own: HOME is "/", and a tool
+  // that keeps a cache there (Semgrep) fails unless the uid happens to be the
+  // image's own user.
+  const user = posix && !asRoot ? ["--user", id, "-e", "HOME=/tmp"] : [];
   const script = asRoot
     ? `touch /tmp/.specgate-start; ${command}; s=$?; find /src -newer /tmp/.specgate-start -user 0 -exec chown ${id} {} + 2>/dev/null; exit $s`
     : command;
@@ -355,10 +460,25 @@ export function dockerArgs(
     `${path.resolve(projectDir)}:/src`,
     "-w",
     "/src",
+    ...worktreeGit(projectDir),
     ...user,
     ...(check.network ? [] : ["--network", "none"]),
     ...check.env.flatMap((e) => ["-e", e]),
     ...check.volumes.flatMap((v) => ["-v", v]),
+    // REQ-238: tests that start containers (Testcontainers) reach the host's
+    // Docker, and the containers they start through the host's address.
+    ...(check.docker
+      ? [
+          "-v",
+          "/var/run/docker.sock:/var/run/docker.sock",
+          "-e",
+          "TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal",
+          "-e",
+          "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock",
+          "--add-host",
+          "host.docker.internal:host-gateway",
+        ]
+      : []),
     ...(check.shell
       ? ["--entrypoint", "sh", check.image, "-c", script]
       : [check.image, ...splitArgs(command)]),
@@ -467,7 +587,7 @@ export function runCheck(
           timeout: check.timeout * 1000,
           maxBuffer: 64 * 1024 * 1024,
         })
-      : spawnSync(base.command, {
+      : spawnSync(forShell(base.command), {
           cwd: projectDir,
           encoding: "utf8",
           shell: true,
@@ -486,6 +606,20 @@ export function runCheck(
     ok: !timedOut && r.status === 0,
     output: timedOut ? `${output}\n(timed out after ${check.timeout} s)`.trim() : output,
   };
+  // REQ-267: a scanner that wrote no report found nothing; it did not run.
+  if (
+    check.sarif &&
+    !ran.ok &&
+    !fs.existsSync(path.join(projectDir, check.sarif)) &&
+    !(r.status === 0 && !timedOut)
+  ) {
+    return {
+      ...ran,
+      couldNotRun: timedOut
+        ? `timed out after ${check.timeout} s without writing ${check.sarif}`
+        : `exited ${r.status} without writing ${check.sarif}`,
+    };
+  }
   if (timedOut) return ran;
   if (check.report) {
     // REQ-223, REQ-224: the report measures the lines this change touched.
@@ -574,6 +708,8 @@ export function archCheck(archCmd: string, archSarif: string): QualityCheck {
     report: null,
     scope: "diff",
     profile: "",
+    docker: false,
+    needs: "",
   };
 }
 
@@ -647,5 +783,5 @@ export function stagesPassed(outcomes: CheckOutcome[], ci: boolean): boolean {
 
 /** For tests: forget whether Docker answered. */
 export function resetDockerProbe(value: boolean | null = null): void {
-  dockerAnswered = value;
+  dockerProblem = value === null ? undefined : value ? null : "Docker is not running here.";
 }

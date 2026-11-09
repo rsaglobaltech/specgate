@@ -239,3 +239,14 @@ test("init --config without --out defaults to the current directory", () => {
     assert.ok(fs.existsSync(path.join(tmp, "out-default", "spec.md")));
   });
 });
+
+test("REQ-249 SCN-249a: a package.json and --yes", () => {
+  withTmp((tmp) => {
+    fs.writeFileSync(path.join(tmp, "package.json"), '{"name":"shop"}');
+    const r = cliIn(tmp, "init", "--yes", "--no-git", "--dry-run");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const said = r.stdout + r.stderr;
+    assert.match(said, /separate project/);
+    assert.match(said, /specgate init.*without --yes/);
+  });
+});

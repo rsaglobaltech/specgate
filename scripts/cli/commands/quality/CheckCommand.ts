@@ -31,6 +31,7 @@ import {
   type CheckOutcome,
 } from "../../../lib/quality-run";
 import type { Stage } from "../../../../packages/core/src/domain/QualityChecks";
+import { forShell } from "../../../lib/shell-command";
 
 const NULL_SHAPE = { check: null };
 
@@ -252,7 +253,7 @@ export class CheckCommand extends BaseCommand {
             )
           : step.stage === "arch" && harness.archSarif
             ? archRun(projectDir, step.argv[0], harness.archSarif, baseFlag || "")
-            : spawnSync(step.argv[0], { cwd: projectDir, encoding: "utf8", shell: true });
+            : spawnSync(forShell(step.argv[0]), { cwd: projectDir, encoding: "utf8", shell: true });
       // One line per stage, replaced by how it ended. What a stage printed is
       // shown only when it failed: on a pass it was a screen of noise between
       // the person and the verdict.
