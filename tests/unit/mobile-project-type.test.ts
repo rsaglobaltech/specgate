@@ -108,7 +108,8 @@ test("an unknown project type is rejected, naming the ones that exist", () => {
       [
         'PROJECT_NAME: "X"',
         "PROJECT_SLUG: x",
-        "PROJECT_TYPE: desktop",
+        // `desktop` was the unknown type here until REQ-464 made it a project type.
+        "PROJECT_TYPE: embedded",
         'DOMAIN: "d"',
         'STACK: "whatever"',
         'API_STYLE: "REST"',

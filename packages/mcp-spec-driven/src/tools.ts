@@ -246,6 +246,21 @@ TOOLS["specgate_ci_init"] = new GenericCliTool(
   "flag",
   false
 );
+TOOLS["specgate_ci_status"] = new GenericCliTool(
+  "specgate_ci_status",
+  "What the project's CI checks, and what it lacks.",
+  "ci status",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+    },
+    required: ["projectDir"],
+  },
+  "flag",
+  false
+);
 TOOLS["specgate_alm_sync"] = new GenericCliTool(
   "specgate_alm_sync",
   "Sync REQs with Jira / Azure Boards (create, close, drift).",

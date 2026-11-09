@@ -70,7 +70,7 @@
       "typeMs": 26,
       "holdMs": 1960,
       "truncated": true,
-      "omitted": 4,
+      "omitted": 5,
       "lines": [
         {
           "t": "  ◆ specgate · init",
@@ -94,6 +94,11 @@
         },
         {
           "t": "  ℹ  🧩 No optional modules selected. Generating base + project-type features only.",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "  ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks",
           "c": "info",
           "s": "out"
         },
@@ -134,11 +139,6 @@
         },
         {
           "t": "    · Dry-run: false",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "    · Git: skipped",
           "c": "out",
           "s": "out"
         }

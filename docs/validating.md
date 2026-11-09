@@ -39,16 +39,29 @@ the one requirement it delivers.
 
 ## Run it in CI
 
-The quickest way is to let Specgate write the job:
+`specgate init` and `specgate adopt` already wrote the job: the spec gate, for
+the CI provider the repository shows (GitHub when it shows none). See what it
+checks, and what it lacks:
 
 ```bash
-specgate ci init
+specgate ci status
 ```
 
-It detects your CI provider (GitHub, GitLab, Azure or Jenkins), sets up the
-project's toolchain (Node, or a JDK for Maven and Gradle) and runs
-`specgate check` at the version you have installed, so a green on your machine
-is a green in CI. On GitHub the job is called `spec-gate`.
+It sets up the project's toolchain (Node, or a JDK for Maven and Gradle) and
+runs `specgate check` at the version that wrote it, so a green on your machine
+is a green in CI. On GitHub the job is called `spec-gate` and runs on Ubuntu,
+macOS and Windows, compares the requirement ids with the base branch, runs the
+[quality checks](quality.md) once they are configured, checks the
+[packs](supply-chain.md) and keeps the pending-work plan. It checks more rather
+than less: every step says in the YAML what it checks and what to delete to
+remove it, and a step whose tool is not configured yet says so and passes.
+
+- `specgate ci init --provider gitlab` (or `azure`, `jenkins`) writes it for
+  another CI; `--force` writes it again, `--minimal` writes one step only.
+- An older `specgate init` wrote `.github/workflows/specs.yml`, which only
+  validated the specification: `specgate ci init --provider github` shows what
+  the gate adds, `--replace` replaces it.
+- `specgate init --no-ci` writes no CI file.
 
 If you write the job by hand, run `validate --strict` and pin the version. A
 release can change what the gate checks, and a pipeline should not change

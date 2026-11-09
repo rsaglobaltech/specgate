@@ -238,8 +238,8 @@ export const SCRATCH: Journey = {
       id: "scratch-ci",
       page: "start/scratch-5-every-day",
       cwd: S,
-      argv: sg("ci", "init", "--provider", "github"),
-      surface: "ci init",
+      argv: sg("ci", "status"),
+      surface: "ci status",
       maxLines: 12,
     },
     {
@@ -373,8 +373,8 @@ export const EXISTING: Journey = {
       id: "existing-ci",
       page: "start/existing-4-ci",
       cwd: E,
-      argv: sg("ci", "init", "--provider", "github"),
-      surface: "ci init",
+      argv: sg("ci", "status"),
+      surface: "ci status",
       maxLines: 12,
     },
     {

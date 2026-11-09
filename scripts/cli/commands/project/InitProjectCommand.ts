@@ -9,6 +9,7 @@ import { parseYamlLite } from "../../../../packages/core/src/domain/YamlLite";
 import type { YamlDocument } from "../../../../packages/core/src/domain/YamlLite";
 import { errorMessage } from "../../../lib/diagnostics";
 import { runInitWizard, defaultAnswers, renderConfigYaml } from "./WizardCommand";
+import { installGate } from "./gate";
 import { BaseCommand } from "../../../lib/command";
 import {
   planStacks,
@@ -33,7 +34,15 @@ const TEMPLATES_DIR = path.join(ROOT_DIR, "templates");
  */
 export type ProjectConfig = Record<string, string>;
 
-export const PROJECT_TYPES = ["backend", "frontend", "mobile"];
+export const PROJECT_TYPES = ["backend", "frontend", "mobile", "desktop"];
+
+/**
+ * The types that run as a service, in a container: they get the `.env.*`
+ * files, docker-compose, the devcontainer. A mobile or desktop app runs on the
+ * person's device, and that scaffold would describe environments it has not
+ * (REQ-463).
+ */
+export const SERVICE_TYPES = ["backend", "frontend"];
 
 /**
  * How much architectural vocabulary a project asks to be scaffolded with.
@@ -197,6 +206,7 @@ function usage() {
       "  --force           Overwrite target directory if it already exists\n" +
       "  --dry-run         Print actions without writing files\n" +
       "  --no-git          Skip git initialization\n" +
+      "  --no-ci           Write no CI file (default: the spec gate, `specgate ci init`)\n" +
       "  --no-sample-req   Omit the starter REQ-000 health requirement. Use when a\n" +
       "                    domain pack will supply the real ones (implied by\n" +
       "                    --from-pack).\n"
@@ -217,6 +227,8 @@ export function parseArgs(argv: string[]) {
     keepMatrix: false,
     noAgents: false,
     noCapabilities: false,
+    /** `--no-ci`: write no CI file (REQ-455). */
+    noCi: false,
     /** `--forja [args…]`: generate the project with forja; the rest is forja's. */
     forja: null as string[] | null,
   };
@@ -251,6 +263,8 @@ export function parseArgs(argv: string[]) {
       opts.keepMatrix = true;
     } else if (a === "--no-agents") {
       opts.noAgents = true;
+    } else if (a === "--no-ci") {
+      opts.noCi = true;
     } else if (a === "--no-capabilities") {
       // Passed to adopt. The docs offered it next to `init`, and `init`
       // refused it; three pilots on fresh scaffolds then deleted three
@@ -366,6 +380,37 @@ export function parseConfigYaml(content: string) {
     }
   }
   return raw;
+}
+
+/** What each domain document is, for the README. */
+const DOC_LINES: Record<string, string> = {
+  "domain-model.md": "bounded contexts, aggregates, value objects, and events",
+  "use-cases.md": "use cases mapped to requirements and commands/queries",
+  "commands.md": "commands and queries expected by the application layer",
+  "events.md": "domain events used for meaningful state changes",
+  "aggregates.md": "aggregate roots and invariants",
+  "status-model.md": "lightweight Unified Process maturity states",
+};
+
+/**
+ * The README's list of what `init` wrote: only the documents the architecture
+ * profile keeps (REQ-462). A README that names a file the profile removed sends
+ * the reader — or an agent — looking for something that is not there.
+ */
+export function readmeStructure(cfg: ProjectConfig): string {
+  const docs = ARCHITECTURE_DOCS[cfg.ARCHITECTURE] ?? ALL_DOMAIN_DOCS;
+  return [
+    "- `spec.md`: business manifesto and goals.",
+    "- `AGENTS.md`: the contract every coding agent works under.",
+    "- `features/`: acceptance criteria in Gherkin.",
+    "- `docs/specs/traceability.md`: requirement -> scenario -> implementation -> test mapping.",
+    ...ALL_DOMAIN_DOCS.filter((d) => docs.includes(d)).map(
+      (d) => `- \`docs/specs/${d}\`: ${DOC_LINES[d]}.`
+    ),
+    "- `docs/specs/runtime-environments.md`: where and how the project runs.",
+    "- `docs/specs/review-checklist.md`: pre-implementation and architecture gates.",
+    "- `docs/specs/adr/`: architecture decision records.",
+  ].join("\n");
 }
 
 function hasDatastore(cfg: ProjectConfig) {
@@ -535,8 +580,9 @@ export function validateConfig(cfg: ProjectConfig) {
   cfg.MODULES = cfg.MODULES || "";
   cfg.ENVIRONMENTS = cfg.ENVIRONMENTS || "dev,feature,prod";
   cfg.DEFAULT_ENV = cfg.DEFAULT_ENV || "dev";
-  cfg.DOCKER_SUPPORT = cfg.DOCKER_SUPPORT || "true";
-  cfg.DEVCONTAINER_SUPPORT = cfg.DEVCONTAINER_SUPPORT || "true";
+  const service = SERVICE_TYPES.includes(cfg.PROJECT_TYPE);
+  cfg.DOCKER_SUPPORT = cfg.DOCKER_SUPPORT || (service ? "true" : "false");
+  cfg.DEVCONTAINER_SUPPORT = cfg.DEVCONTAINER_SUPPORT || (service ? "true" : "false");
   cfg.DATABASE_ENGINE = cfg.DATABASE_ENGINE || "postgres";
   cfg.DATABASE_VERSION = cfg.DATABASE_VERSION || "16";
   cfg.DATABASE_HOST = cfg.DATABASE_HOST || "db";
@@ -594,6 +640,7 @@ export function validateConfig(cfg: ProjectConfig) {
 
   Object.assign(cfg, architectureSections(cfg));
   cfg.STACK_RULES = stackRules(cfg.PROJECT_TYPE);
+  cfg.README_STRUCTURE = readmeStructure(cfg);
   cfg.RUNTIME_DOCKER_SECTION = runtimeDockerSection(cfg);
   cfg.RUNTIME_ENV_TABLE = runtimeEnvTable(cfg);
   cfg.RUNTIME_DATABASE_SECTION = runtimeDatabaseSection(cfg);
@@ -654,6 +701,45 @@ function renderTree(srcRoot: string, dstRoot: string, vars: ProjectConfig, dryRu
     const dstRel = rel.replace(/\.tpl$/, "");
     renderFile(tpl, path.join(dstRoot, dstRel), vars, dryRun);
   }
+}
+
+/** How a mobile or desktop app runs: on the person's device, not in a container (REQ-463). */
+function deviceRuntime(cfg: ProjectConfig): string {
+  return [
+    "# Runtime Environments",
+    "",
+    "> Normative contract, generated by `specgate init`. This is a " +
+      `${cfg.PROJECT_TYPE} app: it runs on the person's device, not in a container,`,
+    "> so there are no `.env.*` files, no docker-compose and no devcontainer.",
+    "> Code must still read its configuration from the environment or the",
+    "> platform's settings — never hardcode a host, a key or a credential.",
+    "",
+    "| Environment | What runs | How |",
+    "|---|---|---|",
+    "| dev | the app on the developer's machine or a simulator | the stack's dev command |",
+    "| release | signed builds for the platforms the app ships to | the release workflow |",
+    "",
+    "## Invariants",
+    "",
+    "1. **No credentials in the repository.** Secrets come from the platform's",
+    "   keychain or the build's secret store, never from a commit.",
+    "2. **The same behaviour on every platform the app ships to**: paths, line",
+    "   endings and permissions are the platform layer's concern.",
+    "",
+  ].join("\n");
+}
+
+function applyDeviceApp(projectDir: string, cfg: ProjectConfig, dryRun: boolean) {
+  if (SERVICE_TYPES.includes(cfg.PROJECT_TYPE)) return;
+  if (dryRun) {
+    logInfo(`[dry-run] ${cfg.PROJECT_TYPE}: skip .env.* and the container runtime`);
+    return;
+  }
+  for (const f of fs.readdirSync(projectDir)) {
+    if (/^\.env\./.test(f) && f !== ".env.example") fs.rmSync(path.join(projectDir, f));
+  }
+  const runtime = path.join(projectDir, "docs", "specs", "runtime-environments.md");
+  if (fs.existsSync(runtime)) fs.writeFileSync(runtime, deviceRuntime(cfg), "utf8");
 }
 
 function applyRuntimeSupportFlags(projectDir: string, cfg: ProjectConfig, dryRun: boolean) {
@@ -818,7 +904,7 @@ function ensureTraceabilityCoverage(projectDir: string) {
 export function generateProject(
   projectDir: string,
   cfg: ProjectConfig,
-  opts: { dryRun: boolean; noSampleReq: boolean; noGit: boolean },
+  opts: { dryRun: boolean; noSampleReq: boolean; noGit: boolean; noCi?: boolean },
   wizardAnswers: Record<string, string> | null
 ) {
   logInfo("🧩 Rendering base template");
@@ -830,6 +916,7 @@ export function generateProject(
     fs.writeFileSync(agentsMd, mergeContract(null, fs.readFileSync(agentsMd, "utf8")), "utf8");
   }
   applyRuntimeSupportFlags(projectDir, cfg, opts.dryRun);
+  applyDeviceApp(projectDir, cfg, opts.dryRun);
   applyArchitectureProfile(projectDir, cfg, opts.dryRun);
 
   // The stack's rules are part of AGENTS.md (rendered from `base`), not a
@@ -874,6 +961,8 @@ export function generateProject(
       );
     }
   }
+
+  installGate(projectDir, opts);
 
   if (!opts.noGit) {
     if (opts.dryRun) {
@@ -937,7 +1026,7 @@ function scaffoldMultiStack(
     generateProject(
       path.join(root, stack.name),
       { ...cfg, STACK: stack.name },
-      { dryRun: opts.dryRun, noSampleReq: opts.noSampleReq, noGit: true },
+      { dryRun: opts.dryRun, noSampleReq: opts.noSampleReq, noGit: true, noCi: true },
       null
     );
   }
@@ -1203,6 +1292,7 @@ export class InitProjectCommand extends BaseCommand {
             "utf8"
           );
         }
+        installGate(projectDir, opts);
         if (!opts.noGit) {
           const git = spawnSync("git", ["init"], { cwd: projectDir, stdio: "ignore" });
           if (git.error || git.status !== 0) {
