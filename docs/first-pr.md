@@ -9,10 +9,10 @@ It assumes the repository has already run `specgate init`; if it has not, the
 ## Once per repository
 
 ```bash
-specgate init        # adopts the existing code; writes spec.md and the matrix
-specgate ci init     # the gate as a CI job — the provider is detected from
-                     # .github/, .gitlab-ci.yml, … or the origin remote;
-                     # with neither yet, add --provider github|gitlab|azure|jenkins
+specgate init        # adopts the existing code; writes spec.md, the matrix and
+                     # the gate as a CI job — for the CI .github/, .gitlab-ci.yml, …
+                     # or the origin remote shows; GitHub when nothing does
+specgate ci status   # what the gate checks, and what it lacks
 git add -A && git commit -m "chore: adopt Specgate"
 ```
 
@@ -21,7 +21,8 @@ then your tests — after setting up what the project needs: a JDK for a
 `pom.xml` or `build.gradle`, `npm ci` for a lockfile. It is the `check` you run
 on your machine, so a green there is a green in CI. It runs the `test_cmd` you
 configured (`specgate config set test_cmd …`), or the one it detects; with
-neither, it runs `validate . --strict` alone and `ci init` says so.
+neither yet, `check` validates the specification, says the test command is not
+configured and how to set it, and passes.
 
 ### Make the gate a required check
 

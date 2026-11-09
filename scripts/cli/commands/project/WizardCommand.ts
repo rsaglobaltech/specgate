@@ -40,7 +40,7 @@ export const WIZARD_FIELDS: WizardField[] = [
   {
     key: "PROJECT_TYPE",
     question: "Project type",
-    choices: ["backend", "frontend", "mobile"],
+    choices: ["backend", "frontend", "mobile", "desktop"],
     def: () => "backend",
   },
   {

@@ -33,7 +33,7 @@
 
 <header class="top">
   <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
-  <span class="top__version">v0.30.0</span>
+  <span class="top__version">v0.31.0</span>
   <button class="top__search" id="search" type="button" aria-label="Search documentation"
           aria-keyshortcuts="Meta+K Control+K">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -58,7 +58,7 @@
 <section class="mx">
   <div class="ed-wrap mx__grid">
     <div class="mx__copy">
-      <p class="mx__eyebrow">[ v0.30.0 ] — A change, a brief or a Jira ticket, to proven requirements</p>
+      <p class="mx__eyebrow">[ v0.31.0 ] — A change, a brief or a Jira ticket, to proven requirements</p>
       <h1 class="mx__title">No test,<br>no <span>done.</span></h1>
       <p class="mx__lede">
         Specgate turns a change you describe, a client's brief or a Jira story
@@ -482,9 +482,9 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
               <div class="jn__text">
                 <p class="jn__what">Put the gate on every pull request — the specification, then your tests. This is what CI runs, and it is the same command you run locally. From then on the loop is four verbs: <code>specgate propose</code> a change — from your own words, the brief or a Jira ticket — write its delta (the requirements it adds) and a test that names each requirement, <code>specgate apply</code> it, <code>specgate archive</code> the change when the last one is in, and open the pull request. <code>specgate status</code> always says where you are. In a small project, <code>specgate new</code> adds a single requirement without a change.</p>
               </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci init --provider github</span>
-    + .github/workflows/spec-gate.yml
-<span class="t-yes">  ✔  CI gate installed</span>
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci status</span>
+<span class="jn__x"># init already wrote .github/workflows/spec-gate.yml</span>
+<span class="t-yes">  ✔  Everything specgate can check runs in CI.</span>
 <span class="jn__c">$ specgate propose free-courts</span>
 <span class="t-yes">  ✔  Change free-courts created · lite · REQ ids REQ-012…REQ-014 reserved</span>
   ➜  specgate apply
@@ -589,8 +589,9 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
               <div class="jn__text">
                 <p class="jn__what">Requirements still in Draft owe nothing yet, so you don't have to fix the past first. The job runs on every pull request: the specification, then your tests. Make it a required check, and a red gate blocks the merge.</p>
               </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci init --provider github</span>
-    + .github/workflows/spec-gate.yml
+              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci status</span>
+<span class="jn__x"># adopt already wrote .github/workflows/spec-gate.yml</span>
+<span class="t-yes">  ✔  Everything specgate can check runs in CI.</span>
 <span class="jn__c">$ specgate check</span>
 <span class="t-yes">  ✔  Specification   validate --strict</span>
 <span class="t-yes">  ✔  Tests           node --test</span>
@@ -909,6 +910,7 @@ TESTING: node:test
   ℹ  🧩 Rendering base template
   ℹ  🛠️ Applying project type template: backend
   ℹ  🧩 No optional modules selected. Generating base + project-type features only.
+  ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
 
   Summary ────────────────────────────────────────────────
     · Project: Smart Parking
@@ -917,8 +919,7 @@ TESTING: node:test
     · Domain: parking operations
     · Output: ~/smart-parking
     · Dry-run: false
-    · Git: skipped
-… 4 more lines
+… 5 more lines
 
 ~/smart-parking $ specgate specops add --pack-root ~/packs --pack multi-tenant/backend --var &quot;PROJECT_NAME=Smart Parking&quot; --var PROJECT_SLUG=smart-parking --var &quot;DOMAIN=parking operations&quot;
 ℹ  Adding multi-tenant/backend to ~/smart-parking
@@ -1000,7 +1001,7 @@ max_attempts: 1
     </div>
 
     <p class="term__meta">
-      Recorded from <strong>v0.30.0</strong>. <a href="./domain-packs.html">Domain packs →</a> <a href="./tutorial.html">The harness run, explained →</a>
+      Recorded from <strong>v0.31.0</strong>. <a href="./domain-packs.html">Domain packs →</a> <a href="./tutorial.html">The harness run, explained →</a>
     </p>
   </div>
 </section>
@@ -1480,7 +1481,7 @@ npx specgate propose --from-brief</code></pre>
       <a href="./release-process.html">Releases</a>
     </nav>
   </div>
-  <p class="ed-wrap ed-foot__note">Documentation for v0.30.0. Every number on this page is checked against the repository by a test.</p>
+  <p class="ed-wrap ed-foot__note">Documentation for v0.31.0. Every number on this page is checked against the repository by a test.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>

@@ -1,0 +1,5 @@
+- The window, the menus and the system tray are the UI layer: no business rule lives there.
+- Long work runs off the UI thread — in a worker or a sidecar process — and the window stays responsive.
+- File system, shell and network access go through one adapter each, with paths built for macOS, Windows and Linux.
+- Releases are signed installers per platform with auto-update; an update never loses the person's data.
+- Startup time and idle memory are acceptance criteria, measured, not polish.

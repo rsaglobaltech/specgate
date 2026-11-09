@@ -66,6 +66,7 @@ $ specgate init
     + docs/specs/adr/README.md
     + AGENTS.md
     + README.md   was missing
+  ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
     · Traceability: generated from spec.md, tags and tests (`specgate matrix`)
 
   Summary ────────────────────────────────────────────────
@@ -78,8 +79,7 @@ $ specgate init
 
   ✔  Adoption completed
 
-  Next steps ─────────────────────────────────────────────
-… 7 more lines
+… 8 more lines
 ```
 <!-- specgate:out-scratch-init:end -->
 

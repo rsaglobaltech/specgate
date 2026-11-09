@@ -47,6 +47,7 @@
             "backend",
             "frontend",
             "mobile",
+            "desktop",
             "contracts"
           ]
         },

@@ -9,7 +9,9 @@ export default [
     run(dir, t) {
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
-      t.ok(t.sg(dir, "ci", "init", "--provider", "github"), "ci init --provider github");
+      // init installs the gate already (REQ-455); ci init writes it again, by hand.
+      t.expect(t.exists(dir, ".github/workflows/spec-gate.yml"), "init installed the spec gate");
+      t.ok(t.sg(dir, "ci", "init", "--provider", "github", "--force"), "ci init --provider github --force");
       const wf = fs
         .readdirSync(path.join(dir, ".github", "workflows"))
         .map((f) => t.read(dir, `.github/workflows/${f}`))
@@ -18,6 +20,24 @@ export default [
       t.expect(/specgate@\S+ check \./.test(wf), "the workflow runs check — the spec and the tests");
       t.expect(/npm (ci|install)/.test(wf), "after installing the project's dependencies");
       t.expect(!/--strict-tdd/.test(wf), "and not the weaker --strict-tdd");
+    },
+  },
+  {
+    name: "ci status says what the gate checks, and what an old specs.yml lacks",
+    covers: ["ci status"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      const full = t.json(t.sg(dir, "ci", "status", "--json"));
+      t.expect(full.checks.every((c) => c.present), "the gate init installed checks everything");
+      fs.rmSync(path.join(dir, ".github", "workflows", "spec-gate.yml"));
+      fs.writeFileSync(
+        path.join(dir, ".github", "workflows", "specs.yml"),
+        "jobs:\n  v:\n    runs-on: ubuntu-latest\n    steps:\n      - run: npx @rsaglobaltech/specgate@latest validate .\n"
+      );
+      const old = t.json(t.sg(dir, "ci", "status", "--json"));
+      t.expect(old.checks.find((c) => c.id === "tests").present === false, "an old specs.yml runs no tests");
+      t.expect(/--replace/.test(old.checks.find((c) => c.id === "tests").add), "and says how to replace it");
     },
   },
   {

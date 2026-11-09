@@ -102,7 +102,9 @@ export function planCi(projectDir: string, version: string): CiPlan {
       testCmd: detected,
     };
   }
-  return { ...base, gateCmd: `${npx} validate . --strict`, testSource: "none", testCmd: null };
+  // No tests yet: `check` still validates the specification strictly, says the
+  // test command is not configured and how to set it, and passes (REQ-456).
+  return { ...base, gateCmd: `${npx} check .`, testSource: "none", testCmd: null };
 }
 
 const NODE_VERSION = "22";
@@ -114,13 +116,16 @@ function indent(lines: string[], n: number): string {
 
 /** GitHub Actions steps after checkout, indented for `steps:`. */
 export function githubSetup(plan: CiPlan, projectDir: string): string {
+  // Every step says why it is there (REQ-457).
   const steps: string[] = [
+    `# Node ${NODE_VERSION}: specgate runs on it.`,
     "- uses: actions/setup-node@v4",
     "  with:",
     `    node-version: '${NODE_VERSION}'`,
   ];
   if (plan.kind === "maven" || plan.kind === "gradle") {
     steps.push(
+      `# Java ${plan.javaVersion} (from the build file) and the ${plan.kind} cache, for the tests.`,
       "- uses: actions/setup-java@v4",
       "  with:",
       "    distribution: temurin",
@@ -129,11 +134,20 @@ export function githubSetup(plan: CiPlan, projectDir: string): string {
     );
   } else if (plan.kind === "node") {
     const lock = fs.existsSync(path.join(projectDir, "package-lock.json"));
-    steps.push(`- run: ${lock ? "npm ci" : "npm install"}`);
+    steps.push(
+      "# The project's dependencies, for its tests.",
+      `- run: ${lock ? "npm ci" : "npm install"}`
+    );
   } else if (plan.kind === "go") {
-    steps.push("- uses: actions/setup-go@v5", "  with:", "    go-version-file: go.mod");
+    steps.push(
+      "# Go, at the version go.mod names, for the tests.",
+      "- uses: actions/setup-go@v5",
+      "  with:",
+      "    go-version-file: go.mod"
+    );
   } else if (plan.kind === "python") {
     steps.push(
+      "# Python 3.12, for the tests.",
       "- uses: actions/setup-python@v5",
       "  with:",
       "    python-version: '3.12'",
@@ -226,5 +240,5 @@ export function describeTests(plan: CiPlan): string {
   if (plan.testSource === "config") return `runs your tests: \`${plan.testCmd}\` (test_cmd)`;
   if (plan.testSource === "detected")
     return `runs your tests: \`${plan.testCmd}\` (detected — \`specgate config set test_cmd\` and re-run to change it)`;
-  return 'runs no tests: none detected — `specgate config set test_cmd "<command>"`, then re-run `ci init --force`';
+  return 'runs no tests yet: none detected — `specgate config set test_cmd "<command>"` and the gate runs them, with no change to this file';
 }

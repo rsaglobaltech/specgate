@@ -5,6 +5,7 @@ import { migrateToDerived } from "../spec/MatrixCommand";
 import * as path from "node:path";
 import { renderTemplate } from "../../../../packages/core/src/domain/PackSpec";
 import { slugify } from "./WizardCommand";
+import { installGate } from "./gate";
 import { BaseCommand } from "../../../lib/command";
 import type { Capability } from "./OnboardCommand";
 
@@ -68,6 +69,7 @@ function usage() {
       "  --monorepo           Adopt every module the repository declares and write\n" +
       "                       the specops.config.yaml that `validate` reads\n" +
       "  --no-capabilities    Do not seed proposed requirements — skeleton only\n  --keep-matrix        Keep traceability.md hand-maintained instead of generated\n  --no-agents          Do not install the /specgate:* commands for the agents found here\n" +
+      "  --no-ci              Write no CI file (default: the spec gate, `specgate ci init`)\n" +
       "  --var KEY=VALUE      Override a detected value (PROJECT_NAME, PROJECT_SLUG,\n" +
       "                       DOMAIN, STACK, API_STYLE, TESTING, TEST_CMD)\n"
   );
@@ -81,6 +83,8 @@ export function parseArgs(argv: string[]) {
     noCapabilities: false,
     keepMatrix: false,
     noAgents: false,
+    /** `--no-ci`: write no CI file (REQ-455). */
+    noCi: false,
     vars: {} as Record<string, string>,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -97,6 +101,8 @@ export function parseArgs(argv: string[]) {
       opts.keepMatrix = true;
     } else if (a === "--no-agents") {
       opts.noAgents = true;
+    } else if (a === "--no-ci") {
+      opts.noCi = true;
     } else if (a === "--var" && argv[i + 1]) {
       const pair = argv[++i];
       const eq = pair.indexOf("=");
@@ -597,6 +603,7 @@ function adoptMonorepo(dir: string, opts: AdoptOptions): never {
   }
 
   logInfo("📋 Summary");
+  installGate(dir, opts);
   logInfo(`- Files written: ${written}${opts.dryRun ? " (dry-run, nothing on disk)" : ""}`);
   logInfo(`- Skipped: ${skipped}`);
   logWarn("This does not certify your code yet — it certifies the skeleton.");
@@ -606,7 +613,7 @@ function adoptMonorepo(dir: string, opts: AdoptOptions): never {
   logInfo("✅ Adoption completed. Next steps:");
   logInfo("  1. specgate validate .          # validates every module listed");
   logInfo("  2. Replace the seeded proposals in each module's spec.md with real behaviour");
-  logInfo("  3. Add `validate . --strict` to CI to lock the gate in");
+  logInfo("  3. specgate ci status          # what the CI gate checks, and what it lacks");
   installDetectedAgents(dir, { dryRun: opts.dryRun, skip: opts.noAgents }, logInfo);
   process.exit(0);
 }
@@ -639,6 +646,8 @@ export class AdoptProjectCommand extends BaseCommand {
     }
 
     const { written, skipped, capabilities } = adoptOne(dir, opts);
+    // The spec gate, as init installs it (REQ-455) — never over a CI file that exists.
+    installGate(dir, opts);
     // A new adoption starts with a generated matrix: nobody maintains it,
     // `done` and `new` write spec.md, and the gate keeps it honest.
     if (!opts.dryRun && !opts.keepMatrix && migrateToDerived(dir)) {
@@ -675,7 +684,7 @@ export class AdoptProjectCommand extends BaseCommand {
       );
     }
     logInfo("  3. specgate status              # what each requirement still needs");
-    logInfo("  4. specgate ci init             # put the gate in CI");
+    logInfo("  4. specgate ci status           # what the CI gate checks, and what it lacks");
     const startup = startupTestAdvice(dir);
     if (startup) {
       logInfo("Keep a startup test in the suite: the gate is only as good as what the tests run.");

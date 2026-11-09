@@ -113,7 +113,7 @@ they are configured.
 |---|---|
 | Your machine, before a PR | `specgate check` — the gate, then your tests if a test command is configured |
 | Delivering a requirement | `specgate apply` — the gate for that requirement, then the status |
-| CI | the job `specgate ci init` writes — `specgate check`, with the project's JDK or Node set up |
+| CI | the spec gate `init` and `adopt` install (`specgate ci init` writes it again) — `specgate check` with the project's JDK or Node set up; `specgate ci status` says what it checks |
 | An agent | the `/specgate:check` command, the `Stop` hook, the harness |
 
 A gate that was slightly different in each place used to approve work in one

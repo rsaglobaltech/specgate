@@ -12,34 +12,42 @@ CI (GitHub, GitLab, Azure DevOps or Jenkins).
 
 | Who | Does what in this phase |
 | --- | --- |
-| **You** | Generate the CI job and commit it |
+| **You** | Commit the CI file `adopt` wrote, and see what it checks |
 | **CI** | Runs `specgate check` on every pull request |
 
-## 1. Generate the job
+## 1. The gate is already in CI
+
+`specgate adopt` (or `init` in a folder with code) wrote it:
+`.github/workflows/spec-gate.yml`, or the file for the CI your repository
+already uses — never over a file that exists. See what it checks, and what it
+lacks:
 
 ```bash
-specgate ci init --provider github
+specgate ci status
 ```
 
 <!-- specgate:out-existing-ci:begin — generated; edit the source, not this block -->
 ```text
-$ specgate ci init --provider github
-  ◆ specgate · ci init   github
+$ specgate ci status
+  ◆ specgate · ci status   .github/workflows/spec-gate.yml
 
-    + .github/workflows/spec-gate.yml
+  ✔  the specification (validate --strict)
+  ✔  the project's tests (check runs test_cmd)
+  ✔  the architecture check (check runs arch_cmd)
+  ✔  Ubuntu, macOS and Windows
+  ✔  the requirement ids against the base branch (check --base)
+  ✔  the quality checks (quality run)
+  ✔  the pack drift (validate --against-lock)
+  ✔  the pending-work plan (plan --format json)
 
-  ✔  CI gate installed. On every PR/MR the job:
-   1  runs `specgate check` — the specification, then the tests, as locally
-     runs your tests: `node --test` (test_cmd)
-   2  runs `validate --against-lock` when .specops.lock exists, so a
-     moved pack tag or an edited generated file fails the build
-   3  publishes `plan --format json` as the spec-plan artifact
-  ℹ  Commit the file and open a PR to see the gate in action.
+  ✔  Everything specgate can check runs in CI.
 ```
 <!-- specgate:out-existing-ci:end -->
 
-`gitlab`, `azure` and `jenkins` work the same way. If you already have a
-workflow, `--stdout` prints the job to paste into it instead.
+An older `specgate init` wrote `.github/workflows/specs.yml`, which only
+validated the specification: `specgate ci init --provider github` shows what
+the gate adds, and `--replace` replaces it. Every step of the gate says what
+it checks and what to delete to remove it; `--minimal` writes one step only.
 
 ## 2. Check locally what CI will run
 
@@ -66,9 +74,9 @@ This is what makes the gate safe on old code: requirements still in `Draft`
 gate holds the code to what you have written down, and only that. Each
 requirement you apply raises the bar by one.
 
-The job runs `specgate check --ci`: with [quality checks](../quality.md), the
-CI-only ones run too, and a check that cannot run fails instead of being
-skipped.
+The job runs `specgate check` with the ids compared to the base branch and,
+once [quality checks](../quality.md) are configured, `specgate quality run
+--stage ci` on Ubuntu, where Docker runs.
 
 ## 3. Commit and open a pull request
 

@@ -238,6 +238,15 @@ export const SURFACE: Command[] = [
           summary: "Generate the spec gate for GitHub, GitLab, Azure, or Jenkins.",
         },
       },
+      {
+        name: "status",
+        script: ["ci_status.js"],
+        help: {
+          group: "core",
+          icon: "🚦",
+          summary: "What the project's CI checks, and what it lacks.",
+        },
+      },
     ],
   },
   {

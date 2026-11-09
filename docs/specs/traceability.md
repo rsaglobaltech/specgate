@@ -241,6 +241,16 @@
 | REQ-446 | SCN-446a | `features/studio/REQ-446.feature` | - | - | - | - | - | tests/unit/studio-ticket.test.ts | Implemented |
 | REQ-447 | SCN-447a | `features/studio/REQ-447.feature` | - | - | - | - | - | tests/unit/studio-ticket.test.ts | Implemented |
 | REQ-448 | SCN-448a | `features/studio/REQ-448.feature` | - | - | - | - | - | tests/unit/studio-ticket.test.ts | Implemented |
+| REQ-455 | SCN-455a | `features/project-setup/REQ-455.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-456 | SCN-456a | `features/project-setup/REQ-456.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-457 | SCN-457a | `features/project-setup/REQ-457.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-458 | SCN-458a | `features/project-setup/REQ-458.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-459 | SCN-459a | `features/project-setup/REQ-459.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-460 | SCN-460a | `features/project-setup/REQ-460.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-461 | SCN-461a | `features/project-setup/REQ-461.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-462 | SCN-462a | `features/project-setup/REQ-462.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-463 | SCN-463a | `features/project-setup/REQ-463.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-464 | SCN-464a | `features/project-setup/REQ-464.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

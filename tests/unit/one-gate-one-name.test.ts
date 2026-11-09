@@ -302,7 +302,12 @@ test("the merge driver git registers is portable, not a path on one machine", ()
 test("ci init announces the command it actually generates", () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ciann-"));
   try {
-    assert.equal(cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix").status, 0);
+    // --no-ci: init installs the gate itself since REQ-455; this test is about
+    // what `ci init` announces when it writes one.
+    assert.equal(
+      cli("init", "--yes", "--out", parent, "--no-git", "--keep-matrix", "--no-ci").status,
+      0
+    );
     const dir = path.join(parent, "my-spec-driven-app");
     const r = cli("ci", "init", "--provider", "github", "--project-dir", dir);
     assert.equal(r.status, 0, r.stdout + r.stderr);

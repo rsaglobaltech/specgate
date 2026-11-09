@@ -9,6 +9,47 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.31.0] — 2026-11-09
+
+A project checked by CI from its first push: `init` and `adopt` install the
+full spec gate, which validates more by default and says, step by step, what
+it checks and how to remove it.
+
+### Added
+
+- **A new project is checked by CI from its first push** (REQ-455):
+  `specgate init` and `specgate adopt` install the spec gate `ci init` writes —
+  for the CI the repository shows, GitHub when none — instead of `specs.yml`,
+  with the specgate version pinned. `--no-ci` leaves it out; a CI file that
+  exists is never overwritten.
+- **The gate validates more by default** (REQ-458): on Ubuntu, macOS and
+  Windows; the requirement ids against the base branch; the quality checks
+  once `harness.config.yaml` configures them; the pack drift; the pending-work
+  plan. **Every step says in the YAML what it checks and what to delete to
+  remove it** (REQ-457), and **it is green on a project just created**: a tool
+  not configured yet is said, with how to configure it (REQ-456).
+- **`specgate ci status`** (REQ-460): what the project's CI checks, each
+  validation present or missing, and how to add it (`--json`).
+- **`ci init --minimal`** (REQ-459): one job on Ubuntu running `check`.
+- **`ci init --replace`** (REQ-461): an old `specs.yml` is replaced only after
+  `ci init` shows what the gate adds.
+- **A `desktop` project type** (REQ-464), for Tauri or Electron apps: its
+  stack rules (the window, a sidecar, signed installers, auto-update) in
+  AGENTS.md.
+
+### Changed
+
+- **The README names only what `init` wrote** (REQ-462): the documents the
+  architecture profile keeps, and `specgate check` as the command — no
+  `AI_RULES.md`, no `validate_specs.sh`.
+- **No container scaffold for an app that runs on a device** (REQ-463): a
+  `mobile` or `desktop` project gets no `.env.*`, docker-compose or
+  devcontainer, and a `runtime-environments.md` for an app on the person's
+  device.
+- **The gate runs `check` on a project with no tests yet**, not
+  `validate --strict` alone: the same strict specification, plus the line that
+  says how to set the test command.
+
 ## [0.30.0] — 2026-11-09
 
 A change from a Jira ticket, from the studio as from the terminal: reviewed
