@@ -18,7 +18,7 @@ The system SHALL, when `onboard` and `adopt` read areas off a directory's childr
 - WHEN the developer runs `specgate onboard`
 - THEN it proposes the areas Billing and Invoices, and not Utils
 
-<!-- specgate:trace status=Approved actor=Developer kind=business-rule -->
+<!-- specgate:trace status=Implemented actor=Developer kind=business-rule -->
 
 ### Requirement: REQ-477 — After adoption, onboard points at one behaviour, not a folder
 
@@ -30,7 +30,7 @@ The system SHALL, when `onboard` runs on an adopted project, name `specgate new 
 - WHEN the developer runs `specgate onboard --json`
 - THEN its next command is `specgate new "<a behaviour you rely on>"`, not `specgate propose describe-billing`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-478 — The adoption baseline names no path that is not one
 
@@ -42,4 +42,4 @@ The system SHALL seed the adoption baseline REQ-001 with no test and no code art
 - WHEN the developer runs `specgate plan --format json`
 - THEN no finding names `npm test` or `existing codebase` as a missing file for REQ-001
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

@@ -9,7 +9,7 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-476 — kind-of-code folders are not areas
-- [ ] 2.2 REQ-477 — onboard's next command after adoption
-- [ ] 2.3 REQ-478 — the baseline names no path that is not one
-- [ ] 2.4 the CHANGELOG
+- [x] 2.1 REQ-476 — kind-of-code folders are not areas
+- [x] 2.2 REQ-477 — onboard's next command after adoption
+- [x] 2.3 REQ-478 — the baseline names no path that is not one
+- [x] 2.4 the CHANGELOG
