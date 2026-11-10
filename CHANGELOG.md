@@ -9,6 +9,19 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.32.1] — 2026-11-10
+
+The container image again: 0.32.0's failed to build.
+
+### Fixed
+
+- **The CLI image builds**: its build stage copies `types/`, which
+  `@rsaglobaltech/specgate/api` compiles against — 0.32.0's image failed on
+  it, so `ghcr.io/rsaglobaltech/specgate:0.32.0` does not exist; use 0.32.1.
+  It also copies `vendor/`, so the image's `studio --static` has its bundled
+  Mermaid again. A test checks that every source folder the npm package ships
+  is copied.
+
 ## [0.32.0] — 2026-11-10
 
 A project read from Node in-process: `@rsaglobaltech/specgate/api` answers
