@@ -9,6 +9,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.32.0] — 2026-11-10
+
+A project read from Node in-process: `@rsaglobaltech/specgate/api` answers
+`status`, `questions` and `matrix` without starting `specgate`, and after
+`apply` the next step stays in the change being built.
+
 ### Added
 
 - **`@rsaglobaltech/specgate/api`: a project read from Node, in-process**
@@ -26,6 +32,9 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   next requirement of the open change just delivered for, and the project's
   queue only once that change has none left to take. Before, applying REQ-016
   of a change with REQ-014 still to do pointed at the project's REQ-000.
+- **A test file named `test_….py` is recognised in linear time**: the
+  regular expression that told it was quadratic on a name of many `test_`
+  (CodeQL `js/polynomial-redos`, raised once the package became a library).
 
 ## [0.31.0] — 2026-11-09
 

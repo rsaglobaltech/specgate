@@ -80,7 +80,7 @@ jobs:
         with: { node-version: '24' }
       # --strict is the whole specification gate, pinned so a release
       # cannot change it under you. It does not run your tests.
-      - run: npx --yes @rsaglobaltech/specgate@0.31.0 validate . --strict
+      - run: npx --yes @rsaglobaltech/specgate@0.32.0 validate . --strict
 ```
 
 `validate --strict` checks the specification only. To fail the job when the
