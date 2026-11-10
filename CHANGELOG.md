@@ -9,6 +9,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.33.0] — 2026-11-10
+
+Onboarding an existing project without an agent finishing it: `adopt` saves
+the test command and agent it detects and says what is ready; the areas it
+finds stay out of the matrix; one short Start page.
+
 ### Fixed
 
 - **Onboarding an existing project no longer needs an agent to finish it**
