@@ -9,6 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Security
+
+- **Every open code-scanning alert closed** (13, CodeQL): a requirement id
+  typed by a person is matched literally, never built into a regular
+  expression (`answer`, `ask`); Markdown table cells escape the backslash as
+  well as the pipe, so text ending in `\` cannot break a questions or review
+  table; shell arguments specgate prints or passes on are quoted for the shell
+  that reads them, Windows' backslash rule included; the spec parser's slug
+  stays linear on hostile input; the studio no longer sends an exception's
+  text to the page — the terminal running it says why. One helper for each
+  escape (`scripts/lib/escape.ts`) instead of hand-written ones.
+
 ### Fixed
 
 - **Folders named by a kind of code are not areas** (#412, REQ-476 … REQ-478,

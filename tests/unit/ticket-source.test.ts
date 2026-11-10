@@ -1442,7 +1442,7 @@ test("REQ-148 SCN-148d: the branch is on the host as soon as work starts", () =>
     assert.equal(run.status, 0, run.stdout + run.stderr);
     assert.equal(
       git(origin, "branch", "--list", "feature/KAN-13-register-vehicle-entry")
-        .replace("*", "")
+        .replace(/^\*\s*/, "")
         .trim(),
       "feature/KAN-13-register-vehicle-entry"
     );

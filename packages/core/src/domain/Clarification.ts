@@ -83,7 +83,8 @@ const TO_REVIEW = "to review";
 
 /** A cell's value as written into a Markdown table: one line, its pipes escaped. */
 function cell(text: string): string {
-  return String(text).replace(/\s+/g, " ").trim().replace(/\|/g, "\\|");
+  // Backslashes first: `a\|b` must not leave an unescaped pipe (code scanning).
+  return String(text).replace(/\s+/g, " ").trim().replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
 }
 
 /** The cells of a table line, split on pipes that are not escaped. */
