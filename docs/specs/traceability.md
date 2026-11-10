@@ -265,6 +265,8 @@
 | REQ-476 | SCN-476a, SCN-476b | `features/project-setup/REQ-476.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
 | REQ-477 | SCN-477a | `features/project-setup/REQ-477.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
 | REQ-478 | SCN-478a | `features/project-setup/REQ-478.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
+| REQ-479 | SCN-479a | `features/clarification/REQ-479.feature` | - | - | - | - | - | tests/unit/questions-options.test.ts | Approved |
+| REQ-480 | SCN-480a | `features/clarification/REQ-480.feature` | - | - | - | - | - | tests/unit/questions-options.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -57,6 +57,8 @@ export interface QuestionsAnswer {
       change: string;
       text: string;
       blocks: string[];
+      /** The options its author listed in "Options seen"; empty when none (REQ-479). */
+      options: string[];
       file: string;
       line: number;
     }>;
