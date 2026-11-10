@@ -4,7 +4,7 @@
 
 ### Requirement: REQ-470 — Adopt saves what it detects and says what is ready
 
-The system SHALL, when `specgate adopt` adopts a project, save the test command it detects as `test_cmd` and, when an agent's CLI is on the PATH, the command Build runs it with as `agent` — asking before each when a person is at the terminal, applying them with `--yes` or without a terminal, never replacing a value already set — and SHALL end with one readiness list that says, for the tests, the agent, the architecture check and the CI gate, whether each is set and the command that sets it.
+The system SHALL, when `specgate adopt` adopts a project, save the test command it detects as `test_cmd` — when the project declares it (a `test` script) or has test files; a project with neither is told no test was found yet, with the command to set it later — and, when an agent's CLI is on the PATH, the command Build runs it with as `agent` — asking before each when a person is at the terminal, applying them with `--yes` or without a terminal, never replacing a value already set — and SHALL end with one readiness list that says, for the tests, the agent, the architecture check and the CI gate, whether each is set and the command that sets it.
 
 #### Scenario: SCN-470a — A Node project adopted with --yes
 

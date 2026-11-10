@@ -87,9 +87,13 @@ export function settle(
   };
 
   let tests = current.testCmd ?? null;
+  // Only a command the project declares, or one with tests to run: `pytest`
+  // with no test exits 5, `mvn test` on an empty module fetches the world.
+  const runnable = hasTests(dir);
   if (
     !tests &&
     opts.detectedTest &&
+    runnable &&
     set("test_cmd", opts.detectedTest, `Run \`${opts.detectedTest}\` as the project's tests?`)
   ) {
     tests = opts.detectedTest;
@@ -109,7 +113,11 @@ export function settle(
     {
       name: "Tests",
       ready: !!tests,
-      detail: tests ?? 'not set — specgate config set test_cmd "<command>"',
+      detail:
+        tests ??
+        (opts.detectedTest && !runnable
+          ? `no test found yet — specgate config set test_cmd "${opts.detectedTest}" once there is one`
+          : 'not set — specgate config set test_cmd "<command>"'),
     },
     {
       name: "Agent",
@@ -158,6 +166,44 @@ const SKIP = new Set([
   ".next",
   "coverage",
 ]);
+
+/** npm's default `test` script, which only says there is none. */
+const NO_TEST_SCRIPT = /no test specified/;
+
+/**
+ * Whether the project has tests to run (REQ-470): a `test` script it declares,
+ * a test file anywhere in it, or a `src/test` folder (Maven, Gradle).
+ */
+export function hasTests(dir: string): boolean {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")) as {
+      scripts?: Record<string, string>;
+    };
+    const script = pkg.scripts?.test;
+    if (script && !NO_TEST_SCRIPT.test(script)) return true;
+  } catch {
+    // No package.json, or not JSON.
+  }
+  if (fs.existsSync(path.join(dir, "src", "test"))) return true;
+  let found = false;
+  const walk = (abs: string, depth: number) => {
+    if (found || depth > 6) return;
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(abs, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      if (found) return;
+      if (e.isDirectory()) {
+        if (!SKIP.has(e.name)) walk(path.join(abs, e.name), depth + 1);
+      } else if (TEST_FILE.test(e.name)) found = true;
+    }
+  };
+  walk(dir, 0);
+  return found;
+}
 
 /** The test files whose path has the area's folder name in it: `test/auth/…`, `src/auth/x.test.ts`. */
 export function testsOf(dir: string, area: string, limit = 20): string[] {

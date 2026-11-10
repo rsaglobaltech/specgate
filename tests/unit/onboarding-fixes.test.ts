@@ -234,3 +234,29 @@ test("REQ-474 SCN-474a: once adopted, Home's next step is the one status gives �
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-470: a project with no test yet gets no test command — the readiness list says so, and check still passes", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sg-notests-"));
+  try {
+    fs.writeFileSync(path.join(dir, "pyproject.toml"), '[project]\nname = "billing"\n');
+    fs.mkdirSync(path.join(dir, "billing"));
+    fs.writeFileSync(path.join(dir, "billing", "__init__.py"), "");
+    const r = adopt(dir, false, "--yes");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.doesNotMatch(harness(dir), /^test_cmd:/m);
+    assert.match(
+      r.stdout + r.stderr,
+      /·\s+Tests\s+no test found yet — specgate config set test_cmd "pytest" once there is one/
+    );
+    const check = runCli(["check", dir], { env: { ...process.env, CI: "1" } });
+    assert.equal(check.status, 0, check.stdout + check.stderr);
+    // Tests added later: a second look finds them.
+    fs.mkdirSync(path.join(dir, "tests"));
+    fs.writeFileSync(
+      path.join(dir, "tests", "test_total.py"),
+      "def test_total():\n    assert True\n"
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
