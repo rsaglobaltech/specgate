@@ -180,6 +180,38 @@ echo 'npx specgate validate . --strict' > .husky/pre-commit
 Anyone can skip a hook with `git commit --no-verify`, so run the same gate in
 CI as well: see [Validating](validating.md#run-it-in-ci).
 
+## Read a project from Node
+
+A tool written in Node — an editor, a dashboard, the studio — can read a
+project without starting `specgate` for each read:
+
+```ts
+import { status, questions, matrix, API_VERSION } from "@rsaglobaltech/specgate/api";
+
+const open = (await questions("path/to/project")).questions.open;
+for (const q of open) console.log(q.id, "blocks", q.blocks.join(", "));
+```
+
+Each function answers exactly what the command prints with `--json`:
+
+| Function         | Answers what this prints           |
+| ---------------- | ---------------------------------- |
+| `status(dir)`    | `specgate status --json`           |
+| `questions(dir)` | `specgate questions --json`        |
+| `matrix(dir)`    | `specgate matrix --json --dry-run` |
+
+The findings are under `status`, each with its code, message and fix, as in
+[the agent contract](specs/agent-contract.md). The functions only read: they
+write no file of the project — a derived matrix behind its specs is derived in
+memory, not rewritten — and start no process but `git ls-files`. A folder with
+no specgate project is refused with the code `not_a_project` and the fix
+`specgate init`.
+
+The types ship with the package. `API_VERSION` is `1.0.0`; its major number
+changes only when an answer's shape breaks. Commands that change the project
+(`apply`, `archive`, `config set`) are not in the API: run them through the
+CLI, where the gate and its output belong.
+
 ## Connect Jira
 
 Specgate works with Jira in two modes. Pick one per project.

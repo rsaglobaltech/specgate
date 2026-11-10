@@ -8,6 +8,21 @@
     "specgate": "bin/specgate.js",
     "create-spec-driven-app": "bin/specgate.js"
   },
+  "exports": {
+    "./api": {
+      "types": "./types/api.d.ts",
+      "default": "./dist/scripts/api/index.js"
+    },
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
+  "typesVersions": {
+    "*": {
+      "api": [
+        "types/api.d.ts"
+      ]
+    }
+  },
   "files": [
     "bin/",
     "dist/bin/",
@@ -15,6 +30,7 @@
     "dist/studio/",
     "dist/packages/core/",
     "dist/packages/mcp-spec-driven/src/",
+    "types/",
     "templates/",
     "examples/",
     "vendor/",

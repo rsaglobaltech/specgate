@@ -585,6 +585,48 @@ function emitText(
   if (process.env.SPECGATE_BARE === "1") out(`  ${ui.muted("All commands: specgate --help")}\n\n`);
 }
 
+/** The document `status --json` prints, and the API's `status` answers (REQ-466). */
+function statusDocument(
+  projectDir: string,
+  summary: QueueSummary,
+  lock: Lockfile | null,
+  notes: Diagnostic[] = [],
+  unwritten: Diagnostic[] = []
+): Record<string, unknown> {
+  const { counts, pending, orphans } = summary;
+  return {
+    schemaVersion: 1,
+    projectDir: path.resolve(projectDir),
+    total: counts.total,
+    pending,
+    counts,
+    orphanFeatures: orphans,
+    packs: lock && lock.packs ? lock.packs : [],
+    requirements: summary.items.map((it) => ({
+      id: it.requirement,
+      title: titleOf(it) || null,
+      category: it.category,
+      needs: needsOf(it) || null,
+      ...(it.change ? { change: it.change } : {}),
+      ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
+      ...(it.answered ? { answered: it.answered } : {}),
+    })),
+    ...(summary.brief
+      ? {
+          brief: {
+            path: summary.brief.brief,
+            modules: summary.brief.modules.map((m) => ({
+              module: m.module,
+              state: m.state,
+            })),
+          },
+        }
+      : {}),
+    nextCommand: nextCommandPlain(summary),
+    status: [...notes, ...unwritten],
+  };
+}
+
 function emitJson(
   projectDir: string,
   summary: QueueSummary,
@@ -592,43 +634,23 @@ function emitJson(
   notes: Diagnostic[] = [],
   unwritten: Diagnostic[] = []
 ): void {
-  const { counts, pending, orphans } = summary;
   process.stdout.write(
-    JSON.stringify(
-      {
-        schemaVersion: 1,
-        projectDir: path.resolve(projectDir),
-        total: counts.total,
-        pending,
-        counts,
-        orphanFeatures: orphans,
-        packs: lock && lock.packs ? lock.packs : [],
-        requirements: summary.items.map((it) => ({
-          id: it.requirement,
-          title: titleOf(it) || null,
-          category: it.category,
-          needs: needsOf(it) || null,
-          ...(it.change ? { change: it.change } : {}),
-          ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
-          ...(it.answered ? { answered: it.answered } : {}),
-        })),
-        ...(summary.brief
-          ? {
-              brief: {
-                path: summary.brief.brief,
-                modules: summary.brief.modules.map((m) => ({
-                  module: m.module,
-                  state: m.state,
-                })),
-              },
-            }
-          : {}),
-        nextCommand: nextCommandPlain(summary),
-        status: [...notes, ...unwritten],
-      },
-      null,
-      2
-    ) + "\n"
+    JSON.stringify(statusDocument(projectDir, summary, lock, notes, unwritten), null, 2) + "\n"
+  );
+}
+
+/**
+ * What `specgate status --json` prints for the project, read without writing:
+ * a derived matrix is derived in memory, not regenerated on disk (REQ-467).
+ */
+export function statusAnswer(projectDir: string): Record<string, unknown> {
+  return withQueue(
+    projectDir,
+    (summary, dir) => {
+      const { lock, notes, unwritten } = readStatus(projectDir, summary, dir);
+      return statusDocument(projectDir, summary, lock, notes, unwritten);
+    },
+    { write: false }
   );
 }
 
@@ -669,46 +691,59 @@ export class StatusCommand extends BaseCommand {
     summary: QueueSummary,
     dir: string
   ): void {
-    try {
-      summary.brief = briefProgress(projectDir);
-    } catch {
-      summary.brief = null;
-    }
-    // A brief that lists no module yet — forja's template, the client's text
-    // pasted below it — is what to do next, not the adoption path (REQ-243).
-    if (!summary.brief) {
-      const text = fs.existsSync(path.join(projectDir, DEFAULT_BRIEF))
-        ? fs.readFileSync(path.join(projectDir, DEFAULT_BRIEF), "utf8")
-        : null;
-      if (text !== null && briefModules(text).length === 0) {
-        summary.briefToFill = DEFAULT_BRIEF;
-        summary.rootBrief = rootBrief(projectDir, text) || undefined;
-      }
-    }
-    let lock: Lockfile | null = null;
-    try {
-      lock = readLock(projectDir);
-    } catch {
-      lock = null;
-    }
-
-    // D4 and D5 on the project's own specification: notes, never failures.
-    let notes: Diagnostic[] = [];
-    try {
-      const sources = readDerivationSources(dir);
-      const specs = [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])];
-      notes = specNotes(specs, sources.features);
-      // A row with no use case still has a title in its spec section (#48).
-      const titles = requirementTitles(specs);
-      for (const it of summary.items) {
-        if (!titleOf(it) && titles.has(it.requirement)) it.title = titles.get(it.requirement);
-      }
-    } catch {
-      notes = [];
-    }
-
-    const unwritten = unwrittenNotes(projectDir);
+    const { lock, notes, unwritten } = readStatus(projectDir, summary, dir);
     if (opts.format === "json") emitJson(projectDir, summary, lock, notes, unwritten);
     else emitText(projectDir, summary, lock, notes, unwritten);
   }
+}
+
+/**
+ * Everything `status` reports besides the queue: the brief's progress, the
+ * packs, the specification's notes, the changes whose delta is unwritten.
+ */
+function readStatus(
+  projectDir: string,
+  summary: QueueSummary,
+  dir: string
+): { lock: Lockfile | null; notes: Diagnostic[]; unwritten: Diagnostic[] } {
+  try {
+    summary.brief = briefProgress(projectDir);
+  } catch {
+    summary.brief = null;
+  }
+  // A brief that lists no module yet — forja's template, the client's text
+  // pasted below it — is what to do next, not the adoption path (REQ-243).
+  if (!summary.brief) {
+    const text = fs.existsSync(path.join(projectDir, DEFAULT_BRIEF))
+      ? fs.readFileSync(path.join(projectDir, DEFAULT_BRIEF), "utf8")
+      : null;
+    if (text !== null && briefModules(text).length === 0) {
+      summary.briefToFill = DEFAULT_BRIEF;
+      summary.rootBrief = rootBrief(projectDir, text) || undefined;
+    }
+  }
+  let lock: Lockfile | null = null;
+  try {
+    lock = readLock(projectDir);
+  } catch {
+    lock = null;
+  }
+
+  // D4 and D5 on the project's own specification: notes, never failures.
+  let notes: Diagnostic[] = [];
+  try {
+    const sources = readDerivationSources(dir);
+    const specs = [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])];
+    notes = specNotes(specs, sources.features);
+    // A row with no use case still has a title in its spec section (#48).
+    const titles = requirementTitles(specs);
+    for (const it of summary.items) {
+      if (!titleOf(it) && titles.has(it.requirement)) it.title = titles.get(it.requirement);
+    }
+  } catch {
+    notes = [];
+  }
+
+  const unwritten = unwrittenNotes(projectDir);
+  return { lock, notes, unwritten };
 }

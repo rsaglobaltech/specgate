@@ -1,5 +1,6 @@
 import { resolveProjectDir } from "../../../lib/project-root";
 import { error } from "../../../lib/diagnostics";
+import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
 import { agentIo, wantsJson, type AgentIo, type AgentDocument } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import { appendEvent } from "../../../lib/harness-events";
@@ -56,6 +57,28 @@ function project(dir: string, io: AgentIo, shape: AgentDocument): string {
   }
 }
 
+/** The document `questions --json` prints, and the API's `questions` answers (REQ-466). */
+export function questionsDocument(w: ReturnType<typeof waiting>) {
+  return {
+    questions: {
+      open: w.questions.map((q) => ({
+        id: q.id,
+        change: q.change,
+        text: q.text,
+        blocks: q.blocks,
+        file: q.file,
+        line: q.line,
+      })),
+      waitingWithoutQuestion: w.requirements,
+    },
+  };
+}
+
+/** What `specgate questions --json` prints for the project. */
+export function questionsAnswer(dir: string) {
+  return { ...questionsDocument(waiting(dir)), status: [] as Diagnostic[] };
+}
+
 export class QuestionsCommand extends BaseCommand {
   public execute(): void {
     const argv = this.args;
@@ -73,43 +96,28 @@ export class QuestionsCommand extends BaseCommand {
     const p = parse(argv, io, shape, "questions");
     const dir = project(p.dir, io, shape);
     const w = waiting(dir);
-    io.emit(
-      {
-        questions: {
-          open: w.questions.map((q) => ({
-            id: q.id,
-            change: q.change,
-            text: q.text,
-            blocks: q.blocks,
-            file: q.file,
-            line: q.line,
-          })),
-          waitingWithoutQuestion: w.requirements,
-        },
-      },
-      () => {
-        process.stdout.write(ui.header("questions"));
-        if (w.questions.length === 0 && w.requirements.length === 0) {
-          process.stdout.write(ui.ok("Nothing waits for an answer.") + "\n");
-          return;
-        }
-        for (const q of w.questions) {
+    io.emit(questionsDocument(w), () => {
+      process.stdout.write(ui.header("questions"));
+      if (w.questions.length === 0 && w.requirements.length === 0) {
+        process.stdout.write(ui.ok("Nothing waits for an answer.") + "\n");
+        return;
+      }
+      for (const q of w.questions) {
+        process.stdout.write(
+          `  ${q.id}  ${ui.muted(q.change)}  ${q.text}\n` +
+            `      ${ui.muted(q.blocks.length ? `blocks ${q.blocks.join(", ")}` : "blocks nothing")}` +
+            `  ${ui.muted(`→ specgate answer ${q.id} "…"${q.change !== "project" ? ` --change ${q.change}` : ""}`)}\n`
+        );
+      }
+      if (w.requirements.length) {
+        process.stdout.write(`\n  ${ui.muted("Needs Clarification with no open question:")}\n`);
+        for (const r of w.requirements) {
           process.stdout.write(
-            `  ${q.id}  ${ui.muted(q.change)}  ${q.text}\n` +
-              `      ${ui.muted(q.blocks.length ? `blocks ${q.blocks.join(", ")}` : "blocks nothing")}` +
-              `  ${ui.muted(`→ specgate answer ${q.id} "…"${q.change !== "project" ? ` --change ${q.change}` : ""}`)}\n`
+            `  ${r.requirement}  ${r.title}  ${ui.muted(`→ specgate ask ${r.requirement} "…"`)}\n`
           );
         }
-        if (w.requirements.length) {
-          process.stdout.write(`\n  ${ui.muted("Needs Clarification with no open question:")}\n`);
-          for (const r of w.requirements) {
-            process.stdout.write(
-              `  ${r.requirement}  ${r.title}  ${ui.muted(`→ specgate ask ${r.requirement} "…"`)}\n`
-            );
-          }
-        }
       }
-    );
+    });
   }
 }
 

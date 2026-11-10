@@ -195,7 +195,9 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 
 Many commands take `--json` and then print one JSON document on standard
 output; [the agent contract](specs/agent-contract.md) lists the format and
-every diagnostic code.
+every diagnostic code. From Node, `status`, `questions` and `matrix` are also
+functions of `@rsaglobaltech/specgate/api` that answer the same document
+in-process: [Read a project from Node](automation.md#read-a-project-from-node).
 
 | Code | Meaning                                              |
 | ---- | ---------------------------------------------------- |
