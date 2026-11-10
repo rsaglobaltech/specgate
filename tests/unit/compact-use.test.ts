@@ -14,6 +14,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import { escapeRegExp } from "../../scripts/lib/escape";
 import type { SpawnSyncReturns } from "node:child_process";
 import type { CliResult } from "../helpers/cli";
 
@@ -569,11 +570,7 @@ test("REQ-115 SCN-115a: a script written for 0.20 keeps working", () => {
         cli(p.dir, ...args)
           .stdout.split("\n")
           .find((l: string) => l.trim()) || "";
-      assert.match(
-        help,
-        new RegExp(`Same as specgate ${verb.replace(/-/g, "\\-")}\\b`),
-        args.join(" ")
-      );
+      assert.match(help, new RegExp(`Same as specgate ${escapeRegExp(verb)}\\b`), args.join(" "));
     }
   } finally {
     p.done();

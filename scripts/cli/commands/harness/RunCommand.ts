@@ -23,6 +23,7 @@
  * gate twice: on its branch and merged (ADR-0036).
  */
 
+import { quoteArg } from "../../../lib/escape";
 import { harnessCommitMessage, ticketKeyOf } from "../../../lib/ticket-keys";
 import { runWithDeadline } from "../../../lib/run-with-deadline";
 import { derivedMatrixFor, refreshDerivedMatrix } from "../spec/MatrixCommand";
@@ -3631,7 +3632,7 @@ export class RunCommand extends BaseCommand {
       if (unkept && !jsonMode && !process.env.SPECGATE_HARNESS_WORKER) {
         process.stdout.write(
           `  ${ui.muted("Keep this agent for the next run and the studio's Build:")}\n` +
-            `    specgate config set agent "${args.agent.replace(/"/g, '\\"')}"\n\n`
+            `    specgate config set agent ${quoteArg(args.agent)}\n\n`
         );
       }
 

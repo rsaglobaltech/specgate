@@ -60,12 +60,17 @@ export const SCN_ID = /^SCN-[A-Za-z0-9.-]+$/;
 
 /** Stable key for matching a requirement across a delta and a spec. */
 export function slug(text: unknown): string {
-  return String(text || "")
+  const s = String(text || "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, "-");
+  // Trimmed by index: `/^-+|-+$/` is quadratic on a long run of dashes (code scanning).
+  let start = 0;
+  let end = s.length;
+  while (start < end && s[start] === "-") start++;
+  while (end > start && s[end - 1] === "-") end--;
+  return s.slice(start, end);
 }
 
 export function splitLabel(label: string): { id: string | null; name: string } {
