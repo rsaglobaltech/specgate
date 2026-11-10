@@ -28,18 +28,14 @@ specgate status
 $ specgate status
   ◆ specgate · status   invoicing
 
-  Requirements  █████░░░░░░░░░░░░░░░  1 of 4 done
+  Requirements  ██████████░░░░░░░░░░  1 of 2 done
 
   To do ──────────────────────────────────────────────────
     ○ REQ-001  Preserve existing behaviour  a test and code
-    ○ REQ-002  Invoices                     its scenario
-    ○ REQ-003  Customers                    its scenario
-
-  ·  No agent set for the harness and the studio's Build: specgate config set agent "claude -p < {prompt_file}"
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate plan
-     REQ-002's feature file is missing — plan shows which
+  ➜  specgate new "<a behaviour you rely on>"
+     only the adoption baseline is specified — add one requirement your code already meets
 ```
 <!-- specgate:out-existing-status-daily:end -->
 

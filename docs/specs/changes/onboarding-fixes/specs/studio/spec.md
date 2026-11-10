@@ -12,4 +12,4 @@ The system SHALL start `specgate studio` in a folder that is not a specgate proj
 - WHEN the developer runs `specgate studio` there, previews the adoption and confirms it
 - THEN the studio shows the files the preview listed, then the adopted project's Home with its one requirement, and the folder has spec.md and `test_cmd: npm test`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

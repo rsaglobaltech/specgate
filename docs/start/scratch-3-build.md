@@ -94,6 +94,7 @@ specgate harness prompt REQ-003
 $ specgate harness prompt REQ-003
   ◆ specgate · harness run   dry run · 1 requirement(s) would be processed
 
+  Agent         claude --output-format stream-json --verbose --permission-mode acceptEdits -p < {prompt_file} | specgate harness events --from claude
   Setup         none
 
   REQ-003 · NEEDS_EVERYTHING → branch harness/REQ-003 ────
@@ -111,8 +112,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 
 #### Scenario: SCN-004 — The second booking is refused
 
-- GIVEN the centre court is booked on Monday evening
-… 87 more lines
+… 88 more lines
 ```
 <!-- specgate:out-scratch-harness-prompt:end -->
 

@@ -12,7 +12,7 @@ The system SHALL, when `specgate adopt` adopts a project, save the test command 
 - WHEN the developer runs `specgate adopt --yes`
 - THEN `harness.config.yaml` has `test_cmd: npm test`, `specgate check` runs `npm test`, and the readiness list shows the tests as set and the architecture check as not set with `specgate config set arch_cmd "<command>"`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-471 — The areas adopt finds are not requirements
 
@@ -24,7 +24,7 @@ The system SHALL write the areas `adopt` reads off the code — each with the fo
 - WHEN the developer adopts it
 - THEN `docs/specs/adoption.md` lists the four areas with their folders, file counts and `test/auth/auth.test.js` under Auth, the matrix has only REQ-001, and `status` shows one requirement
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-472 — An earlier adoption's unspecified proposals are flagged
 
@@ -36,7 +36,7 @@ The system SHALL, in a project adopted before REQ-471, report each requirement s
 - WHEN the developer runs `specgate status --json`
 - THEN its findings include `proposal_unspecified` for REQ-002, whose fix names `specgate new` and removing the section
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-473 — One command sets up the agent
 
@@ -48,7 +48,7 @@ The system SHALL, when `specgate agents init --tool <tool>` installs an agent's 
 - WHEN the developer runs `specgate agents init --tool claude`
 - THEN the Claude Code commands are installed and `specgate config get agent` answers the Claude Code command that reads `-p < {prompt_file}`, as `config set agent` saves it
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-475 — One short page to start
 
@@ -60,4 +60,4 @@ The system SHALL publish one Start page with two paths — an existing project a
 - WHEN they open the Start page from the home page
 - THEN the existing-project path shows at most six steps, each with its command, from installing specgate to the first applied requirement, and getting-started and quickstart point to it
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

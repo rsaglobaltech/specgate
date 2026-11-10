@@ -9,6 +9,27 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Onboarding an existing project no longer needs an agent to finish it**
+  (REQ-470 … REQ-475, reported by testers):
+  - `adopt` saves the test command it detects as `test_cmd` and, when an
+    agent's CLI is on the PATH, the agent Build runs — asking first at a
+    terminal, applying with `--yes` — and ends with one readiness list: tests,
+    agent, architecture, CI gate, each set or with the command that sets it.
+    Before, `check` passed after adoption without running a single test.
+  - The areas `adopt` reads off the code go to `docs/specs/adoption.md` with
+    their folders and tests, not into spec.md and the matrix: no more rows like
+    `REQ-002 Auth · TBD` that nobody could tell the purpose of. A project
+    adopted earlier gets `proposal_unspecified` in `status` and `doctor` for
+    each one, with how to fix it.
+  - `agents init --tool claude` also sets the agent Build runs, when none is.
+  - The studio's next step on a folder with code is "Adopt this folder", not
+    "Create the project"; once adopted, "Specify a behaviour you rely on", as
+    `status` says.
+  - One short Start page with two paths of six steps; getting-started and
+    quickstart point to it.
+
 ## [0.32.1] — 2026-11-10
 
 The container image again: 0.32.0's failed to build.

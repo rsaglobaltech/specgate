@@ -81,7 +81,7 @@ $ specgate init
 
   ✔  Adoption completed
 
-… 8 more lines
+… 16 more lines
 ```
 <!-- specgate:out-scratch-init:end -->
 

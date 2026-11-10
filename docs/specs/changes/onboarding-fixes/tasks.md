@@ -8,9 +8,9 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-470 — adopt saves what it detects, asks when interactive, ends with a readiness list
-- [ ] 2.2 REQ-471, REQ-472 — areas to adoption.md, not the matrix; old proposals flagged
-- [ ] 2.3 REQ-473 — agents init sets Build's agent
-- [ ] 2.4 REQ-474 — the studio opens any folder, with a start screen that adopts it
-- [ ] 2.5 REQ-475 — one short Start page
-- [ ] 2.6 the CHANGELOG
+- [x] 2.1 REQ-470 — adopt saves what it detects, asks when interactive, ends with a readiness list
+- [x] 2.2 REQ-471, REQ-472 — areas to adoption.md, not the matrix; old proposals flagged
+- [x] 2.3 REQ-473 — agents init sets Build's agent
+- [x] 2.4 REQ-474 — the studio opens any folder, with a start screen that adopts it
+- [x] 2.5 REQ-475 — one short Start page
+- [x] 2.6 the CHANGELOG

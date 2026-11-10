@@ -17,7 +17,7 @@ adopted and `specgate check` passes.
 | **Your agent** | Can write both from the code and the tests — you review |
 | **Specgate** | Opens the change and reserves its requirement ids |
 
-## 1. See what adoption proposed
+## 1. See where you start
 
 ```bash
 specgate status
@@ -28,25 +28,21 @@ specgate status
 $ specgate status
   ◆ specgate · status   invoicing
 
-  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 3 done
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 1 done
 
   To do ──────────────────────────────────────────────────
     ○ REQ-001  Preserve existing behaviour  a test and code
-    ○ REQ-002  Invoices                     its scenario
-    ○ REQ-003  Customers                    its scenario
-
-  ·  No agent set for the harness and the studio's Build: specgate config set agent "claude -p < {prompt_file}"
 
   Next ───────────────────────────────────────────────────
-  ➜  specgate plan
-     REQ-002's feature file is missing — plan shows which
+  ➜  specgate new "<a behaviour you rely on>"
+     only the adoption baseline is specified — add one requirement your code already meets
 ```
 <!-- specgate:out-existing-status:end -->
 
-`REQ-002 Invoices` and `REQ-003 Customers` are the **capabilities** — areas of
-the product — that `onboard` found in your layout. They are placeholders for
-whole modules, still `Draft`, and a `Draft` requirement owes nothing yet, so
-they do not block the gate. Leave them for now and start smaller.
+Only the adoption baseline is a requirement. The areas adoption found in your
+layout — Invoices, Customers — are listed in `docs/specs/adoption.md` with their
+folders and tests: a map to pick from, not requirements. Start smaller than an
+area.
 
 ## 2. Pick one behaviour you would hate to break
 
@@ -68,7 +64,7 @@ specgate propose invoice-rounding
 $ specgate propose invoice-rounding
   ◆ specgate · propose   invoice-rounding
 
-  ✔  Change invoice-rounding created · lite · REQ ids REQ-004…REQ-006 reserved
+  ✔  Change invoice-rounding created · lite · REQ ids REQ-002…REQ-004 reserved
 
     + docs/specs/changes/invoice-rounding/change.yaml
     + docs/specs/changes/invoice-rounding/proposal.md
@@ -133,19 +129,15 @@ specgate status
 $ specgate status
   ◆ specgate · status   invoicing
 
-  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 4 done
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 2 done
 
   To do ──────────────────────────────────────────────────
     ○ REQ-001  Preserve existing behaviour              a test and code
-    ○ REQ-002  Invoices                                 its scenario
-    ○ REQ-003  Customers                                its scenario
     ○ REQ-004  An invoice total is rounded to the cent  a test and code
 
-  ·  No agent set for the harness and the studio's Build: specgate config set agent "claude -p < {prompt_file}"
-
   Next ───────────────────────────────────────────────────
-  ➜  specgate plan
-     REQ-002's feature file is missing — plan shows which
+  ➜  specgate apply REQ-004
+     once a test mentions REQ-004 — that mention is the link; apply checks first
 ```
 <!-- specgate:out-existing-status-change:end -->
 
