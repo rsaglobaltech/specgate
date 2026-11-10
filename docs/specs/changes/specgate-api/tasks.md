@@ -4,7 +4,7 @@
 
 - [x] 1.1 Write the delta spec for api (REQ-466 … REQ-469)
 - [x] 1.2 Run `specgate change validate`
-- [ ] 1.3 The proposal reviewed and approved by the person who asked for it
+- [x] 1.3 The proposal reviewed and approved by the person who asked for it
 
 ## 2. Implementation
 

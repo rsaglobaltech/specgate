@@ -12,7 +12,7 @@ The system SHALL export from `@rsaglobaltech/specgate/api` the functions `status
 - WHEN a program calls `questions(dir)` and runs `specgate questions --json` on the same project
 - THEN both answers are equal, and Q2 in them names `draft-orders` and blocks `REQ-003`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Approved actor=Developer kind=functional -->
 
 ### Requirement: REQ-467 — The API only reads
 
@@ -24,7 +24,7 @@ The system SHALL answer `status`, `questions` and `matrix` from the API without 
 - WHEN a program calls `matrix(dir)`
 - THEN the answer has the rows as they would be derived, and `traceability.md` is unchanged byte for byte
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Approved actor=Developer kind=functional -->
 
 ### Requirement: REQ-468 — The API is typed, versioned, and breaks no import
 
@@ -36,7 +36,7 @@ The system SHALL publish the API's types with it and export `API_VERSION`, whose
 - WHEN it imports `questions` and `API_VERSION` from `@rsaglobaltech/specgate/api`, and resolves `@rsaglobaltech/specgate/package.json`
 - THEN it compiles with no error, `API_VERSION` is `1.0.0`, and `package.json` resolves
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Approved actor=Developer kind=functional -->
 
 ### Requirement: REQ-469 — A folder that is not a project is refused
 
@@ -48,4 +48,4 @@ The system SHALL reject a call of the API on a folder that has no specgate proje
 - WHEN a program calls `status(dir)` on it
 - THEN the call rejects with code `not_a_project`, the folder in its message, and the fix `specgate init`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Approved actor=Developer kind=functional -->
