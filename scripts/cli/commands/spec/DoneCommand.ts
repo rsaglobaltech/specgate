@@ -713,10 +713,11 @@ function writeStatus(
 }
 
 /**
- * What to run after a delivery: the next requirement, or — when that one was
- * its open change's last — archiving the change.
+ * What to run after a delivery: the next requirement — of the same open change
+ * when it has one to take — or, when that one was its open change's last,
+ * archiving the change.
  */
-function nextAfter(
+export function nextAfter(
   items: QueueItem[],
   id: string,
   owner: InFlightRequirement | undefined,
@@ -731,7 +732,14 @@ function nextAfter(
       );
     }
   }
-  const following = nextRequirement(items, [id]);
+  // The change being built first, then the project's queue (REQ-465).
+  const following =
+    (owner &&
+      nextRequirement(
+        items.filter((it) => it.change === owner.change),
+        [id]
+      )) ||
+    nextRequirement(items, [id]);
   return following
     ? ui.next(`specgate apply ${following.requirement}`, "the next requirement")
     : ui.next("specgate status", "what is left, and the next requirement");
