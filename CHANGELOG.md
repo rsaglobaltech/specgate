@@ -9,6 +9,24 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.33.1] — 2026-11-10
+
+Each open question carries its options; a threshold with no value is flagged.
+
+### Added
+
+- **`options` in every open question** of `specgate questions --json` and the
+  API's `questions(dir)` (REQ-479): the options its author listed in "Options
+  seen", so a tool — specgate-studio's editor and Questions — shows them
+  without reading `questions.md` itself.
+
+### Fixed
+
+- **A threshold named without its value is flagged** (REQ-480): the brief check
+  reported "fast" or "scalable" with no number, but not "free above some
+  amount". `B6_unmeasured` now also flags "some amount", "a certain number",
+  "cierto importe", "einen bestimmten Betrag".
+
 ## [0.33.0] — 2026-11-10
 
 Onboarding an existing project without an agent finishing it: `adopt` saves

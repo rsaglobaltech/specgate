@@ -66,6 +66,8 @@ export function questionsDocument(w: ReturnType<typeof waiting>) {
         change: q.change,
         text: q.text,
         blocks: q.blocks,
+        // As "Options seen" lists them (REQ-479): a tool never reads questions.md.
+        options: q.options,
         file: q.file,
         line: q.line,
       })),
