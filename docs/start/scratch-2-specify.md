@@ -1,5 +1,7 @@
 # From scratch · 2 — From the brief to a checked spec
 
+> **The short version** of a new project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** one module of the client's brief drafted as requirements
 and Gherkin scenarios, checked so that nothing in them is invented, and

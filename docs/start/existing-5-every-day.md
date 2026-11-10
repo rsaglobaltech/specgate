@@ -1,5 +1,7 @@
 # Existing project · 5 — Every day
 
+> **The short version** of an existing project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** a daily loop in which the specification grows with the
 work you were doing anyway — one change per bug fix, story or module —

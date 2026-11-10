@@ -1,5 +1,7 @@
 # From scratch · 5 — Every day
 
+> **The short version** of a new project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** the gate on every pull request, and a daily loop short
 enough to remember — four verbs: `propose`, `apply`, `status` and `archive`.

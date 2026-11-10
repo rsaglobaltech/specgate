@@ -1,5 +1,7 @@
 # From scratch · 3 — Build the first requirement
 
+> **The short version** of a new project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** REQ-002 — *a member books a court for one hour* — implemented, with a
 test that names it. Two ways: by hand (or with your agent in the chat), or
