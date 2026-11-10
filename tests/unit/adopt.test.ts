@@ -142,7 +142,7 @@ test("adopt on a Node project reads package.json facts", () => {
   });
 });
 
-test("#44: after adoption, check names the test command it found and how to turn it on", () => {
+test("#44, REQ-470: after adoption, check runs the test command adoption found", () => {
   withTmp((tmp) => {
     fs.writeFileSync(
       path.join(tmp, "package.json"),
@@ -153,16 +153,15 @@ test("#44: after adoption, check names the test command it found and how to turn
     assert.equal(a.status, 0, a.stdout + a.stderr);
     assert.match(a.stdout, /Test command: npm test/);
 
-    // Adoption does not switch the tests on: the first gate stays the
-    // specification, as documented. But it no longer contradicts adoption.
+    // Adoption saves the test command it found (REQ-470): the first gate already
+    // runs the tests, not only the specification.
+    assert.match(
+      fs.readFileSync(path.join(tmp, "harness.config.yaml"), "utf8"),
+      /^test_cmd: "npm test"$/m
+    );
     const c = cli(["check"], { cwd: tmp });
     assert.equal(c.status, 0, c.stdout + c.stderr);
-    assert.match(c.stdout, /looks like `npm test`/);
-    assert.match(c.stdout, /specgate config set test_cmd/);
-
-    assert.equal(cli(["harness", "init", "--project-dir", tmp]).status, 0);
-    const after = cli(["check"], { cwd: tmp });
-    assert.match(after.stdout, /the specification and `npm test`/, after.stdout + after.stderr);
+    assert.match(c.stdout, /the specification and `npm test`/, c.stdout + c.stderr);
   });
 });
 
@@ -275,10 +274,11 @@ test("the warning goes away as soon as one real scenario exists (H15)", () => {
   });
 });
 
-test("adopt seeds one proposed requirement per capability the layout implies", () => {
+test("REQ-471: adopt keeps the areas the layout implies — in docs/specs/adoption.md, not as requirements", () => {
   // The seam that used to lose the whole point: onboard read eight capabilities
-  // and adopt wrote a placeholder. Adoption died right there — measured on
-  // lixi-platform, adopted months ago and still on REQ-001 alone.
+  // and adopt wrote a placeholder (lixi-platform, adopted and still on REQ-001).
+  // Seeding them as requirements filled the matrix with TBD rows nobody could
+  // read (onboarding-fixes): they are kept as areas with their evidence instead.
   withTmp((tmp) => {
     const dir = path.join(tmp, "shop");
     for (const area of ["booking", "billing", "identity"]) {
@@ -290,18 +290,17 @@ test("adopt seeds one proposed requirement per capability the layout implies", (
 
     const r = cli(["adopt", "--project-dir", dir, "--keep-matrix"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /Requirements seeded: 3 proposal/);
+    assert.match(r.stdout, /Areas found in the code: 3/);
+
+    const areas = fs.readFileSync(path.join(dir, "docs", "specs", "adoption.md"), "utf8");
+    for (const area of ["Booking", "Billing", "Identity"])
+      assert.match(areas, new RegExp(`## ${area}`));
+    assert.match(areas, /`domain\/booking` · 2 source files/);
 
     const spec = fs.readFileSync(path.join(dir, "spec.md"), "utf8");
-    for (const area of ["Booking", "Billing", "Identity"]) {
-      assert.match(spec, new RegExp(`## REQ-\\d+ — ${area}`));
-    }
-    // Every seeded requirement says it is a guess and names its evidence.
-    assert.match(spec, /\*\*Proposed, not specified\.\*\* Read off `domain\/booking`/);
-
-    // A seeded requirement without a row would fail --strict-tdd (TDD-3).
+    assert.deepEqual(spec.match(/^## REQ-\d+/gm), ["## REQ-001"]);
     const matrix = fs.readFileSync(path.join(dir, "docs", "specs", "traceability.md"), "utf8");
-    assert.match(matrix, /\| REQ-002 \|.*`domain\/\w+` \| TBD \| Draft \|/);
+    assert.doesNotMatch(matrix, /\| TBD \|/);
 
     assert.equal(cli(["validate", dir]).status, 0);
     const strict = cli(["validate", dir, "--strict-tdd"]);

@@ -31,10 +31,27 @@ export function Home({ lang, route, home, branch }: HomeProps) {
       <section class="next" aria-label={t(lang, "nextStep")}>
         <div class="next-text">
           <span class="eyebrow">[ {t(lang, "nextStep").toUpperCase()} ]</span>
-          <span class="next-title">{t(lang, next ? (`next_${next}` as Key) : "next_none")}</span>
+          <span class="next-title">
+            {t(
+              lang,
+              route.hint
+                ? (`next_${route.hint}` as Key)
+                : next
+                  ? (`next_${next}` as Key)
+                  : "next_none"
+            )}
+          </span>
+          {route.hint === "specify" && route.areas ? (
+            <span class="next-sub">
+              {t(lang, "areasFound").replace("{N}", String(route.areas))}
+            </span>
+          ) : null}
         </div>
         {next ? (
-          <a class="btn-primary" href={hrefOf(STEP_SECTION[next])}>
+          <a
+            class="btn-primary"
+            href={hrefOf(route.hint === "specify" ? "changes" : STEP_SECTION[next])}
+          >
             {t(lang, "go")} →
           </a>
         ) : null}

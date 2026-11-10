@@ -258,6 +258,20 @@ export interface RouteView {
   empty: boolean;
   steps: RouteStep[];
   next: StepKey | null;
+  /**
+   * What the next step means here (REQ-474): a folder with code is adopted, an
+   * empty one created; an adopted project with no brief specifies a behaviour,
+   * as `status` says. Null: the step's own meaning.
+   */
+  hint: "adopt" | "create" | "specify" | null;
+  /** The areas adoption found, in docs/specs/adoption.md. */
+  areas: number;
+}
+
+/** How many areas docs/specs/adoption.md lists (REQ-471). */
+function adoptionAreaCount(projectDir: string): number {
+  const text = read(path.join(projectDir, "docs", "specs", "adoption.md"));
+  return text ? (text.match(/^## /gm) ?? []).length : 0;
 }
 
 export function isProject(projectDir: string): boolean {
@@ -297,6 +311,8 @@ export function route(projectDir: string): RouteView {
         counts: {},
       })),
       next: "project",
+      hint: isEmptyFolder(projectDir) ? "create" : "adopt",
+      areas: 0,
     };
   }
   const states: Record<StepKey, { state: StepState; counts: Record<string, number | string> }> =
@@ -350,6 +366,9 @@ export function route(projectDir: string): RouteView {
       counts: states[key].counts,
     })),
     next,
+    // An adopted project with no brief: specify one behaviour at a time (REQ-474).
+    hint: next === "brief" && !briefText && reqs.size === 0 ? "specify" : null,
+    areas: adoptionAreaCount(projectDir),
   };
 }
 

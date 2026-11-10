@@ -57,11 +57,16 @@ export const NAV: readonly NavSection[] = [
       "Install it, learn the ideas behind it, and follow one of two journeys of five short steps — a new project, or code you already have.",
     entries: [
       {
+        slug: "start",
+        group: "Begin",
+        label: "Start here",
+        blurb: "Two paths, six commands each: an existing project, or a new one.",
+      },
+      {
         slug: "getting-started",
         group: "Begin",
         label: "Getting started",
-        blurb:
-          "Install it, choose where you start and where the work comes from, then the four verbs.",
+        blurb: "Installing it, and where to read more.",
       },
       {
         slug: "concepts",
