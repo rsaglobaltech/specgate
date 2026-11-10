@@ -5,9 +5,10 @@
 Testers onboarded an existing local project and had to ask Claude to set
 everything up. Reproduced on specgate 0.32.1:
 
-- `specgate studio` refuses to start in a folder that is not a project yet
-  ("docs/specs/traceability.md not found") — and Adopt lives in the studio's
-  Settings, so the studio can never be used to onboard.
+- The studio's Home, on a folder with code that is not a project yet, says
+  "Create the project" — the wrong door for existing code; Adopt sits in
+  Settings. Once adopted, Home says "Write the brief" while `status` says to
+  specify one behaviour: two next steps.
 - `adopt` detects the test command (`npm test`, `mvn test`, `pytest`…) and only
   writes it into spec.md's text: `test_cmd` stays unset, so `specgate check` is
   green while running no test. The agent is set in two unrelated places
@@ -29,14 +30,14 @@ In scope:
   into spec.md or the matrix; earlier adoptions' unspecified proposals are
   flagged with how to fix them.
 - `agents init --tool <tool>` also sets the agent Build runs.
-- The studio opens any folder: one that is not a project gets a start screen
-  that adopts it, with a preview first.
+- The studio's next step says "Adopt this folder" on code (Adopt previews
+  first), then "Specify a behaviour you rely on", as `status` says.
 - One short Start page, two paths; the old doors point to it.
 
 Out of scope:
 
-- The studio creating a new project from an empty folder (it shows the
-  command); the wizard stays in the terminal.
+- A new start screen in the studio: Home and Settings already carry the flow;
+  the fix is what they say.
 
 ## Approach
 
