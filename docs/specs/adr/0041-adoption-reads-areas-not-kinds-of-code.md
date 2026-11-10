@@ -37,8 +37,9 @@ on real projects:
    (`components`, `hooks`, `helpers`, `types`, `styles`, `store`, `stores`,
    `lib`, `libs`, `constants`, `contexts`, `providers`, `layouts`, `services`,
    `models`, `controllers`, `middlewares`, `interfaces`, `dto`, …) — the split
-   is by kind and says nothing about the product. In a mixed split, kind-named
-   children are left out. A ratio over a list keeps a new framework's extra
+   is by kind and says nothing about the product. In a mixed split, only the
+   generic kinds (`components`, `hooks`, `utils`, `helpers`, …) are left out: a
+   layer name alone — serilog's `Core`, a monorepo's `api` — can be a real area. A ratio over a list keeps a new framework's extra
    name from turning the rule wrong; silence beats a confident wrong answer.
 3. **The baseline names no path that is not one.** REQ-001 carries no test and
    no artifact until a test names it.
