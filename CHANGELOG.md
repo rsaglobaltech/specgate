@@ -9,6 +9,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.33.0] — 2026-11-10
+
+Onboarding an existing project without an agent finishing it: `adopt` saves
+the test command and agent it detects and says what is ready; the areas it
+finds stay out of the matrix, and folders named by a kind of code are not
+areas (#412); one short Start page; every open code-scanning alert closed.
+
 ### Security
 
 - **Every open code-scanning alert closed** (13, CodeQL): a requirement id
@@ -34,9 +41,6 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `propose describe-<folder>`. The baseline REQ-001 no longer carries
   `npm test` and "existing codebase" as if they were paths, and `harness run`
   leaves it out unless named with `--req`.
-
-### Fixed
-
 - **Onboarding an existing project no longer needs an agent to finish it**
   (REQ-470 … REQ-475, reported by testers):
   - `adopt` saves the test command it detects as `test_cmd` and, when an
