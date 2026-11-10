@@ -7,5 +7,5 @@ Implemented.
 
 | Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| REQ-001 | SCN-001 | `features/adoption/baseline.feature` | UC-001 Preserve existing behaviour | - | - | - | existing codebase | `{{TEST_CMD}}` | Draft |
+| REQ-001 | SCN-001 | `features/adoption/baseline.feature` | UC-001 Preserve existing behaviour | - | - | - | - | - | Draft |
 {{PROPOSED_ROWS}}

@@ -355,7 +355,13 @@ export class StudioCommand extends BaseCommand {
         try {
           json(200, reads[url]());
         } catch (err) {
-          json(500, { ok: false, message: errorMessage(err) });
+          // The details stay in this terminal; the page gets no exception text.
+          process.stderr.write(`studio: ${url} failed: ${errorMessage(err)}\n`);
+          json(500, {
+            ok: false,
+            message:
+              "The studio could not read this; the terminal running specgate studio says why.",
+          });
         }
         return;
       }
