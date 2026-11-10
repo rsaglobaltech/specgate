@@ -1,5 +1,7 @@
 # Existing project · 3 — Close the first requirement
 
+> **The short version** of an existing project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** REQ-004 marked `Implemented` — proved by a test you already had,
 now naming it — and its change archived, so the requirement is part of the

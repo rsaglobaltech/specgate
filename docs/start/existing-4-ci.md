@@ -1,5 +1,7 @@
 # Existing project · 4 — Put the gate in CI
 
+> **The short version** of an existing project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** every pull request runs the gate, so a requirement marked done can
 never again sit on red code — and adopting it does not ask you to fix the

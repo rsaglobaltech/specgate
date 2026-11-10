@@ -1,5 +1,7 @@
 # Existing project · 1 — Adopt, touching no code
 
+> **The short version** of an existing project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** Specgate set up on a codebase that already works, without changing
 a line of it, and a gate that passes with your existing tests.

@@ -112,7 +112,7 @@ test("every recorded step runs a command this CLI has", () => {
  */
 function invocations(): Array<{ page: string; argv: string[] }> {
   const out: Array<{ page: string; argv: string[] }> = [];
-  for (const page of [...PAGES, "getting-started"]) {
+  for (const page of [...PAGES, "start", "getting-started"]) {
     const text = read(page);
     const snippets = [
       ...[...text.matchAll(/```bash\n([\s\S]*?)```/g)].flatMap((m) => m[1].split("\n")),
@@ -178,7 +178,8 @@ test("the sidebar's Start section walks both journeys in order", () => {
   const start = NAV.find((s: any) => s.title === "Start");
   assert.ok(start, "no Start section");
   const slugs = start.entries.map((e: any) => e.slug);
-  assert.equal(slugs[0], "getting-started");
+  // The short Start page leads the section (onboarding-fixes REQ-475).
+  assert.equal(slugs[0], "start");
   assert.deepEqual(
     slugs.filter((s: string) => /^start\/(scratch|existing)-/.test(s)),
     JOURNEYS.flatMap((j: any) => PAGES.filter((p) => p.startsWith(`start/${j.id}-`))),

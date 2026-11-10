@@ -1,5 +1,7 @@
 # Existing project · 2 — Write down what you rely on
 
+> **The short version** of an existing project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** one behaviour the business already depends on, written as a
 requirement with a concrete example, in an open change — the first thing the

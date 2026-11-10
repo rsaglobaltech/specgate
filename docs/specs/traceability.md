@@ -261,7 +261,7 @@
 | REQ-472 | SCN-472a | `features/project-setup/REQ-472.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
 | REQ-473 | SCN-473a | `features/project-setup/REQ-473.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
 | REQ-474 | SCN-474a | `features/studio/REQ-474.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
-| REQ-475 | SCN-475a | `features/project-setup/REQ-475.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
+| REQ-475 | SCN-475a | `features/project-setup/REQ-475.feature` | - | - | - | - | - | tests/unit/onboarding-docs.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
