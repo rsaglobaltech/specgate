@@ -4,4 +4,4 @@ Feature: One command sets up the agent
   Scenario: Claude Code set up once
     Given an adopted project with no `agent` set
     When the developer runs `specgate agents init --tool claude`
-    Then the Claude Code commands are installed and `specgate config get agent` answers `claude -p < {prompt_file}`
+    Then the Claude Code commands are installed and `specgate config get agent` answers the Claude Code command that reads `-p < {prompt_file}`, as `config set agent` saves it

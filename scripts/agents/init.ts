@@ -10,6 +10,11 @@
  * moves; a file that calls the engine never is.
  */
 
+import { agentCommand } from "../cli/commands/project/readiness";
+import {
+  readHarnessConfig,
+  writeHarnessCommand,
+} from "../../packages/core/src/infrastructure/HarnessConfigFile";
 import { ensureContract } from "./contract-file";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -621,6 +626,18 @@ export function main(argv: string[]): void {
     dryRun: opts.dryRun,
   });
 
+  // One command sets up the agent (REQ-473): its commands, and the agent Build
+  // runs when none is set yet — never over one a person chose.
+  let agentSet: string | null = null;
+  if (!opts.dryRun && !readHarnessConfig(projectDir)?.agent) {
+    const tool = opts.tools.find((t) => agentCommand(t));
+    const command = tool ? agentCommand(tool) : null;
+    if (command) {
+      writeHarnessCommand(projectDir, "agent", command);
+      agentSet = command;
+    }
+  }
+
   io.emit(
     {
       agents: {
@@ -629,6 +646,7 @@ export function main(argv: string[]): void {
         dryRun: opts.dryRun,
         written,
         skipped,
+        agent: agentSet,
       },
       status: diagnostics,
     },
@@ -643,6 +661,11 @@ export function main(argv: string[]): void {
       }
       if (skipped.length > 0) {
         process.stdout.write(`\n  ${ui.muted("Pass --force to overwrite the skipped files.")}\n`);
+      }
+      if (agentSet) {
+        process.stdout.write(
+          `\n  ${ui.ok(`Build runs it: agent set in harness.config.yaml — ${ui.muted(agentSet)}`)}\n`
+        );
       }
       process.stdout.write(
         "\n" +

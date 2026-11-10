@@ -46,7 +46,7 @@ The system SHALL, when `specgate agents init --tool <tool>` installs an agent's 
 
 - GIVEN an adopted project with no `agent` set
 - WHEN the developer runs `specgate agents init --tool claude`
-- THEN the Claude Code commands are installed and `specgate config get agent` answers `claude -p < {prompt_file}`
+- THEN the Claude Code commands are installed and `specgate config get agent` answers the Claude Code command that reads `-p < {prompt_file}`, as `config set agent` saves it
 
 <!-- specgate:trace status=Approved actor=Developer kind=functional -->
 
