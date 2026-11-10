@@ -7,6 +7,7 @@
  * `scripts/alm/` (ADR-0021 §1).
  */
 
+import { markdownCell } from "../../../lib/escape";
 import { spawnSync } from "node:child_process";
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
@@ -339,7 +340,7 @@ function proposalFor(t: Ticket, changeId: string, capability: string): string {
 
 function questionsFor(t: Ticket): string | undefined {
   if (t.questions.length === 0) return undefined;
-  const cell = (s: string) => s.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+  const cell = markdownCell;
   return [
     "# Questions",
     "",

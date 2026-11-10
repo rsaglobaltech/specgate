@@ -256,6 +256,15 @@
 | REQ-467 | SCN-467a | `features/api/REQ-467.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Approved |
 | REQ-468 | SCN-468a | `features/api/REQ-468.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Approved |
 | REQ-469 | SCN-469a | `features/api/REQ-469.feature` | - | - | - | - | - | tests/unit/specgate-api.test.ts | Approved |
+| REQ-470 | SCN-470a | `features/project-setup/REQ-470.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
+| REQ-471 | SCN-471a | `features/project-setup/REQ-471.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
+| REQ-472 | SCN-472a | `features/project-setup/REQ-472.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
+| REQ-473 | SCN-473a | `features/project-setup/REQ-473.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
+| REQ-474 | SCN-474a | `features/studio/REQ-474.feature` | - | - | - | - | - | tests/unit/onboarding-fixes.test.ts | Approved |
+| REQ-475 | SCN-475a | `features/project-setup/REQ-475.feature` | - | - | - | - | - | tests/unit/onboarding-docs.test.ts | Approved |
+| REQ-476 | SCN-476a, SCN-476b | `features/project-setup/REQ-476.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
+| REQ-477 | SCN-477a | `features/project-setup/REQ-477.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
+| REQ-478 | SCN-478a | `features/project-setup/REQ-478.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -1,3 +1,4 @@
+import { escapeRegExp } from "./escape";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {
@@ -224,7 +225,7 @@ export function definedIn(
   projectDir: string,
   req: string
 ): { change: string; file: string } | null {
-  const heading = new RegExp(`^###\\s+Requirement:\\s+${req}\\b`, "m");
+  const heading = new RegExp(`^###\\s+Requirement:\\s+${escapeRegExp(req)}\\b`, "m");
   for (const change of listChangeIds(projectDir)) {
     const specs = path.join(changeDir(projectDir, change), "specs");
     for (const cap of safeDirs(specs)) {
@@ -238,7 +239,7 @@ export function definedIn(
     if (heading.test(read(file) || "")) return { change: PROJECT, file };
   }
   const spec = path.join(projectDir, "spec.md");
-  if (new RegExp(`^#{2,3}\\s+${req}\\b`, "m").test(read(spec) || ""))
+  if (new RegExp(`^#{2,3}\\s+${escapeRegExp(req)}\\b`, "m").test(read(spec) || ""))
     return { change: PROJECT, file: spec };
   return null;
 }
@@ -253,7 +254,10 @@ function setStatusInTables(projectDir: string, req: string, status: string): boo
     const file = path.join(projectDir, rel);
     const text = read(file);
     if (!text) continue;
-    const row = new RegExp(`^(\\|\\s*${req}\\s*\\|.*\\|)\\s*[^|]+?\\s*\\|\\s*$`, "gm");
+    const row = new RegExp(
+      `^(\\|\\s*${escapeRegExp(req)}\\s*\\|.*\\|)\\s*[^|]+?\\s*\\|\\s*$`,
+      "gm"
+    );
     const next = text.replace(row, (_m, head: string) => `${head} ${status} |`);
     if (next !== text) {
       write(file, next);
@@ -295,7 +299,7 @@ export function setStatusIn(
     return setStatusInTables(projectDir, req, status);
   }
   const lines = (read(file) || "").split("\n");
-  const head = new RegExp(`^(?:###\\s+Requirement:|##)\\s+${req}\\b`);
+  const head = new RegExp(`^(?:###\\s+Requirement:|##)\\s+${escapeRegExp(req)}\\b`);
   const start = lines.findIndex((l) => head.test(l));
   if (start === -1) return false;
   for (let i = start + 1; i < lines.length && !/^#{2,3}\s(?!#)/.test(lines[i]); i += 1) {

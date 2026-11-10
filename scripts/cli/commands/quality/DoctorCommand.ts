@@ -1,3 +1,4 @@
+import { unspecifiedProposals } from "../../../lib/proposals";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -337,6 +338,19 @@ export class DoctorCommand extends BaseCommand {
     }
   }
 
+  /** An earlier adoption's proposals nobody specified (REQ-472). */
+  private checkProposals(dir: string) {
+    const left = unspecifiedProposals(dir);
+    if (left.length === 0) return;
+    for (const p of left) {
+      this.warn(
+        "proposals",
+        `${p.id} "${p.title}" is proposed, not specified — a folder an earlier adoption read off the code`,
+        `rewrite it as one behaviour you rely on, or specgate new "<behaviour>" and remove ${p.id}'s section from spec.md`
+      );
+    }
+  }
+
   private checkPlaceholders(dir: string) {
     const offenders = findUnresolvedPlaceholders(dir);
     if (offenders.length === 0) {
@@ -666,6 +680,7 @@ export class DoctorCommand extends BaseCommand {
       this.checkCapabilityDrift(dir);
       this.checkChanges(dir);
       this.checkPlaceholders(dir);
+      this.checkProposals(dir);
       this.checkSpecops(dir);
       this.checkMergeDrivers(dir);
       this.checkArchitectureProfile(dir);

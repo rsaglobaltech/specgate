@@ -23,6 +23,7 @@
  * gate twice: on its branch and merged (ADR-0036).
  */
 
+import { quoteArg } from "../../../lib/escape";
 import { harnessCommitMessage, ticketKeyOf } from "../../../lib/ticket-keys";
 import { runWithDeadline } from "../../../lib/run-with-deadline";
 import { derivedMatrixFor, refreshDerivedMatrix } from "../spec/MatrixCommand";
@@ -3325,6 +3326,29 @@ export async function runLevels(
   return results;
 }
 
+/**
+ * The requirements a run takes: one row each (the plan has one per scenario,
+ * and two rows cost two agent sessions), none already done, and never the
+ * adoption baseline unless it is named — an agent cannot build "existing
+ * behaviour is preserved"; a test that names REQ-001 closes it (REQ-478).
+ */
+export function harnessQueue<
+  T extends { requirement: string; category?: string; featureFile?: string; feature_file?: string },
+>(rows: T[], reqs: readonly string[]): T[] {
+  const wanted = new Set(reqs);
+  const firstRow = new Set<string>();
+  return rows.filter((r) => {
+    if (r.category === "DONE" || firstRow.has(r.requirement)) return false;
+    if (wanted.size > 0 && !wanted.has(r.requirement)) return false;
+    const baseline = String(r.featureFile ?? r.feature_file ?? "").includes(
+      "features/adoption/baseline"
+    );
+    if (baseline && !wanted.has(r.requirement)) return false;
+    firstRow.add(r.requirement);
+    return true;
+  });
+}
+
 export class RunCommand extends BaseCommand {
   public async execute() {
     try {
@@ -3393,19 +3417,10 @@ export class RunCommand extends BaseCommand {
       // A requirement with two scenarios was processed twice — two agent
       // sessions, paid twice, both on branch harness/REQ-NNN. The prompt carries
       // every scenario of the requirement, so one run per requirement is enough.
-      const firstRow = new Set<string>();
-      let pending = (plan.requirements || []).filter((r) => {
-        if (r.category === "DONE" || firstRow.has(r.requirement)) return false;
-        firstRow.add(r.requirement);
-        return true;
-      });
+      let pending = harnessQueue(plan.requirements || [], args.reqs);
       if (args.reqs.length > 0) {
-        const wanted = new Set(args.reqs);
         // In the order given (REQ-185): the plan's order reshuffled a chain silently.
-        pending = orderAsGiven(
-          pending.filter((r) => wanted.has(r.requirement)),
-          args.reqs
-        );
+        pending = orderAsGiven(pending, args.reqs);
         const found = new Set(pending.map((r) => r.requirement));
         for (const want of args.reqs) {
           if (!found.has(want)) warn(`${want} is not a pending requirement — skipped.`);
@@ -3617,7 +3632,7 @@ export class RunCommand extends BaseCommand {
       if (unkept && !jsonMode && !process.env.SPECGATE_HARNESS_WORKER) {
         process.stdout.write(
           `  ${ui.muted("Keep this agent for the next run and the studio's Build:")}\n` +
-            `    specgate config set agent "${args.agent.replace(/"/g, '\\"')}"\n\n`
+            `    specgate config set agent ${quoteArg(args.agent)}\n\n`
         );
       }
 

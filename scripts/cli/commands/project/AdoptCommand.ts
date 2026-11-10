@@ -1,5 +1,6 @@
 import { mergeContract } from "../../../agents/contract-file";
 import { installDetectedAgents } from "../../../agents/detect";
+import { adoptionAreas, readinessText, settle } from "./readiness";
 import * as fs from "node:fs";
 import { migrateToDerived } from "../spec/MatrixCommand";
 import * as path from "node:path";
@@ -83,6 +84,7 @@ export function parseArgs(argv: string[]) {
     noCapabilities: false,
     keepMatrix: false,
     noAgents: false,
+    yes: false,
     /** `--no-ci`: write no CI file (REQ-455). */
     noCi: false,
     vars: {} as Record<string, string>,
@@ -101,6 +103,8 @@ export function parseArgs(argv: string[]) {
       opts.keepMatrix = true;
     } else if (a === "--no-agents") {
       opts.noAgents = true;
+    } else if (a === "--yes" || a === "-y") {
+      opts.yes = true;
     } else if (a === "--no-ci") {
       opts.noCi = true;
     } else if (a === "--var" && argv[i + 1]) {
@@ -433,6 +437,8 @@ interface AdoptOptions {
   monorepo: boolean;
   noCapabilities: boolean;
   noAgents?: boolean;
+  /** Save what adoption detects without asking (REQ-470); no terminal means the same. */
+  yes?: boolean;
   vars: Record<string, string>;
 }
 
@@ -447,7 +453,8 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
   const capabilities: Capability[] = opts.noCapabilities
     ? []
     : (require("./OnboardCommand") as typeof import("./OnboardCommand")).proposeCapabilities(dir);
-  const proposed = buildProposedRequirements(capabilities);
+  // The areas read off the code are not requirements (REQ-471): they go to
+  // docs/specs/adoption.md, and spec.md and the matrix start with REQ-001 alone.
 
   // A string map, not a literal: `opts.vars` (`--var KEY=VALUE`) may override any key.
   const vars: Record<string, string> = {
@@ -458,8 +465,8 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
     API_STYLE: "REST with DTO boundaries",
     TESTING: detected.TESTING,
     TEST_CMD: detected.TEST_CMD,
-    PROPOSED_REQUIREMENTS: proposed.spec,
-    PROPOSED_ROWS: proposed.rows,
+    PROPOSED_REQUIREMENTS: "",
+    PROPOSED_ROWS: "",
     ...opts.vars,
   };
 
@@ -525,6 +532,24 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
     written++;
   }
 
+  if (capabilities.length > 0) {
+    const areasPath = path.join(dir, "docs", "specs", "adoption.md");
+    if (fs.existsSync(areasPath)) {
+      if (!quiet) logWarn("skip (exists): docs/specs/adoption.md");
+      skipped++;
+    } else if (opts.dryRun) {
+      say(
+        `[dry-run] write docs/specs/adoption.md (${capabilities.length} areas found in the code)`
+      );
+      written++;
+    } else {
+      fs.mkdirSync(path.dirname(areasPath), { recursive: true });
+      fs.writeFileSync(areasPath, adoptionAreas(dir, vars.PROJECT_NAME, capabilities), "utf8");
+      say(`write docs/specs/adoption.md (${capabilities.length} areas found in the code)`);
+      written++;
+    }
+  }
+
   if (!fs.existsSync(path.join(dir, "README.md")) && !opts.dryRun) {
     fs.writeFileSync(
       path.join(dir, "README.md"),
@@ -535,7 +560,8 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
     written++;
   }
 
-  return { written, skipped, capabilities };
+  const testCmd = detected.detected === "none" ? null : vars.TEST_CMD;
+  return { written, skipped, capabilities, testCmd };
 }
 
 /**
@@ -645,7 +671,7 @@ export class AdoptProjectCommand extends BaseCommand {
       );
     }
 
-    const { written, skipped, capabilities } = adoptOne(dir, opts);
+    const { written, skipped, capabilities, testCmd } = adoptOne(dir, opts);
     // The spec gate, as init installs it (REQ-455) — never over a CI file that exists.
     installGate(dir, opts);
     // A new adoption starts with a generated matrix: nobody maintains it,
@@ -659,7 +685,7 @@ export class AdoptProjectCommand extends BaseCommand {
     logInfo(`- Files skipped (already present): ${skipped}`);
     if (capabilities.length > 0) {
       logInfo(
-        `- Requirements seeded: ${capabilities.length} proposal(s) from the layout — ${capabilities.map((c) => c.id).join(", ")}`
+        `- Areas found in the code: ${capabilities.length} — ${capabilities.map((c) => c.id).join(", ")} (docs/specs/adoption.md, not requirements)`
       );
     }
     logWarn("This does not certify your code yet — it certifies the skeleton.");
@@ -676,7 +702,7 @@ export class AdoptProjectCommand extends BaseCommand {
         "  2. specgate propose --from-brief  # docs/brief.md → requirements, module by module"
       );
     } else if (capabilities.length > 0) {
-      logInfo("  2. Argue with the seeded proposals in spec.md — each one names its evidence");
+      logInfo('  2. specgate new "<behaviour>"   # one per area in docs/specs/adoption.md');
     } else {
       logInfo('  2. specgate new "<behaviour>"   # one requirement you already rely on');
       logInfo(
@@ -691,6 +717,27 @@ export class AdoptProjectCommand extends BaseCommand {
       logInfo(`  ${startup}`);
     }
     installDetectedAgents(dir, { dryRun: opts.dryRun, skip: opts.noAgents }, logInfo);
+    // What is ready and what is not, saving what was detected (REQ-470).
+    const ready = settle(
+      dir,
+      { detectedTest: testCmd, yes: !!opts.yes, dryRun: opts.dryRun, ci: ciGateOf(dir) },
+      logInfo
+    );
+    process.stdout.write(readinessText(ready));
     process.exit(0);
   }
+}
+
+/** The CI file that runs the spec gate, when one does. */
+function ciGateOf(dir: string): string | null {
+  for (const f of [
+    ".github/workflows/spec-gate.yml",
+    ".gitlab-ci.yml",
+    "azure-pipelines.yml",
+    "Jenkinsfile",
+  ]) {
+    const p = path.join(dir, f);
+    if (fs.existsSync(p) && /specgate/.test(fs.readFileSync(p, "utf8"))) return f;
+  }
+  return null;
 }

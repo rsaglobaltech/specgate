@@ -1,5 +1,7 @@
 # Existing project · 1 — Adopt, touching no code
 
+> **The short version** of an existing project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** Specgate set up on a codebase that already works, without changing
 a line of it, and a gate that passes with your existing tests.
@@ -88,31 +90,32 @@ $ specgate init
     + docs/specs/traceability.md
     + docs/specs/adr/README.md
     + AGENTS.md
+    + docs/specs/adoption.md   2 areas found in the code
     + README.md   was missing
   ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
     · Traceability: generated from spec.md, tags and tests (`specgate matrix`)
 
   Summary ────────────────────────────────────────────────
-    · Files written: 6
+    · Files written: 7
     · Files skipped (already present): 0
-    · Requirements seeded: 2 proposal(s) from the layout — invoices, customers
+    · Areas found in the code: 2 — invoices, customers (docs/specs/adoption.md, not requirements)
   ▲  This does not certify your code yet — it certifies the skeleton.
      A green `validate` right now means the structure is in place, not that any
      behaviour is covered. It starts meaning something when the requirements below
      are real and their scenarios are linked to tests.
 
-  ✔  Adoption completed
-… 8 more lines
+… 17 more lines
 ```
 <!-- specgate:out-existing-init:end -->
 
 `init` (the same as `adopt` on a repository with code) writes `spec.md`,
 `AGENTS.md`, a baseline scenario and the generated traceability matrix — and
-only files that do not exist yet. It seeds one **proposed** requirement per
-capability (`REQ-002 Invoices`, `REQ-003 Customers`), each marked as a guess,
-each `Draft`, so nothing claims to be specified or verified.
+only files that do not exist yet. The areas it reads off the code (Invoices,
+Customers) go to `docs/specs/adoption.md` with their folders and tests — a map
+to specify from, not requirements. It saves the test command and the agent it
+detects, asking first, and ends with a readiness list.
 
-## 4. Tell it how to run your tests
+## 4. Check the test command it saved — or set it
 
 ```bash
 specgate config set test_cmd "node --test"

@@ -9,6 +9,57 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.33.0] — 2026-11-10
+
+Onboarding an existing project without an agent finishing it: `adopt` saves
+the test command and agent it detects and says what is ready; the areas it
+finds stay out of the matrix, and folders named by a kind of code are not
+areas (#412); one short Start page; every open code-scanning alert closed.
+
+### Security
+
+- **Every open code-scanning alert closed** (13, CodeQL): a requirement id
+  typed by a person is matched literally, never built into a regular
+  expression (`answer`, `ask`); Markdown table cells escape the backslash as
+  well as the pipe, so text ending in `\` cannot break a questions or review
+  table; shell arguments specgate prints or passes on are quoted for the shell
+  that reads them, Windows' backslash rule included; the spec parser's slug
+  stays linear on hostile input; the studio no longer sends an exception's
+  text to the page — the terminal running it says why. One helper for each
+  escape (`scripts/lib/escape.ts`) instead of hand-written ones.
+
+### Fixed
+
+- **Folders named by a kind of code are not areas** (#412, REQ-476 … REQ-478,
+  ADR-0041): `onboard` and `adopt` no longer read `components`, `hooks`,
+  `utils`… as areas of the product. A directory where at least two children,
+  and at least half, are named by a kind of code (the layers included) proposes
+  no area, and `onboard` says the code is organised by kind; in a mixed split
+  the generic kinds are left out (`billing`, `invoices`, `utils` → Billing,
+  Invoices), while a layer name alone — serilog's `Core` — stays an area. Once
+  adopted, `onboard` points at `specgate new "<a behaviour you rely on>"`, never
+  `propose describe-<folder>`. The baseline REQ-001 no longer carries
+  `npm test` and "existing codebase" as if they were paths, and `harness run`
+  leaves it out unless named with `--req`.
+- **Onboarding an existing project no longer needs an agent to finish it**
+  (REQ-470 … REQ-475, reported by testers):
+  - `adopt` saves the test command it detects as `test_cmd` and, when an
+    agent's CLI is on the PATH, the agent Build runs — asking first at a
+    terminal, applying with `--yes` — and ends with one readiness list: tests,
+    agent, architecture, CI gate, each set or with the command that sets it.
+    Before, `check` passed after adoption without running a single test.
+  - The areas `adopt` reads off the code go to `docs/specs/adoption.md` with
+    their folders and tests, not into spec.md and the matrix: no more rows like
+    `REQ-002 Auth · TBD` that nobody could tell the purpose of. A project
+    adopted earlier gets `proposal_unspecified` in `status` and `doctor` for
+    each one, with how to fix it.
+  - `agents init --tool claude` also sets the agent Build runs, when none is.
+  - The studio's next step on a folder with code is "Adopt this folder", not
+    "Create the project"; once adopted, "Specify a behaviour you rely on", as
+    `status` says.
+  - One short Start page with two paths of six steps; getting-started and
+    quickstart point to it.
+
 ## [0.32.1] — 2026-11-10
 
 The container image again: 0.32.0's failed to build.

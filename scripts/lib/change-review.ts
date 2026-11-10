@@ -1,3 +1,4 @@
+import { markdownCell } from "./escape";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { namedBy, questionTable } from "../../packages/core/src/domain/Clarification";
@@ -114,9 +115,7 @@ export interface ReviewNote {
 
 const NOTES_HEADER = "| Date | Requirement | Request |";
 
-function cell(text: string): string {
-  return String(text).replace(/\s+/g, " ").trim().replace(/\|/g, "\\|");
-}
+const cell = markdownCell;
 
 /** The change's review notes. */
 export function reviewNotes(projectDir: string, id: string): ReviewNote[] {

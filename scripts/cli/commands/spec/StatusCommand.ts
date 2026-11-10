@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { proposalNotes } from "../../../lib/proposals";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability, classify, detectOrphans } from "./PlanCommand";
 import { readLock } from "../../../specops/lock";
@@ -735,6 +736,8 @@ function readStatus(
     const sources = readDerivationSources(dir);
     const specs = [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])];
     notes = specNotes(specs, sources.features);
+    // An earlier adoption's proposals nobody specified (REQ-472).
+    notes.push(...proposalNotes(projectDir));
     // A row with no use case still has a title in its spec section (#48).
     const titles = requirementTitles(specs);
     for (const it of summary.items) {

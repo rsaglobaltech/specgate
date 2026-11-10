@@ -602,9 +602,9 @@ function docsHome(version: string, opts: SiteOptions): string {
     text: "",
     html:
       `<h1>Documentation</h1>` +
-      `<p class="home__lede">Specifications that are checked, not admired. Start with ` +
-      `<a href="getting-started.html">Getting started</a> if the folder is empty, or ` +
-      `<a href="quickstart.html">You cloned a repo</a> if somebody handed you one.</p>` +
+      `<p class="home__lede">Specifications that are checked, not admired. ` +
+      `<a href="start.html">Start here</a> — an existing project or a new one, six commands each — ` +
+      `or <a href="quickstart.html">Joining a project</a> if somebody set it up for you.</p>` +
       `<figure class="code" data-lang="bash">` +
       `<figcaption class="code__head"><span class="code__lang">Install</span>` +
       `<button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button>` +
