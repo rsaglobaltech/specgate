@@ -45,8 +45,14 @@ const SKIP = new Set([
   ".specgate",
   "target",
 ]);
-const TEST_FILE =
-  /(\.|-|_)(test|spec)\.[cm]?[jt]sx?$|Test\.(java|kt)$|_test\.(go|py)$|test_.*\.py$/;
+const TEST_NAME = /(\.|-|_)(test|spec)\.[cm]?[jt]sx?$|Test\.(java|kt)$|_test\.(go|py)$/;
+/**
+ * A test file by its name. `test_….py` is checked without a regular
+ * expression: `/test_.*\.py$/` is quadratic on a name of many `test_`.
+ */
+const TEST_FILE = {
+  test: (name: string) => TEST_NAME.test(name) || (name.endsWith(".py") && name.includes("test_")),
+};
 const MAX_FILES = 4000;
 
 function relative(projectDir: string, file: string): string {
