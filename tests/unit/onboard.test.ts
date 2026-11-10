@@ -139,7 +139,7 @@ test("onboard runs on a repository that is not adopted yet", () => {
   }
 });
 
-test("once adopted, the next step is describing the largest capability", () => {
+test("REQ-477: once adopted, the next step is one behaviour, not a change named after the largest folder (#412)", () => {
   const dir = repo({
     "spec.md": "# Spec\n",
     "domain/booking/a.ts": "//",
@@ -149,7 +149,7 @@ test("once adopted, the next step is describing the largest capability", () => {
   try {
     const doc = JSON.parse(cli("onboard", "--project-dir", dir, "--json").stdout);
     assert.equal(doc.onboarding.adopted, true);
-    assert.equal(doc.onboarding.nextCommand, "specgate propose describe-booking");
+    assert.equal(doc.onboarding.nextCommand, 'specgate new "<a behaviour you rely on>"');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

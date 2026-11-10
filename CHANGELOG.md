@@ -11,6 +11,20 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Fixed
 
+- **Folders named by a kind of code are not areas** (#412, REQ-476 … REQ-478,
+  ADR-0041): `onboard` and `adopt` no longer read `components`, `hooks`,
+  `utils`… as areas of the product. A directory where at least two children,
+  and at least half, are named by a kind of code (the layers included) proposes
+  no area, and `onboard` says the code is organised by kind; in a mixed split
+  the generic kinds are left out (`billing`, `invoices`, `utils` → Billing,
+  Invoices), while a layer name alone — serilog's `Core` — stays an area. Once
+  adopted, `onboard` points at `specgate new "<a behaviour you rely on>"`, never
+  `propose describe-<folder>`. The baseline REQ-001 no longer carries
+  `npm test` and "existing codebase" as if they were paths, and `harness run`
+  leaves it out unless named with `--req`.
+
+### Fixed
+
 - **Onboarding an existing project no longer needs an agent to finish it**
   (REQ-470 … REQ-475, reported by testers):
   - `adopt` saves the test command it detects as `test_cmd` and, when an
