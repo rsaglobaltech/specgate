@@ -251,6 +251,7 @@
 | REQ-462 | SCN-462a | `features/project-setup/REQ-462.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
 | REQ-463 | SCN-463a | `features/project-setup/REQ-463.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
 | REQ-464 | SCN-464a | `features/project-setup/REQ-464.feature` | - | - | - | - | - | tests/unit/init-ready-for-ci.test.ts | Implemented |
+| REQ-465 | SCN-465a, SCN-465b | `features/daily-surface/REQ-465.feature` | - | - | - | - | - | tests/unit/apply-next-in-change.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

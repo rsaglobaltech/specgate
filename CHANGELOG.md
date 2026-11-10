@@ -9,6 +9,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **After `apply`, Next stays in the change** (REQ-465): the next step is the
+  next requirement of the open change just delivered for, and the project's
+  queue only once that change has none left to take. Before, applying REQ-016
+  of a change with REQ-014 still to do pointed at the project's REQ-000.
+
 ## [0.31.0] — 2026-11-09
 
 A project checked by CI from its first push: `init` and `adopt` install the
