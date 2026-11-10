@@ -15,8 +15,12 @@ In scope:
 
 - `@rsaglobaltech/specgate/api`: `status(dir)`, `questions(dir)` and
   `matrix(dir)`, each answering what `specgate <command> --json` prints — the
-  data, and the findings under `status` with code, message and fix.
-- Reads only: no file written, no process started.
+  data, and the findings under `status` with code, message and fix. For the
+  matrix that is `matrix --json --dry-run`: `matrix --json` regenerates a
+  derived matrix on disk, and a read must not.
+- Reads only: no file written, and no process but `git ls-files` — `status`
+  lays the open changes over a copy of the project, and git says which files
+  that copy needs (REQ-184).
 - Types shipped with it, and `API_VERSION`, whose major changes only when an
   answer's shape breaks.
 - A folder that is not a specgate project is refused with a code and a fix.

@@ -170,6 +170,26 @@ export function migrateToDerived(projectDir: string): boolean {
   return true;
 }
 
+const handKept = () =>
+  info("matrix_hand_kept", "This project keeps its matrix by hand.", {
+    fix: "specgate matrix --migrate",
+  });
+
+/**
+ * What `specgate matrix --json --dry-run` prints for the project: whether its
+ * matrix is derived and, when it is, how many rows derivation gives — read
+ * without writing (REQ-466, REQ-467).
+ */
+export function matrixAnswer(projectDir: string) {
+  const file = path.join(projectDir, MATRIX);
+  const existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+  if (!isDerivedMatrix(existing)) {
+    return { matrix: { projectDir, derived: false }, status: [handKept()] };
+  }
+  const rows = rowsOf(derivedMatrixFor(projectDir, existing)).length;
+  return { matrix: { projectDir, derived: true, written: false, rows }, status: [] };
+}
+
 export class MatrixCommand extends BaseCommand {
   public execute(): void {
     const argv = this.args;
@@ -206,11 +226,7 @@ export class MatrixCommand extends BaseCommand {
       io.emit(
         {
           matrix: { projectDir, derived: false },
-          status: [
-            info("matrix_hand_kept", "This project keeps its matrix by hand.", {
-              fix: "specgate matrix --migrate",
-            }),
-          ],
+          status: [handKept()],
         },
         () =>
           process.stdout.write(

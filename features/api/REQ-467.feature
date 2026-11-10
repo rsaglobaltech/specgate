@@ -4,4 +4,4 @@ Feature: The API only reads
   Scenario: A derived matrix behind its specs
     Given a derived project whose `docs/specs/traceability.md` is behind its capability specs
     When a program calls `matrix(dir)`
-    Then the answer has the rows as they would be derived, and `traceability.md` is unchanged byte for byte
+    Then the answer counts the rows as they would be derived and says nothing was written, and `traceability.md` is unchanged byte for byte

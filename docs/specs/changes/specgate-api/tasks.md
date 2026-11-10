@@ -8,8 +8,8 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-466 — status, questions, matrix answer what --json prints
-- [ ] 2.2 REQ-467 — reads only: nothing written, no process
-- [ ] 2.3 REQ-468 — exports, types, API_VERSION; existing paths keep resolving
-- [ ] 2.4 REQ-469 — a folder that is not a project, refused with code and fix
-- [ ] 2.5 docs (a page for the API), the CHANGELOG
+- [x] 2.1 REQ-466 — status, questions, matrix answer what --json prints
+- [x] 2.2 REQ-467 — reads only: nothing written, no process
+- [x] 2.3 REQ-468 — exports, types, API_VERSION; existing paths keep resolving
+- [x] 2.4 REQ-469 — a folder that is not a project, refused with code and fix
+- [x] 2.5 docs (a page for the API), the CHANGELOG

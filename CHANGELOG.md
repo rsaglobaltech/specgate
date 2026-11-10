@@ -9,6 +9,17 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`@rsaglobaltech/specgate/api`: a project read from Node, in-process**
+  (REQ-466 … REQ-469): `status(dir)`, `questions(dir)` and `matrix(dir)`
+  answer exactly what `status --json`, `questions --json` and
+  `matrix --json --dry-run` print, without starting `specgate` for each read.
+  They write no file of the project and start no process but `git ls-files`;
+  a folder that is not a project is refused with `not_a_project`. The types
+  ship with the package and `API_VERSION` is `1.0.0`. The package now has
+  `exports`: `./api`, `./package.json`, and every path that resolved before.
+
 ### Fixed
 
 - **After `apply`, Next stays in the change** (REQ-465): the next step is the
