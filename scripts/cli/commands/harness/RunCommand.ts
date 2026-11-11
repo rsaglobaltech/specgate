@@ -49,7 +49,6 @@ import {
   keepPrompt,
   writeQueue,
 } from "../../../lib/harness-events";
-import { ask as askQuestion } from "../../../lib/clarification";
 import { e2eTestsNaming, onScreen } from "../../../lib/screen-requirements";
 import {
   acquireRunLock,
