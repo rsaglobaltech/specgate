@@ -17,6 +17,12 @@ import {
 import { readDerivationSources } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { appendRequirementSection } from "../../../../packages/core/src/domain/SpecSections";
 import type { RawMatrixRow } from "../../../../packages/core/src/domain/RequirementPlan";
+import {
+  scenarioRows,
+  type MatrixScenarioRow,
+} from "../../../../packages/core/src/domain/MatrixScenarios";
+import { inFlightView } from "../../../lib/in-flight";
+import { allQuestions } from "../../../lib/clarification";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -41,6 +47,10 @@ function usage(): void {
   specgate matrix --check    exit 1 if the file no longer matches its sources
   specgate matrix --migrate  turn a hand-kept matrix into a generated one;
                              verifies the result is row-for-row identical first
+
+  With --json, matrix.scenarios lists one row per scenario — open changes
+  included — with its feature, tests, code, status, the links it is missing
+  (gaps) and the open question it waits for (waiting).
 
 `
   );
@@ -176,18 +186,54 @@ const handKept = () =>
   });
 
 /**
+ * The matrix as one row per scenario (REQ-498), each with the open question
+ * that blocks its requirement. Read as `status` reads the project:
+ * with the open changes' requirements in it, as they will be after archive
+ * (ADR-0035). Nothing of the project is written; links are checked against
+ * the project itself.
+ */
+export function matrixScenarios(projectDir: string): MatrixScenarioRow[] {
+  const view = inFlightView(projectDir);
+  try {
+    const dir = view ? view.dir : projectDir;
+    const file = path.join(dir, MATRIX);
+    const content = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+    const rows = rowsOf(isDerivedMatrix(content) ? derivedMatrixFor(dir, content) : content);
+    const waiting = new Map<string, { question: string; change: string }>();
+    for (const q of allQuestions(projectDir)) {
+      if (q.answered) continue;
+      for (const req of q.blocks) {
+        if (!waiting.has(req)) waiting.set(req, { question: q.id, change: q.change });
+      }
+    }
+    const exists = (rel: string) => {
+      try {
+        return fs.existsSync(path.join(projectDir, rel));
+      } catch {
+        return false;
+      }
+    };
+    return scenarioRows(rows, exists, waiting);
+  } finally {
+    if (view) view.cleanup();
+  }
+}
+
+/**
  * What `specgate matrix --json --dry-run` prints for the project: whether its
  * matrix is derived and, when it is, how many rows derivation gives — read
- * without writing (REQ-466, REQ-467).
+ * without writing (REQ-466, REQ-467) — and its rows, one per scenario
+ * (REQ-498).
  */
 export function matrixAnswer(projectDir: string) {
   const file = path.join(projectDir, MATRIX);
   const existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+  const scenarios = matrixScenarios(projectDir);
   if (!isDerivedMatrix(existing)) {
-    return { matrix: { projectDir, derived: false }, status: [handKept()] };
+    return { matrix: { projectDir, derived: false, scenarios }, status: [handKept()] };
   }
   const rows = rowsOf(derivedMatrixFor(projectDir, existing)).length;
-  return { matrix: { projectDir, derived: true, written: false, rows }, status: [] };
+  return { matrix: { projectDir, derived: true, written: false, rows, scenarios }, status: [] };
 }
 
 export class MatrixCommand extends BaseCommand {
@@ -225,7 +271,11 @@ export class MatrixCommand extends BaseCommand {
     if (!isDerivedMatrix(existing)) {
       io.emit(
         {
-          matrix: { projectDir, derived: false },
+          matrix: {
+            projectDir,
+            derived: false,
+            scenarios: io.json ? matrixScenarios(projectDir) : [],
+          },
           status: [handKept()],
         },
         () =>
@@ -269,16 +319,19 @@ export class MatrixCommand extends BaseCommand {
       ensureUnionMerge(projectDir);
     }
     const rows = rowsOf(next).length;
-    io.emit({ matrix: { projectDir, derived: true, written: stale && !dryRun, rows } }, () =>
-      process.stdout.write(
-        ui.header("matrix") +
-          (stale
-            ? ui.ok(
-                `${dryRun ? "Would regenerate" : "Regenerated"} docs/specs/traceability.md ${ui.muted(`(${rows} rows)`)}`
-              )
-            : ui.ok(`The matrix is up to date ${ui.muted(`(${rows} rows)`)}`)) +
-          "\n"
-      )
+    const scenarios = io.json ? matrixScenarios(projectDir) : [];
+    io.emit(
+      { matrix: { projectDir, derived: true, written: stale && !dryRun, rows, scenarios } },
+      () =>
+        process.stdout.write(
+          ui.header("matrix") +
+            (stale
+              ? ui.ok(
+                  `${dryRun ? "Would regenerate" : "Regenerated"} docs/specs/traceability.md ${ui.muted(`(${rows} rows)`)}`
+                )
+              : ui.ok(`The matrix is up to date ${ui.muted(`(${rows} rows)`)}`)) +
+            "\n"
+        )
     );
   }
 

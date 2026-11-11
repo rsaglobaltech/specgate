@@ -2,6 +2,12 @@ import type { QualityConfig } from "./QualityChecks";
 
 export interface HarnessSettings {
   agent: string;
+  /**
+   * The profile `agent` was resolved from — `--profile` or `agent_profile:` —
+   * so the run records whose tokens and hint they were (REQ-509). Empty for a
+   * command given as is.
+   */
+  agentProfile?: string;
   /** The quality and security checks, by stage (ADR-0040). Absent: none configured. */
   quality?: QualityConfig;
   testCmd: string;

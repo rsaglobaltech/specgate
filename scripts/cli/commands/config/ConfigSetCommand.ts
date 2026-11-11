@@ -9,6 +9,17 @@ import {
   writeHarnessCommand,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { withAgentPermission, withLiveStream } from "../../../lib/agent-permission";
+import {
+  CATALOG,
+  CONFIG_JSON_FILE,
+  HARNESS_FILE,
+  catalog,
+  currentValue,
+  presentKeys,
+  resolveKey,
+  setYamlKey,
+  unknownKeyFix,
+} from "../../../lib/config-keys";
 
 export const CONFIG_DIR = ".specgate";
 export const CONFIG_FILE = "config.json";
@@ -84,22 +95,34 @@ export function write(projectDir: string, config: ProjectConfig): string {
   return file;
 }
 
+/** The file a key is kept in, relative to the project, with forward slashes (REQ-505). */
+function fileOf(key: string): string {
+  if (HARNESS_KEYS.has(key)) return HARNESS_FILE;
+  const r = resolveKey(key);
+  return r ? r.spec.file : CONFIG_JSON_FILE;
+}
+
+const filesOf = (keys: string[]) => Object.fromEntries(keys.map((k) => [k, fileOf(k)]));
+
 function usage() {
-  const keys = Object.entries(KEYS)
-    .map(([k, v]) => {
-      const allowed = v.values ? ` (${v.values.join(" | ")})` : "";
-      return `    ${k}${allowed}\n      ${v.describe}`;
-    })
-    .join("\n");
+  const keys = CATALOG.map((v) => {
+    const allowed = v.values ? ` (${v.values.join(" | ")})` : "";
+    return `    ${v.key}${allowed}\n      ${v.description} ${v.file}`;
+  }).join("\n");
   process.stdout.write(
     "Usage:\n" +
       "  specgate config set <key> <value>\n" +
       '  specgate config set test_cmd "npm test"\n' +
+      '  specgate config set profiles.fast.agent "claude -p < {prompt_file}"\n' +
+      '  specgate config set checks.lint.run "npm run lint"\n' +
+      "  specgate config set alm.token_env JIRA_TOKEN\n" +
       "  specgate config get <key>\n" +
-      "  specgate config list\n\n" +
-      `Keys:\n${keys}\n\n` +
-      `Stored in ${CONFIG_DIR}/${CONFIG_FILE} (test_cmd in ${HARNESS_CONFIG_FILE}).\n` +
-      "Commit it to share the setting.\n"
+      "  specgate config list\n" +
+      "  specgate config keys       every key, its values, default, current value and file\n\n" +
+      `Keys (<name> is a profile's or a check's name):\n${keys}\n\n` +
+      "With --json, get, set and list say the file each key is kept in, under files.\n" +
+      "Tokens are never stored: an *_env key names the variable that holds one.\n" +
+      "Commit the files to share the settings.\n"
   );
 }
 
@@ -119,10 +142,28 @@ export class ConfigSetCommand extends BaseCommand {
     const positional = [];
     for (let i = 0; i < args.length; i++) {
       if (args[i] === "--project-dir" && args[i + 1]) projectDir = args[++i];
-      else if (!args[i].startsWith("-")) positional.push(args[i]);
+      // A negative number is a value, not a flag: `config set … -1` is refused as a value.
+      else if (!args[i].startsWith("-") || /^-\d/.test(args[i])) positional.push(args[i]);
     }
 
     const [action, key, ...rest] = positional;
+
+    // REQ-506: the catalog, each key with its values, default, value and file.
+    if (action === "keys") {
+      const base = read(projectDir);
+      const keys = catalog(projectDir, (k) => {
+        if (HARNESS_KEYS.has(k)) return harnessCommand(projectDir, k);
+        const v = base[k];
+        return v === undefined || v === null ? null : (v as string);
+      });
+      io.emit({ keys }, () => {
+        for (const k of keys) {
+          const shown = k.current === null ? "(default)" : String(k.current);
+          process.stdout.write(`  ${k.key} = ${shown}\n      ${k.description} ${k.file}\n`);
+        }
+      });
+      return;
+    }
 
     if (action === "list" || (!action && !key)) {
       const config = read(projectDir);
@@ -130,7 +171,8 @@ export class ConfigSetCommand extends BaseCommand {
         const v = harnessCommand(projectDir, k);
         if (v !== null) config[k] = v;
       }
-      io.emit({ config }, () => {
+      for (const k of presentKeys(projectDir)) config[k] = currentValue(projectDir, k);
+      io.emit({ config, files: filesOf(Object.keys(config)) }, () => {
         const entries = Object.entries(config);
         if (entries.length === 0) {
           process.stdout.write("  (no settings — everything is at its default)\n");
@@ -141,11 +183,14 @@ export class ConfigSetCommand extends BaseCommand {
       return;
     }
 
-    if (!KEYS[key]) {
+    const resolved = KEYS[key] ? null : resolveKey(key);
+    if (!KEYS[key] && !resolved) {
       io.usage(NULL_SHAPE, [
         error("config_key_unknown", `Unknown setting: ${key || "(none)"}`, {
           target: key,
-          fix: `Known settings: ${Object.keys(KEYS).join(", ")}.`,
+          fix: /^(alm|profiles|checks)\./.test(key || "")
+            ? unknownKeyFix(key)
+            : `Known settings: ${Object.keys(KEYS).join(", ")}; \`specgate config keys\` lists every one.`,
         }),
       ]);
     }
@@ -153,7 +198,8 @@ export class ConfigSetCommand extends BaseCommand {
     if (action === "get") {
       const config = read(projectDir);
       if (HARNESS_KEYS.has(key)) config[key] = harnessCommand(projectDir, key);
-      io.emit({ config: { [key]: config[key] ?? null } }, () =>
+      if (resolved) config[key] = currentValue(projectDir, key);
+      io.emit({ config: { [key]: config[key] ?? null }, files: filesOf([key]) }, () =>
         process.stdout.write(`  ${key} = ${config[key] ?? "(default)"}\n`)
       );
       return;
@@ -163,19 +209,34 @@ export class ConfigSetCommand extends BaseCommand {
       io.usage(NULL_SHAPE, [
         error("config_action_unknown", `Unknown action: ${action || "(none)"}`, {
           target: action,
-          fix: "Use one of: set, get, list.",
+          fix: "Use one of: set, get, list, keys.",
         }),
       ]);
     }
 
     // `config set test_cmd npm test` and `… "npm test"` mean the same command.
-    const value = HARNESS_KEYS.has(key) && rest.length > 0 ? rest.join(" ") : rest[0];
+    const value = (HARNESS_KEYS.has(key) || resolved) && rest.length > 0 ? rest.join(" ") : rest[0];
     if (value === undefined) {
       io.usage(NULL_SHAPE, [
         error("config_value_required", `No value given for ${key}.`, {
           fix: `specgate config set ${key} <value>`,
         }),
       ]);
+    }
+
+    // REQ-507, REQ-508: profiles, quality checks and ALM, into their YAML file.
+    if (resolved) {
+      const outcome = setYamlKey(projectDir, key, value);
+      if (outcome.ok === false) {
+        io.usage(NULL_SHAPE, [
+          error("config_value_invalid", outcome.message, { target: value, fix: outcome.fix }),
+        ]);
+      }
+      const written = outcome as { file: string; value: unknown };
+      io.emit({ config: { [key]: written.value }, files: filesOf([key]) }, () =>
+        process.stdout.write(`  ✔  ${key} = ${value}\n     ${written.file}\n`)
+      );
+      process.exit(EXIT.OK);
     }
 
     const allowed = KEYS[key].values;
@@ -214,7 +275,7 @@ export class ConfigSetCommand extends BaseCommand {
       // REQ-278: a bare Claude Code agent is also streamed into the live view.
       const kept = key === "agent" ? withLiveStream(withAgentPermission(value).command) : value;
       const file = writeHarnessCommand(projectDir, key as "test_cmd" | "arch_cmd" | "agent", kept);
-      io.emit({ config: { [key]: kept } }, () =>
+      io.emit({ config: { [key]: kept }, files: filesOf([key]) }, () =>
         process.stdout.write(
           `  ✔  ${key} = ${kept}\n     ${path.relative(process.cwd(), file) || file}\n` +
             (key === "agent"
@@ -229,7 +290,7 @@ export class ConfigSetCommand extends BaseCommand {
     config[key] = value;
     const file = write(projectDir, config);
 
-    io.emit({ config }, () =>
+    io.emit({ config, files: filesOf(Object.keys(config)) }, () =>
       process.stdout.write(
         `  ✔  ${key} = ${value}\n     ${path.relative(process.cwd(), file) || file}\n`
       )

@@ -270,6 +270,18 @@
 | REQ-481 | SCN-481a | `features/clarification/REQ-481.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
 | REQ-482 | SCN-482a | `features/clarification/REQ-482.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
 | REQ-483 | SCN-483a | `features/trusted-gate/REQ-483.feature` | - | - | - | - | - | tests/unit/scenario-heading-ids.test.ts | Approved |
+| REQ-498 | SCN-498a, SCN-498b | `features/daily-surface/REQ-498.feature` | - | - | - | - | - | tests/unit/matrix-scenarios.test.ts | Approved |
+| REQ-499 | SCN-499a | `features/quality/REQ-499.feature` | - | - | - | - | - | tests/unit/line-coverage.test.ts | Approved |
+| REQ-500 | SCN-500a | `features/daily-surface/REQ-500.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Approved |
+| REQ-501 | SCN-501a | `features/quality/REQ-501.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Approved |
+| REQ-502 | SCN-502a | `features/harness/REQ-502.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Approved |
+| REQ-503 | SCN-503a | `features/trusted-gate/REQ-503.feature` | - | - | - | - | - | tests/unit/gate-stages.test.ts | Approved |
+| REQ-504 | SCN-504a | `features/trusted-gate/REQ-504.feature` | - | - | - | - | - | tests/unit/gate-stages.test.ts | Approved |
+| REQ-505 | SCN-505a | `features/project-setup/REQ-505.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
+| REQ-506 | SCN-506a | `features/project-setup/REQ-506.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
+| REQ-507 | SCN-507a | `features/project-setup/REQ-507.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
+| REQ-508 | SCN-508a | `features/project-setup/REQ-508.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
+| REQ-509 | SCN-509a | `features/harness/REQ-509.feature` | - | - | - | - | - | tests/unit/measured-cost.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

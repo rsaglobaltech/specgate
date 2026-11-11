@@ -186,7 +186,7 @@ A tool written in Node — an editor, a dashboard, the studio — can read a
 project without starting `specgate` for each read:
 
 ```ts
-import { status, questions, matrix, API_VERSION } from "@rsaglobaltech/specgate/api";
+import { status, questions, matrix, report, lastCheck, API_VERSION } from "@rsaglobaltech/specgate/api";
 
 const open = (await questions("path/to/project")).questions.open;
 for (const q of open) console.log(q.id, "blocks", q.blocks.join(", "));
@@ -194,11 +194,21 @@ for (const q of open) console.log(q.id, "blocks", q.blocks.join(", "));
 
 Each function answers exactly what the command prints with `--json`:
 
-| Function         | Answers what this prints           |
-| ---------------- | ---------------------------------- |
-| `status(dir)`    | `specgate status --json`           |
-| `questions(dir)` | `specgate questions --json`        |
-| `matrix(dir)`    | `specgate matrix --json --dry-run` |
+| Function                          | Answers what this prints                                         |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `status(dir)`                     | `specgate status --json`                                         |
+| `questions(dir)`                  | `specgate questions --json`                                      |
+| `matrix(dir)`                     | `specgate matrix --json --dry-run`                               |
+| `report(dir, { capability })`     | `specgate report --format json --stdout [--capability <name>]`   |
+| `lastCheck(dir)`                  | `specgate check --last --json`                                   |
+
+`matrix(dir)` lists the rows one per scenario as `matrix.scenarios`, each with
+its `requirement`, `scenario`, `feature`, `tests`, `code`, `status`, the links
+it is missing as `gaps` (`feature`, `test`, `code`) and the open question that
+blocks it as `waiting`; `matrix.rows` stays the count. `status(dir)` gives each
+requirement its `capability`. `report(dir)` carries the project's line
+coverage as `coverage.lines`, and refuses a capability the project does not
+have with the code `capability_unknown`.
 
 The findings are under `status`, each with its code, message and fix, as in
 [the agent contract](specs/agent-contract.md). The functions only read: they

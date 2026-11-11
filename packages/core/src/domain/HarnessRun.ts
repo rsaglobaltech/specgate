@@ -153,6 +153,52 @@ export interface AttemptRecord {
    * the project.
    */
   profiles?: string[];
+  /**
+   * The tokens each agent step reported through its stream, by the role that
+   * ran it (REQ-509). A step whose agent reported none is not listed.
+   */
+  usage?: StepUsage[];
+}
+
+/** One agent step's tokens, as its stream's final usage line reported them. */
+export interface StepUsage {
+  profile: string;
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
+}
+
+/**
+ * The tokens the events lines written during one agent step report: the last
+ * final `usage` line of that attempt — what the agent's stream said at its
+ * end. Null when the step wrote none (an agent that is not streamed).
+ */
+export function stepUsage(
+  lines: readonly string[],
+  attempt: number,
+  profile: string
+): StepUsage | null {
+  let found: StepUsage | null = null;
+  const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : 0);
+  for (const line of lines) {
+    let e: Record<string, unknown>;
+    try {
+      e = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (!e || e.type !== "usage" || e.final !== true) continue;
+    if (e.attempt !== undefined && e.attempt !== attempt) continue;
+    found = {
+      profile,
+      input: n(e.input),
+      output: n(e.output),
+      cacheRead: n(e.cacheRead),
+      cacheWrite: n(e.cacheWrite),
+    };
+  }
+  return found;
 }
 
 /**

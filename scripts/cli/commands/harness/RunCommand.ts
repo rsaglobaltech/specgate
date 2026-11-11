@@ -41,7 +41,14 @@ import { buildPrompt } from "../../../harness/prompt";
 import { withAgentPermission } from "../../../lib/agent-permission";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
-import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
+import {
+  appendEvent,
+  eventsFileFor,
+  eventsLineCount,
+  eventsLinesSince,
+  keepPrompt,
+  writeQueue,
+} from "../../../lib/harness-events";
 import { ask as askQuestion } from "../../../lib/clarification";
 import { e2eTestsNaming, onScreen } from "../../../lib/screen-requirements";
 import {
@@ -159,6 +166,8 @@ import {
 } from "../../../../packages/core/src/domain/CucumberMessages";
 import {
   AttemptRecord,
+  StepUsage,
+  stepUsage,
   AttemptStep,
   featureFilePath,
   planAttempt,
@@ -452,6 +461,8 @@ export function parseArgs(argv: string[]) {
     setupCmd: "",
     chain: false,
     profile: "",
+    /** The profile `--profile` resolved `agent` from (REQ-509). */
+    agentProfile: "",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
@@ -1560,6 +1571,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     let agentMs = 0;
     /** Which roles ran this attempt, in order — the run record's answer to "who did this". */
     const profilesUsed: string[] = [];
+    /** The tokens each step's agent reported, when its stream said (REQ-509). */
+    const usageUsed: StepUsage[] = [];
     const record = (stage: AttemptRecord["endedAt"]) => {
       event({
         type: "attempt",
@@ -1573,6 +1586,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         agentMs,
         totalMs: Date.now() - attemptStart,
         profiles: [...profilesUsed],
+        ...(usageUsed.length > 0 ? { usage: [...usageUsed] } : {}),
       });
       ledgerAttempts(attemptLog);
     };
@@ -1638,6 +1652,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           info(`${req.requirement}: ${step.advisory ? "reviewing" : "running"} as '${profile}'`);
         }
         const agentStart = Date.now();
+        const eventsBefore = eventsLineCount(eventsFile);
         const agent = runWithDeadline(command, {
           cwd: worktreeDir,
           timeoutMs,
@@ -1655,7 +1670,12 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         // Node reports a timeout as an errno-carrying Error; the base `Error`
         // type the spawnSync signature declares does not have `code`.
         agentMs += Date.now() - agentStart;
-        profilesUsed.push(profile ?? (step.advisory ? "reviewer" : "agent"));
+        // REQ-509: the default agent's profile, when it came from one, so its
+        // tokens are priced and its hint applies.
+        const role = profile ?? (step.advisory ? "reviewer" : settings.agentProfile || "agent");
+        profilesUsed.push(role);
+        const used = stepUsage(eventsLinesSince(eventsFile, eventsBefore), attempt, role);
+        if (used) usageUsed.push(used);
 
         fs.rmSync(promptFile, { force: true });
         const agentError = agent.error as NodeJS.ErrnoException | undefined;
@@ -3357,7 +3377,10 @@ export class RunCommand extends BaseCommand {
       const projectDir = resolveProjectDir(args.projectDir, { requireSentinel: true });
 
       // REQ-211: a profile chosen for this run is its agent, ahead of the file's.
-      if (args.profile && !args.agent) args.agent = resolveProfileAgent(projectDir, args.profile);
+      if (args.profile && !args.agent) {
+        args.agent = resolveProfileAgent(projectDir, args.profile);
+        args.agentProfile = args.profile;
+      }
       const fileConfig = readHarnessConfig(projectDir);
       const settings = resolveHarnessSettings(fileConfig, args);
       // A fresh worktree has no dependencies. Unless told, install what the

@@ -9,6 +9,62 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+What specgate-studio's Traceability, Report and Settings views read: the
+matrix row by row, a capability filter, every stage of the gate and the last
+result, the project's line coverage, where each setting lives, and the cost
+measured from the agent's tokens.
+
+### Added
+
+- **The matrix, one row per scenario** (REQ-498): `specgate matrix --json` and
+  the API's `matrix(dir)` list `matrix.scenarios`, open changes included, each
+  row with `requirement`, `scenario`, `feature`, `tests`, `code`, `status`,
+  `gaps` (`feature`, `test`, `code`: the links it does not have to a file that
+  exists) and `waiting` (the open question that blocks it, with its change).
+  `matrix.rows` stays the count.
+- **The project's line coverage** (REQ-499): `report --format json` and the
+  new API function `report(dir)` give `coverage.lines` (`percent`, `covered`,
+  `total`, `tool`, `file`, `measuredAt`), read from the coverage report a
+  quality check names, else from the newest LCOV, istanbul summary, Cobertura
+  or JaCoCo report in its standard place. With none it is `null` with
+  `coverage_not_measured` and how to have the stack write one — never 0.
+- **A capability filter** (REQ-500 … REQ-502): each requirement of
+  `status --json` and `status(dir)` has its `capability`, and
+  `specgate report --capability <name>` and
+  `specgate harness report --capability <name>` keep only that capability's
+  requirements; one the project does not have exits 2 with
+  `capability_unknown`.
+- **Every stage of the gate** (REQ-503): every `check --json` answer, passed or
+  failed, lists `stages` — `ids`, `changes`, `validate`, `architecture`,
+  `tests` and one `quality` stage per check — each with its `command`, its
+  `result` (`passed`, `failed`, `skipped`, `not run`) and its `findings`;
+  `validate` carries validate's own findings. A failed gate keeps
+  `check: null`.
+- **The last gate result** (REQ-504): each `check` keeps its result in the
+  repository's git folder, `git status` untouched, and
+  `specgate check --last --json` and the API's `lastCheck(dir)` read it back:
+  when it ran, the commit and branch, whether the tree was dirty, the stages
+  and findings. With none, `last_check_none` gives the fix `specgate check`.
+- **Where each setting lives** (REQ-505, REQ-506): `config get`, `set` and
+  `list` with `--json` add `files`, the file of each key, and
+  `specgate config keys --json` lists every key with its description, values,
+  pattern, default, current value and file.
+- **`config set` for profiles, quality checks and ALM** (REQ-507, REQ-508):
+  `profiles.<name>.<field>` (agent, advisory, cost hint, prices per token) in
+  `.harness/profiles.yaml`, `agent_profile`, `quality`, `diff_coverage`,
+  `mutation_score` and `checks.<name>.<field>` in `harness.config.yaml`, and
+  `alm.<key>` and `alm.pr.<key>` in `alm.config.yaml`, each edited line by
+  line, comments kept, and refused with `config_value_invalid` before the file
+  changes when the file's reader would refuse it. An `_env` key takes only a
+  variable's name; no key stores a token.
+- **Measured cost** (REQ-509): the run ledger records the tokens each agent
+  step's stream reported, under the profile that ran it — `--profile` and
+  `agent_profile` now record the profile's name — and
+  `harness report --json` gives `costByProfile`, each with its tokens, the
+  `estimated` and `measured` cost and the `basis`, priced by
+  `price_per_input_token` and `price_per_output_token` in the profile, and
+  `measuredCost`.
+
 ## [0.33.2] — 2026-11-11
 
 Each question says where it was asked and stays in sight until the spec is
