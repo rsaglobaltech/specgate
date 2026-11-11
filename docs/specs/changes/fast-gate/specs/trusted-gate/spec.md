@@ -12,7 +12,7 @@ The system SHALL, with `specgate check --affected`, compare the project with its
 - WHEN a tool runs `specgate check --affected --json`
 - THEN it exits 0, `selection.mode` is `affected`, `requirements` is `["REQ-001"]`, `tests` is REQ-001's test file alone, and the tests stage ran `node run-tests.js` with that one file
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-511 — A change to what every test depends on runs the whole suite
 
@@ -24,7 +24,7 @@ The system SHALL, when a changed file is one every test can depend on — `packa
 - WHEN a tool runs `specgate check --affected --json`
 - THEN `selection.mode` is `full`, its `reason` names `package-lock.json`, and the tests stage ran `node run-tests.js` with no file
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-512 — When nothing maps, the whole suite runs, and says why
 
@@ -36,7 +36,7 @@ The system SHALL never run no test silently under `check --affected`: when nothi
 - WHEN a tool runs `specgate check --affected --json`
 - THEN `selection.mode` is `full`, its `reason` names `src/helpers.sql` as linked to nothing, and the tests stage ran the whole suite
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-513 — The test command takes the selected files
 
@@ -48,7 +48,7 @@ The system SHALL fill `{files}` in the test command with the selected test files
 - WHEN a tool runs `specgate check --affected --json`, then sets `test_cmd_affected` to `node run-tests.js {files}` and runs it again
 - THEN the first answer has `selection.mode` `full` and the finding `affected_needs_files` naming `{files}`; the second ran `node run-tests.js` with `test/my req.test.js` as one argument
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-514 — The whole suite stays the default, and CI always runs it
 
@@ -60,7 +60,7 @@ The system SHALL run the whole suite on `specgate check` with no flag, as before
 - WHEN a tool runs `specgate check --json`, then `specgate check --ci --affected --json`
 - THEN both ran the whole suite with `selection.mode` `full`; the second has the finding `affected_ignored_ci` and no test file `cached`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-515 — apply runs the tests of the requirement it delivers
 
@@ -72,7 +72,7 @@ The system SHALL, when `specgate apply <REQ>` runs the tests, fill `{files}` wit
 - WHEN a person runs `specgate apply REQ-001`
 - THEN REQ-001 is Implemented and the tests that ran were REQ-001's test file alone
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-516 — A test that passed on the same code is not run again
 
@@ -84,7 +84,7 @@ The system SHALL, under `check --affected` with a command that takes `{files}`, 
 - WHEN `specgate check --affected --json` runs again, then REQ-001's source file changes and it runs a third time, then it runs with `--no-cache`
 - THEN the second answer lists REQ-001's test file under `cached` and ran no test; the third ran it; the fourth ran it and cached nothing
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-517 — validate, status and matrix grow linearly with the project
 
@@ -96,7 +96,7 @@ The system SHALL keep the time `validate --strict`, `status --json` and `matrix 
 - WHEN the benchmark runs `validate --strict`, `status --json` and `matrix --json` on each
 - THEN every run exits 0, and for each command the time on 2,000 is less than six times the time on 500
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-518 — The architecture check and the tests run side by side
 
@@ -108,7 +108,7 @@ The system SHALL, in `specgate check`, run `validate --strict` first and stop th
 - WHEN a tool runs `specgate check --json`, then sets `gate_parallel: false` and runs it again
 - THEN the first answer's architecture and tests stages both passed and overlapped in time; the second's ran one after the other
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-519 — Each stage says how long it took
 
@@ -120,4 +120,4 @@ The system SHALL give each entry of `stages` in `specgate check --json`, and of 
 - WHEN a tool runs `specgate check --json`, then `specgate check --last --json`
 - THEN the validate and tests stages have `ms` of at least 0 and 250, the architecture stage has `ms` null, and the last result gives the same
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
