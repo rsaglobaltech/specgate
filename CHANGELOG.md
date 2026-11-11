@@ -9,6 +9,33 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.33.2] — 2026-11-11
+
+Each question says where it was asked and stays in sight until the spec is
+confirmed; a scenario's title that names a requirement no longer declares it.
+
+### Added
+
+- **Where each question was asked** (REQ-481): every question of
+  `specgate questions --json` and the API's `questions(dir)` carries `asked` —
+  `brief` when its change was opened from a brief that asks it, `build` when
+  `specgate ask` added it while a requirement was built (recorded in an
+  `Asked` column of its row), `draft` otherwise.
+- **Answered questions waiting to be confirmed** (REQ-482):
+  `questions --json` and the API list them as `answered`, each with its
+  answer, until `specgate answer <Q> --reviewed` confirms the spec says it.
+  specgate-studio's Questions view keeps them in sight with "The spec says it".
+
+### Fixed
+
+- **A requirement id in a scenario heading declares nothing** (REQ-483): the
+  gate read every `REQ-…` in any heading from `##` to `####` as a declared
+  requirement, so "#### Scenario: SCN-252 — Apply on REQ-030 in the browser"
+  failed `validate --strict` with TDD-3:
+  `Requirement REQ-030 found in spec.md but has no row in traceability.md`.
+  Headings that start with Scenario, Escenario, Example or Ejemplo are now
+  skipped; requirement headings and table rows are read as before.
+
 ## [0.33.1] — 2026-11-10
 
 Each open question carries its options; a threshold with no value is flagged.

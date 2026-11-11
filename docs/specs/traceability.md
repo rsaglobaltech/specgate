@@ -267,6 +267,9 @@
 | REQ-478 | SCN-478a | `features/project-setup/REQ-478.feature` | - | - | - | - | - | tests/unit/technical-folders.test.ts | Approved |
 | REQ-479 | SCN-479a | `features/clarification/REQ-479.feature` | - | - | - | - | - | tests/unit/questions-options.test.ts | Approved |
 | REQ-480 | SCN-480a | `features/clarification/REQ-480.feature` | - | - | - | - | - | tests/unit/questions-options.test.ts | Approved |
+| REQ-481 | SCN-481a | `features/clarification/REQ-481.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
+| REQ-482 | SCN-482a | `features/clarification/REQ-482.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
+| REQ-483 | SCN-483a | `features/trusted-gate/REQ-483.feature` | - | - | - | - | - | tests/unit/scenario-heading-ids.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

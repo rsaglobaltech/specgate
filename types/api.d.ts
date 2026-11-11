@@ -59,6 +59,19 @@ export interface QuestionsAnswer {
       blocks: string[];
       /** The options its author listed in "Options seen"; empty when none (REQ-479). */
       options: string[];
+      /** Where it was asked: the brief, a draft, or the agent while it builds (REQ-481). */
+      asked: "brief" | "draft" | "build";
+      file: string;
+      line: number;
+    }>;
+    /** Answered, and not yet confirmed with `specgate answer <Q> --reviewed` (REQ-482). */
+    answered: Array<{
+      id: string;
+      change: string;
+      text: string;
+      blocks: string[];
+      answer: string;
+      asked: "brief" | "draft" | "build";
       file: string;
       line: number;
     }>;
