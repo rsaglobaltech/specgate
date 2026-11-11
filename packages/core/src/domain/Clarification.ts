@@ -68,6 +68,10 @@ export interface QuestionRow {
   options: string[];
   /** Its Status cell, lower-cased; empty without one. */
   status: string;
+  /** Its Answer cell as written; empty without one. */
+  answer: string;
+  /** Its Asked cell, lower-cased: `build` when `specgate ask` added it (REQ-481); empty without one. */
+  asked: string;
 }
 
 export interface AssumptionRow {
@@ -125,6 +129,7 @@ export function questionTable(md: string): QuestionRow[] {
   const answerAt = col(t, "answer", "respuesta");
   const optionsAt = col(t, "options seen", "options", "opciones");
   const statusAt = col(t, "status", "estado");
+  const askedAt = col(t, "asked");
   return t.rows.map((i) => {
     const c = cells(t.lines[i]);
     const answer = answerAt >= 0 ? c[answerAt] || "" : "";
@@ -136,6 +141,8 @@ export function questionTable(md: string): QuestionRow[] {
       answered: isAnswered([answer, ...(id ? answerLines(md, id) : [])]),
       line: i + 1,
       status: statusAt >= 0 ? (c[statusAt] || "").toLowerCase() : "",
+      answer,
+      asked: askedAt >= 0 ? (c[askedAt] || "").toLowerCase() : "",
       options: (optionsAt >= 0 ? c[optionsAt] || "" : "")
         .split(/\s*[;·]\s*/)
         .map((o) => o.trim())
@@ -237,9 +244,10 @@ export function addQuestion(
   md: string | undefined,
   change: string,
   text: string,
-  blocks: string[]
+  blocks: string[],
+  asked?: "build"
 ): { md: string; id: string } {
-  return appendRow(
+  const added = appendRow(
     md,
     `# Questions — ${change}`,
     QUESTION_HEADER,
@@ -247,6 +255,17 @@ export function addQuestion(
     (id) => `| ${id} | ${cell(text)} | ${blocks.join(", ")} |  |  | open |`,
     "Q"
   );
+  if (!asked) return added;
+  // Where it was asked, in its own column, read back by `questions` (REQ-481).
+  const t = table(added.md, /\bBlocks\b/i)!;
+  withColumns(t, ["Asked"]);
+  const askedAt = col(t, "asked");
+  const at = t.rows.find((i) => cells(t.lines[i])[0] === added.id)!;
+  const c = cells(t.lines[at]);
+  while (c.length <= askedAt) c.push("");
+  c[askedAt] = asked;
+  t.lines[at] = `| ${c.join(" | ")} |`;
+  return { md: t.lines.join("\n"), id: added.id };
 }
 
 /** `assumptions.md` with a new assumption from an answer, to review until the spec reflects it. */
@@ -305,12 +324,14 @@ export function upsertAssumption(
   return { md: t.lines.join(eolOf(md || "")), id: waiting.id };
 }
 
-/** `questions.md` with the question's Status set to reviewed, when the table has a Status column. */
+/** `questions.md` with the question's Status set to reviewed, the column added when it has none. */
 export function markQuestionReviewed(md: string, id: string): string {
   const t = table(md, /\bBlocks\b/i);
   const at = t ? t.rows.find((i) => cells(t.lines[i])[0] === id) : undefined;
-  const statusAt = t ? col(t, "status", "estado") : -1;
-  if (!t || at === undefined || statusAt < 0) return md;
+  if (!t || at === undefined) return md;
+  // An answer written by hand in a table with no Status: the column is added (REQ-482).
+  if (col(t, "status", "estado") < 0) withColumns(t, ["Status"]);
+  const statusAt = col(t, "status", "estado");
   const c = cells(t.lines[at]);
   while (c.length < t.cols.length) c.push("");
   c[statusAt] = "reviewed";

@@ -9,6 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **Where each question was asked** (REQ-481): every question of `specgate
+  questions --json` and the API's `questions(dir)` carries `asked` — `brief`
+  when its change was opened from a brief that asks it, `build` when `specgate
+  ask` added it while a requirement was built (recorded in an `Asked` column of
+  its row), `draft` otherwise.
+- **Answered questions waiting to be confirmed** (REQ-482): `questions --json`
+  and the API list them as `answered`, each with its answer, until `specgate
+  answer <Q> --reviewed` confirms the spec says it. specgate-studio's Questions
+  view keeps them in sight with "The spec says it".
+
 ## [0.33.1] — 2026-11-10
 
 Each open question carries its options; a threshold with no value is flagged.
