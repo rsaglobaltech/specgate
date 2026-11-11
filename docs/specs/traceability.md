@@ -270,6 +270,12 @@
 | REQ-481 | SCN-481a | `features/clarification/REQ-481.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
 | REQ-482 | SCN-482a | `features/clarification/REQ-482.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
 | REQ-483 | SCN-483a | `features/trusted-gate/REQ-483.feature` | - | - | - | - | - | tests/unit/scenario-heading-ids.test.ts | Approved |
+| REQ-484 | SCN-484a | `features/change-lifecycle/REQ-484.feature` | - | - | - | - | - | tests/unit/studio-review-notes.test.ts | Approved |
+| REQ-485 | SCN-485a | `features/change-lifecycle/REQ-485.feature` | - | - | - | - | - | tests/unit/studio-review-notes.test.ts | Approved |
+| REQ-486 | SCN-486a | `features/brief-cards/REQ-486.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Approved |
+| REQ-487 | SCN-487a | `features/brief-cards/REQ-487.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Approved |
+| REQ-488 | SCN-488a | `features/brief-cards/REQ-488.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Approved |
+| REQ-489 | SCN-489a | `features/project-setup/REQ-489.feature` | - | - | - | - | - | tests/unit/adopt-dry-run.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
