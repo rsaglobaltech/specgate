@@ -94,6 +94,22 @@ keeps them — stage, verdict, findings, and the diff coverage and mutation
 score of the lines it changed — and the report adds a section with the means
 and how often each check ran. `--json` carries it as `quality`.
 
+## Before it starts
+
+`specgate plan --json` estimates each pending requirement under `estimates`: its
+`time` in milliseconds and, when a profile declares `cost_per_run_hint`, its
+`cost`. Each number says its `basis`, from the strongest:
+
+| `basis`   | Taken from                                                              |
+| --------- | ----------------------------------------------------------------------- |
+| `history` | The mean of this requirement's own recorded runs.                       |
+| `size`    | Its scenario steps, at the time delivered requirements took per step.   |
+| `average` | The time per delivered requirement, failed attempts included.           |
+| `none`    | Nothing recorded supports a number: it is `null`.                       |
+
+`samples` says how many runs or requirements it rests on. Like the spend
+above, a cost is a declared price, not a measured one.
+
 ## Next
 
 - [The harness](harness.md)

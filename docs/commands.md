@@ -134,6 +134,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate harness prompt <REQ>`         | Prints the prompt an agent would get. Runs nothing.                         | [Choosing your agent](agent-setup.md)          |
 | `specgate harness report`               | First-attempt rate and time per delivered requirement.                      | [What the harness has cost](harness-report.md) |
 | `specgate harness events --from claude` | Turns Claude Code's stream into events for the live view.                   | [The harness](harness.md#watch-it-work)        |
+| `specgate harness stop --after-current` | Asks the running harness to stop after the requirement in progress.         | [Drive the harness](harness-control.md) |
 | `specgate studio`                       | The visual app, from an empty folder to the report; `/live`: the harness.   | `specgate studio --help`                       |
 | `specgate ci init`                      | Writes the CI job for GitHub, GitLab, Azure or Jenkins.                     | [Validating](validating.md)                    |
 | `specgate ci status`                    | What the CI gate checks, and what it lacks.                                | [Validating](validating.md)                    |

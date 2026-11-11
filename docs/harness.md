@@ -119,6 +119,14 @@ through `specgate harness events --from claude`:
 agent: "claude -p --output-format stream-json --verbose < {prompt_file} | specgate harness events --from claude"
 ```
 
+### Drive it from another tool
+
+A tool that starts the harness — an editor, specgate-studio — reads it as JSON:
+`--format jsonl` streams one event per line, `specgate harness stop
+--after-current` ends a run between requirements, `--allow-dirty` builds with
+uncommitted files, and a question the agent asks gets its id while the run goes
+on. See [Drive the harness from a tool](harness-control.md).
+
 ## Parallel branches and the traceability matrix
 
 Each harness branch changes its own row in `docs/specs/traceability.md`.

@@ -91,6 +91,7 @@ not run reports an `error` about itself.
 | `specgate specops diff --json` | `changes` | no |
 | `specgate harness run --format json` | `results` | no |
 | `specgate harness report --json` | `report` | no |
+| `specgate harness stop --after-current --json` | `stop` | no |
 
 The document key is what the payload carries on success and what is set to
 `null` on failure. Every document also carries `status`: an array of

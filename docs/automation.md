@@ -199,13 +199,17 @@ Each function answers exactly what the command prints with `--json`:
 | `status(dir)`    | `specgate status --json`           |
 | `questions(dir)` | `specgate questions --json`        |
 | `matrix(dir)`    | `specgate matrix --json --dry-run` |
+| `harnessStop(dir, { afterCurrent: true })` | `specgate harness stop --after-current --json` |
 
 The findings are under `status`, each with its code, message and fix, as in
-[the agent contract](specs/agent-contract.md). The functions only read: they
-write no file of the project — a derived matrix behind its specs is derived in
-memory, not rewritten — and start no process but `git ls-files`. A folder with
-no specgate project is refused with the code `not_a_project` and the fix
-`specgate init`.
+[the agent contract](specs/agent-contract.md). The reads write no file of the
+project — a derived matrix behind its specs is derived in memory, not
+rewritten — and start no process but `git ls-files`. `harnessStop` writes one
+file, the stop request beside the harness's events, ignored by git. A folder
+with no specgate project is refused with the code `not_a_project` and the fix
+`specgate init`. The documents `harness run` prints are typed there too:
+`HarnessRunReport` for `--format json`, and `HarnessStreamEvent` for each line
+of `--format jsonl`.
 
 The types ship with the package. `API_VERSION` is `1.0.0`; its major number
 changes only when an answer's shape breaks. Commands that change the project

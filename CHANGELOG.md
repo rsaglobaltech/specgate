@@ -9,6 +9,40 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **Build on a dirty tree, when asked** (REQ-490):
+  `specgate harness run --allow-dirty` cuts every branch from the last
+  commit and leaves the uncommitted and untracked files as they are. The JSON
+  result says so under `dirty`, with `leftOut` listing them. Refused with
+  `--chain`, which merges into that working copy; without the flag the refusal
+  now names it.
+- **Stop after the requirement in progress** (REQ-491, REQ-492):
+  `specgate harness stop --after-current [--json]` and `harnessStop(dir)` in
+  the API. The run finishes its requirement and starts no other; its JSON
+  result has `stopped` with `by` (`request` or `budget`), the reason and
+  `notAttempted`. With no run working there, nothing is requested
+  (`harness_not_running`). Nothing is killed, on any platform.
+- **An estimate per requirement** (REQ-493): `specgate plan --json` has
+  `estimates`, one per pending requirement — `time` in milliseconds and, when
+  a profile declares `cost_per_run_hint`, `cost` — each with its `basis`
+  (`history`, `size`, `average` or `none`) and the `samples` it rests on.
+- **A question gets its id while the run goes on** (REQ-494, REQ-495): when the
+  agent runs `specgate ask`, the harness writes the question into the project
+  and commits it at once, and a `question` event with its `id` follows in the
+  requirement's events file. The requirement ends as `question`; its result's
+  `waitingForAnswer` names the question and the command that answers it. The
+  run does not wait for the answer: it is reviewed before the specification
+  says it, and the requirement runs again after that.
+- **A live JSON stream** (REQ-496, REQ-497): `specgate harness run --format jsonl`
+  writes one JSON event per line on stdout — `run-start`, attempts, gate
+  stages, `agent-start`/`agent-end`, the agent's `output` as it comes, the
+  adapter's steps and `usage`, the question with its id, each `result`, and
+  last `run-end` with the `--format json` document — also from parallel
+  workers, each line whole. The schema is `HarnessStreamEvent` in
+  `types/api.d.ts` and in [Drive the harness from a tool](docs/harness-control.md).
+  The events files are unchanged.
+
 ## [0.33.2] — 2026-11-11
 
 Each question says where it was asked and stays in sight until the spec is
