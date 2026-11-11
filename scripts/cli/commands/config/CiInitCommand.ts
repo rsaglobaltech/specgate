@@ -142,7 +142,14 @@ export type GateWritten =
  */
 export function writeGate(
   projectDir: string,
-  opts: { provider?: string | null; minimal?: boolean; replace?: boolean; force?: boolean } = {}
+  opts: {
+    provider?: string | null;
+    minimal?: boolean;
+    replace?: boolean;
+    force?: boolean;
+    /** Say what would be written, writing nothing (REQ-489). */
+    dryRun?: boolean;
+  } = {}
 ): GateWritten {
   const provider = opts.provider ?? detectProvider(projectDir)?.provider ?? "github";
   const dest = PROVIDERS[provider].dest;
@@ -151,6 +158,7 @@ export function writeGate(
     return { written: false, provider, dest, why: "exists" };
   const old = provider === "github" && dest === GATE_FILE && fs.existsSync(at(OLD_SPECS_YML));
   if (old && !opts.replace) return { written: false, provider, dest, why: "old-specs" };
+  if (opts.dryRun) return { written: true, provider, dest };
   fs.mkdirSync(path.dirname(at(dest)), { recursive: true });
   fs.writeFileSync(at(dest), renderCi(provider, projectDir, !!opts.minimal), "utf8");
   if (old) fs.rmSync(at(OLD_SPECS_YML));

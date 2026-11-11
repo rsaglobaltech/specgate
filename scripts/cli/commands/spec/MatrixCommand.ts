@@ -61,6 +61,13 @@ export function derivedMatrixFor(projectDir: string, existing: string | null): s
  * Regenerate a derived project's matrix. Returns true when the file changed.
  * A hand-kept matrix is never touched.
  */
+/** Whether `ensureUnionMerge` would write .gitattributes: no line routes the matrix to a merge yet. */
+export function needsUnionMerge(projectDir: string): boolean {
+  const file = path.join(projectDir, ".gitattributes");
+  const existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+  return !/^docs\/specs\/traceability\.md\s+.*merge=/m.test(existing);
+}
+
 /** The `.gitattributes` line that makes git merge the generated matrix as a union. */
 export const UNION_MERGE_LINE = "docs/specs/traceability.md merge=union";
 
@@ -75,9 +82,9 @@ export const UNION_MERGE_LINE = "docs/specs/traceability.md merge=union";
  * registers) is left alone.
  */
 export function ensureUnionMerge(projectDir: string): void {
+  if (!needsUnionMerge(projectDir)) return;
   const file = path.join(projectDir, ".gitattributes");
   const existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
-  if (/^docs\/specs\/traceability\.md\s+.*merge=/m.test(existing)) return;
   const separator = existing === "" || existing.endsWith("\n") ? "" : "\n";
   fs.appendFileSync(
     file,
