@@ -9,6 +9,49 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+What specgate-studio needed as JSON: a draft's review notes, the brief as a
+form, a client's text proposed as a form, and a dry run of `adopt` that lists
+what it writes.
+
+### Added
+
+- **A draft's review notes as JSON** (REQ-484): `specgate change show <id> --json`
+  and the API's new `change(dir, id)` give `change.review` — each note of
+  `review.md` with its id (`N1`, `N2`…), date, text, requirement, `state`
+  (`open` or `addressed`), and its line; once addressed, the date and what
+  changed, each requirement's delta file, line, and text before and after.
+  `review.md` gains a `Status` column; a table without it reads as open.
+- **Drafting again hands the open notes to the agent** (REQ-485):
+  `specgate propose --from-brief <module> --agent <cmd>` puts every open note
+  in the agent's prompt, marks addressed those whose requirement the agent
+  changed, writes what changed below the table, and says it under
+  `draft.notes`: `given`, `addressed`, `open`.
+- **The brief as a form** (REQ-486, REQ-487):
+  `specgate propose --from-brief --form --json` and the API's `briefForm(dir)`
+  give the front matter's product, surfaces, actors and modules and each
+  module's prose, rules, examples and questions, every field with its line.
+  `--form <file>` (or `--form -`) and the API's `writeBriefForm(dir, form)`
+  write that form back, rewriting only the fields and card lists that changed:
+  CRLF stays CRLF, the text after the last section and every other section
+  stay byte for byte, and a form written back unchanged leaves the file
+  identical. The old studio's save uses the same code.
+- **A client's text proposed as a form** (REQ-488):
+  `specgate propose --from-brief --brief <file> --agent <cmd> --json` answers
+  what the agent proposed under `form`.
+
+### Fixed
+
+- **A brief outside the project writes nothing inside it** (REQ-488): it left
+  `docs/specs/BRIEF-SETUP.md` behind when the proposed front matter had
+  problems, and could move a root brief into it. Claude Code is given the
+  brief's folder with `--add-dir`, as it edits only where it runs.
+- **The studio's brief save keeps CRLF and the end of the file** (REQ-487): it
+  turned CRLF into LF, trimmed the end of the file, and collapsed blank lines
+  in sections that were not the form's.
+- **`adopt --dry-run` lists what `adopt --yes` writes** (REQ-489): README.md,
+  .gitattributes, harness.config.yaml and each agent file were missing, and
+  the CI gate was listed even when one was already there.
+
 ## [0.33.2] — 2026-11-11
 
 Each question says where it was asked and stays in sight until the spec is

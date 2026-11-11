@@ -64,7 +64,7 @@ import {
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
-import { approveChange, noteChange } from "../../../lib/change-review";
+import { approveChange, noteChange, reviewOf } from "../../../lib/change-review";
 import {
   declaredSpecValues,
   declaredCodeValues,
@@ -126,6 +126,8 @@ function verbUsage(sub: string) {
         `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --check | --new-brief | --agent <cmd>\n` +
         `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n` +
+        `    ${c.cyan}specgate propose --from-brief${c.reset} --form [<form.json> | -] [--brief <file>]\n` +
+        `                     ${c.dim}the brief as a form, each field with its line · that form written back, every other byte kept${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-ticket${c.reset} <KEY | issue.json> [--check] [--capability <name>]\n` +
         `                     [--agent <cmd>] [--no-branch] [--no-push]\n` +
         `                     ${c.dim}a Jira ticket as the source text: its Definition of Ready, then its change (docs/from-a-ticket.md)${c.reset}\n\n` +
@@ -680,21 +682,14 @@ function cmdImpact(opts: ChangeOptions) {
   });
 }
 
-function cmdShow(opts: ChangeOptions) {
-  const projectDir = resolveProjectDir(opts.projectDir);
+/**
+ * What `change show <id> --json` prints: the proposal's title, the deltas and
+ * what they touch, the tasks, and the review notes (REQ-484). Null when there
+ * is no such change. The API's `change(dir, id)` answers the same.
+ */
+export function changeShowAnswer(projectDir: string, changeId: string) {
   const p = paths(projectDir);
-  const changeId = opts.positional[0];
-  const nullShape = { change: null };
-
-  if (!changeId || !fs.existsSync(p.change(changeId))) {
-    return fail(opts, nullShape, [
-      error("change_not_found", `Change "${changeId || "(none)"}" does not exist.`, {
-        target: changeId,
-        fix: "Run `specgate change list`.",
-      }),
-    ]);
-  }
-
+  if (!changeId || !fs.existsSync(p.change(changeId))) return null;
   const deltas = listDeltas(projectDir, changeId).map((entry) => {
     const parsed = parseDelta(fs.readFileSync(entry.file, "utf8"));
     return {
@@ -705,44 +700,65 @@ function cmdShow(opts: ChangeOptions) {
       removed: parsed.removed.map((r) => r.heading),
     };
   });
-
   const proposalFile = path.join(p.change(changeId), "proposal.md");
   const proposal = fs.existsSync(proposalFile) ? fs.readFileSync(proposalFile, "utf8") : "";
   const titleMatch = /^#\s+(.+)$/m.exec(proposal);
   const progress = taskProgress(projectDir, changeId);
-
-  emit(
-    opts,
-    {
-      change: {
-        id: changeId,
-        title: titleMatch ? titleMatch[1] : changeId,
-        config: readConfig(projectDir, changeId),
-        deltaCount: deltas.length,
-        deltas,
-        tasks: { total: progress.total, complete: progress.complete },
-      },
+  return {
+    change: {
+      id: changeId,
+      title: titleMatch ? titleMatch[1] : changeId,
+      config: readConfig(projectDir, changeId),
+      deltaCount: deltas.length,
+      deltas,
+      tasks: { total: progress.total, complete: progress.complete },
+      review: reviewOf(projectDir, changeId),
     },
-    () => {
-      process.stdout.write(
-        ui.header("change show", changeId) +
-          `  ${c.bold}${titleMatch ? titleMatch[1] : changeId}${c.reset}\n\n`
-      );
-      if (deltas.length === 0) {
-        process.stdout.write(`    ${ui.muted("No delta specs.")}\n\n`);
-      }
-      for (const d of deltas) {
-        process.stdout.write(`  ${c.accent}${d.capability}${c.reset}  ${ui.muted(d.file)}\n`);
-        for (const r of d.added) process.stdout.write(ui.fileLine("added", r));
-        for (const r of d.modified) process.stdout.write(ui.fileLine("changed", r));
-        for (const r of d.removed) process.stdout.write(ui.fileLine("removed", r));
-        process.stdout.write("\n");
-      }
-      process.stdout.write(
-        `  ${c.bold}Tasks${c.reset}  ${ui.progress(progress.complete, progress.total, "complete")}\n\n`
-      );
+    status: [] as Diagnostic[],
+  };
+}
+
+function cmdShow(opts: ChangeOptions) {
+  const projectDir = resolveProjectDir(opts.projectDir);
+  const changeId = opts.positional[0];
+  const nullShape = { change: null };
+  const answer = changeShowAnswer(projectDir, changeId);
+  if (!answer) {
+    return fail(opts, nullShape, [
+      error("change_not_found", `Change "${changeId || "(none)"}" does not exist.`, {
+        target: changeId,
+        fix: "Run `specgate change list`.",
+      }),
+    ]);
+  }
+  const { deltas, title, review } = answer.change;
+  const progress = answer.change.tasks;
+  emit(opts, answer, () => {
+    process.stdout.write(ui.header("change show", changeId) + `  ${c.bold}${title}${c.reset}\n\n`);
+    if (deltas.length === 0) {
+      process.stdout.write(`    ${ui.muted("No delta specs.")}\n\n`);
     }
-  );
+    for (const d of deltas) {
+      process.stdout.write(`  ${c.accent}${d.capability}${c.reset}  ${ui.muted(d.file)}\n`);
+      for (const r of d.added) process.stdout.write(ui.fileLine("added", r));
+      for (const r of d.modified) process.stdout.write(ui.fileLine("changed", r));
+      for (const r of d.removed) process.stdout.write(ui.fileLine("removed", r));
+      process.stdout.write("\n");
+    }
+    process.stdout.write(
+      `  ${c.bold}Tasks${c.reset}  ${ui.progress(progress.complete, progress.total, "complete")}\n\n`
+    );
+    if (review.notes.length) {
+      process.stdout.write(ui.section(`Review notes ${ui.muted(`(${review.open} open)`)}`));
+      for (const n of review.notes) {
+        const mark = n.state === "open" ? ui.state("todo") : ui.state("done");
+        const about = n.requirement ? `${n.requirement}  ` : "";
+        const when = n.addressed ? ui.muted(`  addressed ${n.addressed.date}`) : "";
+        process.stdout.write(`  ${mark} ${ui.muted(n.id)}  ${about}${n.text}${when}\n`);
+      }
+      process.stdout.write("\n");
+    }
+  });
 }
 
 // ── status ────────────────────────────────────────────────────────────────────

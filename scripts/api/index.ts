@@ -1,5 +1,6 @@
 /**
- * @rsaglobaltech/specgate/api (change specgate-api, REQ-466 … REQ-469).
+ * @rsaglobaltech/specgate/api (change specgate-api, REQ-466 … REQ-469; change
+ * studio-json-gaps, REQ-484, REQ-486, REQ-487).
  *
  * Each function answers with the very document the command builds for
  * `--json`, so the two cannot drift; its signature is typed against
@@ -13,6 +14,10 @@ import { resolveProjectDir } from "../lib/project-root";
 import { statusAnswer } from "../cli/commands/spec/StatusCommand";
 import { questionsAnswer } from "../cli/commands/spec/ClarifyCommands";
 import { matrixAnswer } from "../cli/commands/spec/MatrixCommand";
+import { changeShowAnswer } from "../cli/commands/change/ChangeCommand";
+import { DEFAULT_BRIEF } from "../cli/commands/spec/DraftCommand";
+import { briefFormAnswer, formProblem, saveBriefFormFile } from "../lib/brief-form";
+import type { BriefFormInput } from "../../packages/core/src/domain/BriefForm";
 
 export const API_VERSION: typeof Api.API_VERSION = "1.0.0";
 
@@ -39,3 +44,38 @@ export const questions: typeof Api.questions = async (dir) =>
 
 export const matrix: typeof Api.matrix = async (dir) =>
   asPrinted<Api.MatrixAnswer>(matrixAnswer(project(dir)));
+
+/** `specgate change show <id> --json` (REQ-484); rejects with `change_not_found` for no such change. */
+export const change: typeof Api.change = async (dir, id) => {
+  const answer = changeShowAnswer(project(dir), id);
+  if (!answer) {
+    throw Object.assign(new Error(`Change "${id}" does not exist.`), {
+      code: "change_not_found",
+      fix: "specgate change list",
+    }) as Api.SpecgateApiError;
+  }
+  return asPrinted<Api.ChangeAnswer>(answer);
+};
+
+/** `specgate propose --from-brief --form --json` (REQ-486): docs/brief.md as a form; reads only. */
+export const briefForm: typeof Api.briefForm = async (dir) =>
+  asPrinted<Api.BriefFormAnswer>(briefFormAnswer(project(dir), DEFAULT_BRIEF));
+
+/**
+ * `specgate propose --from-brief --form <file> --json` (REQ-487): the one call
+ * that writes — docs/brief.md, and only the fields and module sections whose
+ * values changed. Rejects with `brief_form_invalid` for what is not a form.
+ */
+export const writeBriefForm: typeof Api.writeBriefForm = async (dir, form) => {
+  const resolved = project(dir);
+  const problem = formProblem(form);
+  if (problem) {
+    throw Object.assign(new Error(problem), {
+      code: "brief_form_invalid",
+      fix: "Pass what briefForm(dir) answered under `form`, with its values changed.",
+    }) as Api.SpecgateApiError;
+  }
+  return asPrinted<Api.BriefFormAnswer>(
+    saveBriefFormFile(resolved, DEFAULT_BRIEF, form as unknown as BriefFormInput)
+  );
+};
