@@ -12,7 +12,7 @@ The system SHALL accept `--capability <name>` on `specgate harness report` and t
 - WHEN a tool runs `specgate harness report --json --capability orders`
 - THEN `report.capability` is `orders`, one requirement was attempted and it passed
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-509 — The harness report gives the measured cost beside the estimate
 
@@ -24,4 +24,4 @@ The system SHALL record, for each agent step of an attempt whose stream reported
 - WHEN a tool runs `specgate harness report --json`
 - THEN `fast` has `measured` 0.002 and `basis` `measured`, `cheap` has `estimated` 0.2, `measured` null and `basis` `estimated`, and `measuredCost.total` is 0.002
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

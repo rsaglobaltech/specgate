@@ -18,7 +18,7 @@ The system SHALL list in `specgate matrix --json` and the API's `matrix(dir)`, a
 - WHEN a tool runs `specgate matrix --json --dry-run`
 - THEN REQ-002's row has `waiting` with `question` Q2 and `change` `draft-orders`, and REQ-001's rows have `waiting` null
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-500 — status names each requirement's capability
 
@@ -30,4 +30,4 @@ The system SHALL give each requirement of `specgate status --json` and the API's
 - WHEN a tool runs `specgate status --json`
 - THEN REQ-001 has `capability` null, REQ-002 has `orders` and REQ-003 has `billing`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

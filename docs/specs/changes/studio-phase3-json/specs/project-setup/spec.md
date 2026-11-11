@@ -12,7 +12,7 @@ The system SHALL answer `specgate config get`, `config set` and `config list` wi
 - WHEN a tool runs `specgate config list --json` and `specgate config get pet --json`
 - THEN the list has `files.test_cmd` `harness.config.yaml` and `files.pet` `.specgate/config.json`, and the get has `files.pet` `.specgate/config.json`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-506 — A catalog of every setting
 
@@ -24,7 +24,7 @@ The system SHALL list with `specgate config keys --json` every key `config set` 
 - WHEN a tool runs `specgate config keys --json`
 - THEN `test_cmd` has `current` `npm test` and `file` `harness.config.yaml`, `pet` has `values` `on` and `off` and `default` `on`, and both `profiles.<name>.agent` and `profiles.fast.agent` are listed with the file `.harness/profiles.yaml`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-507 — config set writes agent profiles
 
@@ -36,7 +36,7 @@ The system SHALL accept `specgate config set profiles.<name>.<field> <value>` fo
 - WHEN a tool runs `specgate config set profiles.fast.agent "claude -p < {prompt_file}"` and `specgate config set profiles.fast.price_per_input_token 0.000003`, then `specgate config set profiles.fast.price_per_output_token cheap --json`
 - THEN `.harness/profiles.yaml` declares `fast` with that agent and price, which `harness run --profile fast` reads; the last exits 2 with `config_value_invalid` and a fix, and the file is unchanged
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-508 — config set writes quality checks and ALM settings, never a credential
 
@@ -48,4 +48,4 @@ The system SHALL accept `specgate config set` for `quality`, `diff_coverage` and
 - WHEN a tool runs `specgate config set checks.lint.run "npm run lint"`, `config set checks.lint.when end`, `config set alm.provider jira` and `config set alm.token_env JIRA_TOKEN`, then `config set alm.token_env "ATATT3xFfGF0abc=123" --json` and `config set checks.lint.when later --json`
 - THEN `specgate quality list --json` shows the check `lint` at `end`, `alm.config.yaml` has `provider: jira` and `token_env: JIRA_TOKEN`, and the last two exit 2 with `config_value_invalid` and a fix, the first saying to name the variable that holds the token, with both files unchanged
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

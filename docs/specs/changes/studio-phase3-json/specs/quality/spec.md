@@ -12,7 +12,7 @@ The system SHALL accept `--capability <name>` on `specgate report`, in HTML and 
 - WHEN a tool runs `specgate report --format json --stdout --capability orders`, then `--capability nothing`
 - THEN the first report has `capability` `orders`, a total of 2 and only REQ-002 and REQ-003; the second exits 2 with `capability_unknown` and a fix that names `orders`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-499 — The coverage report gives the project's line coverage
 
@@ -24,4 +24,4 @@ The system SHALL give in `specgate report --format json` and the API's `report(d
 - WHEN a tool runs `specgate report --format json --stdout` and calls `report(dir)`, then removes the report and runs it again
 - THEN both first answers have `coverage.lines` with `percent` 80, `covered` 8, `total` 10, `tool` `lcov`, `file` `coverage/lcov.info` and `measuredAt`; the last has `coverage.lines` null and `coverage_not_measured` with a fix that names c8
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
