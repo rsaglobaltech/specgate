@@ -84,6 +84,23 @@ the provider that would have read it.
 Every URL must use `https` (plain `http` only for `localhost`), because the
 token is sent to it.
 
+`specgate config set` writes these keys without opening the file, creating it
+with `alm_version: 1` when there is none and keeping its other lines:
+
+```bash
+specgate config set alm.provider jira
+specgate config set alm.base_url https://acme.atlassian.net
+specgate config set alm.project_key KAN
+specgate config set alm.token_env JIRA_TOKEN
+specgate config set alm.pr.base main
+```
+
+Each key is `alm.<key>`, and the `pr:` block's are `alm.pr.<key>`; `epics` is
+written by hand. A key that ends in `_env` takes only a variable's name —
+capitals, digits and `_` — so a token pasted there is refused with
+`config_value_invalid`, and no key holds a token: `alm.token` is refused as
+`config_key_unknown`, with the fix that names the variable instead.
+
 **`cloud_id`.** A Jira token created _with scopes_, the kind Atlassian offers
 first, is refused by the site itself: Jira answers it as an anonymous request,
 so a search returns nothing instead of an error. Such a token works only

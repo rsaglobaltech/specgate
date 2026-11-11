@@ -37,6 +37,32 @@ the gate as `id_taken_on_base`, before two pull requests collide on merge.
 Run `check` before every pull request. `specgate apply` runs the same gate for
 the one requirement it delivers.
 
+### The stages, and the last result
+
+With `--json`, every answer — passed or failed — lists the gate's `stages` in
+the order it runs them: `ids`, `changes`, `validate`, `architecture`, `tests`,
+then one `quality` stage per check, with its `name`. Each has its `command`
+(`null` when it has none), its `result` (`passed`, `failed`, `skipped` when it
+is not configured or could not run, `not run` when an earlier stage failed)
+and its `findings`, each with `code`, `message`, `fix`, `file` and `line` when
+it has them. The `validate` stage carries validate's own findings, so a tool
+does not have to run `validate --json` again. A failed gate keeps `check: null`
+and its findings under `status`.
+
+Each check that reaches a verdict also keeps its result, in the repository's
+git folder (`.git/specgate/last-check.json`, or `.specgate/`, ignored there,
+outside git), so `git status` stays as it was. Read it back without running
+the gate:
+
+```bash
+specgate check --last          # passed or failed, when, on which commit, each stage
+specgate check --last --json   # lastCheck: ranAt, commit, branch, dirty, passed, ci, stages
+```
+
+With no check run yet, `lastCheck` is `null` and the finding `last_check_none`
+gives the fix `specgate check`. From Node, the API's `lastCheck(dir)` answers
+the same.
+
 ## Run it in CI
 
 `specgate init` and `specgate adopt` already wrote the job: the spec gate, for

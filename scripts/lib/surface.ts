@@ -776,6 +776,7 @@ export const SURFACE: Command[] = [
       { name: "set", script: ["config_set.js"], argsFrom: 1 },
       { name: "get", script: ["config_set.js"], argsFrom: 1 },
       { name: "list", script: ["config_set.js"], argsFrom: 1 },
+      { name: "keys", script: ["config_set.js"], argsFrom: 1 },
     ],
     help: {
       group: "dx",

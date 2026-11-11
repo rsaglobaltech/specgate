@@ -96,3 +96,24 @@ export function keepPrompt(projectDir: string, req: string, attempt: number, pro
     /* the view must not break the run */
   }
 }
+
+/** How many lines the events file has now; 0 when it has none. Never throws. */
+export function eventsLineCount(file: string): number {
+  return eventsLines(file).length;
+}
+
+/** The events lines written after the first `count`; never throws (REQ-509). */
+export function eventsLinesSince(file: string, count: number): string[] {
+  return eventsLines(file).slice(count);
+}
+
+function eventsLines(file: string): string[] {
+  try {
+    return fs
+      .readFileSync(file, "utf8")
+      .split(/\r?\n/)
+      .filter((l) => l.trim() !== "");
+  } catch {
+    return [];
+  }
+}
