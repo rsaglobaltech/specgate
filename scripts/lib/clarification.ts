@@ -10,6 +10,7 @@ import {
   upsertAssumption,
   type QuestionRow,
 } from "../../packages/core/src/domain/Clarification";
+import { moduleSection } from "../../packages/core/src/domain/BriefCards";
 import { listChangeIds } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { liveMatrix } from "./live-detail";
 import { refreshDerivedMatrix } from "../cli/commands/spec/MatrixCommand";
@@ -54,9 +55,35 @@ function write(file: string, text: string): void {
   fs.writeFileSync(file, text.endsWith("\n") ? text : `${text}\n`, "utf8");
 }
 
-export interface OpenQuestion extends QuestionRow {
+/** Where a question was asked (REQ-481). */
+export type Asked = "brief" | "draft" | "build";
+
+export interface OpenQuestion extends Omit<QuestionRow, "asked"> {
   change: string;
   file: string;
+  asked: Asked;
+}
+
+/** A question as compared with the brief's: case, spacing and closing marks aside. */
+const plain = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[`*_"“”¿?¡!.:]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * The questions of the brief's module a change was opened from — `brief:` in
+ * its `change.yaml`, the module in its id `draft-<module>` — compared plain.
+ */
+function briefQuestions(projectDir: string, change: string): Set<string> {
+  const yaml = read(path.join(changeDir(projectDir, change), "change.yaml")) || "";
+  const brief = /^brief:\s*(.+?)\s*$/m.exec(yaml)?.[1]?.replace(/^["']|["']$/g, "");
+  const module = /^draft-(.+)$/.exec(change)?.[1];
+  if (!brief || !module) return new Set();
+  const text = read(path.join(projectDir, brief));
+  const section = text ? moduleSection(text, module) : undefined;
+  return new Set((section?.questions ?? []).map((q) => plain(q.text)));
 }
 
 /** Every question of every open change, and of the project. */
@@ -66,8 +93,16 @@ export function allQuestions(projectDir: string): OpenQuestion[] {
     const file = questionsFile(projectDir, change);
     const md = read(file);
     if (!md) continue;
+    const fromBrief = change === PROJECT ? new Set<string>() : briefQuestions(projectDir, change);
     for (const q of questionTable(md)) {
-      out.push({ ...q, change, file: path.relative(projectDir, file).split(path.sep).join("/") });
+      const asked: Asked =
+        q.asked === "build" ? "build" : fromBrief.has(plain(q.text)) ? "brief" : "draft";
+      out.push({
+        ...q,
+        asked,
+        change,
+        file: path.relative(projectDir, file).split(path.sep).join("/"),
+      });
     }
   }
   return out;
@@ -76,9 +111,13 @@ export function allQuestions(projectDir: string): OpenQuestion[] {
 /** What waits for an answer: open questions, and requirements in Needs Clarification no open question names. */
 export function waiting(projectDir: string): {
   questions: OpenQuestion[];
+  /** Answered, and not yet confirmed with `answer --reviewed` (REQ-482). */
+  answered: OpenQuestion[];
   requirements: Array<{ requirement: string; title: string }>;
 } {
-  const questions = allQuestions(projectDir).filter((q) => !q.answered);
+  const all = allQuestions(projectDir);
+  const questions = all.filter((q) => !q.answered);
+  const answered = all.filter((q) => q.answered && q.status !== "reviewed");
   const named = new Set(questions.flatMap((q) => q.blocks));
   const seen = new Set<string>();
   const requirements: Array<{ requirement: string; title: string }> = [];
@@ -88,7 +127,7 @@ export function waiting(projectDir: string): {
     seen.add(row.requirement);
     requirements.push({ requirement: row.requirement, title: row.title });
   }
-  return { questions, requirements };
+  return { questions, answered, requirements };
 }
 
 export type AnswerOutcome =
@@ -335,7 +374,8 @@ export function ask(
     };
   }
   const qFile = questionsFile(projectDir, where.change);
-  const added = addQuestion(read(qFile), where.change, text, [req]);
+  // Asked while the requirement is built: the row says so (REQ-481).
+  const added = addQuestion(read(qFile), where.change, text, [req], "build");
   write(qFile, added.md);
   setWaiting(where.file, projectDir, req);
   return {

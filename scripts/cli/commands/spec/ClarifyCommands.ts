@@ -68,6 +68,19 @@ export function questionsDocument(w: ReturnType<typeof waiting>) {
         blocks: q.blocks,
         // As "Options seen" lists them (REQ-479): a tool never reads questions.md.
         options: q.options,
+        // The brief, a draft, or the agent while it builds (REQ-481).
+        asked: q.asked,
+        file: q.file,
+        line: q.line,
+      })),
+      // Answered, waiting for `answer --reviewed` (REQ-482).
+      answered: w.answered.map((q) => ({
+        id: q.id,
+        change: q.change,
+        text: q.text,
+        blocks: q.blocks,
+        answer: q.answer,
+        asked: q.asked,
         file: q.file,
         line: q.line,
       })),
