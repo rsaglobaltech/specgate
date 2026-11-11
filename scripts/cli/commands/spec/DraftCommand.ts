@@ -20,7 +20,12 @@ import { BaseCommand } from "../../../lib/command";
 import * as ui from "../../../lib/ui";
 import { c, sym } from "../../../lib/ui";
 import { agentIo, wantsJson } from "../../../lib/agent";
-import { error, info } from "../../../lib/diagnostics";
+import { error, errorMessage, info } from "../../../lib/diagnostics";
+import { briefFormAnswer, formProblem, saveBriefFormFile } from "../../../lib/brief-form";
+import type { BriefFormAnswer } from "../../../lib/brief-form";
+import type { BriefFormInput } from "../../../../packages/core/src/domain/BriefForm";
+import { changesFor, type ReviewNote } from "../../../../packages/core/src/domain/ReviewNotes";
+import { addressNotes, reviewNoteList } from "../../../lib/change-review";
 import { resolveProjectDir } from "../../../lib/project-root";
 import {
   actorSurfaces,
@@ -48,6 +53,7 @@ import type { ModuleCards } from "../../../draft/drafting-guide";
 import {
   NO_WRITE_HINT,
   runConfinedAgent,
+  withOutsideDir,
   withWritePermission,
 } from "../../../draft/confined-agent";
 import {
@@ -99,6 +105,11 @@ export interface DraftOptions {
   profile?: string;
   /** `--new-brief`: write docs/brief.md from the template. */
   newBrief: boolean;
+  /**
+   * `--form`: "" reads the brief as a form; a file, or `-` for standard input,
+   * is a form to write back into it (REQ-486, REQ-487).
+   */
+  form?: string;
   projectDir: string;
   json: boolean;
 }
@@ -123,7 +134,10 @@ function usage(): string {
     "  specgate draft --check               the brief rules (B1–B13) on the brief, before drafting\n" +
     "  specgate draft --check <change-id>   the checklist on any change\n" +
     "  specgate draft --new-brief           write docs/brief.md to fill in, when you have none\n" +
-    '  specgate draft --agent "claude -p"   have your agent propose the brief\'s front matter\n\n' +
+    '  specgate draft --agent "claude -p"   have your agent propose the brief\'s front matter\n' +
+    "  specgate draft --form [--json]       the brief as a form, each field with its line\n" +
+    "  specgate draft --form <file|->       write a form — that JSON, values changed — back\n" +
+    "                                       into the brief; every other byte of it is kept\n\n" +
     "  --brief <file>   Your plan or brief (default: docs/brief.md). Any markdown; a front\n" +
     "                   matter with modules, actors and surfaces lets the checklist do more.\n" +
     "  --reserve <n>    Requirement ids a new draft reserves (default 10, at most the --max-requirements).\n" +
@@ -186,7 +200,12 @@ export function parseArgs(argv: string[]): DraftOptions {
     } else if (a === "--agent") o.agent = value();
     else if (a === "--profile") o.profile = value();
     else if (a === "--new-brief") o.newBrief = true;
-    else if (a === "--project-dir") o.projectDir = value();
+    else if (a === "--form") {
+      // `--form` alone reads; `--form <file>` or `--form -` writes, as `--check [<id>]`.
+      const next = argv[i + 1];
+      if (next === undefined || (next.startsWith("-") && next !== "-")) o.form = "";
+      else o.form = value();
+    } else if (a === "--project-dir") o.projectDir = value();
     else if (a === "--json") o.json = true;
     else if (a === "--help" || a === "-h") {
       process.stdout.write(usage());
@@ -213,6 +232,14 @@ export function parseArgs(argv: string[]): DraftOptions {
   }
   if (!Number.isInteger(o.reserve) || o.reserve < 1 || o.reserve > o.maxRequirements) {
     throw new Error(`--reserve needs a whole number from 1 to ${o.maxRequirements}`);
+  }
+  if (
+    o.form !== undefined &&
+    (o.module || o.check || o.checkBrief || o.agent || o.profile || o.newBrief)
+  ) {
+    throw new Error(
+      "--form reads or writes the brief: run it on its own, with --brief <file> at most"
+    );
   }
   if (o.newBrief && (o.module || o.check || o.agent)) {
     throw new Error("--new-brief only writes the brief: run it on its own");
@@ -491,6 +518,28 @@ function nextModuleAfter(projectDir: string, brief: string, current: string): st
       (m) => m !== current && moduleStatus(projectDir, m, brief).state !== "archived"
     ) || null
   );
+}
+
+/**
+ * A brief kept outside the project — the client's text the studio proposes a
+ * form from (REQ-488): nothing is written inside the project for it, no guide
+ * and no move of a root brief.
+ */
+export function outsideProject(projectDir: string, brief: string): boolean {
+  // Both through realpath: /var and /private/var are one folder on macOS.
+  const real = (p: string) => {
+    try {
+      return fs.realpathSync(p);
+    } catch {
+      return p;
+    }
+  };
+  const abs = path.resolve(projectDir, brief);
+  const rel = path.relative(
+    real(projectDir),
+    path.join(real(path.dirname(abs)), path.basename(abs))
+  );
+  return rel === ".." || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel);
 }
 
 /** `docs/specs/BRIEF-SETUP.md`: the guide an agent follows to propose the front matter. */
@@ -776,6 +825,7 @@ export class DraftCommand extends BaseCommand {
         ]);
       }
     }
+    if (opts.form !== undefined) return this.form(opts);
     if (opts.checkBrief) return this.checkBrief(opts);
     if (opts.check) return this.check(opts);
     if (opts.module) return this.module(opts);
@@ -825,7 +875,8 @@ export class DraftCommand extends BaseCommand {
     const brief = { rel, text: text! };
     // REQ-259: the client's text at the root goes where the template asks
     // for it, before anything is explained or proposed over the placeholder.
-    const moved = withRootBrief(projectDir, brief.text);
+    const outside = outsideProject(projectDir, rel);
+    const moved = outside ? null : withRootBrief(projectDir, brief.text);
     if (moved) {
       fs.writeFileSync(file, moved.text, "utf8");
       brief.text = moved.text;
@@ -841,7 +892,7 @@ export class DraftCommand extends BaseCommand {
 
     // (b) No front matter: every field, explained, and the agent to propose it.
     if (frontMatter(brief.text) === null) {
-      writeSetupGuide(projectDir, rel);
+      if (!outside) writeSetupGuide(projectDir, rel);
       io.emit(
         {
           draft: {
@@ -919,7 +970,7 @@ export class DraftCommand extends BaseCommand {
       process.exitCode = 1;
       return;
     }
-    removeSetupGuide(projectDir);
+    if (!outside) removeSetupGuide(projectDir);
 
     // (c') The body: an empty brief, a module without its section or cards.
     const findings = checkBrief(brief.text, rel, projectSurfaces(projectDir));
@@ -1026,6 +1077,56 @@ export class DraftCommand extends BaseCommand {
     process.exitCode = errors > 0 ? 1 : 0;
   }
 
+  /**
+   * `--form`: the brief as a form, each field with its line (REQ-486); with a
+   * file, or `-` for standard input, that form written back into the brief,
+   * only what changed rewritten (REQ-487).
+   */
+  private form(opts: DraftOptions): void {
+    const io = agentIo(opts.json);
+    const projectDir = resolveProjectDir(opts.projectDir);
+    const brief = opts.brief || DEFAULT_BRIEF;
+    const nullShape = { form: null };
+    if (opts.form === "") {
+      const answer = briefFormAnswer(projectDir, brief);
+      io.emit({ ...answer }, () => writeForm(this.verb, answer));
+      return;
+    }
+    let input: unknown;
+    try {
+      const source =
+        opts.form === "-"
+          ? fs.readFileSync(0, "utf8")
+          : fs.readFileSync(path.resolve(opts.form!), "utf8");
+      input = JSON.parse(source);
+    } catch (err) {
+      io.fail(nullShape, [
+        error(
+          "brief_form_unreadable",
+          `The form ${opts.form} cannot be read as JSON: ${errorMessage(err)}`,
+          {
+            fix: "Pass the file `specgate propose --from-brief --form --json` printed, with its values changed.",
+          }
+        ),
+      ]);
+    }
+    // The whole answer `{ form, status }` is accepted as well as its `form`.
+    const form =
+      input && typeof input === "object" && "form" in (input as object)
+        ? (input as { form: unknown }).form
+        : input;
+    const problem = formProblem(form);
+    if (problem) {
+      io.fail(nullShape, [
+        error("brief_form_invalid", problem, {
+          fix: "Pass the file `specgate propose --from-brief --form --json` printed, with its values changed.",
+        }),
+      ]);
+    }
+    const answer = saveBriefFormFile(projectDir, brief, form as BriefFormInput);
+    io.emit({ ...answer }, () => writeForm(this.verb, answer));
+  }
+
   /** `--new-brief`: the template, never over a brief that exists. */
   private newBrief(opts: DraftOptions, file: string, rel: string): void {
     const io = agentIo(opts.json);
@@ -1072,6 +1173,7 @@ export class DraftCommand extends BaseCommand {
     brief: { rel: string; text: string }
   ): void {
     const io = agentIo(opts.json);
+    const outside = outsideProject(projectDir, brief.rel);
     if (frontMatter(brief.text) !== null && checkFrontMatter(brief.text).length === 0) {
       const modules = briefModules(brief.text);
       if (modules.length > 0 && readBriefBody(brief.text).modules.length === 0) {
@@ -1085,6 +1187,7 @@ export class DraftCommand extends BaseCommand {
             frontMatter: "ok",
             next: `specgate propose --from-brief ${first}`,
           },
+          form: briefFormAnswer(projectDir, brief.rel).form,
         },
         () =>
           process.stdout.write(
@@ -1097,12 +1200,17 @@ export class DraftCommand extends BaseCommand {
       );
       return;
     }
-    writeSetupGuide(projectDir, brief.rel);
+    if (!outside) writeSetupGuide(projectDir, brief.rel);
     const own = path
       .relative(projectDir, path.resolve(projectDir, brief.rel))
       .split(path.sep)
       .join("/");
     const agent = withWritePermission(opts.agent);
+    if (outside)
+      agent.command = withOutsideDir(
+        agent.command,
+        path.dirname(path.resolve(projectDir, brief.rel))
+      );
     if (!opts.json) {
       process.stdout.write(
         ui.header(`${this.verb} --agent`, brief.rel) +
@@ -1163,10 +1271,12 @@ export class DraftCommand extends BaseCommand {
       ]);
     }
     const problems = checkFrontMatter(after);
-    if (problems.length === 0) removeSetupGuide(projectDir);
+    if (problems.length === 0 && !outside) removeSetupGuide(projectDir);
     io.emit(
       {
         draft: { brief: brief.rel, frontMatter: proposed, next: "specgate propose --from-brief" },
+        // What the agent proposed, as the form the studio shows (REQ-488).
+        form: briefFormAnswer(projectDir, brief.rel).form,
         status: problems.map((p) => error(p.code, p.message, { fix: p.fix })),
       },
       () => {
@@ -1199,14 +1309,22 @@ export class DraftCommand extends BaseCommand {
   ): void {
     const io = agentIo(opts.json);
     const guide = briefCardsGuide(brief.rel, modules);
-    const guideFile = path.join(projectDir, BRIEF_CARDS_FILE);
-    fs.mkdirSync(path.dirname(guideFile), { recursive: true });
-    fs.writeFileSync(guideFile, guide, "utf8");
+    if (!outsideProject(projectDir, brief.rel)) {
+      const guideFile = path.join(projectDir, BRIEF_CARDS_FILE);
+      fs.mkdirSync(path.dirname(guideFile), { recursive: true });
+      fs.writeFileSync(guideFile, guide, "utf8");
+    }
     const own = path
       .relative(projectDir, path.resolve(projectDir, brief.rel))
       .split(path.sep)
       .join("/");
     const agent = withWritePermission(opts.agent);
+    if (outsideProject(projectDir, brief.rel)) {
+      agent.command = withOutsideDir(
+        agent.command,
+        path.dirname(path.resolve(projectDir, brief.rel))
+      );
+    }
     if (!opts.json) {
       process.stdout.write(
         ui.header(`${this.verb} --agent`, brief.rel) +
@@ -1267,7 +1385,8 @@ export class DraftCommand extends BaseCommand {
     }
     const findings = checkBrief(after, brief.rel, projectSurfaces(projectDir));
     const next = "specgate propose --from-brief --check";
-    io.emit({ draft: { brief: brief.rel, sections: added, next }, status: findings }, () => {
+    const form = briefFormAnswer(projectDir, brief.rel).form;
+    io.emit({ draft: { brief: brief.rel, sections: added, next }, form, status: findings }, () => {
       const out = process.stdout;
       out.write(ui.rule() + "\n");
       out.write(
@@ -1462,12 +1581,18 @@ export class DraftCommand extends BaseCommand {
           agentLine(agent.command, `is drafting ${opts.module}`, agent.added)
       );
     }
+    // REQ-485: the reviewer's open notes go to the agent, and the draft as it
+    // was is kept to tell which of them the agent then changed.
+    const given = reviewNoteList(projectDir, changeId).filter((n) => n.state === "open");
+    const before = deltaTexts(projectDir, changeId);
     const run = runConfinedAgent({
       projectDir,
       changeId,
       command: agent.command,
       prompt:
-        draftingPrompt(opts.module, changeId, guide) + openFindings(projectDir, changeId, brief),
+        draftingPrompt(opts.module, changeId, guide) +
+        openFindings(projectDir, changeId, brief) +
+        notesPrompt(given),
       showOutput: !opts.json,
     });
     if (run.problem === "no_git") {
@@ -1496,7 +1621,23 @@ export class DraftCommand extends BaseCommand {
         }),
       ]);
     }
-    this.report(opts, projectDir, brief, run.reverted, true);
+    const addressed = run.ok
+      ? given
+          .map((n) => ({
+            id: n.id,
+            changes: changesFor(n.requirement, before, deltaTexts(projectDir, changeId)),
+          }))
+          .filter((a) => a.changes.length > 0)
+      : [];
+    addressNotes(projectDir, changeId, addressed, new Date().toISOString().slice(0, 10));
+    const done = addressed.map((a) => a.id);
+    this.report(opts, projectDir, brief, run.reverted, true, {
+      given: given.map((n) => n.id),
+      addressed: done,
+      open: reviewNoteList(projectDir, changeId)
+        .filter((n) => n.state === "open")
+        .map((n) => n.id),
+    });
   }
 
   /** The checklist on `draft-<module>`, and what comes next. */
@@ -1505,11 +1646,13 @@ export class DraftCommand extends BaseCommand {
     projectDir: string,
     brief: string,
     reverted: string[] = [],
-    afterAgent = false
+    afterAgent = false,
+    given?: NotesGiven
   ): void {
     const io = agentIo(opts.json);
     const changeId = `draft-${opts.module}`;
     const status = moduleStatus(projectDir, opts.module, brief);
+    const notes = notesOf(projectDir, changeId, given);
     // The agent's own output is long and ends just above this: a rule marks
     // where Specgate takes over again, so the next step is not lost in it (#105).
     if (afterAgent && !opts.json) process.stdout.write(ui.rule());
@@ -1523,6 +1666,7 @@ export class DraftCommand extends BaseCommand {
             brief,
             prompt: pasteLine(opts.module),
             next: `specgate propose --from-brief ${opts.module}`,
+            ...(notes ? { notes } : {}),
           },
         },
         () =>
@@ -1566,6 +1710,7 @@ export class DraftCommand extends BaseCommand {
           skipped: report.skipped,
           reverted,
           next,
+          ...(notes ? { notes } : {}),
         },
         status: diags,
       },
@@ -1573,6 +1718,7 @@ export class DraftCommand extends BaseCommand {
         const out = process.stdout;
         out.write(afterAgent ? "\n" : ui.header(`${this.verb} ${opts.module}`, brief));
         writeFindings(report, diags);
+        if (notes) writeNotes(notes);
         const dir = `${CHANGES.split(path.sep).join("/")}/${changeId}`;
         const steps: Array<string | [string, string]> = [];
         if (errors === 0) {
@@ -1661,6 +1807,70 @@ function skippedNotes(report: ReturnType<typeof checkDraft>) {
   );
 }
 
+/** Which review notes a run gave the agent, which it addressed, which are open (REQ-485). */
+interface NotesGiven {
+  given: string[];
+  addressed: string[];
+  open: string[];
+}
+
+/** What `draft.notes` says: what this run gave, or — without an agent — the notes still open. */
+function notesOf(projectDir: string, changeId: string, given?: NotesGiven): NotesGiven | null {
+  if (given) return given;
+  const notes = reviewNoteList(projectDir, changeId);
+  if (notes.length === 0) return null;
+  return {
+    given: [],
+    addressed: [],
+    open: notes.filter((n) => n.state === "open").map((n) => n.id),
+  };
+}
+
+function writeNotes(notes: NotesGiven): void {
+  const out = process.stdout;
+  if (notes.given.length) {
+    out.write(
+      ui.info(
+        `The agent was given ${notes.given.length} requested change(s): ${notes.given.join(", ")}; ` +
+          `${notes.addressed.length ? `addressed ${notes.addressed.join(", ")}` : "it changed none of them"}.`
+      )
+    );
+  }
+  if (notes.open.length) {
+    out.write(
+      ui.info(
+        `${notes.open.length} requested change(s) still open: ${notes.open.join(", ")} ${ui.muted("— specgate change show <id>")}`
+      )
+    );
+  }
+}
+
+/** The deltas of a change, each with its path relative to the project. */
+function deltaTexts(projectDir: string, changeId: string): Array<{ file: string; source: string }> {
+  const specs = path.join(projectDir, CHANGES, changeId, "specs");
+  return specFiles(specs).map((rel) => ({
+    file: [CHANGES.split(path.sep).join("/"), changeId, "specs", rel].join("/"),
+    source: fs.readFileSync(path.join(specs, rel), "utf8"),
+  }));
+}
+
+/** The open review notes, for the agent's prompt (REQ-485). */
+export function notesPrompt(notes: ReviewNote[]): string {
+  if (notes.length === 0) return "";
+  return (
+    "\n\n---\n\n## The person reviewing this draft asked for these changes\n\n" +
+    "Make each of them in the draft. Edit the draft as it is: do not start it over, and change " +
+    "nothing else.\n\n" +
+    notes
+      .map(
+        (n) =>
+          `- ${n.id}, ${n.requirement ? `on ${n.requirement}` : "on the whole draft"}: ${n.text}`
+      )
+      .join("\n") +
+    "\n"
+  );
+}
+
 function writeFindings(report: ReturnType<typeof checkDraft>, status: Diagnostic[]): void {
   const out = process.stdout;
   out.write(
@@ -1672,6 +1882,64 @@ function writeFindings(report: ReturnType<typeof checkDraft>, status: Diagnostic
     out.write(d.severity === "error" ? ui.fail(line) : ui.info(line));
     if (d.fix && d.severity === "error") out.write(ui.fix(d.fix));
   }
+}
+
+/** `--form` in the terminal: the fields and their lines; `--json` has each card's. */
+function writeForm(verb: string, answer: BriefFormAnswer): void {
+  const out = process.stdout;
+  const f = answer.form;
+  out.write(ui.header(`${verb} --form`, f.brief));
+  if (!f.exists) {
+    out.write(ui.info(`There is no ${f.brief} yet: a form written with --form <file> creates it.`));
+    return;
+  }
+  if (f.written !== undefined) {
+    out.write(
+      f.written
+        ? ui.ok(`Wrote the form into ${f.brief}; every other line is as it was.`)
+        : ui.ok(`Nothing changed: ${f.brief} is as it was.`)
+    );
+  }
+  const at = (line: number | null) => ui.muted(line === null ? "—" : `line ${line}`);
+  out.write(
+    ui.kv(
+      "Product",
+      `${f.frontMatter.product.value || ui.muted("(none)")}  ${at(f.frontMatter.product.line)}`,
+      10
+    )
+  );
+  out.write(
+    ui.kv(
+      "Surfaces",
+      `${f.frontMatter.surfaces.value.join(", ") || ui.muted("(none)")}  ${at(f.frontMatter.surfaces.line)}`,
+      10
+    )
+  );
+  out.write(
+    ui.kv(
+      "Actors",
+      `${f.frontMatter.actors.value.map((a) => a.name).join(", ") || ui.muted("(none)")}  ${at(f.frontMatter.actors.line)}`,
+      10
+    )
+  );
+  out.write("\n" + ui.section("Modules"));
+  out.write(
+    ui.table(
+      f.modules.map((m) => [
+        m.key,
+        ui.muted(
+          `${m.rules.length} rule(s) · ${m.examples.length} example(s) · ${m.questions.length} question(s)  ${m.line === null ? "no section" : `line ${m.line}`}`
+        ),
+      ])
+    )
+  );
+  const errors = answer.status.filter((d) => d.severity === "error").length;
+  out.write(
+    "\n" +
+      ui.info(
+        `${answer.status.length} finding(s), ${errors} error(s) ${ui.muted("— --json gives every field with its line")}`
+      )
+  );
 }
 
 /** The brief rules' findings: code, the module they are about, message, fix. */

@@ -4,8 +4,9 @@ import * as path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
 import { writeHarnessCommand } from "../../packages/core/src/infrastructure/HarnessConfigFile";
-import { readBriefBody, moduleKey } from "../../packages/core/src/domain/BriefCards";
+import { moduleKey } from "../../packages/core/src/domain/BriefCards";
 import { briefModules } from "../../packages/core/src/domain/DraftChecklist";
+import { readBriefForm, writeBriefForm } from "../../packages/core/src/domain/BriefForm";
 import {
   HARNESS_CONFIG_FILE,
   readHarnessConfig,
@@ -22,7 +23,6 @@ import {
   listArchivedIds,
 } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { checkBrief, briefReady } from "../draft/brief-check";
-import { frontMatter } from "../draft/brief-setup";
 import { DEFAULT_BRIEF, draftReport, moduleStatus } from "../cli/commands/spec/DraftCommand";
 import { allQuestions, waiting } from "./clarification";
 import { liveMatrix } from "./live-detail";
@@ -643,166 +643,55 @@ function findingsOf(text: string) {
   }));
 }
 
-/** docs/brief.md read as the form the studio edits (REQ-214). */
+/** docs/brief.md read as the form the studio edits (REQ-214), through the shared form (REQ-487). */
 export function briefForm(projectDir: string): BriefForm {
   const text = read(path.join(projectDir, DEFAULT_BRIEF));
   if (text === undefined) {
     return { exists: false, product: "", actors: [], modules: [], markdown: "", findings: [] };
   }
-  const fm = frontMatter(text) || "";
-  const product = (/^product:[ \t]*(.*)$/m.exec(fm) || ["", ""])[1]
-    .trim()
-    .replace(/^["']|["']$/g, "");
-  // As written: actorSurfaces lowercases the names it compares.
-  const actors = [...fm.matchAll(/\{\s*name:\s*([^,}]+?)\s*,\s*surfaces:\s*\[([^\]]*)\]/g)]
-    .map((m) => ({
-      name: m[1].replace(/^["']|["']$/g, ""),
-      surfaces: m[2]
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    }))
-    .filter((a) => !a.name.includes("<"));
-  // A template's `## Module: <first-module>` is a blank, not a module.
-  const sections = new Map(
-    readBriefBody(text)
-      .modules.filter((m) => !m.name.startsWith("<"))
-      .map((m) => [moduleKey(m.name), m])
-  );
-  const keys = briefModules(text);
-  for (const k of sections.keys()) if (!keys.includes(k)) keys.push(k);
-  const modules = keys.map((key) => {
-    const s = sections.get(key);
-    return {
-      key,
-      name: s ? s.name : key,
-      prose: s ? s.prose : "",
-      rules: s ? s.rules.map((c) => c.text) : [],
-      examples: s ? s.examples.map((c) => c.text) : [],
-      questions: s ? s.questions.map((c) => c.text) : [],
-    };
-  });
-  return { exists: true, product, actors, modules, markdown: text, findings: findingsOf(text) };
-}
-
-/** Replace a top-level front matter field and its indented lines, or add it. */
-function setField(fm: string, name: string, block: string): string {
-  const lines = fm.split("\n");
-  const at = lines.findIndex((l) => new RegExp(`^${name}:`).test(l));
-  if (at < 0) return `${fm.trimEnd()}\n${block}`;
-  let end = at + 1;
-  while (end < lines.length && /^[ \t]+\S/.test(lines[end])) end += 1;
-  // Comments indented under the field are the author's notes on it: kept.
-  const notes = lines.slice(at + 1, end).filter((l) => /^[ \t]+#/.test(l));
-  const [head, ...rest] = block.split("\n");
-  return [...lines.slice(0, at), head, ...notes, ...rest, ...lines.slice(end)].join("\n");
-}
-
-function moduleSectionText(
-  form: BriefModuleForm,
-  cards: { rules: string; examples: string; questions: string }
-): string {
-  const list = (items: string[]) => items.map((t) => `- ${t.trim()}`).join("\n");
-  // A card the form left empty is not a card.
-  const filled = (items: string[]) => (items || []).filter((t) => String(t).trim());
-  const m = {
-    ...form,
-    prose: form.prose || "",
-    rules: filled(form.rules),
-    examples: filled(form.examples),
-    questions: filled(form.questions),
+  const form = readBriefForm(text);
+  return {
+    exists: true,
+    product: form.frontMatter.product.value,
+    actors: form.frontMatter.actors.value.map((a) => ({ name: a.name, surfaces: a.surfaces })),
+    modules: form.modules.map((m) => ({
+      key: m.key,
+      name: m.name,
+      prose: m.section === "module" ? m.prose.text : "",
+      rules: m.rules.map((c) => c.text),
+      examples: m.examples.map((c) => c.text),
+      questions: m.questions.map((c) => c.text),
+    })),
+    markdown: text,
+    findings: findingsOf(text),
   };
-  const parts = [`## Module: ${m.name.trim() || m.key}`];
-  if (m.prose.trim()) parts.push(m.prose.trim());
-  if (m.rules.length) parts.push(`${cards.rules}\n\n${list(m.rules)}`);
-  if (m.examples.length) parts.push(`${cards.examples}\n\n${list(m.examples)}`);
-  if (m.questions.length) parts.push(`${cards.questions}\n\n${list(m.questions)}`);
-  return parts.join("\n\n");
 }
 
 /**
- * A section under a plain `## <name>` heading whose name is the module's
- * (REQ-437): `## orders` written by hand, not `## Module: orders`. Its text runs
- * to the next `##` heading; `## Context` and the like name no module.
+ * The form written back into docs/brief.md (REQ-214), by the code the CLI and
+ * the API use (REQ-487): only what changed is rewritten, every other byte kept.
  */
-function plainSection(
-  body: string,
-  key: string
-): { source: string; name: string; prose: string } | null {
-  const lines = body.split("\n");
-  const at = lines.findIndex((l) => {
-    const h = /^##[ \t]+(.+?)[ \t]*$/.exec(l);
-    return !!h && !/^module:/i.test(h[1]) && moduleKey(h[1]) === key;
-  });
-  if (at < 0) return null;
-  let end = at + 1;
-  while (end < lines.length && !/^##\s/.test(lines[end])) end += 1;
-  const source = lines.slice(at, end).join("\n");
-  return {
-    source,
-    name: lines[at].replace(/^##[ \t]+/, "").trim(),
-    prose: lines
-      .slice(at + 1, end)
-      .join("\n")
-      .trim(),
-  };
-}
-
-/** The form written back into docs/brief.md, keeping every other line (REQ-214). */
 export function saveBriefForm(
   projectDir: string,
   form: Pick<BriefForm, "product" | "actors" | "modules">
 ): BriefForm {
   const file = path.join(projectDir, DEFAULT_BRIEF);
-  const text = (read(file) || "").replace(/\r\n/g, "\n");
-  const fmMatch = /^---\n([\s\S]*?)\n---[ \t]*\n?/.exec(text);
-  let fm = fmMatch ? fmMatch[1] : "";
-  let body = fmMatch ? text.slice(fmMatch[0].length) : text;
-
-  const modules = form.modules.filter((m) => (m.name || m.key).trim());
-  const keys = modules.map((m) => moduleKey(m.key || m.name));
-  const actors = form.actors.filter((a) => a.name.trim());
-  const surfaces = [...new Set(actors.flatMap((a) => a.surfaces))].filter((s) => !s.includes("<"));
-  fm = setField(fm, "product", `product: ${form.product.trim()}`);
-  fm = setField(fm, "surfaces", `surfaces: [${surfaces.join(", ")}]`);
-  fm = setField(
-    fm,
-    "actors",
-    [
-      "actors:",
-      ...actors.map((a) => `  - { name: ${a.name.trim()}, surfaces: [${a.surfaces.join(", ")}] }`),
-    ].join("\n")
-  );
-  fm = setField(fm, "modules", `modules: [${keys.join(", ")}]`);
-
-  const sections = readBriefBody(text).modules;
-  const spanish = sections.some((s) => /^\s*\**reglas/im.test(s.source));
-  const cards = spanish
-    ? { rules: "Reglas", examples: "Ejemplos", questions: "Preguntas" }
-    : { rules: "Rules", examples: "Examples", questions: "Questions" };
-  const byKey = new Map(sections.map((s) => [moduleKey(s.name), s]));
-  for (const s of sections) {
-    if (!keys.includes(moduleKey(s.name)))
-      body = body.replace(s.source, "").replace(/\n{3,}/g, "\n\n");
+  const text = read(file) || "";
+  const before = readBriefForm(text);
+  const out = writeBriefForm(text, {
+    frontMatter: { product: form.product, actors: form.actors },
+    // A hand-written `## orders` keeps its prose when the form says none (REQ-437).
+    modules: form.modules.map((m) => {
+      const was = before.modules.find((x) => x.key === moduleKey(m.key || m.name));
+      return was && was.section === "plain" && !String(m.prose || "").trim()
+        ? { ...m, prose: was.prose.text }
+        : m;
+    }),
+  });
+  if (out !== text || !fs.existsSync(file)) {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, out, "utf8");
   }
-  for (const m of modules) {
-    const key = moduleKey(m.key || m.name);
-    const existing = byKey.get(key);
-    const hasCards = m.rules.length || m.examples.length || m.questions.length || m.prose.trim();
-    const plain = existing ? null : plainSection(body, key);
-    if (existing) body = body.replace(existing.source, moduleSectionText(m, cards));
-    else if (plain) {
-      // REQ-437: `## orders` written by hand becomes the module's section, its prose in it.
-      const section = moduleSectionText(
-        { ...m, name: plain.name, prose: m.prose.trim() || plain.prose },
-        cards
-      );
-      body = body.replace(plain.source, `${section}\n\n`).replace(/\n{3,}/g, "\n\n");
-    } else if (hasCards) body = `${body.trimEnd()}\n\n${moduleSectionText(m, cards)}\n`;
-  }
-  const out = `---\n${fm.replace(/^\n+/, "")}\n---\n${body.startsWith("\n") ? "" : "\n"}${body.trimEnd()}\n`;
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, out, "utf8");
   return briefForm(projectDir);
 }
 

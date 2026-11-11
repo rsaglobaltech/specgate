@@ -2,7 +2,7 @@ import { mergeContract } from "../../../agents/contract-file";
 import { installDetectedAgents } from "../../../agents/detect";
 import { adoptionAreas, readinessText, settle } from "./readiness";
 import * as fs from "node:fs";
-import { migrateToDerived } from "../spec/MatrixCommand";
+import { migrateToDerived, needsUnionMerge } from "../spec/MatrixCommand";
 import * as path from "node:path";
 import { renderTemplate } from "../../../../packages/core/src/domain/PackSpec";
 import { slugify } from "./WizardCommand";
@@ -550,13 +550,17 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
     }
   }
 
-  if (!fs.existsSync(path.join(dir, "README.md")) && !opts.dryRun) {
-    fs.writeFileSync(
-      path.join(dir, "README.md"),
-      `# ${vars.PROJECT_NAME}\n\nBuild and test: \`${vars.TEST_CMD}\`\n`,
-      "utf8"
-    );
-    say("write README.md (was missing)");
+  if (!fs.existsSync(path.join(dir, "README.md"))) {
+    if (opts.dryRun) {
+      say("[dry-run] write README.md (was missing)");
+    } else {
+      fs.writeFileSync(
+        path.join(dir, "README.md"),
+        `# ${vars.PROJECT_NAME}\n\nBuild and test: \`${vars.TEST_CMD}\`\n`,
+        "utf8"
+      );
+      say("write README.md (was missing)");
+    }
     written++;
   }
 
@@ -678,6 +682,9 @@ export class AdoptProjectCommand extends BaseCommand {
     // `done` and `new` write spec.md, and the gate keeps it honest.
     if (!opts.dryRun && !opts.keepMatrix && migrateToDerived(dir)) {
       logInfo("- Traceability: generated from spec.md, tags and tests (`specgate matrix`)");
+    } else if (opts.dryRun && !opts.keepMatrix && needsUnionMerge(dir)) {
+      // The matrix adopt writes is generated, and git merges it as a union (REQ-489).
+      logInfo("[dry-run] write .gitattributes (the generated matrix merges as a union)");
     }
 
     logInfo("📋 Summary");
