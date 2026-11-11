@@ -92,9 +92,16 @@ const REQUIREMENT_HEADING = /^(#{2,4})\s+(.*)$/;
  * a table row. Matching "a heading that names the id" covers the first three
  * without a fifth special case the next document would break anyway.
  */
+/**
+ * A scenario's heading, which declares no requirement whatever ids its title
+ * names: "#### Scenario: SCN-252 — Apply on REQ-030 in the browser" is about
+ * REQ-030, it does not specify it (REQ-483).
+ */
+const SCENARIO_HEADING = /^(scenario|escenario|example|ejemplo)\b/i;
+
 function headingRequirementIds(line: string): { level: number; ids: string[] } | null {
   const m = REQUIREMENT_HEADING.exec(line.trim());
-  if (!m) return null;
+  if (!m || SCENARIO_HEADING.test(m[2])) return null;
   const ids = m[2].match(/\bREQ-[A-Za-z0-9.]+\b/g) || [];
   return ids.length > 0 ? { level: m[1].length, ids } : null;
 }
