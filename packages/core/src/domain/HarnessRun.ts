@@ -94,7 +94,10 @@ export function featureFilePath(req: HarnessRequirement): string {
 
 export function substituteGateCommand(template: string, req: HarnessRequirement): string {
   const featureFile = featureFilePath(req);
+  // `{files}` is check's and apply's (REQ-513): the harness runs the whole suite.
   return template
+    .split("{files}")
+    .join("")
     .split("{req}")
     .join(req.requirement || "")
     .split("{scenario}")

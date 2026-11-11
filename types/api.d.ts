@@ -172,7 +172,28 @@ export interface GateStage {
   gate?: boolean;
   command: string | null;
   result: "passed" | "failed" | "skipped" | "not run";
+  /** How long the stage took, in milliseconds; null when it did not run (REQ-519). */
+  ms: number | null;
   findings: Finding[];
+}
+
+/** Which tests `specgate check` ran, and why (REQ-510 … REQ-516). */
+export interface TestSelection {
+  /** `affected`: the tests of what changed; `full`: the whole suite. */
+  mode: "affected" | "full";
+  reason: string;
+  /** The ref the change was compared with; null when none was. */
+  base: string | null;
+  /** The files changed since the base, project-relative. */
+  changed: string[];
+  /** The requirements the change touches. */
+  requirements: string[];
+  /** The test files selected; empty when the whole suite runs. */
+  tests: string[];
+  /** Selected test files not run again: they passed before on the same code. */
+  cached: string[];
+  /** The command that ran; null when none did. */
+  command: string | null;
 }
 
 /** `specgate check --last --json` (REQ-504). */
@@ -190,6 +211,8 @@ export interface LastCheckAnswer {
     passed: boolean;
     ci: boolean;
     stages: GateStage[];
+    /** Which tests it ran; absent from a check kept before 0.34.0. */
+    selection?: TestSelection;
   } | null;
   /** The findings that check answered with. */
   status: Finding[];

@@ -84,6 +84,9 @@ test("a failing architecture check fails the gate before the tests run", () => {
   const { parent, dir } = adopted();
   try {
     const marker = path.join(dir, "tests-ran");
+    // Side by side is the default since REQ-518 (tests/unit/gate-parallel.test.ts);
+    // one after the other, the tests still never run after the architecture failed.
+    cli("config", "set", "gate_parallel", "false", "--project-dir", dir);
     cli("config", "set", "arch_cmd", 'node -e "process.exit(1)"', "--project-dir", dir);
     cli(
       "config",

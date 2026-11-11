@@ -32,6 +32,7 @@ import { deriveRows, setTraceFields } from "../../../../packages/core/src/domain
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { forShell } from "../../../lib/shell-command";
+import { applyTestCommand, requirementTestFiles } from "../../../lib/test-selection";
 
 /** A row of the generated matrix, as far as `done` reads it. Core returns them untyped. */
 interface DerivedRow {
@@ -276,12 +277,15 @@ export class DoneCommand extends BaseCommand {
     // REQ-001 --check` printed a tick over a matrix pointing at files that do
     // not exist. Four documentation pages said it "validates first".
     const harness: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
+    // REQ-515: the requirement's own tests, through `{files}` or `{req}`.
+    const testCmd = applyTestCommand(opts.testCmd, harness);
     const plan = planDoneVerification(dir, {
       check: opts.check,
       strict: opts.strict,
       reqId: id,
-      testCmd: opts.testCmd || harness.testCmd,
+      testCmd,
       archCmd: harness.archCmd,
+      files: (testCmd || "").includes("{files}") ? requirementTestFiles(projectDir, [id]) : "",
     });
 
     for (const step of plan.steps) {
@@ -449,7 +453,7 @@ export class DoneCommand extends BaseCommand {
       { ok: boolean; code?: string; message?: string; detail?: string }
     >();
     const harness: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
-    const testCmd = opts.testCmd || harness.testCmd;
+    const testCmd = applyTestCommand(opts.testCmd, harness);
     const gated = opts.check && DELIVERED_STATUSES.includes(opts.status);
     const tracePath = path.join(dir, TRACE);
 
@@ -523,9 +527,11 @@ export class DoneCommand extends BaseCommand {
     }
     if (passing.length > 0 && opts.check && passing.every((id) => results.get(id)!.ok)) {
       // One requirement fills `{req}`; several run the suite for the whole project (REQ-183).
+      // REQ-515: `{files}` holds the tests of every requirement given.
       const cmd = gateTestCommand(
         (testCmd || "").trim(),
-        passing.length === 1 ? passing[0] : undefined
+        passing.length === 1 ? passing[0] : undefined,
+        (testCmd || "").includes("{files}") ? requirementTestFiles(projectDir, passing) : ""
       );
       if (cmd === "") {
         testsUnverified = true;

@@ -186,6 +186,45 @@ const YAML: KeySpec[] = [
     kind: "number",
     check: number(0, 100),
   },
+  // ── The fast gate (REQ-511, REQ-513, REQ-518) ─────────────────────────────────
+  {
+    key: "test_cmd_affected",
+    description:
+      "What `check --affected` and `apply` run instead of test_cmd, with {files} where the selected test files go.",
+    values: null,
+    pattern: "\\{(files|req)\\}",
+    default: null,
+    file: HARNESS_FILE,
+    kind: "string",
+    check: (v) =>
+      /\{(files|req)\}/.test(v)
+        ? null
+        : 'Put {files} where your runner takes test files, e.g. "npx vitest run {files}" — without it, the whole suite runs anyway.',
+  },
+  {
+    key: "full_on",
+    description:
+      "Globs of files whose change makes `check --affected` run the whole suite, comma-separated.",
+    values: null,
+    pattern: null,
+    default: null,
+    file: HARNESS_FILE,
+    kind: "names",
+    check: (v) =>
+      v.split(",").some((g) => g.trim())
+        ? null
+        : 'Give at least one glob, e.g. "src/generated/**,db/schema.sql".',
+  },
+  {
+    key: "gate_parallel",
+    description:
+      "Whether `check` runs the architecture check and the tests side by side; false runs them one after the other.",
+    values: ["true", "false"],
+    pattern: null,
+    default: true,
+    file: HARNESS_FILE,
+    kind: "boolean",
+  },
   // ── Quality checks: one `- name:` item of `checks:` (ADR-0040) ──────────────
   ...(
     [

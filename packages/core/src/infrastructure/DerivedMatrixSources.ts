@@ -46,6 +46,15 @@ const CODE_EXT =
 const MAX_BYTES = 1_000_000;
 const MAX_FILES = 20_000;
 
+/**
+ * Is this a test file by its name — `x.test.ts`, `test_x.py`, `x_test.go`,
+ * `XTest.java` — the files a runner runs, not the helpers beside them?
+ */
+export function isTestByName(rel: string): boolean {
+  const name = rel.slice(rel.lastIndexOf("/") + 1);
+  return CODE_EXT.test(name) && TEST_NAME.test(name);
+}
+
 /** Is this a test file by the conventions of the common stacks? */
 export function isTestFile(rel: string): boolean {
   const parts = rel.split("/");

@@ -146,6 +146,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate quality baseline`             | Records today's SARIF findings as debt: only new ones fail from then on.    | `specgate quality --help`                      |
 | `specgate check --ci`                   | The gate in CI: also the `ci` checks, and a check that cannot run fails.    | [Validating](validating.md)                    |
 | `specgate check --last`                 | The last gate result, its commit and stages, without running the gate.      | [Validating](validating.md#the-stages-and-the-last-result) |
+| `specgate check --affected`             | Only the tests of what changed since the base; the whole suite when it cannot say. `--no-cache`. | [A faster gate](fast-gate.md) |
 | `specgate verify`                       | For OpenSpec projects: fails while a done scenario has no test naming it.   | [Already on OpenSpec](openspec.md)             |
 | `specgate report`                       | A spec-coverage dashboard as one HTML file; `--format json`, `--capability`. | `specgate report --help`                       |
 | `specgate doctor`                       | Diagnoses the project and the environment, with a fix per finding.          | [Troubleshooting](troubleshooting.md)          |
@@ -180,7 +181,8 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | Command                                | What it does                                                                   | Details                       |
 | -------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------- |
 | `specgate config set test_cmd "<cmd>"` | The tests `check` and `apply` run.                                             | `specgate config set --help`  |
-| `specgate config set arch_cmd "<cmd>"` | Your architecture check, run by the gate before the tests.                     | [Validating](validating.md)   |
+| `specgate config set arch_cmd "<cmd>"` | Your architecture check, run by the gate beside the tests.                     | [Validating](validating.md)   |
+| `specgate config set test_cmd_affected "<cmd> {files}"` | What `check --affected` and `apply` run, `{files}` the selected tests. | [A faster gate](fast-gate.md) |
 | `specgate config set profile full`     | Makes `--help` list every command (`core` lists the loop).                     | `specgate config set --help`  |
 | `specgate config set language es`      | The language of generated prose. Keywords stay in English.                     | `specgate config set --help`  |
 | `specgate config set profiles.<name>.<field>` | An agent profile in `.harness/profiles.yaml`: agent, advisory, cost, prices. | [Choosing your agent](agent-setup.md#commit-the-commands-your-team-uses) |

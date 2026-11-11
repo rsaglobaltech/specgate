@@ -20,6 +20,8 @@ export interface GateStage {
   gate?: boolean;
   command: string | null;
   result: StageResult;
+  /** How long it took, in milliseconds; null for a stage that did not run (REQ-519). */
+  ms: number | null;
   findings: Diagnostic[];
 }
 
@@ -37,6 +39,7 @@ export class GateStages {
       ...extra,
       command,
       result: "not run" as StageResult,
+      ms: null as number | null,
       findings: [] as Diagnostic[],
     });
     this.stages = [
@@ -54,7 +57,7 @@ export class GateStages {
     stage: StageName,
     result: StageResult,
     findings: Diagnostic[] = [],
-    extra: { name?: string; command?: string | null } = {}
+    extra: { name?: string; command?: string | null; ms?: number | null } = {}
   ): void {
     const s = this.stages.find(
       (x) => x.stage === stage && (extra.name === undefined || x.name === extra.name)
@@ -63,6 +66,7 @@ export class GateStages {
     s.result = result;
     s.findings = findings;
     if (extra.command !== undefined) s.command = extra.command;
+    if (extra.ms !== undefined) s.ms = extra.ms === null ? null : Math.round(extra.ms);
   }
 
   /** Every stage, as `--json` prints it. */
