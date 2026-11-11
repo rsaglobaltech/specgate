@@ -22,6 +22,7 @@ import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic
 import { requirementReadiness } from "../../../../packages/core/src/domain/RequirementReadiness";
 import { analyseGherkinSource } from "../../../../packages/core/src/domain/GherkinQuality";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
+import { planEstimates } from "../../../lib/requirement-estimates";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
@@ -312,6 +313,8 @@ function emitJson(items: PlanItem[], projectDir: string, orphans: string[]): voi
     next: actionable.length ? actionable[0].requirement : null,
     requirements: camelItems,
     orphanFeatures: orphans,
+    // REQ-493: what each pending requirement will take, each number with its basis.
+    estimates: planEstimates(projectDir, camelItems),
     status: [],
   };
   process.stdout.write(`${JSON.stringify(doc, null, 2)}\n`);

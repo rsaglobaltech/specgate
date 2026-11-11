@@ -13,6 +13,7 @@ import { resolveProjectDir } from "../lib/project-root";
 import { statusAnswer } from "../cli/commands/spec/StatusCommand";
 import { questionsAnswer } from "../cli/commands/spec/ClarifyCommands";
 import { matrixAnswer } from "../cli/commands/spec/MatrixCommand";
+import { stopAfterCurrent } from "../lib/harness-guard";
 
 export const API_VERSION: typeof Api.API_VERSION = "1.0.0";
 
@@ -39,3 +40,19 @@ export const questions: typeof Api.questions = async (dir) =>
 
 export const matrix: typeof Api.matrix = async (dir) =>
   asPrinted<Api.MatrixAnswer>(matrixAnswer(project(dir)));
+
+/**
+ * `specgate harness stop --after-current --json` (REQ-492). Unlike the reads
+ * above, it writes one file when a run is working: the stop request beside
+ * the events, which the run reads between requirements.
+ */
+export const harnessStop: typeof Api.harnessStop = async (dir, options) => {
+  const resolved = project(dir);
+  if (!options || options.afterCurrent !== true) {
+    throw Object.assign(new Error("harnessStop needs { afterCurrent: true }."), {
+      code: "usage",
+      fix: "harnessStop(dir, { afterCurrent: true })",
+    });
+  }
+  return asPrinted<Api.HarnessStopAnswer>(stopAfterCurrent(resolved));
+};

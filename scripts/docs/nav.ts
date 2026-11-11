@@ -374,6 +374,12 @@ export const NAV: readonly NavSection[] = [
         blurb: "Unattended delivery: plan → agent → gate → apply, one worktree per requirement.",
       },
       {
+        slug: "harness-control",
+        label: "Drive the harness from a tool",
+        blurb:
+          "The JSON stream, stop after the current requirement, a dirty tree, questions with ids.",
+      },
+      {
         slug: "harness-report",
         label: "What the harness has cost",
         blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",

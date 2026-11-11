@@ -754,6 +754,18 @@ export const SURFACE: Command[] = [
         },
         json: { key: "report", gate: false },
       },
+      {
+        // REQ-491: what the studio's Stop button and a person at a terminal both use.
+        name: "stop",
+        mcp: false,
+        script: ["harness", "stop.js"],
+        help: {
+          group: "harness",
+          icon: "⏹",
+          summary: "Ask the running harness to stop after the requirement in progress.",
+        },
+        json: { key: "stop", gate: false, args: "--after-current" },
+      },
     ],
   },
 

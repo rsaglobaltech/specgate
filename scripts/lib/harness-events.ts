@@ -6,6 +6,7 @@ import {
   secretValues,
   type HarnessEvent,
 } from "../../packages/core/src/domain/HarnessEvents";
+import { streamEvent } from "./harness-stream";
 
 /**
  * Writing harness events (ADR-0037): `.harness/events/<REQ>.jsonl`, git-ignored.
@@ -58,6 +59,8 @@ export function appendEvent(
   } catch {
     /* the view must not break the run */
   }
+  // The same event on the run's stream, when it streams (REQ-496).
+  streamEvent(event, req, attempt);
 }
 
 /** The run's queue, in the order it works through it (REQ-182). */

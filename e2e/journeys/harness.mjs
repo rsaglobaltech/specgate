@@ -59,4 +59,22 @@ export default [
       );
     },
   },
+  {
+    name: "harness stop asks a run to stop, and says when there is none",
+    covers: ["harness stop"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      const r = t.sg(dir, "harness", "stop", "--after-current", "--json");
+      t.ok(r, "harness stop --after-current");
+      const answer = t.json(r);
+      t.expect(answer.stop.requested === false, "with no run, nothing is requested", r);
+      t.expect(
+        answer.status.some((s) => s.code === "harness_not_running"),
+        "the answer says no run is working",
+        r
+      );
+      t.usage(t.sg(dir, "harness", "stop", "--json"), "harness stop without --after-current");
+    },
+  },
 ];
