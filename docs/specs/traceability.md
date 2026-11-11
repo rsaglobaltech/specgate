@@ -270,6 +270,14 @@
 | REQ-481 | SCN-481a | `features/clarification/REQ-481.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
 | REQ-482 | SCN-482a | `features/clarification/REQ-482.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
 | REQ-483 | SCN-483a | `features/trusted-gate/REQ-483.feature` | - | - | - | - | - | tests/unit/scenario-heading-ids.test.ts | Approved |
+| REQ-490 | SCN-490a, SCN-490b | `features/harness/REQ-490.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-491 | SCN-491a, SCN-491b | `features/harness/REQ-491.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-492 | SCN-492a | `features/harness/REQ-492.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-493 | SCN-493a | `features/harness/REQ-493.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-494 | SCN-494a | `features/harness/REQ-494.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-495 | SCN-495a | `features/harness/REQ-495.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-496 | SCN-496a | `features/harness/REQ-496.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-497 | SCN-497a | `features/harness/REQ-497.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
