@@ -4,8 +4,11 @@
  * Each function answers what the command prints with `--json`: its data, and
  * its findings under `status`. They only read — no file of the project is
  * written and no process is started — except `harnessStop`, which writes the
- * stop request a running harness reads, and `writeBriefForm`, which writes
- * docs/brief.md and nothing else. API_VERSION's major number changes only when
+ * stop request a running harness reads, `writeBriefForm`, which writes
+ * docs/brief.md and nothing else, and the agent's plans (change agent-ask):
+ * `agentAsk` runs the project's agent on a scratch copy and keeps its plan in
+ * the git folder, `agentApply` writes the plan's files and runs its checks,
+ * `agentDiscard` removes a plan. API_VERSION's major number changes only when
  * an answer's shape breaks; functions are added without changing it.
  *
  * The documents `specgate harness run` prints are declared here too, though no
@@ -38,7 +41,15 @@ export interface SpecgateApiError extends Error {
     | "usage"
     | "change_not_found"
     | "brief_form_invalid"
-    | "capability_unknown";
+    | "capability_unknown"
+    | "agent_not_set"
+    | "agent_failed"
+    | "agent_needs_git"
+    | "agent_mode_unknown"
+    | "missing_argument"
+    | "plan_not_found"
+    | "plan_stale"
+    | "edit_refused";
   fix: string;
 }
 
@@ -172,7 +183,28 @@ export interface GateStage {
   gate?: boolean;
   command: string | null;
   result: "passed" | "failed" | "skipped" | "not run";
+  /** How long the stage took, in milliseconds; null when it did not run (REQ-519). */
+  ms: number | null;
   findings: Finding[];
+}
+
+/** Which tests `specgate check` ran, and why (REQ-510 … REQ-516). */
+export interface TestSelection {
+  /** `affected`: the tests of what changed; `full`: the whole suite. */
+  mode: "affected" | "full";
+  reason: string;
+  /** The ref the change was compared with; null when none was. */
+  base: string | null;
+  /** The files changed since the base, project-relative. */
+  changed: string[];
+  /** The requirements the change touches. */
+  requirements: string[];
+  /** The test files selected; empty when the whole suite runs. */
+  tests: string[];
+  /** Selected test files not run again: they passed before on the same code. */
+  cached: string[];
+  /** The command that ran; null when none did. */
+  command: string | null;
 }
 
 /** `specgate check --last --json` (REQ-504). */
@@ -190,6 +222,8 @@ export interface LastCheckAnswer {
     passed: boolean;
     ci: boolean;
     stages: GateStage[];
+    /** Which tests it ran; absent from a check kept before 0.34.0. */
+    selection?: TestSelection;
   } | null;
   /** The findings that check answered with. */
   status: Finding[];
@@ -553,6 +587,84 @@ export interface BriefFormInput {
   }>;
 }
 
+/** One file of an agent's plan (REQ-520). */
+export interface AgentPlanFile {
+  /** Relative to the project, with forward slashes. */
+  path: string;
+  change: "modify" | "add" | "delete";
+  /** The agent's reason, from its `.specgate-ask.json`; empty when it gave none. */
+  why: string;
+  /** The unified diff, `--- a/<path>` / `+++ b/<path>`. */
+  diff: string;
+}
+
+/** `specgate agent ask "<request>" --json` (REQ-520 … REQ-523, REQ-526). */
+export interface AgentAskAnswer {
+  plan: {
+    /** Null when the agent changed nothing: an empty plan is not kept (`plan_empty`). */
+    id: string | null;
+    request: string;
+    /** The only mode: spec.md, docs/specs/** and features/**. */
+    mode: "spec";
+    created: string;
+    files: AgentPlanFile[];
+    /** The specgate checks `agentApply` runs after writing. */
+    then: string[];
+    /** The files given as context and the ones the agent reported reading. */
+    read: string[];
+    /** Null tokens when the agent did not report them (`claude -p --output-format json` does). */
+    usage: { input: number | null; output: number | null; cost?: number };
+  };
+  /** `mention_unresolved`, `edit_refused`, `then_refused`, `plan_empty`. */
+  status: Finding[];
+}
+
+/** `specgate agent plans --json` (REQ-522). */
+export interface AgentPlansAnswer {
+  plans: Array<{
+    id: string;
+    request: string;
+    created: string;
+    files: Array<{ path: string; change: "modify" | "add" | "delete" }>;
+    /** A file changed since the agent started: `agentApply` would refuse `plan_stale`. */
+    stale: boolean;
+  }>;
+  status: Finding[];
+}
+
+/** `specgate agent apply <id> --json` (REQ-524, REQ-525). Nothing is staged or committed. */
+export interface AgentApplyAnswer {
+  applied: {
+    id: string;
+    written: Array<{ path: string; change: "modify" | "add" | "delete" }>;
+    then: Array<{ command: string; exit: number; findings: Finding[] }>;
+  } | null;
+  /** `then_failed` for a check that exited non-zero. */
+  status: Finding[];
+}
+
+/** `specgate agent discard <id> --json` (REQ-522). */
+export interface AgentDiscardAnswer {
+  discarded: { id: string };
+  status: Finding[];
+}
+
+/** What `agentAsk` takes besides the request (REQ-527). */
+export interface AgentAskOptions {
+  /** The agent's command; else `profile`, else `agent:` in harness.config.yaml. */
+  agent?: string;
+  /** A profile of .harness/profiles.yaml. */
+  profile?: string;
+  /** As `--req`: requirements given as context. */
+  req?: string[];
+  /** As `--file`: files given as context. */
+  files?: string[];
+  /** "spec", the only mode. */
+  mode?: "spec";
+  /** As `--timeout`: 900 by default. */
+  timeoutSeconds?: number;
+}
+
 export declare function status(dir: string): Promise<StatusAnswer>;
 export declare function questions(dir: string): Promise<QuestionsAnswer>;
 export declare function matrix(dir: string): Promise<MatrixAnswer>;
@@ -574,3 +686,19 @@ export declare function report(
 ): Promise<ReportAnswer>;
 /** The last gate result `specgate check` kept, without running the gate (REQ-504). */
 export declare function lastCheck(dir: string): Promise<LastCheckAnswer>;
+/**
+ * Runs the project's agent on a scratch copy and answers its plan (REQ-520);
+ * writes only the plan, in the git folder. Rejects `agent_not_set`,
+ * `agent_failed`, `agent_needs_git`, `agent_mode_unknown`.
+ */
+export declare function agentAsk(
+  dir: string,
+  request: string,
+  options?: AgentAskOptions
+): Promise<AgentAskAnswer>;
+/** Writes a plan and runs its checks (REQ-524, REQ-525); rejects `plan_stale`, `plan_not_found`. */
+export declare function agentApply(dir: string, id: string): Promise<AgentApplyAnswer>;
+/** Removes a plan (REQ-522); rejects `plan_not_found`. */
+export declare function agentDiscard(dir: string, id: string): Promise<AgentDiscardAnswer>;
+/** The open plans (REQ-522). */
+export declare function agentPlans(dir: string): Promise<AgentPlansAnswer>;

@@ -242,6 +242,12 @@ export const NAV: readonly NavSection[] = [
         blurb: "Every check the gate runs, what each status owes, and the flags behind check.",
       },
       {
+        slug: "fast-gate",
+        label: "A fast gate",
+        blurb:
+          "Run only the tests a change touches, reuse the ones that passed, arch and tests side by side.",
+      },
+      {
         slug: "quality",
         label: "Quality: Sonar, SpotBugs, coverage",
         blurb:
@@ -378,6 +384,12 @@ export const NAV: readonly NavSection[] = [
         label: "Drive the harness from a tool",
         blurb:
           "The JSON stream, stop after the current requirement, a dirty tree, questions with ids.",
+      },
+      {
+        slug: "agent-ask",
+        label: "Ask your agent",
+        blurb:
+          "A plan with its diff before anything is written: apply it, or discard it. What the studio's agent panel runs.",
       },
       {
         slug: "harness-report",

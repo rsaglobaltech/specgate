@@ -115,9 +115,11 @@ export function requirementsIn(spec: string): DerivedRequirement[] {
     .replace(/\r\n/g, "\n")
     .split("\n");
   const found: DerivedRequirement[] = [];
+  const seen = new Set<string>();
   for (let i = 0; i < lines.length; i += 1) {
     const m = SECTION_HEADING.exec(lines[i].trim());
-    if (!m || found.some((r) => r.id === m[2])) continue;
+    if (!m || seen.has(m[2])) continue;
+    seen.add(m[2]);
     const level = m[1].length;
     let trace: Record<string, string> = {};
     for (let j = i + 1; j < lines.length; j += 1) {
@@ -138,35 +140,108 @@ function mentions(source: string, id: string): boolean {
   return new RegExp(`(^|[^A-Za-z0-9])${escaped}(?![A-Za-z0-9])`).test(source);
 }
 
-/** The scenarios tagged with a requirement: `[{ scn, feature }]`, in file order. */
-function taggedScenarios(
-  features: ReadonlyArray<SourceFile>,
-  id: string
-): Array<{ scn: string; feature: string }> {
-  const out: Array<{ scn: string; feature: string }> = [];
-  for (const f of [...features].sort((a, b) => a.path.localeCompare(b.path))) {
-    for (const tags of Object.values(specgateTagsByScenario(f.source))) {
-      if (!tags.includes(`@${id}`)) continue;
-      const scn = tags.find((t) => t.startsWith("@SCN-"));
-      out.push({ scn: scn ? scn.slice(1) : "-", feature: f.path });
-    }
-  }
-  return out;
+const ALNUM = /[A-Za-z0-9]/;
+const INDEXED_PREFIXES = ["REQ-", "SCN-"];
+
+/**
+ * `REQ-12.3` → `REQ-12`: the prefix and the letters and digits after it. A
+ * mention of an id starts a run whose key is the id's own key, so the files
+ * that can mention it are found by key and confirmed with `mentions`.
+ */
+function mentionKey(text: string, at: number): string {
+  let end = at + 4;
+  while (end < text.length && ALNUM.test(text[end])) end++;
+  return text.slice(at, end);
 }
 
-/** A test or source file that names the requirement is its link. */
-function linkByMention(trace: Record<string, string>, id: string, sources: DerivationSources) {
-  const named = (files: ReadonlyArray<SourceFile>) =>
-    files
+/**
+ * Which files can mention which id, read once (REQ-517).
+ *
+ * Linking by mention ran one regular expression per requirement over every
+ * test and source file: 2,000 requirements and 4,000 files were eight million
+ * scans, and `validate` on such a project took most of a minute. Each file is
+ * read once for the places an id starts; a requirement then tests only the
+ * files that hold its key, with the same `mentions` as before.
+ */
+class MentionIndex {
+  private readonly byKey = new Map<string, number[]>();
+
+  constructor(private readonly files: ReadonlyArray<SourceFile>) {
+    files.forEach((f, i) => {
+      const seen = new Set<string>();
+      for (const prefix of INDEXED_PREFIXES) {
+        for (let at = f.source.indexOf(prefix); at >= 0; at = f.source.indexOf(prefix, at + 1)) {
+          if (at > 0 && ALNUM.test(f.source[at - 1])) continue;
+          const key = mentionKey(f.source, at);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          const list = this.byKey.get(key);
+          if (list) list.push(i);
+          else this.byKey.set(key, [i]);
+        }
+      }
+    });
+  }
+
+  /** The paths of the files that name `id`, sorted. */
+  naming(id: string): string[] {
+    const candidates = INDEXED_PREFIXES.some((p) => id.startsWith(p))
+      ? (this.byKey.get(mentionKey(id, 0)) || []).map((i) => this.files[i])
+      : this.files;
+    return candidates
       .filter((f) => mentions(f.source, id))
       .map((f) => f.path)
       .sort();
+  }
+}
+
+/** The features' tagged scenarios, parsed once and kept by tag (REQ-517). */
+class TagIndex {
+  private readonly byTag = new Map<string, Array<{ scn: string; feature: string }>>();
+
+  constructor(features: ReadonlyArray<SourceFile>) {
+    for (const f of [...features].sort((a, b) => a.path.localeCompare(b.path))) {
+      for (const tags of Object.values(specgateTagsByScenario(f.source))) {
+        const scn = tags.find((t) => t.startsWith("@SCN-"));
+        const entry = { scn: scn ? scn.slice(1) : "-", feature: f.path };
+        for (const tag of new Set(tags)) {
+          const list = this.byTag.get(tag);
+          if (list) list.push(entry);
+          else this.byTag.set(tag, [entry]);
+        }
+      }
+    }
+  }
+
+  /** The scenarios tagged with a requirement: `[{ scn, feature }]`, in file order. */
+  tagged(id: string): Array<{ scn: string; feature: string }> {
+    return (this.byTag.get(`@${id}`) || []).map((e) => ({ ...e }));
+  }
+}
+
+/** What deriving the rows reads many times, indexed once per derivation. */
+interface DerivationIndex {
+  tests: MentionIndex;
+  code: MentionIndex;
+  tags: TagIndex;
+}
+
+function indexSources(sources: DerivationSources): DerivationIndex {
+  return {
+    tests: new MentionIndex(sources.tests),
+    code: new MentionIndex(sources.code || []),
+    tags: new TagIndex(sources.features),
+  };
+}
+
+/** A test or source file that names the requirement is its link. */
+function linkByMention(trace: Record<string, string>, id: string, index: DerivationIndex) {
   if (!trace.test) {
-    const tests = named(sources.tests);
+    const tests = index.tests.naming(id);
     if (tests.length > 0) trace.test = tests.join(", ");
   }
   if (!trace.artifact) {
-    const code = named(sources.code || []);
+    const code = index.code.naming(id);
     if (code.length > 0) trace.artifact = code.join(", ");
   }
 }
@@ -196,18 +271,11 @@ function linkByMention(trace: Record<string, string>, id: string, sources: Deriv
 function scenarioVariants(
   trace: Record<string, string>,
   scenarios: ReadonlyArray<{ scn: string; feature: string }>,
-  sources: DerivationSources,
+  index: DerivationIndex,
   explicitTest: boolean
 ): Array<Record<string, string>> {
   if (scenarios.length === 0) return [trace];
-  const naming = scenarios.map((s) =>
-    s.scn === "-"
-      ? []
-      : sources.tests
-          .filter((f) => mentions(f.source, s.scn))
-          .map((f) => f.path)
-          .sort()
-  );
+  const naming = scenarios.map((s) => (s.scn === "-" ? [] : index.tests.naming(s.scn)));
   const byScenario = !explicitTest && naming.some((n) => n.length > 0);
   return scenarios.map((s, i) => {
     const row: Record<string, string> = { ...trace, scn: s.scn, feature: s.feature };
@@ -225,14 +293,15 @@ function scenarioVariants(
 /** The matrix rows the sources imply. */
 export function deriveRows(sources: DerivationSources): TraceRow[] {
   const rows: TraceRow[] = [];
+  const index = indexSources(sources);
   for (const req of requirementsIn(sources.spec)) {
     const trace: Record<string, string> = { ...req.trace };
     const explicitTest = Boolean(trace.test);
     if (!trace.uc && req.title) trace.uc = req.title;
-    linkByMention(trace, req.id, sources);
+    linkByMention(trace, req.id, index);
 
-    const scenarios = trace.scn || trace.feature ? [] : taggedScenarios(sources.features, req.id);
-    const variants = scenarioVariants(trace, scenarios, sources, explicitTest);
+    const scenarios = trace.scn || trace.feature ? [] : index.tags.tagged(req.id);
+    const variants = scenarioVariants(trace, scenarios, index, explicitTest);
 
     for (const t of variants) {
       const row = TraceabilityMatrix.traceRow({ id: req.id, trace: t });
@@ -257,13 +326,13 @@ export function deriveRows(sources: DerivationSources): TraceRow[] {
       const trace: Record<string, string> = { ...(req.trace || {}) };
       const explicitTest = Boolean(trace.test);
       // Archived requirements link the same way: by being named.
-      linkByMention(trace, req.id, sources);
+      linkByMention(trace, req.id, index);
       // And by their tagged scenarios, one row each, as spec.md requirements
       // do. Capability requirements got a single scenario-less row, so a
       // requirement installed from a pack — or archived from a change — never
       // showed the scenarios that demonstrate it.
-      const scenarios = trace.scn || trace.feature ? [] : taggedScenarios(sources.features, req.id);
-      const variants = scenarioVariants(trace, scenarios, sources, explicitTest);
+      const scenarios = trace.scn || trace.feature ? [] : index.tags.tagged(req.id);
+      const variants = scenarioVariants(trace, scenarios, index, explicitTest);
       for (const t of variants) {
         const row = TraceabilityMatrix.traceRow({ ...req, trace: t });
         if (t.depends) row.dependsOn = String(t.depends).split(",").filter(Boolean);

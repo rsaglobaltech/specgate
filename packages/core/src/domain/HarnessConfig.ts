@@ -12,6 +12,15 @@ export interface HarnessSettings {
   quality?: QualityConfig;
   testCmd: string;
   /**
+   * What `check --affected` and `apply` run instead of `test_cmd`, with
+   * `{files}` or `{req}` (REQ-513): `test_cmd` stays the whole suite.
+   */
+  testCmdAffected?: string;
+  /** Globs of files whose change makes `check --affected` run everything (REQ-511). */
+  fullOn?: string[];
+  /** False: `check` runs the architecture check and the tests one after the other (REQ-518). */
+  gateParallel?: boolean;
+  /**
    * The team's architecture check (ArchUnit, dependency-cruiser, import-linter…),
    * run between validation and the tests wherever the gate runs (ADR-0028).
    * Empty: the architecture is not checked, and `check` says so.

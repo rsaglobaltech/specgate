@@ -810,6 +810,37 @@ export const SURFACE: Command[] = [
     ],
   },
   {
+    // REQ-520 … REQ-526: the studio's agent panel. Its caller is a person's
+    // tool, not an agent: no MCP tool asks another agent for a plan.
+    name: "agent",
+    script: ["agent", "cli.js"],
+    mcp: false,
+    editsContract: true,
+    subcommands: [
+      {
+        name: "ask",
+        help: {
+          group: "dx",
+          icon: "💬",
+          summary: "Your agent proposes a spec change as a plan with its diff; nothing is written.",
+        },
+        json: { key: "plan", gate: false, args: '"<request>"' },
+      },
+      {
+        name: "apply",
+        json: { key: "applied", gate: false, args: "<plan-id>" },
+      },
+      {
+        name: "discard",
+        json: { key: "discarded", gate: false, args: "<plan-id>" },
+      },
+      {
+        name: "plans",
+        json: { key: "plans", gate: false },
+      },
+    ],
+  },
+  {
     name: "update",
     editsContract: true,
     script: ["update.js"],

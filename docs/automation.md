@@ -202,6 +202,10 @@ Each function answers exactly what the command prints with `--json`:
 | `report(dir, { capability })`              | `specgate report --format json --stdout [--capability <name>]` |
 | `lastCheck(dir)`                           | `specgate check --last --json`                                 |
 | `harnessStop(dir, { afterCurrent: true })` | `specgate harness stop --after-current --json`                 |
+| `agentAsk(dir, request, options)`          | `specgate agent ask "<request>" --json`                         |
+| `agentApply(dir, id)`                      | `specgate agent apply <id> --json`                             |
+| `agentDiscard(dir, id)`                    | `specgate agent discard <id> --json`                           |
+| `agentPlans(dir)`                          | `specgate agent plans --json`                                  |
 
 `matrix(dir)` lists the rows one per scenario as `matrix.scenarios`, each with
 its `requirement`, `scenario`, `feature`, `tests`, `code`, `status`, the links
@@ -219,7 +223,10 @@ file, the stop request beside the harness's events, ignored by git. A folder
 with no specgate project is refused with the code `not_a_project` and the fix
 `specgate init`. The documents `harness run` prints are typed there too:
 `HarnessRunReport` for `--format json`, and `HarnessStreamEvent` for each line
-of `--format jsonl`.
+of `--format jsonl`. The agent's plans are the exception that starts a
+process: `agentAsk` runs your agent on a scratch copy and keeps its plan in
+the git folder, and `agentApply` writes the plan's files and runs its checks —
+see [Ask your agent](agent-ask.md).
 
 The types ship with the package. `API_VERSION` is `1.0.0`; its major number
 changes only when an answer's shape breaks. Commands that change the project

@@ -17,6 +17,7 @@ import { spawnSync } from "node:child_process";
 import { info } from "./diagnostics";
 import type { Diagnostic } from "./diagnostics";
 import type { GateStage } from "./gate-stages";
+import type { TestSelection } from "./test-selection";
 
 export const LAST_CHECK_FILE = "last-check.json";
 const STATE_DIR = ".specgate";
@@ -34,6 +35,8 @@ export interface LastCheck {
   /** `check --ci`: the ci-stage quality checks ran too. */
   ci: boolean;
   stages: GateStage[];
+  /** Which tests it ran, and why (REQ-510); absent from a check older than it. */
+  selection?: TestSelection;
   /** The findings the check answered with. */
   status: Diagnostic[];
 }
@@ -61,10 +64,34 @@ export function gitDirOf(dir: string): string | null {
 
 /** Where the last check is kept: the git folder's `specgate/`, else `.specgate/`. */
 function stateFile(projectDir: string): { file: string; inGit: boolean } {
+  return stateFileFor(projectDir, LAST_CHECK_FILE);
+}
+
+/**
+ * Where this machine's state named `name` is kept beside the last check — the
+ * git folder's `specgate/`, else `.specgate/`, ignored there (REQ-516).
+ */
+export function stateFileFor(projectDir: string, name: string): { file: string; inGit: boolean } {
   const git = gitDirOf(projectDir);
   return git
-    ? { file: path.join(git, "specgate", LAST_CHECK_FILE), inGit: true }
-    : { file: path.join(projectDir, STATE_DIR, LAST_CHECK_FILE), inGit: false };
+    ? { file: path.join(git, "specgate", name), inGit: true }
+    : { file: path.join(projectDir, STATE_DIR, name), inGit: false };
+}
+
+/** Write this machine's state beside the last check; outside git, ignored in `.specgate/`. */
+export function writeState(projectDir: string, name: string, text: string): void {
+  const { file, inGit } = stateFileFor(projectDir, name);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  if (!inGit) {
+    // `.specgate/config.json` is the team's; this is this machine's.
+    const ignore = path.join(path.dirname(file), ".gitignore");
+    const lines = fs.existsSync(ignore) ? fs.readFileSync(ignore, "utf8") : "";
+    if (!lines.split(/\r?\n/).includes(name)) {
+      const sep = lines && !lines.endsWith("\n") ? "\n" : "";
+      fs.writeFileSync(ignore, `${lines}${sep}${name}\n`, "utf8");
+    }
+  }
+  fs.writeFileSync(file, text, "utf8");
 }
 
 /** What git says about where the check ran; nulls outside git. */
@@ -90,11 +117,16 @@ function revision(projectDir: string): Pick<LastCheck, "commit" | "branch" | "di
  */
 export function recordLastCheck(
   projectDir: string,
-  result: { passed: boolean; ci: boolean; stages: GateStage[]; status: Diagnostic[] },
+  result: {
+    passed: boolean;
+    ci: boolean;
+    stages: GateStage[];
+    status: Diagnostic[];
+    selection?: TestSelection;
+  },
   now = new Date()
 ): void {
   try {
-    const { file, inGit } = stateFile(projectDir);
     const record: LastCheck = {
       schemaVersion: 1,
       ranAt: now.toISOString(),
@@ -102,19 +134,10 @@ export function recordLastCheck(
       passed: result.passed,
       ci: result.ci,
       stages: result.stages,
+      ...(result.selection ? { selection: result.selection } : {}),
       status: result.status,
     };
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    if (!inGit) {
-      // `.specgate/config.json` is the team's; the last result is this machine's.
-      const ignore = path.join(path.dirname(file), ".gitignore");
-      const lines = fs.existsSync(ignore) ? fs.readFileSync(ignore, "utf8") : "";
-      if (!new RegExp(`^${LAST_CHECK_FILE.replace(".", "\\.")}$`, "m").test(lines)) {
-        const sep = lines && !lines.endsWith("\n") ? "\n" : "";
-        fs.writeFileSync(ignore, `${lines}${sep}${LAST_CHECK_FILE}\n`, "utf8");
-      }
-    }
-    fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`, "utf8");
+    writeState(projectDir, LAST_CHECK_FILE, `${JSON.stringify(record, null, 2)}\n`);
   } catch {
     /* the gate's verdict stands without the record */
   }

@@ -45,6 +45,11 @@ const KNOWN_KEYS = new Set([
   "agent",
   "agent_profile",
   "test_cmd",
+  // REQ-513, REQ-511, REQ-518: what `check --affected` runs, what makes it run
+  // everything, and whether the architecture check and the tests run side by side.
+  "test_cmd_affected",
+  "full_on",
+  "gate_parallel",
   "arch_cmd",
   // ADR-0028 points 3-4 (REQ-231): the SARIF the architecture tool writes.
   "arch_sarif",
@@ -141,6 +146,21 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
     config.promptPrecedents = /^(1|true|yes|on)$/i.test(String(parsed.prompt_precedents).trim());
   }
   if (parsed.test_cmd !== undefined) config.testCmd = String(parsed.test_cmd);
+  if (parsed.test_cmd_affected !== undefined) {
+    config.testCmdAffected = String(parsed.test_cmd_affected);
+  }
+  if (parsed.full_on !== undefined) {
+    if (!Array.isArray(parsed.full_on)) {
+      throw new Error(
+        `${HARNESS_CONFIG_FILE}: full_on must be a list of globs.\n` +
+          'Fix: write it as a YAML sequence, one glob per line, e.g. - "src/generated/**".'
+      );
+    }
+    config.fullOn = parsed.full_on.map((v: unknown) => String(v));
+  }
+  if (parsed.gate_parallel !== undefined) {
+    config.gateParallel = !/^(0|false|no|off)$/i.test(String(parsed.gate_parallel).trim());
+  }
   if (parsed.arch_cmd !== undefined) config.archCmd = String(parsed.arch_cmd);
   if (parsed.arch_sarif !== undefined) config.archSarif = String(parsed.arch_sarif);
   if (parsed.setup_cmd !== undefined) config.setupCmd = String(parsed.setup_cmd);

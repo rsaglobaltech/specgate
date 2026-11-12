@@ -18,7 +18,12 @@ of the gate and the last one run, where each setting lives and the keys to set
 profiles, quality checks and the ALM, line coverage and measured cost — and
 control of the harness from a tool: build on a dirty tree, stop after the
 requirement in progress, an estimate per requirement, a question's id while the
-run goes on, and a live JSON stream.
+run goes on, and a live JSON stream. And a faster gate: `check --affected` runs
+the tests of what changed, a test that passed on the same code is not run
+again, the architecture check and the tests run side by side, every stage says
+how long it took, and `validate`, `status` and `matrix` grow linearly. And
+`specgate agent ask`: an agent's change to the specification as a plan with
+its diff, written only when a person applies it.
 
 ### Added
 
@@ -124,6 +129,72 @@ run goes on, and a live JSON stream.
   `estimated` and `measured` cost and the `basis`, priced by
   `price_per_input_token` and `price_per_output_token` in the profile, and
   `measuredCost`.
+- **`check --affected`: only the tests of what changed** (REQ-510 … REQ-513):
+  `specgate check --affected [--base <ref>]` compares with the base branch,
+  uncommitted and untracked files included, and runs the tests the matrix
+  links to each requirement whose spec section, feature, code or test
+  changed, the changed tests, and the JavaScript and TypeScript tests whose
+  relative imports reach a changed file. They go to the test command as
+  `{files}`, each quoted for the platform's shell, and `{req}` is the one
+  requirement touched; `test_cmd_affected:` in `harness.config.yaml` is the
+  command `--affected` and `apply` run, so `test_cmd` stays the whole suite.
+  The whole suite runs instead, with the reason, when `package.json`, a
+  lockfile, `harness.config.yaml`, a `tsconfig`, a build or runner
+  configuration or a glob under `full_on:` changed, when a changed file is
+  linked to nothing, when nothing changed, with no base, or when the change
+  has no test; a command with neither placeholder runs whole and
+  `affected_needs_files` says how to add `{files}`. Every `check --json`
+  answer has `selection`: `mode` (`affected` or `full`), `reason`, `base`,
+  `changed`, `requirements`, `tests`, `cached` and `command`.
+- **The whole suite where it must** (REQ-514): `check` with no flag runs the
+  whole suite, as before; `check --ci` always does, ignores `--affected`
+  (`affected_ignored_ci`) and never uses the cache.
+- **`apply` runs the requirement's own tests** (REQ-515): `{files}` holds the
+  test files the matrix links to the requirement delivered, and
+  `test_cmd_affected` is used when set.
+- **A test that passed on the same code is not run again** (REQ-516): under
+  `check --affected` with `{files}`, each test file that passed is kept in the
+  git folder beside the last result, with the hashes of its content, the
+  files its imports reach and the code the matrix links to its requirements,
+  under the test command, the lockfiles and the files every test depends on.
+  A test in another language, with an import that cannot be followed, or that
+  reaches the file system, a process or the network is re-run on any source
+  change. `--no-cache` runs everything selected; a failing run forgets the
+  files it ran.
+- **The architecture check and the tests side by side** (REQ-518): after
+  `validate --strict`, which runs alone and fails fast, `arch_cmd` and the
+  tests run at the same time, each with its own output, and both are reported
+  before the gate decides. `gate_parallel: false` runs them one after the
+  other.
+- **How long each stage took** (REQ-519): every entry of `stages` in
+  `check --json`, and of the last result kept, has `ms` (`null` when the stage
+  did not run); on a terminal each stage's line shows its time.
+- **`validate`, `status` and `matrix` grow linearly** (REQ-517): linking a
+  requirement by mention scanned every test and source file once per
+  requirement, and the check for placeholder obligations read the whole spec
+  once per requirement. On a generated project of 1,000 requirements
+  `validate --strict` took 9.9 s and now takes 1.5 s; from 500 to 2,000
+  requirements each of the three commands grows about ×3 for ×4 the
+  requirements, which a benchmark in the suite now holds.
+- **`config set` for the fast gate**: `test_cmd_affected` (refused without
+  `{files}` or `{req}`), `full_on` and `gate_parallel`, listed by
+  `config keys`.
+- **Ask your agent, see the plan, then apply it** (REQ-520 … REQ-527):
+  `specgate agent ask "<request>" --json` runs the configured agent on a
+  scratch copy of the project and answers a plan — `files`, each with `path`,
+  `change` (`modify`, `add`, `delete`), `why` and its `diff`; the `then`
+  checks; what it `read`; `usage` in tokens and cost — and writes nothing.
+  `@REQ-NNN` and `@path` in the request, `--req` and `--file`, become the
+  agent's context. Only `spec.md`, `docs/specs/**` and `features/**` go into
+  a plan; other edits are reported as `edit_refused`. Plans are kept in the
+  git folder under `specgate/plans/<id>/` with each file's base hash;
+  `specgate agent apply <id>` writes them byte for byte when nothing changed
+  since (`plan_stale` otherwise), runs their specgate checks and never
+  commits. `specgate agent discard <id>` and `specgate agent plans` manage
+  them. `agent_not_set` names the fix
+  `specgate agents init --tool claude`; `agent_failed` carries the agent's
+  standard error. In the API: `agentAsk`, `agentApply`, `agentDiscard` and
+  `agentPlans`; `API_VERSION` stays 1.0.0. See `docs/agent-ask.md`.
 
 ### Fixed
 

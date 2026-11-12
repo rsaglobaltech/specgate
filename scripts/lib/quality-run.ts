@@ -262,6 +262,18 @@ function git(projectDir: string, args: string[]) {
  * shares history with. Empty when none is found (no git, a first commit).
  */
 export function baseOf(projectDir: string, explicit = ""): string {
+  return baseRefOf(projectDir, explicit)?.commit || "";
+}
+
+/**
+ * `baseOf`, with the ref it was found from: the explicit base, else the first
+ * of SPECGATE_BASE, origin's default branch, main, master or develop that HEAD
+ * shares history with. Null when none is found.
+ */
+export function baseRefOf(
+  projectDir: string,
+  explicit = ""
+): { ref: string; commit: string } | null {
   const candidates = [
     explicit,
     process.env.SPECGATE_BASE || "",
@@ -274,9 +286,9 @@ export function baseOf(projectDir: string, explicit = ""): string {
   ].filter(Boolean);
   for (const ref of candidates) {
     const r = git(projectDir, ["merge-base", "HEAD", ref]);
-    if (r.status === 0 && r.stdout.trim()) return r.stdout.trim();
+    if (r.status === 0 && r.stdout.trim()) return { ref, commit: r.stdout.trim() };
   }
-  return "";
+  return null;
 }
 
 /** Files changed since the base, committed or not, untracked included; repository-relative. */
