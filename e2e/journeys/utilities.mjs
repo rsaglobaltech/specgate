@@ -140,7 +140,7 @@ export default [
   },
   {
     name: "config remembers a preference and the help follows it",
-    covers: ["config init", "config set", "config get", "config list"],
+    covers: ["config init", "config set", "config get", "config list", "config keys"],
     run(dir, t) {
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
@@ -153,6 +153,13 @@ export default [
       t.expect(
         /profile\s*=\s*full/.test(t.sg(dir, "config", "list").stdout),
         "config list shows it"
+      );
+      const keys = t.sg(dir, "config", "keys", "--json");
+      t.ok(keys, "config keys");
+      t.expect(
+        JSON.parse(keys.stdout).keys.some((k) => k.key === "profile" && k.current === "full"),
+        "config keys lists the preference with its value",
+        keys
       );
       const help = t.sg(dir, "--help");
       t.expect(

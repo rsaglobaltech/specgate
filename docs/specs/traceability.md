@@ -270,6 +270,50 @@
 | REQ-481 | SCN-481a | `features/clarification/REQ-481.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
 | REQ-482 | SCN-482a | `features/clarification/REQ-482.feature` | - | - | - | - | - | tests/unit/questions-asked.test.ts | Approved |
 | REQ-483 | SCN-483a | `features/trusted-gate/REQ-483.feature` | - | - | - | - | - | tests/unit/scenario-heading-ids.test.ts | Approved |
+| REQ-484 | SCN-484a | `features/change-lifecycle/REQ-484.feature` | - | - | - | - | - | tests/unit/studio-review-notes.test.ts | Approved |
+| REQ-485 | SCN-485a | `features/change-lifecycle/REQ-485.feature` | - | - | - | - | - | tests/unit/studio-review-notes.test.ts | Approved |
+| REQ-486 | SCN-486a | `features/brief-cards/REQ-486.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Approved |
+| REQ-487 | SCN-487a | `features/brief-cards/REQ-487.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Approved |
+| REQ-488 | SCN-488a | `features/brief-cards/REQ-488.feature` | - | - | - | - | - | tests/unit/brief-form.test.ts | Approved |
+| REQ-489 | SCN-489a | `features/project-setup/REQ-489.feature` | - | - | - | - | - | tests/unit/adopt-dry-run.test.ts | Approved |
+| REQ-490 | SCN-490a, SCN-490b | `features/harness/REQ-490.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-491 | SCN-491a, SCN-491b | `features/harness/REQ-491.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-492 | SCN-492a | `features/harness/REQ-492.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-493 | SCN-493a | `features/harness/REQ-493.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-494 | SCN-494a | `features/harness/REQ-494.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-495 | SCN-495a | `features/harness/REQ-495.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-496 | SCN-496a | `features/harness/REQ-496.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-497 | SCN-497a | `features/harness/REQ-497.feature` | - | - | - | - | - | tests/unit/harness-control.test.ts | Approved |
+| REQ-498 | SCN-498a, SCN-498b | `features/daily-surface/REQ-498.feature` | - | - | - | - | - | tests/unit/matrix-scenarios.test.ts | Approved |
+| REQ-499 | SCN-499a | `features/quality/REQ-499.feature` | - | - | - | - | - | tests/unit/line-coverage.test.ts | Approved |
+| REQ-500 | SCN-500a | `features/daily-surface/REQ-500.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Approved |
+| REQ-501 | SCN-501a | `features/quality/REQ-501.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Approved |
+| REQ-502 | SCN-502a | `features/harness/REQ-502.feature` | - | - | - | - | - | tests/unit/capability-filter.test.ts | Approved |
+| REQ-503 | SCN-503a | `features/trusted-gate/REQ-503.feature` | - | - | - | - | - | tests/unit/gate-stages.test.ts | Approved |
+| REQ-504 | SCN-504a | `features/trusted-gate/REQ-504.feature` | - | - | - | - | - | tests/unit/gate-stages.test.ts | Approved |
+| REQ-505 | SCN-505a | `features/project-setup/REQ-505.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
+| REQ-506 | SCN-506a | `features/project-setup/REQ-506.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
+| REQ-507 | SCN-507a | `features/project-setup/REQ-507.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
+| REQ-508 | SCN-508a | `features/project-setup/REQ-508.feature` | - | - | - | - | - | tests/unit/config-catalog.test.ts | Approved |
+| REQ-509 | SCN-509a | `features/harness/REQ-509.feature` | - | - | - | - | - | tests/unit/measured-cost.test.ts | Approved |
+| REQ-510 | SCN-510a | `features/trusted-gate/REQ-510.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
+| REQ-511 | SCN-511a | `features/trusted-gate/REQ-511.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
+| REQ-512 | SCN-512a | `features/trusted-gate/REQ-512.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
+| REQ-513 | SCN-513a | `features/trusted-gate/REQ-513.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
+| REQ-514 | SCN-514a | `features/trusted-gate/REQ-514.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
+| REQ-515 | SCN-515a | `features/trusted-gate/REQ-515.feature` | - | - | - | - | - | tests/unit/affected-check.test.ts | Approved |
+| REQ-516 | SCN-516a | `features/trusted-gate/REQ-516.feature` | - | - | - | - | - | tests/unit/test-cache.test.ts | Approved |
+| REQ-517 | SCN-517a | `features/trusted-gate/REQ-517.feature` | - | - | - | - | - | tests/unit/gate-scaling.test.ts | Approved |
+| REQ-518 | SCN-518a | `features/trusted-gate/REQ-518.feature` | - | - | - | - | - | tests/unit/gate-parallel.test.ts | Approved |
+| REQ-519 | SCN-519a | `features/trusted-gate/REQ-519.feature` | - | - | - | - | - | tests/unit/gate-parallel.test.ts | Approved |
+| REQ-520 | SCN-520a | `features/agent-integration/REQ-520.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-521 | SCN-521a | `features/agent-integration/REQ-521.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-522 | SCN-522a | `features/agent-integration/REQ-522.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-523 | SCN-523a | `features/agent-integration/REQ-523.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-524 | SCN-524a | `features/agent-integration/REQ-524.feature` | - | - | - | - | - | tests/unit/agent-apply.test.ts | Approved |
+| REQ-525 | SCN-525a | `features/agent-integration/REQ-525.feature` | - | - | - | - | - | tests/unit/agent-apply.test.ts | Approved |
+| REQ-526 | SCN-526a | `features/agent-integration/REQ-526.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-527 | SCN-527a | `features/agent-integration/REQ-527.feature` | - | - | - | - | - | tests/unit/agent-api.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

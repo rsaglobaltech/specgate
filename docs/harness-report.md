@@ -12,7 +12,14 @@ files. It never runs an agent, git or the network.
 specgate harness report            # every recorded run
 specgate harness report --last 5   # the five most recent runs
 specgate harness report --json     # the same summary, for a script
+specgate harness report --capability orders   # only the requirements of one capability
 ```
+
+`--capability <name>` keeps the results of the requirements that capability
+states: those in `docs/specs/capabilities/<name>/spec.md`, and those an open
+change adds under `specs/<name>/`. `--json` then names it as
+`report.capability`. A capability the project does not have exits 2 with
+`capability_unknown`, and the fix lists the ones it has.
 
 A report over two runs looks like this:
 
@@ -60,10 +67,45 @@ A report over two runs looks like this:
   attempts that failed, by the requirements that actually passed. That is what
   delivery costs.
 
-The cost is wall-clock time, not tokens: an agent is any shell command, and
-only the agent knows what it spent. If a profile declares a
-`cost_per_run_hint`, the report adds an estimated spend and labels it
-*declared by profile, not measured*.
+The cost is wall-clock time first: an agent is any shell command, and only
+the agent knows what it spent. If a profile declares a `cost_per_run_hint`,
+the report adds an estimated spend and labels it *declared by profile, not
+measured*.
+
+## Measured cost
+
+When an agent's stream reports its tokens — Claude Code through
+`specgate harness events --from claude` does — the run records them for each
+agent step, with the profile that ran it. A profile that declares its prices
+per token is then priced from those tokens:
+
+```yaml
+profiles:
+  fast:
+    agent: "claude -p --output-format stream-json --verbose < {prompt_file} | specgate harness events --from claude"
+    price_per_input_token: 0.000003
+    price_per_output_token: 0.000015
+    # optional; both default to the input price
+    price_per_cache_read_token: 0.0000003
+    price_per_cache_write_token: 0.00000375
+```
+
+The report adds a *measured spend* line, and `--json` gives `measuredCost`
+(`total`, the steps measured as `covered`, the others as `uncovered`; `null`
+when none was) and `costByProfile`, one entry per profile:
+
+| Field              | What it holds                                                      |
+| ------------------ | ------------------------------------------------------------------ |
+| `profile`          | The profile, or `agent` for a command given as is                  |
+| `attempts`         | The agent steps it ran                                             |
+| `measuredAttempts` | Of those, the ones whose tokens were recorded                      |
+| `tokens`           | `input`, `output`, `cacheRead`, `cacheWrite`; `null` with none     |
+| `estimated`        | `cost_per_run_hint` × its steps; `null` without a hint             |
+| `measured`         | Its tokens × its prices; `null` without tokens or prices           |
+| `basis`            | `measured`, `estimated`, or `null` when neither could be given     |
+
+`--profile` and `agent_profile:` record the profile's name, so its hint and its
+prices apply to the runs of its agent.
 
 ## Was the gate wrong?
 
@@ -93,6 +135,22 @@ When [quality checks](quality.md) run, each passing requirement's run record
 keeps them — stage, verdict, findings, and the diff coverage and mutation
 score of the lines it changed — and the report adds a section with the means
 and how often each check ran. `--json` carries it as `quality`.
+
+## Before it starts
+
+`specgate plan --json` estimates each pending requirement under `estimates`: its
+`time` in milliseconds and, when a profile declares `cost_per_run_hint`, its
+`cost`. Each number says its `basis`, from the strongest:
+
+| `basis`   | Taken from                                                              |
+| --------- | ----------------------------------------------------------------------- |
+| `history` | The mean of this requirement's own recorded runs.                       |
+| `size`    | Its scenario steps, at the time delivered requirements took per step.   |
+| `average` | The time per delivered requirement, failed attempts included.           |
+| `none`    | Nothing recorded supports a number: it is `null`.                       |
+
+`samples` says how many runs or requirements it rests on. Like the spend
+above, a cost is a declared price, not a measured one.
 
 ## Next
 

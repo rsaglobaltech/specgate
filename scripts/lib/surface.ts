@@ -754,6 +754,18 @@ export const SURFACE: Command[] = [
         },
         json: { key: "report", gate: false },
       },
+      {
+        // REQ-491: what the studio's Stop button and a person at a terminal both use.
+        name: "stop",
+        mcp: false,
+        script: ["harness", "stop.js"],
+        help: {
+          group: "harness",
+          icon: "⏹",
+          summary: "Ask the running harness to stop after the requirement in progress.",
+        },
+        json: { key: "stop", gate: false, args: "--after-current" },
+      },
     ],
   },
 
@@ -764,6 +776,7 @@ export const SURFACE: Command[] = [
       { name: "set", script: ["config_set.js"], argsFrom: 1 },
       { name: "get", script: ["config_set.js"], argsFrom: 1 },
       { name: "list", script: ["config_set.js"], argsFrom: 1 },
+      { name: "keys", script: ["config_set.js"], argsFrom: 1 },
     ],
     help: {
       group: "dx",
@@ -793,6 +806,37 @@ export const SURFACE: Command[] = [
           icon: "🛡",
           summary: "The agent guards for every project: --global, Claude Code and OpenCode.",
         },
+      },
+    ],
+  },
+  {
+    // REQ-520 … REQ-526: the studio's agent panel. Its caller is a person's
+    // tool, not an agent: no MCP tool asks another agent for a plan.
+    name: "agent",
+    script: ["agent", "cli.js"],
+    mcp: false,
+    editsContract: true,
+    subcommands: [
+      {
+        name: "ask",
+        help: {
+          group: "dx",
+          icon: "💬",
+          summary: "Your agent proposes a spec change as a plan with its diff; nothing is written.",
+        },
+        json: { key: "plan", gate: false, args: '"<request>"' },
+      },
+      {
+        name: "apply",
+        json: { key: "applied", gate: false, args: "<plan-id>" },
+      },
+      {
+        name: "discard",
+        json: { key: "discarded", gate: false, args: "<plan-id>" },
+      },
+      {
+        name: "plans",
+        json: { key: "plans", gate: false },
       },
     ],
   },

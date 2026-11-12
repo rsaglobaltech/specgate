@@ -16,8 +16,12 @@ export function installGate(projectDir: string, opts: { dryRun: boolean; noCi?: 
     return;
   }
   if (opts.dryRun) {
+    // What the write would do, so the dry run lists only what is written (REQ-489).
+    const would = writeGate(projectDir, { dryRun: true });
     logInfo(
-      "[dry-run] write .github/workflows/spec-gate.yml (the spec gate; --no-ci leaves it out)"
+      would.written
+        ? `[dry-run] write ${would.dest} (the spec gate; --no-ci leaves it out)`
+        : `🚦 CI: ${would.dest} kept as it is`
     );
     return;
   }

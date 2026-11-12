@@ -34,6 +34,7 @@ the pull request, so the spec and the code are reviewed together.
 | `specgate propose --from-brief --new-brief`     | Writes a `docs/brief.md` for you to fill in. Never overwrites one.              | [Write the brief](start/write-the-brief.md)                      |
 | `specgate propose --from-brief --check`         | Runs the brief rules (B1–B13) on the brief. Writes nothing.                     | [Write the brief](start/write-the-brief.md#step-8-check-it)      |
 | `specgate propose --from-brief --agent "<cmd>"` | Your agent proposes the brief's fields, then a section per module.              | [From a brief](from-a-brief.md)                                  |
+| `specgate propose --from-brief --form`          | The brief as a form, each field with its line; `--form <file>` writes it back.  | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief <module>`        | Opens that module's draft change, or checks it once it exists.                  | [From a brief](from-a-brief.md#2-draft-one-module)               |
 | `specgate propose --from-ticket <KEY>`          | Opens a change from a Jira ticket, on a new `feature/<KEY>-<slug>` branch.      | [From a Jira ticket](from-a-ticket.md)                           |
 | `specgate propose --from-ticket <KEY> --check`  | The ticket's Definition of Ready (rules T1–T9). Writes nothing.                 | [From a Jira ticket](from-a-ticket.md#is-the-ticket-ready)       |
@@ -132,8 +133,9 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate harness init`                 | Writes `harness.config.yaml` and the prompt prefix. Leaves the agent unset. | [The harness](harness.md#set-it-up)            |
 | `specgate harness run`                  | Delivers pending requirements with an agent; `--profile` picks which one.   | [The harness](harness.md)                      |
 | `specgate harness prompt <REQ>`         | Prints the prompt an agent would get. Runs nothing.                         | [Choosing your agent](agent-setup.md)          |
-| `specgate harness report`               | First-attempt rate and time per delivered requirement.                      | [What the harness has cost](harness-report.md) |
+| `specgate harness report`               | First-attempt rate, time and cost per delivered requirement; `--capability`. | [What the harness has cost](harness-report.md) |
 | `specgate harness events --from claude` | Turns Claude Code's stream into events for the live view.                   | [The harness](harness.md#watch-it-work)        |
+| `specgate harness stop --after-current` | Asks the running harness to stop after the requirement in progress.         | [Drive the harness](harness-control.md) |
 | `specgate studio`                       | The visual app, from an empty folder to the report; `/live`: the harness.   | `specgate studio --help`                       |
 | `specgate ci init`                      | Writes the CI job for GitHub, GitLab, Azure or Jenkins.                     | [Validating](validating.md)                    |
 | `specgate ci status`                    | What the CI gate checks, and what it lacks.                                | [Validating](validating.md)                    |
@@ -143,8 +145,10 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate quality run [--stage]`        | Runs the checks of a stage: attempt, end or ci.                             | `specgate quality --help`                      |
 | `specgate quality baseline`             | Records today's SARIF findings as debt: only new ones fail from then on.    | `specgate quality --help`                      |
 | `specgate check --ci`                   | The gate in CI: also the `ci` checks, and a check that cannot run fails.    | [Validating](validating.md)                    |
+| `specgate check --last`                 | The last gate result, its commit and stages, without running the gate.      | [Validating](validating.md#the-stages-and-the-last-result) |
+| `specgate check --affected`             | Only the tests of what changed since the base; the whole suite when it cannot say. `--no-cache`. | [A faster gate](fast-gate.md) |
 | `specgate verify`                       | For OpenSpec projects: fails while a done scenario has no test naming it.   | [Already on OpenSpec](openspec.md)             |
-| `specgate report`                       | A spec-coverage dashboard as one HTML file.                                 | `specgate report --help`                       |
+| `specgate report`                       | A spec-coverage dashboard as one HTML file; `--format json`, `--capability`. | `specgate report --help`                       |
 | `specgate doctor`                       | Diagnoses the project and the environment, with a fix per finding.          | [Troubleshooting](troubleshooting.md)          |
 
 ## Agents
@@ -154,6 +158,10 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate agents init`                 | Slash commands and instruction files for your agent tools.            | [Agents](agents.md)      |
 | `specgate agents install --global`     | The agent guards for every project: OpenCode's plugin, Claude Code's. | [Agents](agents.md)      |
 | `specgate update`                      | Refreshes those generated files after an upgrade, keeping your edits. | [Agents](agents.md)      |
+| `specgate agent ask "<request>"`       | Your agent proposes a spec change as a plan with its diff; nothing is written. `@REQ-NNN`, `@path`. | [Ask your agent](agent-ask.md) |
+| `specgate agent apply <plan-id>`       | Writes the plan if its files did not change since, then runs its checks. Never commits. | [Ask your agent](agent-ask.md) |
+| `specgate agent discard <plan-id>`     | Removes a plan.                                                       | [Ask your agent](agent-ask.md) |
+| `specgate agent plans`                 | The open plans, and which are stale.                                  | [Ask your agent](agent-ask.md) |
 | `specgate mcp install --client claude` | Writes the MCP server configuration for Claude Desktop or Cursor.     | [The MCP server](mcp.md) |
 | `specgate mcp serve`                   | Runs the MCP server over stdio. The client starts it; you do not.     | [The MCP server](mcp.md) |
 
@@ -177,9 +185,14 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | Command                                | What it does                                                                   | Details                       |
 | -------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------- |
 | `specgate config set test_cmd "<cmd>"` | The tests `check` and `apply` run.                                             | `specgate config set --help`  |
-| `specgate config set arch_cmd "<cmd>"` | Your architecture check, run by the gate before the tests.                     | [Validating](validating.md)   |
+| `specgate config set arch_cmd "<cmd>"` | Your architecture check, run by the gate beside the tests.                     | [Validating](validating.md)   |
+| `specgate config set test_cmd_affected "<cmd> {files}"` | What `check --affected` and `apply` run, `{files}` the selected tests. | [A faster gate](fast-gate.md) |
 | `specgate config set profile full`     | Makes `--help` list every command (`core` lists the loop).                     | `specgate config set --help`  |
 | `specgate config set language es`      | The language of generated prose. Keywords stay in English.                     | `specgate config set --help`  |
+| `specgate config set profiles.<name>.<field>` | An agent profile in `.harness/profiles.yaml`: agent, advisory, cost, prices. | [Choosing your agent](agent-setup.md#commit-the-commands-your-team-uses) |
+| `specgate config set checks.<name>.<field>` | A quality check in `harness.config.yaml`; setting its `run` adds it.       | [Quality checks](quality.md#the-checks-reference) |
+| `specgate config set alm.<key>`        | `alm.config.yaml`: provider, URL, project; `*_env` takes a variable's name.   | [Jira and Azure Boards](alm.md#the-configuration-file) |
+| `specgate config keys`                 | Every setting: its values, default, current value and the file it lives in.  | `specgate config set --help`  |
 | `specgate config init`                 | Writes a starter `project.yaml`.                                               | `specgate config init --help` |
 | `specgate schema which`                | Shows which artefact graph a change follows (also `init`, `fork`, `validate`). | `specgate schema --help`      |
 | `specgate completion zsh`              | Prints shell completion for bash, zsh or fish.                                 | `specgate completion --help`  |
@@ -195,9 +208,10 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 
 Many commands take `--json` and then print one JSON document on standard
 output; [the agent contract](specs/agent-contract.md) lists the format and
-every diagnostic code. From Node, `status`, `questions` and `matrix` are also
-functions of `@rsaglobaltech/specgate/api` that answer the same document
-in-process: [Read a project from Node](automation.md#read-a-project-from-node).
+every diagnostic code. From Node, `status`, `questions`, `matrix`, `report`
+and `lastCheck` are also functions of `@rsaglobaltech/specgate/api` that
+answer the same document in-process:
+[Read a project from Node](automation.md#read-a-project-from-node).
 
 | Code | Meaning                                              |
 | ---- | ---------------------------------------------------- |

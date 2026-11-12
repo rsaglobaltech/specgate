@@ -15,13 +15,14 @@ CI part, a repository on GitHub, GitLab, Azure DevOps or Jenkins.
 specgate check
 ```
 
-`check` runs four things, in order, and stops at the first failure:
+`check` runs four things, and stops at the first stage that fails:
 
 1. `validate --strict`: specs, scenarios, traceability, links and coverage.
 2. Your architecture check, if you set one with
    `specgate config set arch_cmd "<cmd>"` (ArchUnit, dependency-cruiser, …).
    With `arch_sarif:` beside it, only a violation the change adds fails.
-3. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`.
+3. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`,
+   side by side with step 2 ([`gate_parallel: false`](fast-gate.md) runs them in turn).
 4. Your [quality checks](quality.md), if `specgate quality init` wrote them:
    coverage and mutation of what the change adds, SAST, secrets, dependencies,
    Conventional Commits — each in Docker. `--ci` adds the CI-only ones and
@@ -36,6 +37,41 @@ the gate as `id_taken_on_base`, before two pull requests collide on merge.
 
 Run `check` before every pull request. `specgate apply` runs the same gate for
 the one requirement it delivers.
+
+### Run only what the change touches: `check --affected`
+
+`specgate check --affected` runs the tests of what changed since the base
+branch — through `{files}` in `test_cmd_affected:` — and the whole suite,
+saying why, whenever it cannot tell what the change needs. A test that passed
+on the same code is not run again. `check` with no flag, and `check --ci`
+always, run the whole suite. See [A faster gate](fast-gate.md).
+
+### The stages, and the last result
+
+With `--json`, every answer — passed or failed — lists the gate's `stages` in
+the order it runs them: `ids`, `changes`, `validate`, `architecture`, `tests`,
+then one `quality` stage per check, with its `name`. Each has its `command`
+(`null` when it has none), its `result` (`passed`, `failed`, `skipped` when it
+is not configured or could not run, `not run` when an earlier stage failed),
+its `ms` (`null` when it did not run) and its `findings`, each with `code`,
+`message`, `fix`, `file` and `line` when it has them; `selection` says which
+tests ran ([A faster gate](fast-gate.md#what-it-says)). The `validate` stage carries validate's own findings, so a tool
+does not have to run `validate --json` again. A failed gate keeps `check: null`
+and its findings under `status`.
+
+Each check that reaches a verdict also keeps its result, in the repository's
+git folder (`.git/specgate/last-check.json`, or `.specgate/`, ignored there,
+outside git), so `git status` stays as it was. Read it back without running
+the gate:
+
+```bash
+specgate check --last          # passed or failed, when, on which commit, each stage
+specgate check --last --json   # lastCheck: ranAt, commit, branch, dirty, passed, ci, stages
+```
+
+With no check run yet, `lastCheck` is `null` and the finding `last_check_none`
+gives the fix `specgate check`. From Node, the API's `lastCheck(dir)` answers
+the same.
 
 ## Run it in CI
 
@@ -80,7 +116,7 @@ jobs:
         with: { node-version: '24' }
       # --strict is the whole specification gate, pinned so a release
       # cannot change it under you. It does not run your tests.
-      - run: npx --yes @rsaglobaltech/specgate@0.33.2 validate . --strict
+      - run: npx --yes @rsaglobaltech/specgate@0.34.0 validate . --strict
 ```
 
 `validate --strict` checks the specification only. To fail the job when the

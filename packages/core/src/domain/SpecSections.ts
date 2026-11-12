@@ -205,36 +205,73 @@ export function appendRequirementSection(
  */
 export function extractRequirementSection(specSource: string, reqId: string): string | null {
   if (!reqId) return null;
+  return extractRequirementSections(specSource, [reqId]).get(reqId) ?? null;
+}
+
+/** `### x` → 3; 0 for a line that is not a heading with text after it. */
+function headingLevel(line: string): number {
+  const m = /^(#+)\s+\S/.exec(line);
+  return m ? m[1].length : 0;
+}
+
+/**
+ * The sections of several requirements in one reading of the document
+ * (REQ-517): each as `extractRequirementSection` gives it, or null.
+ *
+ * The gate asked for every delivered requirement's section in turn, and each
+ * request split and scanned the whole document again — on 2,000 requirements
+ * that was a third of what `validate` spent.
+ */
+export function extractRequirementSections(
+  specSource: string,
+  reqIds: readonly string[]
+): Map<string, string | null> {
   const lines = String(specSource || "")
     .replace(/\r\n/g, "\n")
     .split("\n");
-
-  let start = -1;
-  let level = 2;
+  const wanted = new Set(reqIds.filter(Boolean).map((id) => id.trim()));
+  const headings = new Map<string, { start: number; level: number }>();
+  const rows = new Map<string, string | null>();
   for (let i = 0; i < lines.length; i += 1) {
     const heading = headingRequirementIds(lines[i]);
-    if (heading && heading.ids.includes(reqId.trim())) {
-      start = i;
-      level = heading.level;
-      break;
+    if (heading) {
+      for (const id of heading.ids) {
+        if (wanted.has(id) && !headings.has(id)) {
+          headings.set(id, { start: i, level: heading.level });
+        }
+      }
     }
-  }
-  // No heading: the table row is the requirement's text, and the prompt needs
-  // it just as much.
-  if (start === -1) {
-    const text = tableRowText(specSource, reqId);
-    return text === null ? null : `## ${reqId.trim()}\n\n${text}`;
+    // The first table row of an id decides its text, as `tableRowText` reads it.
+    const row = REQUIREMENT_TABLE_ROW.exec(lines[i].trim());
+    if (row && wanted.has(row[1]) && !rows.has(row[1])) {
+      const text = row[2].trim();
+      rows.set(row[1], text === "" || text === "-" || text.toUpperCase() === "TBD" ? null : text);
+    }
   }
 
-  // The section ends at the next heading of the same level or higher, so a
-  // `####` sub-heading stays inside the requirement and the next `###` does not.
-  const boundary = new RegExp(`^#{1,${level}}\\s+\\S`);
-  let end = lines.length;
-  for (let i = start + 1; i < lines.length; i += 1) {
-    if (boundary.test(lines[i])) {
-      end = i;
-      break;
+  const out = new Map<string, string | null>();
+  for (const raw of reqIds) {
+    if (!raw) continue;
+    const id = raw.trim();
+    const at = headings.get(id);
+    // No heading: the table row is the requirement's text, and the prompt needs
+    // it just as much.
+    if (!at) {
+      const text = rows.get(id);
+      out.set(raw, text === undefined || text === null ? null : `## ${id}\n\n${text}`);
+      continue;
     }
+    // The section ends at the next heading of the same level or higher, so a
+    // `####` sub-heading stays inside the requirement and the next `###` does not.
+    let end = lines.length;
+    for (let i = at.start + 1; i < lines.length; i += 1) {
+      const level = headingLevel(lines[i]);
+      if (level > 0 && level <= at.level) {
+        end = i;
+        break;
+      }
+    }
+    out.set(raw, lines.slice(at.start, end).join("\n").trim());
   }
-  return lines.slice(start, end).join("\n").trim();
+  return out;
 }
