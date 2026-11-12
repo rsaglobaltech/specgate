@@ -242,6 +242,12 @@ export const NAV: readonly NavSection[] = [
         blurb: "Every check the gate runs, what each status owes, and the flags behind check.",
       },
       {
+        slug: "fast-gate",
+        label: "A fast gate",
+        blurb:
+          "Run only the tests a change touches, reuse the ones that passed, arch and tests side by side.",
+      },
+      {
         slug: "quality",
         label: "Quality: Sonar, SpotBugs, coverage",
         blurb:
