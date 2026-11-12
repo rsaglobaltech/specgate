@@ -386,6 +386,12 @@ export const NAV: readonly NavSection[] = [
           "The JSON stream, stop after the current requirement, a dirty tree, questions with ids.",
       },
       {
+        slug: "agent-ask",
+        label: "Ask your agent",
+        blurb:
+          "A plan with its diff before anything is written: apply it, or discard it. What the studio's agent panel runs.",
+      },
+      {
         slug: "harness-report",
         label: "What the harness has cost",
         blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",

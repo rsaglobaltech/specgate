@@ -306,6 +306,14 @@
 | REQ-517 | SCN-517a | `features/trusted-gate/REQ-517.feature` | - | - | - | - | - | tests/unit/gate-scaling.test.ts | Approved |
 | REQ-518 | SCN-518a | `features/trusted-gate/REQ-518.feature` | - | - | - | - | - | tests/unit/gate-parallel.test.ts | Approved |
 | REQ-519 | SCN-519a | `features/trusted-gate/REQ-519.feature` | - | - | - | - | - | tests/unit/gate-parallel.test.ts | Approved |
+| REQ-520 | SCN-520a | `features/agent-integration/REQ-520.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-521 | SCN-521a | `features/agent-integration/REQ-521.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-522 | SCN-522a | `features/agent-integration/REQ-522.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-523 | SCN-523a | `features/agent-integration/REQ-523.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-524 | SCN-524a | `features/agent-integration/REQ-524.feature` | - | - | - | - | - | tests/unit/agent-apply.test.ts | Approved |
+| REQ-525 | SCN-525a | `features/agent-integration/REQ-525.feature` | - | - | - | - | - | tests/unit/agent-apply.test.ts | Approved |
+| REQ-526 | SCN-526a | `features/agent-integration/REQ-526.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
+| REQ-527 | SCN-527a | `features/agent-integration/REQ-527.feature` | - | - | - | - | - | tests/unit/agent-api.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

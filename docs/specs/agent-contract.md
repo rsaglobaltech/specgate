@@ -92,6 +92,10 @@ not run reports an `error` about itself.
 | `specgate harness run --format json` | `results` | no |
 | `specgate harness report --json` | `report` | no |
 | `specgate harness stop --after-current --json` | `stop` | no |
+| `specgate agent ask "<request>" --json` | `plan` | no |
+| `specgate agent apply <plan-id> --json` | `applied` | no |
+| `specgate agent discard <plan-id> --json` | `discarded` | no |
+| `specgate agent plans --json` | `plans` | no |
 
 The document key is what the payload carries on success and what is set to
 `null` on failure. Every document also carries `status`: an array of
