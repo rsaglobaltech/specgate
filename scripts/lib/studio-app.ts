@@ -16,7 +16,7 @@ import {
   approvedOn,
   reviewNotes,
   type Blocker,
-  type ReviewNote,
+  type ReviewNoteRow,
 } from "./change-review";
 import { requestStop, runLockHolder } from "./harness-guard";
 import { findCliRoot } from "./project-root";
@@ -61,7 +61,7 @@ export interface DraftView {
   module: string;
   requirements: DraftRequirement[];
   blockers: Blocker[];
-  notes: ReviewNote[];
+  notes: ReviewNoteRow[];
   questions: Array<{ id: string; text: string; blocks: string[] }>;
 }
 

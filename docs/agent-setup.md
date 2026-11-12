@@ -146,6 +146,10 @@ An explicit `agent:` in `harness.config.yaml` beats a profile: the narrower
 statement wins. `specgate change author --agent-profile local` uses the same
 profiles.
 
+`specgate config set profiles.local.agent "<command>"` writes a profile and
+keeps the file's other lines; `specgate config keys` lists its fields, the
+prices of [Measured cost](harness-report.md#measured-cost) among them.
+
 ## A different agent per requirement
 
 A profile that declares `match:` selects itself, so one run can give an

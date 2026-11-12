@@ -9,6 +9,206 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.34.0] — 2026-11-12
+
+What specgate-studio needed as JSON — a draft's review notes, the brief as a
+form, a client's text proposed as a form, a dry run of `adopt` that lists what
+it writes, the matrix one row per scenario, a filter by capability, every stage
+of the gate and the last one run, where each setting lives and the keys to set
+profiles, quality checks and the ALM, line coverage and measured cost — and
+control of the harness from a tool: build on a dirty tree, stop after the
+requirement in progress, an estimate per requirement, a question's id while the
+run goes on, and a live JSON stream. And a faster gate: `check --affected` runs
+the tests of what changed, a test that passed on the same code is not run
+again, the architecture check and the tests run side by side, every stage says
+how long it took, and `validate`, `status` and `matrix` grow linearly. And
+`specgate agent ask`: an agent's change to the specification as a plan with
+its diff, written only when a person applies it.
+
+### Added
+
+- **Build on a dirty tree, when asked** (REQ-490):
+  `specgate harness run --allow-dirty` cuts every branch from the last
+  commit and leaves the uncommitted and untracked files as they are. The JSON
+  result says so under `dirty`, with `leftOut` listing them. Refused with
+  `--chain`, which merges into that working copy; without the flag the refusal
+  now names it.
+- **Stop after the requirement in progress** (REQ-491, REQ-492):
+  `specgate harness stop --after-current [--json]` and `harnessStop(dir)` in
+  the API. The run finishes its requirement and starts no other; its JSON
+  result has `stopped` with `by` (`request` or `budget`), the reason and
+  `notAttempted`. With no run working there, nothing is requested
+  (`harness_not_running`). Nothing is killed, on any platform.
+- **An estimate per requirement** (REQ-493): `specgate plan --json` has
+  `estimates`, one per pending requirement — `time` in milliseconds and, when
+  a profile declares `cost_per_run_hint`, `cost` — each with its `basis`
+  (`history`, `size`, `average` or `none`) and the `samples` it rests on.
+- **A question gets its id while the run goes on** (REQ-494, REQ-495): when the
+  agent runs `specgate ask`, the harness writes the question into the project
+  and commits it at once, and a `question` event with its `id` follows in the
+  requirement's events file. The requirement ends as `question`; its result's
+  `waitingForAnswer` names the question and the command that answers it. The
+  run does not wait for the answer: it is reviewed before the specification
+  says it, and the requirement runs again after that.
+- **A live JSON stream** (REQ-496, REQ-497): `specgate harness run --format jsonl`
+  writes one JSON event per line on stdout — `run-start`, attempts, gate
+  stages, `agent-start`/`agent-end`, the agent's `output` as it comes, the
+  adapter's steps and `usage`, the question with its id, each `result`, and
+  last `run-end` with the `--format json` document — also from parallel
+  workers, each line whole. The schema is `HarnessStreamEvent` in
+  `types/api.d.ts` and in [Drive the harness from a tool](docs/harness-control.md).
+  The events files are unchanged.
+- **A draft's review notes as JSON** (REQ-484): `specgate change show <id> --json`
+  and the API's new `change(dir, id)` give `change.review` — each note of
+  `review.md` with its id (`N1`, `N2`…), date, text, requirement, `state`
+  (`open` or `addressed`), and its line; once addressed, the date and what
+  changed, each requirement's delta file, line, and text before and after.
+  `review.md` gains a `Status` column; a table without it reads as open.
+- **Drafting again hands the open notes to the agent** (REQ-485):
+  `specgate propose --from-brief <module> --agent <cmd>` puts every open note
+  in the agent's prompt, marks addressed those whose requirement the agent
+  changed, writes what changed below the table, and says it under
+  `draft.notes`: `given`, `addressed`, `open`.
+- **The brief as a form** (REQ-486, REQ-487):
+  `specgate propose --from-brief --form --json` and the API's `briefForm(dir)`
+  give the front matter's product, surfaces, actors and modules and each
+  module's prose, rules, examples and questions, every field with its line.
+  `--form <file>` (or `--form -`) and the API's `writeBriefForm(dir, form)`
+  write that form back, rewriting only the fields and card lists that changed:
+  CRLF stays CRLF, the text after the last section and every other section
+  stay byte for byte, and a form written back unchanged leaves the file
+  identical. The old studio's save uses the same code.
+- **A client's text proposed as a form** (REQ-488):
+  `specgate propose --from-brief --brief <file> --agent <cmd> --json` answers
+  what the agent proposed under `form`.
+- **The matrix, one row per scenario** (REQ-498): `specgate matrix --json` and
+  the API's `matrix(dir)` list `matrix.scenarios`, open changes included, each
+  row with `requirement`, `scenario`, `feature`, `tests`, `code`, `status`,
+  `gaps` (`feature`, `test`, `code`: the links it does not have to a file that
+  exists) and `waiting` (the open question that blocks it, with its change).
+  `matrix.rows` stays the count.
+- **The project's line coverage** (REQ-499): `report --format json` and the
+  new API function `report(dir)` give `coverage.lines` (`percent`, `covered`,
+  `total`, `tool`, `file`, `measuredAt`), read from the coverage report a
+  quality check names, else from the newest LCOV, istanbul summary, Cobertura
+  or JaCoCo report in its standard place. With none it is `null` with
+  `coverage_not_measured` and how to have the stack write one — never 0.
+- **A capability filter** (REQ-500 … REQ-502): each requirement of
+  `status --json` and `status(dir)` has its `capability`, and
+  `specgate report --capability <name>` and
+  `specgate harness report --capability <name>` keep only that capability's
+  requirements; one the project does not have exits 2 with
+  `capability_unknown`.
+- **Every stage of the gate** (REQ-503): every `check --json` answer, passed or
+  failed, lists `stages` — `ids`, `changes`, `validate`, `architecture`,
+  `tests` and one `quality` stage per check — each with its `command`, its
+  `result` (`passed`, `failed`, `skipped`, `not run`) and its `findings`;
+  `validate` carries validate's own findings. A failed gate keeps
+  `check: null`.
+- **The last gate result** (REQ-504): each `check` keeps its result in the
+  repository's git folder, `git status` untouched, and
+  `specgate check --last --json` and the API's `lastCheck(dir)` read it back:
+  when it ran, the commit and branch, whether the tree was dirty, the stages
+  and findings. With none, `last_check_none` gives the fix `specgate check`.
+- **Where each setting lives** (REQ-505, REQ-506): `config get`, `set` and
+  `list` with `--json` add `files`, the file of each key, and
+  `specgate config keys --json` lists every key with its description, values,
+  pattern, default, current value and file.
+- **`config set` for profiles, quality checks and ALM** (REQ-507, REQ-508):
+  `profiles.<name>.<field>` (agent, advisory, cost hint, prices per token) in
+  `.harness/profiles.yaml`, `agent_profile`, `quality`, `diff_coverage`,
+  `mutation_score` and `checks.<name>.<field>` in `harness.config.yaml`, and
+  `alm.<key>` and `alm.pr.<key>` in `alm.config.yaml`, each edited line by
+  line, comments kept, and refused with `config_value_invalid` before the file
+  changes when the file's reader would refuse it. An `_env` key takes only a
+  variable's name; no key stores a token.
+- **Measured cost** (REQ-509): the run ledger records the tokens each agent
+  step's stream reported, under the profile that ran it — `--profile` and
+  `agent_profile` now record the profile's name — and
+  `harness report --json` gives `costByProfile`, each with its tokens, the
+  `estimated` and `measured` cost and the `basis`, priced by
+  `price_per_input_token` and `price_per_output_token` in the profile, and
+  `measuredCost`.
+- **`check --affected`: only the tests of what changed** (REQ-510 … REQ-513):
+  `specgate check --affected [--base <ref>]` compares with the base branch,
+  uncommitted and untracked files included, and runs the tests the matrix
+  links to each requirement whose spec section, feature, code or test
+  changed, the changed tests, and the JavaScript and TypeScript tests whose
+  relative imports reach a changed file. They go to the test command as
+  `{files}`, each quoted for the platform's shell, and `{req}` is the one
+  requirement touched; `test_cmd_affected:` in `harness.config.yaml` is the
+  command `--affected` and `apply` run, so `test_cmd` stays the whole suite.
+  The whole suite runs instead, with the reason, when `package.json`, a
+  lockfile, `harness.config.yaml`, a `tsconfig`, a build or runner
+  configuration or a glob under `full_on:` changed, when a changed file is
+  linked to nothing, when nothing changed, with no base, or when the change
+  has no test; a command with neither placeholder runs whole and
+  `affected_needs_files` says how to add `{files}`. Every `check --json`
+  answer has `selection`: `mode` (`affected` or `full`), `reason`, `base`,
+  `changed`, `requirements`, `tests`, `cached` and `command`.
+- **The whole suite where it must** (REQ-514): `check` with no flag runs the
+  whole suite, as before; `check --ci` always does, ignores `--affected`
+  (`affected_ignored_ci`) and never uses the cache.
+- **`apply` runs the requirement's own tests** (REQ-515): `{files}` holds the
+  test files the matrix links to the requirement delivered, and
+  `test_cmd_affected` is used when set.
+- **A test that passed on the same code is not run again** (REQ-516): under
+  `check --affected` with `{files}`, each test file that passed is kept in the
+  git folder beside the last result, with the hashes of its content, the
+  files its imports reach and the code the matrix links to its requirements,
+  under the test command, the lockfiles and the files every test depends on.
+  A test in another language, with an import that cannot be followed, or that
+  reaches the file system, a process or the network is re-run on any source
+  change. `--no-cache` runs everything selected; a failing run forgets the
+  files it ran.
+- **The architecture check and the tests side by side** (REQ-518): after
+  `validate --strict`, which runs alone and fails fast, `arch_cmd` and the
+  tests run at the same time, each with its own output, and both are reported
+  before the gate decides. `gate_parallel: false` runs them one after the
+  other.
+- **How long each stage took** (REQ-519): every entry of `stages` in
+  `check --json`, and of the last result kept, has `ms` (`null` when the stage
+  did not run); on a terminal each stage's line shows its time.
+- **`validate`, `status` and `matrix` grow linearly** (REQ-517): linking a
+  requirement by mention scanned every test and source file once per
+  requirement, and the check for placeholder obligations read the whole spec
+  once per requirement. On a generated project of 1,000 requirements
+  `validate --strict` took 9.9 s and now takes 1.5 s; from 500 to 2,000
+  requirements each of the three commands grows about ×3 for ×4 the
+  requirements, which a benchmark in the suite now holds.
+- **`config set` for the fast gate**: `test_cmd_affected` (refused without
+  `{files}` or `{req}`), `full_on` and `gate_parallel`, listed by
+  `config keys`.
+- **Ask your agent, see the plan, then apply it** (REQ-520 … REQ-527):
+  `specgate agent ask "<request>" --json` runs the configured agent on a
+  scratch copy of the project and answers a plan — `files`, each with `path`,
+  `change` (`modify`, `add`, `delete`), `why` and its `diff`; the `then`
+  checks; what it `read`; `usage` in tokens and cost — and writes nothing.
+  `@REQ-NNN` and `@path` in the request, `--req` and `--file`, become the
+  agent's context. Only `spec.md`, `docs/specs/**` and `features/**` go into
+  a plan; other edits are reported as `edit_refused`. Plans are kept in the
+  git folder under `specgate/plans/<id>/` with each file's base hash;
+  `specgate agent apply <id>` writes them byte for byte when nothing changed
+  since (`plan_stale` otherwise), runs their specgate checks and never
+  commits. `specgate agent discard <id>` and `specgate agent plans` manage
+  them. `agent_not_set` names the fix
+  `specgate agents init --tool claude`; `agent_failed` carries the agent's
+  standard error. In the API: `agentAsk`, `agentApply`, `agentDiscard` and
+  `agentPlans`; `API_VERSION` stays 1.0.0. See `docs/agent-ask.md`.
+
+### Fixed
+
+- **A brief outside the project writes nothing inside it** (REQ-488): it left
+  `docs/specs/BRIEF-SETUP.md` behind when the proposed front matter had
+  problems, and could move a root brief into it. Claude Code is given the
+  brief's folder with `--add-dir`, as it edits only where it runs.
+- **The studio's brief save keeps CRLF and the end of the file** (REQ-487): it
+  turned CRLF into LF, trimmed the end of the file, and collapsed blank lines
+  in sections that were not the form's.
+- **`adopt --dry-run` lists what `adopt --yes` writes** (REQ-489): README.md,
+  .gitattributes, harness.config.yaml and each agent file were missing, and
+  the CI gate was listed even when one was already there.
+
 ## [0.33.2] — 2026-11-11
 
 Each question says where it was asked and stays in sight until the spec is

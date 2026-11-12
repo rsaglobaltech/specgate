@@ -77,7 +77,7 @@ export function settle(
   const ask = canAsk(opts.yes);
   const set = (key: "test_cmd" | "agent", value: string, question: string): boolean => {
     if (opts.dryRun) {
-      say(`[dry-run] would set ${key}: ${value}`);
+      say(`[dry-run] would set ${key}: ${value}  (harness.config.yaml)`);
       return false;
     }
     if (ask && !askYes(question)) return false;

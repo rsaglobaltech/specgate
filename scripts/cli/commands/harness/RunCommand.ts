@@ -41,8 +41,14 @@ import { buildPrompt } from "../../../harness/prompt";
 import { withAgentPermission } from "../../../lib/agent-permission";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightRequirements, inFlightView } from "../../../lib/in-flight";
-import { appendEvent, eventsFileFor, keepPrompt, writeQueue } from "../../../lib/harness-events";
-import { ask as askQuestion } from "../../../lib/clarification";
+import {
+  appendEvent,
+  eventsFileFor,
+  eventsLineCount,
+  eventsLinesSince,
+  keepPrompt,
+  writeQueue,
+} from "../../../lib/harness-events";
 import { e2eTestsNaming, onScreen } from "../../../lib/screen-requirements";
 import {
   acquireRunLock,
@@ -159,6 +165,8 @@ import {
 } from "../../../../packages/core/src/domain/CucumberMessages";
 import {
   AttemptRecord,
+  StepUsage,
+  stepUsage,
   AttemptStep,
   featureFilePath,
   planAttempt,
@@ -168,6 +176,15 @@ import {
 } from "../../../../packages/core/src/domain/HarnessRun";
 import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
 import { forShell } from "../../../lib/shell-command";
+import {
+  STREAM_FD_VAR,
+  setStream,
+  streamEvent,
+  streamFdOf,
+  streamFromEnv,
+  streamRaw,
+} from "../../../lib/harness-stream";
+import { recordQuestion } from "../../../lib/agent-watch";
 
 /**
  * One requirement as `plan --format json` hands it to the harness.
@@ -249,6 +266,8 @@ interface RunContext {
   mayStart?: () => boolean;
   /** Why `mayStart` said no. */
   stopReason?: () => string;
+  /** The code of that reason: `stop_asked`, or the budget's. */
+  stopCode?: () => string;
   /** The plan's hint for the requirement being processed. */
   hint?: string;
 }
@@ -269,6 +288,10 @@ export interface RequirementResult extends PublishOutcome {
   requirement: string;
   /** The question the agent asked, when the result is `question`. */
   question?: string;
+  /** The question recorded in the project that the requirement waits on (REQ-495). */
+  waitingForAnswer?: WaitingForAnswer;
+  /** Why it was never started: `stop_asked` (REQ-491) or the budget's code. */
+  stoppedBy?: string;
   category?: string;
   result: RequirementVerdict;
   attempts: number;
@@ -283,6 +306,15 @@ export interface RequirementResult extends PublishOutcome {
   checks?: Array<Omit<CheckOutcome, "output">>;
 }
 
+/** The question a requirement waits on, and the command that answers it (REQ-495). */
+export interface WaitingForAnswer {
+  id: string;
+  text: string;
+  change: string;
+  file: string;
+  answer: string;
+}
+
 /** What `attemptRequirement` decides; `processRequirement` adds the rest. */
 type AttemptOutcome = Pick<
   RequirementResult,
@@ -293,6 +325,7 @@ type AttemptOutcome = Pick<
   | "workPreserved"
   | "adversarial"
   | "question"
+  | "waitingForAnswer"
   | "checks"
 >;
 
@@ -389,7 +422,14 @@ function usage() {
       "  --timeout <seconds>    Per-agent-invocation timeout (default 1200).\n" +
       "  --keep-worktrees       Do not remove worktrees after each requirement.\n" +
       "  --force                Recreate harness/REQ-NNN branches that already exist.\n" +
-      "  --format <text|json>   Report format (default text).\n" +
+      "  --allow-dirty          Run on a working tree with uncommitted or untracked files:\n" +
+      "                         every branch is cut from the last commit and those files\n" +
+      "                         stay as they are here. The JSON says which (`dirty`).\n" +
+      "                         Not with --chain, which merges into this working copy.\n" +
+      "  --format <text|json|jsonl>\n" +
+      "                         Report format (default text). jsonl streams one JSON\n" +
+      "                         event per line on stdout while the run goes, ending\n" +
+      "                         with `run-end` (docs/harness-control.md).\n" +
       "  --dry-run              Build prompts and print them; never invoke the agent.\n\n" +
       "CI mode (unattended runners — a nightly job that leaves PRs to review):\n" +
       "  --resume               Continue an interrupted run: reuse the existing\n" +
@@ -452,6 +492,9 @@ export function parseArgs(argv: string[]) {
     setupCmd: "",
     chain: false,
     profile: "",
+    allowDirty: false,
+    /** The profile `--profile` resolved `agent` from (REQ-509). */
+    agentProfile: "",
   };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
@@ -485,6 +528,8 @@ export function parseArgs(argv: string[]) {
       args.setupCmd = argv[++i] || "";
     } else if (token === "--chain") {
       args.chain = true;
+    } else if (token === "--allow-dirty") {
+      args.allowDirty = true;
     } else if (token === "--timeout") {
       const n = Number(argv[++i]);
       if (!Number.isInteger(n) || n < 1) throw new Error("--timeout must be a positive integer");
@@ -541,14 +586,49 @@ export function parseArgs(argv: string[]) {
         "--resume continues it. Pick one."
     );
   }
-  if (!["text", "json"].includes(args.format)) {
-    throw new Error(`Invalid --format: ${args.format}. Expected: text | json.`);
+  if (!["text", "json", "jsonl"].includes(args.format)) {
+    throw new Error(`Invalid --format: ${args.format}. Expected: text | json | jsonl.`);
+  }
+  // REQ-490: --chain merges into the working copy, where the uncommitted files are.
+  if (args.allowDirty && args.chain) {
+    throw new Error(
+      "--allow-dirty cannot go with --chain: --chain merges each green requirement into " +
+        "this working copy, where the uncommitted files are. Commit or stash them, or run " +
+        "without --chain."
+    );
+  }
+  if (args.dryRun && args.format === "jsonl") {
+    throw new Error("--dry-run prints the prompts; it has no stream. Drop --format jsonl.");
   }
   return args;
 }
 
 function git(projectDir: string, gitArgs: string[], opts: { encoding?: "utf8" } = {}) {
   return spawnSync("git", ["-C", projectDir, ...gitArgs], { encoding: "utf8", ...opts });
+}
+
+/**
+ * The paths `git status` shows: changed, staged, deleted or untracked — what a
+ * run cut from the last commit leaves out (REQ-490). Sorted, `/`-separated.
+ */
+function uncommittedPaths(projectDir: string): string[] {
+  const r = git(projectDir, ["status", "--porcelain", "-z", "--untracked-files=all"]);
+  if (r.status !== 0) {
+    throw new Error(`git status failed: ${r.stderr || r.stdout}`);
+  }
+  const out: string[] = [];
+  const entries = String(r.stdout).split("\0");
+  for (let i = 0; i < entries.length; i += 1) {
+    const entry = entries[i];
+    if (entry.length < 4) continue;
+    out.push(entry.slice(3));
+    // A rename or copy carries its old path as the next entry: left out too.
+    if (entry[0] === "R" || entry[0] === "C") {
+      if (entries[i + 1]) out.push(entries[i + 1]);
+      i += 1;
+    }
+  }
+  return [...new Set(out)].sort();
 }
 
 function isGitClean(projectDir: string): boolean {
@@ -1560,6 +1640,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     let agentMs = 0;
     /** Which roles ran this attempt, in order — the run record's answer to "who did this". */
     const profilesUsed: string[] = [];
+    /** The tokens each step's agent reported, when its stream said (REQ-509). */
+    const usageUsed: StepUsage[] = [];
     const record = (stage: AttemptRecord["endedAt"]) => {
       event({
         type: "attempt",
@@ -1573,6 +1655,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         agentMs,
         totalMs: Date.now() - attemptStart,
         profiles: [...profilesUsed],
+        ...(usageUsed.length > 0 ? { usage: [...usageUsed] } : {}),
       });
       ledgerAttempts(attemptLog);
     };
@@ -1638,10 +1721,19 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           info(`${req.requirement}: ${step.advisory ? "reviewing" : "running"} as '${profile}'`);
         }
         const agentStart = Date.now();
+        // REQ-509: the default agent's profile, when it came from one, so its
+        // tokens are priced and its hint applies.
+        const role = profile ?? (step.advisory ? "reviewer" : settings.agentProfile || "agent");
+        const eventsBefore = eventsLineCount(eventsFile);
+        streamEvent({ type: "agent-start", role }, req.requirement, attempt);
         const agent = runWithDeadline(command, {
           cwd: worktreeDir,
           timeoutMs,
           maxBuffer: SUBPROCESS_MAX_BUFFER,
+          // A question it asks is written into the project at once (REQ-494),
+          // and its output streamed while this process waits (REQ-496).
+          projectDir: ctx.projectDir || undefined,
+          streamFd: streamFdOf(),
           // Which requirement and attempt this is, for agents and the wrappers
           // around them (ADR-0036).
           env: {
@@ -1655,7 +1747,20 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         // Node reports a timeout as an errno-carrying Error; the base `Error`
         // type the spawnSync signature declares does not have `code`.
         agentMs += Date.now() - agentStart;
-        profilesUsed.push(profile ?? (step.advisory ? "reviewer" : "agent"));
+        streamEvent(
+          {
+            type: "agent-end",
+            role,
+            exit: agent.status,
+            timedOut: (agent.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT",
+            ms: Date.now() - agentStart,
+          },
+          req.requirement,
+          attempt
+        );
+        profilesUsed.push(role);
+        const used = stepUsage(eventsLinesSince(eventsFile, eventsBefore), attempt, role);
+        if (used) usageUsed.push(used);
 
         fs.rmSync(promptFile, { force: true });
         const agentError = agent.error as NodeJS.ErrnoException | undefined;
@@ -1710,17 +1815,24 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
 
     // The agent asked instead of guessing (REQ-189): another attempt would
     // meet the same question, and the gate has nothing to judge.
+    // REQ-495: the run does not wait for the answer. It becomes an assumption
+    // a person reviews before the specification says it (REQ-188); building
+    // on it first would gate a scenario that does not say what was answered.
     const asked = questionAsked(eventsFile, attempt, attemptStart);
     if (asked) {
-      warn(`${req.requirement}: the agent asked — ${asked}`);
+      warn(`${req.requirement}: the agent asked — ${asked.text}`);
       record("question");
       discardWorktreeChanges(worktreeDir);
+      const waiting = asked.id ? waitingFor(asked as Required<AskedQuestion>) : null;
       return {
         result: "question",
         attempts: attempt - firstAttempt + 1,
         attemptLog,
-        question: asked,
-        error: `Needs clarification: ${asked}`,
+        question: asked.text,
+        ...(waiting ? { waitingForAnswer: waiting } : {}),
+        error: waiting
+          ? `Needs clarification: ${waiting.id} in ${waiting.file} — ${waiting.answer}`
+          : `Needs clarification: ${asked.text}`,
       };
     }
 
@@ -1935,8 +2047,20 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
   };
 }
 
+/** A question an agent asked, with where it was recorded once it was (REQ-494). */
+interface AskedQuestion {
+  text: string;
+  id?: string;
+  change?: string;
+  file?: string;
+}
+
 /** The question the agent recorded with `specgate ask` during this attempt, if any (REQ-189). */
-function questionAsked(eventsFile: string, attempt: number, startedMs: number): string | null {
+function questionAsked(
+  eventsFile: string,
+  attempt: number,
+  startedMs: number
+): AskedQuestion | null {
   let text = "";
   try {
     text = fs.readFileSync(eventsFile, "utf8");
@@ -1944,12 +2068,18 @@ function questionAsked(eventsFile: string, attempt: number, startedMs: number): 
     return null;
   }
   const since = Math.floor(startedMs / 1000) - 1;
-  let asked: string | null = null;
+  let asked: AskedQuestion | null = null;
   for (const line of text.split("\n")) {
     try {
       const e = JSON.parse(line);
       if (e.type === "question" && e.attempt === attempt && Number(e.t) >= since && e.text) {
-        asked = String(e.text);
+        // The line with the id follows the agent's own once the question is recorded.
+        asked = {
+          text: String(e.text),
+          ...(e.id
+            ? { id: String(e.id), change: String(e.change || ""), file: String(e.file || "") }
+            : {}),
+        };
       }
     } catch {
       /* a line being written */
@@ -1958,30 +2088,40 @@ function questionAsked(eventsFile: string, attempt: number, startedMs: number): 
   return asked;
 }
 
+/** What a requirement waits on, with the command that answers it (REQ-495). */
+function waitingFor(q: {
+  id: string;
+  text: string;
+  change: string;
+  file: string;
+}): WaitingForAnswer {
+  return {
+    id: q.id,
+    text: q.text,
+    change: q.change,
+    file: q.file,
+    answer: `specgate answer ${q.id} "…"${q.change && q.change !== "project" ? ` --change ${q.change}` : ""}`,
+  };
+}
+
 /**
- * The questions the run's agents asked, written into the project and
- * committed (REQ-189): the agent could not edit the specification, so the
- * harness does, in one commit per question, and the requirement waits.
+ * The questions the run's agents asked and nothing recorded while they ran,
+ * written into the project and committed (REQ-189): the agent could not edit
+ * the specification, so the harness does, and the requirement waits. A
+ * question is normally recorded the moment it is asked (REQ-494); this is for
+ * one that could not be.
  */
 function recordQuestions(projectDir: string, results: RequirementResult[]): void {
   for (const r of results) {
-    if (r.result !== "question" || !r.question) continue;
-    const asked = askQuestion(projectDir, r.requirement, r.question);
+    if (r.result !== "question" || !r.question || r.waitingForAnswer) continue;
+    const asked = recordQuestion(projectDir, r.requirement, r.question);
     if (!asked.ok) {
       warn(`${r.requirement}: could not record its question — ${asked.message}`);
       continue;
     }
-    git(projectDir, ["add", "-A", "--", "docs/specs", "spec.md"]);
-    git(projectDir, [
-      "commit",
-      "-q",
-      "-m",
-      `docs(specs): ${r.requirement} needs clarification — ${asked.question}\n\n${r.question}`,
-    ]);
-    r.error = `Needs clarification: ${asked.question} in ${asked.file} — specgate answer ${asked.question} "…"`;
-    info(
-      `${r.requirement}: ${asked.question} recorded in ${asked.file}; answer it with specgate answer`
-    );
+    r.waitingForAnswer = waitingFor({ ...asked, text: r.question });
+    r.error = `Needs clarification: ${asked.id} in ${asked.file} — ${r.waitingForAnswer.answer}`;
+    info(`${r.requirement}: ${asked.id} recorded in ${asked.file}; answer it with specgate answer`);
   }
 }
 
@@ -2458,7 +2598,21 @@ function processRequirement(req: HarnessRequirement, ctx: RunContext): Requireme
     delete ledger.record.running;
     ledgerWrite();
   }
+  // A worker's result reaches the stream through its parent, which reads its report.
+  if (!process.env.SPECGATE_HARNESS_WORKER) streamResult(result);
   return result;
+}
+
+/** What each requirement's last `result` event said, to send a changed one again. */
+const streamedResults = new Map<string, string>();
+
+/** A requirement's result on the stream (REQ-496); again only when it changed. */
+function streamResult(result: RequirementResult): void {
+  if (streamFdOf() === null) return;
+  const said = JSON.stringify(result);
+  if (streamedResults.get(result.requirement) === said) return;
+  streamedResults.set(result.requirement, said);
+  streamEvent({ type: "result", result }, result.requirement);
 }
 
 function processOneRequirement(req: HarnessRequirement, ctx: RunContext): RequirementResult {
@@ -2738,15 +2892,65 @@ export function publishBranch(
  */
 const FAILURE_TAIL_LINES = 20;
 
-export function printReport(results: RequirementResult[], format: string, recorded?: string): void {
+/** Why a run started no more requirements (REQ-491): a stop asked, or its budget. */
+export interface RunStopped {
+  by: "request" | "budget";
+  code: string;
+  reason: string;
+  notAttempted: string[];
+}
+
+/** What `--allow-dirty` left out (REQ-490). */
+export interface RunDirty {
+  allowed: boolean;
+  leftOut: string[];
+}
+
+/** The requirements a stop or a budget kept from starting, and why; `null` when none. */
+export function runStopped(results: RequirementResult[]): RunStopped | null {
+  const halted = results.filter((r) => r.stoppedBy);
+  if (halted.length === 0) return null;
+  const code = String(halted[0].stoppedBy);
+  return {
+    by: code === STOP_ASKED ? "request" : "budget",
+    code,
+    reason: String(halted[0].error || "").replace(/^Not attempted: /, ""),
+    notAttempted: halted.map((r) => r.requirement),
+  };
+}
+
+/** The document `--format json` prints, and the stream's `run-end` carries. */
+export function reportDocument(
+  results: RequirementResult[],
+  extra: { dirty?: RunDirty; stopped?: RunStopped | null } = {}
+) {
+  const summary = results.reduce<Record<string, number>>((acc, r) => {
+    acc[r.result] = (acc[r.result] || 0) + 1;
+    return acc;
+  }, {});
+  return {
+    schemaVersion: 1,
+    total: results.length,
+    summary,
+    results,
+    dirty: extra.dirty || { allowed: false, leftOut: [] },
+    stopped: extra.stopped === undefined ? runStopped(results) : extra.stopped,
+  };
+}
+
+export function printReport(
+  results: RequirementResult[],
+  format: string,
+  recorded?: string,
+  extra: { dirty?: RunDirty } = {}
+): void {
   if (format === "json") {
-    const summary = results.reduce<Record<string, number>>((acc, r) => {
-      acc[r.result] = (acc[r.result] || 0) + 1;
-      return acc;
-    }, {});
-    process.stdout.write(
-      JSON.stringify({ schemaVersion: 1, total: results.length, summary, results }, null, 2) + "\n"
-    );
+    process.stdout.write(JSON.stringify(reportDocument(results, extra), null, 2) + "\n");
+    return;
+  }
+  if (format === "jsonl") {
+    for (const r of results) streamResult(r);
+    streamEvent({ type: "run-end", report: reportDocument(results, extra), status: [] });
     return;
   }
 
@@ -2868,7 +3072,7 @@ const dispatchLevel: LevelRunner = async (runnable, byId, hintByReq, ctx, concur
       // ceiling checked only between levels never fires. Measured: a
       // `--budget-seconds 2` run of three 3-second agents ran all three.
       if (ctx.mayStart && !ctx.mayStart()) {
-        results.push(notAttempted(byId.get(id), id, ctx.stopReason!()));
+        results.push(notAttempted(byId.get(id), id, ctx.stopReason!(), ctx.stopCode?.()));
         continue;
       }
       // Every id in a level comes from the queue `byId` was built from.
@@ -2912,7 +3116,7 @@ async function runChain(
     // REQ-209: a stop asked while the last requirement ran starts no other.
     if (i > 0 && takeStop(projectDir)) {
       for (const rest of pending.slice(i)) {
-        results.push(notAttempted(rest, rest.requirement, "a stop was asked"));
+        results.push(notAttempted(rest, rest.requirement, "a stop was asked", STOP_ASKED));
       }
       info(`stopped as asked: ${pending.length - i} requirement(s) not attempted`);
       break;
@@ -3005,11 +3209,19 @@ async function runChain(
   return results;
 }
 
-/** A requirement the budget never let start. Not a failure — it was not tried. */
+/** The code of a stop a person asked for (REQ-209, REQ-491). */
+const STOP_ASKED = "stop_asked";
+
+/**
+ * A requirement the budget never let start. Not a failure — it was not tried.
+ * `code` says it was a stop or the budget, as against a chain that stopped at
+ * a failure (REQ-491).
+ */
 function notAttempted(
   req: HarnessRequirement | null | undefined,
   id: string,
-  reason: string
+  reason: string,
+  code?: string
 ): RequirementResult {
   return {
     requirement: id,
@@ -3018,6 +3230,7 @@ function notAttempted(
     attempts: 0,
     branch: `harness/${id}`,
     error: `Not attempted: ${reason}`,
+    ...(code ? { stoppedBy: code } : {}),
   };
 }
 
@@ -3046,21 +3259,45 @@ function runWorkers(
         // Same question as the sequential path: a worker already in flight is
         // never interrupted, but the next one need not be started.
         if (ctx.mayStart && !ctx.mayStart()) {
-          results.push(notAttempted(byId ? byId.get(id) : null, id, ctx.stopReason!()));
+          results.push(
+            notAttempted(byId ? byId.get(id) : null, id, ctx.stopReason!(), ctx.stopCode?.())
+          );
           continue;
         }
+        // REQ-497: a streaming run gives each worker a pipe of its own as fd 3,
+        // read here line by line, so two workers' lines never interleave.
+        const streaming = streamFdOf() !== null;
         const child = spawn(process.execPath, [WORKER_ENTRY, ...workerArgs(id, ctx)], {
-          env: { ...process.env, SPECGATE_HARNESS_WORKER: "1" },
+          env: {
+            ...process.env,
+            SPECGATE_HARNESS_WORKER: "1",
+            ...(streaming ? { [STREAM_FD_VAR]: "3" } : {}),
+          },
+          stdio: ["pipe", "pipe", "pipe", streaming ? "pipe" : "ignore"],
         });
+        if (streaming) {
+          let partial = "";
+          const events = child.stdio[3] as NodeJS.ReadableStream;
+          events.setEncoding("utf8");
+          events.on("data", (d: string) => {
+            const parts = (partial + d).split("\n");
+            partial = parts.pop() ?? "";
+            for (const line of parts) streamRaw(line);
+          });
+          events.on("end", () => {
+            if (partial) streamRaw(partial);
+            partial = "";
+          });
+        }
 
         let stdout = "";
         let stderr = "";
-        child.stdout.on("data", (d) => {
+        child.stdout!.on("data", (d) => {
           stdout += d;
         });
         // A worker's prose goes straight through, so a long run is not silent.
         // Its JSON report is the only thing the parent parses.
-        child.stderr.on("data", (d) => {
+        child.stderr!.on("data", (d) => {
           stderr += d;
           process.stderr.write(d);
         });
@@ -3070,7 +3307,9 @@ function runWorkers(
 
         child.on("close", () => {
           running.delete(id);
-          results.push(parseWorkerReport(id, stdout, stderr));
+          const result = parseWorkerReport(id, stdout, stderr);
+          results.push(result);
+          streamResult(result);
           if (queue.length === 0 && running.size === 0) resolve(results);
           else fill();
         });
@@ -3261,7 +3500,7 @@ export async function runLevels(
           if (stoppedBy) return false;
           // REQ-209: a stop asked while a requirement ran starts no other.
           if (started > 0 && takeStop(ctx.projectDir)) {
-            stoppedBy = { stop: true, code: "stop_asked", reason: "a stop was asked" };
+            stoppedBy = { stop: true, code: STOP_ASKED, reason: "a stop was asked" };
             return false;
           }
           const verdict = budgetVerdict(
@@ -3277,6 +3516,7 @@ export async function runLevels(
           return true;
         },
         stopReason: () => (stoppedBy ? stoppedBy.reason : ""),
+        stopCode: () => (stoppedBy && stoppedBy.code) || "",
       },
       concurrency
     );
@@ -3301,7 +3541,7 @@ export async function runLevels(
     for (const level of levels) {
       for (const id of level) {
         if (results.some((r) => r.requirement === id)) continue;
-        results.push(notAttempted(byId.get(id), id, stoppedBy.reason));
+        results.push(notAttempted(byId.get(id), id, stoppedBy.reason, stoppedBy.code || ""));
       }
     }
   }
@@ -3353,11 +3593,17 @@ export class RunCommand extends BaseCommand {
   public async execute() {
     try {
       const args = parseArgs(this.args);
-      setJsonMode(args.format === "json");
+      setJsonMode(args.format !== "text");
+      // REQ-496: the stream is this run's stdout; a worker's is the pipe its parent gave it.
+      if (args.format === "jsonl") setStream(1);
+      else streamFromEnv();
       const projectDir = resolveProjectDir(args.projectDir, { requireSentinel: true });
 
       // REQ-211: a profile chosen for this run is its agent, ahead of the file's.
-      if (args.profile && !args.agent) args.agent = resolveProfileAgent(projectDir, args.profile);
+      if (args.profile && !args.agent) {
+        args.agent = resolveProfileAgent(projectDir, args.profile);
+        args.agentProfile = args.profile;
+      }
       const fileConfig = readHarnessConfig(projectDir);
       const settings = resolveHarnessSettings(fileConfig, args);
       // A fresh worktree has no dependencies. Unless told, install what the
@@ -3428,6 +3674,7 @@ export class RunCommand extends BaseCommand {
       }
 
       if (pending.length === 0) {
+        if (args.format === "jsonl") printReport([], "jsonl");
         if (jsonMode) info("No pending requirements. Nothing to do.");
         else
           process.stdout.write(
@@ -3468,10 +3715,25 @@ export class RunCommand extends BaseCommand {
         process.exit(0);
       }
 
-      if (!isGitClean(projectDir)) {
-        throw new Error(
-          "Working tree is not clean. Commit or stash your changes before running the harness."
-        );
+      // REQ-490: worktrees are cut from the last commit, so what is not
+      // committed is not part of the run. Refused unless asked for, and said.
+      // A worker is a slice of a run whose parent has already looked.
+      const dirty: RunDirty = { allowed: args.allowDirty, leftOut: [] };
+      if (!process.env.SPECGATE_HARNESS_WORKER) {
+        dirty.leftOut = uncommittedPaths(projectDir);
+        if (dirty.leftOut.length > 0 && !args.allowDirty) {
+          throw new Error(
+            "Working tree is not clean. Commit or stash your changes before running the " +
+              "harness, or pass --allow-dirty to build from the last commit and leave them as they are."
+          );
+        }
+        if (dirty.leftOut.length > 0) {
+          warn(
+            `--allow-dirty: ${dirty.leftOut.length} uncommitted file(s) stay as they are here ` +
+              `and are not part of the run: ${dirty.leftOut.slice(0, 5).join(", ")}` +
+              (dirty.leftOut.length > 5 ? ", …" : "")
+          );
+        }
       }
 
       // Git needs to know who is committing, and the harness commits — once per
@@ -3580,6 +3842,16 @@ export class RunCommand extends BaseCommand {
           projectDir,
           pending.map((r) => r.requirement)
         );
+        streamEvent({
+          type: "run-start",
+          schemaVersion: 1,
+          projectDir,
+          base: baseRef,
+          queue: pending.map((r) => r.requirement),
+          concurrency: settings.concurrency,
+          maxAttempts: settings.maxAttempts,
+          dirty,
+        });
       }
 
       const startedAt = new Date().toISOString();
@@ -3626,7 +3898,8 @@ export class RunCommand extends BaseCommand {
       printReport(
         results,
         args.format,
-        recordPath ? path.relative(projectDir, recordPath) : undefined
+        recordPath ? path.relative(projectDir, recordPath) : undefined,
+        { dirty }
       );
       // REQ-271: the studio's Build reads the agent from harness.config.yaml.
       if (unkept && !jsonMode && !process.env.SPECGATE_HARNESS_WORKER) {
@@ -3644,10 +3917,33 @@ export class RunCommand extends BaseCommand {
     } catch (err) {
       const thrown = err as { message?: string };
       let isJson = false;
+      let format = "";
       try {
-        isJson = parseArgs(this.args).format === "json";
+        format = parseArgs(this.args).format;
+        isJson = format === "json";
       } catch {
-        /* ignore */
+        // Refused arguments are answered in the format asked for, too.
+        const at = this.args.indexOf("--format");
+        format = at >= 0 ? this.args[at + 1] || "" : "";
+        isJson = format === "json";
+      }
+      if (format === "jsonl") {
+        // The last line of a stream is always `run-end`, a refused run's too.
+        process.stdout.write(
+          JSON.stringify({
+            t: Math.floor(Date.now() / 1000),
+            type: "run-end",
+            report: null,
+            status: [
+              {
+                severity: "error",
+                code: "harness_run_error",
+                message: thrown.message || String(err),
+              },
+            ],
+          }) + "\n"
+        );
+        process.exit(1);
       }
       const io = agentIo(isJson);
       return io.fail({ results: null }, [

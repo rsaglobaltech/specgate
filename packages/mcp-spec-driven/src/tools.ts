@@ -933,6 +933,21 @@ TOOLS["specgate_config_list"] = new GenericCliTool(
   "flag",
   false
 );
+TOOLS["specgate_config_keys"] = new GenericCliTool(
+  "specgate_config_keys",
+  "Run specgate config keys",
+  "config keys",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+    },
+    required: ["projectDir"],
+  },
+  "flag",
+  false
+);
 TOOLS["specgate_agents_init"] = new GenericCliTool(
   "specgate_agents_init",
   "Wire the loop into Claude, Cursor, Copilot, Aider and more.",

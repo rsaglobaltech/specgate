@@ -61,7 +61,7 @@ import {
 } from "../../../../packages/core/src/domain/SpecParser";
 import { CAPABILITIES_DIR } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import {
-  extractRequirementSection,
+  extractRequirementSections,
   templateObligationLines,
 } from "../../../../packages/core/src/domain/SpecSections";
 
@@ -621,17 +621,36 @@ export class ValidateSpecsCommand extends BaseCommand {
       return;
     }
 
+    // Each file read once (REQ-517): rows share feature files and test folders,
+    // and reading them per row made a project of N rows read N folders.
+    const texts = new Map<string, string>();
+    const readText = (full: string): string => {
+      let text = texts.get(full);
+      if (text === undefined) {
+        text = fs.readFileSync(full, "utf8");
+        texts.set(full, text);
+      }
+      return text;
+    };
+    const everyTest = new Map<string, string[]>();
     const readAll = (rel: string): string[] => {
+      const known = everyTest.get(rel);
+      if (known) return known;
+      const out = readAllOnce(rel);
+      everyTest.set(rel, out);
+      return out;
+    };
+    const readAllOnce = (rel: string): string[] => {
       const full = path.join(targetDir, artifactFile(rel));
       if (!fs.existsSync(full)) return [];
       const stat = fs.statSync(full);
-      if (stat.isFile()) return [fs.readFileSync(full, "utf8")];
+      if (stat.isFile()) return [readText(full)];
       const out: string[] = [];
       const walkTests = (dir: string) => {
         for (const name of fs.readdirSync(dir)) {
           const child = path.join(dir, name);
           if (fs.statSync(child).isDirectory()) walkTests(child);
-          else out.push(fs.readFileSync(child, "utf8"));
+          else out.push(readText(child));
         }
       };
       walkTests(full);
@@ -652,8 +671,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       return {
         requirement: row.requirement || "",
         featureRel,
-        feature:
-          featurePath && fs.existsSync(featurePath) ? fs.readFileSync(featurePath, "utf8") : "",
+        feature: featurePath && fs.existsSync(featurePath) ? readText(featurePath) : "",
         tests: declaredTests.flatMap(readAll),
         declaredTests,
       };
@@ -695,8 +713,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       const sources = declaredTests.flatMap(readAll);
       const featureRel = declaredPaths(row.featureFile)[0];
       const featurePath = featureRel ? path.join(targetDir, artifactFile(featureRel)) : null;
-      const feature =
-        featurePath && fs.existsSync(featurePath) ? fs.readFileSync(featurePath, "utf8") : "";
+      const feature = featurePath && fs.existsSync(featurePath) ? readText(featurePath) : "";
 
       // A row with no scenario has nothing for the per-scenario check to match
       // on — and those are the rows that lie most easily, because `adopt` seeds
@@ -901,8 +918,10 @@ export class ValidateSpecsCommand extends BaseCommand {
       if (!fs.existsSync(file)) continue;
       const source = fs.readFileSync(file, "utf8");
       const rel = path.relative(targetDir, file).split(path.sep).join("/");
-      for (const id of [...owed].sort()) {
-        const section = extractRequirementSection(source, id);
+      const ids = [...owed].sort();
+      const sections = extractRequirementSections(source, ids);
+      for (const id of ids) {
+        const section = sections.get(id) ?? null;
         if (section === null || templateObligationLines(section).length === 0) continue;
         findings.push(
           error(

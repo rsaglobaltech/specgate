@@ -32,6 +32,11 @@ fields and then the sections from the client's text, and
 `specgate propose --from-brief --check` checks the brief before anything is
 drafted. Step by step: [Write the brief](start/write-the-brief.md).
 
+A tool that edits the brief as a form — specgate-studio — reads it with
+`specgate propose --from-brief --form --json`, each field with its line, and
+writes it back with `--form <file>`: only the fields and card lists that
+changed are rewritten, every other byte of the file stays as it was.
+
 ```markdown
 ---
 product: Bookings for local businesses

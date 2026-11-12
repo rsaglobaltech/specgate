@@ -6,6 +6,7 @@ import {
   secretValues,
   type HarnessEvent,
 } from "../../packages/core/src/domain/HarnessEvents";
+import { streamEvent } from "./harness-stream";
 
 /**
  * Writing harness events (ADR-0037): `.harness/events/<REQ>.jsonl`, git-ignored.
@@ -58,6 +59,8 @@ export function appendEvent(
   } catch {
     /* the view must not break the run */
   }
+  // The same event on the run's stream, when it streams (REQ-496).
+  streamEvent(event, req, attempt);
 }
 
 /** The run's queue, in the order it works through it (REQ-182). */
@@ -91,5 +94,26 @@ export function keepPrompt(projectDir: string, req: string, attempt: number, pro
     fs.writeFileSync(file, prompt, "utf8");
   } catch {
     /* the view must not break the run */
+  }
+}
+
+/** How many lines the events file has now; 0 when it has none. Never throws. */
+export function eventsLineCount(file: string): number {
+  return eventsLines(file).length;
+}
+
+/** The events lines written after the first `count`; never throws (REQ-509). */
+export function eventsLinesSince(file: string, count: number): string[] {
+  return eventsLines(file).slice(count);
+}
+
+function eventsLines(file: string): string[] {
+  try {
+    return fs
+      .readFileSync(file, "utf8")
+      .split(/\r?\n/)
+      .filter((l) => l.trim() !== "");
+  } catch {
+    return [];
   }
 }

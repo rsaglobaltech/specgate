@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { requirementCapabilities } from "../../../lib/capabilities";
 import { proposalNotes } from "../../../lib/proposals";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability, classify, detectOrphans } from "./PlanCommand";
@@ -595,6 +596,7 @@ function statusDocument(
   unwritten: Diagnostic[] = []
 ): Record<string, unknown> {
   const { counts, pending, orphans } = summary;
+  const capabilities = requirementCapabilities(projectDir);
   return {
     schemaVersion: 1,
     projectDir: path.resolve(projectDir),
@@ -608,6 +610,8 @@ function statusDocument(
       title: titleOf(it) || null,
       category: it.category,
       needs: needsOf(it) || null,
+      // REQ-500: the capability that states it, for a view filtered by one.
+      capability: capabilities.get(it.requirement) ?? null,
       ...(it.change ? { change: it.change } : {}),
       ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
       ...(it.answered ? { answered: it.answered } : {}),

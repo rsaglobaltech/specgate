@@ -30,6 +30,7 @@ import * as path from "node:path";
 import { YamlDocument, parseYamlLite } from "../domain/YamlLite";
 import { HarnessSettings } from "../domain/HarnessConfig";
 import { readQuality } from "../domain/QualityChecks";
+import type { TokenPrices } from "../domain/RunBudget";
 
 export const HARNESS_CONFIG_FILE = "harness.config.yaml";
 
@@ -44,6 +45,11 @@ const KNOWN_KEYS = new Set([
   "agent",
   "agent_profile",
   "test_cmd",
+  // REQ-513, REQ-511, REQ-518: what `check --affected` runs, what makes it run
+  // everything, and whether the architecture check and the tests run side by side.
+  "test_cmd_affected",
+  "full_on",
+  "gate_parallel",
   "arch_cmd",
   // ADR-0028 points 3-4 (REQ-231): the SARIF the architecture tool writes.
   "arch_sarif",
@@ -81,6 +87,10 @@ interface HarnessProfile {
   match?: unknown;
   cost_per_run_hint?: unknown;
   advisory?: unknown;
+  price_per_input_token?: unknown;
+  price_per_output_token?: unknown;
+  price_per_cache_read_token?: unknown;
+  price_per_cache_write_token?: unknown;
 }
 
 /** The `profiles:` mapping of `.harness/profiles.yaml`, by profile name. */
@@ -136,6 +146,21 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
     config.promptPrecedents = /^(1|true|yes|on)$/i.test(String(parsed.prompt_precedents).trim());
   }
   if (parsed.test_cmd !== undefined) config.testCmd = String(parsed.test_cmd);
+  if (parsed.test_cmd_affected !== undefined) {
+    config.testCmdAffected = String(parsed.test_cmd_affected);
+  }
+  if (parsed.full_on !== undefined) {
+    if (!Array.isArray(parsed.full_on)) {
+      throw new Error(
+        `${HARNESS_CONFIG_FILE}: full_on must be a list of globs.\n` +
+          'Fix: write it as a YAML sequence, one glob per line, e.g. - "src/generated/**".'
+      );
+    }
+    config.fullOn = parsed.full_on.map((v: unknown) => String(v));
+  }
+  if (parsed.gate_parallel !== undefined) {
+    config.gateParallel = !/^(0|false|no|off)$/i.test(String(parsed.gate_parallel).trim());
+  }
   if (parsed.arch_cmd !== undefined) config.archCmd = String(parsed.arch_cmd);
   if (parsed.arch_sarif !== undefined) config.archSarif = String(parsed.arch_sarif);
   if (parsed.setup_cmd !== undefined) config.setupCmd = String(parsed.setup_cmd);
@@ -203,6 +228,7 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
 
   if (config.agent === undefined && parsed.agent_profile !== undefined) {
     config.agent = resolveProfileAgent(projectDir, String(parsed.agent_profile));
+    config.agentProfile = String(parsed.agent_profile);
   }
 
   // The roles ladder: a profile per attempt, and an advisory reviewer that runs
@@ -305,6 +331,8 @@ export function resolveHarnessSettings(
   const file = fileConfig || {};
   return {
     agent: cliArgs.agent || file.agent || "",
+    // The profile goes with the agent it named: a command given as is has none.
+    agentProfile: cliArgs.agent ? cliArgs.agentProfile || "" : file.agentProfile || "",
     testCmd: cliArgs.testCmd || file.testCmd || "",
     archCmd: cliArgs.archCmd || file.archCmd || "",
     archSarif: file.archSarif || "",
@@ -412,6 +440,41 @@ export function readCostHints(projectDir: string): Record<string, number> {
     if (Number.isFinite(value) && value >= 0) hints[name] = value;
   }
   return hints;
+}
+
+/**
+ * The prices per token each profile declares (REQ-509): a profile with both an
+ * input and an output price; cache reads and writes cost the input price
+ * unless it says otherwise. A price that is not a number of zero or more is
+ * ignored, as a hint is: a wrong price must not stop a report.
+ */
+export function readTokenPrices(projectDir: string): Record<string, TokenPrices> {
+  const profilesPath = path.join(projectDir, ".harness", "profiles.yaml");
+  if (!fs.existsSync(profilesPath)) return {};
+  let doc: YamlDocument;
+  try {
+    doc = parseYamlLite(fs.readFileSync(profilesPath, "utf8")) || {};
+  } catch {
+    return {};
+  }
+  const price = (v: unknown) => {
+    const n = v === undefined || v === null || v === "" ? NaN : Number(v);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+  const out: Record<string, TokenPrices> = {};
+  for (const [name, profile] of Object.entries((doc.profiles || {}) as HarnessProfiles)) {
+    if (!profile) continue;
+    const input = price(profile.price_per_input_token);
+    const output = price(profile.price_per_output_token);
+    if (input === null || output === null) continue;
+    out[name] = {
+      input,
+      output,
+      cacheRead: price(profile.price_per_cache_read_token) ?? input,
+      cacheWrite: price(profile.price_per_cache_write_token) ?? input,
+    };
+  }
+  return out;
 }
 
 function isAdvisoryProfile(projectDir: string, profileName: string): boolean {
