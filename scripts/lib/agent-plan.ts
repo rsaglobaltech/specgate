@@ -31,6 +31,7 @@ import {
   resolveProfileAgent,
 } from "../../packages/core/src/infrastructure/HarnessConfigFile";
 import { extractRequirementSection } from "../../packages/core/src/domain/SpecSections";
+import { escapeRegExp } from "./escape";
 
 // ── Shapes ────────────────────────────────────────────────────────────────────
 
@@ -332,7 +333,7 @@ function findRequirement(projectDir: string, id: string) {
   for (const file of specFiles(projectDir)) {
     const section = extractRequirementSection(fs.readFileSync(file, "utf8"), id);
     if (!section) continue;
-    const tag = new RegExp(`@${id.replace(/\./g, "\\.")}(?![\\w.])`);
+    const tag = new RegExp(`@${escapeRegExp(id)}(?![\\w.])`);
     const feature =
       walk(path.join(projectDir, "features"), (n) => n.endsWith(".feature")).find((f) =>
         tag.test(fs.readFileSync(f, "utf8"))
@@ -347,6 +348,13 @@ function findRequirement(projectDir: string, id: string) {
   return null;
 }
 
+/** A mention without the sentence's punctuation after it: `@REQ-031,` is REQ-031. Linear, no regex. */
+function trimTrailingPunctuation(s: string): string {
+  let end = s.length;
+  while (end > 0 && `.,;:!?)"']`.includes(s[end - 1]!)) end--;
+  return s.slice(0, end);
+}
+
 /** `@REQ-NNN` and `@path` in the request, with `--req` and `--file`. */
 export function resolveContext(
   projectDir: string,
@@ -357,7 +365,7 @@ export function resolveContext(
   const ctx: Context = { requirements: [], files: [], status: [] };
   const mentions: Array<{ token: string; value: string }> = [];
   for (const m of request.matchAll(/(?:^|\s)@([^\s]+)/g)) {
-    const value = m[1].replace(/[.,;:!?)"'\]]+$/, "");
+    const value = trimTrailingPunctuation(m[1]);
     if (value) mentions.push({ token: `@${value}`, value });
   }
   for (const r of reqs) mentions.push({ token: r, value: r });
