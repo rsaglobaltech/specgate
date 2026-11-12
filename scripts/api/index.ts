@@ -1,7 +1,8 @@
 /**
  * @rsaglobaltech/specgate/api (change specgate-api, REQ-466 … REQ-469; change
  * studio-json-gaps, REQ-484, REQ-486, REQ-487; report and lastCheck: change
- * studio-phase3-json, REQ-499, REQ-501, REQ-504).
+ * studio-phase3-json, REQ-499, REQ-501, REQ-504; the agent's plans: change
+ * agent-ask, REQ-527).
  *
  * Each function answers with the very document the command builds for
  * `--json`, so the two cannot drift; its signature is typed against
@@ -23,6 +24,8 @@ import type { BriefFormInput } from "../../packages/core/src/domain/BriefForm";
 import { buildReport, renderJson } from "../cli/commands/quality/ReportCommand";
 import { lastCheckAnswer } from "../lib/last-check";
 import { capabilityNames, requirementCapabilities, unknownCapability } from "../lib/capabilities";
+import * as plans from "../lib/agent-plan";
+import type { Outcome } from "../lib/agent-plan";
 
 export const API_VERSION: typeof Api.API_VERSION = "1.0.0";
 
@@ -121,3 +124,29 @@ export const report: typeof Api.report = async (dir, options = {}) => {
 /** `specgate check --last --json` (REQ-504). */
 export const lastCheck: typeof Api.lastCheck = async (dir) =>
   asPrinted<Api.LastCheckAnswer>(lastCheckAnswer(project(dir)));
+
+/** The command's document, or its first error as a rejection with its code and fix. */
+function answered<T>(outcome: Outcome): T {
+  if (outcome.ok) return asPrinted<T>(outcome.document);
+  const first = outcome.status.find((d) => d.severity === "error") || outcome.status[0];
+  throw Object.assign(new Error(first.message), {
+    code: first.code,
+    fix: first.fix || "",
+  }) as Api.SpecgateApiError;
+}
+
+/** `specgate agent ask "<request>" --json` (REQ-520, REQ-527): runs the agent on a scratch copy. */
+export const agentAsk: typeof Api.agentAsk = async (dir, request, options = {}) =>
+  answered<Api.AgentAskAnswer>(await plans.agentAsk(project(dir), request, options));
+
+/** `specgate agent apply <id> --json` (REQ-524, REQ-525). */
+export const agentApply: typeof Api.agentApply = async (dir, id) =>
+  answered<Api.AgentApplyAnswer>(plans.agentApply(project(dir), id));
+
+/** `specgate agent discard <id> --json` (REQ-522). */
+export const agentDiscard: typeof Api.agentDiscard = async (dir, id) =>
+  answered<Api.AgentDiscardAnswer>(plans.agentDiscard(project(dir), id));
+
+/** `specgate agent plans --json` (REQ-522). */
+export const agentPlans: typeof Api.agentPlans = async (dir) =>
+  answered<Api.AgentPlansAnswer>(plans.agentPlans(project(dir)));

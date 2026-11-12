@@ -21,7 +21,9 @@ requirement in progress, an estimate per requirement, a question's id while the
 run goes on, and a live JSON stream. And a faster gate: `check --affected` runs
 the tests of what changed, a test that passed on the same code is not run
 again, the architecture check and the tests run side by side, every stage says
-how long it took, and `validate`, `status` and `matrix` grow linearly.
+how long it took, and `validate`, `status` and `matrix` grow linearly. And
+`specgate agent ask`: an agent's change to the specification as a plan with
+its diff, written only when a person applies it.
 
 ### Added
 
@@ -177,6 +179,22 @@ how long it took, and `validate`, `status` and `matrix` grow linearly.
 - **`config set` for the fast gate**: `test_cmd_affected` (refused without
   `{files}` or `{req}`), `full_on` and `gate_parallel`, listed by
   `config keys`.
+- **Ask your agent, see the plan, then apply it** (REQ-520 … REQ-527):
+  `specgate agent ask "<request>" --json` runs the configured agent on a
+  scratch copy of the project and answers a plan — `files`, each with `path`,
+  `change` (`modify`, `add`, `delete`), `why` and its `diff`; the `then`
+  checks; what it `read`; `usage` in tokens and cost — and writes nothing.
+  `@REQ-NNN` and `@path` in the request, `--req` and `--file`, become the
+  agent's context. Only `spec.md`, `docs/specs/**` and `features/**` go into
+  a plan; other edits are reported as `edit_refused`. Plans are kept in the
+  git folder under `specgate/plans/<id>/` with each file's base hash;
+  `specgate agent apply <id>` writes them byte for byte when nothing changed
+  since (`plan_stale` otherwise), runs their specgate checks and never
+  commits. `specgate agent discard <id>` and `specgate agent plans` manage
+  them. `agent_not_set` names the fix
+  `specgate agents init --tool claude`; `agent_failed` carries the agent's
+  standard error. In the API: `agentAsk`, `agentApply`, `agentDiscard` and
+  `agentPlans`; `API_VERSION` stays 1.0.0. See `docs/agent-ask.md`.
 
 ### Fixed
 
