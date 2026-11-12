@@ -9,7 +9,7 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
-## [0.34.0] — 2026-11-11
+## [0.34.0] — 2026-11-12
 
 What specgate-studio needed as JSON — a draft's review notes, the brief as a
 form, a client's text proposed as a form, a dry run of `adopt` that lists what
