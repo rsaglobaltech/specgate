@@ -12,7 +12,7 @@ The system SHALL, with `specgate agent ask "<request>" [--plan] [--json]`, run t
 - WHEN a tool runs `specgate agent ask "allow cancelling up to 24 h before shipping" --plan --json`
 - THEN it exits 0; `plan.files` is `spec.md`, `modify`, with the agent's reason and a diff that adds the line; `plan.then` is `specgate validate`; `plan.usage` has the tokens and the cost; and `spec.md` in the project is unchanged
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-521 — Mentions in the request become the agent's context
 
@@ -24,7 +24,7 @@ The system SHALL resolve each `@REQ-NNN` mention in the request, and each `--req
 - WHEN a tool runs `specgate agent ask "cancel up to 24 h before shipping @REQ-001 @docs/notes.md @REQ-999" --json`
 - THEN the prompt the agent received holds REQ-001's section and names `docs/notes.md`; `plan.read` lists `spec.md`, REQ-001's feature file and `docs/notes.md`; and `status` has `mention_unresolved` for `@REQ-999`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-522 — A plan is kept in the git folder until it is applied or discarded
 
@@ -36,7 +36,7 @@ The system SHALL keep each plan that changes a file in the repository's git fold
 - WHEN a tool runs `specgate agent plans --json`, `specgate agent discard <id> --json`, then both again
 - THEN the first lists the plan with `spec.md` and `stale` false, and its folder is under the git folder's `specgate/plans/`; the discard answers its id; then the list is empty and the second discard is refused with `plan_not_found`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-523 — In spec mode the agent may change only the specification
 
@@ -48,7 +48,7 @@ The system SHALL, in mode `spec` — the default, and the only mode — keep in 
 - WHEN a tool runs `specgate agent ask "…" --json`, then `specgate agent ask "…" --mode code --json`
 - THEN the first plan's `files` are `spec.md` and the feature file, and `status` has `edit_refused` for `src/app.js`; the second is refused with `agent_mode_unknown` and the agent did not run
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-524 — apply writes exactly the plan, and only on the base it was made on
 
@@ -60,7 +60,7 @@ The system SHALL, with `specgate agent apply <id> --json`, first check that ever
 - WHEN a tool runs `specgate agent apply <first> --json`, then `specgate agent apply <second> --json`
 - THEN the first writes `spec.md` with the agent's line, the plan is gone, and git has nothing staged and no new commit; the second is refused with `plan_stale` naming `spec.md`, and `spec.md` keeps what the first wrote
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-525 — apply runs the plan's checks and says what they found
 
@@ -72,7 +72,7 @@ The system SHALL, after writing a plan, run each of its `then` commands that is 
 - WHEN a tool runs `specgate agent ask "…" --json`, then `specgate agent apply <id> --json`
 - THEN the plan's `then` is `specgate validate` alone and its `status` has `then_refused` naming `rm -rf src`; `applied.then` has `specgate validate` with its exit and findings, and `src` is still there
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-526 — No agent, a failing agent and an empty plan are answers
 
@@ -84,7 +84,7 @@ The system SHALL refuse `agent ask` with no agent configured as `agent_not_set`,
 - WHEN a tool runs `specgate agent ask "…" --json`, then with `--agent` a script that writes "rate limited" to standard error and exits 1, then with `--agent` a script that changes nothing
 - THEN the first is refused with `agent_not_set` and the fix `specgate agents init --tool claude`; the second with `agent_failed` whose message holds "rate limited", and no plan is kept; the third exits 0 with `plan.id` null, `plan.files` empty and `plan_empty`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-527 — The agent's plans through the API
 
@@ -96,4 +96,4 @@ The system SHALL export from `@rsaglobaltech/specgate/api` `agentAsk(dir, reques
 - WHEN a Node program calls `agentAsk(dir, "…")`, `agentPlans(dir)`, then `agentApply(dir, id)`, and `agentDiscard(dir, "nope")`
 - THEN the plan, the list and the applied answer have the shapes the commands print, `spec.md` holds the agent's line, and the discard rejects with the code `plan_not_found` and the fix `specgate agent plans`
 
-<!-- specgate:trace status=Approved actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
