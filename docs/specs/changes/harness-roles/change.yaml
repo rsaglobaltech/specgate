@@ -4,4 +4,4 @@ created: 2026-11-13
 rigor: lite
 skip_specs: false
 retire_capabilities: false
-req_range: [REQ-532, REQ-537]
+req_range: [REQ-532, REQ-535]

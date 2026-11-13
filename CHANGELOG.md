@@ -9,6 +9,25 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **A tester and an implementer** (REQ-532, REQ-533):
+  `roles: [tester, implementer]` in `harness.config.yaml` runs each attempt as two sessions:
+  the tester writes the failing tests, then the implementer makes them pass.
+  Each gets `SPECGATE_ROLE`. A tester's production code and an implementer's
+  test changes are put back and reported as `lane_crossed`.
+- **A budget per requirement** (REQ-535): `max_cost_usd` stops starting
+  sessions for a requirement once the `cost` its sessions reported reaches the
+  limit; a requirement that then fails reports `budget_exceeded`. An agent that
+  reports no cost is warned about once, as `cost_unknown`.
+
+### Changed
+
+- **The agent's own instructions are protected** (REQ-534): `CLAUDE.md`,
+  `.claude/**`, `.cursor/**`, `.github/**` and `.mcp.json` join the harness's
+  default protected paths. For these paths and `AGENTS.md` and `AI_RULES.md`,
+  creating the file counts as changing it. A project with `protected_paths:` keeps its own list.
+
 ## [0.34.0] — 2026-11-12
 
 What specgate-studio needed as JSON — a draft's review notes, the brief as a

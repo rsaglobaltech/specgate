@@ -27,6 +27,11 @@
  * the gate is running; deleting the declared feature and writing a fresh one in
  * its place shows up as a tracked deletion, and is refused.
  *
+ * The agent's own instructions are the other way round (REQ-534): no
+ * requirement is supposed to create a `CLAUDE.md` or a hook under `.claude/`,
+ * and a new one steers the next session as surely as an edited one. For those
+ * patterns, a new file is a violation too.
+ *
  * ## Why this module holds no git
  *
  * Deciding whether `features/core/health.feature` is protected is a rule.
@@ -42,6 +47,10 @@
  * or fail, the specification documents, the pack lockfile, and the harness
  * configuration itself — an agent that may edit `harness.config.yaml` may
  * disable its own gate.
+ *
+ * REQ-534: and the files that steer the agent. An agent that may append to
+ * `CLAUDE.md`, add a hook under `.claude/`, or change the CI workflow that
+ * runs the gate in `.github/` rewrites its own instructions for the next run.
  */
 export const DEFAULT_PROTECTED_PATHS: readonly string[] = Object.freeze([
   "spec.md",
@@ -51,6 +60,26 @@ export const DEFAULT_PROTECTED_PATHS: readonly string[] = Object.freeze([
   "docs/specs/**",
   ".specops.lock",
   "harness.config.yaml",
+  "CLAUDE.md",
+  ".claude/**",
+  ".cursor/**",
+  ".github/**",
+  ".mcp.json",
+]);
+
+/**
+ * The patterns that protect the agent's instructions (REQ-534): a path one of
+ * them protects is a violation when the agent creates it, not only when it
+ * edits it. See the module note.
+ */
+export const INSTRUCTION_PATHS: readonly string[] = Object.freeze([
+  "AGENTS.md",
+  "AI_RULES.md",
+  "CLAUDE.md",
+  ".claude/**",
+  ".cursor/**",
+  ".github/**",
+  ".mcp.json",
 ]);
 
 export interface WriteScopeChanges {
@@ -125,7 +154,8 @@ export function protectingPattern(filePath: string, rules: WriteScopeRules = {})
 /**
  * Which of the agent's writes were out of scope.
  *
- * `added` paths are never violations — see the module note on `NEEDS_FEATURE`.
+ * `added` paths are not violations — see the module note on `NEEDS_FEATURE` —
+ * except where an instruction pattern protects them (REQ-534).
  * Ordered by path so a report reads the same twice.
  */
 export function checkWriteScope(
@@ -137,7 +167,13 @@ export function checkWriteScope(
     const pattern = protectingPattern(filePath, rules);
     if (pattern) violations.push({ path: filePath, pattern });
   }
-  return violations;
+  for (const filePath of [...changes.added].sort()) {
+    const pattern = protectingPattern(filePath, rules);
+    if (pattern && INSTRUCTION_PATHS.includes(pattern)) {
+      violations.push({ path: filePath, pattern });
+    }
+  }
+  return violations.sort((a, b) => a.path.localeCompare(b.path));
 }
 
 /**

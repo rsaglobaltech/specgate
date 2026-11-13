@@ -21,25 +21,25 @@ In scope:
   implementer's output.
 - REQ-533: lanes — test files the implementer writes and production files the
   tester writes are reverted and reported.
-- REQ-534: protected paths — the specification and the agent instructions
-  (`.claude/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, `.mcp.json`) are
-  checksummed; an attempt that changes them ends `stuck`.
+- REQ-534: the default protected paths grow to the agent's own
+  instructions (`CLAUDE.md`, `.claude/`, `.cursor/`, `.github/`, `.mcp.json`).
 - REQ-535: `max_cost_usd` per requirement, from the agent's reported usage.
-- REQ-536: every requirement ends `ready`, `blocked`, `stuck`, `pending` or
-  `skipped`, and `harness report` gives the first-pass rate.
-- REQ-537: andon — a blocking question the agent writes stops the
-  requirement at `Needs Clarification`, and only the question is kept.
 
 Out of scope:
 
 - An LLM auditor that decides `Tested`: the gate stays the judge. The
   existing `builtin:review` remains advisory.
+- What already exists, found while implementing: the andon cord is REQ-189,
+  REQ-494 and REQ-495 (`specgate ask` stops the requirement until answered);
+  the outcomes are `pass`, `fail`, `skipped`, `blocked` and `question`; and
+  `harness report` already gives the first-attempt rate. REQ-536 and REQ-537,
+  reserved for them, are withdrawn.
 
 ## Approach
 
 The harness loop keeps one worktree per requirement; a role is a second agent
 invocation in that worktree with its own prompt template under
 `templates/harness/`. Lanes are a diff filter run after each role, using the
-same test-path patterns `apply` uses to find tests. Checksums are taken before
-the first role and compared after each. Cost is summed from each session's
-usage, as `agent ask` already reads it.
+test-file conventions of the derived matrix. Protection extends the existing
+write-scope guard's default list. Cost is summed from the `cost` the events
+stream already records for each session.
