@@ -12,7 +12,7 @@ The system SHALL, when `harness.config.yaml` sets `roles: [tester, implementer]`
 - WHEN a tool runs `specgate harness run --req REQ-000`
 - THEN the log holds `tester` then `implementer`, and the run's attempt log names both roles
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-533 — Each role stays in its lane
 
@@ -24,11 +24,11 @@ The system SHALL, with `roles:` set, revert after the tester's session every fil
 - WHEN a tool runs `specgate harness run --req REQ-000`
 - THEN the output reports `lane_crossed` for `implementer` and `tests/a.test.js`, and the tester's content of `tests/a.test.js` is what the gate ran
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-534 — The agent's own instructions are protected by default
 
-The system SHALL protect by default, besides the specification paths it protects today, the files that steer the agent — `CLAUDE.md`, `.claude/**`, `.cursor/**`, `.github/**` and `.mcp.json` — so that an attempt that changes one fails with `agent_touched_protected_path` naming it, as for any protected path; and `protected_paths` in `harness.config.yaml` SHALL still replace the default list.
+The system SHALL protect by default, besides the specification paths it protects today, the files that steer the agent — `CLAUDE.md`, `.claude/**`, `.cursor/**`, `.github/**` and `.mcp.json` — so that an attempt that changes one fails with `agent_touched_protected_path` naming it, as for any protected path; SHALL count creating one of those files, or `AGENTS.md` or `AI_RULES.md`, as changing it, where a new file under the other protected paths stays allowed; and `protected_paths` in `harness.config.yaml` SHALL still replace the default list.
 
 #### Scenario: SCN-534a — The agent edits its own instructions
 
@@ -36,11 +36,11 @@ The system SHALL protect by default, besides the specification paths it protects
 - WHEN a tool runs `specgate harness run --req REQ-000`
 - THEN the attempt fails with `agent_touched_protected_path` naming `CLAUDE.md`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-535 — A requirement has a cost budget
 
-The system SHALL sum, per requirement, the `cost` each agent session's final usage line reports, and when `max_cost_usd` in `harness.config.yaml` is set and the sum reaches it after a session, SHALL start no further session for that requirement and end it `fail` at the stage `budget`, reporting `budget_exceeded` with the cost and the limit; a session that reports no cost SHALL count as zero, with the warning `cost_unknown` once per requirement while a budget is set.
+The system SHALL sum, per requirement, the `cost` each agent session's final usage line reports, and when `max_cost_usd` in `harness.config.yaml` is set and the sum reaches it after a session, SHALL start no further session for that requirement — neither the rest of the attempt, recorded at the stage `budget`, nor a retry — while the gate still judges the work already done; a requirement that does not pass SHALL end `fail`, reporting `budget_exceeded` with the cost and the limit; and a session that reports no cost SHALL count as zero, with the warning `cost_unknown` once per requirement while a budget is set.
 
 #### Scenario: SCN-535a — The first attempt spends the budget
 
@@ -48,4 +48,4 @@ The system SHALL sum, per requirement, the `cost` each agent session's final usa
 - WHEN a tool runs `specgate harness run --req REQ-000`
 - THEN the requirement fails after one attempt, and the output reports `budget_exceeded` with 0.60 and 0.5
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

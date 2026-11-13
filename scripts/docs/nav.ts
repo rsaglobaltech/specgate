@@ -397,6 +397,12 @@ export const NAV: readonly NavSection[] = [
         blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",
       },
       {
+        slug: "harness-roles",
+        label: "Roles, budget and protected paths",
+        blurb:
+          "A tester and an implementer in their lanes, a cost ceiling, the files no agent may change.",
+      },
+      {
         slug: "domain-packs",
         label: "Domain packs",
         blurb: "Install requirements a pilot already proved, or package your own.",

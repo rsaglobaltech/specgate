@@ -49,6 +49,13 @@ export interface HarnessSettings {
   /** Advisory profile run before each retry, or "" for none. */
   reviewProfile: string;
   /**
+   * REQ-532: `tester` then `implementer` as separate sessions of each attempt,
+   * each kept to its lane (REQ-533). Empty means one session per attempt.
+   */
+  roles?: Array<"tester" | "implementer">;
+  /** REQ-535: what one requirement's sessions may cost, in USD. 0 means no limit. */
+  maxCostUsd?: number;
+  /**
    * Profile that tries to break a green implementation (D3), or "" for none.
    *
    * Runs once per requirement, after the gate has passed, and its writes are

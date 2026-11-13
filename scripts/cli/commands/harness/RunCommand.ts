@@ -71,6 +71,8 @@ import {
 } from "../../../lib/quality-run";
 import { dockerNeed, environmentFailure } from "../../../lib/harness-environment";
 import type { QualityCheck, Stage } from "../../../../packages/core/src/domain/QualityChecks";
+import { isTestFile } from "../../../../packages/core/src/infrastructure/DerivedMatrixSources";
+import type { HarnessRole } from "../../../../packages/core/src/domain/HarnessRun";
 import {
   EVENTS_ATTEMPT_VAR,
   EVENTS_FILE_VAR,
@@ -1602,6 +1604,75 @@ function checkDeclaredArtifactsInWorktree(
   return findings.length > 0 ? findings : null;
 }
 
+/**
+ * Build manifests either role may change (REQ-533): a tester adds the test
+ * runner, an implementer the library it uses. Kept and visible in the diff.
+ */
+const LANE_FREE =
+  /(^|\/)(package\.json|package-lock\.json|pom\.xml|build\.gradle|build\.gradle\.kts)$/;
+
+/** Is this file outside the lane of `role` (REQ-533)? */
+export function outsideLane(role: HarnessRole, rel: string): boolean {
+  if (rel.startsWith(PROMPT_ARCHIVE_DIR) || LANE_FREE.test(rel)) return false;
+  return role === "tester" ? !isTestFile(rel) : isTestFile(rel);
+}
+
+/** What the role is told, before the requirement's own prompt (REQ-532). */
+function roleInstruction(role: HarnessRole, requirement: string): string {
+  return role === "tester"
+    ? `You are the **tester** for ${requirement}. Write the failing tests its scenarios call ` +
+        `for, each naming ${requirement} and its scenario id, in the project's test style. Write ` +
+        "no production code: a separate implementer session makes your tests pass, and any " +
+        "file you write outside the tests is reverted."
+    : `You are the **implementer** for ${requirement}. The tester has written its tests; make ` +
+        "them pass by writing the production code. Do not change any test file: test changes " +
+        "are reverted, and a test that is wrong is the tester's to fix on the next attempt.";
+}
+
+/**
+ * The worktree's uncommitted files of one lane, to put back the ones a session
+ * changes outside it (REQ-533). Only what is dirty is kept: a file clean at
+ * the start of the session is HEAD's, and git can restore it.
+ */
+function laneGuard(worktreeDir: string, role: HarnessRole): () => string[] {
+  const dirtyNow = () => {
+    const c = worktreeChanges(worktreeDir);
+    return c ? [...c.modified, ...c.added] : [];
+  };
+  const read = (rel: string) => {
+    try {
+      return fs.readFileSync(path.join(worktreeDir, rel));
+    } catch {
+      return null;
+    }
+  };
+  const before = new Map<string, Buffer | null>();
+  for (const rel of dirtyNow()) if (outsideLane(role, rel)) before.set(rel, read(rel));
+
+  return () => {
+    const reverted: string[] = [];
+    const after = dirtyNow().filter((rel) => outsideLane(role, rel));
+    for (const rel of new Set([...after, ...before.keys()])) {
+      const now = read(rel);
+      const was = before.has(rel) ? before.get(rel)! : undefined;
+      if (was !== undefined) {
+        if (was === null ? now === null : now !== null && now.equals(was)) continue;
+        if (was === null) fs.rmSync(path.join(worktreeDir, rel), { force: true });
+        else {
+          fs.mkdirSync(path.dirname(path.join(worktreeDir, rel)), { recursive: true });
+          fs.writeFileSync(path.join(worktreeDir, rel), was);
+        }
+      } else if (git(worktreeDir, ["cat-file", "-e", `HEAD:${rel}`]).status === 0) {
+        git(worktreeDir, ["checkout", "HEAD", "--", rel]);
+      } else {
+        fs.rmSync(path.join(worktreeDir, rel), { force: true });
+      }
+      reverted.push(rel);
+    }
+    return reverted.sort();
+  };
+}
+
 function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): AttemptOutcome {
   const { worktreeDir, settings, timeoutMs, hint } = ctx;
   /**
@@ -1628,10 +1699,25 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
   const firstAttempt = Math.max(1, (ctx.resumeAt && ctx.resumeAt.attempt) || 1);
   /** Set when another attempt cannot change the outcome (#50). */
   let stopRetrying = false;
+  /** REQ-535: what this requirement's sessions have cost, and its ceiling. */
+  const maxCost = settings.maxCostUsd || 0;
+  let spent = 0;
+  let costUnknownSaid = false;
+  const budgetMessage = () =>
+    `budget_exceeded — ${req.requirement} spent $${spent.toFixed(2)} of its $${maxCost} ` +
+    "budget (max_cost_usd), so no further session ran.";
+  const overBudget = () => maxCost > 0 && spent >= maxCost;
 
   // The live view's file (ADR-0037), in the project, not the worktree.
   const eventsFile = eventsFileFor(ctx.projectDir || worktreeDir, req.requirement);
   for (let attempt = firstAttempt; attempt <= settings.maxAttempts; attempt += 1) {
+    // REQ-535: a retry is more sessions, and the budget is spent.
+    if (overBudget()) {
+      warn(`${req.requirement}: ${budgetMessage()}`);
+      previousFailure = `${budgetMessage()}\n\n${previousFailure}`;
+      stopRetrying = true;
+      break;
+    }
     info(`${req.requirement}: attempt ${attempt}/${settings.maxAttempts}`);
     const attemptStart = Date.now();
     const event = (e: Record<string, unknown> & { type: string }) =>
@@ -1666,11 +1752,21 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     const steps = planAttempt(attempt, {
       attemptProfiles: settings.attemptProfiles,
       reviewProfile: settings.reviewProfile || null,
+      roles: settings.roles || [],
     });
 
     let stepFailed = false;
     try {
       for (const step of steps) {
+        // REQ-535: a session after the budget is spent is not started.
+        if (overBudget()) {
+          previousFailure = budgetMessage();
+          warn(`${req.requirement}: ${budgetMessage()}`);
+          record("budget");
+          stopRetrying = true;
+          stepFailed = true;
+          break;
+        }
         // Built per step, not per attempt: the reviewer runs first and the
         // implementing step that follows must see what it said. Building once
         // up front meant findings only ever reached the *next* attempt, which
@@ -1678,7 +1774,9 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         const prompt = judged(worktreeDir, (dir) =>
           buildPrompt(req, dir, {
             promptPrefix: settings.promptPrefix,
-            hint,
+            hint: step.role
+              ? [roleInstruction(step.role, req.requirement), hint].filter(Boolean).join("\n\n")
+              : hint,
             previousFailure: previousFailure || undefined,
             reviewFindings: step.advisory ? undefined : reviewFindings || undefined,
             attempt,
@@ -1723,8 +1821,11 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         const agentStart = Date.now();
         // REQ-509: the default agent's profile, when it came from one, so its
         // tokens are priced and its hint applies.
-        const role = profile ?? (step.advisory ? "reviewer" : settings.agentProfile || "agent");
+        const role =
+          step.role ?? profile ?? (step.advisory ? "reviewer" : settings.agentProfile || "agent");
         const eventsBefore = eventsLineCount(eventsFile);
+        // REQ-533: what is outside this role's lane, to put back after it.
+        const lane = step.role ? laneGuard(worktreeDir, step.role) : null;
         streamEvent({ type: "agent-start", role }, req.requirement, attempt);
         const agent = runWithDeadline(command, {
           cwd: worktreeDir,
@@ -1739,6 +1840,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           env: {
             SPECGATE_REQ: req.requirement,
             SPECGATE_ATTEMPT: String(attempt),
+            ...(step.role ? { SPECGATE_ROLE: step.role } : {}),
             [EVENTS_FILE_VAR]: eventsFile,
             [EVENTS_REQ_VAR]: req.requirement,
             [EVENTS_ATTEMPT_VAR]: String(attempt),
@@ -1761,6 +1863,22 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         profilesUsed.push(role);
         const used = stepUsage(eventsLinesSince(eventsFile, eventsBefore), attempt, role);
         if (used) usageUsed.push(used);
+        if (maxCost > 0) {
+          if (used && typeof used.cost === "number") spent += used.cost;
+          else if (!costUnknownSaid) {
+            costUnknownSaid = true;
+            warn(
+              `${req.requirement}: cost_unknown — the agent reported no cost; ` +
+                "max_cost_usd counts its sessions as free"
+            );
+          }
+        }
+        if (lane) {
+          for (const rel of lane()) {
+            warn(`${req.requirement}: lane_crossed — ${step.role} wrote ${rel}; reverted`);
+            event({ type: "lane", role: step.role, path: rel, result: "reverted" });
+          }
+        }
 
         fs.rmSync(promptFile, { force: true });
         const agentError = agent.error as NodeJS.ErrnoException | undefined;

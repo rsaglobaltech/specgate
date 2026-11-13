@@ -7,8 +7,8 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-532 — a tester and an implementer, as separate sessions
-- [ ] 2.2 REQ-533 — each role stays in its lane
-- [ ] 2.3 REQ-534 — the agent's own instructions are protected by default
-- [ ] 2.4 REQ-535 — a requirement has a cost budget
-- [ ] 2.5 the CHANGELOG, the command reference and the docs page
+- [x] 2.1 REQ-532 — a tester and an implementer, as separate sessions
+- [x] 2.2 REQ-533 — each role stays in its lane
+- [x] 2.3 REQ-534 — the agent's own instructions are protected by default
+- [x] 2.4 REQ-535 — a requirement has a cost budget
+- [x] 2.5 the CHANGELOG, the command reference and the docs page

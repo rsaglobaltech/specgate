@@ -143,7 +143,9 @@ export interface AttemptRecord {
     /** Green gate, but the diff missed the declared artifacts (A2, --strict-artifacts). */
     | "artifacts"
     | "done"
-    | "commit";
+    | "commit"
+    /** REQ-535: the requirement's `max_cost_usd` was spent, so no session followed. */
+    | "budget";
   /** Wall-clock inside the agent command alone. */
   agentMs: number;
   /** Wall-clock for the whole attempt: prompt, agent, gate, done, commit. */
@@ -170,6 +172,8 @@ export interface StepUsage {
   output: number;
   cacheRead: number;
   cacheWrite: number;
+  /** What the session cost in USD, when its stream said (REQ-535). */
+  cost?: number;
 }
 
 /**
@@ -199,6 +203,9 @@ export function stepUsage(
       output: n(e.output),
       cacheRead: n(e.cacheRead),
       cacheWrite: n(e.cacheWrite),
+      ...(typeof e.cost === "number" && Number.isFinite(e.cost) && e.cost >= 0
+        ? { cost: e.cost }
+        : {}),
     };
   }
   return found;
@@ -294,13 +301,24 @@ export interface AttemptStep {
    * tests stay the only judge.
    */
   advisory: boolean;
+  /**
+   * The lane this step works in (REQ-532), when the project splits the work:
+   * `tester` writes the failing tests, `implementer` makes them pass.
+   */
+  role?: HarnessRole;
 }
+
+/** The roles of `roles:` in harness.config.yaml (REQ-532), in the order they run. */
+export const HARNESS_ROLES = Object.freeze(["tester", "implementer"] as const);
+export type HarnessRole = (typeof HARNESS_ROLES)[number];
 
 export interface AttemptPlanOptions {
   /** Profile per attempt. Shorter than `maxAttempts` reuses the last entry. */
   attemptProfiles?: readonly string[];
   /** Advisory profile run before every retry. Never on the first attempt. */
   reviewProfile?: string | null;
+  /** REQ-532: one implementing step per role instead of one for the whole attempt. */
+  roles?: readonly HarnessRole[];
 }
 
 /**
@@ -322,6 +340,11 @@ export function planAttempt(attempt: number, opts: AttemptPlanOptions = {}): Att
   if (attempt > 1 && opts.reviewProfile) {
     steps.push({ profile: opts.reviewProfile, advisory: true });
   }
-  steps.push({ profile: profile ?? null, advisory: false });
+  const roles = opts.roles ?? [];
+  if (roles.length === 0) {
+    steps.push({ profile: profile ?? null, advisory: false });
+    return steps;
+  }
+  for (const role of roles) steps.push({ profile: profile ?? null, advisory: false, role });
   return steps;
 }
