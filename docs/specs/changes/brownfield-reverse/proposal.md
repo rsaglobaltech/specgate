@@ -37,7 +37,10 @@ Out of scope:
 `reverse --modules` reads the source tree the way `adopt` detects the stack
 (packages, `src/*` folders, Maven/Gradle modules, workspaces) and answers each
 candidate with its path and file count. `reverse <module>` reuses the agent
-plumbing of `propose --from-brief --agent`: a scratch copy, a prompt built from
-the module's files, and a delta written into `docs/specs/changes/reverse-<module>/`
-that `change validate` must accept. The baseline is a JSON file of finding
+plumbing of `propose --from-brief --agent`: the agent runs in the project and
+every write outside its answer file is undone. It answers JSON (requirements,
+scenarios, `source`, `suspect`), and Specgate writes the delta into
+`docs/specs/changes/reverse-<module>/` from it — so `Draft`, `source=` and
+suspects-as-questions hold whatever the agent does. `source_missing` is a
+warning: a refactor that moves a file is not a broken contract. The baseline is a JSON file of finding
 fingerprints (code, file, requirement id) committed beside the matrix.

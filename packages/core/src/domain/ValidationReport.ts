@@ -8,6 +8,8 @@ export interface ValidationFinding {
   fix?: string;
   /** The fix as separate lines, for surfaces that render one per line. */
   fixLines?: readonly string[];
+  /** The requirement the finding is about, when there is one (REQ-531's baseline matches on it). */
+  requirement?: string;
 }
 
 export interface FindingOptions {
@@ -16,6 +18,7 @@ export interface FindingOptions {
   target?: string;
   fix?: string;
   fixLines?: readonly string[];
+  requirement?: string;
 }
 
 export class ValidationReport {
@@ -43,6 +46,7 @@ export class ValidationReport {
       target: opts.target,
       fix: opts.fix,
       fixLines: opts.fixLines,
+      ...(opts.requirement ? { requirement: opts.requirement } : {}),
     });
   }
 
@@ -56,6 +60,7 @@ export class ValidationReport {
       target: opts.target,
       fix: opts.fix,
       fixLines: opts.fixLines,
+      ...(opts.requirement ? { requirement: opts.requirement } : {}),
     });
   }
 
@@ -69,6 +74,7 @@ export class ValidationReport {
       target: opts.target,
       fix: opts.fix,
       fixLines: opts.fixLines,
+      ...(opts.requirement ? { requirement: opts.requirement } : {}),
     });
   }
 }

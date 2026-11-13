@@ -25,6 +25,68 @@ export default [
     },
   },
   {
+    name: "an existing system: modules listed, one reversed into Draft requirements, old gaps baselined",
+    covers: ["reverse", "check"],
+    run(dir, t) {
+      t.write(dir, "pom.xml", "<project><modules><module>orders</module></modules></project>\n");
+      t.write(dir, "orders/pom.xml", "<project/>\n");
+      t.write(dir, "orders/src/main/java/x/Cancel.java", "class Cancel {}\n");
+      t.ok(t.sg(dir, "init"), "init on a Maven system");
+      t.gitInit(dir);
+      const list = t.sg(dir, "reverse", "--modules");
+      t.ok(list, "reverse --modules");
+      t.expect(/orders\s+java/.test(list.stdout), "orders is listed as java", list);
+
+      const answer = {
+        requirements: [
+          {
+            title: "A shipped order cannot be cancelled",
+            text: "The system SHALL refuse to cancel an order whose status is SHIPPED.",
+            source: ["orders/src/main/java/x/Cancel.java:1"],
+            scenarios: [
+              {
+                title: "A shipped order",
+                steps: ["GIVEN a shipped order", "WHEN it is cancelled", "THEN it is refused"],
+              },
+            ],
+          },
+        ],
+      };
+      const agent = path.join(dir, "..", "reverse-agent.cjs");
+      fs.writeFileSync(
+        agent,
+        `const fs = require("node:fs");\nconst f = "docs/specs/changes/reverse-orders/reverse.json";\n` +
+          `fs.mkdirSync(require("node:path").dirname(f), { recursive: true });\n` +
+          `fs.writeFileSync(f, ${JSON.stringify(JSON.stringify(answer))});\n`
+      );
+      const before = t.read(dir, "spec.md");
+      const r = t.sg(
+        dir,
+        "reverse",
+        "orders",
+        "--agent",
+        `"${process.execPath}" "${agent}" {prompt_file}`
+      );
+      t.ok(r, "reverse orders");
+      const delta = t.read(dir, "docs/specs/changes/reverse-orders/specs/orders/spec.md");
+      t.expect(/status=Draft/.test(delta), "the requirement is Draft", r);
+      t.expect(
+        /source=orders\/src\/main\/java\/x\/Cancel\.java:1/.test(delta),
+        "it cites its source",
+        r
+      );
+      t.expect(t.read(dir, "spec.md") === before, "spec.md is untouched");
+
+      const b = t.sg(dir, "check", "--baseline");
+      t.ok(b, "check --baseline");
+      t.expect(
+        /recorded in docs\/specs\/gate-baseline\.json/.test(b.stdout),
+        "the baseline is written",
+        b
+      );
+    },
+  },
+  {
     name: "greenfield: init --yes scaffolds a project whose gate passes",
     covers: ["init", "check", "validate"],
     run(dir, t) {
