@@ -16,7 +16,7 @@ The system SHALL, with `specgate reverse --modules [--json]`, list the candidate
 
 ### Requirement: REQ-529 — reverse drafts one module into a change
 
-The system SHALL, with `specgate reverse <module> [--agent <cmd>] [--json]`, run the configured agent on a scratch copy of the project with a prompt built from the module's source, tests and schema files, and write what it proposes into a change `docs/specs/changes/reverse-<module>/` with reserved REQ ids; every requirement in it SHALL have the status `Draft`; `spec.md` and the capability specs SHALL not change; and the change SHALL pass `specgate change validate`, else the command SHALL answer the validation findings and keep nothing.
+The system SHALL, with `specgate reverse <module> [--agent <cmd>] [--json]`, run the configured agent with a prompt built from the module's source, tests and schema files, undo every write the agent makes outside its answer file, and write what it answers into a change `docs/specs/changes/reverse-<module>/` with reserved REQ ids; every requirement in it SHALL have the status `Draft`; `spec.md` and the capability specs SHALL not change; and the change SHALL pass `specgate change validate`, else the command SHALL answer the validation findings and keep nothing.
 
 #### Scenario: SCN-529a — The agent drafts the orders module
 
@@ -28,7 +28,7 @@ The system SHALL, with `specgate reverse <module> [--agent <cmd>] [--json]`, run
 
 ### Requirement: REQ-530 — A reversed requirement cites its evidence
 
-The system SHALL record, in the trace comment of each requirement `reverse` writes, a `source=` list of the files and lines it was read from; `specgate validate` SHALL report `source_missing` for a cited file that does not exist; and the system SHALL write behaviour the agent marks as suspect — a defect, not a rule — as a question in the change's `questions.md`, never as a requirement.
+The system SHALL record, in the trace comment of each requirement `reverse` writes, a `source=` list of the files and lines it was read from; `specgate validate` SHALL warn `source_missing` for a cited file that does not exist, without failing; and the system SHALL write behaviour the agent marks as suspect — a defect, not a rule — as a question in the change's `questions.md`, never as a requirement.
 
 #### Scenario: SCN-530a — A rule, a defect and a deleted file
 

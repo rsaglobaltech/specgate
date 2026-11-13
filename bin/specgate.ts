@@ -388,6 +388,8 @@ function dispatchValidate(validateArgs: string[]): void {
     // Internal: `done --check` and the harness hold the requirement they are
     // delivering to what a delivered row owes. Not in the help on purpose.
     "--delivering",
+    // Internal: `check --baseline` records today's findings (REQ-531).
+    "--write-baseline",
   ]);
   const unknownFlags = validateArgs.filter((a) => a.startsWith("-") && !VALIDATE_FLAGS.has(a));
   if (unknownFlags.length > 0) {

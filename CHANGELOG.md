@@ -20,6 +20,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   sessions for a requirement once the `cost` its sessions reported reaches the
   limit; a requirement that then fails reports `budget_exceeded`. An agent that
   reports no cost is warned about once, as `cost_unknown`.
+- **`specgate reverse`** (REQ-528, REQ-529, REQ-530): `reverse --modules` lists the
+  modules of an existing system (Maven and Gradle modules, npm workspaces, Go
+  packages, folders under `src/` or `apps/`) with stack and file count, without
+  an agent. `reverse <module>` has your agent read one module and writes the
+  change `reverse-<module>`: every requirement `Draft`, its trace citing
+  `source=` the lines it was read from, behaviour the agent marks as suspect
+  written to `questions.md` instead. `validate` warns `source_missing` when a
+  cited file is gone.
+- **A gate baseline** (REQ-531): `specgate check --baseline` records today's
+  traceability findings in `docs/specs/gate-baseline.json`. After it, `check`
+  and `validate` fail only on new findings, count the `baselined` ones, and name
+  each `baseline_fixed` one so the file shrinks.
 
 ### Changed
 

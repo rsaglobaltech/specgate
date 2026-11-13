@@ -96,7 +96,7 @@ export const BUILD_OUTPUT = new Set([
 /** The wrapper a JVM project puts between the module root and its packages. */
 const JVM_SOURCE_ROOTS = ["src/main/java", "src/main/kotlin", "src/main/scala", "src/main/groovy"];
 
-const CODE_EXT = new Set([
+export const CODE_EXT = new Set([
   ".java",
   ".kt",
   ".kts",

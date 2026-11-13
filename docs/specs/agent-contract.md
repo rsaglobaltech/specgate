@@ -59,6 +59,7 @@ not run reports an `error` about itself.
 
 | Command | Document key | Gate |
 |---|---|---|
+| `specgate reverse [module] --json` | `reverse` | no |
 | `specgate doctor --json` | `doctor` | yes |
 | `specgate status --json` | `status` | no |
 | `specgate alm pull --json` | `pulled` | no |

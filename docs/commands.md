@@ -60,6 +60,8 @@ ids after it: open modules one at a time to keep that possible.
 | `specgate adopt`                                     | Installs Specgate in an existing repository. Never overwrites a file.              | [Getting started](getting-started.md) |
 | `specgate onboard`                                   | Proposes the capabilities an existing repository's layout implies. Writes nothing. | `specgate onboard --help`             |
 | `specgate onboard --tour`                            | Runs the whole loop on a temporary copy of your repository, narrated.              | `specgate onboard --help`             |
+| `specgate reverse --modules`                         | Lists the modules of an existing system, with stack and file count. No agent.      | [Specify a system that already runs](reverse.md) |
+| `specgate reverse <module>`                          | Your agent drafts one module into a change: Draft requirements citing `source=`.   | [Specify a system that already runs](reverse.md) |
 | `specgate add usecase <module/Name>`                 | In a forja project: the class, its test and its wiring (also `entity`, `port`).    | `specgate add --help`                 |
 
 **forja is not on the npm registry.** `init --forja` runs
@@ -145,6 +147,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate quality run [--stage]`        | Runs the checks of a stage: attempt, end or ci.                             | `specgate quality --help`                      |
 | `specgate quality baseline`             | Records today's SARIF findings as debt: only new ones fail from then on.    | `specgate quality --help`                      |
 | `specgate check --ci`                   | The gate in CI: also the `ci` checks, and a check that cannot run fails.    | [Validating](validating.md)                    |
+| `specgate check --baseline`             | Records today's findings in `docs/specs/gate-baseline.json`: only new ones fail. | [Specify a system that already runs](reverse.md#4-turn-the-gate-on-without-a-red-build) |
 | `specgate check --last`                 | The last gate result, its commit and stages, without running the gate.      | [Validating](validating.md#the-stages-and-the-last-result) |
 | `specgate check --affected`             | Only the tests of what changed since the base; the whole suite when it cannot say. `--no-cache`. | [A faster gate](fast-gate.md) |
 | `specgate verify`                       | For OpenSpec projects: fails while a done scenario has no test naming it.   | [Already on OpenSpec](openspec.md)             |

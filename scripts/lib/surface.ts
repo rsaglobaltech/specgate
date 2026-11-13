@@ -174,6 +174,20 @@ export const SURFACE: Command[] = [
     // `init` does this in a repo that has code (phase 1); kept for scripts.
   },
   {
+    // REQ-528 … REQ-530: a running system specified one module at a time.
+    name: "reverse",
+    editsContract: true,
+    mcp: false,
+    script: ["reverse.js"],
+    help: {
+      group: "core",
+      icon: "🔁",
+      summary:
+        "Specify existing code, one module at a time: Draft requirements citing their source.",
+    },
+    json: { key: "reverse", gate: false, args: "[module]" },
+  },
+  {
     name: "onboard",
     script: ["onboard.js"],
     help: {
