@@ -12,7 +12,7 @@ The system SHALL, with `specgate reverse --modules [--json]`, list the candidate
 - WHEN a tool runs `specgate reverse --modules --json`
 - THEN it exits 0 and `modules` lists `billing` then `orders`, each with `stack` `java` and its file count, and no agent was started
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-529 — reverse drafts one module into a change
 
@@ -24,7 +24,7 @@ The system SHALL, with `specgate reverse <module> [--agent <cmd>] [--json]`, run
 - WHEN a tool runs `specgate reverse orders --json`
 - THEN it exits 0, `docs/specs/changes/reverse-orders/` holds a delta with the two requirements, both `Draft`, and `spec.md` is unchanged
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-530 — A reversed requirement cites its evidence
 
@@ -36,7 +36,7 @@ The system SHALL record, in the trace comment of each requirement `reverse` writ
 - WHEN a tool runs `specgate reverse orders --json`, deletes `src/orders/Cancel.java`, then runs `specgate validate --json`
 - THEN the delta has one requirement whose trace carries `source=src/orders/Cancel.java:12`, `questions.md` has one question for the suspect behaviour, and `validate` reports `source_missing` naming the deleted file
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-531 — A baseline lets an existing project adopt the gate
 
@@ -48,4 +48,4 @@ The system SHALL, with `specgate check --baseline`, write the gate's current fin
 - WHEN REQ-002 is set `Implemented` with no test that names it and a tool runs `specgate check --json`
 - THEN it fails with one finding for REQ-002, and reports REQ-001's finding as `baselined`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

@@ -314,10 +314,10 @@
 | REQ-525 | SCN-525a | `features/agent-integration/REQ-525.feature` | - | - | - | - | - | tests/unit/agent-apply.test.ts | Approved |
 | REQ-526 | SCN-526a | `features/agent-integration/REQ-526.feature` | - | - | - | - | - | tests/unit/agent-ask.test.ts | Approved |
 | REQ-527 | SCN-527a | `features/agent-integration/REQ-527.feature` | - | - | - | - | - | tests/unit/agent-api.test.ts | Approved |
-| REQ-528 | SCN-528a | `features/project-setup/REQ-528.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Draft |
-| REQ-529 | SCN-529a | `features/project-setup/REQ-529.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Draft |
-| REQ-530 | SCN-530a | `features/project-setup/REQ-530.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Draft |
-| REQ-531 | SCN-531a | `features/project-setup/REQ-531.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Draft |
+| REQ-528 | SCN-528a | `features/project-setup/REQ-528.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Approved |
+| REQ-529 | SCN-529a | `features/project-setup/REQ-529.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Approved |
+| REQ-530 | SCN-530a | `features/project-setup/REQ-530.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Approved |
+| REQ-531 | SCN-531a | `features/project-setup/REQ-531.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Approved |
 | REQ-532 | SCN-532a | `features/harness/REQ-532.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-533 | SCN-533a | `features/harness/REQ-533.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-534 | SCN-534a | `features/harness/REQ-534.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
