@@ -96,6 +96,10 @@ not run reports an `error` about itself.
 | `specgate release-notes <from>..<to> --json` | `releaseNotes` | no |
 | `specgate acceptance <change> --json` | `acceptance` | no |
 | `specgate guide --json` | `guide` | no |
+| `specgate stack --json` | `stack` | no |
+| `specgate adr new <title> --json` | `adr` | no |
+| `specgate adr supersede <NNNN> <title> --json` | `adr` | no |
+| `specgate adr list --json` | `adr` | no |
 | `specgate agent ask "<request>" --json` | `plan` | no |
 | `specgate agent apply <plan-id> --json` | `applied` | no |
 | `specgate agent discard <plan-id> --json` | `discarded` | no |

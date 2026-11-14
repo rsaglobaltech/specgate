@@ -823,6 +823,53 @@ export const SURFACE: Command[] = [
     json: { key: "guide", gate: false },
   },
   {
+    // REQ-548: the layers and their commands, from the evidence on disk.
+    name: "stack",
+    editsContract: true,
+    mcp: false,
+    script: ["stack.js"],
+    help: {
+      group: "core",
+      icon: "🧱",
+      summary: "Write docs/specs/stack.md: each layer's technology and evidence, and the commands.",
+    },
+    json: { key: "stack", gate: false },
+  },
+  {
+    // REQ-546: decisions recorded and superseded, never rewritten.
+    name: "adr",
+    subcommands: [
+      {
+        name: "new",
+        editsContract: true,
+        mcp: false,
+        script: ["adr.js"],
+        argsFrom: 1,
+        help: {
+          group: "core",
+          icon: "🏛️",
+          summary: "Record an architecture decision: the next ADR, Proposed, in docs/specs/adr/.",
+        },
+        json: { key: "adr", gate: false, args: "<title>" },
+      },
+      {
+        name: "supersede",
+        editsContract: true,
+        mcp: false,
+        script: ["adr.js"],
+        argsFrom: 1,
+        json: { key: "adr", gate: false, args: "<NNNN> <title>" },
+      },
+      {
+        name: "list",
+        mcp: false,
+        script: ["adr.js"],
+        argsFrom: 1,
+        json: { key: "adr", gate: false },
+      },
+    ],
+  },
+  {
     name: "config",
     subcommands: [
       { name: "init", script: ["config_init.js"] },

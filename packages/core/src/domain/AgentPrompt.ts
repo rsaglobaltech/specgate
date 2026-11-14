@@ -31,6 +31,8 @@ export interface PromptOptions {
   /** Which file the rules came from: AGENTS.md, or a legacy AI_RULES.md. */
   rulesFile?: string;
   stageRules?: string[];
+  /** `docs/specs/decision-rights.md`, when the project has one (REQ-547). */
+  decisionRights?: string | null;
   /** Ask the use case to look one up. `precedent` is what it found. */
   withPrecedents?: boolean;
   /**
@@ -188,6 +190,20 @@ export class AgentPrompt {
         AgentPrompt.section(
           `Project rules (${opts.rulesFile || "AGENTS.md"} — non-negotiable)`,
           opts.aiRulesContent.trimEnd()
+        )
+      );
+    }
+
+    if (opts.decisionRights && opts.decisionRights.trim()) {
+      parts.push(
+        AgentPrompt.section(
+          "Decision rights (docs/specs/decision-rights.md — checked against your diff)",
+          opts.decisionRights.trimEnd() +
+            "\n\nA decision marked `ask` is not yours to take: do not add a dependency, a " +
+            "migration or a public API operation it covers. If the requirement cannot be met " +
+            "without one, ask instead — `specgate ask " +
+            String(req.requirement) +
+            ' "<what you need, and why>"`. An attempt that takes it fails.'
         )
       );
     }

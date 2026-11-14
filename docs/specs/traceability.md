@@ -326,6 +326,9 @@
 | REQ-543 | SCN-543a | `features/transition/REQ-543.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
 | REQ-544 | SCN-544a | `features/transition/REQ-544.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
 | REQ-545 | SCN-545a | `features/transition/REQ-545.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
+| REQ-546 | SCN-546a | `features/architecture/REQ-546.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
+| REQ-547 | SCN-547a | `features/architecture/REQ-547.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
+| REQ-548 | SCN-548a | `features/architecture/REQ-548.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
 | REQ-549 | SCN-549a | `features/agent-integration/REQ-549.feature` | - | - | - | - | - | tests/unit/agent-skills.test.ts | Approved |
 | REQ-550 | SCN-550a | `features/agent-integration/REQ-550.feature` | - | - | - | - | - | tests/unit/agent-skills.test.ts | Approved |
 

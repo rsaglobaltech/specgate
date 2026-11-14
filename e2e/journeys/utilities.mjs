@@ -43,6 +43,36 @@ export default [
     },
   },
   {
+    name: "a decision recorded then replaced, and the stack written down once",
+    covers: ["adr new", "adr supersede", "adr list", "stack"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      t.ok(t.sg(dir, "adr", "new", "Use Postgres"), "adr new");
+      const adr = fs
+        .readdirSync(path.join(dir, "docs/specs/adr"))
+        .find((f) => /-use-postgres\.md$/.test(f));
+      t.expect(!!adr, "the ADR is written");
+      const number = adr.slice(0, 4);
+      const file = path.join(dir, "docs/specs/adr", adr);
+      fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("Proposed", "Accepted"));
+      t.ok(t.sg(dir, "adr", "supersede", number, "Use SQLite at the edge"), "adr supersede");
+      const list = t.sg(dir, "adr", "list", "--json");
+      t.ok(list, "adr list");
+      const statuses = JSON.parse(list.stdout).adr.list.map((a) => a.status);
+      t.expect(
+        statuses.some((s) => /^Superseded by /.test(s)),
+        "the old one is superseded",
+        list
+      );
+
+      t.ok(t.sg(dir, "stack"), "stack");
+      const once = t.read(dir, "docs/specs/stack.md");
+      t.ok(t.sg(dir, "stack"), "stack again");
+      t.expect(t.read(dir, "docs/specs/stack.md") === once, "a second run changes nothing");
+    },
+  },
+  {
     name: "onboard reads a repository, proposes capabilities, and writes nothing",
     covers: ["onboard"],
     run(dir, t) {
