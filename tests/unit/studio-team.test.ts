@@ -92,7 +92,15 @@ function fakeGitHub(): Promise<{ port: number; calls: string[]; close: () => voi
   );
   return new Promise((resolve) =>
     server.listen(0, "127.0.0.1", () =>
-      resolve({ port: server.address().port, calls, close: () => server.close() })
+      resolve({
+        port: server.address().port,
+        calls,
+        // Keep-alive connections from the studio's fetch would hold close() open.
+        close: () => {
+          server.closeAllConnections();
+          server.close();
+        },
+      })
     )
   );
 }
@@ -161,7 +169,7 @@ async function studio(dir: string, extra: string[]) {
 
 // ── REQ-553 ─────────────────────────────────────────────────────────────────
 
-test("REQ-553 SCN-553a: a reader tries to answer a question", async () => {
+test("REQ-553 SCN-553a: a reader tries to answer a question", { timeout: 60000 }, async () => {
   const gh = await fakeGitHub();
   const { dir } = teamProject(gh.port);
   const s = await studio(dir, ["--team"]);
@@ -191,7 +199,7 @@ test("REQ-553 SCN-553a: a reader tries to answer a question", async () => {
   }
 });
 
-test("REQ-553: without --team, today's local studio, no sign-in", async () => {
+test("REQ-553: without --team, today's local studio, no sign-in", { timeout: 60000 }, async () => {
   const gh = await fakeGitHub();
   const { dir } = teamProject(gh.port);
   const s = await studio(dir, []);
@@ -231,7 +239,7 @@ test("REQ-553: roles and the gate, without a server", () => {
 
 // ── REQ-554 ─────────────────────────────────────────────────────────────────
 
-test("REQ-554 SCN-554a: an editor answers a question", async () => {
+test("REQ-554 SCN-554a: an editor answers a question", { timeout: 60000 }, async () => {
   const gh = await fakeGitHub();
   const { dir, origin } = teamProject(gh.port);
   const before = git(dir, "rev-parse", "main").stdout.trim();
