@@ -4,6 +4,19 @@ import * as path from "node:path";
 
 export default [
   {
+    name: "a change as one page to send, loading nothing from outside it",
+    covers: ["review"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      t.ok(t.sg(dir, "propose", "pdf"), "propose");
+      t.ok(t.sg(dir, "review", "pdf", "--out", "review.html"), "review");
+      const html = t.read(dir, "review.html");
+      t.expect(/<!doctype html>/i.test(html), "an HTML page");
+      t.expect(!/\b(src|href)\s*=/i.test(html), "nothing loaded from outside it");
+    },
+  },
+  {
     name: "a decision recorded then replaced, and the stack written down once",
     covers: ["adr new", "adr supersede", "adr list", "stack"],
     run(dir, t) {

@@ -97,6 +97,7 @@ not run reports an `error` about itself.
 | `specgate adr new <title> --json` | `adr` | no |
 | `specgate adr supersede <NNNN> <title> --json` | `adr` | no |
 | `specgate adr list --json` | `adr` | no |
+| `specgate review <change> --json` | `review` | no |
 | `specgate agent ask "<request>" --json` | `plan` | no |
 | `specgate agent apply <plan-id> --json` | `applied` | no |
 | `specgate agent discard <plan-id> --json` | `discarded` | no |

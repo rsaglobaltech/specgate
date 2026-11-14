@@ -34,6 +34,8 @@ import {
   type BaselineEntry,
   type GateBaseline,
 } from "../../../../packages/core/src/domain/GateBaseline";
+import { journeyDiagnostics } from "../../../lib/journeys";
+import { onlyJourneys } from "../../../../packages/core/src/domain/Journeys";
 import { citedSources } from "../../../../packages/core/src/domain/ReverseDraft";
 import type { ValidationFinding } from "../../../../packages/core/src/domain/ValidationReport";
 import { ValidateProjectUseCase } from "../../../../packages/core/src/application/ValidateProjectUseCase";
@@ -1034,6 +1036,22 @@ export class ValidateSpecsCommand extends BaseCommand {
     return findings.filter((f) => !excused.has(f));
   }
 
+  /** REQ-552: a journey whose requirements are all delivered owes a test. */
+  private checkJourneys(targetDir: string) {
+    const errors = journeyDiagnostics(targetDir);
+    if (errors.length === 0) return;
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, [...this.notes, ...errors]);
+      return;
+    }
+    this.logError(`Journey findings: ${errors.length}`);
+    for (const d of errors) {
+      process.stderr.write(`  ${d.message}\n`);
+      if (d.fix) process.stderr.write(`     fix: ${d.fix}\n`);
+    }
+    process.exit(1);
+  }
+
   /**
    * REQ-530: a requirement `reverse` wrote cites the code it was read from.
    * When that file is gone the requirement may describe code that no longer
@@ -1384,7 +1402,9 @@ export class ValidateSpecsCommand extends BaseCommand {
 
     for (const ff of featureFiles.sort()) {
       const rel = path.relative(targetDir, ff).split(path.sep).join("/");
-      if (!traceContent.includes(rel)) {
+      // REQ-552: a file of journeys only has no row of its own: a journey is
+      // not one requirement's scenario, and `status --json` lists it.
+      if (!traceContent.includes(rel) && !onlyJourneys(fs.readFileSync(ff, "utf8"))) {
         const exampleRow =
           traceMode === "rich"
             ? `| REQ-TBD | SCN-TBD | \`${rel}\` | UC-TBD | TBD | TBD | TBD | TBD | TBD | Draft |`
@@ -1542,6 +1562,7 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
 
     this.checkCitedSources(targetDir);
+    if (strict) this.checkJourneys(targetDir);
     const skeletonOnly = this.isAdoptionSkeletonOnly(targetDir, featureFiles);
     const advisories = (
       skeletonOnly

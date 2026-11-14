@@ -831,6 +831,18 @@ export const SURFACE: Command[] = [
     ],
   },
   {
+    // REQ-551: a change as one HTML page, for people who do not read the repository.
+    name: "review",
+    mcp: false,
+    script: ["review.js"],
+    help: {
+      group: "core",
+      icon: "📄",
+      summary: "A change as one self-contained HTML page to send to whoever decides on it.",
+    },
+    json: { key: "review", gate: false, args: "<change>" },
+  },
+  {
     name: "config",
     subcommands: [
       { name: "init", script: ["config_init.js"] },

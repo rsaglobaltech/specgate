@@ -29,6 +29,7 @@ import { c, sym } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { miniPet, petEnabled } from "../../../pet/pet";
 import { petFor } from "./PetCommand";
+import { projectJourneys } from "../../../lib/journeys";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 
 /**
@@ -604,6 +605,14 @@ function statusDocument(
     pending,
     counts,
     orphanFeatures: orphans,
+    // REQ-552: each journey, the requirements it crosses and the tests that name it.
+    journeys: projectJourneys(projectDir).journeys.map((j) => ({
+      id: j.id,
+      title: j.title,
+      requirements: j.requirements,
+      tests: j.tests,
+      file: j.file,
+    })),
     packs: lock && lock.packs ? lock.packs : [],
     requirements: summary.items.map((it) => ({
       id: it.requirement,

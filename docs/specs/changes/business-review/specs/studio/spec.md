@@ -16,13 +16,13 @@ The system SHALL, with `specgate review <change> [--out <file>]`, write one self
 
 ### Requirement: REQ-552 — A journey chains requirements and owes a test
 
-The system SHALL read a scenario tagged `@JRN-NNN` together with the `@REQ-NNN` tags of the requirements it crosses as a journey; the traceability matrix SHALL list each journey with its requirements and the test that mentions its id; and `specgate validate --strict` SHALL report `journey_untested` for a journey whose requirements are all delivered and that no test mentions, and `journey_requirement_unknown` for a tag naming a requirement that does not exist.
+The system SHALL read a scenario tagged `@JRN-NNN` together with the `@REQ-NNN` tags of the requirements it crosses as a journey; `specgate status --json` SHALL list each journey with its requirements and the tests that mention its id, and the traceability matrix SHALL not count a journey as a scenario of the requirements it crosses; and `specgate validate --strict` SHALL report `journey_untested` for a journey whose requirements are all delivered and that no test mentions, and `journey_requirement_unknown` for a tag naming a requirement that does not exist.
 
 #### Scenario: SCN-552a — Borrow then return
 
 - GIVEN REQ-002 and REQ-003 `Implemented`, and a scenario tagged `@JRN-001 @REQ-002 @REQ-003` that no test mentions
 - WHEN a tool runs `specgate validate --strict --json`
-- THEN it fails with `journey_untested` for JRN-001, and the matrix lists JRN-001 with REQ-002 and REQ-003
+- THEN it fails with `journey_untested` for JRN-001, and `specgate status --json` lists JRN-001 with REQ-002 and REQ-003
 
 <!-- specgate:trace status=Draft actor=Developer kind=functional -->
 
