@@ -158,6 +158,10 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 
 | Command                                | What it does                                                          | Details                  |
 | -------------------------------------- | --------------------------------------------------------------------- | ------------------------ |
+| `specgate propose <id> --kind bug\|enhancement` | Records the change's kind; release notes group by it.         | [Handing over](transition.md#say-what-kind-of-change-it-is) |
+| `specgate release-notes <from>..<to>`  | The changes archived between two refs, by kind, with their requirements. | [Handing over](transition.md#release-notes) |
+| `specgate acceptance <change>`         | A checklist per scenario; `--sign "<name>"` moves Implemented to Verified. | [Handing over](transition.md#acceptance-a-person-signs) |
+| `specgate guide [--actor <name>]`      | `docs/guide/<actor>.md`: each actor's delivered requirements as steps. | [Handing over](transition.md#a-user-guide-per-actor) |
 | `specgate adr new "<title>"`           | Records an architecture decision: the next ADR, Proposed, dated.      | [Decisions](decisions.md) |
 | `specgate adr supersede <NNNN> "<title>"` | A new ADR that replaces one; the old one changes only its status.  | [Decisions](decisions.md#replace-one-without-rewriting-it) |
 | `specgate adr list`                    | Every ADR with its number, title and status.                          | [Decisions](decisions.md) |

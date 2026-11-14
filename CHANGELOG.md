@@ -53,6 +53,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   and the harness run its test command when `test_cmd` is unset. A corrected
   command is kept; a rerun on an unchanged project changes nothing.
 
+- **Handing over** (REQ-542 … REQ-545):
+  `specgate propose --kind bug|enhancement` records a change's kind (`--from-ticket` takes it from the
+  Jira issue type); `specgate release-notes <from>..<to>` lists the changes
+  archived between two refs as Enhancements, Fixes and other changes, each with
+  its intent and requirements; `specgate acceptance <change>` writes a
+  checklist per scenario, and `--sign "<name>"` — refused while an item is open
+  — records the signature and moves the change's Implemented requirements to
+  Verified; `specgate guide` writes `docs/guide/<actor>.md` from each actor's
+  delivered requirements.
 - **Domain language** (REQ-538 … REQ-541): `init` and `adopt` write an empty
   `docs/specs/glossary.md`; `validate` reports `glossary_term_forbidden` for a
   word the glossary says to avoid (a warning, an error under `--strict`).

@@ -326,6 +326,10 @@
 | REQ-539 | SCN-539a | `features/domain-language/REQ-539.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
 | REQ-540 | SCN-540a | `features/domain-language/REQ-540.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
 | REQ-541 | SCN-541a | `features/domain-language/REQ-541.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
+| REQ-542 | SCN-542a | `features/transition/REQ-542.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
+| REQ-543 | SCN-543a | `features/transition/REQ-543.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
+| REQ-544 | SCN-544a | `features/transition/REQ-544.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
+| REQ-545 | SCN-545a | `features/transition/REQ-545.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
 | REQ-546 | SCN-546a | `features/architecture/REQ-546.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
 | REQ-547 | SCN-547a | `features/architecture/REQ-547.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
 | REQ-548 | SCN-548a | `features/architecture/REQ-548.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
