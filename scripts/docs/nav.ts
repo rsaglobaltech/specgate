@@ -201,6 +201,12 @@ export const NAV: readonly NavSection[] = [
         blurb:
           "Adopt a years-old codebase whose work arrives as Jira tickets: the spec grows ticket by ticket.",
       },
+      {
+        slug: "reverse",
+        label: "Specify a system that already runs",
+        blurb:
+          "Existing code to Draft requirements citing their lines, one module at a time, and a gate baseline.",
+      },
     ],
   },
   {

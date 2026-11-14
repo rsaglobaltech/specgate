@@ -6,7 +6,7 @@ import type { YamlDocument } from "../../../../packages/core/src/domain/YamlLite
 import { listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
-import { formatDiagnostic, error, warning } from "../../../lib/diagnostics";
+import { formatDiagnostic, error, info, warning } from "../../../lib/diagnostics";
 import type { Diagnostic } from "../../../lib/diagnostics";
 import * as ui from "../../../lib/ui";
 import { unwrittenChanges } from "../../../lib/in-flight";
@@ -26,6 +26,16 @@ import * as crypto from "node:crypto";
 import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { findUnresolvedPlaceholders, PLACEHOLDER_RE } from "../../../lib/placeholders";
 import { BaseCommand } from "../../../lib/command";
+import {
+  applyBaseline,
+  baselineOf,
+  parseBaseline,
+  BASELINE_FILE,
+  type BaselineEntry,
+  type GateBaseline,
+} from "../../../../packages/core/src/domain/GateBaseline";
+import { citedSources } from "../../../../packages/core/src/domain/ReverseDraft";
+import type { ValidationFinding } from "../../../../packages/core/src/domain/ValidationReport";
 import { ValidateProjectUseCase } from "../../../../packages/core/src/application/ValidateProjectUseCase";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
 import { RICH_HEADER } from "../../../../packages/core/src/domain/TraceabilityFormat";
@@ -77,6 +87,11 @@ type MonorepoEntry = string | { path?: string } | null | undefined;
 export class ValidateSpecsCommand extends BaseCommand {
   /** Set first thing in `execute()`; null only while the command is being built. */
   private io: AgentIo | null = null;
+  /**
+   * Said with the verdict, pass or fail: what the baseline let through and
+   * what it holds that is gone (REQ-531), and cited evidence that is gone (REQ-530).
+   */
+  private notes: Diagnostic[] = [];
 
   /** The channel, for the checks — every one of them runs after `execute()` set it. */
   private get agent(): AgentIo {
@@ -229,7 +244,7 @@ export class ValidateSpecsCommand extends BaseCommand {
     if (this.io && this.io.json) {
       const diag = error(code, msg, fixLines.length ? { fix: fixLines.join(" ") } : undefined);
       if (exitCode === EXIT.USAGE) this.io.usage({ validation: null }, [diag]);
-      this.io.fail({ validation: null }, [diag]);
+      this.io.fail({ validation: null }, [...this.notes, diag]);
       return;
     }
     this.logError(msg);
@@ -951,6 +966,115 @@ export class ValidateSpecsCommand extends BaseCommand {
     process.exit(1);
   }
 
+  /**
+   * REQ-531: the matrix's errors, less those the baseline holds. With
+   * `--write-baseline` (what `check --baseline` passes), today's errors become
+   * the baseline first, so this run passes on them.
+   */
+  private withBaseline(
+    targetDir: string,
+    findings: readonly ValidationFinding[],
+    strictTdd: boolean,
+    write: boolean
+  ): ValidationFinding[] {
+    const file = path.join(targetDir, BASELINE_FILE);
+    const entryOf = (f: ValidationFinding): BaselineEntry => ({
+      code:
+        f.code === "strict_tdd_violation" && f.target
+          ? `strict_tdd_${f.target.split("-")[1]}`
+          : f.code,
+      file: f.file || "docs/specs/traceability.md",
+      requirement: f.requirement || f.target || f.message,
+    });
+    const errors = findings.filter((f) => f.severity === "error");
+    if (write) {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(baselineOf(errors.map(entryOf)), null, 2) + "\n");
+    }
+    let baseline: GateBaseline | null = null;
+    if (fs.existsSync(file)) {
+      try {
+        baseline = parseBaseline(fs.readFileSync(file, "utf8"));
+      } catch (e) {
+        this.fail(
+          "baseline_invalid",
+          `${BASELINE_FILE} is not a gate baseline: ${(e as Error).message}.`,
+          1,
+          "Run `specgate check --baseline` to write it again, or delete it."
+        );
+      }
+    }
+    if (!baseline) return [...findings];
+    // A strict-only finding is not "fixed" because a plain validate never looked for it.
+    const split = applyBaseline(errors, entryOf, baseline, (code) =>
+      code.startsWith("strict_tdd_") ? strictTdd : true
+    );
+    if (split.baselined.length > 0) {
+      this.notes.push(
+        info(
+          "baselined",
+          `${split.baselined.length} finding(s) baselined in ${BASELINE_FILE}: recorded before, not failing.`,
+          { target: BASELINE_FILE }
+        )
+      );
+    }
+    for (const e of split.fixed) {
+      this.notes.push(
+        info(
+          "baseline_fixed",
+          `${e.requirement}: the baselined finding ${e.code} no longer occurs.`,
+          {
+            target: e.requirement,
+            fix: "Run `specgate check --baseline` to drop it from the baseline.",
+          }
+        )
+      );
+    }
+    const excused = new Set(split.baselined);
+    return findings.filter((f) => !excused.has(f));
+  }
+
+  /**
+   * REQ-530: a requirement `reverse` wrote cites the code it was read from.
+   * When that file is gone the requirement may describe code that no longer
+   * exists — said, not failed: a refactor that moves a file is not a broken
+   * contract, and the fix is to read the requirement against where it went.
+   */
+  private checkCitedSources(targetDir: string) {
+    const specs: string[] = [];
+    const walkSpecs = (dir: string) => {
+      if (!fs.existsSync(dir)) return;
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) {
+          if (e.name !== "archive") walkSpecs(full);
+        } else if (e.name === "spec.md") specs.push(full);
+      }
+    };
+    walkSpecs(path.join(targetDir, "docs", "specs", "capabilities"));
+    walkSpecs(path.join(targetDir, "docs", "specs", "changes"));
+    for (const spec of specs) {
+      const rel = path.relative(targetDir, spec).split(path.sep).join("/");
+      for (const c of citedSources(fs.readFileSync(spec, "utf8"))) {
+        if (fs.existsSync(path.join(targetDir, c.file))) continue;
+        const d = warning(
+          "source_missing",
+          `${c.requirement || rel} cites ${c.source}, and ${c.file} does not exist.`,
+          {
+            target: c.file,
+            file: rel,
+            fix: `Read ${c.requirement || "the requirement"} against where that code went, and update its source=.`,
+          }
+        );
+        this.notes.push(d);
+        if (!this.agent.json) {
+          this.logWarn(d.message);
+          if (d.fix) this.logFix(d.fix);
+        }
+      }
+    }
+  }
+
   public execute(): void {
     const rawArgs = this.args[0] === "validate" ? this.args.slice(1) : this.args;
     const argv = rawArgs;
@@ -1180,11 +1304,19 @@ export class ValidateSpecsCommand extends BaseCommand {
       delivering: isDerivedMatrix(traceContent) ? delivering : undefined,
     });
 
-    const strictTddViolations = report.findings
+    // REQ-531: the findings recorded by `check --baseline` no longer fail.
+    const judgedFindings = this.withBaseline(
+      targetDir,
+      report.findings,
+      strictTdd,
+      argv.includes("--write-baseline")
+    );
+
+    const strictTddViolations = judgedFindings
       .filter((f) => f.code === "strict_tdd_violation")
       .map((f) => f.message);
 
-    for (const finding of report.findings) {
+    for (const finding of judgedFindings) {
       if (finding.code === "strict_tdd_violation") continue; // reported together, below
       // Severity decides. This loop used to fail on anything the report
       // carried, which turned the first warning added to `checkMatrix` into a
@@ -1216,17 +1348,18 @@ export class ValidateSpecsCommand extends BaseCommand {
 
     if (strictTddViolations.length > 0) {
       if (this.agent.json) {
-        this.agent.fail(
-          { validation: null },
-          strictTddViolations.map((v) => {
+        this.agent.fail({ validation: null }, [
+          ...this.notes,
+          ...strictTddViolations.map((v) => {
             const tdd = v.slice(1, 6);
             return error(`strict_tdd_${tdd.split("-")[1]}`, v, {
               fix: TDD_FIXES[tdd],
             });
-          })
-        );
+          }),
+        ]);
         return;
       }
+      for (const n of this.notes) this.logInfo(n.message);
       this.logError("--strict-tdd violations detected:");
       for (const v of strictTddViolations) {
         process.stderr.write(`  ${v}\n`);
@@ -1408,19 +1541,22 @@ export class ValidateSpecsCommand extends BaseCommand {
       }
     }
 
+    this.checkCitedSources(targetDir);
     const skeletonOnly = this.isAdoptionSkeletonOnly(targetDir, featureFiles);
-    const advisories = skeletonOnly
-      ? lockAdvisories.concat([
-          {
-            severity: "warning",
-            code: "adoption_not_retrofilled",
-            message:
-              "The only scenario in this project is the adoption baseline. Nothing the codebase actually does is specified yet.",
-            target: "features/adoption/baseline.feature",
-            fix: 'Retro-fill one requirement you already rely on: specgate new "<behaviour>", then a test that mentions it, then specgate apply.',
-          },
-        ])
-      : lockAdvisories;
+    const advisories = (
+      skeletonOnly
+        ? lockAdvisories.concat([
+            {
+              severity: "warning",
+              code: "adoption_not_retrofilled",
+              message:
+                "The only scenario in this project is the adoption baseline. Nothing the codebase actually does is specified yet.",
+              target: "features/adoption/baseline.feature",
+              fix: 'Retro-fill one requirement you already rely on: specgate new "<behaviour>", then a test that mentions it, then specgate apply.',
+            },
+          ])
+        : lockAdvisories
+    ).concat(this.notes);
 
     if (this.agent.json) {
       this.agent.emit({
@@ -1472,6 +1608,10 @@ export class ValidateSpecsCommand extends BaseCommand {
           "checked the moment its Status leaves Draft — `specgate apply <REQ>` does that.",
         ]);
       }
+    }
+    for (const n of this.notes.filter((x) => x.severity === "info")) {
+      this.logInfo(`- ${n.message}`);
+      if (n.fix) this.logFix(n.fix);
     }
     if (skeletonOnly) {
       this.logWarn("Adoption never retro-filled — the only scenario is the adoption baseline.");
