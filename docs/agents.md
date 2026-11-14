@@ -45,6 +45,15 @@ It also writes the instruction file each tool reads:
 `.cursor/rules/specgate.mdc`, `.github/copilot-instructions.md`,
 `CONVENTIONS.md`, `GEMINI.md`, `AGENTS.md` and so on.
 
+**Agent Skills.** `specgate agents init --format skills` writes the same steps
+as skill folders (`specgate-apply/SKILL.md`, …) in the open Agent Skills
+format: into `.agents/skills/`, which Codex and OpenCode read, and into the
+skills folder of each tool you name with `--tool claude|cursor|gemini` (or,
+without `--tool`, of each tool whose folder the project already has). A
+`SKILL.md` you changed is kept and reported as `skill_kept`; `--force` replaces
+it. The Claude Code plugin carries the same skills, with an Agent Plugins
+`plugin.json` and a Tessl `.tessl-plugin/plugin.json`.
+
 The slash commands run the same commands you type in the terminal. An archive
 the agent tries before every requirement is Implemented is refused, as it is
 for you. Existing files are never overwritten without `--force`.

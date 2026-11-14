@@ -125,7 +125,8 @@ the CLI supports, so getting this backwards fails CI rather than users.
 
 1. Update `CHANGELOG.md`. Every user-visible change gets a line; group by
    Added / Changed / Fixed / Removed.
-2. Bump `version` in `package.json`.
+2. Bump `version` in `package.json`, then `npm run build && npm run plugin:sync`
+   so the plugin's three manifests carry it (a test fails until they do).
 3. Re-record the landing page's terminal: `npm run build && npm run docs:terminal`,
    then update the version in `docs/index.html`. The recording carries the
    version it was made from and a test compares the two, so skipping this fails
