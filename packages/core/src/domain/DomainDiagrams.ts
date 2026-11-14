@@ -146,7 +146,7 @@ const ER_LINK: Record<Relation["kind"], string> = {
   "many-to-many": "}o--o{",
 };
 const ident = (s: string) => s.replace(/[^A-Za-z0-9_]/g, "_");
-const cell = (s: string) => (s || "-").replace(/\|/g, "\\|");
+const cell = (s: string) => (s || "-").replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
 
 /** `docs/specs/model.md`, or null when there is nothing to draw. */
 export function renderModel(entities: readonly Entity[]): string | null {
