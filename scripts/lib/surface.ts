@@ -784,6 +784,45 @@ export const SURFACE: Command[] = [
   },
 
   {
+    // REQ-542: what a release delivered, from the changes it archived.
+    name: "release-notes",
+    mcp: false,
+    script: ["release_notes.js"],
+    help: {
+      group: "core",
+      icon: "📰",
+      summary:
+        "Release notes between two refs: the changes archived, by kind, with their requirements.",
+    },
+    json: { key: "releaseNotes", gate: false, args: "<from>..<to>" },
+  },
+  {
+    // REQ-543: a person checks each scenario, then signs.
+    name: "acceptance",
+    editsContract: true,
+    mcp: false,
+    script: ["acceptance.js"],
+    help: {
+      group: "core",
+      icon: "🖋️",
+      summary:
+        "A change's acceptance checklist; --sign moves its Implemented requirements to Verified.",
+    },
+    json: { key: "acceptance", gate: false, args: "<change>" },
+  },
+  {
+    // REQ-544: what each actor can do, from what was delivered.
+    name: "guide",
+    mcp: false,
+    script: ["guide.js"],
+    help: {
+      group: "core",
+      icon: "📘",
+      summary: "Write docs/guide/<actor>.md: each actor's delivered requirements as steps.",
+    },
+    json: { key: "guide", gate: false },
+  },
+  {
     // REQ-548: the layers and their commands, from the evidence on disk.
     name: "stack",
     editsContract: true,

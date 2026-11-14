@@ -12,7 +12,7 @@ The system SHALL, with `specgate release-notes <from>..<to> [--out <file>] [--js
 - WHEN a tool runs `specgate release-notes v1.0.0..v1.1.0`
 - THEN the output has an `Enhancements` section with `pdf-invoices` and REQ-007's title, then a `Fixes` section with `rounding` and REQ-009's title
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-543 — Acceptance is a checklist a person signs
 
@@ -24,7 +24,7 @@ The system SHALL, with `specgate acceptance <change>`, write `docs/specs/changes
 - WHEN a tool runs `specgate acceptance pdf-invoices`, checks one item, runs `--sign "Ana Pérez"`, checks the other and runs `--sign "Ana Pérez"` again
 - THEN the first sign is refused with `acceptance_incomplete`; after the second, the file records the name and date and REQ-007 is `Verified`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-544 — A user guide per actor
 
@@ -36,7 +36,7 @@ The system SHALL, with `specgate guide [--actor <name>]`, write `docs/guide/<act
 - WHEN a tool runs `specgate guide --actor Customer`
 - THEN `docs/guide/customer.md` has a section for REQ-001 with its scenario as steps, and none for REQ-002 or REQ-003
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-545 — A change says whether it is a bug or an enhancement
 
@@ -48,4 +48,4 @@ The system SHALL accept `specgate propose <change-id> --kind bug|enhancement`, r
 - WHEN a tool runs `specgate propose rounding --kind bug`, then `specgate propose other --kind chore`
 - THEN `docs/specs/changes/rounding/change.yaml` has `kind: bug`, and the second is refused with `change_kind_unknown`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->

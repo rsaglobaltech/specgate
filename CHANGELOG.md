@@ -52,7 +52,6 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   their technology and evidence and the build/test/end-to-end commands; `check`
   and the harness run its test command when `test_cmd` is unset. A corrected
   command is kept; a rerun on an unchanged project changes nothing.
-
 - **Review with the business** (REQ-551, REQ-552): `specgate review <change>`
   writes the change as one self-contained HTML page (intent, requirements,
   scenarios as plain steps, questions, assumptions, date and commit; nothing
@@ -61,6 +60,24 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   counted as those requirements' own scenario, and under `--strict` owes a test
   once all of them are delivered (`journey_untested`,
   `journey_requirement_unknown`).
+- **Handing over** (REQ-542 … REQ-545):
+  `specgate propose --kind bug|enhancement` records a change's kind (`--from-ticket` takes it from the
+  Jira issue type); `specgate release-notes <from>..<to>` lists the changes
+  archived between two refs as Enhancements, Fixes and other changes, each with
+  its intent and requirements; `specgate acceptance <change>` writes a
+  checklist per scenario, and `--sign "<name>"` — refused while an item is open
+  — records the signature and moves the change's Implemented requirements to
+  Verified; `specgate guide` writes `docs/guide/<actor>.md` from each actor's
+  delivered requirements.
+- **Domain language** (REQ-538 … REQ-541): `init` and `adopt` write an empty
+  `docs/specs/glossary.md`; `validate` reports `glossary_term_forbidden` for a
+  word the glossary says to avoid (a warning, an error under `--strict`).
+  Business rules numbered `BR-NNN` in a requirement's `Rules:` list:
+  `rule_duplicate`, and under `--strict` `rule_untested` for a delivered
+  requirement's rule no test names. `check` generates `docs/specs/model.md`
+  (a Mermaid ER diagram from `aggregates.md` and `model.yaml`) and
+  `docs/specs/actors.md` (from the brief's actors and each `actor=`);
+  `validate` reports `model_stale`, `actors_stale` and warns `actor_unknown`.
 
 - **The studio for a team** (REQ-553, REQ-554): `specgate studio --team` runs
   behind the team's sign-in proxy, which names the user in a header

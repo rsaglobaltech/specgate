@@ -36,6 +36,12 @@ import {
 } from "../../../../packages/core/src/domain/GateBaseline";
 import { journeyDiagnostics } from "../../../lib/journeys";
 import { onlyJourneys } from "../../../../packages/core/src/domain/Journeys";
+import {
+  actorFindings,
+  glossaryFindings,
+  ruleFindings,
+  staleDiagramFindings,
+} from "../../../lib/domain-docs";
 import { citedSources } from "../../../../packages/core/src/domain/ReverseDraft";
 import type { ValidationFinding } from "../../../../packages/core/src/domain/ValidationReport";
 import { ValidateProjectUseCase } from "../../../../packages/core/src/application/ValidateProjectUseCase";
@@ -1053,6 +1059,38 @@ export class ValidateSpecsCommand extends BaseCommand {
   }
 
   /**
+   * REQ-538 … REQ-541: the glossary, the numbered business rules, and the two
+   * generated diagrams. Errors fail; warnings travel with the verdict.
+   */
+  private checkDomainDocs(targetDir: string, strict: boolean) {
+    const found = [
+      ...glossaryFindings(targetDir, strict),
+      ...ruleFindings(targetDir, strict),
+      ...actorFindings(targetDir),
+      ...staleDiagramFindings(targetDir),
+    ];
+    const errors = found.filter((d) => d.severity === "error");
+    for (const d of found.filter((x) => x.severity !== "error")) {
+      this.notes.push(d);
+      if (!this.agent.json) {
+        this.logWarn(d.message);
+        if (d.fix) this.logFix(d.fix);
+      }
+    }
+    if (errors.length === 0) return;
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, [...this.notes, ...errors]);
+      return;
+    }
+    this.logError(`Domain language findings: ${errors.length}`);
+    for (const d of errors) {
+      process.stderr.write(`  ${d.message}\n`);
+      if (d.fix) process.stderr.write(`     fix: ${d.fix}\n`);
+    }
+    process.exit(1);
+  }
+
+  /**
    * REQ-530: a requirement `reverse` wrote cites the code it was read from.
    * When that file is gone the requirement may describe code that no longer
    * exists — said, not failed: a refactor that moves a file is not a broken
@@ -1563,6 +1601,7 @@ export class ValidateSpecsCommand extends BaseCommand {
 
     this.checkCitedSources(targetDir);
     if (strict) this.checkJourneys(targetDir);
+    this.checkDomainDocs(targetDir, strict);
     const skeletonOnly = this.isAdoptionSkeletonOnly(targetDir, featureFiles);
     const advisories = (
       skeletonOnly

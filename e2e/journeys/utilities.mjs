@@ -17,6 +17,45 @@ export default [
     },
   },
   {
+    name: "a change with a kind, accepted by a person, in the release notes and the guide",
+    covers: ["release-notes", "acceptance", "guide"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      t.gitInit(dir);
+      t.git(dir, "tag", "v0");
+      t.ok(t.sg(dir, "propose", "pdf", "--kind", "enhancement"), "propose --kind");
+      const delta = "docs/specs/changes/pdf/specs/pdf/spec.md";
+      const id = /REQ-\d+/.exec(t.read(dir, "docs/specs/changes/pdf/change.yaml"))[0];
+      t.write(
+        dir,
+        delta,
+        `# Delta — pdf\n\n## ADDED Requirements\n\n### Requirement: ${id} — Invoices as PDF\n\n` +
+          "The system SHALL offer an invoice as a PDF.\n\n#### Scenario: A paid invoice\n\n" +
+          "- GIVEN a paid invoice\n- WHEN its owner downloads it\n- THEN a PDF arrives\n\n" +
+          "<!-- specgate:trace status=Implemented actor=Customer kind=functional -->\n"
+      );
+      t.ok(t.sg(dir, "acceptance", "pdf"), "acceptance");
+      const file = path.join(dir, "docs/specs/changes/pdf/acceptance.md");
+      fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("- [ ]", "- [x]"));
+      t.ok(t.sg(dir, "acceptance", "pdf", "--sign", "Ana"), "acceptance --sign");
+
+      const base = "docs/specs/changes/archive/2026-11-14-pdf";
+      fs.mkdirSync(path.join(dir, "docs/specs/changes/archive"), { recursive: true });
+      fs.renameSync(path.join(dir, "docs/specs/changes/pdf"), path.join(dir, base));
+      t.git(dir, "add", "-A");
+      t.git(dir, "commit", "-qm", "release");
+      const notes = t.sg(dir, "release-notes", "v0..HEAD");
+      t.ok(notes, "release-notes");
+      t.expect(
+        /## Enhancements[\s\S]*Invoices as PDF/.test(notes.stdout),
+        "the change is listed",
+        notes
+      );
+      t.ok(t.sg(dir, "guide"), "guide");
+    },
+  },
+  {
     name: "a decision recorded then replaced, and the stack written down once",
     covers: ["adr new", "adr supersede", "adr list", "stack"],
     run(dir, t) {
