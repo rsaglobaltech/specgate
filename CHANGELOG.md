@@ -62,6 +62,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   — records the signature and moves the change's Implemented requirements to
   Verified; `specgate guide` writes `docs/guide/<actor>.md` from each actor's
   delivered requirements.
+- **Domain language** (REQ-538 … REQ-541): `init` and `adopt` write an empty
+  `docs/specs/glossary.md`; `validate` reports `glossary_term_forbidden` for a
+  word the glossary says to avoid (a warning, an error under `--strict`).
+  Business rules numbered `BR-NNN` in a requirement's `Rules:` list:
+  `rule_duplicate`, and under `--strict` `rule_untested` for a delivered
+  requirement's rule no test names. `check` generates `docs/specs/model.md`
+  (a Mermaid ER diagram from `aggregates.md` and `model.yaml`) and
+  `docs/specs/actors.md` (from the brief's actors and each `actor=`);
+  `validate` reports `model_stale`, `actors_stale` and warns `actor_unknown`.
 
 ### Changed
 

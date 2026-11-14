@@ -236,6 +236,12 @@ export const NAV: readonly NavSection[] = [
           "Release notes from archived changes, a checklist a person signs, and a guide per actor.",
       },
       {
+        slug: "domain-language",
+        label: "Glossary, rules and diagrams",
+        blurb:
+          "One word for one thing, numbered business rules each tested, and the entity and actor diagrams generated.",
+      },
+      {
         slug: "new-project",
         label: "A new product, step by step",
         blurb: "The twelve steps six pilots took, from a client's brief to a running product.",

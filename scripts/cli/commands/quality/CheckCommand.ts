@@ -38,6 +38,7 @@ import { BASELINE_FILE, parseBaseline } from "../../../../packages/core/src/doma
 import { checksFor } from "../../../../packages/core/src/domain/QualityChecks";
 import { gateTestCommand } from "../../../../packages/core/src/domain/DoneVerification";
 import { planTests } from "../../../lib/test-selection";
+import { refreshDomainDiagrams } from "../../../lib/domain-docs";
 import { stackFileCommand } from "../../../lib/stack-detect";
 import { startShell, type StageRun } from "../../../lib/stage-run";
 import type { Diagnostic } from "../../../lib/diagnostics";
@@ -339,6 +340,10 @@ export class CheckCommand extends BaseCommand {
       process.stdout.write(
         `  ${ui.muted("↻  docs/specs/traceability.md regenerated from its sources")}\n`
       );
+    }
+    // REQ-540, REQ-541: the entity model and the actors diagram, the same way.
+    for (const file of refreshDomainDiagrams(projectDir)) {
+      if (!json) process.stdout.write(`  ${ui.muted(`↻  ${file} regenerated from its sources`)}\n`);
     }
 
     // On a ticket's branch, commits that do not name the ticket (ADR-0039);

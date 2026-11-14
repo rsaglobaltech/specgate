@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import { copyableFiles } from "./harness-guard";
+import { refreshDomainDiagrams } from "./domain-docs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
@@ -189,6 +190,8 @@ export function inFlightView(projectDir: string): InFlightView | null {
     repo.executePlan(plan);
   }
   refreshDerivedMatrix(dir);
+  // The diagrams follow the specs the open changes add, as the matrix does (REQ-540, REQ-541).
+  refreshDomainDiagrams(dir);
 
   const real = path.resolve(projectDir);
   // Full paths first, then the bare folder name a header may print.
