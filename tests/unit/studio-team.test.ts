@@ -105,8 +105,21 @@ function fakeGitHub(): Promise<{ port: number; calls: string[]; close: () => voi
   );
 }
 
+/** A port the system says is free: a fixed range can fall in one Windows reserves. */
+function freePort(): Promise<number> {
+  const net = require("node:net");
+  return new Promise((resolve, reject) => {
+    const s = net.createServer();
+    s.on("error", reject);
+    s.listen(0, "127.0.0.1", () => {
+      const { port } = s.address();
+      s.close(() => resolve(port));
+    });
+  });
+}
+
 async function studio(dir: string, extra: string[]) {
-  const port = 48000 + Math.floor(Math.random() * 2000);
+  const port = await freePort();
   const child = cp.spawn(process.execPath, [CLI, "studio", "--port", String(port), ...extra], {
     cwd: dir,
     env: { ...process.env, NO_COLOR: "1", SPECGATE_TEST_PR_TOKEN: "t0ken" },
@@ -114,11 +127,28 @@ async function studio(dir: string, extra: string[]) {
   });
   let err = "";
   child.stderr.on("data", (d: Buffer) => (err += d));
+  const kill = () => {
+    try {
+      if (process.platform !== "win32") process.kill(-child.pid, "SIGTERM");
+      else child.kill();
+    } catch {
+      /* already gone */
+    }
+  };
+  // A studio that never started is killed before the test fails: a live child
+  // keeps the test file from ever exiting.
   await new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`studio did not start: ${err}`)), 10000);
+    const fail = (why: string) => {
+      clearTimeout(timer);
+      kill();
+      reject(new Error(`studio did not start: ${why} ${err}`));
+    };
+    const timer = setTimeout(() => fail("timed out"), 20000);
+    child.on("exit", (code: number | null) => fail(`exited ${code}`));
     child.stdout.on("data", (d: Buffer) => {
       if (String(d).includes("http://")) {
         clearTimeout(timer);
+        child.removeAllListeners("exit");
         resolve();
       }
     });
@@ -156,14 +186,7 @@ async function studio(dir: string, extra: string[]) {
       req.on("error", reject);
       req.end(data);
     });
-  const stop = () => {
-    try {
-      if (process.platform !== "win32") process.kill(-child.pid, "SIGTERM");
-      else child.kill();
-    } catch {
-      /* already gone */
-    }
-  };
+  const stop = kill;
   return { call, stop, stderr: () => err };
 }
 
