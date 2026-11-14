@@ -265,6 +265,7 @@ is ever read as HTML.
 
 ## Next
 
+- [The studio for a team](studio-team.md)
 - [Quality and security checks](quality.md) — what the quality level turns on.
 - [The harness](harness.md) — what Build runs, in the terminal.
 - [From a client brief to a spec](from-a-brief.md) — the brief and the drafts,

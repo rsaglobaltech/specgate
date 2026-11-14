@@ -83,6 +83,12 @@ export const NAV: readonly NavSection[] = [
           "Specgate as an app: from an empty folder to the report, step by step, without the commands.",
       },
       {
+        slug: "studio-team",
+        label: "The studio for a team",
+        blurb:
+          "Behind your sign-in proxy: readers, editors and admins, and every edit a pull request.",
+      },
+      {
         slug: "start/scratch-1-install",
         group: "From scratch",
         step: 1,
