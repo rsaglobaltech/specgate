@@ -322,6 +322,10 @@
 | REQ-533 | SCN-533a | `features/harness/REQ-533.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-534 | SCN-534a | `features/harness/REQ-534.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-535 | SCN-535a | `features/harness/REQ-535.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
+| REQ-538 | SCN-538a | `features/domain-language/REQ-538.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
+| REQ-539 | SCN-539a | `features/domain-language/REQ-539.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
+| REQ-540 | SCN-540a | `features/domain-language/REQ-540.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
+| REQ-541 | SCN-541a | `features/domain-language/REQ-541.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
 | REQ-549 | SCN-549a | `features/agent-integration/REQ-549.feature` | - | - | - | - | - | tests/unit/agent-skills.test.ts | Approved |
 | REQ-550 | SCN-550a | `features/agent-integration/REQ-550.feature` | - | - | - | - | - | tests/unit/agent-skills.test.ts | Approved |
 

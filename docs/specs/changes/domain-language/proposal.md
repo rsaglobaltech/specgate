@@ -33,7 +33,8 @@ Out of scope:
 ## Approach
 
 The glossary is a Markdown table (term, definition, avoid). The rule ids are
-parsed by `change/parser.ts` from a `Rules` list in the requirement's body and
-added as a column of the matrix. Both diagrams are rendered by the code that
+read from a `Rules:` list in the requirement's body; the matrix keeps its
+columns (a new one would change a format every project and tool reads), and a
+rule is linked to its test by the test naming it. Both diagrams are rendered by the code that
 regenerates the matrix, so `check` keeps them current and `validate` reports
 `model_stale` or `actors_stale` when the committed copy differs.
