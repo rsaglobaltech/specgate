@@ -31,6 +31,7 @@ import { miniPet, petEnabled } from "../../../pet/pet";
 import { petFor } from "./PetCommand";
 import { projectJourneys } from "../../../lib/journeys";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import { readConfig } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 
 /**
  * Whether the harness has an agent to run (REQ-271): the studio's Build said
@@ -597,6 +598,14 @@ function statusDocument(
   unwritten: Diagnostic[] = []
 ): Record<string, unknown> {
   const { counts, pending, orphans } = summary;
+  // REQ-545: whether the open change a requirement belongs to is a bug or an enhancement.
+  const kindOf = (change: string): string | null => {
+    try {
+      return (readConfig(projectDir, change).kind as string | undefined) || null;
+    } catch {
+      return null;
+    }
+  };
   const capabilities = requirementCapabilities(projectDir);
   return {
     schemaVersion: 1,
@@ -621,7 +630,7 @@ function statusDocument(
       needs: needsOf(it) || null,
       // REQ-500: the capability that states it, for a view filtered by one.
       capability: capabilities.get(it.requirement) ?? null,
-      ...(it.change ? { change: it.change } : {}),
+      ...(it.change ? { change: it.change, changeKind: kindOf(it.change) } : {}),
       ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
       ...(it.answered ? { answered: it.answered } : {}),
     })),

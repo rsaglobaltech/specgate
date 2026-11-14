@@ -405,6 +405,8 @@ function openChange(projectDir: string, t: Ticket, changeId: string, capability:
       ...DEFAULT_CONFIG,
       created: new Date().toISOString().slice(0, 10),
       req_range: reqRange,
+      // REQ-545: a Jira Bug is a fix in the release notes; anything else adds something.
+      kind: /^bug$/i.test(String(t.type || "").trim()) ? "bug" : "enhancement",
     };
     write(
       "change.yaml",

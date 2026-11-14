@@ -236,6 +236,12 @@ export const NAV: readonly NavSection[] = [
           "A change as one HTML page to send, and journeys across requirements tested end to end.",
       },
       {
+        slug: "transition",
+        label: "Release notes, acceptance, user guides",
+        blurb:
+          "Release notes from archived changes, a checklist a person signs, and a guide per actor.",
+      },
+      {
         slug: "domain-language",
         label: "Glossary, rules and diagrams",
         blurb:
