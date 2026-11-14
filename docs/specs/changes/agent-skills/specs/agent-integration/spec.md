@@ -12,7 +12,7 @@ The system SHALL, with `specgate agents init --format skills [--tool <name>]`, w
 - WHEN a tool runs `specgate agents init --format skills --tool cursor`
 - THEN `.agents/skills/specgate-apply/SKILL.md` and `.cursor/skills/specgate-apply/SKILL.md` exist, each with `name: specgate-apply` in its front matter
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-550 — The package carries the plugin manifests
 
@@ -24,4 +24,4 @@ The system SHALL keep, in the plugin folder `packages/claude-plugin` the marketp
 - WHEN a maintainer runs the test suite, then `npm run plugin:sync`
 - THEN the suite fails naming each manifest that differs, and the sync writes the three manifests at the new version
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
