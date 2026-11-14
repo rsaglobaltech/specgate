@@ -26,5 +26,7 @@ Out of scope:
 
 The skill bodies are the thin commands `agents init` already writes, wrapped
 with the `SKILL.md` front matter (name, description with trigger phrases).
-Manifests are generated from `package.json` at build time, so they cannot
-drift.
+The manifests and the plugin's skills are generated from `package.json` and
+the same `STEPS`; `npm run plugin:sync` writes them, and a test fails while the
+committed plugin differs. The skills cover every step `agents init` already
+writes as a command, not a hand-picked subset.
