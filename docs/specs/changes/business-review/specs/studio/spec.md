@@ -28,7 +28,7 @@ The system SHALL read a scenario tagged `@JRN-NNN` together with the `@REQ-NNN` 
 
 ### Requirement: REQ-553 — The studio serves a team, by role
 
-The system SHALL, with `specgate studio --team`, require sign-in through the Git provider named in `studio.team.yaml` and give each signed-in user the role the file assigns — `reader`, `editor` or `admin`, `reader` by default; a `reader` SHALL see every section and SHALL be refused every write with `role_forbidden`; and without `--team` the studio SHALL keep today's local behaviour with no sign-in.
+The system SHALL, with `specgate studio --team`, require a signed-in user, named by the sign-in proxy in front of it in the header `studio.team.yaml` names (and, with `SPECGATE_PROXY_SECRET` set, the proxy's secret header), and give each signed-in user the role the file assigns — `reader`, `editor` or `admin`, `reader` by default; a `reader` SHALL see every section and SHALL be refused every write with `role_forbidden`, and running builds, agents or settings SHALL be an `admin`'s; and without `--team` the studio SHALL keep today's local behaviour with no sign-in.
 
 #### Scenario: SCN-553a — A reader tries to answer a question
 

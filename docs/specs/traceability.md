@@ -329,6 +329,8 @@
 | REQ-550 | SCN-550a | `features/agent-integration/REQ-550.feature` | - | - | - | - | - | tests/unit/agent-skills.test.ts | Approved |
 | REQ-551 | SCN-551a | `features/studio/REQ-551.feature` | - | - | - | - | - | tests/unit/business-review.test.ts | Approved |
 | REQ-552 | SCN-552a | `features/studio/REQ-552.feature` | - | - | - | - | - | tests/unit/business-review.test.ts | Approved |
+| REQ-553 | SCN-553a | `features/studio/REQ-553.feature` | - | - | - | - | - | tests/unit/studio-team.test.ts | Approved |
+| REQ-554 | SCN-554a | `features/studio/REQ-554.feature` | - | - | - | - | - | tests/unit/studio-team.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

@@ -62,6 +62,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   once all of them are delivered (`journey_untested`,
   `journey_requirement_unknown`).
 
+- **The studio for a team** (REQ-553, REQ-554): `specgate studio --team` runs
+  behind the team's sign-in proxy, which names the user in a header
+  (`SPECGATE_PROXY_SECRET` makes the studio answer the proxy only). Roles come
+  from `studio.team.yaml`: a reader is refused every write (`role_forbidden`),
+  an editor's answers, approvals, notes and brief edits are committed as that
+  user on `studio/<user>/<change>` and opened as a pull request, never on the
+  base branch, and running builds or agents is an admin's.
+
 ### Changed
 
 - **The agent's own instructions are protected** (REQ-534): `CLAUDE.md`,

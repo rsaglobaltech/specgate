@@ -35,5 +35,6 @@ Out of scope:
 `review` reuses the studio's report renderer with an inline stylesheet, so the
 page opens from a file or a mail attachment. Journeys are Gherkin scenarios
 tagged `@JRN-NNN` and the `@REQ-NNN` of each step's requirement. Team mode
-puts the existing studio server behind an OAuth sign-in with GitHub or GitLab;
-writes go through the same ALM `pr` code `alm pr` uses.
+puts the existing studio server behind the team's own sign-in proxy (it names
+the user in a header; Specgate holds no OAuth secret); writes go through the
+same `pr` code `alm pr` uses.
