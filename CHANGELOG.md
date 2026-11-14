@@ -33,6 +33,20 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   and `validate` fail only on new findings, count the `baselined` ones, and name
   each `baseline_fixed` one so the file shrinks.
 
+- **Architecture decisions** (REQ-546): `specgate adr new "<title>"` writes the
+  next numbered ADR (Proposed, dated, Context/Decision/Consequences);
+  `specgate adr supersede <NNNN> "<title>"` writes its replacement and changes
+  only the old one's status, to `Superseded by NNNN`; `specgate adr list`.
+- **Decision rights** (REQ-547): `docs/specs/decision-rights.md` marks
+  `dependency`, `migration` and `public-api` as `agent` or `ask`. The harness
+  puts the table in the prompt, and an attempt that adds a dependency, a
+  migration or an OpenAPI operation kept for a person fails with
+  `decision_right_exceeded`.
+- **`specgate stack`** (REQ-548): writes `docs/specs/stack.md`, the layers with
+  their technology and evidence and the build/test/end-to-end commands; `check`
+  and the harness run its test command when `test_cmd` is unset. A corrected
+  command is kept; a rerun on an unchanged project changes nothing.
+
 ### Changed
 
 - **The agent's own instructions are protected** (REQ-534): `CLAUDE.md`,

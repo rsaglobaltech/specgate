@@ -28,7 +28,7 @@ The system SHALL read `docs/specs/decision-rights.md`, when it exists, as a tabl
 
 ### Requirement: REQ-548 — The stack file names the layers and their commands
 
-The system SHALL, with `specgate stack [--json]`, write `docs/specs/stack.md` with a table of the layers it detects — migration, persistence, service, API, UI, end-to-end — each with its technology and the evidence it was detected from, and a table of commands (build, test, affected test, end-to-end); the harness and `check` SHALL take a command from it when the configuration sets none; and a second run on an unchanged project SHALL change nothing.
+The system SHALL, with `specgate stack [--json]`, write `docs/specs/stack.md` with a table of the layers it detects — migration, persistence, service, API, UI, end-to-end — each with its technology and the evidence it was detected from, and a table of commands (build, test, affected test, end-to-end); the harness and `check` SHALL take the test command from it when the configuration sets none; a command a person corrected in the file SHALL be kept when it is regenerated; and a second run on an unchanged project SHALL change nothing.
 
 #### Scenario: SCN-548a — A Spring and Flyway project
 

@@ -322,6 +322,9 @@
 | REQ-533 | SCN-533a | `features/harness/REQ-533.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-534 | SCN-534a | `features/harness/REQ-534.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-535 | SCN-535a | `features/harness/REQ-535.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
+| REQ-546 | SCN-546a | `features/architecture/REQ-546.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
+| REQ-547 | SCN-547a | `features/architecture/REQ-547.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
+| REQ-548 | SCN-548a | `features/architecture/REQ-548.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
