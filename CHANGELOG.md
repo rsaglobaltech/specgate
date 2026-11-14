@@ -41,6 +41,16 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   Tessl `.tessl-plugin/plugin.json` at the package's version;
   `npm run plugin:sync` regenerates them and a test fails while they are stale.
 
+- **Handing over** (REQ-542 … REQ-545): `specgate propose --kind
+  bug|enhancement` records a change's kind (`--from-ticket` takes it from the
+  Jira issue type); `specgate release-notes <from>..<to>` lists the changes
+  archived between two refs as Enhancements, Fixes and other changes, each with
+  its intent and requirements; `specgate acceptance <change>` writes a
+  checklist per scenario, and `--sign "<name>"` — refused while an item is open
+  — records the signature and moves the change's Implemented requirements to
+  Verified; `specgate guide` writes `docs/guide/<actor>.md` from each actor's
+  delivered requirements.
+
 ### Changed
 
 - **The agent's own instructions are protected** (REQ-534): `CLAUDE.md`,

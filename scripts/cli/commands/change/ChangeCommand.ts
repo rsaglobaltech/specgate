@@ -41,6 +41,7 @@ import { ArchiveChangeUseCase } from "../../../../packages/core/src/application/
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import {
   CHANGE_ID_RE,
+  CHANGE_KINDS,
   CHANGE_CONFIG_FILE,
   DEFAULT_CONFIG,
   paths,
@@ -122,7 +123,8 @@ function verbUsage(sub: string) {
       `\n  ${c.bold}${c.cyan}💡 propose${c.reset}  ${c.dim}— open a change${c.reset}\n\n` +
         `  ${c.bold}USAGE${c.reset}\n` +
         `    ${c.cyan}specgate propose${c.reset} <change-id> [--capability <name>] [--from-value-drift <REQ:id>]\n` +
-        `                     [--full] [--reserve <n>] [--project-dir <path>] [--json]\n` +
+        `                     [--full] [--reserve <n>] [--kind bug|enhancement]\n` +
+        `                     [--project-dir <path>] [--json]\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --check | --new-brief | --agent <cmd>\n` +
         `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n` +
@@ -182,6 +184,7 @@ function usage() {
       `    ${c.green}--from-value-drift <REQ:id>${c.reset} ${c.dim}(new) Propose a spec update for a diverging` +
       ` declared value (§8.6).${c.reset}\n` +
       `    ${c.green}--full${c.reset}                ${c.dim}(new) Full rigor — also scaffold design.md.${c.reset}\n` +
+      `    ${c.green}--kind <bug|enhancement>${c.reset} ${c.dim}(new) What the change is; release notes group by it.${c.reset}\n` +
       `    ${c.green}--artifact <name>${c.reset}     ${c.dim}(author) Which artefact to write. Default: proposal.${c.reset}\n` +
       `    ${c.green}--agent <cmd>${c.reset}         ${c.dim}(author) Agent command; must contain {prompt_file}.${c.reset}\n` +
       `    ${c.green}--agent-profile <n>${c.reset}   ${c.dim}(author) A profile from .harness/profiles.yaml.${c.reset}\n` +
@@ -211,6 +214,8 @@ export interface ChangeOptions {
   modify: string[];
   schema?: string;
   reserve: number;
+  /** REQ-545: `--kind bug|enhancement`. */
+  kind?: string;
   yes?: boolean;
   artifact?: string;
   agent?: string;
@@ -241,6 +246,7 @@ function parseArgs(argv: string[]): ChangeOptions {
     else if (a === "--modify" && argv[i + 1]) opts.modify.push(argv[++i]);
     else if (a === "--req" && argv[i + 1]) opts.req = argv[++i];
     else if (a === "--schema" && argv[i + 1]) opts.schema = argv[++i];
+    else if (a === "--kind" && argv[i + 1]) opts.kind = argv[++i].toLowerCase();
     else if (a === "--reserve" && argv[i + 1]) opts.reserve = parseInt(argv[++i], 10) || 3;
     else if (a === "--artifact" && argv[i + 1]) opts.artifact = argv[++i];
     else if (a === "--agent" && argv[i + 1]) opts.agent = argv[++i];
@@ -411,6 +417,14 @@ function cmdNew(opts: ChangeOptions) {
       }),
     ]);
   }
+  if (opts.kind !== undefined && !(CHANGE_KINDS as readonly string[]).includes(opts.kind)) {
+    return fail(opts, nullShape, [
+      error("change_kind_unknown", `"${opts.kind}" is not a kind of change.`, {
+        target: opts.kind,
+        fix: `Use --kind ${CHANGE_KINDS.join(" or --kind ")}.`,
+      }),
+    ]);
+  }
   const dir = p.change(changeId);
   if (fs.existsSync(dir)) {
     return fail(opts, nullShape, [
@@ -479,6 +493,7 @@ function cmdNew(opts: ChangeOptions) {
     created: new Date().toISOString().slice(0, 10),
     rigor: opts.full ? "full" : "lite",
     req_range: reqRange,
+    ...(opts.kind ? { kind: opts.kind } : {}),
   };
 
   const created: string[] = [];
@@ -517,6 +532,7 @@ function cmdNew(opts: ChangeOptions) {
         schema: config.schema,
         rigor: config.rigor,
         reqRange,
+        kind: opts.kind || null,
         created,
       },
     },
@@ -571,6 +587,7 @@ function cmdList(opts: ChangeOptions) {
       id,
       schema: config.schema,
       rigor: config.rigor,
+      kind: (config.kind as string | undefined) || null,
       completedTasks: progress.complete,
       totalTasks: progress.total,
       deltaCount: listDeltas(projectDir, id).length,
@@ -590,7 +607,7 @@ function cmdList(opts: ChangeOptions) {
           `${ui.state(ch.status === "complete" ? "ready" : ch.status === "in-progress" ? "doing" : "todo")} ${c.bold}${ch.id}${c.reset}`,
           ui.muted(`${ch.completedTasks}/${ch.totalTasks} tasks`),
           ui.muted(`${ch.deltaCount} delta(s)`),
-          ui.muted(ch.rigor),
+          ui.muted(ch.kind ? `${ch.rigor} · ${ch.kind}` : ch.rigor),
         ])
       ) + "\n"
     );
@@ -709,6 +726,8 @@ export function changeShowAnswer(projectDir: string, changeId: string) {
       id: changeId,
       title: titleMatch ? titleMatch[1] : changeId,
       config: readConfig(projectDir, changeId),
+      // REQ-545: bug or enhancement, null when the change does not say.
+      kind: (readConfig(projectDir, changeId).kind as string | undefined) || null,
       deltaCount: deltas.length,
       deltas,
       tasks: { total: progress.total, complete: progress.complete },
@@ -734,7 +753,10 @@ function cmdShow(opts: ChangeOptions) {
   const { deltas, title, review } = answer.change;
   const progress = answer.change.tasks;
   emit(opts, answer, () => {
-    process.stdout.write(ui.header("change show", changeId) + `  ${c.bold}${title}${c.reset}\n\n`);
+    const kind = answer.change.kind ? `  ${ui.muted(`· ${answer.change.kind}`)}` : "";
+    process.stdout.write(
+      ui.header("change show", changeId) + `  ${c.bold}${title}${c.reset}${kind}\n\n`
+    );
     if (deltas.length === 0) {
       process.stdout.write(`    ${ui.muted("No delta specs.")}\n\n`);
     }

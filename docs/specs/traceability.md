@@ -322,6 +322,10 @@
 | REQ-533 | SCN-533a | `features/harness/REQ-533.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-534 | SCN-534a | `features/harness/REQ-534.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-535 | SCN-535a | `features/harness/REQ-535.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
+| REQ-542 | SCN-542a | `features/transition/REQ-542.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
+| REQ-543 | SCN-543a | `features/transition/REQ-543.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
+| REQ-544 | SCN-544a | `features/transition/REQ-544.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
+| REQ-545 | SCN-545a | `features/transition/REQ-545.feature` | - | - | - | - | - | tests/unit/transition-outputs.test.ts | Approved |
 | REQ-549 | SCN-549a | `features/agent-integration/REQ-549.feature` | - | - | - | - | - | tests/unit/agent-skills.test.ts | Approved |
 | REQ-550 | SCN-550a | `features/agent-integration/REQ-550.feature` | - | - | - | - | - | tests/unit/agent-skills.test.ts | Approved |
 
