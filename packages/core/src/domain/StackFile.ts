@@ -28,8 +28,9 @@ export interface LayerFact {
   readonly evidence: string;
 }
 
-const cell = (v: string) => v.replace(/\|/g, "\\|");
-const code = (v: string) => (v ? `\`${v}\`` : "-");
+/** A table cell: backslashes first, then pipes, so the cell reads back as written. */
+const cell = (v: string) => v.replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
+const code = (v: string) => (v ? `\`${cell(v)}\`` : "-");
 
 /** The file, every layer in a fixed order, every command in a fixed order. */
 export function renderStack(
@@ -75,7 +76,10 @@ export function stackCommands(md: string | null): Partial<Record<StackCommand, s
     if (!m) continue;
     const name = m[1] as StackCommand;
     if (!STACK_COMMANDS.includes(name)) continue;
-    const run = m[2].replace(/^`|`$/g, "").replace(/\\\|/g, "|").trim();
+    const run = m[2]
+      .replace(/^`|`$/g, "")
+      .replace(/\\([\\|])/g, "$1")
+      .trim();
     if (run && run !== "-") out[name] = run;
   }
   return out;

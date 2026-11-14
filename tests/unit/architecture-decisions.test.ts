@@ -154,6 +154,9 @@ test("REQ-547 SCN-547a: the agent adds a library", () => {
   put(dir, "package.json", JSON.stringify({ name: "app", dependencies: {} }, null, 2) + "\n");
   git(dir, "init", "-q");
   git(dir, "config", "core.autocrlf", "false");
+  // CI has no global identity, and the harness commits what it lands.
+  git(dir, "config", "user.email", "t@t");
+  git(dir, "config", "user.name", "t");
   git(dir, "add", "-A");
   git(dir, "commit", "-qm", "seed");
   const agent = path.join(parent, "agent.js");
@@ -305,4 +308,10 @@ test("REQ-548: a command a person corrected is kept on the next run", () => {
   const merged = mergeCommands({ test: "npm test", build: "npm run build" }, before);
   assert.deepEqual(merged, { test: "npm run test:ci", build: "npm run build" });
   assert.deepEqual(stackCommands(renderStack([], {})), {});
+  const piped = "npm test 2>&1 | tee out.log && echo C:\\tmp";
+  assert.deepEqual(
+    stackCommands(renderStack([], { test: piped })),
+    { test: piped },
+    "a pipe and a backslash read back"
+  );
 });
