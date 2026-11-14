@@ -322,6 +322,10 @@
 | REQ-533 | SCN-533a | `features/harness/REQ-533.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-534 | SCN-534a | `features/harness/REQ-534.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-535 | SCN-535a | `features/harness/REQ-535.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
+| REQ-538 | SCN-538a | `features/domain-language/REQ-538.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
+| REQ-539 | SCN-539a | `features/domain-language/REQ-539.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
+| REQ-540 | SCN-540a | `features/domain-language/REQ-540.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
+| REQ-541 | SCN-541a | `features/domain-language/REQ-541.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
 | REQ-546 | SCN-546a | `features/architecture/REQ-546.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
 | REQ-547 | SCN-547a | `features/architecture/REQ-547.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
 | REQ-548 | SCN-548a | `features/architecture/REQ-548.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |

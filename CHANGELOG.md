@@ -52,7 +52,6 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   their technology and evidence and the build/test/end-to-end commands; `check`
   and the harness run its test command when `test_cmd` is unset. A corrected
   command is kept; a rerun on an unchanged project changes nothing.
-
 - **Review with the business** (REQ-551, REQ-552): `specgate review <change>`
   writes the change as one self-contained HTML page (intent, requirements,
   scenarios as plain steps, questions, assumptions, date and commit; nothing
@@ -61,6 +60,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   counted as those requirements' own scenario, and under `--strict` owes a test
   once all of them are delivered (`journey_untested`,
   `journey_requirement_unknown`).
+- **Domain language** (REQ-538 … REQ-541): `init` and `adopt` write an empty
+  `docs/specs/glossary.md`; `validate` reports `glossary_term_forbidden` for a
+  word the glossary says to avoid (a warning, an error under `--strict`).
+  Business rules numbered `BR-NNN` in a requirement's `Rules:` list:
+  `rule_duplicate`, and under `--strict` `rule_untested` for a delivered
+  requirement's rule no test names. `check` generates `docs/specs/model.md`
+  (a Mermaid ER diagram from `aggregates.md` and `model.yaml`) and
+  `docs/specs/actors.md` (from the brief's actors and each `actor=`);
+  `validate` reports `model_stale`, `actors_stale` and warns `actor_unknown`.
 
 ### Changed
 

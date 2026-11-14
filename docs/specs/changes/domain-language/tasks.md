@@ -7,8 +7,8 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-538 — the glossary keeps one word for one thing
-- [ ] 2.2 REQ-539 — business rules are numbered and each one is tested
-- [ ] 2.3 REQ-540 — the entity model is generated
-- [ ] 2.4 REQ-541 — the actors diagram is generated
-- [ ] 2.5 the CHANGELOG, the command reference and the docs page
+- [x] 2.1 REQ-538 — the glossary keeps one word for one thing
+- [x] 2.2 REQ-539 — business rules are numbered and each one is tested
+- [x] 2.3 REQ-540 — the entity model is generated
+- [x] 2.4 REQ-541 — the actors diagram is generated
+- [x] 2.5 the CHANGELOG, the command reference and the docs page
