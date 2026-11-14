@@ -7,6 +7,6 @@
 
 ## 2. Implementation
 
-- [ ] 2.1 REQ-549 — the loop installs as Agent Skills
-- [ ] 2.2 REQ-550 — the package carries the plugin manifests
-- [ ] 2.3 the CHANGELOG, the command reference and the docs page
+- [x] 2.1 REQ-549 — the loop installs as Agent Skills
+- [x] 2.2 REQ-550 — the package carries the plugin manifests
+- [x] 2.3 the CHANGELOG, the command reference and the docs page

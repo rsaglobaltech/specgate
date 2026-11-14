@@ -66,6 +66,7 @@
     "prebuild": "npm run clean",
     "prepack": "npm run build",
     "pretest": "npm run build",
+    "plugin:sync": "node dist/scripts/plugin/sync-claude-plugin.js",
     "test": "node --test dist/tests/cli.test.js",
     "test:unit": "node scripts/run-tests.cjs dist/tests/unit",
     "test:core-unit": "node scripts/run-tests.cjs dist/packages/core/test/unit",

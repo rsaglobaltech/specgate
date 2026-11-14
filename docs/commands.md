@@ -163,6 +163,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate adr list`                    | Every ADR with its number, title and status.                          | [Decisions](decisions.md) |
 | `specgate stack`                       | Writes `docs/specs/stack.md`: each layer's technology and evidence, and the commands. | [Decisions](decisions.md#the-stack-file) |
 | `specgate agents init`                 | Slash commands and instruction files for your agent tools.            | [Agents](agents.md)      |
+| `specgate agents init --format skills` | The same steps as Agent Skills folders, in `.agents/skills/` and each tool's own. | [Agents](agents.md#wire-it-in) |
 | `specgate agents install --global`     | The agent guards for every project: OpenCode's plugin, Claude Code's. | [Agents](agents.md)      |
 | `specgate update`                      | Refreshes those generated files after an upgrade, keeping your edits. | [Agents](agents.md)      |
 | `specgate agent ask "<request>"`       | Your agent proposes a spec change as a plan with its diff; nothing is written. `@REQ-NNN`, `@path`. | [Ask your agent](agent-ask.md) |

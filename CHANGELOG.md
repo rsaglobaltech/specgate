@@ -32,7 +32,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   traceability findings in `docs/specs/gate-baseline.json`. After it, `check`
   and `validate` fail only on new findings, count the `baselined` ones, and name
   each `baseline_fixed` one so the file shrinks.
-
+- **Agent Skills** (REQ-549, REQ-550): `specgate agents init --format skills`
+  writes each step of the loop as a `SKILL.md` folder into `.agents/skills/` and
+  the skills folder of each named (or present) tool — Claude Code, Cursor,
+  Gemini CLI. A skill changed by hand is kept (`skill_kept`). The Claude Code
+  plugin carries the same skills, plus an Agent Plugins `plugin.json` and a
+  Tessl `.tessl-plugin/plugin.json` at the package's version;
+  `npm run plugin:sync` regenerates them and a test fails while they are stale.
 - **Architecture decisions** (REQ-546): `specgate adr new "<title>"` writes the
   next numbered ADR (Proposed, dated, Context/Decision/Consequences);
   `specgate adr supersede <NNNN> "<title>"` writes its replacement and changes
