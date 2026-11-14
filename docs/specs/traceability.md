@@ -322,6 +322,9 @@
 | REQ-533 | SCN-533a | `features/harness/REQ-533.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-534 | SCN-534a | `features/harness/REQ-534.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
 | REQ-535 | SCN-535a | `features/harness/REQ-535.feature` | - | - | - | - | - | tests/unit/harness-roles.test.ts | Approved |
+| REQ-546 | SCN-546a | `features/architecture/REQ-546.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
+| REQ-547 | SCN-547a | `features/architecture/REQ-547.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
+| REQ-548 | SCN-548a | `features/architecture/REQ-548.feature` | - | - | - | - | - | tests/unit/architecture-decisions.test.ts | Approved |
 | REQ-549 | SCN-549a | `features/agent-integration/REQ-549.feature` | - | - | - | - | - | tests/unit/agent-skills.test.ts | Approved |
 | REQ-550 | SCN-550a | `features/agent-integration/REQ-550.feature` | - | - | - | - | - | tests/unit/agent-skills.test.ts | Approved |
 

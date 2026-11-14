@@ -38,6 +38,7 @@ import { BASELINE_FILE, parseBaseline } from "../../../../packages/core/src/doma
 import { checksFor } from "../../../../packages/core/src/domain/QualityChecks";
 import { gateTestCommand } from "../../../../packages/core/src/domain/DoneVerification";
 import { planTests } from "../../../lib/test-selection";
+import { stackFileCommand } from "../../../lib/stack-detect";
 import { startShell, type StageRun } from "../../../lib/stage-run";
 import type { Diagnostic } from "../../../lib/diagnostics";
 
@@ -290,7 +291,11 @@ export class CheckCommand extends BaseCommand {
     // REQ-503: every stage, planned up front and set as the gate reaches it,
     // so a failed gate still says what passed before it and what never ran.
     const harness: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
-    const testCmd = testCmdFlag !== undefined ? testCmdFlag : harness.testCmd;
+    // REQ-548: the stack file's test command when the configuration sets none.
+    const testCmd =
+      testCmdFlag !== undefined
+        ? testCmdFlag
+        : harness.testCmd || stackFileCommand(projectDir, "test") || undefined;
     const archCmd = (harness.archCmd || "").trim();
     const qualityStages: Stage[] = ci ? ["attempt", "end", "ci"] : ["attempt", "end"];
     // REQ-510 … REQ-516: which tests run — the whole suite, or what the change
@@ -300,7 +305,7 @@ export class CheckCommand extends BaseCommand {
       ci,
       noCache,
       base: baseFlag || prBase(projectDir) || undefined,
-      testCmd: testCmdFlag,
+      testCmd: testCmdFlag !== undefined ? testCmdFlag : harness.testCmd ? undefined : testCmd,
       harness,
     });
     const selection = tests.selection;

@@ -23,6 +23,12 @@
  * gate twice: on its branch and merged (ADR-0036).
  */
 
+import { stackFileCommand } from "../../../lib/stack-detect";
+import {
+  DECISION_RIGHTS_FILE,
+  decisionsExceeded,
+  parseDecisionRights,
+} from "../../../../packages/core/src/domain/DecisionRights";
 import { quoteArg } from "../../../lib/escape";
 import { harnessCommitMessage, ticketKeyOf } from "../../../lib/ticket-keys";
 import { runWithDeadline } from "../../../lib/run-with-deadline";
@@ -1509,6 +1515,43 @@ function checkWriteScopeInWorktree(worktreeDir: string, settings: HarnessSetting
 }
 
 /**
+ * REQ-547: a decision the project keeps for a person — a dependency, a
+ * migration, a public API operation — taken by the agent anyway. Read from the
+ * diff against the attempt's base; the rights file is read from the worktree's
+ * base too, so an agent cannot grant itself the right (the file is protected).
+ */
+function checkDecisionRightsInWorktree(worktreeDir: string) {
+  const committed = git(worktreeDir, ["show", `HEAD:${DECISION_RIGHTS_FILE}`]);
+  if (committed.status !== 0) return null;
+  const { rights } = parseDecisionRights(committed.stdout || "");
+  if (![...rights.values()].includes("ask")) return null;
+  const all = worktreeChanges(worktreeDir);
+  if (!all) return null;
+  const read = (rel: string) => {
+    const full = path.join(worktreeDir, rel);
+    return fs.existsSync(full) && fs.statSync(full).isFile() ? fs.readFileSync(full, "utf8") : null;
+  };
+  const changes = [
+    ...all.modified.map((p) => {
+      const before = git(worktreeDir, ["show", `HEAD:${p}`]);
+      return { path: p, before: before.status === 0 ? before.stdout : null, after: read(p) };
+    }),
+    ...all.added.map((p) => ({ path: p, before: null, after: read(p) })),
+  ];
+  const exceeded = decisionsExceeded(rights, changes);
+  if (exceeded.length === 0) return null;
+  return {
+    exceeded,
+    message:
+      `decision_right_exceeded — the attempt took ${exceeded.length} decision(s) ` +
+      `${DECISION_RIGHTS_FILE} keeps for a person:\n` +
+      exceeded.map((e) => `  ${e.decision}: ${e.file} (${e.detail})`).join("\n") +
+      `\n\nUndo them and meet the requirement without them. If it cannot be met ` +
+      `without one, ask: \`specgate ask <REQ> "<what you need, and why>"\`.`,
+  };
+}
+
+/**
  * Did the agent rewrite the definition the gate command depends on? (#167)
  *
  * The write-scope guard covers the contract — spec.md, AI_RULES.md, features/**
@@ -1994,6 +2037,19 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       warn(`${req.requirement}: the agent rewrote the gate command`);
       warn(`  ${gateCmd.manifest} → scripts.${gateCmd.script}`);
       record("write-scope");
+      continue;
+    }
+
+    // REQ-547: a decision kept for a person, taken anyway.
+    const rights = checkDecisionRightsInWorktree(worktreeDir);
+    if (rights) {
+      previousFailure = rights.message;
+      for (const e of rights.exceeded) {
+        warn(
+          `${req.requirement}: decision_right_exceeded — ${e.decision} in ${e.file} (${e.detail})`
+        );
+      }
+      record("decision-right");
       continue;
     }
 
@@ -3724,6 +3780,8 @@ export class RunCommand extends BaseCommand {
       }
       const fileConfig = readHarnessConfig(projectDir);
       const settings = resolveHarnessSettings(fileConfig, args);
+      // REQ-548: the stack file's test command when the configuration sets none.
+      if (!settings.testCmd) settings.testCmd = stackFileCommand(projectDir, "test");
       // A fresh worktree has no dependencies. Unless told, install what the
       // lockfile pins (ADR-0036); `--setup-cmd none` runs nothing.
       if (settings.setupCmd === "none") settings.setupCmd = "";

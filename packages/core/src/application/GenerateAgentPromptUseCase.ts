@@ -61,6 +61,8 @@ export class GenerateAgentPromptUseCase {
       rulesFile,
       requirementText: requirementText || undefined,
       otherScenarios,
+      // REQ-547: what the agent may decide on its own.
+      decisionRights: this.configRepo.readProjectFile(projectDir, "docs/specs/decision-rights.md"),
       // Opt-in: the caller decides, because a precedent costs prompt budget and
       // is only worth it once a project has accepted work to point at.
       precedent: opts.withPrecedents ? this.findPrecedent(req, projectDir) : null,

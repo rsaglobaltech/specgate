@@ -121,6 +121,11 @@ export interface AttemptRecord {
     | "agent-error"
     | "write-scope"
     /**
+     * The agent took a decision the project's decision rights keep for a
+     * person: a dependency, a migration, a public API operation (REQ-547).
+     */
+    | "decision-right"
+    /**
      * The agent wrote no files at all, so there was nothing to gate (H19).
      * Its own stage because the fix is never in the code — it is the agent's
      * write permissions or its prompt, and `harness report` should not file it

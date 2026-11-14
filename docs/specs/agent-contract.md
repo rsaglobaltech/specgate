@@ -93,6 +93,10 @@ not run reports an `error` about itself.
 | `specgate harness run --format json` | `results` | no |
 | `specgate harness report --json` | `report` | no |
 | `specgate harness stop --after-current --json` | `stop` | no |
+| `specgate stack --json` | `stack` | no |
+| `specgate adr new <title> --json` | `adr` | no |
+| `specgate adr supersede <NNNN> <title> --json` | `adr` | no |
+| `specgate adr list --json` | `adr` | no |
 | `specgate agent ask "<request>" --json` | `plan` | no |
 | `specgate agent apply <plan-id> --json` | `applied` | no |
 | `specgate agent discard <plan-id> --json` | `discarded` | no |
