@@ -12,7 +12,7 @@ The system SHALL read `docs/specs/glossary.md`, when it exists, as a table of `T
 - WHEN a tool runs `specgate validate --json`
 - THEN it reports `glossary_term_forbidden` for `client` on REQ-001's line, with `Customer` as the term to use
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-539 — Business rules are numbered and each one is tested
 
@@ -24,7 +24,7 @@ The system SHALL read a `Rules:` list in a requirement's body whose items start 
 - WHEN a tool runs `specgate validate --strict --json`
 - THEN it fails with `rule_untested` for BR-002 only
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-540 — The entity model is generated
 
@@ -36,7 +36,7 @@ The system SHALL generate `docs/specs/model.md` — a Mermaid `erDiagram` with o
 - WHEN a tool runs `specgate check`, then edits `docs/specs/model.md` by hand and runs `specgate validate --json`
 - THEN the generated file has an `erDiagram` with `Invoice` and `Payment`, and `validate` reports `model_stale`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-541 — The actors diagram is generated
 
@@ -48,4 +48,4 @@ The system SHALL generate `docs/specs/actors.md` — a Mermaid `flowchart` linki
 - WHEN a tool runs `specgate check` then `specgate validate --json`
 - THEN `docs/specs/actors.md` links `Customer` to REQ-001, and `validate` reports `actor_unknown` for REQ-002 naming `Admin`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
