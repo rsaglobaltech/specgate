@@ -415,6 +415,12 @@ export const NAV: readonly NavSection[] = [
           "A tester and an implementer in their lanes, a cost ceiling, the files no agent may change.",
       },
       {
+        slug: "decisions",
+        label: "Decisions, rights and the stack",
+        blurb:
+          "ADRs replaced, never rewritten; what the agent may decide on its own; the stack written down once.",
+      },
+      {
         slug: "domain-packs",
         label: "Domain packs",
         blurb: "Install requirements a pilot already proved, or package your own.",

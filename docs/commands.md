@@ -158,6 +158,10 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 
 | Command                                | What it does                                                          | Details                  |
 | -------------------------------------- | --------------------------------------------------------------------- | ------------------------ |
+| `specgate adr new "<title>"`           | Records an architecture decision: the next ADR, Proposed, dated.      | [Decisions](decisions.md) |
+| `specgate adr supersede <NNNN> "<title>"` | A new ADR that replaces one; the old one changes only its status.  | [Decisions](decisions.md#replace-one-without-rewriting-it) |
+| `specgate adr list`                    | Every ADR with its number, title and status.                          | [Decisions](decisions.md) |
+| `specgate stack`                       | Writes `docs/specs/stack.md`: each layer's technology and evidence, and the commands. | [Decisions](decisions.md#the-stack-file) |
 | `specgate agents init`                 | Slash commands and instruction files for your agent tools.            | [Agents](agents.md)      |
 | `specgate agents init --format skills` | The same steps as Agent Skills folders, in `.agents/skills/` and each tool's own. | [Agents](agents.md#wire-it-in) |
 | `specgate agents install --global`     | The agent guards for every project: OpenCode's plugin, Claude Code's. | [Agents](agents.md)      |

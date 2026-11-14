@@ -12,7 +12,7 @@ The system SHALL, with `specgate adr new "<title>"`, write `docs/specs/adr/NNNN-
 - WHEN a tool runs `specgate adr supersede 0001 "Use SQLite for the edge"` then `specgate adr list --json`
 - THEN `0002-use-sqlite-for-the-edge.md` exists and names 0001; 0001's status is `Superseded by 0002` and its other lines are unchanged; and the list has both
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-547 — The agent decides only what its rights allow
 
@@ -24,11 +24,11 @@ The system SHALL read `docs/specs/decision-rights.md`, when it exists, as a tabl
 - WHEN a tool runs `specgate harness run --req REQ-001 --json`
 - THEN the attempt fails with `decision_right_exceeded` naming `dependency` and `package.json`
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-548 — The stack file names the layers and their commands
 
-The system SHALL, with `specgate stack [--json]`, write `docs/specs/stack.md` with a table of the layers it detects — migration, persistence, service, API, UI, end-to-end — each with its technology and the evidence it was detected from, and a table of commands (build, test, affected test, end-to-end); the harness and `check` SHALL take a command from it when the configuration sets none; and a second run on an unchanged project SHALL change nothing.
+The system SHALL, with `specgate stack [--json]`, write `docs/specs/stack.md` with a table of the layers it detects — migration, persistence, service, API, UI, end-to-end — each with its technology and the evidence it was detected from, and a table of commands (build, test, affected test, end-to-end); the harness and `check` SHALL take the test command from it when the configuration sets none; a command a person corrected in the file SHALL be kept when it is regenerated; and a second run on an unchanged project SHALL change nothing.
 
 #### Scenario: SCN-548a — A Spring and Flyway project
 
@@ -36,4 +36,4 @@ The system SHALL, with `specgate stack [--json]`, write `docs/specs/stack.md` wi
 - WHEN a tool runs `specgate stack` twice, then `specgate check --json`
 - THEN `stack.md` lists `migration` as Flyway and `service` as Spring Boot with their evidence, the second run changes nothing, and `check` runs the stack file's test command
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
