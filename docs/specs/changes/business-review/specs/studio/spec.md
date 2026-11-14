@@ -36,7 +36,7 @@ The system SHALL, with `specgate studio --team`, require a signed-in user, named
 - WHEN `ana` signs in and answers an open question through the studio's API
 - THEN the answer is refused with `role_forbidden` and `questions.md` is unchanged
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
 
 ### Requirement: REQ-554 — In team mode, edits arrive as pull requests
 
@@ -48,4 +48,4 @@ The system SHALL, in team mode, write an editor's change to the specification on
 - WHEN `luis` answers it through the studio
 - THEN a commit authored by `luis` exists on `studio/luis/pdf-invoices`, a pull request to the base branch is open with it, the base branch has no new commit, and the answer holds the pull request's URL
 
-<!-- specgate:trace status=Draft actor=Developer kind=functional -->
+<!-- specgate:trace status=Implemented actor=Developer kind=functional -->
