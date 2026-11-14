@@ -78,6 +78,8 @@ function mavenProject() {
   }
   put(dir, "orders/src/main/java/x/Cancel.java", "class Cancel {\n  // refuse when SHIPPED\n}\n");
   git(dir, "init", "-q");
+  // A checkout restores LF as written, not as the runner's autocrlf would.
+  git(dir, "config", "core.autocrlf", "false");
   git(dir, "add", "-A");
   git(dir, "commit", "-qm", "seed");
   return { parent, dir };
@@ -230,6 +232,15 @@ test("REQ-530: the answer is checked before anything is written", () => {
   assert.equal(badStep.ok, false);
   const ok = parseReverseAnswer(JSON.stringify({ requirements: [rule("A")] }));
   assert.equal(ok.ok, true);
+});
+
+test("REQ-530: a source written against the comment's close reads without it", () => {
+  assert.deepEqual(
+    citedSources("### Requirement: REQ-001 — A\n<!-- specgate:trace source=a/B.java:3-->\n").map(
+      (c: { source: string }) => c.source
+    ),
+    ["a/B.java:3"]
+  );
 });
 
 test("REQ-530: the delta cites its sources, and they read back", () => {

@@ -154,7 +154,7 @@ export function sourceFile(source: string): string {
   return source.replace(/:\d+(?:-\d+)?$/, "");
 }
 
-const SOURCE_ATTR = /\bsource=(?:"([^"]*)"|'([^']*)'|([^\s>]+))/;
+const SOURCE_ATTR = /\bsource=(?:"([^"]*)"|'([^']*)'|(\S+))/;
 
 /** Every `source=` a spec's trace comments cite, with the requirement each belongs to. */
 export function citedSources(spec: string): CitedSource[] {
@@ -168,9 +168,11 @@ export function citedSources(spec: string): CitedSource[] {
     }
     const t = line.trim();
     if (!t.startsWith("<!--") || !t.includes("specgate:trace")) continue;
-    const m = SOURCE_ATTR.exec(t);
+    // The comment's close is cut first, so `source=a.java-->` reads `a.java`.
+    const body = t.endsWith("-->") ? t.slice(0, -3) : t;
+    const m = SOURCE_ATTR.exec(body);
     if (!m) continue;
-    const value = (m[1] ?? m[2] ?? m[3] ?? "").replace(/-->$/, "");
+    const value = m[1] ?? m[2] ?? m[3] ?? "";
     for (const s of value.split(",").map((x) => x.trim())) {
       if (s) out.push({ requirement, source: s, file: sourceFile(s) });
     }
