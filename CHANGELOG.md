@@ -52,7 +52,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   their technology and evidence and the build/test/end-to-end commands; `check`
   and the harness run its test command when `test_cmd` is unset. A corrected
   command is kept; a rerun on an unchanged project changes nothing.
-
+- **Review with the business** (REQ-551, REQ-552): `specgate review <change>`
+  writes the change as one self-contained HTML page (intent, requirements,
+  scenarios as plain steps, questions, assumptions, date and commit; nothing
+  loaded from outside it, every value escaped). Journeys: a scenario tagged
+  `@JRN-NNN` with the `@REQ-NNN` it crosses is listed by `status --json`, not
+  counted as those requirements' own scenario, and under `--strict` owes a test
+  once all of them are delivered (`journey_untested`,
+  `journey_requirement_unknown`).
 - **Handing over** (REQ-542 … REQ-545):
   `specgate propose --kind bug|enhancement` records a change's kind (`--from-ticket` takes it from the
   Jira issue type); `specgate release-notes <from>..<to>` lists the changes

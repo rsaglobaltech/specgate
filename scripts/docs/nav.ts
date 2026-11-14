@@ -230,6 +230,12 @@ export const NAV: readonly NavSection[] = [
         blurb: "Requirements, scenarios and the traceability matrix.",
       },
       {
+        slug: "business-review",
+        label: "Review with the business",
+        blurb:
+          "A change as one HTML page to send, and journeys across requirements tested end to end.",
+      },
+      {
         slug: "transition",
         label: "Release notes, acceptance, user guides",
         blurb:

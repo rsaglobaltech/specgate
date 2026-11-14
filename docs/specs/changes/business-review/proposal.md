@@ -16,9 +16,9 @@ In scope:
 
 - REQ-551: `specgate review <change>` writes a self-contained HTML page of a
   change in plain language, for people who do not read Markdown in a repo.
-- REQ-552: journeys `JRN-NNN` — a scenario that chains requirements — with
-  their own column in the matrix and a test owed once every requirement in
-  them is delivered.
+- REQ-552: journeys `JRN-NNN` — a scenario that chains requirements — listed by
+  `status --json` (the matrix keeps its format) and owing a test once every
+  requirement in them is delivered.
 - REQ-553: `specgate studio --team` serves the studio to several people,
   with roles read from `studio.team.yaml`; a Reader cannot write.
 - REQ-554: in team mode an Editor's change is written to a branch and opened
