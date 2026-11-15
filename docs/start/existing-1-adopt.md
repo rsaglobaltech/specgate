@@ -89,6 +89,7 @@ $ specgate init
     + features/adoption/baseline.feature
     + docs/specs/traceability.md
     + docs/specs/adr/README.md
+    + docs/specs/glossary.md
     + AGENTS.md
     + docs/specs/adoption.md   2 areas found in the code
     + README.md   was missing
@@ -96,14 +97,13 @@ $ specgate init
     · Traceability: generated from spec.md, tags and tests (`specgate matrix`)
 
   Summary ────────────────────────────────────────────────
-    · Files written: 7
+    · Files written: 8
     · Files skipped (already present): 0
     · Areas found in the code: 2 — invoices, customers (docs/specs/adoption.md, not requirements)
   ▲  This does not certify your code yet — it certifies the skeleton.
      A green `validate` right now means the structure is in place, not that any
      behaviour is covered. It starts meaning something when the requirements below
      are real and their scenarios are linked to tests.
-
 … 17 more lines
 ```
 <!-- specgate:out-existing-init:end -->

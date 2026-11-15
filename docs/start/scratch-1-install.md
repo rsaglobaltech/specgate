@@ -66,13 +66,14 @@ $ specgate init
     + features/adoption/baseline.feature
     + docs/specs/traceability.md
     + docs/specs/adr/README.md
+    + docs/specs/glossary.md
     + AGENTS.md
     + README.md   was missing
   ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
     · Traceability: generated from spec.md, tags and tests (`specgate matrix`)
 
   Summary ────────────────────────────────────────────────
-    · Files written: 6
+    · Files written: 7
     · Files skipped (already present): 0
   ▲  This does not certify your code yet — it certifies the skeleton.
      A green `validate` right now means the structure is in place, not that any
@@ -80,8 +81,7 @@ $ specgate init
      are real and their scenarios are linked to tests.
 
   ✔  Adoption completed
-
-… 16 more lines
+… 17 more lines
 ```
 <!-- specgate:out-scratch-init:end -->
 

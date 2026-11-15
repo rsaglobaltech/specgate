@@ -112,7 +112,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 
 #### Scenario: SCN-004 — The second booking is refused
 
-… 88 more lines
+… 89 more lines
 ```
 <!-- specgate:out-scratch-harness-prompt:end -->
 

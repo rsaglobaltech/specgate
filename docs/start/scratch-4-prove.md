@@ -98,6 +98,7 @@ specgate check
 $ specgate check
   ◆ specgate · check   court-bookings
 
+  ↻  docs/specs/actors.md regenerated from its sources
   ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test
