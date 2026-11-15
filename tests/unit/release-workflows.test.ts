@@ -99,3 +99,30 @@ test("REQ-556 SCN-556a: the publish job is ready for OIDC", () => {
   assert.match(doc, /## Trusted publishing/);
   assert.match(doc, /disallow tokens/);
 });
+
+test("REQ-571 SCN-571a: the version is checked against the public surface before it is published", () => {
+  const yaml = workflow("publish-npm.yml");
+  const job = yaml.slice(yaml.indexOf("\n  publish:"), yaml.indexOf("\n  smoke:"));
+  const check = job.indexOf(
+    'npm run contract:check -- --release "${{ steps.package_metadata.outputs.version }}"'
+  );
+  assert.ok(check > 0, "the publish job runs contract:check --release");
+  assert.ok(check < job.indexOf("- name: Publish\n"), "before publishing");
+  assert.ok(job.indexOf("npm run test:all") < check, "after the build the suite runs");
+});
+
+test("REQ-572 SCN-572a: the published package is installed and used, under its dist-tag", () => {
+  const yaml = workflow("publish-npm.yml");
+  const smoke = yaml.slice(yaml.indexOf("\n  smoke:"));
+  assert.match(smoke, /needs: publish/);
+  assert.match(smoke, /if: needs\.publish\.outputs\.dry_run != 'true'/);
+  assert.match(smoke, /npm view "\$\{PACKAGE\}" "dist-tags\.\$\{DIST_TAG\}"/);
+  assert.match(smoke, /npm install --no-audit --no-fund "\$\{PACKAGE\}@\$\{VERSION\}"/);
+  assert.match(smoke, /npx --no-install specgate --version/);
+  assert.match(smoke, /npx --no-install sgate --version/);
+  assert.match(smoke, /npx --no-install specgate init --yes/);
+  assert.match(smoke, /specgate status --json/);
+  for (const out of ["name", "version", "dist_tag", "dry_run"]) {
+    assert.match(yaml, new RegExp(`\\n      ${out}: \\$\\{\\{ steps\\.`), `publish exposes ${out}`);
+  }
+});

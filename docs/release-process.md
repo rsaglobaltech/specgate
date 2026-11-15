@@ -185,12 +185,9 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
    The tag runs the E2E journeys on Linux, macOS and Windows, then
    `test:all`, then publishes with provenance.
-5. **Check the registry:**
-
-   ```bash
-   npm view @rsaglobaltech/specgate dist-tags     # latest: X.Y.Z
-   npx @rsaglobaltech/specgate@X.Y.Z --version
-   ```
+5. **Check the registry.** `publish-npm.yml`'s `smoke` job installs the
+   version from npm under its dist-tag and runs `--version`, `init` and
+   `status` (REQ-572); its job failing is a published version to patch at once.
 
    Only npm gates on the E2E (Windows included): 0.19.0 failed it after the
    other two published, so it shipped as 0.19.1 (0.27.0 too, as 0.27.1) — a published tag is never rebuilt.

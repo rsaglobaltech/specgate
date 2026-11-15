@@ -39,6 +39,21 @@ being merged and compares the two (REQ-568):
 - an item that appears is listed, and the release that ships it is at least a
   minor (`contract:check --release <version>`).
 
+## Projects of every release
+
+A project as each release wrote it — 0.35.0 today, then 1.0.0 and the releases
+after — is kept under `tests/compat/<version>/`. Every build reads each one:
+`validate`, `status`, `config list`, `change validate`, and, for a project from
+before 1.0, `migrate 1.0` and `validate --strict` after it (REQ-570).
+
+## When a version is published
+
+Before the tag publishes anything, `contract:check --release <version>` checks
+the version against the surface: a patch that adds to it, or a removal outside
+a major, stops the release (REQ-571). After it, the published package is
+installed from npm under its dist-tag and used — `--version`, `init`,
+`status` (REQ-572).
+
 ## Deprecation, then removal
 
 Something is removed in two steps, never one (REQ-569):

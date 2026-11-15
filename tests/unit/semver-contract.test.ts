@@ -14,7 +14,7 @@ const path = require("node:path");
 const ROOT_DIR = require("node:path").resolve(
   __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, "")
 );
-const { judge } = require("../../scripts/semver/contract-check");
+const { judge, promised } = require("../../scripts/semver/contract-check");
 const { apiItems, flagsOf, jsonPaths } = require("../../scripts/semver/surface");
 
 const base = {
@@ -109,4 +109,14 @@ test("REQ-568: the frozen surface and the deprecations are committed", () => {
       JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "contract", "deprecations.json"), "utf8"))
     )
   );
+});
+
+test("REQ-568: the promise starts at a final 1.0.0", () => {
+  assert.equal(promised("1.0.0"), true);
+  assert.equal(promised("1.0.0-rc.12"), false);
+  assert.equal(promised("0.35.0"), false);
+  const rc = { ...base, version: "1.0.0-rc.11" };
+  const j = judge(rc, ["command:status"], [], "1.0.0-rc.12", "1.0.0-rc.12");
+  assert.deepEqual(j.errors, [], "a candidate's surface is still being shaped");
+  assert.equal(j.notes.length, 2, "what would fail is still said");
 });

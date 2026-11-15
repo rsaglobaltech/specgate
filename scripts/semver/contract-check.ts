@@ -41,6 +41,8 @@ export interface Judgement {
   added: string[];
   /** Why this cannot ship; empty when it can. */
   errors: string[];
+  /** What would fail once the baseline carries the promise (a 0.x or candidate baseline). */
+  notes: string[];
   /** Deprecated items still present, said on every run. */
   deprecated: Deprecation[];
 }
@@ -86,7 +88,17 @@ export function judge(
     }
   }
   const deprecated = deprecations.filter((d) => now.has(d.item));
-  return { removed, added, errors, deprecated };
+  // The promise starts at a final 1.0.0: a candidate's surface (1.0.0-rc.N)
+  // or a 0.x one is still being shaped, so its diff is said, not enforced.
+  if (!promised(baseline.version)) {
+    return { removed, added, errors: [], notes: errors, deprecated };
+  }
+  return { removed, added, errors, notes: [], deprecated };
+}
+
+/** Whether a baseline's version carries the compatibility promise: 1.0.0 or later, final. */
+export function promised(version: string): boolean {
+  return major(version) >= 1 && !version.includes("-");
 }
 
 function readJson<T>(rel: string, fallback: T): T {
@@ -130,6 +142,12 @@ function main(argv: string[]): number {
         j.deprecated.map((d) => `${d.item} — since ${d.since}, use ${d.use}`)
       )
   );
+  if (j.notes.length) {
+    process.stdout.write(
+      `\n${baseline.version} is not yet a promise (the promise starts at a final 1.0.0); from then on these would fail:\n` +
+        `${j.notes.map((n) => `  · ${n}`).join("\n")}\n`
+    );
+  }
   if (j.errors.length) {
     process.stderr.write(`\n${j.errors.map((e) => `✖ ${e}`).join("\n")}\n`);
     return 1;
