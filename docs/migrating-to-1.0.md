@@ -1,28 +1,25 @@
 # Migrating to 1.0
 
-Specgate 1.0 is released as candidates (`1.0.0-rc.N`) before it becomes the
-version `npm install` gives. This page lists every change that breaks a 0.x
+Specgate 1.0.0 is released: it is the version `npm install` gives. This page
+lists every change that breaks a 0.x
 project — 0.35, the last of them, or an older one — what `specgate migrate 1.0`
 does about each, and what is left to a person. From 1.0 on, a change that breaks
 a project waits for 2.0.
 
-## Try it, or stay on 0.35
+## Move to 1.0, or stay on 0.35
 
 ```bash
-npm i -D @rsaglobaltech/specgate@next   # the latest 1.0 candidate
+npm i -D @rsaglobaltech/specgate@1      # 1.0 — what `latest` gives
 npm i -D @rsaglobaltech/specgate@0.35   # stay on 0.35
 ```
 
-A candidate is published under the dist-tag `next`, never `latest`, and its
-Docker image carries only its version (REQ-281): nothing moves to 1.0 unless you
-ask for it.
+A project keeps the version its `package.json` names: nothing moves to 1.0
+until you install it there. The Docker image is `ghcr.io/rsaglobaltech/specgate:1.0.0`;
+pin `:0.35.0` to stay.
 
-- **"No matching version found for @rsaglobaltech/specgate@next"** just after a
-  candidate is published: npm still has the list of versions from before it.
-  Add `--prefer-online`.
 - **A project forja generated** depends on the 0.x it was made with; inside it
-  `npx specgate` is that version. Run the first line above in it — `npm i -D
-  @rsaglobaltech/specgate@next` — then `npx specgate --version` says the candidate.
+  `npx specgate` is that version. Run the first line above in it, then
+  `npx specgate --version` says 1.0.0.
 
 ## The migration, in one command
 
@@ -152,13 +149,14 @@ anyone), and that approvals now gate the harness.
 **By hand.** `specgate change approve <id> --layer discover|design|tasks`, or the
 studio's Changes. To keep 0.x's behaviour: `approvals: { required: never }`.
 
-## When a later candidate adds a step
+## A project migrated with a candidate
 
 The migration is one ordered table of steps (`MIGRATION_1_0` in
-`scripts/lib/migrate.ts`). A candidate that adds a breaking change — roles and
-approvers, for example — adds its step there, and `specgate migrate 1.0` on an
-already migrated project runs only the new step. Read this page again for each
-candidate: its sections are the list.
+`scripts/lib/migrate.ts`); each candidate that broke something — roles and
+approvers, for example — added its step there. A project migrated with an
+earlier `1.0.0-rc.N` runs `specgate migrate 1.0` again with 1.0.0: only the
+steps it has not had run. Within 1.x nothing is added to this list — a change
+that breaks a project waits for 2.0 ([compatibility](compatibility.md)).
 
 ## If something goes wrong
 
