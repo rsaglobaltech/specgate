@@ -201,7 +201,7 @@ See [Harness report](harness-report.md).
 Every candidate after the first came out of a run of truck-flote — a product of
 three repositories built from its client's brief alone — and fixes what that run
 found. The full notes are in the
-[CHANGELOG](https://github.com/rsaglobaltech/specgate/blob/next/1.0/CHANGELOG.md).
+[CHANGELOG](https://github.com/rsaglobaltech/specgate/blob/main/CHANGELOG.md).
 
 | Candidate | What it changed |
 |---|---|

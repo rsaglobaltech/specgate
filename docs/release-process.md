@@ -196,8 +196,9 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
 ## Pre-releases
 
-A version with a prerelease part (`1.0.0-rc.1`, cut from the `next/1.0` branch,
-never from `main`) is tagged like any release: the workflows publish it under
+A version with a prerelease part (`1.0.0-rc.1`, cut from a candidate line such
+as 1.0's `next/1.0` — retired once 1.0.0 shipped from `main` — never from
+`main` itself) is tagged like any release: the workflows publish it under
 the dist-tag `next` and tag its image with the version only, never `latest`
 (REQ-281). Its GitHub release is created with `--prerelease`.
 
