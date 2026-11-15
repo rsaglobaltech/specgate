@@ -1,0 +1,1 @@
+A project as Specgate 1.0.0 wrote it: `init --yes`, `propose pdf-invoices --kind enhancement`, its Discover and its delta filled in, and the lanes under `lanes:`. Made with the release build of 1.0.0 before it was published (the same build npm serves). Not edited by hand afterwards; tests/unit/compat.test.ts runs the current CLI on a copy.

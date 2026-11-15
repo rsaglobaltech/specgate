@@ -194,9 +194,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # --loglevel verbose says how npm authenticated: the trusted publisher
+      # (OIDC) or the NPM_TOKEN fallback. 1.0.0-rc.12 went out on the token.
       - name: Publish
         if: steps.publish_settings.outputs.dry_run != 'true'
-        run: npm publish --tag "${{ steps.publish_settings.outputs.dist_tag }}" --access public --provenance
+        run: npm publish --tag "${{ steps.publish_settings.outputs.dist_tag }}" --access public --provenance --loglevel verbose
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

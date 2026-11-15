@@ -9,6 +9,25 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-11-15
+
+The build 1.0.0-rc.12 was, published as `latest`, and the promise that comes
+with it: within 1.x nothing a user relies on — a command, a flag, a code, an
+exit status, a key of a `--json` answer, a configuration key — is removed or
+changes its type ([compatibility](docs/compatibility.md)). Everything the 1.0
+line added is under 1.0.0-rc.1 to 1.0.0-rc.12 below; coming from 0.35, read
+[migrating to 1.0](docs/migrating-to-1.0.md) and run `specgate migrate 1.0`.
+
+### Changed
+
+- **The promise is enforced from here** (REQ-568, REQ-569, REQ-570):
+  `contract/surface.json` is frozen at 1.0.0, so `contract:check` now fails a
+  pull request that removes from the public surface; `tests/compat/1.0.0/`
+  keeps a project as 1.0.0 writes it, read by every later build next to
+  0.35.0's.
+- **The npm publish says how it authenticated**: `--loglevel verbose` shows
+  whether the trusted publisher (OIDC) or the token was used.
+
 ## [1.0.0-rc.12] — 2026-11-15
 
 The 1.0 line with everything 0.28 to 0.35 shipped, made to work together, and

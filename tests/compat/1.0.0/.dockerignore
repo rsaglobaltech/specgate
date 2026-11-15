@@ -1,0 +1,11 @@
+.git
+.devcontainer
+node_modules
+target
+build
+dist
+.env
+.env.*
+!.env.example
+!.env.*.app
+!.env.*.infra
