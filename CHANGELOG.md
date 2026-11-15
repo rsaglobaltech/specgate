@@ -9,6 +9,17 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0-rc.12] — 2026-11-15
+
+The 1.0 line with everything 0.28 to 0.35 shipped, made to work together, and
+the promise 1.0 makes kept by the build. A change in three layers — Discover,
+Design, Tasks — each approved by whoever holds its role, now also in the
+studio and in `reverse`, `review`, `acceptance` and `release-notes`; a
+workspace of repositories whose Live is the studio's; the tester and
+implementer sessions under `lanes:`; a 0.35 project moved to 1.0 with
+`specgate migrate 1.0`; and `contract/surface.json`, which no pull request may
+take anything away from within a major version.
+
 ### Changed
 
 - **The tester and implementer sessions are `lanes:`** (REQ-532, REQ-559):
