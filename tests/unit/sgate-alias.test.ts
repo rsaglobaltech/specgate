@@ -24,7 +24,7 @@ test("REQ-555 SCN-555a: the short alias", () => {
       encoding: "utf8",
     }).stdout.trim();
   assert.equal(version("sgate"), version("specgate"));
-  assert.match(version("sgate"), new RegExp(pkg.version.replace(/\./g, "\\.")));
+  assert.ok(version("sgate").includes(pkg.version), version("sgate"));
 
   for (const shell of ["bash", "zsh", "fish"]) {
     const script = GENERATORS[shell]();
