@@ -9,6 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.35.0] — 2026-11-15
+
+Both ends of the lifecycle, around the gate. Before the first requirement:
+`specgate reverse` drafts requirements from code that already runs, and
+`check --baseline` turns the gate on without a red build. In the middle: the
+harness as a tester and an implementer, a cost cap per requirement, the agent's
+own instruction files protected, ADRs, decision rights and the stack file, a
+glossary, numbered business rules and generated diagrams, and the loop as Agent
+Skills. After the last: `specgate review` for the business, the studio served
+to a team behind its sign-in proxy, release notes, an acceptance a person
+signs, and a user guide per actor. And `sgate`, a shorter way to type it.
+
 ### Added
 
 - **A tester and an implementer** (REQ-532, REQ-533):
@@ -88,6 +100,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   user on `studio/<user>/<change>` and opened as a pull request, never on the
   base branch, and running builds or agents is an admin's.
 
+- **`sgate`** (REQ-555): the package also installs `sgate`, a short alias of
+  `specgate` (ADR-0042); `specgate completion` completes both. Examples and
+  messages keep `specgate`.
+
 ### Changed
 
 - **The agent's own instructions are protected** (REQ-534): `CLAUDE.md`,
@@ -98,6 +114,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   now fails with `agent_touched_protected_path`. If your agent is meant to edit
   one — a workflow under `.github/`, say — name it in `allow_paths:` in
   `harness.config.yaml`.
+
+### Fixed
+
+- **Upgrade hints named the old package.** Pack and lockfile errors said
+  `npm install -g create-spec-driven-app@latest`, the deprecated package; they
+  name `@rsaglobaltech/specgate`. The VS Code extension's runner defaulted to
+  the old package too.
+- **`specgate completion fish`** wrote every `specgate` line twice.
 
 ## [0.34.0] — 2026-11-12
 
