@@ -9,7 +9,7 @@ import { DiskProjectRepository } from "../../../../packages/core/src/infrastruct
 import { formatDiagnostic, error, info, warning } from "../../../lib/diagnostics";
 import type { Diagnostic } from "../../../lib/diagnostics";
 import * as ui from "../../../lib/ui";
-import { unwrittenChanges } from "../../../lib/in-flight";
+import { leavingRequirements, unwrittenChanges } from "../../../lib/in-flight";
 import { checkAgainstLock } from "../../../specops/against_lock";
 import { requirementGraphFromProject } from "../../../lib/requirement-graph";
 import { SHARED_PATHS } from "../../../../packages/core/src/domain/MultiStack";
@@ -46,7 +46,7 @@ import { citedSources } from "../../../../packages/core/src/domain/ReverseDraft"
 import type { ValidationFinding } from "../../../../packages/core/src/domain/ValidationReport";
 import { ValidateProjectUseCase } from "../../../../packages/core/src/application/ValidateProjectUseCase";
 import { DiskTraceabilityRepository } from "../../../../packages/core/src/infrastructure/DiskTraceabilityRepository";
-import { RICH_HEADER } from "../../../../packages/core/src/domain/TraceabilityFormat";
+import { RICH_HEADER, withStatus } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { findCliRoot } from "../../../lib/project-root";
 import {
   analyseGherkinSource,
@@ -1313,14 +1313,30 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
 
     const tracePath = path.join(targetDir, "docs/specs/traceability.md");
-    const traceContent = fs.readFileSync(tracePath, "utf8");
+    const matrixOnDisk = fs.readFileSync(tracePath, "utf8");
+    // REQ-557: a requirement an open change removes is judged as Deprecated —
+    // its files may already be gone, as `check` (after archive) requires. The
+    // file on disk is still what a generated matrix is compared with.
+    const leaving = leavingRequirements(targetDir);
+    const traceContent = withStatus(matrixOnDisk, new Set(leaving.keys()), "Deprecated");
+    for (const [id, change] of leaving) {
+      this.notes.push(
+        info(
+          "requirement_leaving",
+          `${id} is removed by the open change ${change}: judged as Deprecated.`,
+          {
+            target: id,
+          }
+        )
+      );
+    }
 
     // A generated matrix that no longer matches spec.md, the tags and the tests
     // is a stale cache every check below would trust. Not behind a flag: a
     // project only gets here by opting into generation (`matrix --migrate`).
     if (
-      isDerivedMatrix(traceContent) &&
-      derivedMatrixFor(targetDir, traceContent) !== traceContent
+      isDerivedMatrix(matrixOnDisk) &&
+      derivedMatrixFor(targetDir, matrixOnDisk) !== matrixOnDisk
     ) {
       const stale = error(
         "matrix_stale",

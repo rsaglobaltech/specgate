@@ -81,6 +81,29 @@ export function inFlightRequirements(projectDir: string): InFlightRequirement[] 
   return out;
 }
 
+/**
+ * The requirements the open changes remove, each with the change that removes
+ * it (REQ-557). `validate` judges them as `Deprecated`: `check` judges the
+ * project after archive, where they are gone, and the two must agree on the
+ * tree that has already let them go.
+ */
+export function leavingRequirements(projectDir: string): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const change of listChangeIds(projectDir)) {
+    for (const d of listDeltas(projectDir, change)) {
+      if (untouched(d)) continue;
+      try {
+        for (const req of parseDelta(fs.readFileSync(d.file, "utf8")).removed || []) {
+          if (req.id) out.set(req.id, change);
+        }
+      } catch {
+        // `change validate` reports a delta that does not parse
+      }
+    }
+  }
+  return out;
+}
+
 /** The requirements one change adds or modifies. */
 export function changeRequirements(projectDir: string, change: string): InFlightRequirement[] {
   const out: InFlightRequirement[] = [];
@@ -162,7 +185,12 @@ export function inFlightView(projectDir: string): InFlightView | null {
     for (const f of files) {
       const to = path.join(dir, f);
       fs.mkdirSync(path.dirname(to), { recursive: true });
-      fs.copyFileSync(path.join(projectDir, f), to);
+      const from = path.join(projectDir, f);
+      // REQ-558: a symlink git lists (a linked node_modules, a shared folder)
+      // is linked again, not copied: copying one that points at a folder
+      // throws, and the command died with a stack trace.
+      if (fs.lstatSync(from).isSymbolicLink()) fs.symlinkSync(fs.readlinkSync(from), to);
+      else fs.copyFileSync(from, to);
     }
   } else {
     fs.cpSync(projectDir, dir, {
