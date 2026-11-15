@@ -40,7 +40,22 @@ export function substituteAgentCommand(template: string, promptFile: string): st
         '--agent "claude -p < {prompt_file}"'
     );
   }
-  return template.split("{prompt_file}").join(promptFile);
+  return withPromptFile(template, promptFile);
+}
+
+/**
+ * The template with the prompt file's path in place of `{prompt_file}`. A path
+ * with a space (`C:\Users\Juan Perez\…`) goes in double quotes, so it reaches
+ * the agent as one argument (REQ-431); a placeholder its author already quoted
+ * is not quoted twice, and a path without one is written as it always was.
+ */
+export function withPromptFile(template: string, promptFile: string): string {
+  if (!/\s/.test(promptFile)) return template.split("{prompt_file}").join(promptFile);
+  const quoted = `"${promptFile}"`;
+  return template
+    .replace(/(["'])\{prompt_file\}\1/g, () => quoted)
+    .split("{prompt_file}")
+    .join(quoted);
 }
 
 /** Run the gate (validate --strict-tdd, then the optional test command). */
@@ -79,7 +94,10 @@ export function featureFilePath(req: HarnessRequirement): string {
 
 export function substituteGateCommand(template: string, req: HarnessRequirement): string {
   const featureFile = featureFilePath(req);
+  // `{files}` is check's and apply's (REQ-513): the harness runs the whole suite.
   return template
+    .split("{files}")
+    .join("")
     .split("{req}")
     .join(req.requirement || "")
     .split("{scenario}")
@@ -103,6 +121,11 @@ export interface AttemptRecord {
     | "agent-error"
     | "write-scope"
     /**
+     * The agent took a decision the project's decision rights keep for a
+     * person: a dependency, a migration, a public API operation (REQ-547).
+     */
+    | "decision-right"
+    /**
      * The agent wrote no files at all, so there was nothing to gate (H19).
      * Its own stage because the fix is never in the code — it is the agent's
      * write permissions or its prompt, and `harness report` should not file it
@@ -125,7 +148,9 @@ export interface AttemptRecord {
     /** Green gate, but the diff missed the declared artifacts (A2, --strict-artifacts). */
     | "artifacts"
     | "done"
-    | "commit";
+    | "commit"
+    /** REQ-535: the requirement's `max_cost_usd` was spent, so no session followed. */
+    | "budget";
   /** Wall-clock inside the agent command alone. */
   agentMs: number;
   /** Wall-clock for the whole attempt: prompt, agent, gate, done, commit. */
@@ -140,6 +165,57 @@ export interface AttemptRecord {
   profiles?: string[];
   /** The gate stage that rejected it, for `gate`, `spec` and `check` (REQ-301). */
   gateStage?: string;
+  /**
+   * The tokens each agent step reported through its stream, by the role that
+   * ran it (REQ-509). A step whose agent reported none is not listed.
+   */
+  usage?: StepUsage[];
+}
+
+/** One agent step's tokens, as its stream's final usage line reported them. */
+export interface StepUsage {
+  profile: string;
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
+  /** What the session cost in USD, when its stream said (REQ-535). */
+  cost?: number;
+}
+
+/**
+ * The tokens the events lines written during one agent step report: the last
+ * final `usage` line of that attempt — what the agent's stream said at its
+ * end. Null when the step wrote none (an agent that is not streamed).
+ */
+export function stepUsage(
+  lines: readonly string[],
+  attempt: number,
+  profile: string
+): StepUsage | null {
+  let found: StepUsage | null = null;
+  const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : 0);
+  for (const line of lines) {
+    let e: Record<string, unknown>;
+    try {
+      e = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (!e || e.type !== "usage" || e.final !== true) continue;
+    if (e.attempt !== undefined && e.attempt !== attempt) continue;
+    found = {
+      profile,
+      input: n(e.input),
+      output: n(e.output),
+      cacheRead: n(e.cacheRead),
+      cacheWrite: n(e.cacheWrite),
+      ...(typeof e.cost === "number" && Number.isFinite(e.cost) && e.cost >= 0
+        ? { cost: e.cost }
+        : {}),
+    };
+  }
+  return found;
 }
 
 /**
@@ -232,13 +308,24 @@ export interface AttemptStep {
    * tests stay the only judge.
    */
   advisory: boolean;
+  /**
+   * The lane this step works in (REQ-532), when the project splits the work:
+   * `tester` writes the failing tests, `implementer` makes them pass.
+   */
+  role?: HarnessRole;
 }
+
+/** The roles of `roles:` in harness.config.yaml (REQ-532), in the order they run. */
+export const HARNESS_ROLES = Object.freeze(["tester", "implementer"] as const);
+export type HarnessRole = (typeof HARNESS_ROLES)[number];
 
 export interface AttemptPlanOptions {
   /** Profile per attempt. Shorter than `maxAttempts` reuses the last entry. */
   attemptProfiles?: readonly string[];
   /** Advisory profile run before every retry. Never on the first attempt. */
   reviewProfile?: string | null;
+  /** REQ-532: one implementing step per role instead of one for the whole attempt. */
+  roles?: readonly HarnessRole[];
 }
 
 /**
@@ -260,6 +347,11 @@ export function planAttempt(attempt: number, opts: AttemptPlanOptions = {}): Att
   if (attempt > 1 && opts.reviewProfile) {
     steps.push({ profile: opts.reviewProfile, advisory: true });
   }
-  steps.push({ profile: profile ?? null, advisory: false });
+  const roles = opts.roles ?? [];
+  if (roles.length === 0) {
+    steps.push({ profile: profile ?? null, advisory: false });
+    return steps;
+  }
+  for (const role of roles) steps.push({ profile: profile ?? null, advisory: false, role });
   return steps;
 }

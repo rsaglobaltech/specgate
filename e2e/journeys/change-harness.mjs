@@ -56,7 +56,7 @@ export default [
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
       t.ok(t.sg(dir, "change", "new", "add-coupons"), "change new");
-      // ADR-0042: a new change is layered, and starts from its Discover.
+      // ADR-0044: a new change is layered, and starts from its Discover.
       t.expect(
         /discover/.test(t.sg(dir, "change", "status", "add-coupons").stdout),
         "status names the next artefact"

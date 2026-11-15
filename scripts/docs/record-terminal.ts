@@ -190,8 +190,9 @@ export const RULES: ReadonlyArray<{
     apply: (s) =>
       s
         .replace(/duration_ms [\d.]+/g, "duration_ms 1.234")
-        .replace(/\b\d+(\.\d+)?ms\b/g, "12ms")
-        .replace(/\b\d+\.\d+s\b/g, "1.2s"),
+        // With or without the space the harness now writes: "in 0.1 s", "37 ms".
+        .replace(/\b\d+(\.\d+)?( ?)ms\b/g, "12$2ms")
+        .replace(/\b\d+\.\d+( ?)s\b/g, "1.2$1s"),
   },
   {
     id: "nodever",
@@ -349,23 +350,17 @@ export function prepareBin(scratch: string): void {
  * Build the world the harness beats run in.
  *
  * Nothing here is shown. It exists so that what *is* shown is worth a reader's
- * attention: putting a stub agent on PATH and copying a pack next to the work
- * are both true, and neither is why anyone is on the page.
+ * attention: putting a stub agent on PATH is true, and not why anyone is on the
+ * page.
  */
 function prepare(scratch: string): void {
   const bin = path.join(scratch, "bin");
   // Reused, not forked: one deterministic agent, one place to fix it.
   fs.copyFileSync(
-    path.join(ROOT, "scripts", "demo", "stub-agent.sh"),
+    path.join(ROOT, "scripts", "docs", "stub-agent.sh"),
     path.join(bin, "specgate-stub-agent")
   );
   fs.chmodSync(path.join(bin, "specgate-stub-agent"), 0o755);
-
-  // A local pack rather than a clone: a recording CI can reproduce cannot
-  // depend on the network, and `--pack-root` is a documented way to work.
-  fs.cpSync(path.join(ROOT, "packs", "multi-tenant"), path.join(scratch, "packs", "multi-tenant"), {
-    recursive: true,
-  });
 
   fs.writeFileSync(path.join(scratch, "smart-parking.yaml"), CONFIG_YAML, "utf8");
 }
@@ -383,13 +378,124 @@ function projectSetup(scratch: string, env: NodeJS.ProcessEnv): void {
   fs.writeFileSync(path.join(project, "harness.config.yaml"), HARNESS_YAML, "utf8");
   gitInit(project, env);
   run(project, env, ["git", "add", "-A"]);
-  run(project, env, ["git", "commit", "-qm", "initial: specs and the pack"]);
+  run(project, env, ["git", "commit", "-qm", "initial: the specification"]);
 }
 
 export function gitInit(project: string, env: NodeJS.ProcessEnv): void {
   run(project, env, ["git", "init", "-q", "-b", "main", "."]);
   run(project, env, ["git", "config", "user.name", "specgate demo"]);
   run(project, env, ["git", "config", "user.email", "demo@example.invalid"]);
+}
+
+// ── The invoices project: the existing-repository recording ─────────────────
+
+const INVOICE_JS = `// An invoice's total is the sum of its lines, rounded to the cent.
+function total(lines) {
+  const sum = lines.reduce((s, l) => s + l.qty * l.price, 0);
+  return Math.round(sum * 100) / 100;
+}
+
+// A paid invoice cannot be edited.
+function edit(invoice, lines) {
+  if (invoice.status === "PAID") throw new Error("invoice already paid");
+  return { ...invoice, lines };
+}
+
+// A refund keeps two decimals.
+function refund(amount) {
+  return Math.floor(amount * 100) / 100;
+}
+
+module.exports = { total, edit, refund };
+`;
+
+const INVOICE_TEST = `const test = require("node:test");
+const assert = require("node:assert/strict");
+const { total, edit } = require("../src/billing/invoice");
+
+test("an invoice's total", () => assert.equal(total([{ qty: 3, price: 0.1 }]), 0.3));
+test("a paid invoice is not edited", () => assert.throws(() => edit({ status: "PAID" }, [])));
+`;
+
+/** What a model would answer for src/billing: two rules and one likely defect. */
+const REVERSE_ANSWER = {
+  requirements: [
+    {
+      title: "An invoice's total is rounded to the cent",
+      text: "The system SHALL total an invoice as the sum of its lines, rounded to the cent.",
+      source: ["src/billing/invoice.js:2"],
+      scenarios: [
+        {
+          title: "Three lines of 0.10",
+          steps: [
+            "GIVEN an invoice with 3 units at 0.10 EUR",
+            "WHEN its total is computed",
+            "THEN the total is 0.30 EUR",
+          ],
+        },
+      ],
+    },
+    {
+      title: "A paid invoice cannot be edited",
+      text: "The system SHALL refuse to edit an invoice whose status is PAID.",
+      source: ["src/billing/invoice.js:8"],
+      scenarios: [
+        {
+          title: "Editing a paid invoice",
+          steps: [
+            "GIVEN an invoice with status PAID",
+            "WHEN someone edits its lines",
+            "THEN the edit is refused",
+          ],
+        },
+      ],
+    },
+    {
+      title: "A refund keeps two decimals",
+      text: "The system truncates a refund to two decimals.",
+      source: ["src/billing/invoice.js:14"],
+      suspect:
+        "Truncating rounds every refund down, by up to a cent: it reads like a defect, not a rule.",
+    },
+  ],
+};
+
+/**
+ * A repository with code, tests and history and no specification, and a
+ * stand-in agent for `reverse`: it writes the answer a model would, to the one
+ * file the prompt names, so the recording comes out the same every time.
+ */
+function invoicesProject(scratch: string, env: NodeJS.ProcessEnv): void {
+  const project = path.join(scratch, "invoices");
+  write(
+    path.join(project, "package.json"),
+    `${JSON.stringify(
+      { name: "invoices", version: "1.4.0", scripts: { test: "node --test test/*.test.js" } },
+      null,
+      2
+    )}\n`
+  );
+  write(path.join(project, "src", "billing", "invoice.js"), INVOICE_JS);
+  write(
+    path.join(project, "src", "notify", "email.js"),
+    "function receipt(invoice) {\n  return `Invoice ${invoice.id}: ${invoice.total} EUR`;\n}\nmodule.exports = { receipt };\n"
+  );
+  write(path.join(project, "test", "invoice.test.js"), INVOICE_TEST);
+  gitInit(project, env);
+  run(project, env, ["git", "add", "-A"]);
+  run(project, env, ["git", "commit", "-qm", "invoices 1.4: refunds"]);
+
+  const answer = path.join(scratch, "reverse-answer.json");
+  write(answer, `${JSON.stringify(REVERSE_ANSWER, null, 2)}\n`);
+  const agent = path.join(scratch, "bin", "reverse-agent");
+  fs.writeFileSync(
+    agent,
+    "#!/usr/bin/env bash\n" +
+      "out=$(grep -o 'Write ONE file, `[^`]*`' \"$1\" | sed 's/.*`\\(.*\\)`/\\1/')\n" +
+      'mkdir -p "$(dirname "$out")"\n' +
+      `cp "${answer}" "$out"\n`,
+    { mode: 0o755 }
+  );
 }
 
 // ── The court-bookings project: the brief and gate recordings ───────────────
@@ -563,6 +669,10 @@ const SETUP: Record<
     beats: Record<string, (scratch: string, env: NodeJS.ProcessEnv) => void>;
   }
 > = {
+  existing: {
+    before: (scratch, env) => invoicesProject(scratch, env),
+    beats: {},
+  },
   harness: {
     before: (scratch) => prepare(scratch),
     beats: { "harness-config": (scratch, env) => projectSetup(scratch, env) },

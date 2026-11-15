@@ -10,7 +10,7 @@ import type { LoadedWorkspace } from "./workspace";
 /**
  * The workspace's live view (REQ-320..322): a fold of each member's own live
  * model (ADR-0037) and harness ledger, and of the workspace's stories
- * (ADR-0041). It reads; it never writes a member.
+ * (ADR-0043). It reads; it never writes a member.
  */
 
 export interface Cost {

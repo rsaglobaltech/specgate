@@ -29,7 +29,8 @@
  */
 
 import { summariseQuality, type QualitySummary, type RecordedCheck } from "./QualitySummary";
-import { estimateRunCost } from "./RunBudget";
+import { estimateRunCost, costByProfile, type ProfileCost, type TokenPrices } from "./RunBudget";
+import type { StepUsage } from "./HarnessRun";
 import { summariseGaps, type GapAttempt, type GapInput, type GapSummary } from "./HarnessGaps";
 
 /** One attempt, as the ledger records it. */
@@ -41,6 +42,8 @@ export interface AttemptRow {
   profiles?: string[];
   /** The gate stage that rejected it, e.g. "quality check: pmd" (REQ-301). */
   gateStage?: string;
+  /** The tokens each step's agent reported (REQ-509). */
+  usage?: StepUsage[];
 }
 
 /** One requirement's outcome within a run. */
@@ -138,6 +141,18 @@ export interface HarnessReportSummary {
    */
   estimatedCost: { total: number; covered: number; uncovered: number } | null;
   /**
+   * Per profile that ran: its attempts, its tokens, the cost estimated from its
+   * hint and the cost measured from its tokens and prices, and which of the two
+   * stands (REQ-509).
+   */
+  costByProfile: ProfileCost[];
+  /**
+   * The cost measured from the tokens the agents reported, priced by their
+   * profiles: the steps measured, and those that ran without tokens or a price.
+   * `null` when no step could be measured.
+   */
+  measuredCost: { total: number; covered: number; uncovered: number } | null;
+  /**
    * Of the failures, the share that were genuine. `null` until somebody marks
    * one — an unmarked ledger cannot tell the two apart, and guessing 100% would
    * be the most flattering possible lie about our own gate.
@@ -155,6 +170,7 @@ export const STAGE_LABELS: Readonly<Record<string, string>> = Object.freeze({
   "agent-timeout": "agent timed out",
   "agent-error": "agent exited non-zero",
   "write-scope": "agent edited protected files",
+  "decision-right": "agent took a decision kept for a person",
   "agent-unavailable": "agent out of quota or rate-limited",
   spec: "the specification fails the gate",
   gate: "gate rejected the work",
@@ -169,7 +185,8 @@ export function summariseRuns(
   runs: readonly RunFile[],
   falseFailures: readonly FalseFailureMark[] = [],
   costPerRunHint: Readonly<Record<string, number>> = {},
-  gapInput: GapInput = {}
+  gapInput: GapInput = {},
+  prices: Readonly<Record<string, TokenPrices>> = {}
 ): HarnessReportSummary {
   // REQ-269: every run's time counts, each requirement once, at its latest
   // outcome. Two runs of REQ-002 — failed, then passed — read "1 of 2 passed"
@@ -233,6 +250,8 @@ export function summariseRuns(
   const attemptProfiles = rows.flatMap((row) =>
     (row.attemptLog ?? []).map((a) => a?.profiles ?? [])
   );
+  const attemptUsage = rows.flatMap((row) => (row.attemptLog ?? []).map((a) => a?.usage ?? []));
+  const costs = costByProfile(attemptProfiles, attemptUsage, costPerRunHint, prices);
 
   const timeline = [...runs]
     .sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)))
@@ -267,6 +286,8 @@ export function summariseRuns(
     exhausted,
     timeline,
     estimatedCost: estimateRunCost(attemptProfiles, costPerRunHint),
+    costByProfile: costs.byProfile,
+    measuredCost: costs.measured,
     falseFailures: falseCount,
     realFailureRate:
       failedRows.length > 0 && marked.size > 0

@@ -3,8 +3,10 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
-import { readBriefBody, moduleKey } from "../../packages/core/src/domain/BriefCards";
+import { writeHarnessCommand } from "../../packages/core/src/infrastructure/HarnessConfigFile";
+import { moduleKey } from "../../packages/core/src/domain/BriefCards";
 import { briefModules } from "../../packages/core/src/domain/DraftChecklist";
+import { readBriefForm, writeBriefForm } from "../../packages/core/src/domain/BriefForm";
 import {
   HARNESS_CONFIG_FILE,
   readHarnessConfig,
@@ -21,14 +23,15 @@ import {
   listArchivedIds,
 } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { checkBrief, briefReady } from "../draft/brief-check";
-import { frontMatter } from "../draft/brief-setup";
 import { DEFAULT_BRIEF, draftReport, moduleStatus } from "../cli/commands/spec/DraftCommand";
 import { allQuestions, waiting } from "./clarification";
 import { liveMatrix } from "./live-detail";
 import { summariseRuns, type RunFile } from "../../packages/core/src/domain/HarnessReport";
 import { intentEvidence, readGapMarks } from "../harness/gap-evidence";
 import { readLive } from "./live-model";
+import { killTree } from "./kill-tree";
 import { approvedOn } from "./change-review";
+import { studioLog } from "./harness-events";
 import { buildView, drafts, gate } from "./studio-app";
 import { findCliRoot } from "./project-root";
 
@@ -110,13 +113,8 @@ export function profilesView(projectDir: string): ProfileView[] {
   return out;
 }
 
-/** The arguments that run an agent: the profile picked, else the configured one. */
-function agentArgs(projectDir: string, profile: string): string[] | null {
-  if (profile) {
-    return profilesView(projectDir).some((p) => p.name === profile) ? ["--profile", profile] : null;
-  }
-  const chosen = profilesView(projectDir).find((p) => p.default);
-  if (chosen) return ["--profile", chosen.name];
+/** The agent command `harness.config.yaml` holds — what Build's own command writes — or null (REQ-431). */
+export function configuredAgent(projectDir: string): string | null {
   const cfg = read(path.join(projectDir, HARNESS_CONFIG_FILE)) || "";
   const m = /^agent:\s*(.+)$/m.exec(cfg);
   if (!m) return null;
@@ -129,6 +127,17 @@ function agentArgs(projectDir: string, profile: string): string[] | null {
       agent = raw.slice(1, -1);
     }
   } else if (raw.startsWith("'")) agent = raw.slice(1, -1).replace(/''/g, "'");
+  return agent || null;
+}
+
+/** The arguments that run an agent: the profile picked, else the default profile, else the configured command. */
+function agentArgs(projectDir: string, profile: string): string[] | null {
+  if (profile) {
+    return profilesView(projectDir).some((p) => p.name === profile) ? ["--profile", profile] : null;
+  }
+  const chosen = profilesView(projectDir).find((p) => p.default);
+  if (chosen) return ["--profile", chosen.name];
+  const agent = configuredAgent(projectDir);
   return agent ? ["--agent", agent] : null;
 }
 
@@ -180,11 +189,7 @@ function startJob(
           : "The agent is working on the brief. Wait for it, or stop it.",
     };
   }
-  const dir = path.join(projectDir, ".harness", "events");
-  fs.mkdirSync(dir, { recursive: true });
-  const ignore = path.join(dir, ".gitignore");
-  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
-  const log = path.join(dir, `studio-${kind}.log`);
+  const log = studioLog(projectDir, kind);
   fs.writeFileSync(log, "", "utf8");
   const out = fs.openSync(log, "a");
   const child = spawn(process.execPath, [cli(), ...args, "--project-dir", projectDir], {
@@ -195,7 +200,7 @@ function startJob(
       ...process.env,
       NO_COLOR: "1",
       // A streaming agent reports what it does; the page shows its last step.
-      AGENT_EVENTS_FILE: path.join(dir, `studio-${kind}.jsonl`),
+      AGENT_EVENTS_FILE: path.join(path.dirname(log), `studio-${kind}.jsonl`),
     },
   });
   child.unref();
@@ -216,15 +221,8 @@ function startJob(
 export function stopJob(projectDir: string): Outcome {
   const job = currentJob(projectDir);
   if (!job) return { ok: false, code: "job_not_running", message: "Nothing is being drafted." };
-  if (process.platform === "win32") {
-    spawnSync("taskkill", ["/pid", String(job.pid), "/T", "/F"]);
-  } else {
-    try {
-      process.kill(-job.pid, "SIGTERM");
-    } catch {
-      /* already gone */
-    }
-  }
+  // With its agent, which runs in a process group of its own (REQ-216).
+  killTree(job.pid);
   return { ok: true };
 }
 
@@ -262,6 +260,20 @@ export interface RouteView {
   empty: boolean;
   steps: RouteStep[];
   next: StepKey | null;
+  /**
+   * What the next step means here (REQ-474): a folder with code is adopted, an
+   * empty one created; an adopted project with no brief specifies a behaviour,
+   * as `status` says. Null: the step's own meaning.
+   */
+  hint: "adopt" | "create" | "specify" | null;
+  /** The areas adoption found, in docs/specs/adoption.md. */
+  areas: number;
+}
+
+/** How many areas docs/specs/adoption.md lists (REQ-471). */
+function adoptionAreaCount(projectDir: string): number {
+  const text = read(path.join(projectDir, "docs", "specs", "adoption.md"));
+  return text ? (text.match(/^## /gm) ?? []).length : 0;
 }
 
 export function isProject(projectDir: string): boolean {
@@ -301,6 +313,8 @@ export function route(projectDir: string): RouteView {
         counts: {},
       })),
       next: "project",
+      hint: isEmptyFolder(projectDir) ? "create" : "adopt",
+      areas: 0,
     };
   }
   const states: Record<StepKey, { state: StepState; counts: Record<string, number | string> }> =
@@ -354,6 +368,9 @@ export function route(projectDir: string): RouteView {
       counts: states[key].counts,
     })),
     next,
+    // An adopted project with no brief: specify one behaviour at a time (REQ-474).
+    hint: next === "brief" && !briefText && reqs.size === 0 ? "specify" : null,
+    areas: adoptionAreaCount(projectDir),
   };
 }
 
@@ -443,12 +460,38 @@ export function presetProfiles(agent: NewProject["agent"]): Array<{ name: string
   return [];
 }
 
-/** Which agent CLIs this machine has on its PATH. */
-export function agentsInstalled(): { claude: boolean; codex: boolean } {
-  const has = (cmd: string) =>
-    spawnSync(process.platform === "win32" ? "where" : "which", [cmd], { encoding: "utf8" })
-      .status === 0;
-  return { claude: has("claude"), codex: has("codex") };
+/** Which agent CLIs this machine has on its PATH (kept in studio-app, which Build reads). */
+export { agentsInstalled } from "./studio-app";
+
+export type AgentChoice = { kind: "claude" | "codex" } | { kind: "custom"; command: string };
+
+/**
+ * The agent chosen in the studio, written as `specgate config set agent` and
+ * the new-project step write it (REQ-431): Claude Code and Codex as their
+ * profiles, a command of one's own as `agent:`.
+ */
+export function chooseAgent(
+  projectDir: string,
+  choice: AgentChoice
+): { ok: true; agent: string } | { ok: false; code: string; message: string } {
+  if (choice.kind === "custom") {
+    const command = String(choice.command || "").trim();
+    if (!command.includes("{prompt_file}")) {
+      return {
+        ok: false,
+        code: "agent_without_prompt_file",
+        message: "The command must name {prompt_file}, where the prompt is handed over.",
+      };
+    }
+    writeHarnessCommand(projectDir, "agent", command);
+    return { ok: true, agent: command };
+  }
+  const profiles = presetProfiles(choice.kind);
+  if (!profiles.length) {
+    return { ok: false, code: "agent_unknown", message: `No preset for ${String(choice.kind)}.` };
+  }
+  writeProfiles(projectDir, profiles);
+  return { ok: true, agent: profiles[0].agent };
 }
 
 const slugOf = (name: string) =>
@@ -602,130 +645,55 @@ function findingsOf(text: string) {
   }));
 }
 
-/** docs/brief.md read as the form the studio edits (REQ-214). */
+/** docs/brief.md read as the form the studio edits (REQ-214), through the shared form (REQ-487). */
 export function briefForm(projectDir: string): BriefForm {
   const text = read(path.join(projectDir, DEFAULT_BRIEF));
   if (text === undefined) {
     return { exists: false, product: "", actors: [], modules: [], markdown: "", findings: [] };
   }
-  const fm = frontMatter(text) || "";
-  const product = (/^product:[ \t]*(.*)$/m.exec(fm) || ["", ""])[1]
-    .trim()
-    .replace(/^["']|["']$/g, "");
-  // As written: actorSurfaces lowercases the names it compares.
-  const actors = [...fm.matchAll(/\{\s*name:\s*([^,}]+?)\s*,\s*surfaces:\s*\[([^\]]*)\]/g)]
-    .map((m) => ({
-      name: m[1].replace(/^["']|["']$/g, ""),
-      surfaces: m[2]
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    }))
-    .filter((a) => !a.name.includes("<"));
-  // A template's `## Module: <first-module>` is a blank, not a module.
-  const sections = new Map(
-    readBriefBody(text)
-      .modules.filter((m) => !m.name.startsWith("<"))
-      .map((m) => [moduleKey(m.name), m])
-  );
-  const keys = briefModules(text);
-  for (const k of sections.keys()) if (!keys.includes(k)) keys.push(k);
-  const modules = keys.map((key) => {
-    const s = sections.get(key);
-    return {
-      key,
-      name: s ? s.name : key,
-      prose: s ? s.prose : "",
-      rules: s ? s.rules.map((c) => c.text) : [],
-      examples: s ? s.examples.map((c) => c.text) : [],
-      questions: s ? s.questions.map((c) => c.text) : [],
-    };
-  });
-  return { exists: true, product, actors, modules, markdown: text, findings: findingsOf(text) };
-}
-
-/** Replace a top-level front matter field and its indented lines, or add it. */
-function setField(fm: string, name: string, block: string): string {
-  const lines = fm.split("\n");
-  const at = lines.findIndex((l) => new RegExp(`^${name}:`).test(l));
-  if (at < 0) return `${fm.trimEnd()}\n${block}`;
-  let end = at + 1;
-  while (end < lines.length && /^[ \t]+\S/.test(lines[end])) end += 1;
-  // Comments indented under the field are the author's notes on it: kept.
-  const notes = lines.slice(at + 1, end).filter((l) => /^[ \t]+#/.test(l));
-  const [head, ...rest] = block.split("\n");
-  return [...lines.slice(0, at), head, ...notes, ...rest, ...lines.slice(end)].join("\n");
-}
-
-function moduleSectionText(
-  form: BriefModuleForm,
-  cards: { rules: string; examples: string; questions: string }
-): string {
-  const list = (items: string[]) => items.map((t) => `- ${t.trim()}`).join("\n");
-  // A card the form left empty is not a card.
-  const filled = (items: string[]) => (items || []).filter((t) => String(t).trim());
-  const m = {
-    ...form,
-    prose: form.prose || "",
-    rules: filled(form.rules),
-    examples: filled(form.examples),
-    questions: filled(form.questions),
+  const form = readBriefForm(text);
+  return {
+    exists: true,
+    product: form.frontMatter.product.value,
+    actors: form.frontMatter.actors.value.map((a) => ({ name: a.name, surfaces: a.surfaces })),
+    modules: form.modules.map((m) => ({
+      key: m.key,
+      name: m.name,
+      prose: m.section === "module" ? m.prose.text : "",
+      rules: m.rules.map((c) => c.text),
+      examples: m.examples.map((c) => c.text),
+      questions: m.questions.map((c) => c.text),
+    })),
+    markdown: text,
+    findings: findingsOf(text),
   };
-  const parts = [`## Module: ${m.name.trim() || m.key}`];
-  if (m.prose.trim()) parts.push(m.prose.trim());
-  if (m.rules.length) parts.push(`${cards.rules}\n\n${list(m.rules)}`);
-  if (m.examples.length) parts.push(`${cards.examples}\n\n${list(m.examples)}`);
-  if (m.questions.length) parts.push(`${cards.questions}\n\n${list(m.questions)}`);
-  return parts.join("\n\n");
 }
 
-/** The form written back into docs/brief.md, keeping every other line (REQ-214). */
+/**
+ * The form written back into docs/brief.md (REQ-214), by the code the CLI and
+ * the API use (REQ-487): only what changed is rewritten, every other byte kept.
+ */
 export function saveBriefForm(
   projectDir: string,
   form: Pick<BriefForm, "product" | "actors" | "modules">
 ): BriefForm {
   const file = path.join(projectDir, DEFAULT_BRIEF);
-  const text = (read(file) || "").replace(/\r\n/g, "\n");
-  const fmMatch = /^---\n([\s\S]*?)\n---[ \t]*\n?/.exec(text);
-  let fm = fmMatch ? fmMatch[1] : "";
-  let body = fmMatch ? text.slice(fmMatch[0].length) : text;
-
-  const modules = form.modules.filter((m) => (m.name || m.key).trim());
-  const keys = modules.map((m) => moduleKey(m.key || m.name));
-  const actors = form.actors.filter((a) => a.name.trim());
-  const surfaces = [...new Set(actors.flatMap((a) => a.surfaces))].filter((s) => !s.includes("<"));
-  fm = setField(fm, "product", `product: ${form.product.trim()}`);
-  fm = setField(fm, "surfaces", `surfaces: [${surfaces.join(", ")}]`);
-  fm = setField(
-    fm,
-    "actors",
-    [
-      "actors:",
-      ...actors.map((a) => `  - { name: ${a.name.trim()}, surfaces: [${a.surfaces.join(", ")}] }`),
-    ].join("\n")
-  );
-  fm = setField(fm, "modules", `modules: [${keys.join(", ")}]`);
-
-  const sections = readBriefBody(text).modules;
-  const spanish = sections.some((s) => /^\s*\**reglas/im.test(s.source));
-  const cards = spanish
-    ? { rules: "Reglas", examples: "Ejemplos", questions: "Preguntas" }
-    : { rules: "Rules", examples: "Examples", questions: "Questions" };
-  const byKey = new Map(sections.map((s) => [moduleKey(s.name), s]));
-  for (const s of sections) {
-    if (!keys.includes(moduleKey(s.name)))
-      body = body.replace(s.source, "").replace(/\n{3,}/g, "\n\n");
+  const text = read(file) || "";
+  const before = readBriefForm(text);
+  const out = writeBriefForm(text, {
+    frontMatter: { product: form.product, actors: form.actors },
+    // A hand-written `## orders` keeps its prose when the form says none (REQ-437).
+    modules: form.modules.map((m) => {
+      const was = before.modules.find((x) => x.key === moduleKey(m.key || m.name));
+      return was && was.section === "plain" && !String(m.prose || "").trim()
+        ? { ...m, prose: was.prose.text }
+        : m;
+    }),
+  });
+  if (out !== text || !fs.existsSync(file)) {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, out, "utf8");
   }
-  for (const m of modules) {
-    const key = moduleKey(m.key || m.name);
-    const existing = byKey.get(key);
-    const hasCards = m.rules.length || m.examples.length || m.questions.length || m.prose.trim();
-    if (existing) body = body.replace(existing.source, moduleSectionText(m, cards));
-    else if (hasCards) body = `${body.trimEnd()}\n\n${moduleSectionText(m, cards)}\n`;
-  }
-  const out = `---\n${fm.replace(/^\n+/, "")}\n---\n${body.startsWith("\n") ? "" : "\n"}${body.trimEnd()}\n`;
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, out, "utf8");
   return briefForm(projectDir);
 }
 

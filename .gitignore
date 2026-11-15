@@ -13,7 +13,6 @@ packages/vscode-spec-driven/*.vsix
 _site/
 # Internal notes and pilot assessments: kept locally, never committed
 mejoras/
-scripts/demo/**/out/
 .smoke-tmp/
 # JVM plugin build output (Java sources are tracked, build artefacts are not)
 # Wildcards, not one line per package: `intellij-spec-driven` had 17 of these
@@ -34,3 +33,7 @@ packages/gradle-plugin/bin/
 # Local agent and tool state
 .claude/
 .local/
+
+# The studio browser tests (REQ-436)
+playwright-report/
+test-results/

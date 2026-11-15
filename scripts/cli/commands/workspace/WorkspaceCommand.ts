@@ -53,7 +53,7 @@ function usage(): void {
     `
   🧩 ${c.bold}specgate workspace${c.reset} <init|status|check|draft|propose|live|harness> [options]
 
-  The repositories of one product, named in ${WORKSPACE_FILE} (ADR-0041).
+  The repositories of one product, named in ${WORKSPACE_FILE} (ADR-0043).
   Inside a repository REQ-012 is the id; across the workspace it is fleet:REQ-012.
 
     init [--name <n>] [--repo <name>=<path>[:<role>]]… [--force]

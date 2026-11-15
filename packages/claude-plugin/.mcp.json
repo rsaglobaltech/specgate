@@ -1,6 +1,7 @@
 {
   "mcpServers": {
     "spec-driven": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",

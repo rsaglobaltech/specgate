@@ -10,7 +10,7 @@ export interface ValidateResult {
 export class ValidateRunner {
   private cliPath: string;
 
-  constructor(cliPath: string = "npx create-spec-driven-app") {
+  constructor(cliPath: string = "npx @rsaglobaltech/specgate") {
     this.cliPath = cliPath;
   }
 

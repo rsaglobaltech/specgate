@@ -1,6 +1,6 @@
 /**
  * `specgate migrate 1.0`: a 0.27 project's open changes moved to the three
- * layers (ADR-0042, REQ-325..329).
+ * layers (ADR-0044, REQ-325..329).
  *
  * Every test builds a project the way 0.27.9 left it — `specgate init`, a change
  * opened with `--schema spec-driven`, an archived change — with git and its own
@@ -174,7 +174,7 @@ test("REQ-328 SCN-328a: the report of a real run", () => {
     m.manual.some((x: string) => /design\.md/.test(x)),
     m.manual.join(" | ")
   );
-  // ADR-0043: the roles are named by a person, and approvals now gate the harness.
+  // ADR-0045: the roles are named by a person, and approvals now gate the harness.
   assert.ok(
     m.manual.some((x: string) => /roles:/.test(x)),
     m.manual.join(" | ")

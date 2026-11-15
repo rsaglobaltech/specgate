@@ -34,6 +34,40 @@ test("Dockerfile.cli's build stage does not COPY tests or features", () => {
   assert.doesNotMatch(dockerfile, /^COPY features /m);
 });
 
+test("Dockerfile.cli's build stage copies every source npm run build reads, the studio's included", () => {
+  // 0.29.0's image failed to build: the studio's source (studio/, bundled by
+  // scripts/build-studio.cjs) was not copied, and tsc -p studio/tsconfig.json
+  // found nothing. The build script names every tree it compiles.
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  const build: string = pkg.scripts.build;
+  for (const tree of ["studio"]) {
+    assert.match(build, new RegExp(`\\b${tree}/`), `the build reads ${tree}/`);
+    assert.match(
+      dockerfile,
+      new RegExp(`^COPY ${tree} \\./${tree}$`, "m"),
+      `Dockerfile.cli copies ${tree}/`
+    );
+  }
+});
+
+test("Dockerfile.cli copies every source folder the npm tarball ships, types/ included", () => {
+  // 0.32.0's image failed to build: types/api.d.ts, which scripts/api compiles
+  // against and the tarball ships, was not copied in.
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  const folders = (pkg.files as string[])
+    .filter((f) => f.endsWith("/") && !f.startsWith("dist/"))
+    .map((f) => f.slice(0, -1))
+    .filter((f) => fs.existsSync(path.join(ROOT, f)));
+  assert.ok(folders.includes("types"), "the tarball ships types/");
+  for (const tree of folders) {
+    assert.match(
+      dockerfile,
+      new RegExp(`^COPY ${tree} \\./${tree}$`, "m"),
+      `Dockerfile.cli copies ${tree}/`
+    );
+  }
+});
+
 test(".dockerignore excludes everything that never reaches the npm tarball", () => {
   for (const pattern of ["tests", "features", "packages/*/test", "node_modules", ".git"]) {
     assert.match(

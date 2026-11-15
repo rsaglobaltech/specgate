@@ -4,7 +4,7 @@
 
 The repositories of one product, named in one file: where the product stands,
 one gate across them, the requirements of one that wait for another's, and a
-business story split into a change in each (ADR-0041).
+business story split into a change in each (ADR-0043).
 
 ## ADDED Requirements
 

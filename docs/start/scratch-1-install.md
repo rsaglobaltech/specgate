@@ -1,5 +1,7 @@
 # From scratch · 1 — Install and set up
 
+> **The short version** of a new project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** a new project with Specgate set up, knowing how to run your tests,
 and a gate that passes — before there is a single requirement.
@@ -66,6 +68,7 @@ $ specgate init
     + docs/specs/adr/README.md
     + AGENTS.md
     + README.md   was missing
+  ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
     · Traceability: generated from spec.md, tags and tests (`specgate matrix`)
 
   Summary ────────────────────────────────────────────────
@@ -78,8 +81,7 @@ $ specgate init
 
   ✔  Adoption completed
 
-  Next steps ─────────────────────────────────────────────
-… 7 more lines
+… 16 more lines
 ```
 <!-- specgate:out-scratch-init:end -->
 

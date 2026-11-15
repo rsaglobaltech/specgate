@@ -138,7 +138,7 @@ export function draftingGuide(i: DraftingGuideInput): string {
       ? `- **Scenario ids:** \`${i.firstScenario}\` … \`${i.lastScenario}\`, one each, no others.`
       : `- **Scenario ids:** from \`${i.firstScenario}\` up, one each.`,
     "",
-    // ADR-0042: the change has three layers, each with its owner.
+    // ADR-0044: the change has three layers, each with its owner.
     "**The layers of this change.** `discover.md` is product's: the business",
     "context, the use case and its acceptance criteria (`- AC-1: …`), in the brief's",
     "words and with no technology. `design.md` is the architect's and `tasks.md` the",
@@ -193,9 +193,9 @@ export function draftingGuide(i: DraftingGuideInput): string {
     "open are **questions, not guesses**. Never invent a business rule.",
     "",
     "```markdown",
-    "| # | Question | Blocks | Options seen |",
-    "|---|---|---|---|",
-    `| Q1 | <the question, in the client's words> | ${i.reqRange[0]} | <what you could imagine> |`,
+    "| # | Question | Blocks | Options seen | Answer | Status |",
+    "|---|---|---|---|---|---|",
+    `| Q1 | <the question, in the client's words> | ${i.reqRange[0]} | <what you could imagine> |  | open |`,
     "```",
     "",
     'A requirement a question blocks carries `status="Needs Clarification"` in',

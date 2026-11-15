@@ -24,4 +24,4 @@ had no answer.
   member, linked back (REQ-296); the story is done when every member archived its
   part (REQ-297).
 
-The model is ADR-0041.
+The model is ADR-0043.

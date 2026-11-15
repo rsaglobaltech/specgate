@@ -26,7 +26,6 @@ require("node:test").after(() => {
 });
 const { spawnSync } = require("node:child_process");
 const { readLive } = require("../../scripts/lib/live-model");
-const { livePage } = require("../../scripts/lib/live-page");
 const {
   keepPrompt,
   promptFileFor,
@@ -50,6 +49,38 @@ function events(file: string): Array<Record<string, unknown>> {
     .filter(Boolean)
     .map((l: string) => JSON.parse(l));
 }
+
+// The new studio's Live, rendered to text (REQ-433): the live view the old page was.
+const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+const NOW = 1_800_000_000;
+const liveModel = (reqs: unknown[] = [], extra: Record<string, unknown> = {}) => ({
+  requirements: reqs,
+  queue: [],
+  queueStarted: 0,
+  totals: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: null, turns: 0 },
+  questions: { open: [], waitingWithoutQuestion: [] },
+  ...extra,
+});
+const running = (extra: Record<string, unknown> = {}) => ({
+  req: "REQ-022",
+  title: "Registrar una clase",
+  group: "diario",
+  attempt: 1,
+  phase: "gate",
+  state: "running",
+  started: NOW - 120,
+  updated: NOW,
+  elapsed: 120,
+  tests: null,
+  files: [],
+  steps: [{ type: "gate-start", stage: "tests", t: NOW - 20 }],
+  agent: null,
+  usage: null,
+  prompt: null,
+  question: null,
+  running: { stage: "tests", since: NOW - 20, runner: "host", image: "" },
+  ...extra,
+});
 
 test("REQ-182 SCN-182a: the Claude adapter records the model, the context per message and the session's totals", () => {
   const dir = tmp();
@@ -196,20 +227,25 @@ test("REQ-182 SCN-182c: the prompt an attempt was given is kept for the view, be
 });
 
 test("REQ-182 SCN-182d: the sidebar is a work queue and the requirement has an Agent tab", () => {
-  const html = livePage("demo");
-  for (const want of [
-    'aria-label="Work queue"',
-    'block("Now")',
-    'block("Needs attention"',
-    'block("Up next"',
-    'block("Finished recently")',
-    'data-tab="agent"',
-    "paneAgent",
-    "/prompt/",
-  ]) {
-    assert.ok(html.includes(want), `page has ${want}`);
+  const html: string = studio.renderLive(
+    "en",
+    liveModel([
+      running({
+        agent: { model: "claude-opus-4-1", version: "2.0", permission: "acceptEdits", tools: 9 },
+      }),
+    ]),
+    "open",
+    NOW,
+    []
+  );
+  assert.match(html, /<aside class="live-side" aria-label="Work queue">/);
+  for (const block of ["Now", "Needs attention", "Up next", "Finished recently"]) {
+    assert.match(html, new RegExp(`<section class="wq" aria-label="${block}">`), block);
   }
-  assert.ok(!html.includes('el("details"), has'), "the module accordion left the sidebar");
-  const script = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
-  assert.doesNotThrow(() => new Function(script));
+  assert.match(html, /role="tab" id="tab-agent"[^>]*>Agent</);
+  // The Agent tab reads the prompt the attempt was given.
+  const app = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.js"), "utf8");
+  assert.match(app, /\/prompt\//);
+  // The module accordion is not in the sidebar.
+  assert.doesNotMatch(html.slice(html.indexOf('class="live-side"')), /<details/);
 });

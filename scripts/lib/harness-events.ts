@@ -6,6 +6,7 @@ import {
   secretValues,
   type HarnessEvent,
 } from "../../packages/core/src/domain/HarnessEvents";
+import { streamEvent } from "./harness-stream";
 
 /**
  * Writing harness events (ADR-0037): `.harness/events/<REQ>.jsonl`, git-ignored.
@@ -14,17 +15,32 @@ import {
 
 export const EVENTS_DIR = path.join(".harness", "events");
 
+/** The events directory, created, with a `.gitignore` that keeps everything in it out of git. */
+function eventsDir(projectDir: string): string {
+  const dir = path.join(projectDir, EVENTS_DIR);
+  fs.mkdirSync(dir, { recursive: true });
+  const ignore = path.join(dir, ".gitignore");
+  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
+  return dir;
+}
+
+/**
+ * A log the studio writes for a job it starts — `studio-run.log` and the like —
+ * in the ignored events directory. Written anywhere git sees it, the harness
+ * found the tree not clean and refused to run (REQ-208).
+ */
+export function studioLog(projectDir: string, kind: string): string {
+  return path.join(eventsDir(projectDir), `studio-${kind}.log`);
+}
+
 /** The events file of one requirement, its directory created and ignored by git. */
 export function eventsFileFor(projectDir: string, req: string): string {
-  const dir = path.join(projectDir, EVENTS_DIR);
   try {
-    fs.mkdirSync(dir, { recursive: true });
-    const ignore = path.join(dir, ".gitignore");
-    if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
+    return path.join(eventsDir(projectDir), `${req}.jsonl`);
   } catch {
     /* the view is optional; the run is not */
+    return path.join(projectDir, EVENTS_DIR, `${req}.jsonl`);
   }
-  return path.join(dir, `${req}.jsonl`);
 }
 
 /** Append one event as one line, masked; never throws. */
@@ -43,6 +59,8 @@ export function appendEvent(
   } catch {
     /* the view must not break the run */
   }
+  // The same event on the run's stream, when it streams (REQ-496).
+  streamEvent(event, req, attempt);
 }
 
 /** The run's queue, in the order it works through it (REQ-182). */
@@ -76,5 +94,26 @@ export function keepPrompt(projectDir: string, req: string, attempt: number, pro
     fs.writeFileSync(file, prompt, "utf8");
   } catch {
     /* the view must not break the run */
+  }
+}
+
+/** How many lines the events file has now; 0 when it has none. Never throws. */
+export function eventsLineCount(file: string): number {
+  return eventsLines(file).length;
+}
+
+/** The events lines written after the first `count`; never throws (REQ-509). */
+export function eventsLinesSince(file: string, count: number): string[] {
+  return eventsLines(file).slice(count);
+}
+
+function eventsLines(file: string): string[] {
+  try {
+    return fs
+      .readFileSync(file, "utf8")
+      .split(/\r?\n/)
+      .filter((l) => l.trim() !== "");
+  } catch {
+    return [];
   }
 }

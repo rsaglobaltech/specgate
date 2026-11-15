@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * REQ-316..318 (ADR-0043) — a role's constraints, written once in
+ * REQ-316..318 (ADR-0045) — a role's constraints, written once in
  * `harness/<role>.md`, reach the requirements they concern; the report and the
  * live view say which were used; the review advises on each.
  */

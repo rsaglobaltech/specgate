@@ -37,7 +37,10 @@ for (const { provider, dest, marker } of CASES) {
       assert.ok(fs.existsSync(file), `missing ${dest}`);
       const content = fs.readFileSync(file, "utf8");
       assert.ok(content.includes(marker), `missing marker '${marker}'`);
-      assert.match(content, /validate \. --strict\b/);
+      // A project with no tests yet runs `check` too since REQ-456: its
+      // Specification stage is `validate --strict`, and it says how to set the
+      // test command instead of leaving it out of the gate.
+      assert.match(content, /specgate@\S+ check \./);
       assert.match(content, /plan --project-dir \. --format json/);
       // The pack-drift gate, guarded so a project without packs is unaffected.
       assert.match(content, /validate \. --against-lock/);
@@ -101,8 +104,10 @@ for (const { provider, dest } of CASES) {
       assert.match(
         body,
         // One name for the gate: round 2 found nine other places still saying
-        // `--strict-tdd`, which made this one look like the mistake.
-        /validate \. --strict\b/,
+        // `--strict-tdd`, which made this one look like the mistake. Since
+        // REQ-456 that is `check`, whose Specification stage runs
+        // `validate --strict` — a matrix row whose test is gone fails it.
+        /specgate@\S+ check \./,
         `${provider}: the gate claims to catch a lost test artifact, so it must run --strict-links`
       );
     });
@@ -186,7 +191,8 @@ test("a configured test_cmd is read by check, not copied into the job", () => {
       'harness_version: 1\ntest_cmd: "mvn -q -B verify"\n'
     );
     const gh = render(tmp, "github");
-    assert.match(gh, /specgate@\S+ check \.\n/);
+    // GitHub adds `--base` (REQ-458); the test command is still not copied in.
+    assert.match(gh, /specgate@\S+ check \.( --base \S+[^\n]*)?\n/);
     assert.doesNotMatch(gh, /--test-cmd/);
   });
 });

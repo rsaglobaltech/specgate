@@ -66,8 +66,13 @@ export interface ChangeConfig {
   skip_specs?: boolean;
   retire_capabilities?: boolean;
   req_range?: string[];
+  /** REQ-545: `bug` or `enhancement`; release notes group by it. */
+  kind?: string;
   [key: string]: unknown;
 }
+
+/** The kinds a change may declare (REQ-545). */
+export const CHANGE_KINDS = ["bug", "enhancement"] as const;
 
 /**
  * A `change.yaml` after `readConfig`: the defaults fill whatever the file left
@@ -223,6 +228,7 @@ export function renderConfig(cfg: ChangeConfig): string {
   if (Array.isArray(cfg.req_range) && cfg.req_range.length === 2) {
     lines.push(`req_range: [${cfg.req_range[0]}, ${cfg.req_range[1]}]`);
   }
+  if (cfg.kind) lines.push(`kind: ${String(cfg.kind)}`);
   // A person's approval survives a rewrite of the file (REQ-206).
   if (cfg.approved) lines.push(`approved: ${String(cfg.approved)}`);
   return `${lines.join("\n")}\n`;

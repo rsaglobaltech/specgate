@@ -11,7 +11,7 @@
 
   <name>specgate-maven-plugin</name>
   <description>
-    Run the create-spec-driven-app (specgate) spec gate from Maven, so Java teams
+    Run the Specgate spec gate from Maven, so Java teams
     need no local Node.js: mvn specgate:validate / specgate:plan / specgate:doctor.
     Resolves the CLI through npx when Node is available, or through the
     official Docker image otherwise.

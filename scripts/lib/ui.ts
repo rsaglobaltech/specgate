@@ -333,6 +333,21 @@ export function task<T>(
 }
 
 /**
+ * How a stage that ran on its own ended, as `task` draws it: on a terminal
+ * with its time (REQ-519), in a log or a recording without, so two runs of the
+ * same thing print the same bytes.
+ */
+export function stageLine(
+  label: string,
+  good: boolean,
+  ms: number,
+  stream: NodeJS.WriteStream = process.stdout
+): string {
+  const live = !!stream.isTTY && COLOR > 0;
+  return (good ? ok : fail)(`${label}${live ? ` ${muted(`(${duration(ms)})`)}` : ""}`);
+}
+
+/**
  * One line of the older log style — `logInfo("write spec.md")`,
  * `logInfo("📋 Summary")`, `logInfo("  1. specgate check   # the gate")` — drawn
  * in the shapes above, read from the line's own form. `init`, `adopt` and the

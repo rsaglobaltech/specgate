@@ -45,6 +45,17 @@ It also writes the instruction file each tool reads:
 `.cursor/rules/specgate.mdc`, `.github/copilot-instructions.md`,
 `CONVENTIONS.md`, `GEMINI.md`, `AGENTS.md` and so on.
 
+**Agent Skills.** `specgate agents init --format skills` writes the same steps
+as skill folders (`specgate-apply/SKILL.md`, …) in the open Agent Skills
+format: into `.agents/skills/`, which Codex and OpenCode read, and into the
+skills folder of each tool you name with `--tool claude|cursor|gemini` (or,
+without `--tool`, of each tool whose folder the project already has). A
+`SKILL.md` that differs from what this version writes — one you changed, or one
+an older Specgate wrote — is kept and reported as `skill_kept`; `--force`
+replaces it. The Claude Code plugin carries the same skills, with an Agent Plugins
+`plugin.json` (schema 1.0.0) and a Tessl `.tessl-plugin/plugin.json`
+(`rsaglobaltech/specgate`); both find the skills in its `skills/` folder.
+
 The slash commands run the same commands you type in the terminal. An archive
 the agent tries before every requirement is Implemented is refused, as it is
 for you. Existing files are never overwritten without `--force`.
@@ -126,6 +137,41 @@ specgate validate . --json 2>/dev/null | jq .
 
 [The agent contract](specs/agent-contract.md) has the full rules and every
 diagnostic code. It is generated from the source, and CI fails when it drifts.
+
+## The guards
+
+Instruction files are words an agent may walk past. The Claude Code plugin
+(`--tool claude-plugin`) and the OpenCode plugin (`--tool opencode-plugin`)
+add three hooks that run whatever the agent decides:
+
+- **Session start** — the session is told the project is spec-driven, the
+  open change, the requirements it still owes and the next one.
+- **Test first** — a write to a source file is refused while no change is
+  open, or while no test new or modified in the working tree names one of its
+  requirements. The refusal names the step to take instead:
+
+  ```
+  specgate: write the test for REQ-311 first — change `module-map`. A test file
+  new or changed in the working tree that names REQ-311 is the link; then
+  src/core/map/scan.ts is allowed, then `specgate apply REQ-311`.
+  ```
+
+  Tests, specs, features, docs, configuration and Markdown are never refused.
+- **The gate** — before the session ends (Claude Code) or when it goes idle
+  (OpenCode), a red gate sends its findings back, once per prompt.
+
+Install them once for every project:
+
+```bash
+specgate agents install --global
+```
+
+OpenCode's plugin goes into its global folder (`~/.config/opencode`, or
+`$XDG_CONFIG_HOME/opencode`); for Claude Code the command prints the two
+`/plugin` lines that install it from this repository's marketplace. A project
+without `spec.md` sees nothing from either. Turn the test-first guard off for
+one project with `specgate config set agent_guard off`, or for one session
+with `SPECGATE_GUARD=off`.
 
 ## Antigravity
 

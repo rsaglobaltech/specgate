@@ -65,7 +65,7 @@ export const BUILT_IN: Record<string, BuiltInSchema> = {
       { id: "tasks", generates: "tasks.md", requires: ["specs", "design"] },
     ],
   },
-  // ADR-0042: what new changes follow from 1.0 on. Each layer has its owner:
+  // ADR-0044: what new changes follow from 1.0 on. Each layer has its owner:
   // discover.md (product), design.md (architect), tasks.md (developer).
   layered: {
     name: "layered",

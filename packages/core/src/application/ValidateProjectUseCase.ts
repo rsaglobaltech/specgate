@@ -209,7 +209,7 @@ export class ValidateProjectUseCase {
         report.addError(
           "strict_tdd_violation",
           `[TDD-1] Test artifact is TBD but status is '${judged}' (scenario: ${scenarioId || "(no id)"})`,
-          { target: "TDD-1" }
+          { target: "TDD-1", requirement: requirementId || scenarioId || undefined }
         );
       }
 
@@ -217,7 +217,7 @@ export class ValidateProjectUseCase {
         report.addError(
           "strict_tdd_violation",
           `[TDD-2] Traceability row missing Scenario ID with status '${judged}' (requirement: ${requirementId || "(none)"})`,
-          { target: "TDD-2" }
+          { target: "TDD-2", requirement: requirementId || undefined }
         );
       }
     }
@@ -235,7 +235,7 @@ export class ValidateProjectUseCase {
           report.addError(
             "strict_tdd_violation",
             `[TDD-3] Requirement ${reqId} found in spec.md but has no row in traceability.md`,
-            { target: "TDD-3" }
+            { target: "TDD-3", requirement: reqId }
           );
         }
       }

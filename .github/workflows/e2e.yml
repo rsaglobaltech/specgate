@@ -1,28 +1,19 @@
-# E2E — the package as a user installs it, on throwaway repositories
-# (e2e/run.mjs).
+name: E2E
+
+# The package as a user installs it, on throwaway repositories (e2e/run.mjs).
 #
 # The CI suites run the source tree; this runs `npm pack`, installs the
 # tarball into an empty directory and drives the installed binary through the
 # journeys a team takes: adopt, new, done, check, a stale matrix, a hand-kept
 # matrix migrated, the harness, and an upgrade from the last published
-# version.
-#
-# Reusable only: ci.yml calls it (job `E2E`) on every push and pull request,
-# and through ci.yml release.yml gates the publish on it. It has no push or
-# pull_request trigger of its own; run it by hand with workflow_dispatch.
-name: E2E
+# version. `publish-npm.yml` calls it and publishes only if it passes.
 
 on:
-  workflow_call:
+  push:
+    branches: [main, develop]
+  pull_request:
   workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  # `e2e-` keeps this group apart from the caller's (see ci.yml).
-  group: ${{ github.workflow }}-e2e-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  workflow_call:
 
 jobs:
   e2e:
@@ -32,17 +23,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v7
-      - name: Set up Node.js 24
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: '24'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
+          node-version: "24"
+          cache: "npm"
+      - run: npm ci
       - name: Build
         run: npm run build
       - name: Git identity for the harness journey
@@ -53,3 +40,40 @@ jobs:
         run: node e2e/run.mjs --coverage --list
       - name: Pack, install and run the journeys
         run: node e2e/run.mjs
+
+  studio:
+    # REQ-436: the studio in a real browser, against a project made for the
+    # test — every section, and the journey from an open question to a run
+    # followed in Live (e2e/studio/).
+    name: Studio in a browser (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "npm"
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Git identity for the harness run
+        run: |
+          git config --global user.email "e2e@example.com"
+          git config --global user.name "E2E"
+      - name: Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: The studio's browser tests
+        run: npm run e2e:studio
+      - name: The report, when they fail
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: studio-playwright-${{ matrix.os }}
+          path: |
+            playwright-report/
+            test-results/studio/
+          retention-days: 7

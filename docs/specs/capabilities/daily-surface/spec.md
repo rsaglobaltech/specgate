@@ -406,13 +406,13 @@ The system SHALL, on Windows, rewrite `./name` as `.\name` only where a command 
 
 ### Requirement: REQ-337 — Adopt one area of a large system
 
-The system SHALL, with `specgate adopt --scope <path>`, propose requirements only for the areas under that path, write a baseline scenario that names it, and record the scope in spec.md; a path that does not exist is refused before anything is written.
+The system SHALL, with `specgate adopt --scope <path>`, list in `docs/specs/adoption.md` only the areas under that path — proposing no requirement, as any adoption — write a baseline scenario that names it, and record the scope in spec.md; a path that does not exist is refused before anything is written.
 
 #### Scenario: SCN-337a — The billing area only
 
 - GIVEN a repository with src/billing/invoices, src/billing/payments and src/shipping/routes, each holding source files
 - WHEN the developer runs `specgate adopt --scope src/billing`
-- THEN spec.md proposes invoices and payments, not routes, names src/billing as the scope, and features/adoption/baseline.feature names src/billing
+- THEN docs/specs/adoption.md lists invoices and payments, not routes, spec.md names src/billing as the scope, and features/adoption/baseline.feature names src/billing
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-337.feature kind=functional status=Implemented test=tests/unit/org-steering.test.ts -->
 
@@ -427,3 +427,39 @@ The system SHALL warn `adopt_too_big`, when adoption finds more areas than the e
 - THEN it proposes eight and warns `adopt_too_big` naming the two left out and `adopt --scope`
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-338.feature kind=functional status=Implemented test=tests/unit/org-steering.test.ts -->
+
+### Requirement: REQ-555 — sgate is a short alias of specgate
+
+The system SHALL install the command `sgate` next to `specgate`, running the same entry point with the same arguments and output, and `specgate completion bash|zsh|fish` SHALL complete `sgate` as it completes `specgate`.
+
+#### Scenario: SCN-555a — The short alias
+
+- GIVEN the package installed
+- WHEN a developer runs `sgate --version` and `specgate --version`
+- THEN both print the same version, and the completion script for each shell registers `sgate`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-555.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-557 — A requirement an open change removes owes nothing to validate
+
+The system SHALL, in `specgate validate`, judge a requirement that an open change's delta lists under `## REMOVED Requirements` as it judges a `Deprecated` one — its feature file, technical artifact and test may be gone, and no strict-TDD rule applies to it — so that the tree `specgate check` passes while the change is open, with those files deleted, also passes `specgate validate --strict`.
+
+#### Scenario: SCN-557a — Removing a delivered requirement
+
+- GIVEN a delivered requirement with a feature file and a test, and an open change that removes it
+- WHEN its feature file and its test are deleted, and a developer runs `specgate validate . --strict`
+- THEN it passes, with no `declared_artifact_missing` and no strict-TDD violation for that requirement
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-557.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-558 — The after-archive copy keeps a symlink
+
+The system SHALL, when it copies the project to judge it after archive (`check`, `apply`, `status`), recreate each symlink git lists as a symlink to the same target, instead of copying what it points at, so a linked folder such as `node_modules` never stops the command.
+
+#### Scenario: SCN-558a — A linked node_modules
+
+- GIVEN a project in git with an open change and an untracked symlink `node_modules` pointing at a folder
+- WHEN a developer runs `specgate check`
+- THEN the gate runs, and does not fail copying the symlink
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-558.feature kind=functional status=Implemented -->

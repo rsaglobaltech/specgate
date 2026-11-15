@@ -6,6 +6,8 @@ import { BaseCommand } from "../../../lib/command";
 
 export const COMMANDS = commandNames();
 export const SUBCOMMANDS: Record<string, string[]> = subcommandNames();
+/** The names the package installs: the command, its short alias (ADR-0042), the old package name. */
+export const BINARIES = ["specgate", "sgate", "create-spec-driven-app"];
 
 export function bashScript() {
   const cmds = COMMANDS.join(" ");
@@ -29,7 +31,7 @@ ${subCases}
     esac
   fi
 }
-complete -F _specgate specgate create-spec-driven-app
+complete -F _specgate ${BINARIES.join(" ")}
 `;
 }
 
@@ -38,7 +40,7 @@ export function zshScript() {
   const subCases = Object.entries(SUBCOMMANDS)
     .map(([cmd, subs]) => `        ${cmd}) compadd ${subs.join(" ")} ;;`)
     .join("\n");
-  return `#compdef specgate create-spec-driven-app
+  return `#compdef ${BINARIES.join(" ")}
 # specgate zsh completion
 _specgate() {
   if (( CURRENT == 2 )); then
@@ -51,7 +53,7 @@ ${subCases}
     esac
   fi
 }
-compdef _specgate specgate create-spec-driven-app
+compdef _specgate ${BINARIES.join(" ")}
 `;
 }
 
@@ -59,16 +61,16 @@ export function fishScript() {
   const lines = [
     "# specgate fish completion",
     "# Only complete the first word when no subcommand has been given yet.",
-    `complete -c specgate -n __fish_use_subcommand -a "${COMMANDS.join(" ")}"`,
-    `complete -c specgate -n __fish_use_subcommand -a "${COMMANDS.join(" ")}"`,
-    `complete -c create-spec-driven-app -n __fish_use_subcommand -a "${COMMANDS.join(" ")}"`,
   ];
+  for (const bin of BINARIES) {
+    lines.push(`complete -c ${bin} -n __fish_use_subcommand -a "${COMMANDS.join(" ")}"`);
+  }
   for (const [cmd, subs] of Object.entries(SUBCOMMANDS)) {
-    lines.push(
-      `complete -c specgate -n "__fish_seen_subcommand_from ${cmd}" -a "${subs.join(" ")}"`,
-      `complete -c specgate -n "__fish_seen_subcommand_from ${cmd}" -a "${subs.join(" ")}"`,
-      `complete -c create-spec-driven-app -n "__fish_seen_subcommand_from ${cmd}" -a "${subs.join(" ")}"`
-    );
+    for (const bin of BINARIES) {
+      lines.push(
+        `complete -c ${bin} -n "__fish_seen_subcommand_from ${cmd}" -a "${subs.join(" ")}"`
+      );
+    }
   }
   return `${lines.join("\n")}\n`;
 }

@@ -18,7 +18,7 @@ by feature, and then what each candidate changed.
 
 A 0.27 change was a proposal and a delta. A 1.0 change has three layers, each
 written and approved by the role that owns it
-([ADR-0042](specs/adr/0042-the-three-layers-of-a-change.md)):
+([ADR-0044](specs/adr/0044-the-three-layers-of-a-change.md)):
 
 | Layer | File | Owner | Says |
 |---|---|---|---|
@@ -46,7 +46,7 @@ in its prompt.
 ## Roles and approvals gate the harness
 
 `roles:` in `harness.config.yaml` names who holds each role, and each layer is
-approved by its owner ([ADR-0043](specs/adr/0043-roles-approvals-and-role-packages.md)):
+approved by its owner ([ADR-0045](specs/adr/0045-roles-approvals-and-role-packages.md)):
 
 ```bash
 specgate change approve follow-shipment --layer discover   # product
@@ -69,7 +69,7 @@ and the run record, the live view and `harness report` name it as `role@version`
 
 A **workspace repository** holds `specgate.workspace.yaml`, naming the
 repositories of one product and their roles — `service`, `web`, `contracts`
-([Workspace](workspace.md), [ADR-0041](specs/adr/0041-the-workspace.md)).
+([Workspace](workspace.md), [ADR-0043](specs/adr/0043-the-workspace.md)).
 
 ```bash
 specgate workspace init --name truck-flote     # finds the sibling repositories

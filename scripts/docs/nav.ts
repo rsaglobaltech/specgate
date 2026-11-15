@@ -57,11 +57,16 @@ export const NAV: readonly NavSection[] = [
       "Install it, learn the ideas behind it, and follow one of two journeys of five short steps — a new project, or code you already have.",
     entries: [
       {
+        slug: "start",
+        group: "Begin",
+        label: "Start here",
+        blurb: "Two paths, six commands each: an existing project, or a new one.",
+      },
+      {
         slug: "getting-started",
         group: "Begin",
         label: "Getting started",
-        blurb:
-          "Install it, choose where you start and where the work comes from, then the four verbs.",
+        blurb: "Installing it, and where to read more.",
       },
       {
         slug: "concepts",
@@ -71,11 +76,24 @@ export const NAV: readonly NavSection[] = [
           "The six ideas behind every command, and the vocabulary: change, delta, draft, gate, matrix.",
       },
       {
+        slug: "methodology",
+        group: "Begin",
+        label: "The method",
+        blurb:
+          "The way of working the tool encodes: six principles, four phases, two ways in, who does what, and where each artefact lives.",
+      },
+      {
         slug: "studio",
         group: "Begin",
         label: "The studio — no terminal",
         blurb:
           "Specgate as an app: from an empty folder to the report, step by step, without the commands.",
+      },
+      {
+        slug: "studio-team",
+        label: "The studio for a team",
+        blurb:
+          "Behind your sign-in proxy: readers, editors and admins, and every edit a pull request.",
       },
       {
         slug: "start/scratch-1-install",
@@ -196,6 +214,12 @@ export const NAV: readonly NavSection[] = [
         blurb:
           "Adopt a years-old codebase whose work arrives as Jira tickets: the spec grows ticket by ticket.",
       },
+      {
+        slug: "reverse",
+        label: "Specify a system that already runs",
+        blurb:
+          "Existing code to Draft requirements citing their lines, one module at a time, and a gate baseline.",
+      },
     ],
   },
   {
@@ -219,6 +243,24 @@ export const NAV: readonly NavSection[] = [
         blurb: "Requirements, scenarios and the traceability matrix.",
       },
       {
+        slug: "business-review",
+        label: "Review with the business",
+        blurb:
+          "A change as one HTML page to send, and journeys across requirements tested end to end.",
+      },
+      {
+        slug: "transition",
+        label: "Release notes, acceptance, user guides",
+        blurb:
+          "Release notes from archived changes, a checklist a person signs, and a guide per actor.",
+      },
+      {
+        slug: "domain-language",
+        label: "Glossary, rules and diagrams",
+        blurb:
+          "One word for one thing, numbered business rules each tested, and the entity and actor diagrams generated.",
+      },
+      {
         slug: "new-project",
         label: "A new product, step by step",
         blurb: "The twelve steps six pilots took, from a client's brief to a running product.",
@@ -235,6 +277,12 @@ export const NAV: readonly NavSection[] = [
         slug: "validating",
         label: "Validating",
         blurb: "Every check the gate runs, what each status owes, and the flags behind check.",
+      },
+      {
+        slug: "fast-gate",
+        label: "A fast gate",
+        blurb:
+          "Run only the tests a change touches, reuse the ones that passed, arch and tests side by side.",
       },
       {
         slug: "quality",
@@ -387,9 +435,39 @@ export const NAV: readonly NavSection[] = [
         blurb: "Unattended delivery: plan → agent → gate → apply, one worktree per requirement.",
       },
       {
+        slug: "harness-control",
+        label: "Drive the harness from a tool",
+        blurb:
+          "The JSON stream, stop after the current requirement, a dirty tree, questions with ids.",
+      },
+      {
+        slug: "agent-ask",
+        label: "Ask your agent",
+        blurb:
+          "A plan with its diff before anything is written: apply it, or discard it. What the studio's agent panel runs.",
+      },
+      {
         slug: "harness-report",
         label: "What the harness has cost",
         blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",
+      },
+      {
+        slug: "steering",
+        label: "Drift and API contracts",
+        blurb:
+          "Behaviour changed without a requirement, and requirements that name an API operation that is not there.",
+      },
+      {
+        slug: "harness-roles",
+        label: "Roles, budget and protected paths",
+        blurb:
+          "A tester and an implementer in their lanes, a cost ceiling, the files no agent may change.",
+      },
+      {
+        slug: "decisions",
+        label: "Decisions, rights and the stack",
+        blurb:
+          "ADRs replaced, never rewritten; what the agent may decide on its own; the stack written down once.",
       },
       {
         slug: "domain-packs",

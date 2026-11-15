@@ -209,29 +209,32 @@ test("REQ-212 SCN-212a: a project with a brief and no draft is at Drafts", () =>
 });
 
 test("REQ-212: the page shows the seven steps and reads the route's APIs", () => {
-  const { studioAppPage } = require("../../scripts/lib/studio-app-page");
-  const html = studioAppPage("demo", "abc123");
-  for (const want of [
-    'project:"Proyecto"',
-    'brief:"Brief"',
-    'drafts:"Borradores"',
-    'report:"Informe"',
-    'project:"Project"',
-    '"api/route"',
-    '"api/profiles"',
-    '"api/brief"',
-    '"api/brief/fill"',
-    '"api/modules"',
-    '"api/draft"',
-    '"api/project"',
-    '"api/report"',
-    '"report.html"',
+  const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+  for (const k of [
+    "step_project",
+    "step_brief",
+    "step_drafts",
+    "step_questions",
+    "step_review",
+    "step_build",
+    "step_report",
   ]) {
-    assert.ok(html.includes(want), want);
+    assert.ok(studio.TEXTS.es[k] && studio.TEXTS.en[k], k);
   }
-  const script = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
-  assert.doesNotThrow(() => new Function(script));
-  assert.doesNotMatch(script, /innerHTML|insertAdjacentHTML|outerHTML/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.js"), "utf8");
+  for (const api of [
+    "/api/route",
+    "/api/profiles",
+    "/api/brief",
+    "/api/brief/fill",
+    "/api/modules",
+    "/api/draft",
+    "/api/project",
+    "/api/report",
+    "/report.html",
+  ]) {
+    assert.ok(app.includes(api), api);
+  }
 });
 
 test("REQ-212 SCN-212b: a folder that is not a project starts at Project", () => {

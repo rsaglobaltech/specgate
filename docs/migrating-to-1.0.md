@@ -48,7 +48,7 @@ written for 0.27, and adds `migrate` to `status --json`.
 
 ## What breaks, and what migrate does
 
-### A change has three layers (ADR-0042)
+### A change has three layers (ADR-0044)
 
 `change new`, `propose`, `propose --from-brief` and `--from-ticket` write
 `discover.md` (product: context, use case, acceptance criteria `- AC-1: …`),
@@ -81,7 +81,7 @@ range, an approval, the ticket — is kept.
 - `change new --schema spec-driven` still writes the 0.27 layout, for a team
   that needs one more change in it.
 
-### A dependency on another repository (ADR-0041)
+### A dependency on another repository (ADR-0043)
 
 Inside a repository, `depends=<repo>:REQ-NNN` is a dependency on another
 repository of the workspace, not an `unknown_dependency`: the workspace
@@ -116,7 +116,7 @@ These need no migration. They are listed so the upgrade is complete:
 
 **What changed.** A layered change is built only once each of its layers is
 approved by someone holding the layer's role — product the Discover, architect
-the Design, developer the Tasks ([ADR-0043](specs/adr/0043-roles-approvals-and-role-packages.md)).
+the Design, developer the Tasks ([ADR-0045](specs/adr/0045-roles-approvals-and-role-packages.md)).
 An approval records who signed which version; editing a layer asks for it again.
 
 **What migrate does.** Nothing it can decide for you: its report says to name the

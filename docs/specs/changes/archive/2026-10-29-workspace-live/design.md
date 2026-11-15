@@ -7,7 +7,7 @@
 
 - `scripts/lib/workspace-live.ts` — the workspace live model, folded from each
   member's own live model (`readLive`, ADR-0037) and harness ledger
-  (`.harness/runs/*.json`), and from the workspace's stories (ADR-0041).
+  (`.harness/runs/*.json`), and from the workspace's stories (ADR-0043).
 - `scripts/lib/workspace-live-page.ts` — the page, streamed like `/live`.
 - `StudioCommand` — in a workspace repository, `/live`, `/live.json` and
   `/live/stream` serve the workspace.
@@ -41,5 +41,5 @@ folders, the workspace's `docs/stories/`. The view writes no member.
 
 ## Decisions
 
-Extends ADR-0041 (the workspace) and ADR-0037 (the live view): the workspace
+Extends ADR-0043 (the workspace) and ADR-0037 (the live view): the workspace
 view is a fold of the members' own views, never a second record.

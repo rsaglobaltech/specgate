@@ -1,3 +1,4 @@
+import { unspecifiedProposals } from "../../../lib/proposals";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -337,6 +338,19 @@ export class DoctorCommand extends BaseCommand {
     }
   }
 
+  /** An earlier adoption's proposals nobody specified (REQ-472). */
+  private checkProposals(dir: string) {
+    const left = unspecifiedProposals(dir);
+    if (left.length === 0) return;
+    for (const p of left) {
+      this.warn(
+        "proposals",
+        `${p.id} "${p.title}" is proposed, not specified — a folder an earlier adoption read off the code`,
+        `rewrite it as one behaviour you rely on, or specgate new "<behaviour>" and remove ${p.id}'s section from spec.md`
+      );
+    }
+  }
+
   private checkPlaceholders(dir: string) {
     const offenders = findUnresolvedPlaceholders(dir);
     if (offenders.length === 0) {
@@ -390,7 +404,7 @@ export class DoctorCommand extends BaseCommand {
         this.warn(
           label,
           `the driver points at ${runs}, which does not exist — git merges ${d.pattern} by lines until it is registered again`,
-          "Run `specgate harness init --project-dir .` here to point it at this machine's specgate."
+          "Run `specgate harness init --merge-drivers` here to point it at this machine's specgate."
         );
         return;
       }
@@ -405,7 +419,7 @@ export class DoctorCommand extends BaseCommand {
       this.recordError(
         label,
         `merge.${d.name}.name is set but its driver command is missing — git will refuse to merge ${d.pattern}`,
-        `Either finish the registration with \`specgate harness init --project-dir .\`, or remove the half: git config --unset merge.${d.name}.name`
+        `Either finish the registration with \`specgate harness init --merge-drivers\`, or remove the half: git config --unset merge.${d.name}.name`
       );
       return;
     }
@@ -413,7 +427,7 @@ export class DoctorCommand extends BaseCommand {
     this.warn(
       label,
       `.gitattributes routes ${d.pattern} to the specgate merge driver, but this clone has not registered it`,
-      `Run \`specgate harness init --project-dir .\` here. Until then git merges ${d.pattern} by lines, so two parallel branches collide on neighbouring lines.`
+      `Run \`specgate harness init --merge-drivers\` here. Until then git merges ${d.pattern} by lines, so two parallel branches collide on neighbouring lines.`
     );
   }
 
@@ -666,6 +680,7 @@ export class DoctorCommand extends BaseCommand {
       this.checkCapabilityDrift(dir);
       this.checkChanges(dir);
       this.checkPlaceholders(dir);
+      this.checkProposals(dir);
       this.checkSpecops(dir);
       this.checkMergeDrivers(dir);
       this.checkArchitectureProfile(dir);

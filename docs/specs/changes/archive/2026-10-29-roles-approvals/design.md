@@ -50,7 +50,7 @@
 
 ## Decisions
 
-- ADR-0043: roles, layer approvals and role packages. Rejected: approvals in
+- ADR-0045: roles, layer approvals and role packages. Rejected: approvals in
   `change.yaml` (one line per approval, merge conflicts on every sign-off);
   approval as an error in `validate` (a draft is legitimately unapproved while
   it is written — the harness is where building starts).

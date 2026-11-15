@@ -1,5 +1,7 @@
 # From scratch · 4 — Prove it
 
+> **The short version** of a new project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** REQ-002 marked `Implemented` — which Specgate only does after the
 gate has checked it — the whole gate green, and a page that tells anyone

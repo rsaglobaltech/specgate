@@ -33,7 +33,7 @@ export class ValidateChangeUseCase {
     const diagnostics: Diagnostic[] = [];
     const config = this.projectRepo.readConfig(changeId);
 
-    // ADR-0042: the Discover is discover.md; a 0.27 change's is its proposal.
+    // ADR-0044: the Discover is discover.md; a 0.27 change's is its proposal.
     const dir = paths.change(changeId);
     const read = (f: string) => this.projectRepo.readFile(path.join(dir, f));
     const discoverFile = read("discover.md") !== null ? "discover.md" : LEGACY_DISCOVER;

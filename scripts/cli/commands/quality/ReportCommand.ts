@@ -16,7 +16,15 @@ import {
 import type { ValueDriftStatus } from "../../../../packages/core/src/domain/ValueAnnotations";
 import type { PlanItem } from "../../../../packages/core/src/domain/RequirementPlan";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
-import { errorMessage } from "../../../lib/diagnostics";
+import { error, errorMessage } from "../../../lib/diagnostics";
+import type { Diagnostic } from "../../../lib/diagnostics";
+import { agentIo, wantsJson } from "../../../lib/agent";
+import { projectLineCoverage, type LineCoverageAnswer } from "../../../lib/line-coverage";
+import {
+  capabilityNames,
+  requirementCapabilities,
+  unknownCapability,
+} from "../../../lib/capabilities";
 import * as ui from "../../../lib/ui";
 
 const HISTORY_REL = "reports/spec-coverage-history.jsonl";
@@ -77,6 +85,14 @@ export interface CoverageReport {
   specops: SpecopsSummary;
   requirements: PlanItem[];
   declaredValues: DeclaredValuesReport;
+  /**
+   * The project's line coverage, from the report its coverage tool wrote, or
+   * null when none measures it (REQ-499). The whole project's, with or without
+   * `--capability`.
+   */
+  coverage: { lines: LineCoverageAnswer | null };
+  /** The capability the report is narrowed to with `--capability` (REQ-501). */
+  capability?: string;
   /** Diagnostics, when a caller attaches them; `renderJson` defaults it to `[]`. */
   status?: unknown[];
 }
@@ -95,13 +111,16 @@ export interface HistoryEntry {
   valuesDiverging?: number;
 }
 
-export function buildReport(projectDir: string): CoverageReport {
+export function buildReport(projectDir: string, capability: string | null = null): CoverageReport {
   const tracePath = path.join(projectDir, "docs/specs/traceability.md");
   const content = fs.readFileSync(tracePath, "utf8");
   const rows = parseTraceability(content);
+  // REQ-501: only the requirements the capability states, as `status` assigns them.
+  const capabilities = capability ? requirementCapabilities(projectDir) : null;
   const items: PlanItem[] = rows
     .map((r) => classify(r, (rel: string) => fileExists(projectDir, rel)))
-    .filter((x) => x !== null);
+    .filter((x) => x !== null)
+    .filter((x) => !capabilities || capabilities.get(x.requirement) === capability);
   const orphans = detectOrphans(projectDir, items);
 
   const byCategory = items.reduce((acc: Record<string, number>, it) => {
@@ -113,6 +132,7 @@ export function buildReport(projectDir: string): CoverageReport {
   const implemented = byCategory[DONE_CATEGORY] || 0;
   const implementedPct = total === 0 ? 0 : Math.round((implemented / total) * 1000) / 10;
   const needsTest = items.filter((it) => !it.test_exists).map((it) => it.requirement);
+  const lines = projectLineCoverage(projectDir);
 
   return {
     schemaVersion: 1,
@@ -127,6 +147,9 @@ export function buildReport(projectDir: string): CoverageReport {
     specops: readSpecops(projectDir),
     requirements: items,
     declaredValues: buildDeclaredValues(projectDir, items),
+    coverage: { lines: lines.lines },
+    ...(capability ? { capability } : {}),
+    status: lines.status,
   };
 }
 
@@ -533,6 +556,8 @@ export interface ReportOptions {
   out: string | null;
   stdout: boolean;
   record: boolean;
+  /** `--capability <name>`: only that capability's requirements (REQ-501). */
+  capability: string | null;
 }
 
 function toCamelRequirement(item: PlanItem) {
@@ -567,6 +592,11 @@ export function renderJson(report: CoverageReport): string {
   return JSON.stringify(wire, null, 2) + "\n";
 }
 
+/** A usage error, as JSON with `--format json` or `--json`, exit 2. */
+function usageError(argv: string[], d: Diagnostic): never {
+  return agentIo(wantsJson(argv)).usage({ report: null }, [d]);
+}
+
 export function parseArgs(argv: string[]) {
   const opts: ReportOptions = {
     projectDir: ".",
@@ -574,6 +604,7 @@ export function parseArgs(argv: string[]) {
     out: null,
     stdout: false,
     record: false,
+    capability: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -586,12 +617,25 @@ export function parseArgs(argv: string[]) {
     } else if (a === "--html") opts.format = "html";
     else if (a === "--stdout") opts.stdout = true;
     else if (a === "--record") opts.record = true;
-    else if (a === "--help" || a === "-h") {
+    else if (a === "--capability") {
+      const name = argv[++i];
+      if (!name || name.startsWith("-")) {
+        usageError(
+          argv,
+          error("missing_value", "--capability needs a capability name.", {
+            fix: "specgate report --format json --capability <name>",
+          })
+        );
+      }
+      opts.capability = name;
+    } else if (a === "--help" || a === "-h") {
       process.stdout.write(
         `\n  📊 report — spec-coverage dashboard\n\n` +
           `  USAGE\n` +
           `    specgate report [--project-dir <path>] [--format html|json]\n` +
-          `                                  [--out <file>] [--stdout] [--record]\n\n`
+          `                                  [--out <file>] [--stdout] [--record]\n` +
+          `                                  [--capability <name>]\n\n` +
+          `  --capability <name>  Only the requirements of that capability.\n\n`
       );
       process.exit(0);
     } else if (a.startsWith("-")) {
@@ -628,9 +672,17 @@ export class ReportCommand extends BaseCommand {
       process.exit(2);
     }
 
-    const report = buildReport(projectDir);
+    if (opts.capability) {
+      const known = capabilityNames(requirementCapabilities(projectDir));
+      if (!known.includes(opts.capability)) {
+        usageError(this.args, unknownCapability(opts.capability, known, "specgate report"));
+      }
+    }
+    const report = buildReport(projectDir, opts.capability);
     const now = new Date();
-    if (opts.record) appendHistory(projectDir, report, now);
+    // The history follows the whole project: a narrowed report is not its next point.
+    if (opts.record)
+      appendHistory(projectDir, opts.capability ? buildReport(projectDir) : report, now);
 
     const history = readHistory(projectDir);
     const output =

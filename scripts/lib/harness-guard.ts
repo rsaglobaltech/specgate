@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
+import { warning, type Diagnostic } from "../../packages/core/src/domain/Diagnostic";
 
 /**
  * What keeps a long harness run from hurting itself (REQ-184..186): copies
@@ -174,4 +175,47 @@ export function takeStop(projectDir: string): boolean {
   if (!fs.existsSync(file)) return false;
   fs.rmSync(file, { force: true });
   return true;
+}
+
+/** What `specgate harness stop --after-current --json` answers, and the API's `harnessStop` (REQ-491, REQ-492). */
+export interface StopAnswer {
+  stop: {
+    requested: boolean;
+    /** The run asked to stop: its process, its requirements, when it started (epoch seconds). */
+    run: { pid: number; requirements: string[]; startedAt: number } | null;
+  };
+  status: Diagnostic[];
+}
+
+/**
+ * Ask the run working in this project to stop once the requirement in progress
+ * ends (REQ-491). It never signals a process — the run reads the request
+ * between requirements — so nothing platform-specific is killed. With no run
+ * holding the working copy, nothing is requested: a request left behind would
+ * be the next run's to throw away, and the caller should know there was none.
+ */
+export function stopAfterCurrent(projectDir: string): StopAnswer {
+  const holder = runLockHolder(projectDir);
+  if (!holder) {
+    return {
+      stop: { requested: false, run: null },
+      status: [
+        warning(
+          "harness_not_running",
+          "No harness run is working in this project: nothing to stop.",
+          {
+            fix: "specgate harness run",
+          }
+        ),
+      ],
+    };
+  }
+  requestStop(projectDir);
+  return {
+    stop: {
+      requested: true,
+      run: { pid: holder.pid, requirements: [...(holder.reqs || [])], startedAt: holder.started },
+    },
+    status: [],
+  };
 }

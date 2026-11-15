@@ -36,7 +36,7 @@ import { error, warning } from "./diagnostics";
 import type { Diagnostic } from "./diagnostics";
 
 /**
- * The repositories of a workspace, read from disk (ADR-0041). Every member is
+ * The repositories of a workspace, read from disk (ADR-0043). Every member is
  * asked through the CLI itself — `status --json`, `check --json` — so the
  * workspace sees exactly what each repository's own gate sees.
  */
@@ -209,7 +209,7 @@ export function subChangeState(memberDir: string, change: string): SubChangeStat
   return "missing";
 }
 
-// ── The JSON model (ADR-0041) ────────────────────────────────────────────────
+// ── The JSON model (ADR-0043) ────────────────────────────────────────────────
 
 export interface RepoState {
   name: string;
@@ -755,7 +755,7 @@ export function openSubChange(
       }
     );
   }
-  // A 1.0 change's Discover (ADR-0042), or a 0.27 change's proposal.
+  // A 1.0 change's Discover (ADR-0044), or a 0.27 change's proposal.
   const changeDir = path.join(dir, "docs", "specs", "changes", story);
   const proposal = ["discover.md", "proposal.md"]
     .map((f) => path.join(changeDir, f))

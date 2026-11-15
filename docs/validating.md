@@ -15,13 +15,14 @@ CI part, a repository on GitHub, GitLab, Azure DevOps or Jenkins.
 specgate check
 ```
 
-`check` runs four things, in order, and stops at the first failure:
+`check` runs four things, and stops at the first stage that fails:
 
 1. `validate --strict`: specs, scenarios, traceability, links and coverage.
 2. Your architecture check, if you set one with
    `specgate config set arch_cmd "<cmd>"` (ArchUnit, dependency-cruiser, …).
    With `arch_sarif:` beside it, only a violation the change adds fails.
-3. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`.
+3. Your tests, from `specgate config set test_cmd "npm test"` or `--test-cmd`,
+   side by side with step 2 ([`gate_parallel: false`](fast-gate.md) runs them in turn).
 4. Your [quality checks](quality.md), if `specgate quality init` wrote them:
    coverage and mutation of what the change adds, SAST, secrets, dependencies,
    Conventional Commits — each in Docker. `--ci` adds the CI-only ones and
@@ -37,18 +38,66 @@ the gate as `id_taken_on_base`, before two pull requests collide on merge.
 Run `check` before every pull request. `specgate apply` runs the same gate for
 the one requirement it delivers.
 
-## Run it in CI
+### Run only what the change touches: `check --affected`
 
-The quickest way is to let Specgate write the job:
+`specgate check --affected` runs the tests of what changed since the base
+branch — through `{files}` in `test_cmd_affected:` — and the whole suite,
+saying why, whenever it cannot tell what the change needs. A test that passed
+on the same code is not run again. `check` with no flag, and `check --ci`
+always, run the whole suite. See [A faster gate](fast-gate.md).
+
+### The stages, and the last result
+
+With `--json`, every answer — passed or failed — lists the gate's `stages` in
+the order it runs them: `ids`, `changes`, `validate`, `architecture`, `tests`,
+then one `quality` stage per check, with its `name`. Each has its `command`
+(`null` when it has none), its `result` (`passed`, `failed`, `skipped` when it
+is not configured or could not run, `not run` when an earlier stage failed),
+its `ms` (`null` when it did not run) and its `findings`, each with `code`,
+`message`, `fix`, `file` and `line` when it has them; `selection` says which
+tests ran ([A faster gate](fast-gate.md#what-it-says)). The `validate` stage carries validate's own findings, so a tool
+does not have to run `validate --json` again. A failed gate keeps `check: null`
+and its findings under `status`.
+
+Each check that reaches a verdict also keeps its result, in the repository's
+git folder (`.git/specgate/last-check.json`, or `.specgate/`, ignored there,
+outside git), so `git status` stays as it was. Read it back without running
+the gate:
 
 ```bash
-specgate ci init
+specgate check --last          # passed or failed, when, on which commit, each stage
+specgate check --last --json   # lastCheck: ranAt, commit, branch, dirty, passed, ci, stages
 ```
 
-It detects your CI provider (GitHub, GitLab, Azure or Jenkins), sets up the
-project's toolchain (Node, or a JDK for Maven and Gradle) and runs
-`specgate check` at the version you have installed, so a green on your machine
-is a green in CI. On GitHub the job is called `spec-gate`.
+With no check run yet, `lastCheck` is `null` and the finding `last_check_none`
+gives the fix `specgate check`. From Node, the API's `lastCheck(dir)` answers
+the same.
+
+## Run it in CI
+
+`specgate init` and `specgate adopt` already wrote the job: the spec gate, for
+the CI provider the repository shows (GitHub when it shows none). See what it
+checks, and what it lacks:
+
+```bash
+specgate ci status
+```
+
+It sets up the project's toolchain (Node, or a JDK for Maven and Gradle) and
+runs `specgate check` at the version that wrote it, so a green on your machine
+is a green in CI. On GitHub the job is called `spec-gate` and runs on Ubuntu,
+macOS and Windows, compares the requirement ids with the base branch, runs the
+[quality checks](quality.md) once they are configured, checks the
+[packs](supply-chain.md) and keeps the pending-work plan. It checks more rather
+than less: every step says in the YAML what it checks and what to delete to
+remove it, and a step whose tool is not configured yet says so and passes.
+
+- `specgate ci init --provider gitlab` (or `azure`, `jenkins`) writes it for
+  another CI; `--force` writes it again, `--minimal` writes one step only.
+- An older `specgate init` wrote `.github/workflows/specs.yml`, which only
+  validated the specification: `specgate ci init --provider github` shows what
+  the gate adds, `--replace` replaces it.
+- `specgate init --no-ci` writes no CI file.
 
 If you write the job by hand, run `validate --strict` and pin the version. A
 release can change what the gate checks, and a pipeline should not change
@@ -211,26 +260,7 @@ that `adopt` wrote:
 The exit code stays `0`. In `--json`, `validation.adoptionRetrofilled` carries
 the same fact, with an `adoption_not_retrofilled` advisory in `status[]`.
 
-## Behaviour changed without a specification
 
-`specgate check` lists each commit since the base that changes production code,
-names no requirement (`REQ-NNN`) in its message, and changes no test that names
-one: the warning `spec_drift`, with the commit and its files (REQ-333). Tests,
-specs, features, docs and build configuration are not production code; the
-harness's commits name their requirement, so they never drift.
-`specgate drift [--base <branch>] [--json]` prints the same for CI. With
-`drift: gate` in harness.config.yaml it fails both (REQ-334); `drift: off` stops
-looking.
-
-## A requirement that points at an API operation
-
-A requirement can name the operation it specifies in its trace comment:
-`api=openapi.yaml#/paths/~1positions/post` (a JSON pointer),
-`api=openapi.yaml#reportPosition` or a bare `api=reportPosition`. `validate`
-reads OpenAPI and AsyncAPI, YAML or JSON, and fails with `api_operation_missing`
-or `api_contract_missing` when it is not there (REQ-335).
-`specgate contract check` lists, per contract, the operations no requirement
-cites and the references that do not resolve (REQ-336).
 
 ## Declared-value drift: a report, not a gate
 
@@ -251,9 +281,8 @@ comparison is exact string equality: `15m` and `900000` are different values.
 Each value is **matched**, **diverging**, **spec only** or **code only**, and
 `specgate report --record` adds the totals to the report history.
 
-It is a report rather than a gate because annotations cover only the values
-someone chose to annotate; a hard gate over them would mostly measure who
-remembered ([ADR-0023](specs/adr/0023-checking-content-gate-or-report.md)).
+It is a report, not a gate: annotations cover only the values someone chose to
+annotate ([ADR-0023](specs/adr/0023-checking-content-gate-or-report.md)).
 
 When a value diverges, you have three options:
 
@@ -267,5 +296,4 @@ When a value diverges, you have three options:
 
 ## Next
 
-- [Your team's first pull request](first-pr.md)
-- [Automation](automation.md)
+- [Your team's first pull request](first-pr.md) · [Automation](automation.md) · [Drift and API contracts](steering.md)

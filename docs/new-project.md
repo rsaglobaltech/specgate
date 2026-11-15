@@ -43,7 +43,7 @@ npm install --save-dev @rsaglobaltech/specgate
 npx specgate init --no-capabilities        # a new project: no proposals from folders
 npx specgate config set test_cmd "<cmd>"   # the tests `check` and `apply` run
 npx specgate apply REQ-001                 # the adoption baseline
-npx specgate ci init --provider github     # the same gate in CI: specification and tests
+npx specgate ci status                     # init wrote the gate for CI: what it checks
 ```
 
 `init` detects the stack and proposes the test command (`npm test`,

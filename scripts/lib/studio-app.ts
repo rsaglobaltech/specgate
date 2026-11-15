@@ -21,13 +21,20 @@ import {
   approvedOn,
   reviewNotes,
   type Blocker,
-  type ReviewNote,
+  type ReviewNoteRow,
 } from "./change-review";
 import { requestStop, runLockHolder } from "./harness-guard";
 import { findCliRoot } from "./project-root";
+import { cachedBySpecs } from "./studio-cache";
+import { appendEvent, eventsFileFor, studioLog } from "./harness-events";
+import { killTree } from "./kill-tree";
+import { withQueue } from "../cli/commands/spec/StatusCommand";
+import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
+import { requirementTitles } from "../../packages/core/src/domain/DraftChecklist";
 import { inFlightView } from "./in-flight";
 import { approvalSettings, changeApprovals, gitIdentity } from "./approvals";
 import { holdsRole, type ApprovalRecord } from "../../packages/core/src/domain/Approvals";
+import { capabilitiesOf } from "./studio-actions";
 
 /**
  * What the visual studio shows and does (REQ-204..210): each read is built from
@@ -75,7 +82,7 @@ export interface DraftView {
   requirements: DraftRequirement[];
   layers: DraftLayer[];
   blockers: Blocker[];
-  notes: ReviewNote[];
+  notes: ReviewNoteRow[];
   questions: Array<{ id: string; text: string; blocks: string[] }>;
 }
 
@@ -118,7 +125,7 @@ function draftRequirements(projectDir: string, change: string): DraftRequirement
 
 /**
  * The change's layers with their owners, and whether each is written
- * (REQ-289, ADR-0042). A 0.27 change shows its proposal as the Discover.
+ * (REQ-289, ADR-0044). A 0.27 change shows its proposal as the Discover.
  */
 function draftLayers(projectDir: string, change: string): DraftLayer[] {
   const dir = path.join(projectDir, "docs", "specs", "changes", change);
@@ -162,6 +169,78 @@ export function drafts(projectDir: string): DraftView[] {
     .filter((d) => d.requirements.length > 0);
 }
 
+// ── Every change (REQ-439) ──────────────────────────────────────────────────
+
+export interface ChangeView {
+  id: string;
+  /** The brief's module a draft is for (`draft-orders` → `orders`), or null. */
+  module: string | null;
+  /** When a person approved it, or "". */
+  approved: string;
+  requirements: Array<{ id: string; title: string; status: string }>;
+  delivered: number;
+  tasks: { done: number; total: number; items: Array<{ text: string; done: boolean }> };
+  proposal: string;
+  /** Every requirement in it delivered: archive takes it. */
+  canArchive: boolean;
+  /** The ticket it was opened from, and its address on the ALM when that is known (REQ-447). */
+  ticket: string | null;
+  ticketUrl: string | null;
+}
+
+/** Each open change with its progress, its proposal and tasks — not only the brief's drafts (REQ-439). */
+/** A Jira ticket's address, from `base_url` in alm.config.yaml; null for another ALM or none. */
+function ticketUrlOf(projectDir: string, key: string): string | null {
+  const alm = read(path.join(projectDir, "alm.config.yaml")) || "";
+  const field = (name: string) =>
+    (new RegExp(`^${name}:\\s*["']?([^"'#\\s]+)["']?`, "m").exec(alm) || [])[1] || "";
+  const base = field("base_url").replace(/\/+$/, "");
+  return field("provider") === "jira" && /^https?:\/\//.test(base) ? `${base}/browse/${key}` : null;
+}
+
+export function changesView(projectDir: string): {
+  changes: ChangeView[];
+  alm: boolean;
+  capabilities: string[];
+} {
+  const changes = listChangeIds(projectDir).map((id): ChangeView => {
+    const dir = path.join(projectDir, "docs", "specs", "changes", id);
+    const requirements = draftRequirements(projectDir, id).map((r) => ({
+      id: r.id,
+      title: r.title,
+      status: r.status,
+    }));
+    const delivered = requirements.filter((r) => DELIVERED.has(r.status)).length;
+    const items = (read(path.join(dir, "tasks.md")) || "")
+      .split(/\r?\n/)
+      .map((l) => /^\s*[-*]\s+\[([ xX])\]\s+(.*)$/.exec(l))
+      .filter((m): m is RegExpExecArray => !!m)
+      .map((m) => ({ text: m[2].trim(), done: m[1] !== " " }));
+    const proposal = read(path.join(dir, "proposal.md")) || "";
+    const ticket =
+      /^ticket:\s*([A-Z][A-Z0-9_]*-\d+)\s*$/m.exec(
+        read(path.join(dir, "change.yaml")) || ""
+      )?.[1] || null;
+    return {
+      id,
+      module: id.startsWith("draft-") ? id.replace(/^draft-/, "").replace(/-additions$/, "") : null,
+      approved: approvedOn(projectDir, id),
+      requirements,
+      delivered,
+      tasks: { done: items.filter((t) => t.done).length, total: items.length, items },
+      proposal: proposal.length > 20000 ? `${proposal.slice(0, 20000)}\n…` : proposal,
+      canArchive: requirements.length > 0 && delivered === requirements.length,
+      ticket,
+      ticketUrl: ticket ? ticketUrlOf(projectDir, ticket) : null,
+    };
+  });
+  return {
+    changes,
+    alm: fs.existsSync(path.join(projectDir, "alm.config.yaml")),
+    capabilities: capabilitiesOf(projectDir),
+  };
+}
+
 // ── Questions ───────────────────────────────────────────────────────────────
 
 export interface QuestionsView {
@@ -195,7 +274,10 @@ export function questionsView(projectDir: string): QuestionsView {
         "agent" | "draft" | "project",
     }));
   const toReview: QuestionsView["toReview"] = [];
-  const texts = new Map(allQuestions(projectDir).map((q) => [`${q.change}:${q.id}`, q.text]));
+  const questions = allQuestions(projectDir);
+  const texts = new Map(questions.map((q) => [`${q.change}:${q.id}`, q.text]));
+  // One row per question, however often it was answered (REQ-210).
+  const listed = new Set<string>();
   for (const change of [...listChangeIds(projectDir), "project"]) {
     const file =
       change === "project"
@@ -203,6 +285,8 @@ export function questionsView(projectDir: string): QuestionsView {
         : path.join(projectDir, "docs", "specs", "changes", change, "assumptions.md");
     for (const a of assumptionsToReview(read(file) || "")) {
       const q = (/Q\d+/.exec(a.why) || [""])[0];
+      if (listed.has(`${change}:${q}`)) continue;
+      listed.add(`${change}:${q}`);
       toReview.push({
         change,
         assumption: a.id,
@@ -210,6 +294,19 @@ export function questionsView(projectDir: string): QuestionsView {
         text: texts.get(`${change}:${q}`) || "",
       });
     }
+  }
+  // Answers written by hand: answered, not yet confirmed, still holding a requirement.
+  const waiting = new Set(
+    liveMatrix(projectDir)
+      .filter((m) => m.status === "Needs Clarification")
+      .map((m) => m.requirement)
+  );
+  for (const q of questions) {
+    const key = `${q.change}:${q.id}`;
+    if (!q.answered || q.status === "reviewed" || listed.has(key)) continue;
+    if (!q.blocks.some((b) => waiting.has(b))) continue;
+    listed.add(key);
+    toReview.push({ change: q.change, assumption: "", question: q.id, text: q.text });
   }
   return { open, toReview };
 }
@@ -222,24 +319,63 @@ function profileNames(projectDir: string): string[] {
 
 // ── Build ───────────────────────────────────────────────────────────────────
 
+let installed: { claude: boolean; codex: boolean } | null = null;
+
+/** Which agent CLIs this machine has on its PATH — looked up once per studio. */
+export function agentsInstalled(): { claude: boolean; codex: boolean } {
+  const has = (cmd: string) =>
+    spawnSync(process.platform === "win32" ? "where" : "which", [cmd], { encoding: "utf8" })
+      .status === 0;
+  installed ??= { claude: has("claude"), codex: has("codex") };
+  return installed;
+}
+
 export interface BuildView {
   ready: Array<{ id: string; title: string; module: string }>;
   agent: boolean;
+  /** Without an agent: the agent CLIs found on the PATH, to offer (REQ-431). */
+  installed?: { claude: boolean; codex: boolean };
   running: { pid: number; reqs: string[] } | null;
   estimate: { minutes: number | null; costPerRequirement: number | null };
 }
 
+/**
+ * What `specgate status --json` lists, read in this process and kept until a
+ * spec file changes (REQ-430); each requirement with the title its spec gives it.
+ */
 function plan(projectDir: string): Array<{ id: string; title: string; category: string }> {
-  const r = spawnSync(process.execPath, [cli(), "status", "--json", "--project-dir", projectDir], {
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
+  return cachedBySpecs(projectDir, "plan", () => {
+    try {
+      return withQueue(
+        projectDir,
+        (summary, dir) => {
+          let titles = new Map<string, string>();
+          try {
+            const sources = readDerivationSources(dir);
+            titles = requirementTitles([
+              { path: "spec.md", source: sources.spec },
+              ...(sources.capabilities || []),
+            ]);
+          } catch {
+            /* titles from the matrix only */
+          }
+          return summary.items.map((it) => {
+            const own = String(it.title || "")
+              .replace(/^UC-\d+\s*/, "")
+              .trim();
+            return {
+              id: it.requirement,
+              title: own && own !== "-" ? own : titles.get(it.requirement) || it.requirement,
+              category: it.category,
+            };
+          });
+        },
+        { write: false }
+      );
+    } catch {
+      return [];
+    }
   });
-  try {
-    const doc = JSON.parse(r.stdout.slice(r.stdout.indexOf("{")));
-    return doc.requirements || [];
-  } catch {
-    return [];
-  }
 }
 
 /** The median of past passing requirements' durations, and their mean reported cost. */
@@ -294,10 +430,12 @@ export function buildView(projectDir: string): BuildView {
   };
   const est = estimateFrom(projectDir);
   const holder = runLockHolder(projectDir);
+  const agent =
+    Boolean(cfg.agent) || (Array.isArray(cfg.attemptProfiles) && cfg.attemptProfiles.length > 0);
   return {
     ready,
-    agent:
-      Boolean(cfg.agent) || (Array.isArray(cfg.attemptProfiles) && cfg.attemptProfiles.length > 0),
+    agent,
+    ...(agent ? {} : { installed: agentsInstalled() }),
     running: holder ? { pid: holder.pid, reqs: holder.reqs } : null,
     estimate: {
       minutes: est.minutesEach === null ? null : est.minutesEach * ready.length,
@@ -325,7 +463,7 @@ export function startBuild(projectDir: string, reqs: string[], profile = ""): St
       ok: false,
       code: "build_no_agent",
       message:
-        "No agent is configured. Set agent: in harness.config.yaml (specgate harness init writes it).",
+        'No agent is configured. Choose one in Build, or run: specgate config set agent "claude -p < {prompt_file}" (it is kept in harness.config.yaml).',
     };
   }
   if (view.running) {
@@ -357,8 +495,7 @@ export function startBuild(projectDir: string, reqs: string[], profile = ""): St
   }
   const saved = saveSpecification(projectDir);
   if (!saved.ok) return saved;
-  const log = path.join(projectDir, ".harness", "events", "studio-run.log");
-  fs.mkdirSync(path.dirname(log), { recursive: true });
+  const log = studioLog(projectDir, "run");
   const out = fs.openSync(log, "a");
   const child = spawn(
     process.execPath,
@@ -475,11 +612,25 @@ export function saveSpecification(
 
 /** Ask the run in progress to stop after its current requirement (REQ-209). */
 export function stopBuild(
-  projectDir: string
+  projectDir: string,
+  now = false
 ): { ok: true } | { ok: false; code: string; message: string } {
-  if (!runLockHolder(projectDir))
-    return { ok: false, code: "build_not_running", message: "No run is working." };
+  const lock = runLockHolder(projectDir);
+  if (!lock) return { ok: false, code: "build_not_running", message: "No run is working." };
   requestStop(projectDir);
+  if (!now) return { ok: true };
+  // At once (REQ-433): the run and every process it started, then each attempt
+  // it left open is ended, so Live does not show it running forever.
+  killTree(lock.pid);
+  for (const r of readLive(projectDir).requirements) {
+    if (r.state !== "running") continue;
+    appendEvent(
+      eventsFileFor(projectDir, r.req),
+      { type: "attempt", state: "end", result: "fail", stage: "stopped" },
+      r.req,
+      r.attempt
+    );
+  }
   return { ok: true };
 }
 
