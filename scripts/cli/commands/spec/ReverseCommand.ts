@@ -42,9 +42,9 @@ function usage(): void {
       "  specgate reverse --modules [--project-dir <path>] [--json]\n" +
       '  specgate reverse <module> [--agent "<cmd>"] [--project-dir <path>] [--json]\n\n' +
       "Specify a system that already runs, one module at a time.\n\n" +
-      "--modules lists the candidates — Maven and Gradle modules, npm workspaces, Go\n" +
-      "packages, and the folders under src/ or apps/ that hold code — with their path,\n" +
-      "stack and file count. No agent runs.\n\n" +
+      "--modules lists the candidates — folders with their own build manifest at the\n" +
+      "first or second level, Go packages, and the folders under src/ or apps/ that\n" +
+      "hold code — with their path, stack and file count. No agent runs.\n\n" +
       "reverse <module> gives your agent (--agent, or agent: in harness.config.yaml)\n" +
       "the module's source, tests and schema files. It answers what the code does, as\n" +
       "requirements with scenarios and the lines each was read from; Specgate writes\n" +

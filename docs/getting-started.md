@@ -11,7 +11,7 @@ npx specgate --help
 ```
 
 Anywhere else, run it without installing: `npx @rsaglobaltech/specgate@latest`
-in place of `specgate`.
+in place of `specgate`. Installed, it also answers to the shorter `sgate`.
 
 ## More, when you need it
 

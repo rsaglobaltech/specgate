@@ -5,7 +5,8 @@ row links to the page that explains it in full.
 
 `specgate --help` lists the daily loop. `specgate --help --all` lists every
 command, and `specgate <command> --help` shows a command's options. To make the
-full list the default, run `specgate config set profile full`.
+full list the default, run `specgate config set profile full`. The package also
+installs `sgate`, a short alias of `specgate`.
 
 In these tables, a **change** is a folder under `docs/specs/changes/<id>/` that
 proposes new or changed requirements; the **gate** is `specgate check`. See
