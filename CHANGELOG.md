@@ -35,6 +35,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   repository, the studio's Live shows each repository's harness and cost and
   each story's parts; each repository opens its own Live, read only. The
   separate live pages are gone; their addresses and data are unchanged.
+- **From 0.35 to 1.0 in one command** (REQ-567): `status` names
+  `specgate migrate 1.0` also when only the lanes under `roles:` need it
+  (`migrate.config` in `--json`); the migration keeps each change's kind and
+  lists the scripts that still read `SPECGATE_ROLE`.
 - **npm publishes through trusted publishing** (REQ-556): the publish job
   installs npm 11.5.1 or later and npm authenticates with OIDC before the
   `NPM_TOKEN` secret, which is removed after the first trusted publish

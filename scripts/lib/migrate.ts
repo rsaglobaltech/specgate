@@ -165,14 +165,36 @@ const configStep: MigrationStep = {
  * `roles: [tester, implementer]`; 1.0 calls them `lanes:` and keeps `roles:`
  * for people. The line is renamed, nothing else in the file is touched.
  */
+const LANES_LINE = /^roles:(\s*\[\s*tester\s*,\s*implementer\s*\][^\n]*)$/m;
+
+/** Whether harness.config.yaml still names the lanes `roles:`, as 0.35 did (REQ-567). */
+export function lanesToMigrate(projectDir: string): boolean {
+  const file = path.join(projectDir, "harness.config.yaml");
+  return fs.existsSync(file) && LANES_LINE.test(fs.readFileSync(file, "utf8"));
+}
+
+/** Tracked files that still read 0.35's `SPECGATE_ROLE` (REQ-567). */
+function readsOldLaneVariable(projectDir: string): string[] {
+  const r = spawnSync("git", ["grep", "-l", "SPECGATE_ROLE"], {
+    cwd: projectDir,
+    encoding: "utf8",
+  });
+  return r.status === 0 ? r.stdout.split("\n").filter(Boolean).sort() : [];
+}
+
 const lanesStep: MigrationStep = {
   id: "lanes",
   title: "Lanes, not roles",
   plan(projectDir) {
     const file = path.join(projectDir, "harness.config.yaml");
     const text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
-    const line = /^roles:(\s*\[\s*tester\s*,\s*implementer\s*\][^\n]*)$/m.exec(text);
-    if (!line) return { actions: [], manual: [] };
+    const line = LANES_LINE.exec(text);
+    const scripts = readsOldLaneVariable(projectDir);
+    const manual = scripts.map(
+      (f) =>
+        `${f} reads SPECGATE_ROLE: the tester and implementer sessions get SPECGATE_LANE since 1.0.`
+    );
+    if (!line) return { actions: [], manual };
     return {
       actions: [
         {
@@ -182,7 +204,7 @@ const lanesStep: MigrationStep = {
           why: "roles: [tester, implementer] → lanes: (roles: now names people)",
         },
       ],
-      manual: [],
+      manual,
     };
   },
 };

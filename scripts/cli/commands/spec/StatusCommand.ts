@@ -34,17 +34,25 @@ import { miniPet, petEnabled } from "../../../pet/pet";
 import { petFor } from "./PetCommand";
 import { projectJourneys } from "../../../lib/journeys";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
-import { changesToMigrate } from "../../../lib/migrate";
+import { changesToMigrate, lanesToMigrate } from "../../../lib/migrate";
 import { readConfig } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 
 /**
  * Whether the harness has an agent to run (REQ-271): the studio's Build said
  * "set agent in harness.config.yaml" and nothing before it had (truck-flote, S58).
  */
-/** `migrate` for `status --json` while open changes are written for 0.27 (REQ-329). */
-function migrateHint(projectDir: string): { migrate?: { changes: string[]; command: string } } {
+/**
+ * `migrate` for `status --json` while open changes are written for 0.x
+ * (REQ-329), or harness.config.yaml still names the lanes `roles:` (REQ-567).
+ */
+function migrateHint(projectDir: string): {
+  migrate?: { changes: string[]; config: boolean; command: string };
+} {
   const changes = changesToMigrate(projectDir);
-  return changes.length > 0 ? { migrate: { changes, command: "specgate migrate 1.0" } } : {};
+  const config = lanesToMigrate(projectDir);
+  return changes.length > 0 || config
+    ? { migrate: { changes, config, command: "specgate migrate 1.0" } }
+    : {};
 }
 
 function agentConfigured(projectDir: string): boolean {
@@ -570,7 +578,12 @@ function emitText(
   const toMigrate = changesToMigrate(projectDir);
   if (toMigrate.length > 0)
     out(
-      `\n  ${ui.muted(`·  ${toMigrate.length} open change(s) written for 0.27:`)} specgate migrate 1.0\n`
+      `\n  ${ui.muted(`·  ${toMigrate.length} open change(s) written for 0.x:`)} specgate migrate 1.0\n`
+    );
+  // REQ-567: 0.35's lanes under `roles:` — the harness config does not load until renamed.
+  else if (lanesToMigrate(projectDir))
+    out(
+      `\n  ${ui.muted("·  harness.config.yaml names the lanes roles:, as 0.35 did:")} specgate migrate 1.0\n`
     );
 
   // Proposed, not written yet: not judged, and said, so nobody wonders why
