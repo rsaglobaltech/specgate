@@ -56,6 +56,7 @@ const versions = fs
 
 test("REQ-570: there is a project of every version the compatibility promise covers", () => {
   assert.ok(versions.includes("0.35.0"), "0.35.0, the last version before 1.0");
+  assert.ok(versions.includes("1.0.0"), "1.0.0, the first the promise covers");
 });
 
 for (const version of versions) {
