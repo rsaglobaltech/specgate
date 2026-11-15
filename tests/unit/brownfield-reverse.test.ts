@@ -167,6 +167,28 @@ test("REQ-529 SCN-529a: the agent drafts the orders module", () => {
   assert.equal(sg(dir, "change", "validate", "reverse-orders").status, 0);
 });
 
+test("REQ-561 SCN-561a: a reversed module is a layered change", () => {
+  const { parent, dir } = mavenProject();
+  const cmd = agent(parent, {
+    requirements: [rule("Refuse a shipped cancel"), rule("Record who cancelled")],
+  });
+  const r = sg(dir, "reverse", "orders", "--agent", cmd, "--json");
+  assert.equal(r.status, 0, r.out);
+  const change = path.join(dir, "docs/specs/changes/reverse-orders");
+  for (const f of ["discover.md", "design.md", "tasks.md"]) {
+    assert.ok(fs.existsSync(path.join(change, f)), `${f} written`);
+  }
+  assert.equal(fs.existsSync(path.join(change, "proposal.md")), false);
+  assert.match(fs.readFileSync(path.join(change, "change.yaml"), "utf8"), /^schema: layered$/m);
+  assert.match(fs.readFileSync(path.join(change, "discover.md"), "utf8"), /^- AC-1: /m);
+  const ids: string[] = JSON.parse(r.stdout).reverse.requirements;
+  const tasks = fs.readFileSync(path.join(change, "tasks.md"), "utf8");
+  for (const id of ids) assert.match(tasks, new RegExp(`^- \\[ \\] ${id}:`, "m"));
+  // Its layers pass their own rules: no warning to fix before a review.
+  const v = sg(dir, "change", "validate", "reverse-orders", "--strict", "--json");
+  assert.equal(v.status, 0, v.out);
+});
+
 test("REQ-529: an answer that is not one keeps nothing", () => {
   const { parent, dir } = mavenProject();
   const cmd = agent(parent, { requirements: [{ title: "No source", text: "x", scenarios: [] }] });

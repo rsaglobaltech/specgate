@@ -111,7 +111,8 @@ export class ReleaseNotesCommand extends BaseCommand {
       return {
         id: changeIdOf(folder),
         kind: String(config?.kind || "").toLowerCase(),
-        intent: intentOf(at(`${base}/proposal.md`)),
+        // A 1.0 change's Discover, or a 0.x change's proposal (REQ-542).
+        intent: intentOf(at(`${base}/discover.md`) || at(`${base}/proposal.md`)),
         requirements: deltas.flatMap((d) => deliveredBy(at(d))),
       };
     });

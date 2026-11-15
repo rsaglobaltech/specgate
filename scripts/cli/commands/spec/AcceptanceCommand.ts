@@ -16,6 +16,15 @@ import {
   signed,
   type AcceptanceRequirement,
 } from "../../../../packages/core/src/domain/Acceptance";
+import { acceptanceCriteria } from "../../../../packages/core/src/domain/ChangeLayers";
+
+const readOr = (file: string) => {
+  try {
+    return fs.readFileSync(file, "utf8");
+  } catch {
+    return "";
+  }
+};
 
 const NULL_SHAPE = { acceptance: null };
 
@@ -115,7 +124,12 @@ export class AcceptanceCommand extends BaseCommand {
     if (!existed) {
       fs.writeFileSync(
         file,
-        renderAcceptance(change, changeRequirements(projectDir, change)),
+        renderAcceptance(
+          change,
+          changeRequirements(projectDir, change),
+          // REQ-560: the Discover's criteria, when the change has one.
+          acceptanceCriteria(readOr(path.join(paths(projectDir).change(change), "discover.md")))
+        ),
         "utf8"
       );
     }

@@ -32,7 +32,8 @@ export function changeIdOf(archiveFolder: string): string {
 /** The first paragraph under `## Intent`, on one line. */
 export function intentOf(proposal: string): string {
   const lines = proposal.replace(/\r\n/g, "\n").split("\n");
-  const at = lines.findIndex((l) => /^##\s+Intent\b/i.test(l));
+  // A 1.0 change says why in its Discover's Context; a 0.x one in its proposal's Intent.
+  const at = lines.findIndex((l) => /^##\s+(Intent|Context)\b/i.test(l));
   if (at === -1) return "";
   const para: string[] = [];
   for (const line of lines.slice(at + 1)) {
@@ -41,6 +42,7 @@ export function intentOf(proposal: string): string {
       if (para.length) break;
       continue;
     }
+    if (line.trim().startsWith("<!--")) continue; // a template's hint, not the intent
     para.push(line.trim());
   }
   return para.join(" ");

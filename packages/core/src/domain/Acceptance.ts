@@ -17,7 +17,11 @@ export interface AcceptanceRequirement {
 }
 
 /** The checklist, every item unchecked. */
-export function renderAcceptance(change: string, reqs: readonly AcceptanceRequirement[]): string {
+export function renderAcceptance(
+  change: string,
+  reqs: readonly AcceptanceRequirement[],
+  criteria: ReadonlyArray<{ readonly id: string; readonly text: string }> = []
+): string {
   const out = [
     `# Acceptance — ${change}`,
     "",
@@ -26,6 +30,12 @@ export function renderAcceptance(change: string, reqs: readonly AcceptanceRequir
     "an item is unchecked, and moves each Implemented requirement to Verified.",
     "",
   ];
+  // REQ-560: what the business asked for, criterion by criterion, before the scenarios.
+  if (criteria.length > 0) {
+    out.push("## Acceptance criteria", "");
+    for (const c of criteria) out.push(`- [ ] ${c.id}: ${c.text}`);
+    out.push("");
+  }
   for (const r of reqs) {
     out.push(`## ${r.id}${r.title ? ` — ${r.title}` : ""}`, "");
     for (const s of r.scenarios) {
