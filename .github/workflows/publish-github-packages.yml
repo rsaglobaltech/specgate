@@ -15,6 +15,7 @@ on:
         type: choice
         options:
           - beta
+          - next
           - latest
       dry_run:
         description: 'Run publish in dry-run mode'
@@ -97,6 +98,10 @@ jobs:
         # checked — and a tag push does not trigger ci.yml, which filters on
         # branches.
         run: npm run test:all
+        env:
+          # As ci.yml's coverage step: merging 1.0's coverage overruns the
+          # default heap, and v1.0.0-rc.12's first publish died there.
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Validate npm package contents
         run: npm run pack:dry-run

@@ -126,3 +126,13 @@ test("REQ-572 SCN-572a: the published package is installed and used, under its d
     assert.match(yaml, new RegExp(`\\n      ${out}: \\$\\{\\{ steps\\.`), `publish exposes ${out}`);
   }
 });
+
+test("REQ-571: the publish jobs run the suite with the heap CI gives it, and can publish a candidate by hand", () => {
+  for (const file of ["publish-npm.yml", "publish-github-packages.yml"]) {
+    const yaml = workflow(file);
+    const step = yaml.slice(yaml.indexOf("- name: Run test suite"));
+    const body = step.slice(0, step.indexOf("\n      - name:", 10));
+    assert.match(body, /NODE_OPTIONS: --max-old-space-size=6144/, `${file}: the suite's heap`);
+    assert.match(yaml, /options:\n\s+- beta\n\s+- next\n\s+- latest/, `${file}: next by hand`);
+  }
+});
