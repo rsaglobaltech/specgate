@@ -39,6 +39,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `specgate migrate 1.0` also when only the lanes under `roles:` need it
   (`migrate.config` in `--json`); the migration keeps each change's kind and
   lists the scripts that still read `SPECGATE_ROLE`.
+- **What 1.0 promises, enforced** (REQ-568, REQ-569): `contract/surface.json`
+  freezes the public surface — commands, flags, diagnostic and exit codes, MCP
+  tools, the API, configuration keys, the JSON keys a tool reads and their
+  types — and `npm run contract:check`, on every pull request, fails when any
+  of it is gone within a major. Removal needs a deprecation in a minor first.
+  See docs/compatibility.md.
 - **npm publishes through trusted publishing** (REQ-556): the publish job
   installs npm 11.5.1 or later and npm authenticates with OIDC before the
   `NPM_TOKEN` secret, which is removed after the first trusted publish
