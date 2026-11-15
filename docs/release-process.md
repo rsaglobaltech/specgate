@@ -47,10 +47,10 @@ short alias `sgate` (ADR-0042) and, for old links, `create-spec-driven-app`.
 Semantic versioning. The CLI and the companion packages version independently;
 a CLI release does not force a bump of the VS Code extension.
 
-**Tags are `vX.Y.Z`.** The publish workflows trigger on `v*`, and the two tags
-that predate this document (`0.1.0-beta.1`, `0.1.4`) have no `v` prefix, which
-is why the tag-triggered path had never once fired. Do not create unprefixed
-tags.
+**Tags are `vX.Y.Z`** (the publish workflows trigger on `v*`). From 1.0 the
+public surface is frozen at each release — `npm run contract:write` in the
+release commit, `contract:check --release <version>` before the tag — see
+[What 1.0 promises](compatibility.md).
 
 ## Support policy
 

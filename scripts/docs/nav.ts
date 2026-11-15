@@ -452,6 +452,12 @@ export const NAV: readonly NavSection[] = [
         blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",
       },
       {
+        slug: "compatibility",
+        label: "What 1.0 promises",
+        blurb:
+          "Semantic versioning, enforced: what never breaks within 1.x, how it is checked, deprecation before removal.",
+      },
+      {
         slug: "steering",
         label: "Drift and API contracts",
         blurb:

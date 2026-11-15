@@ -1,15 +1,16 @@
 # Migrating to 1.0
 
-Specgate 1.0 is built on its own line (`next/1.0`) and released as candidates
-(`1.0.0-rc.N`) before it becomes the version `npm install` gives. This page lists
-every change that breaks a 0.27 project, what `specgate migrate 1.0` does about
-each, and what is left to a person.
+Specgate 1.0 is released as candidates (`1.0.0-rc.N`) before it becomes the
+version `npm install` gives. This page lists every change that breaks a 0.x
+project — 0.35, the last of them, or an older one — what `specgate migrate 1.0`
+does about each, and what is left to a person. From 1.0 on, a change that breaks
+a project waits for 2.0.
 
-## Try it, or stay on 0.27
+## Try it, or stay on 0.35
 
 ```bash
 npm i -D @rsaglobaltech/specgate@next   # the latest 1.0 candidate
-npm i -D @rsaglobaltech/specgate@0.27   # stay on 0.27; it keeps getting fixes
+npm i -D @rsaglobaltech/specgate@0.35   # stay on 0.35
 ```
 
 A candidate is published under the dist-tag `next`, never `latest`, and its
@@ -19,8 +20,8 @@ ask for it.
 - **"No matching version found for @rsaglobaltech/specgate@next"** just after a
   candidate is published: npm still has the list of versions from before it.
   Add `--prefer-online`.
-- **A project forja generated** depends on the 0.27 it was made with; inside it
-  `npx specgate` is 0.27. Run the first line above in it — `npm i -D
+- **A project forja generated** depends on the 0.x it was made with; inside it
+  `npx specgate` is that version. Run the first line above in it — `npm i -D
   @rsaglobaltech/specgate@next` — then `npx specgate --version` says the candidate.
 
 ## The migration, in one command
@@ -43,8 +44,11 @@ git diff                         # review, then commit
 - `--json` gives the same report as data: each step, its file actions and what
   is left to you.
 
-`specgate status` names the command, once, while an open change is still
-written for 0.27, and adds `migrate` to `status --json`.
+`specgate status` names the command while an open change is still written for
+0.x, or while `harness.config.yaml` names the lanes `roles:` as 0.35 did; it adds
+`migrate` to `status --json` (`changes`, and `config: true` for the second).
+Until then `config list` reports `harness_config_invalid`, because 1.0 refuses
+that key.
 
 ## What breaks, and what migrate does
 
@@ -55,7 +59,7 @@ written for 0.27, and adds `migrate` to `status --json`.
 `design.md` (architect) and `tasks.md` (developer) under the `layered` schema,
 and no longer write `proposal.md`.
 
-| 0.27 | 1.0 |
+| 0.x | 1.0 |
 | --- | --- |
 | `proposal.md` | `discover.md`, the same text |
 | — | `design.md`, drafted from the proposal's Approach |
@@ -67,18 +71,18 @@ and no longer write `proposal.md`.
 `design.md` with every acceptance criterion it finds listed for the architect,
 keeps `tasks.md` (a draft from a brief without one gets the empty draft list),
 and sets `schema: layered`. Every other line of `change.yaml` — the reserved
-range, an approval, the ticket — is kept.
+range, an approval, the ticket, 0.35's `kind:` — is kept.
 
 **You do:**
 
 - Review each drafted `design.md`: the architect answers each criterion there.
-- Run `specgate change validate <id>`. A 0.27 proposal often names technology
+- Run `specgate change validate <id>`. A 0.x proposal often names technology
   ("a REST endpoint", "Postgres") that the Discover should leave to the design:
   the layer rules warn, and `change validate --strict` fails, until it moves.
-- Without migrating, a 0.27 change still validates: its `proposal.md` is read
+- Without migrating, a 0.x change still validates: its `proposal.md` is read
   as its Discover, and a missing `design.md` is a `layer_no_design` warning
   whose fix names `specgate migrate 1.0`.
-- `change new --schema spec-driven` still writes the 0.27 layout, for a team
+- `change new --schema spec-driven` still writes the 0.x layout, for a team
   that needs one more change in it.
 
 ### A dependency on another repository (ADR-0043)
@@ -87,9 +91,9 @@ Inside a repository, `depends=<repo>:REQ-NNN` is a dependency on another
 repository of the workspace, not an `unknown_dependency`: the workspace
 (`specgate workspace check`) judges it.
 
-**migrate does:** nothing; nothing in a 0.27 project needs rewriting.
+**migrate does:** nothing; nothing in a 0.x project needs rewriting.
 
-**You do:** if a 0.27 project used `:` in a dependency for something else,
+**You do:** if a 0.x project used `:` in a dependency for something else,
 rename it. Then, for a product of several repositories, see
 [Workspace](workspace.md).
 
@@ -100,8 +104,20 @@ rename it. Then, for a product of several repositories, see
 `lanes: [tester, implementer]`, and each one gets `SPECGATE_LANE` instead of
 `SPECGATE_ROLE` (REQ-559).
 
-**migrate does:** renames that one line to `lanes:`; nothing else in the file changes.
-**You do:** an agent script that reads `SPECGATE_ROLE` reads `SPECGATE_LANE`.
+**migrate does:** renames that one line to `lanes:`; nothing else in the file
+changes. Its report lists each tracked file that still reads `SPECGATE_ROLE`.
+**You do:** change those scripts to read `SPECGATE_LANE`.
+
+### What 0.28–0.35 added, as 1.0 reads it
+
+Nothing to migrate here; what changes is what you see:
+
+- `review`, `acceptance` and `release-notes` read a change's Discover: its
+  Context is the "Why", and its acceptance criteria are on the review page and
+  in the acceptance checklist. A 0.x change's proposal still reads as before.
+- `reverse` drafts a module as a layered change.
+- The studio approves a change layer by layer, as whoever holds the role; in a
+  team's studio, as the signed-in person.
 
 ### Configuration versions
 
@@ -134,7 +150,7 @@ people under `roles:` in `harness.config.yaml` (until then a role is open to
 anyone), and that approvals now gate the harness.
 
 **By hand.** `specgate change approve <id> --layer discover|design|tasks`, or the
-studio's Review. To keep 0.27's behaviour: `approvals: { required: never }`.
+studio's Changes. To keep 0.x's behaviour: `approvals: { required: never }`.
 
 ## When a later candidate adds a step
 
@@ -152,4 +168,4 @@ candidate: its sections are the list.
   `spec-driven` (a pack's own schema, say). Migrate leaves those alone; move its
   layers by hand or keep it as it is.
 - **The report is not there:** nothing was migrated — the project had no open
-  0.27 change and no configuration to raise.
+  0.x change, no lanes under `roles:` and no configuration to raise.

@@ -39,6 +39,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `specgate migrate 1.0` also when only the lanes under `roles:` need it
   (`migrate.config` in `--json`); the migration keeps each change's kind and
   lists the scripts that still read `SPECGATE_ROLE`.
+- **What 1.0 promises, enforced** (REQ-568, REQ-569): `contract/surface.json`
+  freezes the public surface — commands, flags, diagnostic and exit codes, MCP
+  tools, the API, configuration keys, the JSON keys a tool reads and their
+  types — and `npm run contract:check`, on every pull request, fails when any
+  of it is gone within a major. Removal needs a deprecation in a minor first.
+  See docs/compatibility.md.
 - **npm publishes through trusted publishing** (REQ-556): the publish job
   installs npm 11.5.1 or later and npm authenticates with OIDC before the
   `NPM_TOKEN` secret, which is removed after the first trusted publish
@@ -53,7 +59,6 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `Deprecated` — its files may be gone — and says so (`requirement_leaving`).
 - **A linked folder no longer stops `check`** (REQ-558): the after-archive copy
   recreates a symlink git lists (a linked `node_modules`) instead of copying it.
-- **A release candidate is never installed by default** (REQ-281): every publish workflow treated a pushed `v*` tag as `latest`, so a `v1.0.0-rc.1` would have become the default `npm install` and the `latest` image. A version with a prerelease part is now published under the dist-tag `next`, and its image is tagged with its version only.
 
 ## [0.35.0] — 2026-11-15
 

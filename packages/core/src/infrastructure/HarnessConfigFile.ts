@@ -40,7 +40,7 @@ export const HARNESS_CONFIG_FILE = "harness.config.yaml";
 export { HarnessSettings } from "../domain/HarnessConfig";
 
 /** Every key this reader understands. Anything else is rejected, not ignored. */
-const KNOWN_KEYS = new Set([
+export const KNOWN_KEYS = new Set([
   "harness_version",
   "agent",
   "agent_profile",
