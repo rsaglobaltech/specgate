@@ -9,6 +9,626 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-11-15
+
+The build 1.0.0-rc.12 was, published as `latest`, and the promise that comes
+with it: within 1.x nothing a user relies on — a command, a flag, a code, an
+exit status, a key of a `--json` answer, a configuration key — is removed or
+changes its type ([compatibility](docs/compatibility.md)). Everything the 1.0
+line added is under 1.0.0-rc.1 to 1.0.0-rc.12 below; coming from 0.35, read
+[migrating to 1.0](docs/migrating-to-1.0.md) and run `specgate migrate 1.0`.
+
+### Changed
+
+- **The promise is enforced from here** (REQ-568, REQ-569, REQ-570):
+  `contract/surface.json` is frozen at 1.0.0, so `contract:check` now fails a
+  pull request that removes from the public surface; `tests/compat/1.0.0/`
+  keeps a project as 1.0.0 writes it, read by every later build next to
+  0.35.0's.
+- **The npm publish says how it authenticated**: `--loglevel verbose` shows
+  whether the trusted publisher (OIDC) or the token was used.
+
+## [1.0.0-rc.12] — 2026-11-15
+
+The 1.0 line with everything 0.28 to 0.35 shipped, made to work together, and
+the promise 1.0 makes kept by the build. A change in three layers — Discover,
+Design, Tasks — each approved by whoever holds its role, now also in the
+studio and in `reverse`, `review`, `acceptance` and `release-notes`; a
+workspace of repositories whose Live is the studio's; the tester and
+implementer sessions under `lanes:`; a 0.35 project moved to 1.0 with
+`specgate migrate 1.0`; and `contract/surface.json`, which no pull request may
+take anything away from within a major version.
+
+### Changed
+
+- **The tester and implementer sessions are `lanes:`** (REQ-532, REQ-559):
+  `lanes: [tester, implementer]` in `harness.config.yaml`, and each session
+  gets `SPECGATE_LANE`. `roles:` names the people who approve each layer
+  (ADR-0045); a `roles:` list — 0.35's spelling — is refused with the fix, and
+  `specgate migrate 1.0` renames it.
+- **The pages for the business read a 1.0 change** (REQ-542, REQ-560,
+  REQ-561): `review` shows the Discover's Context as "Why" and its acceptance
+  criteria; `acceptance` lists each criterion to check before the scenarios;
+  `release-notes` takes each change's why from its Discover, or a 0.x
+  proposal; `reverse` drafts a module as a layered change.
+- **The studio approves layer by layer** (REQ-562): Changes lists a 1.0
+  change's Discover, Design and Tasks with their owners, approvals and quorum,
+  and Approve on each layer whose role you hold; in a team's studio the
+  approval is the signed-in user's, not the machine's git identity.
+- **What a tool reads, answered without guessing** (REQ-563, REQ-564,
+  REQ-565): `config list --json` reports an unreadable `harness.config.yaml`
+  as `harness_config_invalid` instead of empty settings; `change show --json`
+  carries `change.approvals`, whether the change may be built; `status --json`
+  carries `next`, the next step as argv. The agent contract documents these
+  shapes and the workspace's `status`.
+- **The workspace's Live is the studio's** (REQ-566): in a workspace
+  repository, the studio's Live shows each repository's harness and cost and
+  each story's parts; each repository opens its own Live, read only. The
+  separate live pages are gone; their addresses and data are unchanged.
+- **From 0.35 to 1.0 in one command** (REQ-567): `status` names
+  `specgate migrate 1.0` also when only the lanes under `roles:` need it
+  (`migrate.config` in `--json`); the migration keeps each change's kind and
+  lists the scripts that still read `SPECGATE_ROLE`.
+- **What 1.0 promises, enforced** (REQ-568, REQ-569): `contract/surface.json`
+  freezes the public surface — commands, flags, diagnostic and exit codes, MCP
+  tools, the API, configuration keys, the JSON keys a tool reads and their
+  types — and `npm run contract:check`, on every pull request, fails when any
+  of it is gone within a major. Removal needs a deprecation in a minor first.
+  See docs/compatibility.md.
+- **Every release's project, read by every build; every release, installed**
+  (REQ-570, REQ-571, REQ-572): a project 0.35.0 wrote is kept under
+  `tests/compat/` and read, migrated and checked by each build; the publish job
+  checks the version against the frozen surface before publishing; a job after
+  it installs the published version from npm, under its dist-tag, and uses it.
+- **npm publishes through trusted publishing** (REQ-556): the publish job
+  installs npm 11.5.1 or later and npm authenticates with OIDC before the
+  `NPM_TOKEN` secret, which is removed after the first trusted publish
+  (docs/release-process.md, "Trusted publishing").
+
+### Fixed
+
+- **`check` and `validate` agree on a requirement an open change removes**
+  (REQ-557, #432): `check` judges the project after archive, where it is gone;
+  `validate` asked for its feature file and test until the archive, so no tree
+  passed both and the stop hook failed every turn. `validate` now judges it as
+  `Deprecated` — its files may be gone — and says so (`requirement_leaving`).
+- **A linked folder no longer stops `check`** (REQ-558): the after-archive copy
+  recreates a symlink git lists (a linked `node_modules`) instead of copying it.
+
+## [0.35.0] — 2026-11-15
+
+Both ends of the lifecycle, around the gate. Before the first requirement:
+`specgate reverse` drafts requirements from code that already runs, and
+`check --baseline` turns the gate on without a red build. In the middle: the
+harness as a tester and an implementer, a cost cap per requirement, the agent's
+own instruction files protected, ADRs, decision rights and the stack file, a
+glossary, numbered business rules and generated diagrams, and the loop as Agent
+Skills. After the last: `specgate review` for the business, the studio served
+to a team behind its sign-in proxy, release notes, an acceptance a person
+signs, and a user guide per actor. And `sgate`, a shorter way to type it.
+
+### Added
+
+- **A tester and an implementer** (REQ-532, REQ-533):
+  `roles: [tester, implementer]` in `harness.config.yaml` runs each attempt as two sessions:
+  the tester writes the failing tests, then the implementer makes them pass.
+  Each gets `SPECGATE_ROLE`. A tester's production code and an implementer's
+  test changes are put back and reported as `lane_crossed`.
+- **A budget per requirement** (REQ-535): `max_cost_usd` stops starting
+  sessions for a requirement once the `cost` its sessions reported reaches the
+  limit; a requirement that then fails reports `budget_exceeded`. An agent that
+  reports no cost is warned about once, as `cost_unknown`.
+- **`specgate reverse`** (REQ-528, REQ-529, REQ-530): `reverse --modules` lists the
+  modules of an existing system (folders with their own build manifest at the
+  first or second level, Go packages, folders under `src/` or `apps/`) with stack and file count, without
+  an agent. `reverse <module>` has your agent read one module and writes the
+  change `reverse-<module>`: every requirement `Draft`, its trace citing
+  `source=` the lines it was read from, behaviour the agent marks as suspect
+  written to `questions.md` instead. `validate` warns `source_missing` when a
+  cited file is gone.
+- **A gate baseline** (REQ-531): `specgate check --baseline` records today's
+  traceability findings in `docs/specs/gate-baseline.json`. After it, `check`
+  and `validate` fail only on new findings, count the `baselined` ones, and name
+  each `baseline_fixed` one so the file shrinks.
+- **Agent Skills** (REQ-549, REQ-550): `specgate agents init --format skills`
+  writes each step of the loop as a `SKILL.md` folder into `.agents/skills/` and
+  the skills folder of each named (or present) tool — Claude Code, Cursor,
+  Gemini CLI. A skill changed by hand is kept (`skill_kept`). The Claude Code
+  plugin carries the same skills, plus an Agent Plugins `plugin.json` (to the
+  1.0.0 schema) and a Tessl `.tessl-plugin/plugin.json` (`rsaglobaltech/specgate`)
+  at the package's version; `npm run plugin:sync` regenerates them, and a test
+  fails while they are stale or break their format's published rules.
+- **Architecture decisions** (REQ-546): `specgate adr new "<title>"` writes the
+  next numbered ADR (Proposed, dated, Context/Decision/Consequences);
+  `specgate adr supersede <NNNN> "<title>"` writes its replacement and changes
+  only the old one's status, to `Superseded by NNNN`; `specgate adr list`.
+- **Decision rights** (REQ-547): `docs/specs/decision-rights.md` marks
+  `dependency`, `migration` and `public-api` as `agent` or `ask`. The harness
+  puts the table in the prompt, and an attempt that adds a dependency, a
+  migration or an OpenAPI operation kept for a person fails with
+  `decision_right_exceeded`.
+- **`specgate stack`** (REQ-548): writes `docs/specs/stack.md`, the layers with
+  their technology and evidence and the build/test/end-to-end commands; `check`
+  and the harness run its test command when `test_cmd` is unset. A corrected
+  command is kept; a rerun on an unchanged project changes nothing.
+- **Review with the business** (REQ-551, REQ-552): `specgate review <change>`
+  writes the change as one self-contained HTML page (intent, requirements,
+  scenarios as plain steps, questions, assumptions, date and commit; nothing
+  loaded from outside it, every value escaped). Journeys: a scenario tagged
+  `@JRN-NNN` with the `@REQ-NNN` it crosses is listed by `status --json`, not
+  counted as those requirements' own scenario, and under `--strict` owes a test
+  once all of them are delivered (`journey_untested`,
+  `journey_requirement_unknown`).
+- **Handing over** (REQ-542 … REQ-545):
+  `specgate propose --kind bug|enhancement` records a change's kind (`--from-ticket` takes it from the
+  Jira issue type); `specgate release-notes <from>..<to>` lists the changes
+  archived between two refs as Enhancements, Fixes and other changes, each with
+  its intent and requirements; `specgate acceptance <change>` writes a
+  checklist per scenario, and `--sign "<name>"` — refused while an item is open
+  — records the signature and moves the change's Implemented requirements to
+  Verified; `specgate guide` writes `docs/guide/<actor>.md` from each actor's
+  delivered requirements.
+- **Domain language** (REQ-538 … REQ-541): `init` and `adopt` write an empty
+  `docs/specs/glossary.md`; `validate` reports `glossary_term_forbidden` for a
+  word the glossary says to avoid (a warning, an error under `--strict`).
+  Business rules numbered `BR-NNN` in a requirement's `Rules:` list:
+  `rule_duplicate`, and under `--strict` `rule_untested` for a delivered
+  requirement's rule no test names. `check` generates `docs/specs/model.md`
+  (a Mermaid ER diagram from `aggregates.md` and `model.yaml`) and
+  `docs/specs/actors.md` (from the brief's actors and each `actor=`);
+  `validate` reports `model_stale`, `actors_stale` and warns `actor_unknown`.
+
+- **The studio for a team** (REQ-553, REQ-554): `specgate studio --team` runs
+  behind the team's sign-in proxy, which names the user in a header
+  (`SPECGATE_PROXY_SECRET` makes the studio answer the proxy only). Roles come
+  from `studio.team.yaml`: a reader is refused every write (`role_forbidden`),
+  an editor's answers, approvals, notes and brief edits are committed as that
+  user on `studio/<user>/<change>` and opened as a pull request, never on the
+  base branch, and running builds or agents is an admin's.
+
+- **`sgate`** (REQ-555): the package also installs `sgate`, a short alias of
+  `specgate` (ADR-0042); `specgate completion` completes both. Examples and
+  messages keep `specgate`.
+
+### Changed
+
+- **The agent's own instructions are protected** (REQ-534): `CLAUDE.md`,
+  `.claude/**`, `.cursor/**`, `.github/**` and `.mcp.json` join the harness's
+  default protected paths. For these paths and `AGENTS.md` and `AI_RULES.md`,
+  creating the file counts as changing it. A project with `protected_paths:` keeps its own list.
+  **Check before upgrading:** an attempt whose agent edits one of these files
+  now fails with `agent_touched_protected_path`. If your agent is meant to edit
+  one — a workflow under `.github/`, say — name it in `allow_paths:` in
+  `harness.config.yaml`.
+
+### Fixed
+
+- **Upgrade hints named the old package.** Pack and lockfile errors said
+  `npm install -g create-spec-driven-app@latest`, the deprecated package; they
+  name `@rsaglobaltech/specgate`. The VS Code extension's runner defaulted to
+  the old package too.
+- **`specgate completion fish`** wrote every `specgate` line twice.
+
+## [0.34.0] — 2026-11-12
+
+What specgate-studio needed as JSON — a draft's review notes, the brief as a
+form, a client's text proposed as a form, a dry run of `adopt` that lists what
+it writes, the matrix one row per scenario, a filter by capability, every stage
+of the gate and the last one run, where each setting lives and the keys to set
+profiles, quality checks and the ALM, line coverage and measured cost — and
+control of the harness from a tool: build on a dirty tree, stop after the
+requirement in progress, an estimate per requirement, a question's id while the
+run goes on, and a live JSON stream. And a faster gate: `check --affected` runs
+the tests of what changed, a test that passed on the same code is not run
+again, the architecture check and the tests run side by side, every stage says
+how long it took, and `validate`, `status` and `matrix` grow linearly. And
+`specgate agent ask`: an agent's change to the specification as a plan with
+its diff, written only when a person applies it.
+
+### Added
+
+- **Build on a dirty tree, when asked** (REQ-490):
+  `specgate harness run --allow-dirty` cuts every branch from the last
+  commit and leaves the uncommitted and untracked files as they are. The JSON
+  result says so under `dirty`, with `leftOut` listing them. Refused with
+  `--chain`, which merges into that working copy; without the flag the refusal
+  now names it.
+- **Stop after the requirement in progress** (REQ-491, REQ-492):
+  `specgate harness stop --after-current [--json]` and `harnessStop(dir)` in
+  the API. The run finishes its requirement and starts no other; its JSON
+  result has `stopped` with `by` (`request` or `budget`), the reason and
+  `notAttempted`. With no run working there, nothing is requested
+  (`harness_not_running`). Nothing is killed, on any platform.
+- **An estimate per requirement** (REQ-493): `specgate plan --json` has
+  `estimates`, one per pending requirement — `time` in milliseconds and, when
+  a profile declares `cost_per_run_hint`, `cost` — each with its `basis`
+  (`history`, `size`, `average` or `none`) and the `samples` it rests on.
+- **A question gets its id while the run goes on** (REQ-494, REQ-495): when the
+  agent runs `specgate ask`, the harness writes the question into the project
+  and commits it at once, and a `question` event with its `id` follows in the
+  requirement's events file. The requirement ends as `question`; its result's
+  `waitingForAnswer` names the question and the command that answers it. The
+  run does not wait for the answer: it is reviewed before the specification
+  says it, and the requirement runs again after that.
+- **A live JSON stream** (REQ-496, REQ-497): `specgate harness run --format jsonl`
+  writes one JSON event per line on stdout — `run-start`, attempts, gate
+  stages, `agent-start`/`agent-end`, the agent's `output` as it comes, the
+  adapter's steps and `usage`, the question with its id, each `result`, and
+  last `run-end` with the `--format json` document — also from parallel
+  workers, each line whole. The schema is `HarnessStreamEvent` in
+  `types/api.d.ts` and in [Drive the harness from a tool](docs/harness-control.md).
+  The events files are unchanged.
+- **A draft's review notes as JSON** (REQ-484): `specgate change show <id> --json`
+  and the API's new `change(dir, id)` give `change.review` — each note of
+  `review.md` with its id (`N1`, `N2`…), date, text, requirement, `state`
+  (`open` or `addressed`), and its line; once addressed, the date and what
+  changed, each requirement's delta file, line, and text before and after.
+  `review.md` gains a `Status` column; a table without it reads as open.
+- **Drafting again hands the open notes to the agent** (REQ-485):
+  `specgate propose --from-brief <module> --agent <cmd>` puts every open note
+  in the agent's prompt, marks addressed those whose requirement the agent
+  changed, writes what changed below the table, and says it under
+  `draft.notes`: `given`, `addressed`, `open`.
+- **The brief as a form** (REQ-486, REQ-487):
+  `specgate propose --from-brief --form --json` and the API's `briefForm(dir)`
+  give the front matter's product, surfaces, actors and modules and each
+  module's prose, rules, examples and questions, every field with its line.
+  `--form <file>` (or `--form -`) and the API's `writeBriefForm(dir, form)`
+  write that form back, rewriting only the fields and card lists that changed:
+  CRLF stays CRLF, the text after the last section and every other section
+  stay byte for byte, and a form written back unchanged leaves the file
+  identical. The old studio's save uses the same code.
+- **A client's text proposed as a form** (REQ-488):
+  `specgate propose --from-brief --brief <file> --agent <cmd> --json` answers
+  what the agent proposed under `form`.
+- **The matrix, one row per scenario** (REQ-498): `specgate matrix --json` and
+  the API's `matrix(dir)` list `matrix.scenarios`, open changes included, each
+  row with `requirement`, `scenario`, `feature`, `tests`, `code`, `status`,
+  `gaps` (`feature`, `test`, `code`: the links it does not have to a file that
+  exists) and `waiting` (the open question that blocks it, with its change).
+  `matrix.rows` stays the count.
+- **The project's line coverage** (REQ-499): `report --format json` and the
+  new API function `report(dir)` give `coverage.lines` (`percent`, `covered`,
+  `total`, `tool`, `file`, `measuredAt`), read from the coverage report a
+  quality check names, else from the newest LCOV, istanbul summary, Cobertura
+  or JaCoCo report in its standard place. With none it is `null` with
+  `coverage_not_measured` and how to have the stack write one — never 0.
+- **A capability filter** (REQ-500 … REQ-502): each requirement of
+  `status --json` and `status(dir)` has its `capability`, and
+  `specgate report --capability <name>` and
+  `specgate harness report --capability <name>` keep only that capability's
+  requirements; one the project does not have exits 2 with
+  `capability_unknown`.
+- **Every stage of the gate** (REQ-503): every `check --json` answer, passed or
+  failed, lists `stages` — `ids`, `changes`, `validate`, `architecture`,
+  `tests` and one `quality` stage per check — each with its `command`, its
+  `result` (`passed`, `failed`, `skipped`, `not run`) and its `findings`;
+  `validate` carries validate's own findings. A failed gate keeps
+  `check: null`.
+- **The last gate result** (REQ-504): each `check` keeps its result in the
+  repository's git folder, `git status` untouched, and
+  `specgate check --last --json` and the API's `lastCheck(dir)` read it back:
+  when it ran, the commit and branch, whether the tree was dirty, the stages
+  and findings. With none, `last_check_none` gives the fix `specgate check`.
+- **Where each setting lives** (REQ-505, REQ-506): `config get`, `set` and
+  `list` with `--json` add `files`, the file of each key, and
+  `specgate config keys --json` lists every key with its description, values,
+  pattern, default, current value and file.
+- **`config set` for profiles, quality checks and ALM** (REQ-507, REQ-508):
+  `profiles.<name>.<field>` (agent, advisory, cost hint, prices per token) in
+  `.harness/profiles.yaml`, `agent_profile`, `quality`, `diff_coverage`,
+  `mutation_score` and `checks.<name>.<field>` in `harness.config.yaml`, and
+  `alm.<key>` and `alm.pr.<key>` in `alm.config.yaml`, each edited line by
+  line, comments kept, and refused with `config_value_invalid` before the file
+  changes when the file's reader would refuse it. An `_env` key takes only a
+  variable's name; no key stores a token.
+- **Measured cost** (REQ-509): the run ledger records the tokens each agent
+  step's stream reported, under the profile that ran it — `--profile` and
+  `agent_profile` now record the profile's name — and
+  `harness report --json` gives `costByProfile`, each with its tokens, the
+  `estimated` and `measured` cost and the `basis`, priced by
+  `price_per_input_token` and `price_per_output_token` in the profile, and
+  `measuredCost`.
+- **`check --affected`: only the tests of what changed** (REQ-510 … REQ-513):
+  `specgate check --affected [--base <ref>]` compares with the base branch,
+  uncommitted and untracked files included, and runs the tests the matrix
+  links to each requirement whose spec section, feature, code or test
+  changed, the changed tests, and the JavaScript and TypeScript tests whose
+  relative imports reach a changed file. They go to the test command as
+  `{files}`, each quoted for the platform's shell, and `{req}` is the one
+  requirement touched; `test_cmd_affected:` in `harness.config.yaml` is the
+  command `--affected` and `apply` run, so `test_cmd` stays the whole suite.
+  The whole suite runs instead, with the reason, when `package.json`, a
+  lockfile, `harness.config.yaml`, a `tsconfig`, a build or runner
+  configuration or a glob under `full_on:` changed, when a changed file is
+  linked to nothing, when nothing changed, with no base, or when the change
+  has no test; a command with neither placeholder runs whole and
+  `affected_needs_files` says how to add `{files}`. Every `check --json`
+  answer has `selection`: `mode` (`affected` or `full`), `reason`, `base`,
+  `changed`, `requirements`, `tests`, `cached` and `command`.
+- **The whole suite where it must** (REQ-514): `check` with no flag runs the
+  whole suite, as before; `check --ci` always does, ignores `--affected`
+  (`affected_ignored_ci`) and never uses the cache.
+- **`apply` runs the requirement's own tests** (REQ-515): `{files}` holds the
+  test files the matrix links to the requirement delivered, and
+  `test_cmd_affected` is used when set.
+- **A test that passed on the same code is not run again** (REQ-516): under
+  `check --affected` with `{files}`, each test file that passed is kept in the
+  git folder beside the last result, with the hashes of its content, the
+  files its imports reach and the code the matrix links to its requirements,
+  under the test command, the lockfiles and the files every test depends on.
+  A test in another language, with an import that cannot be followed, or that
+  reaches the file system, a process or the network is re-run on any source
+  change. `--no-cache` runs everything selected; a failing run forgets the
+  files it ran.
+- **The architecture check and the tests side by side** (REQ-518): after
+  `validate --strict`, which runs alone and fails fast, `arch_cmd` and the
+  tests run at the same time, each with its own output, and both are reported
+  before the gate decides. `gate_parallel: false` runs them one after the
+  other.
+- **How long each stage took** (REQ-519): every entry of `stages` in
+  `check --json`, and of the last result kept, has `ms` (`null` when the stage
+  did not run); on a terminal each stage's line shows its time.
+- **`validate`, `status` and `matrix` grow linearly** (REQ-517): linking a
+  requirement by mention scanned every test and source file once per
+  requirement, and the check for placeholder obligations read the whole spec
+  once per requirement. On a generated project of 1,000 requirements
+  `validate --strict` took 9.9 s and now takes 1.5 s; from 500 to 2,000
+  requirements each of the three commands grows about ×3 for ×4 the
+  requirements, which a benchmark in the suite now holds.
+- **`config set` for the fast gate**: `test_cmd_affected` (refused without
+  `{files}` or `{req}`), `full_on` and `gate_parallel`, listed by
+  `config keys`.
+- **Ask your agent, see the plan, then apply it** (REQ-520 … REQ-527):
+  `specgate agent ask "<request>" --json` runs the configured agent on a
+  scratch copy of the project and answers a plan — `files`, each with `path`,
+  `change` (`modify`, `add`, `delete`), `why` and its `diff`; the `then`
+  checks; what it `read`; `usage` in tokens and cost — and writes nothing.
+  `@REQ-NNN` and `@path` in the request, `--req` and `--file`, become the
+  agent's context. Only `spec.md`, `docs/specs/**` and `features/**` go into
+  a plan; other edits are reported as `edit_refused`. Plans are kept in the
+  git folder under `specgate/plans/<id>/` with each file's base hash;
+  `specgate agent apply <id>` writes them byte for byte when nothing changed
+  since (`plan_stale` otherwise), runs their specgate checks and never
+  commits. `specgate agent discard <id>` and `specgate agent plans` manage
+  them. `agent_not_set` names the fix
+  `specgate agents init --tool claude`; `agent_failed` carries the agent's
+  standard error. In the API: `agentAsk`, `agentApply`, `agentDiscard` and
+  `agentPlans`; `API_VERSION` stays 1.0.0. See `docs/agent-ask.md`.
+
+### Fixed
+
+- **A brief outside the project writes nothing inside it** (REQ-488): it left
+  `docs/specs/BRIEF-SETUP.md` behind when the proposed front matter had
+  problems, and could move a root brief into it. Claude Code is given the
+  brief's folder with `--add-dir`, as it edits only where it runs.
+- **The studio's brief save keeps CRLF and the end of the file** (REQ-487): it
+  turned CRLF into LF, trimmed the end of the file, and collapsed blank lines
+  in sections that were not the form's.
+- **`adopt --dry-run` lists what `adopt --yes` writes** (REQ-489): README.md,
+  .gitattributes, harness.config.yaml and each agent file were missing, and
+  the CI gate was listed even when one was already there.
+
+## [0.33.2] — 2026-11-11
+
+Each question says where it was asked and stays in sight until the spec is
+confirmed; a scenario's title that names a requirement no longer declares it.
+
+### Added
+
+- **Where each question was asked** (REQ-481): every question of
+  `specgate questions --json` and the API's `questions(dir)` carries `asked` —
+  `brief` when its change was opened from a brief that asks it, `build` when
+  `specgate ask` added it while a requirement was built (recorded in an
+  `Asked` column of its row), `draft` otherwise.
+- **Answered questions waiting to be confirmed** (REQ-482):
+  `questions --json` and the API list them as `answered`, each with its
+  answer, until `specgate answer <Q> --reviewed` confirms the spec says it.
+  specgate-studio's Questions view keeps them in sight with "The spec says it".
+
+### Fixed
+
+- **A requirement id in a scenario heading declares nothing** (REQ-483): the
+  gate read every `REQ-…` in any heading from `##` to `####` as a declared
+  requirement, so "#### Scenario: SCN-252 — Apply on REQ-030 in the browser"
+  failed `validate --strict` with TDD-3:
+  `Requirement REQ-030 found in spec.md but has no row in traceability.md`.
+  Headings that start with Scenario, Escenario, Example or Ejemplo are now
+  skipped; requirement headings and table rows are read as before.
+
+## [0.33.1] — 2026-11-10
+
+Each open question carries its options; a threshold with no value is flagged.
+
+### Added
+
+- **`options` in every open question** of `specgate questions --json` and the
+  API's `questions(dir)` (REQ-479): the options its author listed in "Options
+  seen", so a tool — specgate-studio's editor and Questions — shows them
+  without reading `questions.md` itself.
+
+### Fixed
+
+- **A threshold named without its value is flagged** (REQ-480): the brief check
+  reported "fast" or "scalable" with no number, but not "free above some
+  amount". `B6_unmeasured` now also flags "some amount", "a certain number",
+  "cierto importe", "einen bestimmten Betrag".
+
+## [0.33.0] — 2026-11-10
+
+Onboarding an existing project without an agent finishing it: `adopt` saves
+the test command and agent it detects and says what is ready; the areas it
+finds stay out of the matrix, and folders named by a kind of code are not
+areas (#412); one short Start page; every open code-scanning alert closed.
+
+### Security
+
+- **Every open code-scanning alert closed** (13, CodeQL): a requirement id
+  typed by a person is matched literally, never built into a regular
+  expression (`answer`, `ask`); Markdown table cells escape the backslash as
+  well as the pipe, so text ending in `\` cannot break a questions or review
+  table; shell arguments specgate prints or passes on are quoted for the shell
+  that reads them, Windows' backslash rule included; the spec parser's slug
+  stays linear on hostile input; the studio no longer sends an exception's
+  text to the page — the terminal running it says why. One helper for each
+  escape (`scripts/lib/escape.ts`) instead of hand-written ones.
+
+### Fixed
+
+- **Folders named by a kind of code are not areas** (#412, REQ-476 … REQ-478,
+  ADR-0041): `onboard` and `adopt` no longer read `components`, `hooks`,
+  `utils`… as areas of the product. A directory where at least two children,
+  and at least half, are named by a kind of code (the layers included) proposes
+  no area, and `onboard` says the code is organised by kind; in a mixed split
+  the generic kinds are left out (`billing`, `invoices`, `utils` → Billing,
+  Invoices), while a layer name alone — serilog's `Core` — stays an area. Once
+  adopted, `onboard` points at `specgate new "<a behaviour you rely on>"`, never
+  `propose describe-<folder>`. The baseline REQ-001 no longer carries
+  `npm test` and "existing codebase" as if they were paths, and `harness run`
+  leaves it out unless named with `--req`.
+- **Onboarding an existing project no longer needs an agent to finish it**
+  (REQ-470 … REQ-475, reported by testers):
+  - `adopt` saves the test command it detects as `test_cmd` and, when an
+    agent's CLI is on the PATH, the agent Build runs — asking first at a
+    terminal, applying with `--yes` — and ends with one readiness list: tests,
+    agent, architecture, CI gate, each set or with the command that sets it.
+    Before, `check` passed after adoption without running a single test.
+  - The areas `adopt` reads off the code go to `docs/specs/adoption.md` with
+    their folders and tests, not into spec.md and the matrix: no more rows like
+    `REQ-002 Auth · TBD` that nobody could tell the purpose of. A project
+    adopted earlier gets `proposal_unspecified` in `status` and `doctor` for
+    each one, with how to fix it.
+  - `agents init --tool claude` also sets the agent Build runs, when none is.
+  - The studio's next step on a folder with code is "Adopt this folder", not
+    "Create the project"; once adopted, "Specify a behaviour you rely on", as
+    `status` says.
+  - One short Start page with two paths of six steps; getting-started and
+    quickstart point to it.
+
+## [0.32.1] — 2026-11-10
+
+The container image again: 0.32.0's failed to build.
+
+### Fixed
+
+- **The CLI image builds**: its build stage copies `types/`, which
+  `@rsaglobaltech/specgate/api` compiles against — 0.32.0's image failed on
+  it, so `ghcr.io/rsaglobaltech/specgate:0.32.0` does not exist; use 0.32.1.
+  It also copies `vendor/`, so the image's `studio --static` has its bundled
+  Mermaid again. A test checks that every source folder the npm package ships
+  is copied.
+
+## [0.32.0] — 2026-11-10
+
+A project read from Node in-process: `@rsaglobaltech/specgate/api` answers
+`status`, `questions` and `matrix` without starting `specgate`, and after
+`apply` the next step stays in the change being built.
+
+### Added
+
+- **`@rsaglobaltech/specgate/api`: a project read from Node, in-process**
+  (REQ-466 … REQ-469): `status(dir)`, `questions(dir)` and `matrix(dir)`
+  answer exactly what `status --json`, `questions --json` and
+  `matrix --json --dry-run` print, without starting `specgate` for each read.
+  They write no file of the project and start no process but `git ls-files`;
+  a folder that is not a project is refused with `not_a_project`. The types
+  ship with the package and `API_VERSION` is `1.0.0`. The package now has
+  `exports`: `./api`, `./package.json`, and every path that resolved before.
+
+### Fixed
+
+- **After `apply`, Next stays in the change** (REQ-465): the next step is the
+  next requirement of the open change just delivered for, and the project's
+  queue only once that change has none left to take. Before, applying REQ-016
+  of a change with REQ-014 still to do pointed at the project's REQ-000.
+- **A test file named `test_….py` is recognised in linear time**: the
+  regular expression that told it was quadratic on a name of many `test_`
+  (CodeQL `js/polynomial-redos`, raised once the package became a library).
+
+## [0.31.0] — 2026-11-09
+
+A project checked by CI from its first push: `init` and `adopt` install the
+full spec gate, which validates more by default and says, step by step, what
+it checks and how to remove it.
+
+### Added
+
+- **A new project is checked by CI from its first push** (REQ-455):
+  `specgate init` and `specgate adopt` install the spec gate `ci init` writes —
+  for the CI the repository shows, GitHub when none — instead of `specs.yml`,
+  with the specgate version pinned. `--no-ci` leaves it out; a CI file that
+  exists is never overwritten.
+- **The gate validates more by default** (REQ-458): on Ubuntu, macOS and
+  Windows; the requirement ids against the base branch; the quality checks
+  once `harness.config.yaml` configures them; the pack drift; the pending-work
+  plan. **Every step says in the YAML what it checks and what to delete to
+  remove it** (REQ-457), and **it is green on a project just created**: a tool
+  not configured yet is said, with how to configure it (REQ-456).
+- **`specgate ci status`** (REQ-460): what the project's CI checks, each
+  validation present or missing, and how to add it (`--json`).
+- **`ci init --minimal`** (REQ-459): one job on Ubuntu running `check`.
+- **`ci init --replace`** (REQ-461): an old `specs.yml` is replaced only after
+  `ci init` shows what the gate adds.
+- **A `desktop` project type** (REQ-464), for Tauri or Electron apps: its
+  stack rules (the window, a sidecar, signed installers, auto-update) in
+  AGENTS.md.
+
+### Changed
+
+- **The README names only what `init` wrote** (REQ-462): the documents the
+  architecture profile keeps, and `specgate check` as the command — no
+  `AI_RULES.md`, no `validate_specs.sh`.
+- **No container scaffold for an app that runs on a device** (REQ-463): a
+  `mobile` or `desktop` project gets no `.env.*`, docker-compose or
+  devcontainer, and a `runtime-environments.md` for an app on the person's
+  device.
+- **The gate runs `check` on a project with no tests yet**, not
+  `validate --strict` alone: the same strict specification, plus the line that
+  says how to set the test command.
+
+## [0.30.0] — 2026-11-09
+
+A change from a Jira ticket, from the studio as from the terminal: reviewed
+first, on the branch agentkit made, its publishing said and confirmed.
+
+### Added
+
+- **A ticket reviewed in the studio before its change is opened**
+  (REQ-446): Changes → New change → **Review the ticket** runs
+  `propose --from-ticket <KEY> --check --json` and shows whether it is ready,
+  each finding with its fix, and the capability; when the epic names none,
+  the project's capabilities are offered. A ticket that is not ready is not
+  opened.
+- **The ticket's branch, known before the change is opened** (REQ-447):
+  Home names the ticket and the team when the branch does
+  (`feature/parking/KAN-13`); on that branch the change opens with
+  `--no-branch`, elsewhere the studio names the branch it will create. A
+  change opened from a ticket shows its key in Changes, linked to Jira.
+- **Publishing a ticket's change, said and confirmed** (REQ-448): before
+  opening, the studio names the folder it commits — and nothing else — and
+  the branch it pushes; it opens only once confirmed. **Don't push yet**
+  adds `--no-push`.
+- **A clone registers the merge drivers alone** (REQ-172):
+  `specgate harness init --merge-drivers` registers them in the clone's git
+  config and writes no other file; `harness init` also wrote
+  `harness.config.yaml` and `.harness/`, leaving a developer's tree dirty.
+- **The check says where the change will go** (REQ-171):
+  `propose --from-ticket --check --json` reports `capability`, from
+  `--capability` or the epic's mapping, and warns `ticket_no_capability`
+  with the capabilities that exist. A tool that creates the branch learns it
+  before the branch exists, not when opening the change fails.
+- **A ticket's branch may name its team** (REQ-170): `feature/<team>/KAN-13`,
+  the way agentkit names it, is KAN-13's branch for `check` and
+  `propose --from-ticket`, like `feature/KAN-13-…`.
+
+### Changed
+
+- **`--no-branch` on the ticket's branch publishes the reservation**
+  (REQ-165): when another tool already made a branch whose name carries the
+  key, `propose --from-ticket --no-branch` commits the change's folder, and
+  only it, and pushes it, as when Specgate creates the branch. On any other
+  branch it still commits nothing.
+
 ## [0.29.1] — 2026-11-09
 
 The CLI image for 0.29: the npm package of 0.29.0 was complete; its Docker image was not built.
@@ -82,9 +702,171 @@ Node.js 24 where Specgate runs once, after the October 2026 Node.js security rel
 
 - **npm audit and the licence check pass again** (#379): zod, fast-uri and qs updated; argparse 3's PSF-2.0 licence allowed and explained in docs/supply-chain.md.
 
+## [1.0.0-rc.11] — 2026-10-30
+
+After the ninth microservices run of truck-flote, where all nine requirements were built and served or called the contracts' operations: the workspace check judges that code as the harness does.
+
+### Fixed
+
+- **The workspace check judges the code as the harness does (REQ-419).** In the ninth microservices run of truck-flote, tracking served `GET /fleet/positions` and `GET /drivers/{driverId}/driving-time` as Spring maps them — a prefix on the class, the rest on the method — and the harness passed them (REQ-418); `workspace check` still warned `contract_operation_not_found` for both, and for the contracts repository, which serves none of its own operations (MS9-1). It now counts a route in pieces and skips a member whose role is `contracts`; a missing segment is still reported.
+
+## [1.0.0-rc.10] — 2026-10-30
+
+After the eighth microservices run of truck-flote: a part cites the contracts' operation exactly as the story lists it, or approval refuses it; the code serves or calls what it cites, or the harness does not pass it; a rule citing a law names its source; an agent that wrote nothing once is retried.
+
+### Fixed
+
+- **A part cites the operation as the story lists it (REQ-415).** In the eighth microservices run of truck-flote, web cited `api=contracts:contracts/tracking.yaml#…` for the contract `tracking-api.yaml`, tracking cited no operation, and both were approved and built with a warning each (MS8-2). The story's context now lists, under each requirement of the contracts, the `depends=… api=…` line to copy with the operation's method and path; `change validate` fails with `layer_api_unresolved` for a citation of the contracts repository that resolves to none of its operations, listing those that exist, and `layer_no_operation_cited` is an error once the contracts' requirement cites an operation (REQ-406). `change approve` refuses both.
+- **A rule citing a law names its source (REQ-416).** The driving-time rule cited the EU regulation and named no source, and `change approve` refused it with a generic fix (MS8-1). The specs rules now ask for a `Source:` line, with an example, and `approve_blocked` gives each blocker's own fix, prefixed with its requirement: `REQ-004: Add a "Source:" line…`.
+- **An empty attempt after a written one is retried once (REQ-417).** Tracking's REQ-004 wrote nothing after REQ-002 and REQ-003 had passed in the same run, and was not retried (MS8-3). An agent that wrote earlier in the run can write, so an empty attempt is now retried once, told it wrote nothing; an agent that never wrote still stops at once (REQ-264).
+- **The code serves or calls the operation it cites (REQ-418).** In runs 7 and 8 tracking passed every test serving no route of the contract and web called none, and `contract_operation_not_found` stayed a warning (MS7-1). A harness attempt whose requirement cites another repository's operation now fails, after a green gate, while no source file has its path — whole, or in pieces as a class's prefix and a method's rest — and the next attempt is told the method and path.
+
+## [1.0.0-rc.9] — 2026-10-30
+
+After the seventh microservices run of truck-flote: a part cites the contract's operation, its agent reads it and its code is checked against it, and the workspace's live view opens each repository's own; Node.js 24 for the image and the single jobs.
+
+### Changed
+
+- **Node.js 24 for the image and the single jobs.** The October 21, 2026 Node.js security release fixed ten CVEs, among them a remote code execution in the bundled Brotli decoder. The CLI image is now built on `node:24-alpine`, and lint, packaging, publishing, the site, E2E and the security jobs run on Node 24; the test matrix keeps Node 22 and 24, the floor `package.json` still declares (`>=22`). On Node 22, use 22.23.4 or later. Also in 0.27.10.
+- **typescript-eslint 8.72.** The lint toolchain moves from 8.71.2 to 8.72.1, in the lockfile only.
+
 ### Added
 
-- **The site carries the stable docs and the 1.0 candidate's.** Every page has a version picker at the top left: the stable entry opens these docs, the candidate's opens what 1.0 adds, under `next/`. The Pages workflow checks out `next/1.0` and builds it there with that line's own generator; built without `--versions`, the badge is as it was.
+- **Each repository's live view, from the workspace (REQ-410..412).** The workspace's live view showed each repository's requirement in flight, its step and its cost, but to see a repository's queue, console, attempts and gate the viewer had to start that repository's own studio (truck-flote, MS7-2). In a workspace's studio each repository's name now opens `/live/repo/<name>/`: the same live view the repository's studio serves at `/live`, read from its folder and kept current by its own stream, naming its role and leading back to the workspace. It is read-only; a repository the workspace does not have, or whose folder is missing, is a 404 saying so.
+
+### Fixed
+
+- **An operation of another repository's contract (REQ-405).** In the seventh microservices run of truck-flote the contracts were built first and complete, and tracking served `/api/fleet/positions` while the contract said `/fleet/status`, and web called an API of its own (MS7-1): the parts cited `depends=contracts:REQ-NNN`, never an operation, and a service citing the contracts' file failed its own `validate`, the file being in another repository. `api=contracts:contracts/fleet.openapi.yaml#getFleetStatus` now names an operation of the workspace repository `contracts`: a member's `validate` leaves it to `workspace check`, which resolves it there — `workspace_api_unresolved`, an error once the requirement is delivered.
+- **A part that waits for the contracts cites their operation (REQ-406).** `change validate` warns `layer_no_operation_cited` for a requirement whose `depends=` names a contracts requirement and whose trace has no `api=`, naming that requirement's operations; the story's context and the design's rules ask for the qualified `api=` and say the provider serves and the consumer calls exactly that method and path.
+- **The prompt quotes the operation (REQ-407).** The harness prompt of a requirement citing `api=` names each operation, its method and path, and quotes it as the contract writes it; `workspace harness run` tells each harness where the workspace is (`SPECGATE_WORKSPACE`), so an operation of the contracts repository is found from a member.
+- **The operation is in the code (REQ-408).** `workspace check` and `contract check` warn `contract_operation_not_found` for a delivered requirement citing an HTTP operation whose path no source file of its repository serves or calls — tests, `contracts/`, `docs/` and `features/` aside, a parameter written `{id}`, `:id`, `[id]`, `<id>` or `${…}`, any prefix such as `/api`. A warning: a route mounted in two pieces is not seen.
+
+## [1.0.0-rc.8] — 2026-10-30
+
+The documentation site carries both versions, with a picker at the top left and a page of what 1.0 adds; the pipelines are fewer and clearer — one CI, one release, one scheduled workflow — and npm audit and the licence check pass again.
+
+### Added
+
+- **The site carries both versions (REQ-400, REQ-401).** The documentation site showed only the stable line, so a reader had no way to see that a 1.0 candidate existed or what it adds. Built with `--channel stable|next --versions stable=…,next=…`, every page and the landing page have a version picker at the top left: the stable entry opens the stable docs, the candidate's opens what 1.0 adds. The candidate's pages, published under `next/`, say they document a candidate, lead back to the stable docs and edit `next/1.0`. Built without `--versions`, the badge is as it was.
+- **What is new in 1.0 (REQ-402).** [docs/whats-new-1.0.md](docs/whats-new-1.0.md) explains each feature of 1.0 with its commands, and names every candidate; a test fails when a candidate in this changelog is missing from it.
+
+### Changed
+
+- **One release workflow.** `release.yml` replaces `publish-npm.yml`, `publish-docker.yml` and `publish-github-packages.yml`: a `v*` tag runs the whole of `ci.yml` on the tagged commit, then publishes to npm with provenance, then pushes the image, which now waits for npm instead of publishing on its own. The version and the dist-tag are decided once; a prerelease is still published under `next` and its image tagged with the version only (REQ-281). New versions are no longer published to GitHub Packages; the versions there stay installable.
+- **CI calls the E2E journeys, and runs the OS-independent checks once.** `e2e.yml` is now only called (by `ci.yml`, and so by the release) or run by hand. The agent-contract check, the self-validation, the registry build and the snapshot tests run once on Ubuntu instead of on all six matrix legs, and the core unit suite no longer runs a second time after the coverage run that already includes it.
+- **The weekly checks are one workflow.** `scheduled.yml` replaces `docs-nightly.yml`, `mutation.yml` and `openspec-compat.yml`, runs only in this repository, not in forks, and checks the terminal recordings on the Node major they were made with: on Node 22 against recordings made on Node 24, every recording read as out of date, which is why the nightly check failed every night.
+- **The workflows follow one set of rules.** Read-only permissions unless a job needs more, one concurrency group per workflow and ref, a timeout on every job, third-party actions pinned to a commit (Dependabot bumps them). Security also runs on `next/**`, and its SBOM job no longer fails on `argparse` 3, whose PSF-2.0 licence is now allowed; overrides for `qs`, `fast-uri` and `zod` clear `npm audit`. On a pull request that touches the docs, `pages.yml` builds the site without deploying it.
+
+## [1.0.0-rc.7] — 2026-10-30
+
+After the sixth microservices run of truck-flote: a part that uses the contracts is written after them, and a requirement still being drafted that waits for another repository is the order the story is built in, not a failure of the workspace check.
+
+### Fixed
+
+- **A part is written after the contracts it uses (REQ-395).** The parts of a story were written at the same time, and tracking, finding nothing in contracts, designed an API of its own that web then used directly (truck-flote, MS6-1). `change author` now refuses the specs, design or tasks of a part that shares a criterion with the contracts repository while the contracts' part specifies nothing (`author_contracts_first`); `--force` writes it anyway.
+- **A waiting requirement of an open change is the build order (REQ-396).** Before the build, `workspace check` failed with `workspace_dependency_pending` for every requirement waiting for another repository, though the story harness builds them in that order (MS6-2). For a requirement still in an open change it is now a warning; a delivered requirement whose dependency is not still fails.
+
+## [1.0.0-rc.6] — 2026-10-30
+
+After the fifth microservices run of truck-flote: the architect who decides that a requirement waits for another repository writes it into the requirement, so the story harness builds the parts in order, and a quoted placeholder operation is no longer taken for a citation.
+
+### Fixed
+
+- **The design carries its dependencies into the traces (REQ-390).** The specs of a layered change are written before its design, so an architect who decided that a requirement waits for `contracts:REQ-002` wrote it only in design.md, and the story harness, which orders the parts from the traces, built them all at once (truck-flote, MS5-1). The rules of `change instructions design`, and so the prompt of `change author design`, now say that a `depends=` or `api=` the design decides goes into the requirement's `specgate:trace` under `specs/` too, and the story context of a sub-change's design says the same.
+- **A placeholder operation is no citation (REQ-391).** A design quoting `api=contracts/fleet.openapi.yaml#<operationId>` as guidance was reported as `layer_design_dependency_untraced`; an `api=` whose operation is a placeholder is now guidance (MS5-2).
+
+## [1.0.0-rc.5] — 2026-10-30
+
+After the fourth microservices run of truck-flote: a contract cited by a requirement not yet built is a warning until it is delivered, so the contracts repository builds its requirements one by one, and a service or web requirement of a story that cites nothing of the contracts repository is pointed out.
+
+### Fixed
+
+- **A contract is written one requirement at a time** (REQ-385, REQ-335): `validate` failed `api_contract_missing` for a requirement still Draft that cites a contract file it will write, so the contracts repository's first requirement was refused for its later ones (truck-flote, MS4-2). A citation that does not resolve is now an error only for a delivered requirement or the one being delivered, and a warning otherwise.
+- **A part that shares a criterion with the contracts cites them** (REQ-386): in a story with a contracts repository, `change validate` warns `layer_no_contract_cited` for a requirement of another repository that cites none of its requirements or operations (MS4-1).
+
+## [1.0.0-rc.4] — 2026-10-30
+
+After the third microservices run of truck-flote: an agent that ticks its own task is no longer refused for touching the specification, the dependencies and operations a design names are checked against the traces, and the contracts repository's agent writes the contract its requirements describe.
+
+### Fixed
+
+- **What a design says a requirement waits for reaches its trace** (REQ-380, REQ-381): in the third microservices run the panel's design named `depends=contracts:REQ-002`, `depends=tracking:REQ-002` and the operations it uses, its traces carried none, and `change validate` said ✔. Each `depends=` or `api=` design.md names and no `specgate:trace` carries is now a `layer_design_dependency_untraced` warning, naming the requirement on that line.
+- **The contracts repository writes its contracts** (REQ-382): its agent described them in requirements and wrote no file, so nothing could cite an operation. The story context now asks the contracts member for the OpenAPI or AsyncAPI file under `contracts/` and `api=contracts/<file>#<operationId>` on each requirement, and the other members to cite it with `depends=` and `api=`.
+- **Ticking a task is not an edit of the contract** (REQ-375): an agent that marked the task it had just delivered was refused as `agent_touched_protected_path`, every attempt, though the harness writes the same tick itself (truck-flote microservices run 3). A change to a change's `tasks.md` that only changes the box of its tasks is now accepted; any other edit of it is still refused, and the prompt says the harness ticks the tasks.
+- **A quoted story title is read whole** (REQ-376): `workspace draft` listed `"Optimización de rutas` — the front matter was split at the comma inside the quotes.
+
+## [1.0.0-rc.3] — 2026-10-30
+
+After the second microservices run of truck-flote: a tick in tasks.md no longer withdraws an approval, so a change is built past its first requirement; the workspace's agent proposes the stories, a story says which criteria each repository answers and keeps its questions, the agents that write a sub-change see the whole story, and the story is built only as far as its dependencies are delivered.
+
+### Fixed
+
+- **A delivered requirement no longer un-approves its change** (REQ-370, REQ-371): delivering a requirement ticks its task in `tasks.md` (REQ-353), and the tick changed the hash the tasks' approval was bound to, so the harness refused the change's second requirement as "not approved: tasks". A layer is now hashed with every task box read as open: a tick, by the harness or a person, keeps the approval, and any other edit still asks for it again. Approvals recorded by 1.0.0-rc.1 and rc.2 keep counting.
+- **A prompt file Windows still holds never fails the command** (REQ-372): four `change author` runs side by side ended in `EBUSY … unlink` after their agents had written their layers. Removing a prompt file now retries briefly and then leaves it to the system — in `change author`, the drafting agents and the harness.
+- **An agent proposes the brief's stories** (REQ-360): `workspace draft --agent` with no story named ran no agent and said nothing; the agent now fills the front matter's `stories:`, writing only `docs/brief.md`, and the client's text is put back if it moved. With stories named, `--agent` without a story id is refused.
+- **Each criterion names its repositories** (REQ-361, REQ-362): a story's `## Repositories` lists the criteria each answers (`- fleet: AC-1, AC-2`); each Discover says which are its own and which the others', and `workspace check` warns about a criterion no repository answers or two claim.
+- **A story's questions wait for their answers** (REQ-363): they go in `docs/stories/<id>/questions.md`; `workspace propose` refuses while one is open, unless `--allow-open-questions`.
+- **A drafted story keeps none of its form's hints** (REQ-364).
+- **The Discover stays business** (REQ-365, REQ-344): the guidance on `depends=` and `api=` that tripped `layer_discover_technical` in every repository moves to the sub-change's `design.md`.
+- **`change author` hears of the story** (REQ-366): `story.json` in each sub-change names its workspace, and the prompt for any layer carries the story's other parts and their requirements.
+- **A requirement waits for what it depends on** (REQ-367): `workspace harness run --story` starts only the requirements whose dependencies are delivered, names the others waiting, and exits 1.
+
+## [1.0.0-rc.2] — 2026-10-30
+
+After the first microservices run of truck-flote (five repositories, one story across three of them, nine requirements delivered in parallel): the workspace takes the client's brief and drafts its stories, a story's intent and criteria reach every repository, the story is built in the order of its dependencies, and `init --yes` adopts the folder it is run in.
+
+### Breaking
+
+- **`specgate init --yes` adopts a folder that already has code** (REQ-249, modified): it scaffolded a separate project inside it (`my-spec-driven-app/`), so a scripted `init` in a repository made a second one. `--yes` now only skips the questions; `--new`, `--out`, `--config`, `--multi-stack` and `--forja` still scaffold.
+
+### Fixed
+
+- **`change validate` reports what `change approve` refuses** (REQ-350): a layered change validated, then approval refused it for requirements with no kind. Validation now fails with `change_not_approvable` for each finding approval would block on.
+- **The agent writing a change's requirements is told what they need** (REQ-351): `kind=`, `actor=`, and a feature file of its own.
+- **Two requirements naming one feature file are reported** (REQ-352): `change validate` and `change archive` refuse with `change_feature_shared`; archiving would have kept only one's scenarios.
+- **A delivered requirement ticks its tasks** (REQ-353): `done`, which the harness runs, ticks the tasks of the open change that name the requirement.
+- **`change --help` describes the three layers** (REQ-354), and docs/migrating-to-1.0.md says how to install a candidate just published (`--prefer-online`) and how to move a forja project to it.
+- **The workspace takes the client's brief** (REQ-339..341): `specgate workspace draft` puts a root `brief.md` below a front matter that names the brief's stories and their repositories, `workspace draft <story> --agent "<cmd>"` drafts a story's intent and criteria from the brief, confined to the story, and `specgate status` in a workspace repository shows the workspace and the next step instead of failing on a missing matrix.
+- **Every repository receives the story** (REQ-342..344): `workspace propose` takes a drafted story, copies its intent and criteria into each sub-change's `discover.md` and names the story's other repositories and how to write `depends=` and `api=`; `workspace check` warns `workspace_story_diverged` when a repository's criteria are not the story's; each harness is told the story's other parts.
+- **A story is built in dependency order** (REQ-345): `workspace harness run --story` starts a repository whose part waits on another's undelivered requirement after that repository has finished; the dry run shows the levels.
+- **The live view and the story's cost** (REQ-346, REQ-347): every JSON document of the studio says `charset=utf-8`, and a story's cost counts its archived parts.
+- **Short repository names, and the logs ignored** (REQ-348, REQ-349): `workspace init` names `truck-flote-fleet` as `fleet`, prints name, path and role in their own columns, and ignores `.specgate/workspace-runs/`.
+
+## [1.0.0-rc.1] — 2026-10-30
+
+The first candidate of the 1.0 line, for teams of several repositories and roles: a change in three layers with their owners, a workspace of repositories with stories across them and its own live view, approvals per layer and harness packages per role, the backlog following the phases, the two gaps measured, principles, drift and API contracts checked, and `specgate migrate 1.0` to move a 0.27 project. Published under the npm dist-tag `next`; `latest` stays 0.27. See [Migrating to 1.0](docs/migrating-to-1.0.md).
+
+### Breaking
+
+- **`depends=<repo>:REQ-NNN` is a dependency on another repository** (REQ-294): inside a repository it is no longer an `unknown_dependency`; the workspace judges it.
+- **A change has three layers, each with its owner** (REQ-282..REQ-289, ADR-0044): `change new`, `propose`, `propose --from-brief` and `--from-ticket` write `discover.md` (product: context, use case, acceptance criteria `- AC-1: …`), `design.md` (architect) and `tasks.md` (developer) under the new `layered` schema, and no longer write `proposal.md`. `change new --schema spec-driven` keeps the 0.27 layout. A change written with 0.27 stays valid: its `proposal.md` is read as its Discover, and a missing `design.md` is a warning naming `specgate migrate 1.0`.
+- **`depends=<repo>:REQ-NNN` is a dependency on another repository** (REQ-294): inside a repository it is no longer an `unknown_dependency`; the workspace judges it.
+- **A 1.0 change is built once it is approved** (REQ-315, ADR-0045): `harness run` skips a requirement of an open change of the `layered` schema until every written layer has its approvals, with `harness_not_approved`. `approvals: { required: never }` in `harness.config.yaml` keeps the 0.27 behaviour, `always` asks it of 0.27 changes too.
+- **A change has three layers, each with its owner** (REQ-282..REQ-289, ADR-0044): `change new`, `propose`, `propose --from-brief` and `--from-ticket` write `discover.md` (product: context, use case, acceptance criteria `- AC-1: …`), `design.md` (architect) and `tasks.md` (developer) under the new `layered` schema, and no longer write `proposal.md`. `change new --schema spec-driven` keeps the 0.27 layout. A change written with 0.27 stays valid: its `proposal.md` is read as its Discover, and a missing `design.md` is a warning naming `specgate migrate 1.0`.
+
+### Added
+
+- **`specgate migrate 1.0`** (REQ-325..REQ-329): on a committed 0.27 project, moves each open change into the three layers — `proposal.md` to `discover.md` word for word, a `design.md` drafted from it, `tasks.md` kept, `schema: layered` — never touching the archive, and writes `docs/specs/migration-1.0.md` with what it did and what is left to a person. `--dry-run` changes nothing and prints the same report; a second run does nothing; a dirty tree is refused. `specgate status` names the command while an open change is still written for 0.27. Every breaking change, and how to stay on 0.27: [Migrating to 1.0](docs/migrating-to-1.0.md).
+- **The workspace, live** (REQ-320..REQ-324): `specgate studio` in a workspace repository serves its `/live` — a panel per repository with the requirement in flight, its gate step and the agent's last step; each story with its parts open, building, archived or missing, and the parts waiting on another repository's undelivered requirement named; the cost per repository and per story. `specgate workspace harness run --story <id>` starts every repository's harness for its part at once, and none when one repository's base already fails the gate. `workspace live --json` prints the model.
+- **The organization's principles** (REQ-330..REQ-332): `docs/specs/principles.md` with `principles_version` and `source` (a principles file, or `pack:<pack_id>` when a domain pack delivers it). `specgate check` names the version and warns `principles_behind` when the source has a newer one; a principle with `run=` or `forbid=` … `in=` is checked by the gate (`principle_failed`; `level=warn` for advice).
+- **Behaviour changed without a specification** (REQ-333, REQ-334): `check` warns `spec_drift` for each commit since the base that changes production code and names no requirement in its message or in a test it changes; `specgate drift` reports it for CI, and `drift: gate` in harness.config.yaml fails both.
+- **A requirement points at an API operation** (REQ-335, REQ-336): `api=` in its trace comment, a JSON pointer or an operationId of an OpenAPI or AsyncAPI contract; `validate` fails when it does not resolve, and `specgate contract check` lists the operations no requirement cites.
+- **`specgate adopt --scope <path>`** (REQ-337, REQ-338): specify one area of a large repository; adoption warns `adopt_too_big` when it finds more areas than the eight it proposes.
+- **The two gaps** (REQ-300..REQ-304): `harness report` says, for each requirement that needed rework, whether the spec was clear and the code diverged (spec → implementation) or the spec missed part of the use case (intent → spec). It suggests one from what it recorded — a rejection the agent fixed, naming the check that caught it; an answered question, a review note or a modified delta — and a person sets it with `--classify REQ-NNN --gap spec-impl|intent-spec --reason "..."`. The report shows both shares overall and per module and what to strengthen; the studio's report shows both shares. The run ledger now records the gate stage that rejected each attempt.
+- **The board follows the change** (REQ-305): `alm sync` moves each change's ticket — its `ticket:` or `origin: alm:<key>` — to the state of its phase: `proposed`, `building` once a requirement has a `harness/REQ-NNN` branch or is Implemented, `archived`. Each provider has a default (Jira status category, Azure Boards state, a GitHub label or a closed issue, a Linear state type) and `phases:` in `alm.config.yaml` names a board's own. A move already made is not made again (`.specops/alm-phases.json`), and `--dry-run` prints each move. `mirror: false` keeps `alm sync` from creating an issue per requirement where the tickets are the source.
+- **What the ticket gains comes back as notes** (REQ-306): `alm pull` brings each open change's new comments, and a note when the ticket's description changed, into its `review.md` — never into the proposal or the delta.
+- **One sub-issue per repository** (REQ-307): a change that lists `repositories:` gets a sub-issue of its ticket for each, created once.
+- **Linear** (REQ-308), a fourth built-in provider through its GraphQL API: `team_key` and `token_env`.
+- **`alm phase` and `alm move`** (REQ-309): where a change stands, without the network, and its ticket moved there now; both are MCP tools (`specgate_alm_phase`, `specgate_alm_move`). New provider capabilities (`phase`, `subIssues`, `comments`, `readText`) are optional, so a community provider written for 0.27 still loads.
+- **A workspace of repositories** (REQ-290..298, ADR-0043): `specgate.workspace.yaml` names the repositories of one product, and `specgate workspace init|status|check|propose` say where the product stands, run every repository's gate at once, resolve ids qualified with their repository (`tracking:REQ-012`), hold a requirement back until the one it depends on in another repository is delivered, and split a business story into a change in each repository it touches — done when every one is archived. See [docs/workspace.md](docs/workspace.md).
+- **Roles and an approval per layer** (REQ-310..REQ-315, REQ-319, ADR-0045): `roles:` in `harness.config.yaml` names who holds each role; `change approve <id> --layer discover|design|tasks` records an approval by the layer's owner — product, architect, developer — with `approvals.quorum` for how many people a layer needs. Each approval goes in the change's `approvals.json` with a hash of the layer, kept in the archive; editing an approved layer asks for its approval again. The studio's Review shows each layer's approvals and approves the layer the viewer owns.
+- **Role packages** (REQ-316..REQ-318, ADR-0045): `harness/<role>.md`, with `applies-to` by kind, capability or tag, reaches the prompt of the requirements it concerns under "Role constraints"; the prompt event, the run record, the live view and `harness report` name each package as `role@version`, and the review check gives one line of advice per package.
+- **The layer rules** (REQ-284..REQ-287): `change validate` warns when the Discover names a technology, when the design does not answer an acceptance criterion, when a task names no requirement, and when the Discover differs from the version it was agreed at. `change validate --strict` fails on them.
+- **The layers are named where people look** (REQ-288, REQ-289): `change status` lists discover, specs, design and tasks with their owner ("Write discover.md (product)"), the drafting guides say which layer the agent writes, and the studio's review lists each layer with its owner and whether it is written.
+
+### Fixed
+
+- **A release candidate is never installed by default** (REQ-281): every publish workflow treated a pushed `v*` tag as `latest`, so a `v1.0.0-rc.1` would have become the default `npm install` and the `latest` image. A version with a prerelease part is now published under the dist-tag `next`, and its image is tagged with its version only.
 
 ## [0.27.9] — 2026-10-29
 

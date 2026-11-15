@@ -2,7 +2,7 @@
   "name": "specgate",
   "displayName": "Spec-Driven Development",
   "description": "Specs as executable contracts: the daily loop as commands, the spec tree over MCP, the test before the code, and the gate as a hook that runs before the session can end.",
-  "version": "0.29.1",
+  "version": "1.0.0",
   "license": "MIT",
   "keywords": [
     "spec-driven-development",
@@ -10,5 +10,10 @@
     "gherkin",
     "traceability"
   ],
-  "homepage": "https://rsaglobaltech.github.io/specgate/"
+  "homepage": "https://rsaglobaltech.github.io/specgate/",
+  "repository": "https://github.com/rsaglobaltech/specgate",
+  "author": {
+    "name": "RSA Global Tech",
+    "url": "https://github.com/rsaglobaltech"
+  }
 }

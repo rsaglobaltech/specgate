@@ -350,17 +350,23 @@ The system SHALL, when `docs/brief.md` exists and its front matter lists no modu
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-243.feature kind=functional status=Implemented test=tests/unit/brief-cards.test.ts -->
 
-### Requirement: REQ-249 — init --yes where code exists says what it does
+### Requirement: REQ-249 — init --yes where code exists adopts it
 
-The system SHALL, when `specgate init --yes` scaffolds in a folder that already has code, warn that it creates a separate project in a sub-folder and that `specgate init`, without `--yes`, adopts the folder in place.
+The system SHALL, when `specgate init --yes` runs in a folder that already has code, adopt that folder in place as plain `specgate init` does, and scaffold a separate project there only with `--new` (or `--out`, `--config`, `--multi-stack`, `--forja`, which describe the project to create).
 
 #### Scenario: SCN-249a — A package.json and --yes
 
 - GIVEN a folder with `package.json`
 - WHEN `specgate init --yes --dry-run` runs
-- THEN it warns that it scaffolds a separate project and names `specgate init` without `--yes` to adopt the folder
+- THEN it says it adopts the folder in place and writes no sub-folder project
 
-<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-249.feature kind=functional status=Implemented test=tests/unit/init-wizard.test.ts -->
+#### Scenario: SCN-249b — --new still scaffolds
+
+- GIVEN a folder with `package.json`
+- WHEN `specgate init --yes --new --dry-run` runs
+- THEN it scaffolds a separate project, as before
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-249.feature kind=functional status=Implemented test=tests/unit/rc2-change.test.ts -->
 
 ### Requirement: REQ-255 — A command that starts with ./ runs on Windows
 
@@ -397,3 +403,87 @@ The system SHALL, on Windows, rewrite `./name` as `.\name` only where a command 
 - THEN it runs as written, while `(./mvnw -q test)` still runs as `(.\mvnw -q test)`
 
 <!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-265.feature kind=functional status=Implemented test=tests/unit/shell-command.test.ts -->
+
+### Requirement: REQ-337 — Adopt one area of a large system
+
+The system SHALL, with `specgate adopt --scope <path>`, list in `docs/specs/adoption.md` only the areas under that path — proposing no requirement, as any adoption — write a baseline scenario that names it, and record the scope in spec.md; a path that does not exist is refused before anything is written.
+
+#### Scenario: SCN-337a — The billing area only
+
+- GIVEN a repository with src/billing/invoices, src/billing/payments and src/shipping/routes, each holding source files
+- WHEN the developer runs `specgate adopt --scope src/billing`
+- THEN docs/specs/adoption.md lists invoices and payments, not routes, spec.md names src/billing as the scope, and features/adoption/baseline.feature names src/billing
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-337.feature kind=functional status=Implemented test=tests/unit/org-steering.test.ts -->
+
+### Requirement: REQ-338 — A specification too big to review is said
+
+The system SHALL warn `adopt_too_big`, when adoption finds more areas than the eight it proposes, naming how many it left out and `specgate adopt --scope <area>` as the way to start with the part being touched.
+
+#### Scenario: SCN-338a — Ten areas
+
+- GIVEN a repository whose src holds ten areas with source files
+- WHEN the developer runs `specgate adopt`
+- THEN it proposes eight and warns `adopt_too_big` naming the two left out and `adopt --scope`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-338.feature kind=functional status=Implemented test=tests/unit/org-steering.test.ts -->
+
+### Requirement: REQ-555 — sgate is a short alias of specgate
+
+The system SHALL install the command `sgate` next to `specgate`, running the same entry point with the same arguments and output, and `specgate completion bash|zsh|fish` SHALL complete `sgate` as it completes `specgate`.
+
+#### Scenario: SCN-555a — The short alias
+
+- GIVEN the package installed
+- WHEN a developer runs `sgate --version` and `specgate --version`
+- THEN both print the same version, and the completion script for each shell registers `sgate`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-555.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-557 — A requirement an open change removes owes nothing to validate
+
+The system SHALL, in `specgate validate`, judge a requirement that an open change's delta lists under `## REMOVED Requirements` as it judges a `Deprecated` one — its feature file, technical artifact and test may be gone, and no strict-TDD rule applies to it — so that the tree `specgate check` passes while the change is open, with those files deleted, also passes `specgate validate --strict`.
+
+#### Scenario: SCN-557a — Removing a delivered requirement
+
+- GIVEN a delivered requirement with a feature file and a test, and an open change that removes it
+- WHEN its feature file and its test are deleted, and a developer runs `specgate validate . --strict`
+- THEN it passes, with no `declared_artifact_missing` and no strict-TDD violation for that requirement
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-557.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-558 — The after-archive copy keeps a symlink
+
+The system SHALL, when it copies the project to judge it after archive (`check`, `apply`, `status`), recreate each symlink git lists as a symlink to the same target, instead of copying what it points at, so a linked folder such as `node_modules` never stops the command.
+
+#### Scenario: SCN-558a — A linked node_modules
+
+- GIVEN a project in git with an open change and an untracked symlink `node_modules` pointing at a folder
+- WHEN a developer runs `specgate check`
+- THEN the gate runs, and does not fail copying the symlink
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-558.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-563 — An unreadable harness config is said, not answered as empty
+
+The system SHALL, when `harness.config.yaml` cannot be read, have `specgate config list --json` report the finding `harness_config_invalid` naming the file and the fix the reader gives, and exit 1, instead of answering the settings as unset.
+
+#### Scenario: SCN-563a — A 0.35 lanes key
+
+- GIVEN a project whose harness config has `roles: [tester, implementer]`
+- WHEN a tool runs `specgate config list --json`
+- THEN it exits 1 with `harness_config_invalid` on harness.config.yaml, whose fix names `lanes: [tester, implementer]`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-563.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-565 — The next step as data
+
+The system SHALL add to `specgate status --json` the field `next`: the next command, its arguments without `specgate` (null when the next step is not a command), and whether an argument is still a `<…>` placeholder for a person to fill in; `nextCommand` SHALL stay as it is.
+
+#### Scenario: SCN-565a — The next step as data
+
+- GIVEN a project whose next step is `specgate apply REQ-007`
+- WHEN a tool runs `specgate status --json`
+- THEN `next.argv` is `["apply", "REQ-007"]`, `next.placeholder` is false, and `next.command` equals `nextCommand`
+
+<!-- specgate:trace actor=Developer feature=features/daily-surface/REQ-565.feature kind=functional status=Implemented -->

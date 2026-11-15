@@ -155,6 +155,29 @@ computed — \`strict_tdd_*\` covers \`strict_tdd_1\` through \`strict_tdd_3\`.
 
 ${table(codeRows, ["Code", "Emitted by"])}
 
+## Shapes a tool depends on
+
+These are read by tools built on this CLI (specgate-studio among them), so they
+change only in a major version.
+
+- **\`status --json\`, in a project:** \`total\`, \`pending\`, \`counts\`,
+  \`requirements[]\` (\`id\`, \`title\`, \`category\`, \`needs\`, \`change\`,
+  \`changeKind\`, \`question\`), \`nextCommand\` (a sentence) and \`next\` — the same
+  step as data: \`{ command, argv, placeholder }\`, \`argv\` without \`specgate\`
+  and null when the step is not a command, \`placeholder\` true while an argument
+  is still \`<…>\` for a person to fill in (REQ-565). \`migrate\` appears while an
+  open change is still written for 0.x.
+- **\`status --json\`, in a workspace repository** (\`specgate.workspace.yaml\`, no
+  \`traceability.md\`): \`{ workspace, next }\` — \`workspace\` holds the
+  repositories and the stories, \`next\` is \`{ command, why }\`. There is no
+  \`requirements\` key: each repository answers its own \`status\`.
+- **\`change show <id> --json\`:** \`change.approvals\` — \`required\`, \`approved\`,
+  \`approvedAt\` and \`layers[]\` with each layer's approvals and quorum — is
+  whether the change may be built (REQ-564). \`change.config.approved\` is only the
+  line \`change.yaml\` keeps, and outlives an edit of a layer approved before it.
+- **\`config list --json\`:** a \`harness.config.yaml\` that cannot be read is the
+  finding \`harness_config_invalid\`, with its fix, and exit 1 (REQ-563).
+
 ## Worked example
 
 \`\`\`bash

@@ -330,6 +330,18 @@ The system SHALL take the title of each scenario in the studio's report from the
 
 <!-- specgate:trace actor=Developer feature=features/studio/REQ-280.feature kind=functional status=Implemented test=tests/unit/harness-run7.test.ts -->
 
+### Requirement: REQ-304 — The report shows the two gaps
+
+The system SHALL show in the studio's report the share of built requirements with each gap — spec → implementation and intent → spec — as `harness report` computes them, and nothing when the ledger records no requirement.
+
+#### Scenario: SCN-304a — A report after two runs
+
+- GIVEN a project whose ledger records REQ-002, rejected at `quality check: pmd` and then passed, and REQ-003, passed at once
+- WHEN the studio's report is read
+- THEN it gives spec → implementation 50 % and intent → spec 0 %
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-304.feature kind=functional status=Implemented test=tests/unit/harness-gaps.test.ts -->
+
 ### Requirement: REQ-429 — One way to write and read an answer
 
 The drafting guide SHALL tell the agent to write `questions.md` with the columns `# | Question | Blocks | Options seen | Answer | Status`; `specgate questions`, the studio and the draft checklist SHALL read an answer the same way — the `Answer` (or `Respuesta`) cell, or a line `Answer (Qn): …` under the table — and SHALL not count an empty cell or a placeholder (`TBD`, `pending`, `pendiente`) as an answer.
@@ -546,3 +558,98 @@ The system SHALL, when the studio's port is taken, ask what answers there: when 
 
 <!-- specgate:trace actor=Developer feature=features/studio/REQ-445.feature kind=functional status=Implemented -->
 
+### Requirement: REQ-446 — A ticket reviewed before its change is opened
+
+The system SHALL, when the studio is given a ticket key to open a change from, first run `specgate propose --from-ticket <KEY> --check --json` and show whether the ticket is ready, each finding with its fix, and the capability the change will go into; SHALL, when there is no capability, offer the project's capabilities to choose from and open the change in the chosen one with `--capability`; and SHALL not open a change for a ticket that is not ready.
+
+#### Scenario: SCN-446a — A story without an epic
+
+- GIVEN a project with the capabilities `billing` and `orders`, and the story PAY-123, ready, with no epic
+- WHEN PAY-123 is reviewed in the studio
+- THEN it is shown ready, with no capability, `billing` and `orders` offered, and opening it in `orders` runs `propose --from-ticket PAY-123 --capability orders`
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-446.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-447 — The ticket's branch, known before the change is opened
+
+The system SHALL read the branch the project is on and, when it names a ticket — `<feature|bugfix|hotfix>/<KEY>` or `<feature|bugfix|hotfix>/<team>/<KEY>`, as `check` reads it — show on Home the ticket and the team; SHALL open a change for that ticket on that branch with `--no-branch`, and otherwise name the branch it will create; and SHALL show in Changes the ticket of a change opened from one, linked to it when `alm.config.yaml` names the ALM's address.
+
+#### Scenario: SCN-447a — On the branch agentkit made
+
+- GIVEN a project on the branch `feature/parking/KAN-13`
+- WHEN Home is opened, and KAN-13 is then opened from Changes
+- THEN Home says the branch is KAN-13's, of the team parking, and the change is opened on `feature/parking/KAN-13` with `--no-branch`, no other branch created
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-447.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-448 — Publishing a ticket's change, said and confirmed
+
+The system SHALL say, before a ticket's change is opened, that it will commit the change's folder and nothing else, naming the branch, and push that branch; SHALL open it only once the person confirms; and SHALL, when "Don't push yet" is chosen, open it with `--no-push`.
+
+#### Scenario: SCN-448a — Opened without pushing
+
+- GIVEN KAN-13 reviewed and ready on `feature/parking/KAN-13`
+- WHEN it is opened with "Don't push yet" and confirmed
+- THEN the command run is `propose --from-ticket KAN-13 --no-branch --no-push`, the branch holds the change's commit, and nothing was pushed
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-448.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-551 — A change reviewed by people who do not read the repository
+
+The system SHALL, with `specgate review <change> [--out <file>]`, write one self-contained HTML file — no external script, stylesheet or font — with the change's intent, each requirement's title, text, status and scenarios as plain steps, its open questions and its assumptions, and the date and commit it was made from; and SHALL refuse a change id that does not exist with `change_not_found`.
+
+#### Scenario: SCN-551a — A page that opens without a network
+
+- GIVEN an open change `pdf-invoices` with REQ-007, one scenario and one open question
+- WHEN a tool runs `specgate review pdf-invoices --out review.html`
+- THEN `review.html` holds REQ-007's title, its scenario's steps and the question, and has no `src` or `href` attribute pointing outside the file
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-551.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-552 — A journey chains requirements and owes a test
+
+The system SHALL read a scenario tagged `@JRN-NNN` together with the `@REQ-NNN` tags of the requirements it crosses as a journey; `specgate status --json` SHALL list each journey with its requirements and the tests that mention its id, and the traceability matrix SHALL not count a journey as a scenario of the requirements it crosses; and `specgate validate --strict` SHALL report `journey_untested` for a journey whose requirements are all delivered and that no test mentions, and `journey_requirement_unknown` for a tag naming a requirement that does not exist.
+
+#### Scenario: SCN-552a — Borrow then return
+
+- GIVEN REQ-002 and REQ-003 `Implemented`, and a scenario tagged `@JRN-001 @REQ-002 @REQ-003` that no test mentions
+- WHEN a tool runs `specgate validate --strict --json`
+- THEN it fails with `journey_untested` for JRN-001, and `specgate status --json` lists JRN-001 with REQ-002 and REQ-003
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-552.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-553 — The studio serves a team, by role
+
+The system SHALL, with `specgate studio --team`, require a signed-in user, named by the sign-in proxy in front of it in the header `studio.team.yaml` names (and, with `SPECGATE_PROXY_SECRET` set, the proxy's secret header), and give each signed-in user the role the file assigns — `reader`, `editor` or `admin`, `reader` by default; a `reader` SHALL see every section and SHALL be refused every write with `role_forbidden`, and running builds, agents or settings SHALL be an `admin`'s; and without `--team` the studio SHALL keep today's local behaviour with no sign-in.
+
+#### Scenario: SCN-553a — A reader tries to answer a question
+
+- GIVEN `studio --team` running with `studio.team.yaml` giving `ana` the role `reader`
+- WHEN `ana` signs in and answers an open question through the studio's API
+- THEN the answer is refused with `role_forbidden` and `questions.md` is unchanged
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-553.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-554 — In team mode, edits arrive as pull requests
+
+The system SHALL, in team mode, write an editor's change to the specification on a branch `studio/<user>/<change>` with a commit authored by that user, and open or update a pull request to the configured base branch, never committing to the base branch itself; and SHALL answer the pull request's URL.
+
+#### Scenario: SCN-554a — An editor answers a question
+
+- GIVEN `studio --team` with `luis` as `editor` and an open question in the change `pdf-invoices`
+- WHEN `luis` answers it through the studio
+- THEN a commit authored by `luis` exists on `studio/luis/pdf-invoices`, a pull request to the base branch is open with it, the base branch has no new commit, and the answer holds the pull request's URL
+
+<!-- specgate:trace actor=Developer feature=features/studio/REQ-554.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-562 — The studio approves a change layer by layer
+
+The system SHALL show, in the studio's Changes, each written layer of a change (Discover, Design, Tasks) with the role that owns it, its approvals against its quorum and who gave them, and an Approve on each layer whose role the viewer holds; the viewer SHALL be the git identity of the project in a local studio and the user and e-mail the sign-in proxy names in a team's studio, and an approval SHALL be recorded for that viewer.
+
+#### Scenario: SCN-562a — In a team, the proxy's user approves the layer of their role
+
+- GIVEN a change whose Discover is written, and `roles: { product: [luis@acme.eu] }`
+- WHEN Ana, then Luis, signed in through the proxy, approve the Discover
+- THEN Ana's approval is refused, Luis's is recorded as luis@acme.eu, and the studio offered Approve on the Discover to Luis only
+
+<!-- specgate:trace actor=Product feature=features/studio/REQ-562.feature kind=functional status=Implemented -->

@@ -1,7 +1,7 @@
 {
   "name": "@specgate/core",
   "version": "0.1.0",
-  "description": "The CLI's inner circle: the domain model, the use cases, their ports, and the disk adapters that implement them. Imports nothing from scripts/ — the dependency rule is enforced by tests/unit/architecture.test.ts. Ships inside create-spec-driven-app; see `files` in the root package.json.",
+  "description": "The CLI's inner circle: the domain model, the use cases, their ports, and the disk adapters that implement them. Imports nothing from scripts/ — the dependency rule is enforced by tests/unit/architecture.test.ts. Ships inside @rsaglobaltech/specgate; see `files` in the root package.json.",
   "license": "MIT",
   "type": "commonjs",
   "engines": {

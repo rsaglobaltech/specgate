@@ -32,6 +32,7 @@ import { deriveRows, setTraceFields } from "../../../../packages/core/src/domain
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { forShell } from "../../../lib/shell-command";
+import { applyTestCommand, requirementTestFiles } from "../../../lib/test-selection";
 
 /** A row of the generated matrix, as far as `done` reads it. Core returns them untyped. */
 interface DerivedRow {
@@ -276,12 +277,15 @@ export class DoneCommand extends BaseCommand {
     // REQ-001 --check` printed a tick over a matrix pointing at files that do
     // not exist. Four documentation pages said it "validates first".
     const harness: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
+    // REQ-515: the requirement's own tests, through `{files}` or `{req}`.
+    const testCmd = applyTestCommand(opts.testCmd, harness);
     const plan = planDoneVerification(dir, {
       check: opts.check,
       strict: opts.strict,
       reqId: id,
-      testCmd: opts.testCmd || harness.testCmd,
+      testCmd,
       archCmd: harness.archCmd,
+      files: (testCmd || "").includes("{files}") ? requirementTestFiles(projectDir, [id]) : "",
     });
 
     for (const step of plan.steps) {
@@ -449,7 +453,7 @@ export class DoneCommand extends BaseCommand {
       { ok: boolean; code?: string; message?: string; detail?: string }
     >();
     const harness: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
-    const testCmd = opts.testCmd || harness.testCmd;
+    const testCmd = applyTestCommand(opts.testCmd, harness);
     const gated = opts.check && DELIVERED_STATUSES.includes(opts.status);
     const tracePath = path.join(dir, TRACE);
 
@@ -523,9 +527,11 @@ export class DoneCommand extends BaseCommand {
     }
     if (passing.length > 0 && opts.check && passing.every((id) => results.get(id)!.ok)) {
       // One requirement fills `{req}`; several run the suite for the whole project (REQ-183).
+      // REQ-515: `{files}` holds the tests of every requirement given.
       const cmd = gateTestCommand(
         (testCmd || "").trim(),
-        passing.length === 1 ? passing[0] : undefined
+        passing.length === 1 ? passing[0] : undefined,
+        (testCmd || "").includes("{files}") ? requirementTestFiles(projectDir, passing) : ""
       );
       if (cmd === "") {
         testsUnverified = true;
@@ -666,6 +672,27 @@ function readTrace(dir: string): string {
 }
 
 /**
+ * REQ-353: tick the tasks of the requirement's open change that name it. The
+ * harness delivered every requirement and archive still counted 11, 21 and 13
+ * unchecked tasks (truck-flote, MS-13): the Tasks layer said nothing true.
+ * `deltaFile` is `docs/specs/changes/<id>/specs/<capability>/spec.md`.
+ */
+function tickTasksOf(deltaFile: string, id: string): void {
+  const parts = deltaFile.split(/[\\/]/);
+  const at = parts.lastIndexOf("specs", parts.length - 3);
+  if (at < 1) return;
+  const tasks = path.join(parts.slice(0, at).join(path.sep), "tasks.md");
+  if (!fs.existsSync(tasks)) return;
+  // The id came from the command line: escaped, so it is matched as text.
+  const names = new RegExp(`\\b${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+  const text = fs.readFileSync(tasks, "utf8");
+  const next = text.replace(/^(\s*[-*]\s*)\[ \](.*)$/gm, (line, lead, rest) =>
+    names.test(rest) ? `${lead}[x]${rest}` : line
+  );
+  if (next !== text) fs.writeFileSync(tasks, next, "utf8");
+}
+
+/**
  * Write the status to the requirement's one owner: its open change's delta
  * when it is in flight (ADR-0035), spec.md or its capability spec otherwise,
  * or the hand-kept matrix of a project that is not derived.
@@ -684,6 +711,7 @@ function writeStatus(
       return { ok: false, updated: 0, error: `${id} has no section in ${owner.deltaFile}.` };
     }
     fs.writeFileSync(file, next, "utf8");
+    if (DELIVERED_STATUSES.includes(status)) tickTasksOf(file, id);
     const rows = deriveRows(readDerivationSources(judgedDir)).filter(
       (r: DerivedRow) => r.requirement === id
     ).length;
@@ -713,10 +741,11 @@ function writeStatus(
 }
 
 /**
- * What to run after a delivery: the next requirement, or — when that one was
- * its open change's last — archiving the change.
+ * What to run after a delivery: the next requirement — of the same open change
+ * when it has one to take — or, when that one was its open change's last,
+ * archiving the change.
  */
-function nextAfter(
+export function nextAfter(
   items: QueueItem[],
   id: string,
   owner: InFlightRequirement | undefined,
@@ -731,7 +760,14 @@ function nextAfter(
       );
     }
   }
-  const following = nextRequirement(items, [id]);
+  // The change being built first, then the project's queue (REQ-465).
+  const following =
+    (owner &&
+      nextRequirement(
+        items.filter((it) => it.change === owner.change),
+        [id]
+      )) ||
+    nextRequirement(items, [id]);
   return following
     ? ui.next(`specgate apply ${following.requirement}`, "the next requirement")
     : ui.next("specgate status", "what is left, and the next requirement");

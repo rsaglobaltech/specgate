@@ -25,7 +25,8 @@ specgate propose add-dynamic-pricing --capability pricing
   ✔  Change add-dynamic-pricing created · lite · REQ ids REQ-014…REQ-016 reserved
 
     + docs/specs/changes/add-dynamic-pricing/change.yaml
-    + docs/specs/changes/add-dynamic-pricing/proposal.md
+    + docs/specs/changes/add-dynamic-pricing/discover.md
+    + docs/specs/changes/add-dynamic-pricing/design.md
     + docs/specs/changes/add-dynamic-pricing/tasks.md
     + docs/specs/changes/add-dynamic-pricing/specs/pricing/spec.md
 
@@ -34,9 +35,11 @@ specgate propose add-dynamic-pricing --capability pricing
      after you write the delta, a test that names each requirement, and the code
 ```
 
-- **`lite`** is the default level of detail: a proposal, a task list and a
-  delta. `--full` also creates a `design.md` for changes that need a written
-  design.
+- **The layers** ([ADR-0044](specs/adr/0044-the-three-layers-of-a-change.md)):
+  `discover.md` is product's (context, use case, criteria `- AC-1: …`),
+  `design.md` the architect's (it names every criterion), `tasks.md` the
+  developer's (each task names its `REQ-NNN`). `change validate` warns on each
+  rule; a 0.27 change's `proposal.md` is its Discover.
 - **The delta** is `specs/<capability>/spec.md`: only the requirements this
   change adds, modifies or removes. It is named after the change unless
   `--capability` names the capability it belongs to.
@@ -169,6 +172,15 @@ refused while its checklist has an error or a question is open; `specgate
 change note <id> "<what to change>" --req REQ-NNN` asks for a change in your
 words, in the draft's `review.md`. The [studio](studio.md)'s Changes section does
 both, each blocker with the action that clears it, and Build starts only approved drafts.
+
+Each layer is approved by its owner (ADR-0045): `--layer discover` by product,
+`--layer design` by the architect, `--layer tasks` by the developer; without
+`--layer`, the layers you own. `harness.config.yaml` says who holds each role
+and how many people a layer needs — `roles: { product: [ana@acme.eu] }`,
+`approvals: { quorum: { design: 2 }, required: layered }` (`always`, or `never`
+for the 0.27 behaviour). A role nobody is named for is open to anyone. Each
+approval goes in the change's `approvals.json` with a hash of the layer; editing
+it asks for its approval again. The harness skips an unapproved 1.0 change.
 
 ## 6. Archive it
 

@@ -61,6 +61,30 @@ harness_version: 1
 #   test_cmd: "npm ci && npm run verify && npm run test:e2e -- {feature_file}"
 {{TEST_CMD_LINE}}
 
+# `specgate check --affected` runs only the tests of what changed since the base
+# branch: those the matrix links to each requirement whose spec, feature, code
+# or test changed. It hands them to the test command as {files}, each quoted for
+# your shell — or {req}, when one requirement is touched. Set a command of its
+# own, so test_cmd stays the whole suite that `check` and CI run:
+#
+#   test_cmd_affected: "npx vitest run {files}"
+#   test_cmd_affected: "npx jest {files}"
+#   test_cmd_affected: "python -m pytest {files}"
+#
+# Without {files} or {req}, --affected runs the whole command and says so.
+# A change to package.json, a lockfile, this file, a tsconfig or a build
+# configuration runs the whole suite. List your own such files here:
+#
+# full_on:
+#   - "src/generated/**"
+#   - "db/schema.sql"
+
+# The architecture check (arch_cmd) and the tests run side by side after
+# validate. If both build into the same folder (two Maven runs on target/, say),
+# run them one after the other:
+#
+# gate_parallel: false
+
 # Run once in each fresh worktree before the agent starts — the worktree has
 # only what git tracks, so this is where dependencies get installed. `check`
 # does not run it; your own checkout already has them.

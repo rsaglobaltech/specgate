@@ -1,7 +1,7 @@
 # Spec-Driven Development — VS Code Extension
 
 Supercharges VS Code for projects generated with
-[`create-spec-driven-app`](https://github.com/rsaglobaltech/specgate).
+[Specgate](https://github.com/rsaglobaltech/specgate).
 
 ---
 
@@ -81,8 +81,8 @@ appear as red **missing** nodes. The panel refreshes as you edit and save.
 ## Requirements
 
 - VS Code ≥ 1.85
-- Node.js ≥ 18 (for the CLI)
-- `create-spec-driven-app` CLI reachable via `npx` or a local install
+- Node.js ≥ 22 (for the CLI)
+- `@rsaglobaltech/specgate` reachable via `npx` or a local install
 
 ---
 
@@ -90,7 +90,7 @@ appear as red **missing** nodes. The panel refreshes as you edit and save.
 
 | Setting                      | Default                      | Description                         |
 | ---------------------------- | ---------------------------- | ----------------------------------- |
-| `spec-driven.cliPath`        | `npx create-spec-driven-app` | How to invoke the CLI               |
+| `spec-driven.cliPath`        | `npx @rsaglobaltech/specgate` | How to invoke the CLI              |
 | `spec-driven.validateOnSave` | `true`                       | Run validate automatically on save  |
 | `spec-driven.schemaPath`     | _(empty)_                    | Override path to `pack.schema.json` |
 | `spec-driven.codeLens`       | `true`                       | Show CodeLens above requirement IDs |

@@ -10,15 +10,18 @@ of intent.
 ### Requirement: REQ-100 — A change is a reviewable folder
 
 El sistema SHALL representar un cambio propuesto como un directorio bajo
-`docs/specs/changes/<change-id>/` que contiene la propuesta, las tareas y los
-deltas de especificación que el cambio introduce.
+`docs/specs/changes/<change-id>/` que contiene sus capas — `discover.md`,
+`design.md` y `tasks.md`, o la propuesta de un cambio de 0.27 — y los deltas de
+especificación que el cambio introduce.
 
 #### Scenario: SCN-100a — Crear un cambio
 
 - GIVEN un proyecto spec-driven sin cambios activos
 - WHEN el usuario ejecuta `specgate change new add-dynamic-pricing`
-- THEN se crea el directorio del cambio con `proposal.md`, `tasks.md` y `change.yaml`
+- THEN se crea el directorio del cambio con `discover.md`, `design.md`, `tasks.md` y `change.yaml`
 - AND se reserva un rango de identificadores REQ que ningún otro cambio puede usar
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-100.feature kind=functional status=Implemented test=tests/unit/change-layers.test.ts -->
 
 ### Requirement: REQ-101 — Los deltas expresan la diferencia, no el estado final
 
@@ -191,3 +194,447 @@ The system SHALL take the highest reserved requirement id, on this branch and on
 - THEN it gets REQ-019 and REQ-020
 
 <!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-202.feature kind=functional status=Implemented test=tests/unit/change-evolution.test.ts -->
+
+### Requirement: REQ-282 — A change has three layers, each with its owner
+
+The system SHALL scaffold a new change, with `specgate change new`, under the `layered` schema with three layers: `discover.md`, owned by product (business context, use case, acceptance criteria), `design.md`, owned by the architect (modules, mechanisms, channels, decisions), and `tasks.md`, owned by the developer (verifiable tasks naming their requirement), each file stating its owner.
+
+#### Scenario: SCN-282a — A new change
+
+- GIVEN a project with no active change
+- WHEN `specgate change new add-pricing --json` runs
+- THEN the change holds `discover.md`, `design.md` and `tasks.md`, each with an `Owner:` line naming product, architect and developer, its `change.yaml` says `schema: layered`, and no `proposal.md` is written
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-282.feature kind=functional status=Implemented test=tests/unit/change-layers.test.ts -->
+
+### Requirement: REQ-283 — A 0.27 change stays valid, and names the upgrade
+
+The system SHALL read a change without `discover.md` — the 0.27 layout — with its `proposal.md` as its Discover, SHALL validate it as before, SHALL warn when it has no `design.md` with a fix naming `specgate migrate 1.0`, and SHALL offer that migration a `design.md` drafted from the proposal, listing every acceptance criterion the proposal states.
+
+#### Scenario: SCN-283a — A change written with 0.27
+
+- GIVEN a change with `proposal.md`, `tasks.md`, a valid delta and `schema: spec-driven`
+- WHEN `specgate change validate` runs
+- THEN it passes with exit 0 and a `layer_no_design` warning whose fix names `specgate migrate 1.0`
+
+#### Scenario: SCN-283b — The migration's design
+
+- GIVEN a proposal whose Approach says "a pricing table per region" and whose criteria list `AC-1: peak rate above 100 orders`
+- WHEN the migration asks for its design
+- THEN the design's Mechanisms carry "a pricing table per region" and list `AC-1` to be answered
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-283.feature kind=functional status=Implemented test=tests/unit/change-layers.test.ts -->
+
+### Requirement: REQ-284 — The Discover says what, not how
+
+The system SHALL warn, on `change validate`, when the Discover of a layered change names a technology — a framework, a database, an API, an endpoint, a queue — with a fix saying the technology goes in `design.md`.
+
+#### Scenario: SCN-284a — A database in the business story
+
+- GIVEN a layered change whose Discover says "the prices are stored in PostgreSQL"
+- WHEN `specgate change validate` runs
+- THEN it warns `layer_discover_technical`, naming PostgreSQL
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-284.feature kind=business-rule status=Implemented test=tests/unit/change-layers.test.ts -->
+
+### Requirement: REQ-285 — The Design answers every acceptance criterion
+
+The system SHALL warn, on `change validate`, for each acceptance criterion of the Discover (`- AC-1: …` under "Acceptance criteria") that `design.md` does not name, and `change validate --strict` SHALL fail on it.
+
+#### Scenario: SCN-285a — A criterion the design forgot
+
+- GIVEN a Discover with `AC-1` and `AC-2`, and a design that answers only `AC-1`
+- WHEN `specgate change validate --strict` runs
+- THEN it exits 1 with `layer_design_misses_criterion` for `AC-2` and none for `AC-1`
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-285.feature kind=business-rule status=Implemented test=tests/unit/change-layers.test.ts -->
+
+### Requirement: REQ-286 — Every task names the requirement it delivers
+
+The system SHALL warn, on `change validate`, for each task of a layered change's `tasks.md` that names no requirement (`REQ-NNN`), except the specification tasks under a "Specification" heading.
+
+#### Scenario: SCN-286a — A task with no requirement
+
+- GIVEN a layered change whose implementation tasks are "2.1 REQ-005 — the price list" and "2.2 Refactor the client"
+- WHEN `specgate change validate` runs
+- THEN it warns `layer_task_without_requirement` for "2.2 Refactor the client" only
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-286.feature kind=business-rule status=Implemented test=tests/unit/change-layers.test.ts -->
+
+### Requirement: REQ-287 — The business story stays put
+
+The system SHALL warn, on `change validate`, when a layered change's `discover.md` differs — beyond whitespace and comments — from the version it was agreed at: the one in the commit that recorded the change's approval, or else its first committed version.
+
+#### Scenario: SCN-287a — The story rewritten during the design
+
+- GIVEN a layered change whose `discover.md` was committed with "AC-1: peak rate above 100 orders"
+- WHEN the working copy changes it to "AC-1: peak rate above 500 orders" and `specgate change validate` runs
+- THEN it warns `layer_discover_rewritten`, naming the commit the story was agreed at
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-287.feature kind=business-rule status=Implemented test=tests/unit/change-layers.test.ts -->
+
+### Requirement: REQ-288 — Status and drafting name the layers
+
+The system SHALL have `specgate change status` list a layered change's artifacts as discover, specs, design and tasks, counting a layer still as `change new` wrote it as not written, with each next step naming the file and its owner; and `specgate propose --from-brief` and `--from-ticket` SHALL scaffold the three layers, their DRAFTING.md saying which layer the agent writes.
+
+#### Scenario: SCN-288a — The next layer and its owner
+
+- GIVEN a layered change fresh from `change new`
+- WHEN `specgate change status --json` runs
+- THEN the artifacts are discover, specs, design and tasks, and a next step reads "Write discover.md (product)"
+
+#### Scenario: SCN-288b — A module drafted from the brief
+
+- GIVEN a project whose brief lists the module "pricing"
+- WHEN `specgate propose --from-brief pricing` runs
+- THEN the draft holds `discover.md`, `design.md` and `tasks.md` under `schema: layered`, and its DRAFTING.md names the three layers
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-288.feature kind=functional status=Implemented test=tests/unit/change-layers.test.ts -->
+
+### Requirement: REQ-289 — The studio's review shows the layers
+
+The system SHALL list, in the studio's review of a draft, the change's layers with their owners and whether each is written.
+
+#### Scenario: SCN-289a — Reviewing a layered draft
+
+- GIVEN a layered draft whose Discover is written and whose design is still the template
+- WHEN the studio's review data is read (`/api/drafts`)
+- THEN the draft lists discover (product, written), design (architect, not written) and tasks (developer)
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-289.feature kind=functional status=Implemented test=tests/unit/change-layers.test.ts -->
+
+### Requirement: REQ-325 — A 0.27 change in progress is upgraded to the three layers
+
+The system SHALL, on `specgate migrate 1.0`, upgrade every open change whose `change.yaml` says `schema: spec-driven` to the `layered` schema: its `proposal.md` becomes `discover.md` with its text unchanged, a `design.md` is drafted from the proposal, its `tasks.md` is kept, and no archived change is read or rewritten.
+
+#### Scenario: SCN-325a — An open change written with 0.27
+
+- GIVEN a committed project with an open change `add-rates` written with `change new --schema spec-driven`, its proposal stating "Rates come from the provider."
+- WHEN the person runs `specgate migrate 1.0`
+- THEN `add-rates` has `discover.md` with the proposal's text, a `design.md`, its `tasks.md`, no `proposal.md`, and `schema: layered` in `change.yaml`
+
+#### Scenario: SCN-325b — A delivered change
+
+- GIVEN the same project with an archived 0.27 change
+- WHEN the person runs `specgate migrate 1.0`
+- THEN every file under the archive is byte for byte as before
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-325.feature kind=functional status=Implemented test=tests/unit/migrate.test.ts -->
+
+### Requirement: REQ-326 — The migration can be previewed, and runs once
+
+The system SHALL, on `specgate migrate 1.0 --dry-run`, print the same report a real run would and change no file; and SHALL, on a project already migrated, change nothing and say there is nothing left to migrate.
+
+#### Scenario: SCN-326a — A preview
+
+- GIVEN a project with an open 0.27 change
+- WHEN the person runs `specgate migrate 1.0 --dry-run --json`
+- THEN the report lists the change's actions, and no file in the project changed
+
+#### Scenario: SCN-326b — A second run
+
+- GIVEN a project migrated and committed
+- WHEN the person runs `specgate migrate 1.0` again
+- THEN it exits 0, plans no action and leaves every file as it was
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-326.feature kind=functional status=Implemented test=tests/unit/migrate.test.ts -->
+
+### Requirement: REQ-327 — The migration starts from a commit
+
+The system SHALL refuse `specgate migrate 1.0` without `--dry-run` when the project has uncommitted changes or is not a git repository, naming how to commit or stash first, and SHALL change nothing.
+
+#### Scenario: SCN-327a — Work not committed
+
+- GIVEN a project with an open 0.27 change and an uncommitted edit
+- WHEN the person runs `specgate migrate 1.0`
+- THEN it exits 1 with `migrate_dirty_tree` and the change still has its `proposal.md`
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-327.feature kind=functional status=Implemented test=tests/unit/migrate.test.ts -->
+
+### Requirement: REQ-328 — The migration says what it did and what is left
+
+The system SHALL write, when it changes anything, a report to `docs/specs/migration-1.0.md` and in `--json` that lists each step, the file actions it took and what a person must still do; the steps SHALL be one ordered table, so a step of a later 1.0 feature is added in one place.
+
+#### Scenario: SCN-328a — The report of a real run
+
+- GIVEN a project with an open 0.27 change
+- WHEN the person runs `specgate migrate 1.0 --json`
+- THEN `docs/specs/migration-1.0.md` names the change and `discover.md`, `design.md`, and lists reviewing the drafted design as a manual step, and the JSON has the same steps
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-328.feature kind=functional status=Implemented test=tests/unit/migrate.test.ts -->
+
+### Requirement: REQ-329 — Status names the migration
+
+The system SHALL, on `specgate status`, while an open change says `schema: spec-driven`, print one line naming `specgate migrate 1.0` and the number of such changes, and add a `migrate` key to `--json`; with none it says nothing about it.
+
+#### Scenario: SCN-329a — A 0.27 project opened with 1.0
+
+- GIVEN a project with one open 0.27 change
+- WHEN the person runs `specgate status`
+- THEN the output names `specgate migrate 1.0` once, and `status --json` has `migrate.changes` = ["add-rates"]
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-329.feature kind=functional status=Implemented test=tests/unit/migrate.test.ts -->
+
+### Requirement: REQ-310 — The roles of a project
+
+The system SHALL read `roles:` from `harness.config.yaml` as a mapping from a role (product, architect, developer, security, …) to the people who hold it, each matched to the git identity of whoever runs a command (`user.email` or `user.name`, case-insensitive); a role nobody is named for SHALL be open to anyone.
+
+#### Scenario: SCN-310a — Ana holds the product role
+
+- GIVEN `roles: { product: [ana@acme.eu], architect: [carlos@acme.eu] }` and a git identity `ana@acme.eu`
+- WHEN the roles of that person are asked for
+- THEN they are product and developer — developer because nobody is named for it — and not architect
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-310.feature kind=functional status=Implemented test=tests/unit/approvals.test.ts -->
+
+### Requirement: REQ-311 — A layer is approved by the role that owns it
+
+The system SHALL record `specgate change approve <id> --layer discover|design|tasks` only for a person holding the layer's owning role — product for the Discover, architect for the Design, developer for the Tasks — and SHALL refuse anyone else, naming the role; without `--layer` it SHALL approve every written layer the person owns.
+
+#### Scenario: SCN-311a — The architect cannot approve the business story
+
+- GIVEN roles naming ana@acme.eu as product and carlos@acme.eu as architect, and a change with all three layers written
+- WHEN carlos@acme.eu runs `change approve <id> --layer discover`
+- THEN it is refused with `approve_not_owner` naming the product role, and `--layer design` is recorded
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-311.feature kind=functional status=Implemented test=tests/unit/approvals.test.ts -->
+
+### Requirement: REQ-312 — How many people a layer needs
+
+The system SHALL count a layer approved once as many distinct people as `approvals.quorum.<layer>` says (default 1) have approved its current text.
+
+#### Scenario: SCN-312a — Two architects for the design
+
+- GIVEN `approvals: { quorum: { design: 2 } }` and two people in the architect role
+- WHEN the first of them approves the design
+- THEN the design still waits for one approval, and it is approved once the second does; the same person twice counts once
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-312.feature kind=functional status=Implemented test=tests/unit/approvals.test.ts -->
+
+### Requirement: REQ-313 — Who approved which version
+
+The system SHALL record each approval in the change's `approvals.json` — the layer, the person's name and email, the role, the hash of the layer's text and the date — so the record moves with the change into the archive.
+
+#### Scenario: SCN-313a — The audit after the change is closed
+
+- GIVEN a change whose three layers were approved
+- WHEN `approvals.json` is read
+- THEN it lists one entry per approval with layer, name, email, role, a sha256 hash of that layer and the date
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-313.feature kind=functional status=Implemented test=tests/unit/approvals.test.ts -->
+
+### Requirement: REQ-314 — A changed layer is approved again
+
+The system SHALL count an approval only while the layer's text has the hash approved; a layer changed afterwards SHALL wait for a new approval, and the change SHALL no longer read as approved.
+
+#### Scenario: SCN-314a — The design is rewritten after its approval
+
+- GIVEN a change whose layers were all approved
+- WHEN `design.md` is edited
+- THEN the design waits for an approval again, the change is not approved, and the Discover's approval still counts
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-314.feature kind=functional status=Implemented test=tests/unit/approvals.test.ts -->
+
+### Requirement: REQ-315 — Nothing is built before its approvals
+
+The system SHALL have `harness run` skip, before any worktree or agent, a requirement of an open change whose required approvals are missing, naming the layers that wait and the command that approves them. `approvals.required` SHALL say which changes need them: `layered` (the 1.0 default: changes of the layered schema), `always`, or `never` (the 0.27 behaviour).
+
+#### Scenario: SCN-315a — A 1.0 change nobody approved
+
+- GIVEN an open layered change adding REQ-002, not approved
+- WHEN `harness run --req REQ-002` runs
+- THEN REQ-002 is skipped with `harness_not_approved`, no agent runs, and with `approvals: { required: never }` it is attempted
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-315.feature kind=functional status=Implemented test=tests/unit/approvals.test.ts -->
+
+### Requirement: REQ-319 — The studio's Review shows and takes layer approvals
+
+The system SHALL return, for each layer of a draft in the studio's `/api/drafts`, its approvals, how many it needs, whether it is approved and whether the viewer owns it; and SHALL record `POST /api/approve` with a `layer` for the viewer's git identity under the same rules as `change approve`.
+
+#### Scenario: SCN-319a — Ana approves the Discover from the studio
+
+- GIVEN a draft with its layers written and ana@acme.eu as product
+- WHEN the studio is asked for the drafts and then posts an approval of the Discover as ana@acme.eu
+- THEN the Discover reads as owned by the viewer, and after the post it is approved by ana@acme.eu
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-319.feature kind=functional status=Implemented test=tests/unit/approvals.test.ts -->
+
+### Requirement: REQ-350 — change validate reports what approval refuses
+
+The system SHALL, in `specgate change validate` of a layered change, report as errors the findings that `change approve` would refuse it for — the draft checklist's errors, such as a requirement with no kind, and its open questions — so validation never passes a change that approval then blocks.
+
+#### Scenario: SCN-350a — A requirement with no kind
+
+- GIVEN a layered change whose requirement has a trace with no `kind=`
+- WHEN `specgate change validate` runs
+- THEN it fails with `change_not_approvable` naming the missing kind, as `change approve` would
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-350.feature kind=functional status=Implemented test=tests/unit/rc2-change.test.ts -->
+
+### Requirement: REQ-351 — The agent writing a change's requirements is told what they need
+
+The system SHALL tell the agent that writes a layered change's requirements (`change author --artifact specs`, `change instructions specs`) to give each requirement's trace a `kind=` (functional, non-functional or business-rule) and an `actor=`, and a feature file of its own.
+
+#### Scenario: SCN-351a — The instructions for the specs of a layered change
+
+- GIVEN a layered change
+- WHEN `specgate change instructions specs <id>` runs
+- THEN its rules name `kind=`, `actor=` and one feature file per requirement
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-351.feature kind=functional status=Implemented test=tests/unit/rc2-change.test.ts -->
+
+### Requirement: REQ-352 — Two requirements naming one feature file are reported
+
+The system SHALL report, in `change validate` and when archiving, two requirements of a change whose traces name the same feature file, naming both and the file, since archiving lays one feature file per requirement and the second would replace the first's scenarios.
+
+#### Scenario: SCN-352a — Three requirements, one feature file
+
+- GIVEN a change whose REQ-002 and REQ-003 both trace `feature=features/x/follow.feature`
+- WHEN `specgate change validate` runs
+- THEN it fails with `change_feature_shared` naming REQ-002, REQ-003 and the file
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-352.feature kind=functional status=Implemented test=tests/unit/rc2-change.test.ts -->
+
+### Requirement: REQ-353 — A delivered requirement ticks its tasks
+
+The system SHALL, when a requirement of an open change is delivered (`specgate done`, which the harness runs), tick the unchecked tasks of that change's `tasks.md` that name the requirement, so archiving warns only about tasks no delivered requirement names.
+
+#### Scenario: SCN-353a — The harness delivered REQ-002
+
+- GIVEN an open change whose tasks.md has `- [ ] 2.1 Build the panel (REQ-002)` and `- [ ] 2.2 Docs`
+- WHEN `specgate done REQ-002` delivers it
+- THEN the task naming REQ-002 is ticked and the other is not
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-353.feature kind=functional status=Implemented test=tests/unit/rc2-change.test.ts -->
+
+### Requirement: REQ-354 — The change command's help describes the three layers
+
+The system SHALL describe, in `specgate change --help`, a new change as its three layers — discover, design and tasks — not as a proposal.
+
+#### Scenario: SCN-354a — The help of change new
+
+- GIVEN Specgate 1.0
+- WHEN `specgate change --help` runs
+- THEN the line for `new` names discover, design and tasks and not "proposal"
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-354.feature kind=functional status=Implemented test=tests/unit/rc2-change.test.ts -->
+
+### Requirement: REQ-370 — A ticked task keeps the approval of the tasks
+
+The system SHALL take the approved content of a layer with its task boxes read as open, so that ticking a task — as delivering its requirement does (REQ-353), or by a person — keeps the layer's approvals, while any other edit of the layer still asks for them again (REQ-314).
+
+#### Scenario: SCN-370a — The second requirement of an approved change
+
+- GIVEN a layered change with REQ-002 and REQ-003, every layer approved
+- WHEN REQ-002 is delivered and its task in tasks.md is ticked
+- THEN the harness still accepts REQ-003 as approved
+
+#### Scenario: SCN-370b — A task reworded after the approval
+
+- GIVEN the same approved change
+- WHEN a task of tasks.md is reworded
+- THEN the harness refuses the change as not approved: tasks
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-370.feature kind=functional status=Implemented test=tests/unit/rc3-approvals.test.ts -->
+
+### Requirement: REQ-371 — Approvals recorded by the first candidates keep counting
+
+The system SHALL accept an approval whose recorded hash is of the layer's text as written — the form 1.0.0-rc.1 and rc.2 recorded — as long as that text has not changed.
+
+#### Scenario: SCN-371a — A record written by 1.0.0-rc.2
+
+- GIVEN an approval of tasks.md recorded with the hash of its text as written, a task already ticked
+- WHEN its approvals are read
+- THEN the tasks are approved
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-371.feature kind=functional status=Implemented test=tests/unit/rc3-approvals.test.ts -->
+
+### Requirement: REQ-380 — A dependency the design names is carried by a requirement
+
+The system SHALL warn, when a layered change is validated, `layer_design_dependency_untraced` for each `depends=<repo>:REQ-NNN` that design.md names and that no `specgate:trace` of the change's delta carries, naming the requirement the design line associates it with when it names one, and saying to add it to that requirement's trace.
+
+#### Scenario: SCN-380a — The panel's design names what it waits for
+
+- GIVEN a layered change whose design.md has the row "REQ-002 — `depends=tracking:REQ-002`" and whose REQ-002 trace carries no depends
+- WHEN `specgate change validate` runs
+- THEN it warns layer_design_dependency_untraced for tracking:REQ-002, naming REQ-002
+
+#### Scenario: SCN-380b — The dependency is in the trace
+
+- GIVEN the same change, with `depends=tracking:REQ-002` in REQ-002's trace
+- WHEN `specgate change validate` runs
+- THEN it gives no layer_design_dependency_untraced warning
+
+<!-- specgate:trace actor=Architect feature=features/change-lifecycle/REQ-380.feature kind=functional status=Implemented test=tests/unit/rc4-deps.test.ts -->
+
+### Requirement: REQ-381 — An operation the design names is cited by a requirement
+
+The system SHALL warn `layer_design_dependency_untraced` for each `api=<file>#<operation>` that design.md names and that no trace of the change's delta cites, and SHALL take neither a placeholder id (`REQ-NNN`) nor a placeholder file (`<file>`) for a reference.
+
+#### Scenario: SCN-381a — An operation named only in the design
+
+- GIVEN a layered change whose design.md names `api=contracts/fleet.yaml#listFleet` and the scaffold's `depends=contracts:REQ-NNN` and `api=<file>#<operationId>`
+- WHEN `specgate change validate` runs
+- THEN it warns once, for api=contracts/fleet.yaml#listFleet
+
+<!-- specgate:trace actor=Architect feature=features/change-lifecycle/REQ-381.feature kind=functional status=Implemented test=tests/unit/rc4-deps.test.ts -->
+
+### Requirement: REQ-390 — The design carries its dependencies into the traces
+
+The system SHALL include, among the rules of `change instructions design` for a layered change (and so in the prompt of `change author design`), a rule saying that a `depends=<repo>:REQ-NNN` or `api=<file>#<operationId>` the design decides goes into that requirement's `specgate:trace` in the delta under `specs/`, naming `layer_design_dependency_untraced`.
+
+#### Scenario: SCN-390a — The architect is told to carry a dependency into the trace
+
+- GIVEN a layered change panel
+- WHEN the architect runs `specgate change instructions design panel --json`
+- THEN one of the rules names `depends=`, `api=`, the `specgate:trace` under `specs/` and `layer_design_dependency_untraced`
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-390.feature kind=functional status=Implemented test=tests/unit/rc6-deps.test.ts -->
+
+### Requirement: REQ-391 — A placeholder operation is no citation
+
+The system SHALL NOT report `layer_design_dependency_untraced` for an `api=<file>#<operationId>` whose operation is a placeholder in angle brackets, even when the file is named.
+
+#### Scenario: SCN-391a — An operation placeholder after a real file is no reference
+
+- GIVEN the design of panel quotes `api=contracts/fleet-tracking.openapi.yaml#<operationId>`
+- WHEN the developer runs `specgate change validate panel --json`
+- THEN no `layer_design_dependency_untraced` is reported
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-391.feature kind=functional status=Implemented test=tests/unit/rc6-deps.test.ts -->
+
+### Requirement: REQ-416 — A rule citing a law names its source
+
+The system SHALL tell whoever writes a layered change's specs that a `kind=business-rule` requirement citing a law, regulation, standard or contract carries a `Source:` line, with an example; and `change approve`, refusing a change with `approve_blocked`, SHALL give as its fix each blocker's own fix, prefixed with the requirement or item it is about.
+
+#### Scenario: SCN-416a — A driving-time rule cites the regulation
+
+- GIVEN contracts' change track-fleet has REQ-004, a business rule citing "the EU regulation on driving times" with no `Source:`
+- WHEN the developer runs `specgate change instructions specs track-fleet --json` and `specgate change approve track-fleet --json`
+- THEN the instructions show `Source: Regulation (EC) No 561/2006`, and approve is refused naming that REQ-004 names no source, with the fix `REQ-004: Add a "Source:" line`
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-416.feature kind=functional status=Implemented test=tests/unit/rc10-contract.test.ts -->
+
+### Requirement: REQ-564 — change show says whether the change may be built
+
+The system SHALL include in `specgate change show <id> --json` the change's approvals as the harness judges them — whether they are required, whether the change is approved, when, and each layer's approvals and quorum — so a tool never takes `change.yaml`'s `approved:` line, which outlives an edit of an approved layer, for the answer.
+
+#### Scenario: SCN-564a — A change just proposed
+
+- GIVEN a change just proposed, with its three layers and no approval
+- WHEN a tool runs `specgate change show <id> --json`
+- THEN `change.approvals.approved` is false and `change.approvals.layers` lists discover, design and tasks
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-564.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-567 — A 0.35 project reaches 1.0 in one command
+
+The system SHALL, on a project 0.35 left — open changes without layers, the lanes under `roles:`, agent scripts that read `SPECGATE_ROLE` — name `specgate migrate 1.0` in `specgate status` (and in `status --json`'s `migrate`, with `config: true` when the harness config needs it, even with no open change to migrate); and `specgate migrate 1.0` SHALL layer the open changes keeping every other line of their `change.yaml`, rename the lanes, and list each tracked file that reads `SPECGATE_ROLE` among what a person must still do.
+
+#### Scenario: SCN-567a — A 0.35 project, moved to 1.0 in one command
+
+- GIVEN a committed 0.35 project with an open change of kind bug, `roles: [tester, implementer]` and scripts/agent.sh reading `SPECGATE_ROLE`
+- WHEN a developer runs `specgate status`, then `specgate migrate 1.0`
+- THEN status names the migration; afterwards the change is layered and still of kind bug, the harness config says `lanes:` and loads, the report names scripts/agent.sh, and status no longer names the migration
+
+<!-- specgate:trace actor=Developer feature=features/change-lifecycle/REQ-567.feature kind=functional status=Implemented -->

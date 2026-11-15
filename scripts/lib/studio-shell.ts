@@ -18,7 +18,23 @@ const escape = (s: string) =>
  * The page: the token for writes (REQ-201), the project's name, the app's
  * script and styles; with a section, the one it opens on — `/live` opens Live (REQ-433).
  */
-export function studioShell(projectName: string, token: string, section = ""): string {
+/**
+ * REQ-566: a workspace's studio opens its Live on the workspace
+ * (`workspace`), and each member's view on that member's data under
+ * `liveBase` (`/live/repo/<name>`), read only, with its role.
+ */
+export interface ShellLive {
+  workspace?: string;
+  liveBase?: string;
+  role?: string;
+}
+
+export function studioShell(
+  projectName: string,
+  token: string,
+  section = "",
+  live: ShellLive = {}
+): string {
   return [
     "<!doctype html>",
     '<html lang="es">',
@@ -28,6 +44,13 @@ export function studioShell(projectName: string, token: string, section = ""): s
     `<meta name="specgate-token" content="${escape(token)}"/>`,
     `<meta name="specgate-project" content="${escape(projectName)}"/>`,
     ...(section ? [`<meta name="specgate-section" content="${escape(section)}"/>`] : []),
+    ...(live.workspace
+      ? [`<meta name="specgate-workspace" content="${escape(live.workspace)}"/>`]
+      : []),
+    ...(live.liveBase
+      ? [`<meta name="specgate-live-base" content="${escape(live.liveBase)}"/>`]
+      : []),
+    ...(live.role ? [`<meta name="specgate-role" content="${escape(live.role)}"/>`] : []),
     `<title>Specgate Studio — ${escape(projectName)}</title>`,
     '<link rel="stylesheet" href="/studio/app.css"/>',
     "</head>",

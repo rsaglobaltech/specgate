@@ -2,6 +2,19 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { namedBy, questionTable } from "../../packages/core/src/domain/Clarification";
 import { draftReport } from "../cli/commands/spec/DraftCommand";
+import type { LayerId } from "../../packages/core/src/domain/ChangeLayers";
+import { approveLayers, changeApprovals } from "./approvals";
+import type { Identity } from "../../packages/core/src/domain/Approvals";
+import { contractCitationWarnings } from "./story-part";
+import {
+  parseReviewNotes,
+  withNoteAdded,
+  withNotesAddressed,
+  type ReviewChange,
+  type ReviewNote,
+} from "../../packages/core/src/domain/ReviewNotes";
+
+export type { ReviewChange, ReviewNote };
 
 /**
  * A person's review of a draft change (REQ-206, REQ-207): approving it, which
@@ -22,10 +35,18 @@ function read(file: string): string | undefined {
   }
 }
 
-/** When a person approved the change, or "" when nobody has. */
+/**
+ * When the change was approved, or "" while it is not. A 1.0 change, and any
+ * change with recorded approvals, is approved only while every written layer's
+ * approvals match its text (REQ-314); a 0.27 change without any reads the
+ * `approved:` line it always had.
+ */
 export function approvedOn(projectDir: string, id: string): string {
   const yaml = read(path.join(changeDir(projectDir, id), "change.yaml")) || "";
-  return (/^approved:\s*(\S+)/m.exec(yaml) || [])[1] || "";
+  const line = (/^approved:\s*(\S+)/m.exec(yaml) || [])[1] || "";
+  const state = changeApprovals(projectDir, id);
+  if (state.schema === "layered" || state.recorded) return state.approved ? state.approvedAt : "";
+  return line;
 }
 
 /** What clears a blocker: answer a question, confirm the spec says its answer, or open a requirement (REQ-206). */
@@ -38,6 +59,9 @@ export interface BlockerAction {
 export interface Blocker {
   code: string;
   message: string;
+  /** What to do about it, as the rule that found it says, and where. */
+  fix?: string;
+  target?: string;
   action?: BlockerAction;
 }
 
@@ -64,8 +88,25 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
   } else {
     for (const d of r.report.status) {
       if (d.severity !== "error") continue;
-      out.push({ code: d.code, message: d.message, action: actionFor(d.message) });
+      out.push({
+        code: d.code,
+        message: d.message,
+        action: actionFor(d.message),
+        ...(d.fix ? { fix: d.fix } : {}),
+        ...(d.target ? { target: d.target } : {}),
+      });
     }
+  }
+  // REQ-415: a part of a story cites the contracts' operations as they are.
+  for (const d of contractCitationWarnings(projectDir, id)) {
+    if (d.severity !== "error") continue;
+    out.push({
+      code: d.code,
+      message: d.message,
+      action: actionFor(d.message),
+      ...(d.fix ? { fix: d.fix } : {}),
+      ...(d.target ? { target: d.target } : {}),
+    });
   }
   for (const q of questions) {
     if (!q.answered && !out.some((b) => names(b.message, q.id))) {
@@ -73,6 +114,7 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
         code: "approve_question_open",
         message: `${q.id} is open: ${q.text}`,
         action: { kind: "answer", question: q.id },
+        fix: `Answer ${q.id} in questions.md.`,
       });
     }
   }
@@ -80,12 +122,22 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
 }
 
 export type ApproveOutcome =
-  | { ok: true; change: string; approved: string }
-  | { ok: false; code: string; message: string; blockers?: Blocker[] };
+  | { ok: true; change: string; approved: string; layers?: LayerId[]; pending?: LayerId[] }
+  | { ok: false; code: string; message: string; blockers?: Blocker[]; fix?: string };
 
-/** Record that a person approved the change (REQ-206). */
-export function approveChange(projectDir: string, id: string, today: string): ApproveOutcome {
-  const file = path.join(changeDir(projectDir, id), "change.yaml");
+/**
+ * Record that a person approved the change (REQ-206): the layers they own, or
+ * the one named (REQ-311). `approved` is the date once every layer is in, ""
+ * while some still wait.
+ */
+export function approveChange(
+  projectDir: string,
+  id: string,
+  today: string,
+  layer?: LayerId,
+  /** REQ-562: who approves — the proxy's user in a team's studio; git's identity otherwise. */
+  who?: Identity
+): ApproveOutcome {
   if (!fs.existsSync(changeDir(projectDir, id))) {
     return { ok: false, code: "change_not_found", message: `No open change ${id}.` };
   }
@@ -96,45 +148,51 @@ export function approveChange(projectDir: string, id: string, today: string): Ap
       code: "approve_blocked",
       message: `${id} cannot be approved yet: ${blockers.map((b) => b.message).join("; ")}`,
       blockers,
+      // REQ-416: each blocker's own fix, not a generic one (truck-flote, MS8-1).
+      fix: blockers
+        .filter((b) => b.fix)
+        .map((b) => (b.target ? `${b.target}: ${b.fix}` : b.fix))
+        .join(" "),
     };
   }
-  const yaml = read(file) || "";
-  const next = /^approved:/m.test(yaml)
-    ? yaml.replace(/^approved:.*$/m, `approved: ${today}`)
-    : `${yaml.replace(/\n*$/, "\n")}approved: ${today}\n`;
-  fs.writeFileSync(file, next, "utf8");
-  return { ok: true, change: id, approved: today };
+  return approveLayers(projectDir, id, layer ? [layer] : null, today, who);
 }
 
-export interface ReviewNote {
+export interface ReviewNoteRow {
   date: string;
   requirement: string;
   text: string;
 }
 
-const NOTES_HEADER = "| Date | Requirement | Request |";
+/** review.md of a change, relative to the project with `/`. */
+export const reviewFile = (id: string) => `${CHANGES.split(path.sep).join("/")}/${id}/review.md`;
 
-function cell(text: string): string {
-  return String(text).replace(/\s+/g, " ").trim().replace(/\|/g, "\\|");
+/** Every note of the change's review.md, each open or addressed, with what changed (REQ-484). */
+export function reviewNoteList(projectDir: string, id: string): ReviewNote[] {
+  return parseReviewNotes(read(path.join(changeDir(projectDir, id), "review.md")) || "");
 }
 
-/** The change's review notes. */
-export function reviewNotes(projectDir: string, id: string): ReviewNote[] {
-  const md = read(path.join(changeDir(projectDir, id), "review.md")) || "";
-  return md
-    .split(/\r?\n/)
-    .filter((l) => /^\|\s*\d{4}-\d{2}-\d{2}\s*\|/.test(l))
-    .map((l) => {
-      const c = l
-        .split(/(?<!\\)\|/)
-        .slice(1, -1)
-        .map((x) => x.trim());
-      return {
-        date: c[0],
-        requirement: c[1] === "—" ? "" : c[1],
-        text: (c[2] || "").replace(/\\\|/g, "|"),
-      };
-    });
+/** The change's review notes, as the old studio's Review lists them (REQ-207). */
+export function reviewNotes(projectDir: string, id: string): ReviewNoteRow[] {
+  return reviewNoteList(projectDir, id).map((n) => ({
+    date: n.date,
+    requirement: n.requirement || "",
+    text: n.text,
+  }));
+}
+
+/** What `change show --json` gives under `review` (REQ-484). */
+export function reviewOf(
+  projectDir: string,
+  id: string
+): { file: string | null; open: number; notes: ReviewNote[] } {
+  const exists = fs.existsSync(path.join(changeDir(projectDir, id), "review.md"));
+  const notes = reviewNoteList(projectDir, id);
+  return {
+    file: exists ? reviewFile(id) : null,
+    open: notes.filter((n) => n.state === "open").length,
+    notes,
+  };
 }
 
 /** Ask the draft for a change in your own words (REQ-207). */
@@ -150,10 +208,18 @@ export function noteChange(
   }
   if (!text.trim()) return { ok: false, code: "note_empty", message: "The request is empty." };
   const file = path.join(changeDir(projectDir, id), "review.md");
-  const md =
-    read(file) ||
-    `# Review — ${id}\n\nWhat the person reviewing this draft asked to change.\n\n${NOTES_HEADER}\n|---|---|---|\n`;
-  const row = `| ${today} | ${requirement || "—"} | ${cell(text)} |`;
-  fs.writeFileSync(file, `${md.replace(/\n*$/, "\n")}${row}\n`, "utf8");
-  return { ok: true, change: id, notes: reviewNotes(projectDir, id).length };
+  fs.writeFileSync(file, withNoteAdded(read(file), id, { date: today, requirement, text }), "utf8");
+  return { ok: true, change: id, notes: reviewNoteList(projectDir, id).length };
+}
+
+/** Mark notes addressed, each with what changed (REQ-485). */
+export function addressNotes(
+  projectDir: string,
+  id: string,
+  addressed: Array<{ id: string; changes: ReviewChange[] }>,
+  today: string
+): void {
+  if (addressed.length === 0) return;
+  const file = path.join(changeDir(projectDir, id), "review.md");
+  fs.writeFileSync(file, withNotesAddressed(read(file) || "", addressed, today), "utf8");
 }

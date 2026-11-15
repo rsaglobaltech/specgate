@@ -29,7 +29,9 @@
  */
 
 import { summariseQuality, type QualitySummary, type RecordedCheck } from "./QualitySummary";
-import { estimateRunCost } from "./RunBudget";
+import { estimateRunCost, costByProfile, type ProfileCost, type TokenPrices } from "./RunBudget";
+import type { StepUsage } from "./HarnessRun";
+import { summariseGaps, type GapAttempt, type GapInput, type GapSummary } from "./HarnessGaps";
 
 /** One attempt, as the ledger records it. */
 export interface AttemptRow {
@@ -38,6 +40,10 @@ export interface AttemptRow {
   agentMs?: number;
   totalMs?: number;
   profiles?: string[];
+  /** The gate stage that rejected it, e.g. "quality check: pmd" (REQ-301). */
+  gateStage?: string;
+  /** The tokens each step's agent reported (REQ-509). */
+  usage?: StepUsage[];
 }
 
 /** One requirement's outcome within a run. */
@@ -135,6 +141,18 @@ export interface HarnessReportSummary {
    */
   estimatedCost: { total: number; covered: number; uncovered: number } | null;
   /**
+   * Per profile that ran: its attempts, its tokens, the cost estimated from its
+   * hint and the cost measured from its tokens and prices, and which of the two
+   * stands (REQ-509).
+   */
+  costByProfile: ProfileCost[];
+  /**
+   * The cost measured from the tokens the agents reported, priced by their
+   * profiles: the steps measured, and those that ran without tokens or a price.
+   * `null` when no step could be measured.
+   */
+  measuredCost: { total: number; covered: number; uncovered: number } | null;
+  /**
    * Of the failures, the share that were genuine. `null` until somebody marks
    * one — an unmarked ledger cannot tell the two apart, and guessing 100% would
    * be the most flattering possible lie about our own gate.
@@ -142,6 +160,8 @@ export interface HarnessReportSummary {
   realFailureRate: number | null;
   /** What the quality checks said about the requirements delivered (REQ-229). */
   quality: QualitySummary;
+  /** Spec → implementation and intent → spec (REQ-300..REQ-303). */
+  gaps: GapSummary;
 }
 
 /** How an attempt ending is worth describing to a person. */
@@ -150,6 +170,7 @@ export const STAGE_LABELS: Readonly<Record<string, string>> = Object.freeze({
   "agent-timeout": "agent timed out",
   "agent-error": "agent exited non-zero",
   "write-scope": "agent edited protected files",
+  "decision-right": "agent took a decision kept for a person",
   "agent-unavailable": "agent out of quota or rate-limited",
   spec: "the specification fails the gate",
   gate: "gate rejected the work",
@@ -163,7 +184,9 @@ export const STAGE_LABELS: Readonly<Record<string, string>> = Object.freeze({
 export function summariseRuns(
   runs: readonly RunFile[],
   falseFailures: readonly FalseFailureMark[] = [],
-  costPerRunHint: Readonly<Record<string, number>> = {}
+  costPerRunHint: Readonly<Record<string, number>> = {},
+  gapInput: GapInput = {},
+  prices: Readonly<Record<string, TokenPrices>> = {}
 ): HarnessReportSummary {
   // REQ-269: every run's time counts, each requirement once, at its latest
   // outcome. Two runs of REQ-002 — failed, then passed — read "1 of 2 passed"
@@ -227,6 +250,8 @@ export function summariseRuns(
   const attemptProfiles = rows.flatMap((row) =>
     (row.attemptLog ?? []).map((a) => a?.profiles ?? [])
   );
+  const attemptUsage = rows.flatMap((row) => (row.attemptLog ?? []).map((a) => a?.usage ?? []));
+  const costs = costByProfile(attemptProfiles, attemptUsage, costPerRunHint, prices);
 
   const timeline = [...runs]
     .sort((a, b) => String(a.startedAt).localeCompare(String(b.startedAt)))
@@ -261,13 +286,33 @@ export function summariseRuns(
     exhausted,
     timeline,
     estimatedCost: estimateRunCost(attemptProfiles, costPerRunHint),
+    costByProfile: costs.byProfile,
+    measuredCost: costs.measured,
     falseFailures: falseCount,
     realFailureRate:
       failedRows.length > 0 && marked.size > 0
         ? (failedRows.length - falseCount) / failedRows.length
         : null,
     quality: summariseQuality(runs),
+    gaps: summariseGaps(
+      current.map((r) => r.requirement),
+      attemptsByRequirement(rows),
+      gapInput
+    ),
   };
+}
+
+/** Each requirement's attempts across every run, oldest first. */
+function attemptsByRequirement(rows: readonly ResultRow[]): Map<string, GapAttempt[]> {
+  const out = new Map<string, GapAttempt[]>();
+  for (const row of rows) {
+    const list = out.get(row.requirement) ?? [];
+    for (const a of row.attemptLog ?? []) {
+      if (a && a.endedAt) list.push({ endedAt: a.endedAt, gateStage: a.gateStage });
+    }
+    out.set(row.requirement, list);
+  }
+  return out;
 }
 
 /** The ledger of human marks, one JSON object per line. */

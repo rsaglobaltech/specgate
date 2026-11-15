@@ -1,11 +1,16 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { requirementCapabilities } from "../../../lib/capabilities";
+import { proposalNotes } from "../../../lib/proposals";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { parseTraceability, classify, detectOrphans } from "./PlanCommand";
 import { readLock } from "../../../specops/lock";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
 import { runMonorepoFanout } from "../../../lib/monorepo-fanout";
+import { WORKSPACE_FILE } from "../../../../packages/core/src/domain/Workspace";
+import { loadWorkspace, workspaceModel } from "../../../lib/workspace";
+import { readWorkspaceStories } from "../../../lib/workspace-draft";
 import {
   openQuestions,
   answeredQuestions,
@@ -27,12 +32,29 @@ import { c, sym } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { miniPet, petEnabled } from "../../../pet/pet";
 import { petFor } from "./PetCommand";
+import { projectJourneys } from "../../../lib/journeys";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import { changesToMigrate, lanesToMigrate } from "../../../lib/migrate";
+import { readConfig } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 
 /**
  * Whether the harness has an agent to run (REQ-271): the studio's Build said
  * "set agent in harness.config.yaml" and nothing before it had (truck-flote, S58).
  */
+/**
+ * `migrate` for `status --json` while open changes are written for 0.x
+ * (REQ-329), or harness.config.yaml still names the lanes `roles:` (REQ-567).
+ */
+function migrateHint(projectDir: string): {
+  migrate?: { changes: string[]; config: boolean; command: string };
+} {
+  const changes = changesToMigrate(projectDir);
+  const config = lanesToMigrate(projectDir);
+  return changes.length > 0 || config
+    ? { migrate: { changes, config, command: "specgate migrate 1.0" } }
+    : {};
+}
+
 function agentConfigured(projectDir: string): boolean {
   try {
     const config = readHarnessConfig(projectDir);
@@ -377,6 +399,24 @@ export function forjaAddCommand(todo: QueueItem): string {
 const needsCode = (todo: QueueItem) =>
   ["NEEDS_EVERYTHING", "NEEDS_TEST", "NEEDS_IMPLEMENTATION"].includes(todo.category);
 
+/**
+ * The next command as argv (REQ-565): what a tool runs, without `specgate`,
+ * and whether it still holds a placeholder (`<a behaviour you rely on>`) for a
+ * person to fill in. `argv` is null when the next step is not a command.
+ */
+export function nextStep(command: string): {
+  command: string;
+  argv: string[] | null;
+  placeholder: boolean;
+} {
+  if (!command.startsWith("specgate ")) return { command, argv: null, placeholder: false };
+  const argv: string[] = [];
+  for (const m of command.slice("specgate ".length).matchAll(/"([^"]*)"|(\S+)/g)) {
+    argv.push(m[1] !== undefined ? m[1] : m[2]);
+  }
+  return { command, argv, placeholder: argv.some((a) => /<[^>]+>/.test(a)) };
+}
+
 export function nextCommandPlain({
   items,
   tickets,
@@ -534,6 +574,18 @@ function emitText(
         `specgate config set agent "claude -p < {prompt_file}"\n`
     );
 
+  // REQ-329: a project with changes written for 0.27, opened with 1.0.
+  const toMigrate = changesToMigrate(projectDir);
+  if (toMigrate.length > 0)
+    out(
+      `\n  ${ui.muted(`·  ${toMigrate.length} open change(s) written for 0.x:`)} specgate migrate 1.0\n`
+    );
+  // REQ-567: 0.35's lanes under `roles:` — the harness config does not load until renamed.
+  else if (lanesToMigrate(projectDir))
+    out(
+      `\n  ${ui.muted("·  harness.config.yaml names the lanes roles:, as 0.35 did:")} specgate migrate 1.0\n`
+    );
+
   // Proposed, not written yet: not judged, and said, so nobody wonders why
   // the change is missing from the queue (ADR-0035).
   if (unwritten.length > 0) out("\n");
@@ -585,6 +637,71 @@ function emitText(
   if (process.env.SPECGATE_BARE === "1") out(`  ${ui.muted("All commands: specgate --help")}\n\n`);
 }
 
+/** The document `status --json` prints, and the API's `status` answers (REQ-466). */
+function statusDocument(
+  projectDir: string,
+  summary: QueueSummary,
+  lock: Lockfile | null,
+  notes: Diagnostic[] = [],
+  unwritten: Diagnostic[] = []
+): Record<string, unknown> {
+  const { counts, pending, orphans } = summary;
+  // REQ-545: whether the open change a requirement belongs to is a bug or an enhancement.
+  const kindOf = (change: string): string | null => {
+    try {
+      return (readConfig(projectDir, change).kind as string | undefined) || null;
+    } catch {
+      return null;
+    }
+  };
+  const capabilities = requirementCapabilities(projectDir);
+  return {
+    schemaVersion: 1,
+    projectDir: path.resolve(projectDir),
+    total: counts.total,
+    pending,
+    counts,
+    orphanFeatures: orphans,
+    // REQ-552: each journey, the requirements it crosses and the tests that name it.
+    journeys: projectJourneys(projectDir).journeys.map((j) => ({
+      id: j.id,
+      title: j.title,
+      requirements: j.requirements,
+      tests: j.tests,
+      file: j.file,
+    })),
+    packs: lock && lock.packs ? lock.packs : [],
+    requirements: summary.items.map((it) => ({
+      id: it.requirement,
+      title: titleOf(it) || null,
+      category: it.category,
+      needs: needsOf(it) || null,
+      // REQ-500: the capability that states it, for a view filtered by one.
+      capability: capabilities.get(it.requirement) ?? null,
+      ...(it.change ? { change: it.change, changeKind: kindOf(it.change) } : {}),
+      ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
+      ...(it.answered ? { answered: it.answered } : {}),
+    })),
+    ...(summary.brief
+      ? {
+          brief: {
+            path: summary.brief.brief,
+            modules: summary.brief.modules.map((m) => ({
+              module: m.module,
+              state: m.state,
+            })),
+          },
+        }
+      : {}),
+    nextCommand: nextCommandPlain(summary),
+    // REQ-565: the same step as data, so a tool runs it without parsing prose.
+    next: nextStep(nextCommandPlain(summary)),
+    // REQ-329: only while an open change is still written for 0.27.
+    ...migrateHint(projectDir),
+    status: [...notes, ...unwritten],
+  };
+}
+
 function emitJson(
   projectDir: string,
   summary: QueueSummary,
@@ -592,43 +709,23 @@ function emitJson(
   notes: Diagnostic[] = [],
   unwritten: Diagnostic[] = []
 ): void {
-  const { counts, pending, orphans } = summary;
   process.stdout.write(
-    JSON.stringify(
-      {
-        schemaVersion: 1,
-        projectDir: path.resolve(projectDir),
-        total: counts.total,
-        pending,
-        counts,
-        orphanFeatures: orphans,
-        packs: lock && lock.packs ? lock.packs : [],
-        requirements: summary.items.map((it) => ({
-          id: it.requirement,
-          title: titleOf(it) || null,
-          category: it.category,
-          needs: needsOf(it) || null,
-          ...(it.change ? { change: it.change } : {}),
-          ...(it.category === "WAITING_FOR_ANSWER" ? { question: it.question || null } : {}),
-          ...(it.answered ? { answered: it.answered } : {}),
-        })),
-        ...(summary.brief
-          ? {
-              brief: {
-                path: summary.brief.brief,
-                modules: summary.brief.modules.map((m) => ({
-                  module: m.module,
-                  state: m.state,
-                })),
-              },
-            }
-          : {}),
-        nextCommand: nextCommandPlain(summary),
-        status: [...notes, ...unwritten],
-      },
-      null,
-      2
-    ) + "\n"
+    JSON.stringify(statusDocument(projectDir, summary, lock, notes, unwritten), null, 2) + "\n"
+  );
+}
+
+/**
+ * What `specgate status --json` prints for the project, read without writing:
+ * a derived matrix is derived in memory, not regenerated on disk (REQ-467).
+ */
+export function statusAnswer(projectDir: string): Record<string, unknown> {
+  return withQueue(
+    projectDir,
+    (summary, dir) => {
+      const { lock, notes, unwritten } = readStatus(projectDir, summary, dir);
+      return statusDocument(projectDir, summary, lock, notes, unwritten);
+    },
+    { write: false }
   );
 }
 
@@ -649,6 +746,11 @@ export class StatusCommand extends BaseCommand {
     }
 
     const tracePath = path.join(projectDir, "docs/specs/traceability.md");
+    // REQ-341: a workspace repository holds stories, not a matrix.
+    if (!fs.existsSync(tracePath) && fs.existsSync(path.join(projectDir, WORKSPACE_FILE))) {
+      workspaceStatus(projectDir, opts.format === "json");
+      process.exit(0);
+    }
     if (!fs.existsSync(tracePath)) {
       process.stderr.write(
         `${c.red}✖${c.reset}  docs/specs/traceability.md not found in ${projectDir}\n` +
@@ -669,46 +771,140 @@ export class StatusCommand extends BaseCommand {
     summary: QueueSummary,
     dir: string
   ): void {
-    try {
-      summary.brief = briefProgress(projectDir);
-    } catch {
-      summary.brief = null;
-    }
-    // A brief that lists no module yet — forja's template, the client's text
-    // pasted below it — is what to do next, not the adoption path (REQ-243).
-    if (!summary.brief) {
-      const text = fs.existsSync(path.join(projectDir, DEFAULT_BRIEF))
-        ? fs.readFileSync(path.join(projectDir, DEFAULT_BRIEF), "utf8")
-        : null;
-      if (text !== null && briefModules(text).length === 0) {
-        summary.briefToFill = DEFAULT_BRIEF;
-        summary.rootBrief = rootBrief(projectDir, text) || undefined;
-      }
-    }
-    let lock: Lockfile | null = null;
-    try {
-      lock = readLock(projectDir);
-    } catch {
-      lock = null;
-    }
-
-    // D4 and D5 on the project's own specification: notes, never failures.
-    let notes: Diagnostic[] = [];
-    try {
-      const sources = readDerivationSources(dir);
-      const specs = [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])];
-      notes = specNotes(specs, sources.features);
-      // A row with no use case still has a title in its spec section (#48).
-      const titles = requirementTitles(specs);
-      for (const it of summary.items) {
-        if (!titleOf(it) && titles.has(it.requirement)) it.title = titles.get(it.requirement);
-      }
-    } catch {
-      notes = [];
-    }
-
-    const unwritten = unwrittenNotes(projectDir);
+    const { lock, notes, unwritten } = readStatus(projectDir, summary, dir);
     if (opts.format === "json") emitJson(projectDir, summary, lock, notes, unwritten);
     else emitText(projectDir, summary, lock, notes, unwritten);
   }
+}
+
+/**
+ * REQ-341: `status` in a workspace repository — its repositories, its
+ * stories, and the step that comes next, from the brief to the build.
+ */
+function workspaceStatus(projectDir: string, json: boolean): void {
+  const { ws, problems } = loadWorkspace(projectDir);
+  if (!ws) {
+    process.stderr.write(
+      problems.map((p) => `${c.red}✖${c.reset}  ${p.message}`).join("\n") + "\n"
+    );
+    process.exit(2);
+  }
+  const model = workspaceModel(ws);
+  const named = readWorkspaceStories(ws);
+  const drafted = new Set(model.stories.map((s) => s.id));
+  const undrafted = named.find((s) => !drafted.has(s.id));
+  const unsplit = model.stories.find((s) => s.subchanges.length === 0);
+  const building = model.stories.find(
+    (s) => !s.done && s.subchanges.some((p) => p.state === "open")
+  );
+  const next =
+    named.length === 0 && model.stories.length === 0
+      ? { command: "specgate workspace draft", why: "the client's brief, and the stories it holds" }
+      : undrafted
+        ? {
+            command: `specgate workspace draft ${undrafted.id} --agent "claude -p"`,
+            why: "its intent and criteria, from the brief",
+          }
+        : unsplit
+          ? {
+              command: `specgate workspace propose ${unsplit.id}`,
+              why: "its change in each repository it touches",
+            }
+          : building
+            ? {
+                command: `specgate workspace harness run --story ${building.id}`,
+                why: "each repository builds its part",
+              }
+            : {
+                command: "specgate workspace check",
+                why: "every repository's gate, and the links between them",
+              };
+  if (json) {
+    process.stdout.write(JSON.stringify({ workspace: model, next }, null, 2) + "\n");
+    return;
+  }
+  process.stdout.write(ui.header("status", `${model.name} · workspace`));
+  process.stdout.write(ui.section("Repositories"));
+  process.stdout.write(
+    ui.table(
+      model.repos.map((r) => [
+        r.name,
+        r.role,
+        r.requirements
+          ? `${r.requirements.done} of ${r.requirements.total} done`
+          : r.exists
+            ? "no status"
+            : "missing",
+      ])
+    ) + "\n"
+  );
+  if (model.stories.length || named.length) {
+    process.stdout.write(ui.section("Stories"));
+    for (const s of named.filter((x) => !drafted.has(x.id)))
+      process.stdout.write(
+        `    ${ui.state("todo")} ${s.id}  ${c.muted}named in the brief${c.reset}\n`
+      );
+    for (const s of model.stories) {
+      const parts = s.subchanges.length
+        ? s.subchanges.map((p) => `${p.repo} ${p.state}`).join(" · ")
+        : "not split yet";
+      process.stdout.write(
+        `    ${ui.state(s.done ? "done" : "doing")} ${s.id}  ${c.muted}${parts}${c.reset}\n`
+      );
+    }
+  }
+  process.stdout.write(`\n  ${ui.next(next.command, next.why)}\n`);
+}
+
+/**
+ * Everything `status` reports besides the queue: the brief's progress, the
+ * packs, the specification's notes, the changes whose delta is unwritten.
+ */
+function readStatus(
+  projectDir: string,
+  summary: QueueSummary,
+  dir: string
+): { lock: Lockfile | null; notes: Diagnostic[]; unwritten: Diagnostic[] } {
+  try {
+    summary.brief = briefProgress(projectDir);
+  } catch {
+    summary.brief = null;
+  }
+  // A brief that lists no module yet — forja's template, the client's text
+  // pasted below it — is what to do next, not the adoption path (REQ-243).
+  if (!summary.brief) {
+    const text = fs.existsSync(path.join(projectDir, DEFAULT_BRIEF))
+      ? fs.readFileSync(path.join(projectDir, DEFAULT_BRIEF), "utf8")
+      : null;
+    if (text !== null && briefModules(text).length === 0) {
+      summary.briefToFill = DEFAULT_BRIEF;
+      summary.rootBrief = rootBrief(projectDir, text) || undefined;
+    }
+  }
+  let lock: Lockfile | null = null;
+  try {
+    lock = readLock(projectDir);
+  } catch {
+    lock = null;
+  }
+
+  // D4 and D5 on the project's own specification: notes, never failures.
+  let notes: Diagnostic[] = [];
+  try {
+    const sources = readDerivationSources(dir);
+    const specs = [{ path: "spec.md", source: sources.spec }, ...(sources.capabilities || [])];
+    notes = specNotes(specs, sources.features);
+    // An earlier adoption's proposals nobody specified (REQ-472).
+    notes.push(...proposalNotes(projectDir));
+    // A row with no use case still has a title in its spec section (#48).
+    const titles = requirementTitles(specs);
+    for (const it of summary.items) {
+      if (!titleOf(it) && titles.has(it.requirement)) it.title = titles.get(it.requirement);
+    }
+  } catch {
+    notes = [];
+  }
+
+  const unwritten = unwrittenNotes(projectDir);
+  return { lock, notes, unwritten };
 }

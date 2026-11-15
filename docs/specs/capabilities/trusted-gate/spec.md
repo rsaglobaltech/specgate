@@ -283,6 +283,18 @@ The system SHALL register each merge driver so that, when the specgate file it r
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-169.feature kind=functional status=Implemented test=tests/cli.test.ts -->
 
+### Requirement: REQ-172 — A clone registers the merge drivers alone
+
+The system SHALL, on `specgate harness init --merge-drivers`, register the merge drivers in the clone's git config, adding their rules to `.gitattributes` only when they are missing, and write no other file; and the messages that tell a clone to register the drivers SHALL name `specgate harness init --merge-drivers`.
+
+#### Scenario: SCN-172a — A developer's fresh clone
+
+- GIVEN a clone whose committed `.gitattributes` routes the capability specs and the matrix to the drivers, with a committed `harness.config.yaml`, and no driver in its git config
+- WHEN the developer runs `specgate harness init --merge-drivers`
+- THEN `merge.specgate-spec.driver` and `merge.specgate-matrix.driver` are set in its git config, and `git status --porcelain` is empty
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-172.feature kind=functional status=Implemented test=tests/cli.test.ts -->
+
 ### Requirement: REQ-183 — The gate fills the test command's placeholders outside the harness
 
 The system SHALL run the test command of `specgate check` with `{req}`, `{scenario}` and `{feature_file}` empty, as the gate of the whole project, and the one of `apply` and `done` for a single requirement with `{req}` set to it; several requirements at once run it with `{req}` empty.
@@ -300,3 +312,93 @@ The system SHALL run the test command of `specgate check` with `{req}`, `{scenar
 - THEN the gate runs `npm test && node e2e-names.mjs REQ-007`
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-183.feature kind=functional status=Implemented test=packages/core/test/unit/done-verification.test.ts -->
+
+### Requirement: REQ-281 — A release candidate is never what people install by default
+
+The system SHALL publish a version whose number has a prerelease part (`1.0.0-rc.1`), when its tag is pushed, under the npm and GitHub Packages dist-tag `next` and as a Docker image tagged with its version only, never `latest`; a final version (`0.27.9`) SHALL stay `latest` on all three.
+
+#### Scenario: SCN-281a — The first 1.0 release candidate
+
+- GIVEN the tag `v1.0.0-rc.1` is pushed with `package.json` at `1.0.0-rc.1`
+- WHEN the npm, GitHub Packages and Docker publish workflows run
+- THEN npm and GitHub Packages publish it under `next`, the image is tagged `1.0.0-rc.1` and not `latest`, and the image's smoke test runs `1.0.0-rc.1`
+
+#### Scenario: SCN-281b — A final version
+
+- GIVEN the tag `v0.27.9` is pushed with `package.json` at `0.27.9`
+- WHEN the same workflows run
+- THEN npm and GitHub Packages publish it under `latest`, and the image is tagged `0.27.9`, `0.27` and `latest`
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-281.feature kind=functional status=Implemented test=tests/unit/release-workflows.test.ts -->
+
+### Requirement: REQ-556 — npm publishes through trusted publishing
+
+The system SHALL run the npm publish job with `id-token: write` and npm 11.5.1 or later, so that npm authenticates the publish through trusted publishing (OIDC) when the package's trusted publisher names this repository and `publish-npm.yml`; the job SHALL NOT pass a token to any step other than the publish steps and the version check; and `docs/release-process.md` SHALL describe configuring the trusted publisher and removing the token after the first trusted publish.
+
+#### Scenario: SCN-556a — The publish job is ready for OIDC
+
+- GIVEN the repository's `publish-npm.yml`
+- WHEN a maintainer reads its publish job
+- THEN it grants `id-token: write`, installs npm 11.5.1 or later before publishing, and passes `NPM_TOKEN` only to the version check and the publish steps
+
+<!-- specgate:trace actor=Maintainer feature=features/trusted-gate/REQ-556.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-568 — The public surface is frozen within a major version
+
+The system SHALL list its public surface — commands and sub-commands, the flags each `--help` lists, every diagnostic code, the exit codes, the MCP tools, the library API's exports and members, the configuration keys, and every key with its type of the JSON answers a tool reads — from its own code and CLI; SHALL keep the list of the last release in `contract/surface.json`; and `npm run contract:check`, run by CI on every pull request, SHALL fail when an item of that list is gone or a key's type changed within the same major version, list what was added, and with `--release <version>` fail a version that adds to the surface without raising at least the minor.
+
+#### Scenario: SCN-568a — A flag removed in a minor
+
+- GIVEN `contract/surface.json` frozen at 1.0.0 with `status --json`
+- WHEN a pull request for 1.1.0 removes `--json` from `status`
+- THEN `contract:check` fails, naming `flag:status --json` and that removing it waits for 2.0.0
+
+<!-- specgate:trace actor=Maintainer feature=features/trusted-gate/REQ-568.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-569 — Deprecation before removal
+
+The system SHALL allow an item of the public surface to be removed only in a new major version and only once `contract/deprecations.json` listed it — with the version that deprecated it and what to use instead — and SHALL list, on every check, the deprecated items still present.
+
+#### Scenario: SCN-569a — A removal in a major, after a deprecation
+
+- GIVEN `status --json` deprecated in 1.4.0 for `--format json`
+- WHEN 2.0.0 removes it, and another 2.0.0 removes an item never deprecated
+- THEN the first passes, and the second fails, saying to deprecate it in a minor release first
+
+<!-- specgate:trace actor=Maintainer feature=features/trusted-gate/REQ-569.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-570 — Every release's project keeps working
+
+The system SHALL keep, under `tests/compat/<version>/`, a project as each release since 0.35.0 wrote it, and its test suite SHALL read each one with the CLI being built — `validate`, `status --json`, `config list`, `change validate` of each open change — and, for a project from before 1.0, run `migrate 1.0` and then `validate --strict`, failing when any of them fails.
+
+#### Scenario: SCN-570a — A project 0.35.0 wrote
+
+- GIVEN the project 0.35.0 wrote with `init --yes` and `propose pdf-invoices`, its lanes under `roles:`
+- WHEN the test suite runs
+- THEN it validates as it is, status names the migration, `migrate 1.0` succeeds, and it passes `validate --strict`, `config list` and `change validate` afterwards
+
+<!-- specgate:trace actor=Maintainer feature=features/trusted-gate/REQ-570.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-571 — A version is checked against the surface before it is published
+
+The system SHALL, in the npm publish job and before publishing, run `contract:check --release <version>`, so that a version adding to the public surface without raising at least the minor, or removing from it outside a new major, is not published; while the frozen surface is a candidate's or a 0.x one, the diff SHALL be reported without stopping the release.
+
+#### Scenario: SCN-571a — The publish job checks the version
+
+- GIVEN the publish workflow
+- WHEN it runs for a tag
+- THEN it runs `contract:check --release` with the version, after the test suite and before publishing
+
+<!-- specgate:trace actor=Maintainer feature=features/trusted-gate/REQ-571.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-572 — A published version is installed and used
+
+The system SHALL, after publishing a version to npm, install it from the registry as a user would — once the registry serves it — check that the dist-tag it was meant for names it, and run `specgate --version`, `sgate --version`, `specgate init --yes` and `specgate status --json` with it, failing the workflow when any of them fails.
+
+#### Scenario: SCN-572a — The published package, installed
+
+- GIVEN the publish workflow
+- WHEN a version is published
+- THEN a job after it installs that version from npm, checks its dist-tag, and runs `--version`, `init` and `status`
+
+<!-- specgate:trace actor=Maintainer feature=features/trusted-gate/REQ-572.feature kind=functional status=Implemented -->

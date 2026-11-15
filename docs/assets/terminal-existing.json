@@ -1,0 +1,378 @@
+{
+  "schemaVersion": 1,
+  "recordedWith": {
+    "version": "1.0.0",
+    "node": "v24.x",
+    "platform": "darwin",
+    "packSource": "local"
+  },
+  "recordedAt": "2026-11-15",
+  "title": "invoices — an existing repository",
+  "cols": 88,
+  "streamsMerged": false,
+  "steps": [
+    {
+      "id": "history",
+      "caption": "A repository that already ships. Not one line of specification.",
+      "cwd": "~/invoices",
+      "command": "git log --oneline",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 900,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "c5da000 invoices 1.4: refunds",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "adopt",
+      "caption": "Adopted in place: it reads the project, it changes no source file.",
+      "cwd": "~/invoices",
+      "command": "specgate init",
+      "surface": "init",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1960,
+      "truncated": true,
+      "omitted": 31,
+      "lines": [
+        {
+          "t": "  ◆ specgate · init",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ℹ  Existing code found (package.json) — adopting this repository in place. Nothing in your code is touched.",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "  ℹ  To scaffold a separate new project instead: specgate init --new",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Stack detection: package.json ──────────────────────────",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    · Project: invoices",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    · Stack: Node.js",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    · Test command: npm test",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    + spec.md",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    + features/adoption/baseline.feature",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    + docs/specs/traceability.md",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    + docs/specs/adr/README.md",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "    + docs/specs/glossary.md",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "untouched",
+      "caption": "Everything it wrote is new. src/ and test/ are not on this list.",
+      "cwd": "~/invoices",
+      "command": "git status --short",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1420,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "?? .gitattributes",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "?? .github/",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "?? AGENTS.md",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "?? README.md",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "?? docs/",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "?? features/",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "?? harness.config.yaml",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "?? spec.md",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "modules",
+      "caption": "The modules it found, without an agent.",
+      "cwd": "~/invoices",
+      "command": "specgate reverse --modules",
+      "surface": "reverse",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1420,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "  ◆ specgate · reverse --modules   invoices",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  src/billing                      node     1 file(s)",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  src/notify                       node     1 file(s)",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Next ───────────────────────────────────────────────────",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ➜  specgate reverse <module>",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "     one module per run, reviewed before the next",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "reverse",
+      "caption": "Your agent reads one module and drafts what it does, each requirement citing its source.",
+      "cwd": "~/invoices",
+      "command": "specgate reverse src/billing --agent \"reverse-agent {prompt_file}\"",
+      "surface": "reverse",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1510,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "  ◆ specgate · reverse   src/billing",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ℹ  The agent is reading 1 file(s) of src/billing…",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  2 requirement(s) drafted into docs/specs/changes/reverse-billing, every one Draft.",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "  ℹ  1 behaviour(s) that may be defects — asked in docs/specs/changes/reverse-billing/questions.md.",
+          "c": "info",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  Next ───────────────────────────────────────────────────",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ➜  specgate change validate reverse-billing",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "     after you review each requirement against its source=",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "question",
+      "caption": "Behaviour that looks like a bug is asked, never written down as the contract.",
+      "cwd": "~/invoices",
+      "command": "cat docs/specs/changes/reverse-billing/questions.md",
+      "surface": null,
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1150,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "# Questions — reverse-billing",
+          "c": "dim",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "| # | Question | Blocks | Options seen | Answer | Status |",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "|---|---|---|---|---|---|",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "| Q1 | The code does this: The system truncates a refund to two decimals. (src/billing/invoice.js:14). Is it a rule to keep, or a defect? Truncating rounds every refund down, by up to a cent: it reads like a defect, not a rule. |  |  |  | open |",
+          "c": "out",
+          "s": "out"
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "caption": "Green on day one: a Draft owes nothing yet.",
+      "cwd": "~/invoices",
+      "command": "specgate check",
+      "surface": "check",
+      "exit": 0,
+      "typeMs": 26,
+      "holdMs": 1420,
+      "truncated": false,
+      "omitted": 0,
+      "lines": [
+        {
+          "t": "  ◆ specgate · check   invoices",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ·  Ids            not compared with a base — no base branch (pass --base <branch>)",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  Specification   validate --strict",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  Tests           npm test",
+          "c": "ok",
+          "s": "out"
+        },
+        {
+          "t": "  ·  Architecture    not checked — specgate config set arch_cmd \"<command>\"",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ✔  Gate passed — the specification and `npm test`",
+          "c": "ok",
+          "s": "out"
+        }
+      ]
+    }
+  ]
+}

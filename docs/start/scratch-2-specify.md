@@ -1,5 +1,7 @@
 # From scratch · 2 — From the brief to a checked spec
 
+> **The short version** of a new project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** one module of the client's brief drafted as requirements
 and Gherkin scenarios, checked so that nothing in them is invented, and
@@ -87,9 +89,9 @@ $ specgate propose --from-brief bookings
 
   ✔  Draft draft-bookings opened · REQ ids REQ-002…REQ-011 reserved
 
-    + docs/specs/changes/draft-bookings/DRAFTING.md                how to write it
-    + docs/specs/changes/draft-bookings/specs/bookings/spec.md     the requirements go here
-    + docs/specs/changes/draft-bookings/change.yaml, proposal.md
+    + docs/specs/changes/draft-bookings/DRAFTING.md                                     how to write it
+    + docs/specs/changes/draft-bookings/specs/bookings/spec.md                          the requirements go here
+    + docs/specs/changes/draft-bookings/change.yaml, discover.md, design.md, tasks.md   the layers
 
   Have your agent write it ───────────────────────────────
   Paste this into Claude Code, Cursor, Codex…
@@ -226,8 +228,6 @@ $ specgate status
   Waiting for an answer ──────────────────────────────────
     ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
-
-  ·  No agent set for the harness and the studio's Build: specgate config set agent "claude -p < {prompt_file}"
 
   Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 

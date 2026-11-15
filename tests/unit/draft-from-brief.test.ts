@@ -140,7 +140,12 @@ test("draft <module> opens the draft linked to the brief, with its guide", (t: T
   assert.match(yaml, /^brief: docs\/brief\.md$/m);
   assert.match(yaml, /req_range: \[REQ-001, REQ-010\]/, "ten ids by default");
   assert.ok(fs.existsSync(path.join(change(dir), "specs", "bookings", "spec.md")));
-  assert.ok(!fs.existsSync(path.join(change(dir), "tasks.md")), "a draft has no tasks to tick");
+  // The developer's layer is there (REQ-288), with nothing to tick yet.
+  assert.doesNotMatch(
+    fs.readFileSync(path.join(change(dir), "tasks.md"), "utf8"),
+    /- \[ \]/,
+    "a draft has no tasks to tick"
+  );
 
   const guide = fs.readFileSync(path.join(change(dir), "DRAFTING.md"), "utf8");
   assert.match(guide, /only the bookings module/);

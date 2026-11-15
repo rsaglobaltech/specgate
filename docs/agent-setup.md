@@ -146,6 +146,10 @@ An explicit `agent:` in `harness.config.yaml` beats a profile: the narrower
 statement wins. `specgate change author --agent-profile local` uses the same
 profiles.
 
+`specgate config set profiles.local.agent "<command>"` writes a profile and
+keeps the file's other lines; `specgate config keys` lists its fields, the
+prices of [Measured cost](harness-report.md#measured-cost) among them.
+
 ## A different agent per requirement
 
 A profile that declares `match:` selects itself, so one run can give an
@@ -206,7 +210,8 @@ and everything it wrote is discarded. The gate stays the only judge. A profile
 named by `review_profile` must declare `advisory: true`, or the harness refuses
 to start. `.harness/runs/<timestamp>.json` names the roles that ran each
 attempt, and the branch keeps one prompt per role (`attempt-2-reviewer.md`,
-`attempt-2-implementer.md`).
+`attempt-2-implementer.md`). A tester and an implementer as separate sessions:
+[Lanes, roles and limits](harness-roles.md).
 
 ## Show the agent what "accepted" looks like
 

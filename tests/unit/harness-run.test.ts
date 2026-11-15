@@ -2342,3 +2342,39 @@ test("REQ-209 SCN-209a: a stop asked while a requirement runs starts no other", 
     fs.rmSync(parent, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
 });
+
+// REQ-417: an agent that wrote for one requirement and nothing for the next is
+// given one more attempt (truck-flote, MS8-3: REQ-004 wrote nothing after
+// REQ-002 and REQ-003 passed, and was never retried).
+test("REQ-417 SCN-417a: the agent writes nothing for one requirement of the run", () => {
+  const { parent, projectDir } = threeRequirementProject();
+  try {
+    const marker = path.join(parent, "skipped-once");
+    const file = path.join(parent, "lapsing-agent.js");
+    fs.writeFileSync(
+      file,
+      [
+        'const fs = require("node:fs");',
+        'const p = require("node:path");',
+        "const prompt = fs.readFileSync(process.argv[2], 'utf8');",
+        `if (/REQ-001/.test(prompt) && !fs.existsSync(${JSON.stringify(marker)})) {`,
+        `  fs.writeFileSync(${JSON.stringify(marker)}, "x");`,
+        "  process.exit(0);",
+        "}",
+        'fs.mkdirSync(p.join(process.cwd(), "src"), { recursive: true });',
+        'fs.writeFileSync(p.join(process.cwd(), "src", "harness-fixture.ts"), "export const written = true;");',
+        "",
+      ].join("\n")
+    );
+    const r = runAll(projectDir, `"${process.execPath}" "${file}" {prompt_file}`, [
+      "--max-attempts",
+      "2",
+    ]);
+    const out = r.stdout + r.stderr;
+    assert.ok(fs.existsSync(marker), out);
+    assert.match(out, /REQ-001\s+the agent produced no files — retrying once/, out);
+    assert.match(out, /3 passed/, out);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});

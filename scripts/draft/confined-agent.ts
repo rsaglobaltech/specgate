@@ -21,6 +21,7 @@ import * as path from "node:path";
 import * as os from "node:os";
 import { spawnSync } from "node:child_process";
 import { isInScope } from "../../packages/core/src/domain/AuthoringScope";
+import { removeTempFile } from "../lib/temp-file";
 
 export interface ConfinedRun {
   ok: boolean;
@@ -97,6 +98,16 @@ export function withWritePermission(command: string): { command: string; added: 
     : { command, added: false };
 }
 
+/**
+ * Claude Code edits only inside the folder it runs in, and the agent runs in
+ * the project: a brief kept outside it (REQ-488) is reachable once its folder
+ * is added with `--add-dir`. Other agents are left as they are.
+ */
+export function withOutsideDir(command: string, dir: string): string {
+  const isClaudePrint = /^\s*claude\b/.test(command) && /(^|\s)(-p|--print)(\s|$)/.test(command);
+  return isClaudePrint && !/--add-dir\b/.test(command) ? `${command} --add-dir "${dir}"` : command;
+}
+
 /** The fix to suggest when an agent ran and wrote nothing (#103). */
 export const NO_WRITE_HINT =
   "If the agent asked for permission to write, it had none: give it edit permission " +
@@ -144,7 +155,7 @@ export function runConfinedAgent(o: {
       stdio: ["pipe", o.showOutput ? 1 : "pipe", o.showOutput ? 2 : "pipe"],
     });
   } finally {
-    fs.rmSync(promptFile, { force: true });
+    removeTempFile(promptFile);
   }
 
   const after = dirtyPaths(o.projectDir) || [];

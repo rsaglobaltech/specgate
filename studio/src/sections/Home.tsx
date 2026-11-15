@@ -10,9 +10,17 @@ export interface HomeProps {
   lang: Lang;
   route: RouteData;
   home: HomeData | null;
+  /** The branch the project is on, and the ticket and team it names (REQ-447). */
+  branch?: BranchView | null;
 }
 
-export function Home({ lang, route, home }: HomeProps) {
+export interface BranchView {
+  branch: string | null;
+  ticket: string | null;
+  team: string | null;
+}
+
+export function Home({ lang, route, home, branch }: HomeProps) {
   const next = route.next;
   return (
     <>
@@ -23,14 +31,43 @@ export function Home({ lang, route, home }: HomeProps) {
       <section class="next" aria-label={t(lang, "nextStep")}>
         <div class="next-text">
           <span class="eyebrow">[ {t(lang, "nextStep").toUpperCase()} ]</span>
-          <span class="next-title">{t(lang, next ? (`next_${next}` as Key) : "next_none")}</span>
+          <span class="next-title">
+            {t(
+              lang,
+              route.hint
+                ? (`next_${route.hint}` as Key)
+                : next
+                  ? (`next_${next}` as Key)
+                  : "next_none"
+            )}
+          </span>
+          {route.hint === "specify" && route.areas ? (
+            <span class="next-sub">
+              {t(lang, "areasFound").replace("{N}", String(route.areas))}
+            </span>
+          ) : null}
         </div>
         {next ? (
-          <a class="btn-primary" href={hrefOf(STEP_SECTION[next])}>
+          <a
+            class="btn-primary"
+            href={hrefOf(route.hint === "specify" ? "changes" : STEP_SECTION[next])}
+          >
             {t(lang, "go")} →
           </a>
         ) : null}
       </section>
+      {branch?.ticket ? (
+        <p class="branch-line">
+          {t(lang, "onBranch")} <code>{branch.branch}</code> ·{" "}
+          {branch.team ? (
+            <>
+              {t(lang, "branchOfTeam").replace("{T}", branch.ticket)} <strong>{branch.team}</strong>
+            </>
+          ) : (
+            t(lang, "branchOf").replace("{T}", branch.ticket)
+          )}
+        </p>
+      ) : null}
       {home ? (
         <section class="tiles" aria-label={t(lang, "home")}>
           <div class="tile">

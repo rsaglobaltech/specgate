@@ -11,6 +11,11 @@
  */
 
 import * as fs from "node:fs";
+import {
+  contractCitationWarnings,
+  contractsNotYetSpecified,
+  withStoryContext,
+} from "../../../lib/story-part";
 import * as path from "node:path";
 import { BaseCommand } from "../../../lib/command";
 
@@ -41,6 +46,7 @@ import { ArchiveChangeUseCase } from "../../../../packages/core/src/application/
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import {
   CHANGE_ID_RE,
+  CHANGE_KINDS,
   CHANGE_CONFIG_FILE,
   DEFAULT_CONFIG,
   paths,
@@ -61,10 +67,20 @@ import {
   templateDesign,
   templateValueDriftDelta,
 } from "../../../../packages/core/src/domain/ChangeTemplates";
+import {
+  LAYERED_SCHEMA,
+  LEGACY_DISCOVER,
+  layer,
+  discoverRewritten,
+  templateDiscover,
+  templateLayeredDesign,
+  templateLayeredTasks,
+} from "../../../../packages/core/src/domain/ChangeLayers";
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
-import { approveChange, noteChange } from "../../../lib/change-review";
+import { approvalBlockers, approveChange, noteChange, reviewOf } from "../../../lib/change-review";
+import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
   declaredSpecValues,
   declaredCodeValues,
@@ -91,6 +107,8 @@ export const TEMPLATES = {
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
+import { removeTempFile } from "../../../lib/temp-file";
+import { changeApprovals } from "../../../lib/approvals";
 
 // The artefact graph. Dependencies are enablers, not gates: `requires` says
 // what makes an artefact *possible*, never what the author must do next.
@@ -122,10 +140,13 @@ function verbUsage(sub: string) {
       `\n  ${c.bold}${c.cyan}💡 propose${c.reset}  ${c.dim}— open a change${c.reset}\n\n` +
         `  ${c.bold}USAGE${c.reset}\n` +
         `    ${c.cyan}specgate propose${c.reset} <change-id> [--capability <name>] [--from-value-drift <REQ:id>]\n` +
-        `                     [--full] [--reserve <n>] [--project-dir <path>] [--json]\n` +
+        `                     [--full] [--reserve <n>] [--kind bug|enhancement]\n` +
+        `                     [--project-dir <path>] [--json]\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --check | --new-brief | --agent <cmd>\n` +
         `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n` +
+        `    ${c.cyan}specgate propose --from-brief${c.reset} --form [<form.json> | -] [--brief <file>]\n` +
+        `                     ${c.dim}the brief as a form, each field with its line · that form written back, every other byte kept${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-ticket${c.reset} <KEY | issue.json> [--check] [--capability <name>]\n` +
         `                     [--agent <cmd>] [--no-branch] [--no-push]\n` +
         `                     ${c.dim}a Jira ticket as the source text: its Definition of Ready, then its change (docs/from-a-ticket.md)${c.reset}\n\n` +
@@ -162,14 +183,14 @@ function usage() {
       `  ${c.bold}USAGE${c.reset}\n` +
       `    ${c.cyan}specgate change${c.reset} <new|list|show|status|instructions|author|validate|impact|approve|note|archive> [options]\n\n` +
       `  ${c.bold}SUBCOMMANDS${c.reset}\n` +
-      `    ${c.green}new <id>${c.reset}       ${c.dim}Scaffold a change folder (proposal, tasks, delta skeleton).${c.reset}\n` +
+      `    ${c.green}new <id>${c.reset}       ${c.dim}Scaffold a change: discover, design, tasks and a delta (--schema spec-driven keeps 0.27's layout).${c.reset}\n` +
       `    ${c.green}list${c.reset}           ${c.dim}Active changes with task progress.${c.reset}\n` +
       `    ${c.green}show <id>${c.reset}      ${c.dim}Proposal, deltas and what they touch.${c.reset}\n` +
       `    ${c.green}status [id]${c.reset}    ${c.dim}Which artefact to write next.${c.reset}\n` +
       `    ${c.green}author <id>${c.reset}    ${c.dim}Have an agent write one artefact, confined to the change.${c.reset}\n` +
       `    ${c.green}validate [id]${c.reset}  ${c.dim}Check the deltas against the capability specs.${c.reset}\n` +
       `    ${c.green}impact <REQ|id>${c.reset} ${c.dim}Spec, features, tests, files and requirements a change to it touches.${c.reset}\n` +
-      `    ${c.green}approve <id>${c.reset}   ${c.dim}A person approved the draft: Build may start it.${c.reset}\n` +
+      `    ${c.green}approve <id>${c.reset}   ${c.dim}Approve the layers you own (--layer discover|design|tasks): Build waits for all.${c.reset}\n` +
       `    ${c.green}note <id> "<text>"${c.reset} ${c.dim}Ask the draft for a change in your words (--req REQ).${c.reset}\n` +
       `    ${c.green}archive <id>${c.reset}   ${c.dim}Once its requirements are Implemented: merge, sync traceability, archive.${c.reset}\n\n` +
       `  ${c.bold}OPTIONS${c.reset}\n` +
@@ -180,6 +201,7 @@ function usage() {
       `    ${c.green}--from-value-drift <REQ:id>${c.reset} ${c.dim}(new) Propose a spec update for a diverging` +
       ` declared value (§8.6).${c.reset}\n` +
       `    ${c.green}--full${c.reset}                ${c.dim}(new) Full rigor — also scaffold design.md.${c.reset}\n` +
+      `    ${c.green}--kind <bug|enhancement>${c.reset} ${c.dim}(new) What the change is; release notes group by it.${c.reset}\n` +
       `    ${c.green}--artifact <name>${c.reset}     ${c.dim}(author) Which artefact to write. Default: proposal.${c.reset}\n` +
       `    ${c.green}--agent <cmd>${c.reset}         ${c.dim}(author) Agent command; must contain {prompt_file}.${c.reset}\n` +
       `    ${c.green}--agent-profile <n>${c.reset}   ${c.dim}(author) A profile from .harness/profiles.yaml.${c.reset}\n` +
@@ -187,7 +209,7 @@ function usage() {
       `    ${c.green}--strict${c.reset}              ${c.dim}(validate) Treat advisory warnings as failures.${c.reset}\n` +
       `    ${c.green}--rebased${c.reset}             ${c.dim}(validate <id>) The delta was rewritten over requirements that moved; record them as they read now.${c.reset}\n` +
       `    ${c.green}--dry-run${c.reset}             ${c.dim}(archive) Print the plan, write nothing.${c.reset}\n` +
-      `    ${c.green}--force${c.reset}               ${c.dim}(archive) Archive with unchecked tasks or a draft whose checklist fails; overwrite features.${c.reset}\n` +
+      `    ${c.green}--force${c.reset}               ${c.dim}(archive) Archive with unchecked tasks or a draft whose checklist fails; overwrite features. (author) Write a part before the contracts it uses.${c.reset}\n` +
       `                          ${c.dim}Never without its requirements delivered (ADR-0035).${c.reset}\n\n`
   );
 }
@@ -205,10 +227,14 @@ export interface ChangeOptions {
   fromValueDrift: string | null;
   /** `--req REQ-NNN`: the requirement a review note is about (REQ-207). */
   req?: string;
+  /** `--layer discover|design|tasks`: the layer `change approve` approves (REQ-311). */
+  layer?: string;
   /** `--modify REQ-NNN`, repeatable: requirements copied into MODIFIED deltas (REQ-190). */
   modify: string[];
   schema?: string;
   reserve: number;
+  /** REQ-545: `--kind bug|enhancement`. */
+  kind?: string;
   yes?: boolean;
   artifact?: string;
   agent?: string;
@@ -238,7 +264,9 @@ function parseArgs(argv: string[]): ChangeOptions {
     else if (a === "--from-value-drift" && argv[i + 1]) opts.fromValueDrift = argv[++i];
     else if (a === "--modify" && argv[i + 1]) opts.modify.push(argv[++i]);
     else if (a === "--req" && argv[i + 1]) opts.req = argv[++i];
+    else if (a === "--layer" && argv[i + 1]) opts.layer = argv[++i];
     else if (a === "--schema" && argv[i + 1]) opts.schema = argv[++i];
+    else if (a === "--kind" && argv[i + 1]) opts.kind = argv[++i].toLowerCase();
     else if (a === "--reserve" && argv[i + 1]) opts.reserve = parseInt(argv[++i], 10) || 3;
     else if (a === "--artifact" && argv[i + 1]) opts.artifact = argv[++i];
     else if (a === "--agent" && argv[i + 1]) opts.agent = argv[++i];
@@ -409,6 +437,14 @@ function cmdNew(opts: ChangeOptions) {
       }),
     ]);
   }
+  if (opts.kind !== undefined && !(CHANGE_KINDS as readonly string[]).includes(opts.kind)) {
+    return fail(opts, nullShape, [
+      error("change_kind_unknown", `"${opts.kind}" is not a kind of change.`, {
+        target: opts.kind,
+        fix: `Use --kind ${CHANGE_KINDS.join(" or --kind ")}.`,
+      }),
+    ]);
+  }
   const dir = p.change(changeId);
   if (fs.existsSync(dir)) {
     return fail(opts, nullShape, [
@@ -473,10 +509,12 @@ function cmdNew(opts: ChangeOptions) {
   const reqRange = reserveReqRange(projectDir, opts.reserve);
   const config = {
     ...DEFAULT_CONFIG,
-    schema: opts.schema || DEFAULT_CONFIG.schema,
+    // ADR-0044: a new change is layered unless the person names a schema.
+    schema: opts.schema || LAYERED_SCHEMA,
     created: new Date().toISOString().slice(0, 10),
     rigor: opts.full ? "full" : "lite",
     req_range: reqRange,
+    ...(opts.kind ? { kind: opts.kind } : {}),
   };
 
   const created: string[] = [];
@@ -487,9 +525,16 @@ function cmdNew(opts: ChangeOptions) {
   };
 
   write(path.join(dir, CHANGE_CONFIG_FILE), renderConfig(config));
-  write(path.join(dir, "proposal.md"), templateProposal(changeId));
-  write(path.join(dir, "tasks.md"), templateTasks());
-  if (opts.full) write(path.join(dir, "design.md"), templateDesign(changeId));
+  if (config.schema === LAYERED_SCHEMA) {
+    // REQ-282: each layer with its owner.
+    write(path.join(dir, "discover.md"), templateDiscover(changeId));
+    write(path.join(dir, "design.md"), templateLayeredDesign(changeId));
+    write(path.join(dir, "tasks.md"), templateLayeredTasks());
+  } else {
+    write(path.join(dir, "proposal.md"), templateProposal(changeId));
+    write(path.join(dir, "tasks.md"), templateTasks());
+    if (opts.full) write(path.join(dir, "design.md"), templateDesign(changeId));
+  }
   if (opts.capability) {
     write(
       path.join(p.changeSpecs(changeId), opts.capability, "spec.md"),
@@ -515,6 +560,7 @@ function cmdNew(opts: ChangeOptions) {
         schema: config.schema,
         rigor: config.rigor,
         reqRange,
+        kind: opts.kind || null,
         created,
       },
     },
@@ -534,7 +580,10 @@ function cmdNew(opts: ChangeOptions) {
               )
             : ui.next(
                 `specgate change validate ${changeId}`,
-                "after you write the proposal, then the delta"
+                // ADR-0044: a layered change starts from its Discover.
+                config.schema === LAYERED_SCHEMA
+                  ? "after you write discover.md, the delta, then design.md and tasks.md"
+                  : "after you write the proposal, then the delta"
               ))
       );
     }
@@ -569,6 +618,7 @@ function cmdList(opts: ChangeOptions) {
       id,
       schema: config.schema,
       rigor: config.rigor,
+      kind: (config.kind as string | undefined) || null,
       completedTasks: progress.complete,
       totalTasks: progress.total,
       deltaCount: listDeltas(projectDir, id).length,
@@ -588,7 +638,7 @@ function cmdList(opts: ChangeOptions) {
           `${ui.state(ch.status === "complete" ? "ready" : ch.status === "in-progress" ? "doing" : "todo")} ${c.bold}${ch.id}${c.reset}`,
           ui.muted(`${ch.completedTasks}/${ch.totalTasks} tasks`),
           ui.muted(`${ch.deltaCount} delta(s)`),
-          ui.muted(ch.rigor),
+          ui.muted(ch.kind ? `${ch.rigor} · ${ch.kind}` : ch.rigor),
         ])
       ) + "\n"
     );
@@ -597,27 +647,38 @@ function cmdList(opts: ChangeOptions) {
 
 // ── show ──────────────────────────────────────────────────────────────────────
 
-/** `change approve <id>` — a person approved the draft; Build waits for it (REQ-206). */
+/**
+ * `change approve <id> [--layer discover|design|tasks]` — a person approves the
+ * layers they own; Build waits until every layer is approved (REQ-206, REQ-311).
+ */
 function cmdApprove(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const id = opts.positional[0];
   const nullShape = { approve: null };
+  const layer = opts.layer as LayerId | undefined;
   const r = id
-    ? approveChange(projectDir, id, new Date().toISOString().slice(0, 10))
+    ? approveChange(projectDir, id, new Date().toISOString().slice(0, 10), layer)
     : { ok: false as const, code: "change_not_found", message: "approve needs a change id." };
   if (!r.ok) {
     return fail(opts, nullShape, [
       error(r.code, r.message, {
         target: id,
-        fix: "Answer its questions and fix what specgate draft --check reports, then approve again.",
+        fix:
+          r.fix ||
+          "Answer its questions and fix what specgate draft --check reports, then approve again.",
       }),
     ]);
   }
-  emit(opts, { approve: r }, () =>
+  emit(opts, { approve: r }, () => {
+    const did = r.layers && r.layers.length ? ` — ${r.layers.join(", ")}` : "";
     process.stdout.write(
-      ui.header("change approve", id) + ui.ok(`${id} approved on ${r.approved}.`) + "\n"
-    )
-  );
+      ui.header("change approve", id) +
+        (r.approved
+          ? ui.ok(`${id} approved on ${r.approved}${did}.`)
+          : ui.ok(`Recorded${did}. Still waiting: ${(r.pending || []).join(", ")}.`)) +
+        "\n"
+    );
+  });
 }
 
 /** `change note <id> "<text>" [--req REQ]` — a change asked in the reviewer's words (REQ-207). */
@@ -680,21 +741,14 @@ function cmdImpact(opts: ChangeOptions) {
   });
 }
 
-function cmdShow(opts: ChangeOptions) {
-  const projectDir = resolveProjectDir(opts.projectDir);
+/**
+ * What `change show <id> --json` prints: the proposal's title, the deltas and
+ * what they touch, the tasks, and the review notes (REQ-484). Null when there
+ * is no such change. The API's `change(dir, id)` answers the same.
+ */
+export function changeShowAnswer(projectDir: string, changeId: string) {
   const p = paths(projectDir);
-  const changeId = opts.positional[0];
-  const nullShape = { change: null };
-
-  if (!changeId || !fs.existsSync(p.change(changeId))) {
-    return fail(opts, nullShape, [
-      error("change_not_found", `Change "${changeId || "(none)"}" does not exist.`, {
-        target: changeId,
-        fix: "Run `specgate change list`.",
-      }),
-    ]);
-  }
-
+  if (!changeId || !fs.existsSync(p.change(changeId))) return null;
   const deltas = listDeltas(projectDir, changeId).map((entry) => {
     const parsed = parseDelta(fs.readFileSync(entry.file, "utf8"));
     return {
@@ -706,43 +760,76 @@ function cmdShow(opts: ChangeOptions) {
     };
   });
 
-  const proposalFile = path.join(p.change(changeId), "proposal.md");
-  const proposal = fs.existsSync(proposalFile) ? fs.readFileSync(proposalFile, "utf8") : "";
+  // The Discover of a layered change, the proposal of a 0.27 one.
+  const discoverFile = ["discover.md", LEGACY_DISCOVER]
+    .map((f) => path.join(p.change(changeId), f))
+    .find((f) => fs.existsSync(f));
+  const proposal = discoverFile ? fs.readFileSync(discoverFile, "utf8") : "";
   const titleMatch = /^#\s+(.+)$/m.exec(proposal);
   const progress = taskProgress(projectDir, changeId);
-
-  emit(
-    opts,
-    {
-      change: {
-        id: changeId,
-        title: titleMatch ? titleMatch[1] : changeId,
-        config: readConfig(projectDir, changeId),
-        deltaCount: deltas.length,
-        deltas,
-        tasks: { total: progress.total, complete: progress.complete },
-      },
+  return {
+    change: {
+      id: changeId,
+      title: titleMatch ? titleMatch[1] : changeId,
+      config: readConfig(projectDir, changeId),
+      // REQ-545: bug or enhancement, null when the change does not say.
+      kind: (readConfig(projectDir, changeId).kind as string | undefined) || null,
+      deltaCount: deltas.length,
+      deltas,
+      tasks: { total: progress.total, complete: progress.complete },
+      review: reviewOf(projectDir, changeId),
+      // REQ-564: whether it may be built, layer by layer — not the `approved:`
+      // line, which outlives an edit of a layer approved before it.
+      approvals: changeApprovals(projectDir, changeId),
     },
-    () => {
-      process.stdout.write(
-        ui.header("change show", changeId) +
-          `  ${c.bold}${titleMatch ? titleMatch[1] : changeId}${c.reset}\n\n`
-      );
-      if (deltas.length === 0) {
-        process.stdout.write(`    ${ui.muted("No delta specs.")}\n\n`);
-      }
-      for (const d of deltas) {
-        process.stdout.write(`  ${c.accent}${d.capability}${c.reset}  ${ui.muted(d.file)}\n`);
-        for (const r of d.added) process.stdout.write(ui.fileLine("added", r));
-        for (const r of d.modified) process.stdout.write(ui.fileLine("changed", r));
-        for (const r of d.removed) process.stdout.write(ui.fileLine("removed", r));
-        process.stdout.write("\n");
-      }
-      process.stdout.write(
-        `  ${c.bold}Tasks${c.reset}  ${ui.progress(progress.complete, progress.total, "complete")}\n\n`
-      );
+    status: [] as Diagnostic[],
+  };
+}
+
+function cmdShow(opts: ChangeOptions) {
+  const projectDir = resolveProjectDir(opts.projectDir);
+  const changeId = opts.positional[0];
+  const nullShape = { change: null };
+  const answer = changeShowAnswer(projectDir, changeId);
+  if (!answer) {
+    return fail(opts, nullShape, [
+      error("change_not_found", `Change "${changeId || "(none)"}" does not exist.`, {
+        target: changeId,
+        fix: "Run `specgate change list`.",
+      }),
+    ]);
+  }
+  const { deltas, title, review } = answer.change;
+  const progress = answer.change.tasks;
+  emit(opts, answer, () => {
+    const kind = answer.change.kind ? `  ${ui.muted(`· ${answer.change.kind}`)}` : "";
+    process.stdout.write(
+      ui.header("change show", changeId) + `  ${c.bold}${title}${c.reset}${kind}\n\n`
+    );
+    if (deltas.length === 0) {
+      process.stdout.write(`    ${ui.muted("No delta specs.")}\n\n`);
     }
-  );
+    for (const d of deltas) {
+      process.stdout.write(`  ${c.accent}${d.capability}${c.reset}  ${ui.muted(d.file)}\n`);
+      for (const r of d.added) process.stdout.write(ui.fileLine("added", r));
+      for (const r of d.modified) process.stdout.write(ui.fileLine("changed", r));
+      for (const r of d.removed) process.stdout.write(ui.fileLine("removed", r));
+      process.stdout.write("\n");
+    }
+    process.stdout.write(
+      `  ${c.bold}Tasks${c.reset}  ${ui.progress(progress.complete, progress.total, "complete")}\n\n`
+    );
+    if (review.notes.length) {
+      process.stdout.write(ui.section(`Review notes ${ui.muted(`(${review.open} open)`)}`));
+      for (const n of review.notes) {
+        const mark = n.state === "open" ? ui.state("todo") : ui.state("done");
+        const about = n.requirement ? `${n.requirement}  ` : "";
+        const when = n.addressed ? ui.muted(`  addressed ${n.addressed.date}`) : "";
+        process.stdout.write(`  ${mark} ${ui.muted(n.id)}  ${about}${n.text}${when}\n`);
+      }
+      process.stdout.write("\n");
+    }
+  });
 }
 
 // ── status ────────────────────────────────────────────────────────────────────
@@ -779,7 +866,7 @@ function cmdStatus(opts: ChangeOptions) {
   const isPlanningComplete = artifacts.every((a) => a.status === "done" || a.status === "skipped");
   const nextSteps = artifacts
     .filter((a) => a.status === "ready")
-    .map((a) => `Write ${a.outputPath}`);
+    .map((a) => `Write ${a.outputPath}${a.owner ? ` (${a.owner})` : ""}`);
   if (isPlanningComplete && progress.remaining > 0) {
     nextSteps.push(`Work through tasks.md (${progress.remaining} remaining)`);
   }
@@ -903,8 +990,28 @@ function cmdAuthor(opts: ChangeOptions) {
     ]);
   }
 
+  // REQ-395: a part that uses the contracts is written once they say something.
+  const waitingFor = contractsNotYetSpecified(projectDir, changeId);
+  if (waitingFor.length && artifact !== "discover" && !opts.dryRun && !opts.force) {
+    return fail(opts, NULL_SHAPE, [
+      error(
+        "author_contracts_first",
+        `${changeId} shares a criterion with ${waitingFor.join(", ")}, whose part of the story specifies nothing yet.`,
+        {
+          target: changeId,
+          fix: `Write the ${waitingFor[0]} part first (specgate change author ${changeId} --artifact specs there), or pass --force.`,
+        }
+      ),
+    ]);
+  }
+
   const instructions = buildInstructions(projectDir, artifact, changeId, TEMPLATES);
-  const prompt = authorPrompt(changeId, artifact, instructions);
+  // REQ-366: a part of a workspace story hears of the story's other parts.
+  const prompt = withStoryContext(
+    authorPrompt(changeId, artifact, instructions),
+    projectDir,
+    changeId
+  );
 
   if (opts.dryRun) {
     return emit(opts, { change: changeId, artifact, wrote: [], reverted: [], prompt }, () =>
@@ -935,7 +1042,7 @@ function cmdAuthor(opts: ChangeOptions) {
       ]);
     }
   } finally {
-    fs.rmSync(promptFile, { force: true });
+    removeTempFile(promptFile);
   }
 
   const touched = spawnSync("git", ["-C", projectDir, "status", "--porcelain"], {
@@ -1062,6 +1169,112 @@ function authorPrompt(changeId: string, artifact: string, instructions: Instruct
   return parts.join("\n");
 }
 
+/**
+ * REQ-287: a layered change's Discover as it was agreed — in the commit that
+ * recorded the approval, or else the first one that held it — against the
+ * working copy. Outside git, or before the first commit, there is nothing to
+ * compare with.
+ */
+function storyRewritten(projectDir: string, changeId: string) {
+  if (readConfig(projectDir, changeId).schema !== LAYERED_SCHEMA) return null;
+  const dir = paths(projectDir).change(changeId);
+  const file = path.join(dir, "discover.md");
+  if (!fs.existsSync(file)) return null;
+  const git = (...args: string[]) =>
+    spawnSync("git", ["-C", projectDir, ...args], { encoding: "utf8" });
+  const top = git("rev-parse", "--show-toplevel");
+  if (top.status !== 0) return null;
+  const rel = (f: string) =>
+    path
+      .relative(fs.realpathSync.native(top.stdout.trim()), fs.realpathSync.native(f))
+      .split(path.sep)
+      .join("/");
+  const earliest = (args: string[]) => {
+    const r = git("log", "--format=%h", ...args);
+    const shas = r.status === 0 ? r.stdout.trim().split(/\r?\n/).filter(Boolean) : [];
+    return shas[shas.length - 1] || "";
+  };
+  const config = path.join(dir, CHANGE_CONFIG_FILE);
+  const approved = readConfig(projectDir, changeId).approved
+    ? earliest(["-S", "approved:", "--", rel(config)])
+    : "";
+  const sha = approved || earliest(["--diff-filter=A", "--", rel(file)]);
+  if (!sha) return null;
+  const baseline = git("show", `${sha}:${rel(file)}`);
+  if (baseline.status !== 0) return null;
+  if (!discoverRewritten(baseline.stdout, fs.readFileSync(file, "utf8"))) return null;
+  return warning(
+    "layer_discover_rewritten",
+    `discover.md differs from the story agreed at ${sha}${approved ? " (approved)" : ""}.`,
+    {
+      target: changeId,
+      file: `docs/specs/changes/${changeId}/discover.md`,
+      fix: `The business story stays put while the design changes: restore it (\`git checkout ${sha} -- ${rel(file)}\`), or have ${layer("discover").owner} agree the new story.`,
+    }
+  );
+}
+
+/**
+ * REQ-350: what `change approve` would refuse a layered change for, said by
+ * `change validate` first. A change that validated was refused at approval
+ * for a requirement with no kind (truck-flote, MS-10): one rule set, run twice.
+ */
+function notApprovable(projectDir: string, id: string): Diagnostic[] {
+  let layeredChange = false;
+  try {
+    layeredChange = readConfig(projectDir, id).schema === LAYERED_SCHEMA;
+  } catch {
+    return [];
+  }
+  if (!layeredChange) return [];
+  return (
+    approvalBlockers(projectDir, id)
+      // The contract citations are said by contractCitationWarnings itself.
+      .filter(
+        (b) =>
+          !["draft_no_specs", "layer_api_unresolved", "layer_no_operation_cited"].includes(b.code)
+      )
+      .map((b) =>
+        error("change_not_approvable", b.message, {
+          target: id,
+          fix: `Fix it before review: \`specgate change approve ${id}\` refuses the change until then.`,
+        })
+      )
+  );
+}
+
+/**
+ * REQ-352: requirements of one change that name the same feature file.
+ * Archiving lays one feature file per requirement, so the second replaced the
+ * first's scenarios and `check` failed far from the cause (truck-flote, MS-9).
+ */
+function sharedFeatureFiles(projectDir: string, id: string): Diagnostic[] {
+  const byFile = new Map<string, string[]>();
+  for (const d of listDeltas(projectDir, id)) {
+    const delta = parseDelta(fs.readFileSync(d.file, "utf8"));
+    for (const r of [...delta.added, ...delta.modified]) {
+      const feature = (r.trace && r.trace.feature) || "";
+      if (!feature || !r.id) continue;
+      byFile.set(feature, [...(byFile.get(feature) || []), r.id]);
+    }
+  }
+  const out: Diagnostic[] = [];
+  for (const [file, ids] of byFile) {
+    if (ids.length < 2) continue;
+    out.push(
+      error(
+        "change_feature_shared",
+        `${ids.join(", ")} all name ${file}: archiving writes one feature file per requirement, so one would replace the others' scenarios.`,
+        {
+          target: id,
+          fix: `Give each requirement a feature file of its own (feature=features/<capability>/${ids[0]}.feature, …).`,
+        }
+      )
+    );
+  }
+  return out;
+}
+
 function cmdValidate(opts: ChangeOptions) {
   const projectDir = resolveProjectDir(opts.projectDir);
   const requested = opts.positional[0];
@@ -1089,6 +1302,13 @@ function cmdValidate(opts: ChangeOptions) {
     const result = new ValidateChangeUseCase(new DiskProjectRepository(projectDir)).execute(
       id,
       opts
+    );
+    const rewritten = storyRewritten(projectDir, id);
+    if (rewritten) result.diagnostics.push(rewritten);
+    result.diagnostics.push(
+      ...sharedFeatureFiles(projectDir, id),
+      ...notApprovable(projectDir, id),
+      ...contractCitationWarnings(projectDir, id)
     );
     const failed = opts.strict ? result.diagnostics.length > 0 : hasErrors(result.diagnostics);
     // What each delta rewrites, as it reads now: on first sight, or on
@@ -1144,6 +1364,12 @@ function cmdArchive(opts: ChangeOptions) {
         fix: "e.g. `specgate change archive add-dynamic-pricing`",
       }),
     ]);
+  }
+
+  // REQ-352: two requirements naming one feature file would lose scenarios.
+  if (fs.existsSync(paths(projectDir).change(changeId))) {
+    const shared = sharedFeatureFiles(projectDir, changeId);
+    if (shared.length) return fail(opts, nullShape, shared);
   }
 
   // A draft (a change opened from a brief) is archived only once its

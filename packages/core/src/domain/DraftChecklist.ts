@@ -365,9 +365,16 @@ const SOURCED = /(https?:\/\/|\bSource:|\bFuente:)/i;
 const QUANTITATIVE =
   /\b(fast|faster|quick(ly)?|slow|speed|latency|response time|performan(t|ce)|throughput|concurren(t|cy)|load|scal(able|e|ability)|uptime|availab(le|ility)|capacity|real[- ]time|instant(ly)?|r[aá]pid[oa]?|veloz|escalable|disponibilidad)\b/i;
 
-/** Promises a quantity and states none. */
+/**
+ * A threshold named without its value (REQ-480): "above some amount", "from a
+ * certain number", "a partir de cierto importe", "ab einem bestimmten Betrag".
+ */
+const UNNAMED_THRESHOLD =
+  /\b(?:some|a certain|certain|a given|a specific)\s+(?:amount|number|sum|limit|threshold|value|price|quantity|percentage|period)\b|\b(?:ciert[oa]|algún|alguna|determinad[oa])\s+(?:importe|monto|cantidad|número|límite|umbral|valor|precio|porcentaje|plazo)\b|\b(?:bestimmte[nmrs]?|gewisse[nmrs]?)\s+(?:Betrag|Menge|Anzahl|Grenze|Schwelle|Wert|Preis|Summe)\b/iu;
+
+/** Promises a quantity and states none, or names a threshold without its value. */
 export function unmeasured(text: string): boolean {
-  return QUANTITATIVE.test(text) && !MEASURE.test(text);
+  return (QUANTITATIVE.test(text) && !MEASURE.test(text)) || UNNAMED_THRESHOLD.test(text);
 }
 
 // ── What D12 looks for ────────────────────────────────────────────────────────

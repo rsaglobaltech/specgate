@@ -15,9 +15,9 @@ do not have.
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.28.0** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **0.28.0** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **0.28.0**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.35.0** is `latest` |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **0.35.0** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **0.35.0**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -33,26 +33,24 @@ purpose. Public npm is the default; routing the scope with
 
 The package was renamed from `create-spec-driven-app` to
 `@rsaglobaltech/specgate` in
-[ADR-0024](specs/adr/0024-the-tool-is-renamed-the-format-is-not.md). The old
-package is deprecated, not unpublished — every version stays installable, so a
-pinned dependency keeps resolving with a warning. The unscoped name `specgate`
-is unavailable: npm compares names without punctuation, so it collides with
-`spec-gate` and the registry answers `403`, which reads like a token problem and
-is not one. Docker images moved to `ghcr.io/<owner>/specgate`; tags published
-under the old image name are never rebuilt. Since
-[ADR-0032](specs/adr/0032-one-name-everywhere.md) nothing else keeps the old
-name: no binary alias, and the on-disk format, cache and environment variables
-are all `specgate`.
+[ADR-0024](specs/adr/0024-the-tool-is-renamed-the-format-is-not.md); the old
+package is deprecated, not unpublished. The unscoped name `specgate` is
+unavailable: npm compares names without punctuation, so it collides with
+`spec-gate` and answers `403`, which reads like a token problem and is not one.
+Docker images live at `ghcr.io/<owner>/specgate`. Since
+[ADR-0032](specs/adr/0032-one-name-everywhere.md) the format, cache and
+environment variables are all `specgate`; the package installs `specgate`, its
+short alias `sgate` (ADR-0042) and, for old links, `create-spec-driven-app`.
 
 ## Versioning
 
 Semantic versioning. The CLI and the companion packages version independently;
 a CLI release does not force a bump of the VS Code extension.
 
-**Tags are `vX.Y.Z`.** The publish workflows trigger on `v*`, and the two tags
-that predate this document (`0.1.0-beta.1`, `0.1.4`) have no `v` prefix, which
-is why the tag-triggered path had never once fired. Do not create unprefixed
-tags.
+**Tags are `vX.Y.Z`** (the publish workflows trigger on `v*`). From 1.0 the
+public surface is frozen at each release — `npm run contract:write` in the
+release commit, `contract:check --release <version>` before the tag — see
+[What 1.0 promises](compatibility.md).
 
 ## Support policy
 
@@ -125,7 +123,8 @@ the CLI supports, so getting this backwards fails CI rather than users.
 
 1. Update `CHANGELOG.md`. Every user-visible change gets a line; group by
    Added / Changed / Fixed / Removed.
-2. Bump `version` in `package.json`.
+2. Bump `version` in `package.json`, then `npm run build && npm run plugin:sync`
+   so the plugin's three manifests carry it (a test fails until they do).
 3. Re-record the landing page's terminal: `npm run build && npm run docs:terminal`,
    then update the version in `docs/index.html`. The recording carries the
    version it was made from and a test compares the two, so skipping this fails
@@ -186,12 +185,9 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
    The tag runs the E2E journeys on Linux, macOS and Windows, then
    `test:all`, then publishes with provenance.
-5. **Check the registry:**
-
-   ```bash
-   npm view @rsaglobaltech/specgate dist-tags     # latest: X.Y.Z
-   npx @rsaglobaltech/specgate@X.Y.Z --version
-   ```
+5. **Check the registry.** `publish-npm.yml`'s `smoke` job installs the
+   version from npm under its dist-tag and runs `--version`, `init` and
+   `status` (REQ-572); its job failing is a published version to patch at once.
 
    Only npm gates on the E2E (Windows included): 0.19.0 failed it after the
    other two published, so it shipped as 0.19.1 (0.27.0 too, as 0.27.1) — a published tag is never rebuilt.
@@ -200,9 +196,22 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
 ## Pre-releases
 
-Run `publish-github-packages.yml` manually (`workflow_dispatch`) with
-`dist_tag: beta` and a version like `0.2.0-beta.1`. Pre-releases never go to
-the public npm registry with the `latest` tag.
+A version with a prerelease part (`1.0.0-rc.1`, cut from the `next/1.0` branch,
+never from `main`) is tagged like any release: the workflows publish it under
+the dist-tag `next` and tag its image with the version only, never `latest`
+(REQ-281). Its GitHub release is created with `--prerelease`.
+
+## Trusted publishing
+
+`publish-npm.yml` is ready for npm's trusted publishing (REQ-556): npm tries
+OIDC before the `NPM_TOKEN` secret. Switch once, **right before a release** — a
+trusted publisher that has not published within two days expires:
+
+1. npmjs.com, the package's **Settings → Trusted Publisher → GitHub Actions**:
+   `rsaglobaltech` / `specgate` / `publish-npm.yml`, no environment.
+2. Tag and push the release; npmjs.com shows it built by `publish-npm.yml`.
+3. Delete the `NPM_TOKEN` secret and the `NODE_AUTH_TOKEN` lines, then in
+   **Settings → Publishing access** choose "disallow tokens".
 
 ## Before you tag — the gate
 
@@ -231,14 +240,6 @@ Check the tarball carries what `files` in `package.json` lists — `bin/`,
 `dist/packages/mcp-spec-driven/src/`, `templates/`, `examples/`, `vendor/`,
 `README.md` and `CHANGELOG.md` — and nothing else — no `.local`, no `dist/packages/**` for
 unpublished packages, no coverage output.
-
-## Verifying a published release
-
-```bash
-npx @rsaglobaltech/specgate@X.Y.Z --version
-npx @rsaglobaltech/specgate@X.Y.Z init --yes --dry-run   # in an empty directory
-npx @rsaglobaltech/specgate@X.Y.Z draft                   # explains the brief it needs
-```
 
 ## After the release
 

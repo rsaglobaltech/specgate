@@ -140,6 +140,19 @@ checks:
 | `docker` | `true` gives the container the host's Docker, for tests that start containers (Testcontainers); the Maven and Gradle presets set it when the build declares Testcontainers |
 | `needs` | An earlier check whose output this one reads (Maven's `dependencies` needs `sbom`); `quality baseline` runs it first |
 
+`specgate config set` writes a check without opening the file, keeping its
+other lines and comments; setting a check's `run` adds it:
+
+```bash
+specgate config set checks.lint.run "npm run lint"
+specgate config set checks.lint.when end
+specgate config set diff_coverage 80
+```
+
+A value the reader would refuse is refused before the file is written, with
+`config_value_invalid` and the fix: `runner: docker` needs its `image` set
+first, `when` is attempt, end or ci. `specgate config keys` lists every field.
+
 Placeholders in `run`: `{req}`, `{base}`, `{changed_files}`,
 `{changed_classes}` (Java, for PIT), `{changed_src}` (TypeScript, for Stryker)
 and `{report_dir}`. `{changed_classes@apps/api}` and `{changed_src@apps/web}`
@@ -199,6 +212,14 @@ a violation the change adds fails ([ADR-0028](specs/adr/0028-architecture-confor
 
 - `specgate harness report` — the quality of what was delivered: diff
   coverage and mutation score, mean, and how often each check ran.
+- `specgate report --format json` — the project's line coverage as
+  `coverage.lines` (`percent`, `covered`, `total`, `tool`, `file`,
+  `measuredAt`), read from the report a check names in `report:`, else from the
+  newest of `coverage/lcov.info`, `coverage/coverage-summary.json`,
+  `coverage/cobertura-coverage.xml`, `coverage.xml`,
+  `target/site/jacoco/jacoco.xml` and
+  `build/reports/jacoco/test/jacocoTestReport.xml`. With none, it is `null` with
+  `coverage_not_measured` and how to have your stack write one — never 0.
 - The live view — each check is a step of the gate, with its measure.
 - The studio — the project page lists the checks and how each runs here; the
   report carries each requirement's figures.

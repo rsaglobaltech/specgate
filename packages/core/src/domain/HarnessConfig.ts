@@ -2,9 +2,24 @@ import type { QualityConfig } from "./QualityChecks";
 
 export interface HarnessSettings {
   agent: string;
+  /**
+   * The profile `agent` was resolved from — `--profile` or `agent_profile:` —
+   * so the run records whose tokens and hint they were (REQ-509). Empty for a
+   * command given as is.
+   */
+  agentProfile?: string;
   /** The quality and security checks, by stage (ADR-0040). Absent: none configured. */
   quality?: QualityConfig;
   testCmd: string;
+  /**
+   * What `check --affected` and `apply` run instead of `test_cmd`, with
+   * `{files}` or `{req}` (REQ-513): `test_cmd` stays the whole suite.
+   */
+  testCmdAffected?: string;
+  /** Globs of files whose change makes `check --affected` run everything (REQ-511). */
+  fullOn?: string[];
+  /** False: `check` runs the architecture check and the tests one after the other (REQ-518). */
+  gateParallel?: boolean;
   /**
    * The team's architecture check (ArchUnit, dependency-cruiser, import-linter…),
    * run between validation and the tests wherever the gate runs (ADR-0028).
@@ -33,6 +48,13 @@ export interface HarnessSettings {
   attemptProfiles: string[];
   /** Advisory profile run before each retry, or "" for none. */
   reviewProfile: string;
+  /**
+   * REQ-532: `tester` then `implementer` as separate sessions of each attempt,
+   * each kept to its lane (REQ-533). Empty means one session per attempt.
+   */
+  lanes?: Array<"tester" | "implementer">;
+  /** REQ-535: what one requirement's sessions may cost, in USD. 0 means no limit. */
+  maxCostUsd?: number;
   /**
    * Profile that tries to break a green implementation (D3), or "" for none.
    *
@@ -72,6 +94,11 @@ export interface HarnessSettings {
    * passed twenty screen requirements that had no screen.
    */
   e2eDir?: string;
+  /**
+   * Behaviour changed without a specification (REQ-333, REQ-334): `report`
+   * (the default) warns, `gate` fails `check`, `off` does not look.
+   */
+  drift?: "report" | "gate" | "off";
   /**
    * Per-profile `cost_per_run_hint` from `.harness/profiles.yaml` (C1). A
    * declared estimate, never a measurement: an agent is any shell command and

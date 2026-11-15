@@ -246,6 +246,21 @@ TOOLS["specgate_ci_init"] = new GenericCliTool(
   "flag",
   false
 );
+TOOLS["specgate_ci_status"] = new GenericCliTool(
+  "specgate_ci_status",
+  "What the project's CI checks, and what it lacks.",
+  "ci status",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+    },
+    required: ["projectDir"],
+  },
+  "flag",
+  false
+);
 TOOLS["specgate_alm_sync"] = new GenericCliTool(
   "specgate_alm_sync",
   "Sync REQs with Jira / Azure Boards (create, close, drift).",
@@ -305,6 +320,38 @@ TOOLS["specgate_alm_pull"] = new GenericCliTool(
   },
   "flag",
   true
+);
+TOOLS["specgate_alm_phase"] = new GenericCliTool(
+  "specgate_alm_phase",
+  "Run specgate alm phase",
+  "alm phase",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+      change: { type: "string", description: "The <change> argument of `specgate alm phase`." },
+    },
+    required: ["projectDir", "change"],
+  },
+  "flag",
+  false
+);
+TOOLS["specgate_alm_move"] = new GenericCliTool(
+  "specgate_alm_move",
+  "Run specgate alm move",
+  "alm move",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+      change: { type: "string", description: "The <change> argument of `specgate alm move`." },
+    },
+    required: ["projectDir", "change"],
+  },
+  "flag",
+  false
 );
 TOOLS["specgate_check"] = new GenericCliTool(
   "specgate_check",
@@ -907,6 +954,21 @@ TOOLS["specgate_config_list"] = new GenericCliTool(
   "specgate_config_list",
   "Run specgate config list",
   "config list",
+  {
+    type: "object",
+    properties: {
+      projectDir: { type: "string" },
+      cliPath: { type: "string" },
+    },
+    required: ["projectDir"],
+  },
+  "flag",
+  false
+);
+TOOLS["specgate_config_keys"] = new GenericCliTool(
+  "specgate_config_keys",
+  "Run specgate config keys",
+  "config keys",
   {
     type: "object",
     properties: {

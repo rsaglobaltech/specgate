@@ -2,6 +2,7 @@ import * as path from "node:path";
 
 import { DeltaSpec } from "../domain/DeltaSpec";
 import { Diagnostic, error, warning } from "../domain/Diagnostic";
+import { LAYERED_SCHEMA, LEGACY_DISCOVER, checkLayers } from "../domain/ChangeLayers";
 import { IProjectRepository } from "./ports/IProjectRepository";
 
 export interface ValidateChangeOptions {
@@ -32,16 +33,35 @@ export class ValidateChangeUseCase {
     const diagnostics: Diagnostic[] = [];
     const config = this.projectRepo.readConfig(changeId);
 
-    if (this.projectRepo.readFile(path.join(paths.change(changeId), "proposal.md")) === null) {
+    // ADR-0044: the Discover is discover.md; a 0.27 change's is its proposal.
+    const dir = paths.change(changeId);
+    const read = (f: string) => this.projectRepo.readFile(path.join(dir, f));
+    const discoverFile = read("discover.md") !== null ? "discover.md" : LEGACY_DISCOVER;
+    const discover = read(discoverFile);
+    if (discover === null) {
+      const wanted = config.schema === LAYERED_SCHEMA ? "discover.md" : LEGACY_DISCOVER;
       diagnostics.push(
-        error("missing_proposal", `Change "${changeId}" has no proposal.md.`, {
+        error("missing_proposal", `Change "${changeId}" has no ${wanted}.`, {
           target: changeId,
-          fix: `Create ${path.join("docs/specs/changes", changeId, "proposal.md")}.`,
+          fix: `Create ${path.join("docs/specs/changes", changeId, wanted)}.`,
         })
       );
     }
 
     const deltas = this.projectRepo.listDeltas(changeId);
+    if (discover !== null) {
+      diagnostics.push(
+        ...checkLayers({
+          changeId,
+          discover,
+          discoverFile,
+          design: read("design.md"),
+          tasks: read("tasks.md"),
+          // REQ-380: what the traces carry, against what the design names.
+          deltas: deltas.map((d) => this.projectRepo.readFile(d.file) || "").join("\n"),
+        })
+      );
+    }
     if (deltas.length === 0 && !config.skip_specs) {
       diagnostics.push(
         warning("no_deltas", `Change "${changeId}" carries no delta specs.`, {

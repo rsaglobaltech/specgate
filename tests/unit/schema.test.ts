@@ -198,9 +198,9 @@ test("instructions accept the artefacts of the change's schema, not the default"
 
 test("listSchemas includes forks alongside the built-ins", () => {
   withProject((dir) => {
-    assert.deepEqual(listSchemas(dir), ["bdd-first", "spec-driven"]);
+    assert.deepEqual(listSchemas(dir), ["bdd-first", "layered", "spec-driven"]);
     cli("schema", "fork", "spec-driven", "team-flow", "--project-dir", dir);
-    assert.deepEqual(listSchemas(dir), ["bdd-first", "spec-driven", "team-flow"]);
+    assert.deepEqual(listSchemas(dir), ["bdd-first", "layered", "spec-driven", "team-flow"]);
   });
 });
 

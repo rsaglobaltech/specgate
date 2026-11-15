@@ -419,3 +419,24 @@ export function countDraftExempt(rows: readonly any[]): number {
   }
   return exempt;
 }
+
+/**
+ * The matrix with each row of `ids` given `status` (REQ-557). A row's status is
+ * its last cell in both shapes; every other byte is kept. Rows are recognised by
+ * their first cell, so a requirement with several scenario rows changes on each.
+ */
+export function withStatus(content: string, ids: ReadonlySet<string>, status: string): string {
+  if (ids.size === 0) return content;
+  return content
+    .split("\n")
+    .map((line) => {
+      const m = /^\|\s*(REQ-[\w.-]+)\s*\|/.exec(line);
+      if (!m || !ids.has(m[1])) return line;
+      const end = line.trimEnd();
+      if (!end.endsWith("|")) return line;
+      const last = end.lastIndexOf("|", end.length - 2);
+      if (last <= 0) return line;
+      return `${end.slice(0, last + 1)} ${status} |`;
+    })
+    .join("\n");
+}

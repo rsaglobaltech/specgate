@@ -59,10 +59,17 @@ not run reports an `error` about itself.
 
 | Command | Document key | Gate |
 |---|---|---|
+| `specgate reverse [module] --json` | `reverse` | no |
 | `specgate doctor --json` | `doctor` | yes |
 | `specgate status --json` | `status` | no |
 | `specgate alm pull --json` | `pulled` | no |
+| `specgate alm phase <change> --json` | `phase` | no |
+| `specgate alm move <change> [<phase>] --json` | `move` | no |
 | `specgate check [dir] --json` | `check` | yes |
+| `specgate migrate 1.0 [--dry-run] --json` | `migrate` | no |
+| `specgate workspace <init|status|check|draft|propose|live|harness> --json` | `workspace` | yes |
+| `specgate drift [dir] --json` | `drift` | yes |
+| `specgate contract check [dir] --json` | `contract` | yes |
 | `specgate quality <list|doctor|run> --json` | `quality` | no |
 | `specgate draft --json` | `draft` | yes |
 | `specgate verify --json` | `verify` | yes |
@@ -91,6 +98,19 @@ not run reports an `error` about itself.
 | `specgate specops diff --json` | `changes` | no |
 | `specgate harness run --format json` | `results` | no |
 | `specgate harness report --json` | `report` | no |
+| `specgate harness stop --after-current --json` | `stop` | no |
+| `specgate release-notes <from>..<to> --json` | `releaseNotes` | no |
+| `specgate acceptance <change> --json` | `acceptance` | no |
+| `specgate guide --json` | `guide` | no |
+| `specgate stack --json` | `stack` | no |
+| `specgate adr new <title> --json` | `adr` | no |
+| `specgate adr supersede <NNNN> <title> --json` | `adr` | no |
+| `specgate adr list --json` | `adr` | no |
+| `specgate review <change> --json` | `review` | no |
+| `specgate agent ask "<request>" --json` | `plan` | no |
+| `specgate agent apply <plan-id> --json` | `applied` | no |
+| `specgate agent discard <plan-id> --json` | `discarded` | no |
+| `specgate agent plans --json` | `plans` | no |
 
 The document key is what the payload carries on success and what is set to
 `null` on failure. Every document also carries `status`: an array of
@@ -121,19 +141,24 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `archive_spec_update_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_agent_failed` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_agent_unset` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `author_contracts_first` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_needs_git` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_out_of_scope` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `author_tree_dirty` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_error` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_exists` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `change_feature_shared` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_id_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `change_kind_unknown` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_name_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `change_not_approvable` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `conflicting_seed_flags` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `impact_target_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `invalid_change_id` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `invalid_value_drift_spec` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `layer_discover_rewritten` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `modify_already_open` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `modify_requirement_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `value_drift_already_matches` | `scripts/cli/commands/change/ChangeCommand.ts` |
@@ -177,6 +202,29 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `nothing_to_contribute` | `scripts/cli/commands/specops/ContributeCommand.ts` |
 | `pack_has_no_repo` | `scripts/cli/commands/specops/ContributeCommand.ts` |
 | `pack_not_found` | `scripts/cli/commands/specops/ContributeCommand.ts` |
+
+## Shapes a tool depends on
+
+These are read by tools built on this CLI (specgate-studio among them), so they
+change only in a major version.
+
+- **`status --json`, in a project:** `total`, `pending`, `counts`,
+  `requirements[]` (`id`, `title`, `category`, `needs`, `change`,
+  `changeKind`, `question`), `nextCommand` (a sentence) and `next` — the same
+  step as data: `{ command, argv, placeholder }`, `argv` without `specgate`
+  and null when the step is not a command, `placeholder` true while an argument
+  is still `<…>` for a person to fill in (REQ-565). `migrate` appears while an
+  open change is still written for 0.x.
+- **`status --json`, in a workspace repository** (`specgate.workspace.yaml`, no
+  `traceability.md`): `{ workspace, next }` — `workspace` holds the
+  repositories and the stories, `next` is `{ command, why }`. There is no
+  `requirements` key: each repository answers its own `status`.
+- **`change show <id> --json`:** `change.approvals` — `required`, `approved`,
+  `approvedAt` and `layers[]` with each layer's approvals and quorum — is
+  whether the change may be built (REQ-564). `change.config.approved` is only the
+  line `change.yaml` keeps, and outlives an edit of a layer approved before it.
+- **`config list --json`:** a `harness.config.yaml` that cannot be read is the
+  finding `harness_config_invalid`, with its fix, and exit 1 (REQ-563).
 
 ## Worked example
 

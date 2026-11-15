@@ -1,3 +1,4 @@
+import { escapeRegExp } from "./escape";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {
@@ -9,6 +10,7 @@ import {
   upsertAssumption,
   type QuestionRow,
 } from "../../packages/core/src/domain/Clarification";
+import { moduleSection } from "../../packages/core/src/domain/BriefCards";
 import { listChangeIds } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { liveMatrix } from "./live-detail";
 import { refreshDerivedMatrix } from "../cli/commands/spec/MatrixCommand";
@@ -53,9 +55,35 @@ function write(file: string, text: string): void {
   fs.writeFileSync(file, text.endsWith("\n") ? text : `${text}\n`, "utf8");
 }
 
-export interface OpenQuestion extends QuestionRow {
+/** Where a question was asked (REQ-481). */
+export type Asked = "brief" | "draft" | "build";
+
+export interface OpenQuestion extends Omit<QuestionRow, "asked"> {
   change: string;
   file: string;
+  asked: Asked;
+}
+
+/** A question as compared with the brief's: case, spacing and closing marks aside. */
+const plain = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[`*_"“”¿?¡!.:]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * The questions of the brief's module a change was opened from — `brief:` in
+ * its `change.yaml`, the module in its id `draft-<module>` — compared plain.
+ */
+function briefQuestions(projectDir: string, change: string): Set<string> {
+  const yaml = read(path.join(changeDir(projectDir, change), "change.yaml")) || "";
+  const brief = /^brief:\s*(.+?)\s*$/m.exec(yaml)?.[1]?.replace(/^["']|["']$/g, "");
+  const module = /^draft-(.+)$/.exec(change)?.[1];
+  if (!brief || !module) return new Set();
+  const text = read(path.join(projectDir, brief));
+  const section = text ? moduleSection(text, module) : undefined;
+  return new Set((section?.questions ?? []).map((q) => plain(q.text)));
 }
 
 /** Every question of every open change, and of the project. */
@@ -65,8 +93,16 @@ export function allQuestions(projectDir: string): OpenQuestion[] {
     const file = questionsFile(projectDir, change);
     const md = read(file);
     if (!md) continue;
+    const fromBrief = change === PROJECT ? new Set<string>() : briefQuestions(projectDir, change);
     for (const q of questionTable(md)) {
-      out.push({ ...q, change, file: path.relative(projectDir, file).split(path.sep).join("/") });
+      const asked: Asked =
+        q.asked === "build" ? "build" : fromBrief.has(plain(q.text)) ? "brief" : "draft";
+      out.push({
+        ...q,
+        asked,
+        change,
+        file: path.relative(projectDir, file).split(path.sep).join("/"),
+      });
     }
   }
   return out;
@@ -75,9 +111,13 @@ export function allQuestions(projectDir: string): OpenQuestion[] {
 /** What waits for an answer: open questions, and requirements in Needs Clarification no open question names. */
 export function waiting(projectDir: string): {
   questions: OpenQuestion[];
+  /** Answered, and not yet confirmed with `answer --reviewed` (REQ-482). */
+  answered: OpenQuestion[];
   requirements: Array<{ requirement: string; title: string }>;
 } {
-  const questions = allQuestions(projectDir).filter((q) => !q.answered);
+  const all = allQuestions(projectDir);
+  const questions = all.filter((q) => !q.answered);
+  const answered = all.filter((q) => q.answered && q.status !== "reviewed");
   const named = new Set(questions.flatMap((q) => q.blocks));
   const seen = new Set<string>();
   const requirements: Array<{ requirement: string; title: string }> = [];
@@ -87,7 +127,7 @@ export function waiting(projectDir: string): {
     seen.add(row.requirement);
     requirements.push({ requirement: row.requirement, title: row.title });
   }
-  return { questions, requirements };
+  return { questions, answered, requirements };
 }
 
 export type AnswerOutcome =
@@ -224,7 +264,7 @@ export function definedIn(
   projectDir: string,
   req: string
 ): { change: string; file: string } | null {
-  const heading = new RegExp(`^###\\s+Requirement:\\s+${req}\\b`, "m");
+  const heading = new RegExp(`^###\\s+Requirement:\\s+${escapeRegExp(req)}\\b`, "m");
   for (const change of listChangeIds(projectDir)) {
     const specs = path.join(changeDir(projectDir, change), "specs");
     for (const cap of safeDirs(specs)) {
@@ -238,7 +278,7 @@ export function definedIn(
     if (heading.test(read(file) || "")) return { change: PROJECT, file };
   }
   const spec = path.join(projectDir, "spec.md");
-  if (new RegExp(`^#{2,3}\\s+${req}\\b`, "m").test(read(spec) || ""))
+  if (new RegExp(`^#{2,3}\\s+${escapeRegExp(req)}\\b`, "m").test(read(spec) || ""))
     return { change: PROJECT, file: spec };
   return null;
 }
@@ -253,7 +293,10 @@ function setStatusInTables(projectDir: string, req: string, status: string): boo
     const file = path.join(projectDir, rel);
     const text = read(file);
     if (!text) continue;
-    const row = new RegExp(`^(\\|\\s*${req}\\s*\\|.*\\|)\\s*[^|]+?\\s*\\|\\s*$`, "gm");
+    const row = new RegExp(
+      `^(\\|\\s*${escapeRegExp(req)}\\s*\\|.*\\|)\\s*[^|]+?\\s*\\|\\s*$`,
+      "gm"
+    );
     const next = text.replace(row, (_m, head: string) => `${head} ${status} |`);
     if (next !== text) {
       write(file, next);
@@ -295,7 +338,7 @@ export function setStatusIn(
     return setStatusInTables(projectDir, req, status);
   }
   const lines = (read(file) || "").split("\n");
-  const head = new RegExp(`^(?:###\\s+Requirement:|##)\\s+${req}\\b`);
+  const head = new RegExp(`^(?:###\\s+Requirement:|##)\\s+${escapeRegExp(req)}\\b`);
   const start = lines.findIndex((l) => head.test(l));
   if (start === -1) return false;
   for (let i = start + 1; i < lines.length && !/^#{2,3}\s(?!#)/.test(lines[i]); i += 1) {
@@ -331,7 +374,8 @@ export function ask(
     };
   }
   const qFile = questionsFile(projectDir, where.change);
-  const added = addQuestion(read(qFile), where.change, text, [req]);
+  // Asked while the requirement is built: the row says so (REQ-481).
+  const added = addQuestion(read(qFile), where.change, text, [req], "build");
   write(qFile, added.md);
   setWaiting(where.file, projectDir, req);
   return {

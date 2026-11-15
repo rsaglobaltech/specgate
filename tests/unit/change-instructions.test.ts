@@ -38,7 +38,11 @@ function withChange(fn: (dir: string) => void): void {
   );
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const dir = path.join(root, "acme-energy-hub");
-  assert.equal(cli("change", "new", "add-pricing", "--project-dir", dir).status, 0);
+  // The 0.27 graph under its own schema; the layered one is in change-layers.
+  assert.equal(
+    cli("change", "new", "add-pricing", "--schema", "spec-driven", "--project-dir", dir).status,
+    0
+  );
   try {
     fn(dir);
   } finally {

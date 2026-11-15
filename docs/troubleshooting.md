@@ -184,7 +184,7 @@ tests with a broken build do not count as delivered.
 | ------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
 | A pull request was merged while the gate was red | The CI job is not a required check                     | Protect the base branch: [require the check](first-pr.md#make-the-gate-a-required-check) |
 | CI changed behaviour after a Specgate release    | It should not: `specgate ci init` pins the version     | After upgrading the package, run `specgate ci init --force` to move the pin              |
-| CI "runs no tests"                               | No test command was set or detected when `ci init` ran | `specgate config set test_cmd "<command>"`, then `specgate ci init --force`              |
+| CI "runs no tests"                               | No test command is configured yet                      | `specgate config set test_cmd "<command>"` — the gate reads it, no change to the CI file  |
 | `matrix_stale` only in CI                        | The regenerated matrix was not committed               | Run `specgate check` locally and commit `traceability.md`                                |
 
 ## Agents

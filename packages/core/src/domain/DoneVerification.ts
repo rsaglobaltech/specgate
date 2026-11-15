@@ -64,6 +64,8 @@ export interface DoneCheckOptions {
   testCmd?: string;
   /** `arch_cmd:` in harness.config.yaml: the architecture check (ADR-0028). */
   archCmd?: string;
+  /** The requirement's test files for `{files}`, quoted for the shell (REQ-515). */
+  files?: string;
 }
 
 /**
@@ -72,9 +74,13 @@ export interface DoneCheckOptions {
  * checked; `{scenario}` and `{feature_file}` are always empty, since no one
  * scenario is meant. The harness fills them per requirement; `check` used to
  * run them as written, and a command that named the requirement broke it.
+ * `{files}` is the test files selected — already quoted — or empty.
  */
-export function gateTestCommand(testCmd: string, reqId?: string): string {
+export function gateTestCommand(testCmd: string, reqId?: string, files?: string): string {
+  // `{files}`: the test files to run, quoted (REQ-513, REQ-515); empty runs them all.
   return testCmd
+    .split("{files}")
+    .join(files || "")
     .split("{req}")
     .join(reqId || "")
     .split("{scenario}")
@@ -117,7 +123,7 @@ export function planDoneVerification(
   const archCmd = (opts.archCmd || "").trim();
   if (archCmd !== "") steps.push({ stage: "arch", argv: [archCmd] });
 
-  const testCmd = gateTestCommand((opts.testCmd || "").trim(), opts.reqId);
+  const testCmd = gateTestCommand((opts.testCmd || "").trim(), opts.reqId, opts.files);
   if (testCmd !== "") steps.push({ stage: "tests", argv: [testCmd] });
 
   return { steps, testsUnverified: testCmd === "" };

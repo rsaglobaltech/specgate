@@ -15,6 +15,7 @@ on:
         type: choice
         options:
           - beta
+          - next
           - latest
       dry_run:
         description: 'Run npm publish in dry-run mode'
@@ -38,6 +39,11 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    outputs:
+      name: ${{ steps.package_metadata.outputs.name }}
+      version: ${{ steps.package_metadata.outputs.version }}
+      dist_tag: ${{ steps.publish_settings.outputs.dist_tag }}
+      dry_run: ${{ steps.publish_settings.outputs.dry_run }}
 
     steps:
       - name: Checkout
@@ -88,6 +94,14 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
+      # REQ-556: trusted publishing (OIDC) needs npm 11.5.1 or later; npm tries
+      # it first and falls back to NODE_AUTH_TOKEN until that secret is removed
+      # (docs/release-process.md, "Trusted publishing").
+      - name: npm for trusted publishing
+        run: |
+          npm install -g npm@^11.5.1
+          npm --version
+
       - name: Install dependencies
         run: npm ci
 
@@ -102,6 +116,10 @@ jobs:
         # checked — and a tag push does not trigger ci.yml, which filters on
         # branches.
         run: npm run test:all
+        env:
+          # As ci.yml's coverage step: merging 1.0's coverage overruns the
+          # default heap, and v1.0.0-rc.12's first publish died there.
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Validate npm package contents
         run: npm run pack:dry-run
@@ -116,7 +134,14 @@ jobs:
         id: publish_settings
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+            # REQ-281: a release candidate (1.0.0-rc.1) is never what
+            # `npm install` gives by default; only a final version is latest.
+            VERSION="${{ steps.package_metadata.outputs.version }}"
+            if [[ "$VERSION" == *-* ]]; then
+              echo "dist_tag=next" >> "$GITHUB_OUTPUT"
+            else
+              echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+            fi
             echo "dry_run=false" >> "$GITHUB_OUTPUT"
           else
             echo "dist_tag=${{ github.event.inputs.dist_tag }}" >> "$GITHUB_OUTPUT"
@@ -151,6 +176,11 @@ jobs:
             exit 1
           fi
 
+      # REQ-571: the version said against the public surface the last release
+      # froze — a patch that adds to it, or a removal outside a major, stops here.
+      - name: The version against the public surface
+        run: npm run contract:check -- --release "${{ steps.package_metadata.outputs.version }}"
+
       - name: Publish summary
         run: |
           echo "Package: ${{ steps.package_metadata.outputs.name }}"
@@ -164,8 +194,59 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # --loglevel verbose says how npm authenticated: the trusted publisher
+      # (OIDC) or the NPM_TOKEN fallback. 1.0.0-rc.12 went out on the token.
       - name: Publish
         if: steps.publish_settings.outputs.dry_run != 'true'
-        run: npm publish --tag "${{ steps.publish_settings.outputs.dist_tag }}" --access public --provenance
+        run: npm publish --tag "${{ steps.publish_settings.outputs.dist_tag }}" --access public --provenance --loglevel verbose
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # REQ-572: what was published, installed from the registry as a user would,
+  # under the dist-tag it was meant for. A failure here is a published version
+  # that does not work: the job fails loudly so the next patch is cut at once.
+  smoke:
+    name: The published package, installed
+    needs: publish
+    if: needs.publish.outputs.dry_run != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Installed from the registry, then used
+        env:
+          PACKAGE: ${{ needs.publish.outputs.name }}
+          VERSION: ${{ needs.publish.outputs.version }}
+          DIST_TAG: ${{ needs.publish.outputs.dist_tag }}
+        run: |
+          # The registry takes a moment to serve a new version.
+          for i in $(seq 1 30); do
+            if npm view "${PACKAGE}@${VERSION}" version --prefer-online >/dev/null 2>&1; then break; fi
+            sleep 20
+          done
+          TAGGED="$(npm view "${PACKAGE}" "dist-tags.${DIST_TAG}" --prefer-online)"
+          if [ "$TAGGED" != "$VERSION" ]; then
+            echo "dist-tag ${DIST_TAG} is ${TAGGED}, not ${VERSION}." >&2
+            exit 1
+          fi
+          WORK="$(mktemp -d)"
+          cd "$WORK"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund "${PACKAGE}@${VERSION}"
+          SAID="$(npx --no-install specgate --version)"
+          if [ "$SAID" != "$VERSION" ]; then
+            echo "specgate --version says ${SAID}, not ${VERSION}." >&2
+            exit 1
+          fi
+          npx --no-install sgate --version
+          mkdir project && cd project
+          npx --no-install specgate init --yes --out . --no-git
+          cd "$(ls)"
+          npx --no-install specgate status --json > status.json
+          node -e "const s=require('./status.json'); if (!Array.isArray(s.requirements)) process.exit(1)"
+          echo "${PACKAGE}@${VERSION} installs, runs and answers, under ${DIST_TAG}."

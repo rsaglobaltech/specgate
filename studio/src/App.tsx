@@ -6,7 +6,7 @@ import { readPrefs, writePrefs, type Prefs } from "./core/prefs";
 import { t, type Key } from "./core/i18n";
 import { useRead } from "./core/useRead";
 import type { HomeData, RouteData } from "./core/route";
-import { Home } from "./sections/Home";
+import { Home, type BranchView } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type ChangeView, type DraftView, type ModulesData } from "./sections/Changes";
 import { useAction } from "./core/useAction";
@@ -28,6 +28,8 @@ import { Offline, SectionError, Skeleton } from "./ui/States";
 import { useConnection } from "./core/useConnection";
 import { get, post } from "./core/api";
 import type { Result } from "./ui/Busy";
+import { liveBase, memberRole, workspaceName } from "./core/liveBase";
+import { WorkspaceLive, type WorkspaceLiveData } from "./sections/WorkspaceLive";
 
 /** What a write did, said in a notice once it is done (REQ-434). */
 const DONE: Record<string, Key> = {
@@ -105,13 +107,14 @@ export function App() {
   };
   const route = useRead<RouteData>("/api/route");
   const home = useRead<HomeData>(section === "home" ? "/api/home" : null);
+  const branch = useRead<BranchView>(section === "home" ? "/api/branch" : null);
   const questions = useRead<QuestionsData>(section === "questions" ? "/api/questions" : null);
   const onChanges = section === "changes";
   const onBrief = section === "brief";
   const modules = useRead<ModulesData>(onChanges || onBrief ? "/api/modules" : null);
   const brief = useRead<BriefData>(onBrief ? "/api/brief" : null);
   const drafts = useRead<DraftView[]>(onChanges ? "/api/drafts" : null);
-  const changes = useRead<{ changes: ChangeView[]; alm: boolean }>(
+  const changes = useRead<{ changes: ChangeView[]; alm: boolean; capabilities: string[] }>(
     onChanges ? "/api/changes" : null
   );
   // REQ-438: the command the studio runs; when it ends, what it changed is read again.
@@ -155,9 +158,13 @@ export function App() {
   useEffect(() => {
     if (onBrief && !readingBrief) brief.reload();
   }, [readingBrief]);
-  const stream = useLive(section === "live");
+  // REQ-566: a workspace's Live is the workspace; a member's reads under its prefix.
+  const base = liveBase();
+  const onWorkspace = !!workspaceName() && !base;
+  const stream = useLive(section === "live" && !onWorkspace, `${base}/live/stream`);
+  const wsStream = useLive<WorkspaceLiveData>(section === "live" && onWorkspace, "/live/stream");
   const liveMatrix = useRead<{ rows: MatrixRow[] }>(
-    section === "live" ? "/live/matrix.json" : null
+    section === "live" && !onWorkspace ? `${base}/live/matrix.json` : null
   );
   // The matrix is read again when a requirement of the run changes state, not on every push.
   const states = (stream.data?.requirements || []).map((r) => `${r.req}:${r.state}`).join(",");
@@ -262,7 +269,7 @@ export function App() {
         ) : null}
         {section === "home" && route.data ? (
           <>
-            <Home lang={prefs.lang} route={route.data} home={home.data} />
+            <Home lang={prefs.lang} route={route.data} home={home.data} branch={branch.data} />
             <GateCard
               lang={prefs.lang}
               run={command.view?.last || null}
@@ -277,39 +284,56 @@ export function App() {
             drafts={drafts.data}
             onDraft={(module) => send("/api/draft", { module, profile: "" })}
             onStopDraft={() => send("/api/draft/stop", {})}
-            onApprove={(change) => send("/api/approve", { change })}
+            onApprove={(change, layer) =>
+              send("/api/approve", layer ? { change, layer } : { change })
+            }
             onNote={(change, req, text) => send("/api/note", { change, req, text })}
             onConfirm={(change, question) =>
               write({ question, change: changeOf(change), reviewed: true })
             }
             changes={changes.data?.changes || []}
             alm={!!changes.data?.alm}
+            capabilities={changes.data?.capabilities || []}
             action={{
               run: command.view?.last || null,
               output: command.view?.output || "",
+              json: command.view?.json,
               onAction: runCommand,
             }}
           />
+        ) : section === "live" && onWorkspace && wsStream.data ? (
+          <WorkspaceLive lang={prefs.lang} data={wsStream.data} />
         ) : section === "live" && stream.data ? (
-          <Live
-            lang={prefs.lang}
-            data={stream.data}
-            connection={stream.connection}
-            onAnswer={(question, change, answer) =>
-              write({ question, change: changeOf(change), answer })
-            }
-            matrix={liveMatrix.data?.rows || []}
-            onReviewed={(question, change) =>
-              write({ question, change: changeOf(change), reviewed: true })
-            }
-            onStop={(now) => send("/api/stop", { now })}
-            detailOf={(id) => get<RequirementDetail | null>(`/live/req/${id}.json`)}
-            promptOf={async (id, attempt) => {
-              const r = await fetch(`/live/req/${id}/prompt/${attempt}.txt`);
-              if (!r.ok) throw new Error(String(r.status));
-              return r.text();
-            }}
-          />
+          <>
+            {base ? (
+              <p class="faint member">
+                {t(prefs.lang, "wsMember")
+                  .replace("{NAME}", project)
+                  .replace("{ROLE}", memberRole())
+                  .replace("{WS}", workspaceName())}{" "}
+                <a href="/live">{t(prefs.lang, "wsBack")}</a>
+              </p>
+            ) : null}
+            <Live
+              lang={prefs.lang}
+              data={stream.data}
+              connection={stream.connection}
+              onAnswer={(question, change, answer) =>
+                write({ question, change: changeOf(change), answer })
+              }
+              matrix={liveMatrix.data?.rows || []}
+              onReviewed={(question, change) =>
+                write({ question, change: changeOf(change), reviewed: true })
+              }
+              onStop={(now) => send("/api/stop", { now })}
+              detailOf={(id) => get<RequirementDetail | null>(`${base}/live/req/${id}.json`)}
+              promptOf={async (id, attempt) => {
+                const r = await fetch(`${base}/live/req/${id}/prompt/${attempt}.txt`);
+                if (!r.ok) throw new Error(String(r.status));
+                return r.text();
+              }}
+            />
+          </>
         ) : onSettings && route.data && profiles.data ? (
           <Settings
             lang={prefs.lang}

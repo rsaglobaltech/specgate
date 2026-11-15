@@ -27,6 +27,11 @@
  * the gate is running; deleting the declared feature and writing a fresh one in
  * its place shows up as a tracked deletion, and is refused.
  *
+ * The agent's own instructions are the other way round (REQ-534): no
+ * requirement is supposed to create a `CLAUDE.md` or a hook under `.claude/`,
+ * and a new one steers the next session as surely as an edited one. For those
+ * patterns, a new file is a violation too.
+ *
  * ## Why this module holds no git
  *
  * Deciding whether `features/core/health.feature` is protected is a rule.
@@ -42,6 +47,10 @@
  * or fail, the specification documents, the pack lockfile, and the harness
  * configuration itself — an agent that may edit `harness.config.yaml` may
  * disable its own gate.
+ *
+ * REQ-534: and the files that steer the agent. An agent that may append to
+ * `CLAUDE.md`, add a hook under `.claude/`, or change the CI workflow that
+ * runs the gate in `.github/` rewrites its own instructions for the next run.
  */
 export const DEFAULT_PROTECTED_PATHS: readonly string[] = Object.freeze([
   "spec.md",
@@ -51,6 +60,26 @@ export const DEFAULT_PROTECTED_PATHS: readonly string[] = Object.freeze([
   "docs/specs/**",
   ".specops.lock",
   "harness.config.yaml",
+  "CLAUDE.md",
+  ".claude/**",
+  ".cursor/**",
+  ".github/**",
+  ".mcp.json",
+]);
+
+/**
+ * The patterns that protect the agent's instructions (REQ-534): a path one of
+ * them protects is a violation when the agent creates it, not only when it
+ * edits it. See the module note.
+ */
+export const INSTRUCTION_PATHS: readonly string[] = Object.freeze([
+  "AGENTS.md",
+  "AI_RULES.md",
+  "CLAUDE.md",
+  ".claude/**",
+  ".cursor/**",
+  ".github/**",
+  ".mcp.json",
 ]);
 
 export interface WriteScopeChanges {
@@ -125,7 +154,8 @@ export function protectingPattern(filePath: string, rules: WriteScopeRules = {})
 /**
  * Which of the agent's writes were out of scope.
  *
- * `added` paths are never violations — see the module note on `NEEDS_FEATURE`.
+ * `added` paths are not violations — see the module note on `NEEDS_FEATURE` —
+ * except where an instruction pattern protects them (REQ-534).
  * Ordered by path so a report reads the same twice.
  */
 export function checkWriteScope(
@@ -137,7 +167,13 @@ export function checkWriteScope(
     const pattern = protectingPattern(filePath, rules);
     if (pattern) violations.push({ path: filePath, pattern });
   }
-  return violations;
+  for (const filePath of [...changes.added].sort()) {
+    const pattern = protectingPattern(filePath, rules);
+    if (pattern && INSTRUCTION_PATHS.includes(pattern)) {
+      violations.push({ path: filePath, pattern });
+    }
+  }
+  return violations.sort((a, b) => a.path.localeCompare(b.path));
 }
 
 /**
@@ -223,6 +259,34 @@ const attributesWithoutStatus = (line: string): string => {
  * harness's own instruction broke. Any other change to the line, or to any
  * other line, is still an edit to the contract.
  */
+/** `- [ ] 2.1 …` with its box read as open, or null for a line that is no task. */
+const openTask = (line: string): string | null =>
+  /^\s*[-*]\s+\[[ xX]\]\s/.test(line) ? line.replace(/\[[xX]\]/, "[ ]") : null;
+
+/**
+ * Whether a unified diff (`git diff -U0`) of a change's tasks.md changes
+ * nothing but the box of its tasks — what delivering a requirement does
+ * (REQ-353), by the harness or by the agent told to close its work.
+ *
+ * Write-scope refused an attempt whose agent ticked the task it had just
+ * delivered (truck-flote microservices run 3, MS3-4): every attempt failed the
+ * same way. A task reworded, added or removed is still an edit of the contract.
+ */
+export function onlyTaskTicksChanged(diff: string): boolean {
+  const removed: string[] = [];
+  const added: string[] = [];
+  for (const line of diff.split("\n")) {
+    if (/^(---|\+\+\+|@@|diff |index )/.test(line)) continue;
+    if (line.startsWith("-")) removed.push(line.slice(1));
+    else if (line.startsWith("+")) added.push(line.slice(1));
+  }
+  if (removed.length === 0 || removed.length !== added.length) return false;
+  return removed.every((r, i) => {
+    const before = openTask(r);
+    return before !== null && before === openTask(added[i]);
+  });
+}
+
 export function onlyTraceStatusChanged(diff: string): boolean {
   const removed: string[] = [];
   const added: string[] = [];

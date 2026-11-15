@@ -1,3 +1,4 @@
+import { quoteArg } from "../../../lib/escape";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -51,12 +52,7 @@ export function forjaUnavailable(command: string): string | null {
 }
 
 /** Quotes one argument for the shell the command runs in. */
-function quote(arg: string): string {
-  if (/^[A-Za-z0-9_./:@=,+-]+$/.test(arg)) return arg;
-  return process.platform === "win32"
-    ? `"${arg.replace(/"/g, '\\"')}"`
-    : `'${arg.replace(/'/g, "'\\''")}'`;
-}
+const quote = (arg: string): string => quoteArg(arg);
 
 /** This Specgate's version, from its own package.json; "" when it cannot be read. */
 export function ownVersion(): string {

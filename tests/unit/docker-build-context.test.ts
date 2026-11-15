@@ -50,6 +50,24 @@ test("Dockerfile.cli's build stage copies every source npm run build reads, the 
   }
 });
 
+test("Dockerfile.cli copies every source folder the npm tarball ships, types/ included", () => {
+  // 0.32.0's image failed to build: types/api.d.ts, which scripts/api compiles
+  // against and the tarball ships, was not copied in.
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  const folders = (pkg.files as string[])
+    .filter((f) => f.endsWith("/") && !f.startsWith("dist/"))
+    .map((f) => f.slice(0, -1))
+    .filter((f) => fs.existsSync(path.join(ROOT, f)));
+  assert.ok(folders.includes("types"), "the tarball ships types/");
+  for (const tree of folders) {
+    assert.match(
+      dockerfile,
+      new RegExp(`^COPY ${tree} \\./${tree}$`, "m"),
+      `Dockerfile.cli copies ${tree}/`
+    );
+  }
+});
+
 test(".dockerignore excludes everything that never reaches the npm tarball", () => {
   for (const pattern of ["tests", "features", "packages/*/test", "node_modules", ".git"]) {
     assert.match(

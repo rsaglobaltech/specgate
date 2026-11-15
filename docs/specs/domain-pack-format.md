@@ -1,6 +1,6 @@
 # Domain Pack Format — Contract Specification
 
-> Authoritative reference for the `pack.yaml` schema (version `1.1.0`).
+> Authoritative reference for the `pack.yaml` schema (version `1.5.0`; older packs on `1.x` still load).
 > Every key, cardinality, allowed value and example is documented here.
 > The companion JSON Schema lives at [`/schemas/pack.schema.json`](../../schemas/pack.schema.json).
 
@@ -22,7 +22,7 @@ A pack is versioned independently of the CLI using SemVer on the
 ## 2. Top-level structure
 
 ```yaml
-schema_version: "1.1.0" # required
+schema_version: "1.5.0" # required
 metadata: { ... } # required
 variables: { ... } # required
 requirements: [...] # required, min 1
@@ -49,10 +49,10 @@ scenarios: [...] # required, min 1
 | Type          | `string`                     |
 | Required      | yes                          |
 | Format        | SemVer (`MAJOR.MINOR.PATCH`) |
-| Current value | `"1.1.0"`                    |
+| Current value | `"1.5.0"`                    |
 
 ```yaml
-schema_version: "1.1.0"
+schema_version: "1.5.0"
 ```
 
 Breaking changes to the schema increment `MAJOR`. Additive changes

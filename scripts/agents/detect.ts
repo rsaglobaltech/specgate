@@ -58,6 +58,13 @@ export function installDetectedAgents(
   try {
     const { written, skipped } = writeAgentFiles(projectDir, tools, { dryRun: opts.dryRun });
     const labels = tools.map((t) => TOOLS[t].label).join(", ");
+    // A dry run names each file (REQ-489). AGENTS.md is the command's own: it
+    // writes the contract there before the agents' files, so it is listed already.
+    if (opts.dryRun) {
+      for (const f of written) {
+        if (f.path !== "AGENTS.md") log(`[dry-run] write ${f.path.split(path.sep).join("/")}`);
+      }
+    }
     log(
       `Agent: ${labels} — ${opts.dryRun ? "would install" : "installed"} the /specgate:* commands` +
         ` (${written.length} file(s)${skipped.length ? `, ${skipped.length} already there, left alone` : ""}).`

@@ -14,6 +14,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+import { escapeRegExp } from "../../scripts/lib/escape";
 import type { SpawnSyncReturns } from "node:child_process";
 import type { CliResult } from "../helpers/cli";
 
@@ -160,7 +161,8 @@ test("REQ-108 SCN-108a: propose opens a change with a delta skeleton", () => {
     assert.equal(r.status, 0, out(r));
     const change = path.join(p.dir, "docs/specs/changes/add-dynamic-pricing");
     for (const f of [
-      "proposal.md",
+      "discover.md",
+      "design.md",
       "tasks.md",
       "change.yaml",
       "specs/add-dynamic-pricing/spec.md",
@@ -254,6 +256,8 @@ test("REQ-109 SCN-109c: the harness delivers an open change's requirement", () =
     git("init", "-q");
     git("config", "user.email", "harness-test@example.com");
     git("config", "user.name", "Harness Test");
+    // 1.0 (REQ-315): a person approves the change before the harness builds it.
+    assert.equal(cli(p.dir, "change", "approve", "add-dynamic-pricing").status, 0);
     git("add", "-A");
     git("commit", "-qm", "seed");
 
@@ -569,11 +573,7 @@ test("REQ-115 SCN-115a: a script written for 0.20 keeps working", () => {
         cli(p.dir, ...args)
           .stdout.split("\n")
           .find((l: string) => l.trim()) || "";
-      assert.match(
-        help,
-        new RegExp(`Same as specgate ${verb.replace(/-/g, "\\-")}\\b`),
-        args.join(" ")
-      );
+      assert.match(help, new RegExp(`Same as specgate ${escapeRegExp(verb)}\\b`), args.join(" "));
     }
   } finally {
     p.done();

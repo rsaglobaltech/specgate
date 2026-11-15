@@ -136,7 +136,7 @@ branch (0 false positives), and the time to adopt on the honest branch — from
 | Phase | Delivers | State |
 |---|---|---|
 | 1 | OpenSpec reader, `verify`, V1–V7, `verify.lock`, the GitHub Action, the pilot | done — pilot |
-| 2 | MCP tool `specgate_verify`; the weekly format re-read (`openspec-compat.yml`) | done |
+| 2 | MCP tool `specgate_verify`; the weekly format re-read (`scheduled.yml`, job `openspec`) | done |
 | 3 | An external pilot (another team or module), then the guide "Specgate with OpenSpec" and the published case | before announcing |
 
 Spec Kit and Kiro are out of scope (ADR-0030, alternatives).

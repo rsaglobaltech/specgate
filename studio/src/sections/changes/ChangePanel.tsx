@@ -6,6 +6,7 @@
 import { useState } from "preact/hooks";
 import { t, type Lang } from "../../core/i18n";
 import type { ActionRun } from "../../core/useAction";
+import { FromTicket } from "./FromTicket";
 import { Busy, type Result } from "../../ui/Busy";
 import { Command } from "../../ui/Command";
 import { Gate } from "../../ui/Gate";
@@ -19,12 +20,17 @@ export interface ChangeView {
   tasks: { done: number; total: number; items: Array<{ text: string; done: boolean }> };
   proposal: string;
   canArchive: boolean;
+  /** The ticket it was opened from, and its address on the ALM (REQ-447). */
+  ticket?: string | null;
+  ticketUrl?: string | null;
 }
 
 export interface ActionProps {
   /** The command the studio ran last, and its output. */
   run: ActionRun | null;
   output: string;
+  /** What the last command printed on stdout, when it prints JSON. */
+  json?: unknown;
   onAction: (action: string, args: Record<string, unknown>) => Promise<Result>;
 }
 
@@ -52,6 +58,18 @@ export function ChangePanel({
       <div class="row spread">
         <h3 id={`chg-${change.id}`}>
           {t(lang, "theChange")} <code class="where">{change.id}</code>
+          {change.ticket ? (
+            <>
+              {" · "}
+              {change.ticketUrl ? (
+                <a href={change.ticketUrl} target="_blank" rel="noopener noreferrer">
+                  {change.ticket}
+                </a>
+              ) : (
+                <span>{change.ticket}</span>
+              )}
+            </>
+          ) : null}
         </h3>
         <span class="faint">
           {t(lang, "reqsDelivered")
@@ -155,15 +173,15 @@ export function ChangePanel({
 export function NewChange({
   lang,
   alm,
+  capabilities = [],
   run,
   output,
+  json,
   onAction,
-}: { lang: Lang; alm: boolean } & ActionProps) {
+}: { lang: Lang; alm: boolean; capabilities?: string[] } & ActionProps) {
   const [id, setId] = useState("");
-  const [ticket, setTicket] = useState("");
   const slug = /^[a-z0-9][a-z0-9-]{1,63}$/.test(id);
-  const key = /^[A-Z][A-Z0-9_]{0,19}-\d{1,9}$/.test(ticket);
-  const mine = !!run && (run.action === "propose-idea" || run.action === "propose-ticket");
+  const mine = !!run && run.action === "propose-idea";
   return (
     <section class="card" aria-labelledby="new-change-h">
       <h2 id="new-change-h">{t(lang, "newChange")}</h2>
@@ -191,32 +209,17 @@ export function NewChange({
       <span id="new-change-hint" class="faint hint">
         {t(lang, "newChangeHint")}
       </span>
-      {alm ? (
-        <>
-          <label for="new-change-ticket" class="label">
-            {t(lang, "fromTicket")}
-          </label>
-          <div class="row">
-            <input
-              id="new-change-ticket"
-              class="text-plain grow"
-              type="text"
-              value={ticket}
-              placeholder="KAN-13"
-              onInput={(e) => setTicket((e.target as HTMLInputElement).value.trim().toUpperCase())}
-            />
-            <Busy
-              class="btn-ghost"
-              busyLabel={t(lang, "starting")}
-              disabled={!key}
-              onRun={() => onAction("propose-ticket", { ticket })}
-            >
-              {t(lang, "proposeFromTicket")}
-            </Busy>
-          </div>
-        </>
-      ) : null}
       {mine ? <Command lang={lang} run={run} output={output} /> : null}
+      {alm ? (
+        <FromTicket
+          lang={lang}
+          capabilities={capabilities}
+          run={run}
+          output={output}
+          json={json}
+          onAction={onAction}
+        />
+      ) : null}
     </section>
   );
 }

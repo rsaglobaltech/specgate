@@ -199,6 +199,7 @@ The system SHALL write, for `specgate config set agent` given a Claude Code prin
 - THEN neither gets `stream-json` nor `specgate harness events`
 
 <!-- specgate:trace actor=Developer feature=features/harness/REQ-278.feature kind=functional status=Implemented test=tests/unit/agent-stream.test.ts -->
+
 ### Requirement: REQ-279 — Docker is checked before the first attempt
 
 The system SHALL, before the first attempt of `harness run` and before the studio's Build starts one, check that Docker runs Linux containers when the project needs it — a quality check with `runner: docker` or `docker: true`, or Testcontainers in a build file — and, when it does not, refuse before any agent runs, naming the fix (start Docker Desktop, or the docker daemon); and SHALL treat a test command whose output says Docker cannot be reached as an environment failure: told to the person with its output, never handed to the agent, and stopping the requirement without a further attempt.
@@ -222,3 +223,207 @@ The system SHALL, before the first attempt of `harness run` and before the studi
 - THEN it makes one attempt and says the tests need Docker, without handing the failure to the agent
 
 <!-- specgate:trace actor=Developer feature=features/harness/REQ-279.feature kind=functional status=Implemented test=tests/unit/harness-run7.test.ts -->
+
+### Requirement: REQ-300 — A person classifies a requirement's gap
+
+The system SHALL record `specgate harness report --classify REQ-NNN --gap spec-impl|intent-spec --reason "<text>"` as one line of `.harness/gaps.jsonl`, with the time it was made; SHALL refuse a classification without a reason or with another gap; and SHALL count, for a requirement classified more than once, the latest classification.
+
+#### Scenario: SCN-300a — Classifying a requirement
+
+- GIVEN a project whose ledger records REQ-002
+- WHEN the person runs `harness report --classify REQ-002 --gap intent-spec --reason "the brief never said a truck can carry two drivers"`
+- THEN `.harness/gaps.jsonl` holds that classification and the report counts REQ-002 as intent → spec, marked by a person
+
+#### Scenario: SCN-300b — A classification without a reason
+
+- GIVEN the same project
+- WHEN the person runs `harness report --classify REQ-002 --gap spec-impl` with no `--reason`
+- THEN the command fails naming `--reason`, and nothing is written
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-300.feature kind=functional status=Implemented test=tests/unit/harness-gaps.test.ts -->
+
+### Requirement: REQ-301 — Specgate suggests the gap from what it recorded
+
+The system SHALL suggest, for a requirement no person classified, *spec → implementation* when an attempt the gate rejected was followed by a passing attempt, naming the gate stage that rejected it (a quality check by its name), and *intent → spec* when the requirement changed after review — a question that blocked it was answered, a review note names it, a change modifies it, or an attempt ended because the gate failed on the specification; intent → spec SHALL win when both apply, and a person's classification SHALL win over any suggestion. The ledger SHALL record the gate stage of each rejected attempt.
+
+#### Scenario: SCN-301a — A rejection the agent fixed
+
+- GIVEN REQ-002's attempt 1 was rejected at `quality check: pmd` and attempt 2 passed
+- WHEN the report is read
+- THEN REQ-002 is suggested as spec → implementation, caught by `pmd`
+
+#### Scenario: SCN-301b — A requirement changed after review
+
+- GIVEN REQ-010 passed on attempt 1, and the draft's `questions.md` has an answered question that blocks REQ-010
+- WHEN the report is read
+- THEN REQ-010 is suggested as intent → spec
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-301.feature kind=functional status=Implemented test=tests/unit/harness-gaps.test.ts -->
+
+### Requirement: REQ-302 — Both gaps, overall and per module
+
+The system SHALL show in `harness report`, and in its `--json` summary as `gaps`, the number and share of requirements with each gap among the requirements the ledger records, overall and per module, and how many classifications a person made and how many were suggested.
+
+#### Scenario: SCN-302a — Two modules
+
+- GIVEN four requirements in the ledger, REQ-002 and REQ-003 of `flota` and REQ-012 and REQ-013 of `tracking`; REQ-002 spec → implementation and REQ-012 intent → spec
+- WHEN the report is read
+- THEN each gap is 1 of 4 (25 %), and `flota` shows 1 spec → implementation of 2 and `tracking` 1 intent → spec of 2
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-302.feature kind=functional status=Implemented test=tests/unit/harness-gaps.test.ts -->
+
+### Requirement: REQ-303 — What to strengthen
+
+The system SHALL name, under the two gaps, what to strengthen: for spec → implementation the gate stage that caught most of them, and for intent → spec the module with most of them — on a tie, the one whose latest classification or evidence is newest.
+
+#### Scenario: SCN-303a — The check that catches most
+
+- GIVEN three requirements suggested as spec → implementation, two caught by `pmd` and one by `test command`
+- WHEN the report is read
+- THEN it says to strengthen `pmd`
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-303.feature kind=functional status=Implemented test=tests/unit/harness-gaps.test.ts -->
+
+### Requirement: REQ-316 — A role's constraints reach the work they concern
+
+The system SHALL read every `harness/<role>.md` — a front matter with `role`, `owner`, `version` and `applies-to` (`kind`, `capability`, `tag` lists) — and SHALL add to the prompt of each requirement it applies to a "Role constraints" section with its text; a package applies when every dimension it lists matches the requirement, and with no `applies-to` to every requirement.
+
+#### Scenario: SCN-316a — Security constraints on a payment requirement
+
+- GIVEN `harness/security.md` applying to the capability `payments`, and REQ-002 in `payments` and REQ-003 in `fleet`
+- WHEN the prompts of REQ-002 and REQ-003 are built
+- THEN REQ-002's prompt has the security package under "Role constraints" and REQ-003's has no such section
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-316.feature kind=functional status=Implemented test=tests/unit/role-packages.test.ts -->
+
+### Requirement: REQ-317 — The report and the live view say which packages were used
+
+The system SHALL name the packages given to an attempt as `role@version` in its `prompt` event and in the run record, show them in the live view of the requirement, and SHALL list in `harness report` each package with the number of requirements it reached.
+
+#### Scenario: SCN-317a — Two runs with the security package
+
+- GIVEN two recorded runs whose results name `security@2`, one of them also `performance@1`
+- WHEN `harness report --json` is read and the live model folds a `prompt` event naming `security@2`
+- THEN the report lists security@2 for 2 requirements and performance@1 for 1, and the live requirement shows security@2
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-317.feature kind=functional status=Implemented test=tests/unit/role-packages.test.ts -->
+
+### Requirement: REQ-318 — A reviewer per package, that only advises
+
+The system SHALL ask the builtin review check, when packages apply to the requirement, for one line per package — `- <role>: OK` or `- <role>: ADVICE — …` — and SHALL never fail the review on that advice.
+
+#### Scenario: SCN-318a — The review instruction names each package
+
+- GIVEN the security and performance packages apply to REQ-002
+- WHEN the review instruction is written
+- THEN it asks for a line for security and one for performance, and says the advice does not decide the verdict
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-318.feature kind=functional status=Implemented test=tests/unit/role-packages.test.ts -->
+
+### Requirement: REQ-372 — A scratch file that cannot be removed never fails the command
+
+The system SHALL remove the prompt files it writes for an agent (`change author`, the drafting agents, the harness) without ever failing the command when the file cannot be removed yet: it retries briefly on `EBUSY` or `EPERM`, then leaves the file to the system.
+
+#### Scenario: SCN-372a — Windows still holds the prompt file
+
+- GIVEN removing a prompt file fails with `EBUSY` twice, then succeeds
+- WHEN the file is removed
+- THEN it is removed on the third try and nothing is thrown
+
+#### Scenario: SCN-372b — The file stays held
+
+- GIVEN removing a prompt file always fails with `EBUSY`
+- WHEN the file is removed
+- THEN nothing is thrown, and the file is reported as left
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-372.feature kind=functional status=Implemented test=tests/unit/rc3-approvals.test.ts -->
+
+### Requirement: REQ-375 — Ticking a task is not an edit of the contract
+
+The system SHALL not refuse an attempt as `agent_touched_protected_path` for a change to a change's `tasks.md` whose only difference is the box of its tasks (`- [ ]`, `- [x]`, `- [X]`), as delivering a requirement writes it, and SHALL keep refusing any other edit of that file; the implementing prompt SHALL say that the harness ticks the requirement's tasks itself.
+
+#### Scenario: SCN-375a — The agent ticks the task it delivered
+
+- GIVEN an approved layered change of two requirements
+- WHEN the agent implements REQ-002 and ticks its task in tasks.md
+- THEN the attempt is not refused for a protected path
+
+#### Scenario: SCN-375b — The agent rewrites a task
+
+- GIVEN the same change
+- WHEN the agent rewords REQ-002's task in tasks.md
+- THEN the attempt is refused with `agent_touched_protected_path`, naming tasks.md
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-375.feature kind=functional status=Implemented test=tests/unit/rc4-ticks.test.ts -->
+
+### Requirement: REQ-417 — An empty attempt after a written one is retried once
+
+The system SHALL attempt a requirement once more, with attempts left, when its agent produced no files and an attempt earlier in the same run did, telling the agent it wrote nothing; and SHALL stop as before when no attempt of the run wrote, or after that one retry.
+
+#### Scenario: SCN-417a — The agent writes nothing for one requirement of the run
+
+- GIVEN a project with REQ-000, REQ-001 and REQ-002, and an agent that writes the first time for each, except the first time for REQ-001
+- WHEN the developer runs `specgate harness run --max-attempts 2`
+- THEN REQ-001 says the agent produced no files and is retried once, and all three pass
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-417.feature kind=functional status=Implemented test=tests/unit/harness-run.test.ts -->
+
+### Requirement: REQ-532 — A tester and an implementer, as separate sessions
+
+The system SHALL, when `harness.config.yaml` sets `lanes: [tester, implementer]`, run each attempt as two agent sessions in the requirement's worktree, in that order: the tester, told to write the failing tests the requirement's scenarios call for and no production code, then the implementer, told to make those tests pass without changing them; each session SHALL get `SPECGATE_LANE` set to its lane in its environment and its role in the run's attempt log; and without `lanes:` the harness SHALL keep a single session per attempt.
+
+#### Scenario: SCN-532a — Two sessions, in order
+
+- GIVEN a project whose harness config sets `lanes: [tester, implementer]` and an agent that appends `SPECGATE_ROLE` to a log outside the worktree
+- WHEN a tool runs `specgate harness run --req REQ-000`
+- THEN the log holds `tester` then `implementer`, and the run's attempt log names both roles
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-532.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-533 — Each role stays in its lane
+
+The system SHALL, with `roles:` set, revert after the tester's session every file it created or changed that is not a test file, and after the implementer's session every test file it created or changed — a test file by the conventions the derived matrix uses — keeping build manifests (`package.json`, `pom.xml`, `build.gradle`, `build.gradle.kts`) and the prompt archive; and SHALL report each reverted file as `lane_crossed`, naming the role and the path.
+
+#### Scenario: SCN-533a — The implementer rewrites a test
+
+- GIVEN the project of SCN-532a and an agent that, as tester, writes `tests/a.test.js`, and as implementer writes `src/a.js` and overwrites `tests/a.test.js`
+- WHEN a tool runs `specgate harness run --req REQ-000`
+- THEN the output reports `lane_crossed` for `implementer` and `tests/a.test.js`, and the tester's content of `tests/a.test.js` is what the gate ran
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-533.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-534 — The agent's own instructions are protected by default
+
+The system SHALL protect by default, besides the specification paths it protects today, the files that steer the agent — `CLAUDE.md`, `.claude/**`, `.cursor/**`, `.github/**` and `.mcp.json` — so that an attempt that changes one fails with `agent_touched_protected_path` naming it, as for any protected path; SHALL count creating one of those files, or `AGENTS.md` or `AI_RULES.md`, as changing it, where a new file under the other protected paths stays allowed; and `protected_paths` in `harness.config.yaml` SHALL still replace the default list.
+
+#### Scenario: SCN-534a — The agent edits its own instructions
+
+- GIVEN a project with the default protected paths and an agent that writes a source file and appends a line to `CLAUDE.md`
+- WHEN a tool runs `specgate harness run --req REQ-000`
+- THEN the attempt fails with `agent_touched_protected_path` naming `CLAUDE.md`
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-534.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-535 — A requirement has a cost budget
+
+The system SHALL sum, per requirement, the `cost` each agent session's final usage line reports, and when `max_cost_usd` in `harness.config.yaml` is set and the sum reaches it after a session, SHALL start no further session for that requirement — neither the rest of the attempt, recorded at the stage `budget`, nor a retry — while the gate still judges the work already done; a requirement that does not pass SHALL end `fail`, reporting `budget_exceeded` with the cost and the limit; and a session that reports no cost SHALL count as zero, with the warning `cost_unknown` once per requirement while a budget is set.
+
+#### Scenario: SCN-535a — The first attempt spends the budget
+
+- GIVEN `max_cost_usd: 0.5` and an agent that writes a usage line with a cost of 0.6 and a test that fails the gate
+- WHEN a tool runs `specgate harness run --req REQ-000`
+- THEN the requirement fails after one attempt, and the output reports `budget_exceeded` with 0.60 and 0.5
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-535.feature kind=functional status=Implemented -->
+
+### Requirement: REQ-559 — The lanes are not the roles
+
+The system SHALL refuse a `harness.config.yaml` whose `roles:` is a list — 0.35's spelling of the lanes — naming `lanes: [tester, implementer]` and `specgate migrate 1.0` as the fix, and SHALL never read such a list as the people who hold a role; and `specgate migrate 1.0` SHALL rename that one line to `lanes:`, keeping the rest of the file byte for byte.
+
+#### Scenario: SCN-559a — A 0.35 project's lanes
+
+- GIVEN a committed project whose harness config has the line `roles: [tester, implementer]`
+- WHEN a developer runs `specgate migrate 1.0`
+- THEN the line reads `lanes: [tester, implementer]`, every other byte of the file is unchanged, and the report still asks who holds product, architect and developer
+
+<!-- specgate:trace actor=Developer feature=features/harness/REQ-559.feature kind=functional status=Implemented -->

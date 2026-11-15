@@ -48,6 +48,11 @@ for the policy on when and how to write an ADR.
 | [0038](0038-brief-cards.md) | Brief cards: module sections with rules, examples and questions, checked before drafting | Accepted | 2026-10-20 |
 | [0039](0039-the-ticket-as-source-text.md) | The ticket as source text: a ticket with acceptance criteria opens a change checked against it; the board stays read-only | Accepted | 2026-10-20 |
 | [0040](0040-quality-and-security-in-the-gate.md) | Quality and security checks are part of the gate: the team's tools, when each runs, only new findings fail, diff coverage and mutation score computed from standard reports | Accepted | 2026-10-28 |
+| [0041](0041-adoption-reads-areas-not-kinds-of-code.md) | Adoption reads areas of the product, never kinds of code, and proposes no requirement | Accepted | 2026-11-10 |
+| [0042](0042-a-short-alias-sgate-for-the-same-command.md) | A short alias, `sgate`, for the same command: an abbreviation of the name, not a second one | Accepted | 2026-11-15 |
+| [0043](0043-the-workspace.md) | A workspace of repositories: one file names them, members stay whole, ids are qualified across them, a story is split into a change per repository | Accepted | 2026-10-29 |
+| [0044](0044-the-three-layers-of-a-change.md) | The three layers of a change: Discover (product), Design (architect), Tasks (developer), each checked; a 0.27 proposal is read as the Discover | Accepted | 2026-10-29 |
+| [0045](0045-roles-approvals-and-role-packages.md) | Roles in the config, an approval per layer by its owner with a quorum and a hash of what was approved, the harness waits for them, and role packages composed into the prompt | Accepted | 2026-10-29 |
 
 ## Template
 

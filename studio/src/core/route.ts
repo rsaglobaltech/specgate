@@ -11,6 +11,10 @@ export interface RouteData {
   empty?: boolean;
   steps: Array<{ key: StepKey; state: StepState; counts: Record<string, number> }>;
   next: StepKey | null;
+  /** What the next step means here (REQ-474). */
+  hint?: "adopt" | "create" | "specify" | null;
+  /** The areas adoption found (REQ-471). */
+  areas?: number;
 }
 
 export interface HomeData {

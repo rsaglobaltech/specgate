@@ -224,3 +224,39 @@ export function mutationScore(changed: Map<string, Set<number>>, mutants: Mutant
   }
   return { value: pct(passed, total), total, passed, misses };
 }
+
+/** The format of a coverage report, which names the tool family that wrote it (REQ-499). */
+export type CoverageTool = "lcov" | "istanbul" | "cobertura" | "jacoco";
+
+/**
+ * The project's line coverage from a whole report: covered and executable
+ * lines summed over every file it lists. Null when the report measures no
+ * line, or cannot be read — a coverage nothing measured is not 0 (REQ-499).
+ */
+export function totalLineCoverage(
+  tool: CoverageTool,
+  text: string
+): { percent: number; covered: number; total: number } | null {
+  let covered = 0;
+  let total = 0;
+  if (tool === "istanbul") {
+    // coverage-summary.json (c8, nyc, vitest, jest): `total.lines`.
+    try {
+      const lines = JSON.parse(text)?.total?.lines;
+      covered = Number(lines?.covered);
+      total = Number(lines?.total);
+    } catch {
+      return null;
+    }
+    if (!Number.isFinite(covered) || !Number.isFinite(total)) return null;
+  } else {
+    const files =
+      tool === "jacoco" ? readJacoco(text) : tool === "lcov" ? readLcov(text) : readCobertura(text);
+    for (const cov of files.values()) {
+      total += cov.executable.size;
+      covered += [...cov.covered].filter((n) => cov.executable.has(n)).length;
+    }
+  }
+  if (total <= 0) return null;
+  return { percent: Math.round((covered / total) * 1000) / 10, covered, total };
+}

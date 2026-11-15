@@ -3,6 +3,11 @@ import * as path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { listChangeIds, listDeltas } from "../../packages/core/src/infrastructure/ChangeWorkspace";
 import { parseDelta } from "../../packages/core/src/domain/SpecParser";
+import {
+  LAYERS,
+  LEGACY_DISCOVER,
+  isUntouchedLayer,
+} from "../../packages/core/src/domain/ChangeLayers";
 import { assumptionsToReview } from "../../packages/core/src/domain/Clarification";
 import { readHarnessConfig } from "../../packages/core/src/infrastructure/HarnessConfigFile";
 import type { QualityConfig } from "../../packages/core/src/domain/QualityChecks";
@@ -16,7 +21,7 @@ import {
   approvedOn,
   reviewNotes,
   type Blocker,
-  type ReviewNote,
+  type ReviewNoteRow,
 } from "./change-review";
 import { requestStop, runLockHolder } from "./harness-guard";
 import { findCliRoot } from "./project-root";
@@ -27,6 +32,13 @@ import { withQueue } from "../cli/commands/spec/StatusCommand";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { requirementTitles } from "../../packages/core/src/domain/DraftChecklist";
 import { inFlightView } from "./in-flight";
+import { approvalSettings, changeApprovals, gitIdentity } from "./approvals";
+import {
+  holdsRole,
+  type ApprovalRecord,
+  type Identity,
+} from "../../packages/core/src/domain/Approvals";
+import { capabilitiesOf } from "./studio-actions";
 
 /**
  * What the visual studio shows and does (REQ-204..210): each read is built from
@@ -55,12 +67,26 @@ export interface DraftRequirement {
   scenarios: Array<{ id: string; title: string; steps: string[] }>;
 }
 
+/** One layer of a change in Review (REQ-289): who owns it and whether it is written. */
+export interface DraftLayer {
+  id: string;
+  owner: string;
+  file: string;
+  written: boolean;
+  /** REQ-319: the approvals of its current text, how many it needs, and whether the viewer owns it. */
+  approvals: ApprovalRecord[];
+  quorum: number;
+  approved: boolean;
+  mine: boolean;
+}
+
 export interface DraftView {
   change: string;
   module: string;
   requirements: DraftRequirement[];
+  layers: DraftLayer[];
   blockers: Blocker[];
-  notes: ReviewNote[];
+  notes: ReviewNoteRow[];
   questions: Array<{ id: string; text: string; blocks: string[] }>;
 }
 
@@ -101,8 +127,35 @@ function draftRequirements(projectDir: string, change: string): DraftRequirement
   return out;
 }
 
+/**
+ * The change's layers with their owners, and whether each is written
+ * (REQ-289, ADR-0044). A 0.27 change shows its proposal as the Discover.
+ */
+function draftLayers(projectDir: string, change: string, who?: Identity): DraftLayer[] {
+  const dir = path.join(projectDir, "docs", "specs", "changes", change);
+  const state = changeApprovals(projectDir, change);
+  const settings = approvalSettings(projectDir);
+  const viewer = who || gitIdentity(projectDir);
+  return LAYERS.map((l) => {
+    const a = state.layers.find((x) => x.layer === l.id)!;
+    const file =
+      l.id === "discover" && !fs.existsSync(path.join(dir, l.file)) ? LEGACY_DISCOVER : l.file;
+    const text = read(path.join(dir, file));
+    return {
+      id: l.id,
+      owner: l.owner,
+      file,
+      written: text !== undefined && !isUntouchedLayer(l.id, text, change),
+      approvals: a.approvals,
+      quorum: a.quorum,
+      approved: a.approved,
+      mine: holdsRole(settings, l.owner, viewer),
+    };
+  });
+}
+
 /** Open changes a person has not approved yet, each as Review shows it (REQ-206). */
-export function drafts(projectDir: string): DraftView[] {
+export function drafts(projectDir: string, who?: Identity): DraftView[] {
   const open = waiting(projectDir).questions;
   return listChangeIds(projectDir)
     .filter((c) => !approvedOn(projectDir, c))
@@ -110,6 +163,7 @@ export function drafts(projectDir: string): DraftView[] {
       change,
       module: change.replace(/^draft-/, "").replace(/-additions$/, ""),
       requirements: draftRequirements(projectDir, change),
+      layers: draftLayers(projectDir, change, who),
       blockers: approvalBlockers(projectDir, change),
       notes: reviewNotes(projectDir, change),
       questions: open
@@ -133,10 +187,26 @@ export interface ChangeView {
   proposal: string;
   /** Every requirement in it delivered: archive takes it. */
   canArchive: boolean;
+  /** The ticket it was opened from, and its address on the ALM when that is known (REQ-447). */
+  ticket: string | null;
+  ticketUrl: string | null;
 }
 
 /** Each open change with its progress, its proposal and tasks — not only the brief's drafts (REQ-439). */
-export function changesView(projectDir: string): { changes: ChangeView[]; alm: boolean } {
+/** A Jira ticket's address, from `base_url` in alm.config.yaml; null for another ALM or none. */
+function ticketUrlOf(projectDir: string, key: string): string | null {
+  const alm = read(path.join(projectDir, "alm.config.yaml")) || "";
+  const field = (name: string) =>
+    (new RegExp(`^${name}:\\s*["']?([^"'#\\s]+)["']?`, "m").exec(alm) || [])[1] || "";
+  const base = field("base_url").replace(/\/+$/, "");
+  return field("provider") === "jira" && /^https?:\/\//.test(base) ? `${base}/browse/${key}` : null;
+}
+
+export function changesView(projectDir: string): {
+  changes: ChangeView[];
+  alm: boolean;
+  capabilities: string[];
+} {
   const changes = listChangeIds(projectDir).map((id): ChangeView => {
     const dir = path.join(projectDir, "docs", "specs", "changes", id);
     const requirements = draftRequirements(projectDir, id).map((r) => ({
@@ -151,6 +221,10 @@ export function changesView(projectDir: string): { changes: ChangeView[]; alm: b
       .filter((m): m is RegExpExecArray => !!m)
       .map((m) => ({ text: m[2].trim(), done: m[1] !== " " }));
     const proposal = read(path.join(dir, "proposal.md")) || "";
+    const ticket =
+      /^ticket:\s*([A-Z][A-Z0-9_]*-\d+)\s*$/m.exec(
+        read(path.join(dir, "change.yaml")) || ""
+      )?.[1] || null;
     return {
       id,
       module: id.startsWith("draft-") ? id.replace(/^draft-/, "").replace(/-additions$/, "") : null,
@@ -160,9 +234,15 @@ export function changesView(projectDir: string): { changes: ChangeView[]; alm: b
       tasks: { done: items.filter((t) => t.done).length, total: items.length, items },
       proposal: proposal.length > 20000 ? `${proposal.slice(0, 20000)}\n…` : proposal,
       canArchive: requirements.length > 0 && delivered === requirements.length,
+      ticket,
+      ticketUrl: ticket ? ticketUrlOf(projectDir, ticket) : null,
     };
   });
-  return { changes, alm: fs.existsSync(path.join(projectDir, "alm.config.yaml")) };
+  return {
+    changes,
+    alm: fs.existsSync(path.join(projectDir, "alm.config.yaml")),
+    capabilities: capabilitiesOf(projectDir),
+  };
 }
 
 // ── Questions ───────────────────────────────────────────────────────────────

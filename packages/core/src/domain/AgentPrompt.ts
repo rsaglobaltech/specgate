@@ -31,6 +31,8 @@ export interface PromptOptions {
   /** Which file the rules came from: AGENTS.md, or a legacy AI_RULES.md. */
   rulesFile?: string;
   stageRules?: string[];
+  /** `docs/specs/decision-rights.md`, when the project has one (REQ-547). */
+  decisionRights?: string | null;
   /** Ask the use case to look one up. `precedent` is what it found. */
   withPrecedents?: boolean;
   /**
@@ -192,6 +194,20 @@ export class AgentPrompt {
       );
     }
 
+    if (opts.decisionRights && opts.decisionRights.trim()) {
+      parts.push(
+        AgentPrompt.section(
+          "Decision rights (docs/specs/decision-rights.md — checked against your diff)",
+          opts.decisionRights.trimEnd() +
+            "\n\nA decision marked `ask` is not yours to take: do not add a dependency, a " +
+            "migration or a public API operation it covers. If the requirement cannot be met " +
+            "without one, ask instead — `specgate ask " +
+            String(req.requirement) +
+            ' "<what you need, and why>"`. An attempt that takes it fails.'
+        )
+      );
+    }
+
     if (opts.precedent && (opts.precedent.testExcerpt || opts.precedent.technicalExcerpt)) {
       const p = opts.precedent;
       const body: string[] = [
@@ -236,6 +252,9 @@ export class AgentPrompt {
         "does not exist yet is not modifying one, and the gate allows it: an agent asked " +
         "to write a missing scenario is not being asked to break this rule.",
       "The harness will run `validate . --strict` and the project test command. Both must pass.",
+      // REQ-375: an agent that ticked its task was refused as editing the contract.
+      "The harness ticks this requirement's tasks in the change's `tasks.md` itself once it is " +
+        "delivered: leave that file as it is.",
     ];
     parts.push(
       AgentPrompt.section(

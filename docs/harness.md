@@ -119,6 +119,14 @@ through `specgate harness events --from claude`:
 agent: "claude -p --output-format stream-json --verbose < {prompt_file} | specgate harness events --from claude"
 ```
 
+### Drive it from another tool
+
+A tool that starts the harness — an editor, specgate-studio — reads it as JSON:
+`--format jsonl` streams one event per line, `specgate harness stop
+--after-current` ends a run between requirements, `--allow-dirty` builds with
+uncommitted files, and a question the agent asks gets its id while the run goes
+on. See [Drive the harness from a tool](harness-control.md).
+
 ## Parallel branches and the traceability matrix
 
 Each harness branch changes its own row in `docs/specs/traceability.md`.
@@ -139,7 +147,8 @@ git add .gitattributes && git commit -m "merge the matrix by row"
 ```
 
 The driver is local git configuration, so every clone and every CI job needs
-`specgate harness init` once. Until then git falls back to its normal merge,
+`specgate harness init --merge-drivers` once: it registers the drivers and
+writes no other file. Until then git falls back to its normal merge,
 and `specgate doctor` reports the gap.
 
 It still **conflicts** when two branches set the same row to different values.
@@ -166,7 +175,8 @@ delete the marker lines, and run `specgate check`.
 run this machine's copy of specgate. If that copy goes away (an `npx` cache
 cleared, a global install removed), the drivers say so and git merges these
 files by lines, with its usual conflict markers, and `specgate doctor` warns.
-Run `specgate harness init` again to point them at the copy you have now.
+Run `specgate harness init --merge-drivers` again to point them at the copy you
+have now.
 
 ## Run more than one requirement at a time
 
@@ -232,6 +242,7 @@ For a nightly job that leaves branches to review:
 | `--pr-cmd "<cmd>"`       | Runs after each push, with `{branch}` and `{req}` placeholders.                 |
 | `--verbose`              | Streams the gate's output while it runs.                                        |
 
+
 ## When a run fails
 
 **Before any agent runs**, the harness validates the base. The gate judges the
@@ -266,4 +277,5 @@ delivered requirement), see [What the harness has cost](harness-report.md).
 ## Next
 
 - [Choosing and wiring your agent](agent-setup.md)
+- [Lanes, roles and limits](harness-roles.md)
 - [What the harness has cost](harness-report.md)

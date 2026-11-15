@@ -6,9 +6,11 @@ import type {
   AlmProvider,
   FetchLike,
   HttpResponse,
+  IssueComment,
   IssueRef,
   IssueStatus,
   IssueSummary,
+  Phase,
 } from "../port";
 
 /** The slices of Jira's REST responses this connector reads. */
@@ -16,12 +18,35 @@ interface JiraIssue {
   readonly key: string;
 }
 interface JiraStatusResponse {
-  readonly fields?: { readonly status?: { readonly statusCategory?: { readonly key?: string } } };
+  readonly fields?: {
+    readonly status?: {
+      readonly name?: string;
+      readonly statusCategory?: { readonly key?: string };
+    };
+  };
 }
 interface JiraTransition {
   readonly id: string;
-  readonly to?: { readonly statusCategory?: { readonly key?: string } };
+  readonly name?: string;
+  readonly to?: { readonly name?: string; readonly statusCategory?: { readonly key?: string } };
 }
+interface JiraComments {
+  readonly comments?: readonly {
+    readonly id: string;
+    readonly author?: { readonly displayName?: string };
+    readonly body?: unknown;
+  }[];
+}
+
+/**
+ * The status category of each phase (REQ-305). Jira's statuses are per
+ * project; its three categories are not, so they are the portable default.
+ */
+const PHASE_CATEGORY: Readonly<Record<Phase, string>> = {
+  proposed: "new",
+  building: "indeterminate",
+  archived: "done",
+};
 interface JiraTransitions {
   readonly transitions?: readonly JiraTransition[];
 }
@@ -51,16 +76,12 @@ const GATEWAY = "https://api.atlassian.com/ex/jira";
  * `done_state` — configuring one would be read by nobody.
  */
 class JiraClient extends HttpAlmClient {
-  readonly capabilities: AlmCapabilities = {
-    create: true,
-    readStatus: true,
-    close: true,
-    listIssues: true,
-  };
+  readonly capabilities: AlmCapabilities = JIRA_CAPABILITIES;
 
   private readonly headers: Readonly<Record<string, string>>;
   private readonly projectKey: string;
   private readonly issueType: string;
+  private readonly subtaskType: string;
   private readonly cloudId: string | undefined;
   private readonly acceptanceField: string | undefined;
   private gateway: Promise<string> | undefined;
@@ -77,6 +98,7 @@ class JiraClient extends HttpAlmClient {
     };
     this.projectKey = String(cfg.project_key ?? "");
     this.issueType = cfg.issue_type ?? "Task";
+    this.subtaskType = typeof cfg.subtask_type === "string" ? cfg.subtask_type : "Sub-task";
     this.cloudId = cfg.cloud_id ? String(cfg.cloud_id).trim() : undefined;
     this.acceptanceField = cfg.acceptance_field ? String(cfg.acceptance_field) : undefined;
   }
@@ -234,6 +256,103 @@ class JiraClient extends HttpAlmClient {
     );
   }
 
+  /**
+   * REQ-305: the transition into the state `phases:` names, or into the
+   * phase's status category. An issue already there is left alone: a workflow
+   * offers no transition from a status to itself.
+   */
+  async setPhase(issueKey: string, phase: Phase, state?: string): Promise<string> {
+    const wanted = (name?: string, category?: string) =>
+      state
+        ? (name ?? "").toLowerCase() === state.toLowerCase()
+        : category === PHASE_CATEGORY[phase];
+
+    const current = await this.requestJson<JiraStatusResponse>(
+      `/rest/api/3/issue/${issueKeyPath(issueKey)}?fields=status`,
+      `Jira read ${issueKey}`,
+      { headers: this.headers }
+    );
+    const status = current.fields?.status;
+    if (status && wanted(status.name, status.statusCategory?.key)) return String(status.name);
+
+    const { transitions } = await this.requestJson<JiraTransitions>(
+      `/rest/api/3/issue/${issueKeyPath(issueKey)}/transitions`,
+      `Jira list transitions for ${issueKey}`,
+      { headers: this.headers }
+    );
+    const transition = (transitions ?? []).find(
+      (t) => wanted(t.to?.name, t.to?.statusCategory?.key) || (!!state && wanted(t.name))
+    );
+    if (!transition) {
+      throw new Error(
+        `Jira: ${issueKey} has no transition to ${state ? `"${state}"` : `a ${PHASE_CATEGORY[phase]} status`} from where it is.\n` +
+          `Fix: name the state of '${phase}' in phases: of alm.config.yaml, as your workflow calls it.`
+      );
+    }
+    await this.request(
+      `/rest/api/3/issue/${issueKeyPath(issueKey)}/transitions`,
+      `Jira transition ${issueKey}`,
+      {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({ transition: { id: transition.id } }),
+      }
+    );
+    return String(transition.to?.name ?? state ?? PHASE_CATEGORY[phase]);
+  }
+
+  /** REQ-307: a sub-task of the change's ticket, one per repository. */
+  async createSubIssue(parentKey: string, title: string): Promise<IssueRef> {
+    issueKeyPath(parentKey);
+    const created = await this.requestJson<JiraIssue>(
+      "/rest/api/3/issue",
+      `Jira create sub-task of ${parentKey}`,
+      {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({
+          fields: {
+            project: { key: this.projectKey },
+            issuetype: { name: this.subtaskType },
+            parent: { key: parentKey },
+            summary: title,
+            labels: ["spec-driven"],
+          },
+        }),
+      }
+    );
+    return { key: created.key, url: `${this.baseUrl}/browse/${created.key}` };
+  }
+
+  /** REQ-306: the ticket's comments, their bodies flattened out of ADF. */
+  async listComments(issueKey: string): Promise<IssueComment[]> {
+    const { comments } = await this.requestJson<JiraComments>(
+      `/rest/api/3/issue/${issueKeyPath(issueKey)}/comment?orderBy=created`,
+      `Jira read the comments of ${issueKey}`,
+      { headers: this.headers }
+    );
+    return (comments ?? []).map((c) => ({
+      id: String(c.id),
+      author: String(c.author?.displayName ?? ""),
+      body: documentText(c.body),
+    }));
+  }
+
+  /** REQ-306: the ticket's summary and description, as text. */
+  async readIssueText(issueKey: string): Promise<{ title: string; body: string }> {
+    const issue = await this.requestJson<{
+      fields?: { summary?: string; description?: unknown };
+    }>(
+      `/rest/api/3/issue/${issueKeyPath(issueKey)}?fields=summary,description`,
+      `Jira read ${issueKey}`,
+      { headers: this.headers }
+    );
+    return {
+      title: String(issue.fields?.summary ?? ""),
+      body: documentText(issue.fields?.description),
+    };
+  }
+
   /** The workflow decides which transition means done; there may be none. */
   private async findDoneTransition(issueKey: string): Promise<JiraTransition> {
     const { transitions } = await this.requestJson<JiraTransitions>(
@@ -261,6 +380,17 @@ function issueKeyPath(key: string): string {
   return encodeURIComponent(key);
 }
 
+const JIRA_CAPABILITIES: AlmCapabilities = {
+  create: true,
+  readStatus: true,
+  close: true,
+  listIssues: true,
+  phase: true,
+  subIssues: true,
+  comments: true,
+  readText: true,
+};
+
 export const jiraProvider: AlmProvider = {
   id: "jira",
   label: "Jira Cloud",
@@ -271,9 +401,10 @@ export const jiraProvider: AlmProvider = {
     // `cloud_id` routes a token created with scopes through Atlassian's
     // gateway: a site id, or `auto` to read it from the site.
     // `acceptance_field` and `epics` serve `propose --from-ticket` (ADR-0039).
-    optional: ["user_env", "issue_type", "cloud_id", "acceptance_field", "epics"],
+    // `subtask_type` names the sub-task type of REQ-307 when it is not "Sub-task".
+    optional: ["user_env", "issue_type", "subtask_type", "cloud_id", "acceptance_field", "epics"],
   },
-  capabilities: { create: true, readStatus: true, close: true, listIssues: true },
+  capabilities: JIRA_CAPABILITIES,
   create: (cfg, fetchImpl) => new JiraClient(cfg, fetchImpl),
 };
 

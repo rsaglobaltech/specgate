@@ -113,7 +113,7 @@ they are configured.
 |---|---|
 | Your machine, before a PR | `specgate check` — the gate, then your tests if a test command is configured |
 | Delivering a requirement | `specgate apply` — the gate for that requirement, then the status |
-| CI | the job `specgate ci init` writes — `specgate check`, with the project's JDK or Node set up |
+| CI | the spec gate `init` and `adopt` install (`specgate ci init` writes it again) — `specgate check` with the project's JDK or Node set up; `specgate ci status` says what it checks |
 | An agent | the `/specgate:check` command, the `Stop` hook, the harness |
 
 A gate that was slightly different in each place used to approve work in one
@@ -134,6 +134,13 @@ the feature files once every requirement in it is `Implemented`. A change is
 archived when its code is done, on its branch, so the spec and the code land
 in one pull request ([ADR-0035](specs/adr/0035-four-verbs-one-lifecycle.md)).
 → [Change a shipped requirement](reviewing-changes.md)
+
+**Layers.** A change has three, each with its owner: `discover.md`, product's —
+what the business needs, its acceptance criteria, no technology; `design.md`,
+the architect's — how, answering each criterion; `tasks.md`, the developer's —
+the work, each task naming its requirement. Product reviews the story, the
+architect the design, and the story stays put while the design changes
+([ADR-0044](specs/adr/0044-the-three-layers-of-a-change.md)).
 
 A change comes from one of three places:
 
@@ -188,6 +195,7 @@ whole loop on a temporary copy of your repository.
 
 ## Next
 
+- [The method](methodology.md) — the phases, roles and artefacts these ideas add up to
 - [Getting started](getting-started.md) — the four verbs on your repository
 - [Your team's first pull request](first-pr.md) — author, reviewer, and every failure
 - [Writing specs](writing-specs.md) — requirements and scenarios worth testing

@@ -299,12 +299,108 @@ The system SHALL, on `specgate agents init --tool opencode`, and by default when
 
 ### Requirement: REQ-165 — Opening a ticket's change publishes its reservation
 
-The system SHALL, when `specgate propose --from-ticket <KEY>` has created the ticket's branch, commit the opened change on it with the message `<KEY> docs(spec): open the change from the ticket` and push that commit with the branch, unless `--no-push` is given, so the requirement and scenario ids it reserved are visible to every other clone from that moment; and SHALL commit nothing when it did not create the branch.
+The system SHALL, when `specgate propose --from-ticket <KEY>` has created the ticket's branch, or when it is given `--no-branch` on a branch that already names `<KEY>`, commit the opened change's folder, and nothing else, on that branch with the message `docs(spec): <KEY> open the change from the ticket`, and push that commit with the branch, unless `--no-push` is given, so the requirement and scenario ids it reserved are visible to every other clone from that moment; and SHALL commit nothing on any other branch.
 
 #### Scenario: SCN-165a — A colleague sees the reservation at once
 
 - GIVEN two clones of one repository, and a colleague who has just opened PET-104 with `specgate propose --from-ticket PET-104.json --capability owners`
 - WHEN the developer, in the other clone, runs `git fetch` and looks at the colleague's branch
-- THEN that branch holds PET-104's change, with its `req_range`, in a commit "PET-104 docs(spec): open the change from the ticket"
+- THEN that branch holds PET-104's change, with its `req_range`, in a commit "docs(spec): PET-104 open the change from the ticket"
+
+#### Scenario: SCN-165b — Another tool made the branch
+
+- GIVEN a colleague on a branch `feature/clinic/PET-104` that agentkit created, with another file staged, who runs `specgate propose --from-ticket PET-104.json --capability owners --no-branch`
+- WHEN the developer, in the other clone, runs `git fetch` and looks at `feature/clinic/PET-104`
+- THEN it holds PET-104's change in a commit "docs(spec): PET-104 open the change from the ticket", and the staged file is still staged, not in that commit
 
 <!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-165.feature kind=functional status=Implemented test=tests/unit/change-overlap.test.ts -->
+
+### Requirement: REQ-305 — The board follows the change's phase
+
+The system SHALL, on `specgate alm sync`, move the ticket of each change — its `ticket:` or `origin: alm:<key>` in `change.yaml` — to the board state of the change's phase: `proposed` while it is open and none of its requirements is being built, `building` once one has a `harness/REQ-NNN` branch or is Implemented, `archived` once the change is archived. The state of each phase SHALL default per provider (Jira status category, Azure Boards state, a GitHub label or a closed issue, a Linear state type) and SHALL be named in `phases:` of `alm.config.yaml` when a board uses its own; a move already made SHALL NOT be made again, and `--dry-run` SHALL print each move without making it.
+
+#### Scenario: SCN-305a — A change whose first requirement is being built
+
+- GIVEN the open change `alerts` with `ticket: FLEET-12` and a branch `harness/REQ-040` for its requirement REQ-040
+- WHEN `specgate alm sync` runs twice
+- THEN FLEET-12 is moved once to the provider's building state, and the second run reports it in sync without a request
+
+#### Scenario: SCN-305b — A board with its own states
+
+- GIVEN `phases: { building: "Doing" }` in `alm.config.yaml` and the change `alerts` being built
+- WHEN `specgate alm sync --dry-run` runs
+- THEN it prints that FLEET-12 would move to "Doing", and nothing is sent to the board
+
+<!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-305.feature kind=functional status=Implemented test=tests/unit/alm-phases.test.ts -->
+
+### Requirement: REQ-306 — What the ticket gains comes back as notes
+
+The system SHALL, on `specgate alm pull`, bring into each open change with a ticket the ticket's comments it has not brought before and, when the ticket's description changed since the last pull, a note saying so with its new text, as notes in the change's `review.md` (the same rows as `change note`); it SHALL never rewrite the change's proposal or delta, and a provider that cannot read comments SHALL be reported, not fail the pull.
+
+#### Scenario: SCN-306a — A comment and a new description
+
+- GIVEN the open change `alerts` with `ticket: FLEET-12`, pulled once, and FLEET-12 then gains the comment "Also by SMS" and a changed description
+- WHEN `specgate alm pull` runs twice
+- THEN `alerts/review.md` gains one note with the comment and one saying the description changed, the second pull adds nothing, and the delta is unchanged
+
+<!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-306.feature kind=functional status=Implemented test=tests/unit/alm-phases.test.ts -->
+
+### Requirement: REQ-307 — One sub-issue per repository of a change
+
+The system SHALL, on `specgate alm sync`, create under the ticket of a change that lists `repositories:` in its `change.yaml` one sub-issue per repository, titled with the ticket key, the repository and the change, record each in `.specops/alm-phases.json`, and create none twice; a provider that cannot create sub-issues, or a change with no ticket, SHALL be reported per change.
+
+#### Scenario: SCN-307a — A change across three repositories
+
+- GIVEN the change `follow-shipment` with `ticket: FLEET-20` and `repositories: [fleet, tracking, web]`
+- WHEN `specgate alm sync` runs twice
+- THEN three sub-issues of FLEET-20 exist, one per repository, and the second run creates none
+
+<!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-307.feature kind=functional status=Implemented test=tests/unit/alm-phases.test.ts -->
+
+### Requirement: REQ-308 — Linear is a built-in provider
+
+The system SHALL offer `provider: linear`, which reads `team_key` and the token from the environment variable named by `token_env` (never from the file), and creates, reads, closes, searches, moves and nests issues of that team through Linear's GraphQL API, passing the same conformance suite as the other built-in providers.
+
+#### Scenario: SCN-308a — The conformance suite against Linear
+
+- GIVEN `provider: linear`, `team_key: ENG` and `token_env: LINEAR_TOKEN` in `alm.config.yaml`
+- WHEN the ALM conformance suite runs against recorded Linear responses
+- THEN creating returns the issue identifier and its URL, a completed issue reads as done, a cancelled one as open, and closing writes a state change
+
+<!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-308.feature kind=functional status=Implemented test=tests/unit/alm-conformance.test.ts -->
+
+### Requirement: REQ-309 — An agent reads and moves a change's phase over MCP
+
+The system SHALL offer `specgate alm phase <change>`, which reports the change's phase, its ticket and the board state last set, without network access, and `specgate alm move <change> [<phase>]`, which moves that change's ticket to its phase (or to the phase named), both with `--json` and both exposed as MCP tools.
+
+#### Scenario: SCN-309a — An agent drives the board
+
+- GIVEN the change `alerts` with `ticket: FLEET-12` and a requirement being built
+- WHEN an agent calls the MCP tools `specgate_alm_phase` and then `specgate_alm_move` for `alerts`
+- THEN the first answers `building` with FLEET-12 and no board state yet, and the second moves FLEET-12 to the building state
+
+<!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-309.feature kind=functional status=Implemented test=tests/unit/alm-phases.test.ts -->
+
+### Requirement: REQ-170 — A ticket's branch may name its team
+
+The system SHALL read a branch named `<feature|bugfix|hotfix>/<team>/<KEY>`, optionally followed by `-<words>`, as the branch of ticket `<KEY>`, wherever it reads a ticket's branch named `<feature|bugfix|hotfix>/<KEY>`.
+
+#### Scenario: SCN-170a — A team's branch is still the ticket's
+
+- GIVEN a branch `feature/parking/KAN-13` with a commit "KAN-13 REQ-151: normalize plates" and a commit "fix typo"
+- WHEN the developer runs `specgate check`
+- THEN it warns `ticket_key_missing` for "fix typo" only
+
+<!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-170.feature kind=functional status=Implemented test=tests/unit/ticket-source.test.ts -->
+
+### Requirement: REQ-171 — The check says where the change will go
+
+The system SHALL, on `specgate propose --from-ticket <ticket> --check` in a Specgate project, report the capability the change would be opened in, from `--capability` or the mapping of the ticket's epic, as `capability` in its JSON output, `null` when there is none; and SHALL then warn `ticket_no_capability`, naming the capabilities under `docs/specs/capabilities/`, without making the ticket not ready.
+
+#### Scenario: SCN-171a — A story without an epic
+
+- GIVEN a Specgate project with the capability `billing`, and the story PAY-123, ready, with no epic
+- WHEN the developer runs `specgate propose --from-ticket PAY-123.json --check --json`
+- THEN it reports `ready` true and `capability` null, and warns `ticket_no_capability` naming `billing`; with `--capability billing` it reports `capability` "billing" and no such warning
+
+<!-- specgate:trace actor=Developer feature=features/ticket-source/REQ-171.feature kind=functional status=Implemented test=tests/unit/ticket-source.test.ts -->

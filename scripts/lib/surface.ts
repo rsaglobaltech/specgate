@@ -174,6 +174,20 @@ export const SURFACE: Command[] = [
     // `init` does this in a repo that has code (phase 1); kept for scripts.
   },
   {
+    // REQ-528 … REQ-530: a running system specified one module at a time.
+    name: "reverse",
+    editsContract: true,
+    mcp: false,
+    script: ["reverse.js"],
+    help: {
+      group: "core",
+      icon: "🔁",
+      summary:
+        "Specify existing code, one module at a time: Draft requirements citing their source.",
+    },
+    json: { key: "reverse", gate: false, args: "[module]" },
+  },
+  {
     name: "onboard",
     script: ["onboard.js"],
     help: {
@@ -238,6 +252,15 @@ export const SURFACE: Command[] = [
           summary: "Generate the spec gate for GitHub, GitLab, Azure, or Jenkins.",
         },
       },
+      {
+        name: "status",
+        script: ["ci_status.js"],
+        help: {
+          group: "core",
+          icon: "🚦",
+          summary: "What the project's CI checks, and what it lacks.",
+        },
+      },
     ],
   },
   {
@@ -255,6 +278,13 @@ export const SURFACE: Command[] = [
       { name: "link" },
       { name: "status" },
       { name: "pull", editsContract: true, json: { key: "pulled", gate: false } },
+      // REQ-309: an agent reads where a change stands, and moves its ticket there.
+      { name: "phase", json: { key: "phase", gate: false, args: "<change>" } },
+      {
+        name: "move",
+        mcpArg: "change",
+        json: { key: "move", gate: false, args: "<change> [<phase>]" },
+      },
       // Pushes a branch and opens a pull request: a person's step, not an MCP tool.
       { name: "pr", mcp: false },
     ],
@@ -274,6 +304,56 @@ export const SURFACE: Command[] = [
       summary: "The gate in CI and before a pull request: specs, links, coverage, tests.",
     },
     json: { key: "check", gate: true, args: "[dir]" },
+  },
+  {
+    name: "migrate",
+    // REQ-325: a one-time move to 1.0 a person runs and reviews; not an MCP tool.
+    mcp: false,
+    script: ["migrate.js"],
+    help: {
+      group: "core",
+      icon: "🧭",
+      summary:
+        "Move a 0.27 project to 1.0: open changes into three layers, a report of what is left.",
+    },
+    json: { key: "migrate", gate: false, args: "1.0 [--dry-run]" },
+  },
+  {
+    name: "workspace",
+    // ADR-0043: runs every member's own gate; a person's view, not an MCP tool yet.
+    mcp: false,
+    script: ["workspace.js"],
+    help: {
+      group: "core",
+      icon: "🧩",
+      summary:
+        "The repositories of one product: status, check, a story across them, built and watched live (ADR-0043).",
+    },
+    json: { key: "workspace", gate: true, args: "<init|status|check|draft|propose|live|harness>" },
+  },
+  {
+    name: "drift",
+    // REQ-333: behaviour changed without a specification, for CI.
+    mcp: false,
+    script: ["drift.js"],
+    help: {
+      group: "core",
+      icon: "🧭",
+      summary: "Commits since the base that change code and name no requirement.",
+    },
+    json: { key: "drift", gate: true, args: "[dir]" },
+  },
+  {
+    name: "contract",
+    // REQ-336: OpenAPI and AsyncAPI contracts against the requirements citing them.
+    mcp: false,
+    script: ["contract.js"],
+    help: {
+      group: "core",
+      icon: "📜",
+      summary: "Contracts against requirements: uncited operations, missing ones.",
+    },
+    json: { key: "contract", gate: true, args: "check [dir]" },
   },
   {
     name: "quality",
@@ -745,9 +825,119 @@ export const SURFACE: Command[] = [
         },
         json: { key: "report", gate: false },
       },
+      {
+        // REQ-491: what the studio's Stop button and a person at a terminal both use.
+        name: "stop",
+        mcp: false,
+        script: ["harness", "stop.js"],
+        help: {
+          group: "harness",
+          icon: "⏹",
+          summary: "Ask the running harness to stop after the requirement in progress.",
+        },
+        json: { key: "stop", gate: false, args: "--after-current" },
+      },
     ],
   },
 
+  {
+    // REQ-542: what a release delivered, from the changes it archived.
+    name: "release-notes",
+    mcp: false,
+    script: ["release_notes.js"],
+    help: {
+      group: "core",
+      icon: "📰",
+      summary:
+        "Release notes between two refs: the changes archived, by kind, with their requirements.",
+    },
+    json: { key: "releaseNotes", gate: false, args: "<from>..<to>" },
+  },
+  {
+    // REQ-543: a person checks each scenario, then signs.
+    name: "acceptance",
+    editsContract: true,
+    mcp: false,
+    script: ["acceptance.js"],
+    help: {
+      group: "core",
+      icon: "🖋️",
+      summary:
+        "A change's acceptance checklist; --sign moves its Implemented requirements to Verified.",
+    },
+    json: { key: "acceptance", gate: false, args: "<change>" },
+  },
+  {
+    // REQ-544: what each actor can do, from what was delivered.
+    name: "guide",
+    mcp: false,
+    script: ["guide.js"],
+    help: {
+      group: "core",
+      icon: "📘",
+      summary: "Write docs/guide/<actor>.md: each actor's delivered requirements as steps.",
+    },
+    json: { key: "guide", gate: false },
+  },
+  {
+    // REQ-548: the layers and their commands, from the evidence on disk.
+    name: "stack",
+    editsContract: true,
+    mcp: false,
+    script: ["stack.js"],
+    help: {
+      group: "core",
+      icon: "🧱",
+      summary: "Write docs/specs/stack.md: each layer's technology and evidence, and the commands.",
+    },
+    json: { key: "stack", gate: false },
+  },
+  {
+    // REQ-546: decisions recorded and superseded, never rewritten.
+    name: "adr",
+    subcommands: [
+      {
+        name: "new",
+        editsContract: true,
+        mcp: false,
+        script: ["adr.js"],
+        argsFrom: 1,
+        help: {
+          group: "core",
+          icon: "🏛️",
+          summary: "Record an architecture decision: the next ADR, Proposed, in docs/specs/adr/.",
+        },
+        json: { key: "adr", gate: false, args: "<title>" },
+      },
+      {
+        name: "supersede",
+        editsContract: true,
+        mcp: false,
+        script: ["adr.js"],
+        argsFrom: 1,
+        json: { key: "adr", gate: false, args: "<NNNN> <title>" },
+      },
+      {
+        name: "list",
+        mcp: false,
+        script: ["adr.js"],
+        argsFrom: 1,
+        json: { key: "adr", gate: false },
+      },
+    ],
+  },
+  {
+    // REQ-551: a change as one HTML page, for people who do not read the repository.
+    name: "review",
+    mcp: false,
+    script: ["review.js"],
+    help: {
+      group: "core",
+      icon: "📄",
+      summary: "A change as one self-contained HTML page to send to whoever decides on it.",
+    },
+    json: { key: "review", gate: false, args: "<change>" },
+  },
   {
     name: "config",
     subcommands: [
@@ -755,6 +945,7 @@ export const SURFACE: Command[] = [
       { name: "set", script: ["config_set.js"], argsFrom: 1 },
       { name: "get", script: ["config_set.js"], argsFrom: 1 },
       { name: "list", script: ["config_set.js"], argsFrom: 1 },
+      { name: "keys", script: ["config_set.js"], argsFrom: 1 },
     ],
     help: {
       group: "dx",
@@ -784,6 +975,37 @@ export const SURFACE: Command[] = [
           icon: "🛡",
           summary: "The agent guards for every project: --global, Claude Code and OpenCode.",
         },
+      },
+    ],
+  },
+  {
+    // REQ-520 … REQ-526: the studio's agent panel. Its caller is a person's
+    // tool, not an agent: no MCP tool asks another agent for a plan.
+    name: "agent",
+    script: ["agent", "cli.js"],
+    mcp: false,
+    editsContract: true,
+    subcommands: [
+      {
+        name: "ask",
+        help: {
+          group: "dx",
+          icon: "💬",
+          summary: "Your agent proposes a spec change as a plan with its diff; nothing is written.",
+        },
+        json: { key: "plan", gate: false, args: '"<request>"' },
+      },
+      {
+        name: "apply",
+        json: { key: "applied", gate: false, args: "<plan-id>" },
+      },
+      {
+        name: "discard",
+        json: { key: "discarded", gate: false, args: "<plan-id>" },
+      },
+      {
+        name: "plans",
+        json: { key: "plans", gate: false },
       },
     ],
   },

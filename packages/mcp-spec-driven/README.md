@@ -1,7 +1,7 @@
 # mcp-spec-driven
 
 [Model Context Protocol](https://modelcontextprotocol.io) server for
-[`create-spec-driven-app`](https://github.com/rsaglobaltech/specgate)
+[Specgate](https://github.com/rsaglobaltech/specgate)
 projects. Lets MCP-aware AI agents (Claude Desktop, Cursor, Aider, etc.) read
 specs, list requirements, update the traceability matrix, lint domain packs,
 and run validate — without scraping or filesystem heuristics.

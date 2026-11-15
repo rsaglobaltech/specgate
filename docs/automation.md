@@ -100,7 +100,7 @@ or the Maven and Gradle plugins.
 
 ```bash
 docker run --rm -v "$PWD:/workspace" \
-  ghcr.io/rsaglobaltech/specgate:0.29.1 validate . --strict
+  ghcr.io/rsaglobaltech/specgate:1.0.0 validate . --strict
 ```
 
 Pin the version: `latest` is fine on a laptop, but a gate that changes under a
@@ -113,7 +113,7 @@ In GitLab CI, that is the whole job:
 
 ```yaml
 spec-gate:
-  image: ghcr.io/rsaglobaltech/specgate:0.29.1
+  image: ghcr.io/rsaglobaltech/specgate:1.0.0
   stage: test
   script:
     - specgate validate . --strict
@@ -123,7 +123,7 @@ In Jenkins:
 
 ```groovy
 stage('Spec gate') {
-    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:0.29.1' } }
+    agent { docker { image 'ghcr.io/rsaglobaltech/specgate:1.0.0' } }
     steps { sh 'specgate validate . --strict' }
 }
 ```
@@ -179,6 +179,59 @@ echo 'npx specgate validate . --strict' > .husky/pre-commit
 
 Anyone can skip a hook with `git commit --no-verify`, so run the same gate in
 CI as well: see [Validating](validating.md#run-it-in-ci).
+
+## Read a project from Node
+
+A tool written in Node — an editor, a dashboard, the studio — can read a
+project without starting `specgate` for each read:
+
+```ts
+import { status, questions, matrix, report, lastCheck, API_VERSION } from "@rsaglobaltech/specgate/api";
+
+const open = (await questions("path/to/project")).questions.open;
+for (const q of open) console.log(q.id, "blocks", q.blocks.join(", "));
+```
+
+Each function answers exactly what the command prints with `--json`:
+
+| Function                                   | Answers what this prints                                       |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| `status(dir)`                              | `specgate status --json`                                       |
+| `questions(dir)`                           | `specgate questions --json`                                    |
+| `matrix(dir)`                              | `specgate matrix --json --dry-run`                             |
+| `report(dir, { capability })`              | `specgate report --format json --stdout [--capability <name>]` |
+| `lastCheck(dir)`                           | `specgate check --last --json`                                 |
+| `harnessStop(dir, { afterCurrent: true })` | `specgate harness stop --after-current --json`                 |
+| `agentAsk(dir, request, options)`          | `specgate agent ask "<request>" --json`                         |
+| `agentApply(dir, id)`                      | `specgate agent apply <id> --json`                             |
+| `agentDiscard(dir, id)`                    | `specgate agent discard <id> --json`                           |
+| `agentPlans(dir)`                          | `specgate agent plans --json`                                  |
+
+`matrix(dir)` lists the rows one per scenario as `matrix.scenarios`, each with
+its `requirement`, `scenario`, `feature`, `tests`, `code`, `status`, the links
+it is missing as `gaps` (`feature`, `test`, `code`) and the open question that
+blocks it as `waiting`; `matrix.rows` stays the count. `status(dir)` gives each
+requirement its `capability`. `report(dir)` carries the project's line
+coverage as `coverage.lines`, and refuses a capability the project does not
+have with the code `capability_unknown`.
+
+The findings are under `status`, each with its code, message and fix, as in
+[the agent contract](specs/agent-contract.md). The reads write no file of the
+project — a derived matrix behind its specs is derived in memory, not
+rewritten — and start no process but `git ls-files`. `harnessStop` writes one
+file, the stop request beside the harness's events, ignored by git. A folder
+with no specgate project is refused with the code `not_a_project` and the fix
+`specgate init`. The documents `harness run` prints are typed there too:
+`HarnessRunReport` for `--format json`, and `HarnessStreamEvent` for each line
+of `--format jsonl`. The agent's plans are the exception that starts a
+process: `agentAsk` runs your agent on a scratch copy and keeps its plan in
+the git folder, and `agentApply` writes the plan's files and runs its checks —
+see [Ask your agent](agent-ask.md).
+
+The types ship with the package. `API_VERSION` is `1.0.0`; its major number
+changes only when an answer's shape breaks. Commands that change the project
+(`apply`, `archive`, `config set`) are not in the API: run them through the
+CLI, where the gate and its output belong.
 
 ## Connect Jira
 

@@ -1,12 +1,28 @@
 {
   "name": "@rsaglobaltech/specgate",
-  "version": "0.29.1",
+  "version": "1.0.0",
   "description": "Specs as executable contracts — requirements, scenarios and traceability that CI enforces.",
   "license": "MIT",
   "type": "commonjs",
   "bin": {
     "specgate": "bin/specgate.js",
+    "sgate": "bin/specgate.js",
     "create-spec-driven-app": "bin/specgate.js"
+  },
+  "exports": {
+    "./api": {
+      "types": "./types/api.d.ts",
+      "default": "./dist/scripts/api/index.js"
+    },
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
+  "typesVersions": {
+    "*": {
+      "api": [
+        "types/api.d.ts"
+      ]
+    }
   },
   "files": [
     "bin/",
@@ -15,6 +31,7 @@
     "dist/studio/",
     "dist/packages/core/",
     "dist/packages/mcp-spec-driven/src/",
+    "types/",
     "templates/",
     "examples/",
     "vendor/",
@@ -50,6 +67,7 @@
     "prebuild": "npm run clean",
     "prepack": "npm run build",
     "pretest": "npm run build",
+    "plugin:sync": "node dist/scripts/plugin/sync-claude-plugin.js",
     "test": "node --test dist/tests/cli.test.js",
     "test:unit": "node scripts/run-tests.cjs dist/tests/unit",
     "test:core-unit": "node scripts/run-tests.cjs dist/packages/core/test/unit",
@@ -65,8 +83,6 @@
     "test:all": "npm test && npm run test:coverage && npm run test:bdd && npm run test:core-unit && npm run test:vscode-unit && npm run test:mcp-unit && npm run test:registry-unit && npm run test:lsp-unit && npm run test:snapshot && npm run registry:build",
     "pack:dry-run": "npm pack --dry-run",
     "pack": "npm pack",
-    "demo:video": "bash scripts/demo/build-video.sh",
-    "demo:video:de": "bash scripts/demo/de/build-video.sh --real-agent",
     "smoke:help": "node bin/specgate.js --help",
     "smoke:init": "node bin/specgate.js init --config examples/project.config.example --out .smoke-tmp --no-git --force",
     "smoke:validate": "node bin/specgate.js validate .smoke-tmp/acme-energy-hub",
@@ -83,6 +99,8 @@
     "docs:studio-shots": "node e2e/studio/screenshots.mjs",
     "verify": "npm run typecheck && npm run lint && npm test && npm run pack:dry-run && npm run selfcheck",
     "selfcheck": "node bin/specgate.js validate .",
+    "contract:check": "node dist/scripts/semver/contract-check.js",
+    "contract:write": "node dist/scripts/semver/contract-check.js --write",
     "docs:agent-contract": "node dist/scripts/gen_agent_contract.js",
     "docs:agent-contract:check": "node dist/scripts/gen_agent_contract.js --check",
     "docs:terminal": "node dist/scripts/docs/record-terminal.js",
@@ -121,6 +139,8 @@
     "typescript-eslint": "^8.59.3"
   },
   "overrides": {
-    "qs": "^6.16.0"
+    "fast-uri": "^3.1.9",
+    "qs": "^6.17.1",
+    "zod": "^4.6.7"
   }
 }

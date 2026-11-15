@@ -45,6 +45,21 @@ export interface IssueRef {
  */
 export type IssueStatus = "open" | "done";
 
+/**
+ * Where a change stands, as the board shows it (REQ-305): open and not yet
+ * built, one of its requirements being built, or archived. The board state of
+ * each is the provider's default or the one `phases:` names.
+ */
+export type Phase = "proposed" | "building" | "archived";
+export const PHASES: readonly Phase[] = ["proposed", "building", "archived"];
+
+/** One comment of a ticket, as `alm pull` brings it back (REQ-306). */
+export interface IssueComment {
+  readonly id: string;
+  readonly author: string;
+  readonly body: string;
+}
+
 /** Operations a provider may support. A capability the core does not branch on does not belong here. */
 export interface AlmCapabilities {
   readonly create: boolean;
@@ -61,6 +76,15 @@ export interface AlmCapabilities {
    * instead of failing at the first request.
    */
   readonly listIssues: boolean;
+  /**
+   * The capabilities of the 1.0 line (REQ-305..307). Optional, so a community
+   * provider written for 0.27 still declares itself correctly; one that leaves
+   * them out degrades with a message per change.
+   */
+  readonly phase?: boolean;
+  readonly subIssues?: boolean;
+  readonly comments?: boolean;
+  readonly readText?: boolean;
 }
 
 /** Which keys of `alm.config.yaml` a provider reads. */
@@ -112,6 +136,18 @@ export interface AlmClient {
    * (ADR-0039). Read-only, and only for the configured project's keys.
    */
   readIssue?(key: string): Promise<unknown>;
+  /**
+   * Move an issue to the board state of a phase (REQ-305): `state` when
+   * `phases:` names one, the provider's default otherwise. Answers the state
+   * it set, in the board's words.
+   */
+  setPhase?(issueKey: string, phase: Phase, state?: string): Promise<string>;
+  /** A child issue of `parentKey` (REQ-307). */
+  createSubIssue?(parentKey: string, title: string): Promise<IssueRef>;
+  /** The ticket's comments, oldest first (REQ-306). */
+  listComments?(issueKey: string): Promise<IssueComment[]>;
+  /** The ticket's title and description as text (REQ-306). */
+  readIssueText?(issueKey: string): Promise<{ title: string; body: string }>;
 }
 
 /** The subset of `fetch` the providers use, so tests can replay recordings. */
@@ -134,12 +170,20 @@ export interface AlmProvider {
   create(cfg: AlmConfig, fetchImpl?: FetchLike): AlmClient;
 }
 
-/** Every capability name, for the checks that iterate them. */
+/** Every capability a provider must declare, for the checks that iterate them. */
 export const CAPABILITIES: readonly (keyof AlmCapabilities)[] = [
   "create",
   "readStatus",
   "close",
   "listIssues",
+];
+
+/** The capabilities a provider may declare (REQ-305..307). */
+export const OPTIONAL_CAPABILITIES: readonly (keyof AlmCapabilities)[] = [
+  "phase",
+  "subIssues",
+  "comments",
+  "readText",
 ];
 
 /** The client method each capability promises. */
@@ -148,10 +192,24 @@ export const CAPABILITY_METHOD: Readonly<Record<keyof AlmCapabilities, keyof Alm
   readStatus: "getIssueStatus",
   close: "closeIssue",
   listIssues: "listIssues",
+  phase: "setPhase",
+  subIssues: "createSubIssue",
+  comments: "listComments",
+  readText: "readIssueText",
 };
 
-/** Config keys the core itself reads, whatever the provider. */
-export const CORE_CONFIG_KEYS: readonly string[] = ["alm_version", "provider", "pr"];
+/**
+ * Config keys the core itself reads, whatever the provider. `phases` names the
+ * board state of each phase (REQ-305); `mirror: false` keeps `alm sync` from
+ * creating an issue per requirement on a project whose tickets are the source.
+ */
+export const CORE_CONFIG_KEYS: readonly string[] = [
+  "alm_version",
+  "provider",
+  "pr",
+  "phases",
+  "mirror",
+];
 
 /**
  * Check a provider declaration is well formed.
@@ -211,9 +269,14 @@ function checkCapabilities(candidate: Partial<AlmProvider>): string[] {
     }
   }
 
-  const extra = Object.keys(caps).filter(
-    (name) => !CAPABILITIES.includes(name as keyof AlmCapabilities)
-  );
+  for (const capability of OPTIONAL_CAPABILITIES) {
+    if (capability in caps && typeof caps[capability] !== "boolean") {
+      problems.push(`${label}: capability '${capability}' is not declared as a boolean`);
+    }
+  }
+
+  const known = [...CAPABILITIES, ...OPTIONAL_CAPABILITIES];
+  const extra = Object.keys(caps).filter((name) => !known.includes(name as keyof AlmCapabilities));
   if (extra.length > 0) {
     problems.push(`${label}: declares unknown capabilit(y/ies): ${extra.join(", ")}`);
   }

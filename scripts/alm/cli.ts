@@ -9,6 +9,8 @@
  *   specgate alm link   <REQ-id> <issue-key> [--project-dir <dir>]
  *   specgate alm status [--project-dir <dir>]
  *   specgate alm pr     <change> [--no-push] [--no-check] [--project-dir <dir>]
+ *   specgate alm phase  <change> [--project-dir <dir>] [--json]
+ *   specgate alm move   <change> [<phase>] [--project-dir <dir>] [--json]
  */
 
 import { resolveProjectDir } from "../lib/project-root";
@@ -24,6 +26,8 @@ import { makeClient } from "./clients";
 import { printDiagnostics, errorMessage } from "../lib/diagnostics";
 import { main as pullMain } from "../cli/commands/alm/PullCommand";
 import { main as prMain } from "../cli/commands/alm/PrCommand";
+import { phaseMain, moveMain } from "../cli/commands/alm/PhaseCommand";
+import { boardChanges, readPhaseMap, writePhaseMap, syncPhases, syncSubIssues } from "./phases";
 import * as ui from "../lib/ui";
 
 function logInfo(msg: string): void {
@@ -43,9 +47,16 @@ function usage() {
       "  specgate alm link   <REQ-id> <issue-key> [--project-dir <dir>]\n" +
       "  specgate alm status [--project-dir <dir>]\n" +
       "  specgate alm pull   [--label <name>] [--project-dir <dir>] [--dry-run]\n" +
-      "  specgate alm pr     <change> [--no-push] [--no-check] [--project-dir <dir>]\n\n" +
+      "  specgate alm pr     <change> [--no-push] [--no-check] [--project-dir <dir>]\n" +
+      "  specgate alm phase  <change> [--project-dir <dir>] [--json]\n" +
+      "  specgate alm move   <change> [<phase>] [--project-dir <dir>] [--json]\n\n" +
       "sync   Creates an ALM issue for every unlinked REQ, closes issues whose REQ\n" +
       "       is Implemented, and reports drift (issue done, REQ still open).\n" +
+      "       Moves each change's ticket to its phase (proposed, building, archived)\n" +
+      "       and creates a sub-issue per repository it names. `mirror: false` in\n" +
+      "       alm.config.yaml skips the issue per REQ when tickets are the source.\n" +
+      "phase  Where a change stands and what the board was told. No network.\n" +
+      "move   Move a change's ticket to its phase now, or to the phase named.\n" +
       "link   Manually map an existing issue to a requirement.\n" +
       "status Print the current REQ ↔ issue mapping without network access.\n" +
       "pull   Open a change per labelled issue, from its title and description;\n" +
@@ -129,8 +140,27 @@ async function main() {
 
       const client = makeClient(cfg, undefined, projectDir);
       const map = readAlmMap(projectDir);
-      const reqs = extractRequirements(projectDir);
+      // `mirror: false`: the tickets are the source, so no issue per requirement.
+      const mirror = cfg.mirror !== false && String(cfg.mirror) !== "false";
+      const reqs = mirror ? extractRequirements(projectDir) : [];
       const actions = await syncRequirements(reqs, map, client, { dryRun: opts.dryRun });
+
+      // REQ-305, REQ-307: the board follows each change with a ticket.
+      const changes = boardChanges(projectDir);
+      const phases = readPhaseMap(projectDir);
+      const moves = await syncPhases(changes, phases, client, cfg, { dryRun: opts.dryRun });
+      const children = await syncSubIssues(changes, phases, client, { dryRun: opts.dryRun });
+      writePhaseMap(projectDir, phases, opts.dryRun);
+      for (const m of moves) {
+        if (m.action === "in-sync") continue;
+        if (m.action === "phase-unsupported") logWarn(`${m.change}: ${m.detail}`);
+        else logInfo(`${m.action} ${m.change} ${m.issue} → ${m.state}`);
+      }
+      for (const c of children) {
+        if (c.detail) logWarn(`${c.change}: ${c.detail}`);
+        else
+          logInfo(`${c.action} sub-issue ${c.change} ${c.repo}${c.issue ? ` → ${c.issue}` : ""}`);
+      }
 
       let drift = 0;
       for (const a of actions) {
@@ -141,7 +171,7 @@ async function main() {
           logInfo(`${a.action} ${a.req}${a.issue ? ` → ${a.issue}` : ""}`);
         }
       }
-      if (!opts.dryRun) writeAlmMap(projectDir, map, false);
+      if (!opts.dryRun && mirror) writeAlmMap(projectDir, map, false);
 
       const summary = actions.reduce(
         (acc, a) => {
@@ -169,6 +199,16 @@ async function main() {
     return;
   }
 
+  if (sub === "phase") {
+    await phaseMain(argv.slice(1));
+    return;
+  }
+
+  if (sub === "move") {
+    await moveMain(argv.slice(1));
+    return;
+  }
+
   if (sub === "pull") {
     // Implemented outside `scripts/alm/` on purpose: ADR-0021 forbids this
     // subsystem from writing the spec tree, and a pull has to produce files.
@@ -177,7 +217,9 @@ async function main() {
     return;
   }
 
-  logError(`Unknown alm sub-command: ${sub || "(none)"}. Expected: sync, link, status, pull, pr`);
+  logError(
+    `Unknown alm sub-command: ${sub || "(none)"}. Expected: sync, link, status, pull, pr, phase, move`
+  );
   usage();
   process.exit(2);
 }

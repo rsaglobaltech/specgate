@@ -6,10 +6,11 @@ import { render } from "preact-render-to-string";
 import { Shell } from "./ui/Shell";
 import type { Section } from "./core/routes";
 import type { Prefs } from "./core/prefs";
-import { Home } from "./sections/Home";
+import { Home, type BranchView } from "./sections/Home";
 import { Questions, type QuestionsData } from "./sections/Questions";
 import { Changes, type ChangeView, type DraftView, type ModulesData } from "./sections/Changes";
 import { ChangePanel, NewChange } from "./sections/changes/ChangePanel";
+import { FromTicket, type TicketReview } from "./sections/changes/FromTicket";
 import { Notices, type Notice } from "./ui/Notices";
 import { Offline, SectionError, Skeleton } from "./ui/States";
 import {
@@ -35,6 +36,7 @@ import { Brief, type BriefData } from "./sections/Brief";
 import { Build, type BuildData, type LiveRequirement, type Profile } from "./sections/Build";
 import type { HomeData, RouteData } from "./core/route";
 import type { Lang } from "./core/i18n";
+import { WorkspaceLive, type WorkspaceLiveData } from "./sections/WorkspaceLive";
 
 export * from "./core/routes";
 export * from "./core/i18n";
@@ -47,8 +49,13 @@ export function renderShell(section: Section, prefs: Prefs, project = "shop"): s
   );
 }
 
-export function renderHome(lang: Lang, route: RouteData, home: HomeData | null): string {
-  return render(<Home lang={lang} route={route} home={home} />);
+export function renderHome(
+  lang: Lang,
+  route: RouteData,
+  home: HomeData | null,
+  branch: BranchView | null = null
+): string {
+  return render(<Home lang={lang} route={route} home={home} branch={branch} />);
 }
 
 export function renderQuestions(lang: Lang, data: QuestionsData): string {
@@ -233,6 +240,32 @@ export function renderNewChange(lang: Lang, alm: boolean): string {
   return render(<NewChange lang={lang} alm={alm} run={null} output="" onAction={none} />);
 }
 
+export { ticketOpenArgs } from "./sections/changes/FromTicket";
+
+export function renderFromTicket(
+  lang: Lang,
+  opts: {
+    review: TicketReview | null;
+    capabilities?: string[];
+    confirming?: boolean;
+    push?: boolean;
+  }
+): string {
+  const none = async () => ({ ok: true });
+  return render(
+    <FromTicket
+      lang={lang}
+      review={opts.review}
+      confirming={opts.confirming}
+      push={opts.push}
+      capabilities={opts.capabilities || []}
+      run={null}
+      output=""
+      onAction={none}
+    />
+  );
+}
+
 export function renderGate(lang: Lang, run: ActionRun | null, output: string): string {
   return render(<Gate lang={lang} run={run} output={output} />);
 }
@@ -245,4 +278,9 @@ export function renderPreferences(lang: Lang, prefs: Preference[]): string {
 export function renderAlm(lang: Lang, alm: AlmData): string {
   const none = async () => ({ ok: true });
   return render(<Alm lang={lang} alm={alm} onAction={none} />);
+}
+
+/** REQ-566: the workspace's Live, rendered to text. */
+export function renderWorkspaceLive(lang: Lang, data: WorkspaceLiveData): string {
+  return render(<WorkspaceLive lang={lang} data={data} />);
 }

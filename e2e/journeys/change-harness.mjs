@@ -30,7 +30,11 @@ function writeChange(dir, t, id, capability, reqId, featureRel) {
       "- WHEN a 10% coupon is applied",
       "- THEN the total is 45 EUR",
       "",
-      featureRel ? `<!-- specgate:trace uc=UC-100 feature=${featureRel} -->` : "",
+      // A 1.0 change validates only when approval would accept it (REQ-350):
+      // every requirement says its kind and who uses it.
+      featureRel
+        ? `<!-- specgate:trace kind=functional actor=Customer uc=UC-100 feature=${featureRel} -->`
+        : "<!-- specgate:trace kind=functional actor=Customer -->",
       "",
     ].join("\n")
   );
@@ -52,8 +56,9 @@ export default [
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
       t.ok(t.sg(dir, "change", "new", "add-coupons"), "change new");
+      // ADR-0044: a new change is layered, and starts from its Discover.
       t.expect(
-        /proposal/.test(t.sg(dir, "change", "status", "add-coupons").stdout),
+        /discover/.test(t.sg(dir, "change", "status", "add-coupons").stdout),
         "status names the next artefact"
       );
       const ins = t.json(t.sg(dir, "change", "instructions", "specs", "--json"));

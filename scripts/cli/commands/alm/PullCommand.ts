@@ -33,6 +33,9 @@ import { error, warning, info } from "../../../lib/diagnostics";
 import { readAlmConfig } from "../../../alm/core";
 import { makeClient } from "../../../alm/clients";
 import type { AlmClient, AlmConfig } from "../../../alm/port";
+import { boardChanges, readPhaseMap, writePhaseMap } from "../../../alm/phases";
+import { pullBack } from "./pull-back";
+import type { BackAction } from "./pull-back";
 import { paths, listChangeIds } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import {
   InboundIssue,
@@ -143,6 +146,33 @@ export async function main(argv: string[]): Promise<void> {
     ]);
   }
 
+  // REQ-306: what each open change's ticket gained since the last pull comes
+  // back as notes, before any new issue is pulled.
+  let notes: BackAction[];
+  try {
+    const map = readPhaseMap(projectDir);
+    notes = await pullBack(projectDir, boardChanges(projectDir), map, client, {
+      dryRun: opts.dryRun,
+      today: new Date().toISOString().slice(0, 10),
+    });
+    writePhaseMap(projectDir, map, opts.dryRun);
+  } catch (e) {
+    return io.fail(NULL_SHAPE, [
+      error("alm_pull_error", (e as Error).message || String(e), {
+        fix: "Check the ticket keys in change.yaml and your ALM configuration.",
+      }),
+    ]);
+  }
+  const printNotes = () => {
+    for (const n of notes) {
+      process.stdout.write(
+        n.action === "comments-unsupported"
+          ? `  ${n.change}: ${n.text}\n`
+          : `  ${n.change} <- ${n.issue}: ${n.text}\n`
+      );
+    }
+  };
+
   // Declared, not discovered at the first request: Jira searches with JQL,
   // GitHub with query parameters, Azure with WIQL — and a provider that cannot
   // search says so rather than failing halfway through a pull.
@@ -157,9 +187,10 @@ export async function main(argv: string[]): Promise<void> {
 
   const issues: InboundIssue[] = await client.listIssues(opts.label);
   if (issues.length === 0) {
-    return io.emit({ pulled: [], skipped: [], label: opts.label }, () =>
-      process.stdout.write(`\n  No open issues labelled '${opts.label}'.\n\n`)
-    );
+    return io.emit({ pulled: [], skipped: [], label: opts.label, notes }, () => {
+      printNotes();
+      process.stdout.write(`\n  No open issues labelled '${opts.label}'.\n\n`);
+    });
   }
 
   const p = paths(projectDir);
@@ -236,7 +267,8 @@ export async function main(argv: string[]): Promise<void> {
     );
   }
 
-  io.emit({ pulled, skipped, label: opts.label, status }, () => {
+  io.emit({ pulled, skipped, label: opts.label, status, notes }, () => {
+    printNotes();
     process.stdout.write(`\n  Pulled ${pulled.length} issue(s) labelled '${opts.label}'\n\n`);
     for (const row of pulled) {
       process.stdout.write(`    ${row.issue} → ${row.change}  (${row.requirement})\n`);
