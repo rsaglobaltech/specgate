@@ -211,7 +211,11 @@ first: what the agent has half done is not kept.
 
 ![Traceability: each module's scenarios with their feature, tests and status, filtered as you type.](assets/img/studio-live-trace.webp)
 
-`/live` opens this section directly.
+`/live` opens this section directly. In a workspace repository it opens on the
+workspace: each repository's harness — what it builds, its queue, what passed
+and failed, what it cost — and each story's parts with what they wait on. A
+repository's name leads to its own Live at `/live/repo/<name>/`, read only,
+with a way back ([Workspace](workspace.md)).
 
 ## Report
 

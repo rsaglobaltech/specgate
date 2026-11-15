@@ -31,6 +31,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   carries `change.approvals`, whether the change may be built; `status --json`
   carries `next`, the next step as argv. The agent contract documents these
   shapes and the workspace's `status`.
+- **The workspace's Live is the studio's** (REQ-566): in a workspace
+  repository, the studio's Live shows each repository's harness and cost and
+  each story's parts; each repository opens its own Live, read only. The
+  separate live pages are gone; their addresses and data are unchanged.
 - **npm publishes through trusted publishing** (REQ-556): the publish job
   installs npm 11.5.1 or later and npm authenticates with OIDC before the
   `NPM_TOKEN` secret, which is removed after the first trusted publish

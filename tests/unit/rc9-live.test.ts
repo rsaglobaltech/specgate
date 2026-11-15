@@ -219,13 +219,15 @@ test("REQ-410 SCN-410a: the developer follows tracking from the workspace", asyn
     const moved = await get(port, "/live/repo/tracking");
     assert.equal(moved.status, 301);
 
+    // REQ-566: the studio's Live, on the member's data, naming it, its role and
+    // the workspace it leads back to.
     const page = await get(port, "/live/repo/tracking/");
     assert.equal(page.status, 200);
-    assert.match(page.body, /Harness live/);
-    assert.match(page.body, /aria-label="Work queue"/);
-    assert.match(page.body, /href="\/live"/);
-    assert.match(page.body, /tracking/);
-    assert.match(page.body, /service/);
+    assert.match(page.body, /<meta name="specgate-section" content="live"\/>/);
+    assert.match(page.body, /<meta name="specgate-live-base" content="\/live\/repo\/tracking"\/>/);
+    assert.match(page.body, /<meta name="specgate-project" content="tracking"\/>/);
+    assert.match(page.body, /<meta name="specgate-role" content="service"\/>/);
+    assert.match(page.body, /<meta name="specgate-workspace" content="[^"]+"\/>/);
 
     const model = JSON.parse((await get(port, "/live/repo/tracking/live.json")).body);
     const r005 = model.requirements.find((r: { req: string }) => r.req === "REQ-005");
@@ -244,7 +246,14 @@ test("REQ-411 SCN-411a: the workspace's live view leads to each repository's", a
   await withStudio(ws, async (port) => {
     const page = await get(port, "/live");
     assert.equal(page.status, 200);
-    assert.match(page.body, /"\/live\/repo\/"/);
+    assert.match(page.body, /<meta name="specgate-workspace" content="[^"]+"\/>/);
+    // REQ-566: the studio draws each repository's panel with its link.
+    const live = JSON.parse((await get(port, "/live.json")).body).live;
+    const studio = require(path.join(ROOT_DIR, "dist", "studio-test", "studio.cjs"));
+    const html: string = studio.renderWorkspaceLive("en", live);
+    for (const r of live.repos) {
+      assert.ok(html.includes(`href="/live/repo/${r.name}/"`), `${r.name} has no link`);
+    }
   });
 });
 

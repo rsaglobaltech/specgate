@@ -36,6 +36,7 @@ import { Brief, type BriefData } from "./sections/Brief";
 import { Build, type BuildData, type LiveRequirement, type Profile } from "./sections/Build";
 import type { HomeData, RouteData } from "./core/route";
 import type { Lang } from "./core/i18n";
+import { WorkspaceLive, type WorkspaceLiveData } from "./sections/WorkspaceLive";
 
 export * from "./core/routes";
 export * from "./core/i18n";
@@ -277,4 +278,9 @@ export function renderPreferences(lang: Lang, prefs: Preference[]): string {
 export function renderAlm(lang: Lang, alm: AlmData): string {
   const none = async () => ({ ok: true });
   return render(<Alm lang={lang} alm={alm} onAction={none} />);
+}
+
+/** REQ-566: the workspace's Live, rendered to text. */
+export function renderWorkspaceLive(lang: Lang, data: WorkspaceLiveData): string {
+  return render(<WorkspaceLive lang={lang} data={data} />);
 }

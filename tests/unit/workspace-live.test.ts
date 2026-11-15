@@ -220,7 +220,7 @@ test("REQ-323 SCN-323a: studio in the workspace repository", async () => {
     );
     const page = await get(port, "/live");
     assert.equal(page.status, 200);
-    assert.match(page.body, /Workspace live/);
+    assert.match(page.body, /<meta name="specgate-workspace" content="truck-flote"\/>/);
   } finally {
     const exited = new Promise<void>((resolve) => {
       if (child.exitCode !== null || child.signalCode !== null) resolve();
