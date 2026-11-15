@@ -105,6 +105,14 @@ its message. The baseline holds the traceability findings of `validate --strict`
 (the TDD rules and the matrix checks). The other checks still fail as before:
 when one does, `check --baseline` says so and records what it could.
 
+## A large system: one area first
+
+`specgate adopt --scope src/billing` adopts the repository but lists only the
+areas under that path in `docs/specs/adoption.md`, and `spec.md` and the
+baseline scenario name the scope (REQ-337). Adoption lists eight areas at most;
+when it finds more it warns `adopt_too_big`, naming the ones left out, and
+suggests `--scope` (REQ-338).
+
 ## Next
 
 - [Writing specs](writing-specs.md)

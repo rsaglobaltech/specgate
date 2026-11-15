@@ -87,9 +87,13 @@ you have:
 - **Code that already runs.** `specgate reverse` drafts requirements from an
   existing module; `check --baseline` turns the gate on without a red build.
   → [Reverse](docs/reverse.md)
-- **For the whole team.** ADRs, a glossary and numbered business rules; a review
-  page for the business, the studio as an app, release notes and an acceptance a
-  person signs. → [Studio](docs/studio.md) · [Handing over](docs/transition.md)
+- **For the whole team.** A change in three layers — Discover, Design, Tasks —
+  each approved by whoever holds its role; ADRs, a glossary and numbered rules; a
+  review page, the studio as an app, release notes and an acceptance a person
+  signs. → [The method](docs/methodology.md) · [Studio](docs/studio.md)
+- **Several repositories, one product.** A workspace splits a story across
+  repositories, checks the contracts between them and builds them in order.
+  → [Workspace](docs/workspace.md)
 - **More in the docs:** [quality checks](docs/quality.md) in Docker,
   [domain packs](docs/domain-packs.md), [OpenSpec](docs/openspec.md).
 

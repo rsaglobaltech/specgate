@@ -2,21 +2,21 @@
 
 Specgate 1.0 is for a product made of several repositories and built by several
 roles. Its candidates (`1.0.0-rc.N`) are published under the npm dist-tag `next`;
-`npm install` keeps giving 0.27 until 1.0 is released.
+`npm install` keeps giving 0.35 until 1.0 is released.
 
 ```bash
 npm i -D @rsaglobaltech/specgate@next --prefer-online   # the latest candidate
 npx specgate --version
 ```
 
-A 0.27 project moves with one command, `specgate migrate 1.0`: what breaks, what
-it does about each, and how to stay on 0.27 are in
+A 0.x project moves with one command, `specgate migrate 1.0`: what breaks, what
+it does about each, and how to stay on 0.35 are in
 [Migrating to 1.0](migrating-to-1.0.md). This page shows what 1.0 adds, feature
 by feature, and then what each candidate changed.
 
 ## A change in three layers, each with its owner
 
-A 0.27 change was a proposal and a delta. A 1.0 change has three layers, each
+A 0.x change was a proposal and a delta. A 1.0 change has three layers, each
 written and approved by the role that owns it
 ([ADR-0044](specs/adr/0044-the-three-layers-of-a-change.md)):
 
@@ -58,8 +58,9 @@ Each approval is kept in the change's `approvals.json` with a hash of the layer.
 Editing an approved layer asks for its approval again — ticking a task box does
 not. The harness builds a layered change only once every written layer is
 approved (`harness_not_approved` otherwise); `approvals: { required: never }`
-keeps 0.27's behaviour. The studio's Review shows each layer's approvals and lets
-the viewer approve the layer they own.
+keeps 0.x's behaviour. The studio's Changes shows each layer's approvals and lets
+the viewer approve the layer they own — in a team's studio, as the signed-in
+person.
 
 **Role packages.** `harness/<role>.md`, with `applies-to` by kind, capability or
 tag, reaches the prompt of the requirements it concerns under "Role constraints",
@@ -157,11 +158,12 @@ requirement at the first attempt.
 
 ## The workspace, live
 
-`specgate studio` in the workspace repository serves `/live`, refreshed as it
-happens: a panel per repository with the requirement in flight, its gate step and
+`specgate studio` in the workspace repository opens its Live on the workspace,
+refreshed as it happens: a panel per repository with the requirement in flight, its gate step and
 the agent's last step; each story with its parts open, building, archived or
 missing, and the parts waiting on another repository named; the cost per
-repository and per story. `specgate workspace live --json` prints the same model.
+repository and per story. Each repository leads to its own Live at
+`/live/repo/<name>/`. `specgate workspace live --json` prints the same model.
 
 ## The backlog follows the change
 
@@ -214,3 +216,4 @@ found. The full notes are in the
 | 1.0.0-rc.9 | A part cites the contract's operation (`api=contracts:<file>#<operationId>`), its agent reads the operation and its code is checked against it (`contract_operation_not_found`); the workspace's live view opens each repository's own at `/live/repo/<name>/`; Node.js 24. |
 | 1.0.0-rc.10 | A part cites the contracts' operation as the story lists it, or approval refuses it (`layer_api_unresolved`); the harness fails a requirement whose code serves or calls none of the operation's path; a rule citing a law names its source; an empty attempt after a written one is retried once. |
 | 1.0.0-rc.11 | `workspace check` judges a part's code as the harness does: a route mounted in pieces counts, and the contracts repository is not asked to serve its own operations. |
+| 1.0.0-rc.12 | Everything 0.28 to 0.35 added, on the 1.0 line: `reverse`, ADRs and decision rights, the glossary and numbered rules, review, acceptance and release notes reading the Discover, the redesigned studio approving layer by layer and showing the workspace, `sgate`. The tester and implementer sessions are `lanes:`. The release workflows are 0.35's again. |

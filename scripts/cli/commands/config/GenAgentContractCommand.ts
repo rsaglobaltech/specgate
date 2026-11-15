@@ -167,7 +167,7 @@ change only in a major version.
   and null when the step is not a command, \`placeholder\` true while an argument
   is still \`<…>\` for a person to fill in (REQ-565). \`migrate\` appears while an
   open change is still written for 0.x.
-- **\`status --json\`, in a workspace repository** (\`workspace.yaml\`, no
+- **\`status --json\`, in a workspace repository** (\`specgate.workspace.yaml\`, no
   \`traceability.md\`): \`{ workspace, next }\` — \`workspace\` holds the
   repositories and the stories, \`next\` is \`{ command, why }\`. There is no
   \`requirements\` key: each repository answers its own \`status\`.

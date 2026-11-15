@@ -71,9 +71,21 @@ can answer go to the change's `questions.md` (`specgate questions`,
 `specgate answer`). Decisions that outlive the change are recorded as ADRs
 (`specgate adr new`), and what the agent may decide alone is written in
 `docs/specs/decision-rights.md`. Words are fixed in the glossary, rules are
-numbered `BR-NNN`. Before building, `specgate review <change>` gives the
-people who decide one page to read, and `specgate change approve` records that
-a person approved the draft.
+numbered `BR-NNN`.
+
+A change has three layers, each owned by a role (ADR-0044):
+
+| Layer | Owner | Says |
+| --- | --- | --- |
+| `discover.md` | product | Why, the use case, and the acceptance criteria `AC-1`, `AC-2`… |
+| `design.md` | architect | How each criterion is met: modules, mechanisms, channels, decisions |
+| `tasks.md` | developer | The work, each task naming the requirement it delivers |
+
+Before building, `specgate review <change>` gives the people who decide one page
+to read, and each layer is approved by someone who holds its role —
+`specgate change approve <id> --layer discover|design|tasks`, or Approve in the
+studio. The harness builds a change only once its layers are approved; editing
+a layer asks for its approval again.
 
 ### Build
 
@@ -90,7 +102,7 @@ Once every requirement of a change is delivered, `specgate archive` merges it
 into the specification, on its branch, so the spec and the code reach review in
 one pull request. `specgate release-notes <from>..<to>` writes what changed for
 the business, grouped by bug and enhancement. `specgate acceptance <change>`
-writes a checklist per scenario; a person checks each item and signs with
+writes a checklist of the acceptance criteria and of each scenario; a person checks each item and signs with
 `--sign`, and the change's `Implemented` requirements become `Verified`. `specgate guide`
 writes a user guide per actor from what was delivered.
 
@@ -117,15 +129,18 @@ Work arriving as Jira tickets enters the same way, through
 
 | Role | Does | Through |
 | --- | --- | --- |
-| Client or product owner | Answers questions, approves drafts, reads the review page, signs acceptance | `answer`, `change approve`, `review`, `acceptance --sign`, the studio |
+| Client or product owner (role `product`) | Answers questions, writes and approves the Discover, reads the review page, signs acceptance | `answer`, `change approve --layer discover`, `review`, `acceptance --sign`, the studio |
+| Architect (role `architect`) | Writes and approves the Design, records decisions | `change approve --layer design`, `adr`, `stack` |
 | Analyst | Writes and reviews requirements, scenarios, the glossary, business rules and journeys | `propose`, deltas, `validate` |
-| Developer | Writes the test first and the code, records decisions | `apply`, `check`, `adr` |
+| Developer (role `developer`) | Approves the Tasks, writes the test first and the code | `change approve --layer tasks`, `apply`, `check` |
 | Reviewer | Reads the delta, its scenarios and its tests in the pull request | the pull request |
 | Agent | Drafts from a source, builds a requirement, asks when it may not decide | `propose --from-brief`, `reverse`, `harness run`, `ask` |
 
-One person often holds several roles. In the studio served to a team, the
-roles are enforced: a reader reads, an editor's changes arrive as pull requests,
-an admin runs builds. → [The studio for a team](studio-team.md)
+One person often holds several roles. Who holds `product`, `architect` and
+`developer` is written under `roles:` in `harness.config.yaml`; a role nobody is
+named for is open to anyone ([Lanes, roles and limits](harness-roles.md)). In
+the studio served to a team, a reader reads, an editor's changes arrive as pull
+requests, and an admin runs builds → [The studio for a team](studio-team.md).
 
 ## Where each artefact lives
 
@@ -134,7 +149,8 @@ an admin runs builds. → [The studio for a team](studio-team.md)
 | The brief | `docs/brief.md` | Written |
 | Requirements | `spec.md`, `docs/specs/capabilities/<capability>/spec.md` | Written, through changes |
 | Scenarios and journeys | `features/**/*.feature` | Scenarios written by archive from the deltas; journeys by hand |
-| An open change | `docs/specs/changes/<id>/` — proposal, delta, `questions.md`, `acceptance.md` | Written |
+| An open change | `docs/specs/changes/<id>/` — `discover.md`, `design.md`, `tasks.md`, the delta, `questions.md`, `acceptance.md` | Written |
+| Approvals of a change | `docs/specs/changes/<id>/approvals.json` | Written by `change approve`, per layer and version |
 | Traceability matrix | `docs/specs/traceability.md` | Generated from what the tests name, or kept by hand |
 | Glossary | `docs/specs/glossary.md` | Written |
 | Entity model, actors | `docs/specs/model.md`, `docs/specs/actors.md` | Generated |
@@ -143,6 +159,7 @@ an admin runs builds. → [The studio for a team](studio-team.md)
 | Review page | `<change>-review.html` | Generated |
 | User guide | `docs/guide/<actor>.md` | Generated |
 | Release notes | printed, or `--out <file>` | Generated |
+| A workspace of repositories | `specgate.workspace.yaml` in its own repository; a story per `docs/stories/<id>/story.md` | Written ([Workspace](workspace.md)) |
 
 ## A requirement's life
 
