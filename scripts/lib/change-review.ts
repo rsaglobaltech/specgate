@@ -4,6 +4,7 @@ import { namedBy, questionTable } from "../../packages/core/src/domain/Clarifica
 import { draftReport } from "../cli/commands/spec/DraftCommand";
 import type { LayerId } from "../../packages/core/src/domain/ChangeLayers";
 import { approveLayers, changeApprovals } from "./approvals";
+import type { Identity } from "../../packages/core/src/domain/Approvals";
 import { contractCitationWarnings } from "./story-part";
 import {
   parseReviewNotes,
@@ -133,7 +134,9 @@ export function approveChange(
   projectDir: string,
   id: string,
   today: string,
-  layer?: LayerId
+  layer?: LayerId,
+  /** REQ-562: who approves — the proxy's user in a team's studio; git's identity otherwise. */
+  who?: Identity
 ): ApproveOutcome {
   if (!fs.existsSync(changeDir(projectDir, id))) {
     return { ok: false, code: "change_not_found", message: `No open change ${id}.` };
@@ -152,7 +155,7 @@ export function approveChange(
         .join(" "),
     };
   }
-  return approveLayers(projectDir, id, layer ? [layer] : null, today);
+  return approveLayers(projectDir, id, layer ? [layer] : null, today, who);
 }
 
 export interface ReviewNoteRow {

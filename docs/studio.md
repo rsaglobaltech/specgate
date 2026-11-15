@@ -109,8 +109,12 @@ A draft to review shows its cycle, then **To approve**: everything that holds
 it, each with the action that clears it — **Answer Q1** for an open question,
 **The spec says it** for an answer the requirement does not reflect yet, the
 file to open for a check that fails. **Approve the draft** says what is still
-missing instead of staying grey without a reason. Below, each requirement
-with its examples as Given / When / Then, and **Ask for a change** under each.
+missing instead of staying grey without a reason. A 1.0 change also lists
+its layers — Discover, Design, Tasks — each with the role that owns it, its
+approvals against the quorum and who gave them, and **Approve** on each layer
+whose role you hold ([Lanes, roles and limits](harness-roles.md)). Below, each
+requirement with its examples as Given / When / Then, and **Ask for a change**
+under each.
 
 ![Changes: the orders draft to review, two open questions each with Answer, Approve the draft waiting with "2 things missing", and the draft's requirements with their examples.](assets/img/studio-changes.webp)
 

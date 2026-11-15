@@ -458,6 +458,8 @@ export class StudioCommand extends BaseCommand {
         }
         identity = { ...verdict, email: one(team.emailHeader) };
       }
+      // REQ-562: who is looking — the proxy's user in a team, git's identity otherwise.
+      const viewer = identity ? { name: identity.user, email: identity.email } : undefined;
       // REQ-204: the app's reads, built from what the commands read.
       const reads: Record<string, () => unknown> = {
         // REQ-434: the page's heartbeat, to say when the studio cannot be reached.
@@ -475,7 +477,7 @@ export class StudioCommand extends BaseCommand {
         "/api/home": () => home(projectDir),
         "/api/gate": () => gate(projectDir),
         "/api/questions": () => questionsView(projectDir),
-        "/api/drafts": () => drafts(projectDir),
+        "/api/drafts": () => drafts(projectDir, viewer),
         // REQ-439: every open change, not only the brief's drafts.
         "/api/changes": () => changesView(projectDir),
         "/api/build": () => buildView(projectDir),
@@ -583,9 +585,9 @@ export class StudioCommand extends BaseCommand {
           // on the user's branch, as a pull request (REQ-554).
           const specWrite = (dir: string): { status: number; payload: unknown } => {
             if (url === "/api/approve") {
-              // REQ-319: one layer, approved for the viewer's git identity.
+              // REQ-319, REQ-562: one layer, approved for the viewer — the proxy's user in a team.
               const layer = body.layer ? (String(body.layer) as LayerId) : undefined;
-              const r = approveChange(dir, String(body.change || ""), today, layer);
+              const r = approveChange(dir, String(body.change || ""), today, layer, viewer);
               return { status: r.ok ? 200 : 422, payload: r };
             }
             if (url === "/api/note") {

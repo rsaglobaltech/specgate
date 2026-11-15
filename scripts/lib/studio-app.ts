@@ -33,7 +33,11 @@ import { readDerivationSources } from "../../packages/core/src/infrastructure/De
 import { requirementTitles } from "../../packages/core/src/domain/DraftChecklist";
 import { inFlightView } from "./in-flight";
 import { approvalSettings, changeApprovals, gitIdentity } from "./approvals";
-import { holdsRole, type ApprovalRecord } from "../../packages/core/src/domain/Approvals";
+import {
+  holdsRole,
+  type ApprovalRecord,
+  type Identity,
+} from "../../packages/core/src/domain/Approvals";
 import { capabilitiesOf } from "./studio-actions";
 
 /**
@@ -127,11 +131,11 @@ function draftRequirements(projectDir: string, change: string): DraftRequirement
  * The change's layers with their owners, and whether each is written
  * (REQ-289, ADR-0044). A 0.27 change shows its proposal as the Discover.
  */
-function draftLayers(projectDir: string, change: string): DraftLayer[] {
+function draftLayers(projectDir: string, change: string, who?: Identity): DraftLayer[] {
   const dir = path.join(projectDir, "docs", "specs", "changes", change);
   const state = changeApprovals(projectDir, change);
   const settings = approvalSettings(projectDir);
-  const viewer = gitIdentity(projectDir);
+  const viewer = who || gitIdentity(projectDir);
   return LAYERS.map((l) => {
     const a = state.layers.find((x) => x.layer === l.id)!;
     const file =
@@ -151,7 +155,7 @@ function draftLayers(projectDir: string, change: string): DraftLayer[] {
 }
 
 /** Open changes a person has not approved yet, each as Review shows it (REQ-206). */
-export function drafts(projectDir: string): DraftView[] {
+export function drafts(projectDir: string, who?: Identity): DraftView[] {
   const open = waiting(projectDir).questions;
   return listChangeIds(projectDir)
     .filter((c) => !approvedOn(projectDir, c))
@@ -159,7 +163,7 @@ export function drafts(projectDir: string): DraftView[] {
       change,
       module: change.replace(/^draft-/, "").replace(/-additions$/, ""),
       requirements: draftRequirements(projectDir, change),
-      layers: draftLayers(projectDir, change),
+      layers: draftLayers(projectDir, change, who),
       blockers: approvalBlockers(projectDir, change),
       notes: reviewNotes(projectDir, change),
       questions: open
