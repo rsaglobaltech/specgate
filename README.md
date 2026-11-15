@@ -70,6 +70,7 @@ you have:
 | One behaviour to add or change | `specgate propose <change-id>` | [Propose one change](docs/start/existing-2-specify.md) |
 | A client brief, or a plan for a new product | `specgate propose --from-brief` | [From a client brief](docs/from-a-brief.md) |
 | A Jira story with acceptance criteria | `specgate propose --from-ticket <KEY>` | [From a Jira ticket](docs/from-a-ticket.md) |
+| A system that already runs, never specified | `specgate reverse <module>` | [Specify a system that already runs](docs/reverse.md) |
 
 ## 🛠️ What it does
 
@@ -88,10 +89,15 @@ you have:
   MCP server ships in the package. For Claude Code and OpenCode, the guards
   hold the agent to it: the open change at session start, no source edit before
   a test names the requirement, the gate before the session ends —
-  `specgate agents install --global` once. → [Agent tools](docs/agents.md)
+  `specgate agents install --global` once. `--format skills` writes the same
+  steps as Agent Skills. → [Agent tools](docs/agents.md)
 - **Unattended delivery.** `specgate harness run` hands each pending requirement
   to your coding agent in its own git worktree and keeps only what passes the
-  gate. → [The harness](docs/harness.md)
+  gate, optionally split into a tester and an implementer under a cost cap.
+  → [The harness](docs/harness.md) · [Roles](docs/harness-roles.md)
+- **Decisions, domain language, handover.** ADRs, the stack, a glossary, numbered
+  rules; a review page, a team studio, release notes, a signed acceptance.
+  → [Decisions](docs/decisions.md) · [Domain language](docs/domain-language.md) · [Review](docs/business-review.md) · [Handing over](docs/transition.md)
 - **Quality, not only tests.** Coverage and mutation of the lines a change adds,
   SpotBugs, PMD, Semgrep, secrets, dependencies, SonarQube and Conventional
   Commits — each in Docker, no account, only new findings fail.
@@ -122,7 +128,7 @@ gate, it fits better. → [Full comparison](docs/comparisons.md)
 ## 📚 Documentation
 
 - [Getting started](docs/getting-started.md) — install, pick your path, the four verbs
-- [From a Jira ticket](docs/from-a-ticket.md) · [From a client brief](docs/from-a-brief.md)
+- [From a Jira ticket](docs/from-a-ticket.md) · [From a client brief](docs/from-a-brief.md) · [From running code](docs/reverse.md)
 - [Concepts](docs/concepts.md) — the ideas and vocabulary behind every command
 - [Commands](docs/commands.md) — every command and flag
 - [FAQ](docs/faq.md) · [Troubleshooting](docs/troubleshooting.md) · [Docs site](https://rsaglobaltech.github.io/specgate/)

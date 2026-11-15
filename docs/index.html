@@ -72,7 +72,7 @@
         <a class="ed-btn" href="#projects">See it on six real products</a>
       </p>
       <p class="ed-actions">
-        <a class="ed-link" href="#studio">New in v0.29: the studio, rebuilt — every step as an app →</a>
+        <a class="ed-link" href="#lifecycle">New: from code already running to a signed handover →</a>
         <a class="ed-link" href="#quality">Quality checks — Sonar, SpotBugs, coverage →</a>
       </p>
       <figure class="code ed-install" data-lang="bash">
@@ -681,6 +681,67 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
         <h3>Traceability without bookkeeping</h3>
         <p>A test that mentions <code>REQ-007</code> is the link. The matrix is
            derived from what your tests say, so it cannot drift from them.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ── The whole lifecycle ──────────────────────────────────────────────── -->
+<section class="ed-band" id="lifecycle">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <p class="ed-eyebrow">Before the first requirement, after the last</p>
+      <h2 class="ed-h2">From code already running to a handover someone signs.</h2>
+      <p class="ed-muted">The gate is the middle. These are the ends: a system
+         nobody specified, the decisions and words a team shares, and what a
+         client reads, reviews and accepts.</p>
+    </div>
+    <div class="sx">
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M30 12 18 24l12 12"/><path d="M8 24h10M30 24h10"/></svg>
+        <h3>Specify what already runs</h3>
+        <p><code>specgate reverse</code> has your agent draft requirements from
+           existing code, each citing the lines it came from.
+           <code>check --baseline</code> turns the gate on without a red build.
+           <a href="./reverse.html">Reverse →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="16" cy="16" r="5"/><circle cx="32" cy="32" r="5"/><path d="M20 20l8 8M30 10h8v8"/></svg>
+        <h3>A tester and an implementer</h3>
+        <p>The harness can split each requirement in two: one agent writes the
+           failing test, another makes it pass and may not touch it. A cost cap
+           per requirement, and agent instructions it cannot rewrite.
+           <a href="./harness-roles.html">Roles →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M12 6h18l8 8v28H12z"/><path d="M30 6v8h8"/><path d="m18 28 4 4 8-9"/></svg>
+        <h3>Decisions on record</h3>
+        <p><code>specgate adr</code> numbers architecture decisions and
+           supersedes them without rewriting history. Decision rights say what
+           the agent may choose alone; <code>specgate stack</code> writes the
+           stack down. <a href="./decisions.html">Decisions →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="8" width="14" height="10" rx="2"/><rect x="26" y="30" width="14" height="10" rx="2"/><path d="M15 18v8h18v4"/></svg>
+        <h3>One language for the domain</h3>
+        <p>A glossary the gate holds requirements to, business rules numbered
+           <code>BR-NNN</code> with a test each, and entity and actor diagrams
+           generated from the specs. <a href="./domain-language.html">Domain language →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="24" rx="3"/><path d="M18 40h12M24 34v6"/><circle cx="18" cy="22" r="3"/><path d="M26 20h10M26 25h7"/></svg>
+        <h3>Reviews for the business</h3>
+        <p><code>specgate review</code> turns a change into one page anyone can
+           open. Journeys chain requirements into a user's path. <code>studio
+           --team</code> serves the studio behind your sign-in, and every edit
+           arrives as a pull request. <a href="./business-review.html">Review →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 26l8 8 20-20"/><path d="M8 42h32"/></svg>
+        <h3>A handover a person signs</h3>
+        <p>Release notes grouped by bug and enhancement, an acceptance checklist
+           per scenario that a person signs to mark it Verified, and a user
+           guide per actor. <a href="./transition.html">Handing over →</a></p>
       </article>
     </div>
   </div>
