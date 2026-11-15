@@ -6,7 +6,7 @@
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-11-11",
+  "recordedAt": "2026-11-15",
   "title": "courts — the gate",
   "cols": 88,
   "streamsMerged": false,
@@ -234,7 +234,7 @@
       "surface": "check",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1420,
+      "holdMs": 1510,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -245,6 +245,11 @@
         },
         {
           "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ↻  docs/specs/actors.md regenerated from its sources",
           "c": "out",
           "s": "out"
         },

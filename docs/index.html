@@ -327,7 +327,7 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
     <div class="ed-head">
       <p class="ed-eyebrow">Not a mockup</p>
       <h2 class="ed-h2">Watch it work.</h2>
-      <p class="ed-muted">Three real runs of this version of the CLI, recorded
+      <p class="ed-muted">Four real runs of this version of the CLI, recorded
          and checked against it at every release: every refusal you see is
          still a refusal.</p>
     </div>
@@ -336,7 +336,8 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
       <div class="demo__tabs" role="tablist" aria-label="Recordings">
         <button class="demo__tab" role="tab" type="button" id="tab-brief" aria-controls="rec-brief" aria-selected="true"><span class="demo__tab-n">1</span>From a brief</button>
         <button class="demo__tab" role="tab" type="button" id="tab-gate" aria-controls="rec-gate" aria-selected="false"><span class="demo__tab-n">2</span>The gate says no</button>
-        <button class="demo__tab" role="tab" type="button" id="tab-harness" aria-controls="rec-harness" aria-selected="false"><span class="demo__tab-n">3</span>Packs, for teams that share requirements</button>
+        <button class="demo__tab" role="tab" type="button" id="tab-existing" aria-controls="rec-existing" aria-selected="false"><span class="demo__tab-n">3</span>A repository that already ships</button>
+        <button class="demo__tab" role="tab" type="button" id="tab-harness" aria-controls="rec-harness" aria-selected="false"><span class="demo__tab-n">4</span>The harness builds one</button>
       </div>
 
       <div class="demo__panel" role="tabpanel" id="rec-brief" aria-labelledby="tab-brief">
@@ -433,10 +434,10 @@ the same hour. Members can cancel a booking. Late cancellations may be charged.
     ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
 
-  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
+  ·  No agent set for the harness and the studio's Build: specgate config set agent &quot;claude -p &lt; {prompt_file}&quot;
 
-  Next ───────────────────────────────────────────────────
-… 2 more lines
+  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
+… 4 more lines
 </code></pre>
 <!-- specgate:terminal-brief:end -->
         </figure>
@@ -502,6 +503,7 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
 ~/courts $ specgate check
   ◆ specgate · check   courts
 
+  ↻  docs/specs/actors.md regenerated from its sources
   ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
   ✔  Specification   validate --strict
   ✔  Tests           node --test
@@ -513,12 +515,101 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
         </figure>
       </div>
 
+      <div class="demo__panel" role="tabpanel" id="rec-existing" aria-labelledby="tab-existing" hidden>
+        <p class="demo__lede">A Node repository with code, tests and history and no specification. Specgate adopts it without touching a source file, your agent drafts one module into requirements that cite their source, and the gate is green the same day.</p>
+        <figure class="term" data-term-src="./assets/terminal-existing.json" data-term-lazy>
+          <figcaption class="term__bar">
+            <span class="term__dots" aria-hidden="true"></span>
+            <span class="term__title">invoices — an existing repository</span>
+            <span class="term__controls">
+              <button class="term__btn term__btn--speed" type="button" hidden aria-label="Playback speed">1×</button>
+              <button class="term__btn term__btn--toggle" type="button" hidden>Pause</button>
+              <button class="term__btn term__btn--skip" type="button" hidden>Show all</button>
+              <button class="term__btn term__btn--replay" type="button" hidden>Replay</button>
+            </span>
+          </figcaption>
+          <div class="term__progress" aria-hidden="true"></div>
+          <div class="term__screen" aria-hidden="true"></div>
+          <p class="term__caption" aria-hidden="true"></p>
+<!-- specgate:terminal-existing:begin — generated; edit the source, not this block -->
+<pre class="term__transcript"><code>~/invoices $ git log --oneline
+c5da000 invoices 1.4: refunds
+
+~/invoices $ specgate init
+  ◆ specgate · init
+
+  ℹ  Existing code found (package.json) — adopting this repository in place. Nothing in your code is touched.
+  ℹ  To scaffold a separate new project instead: specgate init --new
+
+  Stack detection: package.json ──────────────────────────
+    · Project: invoices
+    · Stack: Node.js
+    · Test command: npm test
+    + spec.md
+    + features/adoption/baseline.feature
+    + docs/specs/traceability.md
+    + docs/specs/adr/README.md
+    + docs/specs/glossary.md
+… 31 more lines
+
+~/invoices $ git status --short
+?? .gitattributes
+?? .github/
+?? AGENTS.md
+?? README.md
+?? docs/
+?? features/
+?? harness.config.yaml
+?? spec.md
+
+~/invoices $ specgate reverse --modules
+  ◆ specgate · reverse --modules   invoices
+
+  src/billing                      node     1 file(s)
+  src/notify                       node     1 file(s)
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate reverse &lt;module&gt;
+     one module per run, reviewed before the next
+
+~/invoices $ specgate reverse src/billing --agent &quot;reverse-agent {prompt_file}&quot;
+  ◆ specgate · reverse   src/billing
+
+  ℹ  The agent is reading 1 file(s) of src/billing…
+  ✔  2 requirement(s) drafted into docs/specs/changes/reverse-billing, every one Draft.
+  ℹ  1 behaviour(s) that may be defects — asked in docs/specs/changes/reverse-billing/questions.md.
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate change validate reverse-billing
+     after you review each requirement against its source=
+
+~/invoices $ cat docs/specs/changes/reverse-billing/questions.md
+# Questions — reverse-billing
+
+| # | Question | Blocks | Options seen | Answer | Status |
+|---|---|---|---|---|---|
+| Q1 | The code does this: The system truncates a refund to two decimals. (src/billing/invoice.js:14). Is it a rule to keep, or a defect? Truncating rounds every refund down, by up to a cent: it reads like a defect, not a rule. |  |  |  | open |
+
+~/invoices $ specgate check
+  ◆ specgate · check   invoices
+
+  ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
+  ✔  Specification   validate --strict
+  ✔  Tests           npm test
+  ·  Architecture    not checked — specgate config set arch_cmd &quot;&lt;command&gt;&quot;
+
+  ✔  Gate passed — the specification and `npm test`
+</code></pre>
+<!-- specgate:terminal-existing:end -->
+        </figure>
+      </div>
+
       <div class="demo__panel" role="tabpanel" id="rec-harness" aria-labelledby="tab-harness" hidden>
-        <p class="demo__lede">For teams that reuse requirements across products: a project generated from a seven-line config, a domain pack — a reusable set of requirements and scenarios — installed and pinned, then the harness hands one requirement to an agent in its own git worktree.</p>
+        <p class="demo__lede">A project generated from a seven-line config, its queue, then the harness hands one requirement to an agent in its own git worktree — and keeps it only because the gate passed.</p>
         <figure class="term" data-term-src="./assets/terminal-demo.json" data-term-lazy>
           <figcaption class="term__bar">
             <span class="term__dots" aria-hidden="true"></span>
-            <span class="term__title">smart-parking — a pack, then the harness</span>
+            <span class="term__title">smart-parking — the harness</span>
             <span class="term__controls">
               <button class="term__btn term__btn--speed" type="button" hidden aria-label="Playback speed">1×</button>
               <button class="term__btn term__btn--toggle" type="button" hidden>Pause</button>
@@ -556,29 +647,15 @@ TESTING: node:test
     · Dry-run: false
 … 5 more lines
 
-~/smart-parking $ specgate specops add --pack-root ~/packs --pack multi-tenant/backend --var &quot;PROJECT_NAME=Smart Parking&quot; --var PROJECT_SLUG=smart-parking --var &quot;DOMAIN=parking operations&quot;
-ℹ  Adding multi-tenant/backend to ~/smart-parking
-  ℹ  Using pack: ~/packs/multi-tenant/backend/pack.yaml
-  ℹ  Generated 3 scenario file(s).
-  ℹ  Domain pack expansion completed.
-
 ~/smart-parking $ specgate plan
   ◆ specgate · plan
 
-  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 5 done
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 1 done
 
-  Needs Test + Code ──────────────────────────────────────
-    REQ-002   SCN-001
-      ✔ feature `features/multi-tenant/provisioning_a_tenant_emits_tenantprovisioned.feature`
-    REQ-001   SCN-002
-      ✔ feature `features/multi-tenant/cross_tenant_read_attempts_are_rejected.feature`
-    REQ-003   SCN-003
-      ✔ feature `features/multi-tenant/exceeding_a_quota_emits_quotaexceeded.feature`
-
-  Needs Feature File ─────────────────────────────────────
-    REQ-004   -
-      ○ feature -
-… 5 more lines
+  Needs Test Artifact (TDD) ──────────────────────────────
+    REQ-000   SCN-000
+      ✔ feature `features/core/health.feature`
+      ○ code    `API /health, smoke test`
 
 ~/smart-parking $ cat harness.config.yaml
 harness_version: 1
@@ -626,7 +703,7 @@ max_attempts: 1
   ◆ specgate · validate   smart-parking
 
   ✔  Validation passed
-     · Features detected: 4
+     · Features detected: 1
      · Base SDD structure: complete
      · Traceability mode: rich
 </code></pre>
@@ -636,7 +713,7 @@ max_attempts: 1
     </div>
 
     <p class="term__meta">
-      Recorded from <strong>v0.34.0</strong>. <a href="./domain-packs.html">Domain packs →</a> <a href="./tutorial.html">The harness run, explained →</a>
+      Recorded from <strong>v0.34.0</strong>. <a href="./reverse.html">An existing repository →</a> <a href="./tutorial.html">The harness run, explained →</a>
     </p>
   </div>
 </section>

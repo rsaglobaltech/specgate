@@ -339,6 +339,7 @@
 | REQ-552 | SCN-552a | `features/studio/REQ-552.feature` | - | - | - | - | - | tests/unit/business-review.test.ts | Implemented |
 | REQ-553 | SCN-553a | `features/studio/REQ-553.feature` | - | - | - | - | - | tests/unit/studio-team.test.ts | Implemented |
 | REQ-554 | SCN-554a | `features/studio/REQ-554.feature` | - | - | - | - | - | tests/unit/studio-team.test.ts | Implemented |
+| REQ-555 | SCN-555a | `features/daily-surface/REQ-555.feature` | - | - | - | - | - | tests/unit/sgate-alias.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

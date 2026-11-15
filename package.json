@@ -6,6 +6,7 @@
   "type": "commonjs",
   "bin": {
     "specgate": "bin/specgate.js",
+    "sgate": "bin/specgate.js",
     "create-spec-driven-app": "bin/specgate.js"
   },
   "exports": {
