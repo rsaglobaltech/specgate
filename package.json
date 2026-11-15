@@ -1,11 +1,12 @@
 {
   "name": "@rsaglobaltech/specgate",
-  "version": "0.34.0",
+  "version": "0.35.0",
   "description": "Specs as executable contracts — requirements, scenarios and traceability that CI enforces.",
   "license": "MIT",
   "type": "commonjs",
   "bin": {
     "specgate": "bin/specgate.js",
+    "sgate": "bin/specgate.js",
     "create-spec-driven-app": "bin/specgate.js"
   },
   "exports": {
@@ -66,6 +67,7 @@
     "prebuild": "npm run clean",
     "prepack": "npm run build",
     "pretest": "npm run build",
+    "plugin:sync": "node dist/scripts/plugin/sync-claude-plugin.js",
     "test": "node --test dist/tests/cli.test.js",
     "test:unit": "node scripts/run-tests.cjs dist/tests/unit",
     "test:core-unit": "node scripts/run-tests.cjs dist/packages/core/test/unit",
@@ -81,8 +83,6 @@
     "test:all": "npm test && npm run test:coverage && npm run test:bdd && npm run test:core-unit && npm run test:vscode-unit && npm run test:mcp-unit && npm run test:registry-unit && npm run test:lsp-unit && npm run test:snapshot && npm run registry:build",
     "pack:dry-run": "npm pack --dry-run",
     "pack": "npm pack",
-    "demo:video": "bash scripts/demo/build-video.sh",
-    "demo:video:de": "bash scripts/demo/de/build-video.sh --real-agent",
     "smoke:help": "node bin/specgate.js --help",
     "smoke:init": "node bin/specgate.js init --config examples/project.config.example --out .smoke-tmp --no-git --force",
     "smoke:validate": "node bin/specgate.js validate .smoke-tmp/acme-energy-hub",

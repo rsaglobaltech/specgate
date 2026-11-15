@@ -15,9 +15,9 @@ do not have.
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.34.0** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **0.34.0** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **0.34.0**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.35.0** is `latest` |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **0.35.0** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **0.35.0**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -125,7 +125,8 @@ the CLI supports, so getting this backwards fails CI rather than users.
 
 1. Update `CHANGELOG.md`. Every user-visible change gets a line; group by
    Added / Changed / Fixed / Removed.
-2. Bump `version` in `package.json`.
+2. Bump `version` in `package.json`, then `npm run build && npm run plugin:sync`
+   so the plugin's three manifests carry it (a test fails until they do).
 3. Re-record the landing page's terminal: `npm run build && npm run docs:terminal`,
    then update the version in `docs/index.html`. The recording carries the
    version it was made from and a test compares the two, so skipping this fails

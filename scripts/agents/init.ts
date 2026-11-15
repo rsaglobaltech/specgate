@@ -24,6 +24,7 @@ import { error, warning, errorMessage } from "../lib/diagnostics";
 import { agentIo, wantsJson, EXIT, AgentIo } from "../lib/agent";
 import type { Diagnostic } from "../lib/diagnostics";
 import { STEPS, PROJECT_RULES, AgentStep } from "./commands";
+import { pluginManifests, skillDirsFor, skillFiles, writeSkills } from "./skills";
 
 import { c } from "../lib/ui";
 import * as ui from "../lib/ui";
@@ -156,6 +157,8 @@ function claudePluginFiles(version: string) {
     license: "MIT",
     keywords: ["spec-driven-development", "sdd", "gherkin", "traceability"],
     homepage: "https://rsaglobaltech.github.io/specgate/",
+    repository: "https://github.com/rsaglobaltech/specgate",
+    author: { name: "RSA Global Tech", url: "https://github.com/rsaglobaltech" },
   };
 
   const run = (script: string) => [
@@ -171,10 +174,20 @@ function claudePluginFiles(version: string) {
     },
   };
 
-  const mcp = mcpServerConfig();
+  // Tessl reads the plugin's `.mcp.json` and wants each server's transport named;
+  // Claude Code reads `type: "stdio"` the same as no type.
+  const base = mcpServerConfig();
+  const mcp = {
+    mcpServers: Object.fromEntries(
+      Object.entries(base.mcpServers).map(([k, v]) => [k, { type: "stdio", ...v }])
+    ),
+  };
 
   return [
     { path: path.join(".claude-plugin", "plugin.json"), contents: json(manifest) },
+    // REQ-550: the Agent Plugins and Tessl manifests, and the skills they list.
+    ...pluginManifests(manifest),
+    ...skillFiles("skills"),
     { path: path.join("hooks", "hooks.json"), contents: json(hooks) },
     { path: ".mcp.json", contents: json(mcp) },
     ...STEPS.map((s) => ({
@@ -467,20 +480,28 @@ export interface AgentsInitOptions {
   dryRun: boolean;
   force: boolean;
   json: boolean;
+  /** REQ-549: `skills` writes Agent Skills folders instead of each tool's commands. */
+  format: "commands" | "skills";
+  /** The tools as named with --tool; null when none was named. */
+  named: string[] | null;
   help?: boolean;
   unknown?: string;
+  badFormat?: string;
 }
 
 function usage() {
   process.stdout.write(
     `\n  ${c.bold}${c.cyan}🤖 agents init${c.reset}  ${c.dim}— wire the loop into your agent tools${c.reset}\n\n` +
       `  ${c.bold}USAGE${c.reset}\n` +
-      `    specgate agents init [--tool <names>] [--project-dir <path>] [--dry-run] [--force] [--json]\n\n` +
+      `    specgate agents init [--tool <names>] [--project-dir <path>] [--dry-run] [--force] [--json]\n` +
+      `    specgate agents init --format skills [--tool claude|cursor|gemini] [--force]\n\n` +
       `  ${c.bold}TOOLS${c.reset}\n` +
       `    ${ALL_TOOLS.join(", ")}${c.dim}  (default: all but claude-plugin, opencode-plugin)${c.reset}\n\n` +
       `  ${c.bold}NOTES${c.reset}\n` +
       `    ${c.dim}Existing files are never overwritten without --force.${c.reset}\n` +
-      `    ${c.dim}--dry-run lists what would be written and touches nothing.${c.reset}\n\n`
+      `    ${c.dim}--dry-run lists what would be written and touches nothing.${c.reset}\n` +
+      `    ${c.dim}--format skills writes the loop as Agent Skills into .agents/skills/ and the${c.reset}\n` +
+      `    ${c.dim}named (or present) tool's own folder; a SKILL.md changed by hand is kept.${c.reset}\n\n`
   );
 }
 
@@ -491,6 +512,8 @@ export function parseArgs(argv: string[]): AgentsInitOptions {
     dryRun: false,
     force: false,
     json: false,
+    format: "commands",
+    named: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -499,6 +522,11 @@ export function parseArgs(argv: string[]): AgentsInitOptions {
         .split(",")
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
+      opts.named = opts.tools;
+    } else if (a === "--format" && argv[i + 1]) {
+      const f = argv[++i];
+      if (f === "skills" || f === "commands") opts.format = f;
+      else opts.badFormat = f;
     } else if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
     else if (a === "--dry-run") opts.dryRun = true;
     else if (a === "--force") opts.force = true;
@@ -582,6 +610,42 @@ export function writeAgentFiles(
   return { written, skipped, diagnostics };
 }
 
+/** `agents init --format skills` (REQ-549). */
+function skillsMain(io: AgentIo, projectDir: string, opts: AgentsInitOptions): void {
+  const dirs = skillDirsFor(projectDir, opts.named);
+  const r = writeSkills(projectDir, dirs, { force: opts.force, dryRun: opts.dryRun });
+  io.emit(
+    {
+      agents: {
+        projectDir,
+        format: "skills",
+        dirs: dirs.map((d) => d.split(path.sep).join("/")),
+        dryRun: opts.dryRun,
+        written: r.written,
+        unchanged: r.unchanged,
+        kept: r.kept,
+      },
+      status: r.diagnostics,
+    },
+    () => {
+      process.stdout.write(ui.header("agents init --format skills", dirs.join(", ")));
+      const verb = opts.dryRun ? "would write" : "";
+      for (const w of r.written) process.stdout.write(ui.fileLine("added", w, verb));
+      for (const k of r.kept) {
+        process.stdout.write(`    ${ui.muted(`= ${k}   changed by hand, kept`)}\n`);
+      }
+      if (r.unchanged.length > 0) {
+        process.stdout.write(`    ${ui.muted(`${r.unchanged.length} skill(s) already current`)}\n`);
+      }
+      if (r.kept.length > 0) {
+        process.stdout.write(`\n  ${ui.muted("Pass --force to replace the kept skills.")}\n`);
+      }
+      process.stdout.write("\n");
+    }
+  );
+  process.exit(EXIT.OK);
+}
+
 export function main(argv: string[]): void {
   const opts = parseArgs(argv);
   const io: AgentIo = agentIo(opts.json || wantsJson(argv));
@@ -596,6 +660,15 @@ export function main(argv: string[]): void {
       error("unknown_flag", `Unknown flag: ${opts.unknown}`, {
         target: opts.unknown,
         fix: "Run `specgate agents init --help` for the accepted flags.",
+      }),
+    ]);
+  }
+
+  if (opts.badFormat) {
+    io.usage(NULL_SHAPE, [
+      error("format_unknown", `Unknown format: ${opts.badFormat}`, {
+        target: opts.badFormat,
+        fix: "specgate agents init --format skills",
       }),
     ]);
   }
@@ -620,6 +693,8 @@ export function main(argv: string[]): void {
       }),
     ]);
   }
+
+  if (opts.format === "skills") return skillsMain(io, projectDir, opts);
 
   const { written, skipped, diagnostics } = writeAgentFiles(projectDir, opts.tools, {
     force: opts.force,

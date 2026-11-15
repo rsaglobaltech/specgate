@@ -5,7 +5,8 @@ row links to the page that explains it in full.
 
 `specgate --help` lists the daily loop. `specgate --help --all` lists every
 command, and `specgate <command> --help` shows a command's options. To make the
-full list the default, run `specgate config set profile full`.
+full list the default, run `specgate config set profile full`. The package also
+installs `sgate`, a short alias of `specgate`.
 
 In these tables, a **change** is a folder under `docs/specs/changes/<id>/` that
 proposes new or changed requirements; the **gate** is `specgate check`. See
@@ -60,6 +61,8 @@ ids after it: open modules one at a time to keep that possible.
 | `specgate adopt`                                     | Installs Specgate in an existing repository. Never overwrites a file.              | [Getting started](getting-started.md) |
 | `specgate onboard`                                   | Proposes the capabilities an existing repository's layout implies. Writes nothing. | `specgate onboard --help`             |
 | `specgate onboard --tour`                            | Runs the whole loop on a temporary copy of your repository, narrated.              | `specgate onboard --help`             |
+| `specgate reverse --modules`                         | Lists the modules of an existing system, with stack and file count. No agent.      | [Specify a system that already runs](reverse.md) |
+| `specgate reverse <module>`                          | Your agent drafts one module into a change: Draft requirements citing `source=`.   | [Specify a system that already runs](reverse.md) |
 | `specgate add usecase <module/Name>`                 | In a forja project: the class, its test and its wiring (also `entity`, `port`).    | `specgate add --help`                 |
 
 **forja is not on the npm registry.** `init --forja` runs
@@ -145,6 +148,7 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 | `specgate quality run [--stage]`        | Runs the checks of a stage: attempt, end or ci.                             | `specgate quality --help`                      |
 | `specgate quality baseline`             | Records today's SARIF findings as debt: only new ones fail from then on.    | `specgate quality --help`                      |
 | `specgate check --ci`                   | The gate in CI: also the `ci` checks, and a check that cannot run fails.    | [Validating](validating.md)                    |
+| `specgate check --baseline`             | Records today's findings in `docs/specs/gate-baseline.json`: only new ones fail. | [Specify a system that already runs](reverse.md#4-turn-the-gate-on-without-a-red-build) |
 | `specgate check --last`                 | The last gate result, its commit and stages, without running the gate.      | [Validating](validating.md#the-stages-and-the-last-result) |
 | `specgate check --affected`             | Only the tests of what changed since the base; the whole suite when it cannot say. `--no-cache`. | [A faster gate](fast-gate.md) |
 | `specgate verify`                       | For OpenSpec projects: fails while a done scenario has no test naming it.   | [Already on OpenSpec](openspec.md)             |
@@ -155,7 +159,18 @@ you pick one per project: see [From a Jira ticket](from-a-ticket.md) and
 
 | Command                                | What it does                                                          | Details                  |
 | -------------------------------------- | --------------------------------------------------------------------- | ------------------------ |
+| `specgate propose <id> --kind bug\|enhancement` | Records the change's kind; release notes group by it.         | [Handing over](transition.md#say-what-kind-of-change-it-is) |
+| `specgate release-notes <from>..<to>`  | The changes archived between two refs, by kind, with their requirements. | [Handing over](transition.md#release-notes) |
+| `specgate acceptance <change>`         | A checklist per scenario; `--sign "<name>"` moves Implemented to Verified. | [Handing over](transition.md#acceptance-a-person-signs) |
+| `specgate guide [--actor <name>]`      | `docs/guide/<actor>.md`: each actor's delivered requirements as steps. | [Handing over](transition.md#a-user-guide-per-actor) |
+| `specgate adr new "<title>"`           | Records an architecture decision: the next ADR, Proposed, dated.      | [Decisions](decisions.md) |
+| `specgate adr supersede <NNNN> "<title>"` | A new ADR that replaces one; the old one changes only its status.  | [Decisions](decisions.md#replace-one-without-rewriting-it) |
+| `specgate adr list`                    | Every ADR with its number, title and status.                          | [Decisions](decisions.md) |
+| `specgate stack`                       | Writes `docs/specs/stack.md`: each layer's technology and evidence, and the commands. | [Decisions](decisions.md#the-stack-file) |
+| `specgate studio --team`              | The studio for a team behind a sign-in proxy: roles, and edits as pull requests. | [The studio for a team](studio-team.md) |
+| `specgate review <change>`             | The change as one self-contained HTML page for people outside the repo. | [Review with the business](business-review.md) |
 | `specgate agents init`                 | Slash commands and instruction files for your agent tools.            | [Agents](agents.md)      |
+| `specgate agents init --format skills` | The same steps as Agent Skills folders, in `.agents/skills/` and each tool's own. | [Agents](agents.md#wire-it-in) |
 | `specgate agents install --global`     | The agent guards for every project: OpenCode's plugin, Claude Code's. | [Agents](agents.md)      |
 | `specgate update`                      | Refreshes those generated files after an upgrade, keeping your edits. | [Agents](agents.md)      |
 | `specgate agent ask "<request>"`       | Your agent proposes a spec change as a plan with its diff; nothing is written. `@REQ-NNN`, `@path`. | [Ask your agent](agent-ask.md) |

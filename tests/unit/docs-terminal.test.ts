@@ -90,10 +90,10 @@ function eachRecording(
   for (const r of RECORDINGS) test(`${r.board.id}: ${name}`, () => fn(r));
 }
 
-test("there are three recordings, and the page offers each as a tab", () => {
+test("there are four recordings, and the page offers each as a tab", () => {
   assert.deepEqual(
     BOARDS.map((b) => b.id),
-    ["brief", "gate", "harness"]
+    ["brief", "gate", "existing", "harness"]
   );
   for (const board of BOARDS) {
     assert.match(INDEX, new RegExp(`data-term-src="\\./assets/${board.file.replace(".", "\\.")}"`));
@@ -300,6 +300,7 @@ test("the recordings prove the loop the page promises", () => {
     "archive",
     "check",
     "status",
+    "reverse",
   ]) {
     assert.ok(
       surfaces.includes(required),

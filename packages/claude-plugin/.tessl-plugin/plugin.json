@@ -1,0 +1,14 @@
+{
+  "name": "rsaglobaltech/specgate",
+  "version": "0.35.0",
+  "description": "Specs as executable contracts: the daily loop as commands, the spec tree over MCP, the test before the code, and the gate as a hook that runs before the session can end.",
+  "author": {
+    "name": "RSA Global Tech",
+    "url": "https://github.com/rsaglobaltech"
+  },
+  "homepage": "https://rsaglobaltech.github.io/specgate/",
+  "repository": "https://github.com/rsaglobaltech/specgate",
+  "license": "MIT",
+  "skills": "./skills/",
+  "mcpServers": ".mcp.json"
+}

@@ -70,38 +70,28 @@ you have:
 | One behaviour to add or change | `specgate propose <change-id>` | [Propose one change](docs/start/existing-2-specify.md) |
 | A client brief, or a plan for a new product | `specgate propose --from-brief` | [From a client brief](docs/from-a-brief.md) |
 | A Jira story with acceptance criteria | `specgate propose --from-ticket <KEY>` | [From a Jira ticket](docs/from-a-ticket.md) |
+| A system that already runs, never specified | `specgate reverse <module>` | [Specify a system that already runs](docs/reverse.md) |
 
 ## 🛠️ What it does
 
 - **A gate that does not lie.** `check` fails when a delivered requirement has
-  no scenario, no test that names it, or points at a missing file. A `Draft`
-  owes nothing yet, so the gate is green on day one.
-  → [Validating](docs/validating.md)
-- **Reviews that read intent.** A change is a delta: only what moves. The
-  reviewer reads the requirement, its scenario and its test.
-  → [Your team's first pull request](docs/first-pr.md)
-- **Drafts held to their source.** A draft from a brief or a ticket is checked
-  against that text: every value it uses must come from the source or be listed
-  as an assumption. → [From a client brief](docs/from-a-brief.md)
-- **Your agent works the same loop.** `specgate agents init` installs the loop
-  as slash commands for Claude Code, Cursor, Copilot and other agent tools; an
-  MCP server ships in the package. For Claude Code and OpenCode, the guards
-  hold the agent to it: the open change at session start, no source edit before
-  a test names the requirement, the gate before the session ends —
-  `specgate agents install --global` once. → [Agent tools](docs/agents.md)
-- **Unattended delivery.** `specgate harness run` hands each pending requirement
-  to your coding agent in its own git worktree and keeps only what passes the
-  gate. → [The harness](docs/harness.md)
-- **Quality, not only tests.** Coverage and mutation of the lines a change adds,
-  SpotBugs, PMD, Semgrep, secrets, dependencies, SonarQube and Conventional
-  Commits — each in Docker, no account, only new findings fail.
-  → [Quality and security checks](docs/quality.md)
-- **Without the commands.** `specgate studio` is the whole path as an app: from
-  an empty folder to the report of what was built. → [The studio](docs/studio.md)
-- **Domain knowledge as a dependency.** Versioned domain packs install
-  requirements a team has already proved. → [Domain packs](docs/domain-packs.md)
-- **Already on OpenSpec?** `specgate verify` checks what OpenSpec calls done
-  against your tests. → [Already on OpenSpec](docs/openspec.md)
+  no scenario, no test that names it, or your suite fails. A `Draft` owes
+  nothing yet, so the gate is green on day one. → [Validating](docs/validating.md)
+- **Drafts held to their source.** A draft from a brief or a ticket lists every
+  value the source never gave; what only the client can answer becomes a
+  question. → [From a client brief](docs/from-a-brief.md)
+- **Your agent works the same loop.** Slash commands, Agent Skills and an MCP
+  server for Claude Code, Cursor, Copilot and others; `specgate harness run`
+  delivers each requirement unattended, in its own worktree, and keeps only
+  what passes. → [Agent tools](docs/agents.md) · [The harness](docs/harness.md)
+- **Code that already runs.** `specgate reverse` drafts requirements from an
+  existing module; `check --baseline` turns the gate on without a red build.
+  → [Reverse](docs/reverse.md)
+- **For the whole team.** ADRs, a glossary and numbered business rules; a review
+  page for the business, the studio as an app, release notes and an acceptance a
+  person signs. → [Studio](docs/studio.md) · [Handing over](docs/transition.md)
+- **More in the docs:** [quality checks](docs/quality.md) in Docker,
+  [domain packs](docs/domain-packs.md), [OpenSpec](docs/openspec.md).
 
 ## 🆚 How it compares
 
@@ -122,7 +112,7 @@ gate, it fits better. → [Full comparison](docs/comparisons.md)
 ## 📚 Documentation
 
 - [Getting started](docs/getting-started.md) — install, pick your path, the four verbs
-- [From a Jira ticket](docs/from-a-ticket.md) · [From a client brief](docs/from-a-brief.md)
+- [From a Jira ticket](docs/from-a-ticket.md) · [From a client brief](docs/from-a-brief.md) · [From running code](docs/reverse.md)
 - [Concepts](docs/concepts.md) — the ideas and vocabulary behind every command
 - [Commands](docs/commands.md) — every command and flag
 - [FAQ](docs/faq.md) · [Troubleshooting](docs/troubleshooting.md) · [Docs site](https://rsaglobaltech.github.io/specgate/)

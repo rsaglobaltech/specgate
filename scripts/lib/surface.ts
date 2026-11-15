@@ -174,6 +174,20 @@ export const SURFACE: Command[] = [
     // `init` does this in a repo that has code (phase 1); kept for scripts.
   },
   {
+    // REQ-528 … REQ-530: a running system specified one module at a time.
+    name: "reverse",
+    editsContract: true,
+    mcp: false,
+    script: ["reverse.js"],
+    help: {
+      group: "core",
+      icon: "🔁",
+      summary:
+        "Specify existing code, one module at a time: Draft requirements citing their source.",
+    },
+    json: { key: "reverse", gate: false, args: "[module]" },
+  },
+  {
     name: "onboard",
     script: ["onboard.js"],
     help: {
@@ -769,6 +783,104 @@ export const SURFACE: Command[] = [
     ],
   },
 
+  {
+    // REQ-542: what a release delivered, from the changes it archived.
+    name: "release-notes",
+    mcp: false,
+    script: ["release_notes.js"],
+    help: {
+      group: "core",
+      icon: "📰",
+      summary:
+        "Release notes between two refs: the changes archived, by kind, with their requirements.",
+    },
+    json: { key: "releaseNotes", gate: false, args: "<from>..<to>" },
+  },
+  {
+    // REQ-543: a person checks each scenario, then signs.
+    name: "acceptance",
+    editsContract: true,
+    mcp: false,
+    script: ["acceptance.js"],
+    help: {
+      group: "core",
+      icon: "🖋️",
+      summary:
+        "A change's acceptance checklist; --sign moves its Implemented requirements to Verified.",
+    },
+    json: { key: "acceptance", gate: false, args: "<change>" },
+  },
+  {
+    // REQ-544: what each actor can do, from what was delivered.
+    name: "guide",
+    mcp: false,
+    script: ["guide.js"],
+    help: {
+      group: "core",
+      icon: "📘",
+      summary: "Write docs/guide/<actor>.md: each actor's delivered requirements as steps.",
+    },
+    json: { key: "guide", gate: false },
+  },
+  {
+    // REQ-548: the layers and their commands, from the evidence on disk.
+    name: "stack",
+    editsContract: true,
+    mcp: false,
+    script: ["stack.js"],
+    help: {
+      group: "core",
+      icon: "🧱",
+      summary: "Write docs/specs/stack.md: each layer's technology and evidence, and the commands.",
+    },
+    json: { key: "stack", gate: false },
+  },
+  {
+    // REQ-546: decisions recorded and superseded, never rewritten.
+    name: "adr",
+    subcommands: [
+      {
+        name: "new",
+        editsContract: true,
+        mcp: false,
+        script: ["adr.js"],
+        argsFrom: 1,
+        help: {
+          group: "core",
+          icon: "🏛️",
+          summary: "Record an architecture decision: the next ADR, Proposed, in docs/specs/adr/.",
+        },
+        json: { key: "adr", gate: false, args: "<title>" },
+      },
+      {
+        name: "supersede",
+        editsContract: true,
+        mcp: false,
+        script: ["adr.js"],
+        argsFrom: 1,
+        json: { key: "adr", gate: false, args: "<NNNN> <title>" },
+      },
+      {
+        name: "list",
+        mcp: false,
+        script: ["adr.js"],
+        argsFrom: 1,
+        json: { key: "adr", gate: false },
+      },
+    ],
+  },
+  {
+    // REQ-551: a change as one HTML page, for people who do not read the repository.
+    name: "review",
+    mcp: false,
+    script: ["review.js"],
+    help: {
+      group: "core",
+      icon: "📄",
+      summary: "A change as one self-contained HTML page to send to whoever decides on it.",
+    },
+    json: { key: "review", gate: false, args: "<change>" },
+  },
   {
     name: "config",
     subcommands: [

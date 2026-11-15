@@ -389,6 +389,8 @@ const ADOPT_FILES = [
   ["baseline.feature.tpl", "features/adoption/baseline.feature"],
   ["traceability.md.tpl", "docs/specs/traceability.md"],
   ["adr-readme.md.tpl", "docs/specs/adr/README.md"],
+  // REQ-538: one word for one thing, empty until the team fills it.
+  ["glossary.md.tpl", "docs/specs/glossary.md"],
 ];
 
 /**

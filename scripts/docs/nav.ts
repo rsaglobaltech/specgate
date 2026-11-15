@@ -83,6 +83,12 @@ export const NAV: readonly NavSection[] = [
           "Specgate as an app: from an empty folder to the report, step by step, without the commands.",
       },
       {
+        slug: "studio-team",
+        label: "The studio for a team",
+        blurb:
+          "Behind your sign-in proxy: readers, editors and admins, and every edit a pull request.",
+      },
+      {
         slug: "start/scratch-1-install",
         group: "From scratch",
         step: 1,
@@ -201,6 +207,12 @@ export const NAV: readonly NavSection[] = [
         blurb:
           "Adopt a years-old codebase whose work arrives as Jira tickets: the spec grows ticket by ticket.",
       },
+      {
+        slug: "reverse",
+        label: "Specify a system that already runs",
+        blurb:
+          "Existing code to Draft requirements citing their lines, one module at a time, and a gate baseline.",
+      },
     ],
   },
   {
@@ -222,6 +234,24 @@ export const NAV: readonly NavSection[] = [
         slug: "writing-specs",
         label: "Writing specs",
         blurb: "Requirements, scenarios and the traceability matrix.",
+      },
+      {
+        slug: "business-review",
+        label: "Review with the business",
+        blurb:
+          "A change as one HTML page to send, and journeys across requirements tested end to end.",
+      },
+      {
+        slug: "transition",
+        label: "Release notes, acceptance, user guides",
+        blurb:
+          "Release notes from archived changes, a checklist a person signs, and a guide per actor.",
+      },
+      {
+        slug: "domain-language",
+        label: "Glossary, rules and diagrams",
+        blurb:
+          "One word for one thing, numbered business rules each tested, and the entity and actor diagrams generated.",
       },
       {
         slug: "new-project",
@@ -395,6 +425,18 @@ export const NAV: readonly NavSection[] = [
         slug: "harness-report",
         label: "What the harness has cost",
         blurb: "First-attempt rate and cost per delivered requirement, from the run ledger.",
+      },
+      {
+        slug: "harness-roles",
+        label: "Roles, budget and protected paths",
+        blurb:
+          "A tester and an implementer in their lanes, a cost ceiling, the files no agent may change.",
+      },
+      {
+        slug: "decisions",
+        label: "Decisions, rights and the stack",
+        blurb:
+          "ADRs replaced, never rewritten; what the agent may decide on its own; the stack written down once.",
       },
       {
         slug: "domain-packs",

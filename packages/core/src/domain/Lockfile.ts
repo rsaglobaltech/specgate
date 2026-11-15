@@ -37,7 +37,7 @@ export class Lockfile {
       throw new Error(
         `${Lockfile.FILENAME} was written by a newer version of this CLI ` +
           `(lockfile format ${declared}, this CLI understands ${Lockfile.CURRENT_SCHEMA_VERSION}).\n` +
-          "Fix: upgrade with `npm install -g create-spec-driven-app@latest`, or ask " +
+          "Fix: upgrade with `npm install -g @rsaglobaltech/specgate@latest`, or ask " +
           "whoever committed the lockfile which version they used."
       );
     }

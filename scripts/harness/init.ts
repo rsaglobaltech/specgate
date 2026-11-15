@@ -301,6 +301,8 @@ const MERGEABLE_KEYS = new Set([
   "prompt_prefix_file",
   "attempt_profiles",
   "review_profile",
+  "roles",
+  "max_cost_usd",
   "protected_paths",
   "allow_paths",
   "message_report",

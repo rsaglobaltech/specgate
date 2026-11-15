@@ -276,4 +276,5 @@ delivered requirement), see [What the harness has cost](harness-report.md).
 ## Next
 
 - [Choosing and wiring your agent](agent-setup.md)
+- [Roles, budget and protected paths](harness-roles.md)
 - [What the harness has cost](harness-report.md)

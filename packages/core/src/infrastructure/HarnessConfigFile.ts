@@ -63,6 +63,9 @@ const KNOWN_KEYS = new Set([
   "prompt_prefix_file",
   "attempt_profiles",
   "review_profile",
+  // REQ-532, REQ-535: the work split into lanes, and a cost ceiling per requirement.
+  "roles",
+  "max_cost_usd",
   "protected_paths",
   "allow_paths",
   "message_report",
@@ -243,6 +246,18 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
     }
   }
 
+  if (parsed.roles !== undefined) config.roles = readRoles(parsed.roles);
+
+  if (parsed.max_cost_usd !== undefined) {
+    const usd = Number(parsed.max_cost_usd);
+    if (!Number.isFinite(usd) || usd <= 0) {
+      throw new Error(
+        `Invalid ${HARNESS_CONFIG_FILE}: max_cost_usd must be a positive number of dollars`
+      );
+    }
+    config.maxCostUsd = usd;
+  }
+
   if (parsed.review_profile !== undefined) {
     const name = String(parsed.review_profile);
     const agent = resolveProfileAgent(projectDir, name);
@@ -347,6 +362,10 @@ export function resolveHarnessSettings(
     // in the repository, not a flag somebody types differently each run.
     attemptProfiles: file.attemptProfiles || [],
     reviewProfile: file.reviewProfile || "",
+    // From the file only, like the ladder: how the work is split and what it
+    // may cost are the team's decisions, not a flag typed to get past them.
+    roles: file.roles || [],
+    maxCostUsd: file.maxCostUsd || 0,
     // From the file only, like the role ladder: which agent is allowed to
     // attack the work is a repository decision, not a flag typed per run.
     adversaryProfile: file.adversaryProfile || "",
@@ -366,6 +385,22 @@ export function resolveHarnessSettings(
     costPerRunHint: file.costPerRunHint || {},
     profileRules: file.profileRules || [],
   };
+}
+
+/**
+ * `roles:` (REQ-532). One value is accepted, `[tester, implementer]`: the
+ * tester writes the tests first, so the implementer has something to make pass
+ * and nothing it may weaken. Any other list is refused rather than guessed at.
+ */
+function readRoles(value: unknown): Array<"tester" | "implementer"> {
+  const names = Array.isArray(value) ? value.map((v) => String(v).trim()) : [];
+  if (names.length !== 2 || names[0] !== "tester" || names[1] !== "implementer") {
+    throw new Error(
+      `Invalid ${HARNESS_CONFIG_FILE}: roles must be [tester, implementer].\n` +
+        "Fix: write `roles: [tester, implementer]`, or remove the key for one session per attempt."
+    );
+  }
+  return ["tester", "implementer"];
 }
 
 /** A YAML value that must be a list of names. */

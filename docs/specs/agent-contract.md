@@ -59,6 +59,7 @@ not run reports an `error` about itself.
 
 | Command | Document key | Gate |
 |---|---|---|
+| `specgate reverse [module] --json` | `reverse` | no |
 | `specgate doctor --json` | `doctor` | yes |
 | `specgate status --json` | `status` | no |
 | `specgate alm pull --json` | `pulled` | no |
@@ -92,6 +93,14 @@ not run reports an `error` about itself.
 | `specgate harness run --format json` | `results` | no |
 | `specgate harness report --json` | `report` | no |
 | `specgate harness stop --after-current --json` | `stop` | no |
+| `specgate release-notes <from>..<to> --json` | `releaseNotes` | no |
+| `specgate acceptance <change> --json` | `acceptance` | no |
+| `specgate guide --json` | `guide` | no |
+| `specgate stack --json` | `stack` | no |
+| `specgate adr new <title> --json` | `adr` | no |
+| `specgate adr supersede <NNNN> <title> --json` | `adr` | no |
+| `specgate adr list --json` | `adr` | no |
+| `specgate review <change> --json` | `review` | no |
 | `specgate agent ask "<request>" --json` | `plan` | no |
 | `specgate agent apply <plan-id> --json` | `applied` | no |
 | `specgate agent discard <plan-id> --json` | `discarded` | no |
@@ -132,6 +141,7 @@ computed — `strict_tdd_*` covers `strict_tdd_1` through `strict_tdd_3`.
 | `change_error` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_exists` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_id_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
+| `change_kind_unknown` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_name_required` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_not_found` | `scripts/cli/commands/change/ChangeCommand.ts` |
 | `change_required` | `scripts/cli/commands/change/ChangeCommand.ts` |

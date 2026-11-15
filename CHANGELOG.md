@@ -9,6 +9,120 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [0.35.0] — 2026-11-15
+
+Both ends of the lifecycle, around the gate. Before the first requirement:
+`specgate reverse` drafts requirements from code that already runs, and
+`check --baseline` turns the gate on without a red build. In the middle: the
+harness as a tester and an implementer, a cost cap per requirement, the agent's
+own instruction files protected, ADRs, decision rights and the stack file, a
+glossary, numbered business rules and generated diagrams, and the loop as Agent
+Skills. After the last: `specgate review` for the business, the studio served
+to a team behind its sign-in proxy, release notes, an acceptance a person
+signs, and a user guide per actor. And `sgate`, a shorter way to type it.
+
+### Added
+
+- **A tester and an implementer** (REQ-532, REQ-533):
+  `roles: [tester, implementer]` in `harness.config.yaml` runs each attempt as two sessions:
+  the tester writes the failing tests, then the implementer makes them pass.
+  Each gets `SPECGATE_ROLE`. A tester's production code and an implementer's
+  test changes are put back and reported as `lane_crossed`.
+- **A budget per requirement** (REQ-535): `max_cost_usd` stops starting
+  sessions for a requirement once the `cost` its sessions reported reaches the
+  limit; a requirement that then fails reports `budget_exceeded`. An agent that
+  reports no cost is warned about once, as `cost_unknown`.
+- **`specgate reverse`** (REQ-528, REQ-529, REQ-530): `reverse --modules` lists the
+  modules of an existing system (folders with their own build manifest at the
+  first or second level, Go packages, folders under `src/` or `apps/`) with stack and file count, without
+  an agent. `reverse <module>` has your agent read one module and writes the
+  change `reverse-<module>`: every requirement `Draft`, its trace citing
+  `source=` the lines it was read from, behaviour the agent marks as suspect
+  written to `questions.md` instead. `validate` warns `source_missing` when a
+  cited file is gone.
+- **A gate baseline** (REQ-531): `specgate check --baseline` records today's
+  traceability findings in `docs/specs/gate-baseline.json`. After it, `check`
+  and `validate` fail only on new findings, count the `baselined` ones, and name
+  each `baseline_fixed` one so the file shrinks.
+- **Agent Skills** (REQ-549, REQ-550): `specgate agents init --format skills`
+  writes each step of the loop as a `SKILL.md` folder into `.agents/skills/` and
+  the skills folder of each named (or present) tool — Claude Code, Cursor,
+  Gemini CLI. A skill changed by hand is kept (`skill_kept`). The Claude Code
+  plugin carries the same skills, plus an Agent Plugins `plugin.json` (to the
+  1.0.0 schema) and a Tessl `.tessl-plugin/plugin.json` (`rsaglobaltech/specgate`)
+  at the package's version; `npm run plugin:sync` regenerates them, and a test
+  fails while they are stale or break their format's published rules.
+- **Architecture decisions** (REQ-546): `specgate adr new "<title>"` writes the
+  next numbered ADR (Proposed, dated, Context/Decision/Consequences);
+  `specgate adr supersede <NNNN> "<title>"` writes its replacement and changes
+  only the old one's status, to `Superseded by NNNN`; `specgate adr list`.
+- **Decision rights** (REQ-547): `docs/specs/decision-rights.md` marks
+  `dependency`, `migration` and `public-api` as `agent` or `ask`. The harness
+  puts the table in the prompt, and an attempt that adds a dependency, a
+  migration or an OpenAPI operation kept for a person fails with
+  `decision_right_exceeded`.
+- **`specgate stack`** (REQ-548): writes `docs/specs/stack.md`, the layers with
+  their technology and evidence and the build/test/end-to-end commands; `check`
+  and the harness run its test command when `test_cmd` is unset. A corrected
+  command is kept; a rerun on an unchanged project changes nothing.
+- **Review with the business** (REQ-551, REQ-552): `specgate review <change>`
+  writes the change as one self-contained HTML page (intent, requirements,
+  scenarios as plain steps, questions, assumptions, date and commit; nothing
+  loaded from outside it, every value escaped). Journeys: a scenario tagged
+  `@JRN-NNN` with the `@REQ-NNN` it crosses is listed by `status --json`, not
+  counted as those requirements' own scenario, and under `--strict` owes a test
+  once all of them are delivered (`journey_untested`,
+  `journey_requirement_unknown`).
+- **Handing over** (REQ-542 … REQ-545):
+  `specgate propose --kind bug|enhancement` records a change's kind (`--from-ticket` takes it from the
+  Jira issue type); `specgate release-notes <from>..<to>` lists the changes
+  archived between two refs as Enhancements, Fixes and other changes, each with
+  its intent and requirements; `specgate acceptance <change>` writes a
+  checklist per scenario, and `--sign "<name>"` — refused while an item is open
+  — records the signature and moves the change's Implemented requirements to
+  Verified; `specgate guide` writes `docs/guide/<actor>.md` from each actor's
+  delivered requirements.
+- **Domain language** (REQ-538 … REQ-541): `init` and `adopt` write an empty
+  `docs/specs/glossary.md`; `validate` reports `glossary_term_forbidden` for a
+  word the glossary says to avoid (a warning, an error under `--strict`).
+  Business rules numbered `BR-NNN` in a requirement's `Rules:` list:
+  `rule_duplicate`, and under `--strict` `rule_untested` for a delivered
+  requirement's rule no test names. `check` generates `docs/specs/model.md`
+  (a Mermaid ER diagram from `aggregates.md` and `model.yaml`) and
+  `docs/specs/actors.md` (from the brief's actors and each `actor=`);
+  `validate` reports `model_stale`, `actors_stale` and warns `actor_unknown`.
+
+- **The studio for a team** (REQ-553, REQ-554): `specgate studio --team` runs
+  behind the team's sign-in proxy, which names the user in a header
+  (`SPECGATE_PROXY_SECRET` makes the studio answer the proxy only). Roles come
+  from `studio.team.yaml`: a reader is refused every write (`role_forbidden`),
+  an editor's answers, approvals, notes and brief edits are committed as that
+  user on `studio/<user>/<change>` and opened as a pull request, never on the
+  base branch, and running builds or agents is an admin's.
+
+- **`sgate`** (REQ-555): the package also installs `sgate`, a short alias of
+  `specgate` (ADR-0042); `specgate completion` completes both. Examples and
+  messages keep `specgate`.
+
+### Changed
+
+- **The agent's own instructions are protected** (REQ-534): `CLAUDE.md`,
+  `.claude/**`, `.cursor/**`, `.github/**` and `.mcp.json` join the harness's
+  default protected paths. For these paths and `AGENTS.md` and `AI_RULES.md`,
+  creating the file counts as changing it. A project with `protected_paths:` keeps its own list.
+  **Check before upgrading:** an attempt whose agent edits one of these files
+  now fails with `agent_touched_protected_path`. If your agent is meant to edit
+  one — a workflow under `.github/`, say — name it in `allow_paths:` in
+  `harness.config.yaml`.
+
+### Fixed
+
+- **Upgrade hints named the old package.** Pack and lockfile errors said
+  `npm install -g create-spec-driven-app@latest`, the deprecated package; they
+  name `@rsaglobaltech/specgate`. The VS Code extension's runner defaulted to
+  the old package too.
+- **`specgate completion fish`** wrote every `specgate` line twice.
+
 ## [0.34.0] — 2026-11-12
 
 What specgate-studio needed as JSON — a draft's review notes, the brief as a

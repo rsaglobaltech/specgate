@@ -34,9 +34,12 @@ import type { Stage } from "../../../../packages/core/src/domain/QualityChecks";
 import { forShell } from "../../../lib/shell-command";
 import { GateStages, validateFindings } from "../../../lib/gate-stages";
 import { lastCheckAnswer, recordLastCheck } from "../../../lib/last-check";
+import { BASELINE_FILE, parseBaseline } from "../../../../packages/core/src/domain/GateBaseline";
 import { checksFor } from "../../../../packages/core/src/domain/QualityChecks";
 import { gateTestCommand } from "../../../../packages/core/src/domain/DoneVerification";
 import { planTests } from "../../../lib/test-selection";
+import { refreshDomainDiagrams } from "../../../lib/domain-docs";
+import { stackFileCommand } from "../../../lib/stack-detect";
 import { startShell, type StageRun } from "../../../lib/stage-run";
 import type { Diagnostic } from "../../../lib/diagnostics";
 
@@ -48,6 +51,7 @@ function usage(): void {
   ✅ ${c.bold}specgate check${c.reset} [dir] [--test-cmd "<command>"] [--base <branch>] [--ci] [--json]
   ✅ ${c.bold}specgate check --affected${c.reset} [dir] [--base <ref>] [--no-cache]   only what the change touches
   ✅ ${c.bold}specgate check --last${c.reset} [dir] [--json]   the last gate result, without running it
+  ✅ ${c.bold}specgate check --baseline${c.reset} [dir] [--json]   record today's findings; only new ones fail
 
   The gate — what to run before a pull request:
     1. validate --strict   specs, scenarios, traceability, links and coverage
@@ -81,6 +85,11 @@ function usage(): void {
   selection of tests it ran: mode (affected or full), reason, base, changed,
   requirements, tests, cached and command. Each check keeps its result in the
   repository's git folder; --last reads it back.
+
+  --baseline writes the matrix findings validate --strict has today to
+  docs/specs/gate-baseline.json. After it, check and validate fail only on a
+  finding absent from that file, report the others as baselined, and name
+  each baselined finding that no longer occurs (baseline_fixed).
 
   Exit 0 green · 1 the gate failed · 2 usage error.
 
@@ -150,6 +159,50 @@ export class CheckCommand extends BaseCommand {
     });
   }
 
+  /**
+   * `check --baseline` (REQ-531): `validate --strict` writes the findings it
+   * has today to the baseline, and passes on them. What it cannot baseline —
+   * anything outside the matrix — still fails, and is said.
+   */
+  private writeBaseline(io: AgentIo, projectDir: string): void {
+    const run = spawnSync(
+      process.execPath,
+      [
+        path.join(findCliRoot(__dirname), "bin", "specgate.js"),
+        "validate",
+        projectDir,
+        "--strict",
+        "--write-baseline",
+        "--json",
+      ],
+      { encoding: "utf8" }
+    );
+    const file = path.join(projectDir, BASELINE_FILE);
+    let recorded = 0;
+    try {
+      recorded = parseBaseline(fs.readFileSync(file, "utf8")).findings.length;
+    } catch {
+      recorded = 0;
+    }
+    if (run.status !== 0) {
+      io.fail({ baseline: { file: BASELINE_FILE, findings: recorded } }, [
+        ...validateFindings(run.stdout),
+        error(
+          "baseline_incomplete",
+          `${BASELINE_FILE} records ${recorded} finding(s), and validate --strict still fails on what a baseline cannot hold.`,
+          { fix: "Fix what validate reports, then run `specgate check --baseline` again." }
+        ),
+      ]);
+    }
+    io.emit({ baseline: { file: BASELINE_FILE, findings: recorded } }, () => {
+      process.stdout.write(ui.header("check --baseline", path.basename(projectDir)));
+      process.stdout.write(
+        ui.ok(`${recorded} finding(s) recorded in ${BASELINE_FILE}.`) +
+          `     ${ui.muted("From now on the gate fails only on a finding that is not in it. Commit the file.")}\n\n`
+      );
+    });
+  }
+
   public async execute(): Promise<void> {
     const argv = this.args;
     if (argv.includes("--help") || argv.includes("-h")) {
@@ -165,6 +218,7 @@ export class CheckCommand extends BaseCommand {
     let last = false;
     let affected = false;
     let noCache = false;
+    let baseline = false;
     const positional: string[] = [];
     for (let i = 0; i < argv.length; i++) {
       const a = argv[i];
@@ -174,6 +228,8 @@ export class CheckCommand extends BaseCommand {
         last = true;
       } else if (a === "--affected") {
         affected = true;
+      } else if (a === "--baseline") {
+        baseline = true;
       } else if (a === "--no-cache") {
         noCache = true;
       } else if (a === "--test-cmd") {
@@ -230,11 +286,17 @@ export class CheckCommand extends BaseCommand {
 
     // REQ-504: the last result, read back without running the gate.
     if (last) return this.last(io, projectDir);
+    // REQ-531: today's findings, written down so only new ones fail.
+    if (baseline) return this.writeBaseline(io, projectDir);
 
     // REQ-503: every stage, planned up front and set as the gate reaches it,
     // so a failed gate still says what passed before it and what never ran.
     const harness: Partial<HarnessSettings> = readHarnessConfig(projectDir) || {};
-    const testCmd = testCmdFlag !== undefined ? testCmdFlag : harness.testCmd;
+    // REQ-548: the stack file's test command when the configuration sets none.
+    const testCmd =
+      testCmdFlag !== undefined
+        ? testCmdFlag
+        : harness.testCmd || stackFileCommand(projectDir, "test") || undefined;
     const archCmd = (harness.archCmd || "").trim();
     const qualityStages: Stage[] = ci ? ["attempt", "end", "ci"] : ["attempt", "end"];
     // REQ-510 … REQ-516: which tests run — the whole suite, or what the change
@@ -244,7 +306,7 @@ export class CheckCommand extends BaseCommand {
       ci,
       noCache,
       base: baseFlag || prBase(projectDir) || undefined,
-      testCmd: testCmdFlag,
+      testCmd: testCmdFlag !== undefined ? testCmdFlag : harness.testCmd ? undefined : testCmd,
       harness,
     });
     const selection = tests.selection;
@@ -278,6 +340,10 @@ export class CheckCommand extends BaseCommand {
       process.stdout.write(
         `  ${ui.muted("↻  docs/specs/traceability.md regenerated from its sources")}\n`
       );
+    }
+    // REQ-540, REQ-541: the entity model and the actors diagram, the same way.
+    for (const file of refreshDomainDiagrams(projectDir)) {
+      if (!json) process.stdout.write(`  ${ui.muted(`↻  ${file} regenerated from its sources`)}\n`);
     }
 
     // On a ticket's branch, commits that do not name the ticket (ADR-0039);

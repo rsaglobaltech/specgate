@@ -34,6 +34,7 @@
  * and `validate` fails when it no longer matches its sources.
  */
 
+import { journeyTitles } from "./Journeys";
 import { TraceRow, TraceabilityMatrix } from "./TraceabilityMatrix";
 import { MatrixRow, buildTraceabilityMarkdown, parseTraceabilityRows } from "./TraceabilityFormat";
 import { SpecNode, parseSpec, parseTraceComment } from "./SpecParser";
@@ -201,7 +202,10 @@ class TagIndex {
 
   constructor(features: ReadonlyArray<SourceFile>) {
     for (const f of [...features].sort((a, b) => a.path.localeCompare(b.path))) {
-      for (const tags of Object.values(specgateTagsByScenario(f.source))) {
+      // REQ-552: a journey crosses requirements; it is none of them's own scenario.
+      const journeys = journeyTitles(f.source);
+      for (const [title, tags] of Object.entries(specgateTagsByScenario(f.source))) {
+        if (journeys.has(title)) continue;
         const scn = tags.find((t) => t.startsWith("@SCN-"));
         const entry = { scn: scn ? scn.slice(1) : "-", feature: f.path };
         for (const tag of new Set(tags)) {

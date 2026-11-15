@@ -31,5 +31,6 @@ An empty folder, maybe with a client's brief.
 - [Concepts](concepts.md) — the words: change, delta, gate, matrix
 - [Command reference](commands.md) — every command
 - [The studio](studio.md) — the same paths in an app
+- [Specify a system that already runs](reverse.md) — requirements drafted from the code itself
 - [Joining a project](quickstart.md) — someone else set it up
 - Step by step, with recorded output: [existing code](start/existing-1-adopt.md) · [a new project](start/scratch-1-install.md)
