@@ -683,7 +683,8 @@ function tickTasksOf(deltaFile: string, id: string): void {
   if (at < 1) return;
   const tasks = path.join(parts.slice(0, at).join(path.sep), "tasks.md");
   if (!fs.existsSync(tasks)) return;
-  const names = new RegExp(`\\b${id}\\b`);
+  // The id came from the command line: escaped, so it is matched as text.
+  const names = new RegExp(`\\b${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
   const text = fs.readFileSync(tasks, "utf8");
   const next = text.replace(/^(\s*[-*]\s*)\[ \](.*)$/gm, (line, lead, rest) =>
     names.test(rest) ? `${lead}[x]${rest}` : line

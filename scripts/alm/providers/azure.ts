@@ -134,14 +134,7 @@ class AzureClient extends HttpAlmClient {
     const html = String(item.fields?.["System.Description"] ?? "");
     return {
       title: String(item.fields?.["System.Title"] ?? ""),
-      body: html
-        .replace(/<br\s*\/?>|<\/(?:p|div|li)>/gi, "\n")
-        .replace(/<[^>]+>/g, "")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .trim(),
+      body: htmlToText(html),
     };
   }
 
@@ -192,3 +185,27 @@ export const azureProvider: AlmProvider = {
 };
 
 export default azureProvider;
+
+const ENTITIES: Record<string, string> = {
+  nbsp: " ",
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  "#39": "'",
+};
+
+/**
+ * A work item's HTML description as plain text. Tags are removed until none is
+ * left — one pass leaves `<scr<b>ipt>` behind — and entities are decoded in a
+ * single pass, so `&amp;lt;` reads `&lt;`, never `<`.
+ */
+export function htmlToText(html: string): string {
+  let text = html.replace(/<br\s*\/?>|<\/(?:p|div|li)>/gi, "\n");
+  let previous: string;
+  do {
+    previous = text;
+    text = text.replace(/<[^<>]*>/g, "");
+  } while (text !== previous);
+  return text.replace(/&(nbsp|amp|lt|gt|quot|#39);/g, (_, e: string) => ENTITIES[e]).trim();
+}

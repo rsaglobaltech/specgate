@@ -4,6 +4,8 @@
  * (REQ-339..348). Pure; reading and writing the files is `scripts/lib`.
  */
 
+import { withoutHtmlComments } from "./HtmlComments";
+
 export interface BriefStory {
   id: string;
   title: string;
@@ -117,10 +119,7 @@ export function section(md: string, heading: RegExp): string {
     if (/^##\s/.test(l)) break;
     body.push(l);
   }
-  return body
-    .join("\n")
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .trim();
+  return withoutHtmlComments(body.join("\n")).trim();
 }
 
 export const INTENT = /intent|intenci[oó]n|context/i;
@@ -201,12 +200,11 @@ export function withoutFilledHints(md: string): string {
     let end = i + 1;
     while (end < lines.length && !/^##\s/.test(lines[end])) end += 1;
     const body = lines.slice(i + 1, end).join("\n");
-    const filled = body
-      .replace(/<!--[\s\S]*?-->/g, "")
+    const filled = withoutHtmlComments(body)
       .split("\n")
       .some((l) => l.trim() && !/^[-*]\s*AC-\d+\s*:?\s*$/.test(l.trim()));
     const kept = filled
-      ? body.replace(/[ \t]*<!--[\s\S]*?-->[ \t]*\n?/g, "").replace(/^\n{2,}/, "\n")
+      ? withoutHtmlComments(body, { wholeLine: true }).replace(/^\n{2,}/, "\n")
       : body;
     out.push(lines[i], ...kept.split("\n"));
     i = end;

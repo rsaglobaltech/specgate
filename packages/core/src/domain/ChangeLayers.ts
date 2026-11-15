@@ -12,6 +12,7 @@
 
 import { Diagnostic, warning } from "./Diagnostic";
 import { TECHNICAL } from "./BriefCards";
+import { trimEndChars, withoutHtmlComments } from "./HtmlComments";
 
 export type LayerId = "discover" | "design" | "tasks";
 
@@ -188,7 +189,7 @@ function section(md: string, heading: RegExp): string {
   return out.join("\n");
 }
 
-const withoutComments = (t: string) => t.replace(/<!--[\s\S]*?-->/g, "");
+const withoutComments = (t: string) => withoutHtmlComments(t);
 
 export interface AcceptanceCriterion {
   id: string;
@@ -249,7 +250,7 @@ function crossReferences(text: string): string[] {
   }
   for (const m of text.matchAll(/\bapi=([^\s`|<>]+)/g)) {
     // REQ-391: `#<operationId>` stops the match at `<` and leaves a bare `#`.
-    if (/#[^#\s]/.test(m[1])) refs.push(`api=${m[1].replace(/[.,;:)]+$/, "")}`);
+    if (/#[^#\s]/.test(m[1])) refs.push(`api=${trimEndChars(m[1], ".,;:)")}`);
   }
   return refs;
 }
