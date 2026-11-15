@@ -71,13 +71,25 @@ export function rulesIn(file: string, text: string): RequirementRules[] {
     .map(({ requirement, status, rules }) => ({ requirement, status, rules }));
 }
 
-/** Rule ids used more than once, each occurrence after the first. */
+/**
+ * Rule ids used more than once, each occurrence after the first: by another
+ * requirement, or twice in one file. An open change's delta that restates a
+ * requirement restates its rules too, and that is the same rule, not a second.
+ */
 export function duplicateRules(all: readonly RequirementRules[]): RuleRef[] {
+  const first = new Map<string, RuleRef>();
   const seen = new Set<string>();
   const dup: RuleRef[] = [];
   for (const r of all.flatMap((x) => x.rules)) {
-    if (seen.has(r.id)) dup.push(r);
-    else seen.add(r.id);
+    const owner = first.get(r.id);
+    if (!owner) first.set(r.id, r);
+    else if (owner.file === r.file && owner.requirement === r.requirement) dup.push(r);
+    else if (owner.requirement !== r.requirement) {
+      // Another requirement's: reported once, not again for its restatement in a delta.
+      const once = `${r.requirement} ${r.id}`;
+      if (!seen.has(once)) dup.push(r);
+      seen.add(once);
+    }
   }
   return dup;
 }
@@ -93,8 +105,16 @@ export function untestedRules(
   tests: readonly string[],
   delivered: (requirement: string, traceStatus: string) => boolean
 ): RuleRef[] {
+  // A rule restated by an open delta is reported once, where it was first read.
+  const reported = new Set<string>();
   return all
     .filter((r) => delivered(r.requirement, r.status))
     .flatMap((r) => r.rules)
-    .filter((rule) => !tests.some((t) => mentions(t, rule.id)));
+    .filter((rule) => !tests.some((t) => mentions(t, rule.id)))
+    .filter((rule) => {
+      const key = `${rule.requirement} ${rule.id}`;
+      if (reported.has(key)) return false;
+      reported.add(key);
+      return true;
+    });
 }
