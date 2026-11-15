@@ -188,6 +188,7 @@ whole loop on a temporary copy of your repository.
 
 ## Next
 
+- [The method](methodology.md) — the phases, roles and artefacts these ideas add up to
 - [Getting started](getting-started.md) — the four verbs on your repository
 - [Your team's first pull request](first-pr.md) — author, reviewer, and every failure
 - [Writing specs](writing-specs.md) — requirements and scenarios worth testing

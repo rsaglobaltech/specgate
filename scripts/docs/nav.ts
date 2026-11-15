@@ -76,6 +76,13 @@ export const NAV: readonly NavSection[] = [
           "The six ideas behind every command, and the vocabulary: change, delta, draft, gate, matrix.",
       },
       {
+        slug: "methodology",
+        group: "Begin",
+        label: "The method",
+        blurb:
+          "The way of working the tool encodes: six principles, four phases, two ways in, who does what, and where each artefact lives.",
+      },
+      {
         slug: "studio",
         group: "Begin",
         label: "The studio — no terminal",
