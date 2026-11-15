@@ -53,6 +53,19 @@ export interface DraftView {
     scenarios: Array<{ id: string; title: string; steps: string[] }>;
   }>;
   blockers: Array<{ code: string; message: string; action?: BlockerAction }>;
+  /**
+   * REQ-562: the change's layers (ADR-0044) — who owns each, its approvals
+   * against the quorum, and whether the viewer holds the role that approves it.
+   */
+  layers?: Array<{
+    id: "discover" | "design" | "tasks";
+    owner: string;
+    written: boolean;
+    approvals: Array<{ by: { name: string; email: string }; role: string; at: string }>;
+    quorum: number;
+    approved: boolean;
+    mine: boolean;
+  }>;
   notes: Array<{ date: string; requirement: string; text: string }>;
   questions: Array<{ id: string; text: string; blocks: string[] }>;
 }
@@ -63,7 +76,7 @@ export interface ChangesProps {
   drafts: DraftView[];
   onDraft: (module: string) => Promise<Result>;
   onStopDraft: () => Promise<Result>;
-  onApprove: (change: string) => Promise<Result>;
+  onApprove: (change: string, layer?: "discover" | "design" | "tasks") => Promise<Result>;
   onNote: (change: string, requirement: string, text: string) => Promise<Result>;
   onConfirm: (change: string, question: string) => Promise<Result>;
   /** Every open change (REQ-439), and whether an ALM is configured. */
@@ -194,6 +207,67 @@ function Requirement({
   );
 }
 
+const LAYER_KEY = {
+  discover: "layerDiscover",
+  design: "layerDesign",
+  tasks: "layerTasks",
+} as const;
+
+/**
+ * REQ-562: each layer of a 1.0 change, its owner and its approvals, with an
+ * Approve on each layer the viewer holds the role for — the git identity of
+ * the folder, or the user the sign-in proxy names in a team's studio.
+ */
+function Layers({
+  lang,
+  draft,
+  blocked,
+  onApprove,
+}: {
+  lang: Lang;
+  draft: DraftView;
+  blocked: boolean;
+  onApprove: ChangesProps["onApprove"];
+}) {
+  const [said, setSaid] = useState<Result | null>(null);
+  const layers = (draft.layers || []).filter((l) => l.written);
+  if (layers.length === 0) return null;
+  return (
+    <div class="layers">
+      <p class="faint">{t(lang, "layersTitle")}</p>
+      {layers.map((l) => (
+        <div class={`check ${l.approved ? "ok-line" : ""}`}>
+          <span aria-hidden="true">{l.approved ? "✓" : "○"}</span>
+          <span class="grow">
+            <strong>{t(lang, LAYER_KEY[l.id])}</strong>{" "}
+            <span class="faint">
+              {t(lang, "layerOwner").replace("{ROLE}", l.owner)} ·{" "}
+              {t(lang, "layerQuorum")
+                .replace("{N}", String(l.approvals.length))
+                .replace("{Q}", String(l.quorum))}
+              {l.approvals.length
+                ? ` · ${l.approvals.map((a) => a.by.name || a.by.email).join(", ")}`
+                : ""}
+            </span>
+          </span>
+          {l.mine && !l.approved ? (
+            <Busy
+              class="btn-ghost"
+              busyLabel={t(lang, "approving")}
+              disabled={blocked}
+              onRun={() => onApprove(draft.change, l.id)}
+              onDone={setSaid}
+            >
+              {t(lang, "approveLayer").replace("{LAYER}", t(lang, LAYER_KEY[l.id]))}
+            </Busy>
+          ) : null}
+        </div>
+      ))}
+      <Said lang={lang} r={said} />
+    </div>
+  );
+}
+
 function Review({
   lang,
   draft,
@@ -245,6 +319,7 @@ function Review({
           </div>
         ))}
         <Said lang={lang} r={confirmed} />
+        <Layers lang={lang} draft={draft} blocked={n > 0} onApprove={onApprove} />
         <div class="row approve">
           <Busy
             busyLabel={t(lang, "approving")}

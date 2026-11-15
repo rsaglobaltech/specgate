@@ -48,6 +48,14 @@ roles:
 
 Anyone the file does not list is a `reader`.
 
+## Approvals are the signed-in user's
+
+A layer of a change is approved by whoever holds its role in
+`harness.config.yaml` (`roles: { product: [ana@acme.eu] }`). In a team's
+studio that is the user the proxy names, by their e-mail or login — never the
+git identity of the machine the studio runs on — and the approval arrives, like
+any edit, as a pull request.
+
 ## Edits arrive as pull requests
 
 When an editor answers a question in the change `pdf-invoices`, the studio:

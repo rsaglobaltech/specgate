@@ -2269,3 +2269,11 @@ code.block {
   align-items: center;
   font-size: 14px;
 }
+
+/* REQ-562: a change's layers, under To approve. */
+.layers {
+  margin: 0.75rem 0;
+}
+.layers > p {
+  margin: 0 0 0.25rem;
+}

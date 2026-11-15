@@ -21,6 +21,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   criteria; `acceptance` lists each criterion to check before the scenarios;
   `release-notes` takes each change's why from its Discover, or a 0.x
   proposal; `reverse` drafts a module as a layered change.
+- **The studio approves layer by layer** (REQ-562): Changes lists a 1.0
+  change's Discover, Design and Tasks with their owners, approvals and quorum,
+  and Approve on each layer whose role you hold; in a team's studio the
+  approval is the signed-in user's, not the machine's git identity.
 - **npm publishes through trusted publishing** (REQ-556): the publish job
   installs npm 11.5.1 or later and npm authenticates with OIDC before the
   `NPM_TOKEN` secret, which is removed after the first trusted publish

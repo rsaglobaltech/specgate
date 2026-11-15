@@ -278,7 +278,9 @@ export function App() {
             drafts={drafts.data}
             onDraft={(module) => send("/api/draft", { module, profile: "" })}
             onStopDraft={() => send("/api/draft/stop", {})}
-            onApprove={(change) => send("/api/approve", { change })}
+            onApprove={(change, layer) =>
+              send("/api/approve", layer ? { change, layer } : { change })
+            }
             onNote={(change, req, text) => send("/api/note", { change, req, text })}
             onConfirm={(change, question) =>
               write({ question, change: changeOf(change), reviewed: true })

@@ -456,6 +456,7 @@
 | REQ-559 | SCN-559a | `features/harness/REQ-559.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
 | REQ-560 | SCN-560a | `features/transition/REQ-560.feature` | - | - | - | - | - | tests/unit/layered-outputs.test.ts | Implemented |
 | REQ-561 | SCN-561a | `features/project-setup/REQ-561.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Implemented |
+| REQ-562 | SCN-562a | `features/studio/REQ-562.feature` | - | - | - | - | - | tests/unit/studio-layers.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
