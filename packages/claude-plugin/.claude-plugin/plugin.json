@@ -10,5 +10,10 @@
     "gherkin",
     "traceability"
   ],
-  "homepage": "https://rsaglobaltech.github.io/specgate/"
+  "homepage": "https://rsaglobaltech.github.io/specgate/",
+  "repository": "https://github.com/rsaglobaltech/specgate",
+  "author": {
+    "name": "RSA Global Tech",
+    "url": "https://github.com/rsaglobaltech"
+  }
 }

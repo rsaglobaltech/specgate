@@ -157,6 +157,8 @@ function claudePluginFiles(version: string) {
     license: "MIT",
     keywords: ["spec-driven-development", "sdd", "gherkin", "traceability"],
     homepage: "https://rsaglobaltech.github.io/specgate/",
+    repository: "https://github.com/rsaglobaltech/specgate",
+    author: { name: "RSA Global Tech", url: "https://github.com/rsaglobaltech" },
   };
 
   const run = (script: string) => [
@@ -172,7 +174,14 @@ function claudePluginFiles(version: string) {
     },
   };
 
-  const mcp = mcpServerConfig();
+  // Tessl reads the plugin's `.mcp.json` and wants each server's transport named;
+  // Claude Code reads `type: "stdio"` the same as no type.
+  const base = mcpServerConfig();
+  const mcp = {
+    mcpServers: Object.fromEntries(
+      Object.entries(base.mcpServers).map(([k, v]) => [k, { type: "stdio", ...v }])
+    ),
+  };
 
   return [
     { path: path.join(".claude-plugin", "plugin.json"), contents: json(manifest) },

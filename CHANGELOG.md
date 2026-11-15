@@ -36,9 +36,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   writes each step of the loop as a `SKILL.md` folder into `.agents/skills/` and
   the skills folder of each named (or present) tool — Claude Code, Cursor,
   Gemini CLI. A skill changed by hand is kept (`skill_kept`). The Claude Code
-  plugin carries the same skills, plus an Agent Plugins `plugin.json` and a
-  Tessl `.tessl-plugin/plugin.json` at the package's version;
-  `npm run plugin:sync` regenerates them and a test fails while they are stale.
+  plugin carries the same skills, plus an Agent Plugins `plugin.json` (to the
+  1.0.0 schema) and a Tessl `.tessl-plugin/plugin.json` (`rsaglobaltech/specgate`)
+  at the package's version; `npm run plugin:sync` regenerates them, and a test
+  fails while they are stale or break their format's published rules.
 - **Architecture decisions** (REQ-546): `specgate adr new "<title>"` writes the
   next numbered ADR (Proposed, dated, Context/Decision/Consequences);
   `specgate adr supersede <NNNN> "<title>"` writes its replacement and changes
@@ -93,6 +94,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   `.claude/**`, `.cursor/**`, `.github/**` and `.mcp.json` join the harness's
   default protected paths. For these paths and `AGENTS.md` and `AI_RULES.md`,
   creating the file counts as changing it. A project with `protected_paths:` keeps its own list.
+  **Check before upgrading:** an attempt whose agent edits one of these files
+  now fails with `agent_touched_protected_path`. If your agent is meant to edit
+  one — a workflow under `.github/`, say — name it in `allow_paths:` in
+  `harness.config.yaml`.
 
 ## [0.34.0] — 2026-11-12
 

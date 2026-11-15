@@ -147,34 +147,163 @@ export interface PluginIdentity {
   license: string;
   keywords: string[];
   homepage: string;
+  repository: string;
+  author: { name: string; url: string };
 }
 
-/** The skills folders inside the plugin, as the manifests list them. */
+/** The skills folders inside the plugin, every one under `skills/`. */
 export function pluginSkillPaths(): string[] {
   return STEPS.map((s) => `skills/${skillName(s)}`);
 }
 
+/** The Agent Plugins version the root manifest targets. */
+export const AGENT_PLUGINS_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json";
+
+/** The keys the Agent Plugins 1.0.0 schema defines; it admits no other. */
+export const AGENT_PLUGINS_KEYS = [
+  "$schema",
+  "name",
+  "version",
+  "description",
+  "author",
+  "homepage",
+  "repository",
+  "license",
+  "keywords",
+  "extensions",
+];
+
+/** The Tessl workspace the plugin is published under: `<workspace>/<plugin>`. */
+export const TESSL_WORKSPACE = "rsaglobaltech";
+
 /**
- * The manifests besides Claude Code's: the open Agent Plugins `plugin.json` at
- * the root, and Tessl's `.tessl-plugin/plugin.json`. Generated from the same
- * identity — and so from `package.json`'s version — so they cannot drift.
+ * The manifests besides Claude Code's, each to its own format (REQ-550):
+ *
+ * - the open Agent Plugins `plugin.json` at the root, to the 1.0.0 schema —
+ *   `$schema` and `name` required, no key the schema does not define, so no
+ *   skill list: an Agent Plugins host finds the skills in `skills/`;
+ * - Tessl's `.tessl-plugin/plugin.json` — `name` as `<workspace>/<plugin>`,
+ *   `version` and `description` required, `skills` and `mcpServers` as paths.
+ *
+ * Generated from the same identity — and so from `package.json`'s version — so
+ * they cannot drift.
  */
 export function pluginManifests(id: PluginIdentity): SkillFile[] {
-  const skills = pluginSkillPaths();
-  const common = {
+  const agentPlugins = {
+    $schema: AGENT_PLUGINS_SCHEMA,
     name: id.name,
     version: id.version,
     description: id.description,
-    license: id.license,
+    author: id.author,
     homepage: id.homepage,
+    repository: id.repository,
+    license: id.license,
     keywords: id.keywords,
-    skills,
+  };
+  const tessl = {
+    name: `${TESSL_WORKSPACE}/${id.name}`,
+    version: id.version,
+    description: id.description,
+    author: id.author,
+    homepage: id.homepage,
+    repository: id.repository,
+    license: id.license,
+    skills: "./skills/",
+    mcpServers: ".mcp.json",
   };
   return [
-    { path: "plugin.json", contents: JSON.stringify(common, null, 2) + "\n" },
+    { path: "plugin.json", contents: JSON.stringify(agentPlugins, null, 2) + "\n" },
     {
       path: path.join(".tessl-plugin", "plugin.json"),
-      contents: JSON.stringify({ ...common, displayName: id.displayName }, null, 2) + "\n",
+      contents: JSON.stringify(tessl, null, 2) + "\n",
     },
   ];
+}
+
+/** The Agent Plugins 1.0.0 name: lower-case letters, digits, dots and hyphens. */
+const AGENT_PLUGINS_NAME = /^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
+
+/**
+ * What an Agent Plugins 1.0.0 host would refuse in a root `plugin.json`: the
+ * rules its schema publishes. Empty when the manifest is valid.
+ */
+export function agentPluginsFindings(m: Record<string, unknown>): string[] {
+  const out: string[] = [];
+  if (m.$schema !== AGENT_PLUGINS_SCHEMA) out.push(`$schema must be ${AGENT_PLUGINS_SCHEMA}`);
+  const name = typeof m.name === "string" ? m.name : "";
+  if (!name || name.length > 64 || !AGENT_PLUGINS_NAME.test(name)) {
+    out.push(`name "${String(m.name)}" is not an Agent Plugins name`);
+  }
+  for (const k of Object.keys(m)) {
+    if (!AGENT_PLUGINS_KEYS.includes(k))
+      out.push(`${k}: a key the Agent Plugins schema does not define`);
+  }
+  for (const k of ["version", "description", "homepage", "repository", "license"]) {
+    if (k in m && typeof m[k] !== "string") out.push(`${k} must be a string`);
+  }
+  if (
+    "keywords" in m &&
+    !(Array.isArray(m.keywords) && m.keywords.every((x) => typeof x === "string"))
+  ) {
+    out.push("keywords must be an array of strings");
+  }
+  if ("author" in m) {
+    const a = m.author as Record<string, unknown> | null;
+    if (!a || typeof a !== "object" || Array.isArray(a)) out.push("author must be an object");
+    else {
+      for (const k of Object.keys(a)) {
+        if (!["name", "email", "url"].includes(k) || typeof a[k] !== "string") {
+          out.push(`author.${k}: not a string name, email or url`);
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * What Tessl would refuse in `.tessl-plugin/plugin.json`, checked against the
+ * plugin folder its paths resolve in. Empty when the manifest is valid.
+ */
+export function tesslFindings(m: Record<string, unknown>, pluginDir: string): string[] {
+  const out: string[] = [];
+  if (typeof m.name !== "string" || !/^[a-z0-9][\w.-]*\/[a-z0-9][\w.-]*$/.test(m.name)) {
+    out.push(`name "${String(m.name)}": a Tessl name is <workspace>/<plugin>`);
+  }
+  if (typeof m.version !== "string" || !/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(m.version)) {
+    out.push(`version "${String(m.version)}" is not a semantic version`);
+  }
+  if (typeof m.description !== "string" || !m.description.trim())
+    out.push("description is required");
+  const paths = (v: unknown) => (Array.isArray(v) ? v : [v]).map(String);
+  if ("skills" in m) {
+    for (const p of paths(m.skills)) {
+      const dir = path.join(pluginDir, p);
+      const skills = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
+      if (!skills.some((s) => fs.existsSync(path.join(dir, s, "SKILL.md")))) {
+        out.push(`skills: ${p} holds no <skill>/SKILL.md`);
+      }
+    }
+  }
+  if ("mcpServers" in m) {
+    if (m.mcpServers !== ".mcp.json" && m.mcpServers !== "./.mcp.json") {
+      out.push(`mcpServers must point at .mcp.json, not hold the servers`);
+    } else {
+      const file = path.join(pluginDir, ".mcp.json");
+      const servers = fs.existsSync(file)
+        ? ((JSON.parse(fs.readFileSync(file, "utf8")).mcpServers || {}) as Record<
+            string,
+            { type?: string }
+          >)
+        : {};
+      for (const [k, v] of Object.entries(servers)) {
+        if (v.type !== "stdio" && v.type !== "http")
+          out.push(`.mcp.json: ${k} states no type (stdio or http)`);
+      }
+    }
+  }
+  for (const k of ["displayName", "keywords"]) {
+    if (k in m) out.push(`${k}: not a Tessl manifest field`);
+  }
+  return out;
 }

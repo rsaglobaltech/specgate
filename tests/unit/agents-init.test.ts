@@ -204,11 +204,14 @@ test("antigravity's MCP config is the same server Claude Code is given", () => {
   assert.equal(parsed.mcpServers["spec-driven"].command, "npx");
 
   const plugin = TOOLS["claude-plugin"].files().find((f: any) => f.path.endsWith(".mcp.json"));
-  assert.deepEqual(
-    parsed.mcpServers,
-    JSON.parse(plugin.contents).mcpServers,
-    "the two hosts must be pointed at the same server"
-  );
+  // The plugin's copy also names the transport, `type: "stdio"`, which Tessl
+  // requires (REQ-550); the server it starts is the same one.
+  const servers = JSON.parse(plugin.contents).mcpServers;
+  for (const s of Object.values(servers) as Array<{ type?: string }>) {
+    assert.equal(s.type, "stdio");
+    delete s.type;
+  }
+  assert.deepEqual(parsed.mcpServers, servers, "the two hosts must be pointed at the same server");
 });
 
 test("every rule file stays under Antigravity's 12,000 character limit", () => {
