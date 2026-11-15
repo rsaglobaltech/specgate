@@ -45,6 +45,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   types — and `npm run contract:check`, on every pull request, fails when any
   of it is gone within a major. Removal needs a deprecation in a minor first.
   See docs/compatibility.md.
+- **Every release's project, read by every build; every release, installed**
+  (REQ-570, REQ-571, REQ-572): a project 0.35.0 wrote is kept under
+  `tests/compat/` and read, migrated and checked by each build; the publish job
+  checks the version against the frozen surface before publishing; a job after
+  it installs the published version from npm, under its dist-tag, and uses it.
 - **npm publishes through trusted publishing** (REQ-556): the publish job
   installs npm 11.5.1 or later and npm authenticates with OIDC before the
   `NPM_TOKEN` secret, which is removed after the first trusted publish

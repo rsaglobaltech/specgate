@@ -1,0 +1,1 @@
+A project as Specgate 0.35.0 (npm) wrote it: `init --yes`, `propose pdf-invoices --kind enhancement`, a delta filled in, and 0.35's lanes under `roles:`. Not edited by hand afterwards; tests/unit/compat.test.ts runs the current CLI on a copy.
