@@ -48,9 +48,11 @@ max_cost_usd: 5
 The harness adds up the `cost` each session reports in its final usage line,
 which `specgate harness events` writes for Claude Code. Once a requirement's
 total reaches the limit, no further session starts for it, whether that is the
-implementer after the tester or a retry. The gate still judges what was
-already written; when it fails, the requirement fails with `budget_exceeded`,
-what it spent and the limit. An agent that reports no cost counts as free, and
+implementer after the tester or a retry. When the limit is reached between the
+tester and the implementer, the implementer does not start and the requirement
+fails with `budget_exceeded`, what it spent and the limit, without being gated.
+When it is reached by an attempt's last session, the gate still judges that
+attempt; no retry starts after it. An agent that reports no cost counts as free, and
 the run warns `cost_unknown` once per requirement. `--budget-seconds` and
 `--max-requirements` limit the whole run; this limits one requirement.
 
@@ -62,8 +64,10 @@ gate meaningless. By default it may not change `spec.md`, `AGENTS.md`,
 `harness.config.yaml`. Nor may it change the files that steer an agent:
 `CLAUDE.md`, `.claude/**`, `.cursor/**`, `.github/**` and `.mcp.json`. An
 attempt that does fails with `agent_touched_protected_path`, and the next
-attempt is shown the diff. A new feature file is allowed, because a requirement
-may need one. A new instruction file is not: a `CLAUDE.md` or a hook the agent
+attempt is shown the files, with the diff of any it edited. A new file under
+the contract paths is allowed — a feature file, a file under `docs/specs/` —
+because a requirement may need one; editing or deleting an existing one is
+not. A new instruction file is not allowed either: a `CLAUDE.md` or a hook the agent
 creates steers the next session as surely as an edited one.
 `protected_paths:` replaces the list, and `allow_paths:` names exceptions.
 
