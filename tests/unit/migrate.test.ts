@@ -167,7 +167,7 @@ test("REQ-328 SCN-328a: the report of a real run", () => {
   const m = json(r).migrate;
   assert.deepEqual(
     m.steps.map((s: { id: string }) => s.id),
-    ["layers", "config", "roles"],
+    ["layers", "config", "lanes", "roles"],
     "the steps are one ordered table"
   );
   assert.ok(
@@ -187,7 +187,7 @@ test("REQ-328 SCN-328a: the report of a real run", () => {
   const { MIGRATION_1_0 } = require("../../scripts/lib/migrate");
   assert.deepEqual(
     MIGRATION_1_0.map((s: { id: string }) => s.id),
-    ["layers", "config", "roles"]
+    ["layers", "config", "lanes", "roles"]
   );
 });
 
@@ -200,4 +200,27 @@ test("REQ-329 SCN-329a: a 0.27 project opened with 1.0", () => {
   assert.equal(sg(dir, "migrate", "1.0").status, 0);
   assert.doesNotMatch(sg(dir, "status").stdout, /specgate migrate 1\.0/);
   assert.equal(json(sg(dir, "status", "--json")).migrate, undefined);
+});
+
+test("REQ-559 SCN-559a: a 0.35 project's lanes", () => {
+  const dir = project027();
+  fs.writeFileSync(
+    path.join(dir, "harness.config.yaml"),
+    "harness_version: 1\nroles: [tester, implementer]   # 0.35\nmax_cost_usd: 5\n"
+  );
+  git(dir, "add", "-A");
+  git(dir, "commit", "-qm", "0.35 lanes");
+  const r = sg(dir, "migrate", "1.0", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const text = fs.readFileSync(path.join(dir, "harness.config.yaml"), "utf8");
+  assert.equal(
+    text,
+    "harness_version: 1\nlanes: [tester, implementer]   # 0.35\nmax_cost_usd: 5\n",
+    "the line renamed, everything else as it was"
+  );
+  const roles = json(r).migrate.steps.find((s: { id: string }) => s.id === "roles");
+  assert.ok(
+    roles.manual.some((m: string) => /Name who holds product/.test(m)),
+    "a roles list is not people: the report still asks for them"
+  );
 });

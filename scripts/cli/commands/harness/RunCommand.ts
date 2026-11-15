@@ -1860,7 +1860,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     const steps = planAttempt(attempt, {
       attemptProfiles: settings.attemptProfiles,
       reviewProfile: settings.reviewProfile || null,
-      roles: settings.roles || [],
+      roles: settings.lanes || [],
     });
 
     let stepFailed = false;
@@ -1957,7 +1957,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           env: {
             SPECGATE_REQ: req.requirement,
             SPECGATE_ATTEMPT: String(attempt),
-            ...(step.role ? { SPECGATE_ROLE: step.role } : {}),
+            ...(step.role ? { SPECGATE_LANE: step.role } : {}),
             [EVENTS_FILE_VAR]: eventsFile,
             [EVENTS_REQ_VAR]: req.requirement,
             [EVENTS_ATTEMPT_VAR]: String(attempt),
