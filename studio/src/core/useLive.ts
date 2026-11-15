@@ -6,23 +6,26 @@
 import { useEffect, useState } from "preact/hooks";
 import type { Connection, LiveData } from "../sections/Live";
 
-export function useLive(on: boolean): { data: LiveData | null; connection: Connection } {
-  const [data, setData] = useState<LiveData | null>(null);
+export function useLive<T = LiveData>(
+  on: boolean,
+  url = "/live/stream"
+): { data: T | null; connection: Connection } {
+  const [data, setData] = useState<T | null>(null);
   const [connection, setConnection] = useState<Connection>("connecting");
   useEffect(() => {
     if (!on || typeof EventSource === "undefined") return;
-    const stream = new EventSource("/live/stream");
+    const stream = new EventSource(url);
     stream.onopen = () => setConnection("open");
     stream.onerror = () => setConnection("lost");
     stream.addEventListener("live", (e) => {
       try {
-        setData(JSON.parse((e as MessageEvent<string>).data) as LiveData);
+        setData(JSON.parse((e as MessageEvent<string>).data) as T);
         setConnection("open");
       } catch {
         /* a partial message: the next one is whole */
       }
     });
     return () => stream.close();
-  }, [on]);
+  }, [on, url]);
   return { data, connection };
 }

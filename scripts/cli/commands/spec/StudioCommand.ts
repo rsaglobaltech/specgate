@@ -58,10 +58,8 @@ import { BaseCommand } from "../../../lib/command";
 
 import { c } from "../../../lib/ui";
 import { readLive, liveSignature } from "../../../lib/live-model";
-import { livePage } from "../../../lib/live-page";
 import { loadWorkspace } from "../../../lib/workspace";
 import { readWorkspaceLive, workspaceLiveSignature } from "../../../lib/workspace-live";
-import { workspaceLivePage } from "../../../lib/workspace-live-page";
 import { requirementDetail, liveMatrix } from "../../../lib/live-detail";
 import { promptFileFor } from "../../../lib/harness-events";
 
@@ -817,8 +815,13 @@ export class StudioCommand extends BaseCommand {
         if (rest === "/") {
           res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
           // No token: the member's view reads, its own studio writes.
+          // REQ-566: the studio's Live, on this member's data; read only.
           res.end(
-            livePage(name, "", { role: member.role, back: "/live", workspace: ws.config.name })
+            studioShell(name, "", "live", {
+              workspace: ws.config.name,
+              liveBase: `/live/repo/${encodeURIComponent(name)}`,
+              role: member.role,
+            })
           );
           return;
         }
@@ -832,7 +835,10 @@ export class StudioCommand extends BaseCommand {
       }
       if (ws && (url === "/live" || url === "/live/")) {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(workspaceLivePage(ws.config.name));
+        // REQ-566: the studio's Live, on the workspace.
+        res.end(
+          studioShell(path.basename(projectDir), token, "live", { workspace: ws.config.name })
+        );
         return;
       }
       // REQ-433: the live view is the app's Live section.
@@ -868,11 +874,7 @@ export class StudioCommand extends BaseCommand {
         });
         return;
       }
-      if (url === "/live" || url === "/live/") {
-        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(livePage(path.basename(projectDir), token));
-        return;
-      }
+
       if (projectLive(projectDir, url, req, res)) return;
       if (req.url === "/mermaid.min.js") {
         const mermaidPath = getMermaidPath();

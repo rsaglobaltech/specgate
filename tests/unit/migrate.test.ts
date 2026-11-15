@@ -224,3 +224,51 @@ test("REQ-559 SCN-559a: a 0.35 project's lanes", () => {
     "a roles list is not people: the report still asks for them"
   );
 });
+
+test("REQ-567 SCN-567a: a 0.35 project, moved to 1.0 in one command", () => {
+  const dir = project027();
+  // What 0.35 added: a change's kind and its approval, the lanes under roles:,
+  // and an agent script that reads the lane from SPECGATE_ROLE.
+  const cfg = path.join(dir, CHANGE, "change.yaml");
+  fs.writeFileSync(cfg, fs.readFileSync(cfg, "utf8") + "kind: bug\napproved: 2026-11-14\n");
+  fs.writeFileSync(
+    path.join(dir, "harness.config.yaml"),
+    "harness_version: 1\ntest_cmd: npm test\nroles: [tester, implementer]\n"
+  );
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "scripts", "agent.sh"),
+    '#!/bin/sh\necho "lane: $SPECGATE_ROLE"\n'
+  );
+  git(dir, "add", "-A");
+  git(dir, "commit", "-qm", "0.35");
+
+  // Opened with 1.0: status names the migration, the config is broken, and why.
+  const before = json(sg(dir, "status", "--json"));
+  assert.equal(before.migrate.config, true);
+  assert.deepEqual(before.migrate.changes, ["add-rates"]);
+  assert.equal(sg(dir, "config", "list", "--json").status, 1);
+
+  const r = sg(dir, "migrate", "1.0", "--json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const steps = json(r).migrate.steps;
+  const lanes = steps.find((s: { id: string }) => s.id === "lanes");
+  assert.ok(
+    lanes.manual.some((m: string) => /scripts\/agent\.sh reads SPECGATE_ROLE/.test(m)),
+    "the script to change is named"
+  );
+
+  // After: the change is layered and keeps its kind, the config loads, nothing is left.
+  const yaml = fs.readFileSync(cfg, "utf8");
+  assert.match(yaml, /^schema: layered$/m);
+  assert.match(yaml, /^kind: bug$/m);
+  assert.ok(fs.existsSync(path.join(dir, CHANGE, "discover.md")));
+  assert.match(
+    fs.readFileSync(path.join(dir, "harness.config.yaml"), "utf8"),
+    /^lanes: \[tester, implementer\]$/m
+  );
+  assert.equal(sg(dir, "config", "list", "--json").status, 0);
+  git(dir, "add", "-A");
+  git(dir, "commit", "-qm", "migrated");
+  assert.equal(json(sg(dir, "status", "--json")).migrate, undefined);
+});

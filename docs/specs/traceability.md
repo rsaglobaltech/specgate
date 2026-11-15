@@ -460,6 +460,8 @@
 | REQ-563 | SCN-563a | `features/daily-surface/REQ-563.feature` | - | - | - | - | - | tests/unit/contract-fixes.test.ts | Implemented |
 | REQ-564 | SCN-564a | `features/change-lifecycle/REQ-564.feature` | - | - | - | - | - | tests/unit/contract-fixes.test.ts | Implemented |
 | REQ-565 | SCN-565a | `features/daily-surface/REQ-565.feature` | - | - | - | - | - | tests/unit/contract-fixes.test.ts | Implemented |
+| REQ-566 | SCN-566a | `features/workspace/REQ-566.feature` | - | - | - | - | - | tests/unit/studio-workspace-live.test.ts | Implemented |
+| REQ-567 | SCN-567a | `features/change-lifecycle/REQ-567.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
