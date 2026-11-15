@@ -39,7 +39,8 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            # REQ-281: a release candidate is tagged with its version only.
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
 
       - name: Build and push
         uses: docker/build-push-action@v7
@@ -55,4 +56,4 @@ jobs:
 
       - name: Smoke test the pushed image
         run: |
-          docker run --rm ghcr.io/${{ github.repository_owner }}/specgate:latest --version
+          docker run --rm ghcr.io/${{ github.repository_owner }}/specgate:${{ steps.meta.outputs.version }} --version

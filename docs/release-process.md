@@ -33,16 +33,14 @@ purpose. Public npm is the default; routing the scope with
 
 The package was renamed from `create-spec-driven-app` to
 `@rsaglobaltech/specgate` in
-[ADR-0024](specs/adr/0024-the-tool-is-renamed-the-format-is-not.md). The old
-package is deprecated, not unpublished — every version stays installable, so a
-pinned dependency keeps resolving with a warning. The unscoped name `specgate`
-is unavailable: npm compares names without punctuation, so it collides with
-`spec-gate` and the registry answers `403`, which reads like a token problem and
-is not one. Docker images moved to `ghcr.io/<owner>/specgate`; tags published
-under the old image name are never rebuilt. Since
-[ADR-0032](specs/adr/0032-one-name-everywhere.md) nothing else keeps the old
-name: no binary alias, and the on-disk format, cache and environment variables
-are all `specgate`.
+[ADR-0024](specs/adr/0024-the-tool-is-renamed-the-format-is-not.md); the old
+package is deprecated, not unpublished. The unscoped name `specgate` is
+unavailable: npm compares names without punctuation, so it collides with
+`spec-gate` and answers `403`, which reads like a token problem and is not one.
+Docker images live at `ghcr.io/<owner>/specgate`. Since
+[ADR-0032](specs/adr/0032-one-name-everywhere.md) the format, cache and
+environment variables are all `specgate`; the package installs `specgate`, its
+short alias `sgate` (ADR-0042) and, for old links, `create-spec-driven-app`.
 
 ## Versioning
 
@@ -201,9 +199,22 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
 ## Pre-releases
 
-Run `publish-github-packages.yml` manually (`workflow_dispatch`) with
-`dist_tag: beta` and a version like `0.2.0-beta.1`. Pre-releases never go to
-the public npm registry with the `latest` tag.
+A version with a prerelease part (`1.0.0-rc.1`, cut from the `next/1.0` branch,
+never from `main`) is tagged like any release: the workflows publish it under
+the dist-tag `next` and tag its image with the version only, never `latest`
+(REQ-281). Its GitHub release is created with `--prerelease`.
+
+## Trusted publishing
+
+`publish-npm.yml` is ready for npm's trusted publishing (REQ-556): npm tries
+OIDC before the `NPM_TOKEN` secret. Switch once, **right before a release** — a
+trusted publisher that has not published within two days expires:
+
+1. npmjs.com, the package's **Settings → Trusted Publisher → GitHub Actions**:
+   `rsaglobaltech` / `specgate` / `publish-npm.yml`, no environment.
+2. Tag and push the release; npmjs.com shows it built by `publish-npm.yml`.
+3. Delete the `NPM_TOKEN` secret and the `NODE_AUTH_TOKEN` lines, then in
+   **Settings → Publishing access** choose "disallow tokens".
 
 ## Before you tag — the gate
 
@@ -232,14 +243,6 @@ Check the tarball carries what `files` in `package.json` lists — `bin/`,
 `dist/packages/mcp-spec-driven/src/`, `templates/`, `examples/`, `vendor/`,
 `README.md` and `CHANGELOG.md` — and nothing else — no `.local`, no `dist/packages/**` for
 unpublished packages, no coverage output.
-
-## Verifying a published release
-
-```bash
-npx @rsaglobaltech/specgate@X.Y.Z --version
-npx @rsaglobaltech/specgate@X.Y.Z init --yes --dry-run   # in an empty directory
-npx @rsaglobaltech/specgate@X.Y.Z draft                   # explains the brief it needs
-```
 
 ## After the release
 

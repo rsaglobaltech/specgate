@@ -213,6 +213,7 @@
 | REQ-278 | SCN-278a | `features/harness/REQ-278.feature` | - | - | - | - | - | tests/unit/agent-stream.test.ts | Implemented |
 | REQ-279 | SCN-279a | `features/harness/REQ-279.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
 | REQ-280 | SCN-280a | `features/studio/REQ-280.feature` | - | - | - | - | - | tests/unit/harness-run7.test.ts | Implemented |
+| REQ-281 | SCN-281a | `features/trusted-gate/REQ-281.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
 | REQ-420 | SCN-420a | `features/agent-integration/REQ-420.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 | REQ-421 | SCN-421a | `features/agent-integration/REQ-421.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
 | REQ-422 | SCN-422a | `features/agent-integration/REQ-422.feature` | - | - | - | - | - | tests/unit/agent-guards.test.ts | Implemented |
@@ -340,6 +341,7 @@
 | REQ-553 | SCN-553a | `features/studio/REQ-553.feature` | - | - | - | - | - | tests/unit/studio-team.test.ts | Implemented |
 | REQ-554 | SCN-554a | `features/studio/REQ-554.feature` | - | - | - | - | - | tests/unit/studio-team.test.ts | Implemented |
 | REQ-555 | SCN-555a | `features/daily-surface/REQ-555.feature` | - | - | - | - | - | tests/unit/sgate-alias.test.ts | Implemented |
+| REQ-556 | SCN-556a | `features/trusted-gate/REQ-556.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
