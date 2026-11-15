@@ -52,7 +52,8 @@ skills folder of each tool you name with `--tool claude|cursor|gemini` (or,
 without `--tool`, of each tool whose folder the project already has). A
 `SKILL.md` you changed is kept and reported as `skill_kept`; `--force` replaces
 it. The Claude Code plugin carries the same skills, with an Agent Plugins
-`plugin.json` and a Tessl `.tessl-plugin/plugin.json`.
+`plugin.json` (schema 1.0.0) and a Tessl `.tessl-plugin/plugin.json`
+(`rsaglobaltech/specgate`); both find the skills in its `skills/` folder.
 
 The slash commands run the same commands you type in the terminal. An archive
 the agent tries before every requirement is Implemented is refused, as it is

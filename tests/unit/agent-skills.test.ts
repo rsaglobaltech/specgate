@@ -17,7 +17,12 @@ const ROOT_DIR = require("node:path").resolve(
 );
 const CLI = path.join(ROOT_DIR, "bin", "specgate.js");
 const { STEPS } = require("../../scripts/agents/commands");
-const { skillBody, skillDirsFor } = require("../../scripts/agents/skills");
+const {
+  agentPluginsFindings,
+  skillBody,
+  skillDirsFor,
+  tesslFindings,
+} = require("../../scripts/agents/skills");
 const { pluginFiles, PLUGIN_DIR } = require("../../scripts/plugin/sync-claude-plugin");
 
 const madeDirs: string[] = [];
@@ -129,6 +134,7 @@ test("REQ-550 SCN-550a: the committed plugin is what the generator renders, at t
     if (now !== f.contents) differs.push(`packages/claude-plugin/${rel}`);
   }
   assert.deepEqual(differs, [], `out of date — run: npm run plugin:sync`);
+  const name = (m: { name: string }) => m.name.replace(/^[^/]+\//, "");
   for (const manifest of [
     ".claude-plugin/plugin.json",
     "plugin.json",
@@ -136,19 +142,60 @@ test("REQ-550 SCN-550a: the committed plugin is what the generator renders, at t
   ]) {
     const m = JSON.parse(fs.readFileSync(path.join(PLUGIN_DIR, manifest), "utf8"));
     assert.equal(m.version, version, manifest);
-    assert.equal(m.name, "specgate", manifest);
+    assert.equal(name(m), "specgate", manifest);
+    assert.equal(m.repository, "https://github.com/rsaglobaltech/specgate", manifest);
+    assert.ok(m.author && m.author.name, `${manifest}: author`);
   }
 });
 
-test("REQ-550: the manifests list every skill the plugin carries", () => {
-  for (const manifest of ["plugin.json", ".tessl-plugin/plugin.json"]) {
-    const m = JSON.parse(fs.readFileSync(path.join(PLUGIN_DIR, manifest), "utf8"));
-    assert.deepEqual(
-      m.skills,
-      STEPS.map((s: { name: string }) => `skills/specgate-${s.name}`)
-    );
-    for (const s of m.skills) {
-      assert.ok(fs.existsSync(path.join(PLUGIN_DIR, s, "SKILL.md")), `${manifest}: ${s}`);
-    }
-  }
+test("REQ-550: each committed manifest is valid against its own format", () => {
+  const read = (f: string) => JSON.parse(fs.readFileSync(path.join(PLUGIN_DIR, f), "utf8"));
+  assert.deepEqual(agentPluginsFindings(read("plugin.json")), [], "plugin.json");
+  assert.deepEqual(
+    tesslFindings(read(".tessl-plugin/plugin.json"), PLUGIN_DIR),
+    [],
+    ".tessl-plugin/plugin.json"
+  );
+  assert.equal(read(".tessl-plugin/plugin.json").name, "rsaglobaltech/specgate");
+  // Every skill an Agent Plugins host or Tessl discovers is one of the loop's steps.
+  const found = fs
+    .readdirSync(path.join(PLUGIN_DIR, "skills"))
+    .filter((d: string) => fs.existsSync(path.join(PLUGIN_DIR, "skills", d, "SKILL.md")))
+    .sort();
+  assert.deepEqual(found, STEPS.map((s: { name: string }) => `specgate-${s.name}`).sort());
+});
+
+test("REQ-550 SCN-550b: a manifest a registry would refuse", () => {
+  const read = (f: string) => JSON.parse(fs.readFileSync(path.join(PLUGIN_DIR, f), "utf8"));
+  const withSkills = { ...read("plugin.json"), skills: ["skills/specgate-apply"] };
+  assert.deepEqual(agentPluginsFindings(withSkills), [
+    "skills: a key the Agent Plugins schema does not define",
+  ]);
+  const noSchema = { ...read("plugin.json") };
+  delete noSchema.$schema;
+  assert.match(agentPluginsFindings(noSchema).join("\n"), /\$schema must be/);
+  assert.match(
+    agentPluginsFindings({ ...read("plugin.json"), name: "Spec Gate" }).join("\n"),
+    /not an Agent Plugins name/
+  );
+
+  const bare = { ...read(".tessl-plugin/plugin.json"), name: "specgate" };
+  assert.deepEqual(tesslFindings(bare, PLUGIN_DIR), [
+    'name "specgate": a Tessl name is <workspace>/<plugin>',
+  ]);
+  const inline = { ...read(".tessl-plugin/plugin.json"), mcpServers: { x: {} } };
+  assert.match(tesslFindings(inline, PLUGIN_DIR).join("\n"), /point at \.mcp\.json/);
+  const typeless = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-tessl-"));
+  fs.writeFileSync(
+    path.join(typeless, ".mcp.json"),
+    JSON.stringify({ mcpServers: { s: { command: "x" } } })
+  );
+  assert.deepEqual(
+    tesslFindings(
+      { name: "a/b", version: "1.0.0", description: "d", mcpServers: ".mcp.json" },
+      typeless
+    ),
+    [".mcp.json: s states no type (stdio or http)"]
+  );
+  fs.rmSync(typeless, { recursive: true, force: true });
 });
