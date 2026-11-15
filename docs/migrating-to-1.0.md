@@ -93,6 +93,16 @@ repository of the workspace, not an `unknown_dependency`: the workspace
 rename it. Then, for a product of several repositories, see
 [Workspace](workspace.md).
 
+### The tester and implementer sessions are `lanes:` (from 0.35)
+
+0.35 wrote them as `roles: [tester, implementer]` in `harness.config.yaml`. In
+1.0 `roles:` names the people who approve each layer, so the sessions moved to
+`lanes: [tester, implementer]`, and each one gets `SPECGATE_LANE` instead of
+`SPECGATE_ROLE` (REQ-559).
+
+**migrate does:** renames that one line to `lanes:`; nothing else in the file changes.
+**You do:** an agent script that reads `SPECGATE_ROLE` reads `SPECGATE_LANE`.
+
 ### Configuration versions
 
 No configuration file changes version in 1.0 so far. The migration checks each

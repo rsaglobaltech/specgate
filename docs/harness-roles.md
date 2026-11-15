@@ -1,8 +1,9 @@
-# Roles, budget and protected paths
+# Lanes, roles and limits
 
-Three limits on what the harness's agent may do: split the work so no session
-grades its own tests, cap what one requirement may cost, and keep the agent
-away from the files that define its contract and its instructions.
+What the harness's agent may do, and who decides: split the work into lanes so
+no session grades its own tests, cap what one requirement may cost, keep the
+agent away from the files that define its contract, and wait for the people who
+hold each role to approve.
 
 **You need:** a project where `specgate harness run` already works
 ([The harness](harness.md), [Agent setup](agent-setup.md)).
@@ -10,12 +11,12 @@ away from the files that define its contract and its instructions.
 ## A tester and an implementer
 
 One agent that writes both the code and the tests that judge it can make the
-tests agree with whatever it wrote. `roles:` splits each attempt into two
+tests agree with whatever it wrote. `lanes:` splits each attempt into two
 sessions, in this order:
 
 ```yaml
 # harness.config.yaml
-roles: [tester, implementer]
+lanes: [tester, implementer]
 ```
 
 1. The **tester** writes the failing tests the requirement's scenarios call
@@ -31,12 +32,14 @@ test is a file the derived matrix counts as one: a name such as `a.test.ts`,
 `test_a.py`, `a_test.go` or `ATest.java`, or a file under `test/`, `tests/`,
 `src/test/` or `e2e/`.
 
-Each session gets `SPECGATE_ROLE` (`tester` or `implementer`) in its
+Each session gets `SPECGATE_LANE` (`tester` or `implementer`) in its
 environment, so one agent command can serve both. The run record names both
-roles for each attempt. `roles:` combines with `attempt_profiles`, and the
-profile of the attempt runs both roles. It also combines with `review_profile`,
+lanes for each attempt. `lanes:` combines with `attempt_profiles`, and the
+profile of the attempt runs both lanes. It also combines with `review_profile`,
 whose reviewer still runs first on a retry. The only value accepted is
-`[tester, implementer]`.
+`[tester, implementer]`. 0.35 called this key `roles:`; 1.0 refuses the old
+spelling and `specgate migrate 1.0` renames it, because `roles:` now names
+people (below).
 
 ## A budget per requirement
 

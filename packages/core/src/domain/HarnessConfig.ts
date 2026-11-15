@@ -52,7 +52,7 @@ export interface HarnessSettings {
    * REQ-532: `tester` then `implementer` as separate sessions of each attempt,
    * each kept to its lane (REQ-533). Empty means one session per attempt.
    */
-  roles?: Array<"tester" | "implementer">;
+  lanes?: Array<"tester" | "implementer">;
   /** REQ-535: what one requirement's sessions may cost, in USD. 0 means no limit. */
   maxCostUsd?: number;
   /**

@@ -453,6 +453,7 @@
 | REQ-556 | SCN-556a | `features/trusted-gate/REQ-556.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
 | REQ-557 | SCN-557a | `features/daily-surface/REQ-557.feature` | - | - | - | - | - | tests/unit/removed-in-flight.test.ts | Implemented |
 | REQ-558 | SCN-558a | `features/daily-surface/REQ-558.feature` | - | - | - | - | - | tests/unit/removed-in-flight.test.ts | Implemented |
+| REQ-559 | SCN-559a | `features/harness/REQ-559.feature` | - | - | - | - | - | tests/unit/migrate.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

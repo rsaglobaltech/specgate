@@ -211,7 +211,7 @@ named by `review_profile` must declare `advisory: true`, or the harness refuses
 to start. `.harness/runs/<timestamp>.json` names the roles that ran each
 attempt, and the branch keeps one prompt per role (`attempt-2-reviewer.md`,
 `attempt-2-implementer.md`). A tester and an implementer as separate sessions:
-[Roles, budget and protected paths](harness-roles.md).
+[Lanes, roles and limits](harness-roles.md).
 
 ## Show the agent what "accepted" looks like
 

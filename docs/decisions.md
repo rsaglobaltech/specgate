@@ -97,4 +97,4 @@ evidence it was read from (a dependency in a manifest, or a folder).
 ## Next
 
 - [The harness](harness.md)
-- [Roles, budget and protected paths](harness-roles.md)
+- [Lanes, roles and limits](harness-roles.md)

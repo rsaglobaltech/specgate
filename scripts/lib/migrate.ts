@@ -161,6 +161,33 @@ const configStep: MigrationStep = {
 };
 
 /**
+ * REQ-559: 0.35 wrote the tester and implementer sessions as
+ * `roles: [tester, implementer]`; 1.0 calls them `lanes:` and keeps `roles:`
+ * for people. The line is renamed, nothing else in the file is touched.
+ */
+const lanesStep: MigrationStep = {
+  id: "lanes",
+  title: "Lanes, not roles",
+  plan(projectDir) {
+    const file = path.join(projectDir, "harness.config.yaml");
+    const text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+    const line = /^roles:(\s*\[\s*tester\s*,\s*implementer\s*\][^\n]*)$/m.exec(text);
+    if (!line) return { actions: [], manual: [] };
+    return {
+      actions: [
+        {
+          kind: "edit",
+          file: "harness.config.yaml",
+          content: text.replace(line[0], `lanes:${line[1]}`),
+          why: "roles: [tester, implementer] → lanes: (roles: now names people)",
+        },
+      ],
+      manual: [],
+    };
+  },
+};
+
+/**
  * ADR-0045: who holds each role is a person's decision, so nothing is written;
  * the report says what to name, and that approvals now gate the harness.
  */
@@ -171,7 +198,8 @@ const rolesStep: MigrationStep = {
     const file = path.join(projectDir, "harness.config.yaml");
     const text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
     const manual: string[] = [];
-    if (!/^roles:/m.test(text)) {
+    // A `roles:` list is 0.35's lanes, renamed by the step before: not people.
+    if (!/^roles:(?!\s*\[)/m.test(text)) {
       manual.push(
         "Name who holds product, architect and developer under `roles:` in harness.config.yaml (ADR-0045); until then a role is open to anyone."
       );
@@ -186,7 +214,7 @@ const rolesStep: MigrationStep = {
 };
 
 /** The 1.0 migration, in order. A later 1.0 step is appended here. */
-export const MIGRATION_1_0: MigrationStep[] = [layersStep, configStep, rolesStep];
+export const MIGRATION_1_0: MigrationStep[] = [layersStep, configStep, lanesStep, rolesStep];
 
 export interface PlannedStep extends StepPlan {
   id: string;

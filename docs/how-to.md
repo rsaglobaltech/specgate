@@ -30,7 +30,7 @@ walk up from the current directory looking for `spec.md`, `.specops.lock` or
 | Wire it into editors, agents, hooks and CI | [Automation](automation.md) |
 | Drive it from Claude, Cursor or Copilot | [Agents](agents.md) |
 | Hand requirements to an agent, and watch it work at `/live` | [The harness](harness.md) |
-| Split the harness into a tester and an implementer, or cap its cost | [Roles, budget and protected paths](harness-roles.md) |
+| Split the harness into a tester and an implementer, or cap its cost | [Lanes, roles and limits](harness-roles.md) |
 | Install the loop as Agent Skills | [Agents](agents.md#wire-it-in) |
 | Record architecture decisions, what the agent may decide, and the stack | [Decisions](decisions.md) |
 | Keep a glossary, numbered business rules and domain diagrams | [Domain language](domain-language.md) |

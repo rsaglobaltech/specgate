@@ -11,6 +11,11 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ### Changed
 
+- **The tester and implementer sessions are `lanes:`** (REQ-532, REQ-559):
+  `lanes: [tester, implementer]` in `harness.config.yaml`, and each session
+  gets `SPECGATE_LANE`. `roles:` names the people who approve each layer
+  (ADR-0045); a `roles:` list — 0.35's spelling — is refused with the fix, and
+  `specgate migrate 1.0` renames it.
 - **npm publishes through trusted publishing** (REQ-556): the publish job
   installs npm 11.5.1 or later and npm authenticates with OIDC before the
   `NPM_TOKEN` secret, which is removed after the first trusted publish

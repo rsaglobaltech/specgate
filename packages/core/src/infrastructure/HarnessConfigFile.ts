@@ -64,7 +64,7 @@ const KNOWN_KEYS = new Set([
   "attempt_profiles",
   "review_profile",
   // REQ-532, REQ-535: the work split into lanes, and a cost ceiling per requirement.
-  "roles",
+  "lanes",
   "max_cost_usd",
   "protected_paths",
   "allow_paths",
@@ -258,7 +258,17 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
     }
   }
 
-  if (parsed.roles !== undefined) config.roles = readRoles(parsed.roles);
+  // REQ-559: the tester and implementer sessions are `lanes:`; `roles:` names
+  // who holds product, architect and developer (ADR-0045). 0.35 wrote the
+  // lanes under `roles:`, as a list: refused with the way out, never guessed.
+  if (Array.isArray(parsed.roles)) {
+    throw new Error(
+      `Invalid ${HARNESS_CONFIG_FILE}: roles is a list.\n` +
+        "Fix: the tester and implementer sessions are `lanes: [tester, implementer]` since 1.0 — " +
+        "rename the key, or run `specgate migrate 1.0`. `roles:` names who holds product, architect and developer."
+    );
+  }
+  if (parsed.lanes !== undefined) config.lanes = readLanes(parsed.lanes);
 
   if (parsed.max_cost_usd !== undefined) {
     const usd = Number(parsed.max_cost_usd);
@@ -376,7 +386,7 @@ export function resolveHarnessSettings(
     reviewProfile: file.reviewProfile || "",
     // From the file only, like the ladder: how the work is split and what it
     // may cost are the team's decisions, not a flag typed to get past them.
-    roles: file.roles || [],
+    lanes: file.lanes || [],
     maxCostUsd: file.maxCostUsd || 0,
     // From the file only, like the role ladder: which agent is allowed to
     // attack the work is a repository decision, not a flag typed per run.
@@ -400,16 +410,16 @@ export function resolveHarnessSettings(
 }
 
 /**
- * `roles:` (REQ-532). One value is accepted, `[tester, implementer]`: the
+ * `lanes:` (REQ-532, REQ-559). One value is accepted, `[tester, implementer]`: the
  * tester writes the tests first, so the implementer has something to make pass
  * and nothing it may weaken. Any other list is refused rather than guessed at.
  */
-function readRoles(value: unknown): Array<"tester" | "implementer"> {
+function readLanes(value: unknown): Array<"tester" | "implementer"> {
   const names = Array.isArray(value) ? value.map((v) => String(v).trim()) : [];
   if (names.length !== 2 || names[0] !== "tester" || names[1] !== "implementer") {
     throw new Error(
-      `Invalid ${HARNESS_CONFIG_FILE}: roles must be [tester, implementer].\n` +
-        "Fix: write `roles: [tester, implementer]`, or remove the key for one session per attempt."
+      `Invalid ${HARNESS_CONFIG_FILE}: lanes must be [tester, implementer].\n` +
+        "Fix: write `lanes: [tester, implementer]`, or remove the key for one session per attempt."
     );
   }
   return ["tester", "implementer"];

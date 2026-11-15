@@ -70,7 +70,7 @@ function project(extra: string[] = []) {
   return { parent, dir };
 }
 
-/** An agent from a script body; `ROLE` is `SPECGATE_ROLE`, `LOG` a file outside the worktree. */
+/** An agent from a script body; `ROLE` is `SPECGATE_LANE`, `LOG` a file outside the worktree. */
 function agent(parent: string, body: string[]) {
   const file = path.join(parent, `agent-${Math.random().toString(36).slice(2)}.js`);
   fs.writeFileSync(
@@ -78,7 +78,7 @@ function agent(parent: string, body: string[]) {
     [
       'const fs = require("node:fs");',
       'const path = require("node:path");',
-      'const ROLE = process.env.SPECGATE_ROLE || "";',
+      'const ROLE = process.env.SPECGATE_LANE || "";',
       `const LOG = ${JSON.stringify(path.join(parent, "roles.log"))};`,
       "const put = (rel, text) => { fs.mkdirSync(path.dirname(rel), { recursive: true }); fs.writeFileSync(rel, text); };",
       ...body,
@@ -109,7 +109,7 @@ function attemptsOf(dir: string) {
     });
 }
 
-const ROLES = ["", "roles: [tester, implementer]", ""];
+const ROLES = ["", "lanes: [tester, implementer]", ""];
 
 // ── REQ-532 ─────────────────────────────────────────────────────────────────
 
@@ -130,12 +130,24 @@ test("REQ-532: planAttempt gives one step per role, after the reviewer", () => {
   assert.equal(planAttempt(1, {}).length, 1);
 });
 
-test("REQ-532: roles must be [tester, implementer]", () => {
+test("REQ-532, REQ-559: lanes must be [tester, implementer]; a roles list is refused", () => {
   const dir = tmp();
-  fs.writeFileSync(path.join(dir, "harness.config.yaml"), "roles: [implementer, tester]\n");
-  assert.throws(() => readHarnessConfig(dir), /roles must be \[tester, implementer\]/);
+  fs.writeFileSync(path.join(dir, "harness.config.yaml"), "lanes: [implementer, tester]\n");
+  assert.throws(() => readHarnessConfig(dir), /lanes must be \[tester, implementer\]/);
+  fs.writeFileSync(path.join(dir, "harness.config.yaml"), "lanes: [tester, implementer]\n");
+  assert.deepEqual(readHarnessConfig(dir).lanes, ["tester", "implementer"]);
+  // 0.35's spelling: the way out is named, nothing is guessed.
   fs.writeFileSync(path.join(dir, "harness.config.yaml"), "roles: [tester, implementer]\n");
-  assert.deepEqual(readHarnessConfig(dir).roles, ["tester", "implementer"]);
+  assert.throws(
+    () => readHarnessConfig(dir),
+    /lanes: \[tester, implementer\].*specgate migrate 1\.0/s
+  );
+  // `roles:` naming people (ADR-0045) is not a lane list.
+  fs.writeFileSync(
+    path.join(dir, "harness.config.yaml"),
+    "roles:\n  product: [ana@acme.eu]\nlanes: [tester, implementer]\n"
+  );
+  assert.deepEqual(readHarnessConfig(dir).lanes, ["tester", "implementer"]);
 });
 
 test("REQ-532 SCN-532a: two sessions, in order", () => {

@@ -459,9 +459,9 @@ export const NAV: readonly NavSection[] = [
       },
       {
         slug: "harness-roles",
-        label: "Roles, budget and protected paths",
+        label: "Lanes, roles and limits",
         blurb:
-          "A tester and an implementer in their lanes, a cost ceiling, the files no agent may change.",
+          "A tester and an implementer in their lanes, a cost ceiling, the files no agent may change, and approvals by role.",
       },
       {
         slug: "decisions",
