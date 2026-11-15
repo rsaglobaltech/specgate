@@ -77,3 +77,25 @@ test("REQ-281 SCN-281b: a final version", { skip: !bash && "no bash" }, () => {
   assert.match(docker, /type=semver,pattern=\{\{version\}\}/);
   assert.match(docker, /type=semver,pattern=\{\{major\}\}\.\{\{minor\}\}/);
 });
+
+test("REQ-556 SCN-556a: the publish job is ready for OIDC", () => {
+  const yaml = workflow("publish-npm.yml");
+  const job = yaml.slice(yaml.indexOf("\n  publish:"));
+  assert.match(job, /id-token: write/, "OIDC needs id-token: write");
+  const npmStep = job.indexOf("npm install -g npm@^11.5.1");
+  assert.ok(npmStep > 0, "npm 11.5.1+ is installed in the job");
+  assert.ok(npmStep < job.indexOf("- name: Publish\n"), "before publishing");
+  // The token reaches only the steps that talk to the registry as the publisher.
+  const steps = job.split(/\n {6}- name: /).slice(1);
+  const withToken = steps
+    .filter((s) => s.includes("secrets.NPM_TOKEN"))
+    .map((s) => s.split("\n")[0].trim());
+  assert.deepEqual(withToken.sort(), [
+    "Check package version availability",
+    "Publish",
+    "Publish (dry run)",
+  ]);
+  const doc = fs.readFileSync(path.join(ROOT, "docs", "release-process.md"), "utf8");
+  assert.match(doc, /## Trusted publishing/);
+  assert.match(doc, /disallow tokens/);
+});
