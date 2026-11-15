@@ -72,8 +72,8 @@
         <a class="ed-btn" href="#projects">See it on six real products</a>
       </p>
       <p class="ed-actions">
-        <a class="ed-link" href="#lifecycle">New: from code already running to a signed handover →</a>
-        <a class="ed-link" href="#quality">Quality checks — Sonar, SpotBugs, coverage →</a>
+        <a class="ed-link" href="#why">New: from code already running to a signed handover →</a>
+        <a class="ed-link" href="./quality.html">Quality checks — Sonar, SpotBugs, coverage →</a>
       </p>
       <figure class="code ed-install" data-lang="bash">
         <figcaption class="code__head"><span class="code__lang">Start in three commands</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
@@ -236,400 +236,18 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
         <code>specgate apply · archive · check</code>
       </li>
     </ol>
-  </div>
-</section>
-
-<!-- ── Where it fits ────────────────────────────────────────────────────── -->
-<section class="ed-band" id="loop">
-  <div class="ed-wrap">
-    <div class="ed-head reveal">
-      <p class="ed-eyebrow">Where it fits</p>
-      <h2 class="ed-h2">The DevOps loop, and the half we own.</h2>
-      <p class="ed-muted lp__lede">Specgate covers the Dev side, from plan to release: what to build,
-         and when it is done. Its sister tool, <a class="ed-link" href="https://rsaglobaltech.github.io/forja/" target="_blank" rel="noreferrer">forja</a>,
-         builds the project that code lands in. Running and watching production stays with your platform;
-         what it learns comes back as a requirement.</p>
-    </div>
-    <figure class="lp" role="img" aria-label="The DevOps loop. Plan, code, test and release are covered by Specgate, build by forja, deploy partly by forja's Dockerfiles; operate and monitor are left to your platform.">
-      <svg class="lp__svg" viewBox="0 0 1000 440" aria-hidden="true">
-        <path class="lp__cross" d="M396 114 L604 326 M396 326 L604 114"/>
-        <circle class="lp__seg lp__seg--sg" cx="290" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-76"/><circle class="lp__seg lp__seg--sg" cx="290" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-51"/><circle class="lp__seg lp__seg--fj" cx="290" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-26"/><circle class="lp__seg lp__seg--sg" cx="290" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-1"/><circle class="lp__seg lp__seg--sg" cx="710" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-51"/><circle class="lp__seg lp__seg--part" cx="710" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-76"/><circle class="lp__seg lp__seg--out" cx="710" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-1"/><circle class="lp__seg lp__seg--out" cx="710" cy="220" r="150" pathLength="100" stroke-dasharray="23 77" stroke-dashoffset="-26"/>
-        <text class="lp__label lp__label--sg" x="424" y="80">PLAN</text><text class="lp__label lp__label--sg" x="156" y="80">CODE</text><text class="lp__label lp__label--fj" x="156" y="372">BUILD</text><text class="lp__label lp__label--sg" x="424" y="372">TEST</text><text class="lp__label lp__label--sg" x="576" y="80">RELEASE</text><text class="lp__label lp__label--part" x="844" y="80">DEPLOY</text><text class="lp__label lp__label--out" x="844" y="372">OPERATE</text><text class="lp__label lp__label--out" x="576" y="372">MONITOR</text>
-        <text class="lp__core" x="290" y="228">Dev</text>
-        <text class="lp__sub" x="290" y="258">Specgate · forja</text>
-        <text class="lp__core lp__core--ops" x="710" y="228">Ops</text>
-        <text class="lp__sub" x="710" y="258">your platform</text>
-      </svg>
-      <figcaption class="lp__key">
-        <span class="lp__k lp__k--sg">Specgate</span>
-        <span class="lp__k lp__k--fj">forja</span>
-        <span class="lp__k lp__k--part">Partly covered</span>
-        <span class="lp__k lp__k--out">Your platform</span>
-      </figcaption>
-    </figure>
-    <ol class="lp__stages">
-      <li class="lp__stage lp__stage--sg reveal">
-        <span class="lp__chip">Specgate</span>
-        <h3>Plan</h3>
-        <p class="lp__who">Specgate</p>
-        <p>A change, a brief or a Jira ticket becomes requirements with scenarios. What the source never said becomes a question, not a guess.</p>
-        <code>specgate propose</code>
-      </li>
-      <li class="lp__stage lp__stage--sg reveal">
-        <span class="lp__chip">Specgate + forja</span>
-        <h3>Code</h3>
-        <p class="lp__who">Specgate harness · forja</p>
-        <p>forja writes each use case where the architecture expects it; Specgate's harness hands your agent one requirement at a time, each in its own git worktree.</p>
-        <code>forja add usecase · specgate harness run</code>
-      </li>
-      <li class="lp__stage lp__stage--fj reveal">
-        <span class="lp__chip">forja</span>
-        <h3>Build</h3>
-        <p class="lp__who">forja</p>
-        <p>A project that builds and boots on the first run: Node monorepo or a Spring Boot / Quarkus API.</p>
-        <code>forja init</code>
-      </li>
-      <li class="lp__stage lp__stage--sg reveal">
-        <span class="lp__chip">Specgate</span>
-        <h3>Test</h3>
-        <p class="lp__who">Specgate · forja</p>
-        <p>Tests from the first commit. A requirement is done only when a test names it and the suite passes.</p>
-        <code>specgate apply REQ-007</code>
-      </li>
-      <li class="lp__stage lp__stage--sg reveal">
-        <span class="lp__chip">Specgate</span>
-        <h3>Release</h3>
-        <p class="lp__who">Specgate</p>
-        <p>The same gate before every merge, and a page that says where the product stands.</p>
-        <code>specgate check · report</code>
-      </li>
-      <li class="lp__stage lp__stage--part reveal">
-        <span class="lp__chip">Partly</span>
-        <h3>Deploy</h3>
-        <p class="lp__who">forja</p>
-        <p>Production Dockerfiles for the Java API and the web app. Shipping them is your platform's job.</p>
-        <code>forja init --extras docker</code>
-      </li>
-      <li class="lp__stage lp__stage--out reveal">
-        <span class="lp__chip">Your tools</span>
-        <h3>Operate</h3>
-        <p class="lp__who">Your platform</p>
-        <p>Running it: hosting, scaling, incidents. Neither tool does this, and neither pretends to.</p>
-        <code>—</code>
-      </li>
-      <li class="lp__stage lp__stage--out reveal">
-        <span class="lp__chip">Your tools</span>
-        <h3>Monitor</h3>
-        <p class="lp__who">Your platform</p>
-        <p>Metrics and user feedback. What they reveal comes back as a new requirement, and the loop starts again.</p>
-        <code>specgate propose &lt;change&gt;</code>
-      </li>
-    </ol>
-  </div>
-</section>
-
-<!-- ── Your journey ─────────────────────────────────────────────────────── -->
-<section class="ed-band" id="journey">
-  <div class="ed-wrap">
-    <div class="ed-head reveal">
-      <p class="ed-eyebrow">Your journey</p>
-      <h2 class="ed-h2">Five phases, from your first command to a gate in CI.</h2>
-      <p class="ed-muted">Work comes in three ways — a change you describe
-         (<code>specgate propose &lt;change-id&gt;</code>), a brief for a new product
-         (<code>specgate propose --from-brief</code>), or a Jira story
-         (<code>specgate propose --from-ticket &lt;KEY&gt;</code>) — and follows one
-         lifecycle: propose, build and apply each requirement, archive, open
-         the pull request. <a class="ed-link" href="./from-a-ticket.html">From a Jira ticket →</a></p>
-      <p class="ed-muted">Pick where you start. Each phase says who does the work —
-         you, your agent or the gate — what to run, what you see, and what you
-         have when it is over.</p>
-    </div>
-
-    <div class="jn" data-journey>
-      <div class="jn__switch" role="tablist" aria-label="Where you start">
-        <button type="button" role="tab" id="jn-tab-new" aria-controls="jn-new" aria-selected="true">
-          <span class="jn__switch-k">Start from scratch</span>
-          <span class="jn__switch-s">A new product, maybe a client's brief</span>
-        </button>
-        <button type="button" role="tab" id="jn-tab-old" aria-controls="jn-old" aria-selected="false">
-          <span class="jn__switch-k">Bring an existing project</span>
-          <span class="jn__switch-s">Code that already runs, tests that already pass</span>
-        </button>
-      </div>
-
-      <div class="jn__panel" role="tabpanel" id="jn-new" aria-labelledby="jn-tab-new">
-        <ol class="jn__track">
-          <li class="jn__phase" style="--i:1">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 1 <span>about 5 minutes</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-new-p1">Install and set up</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--gate">The gate</li></ul>
-              <span class="jn__big" aria-hidden="true">01</span>
-            </div>
-            <div class="jn__body" id="jn-new-p1">
-              <div class="jn__text">
-                <p class="jn__what">Create the project with your own tools — <code>npm init</code>, Spring Initializr, <code>cargo new</code> — then let Specgate set itself up in place. It writes specifications, never application code.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ npx @rsaglobaltech/specgate@latest init</span>
-    + spec.md
-    + AGENTS.md
-    + docs/specs/traceability.md
-<span class="jn__c">$ specgate config set test_cmd &quot;node --test&quot;</span>
-<span class="t-yes">  ✔  test_cmd = node --test</span>
-<span class="jn__c">$ specgate check</span>
-<span class="t-yes">  ✔  Specification   validate --strict</span>
-<span class="t-yes">  ✔  Tests           node --test</span>
-<span class="t-yes">  ✔  Gate passed</span></code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> a specification, an agent contract every coding agent reads, and a gate that already runs your tests.</p>
-                <a class="jn__more" href="./start/scratch-1-install.html">From scratch · phase 1, step by step →</a>
-              </div>
-            </div>
-          </li>
-          <li class="jn__phase" style="--i:2">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 2 <span>an hour per module</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-new-p2">From the brief to a checked spec</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li><li class="jn__who jn__who--gate">The gate</li></ul>
-              <span class="jn__big" aria-hidden="true">02</span>
-            </div>
-            <div class="jn__body" id="jn-new-p2">
-              <div class="jn__text">
-                <p class="jn__what">Save the client's brief — or your own plan — as <code>docs/brief.md</code>. <code>specgate propose --from-brief</code> names its modules and the next one to draft. <code>specgate propose --from-brief bookings</code> opens that module as a change — a folder for the requirements it adds — and writes the prompt for your agent. Run the same command again to check the draft: it stops on any value the brief never gave. What only the client can answer becomes a question, not a guess. A person reviews the draft; it stays open until its requirements are built.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate propose --from-brief bookings</span>
-<span class="t-yes">  ✔  Draft draft-bookings opened · REQ ids REQ-002…REQ-011 reserved</span>
-<span class="jn__c">$ specgate propose --from-brief bookings --agent &quot;claude -p&quot;</span>
-<span class="t-no">  ✖  D6_unlisted_value  SCN-005 states &quot;5&quot;, which is not in the brief</span>
-<span class="jn__x"># the fee becomes a question for the client</span>
-<span class="jn__c">$ specgate propose --from-brief bookings</span>
-<span class="t-yes">  ✔  Ready to review</span>
-   3  ➜ specgate apply   its requirements, one at a time;
-                         then specgate archive draft-bookings</code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> requirements and Gherkin scenarios a person reviewed, every invented value either sourced or asked about — in an open change, counted by <code>status</code>, ready to build.</p>
-                <a class="jn__more" href="./start/write-the-brief.html">Write the brief, step by step →</a>
-                <a class="jn__more" href="./start/scratch-2-specify.html">From scratch · phase 2, step by step →</a>
-              </div>
-            </div>
-          </li>
-          <li class="jn__phase" style="--i:3">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 3 <span>per requirement</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-new-p3">Build the first requirement</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li></ul>
-              <span class="jn__big" aria-hidden="true">03</span>
-            </div>
-            <div class="jn__body" id="jn-new-p3">
-              <div class="jn__text">
-                <p class="jn__what"><code>specgate status</code> names the single next command to run — the open change's requirements included. Write the test first and name the requirement in it — that mention is the link; until then <code>apply</code> refuses. Build it by hand, or hand it to the harness, Specgate's runner for your agent: one branch per requirement, and it stops if the gate says no.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate status</span>
-  To do ──────────────────────────────
-    ○ REQ-002  A member books a court for one hour
-  Waiting for an answer ──────────────
-    ○ REQ-004  A member cancels a booking   an answer to Q1
-<span class="jn__c">$ specgate apply REQ-002</span>
-<span class="t-no">  ✖  REQ-002 has no test that names it yet (TDD-1).  [apply_no_test]</span>
-<span class="jn__c">$ node --test</span>
-<span class="t-yes">✔ REQ-002 SCN-002: booking a free court lasts one hour</span>
-<span class="jn__c">$ specgate harness run --req REQ-003</span>
-<span class="jn__x">your agent, in its own git worktree</span></code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> code and a test that names its requirement — on a branch, waiting for your review.</p>
-                <a class="jn__more" href="./start/scratch-3-build.html">From scratch · phase 3, step by step →</a>
-              </div>
-            </div>
-          </li>
-          <li class="jn__phase" style="--i:4">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 4 <span>seconds</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-new-p4">Prove it</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--gate">The gate</li></ul>
-              <span class="jn__big" aria-hidden="true">04</span>
-            </div>
-            <div class="jn__body" id="jn-new-p4">
-              <div class="jn__text">
-                <p class="jn__what"><code>apply</code> runs the gate for that requirement and marks it Implemented only if it passes. A requirement waiting for the client cannot be closed — and neither can its change: <code>archive</code> merges it into the specification only once every requirement in it is Implemented, on your branch, before the pull request. <code>report</code> turns it all into one page for the product owner.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate apply REQ-002</span>
-<span class="t-yes">  ✔  Specification   the gate, for REQ-002</span>
-<span class="t-yes">  ✔  Tests           node --test</span>
-<span class="t-yes">  ✔  REQ-002 → Implemented</span>
-<span class="jn__c">$ specgate apply REQ-004</span>
-<span class="t-no">  ✖  REQ-004 not marked Implemented: REQ-004 is waiting</span>
-     for an answer (Needs Clarification).
-<span class="jn__c">$ specgate archive draft-bookings</span>
-<span class="t-no">  ✖  Change 'draft-bookings' has 2 requirement(s) not delivered yet</span>
-     fix: specgate apply REQ-003
-<span class="jn__c">$ specgate report --out report.html</span>
-<span class="t-yes">  ✔  Wrote report.html</span>
-  █████░░░░░░░░░░░░░░░  1 of 4 implemented</code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> a requirement marked done because a test proved it, a change that closes when its last one is — and a page that says where the product stands.</p>
-                <a class="jn__more" href="./start/scratch-4-prove.html">From scratch · phase 4, step by step →</a>
-              </div>
-            </div>
-          </li>
-          <li class="jn__phase" style="--i:5">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 5 <span>four verbs</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-new-p5">Every day</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li><li class="jn__who jn__who--gate">The gate</li></ul>
-              <span class="jn__big" aria-hidden="true">05</span>
-            </div>
-            <div class="jn__body" id="jn-new-p5">
-              <div class="jn__text">
-                <p class="jn__what">Put the gate on every pull request — the specification, then your tests. This is what CI runs, and it is the same command you run locally. From then on the loop is four verbs: <code>specgate propose</code> a change — from your own words, the brief or a Jira ticket — write its delta (the requirements it adds) and a test that names each requirement, <code>specgate apply</code> it, <code>specgate archive</code> the change when the last one is in, and open the pull request. <code>specgate status</code> always says where you are. In a small project, <code>specgate new</code> adds a single requirement without a change.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci status</span>
-<span class="jn__x"># init already wrote .github/workflows/spec-gate.yml</span>
-<span class="t-yes">  ✔  Everything specgate can check runs in CI.</span>
-<span class="jn__c">$ specgate propose free-courts</span>
-<span class="t-yes">  ✔  Change free-courts created · lite · REQ ids REQ-012…REQ-014 reserved</span>
-  ➜  specgate apply
-     after you write the delta, a test that names each
-     requirement, and the code
-<span class="jn__c">$ specgate propose --from-ticket KAN-13</span>
-<span class="jn__x"># a Jira story: its own change and branch, feature/KAN-13-…</span></code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> a gate on every pull request, and a loop small enough to remember, whatever the work comes from.</p>
-                <a class="jn__more" href="./start/scratch-5-every-day.html">From scratch · phase 5, step by step →</a>
-              </div>
-            </div>
-          </li>
-        </ol>
-      </div>
-
-      <div class="jn__panel" role="tabpanel" id="jn-old" aria-labelledby="jn-tab-old">
-        <ol class="jn__track">
-          <li class="jn__phase" style="--i:1">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 1 <span>about 5 minutes</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-old-p1">Adopt, touching no code</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--gate">The gate</li></ul>
-              <span class="jn__big" aria-hidden="true">01</span>
-            </div>
-            <div class="jn__body" id="jn-old-p1">
-              <div class="jn__text">
-                <p class="jn__what"><code>onboard</code> reads your build files and proposes the capabilities — areas of the product, such as invoices — your layout already implies. <code>init</code> adopts the repository in place — specifications only, not a line of your code — and the gate runs your existing tests.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate onboard</span>
-  3. Capabilities this codebase already implies
-     · Invoices    src/invoices   (2 files)
-     · Customers   src/customers  (1 files)
-<span class="jn__c">$ specgate init</span>
-  Existing code found (package.json) — adopting this
-  repository in place. Nothing in your code is touched.
-<span class="jn__c">$ specgate check</span>
-<span class="t-yes">  ✔  Gate passed</span></code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> a specification seeded from your own layout, an agent contract, and a green gate over the tests you already had.</p>
-                <a class="jn__more" href="./start/existing-1-adopt.html">Existing project · phase 1, step by step →</a>
-              </div>
-            </div>
-          </li>
-          <li class="jn__phase" style="--i:2">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 2 <span>minutes per behaviour</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-old-p2">Write down what you rely on</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li></ul>
-              <span class="jn__big" aria-hidden="true">02</span>
-            </div>
-            <div class="jn__body" id="jn-old-p2">
-              <div class="jn__text">
-                <p class="jn__what">Don't back-fill everything. Pick one behaviour your users depend on and propose it as a change. Write its delta — the requirements and scenarios the change adds: one requirement, with a real example in the numbers your code already produces.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate propose invoice-rounding</span>
-<span class="t-yes">  ✔  Change invoice-rounding created · lite · REQ ids REQ-004…REQ-006 reserved</span>
-    + docs/specs/changes/invoice-rounding/specs/invoice-rounding/spec.md
-<span class="jn__x"># the delta, written by you or your agent</span>
-  ### Requirement: REQ-004 — An invoice total is rounded to the cent
-  #### Scenario: SCN-002 — Three lines at 21% VAT
-  - WHEN its total is computed at 21% VAT
-  - THEN the total is 35.56</code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> one behaviour written down as a requirement and a scenario anyone can read, in an open change.</p>
-                <a class="jn__more" href="./start/existing-2-specify.html">Existing project · phase 2, step by step →</a>
-              </div>
-            </div>
-          </li>
-          <li class="jn__phase" style="--i:3">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 3 <span>minutes</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-old-p3">Close the first requirement</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--gate">The gate</li></ul>
-              <span class="jn__big" aria-hidden="true">03</span>
-            </div>
-            <div class="jn__body" id="jn-old-p3">
-              <div class="jn__text">
-                <p class="jn__what"><code>apply</code> refuses while nothing proves it. Name the requirement in the test you already have — that is the whole link — and run it again. Once the test and your suite pass, it is marked Implemented; then <code>archive</code> merges the change into the specification, before the pull request.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate apply REQ-004</span>
-<span class="t-no">  ✖  REQ-004 has no test that names it yet (TDD-1).  [apply_no_test]</span>
-<span class="jn__x">test(&quot;REQ-004: three lines at 21% VAT are rounded…&quot;)</span>
-<span class="jn__c">$ specgate apply REQ-004</span>
-<span class="t-yes">  ✔  REQ-004 → Implemented</span>
-<span class="jn__c">$ specgate archive invoice-rounding</span>
-<span class="t-yes">  ✔  Archived as 2026-01-01-invoice-rounding</span></code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> your first requirement proved by a test that already existed, and part of the specification.</p>
-                <a class="jn__more" href="./start/existing-3-first-requirement.html">Existing project · phase 3, step by step →</a>
-              </div>
-            </div>
-          </li>
-          <li class="jn__phase" style="--i:4">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 4 <span>one commit</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-old-p4">Put the gate in CI</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--gate">The gate</li></ul>
-              <span class="jn__big" aria-hidden="true">04</span>
-            </div>
-            <div class="jn__body" id="jn-old-p4">
-              <div class="jn__text">
-                <p class="jn__what">Requirements still in Draft owe nothing yet, so you don't have to fix the past first. The job runs on every pull request: the specification, then your tests. Make it a required check, and a red gate blocks the merge.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate ci status</span>
-<span class="jn__x"># adopt already wrote .github/workflows/spec-gate.yml</span>
-<span class="t-yes">  ✔  Everything specgate can check runs in CI.</span>
-<span class="jn__c">$ specgate check</span>
-<span class="t-yes">  ✔  Specification   validate --strict</span>
-<span class="t-yes">  ✔  Tests           node --test</span>
-<span class="t-yes">  ✔  Gate passed</span></code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> a gate that protects what you have proved and ignores what you haven't written down yet.</p>
-                <a class="jn__more" href="./start/existing-4-ci.html">Existing project · phase 4, step by step →</a>
-              </div>
-            </div>
-          </li>
-          <li class="jn__phase" style="--i:5">
-            <div class="jn__pillar reveal">
-              <p class="jn__n">Phase 5 <span>one change at a time</span></p>
-              <h3 class="jn__title"><button class="jn__pick" type="button" aria-expanded="true" aria-controls="jn-old-p5">Every day</button></h3>
-              <ul class="jn__whos" aria-label="Who acts"><li class="jn__who jn__who--you">You</li><li class="jn__who jn__who--agent">Your agent</li><li class="jn__who jn__who--gate">The gate</li></ul>
-              <span class="jn__big" aria-hidden="true">05</span>
-            </div>
-            <div class="jn__body" id="jn-old-p5">
-              <div class="jn__text">
-                <p class="jn__what">Every piece of work opens a change: a bug fix or a rule you touch with <code>specgate propose &lt;change-id&gt;</code>, a Jira story with <code>specgate propose --from-ticket &lt;KEY&gt;</code>, a new area from a brief with <code>specgate propose --from-brief</code>. Then build, <code>apply</code>, <code>archive</code>, and open the pull request. <code>status</code> always says what to run next.</p>
-              </div>
-              <pre class="jn__term" tabindex="0"><code><span class="jn__c">$ specgate status</span>
-  Requirements  █████░░░░░░░░░░░░░░░  1 of 4 done
-<span class="jn__c">$ specgate propose --from-ticket KAN-13 --check</span>
-<span class="jn__x"># is the story ready? acceptance criteria, measurable, small enough</span>
-<span class="jn__c">$ specgate propose --from-ticket KAN-13</span>
-<span class="jn__x"># its change, and its branch feature/KAN-13-…</span></code></pre>
-              <div class="jn__after">
-                <p class="jn__have"><strong>You now have</strong> coverage that grows with the work you were doing anyway.</p>
-                <a class="jn__more" href="./start/existing-5-every-day.html">Existing project · phase 5, step by step →</a>
-                <a class="jn__more" href="./from-a-ticket.html">From a Jira ticket, step by step →</a>
-              </div>
-            </div>
-          </li>
-        </ol>
-      </div>
-    </div>
-    <p class="jn__foot reveal">Already on OpenSpec? Keep it — <a class="ed-link" href="./openspec.html">Specgate can verify what it calls done →</a></p>
+    <p class="ed-muted reveal">Start with <code>specgate init</code> — it adopts a repository
+       that has code, or scaffolds one that does not. Then the loop is four verbs:
+       <code>specgate propose</code> opens a change, <code>specgate apply</code>
+       runs the gate for a requirement and marks it Implemented only if it
+       passes, <code>specgate archive</code> merges the change into the
+       specification once every requirement in it is, and
+       <code>specgate status</code> names the single next command to run.
+       <code>specgate check</code> is the whole gate before a pull request.
+       This is what CI runs, and the same command you run locally. Or hand the
+       loop to your agent: <code>specgate harness run</code> takes one branch per
+       requirement and stops if the gate says no.
+       <a class="ed-link" href="./getting-started.html">Getting started →</a></p>
   </div>
 </section>
 
@@ -638,9 +256,9 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
   <div class="ed-wrap">
     <div class="ed-head reveal">
       <p class="ed-eyebrow">Why teams pick it</p>
-      <h2 class="ed-h2">Six things it will not let slide.</h2>
+      <h2 class="ed-h2">What it will not let slide.</h2>
     </div>
-    <div class="sx">
+    <div class="sx sx--4">
       <article class="sx__card reveal">
         <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="10" width="32" height="28" rx="4"/><path d="M8 18h32"/><path class="sx__no" d="m19 25 10 8m0-8-10 8"/></svg>
         <h3>A gate that can't be talked round</h3>
@@ -651,30 +269,9 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
       <article class="sx__card reveal">
         <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="16"/><path d="M19 19a5 5 0 1 1 6 5c-1 .4-1 1.4-1 3"/><circle class="sx__dot" cx="24" cy="33" r="1.4"/></svg>
         <h3>Ambiguity becomes a question</h3>
-        <p>What the brief cannot answer is asked, not guessed. The requirement it
-           blocks waits for an answer — no person and no agent can close it in
-           the meantime.</p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M12 6h18l8 8v28H12z"/><path d="M30 6v8h8"/><path d="M18 22h14M18 28h14M18 34h8"/></svg>
-        <h3>From a brief, honestly</h3>
-        <p><code>specgate propose --from-brief</code> lists every value nobody gave you. On a
-           five-line brief that list is long — and it is exactly the conversation
-           to have with the client.</p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="36" r="4"/><circle cx="36" cy="24" r="4"/><path d="M12 16v16M16 12c10 0 16 4 16 8M16 36c10 0 16-4 16-8"/></svg>
-        <h3>Any agent, unattended</h3>
-        <p>The harness drives any CLI that takes a prompt, one git worktree per
-           requirement. It never talks to a model itself, and merges only when you ask for a
-           <code>--chain</code>.</p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="8" width="16" height="12" rx="2"/><rect x="26" y="8" width="16" height="12" rx="2"/><rect x="16" y="28" width="16" height="12" rx="2"/><path d="M14 20v4h20v-4M24 24v4"/></svg>
-        <h3>Your stack, your tests</h3>
-        <p>The gate runs the test command you already have. Proven on Node,
-           Spring Boot and Quarkus; it adopts a repository without touching a
-           line of its code.</p>
+        <p>A draft from a brief or a Jira story lists every value nobody gave you.
+           What only the client can answer is asked, not guessed, and its
+           requirement waits for the answer. <a href="./from-a-brief.html">From a brief →</a></p>
       </article>
       <article class="sx__card reveal">
         <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 24h8l4-10 8 20 4-10h8"/></svg>
@@ -682,69 +279,43 @@ npx specgate          <span class="tok tok--c"># where you stand, and what to ru
         <p>A test that mentions <code>REQ-007</code> is the link. The matrix is
            derived from what your tests say, so it cannot drift from them.</p>
       </article>
-    </div>
-  </div>
-</section>
-
-<!-- ── The whole lifecycle ──────────────────────────────────────────────── -->
-<section class="ed-band" id="lifecycle">
-  <div class="ed-wrap">
-    <div class="ed-head reveal">
-      <p class="ed-eyebrow">Before the first requirement, after the last</p>
-      <h2 class="ed-h2">From code already running to a handover someone signs.</h2>
-      <p class="ed-muted">The gate is the middle. These are the ends: a system
-         nobody specified, the decisions and words a team shares, and what a
-         client reads, reviews and accepts.</p>
-    </div>
-    <div class="sx">
       <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M30 12 18 24l12 12"/><path d="M8 24h10M30 24h10"/></svg>
-        <h3>Specify what already runs</h3>
-        <p><code>specgate reverse</code> has your agent draft requirements from
-           existing code, each citing the file it was read from — and the line,
-           when the agent gives one.
-           <code>check --baseline</code> turns the gate on without a red build.
-           <a href="./reverse.html">Reverse →</a></p>
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="8" width="16" height="12" rx="2"/><rect x="26" y="8" width="16" height="12" rx="2"/><rect x="16" y="28" width="16" height="12" rx="2"/><path d="M14 20v4h20v-4M24 24v4"/></svg>
+        <h3>Your stack, even code already running</h3>
+        <p>The gate runs the test command you already have; proven on Node,
+           Spring&nbsp;Boot and Quarkus. <code>specgate reverse</code> has your agent
+           draft requirements from existing code, each citing the file it was
+           read from. <a href="./reverse.html">Reverse →</a></p>
       </article>
       <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="16" cy="16" r="5"/><circle cx="32" cy="32" r="5"/><path d="M20 20l8 8M30 10h8v8"/></svg>
-        <h3>A tester and an implementer</h3>
-        <p>The harness can run each attempt as two sessions: a tester writes the
-           failing tests, an implementer makes them pass, and code either one
-           writes outside its lane is put back. A cost cap per requirement, and
-           the agent's own instruction files are off limits.
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="36" r="4"/><circle cx="36" cy="24" r="4"/><path d="M12 16v16M16 12c10 0 16 4 16 8M16 36c10 0 16-4 16-8"/></svg>
+        <h3>Any agent, unattended</h3>
+        <p>The harness drives any CLI that takes a prompt, one git worktree per
+           requirement — optionally as a tester and an implementer, under a cost
+           cap per requirement. It merges only when you ask for a <code>--chain</code>.
            <a href="./harness-roles.html">Roles →</a></p>
       </article>
       <article class="sx__card reveal">
         <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M12 6h18l8 8v28H12z"/><path d="M30 6v8h8"/><path d="m18 28 4 4 8-9"/></svg>
-        <h3>Decisions on record</h3>
-        <p><code>specgate adr</code> numbers architecture decisions and
-           supersedes them without rewriting history. Decision rights say whether
-           the agent may add a dependency, a migration or an API operation on its
-           own, and the harness checks the diff; <code>specgate stack</code>
-           writes the stack down. <a href="./decisions.html">Decisions →</a></p>
-      </article>
-      <article class="sx__card reveal">
-        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="8" width="14" height="10" rx="2"/><rect x="26" y="30" width="14" height="10" rx="2"/><path d="M15 18v8h18v4"/></svg>
-        <h3>One language for the domain</h3>
-        <p>A glossary whose avoided words the gate reports, business rules
-           numbered <code>BR-NNN</code> that owe a test once delivered, and entity
-           and actor diagrams generated from the model and actors you keep. <a href="./domain-language.html">Domain language →</a></p>
+        <h3>Decisions and words on record</h3>
+        <p>Numbered ADRs, what the agent may decide alone, the stack, a glossary
+           whose avoided words the gate reports, and business rules numbered
+           <code>BR-NNN</code>. <a href="./decisions.html">Decisions →</a></p>
       </article>
       <article class="sx__card reveal">
         <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="24" rx="3"/><path d="M18 40h12M24 34v6"/><circle cx="18" cy="22" r="3"/><path d="M26 20h10M26 25h7"/></svg>
         <h3>Reviews for the business</h3>
         <p><code>specgate review</code> turns a change into one page anyone can
-           open. Journeys chain requirements into a user's path. <code>studio
-           --team</code> serves the studio behind your sign-in proxy, with roles,
-           and an editor's changes arrive as pull requests. <a href="./business-review.html">Review →</a></p>
+           open. <code>studio --team</code> serves the studio behind your sign-in
+           proxy, with roles; an editor's changes arrive as pull requests.
+           <a href="./business-review.html">Review →</a></p>
       </article>
       <article class="sx__card reveal">
         <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 26l8 8 20-20"/><path d="M8 42h32"/></svg>
         <h3>A handover a person signs</h3>
         <p>Release notes grouped by bug and enhancement, an acceptance checklist
-           per scenario that a person signs to mark it Verified, and a user
-           guide per actor. <a href="./transition.html">Handing over →</a></p>
+           a person signs to move its requirements to Verified, and a user guide per
+           actor. <a href="./transition.html">Handing over →</a></p>
       </article>
     </div>
   </div>
@@ -1197,27 +768,6 @@ max_attempts: 1
   </div>
 </section>
 
-<!-- ── Product owner view ───────────────────────────────────────────────── -->
-<section class="ed-band ed-band--paper" id="report">
-  <div class="ed-wrap ed-split ed-split--wide">
-    <div class="ed-split__head reveal">
-      <p class="ed-eyebrow">For the product owner</p>
-      <h2 class="ed-h2">One page that says where the product stands.</h2>
-      <p class="ed-muted"><code>specgate report</code> turns the matrix into a page
-         anyone can read: what is done, what is pending, what is missing a test.
-         This is the clinical-cases pilot as it stands — one requirement left
-         open on purpose, because only the client can say which drug
-         interactions to check.</p>
-      <p><a class="ed-link" href="./projects/healthtech.html">Read the HealthTech project →</a></p>
-    </div>
-    <figure class="shot reveal">
-      <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">report.html</span></div>
-      <img src="./assets/img/report-healthtech.webp" width="1040" height="683" loading="lazy"
-           alt="Spec coverage report for the HealthTech pilot: 95.8% implemented, 23 done, 1 pending, each requirement with its feature, test and code, and REQ-020 still in Needs Clarification.">
-    </figure>
-  </div>
-</section>
-
 <!-- ── The harness ──────────────────────────────────────────────────────── -->
 <section class="ed-band ed-band--ink hz" id="harness" aria-labelledby="hz-h">
   <div class="ed-wrap">
@@ -1234,59 +784,6 @@ max_attempts: 1
          (<code>/live</code>), as it happens (<a class="ed-link" href="./harness.html">the harness</a>).</p>
     </div>
 
-    <figure class="hz__board reveal" data-hz aria-labelledby="hz-cap">
-      <div class="hz__bar">
-        <span class="hz__dots" aria-hidden="true"></span>
-        <code>specgate harness run --agent "claude -p"</code>
-        <span class="hz__live" aria-hidden="true">running</span>
-      </div>
-      <div class="hz__grid" role="table" aria-label="One harness run, step by step">
-        <div class="hz__row hz__row--head" role="row">
-          <span role="columnheader">Requirement</span><span role="columnheader">Worktree</span><span role="columnheader">Attempts — the gate after each</span><span role="columnheader">Result</span>
-        </div>
-        <div class="hz__row" role="row">
-          <span role="cell" class="hz__req"><b>REQ-002</b> A member books a court for one hour</span>
-          <span role="cell" class="hz__c" data-at="1"><code>harness/REQ-002</code></span>
-          <span role="cell" class="hz__att"><i class="hz__c hz__ok" data-at="2">1 ✔</i></span>
-          <span role="cell" class="hz__c hz__res hz__res--ok" data-at="3">✔ committed on its branch</span>
-        </div>
-        <div class="hz__row" role="row">
-          <span role="cell" class="hz__req"><b>REQ-003</b> A court is never booked twice</span>
-          <span role="cell" class="hz__c" data-at="4"><code>harness/REQ-003</code></span>
-          <span role="cell" class="hz__att"><i class="hz__c hz__no" data-at="5">1 ✖ SCN-004</i><i class="hz__c hz__arrow" data-at="6">failures → next prompt</i><i class="hz__c hz__ok" data-at="7">2 ✔</i></span>
-          <span role="cell" class="hz__c hz__res hz__res--ok" data-at="8">✔ committed on its branch</span>
-        </div>
-        <div class="hz__row" role="row">
-          <span role="cell" class="hz__req"><b>REQ-004</b> A member cancels a booking</span>
-          <span role="cell" class="hz__c hz__muted" data-at="9">—</span>
-          <span role="cell" class="hz__att"><i class="hz__c hz__wait" data-at="9">skipped</i></span>
-          <span role="cell" class="hz__c hz__res hz__res--wait" data-at="10">⏸ waiting for an answer</span>
-        </div>
-        <div class="hz__row" role="row">
-          <span role="cell" class="hz__req"><b>REQ-005</b> A member sees which courts are free</span>
-          <span role="cell" class="hz__c" data-at="11"><code>harness/REQ-005</code></span>
-          <span role="cell" class="hz__att"><i class="hz__c hz__no" data-at="12">1 ✖</i><i class="hz__c hz__no" data-at="13">2 ✖</i><i class="hz__c hz__no" data-at="14">3 ✖</i></span>
-          <span role="cell" class="hz__c hz__res hz__res--no" data-at="15"><code>wip(REQ-005): FAILED the gate</code> · stays Draft</span>
-        </div>
-      </div>
-      <figcaption class="hz__foot" id="hz-cap"><span class="hz__c" data-at="16">4 requirements · 2 delivered · 1 waiting for the client · 1 kept as a failed attempt — <strong>nothing merged</strong>.</span> <span class="hz__note">An illustrative run of the court-bookings example.</span></figcaption>
-    </figure>
-
-    <dl class="hz__stats">
-      <div class="reveal"><dt>74 / 76</dt><dd>harness runs that passed on the first attempt — <a href="./projects/rebar-crew.html">Rebar Crew</a></dd></div>
-      <div class="reveal"><dt>17 / 18</dt><dd>first attempt on the first run, median 3½ min each — <a href="./projects/bookings.html">Bookings</a></dd></div>
-      <div class="reveal"><dt>0</dt><dd>merges by the harness. The branch is always yours.</dd></div>
-    </dl>
-
-    <ul class="hz__feats">
-      <li class="reveal"><h3>One worktree per requirement</h3><p>A branch named after it, so a bad attempt never touches your checkout.</p></li>
-      <li class="reveal"><h3>Failures become the next prompt</h3><p>The gate's findings go back to the agent, up to <code>max_attempts</code>.</p></li>
-      <li class="reveal"><h3>Questions stop it</h3><p>A requirement waiting for the client is skipped, not guessed.</p></li>
-      <li class="reveal"><h3>It says what it cost</h3><p><code>specgate harness report</code>: first-attempt rate and time per delivered requirement.</p></li>
-    </ul>
-
-    <!-- specgate:diagram harness-loop -->
-
     <figure class="code ed-agents" data-lang="bash">
       <figcaption class="code__head"><span class="code__lang">Any agent CLI</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
       <pre><code class="language-bash">specgate harness run --agent "claude -p &lt; {prompt_file}"
@@ -1302,100 +799,6 @@ specgate harness run --agent "./my-wrapper.sh {prompt_file}"</code></pre>
       <a class="ed-link" href="./harness.html">How the harness works →</a>
       <a class="ed-link" href="./agent-setup.html">Choosing your agent →</a>
     </p>
-  </div>
-</section>
-
-<!-- ── Quality checks ───────────────────────────────────────────────────── -->
-<section class="ed-band" id="quality">
-  <div class="ed-wrap ed-split ed-split--wide">
-    <div class="ed-split__head reveal">
-      <p class="ed-eyebrow">Quality, not only tests</p>
-      <h2 class="ed-h2">Your team's tools in the gate. Only what a change adds fails.</h2>
-      <p class="ed-muted">Coverage and mutation of the lines the change touched
-         (JaCoCo, PIT, LCOV, Stryker), SonarQube, SpotBugs, PMD, Semgrep,
-         gitleaks, osv-scanner and Conventional Commits — each in its own
-         Docker image, without an account. Today's findings become a baseline,
-         so the gate holds new code to the bar without failing on old debt.</p>
-      <p class="ed-actions">
-        <a class="ed-link" href="./quality.html">Quality and security checks →</a>
-      </p>
-    </div>
-    <figure class="code reveal" data-lang="bash">
-      <figcaption class="code__head"><span class="code__lang">Maven, Gradle or Node</span><button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button></figcaption>
-      <pre><code class="language-bash">specgate quality init --level strict   <span class="tok tok--c"># reads pom.xml, build.gradle, package.json</span>
-specgate quality doctor --pull         <span class="tok tok--c"># how each check runs here</span>
-specgate quality baseline              <span class="tok tok--c"># today's findings are debt</span>
-specgate check                         <span class="tok tok--c"># tests, then the quality checks</span></code></pre>
-    </figure>
-  </div>
-</section>
-
-<!-- ── Status ───────────────────────────────────────────────────────────── -->
-<section class="ed-band ed-band--paper">
-  <div class="ed-wrap">
-    <div class="ed-head reveal">
-      <h2 class="ed-h2">A status is a promise. The gate collects on it.</h2>
-      <p class="ed-muted">Green on the day you adopt it, stricter with every
-         requirement you deliver — and a green run always says what it did not
-         check.</p>
-    </div>
-    <ol class="st">
-      <li class="st__item reveal">
-        <p class="st__tag">Draft</p>
-        <h3>Owes nothing</h3>
-        <p>Except honesty: no scenario without steps, no keyword Cucumber would
-           read as prose.</p>
-      </li>
-      <li class="st__item st__item--wait reveal">
-        <p class="st__tag">Needs Clarification</p>
-        <h3>Owes an answer</h3>
-        <p>From the client. Until then the harness skips it and <code>apply</code>
-           refuses it.</p>
-      </li>
-      <li class="st__item reveal">
-        <p class="st__tag">In progress</p>
-        <h3>Owes a test</h3>
-        <p>One that mentions it — the moment work on it has started.</p>
-      </li>
-      <li class="st__item st__item--deep reveal">
-        <p class="st__tag">Implemented · Verified · Released</p>
-        <h3>Owes everything</h3>
-        <p>Every file it points at exists, its scenario has real steps, and the
-           suite is green.</p>
-      </li>
-    </ol>
-  </div>
-</section>
-
-<!-- ── What the gate checks ─────────────────────────────────────────────── -->
-<section class="ed-band" id="evidence">
-  <div class="ed-wrap ed-split">
-    <div class="ed-split__head reveal">
-      <p class="ed-eyebrow">Evidence</p>
-      <h2 class="ed-h2">Every check is a scar.</h2>
-      <p class="ed-muted">Each one exists because the loop was caught approving
-         work it had not checked — found by running the tool on real projects,
-         and now a test that fails when the guard is removed.</p>
-    </div>
-    <ul class="ed-scars">
-      <li class="reveal">Every test was green and the application <strong>did not
-        boot</strong> — on the core-banking pilot. Specgate now
-        suggests a startup test for JVM stacks, and the harness asks for one on
-        Spring.</li>
-      <li class="reveal">An agent that could not pass a scenario
-        <strong>rewrote the scenario</strong> and got <code>1 passed · 0 failed</code>.
-        Now touching <code>spec.md</code> or <code>features/**</code> fails the
-        attempt, with the diff fed back.</li>
-      <li class="reveal">The command that marks a requirement done,
-        <code>apply</code>, closed one still
-        <strong>waiting for the client</strong>, with no test behind it. Now it
-        refuses, and <code>status</code> lists it apart with the question that
-        blocks it.</li>
-      <li class="reveal"><strong>27 of 28</strong> scenarios in the starter packs
-        executed nothing. Gherkin keywords are case-sensitive, so
-        <code>GIVEN</code> parsed as prose — and an empty scenario passes. The
-        gate now refuses a scenario Cucumber would see as empty.</li>
-    </ul>
   </div>
 </section>
 

@@ -75,39 +75,23 @@ you have:
 ## 🛠️ What it does
 
 - **A gate that does not lie.** `check` fails when a delivered requirement has
-  no scenario, no test that names it, or points at a missing file. A `Draft`
-  owes nothing yet, so the gate is green on day one.
-  → [Validating](docs/validating.md)
-- **Reviews that read intent.** A change is a delta: only what moves. The
-  reviewer reads the requirement, its scenario and its test.
-  → [Your team's first pull request](docs/first-pr.md)
-- **Drafts held to their source.** A draft from a brief or a ticket is checked
-  against that text: every value it uses must come from the source or be listed
-  as an assumption. → [From a client brief](docs/from-a-brief.md)
-- **Your agent works the same loop.** `specgate agents init` installs the loop
-  as slash commands for Claude Code, Cursor, Copilot and other agent tools; an
-  MCP server ships in the package. For Claude Code and OpenCode, the guards
-  hold the agent to it: the open change at session start, no source edit before
-  a test names the requirement, the gate before the session ends —
-  `specgate agents install --global` once. `--format skills` writes the same
-  steps as Agent Skills. → [Agent tools](docs/agents.md)
-- **Unattended delivery.** `specgate harness run` hands each pending requirement
-  to your coding agent in its own git worktree and keeps only what passes the
-  gate — optionally as a tester and an implementer, under a cost cap per requirement.
-  → [The harness](docs/harness.md) · [Roles](docs/harness-roles.md)
-- **Decisions, domain language, handover.** ADRs, the stack, a glossary, numbered
-  rules; a review page, a team studio, release notes, a signed acceptance.
-  → [Decisions](docs/decisions.md) · [Domain language](docs/domain-language.md) · [Review](docs/business-review.md) · [Handing over](docs/transition.md)
-- **Quality, not only tests.** Coverage and mutation of the lines a change adds,
-  SpotBugs, PMD, Semgrep, secrets, dependencies, SonarQube and Conventional
-  Commits — each in Docker, no account, only new findings fail.
-  → [Quality and security checks](docs/quality.md)
-- **Without the commands.** `specgate studio` is the whole path as an app: from
-  an empty folder to the report of what was built. → [The studio](docs/studio.md)
-- **Domain knowledge as a dependency.** Versioned domain packs install
-  requirements a team has already proved. → [Domain packs](docs/domain-packs.md)
-- **Already on OpenSpec?** `specgate verify` checks what OpenSpec calls done
-  against your tests. → [Already on OpenSpec](docs/openspec.md)
+  no scenario, no test that names it, or your suite fails. A `Draft` owes
+  nothing yet, so the gate is green on day one. → [Validating](docs/validating.md)
+- **Drafts held to their source.** A draft from a brief or a ticket lists every
+  value the source never gave; what only the client can answer becomes a
+  question. → [From a client brief](docs/from-a-brief.md)
+- **Your agent works the same loop.** Slash commands, Agent Skills and an MCP
+  server for Claude Code, Cursor, Copilot and others; `specgate harness run`
+  delivers each requirement unattended, in its own worktree, and keeps only
+  what passes. → [Agent tools](docs/agents.md) · [The harness](docs/harness.md)
+- **Code that already runs.** `specgate reverse` drafts requirements from an
+  existing module; `check --baseline` turns the gate on without a red build.
+  → [Reverse](docs/reverse.md)
+- **For the whole team.** ADRs, a glossary and numbered business rules; a review
+  page for the business, the studio as an app, release notes and an acceptance a
+  person signs. → [Studio](docs/studio.md) · [Handing over](docs/transition.md)
+- **More in the docs:** [quality checks](docs/quality.md) in Docker,
+  [domain packs](docs/domain-packs.md), [OpenSpec](docs/openspec.md).
 
 ## 🆚 How it compares
 
