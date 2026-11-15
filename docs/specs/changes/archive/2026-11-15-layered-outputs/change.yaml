@@ -1,0 +1,9 @@
+specgate_change_version: 1
+schema: layered
+created: 2026-11-15
+rigor: lite
+skip_specs: false
+retire_capabilities: false
+req_range: [REQ-560, REQ-561]
+kind: enhancement
+based_on: [REQ-542@9c91786dc6e0]

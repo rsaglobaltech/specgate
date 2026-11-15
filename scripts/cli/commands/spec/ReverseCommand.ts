@@ -30,6 +30,7 @@ import {
 import { addQuestion } from "../../../../packages/core/src/domain/Clarification";
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
+import { LAYERED_SCHEMA } from "../../../../packages/core/src/domain/ChangeLayers";
 
 const NULL_SHAPE = { reverse: null };
 
@@ -131,32 +132,69 @@ export function reversePrompt(
   return out.join("\n");
 }
 
-function proposal(id: string, mod: ReverseModule, rules: number, questions: number): string {
-  return `# Proposal: ${id}
+/**
+ * The change `reverse` writes is layered, like every 1.0 change (ADR-0044,
+ * REQ-561): the Discover says what was read and what a person confirms, the
+ * Design names the module, and each task names the requirement it reviews.
+ */
+function discover(id: string, mod: ReverseModule, rules: number, questions: number): string {
+  return `# Discover: ${id}
 
-## Intent
+> Owner: product — what the business needs and why. No technology here: the
+> design says how.
 
-Specify what the module \`${mod.name}\` (\`${mod.path}\`) already does, read from its
-code by \`specgate reverse\`: ${rules} requirement(s), every one Draft, each citing
-the lines it came from${questions > 0 ? `, and ${questions} behaviour(s) that may be defects, asked in questions.md` : ""}.
+## Context
 
-## Scope
+Specify what \`${mod.name}\` already does, as it runs today: ${rules} requirement(s)
+drafted from it by \`specgate reverse\`, every one Draft, each citing where it was
+read${questions > 0 ? `, and ${questions} behaviour(s) that may be defects, asked in questions.md` : ""}.
 
-In scope: the behaviour of \`${mod.path}\` as it runs today.
+## Use case
 
-Out of scope: changing that behaviour. A requirement here moves past Draft once a
-person has confirmed it is the rule, not an accident of the code.
+A person reads each requirement against what it cites, confirms it is the
+rule, rewords it, or answers its question; only then does it move past Draft.
+
+## Acceptance criteria
+
+- AC-1: Each requirement says what ${mod.name} does today, as a person confirmed it.
+- AC-2: Behaviour that looks like a defect is asked, never written down as the rule.
 `;
 }
 
-const TASKS = `# Tasks
+function design(id: string, mod: ReverseModule): string {
+  return `# Design: ${id}
 
-## 1. Review
+> Owner: architect — how the system meets the Discover. Name each acceptance
+> criterion (AC-1, AC-2…) where it is answered.
 
-- [ ] 1.1 Read each requirement against the code its source= cites
-- [ ] 1.2 Answer questions.md, if there is one
-- [ ] 1.3 Run \`specgate change validate\`
+## Modules
+
+\`${mod.path}\`, unchanged: this change specifies it, it does not alter it.
+
+## Mechanisms
+
+- AC-1 — each requirement's trace cites \`source=\`, the file and line it was read from.
+- AC-2 — behaviour the agent marked as suspect is a question in questions.md.
+
+## Channels
+
+None.
+
+## Decisions
+
+None: what the module does is recorded, not decided.
 `;
+}
+
+function tasks(ids: readonly string[], questions: number): string {
+  return [
+    "# Tasks",
+    "",
+    ...ids.map((id) => `- [ ] ${id}: read it against the code its source= cites`),
+    ...(questions > 0 ? ["- [ ] Answer questions.md"] : []),
+    "",
+  ].join("\n");
+}
 
 export class ReverseCommand extends BaseCommand {
   public execute(): void {
@@ -375,13 +413,21 @@ export class ReverseCommand extends BaseCommand {
       CHANGE_CONFIG_FILE,
       renderConfig({
         ...DEFAULT_CONFIG,
+        schema: LAYERED_SCHEMA,
         created: new Date().toISOString().slice(0, 10),
         rigor: "lite",
         req_range: reqRange,
       })
     );
-    write("proposal.md", proposal(changeId, mod, rules.length, suspects.length));
-    write("tasks.md", TASKS);
+    write("discover.md", discover(changeId, mod, rules.length, suspects.length));
+    write("design.md", design(changeId, mod));
+    write(
+      "tasks.md",
+      tasks(
+        rules.map((_, i) => `REQ-${String(first + i).padStart(3, "0")}`),
+        suspects.length
+      )
+    );
     write(path.join("specs", capability, "spec.md"), renderReverseDelta(capability, rules, first));
     let questions: string | undefined;
     for (const s of suspects)

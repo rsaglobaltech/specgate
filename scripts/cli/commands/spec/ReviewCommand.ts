@@ -17,6 +17,8 @@ import {
   renderReviewPage,
   type ReviewRequirement,
 } from "../../../../packages/core/src/domain/ReviewPage";
+import { acceptanceCriteria } from "../../../../packages/core/src/domain/ChangeLayers";
+import { intentOf } from "../../../../packages/core/src/domain/ReleaseNotes";
 
 const NULL_SHAPE = { review: null };
 
@@ -39,23 +41,6 @@ const read = (file: string) => {
     return "";
   }
 };
-
-/** The first paragraph under `## Intent`, on one line. */
-function intentOf(proposal: string): string {
-  const lines = proposal.replace(/\r\n/g, "\n").split("\n");
-  const at = lines.findIndex((l) => /^##\s+Intent\b/i.test(l));
-  if (at === -1) return "";
-  const para: string[] = [];
-  for (const line of lines.slice(at + 1)) {
-    if (/^#{1,6}\s/.test(line)) break;
-    if (line.trim() === "") {
-      if (para.length) break;
-      continue;
-    }
-    para.push(line.trim());
-  }
-  return para.join(" ");
-}
 
 /** The second cell of each row of the first table: the assumption itself. */
 function assumptionLines(md: string): string[] {
@@ -119,7 +104,8 @@ export class ReviewCommand extends BaseCommand {
       ]);
       return;
     }
-    const proposal = read(path.join(dir, "proposal.md"));
+    // The Discover of a 1.0 change, the proposal of a 0.x one (REQ-560).
+    const proposal = read(path.join(dir, "discover.md")) || read(path.join(dir, "proposal.md"));
     const requirements: ReviewRequirement[] = listDeltas(projectDir, change).flatMap((d) => {
       const delta = parseDelta(read(d.file));
       return [...delta.added, ...delta.modified].map((r) => ({
@@ -136,8 +122,9 @@ export class ReviewCommand extends BaseCommand {
     const commit = spawnSync("git", ["-C", projectDir, "rev-parse", "HEAD"], { encoding: "utf8" });
     const page = renderReviewPage({
       change,
-      title: (/^#\s+(.+)$/m.exec(proposal)?.[1] || change).replace(/^Proposal:\s*/i, ""),
+      title: (/^#\s+(.+)$/m.exec(proposal)?.[1] || change).replace(/^(Proposal|Discover):\s*/i, ""),
       intent: intentOf(proposal),
+      criteria: acceptanceCriteria(proposal),
       kind: String(readConfig(projectDir, change).kind || ""),
       requirements,
       questions: questionTable(read(path.join(dir, "questions.md"))).map((q) => ({

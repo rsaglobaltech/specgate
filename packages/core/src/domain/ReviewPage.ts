@@ -29,6 +29,8 @@ export interface ReviewPageInput {
   readonly change: string;
   readonly title: string;
   readonly intent: string;
+  /** The Discover's acceptance criteria (REQ-560); none for a 0.x change. */
+  readonly criteria?: ReadonlyArray<{ readonly id: string; readonly text: string }>;
   readonly kind: string;
   readonly requirements: readonly ReviewRequirement[];
   readonly questions: readonly ReviewQuestion[];
@@ -123,6 +125,7 @@ ${q.scenarios
 <h1>${e(r.title || r.change)}</h1>
 <p class="meta">${e(r.change)}${r.kind ? ` · ${e(r.kind)}` : ""} · ${e(r.date)}${r.commit ? ` · ${e(r.commit.slice(0, 12))}` : ""}${open.length ? ` · <span class="open">${open.length} open question(s)</span>` : ""}</p>
 ${r.intent ? `<h2>Why</h2><p>${e(plain(r.intent))}</p>` : ""}
+${r.criteria && r.criteria.length ? `<h2>Acceptance criteria</h2><ul>${r.criteria.map((c) => `<li><strong>${e(c.id)}</strong> ${e(c.text)}</li>`).join("")}</ul>` : ""}
 <h2>What it asks for</h2>
 ${reqs || '<p class="meta">No requirement yet.</p>'}
 ${questions}
