@@ -1,7 +1,7 @@
-# Spec: create-spec-driven-app
+# Spec: Specgate
 
 ## 1. Product context
-`create-spec-driven-app` operates in the **developer tooling / specification-first delivery** domain.
+Specgate (`@rsaglobaltech/specgate`) operates in the **developer tooling / specification-first delivery** domain.
 It is an npm CLI that scaffolds new software projects around executable specifications rather than
 code boilerplate, combining Spec-Driven Development (SDD), Domain-Driven Design (DDD),
 Behavior-Driven Development (BDD) and Test-Driven Development (TDD) into a single `npx` command.

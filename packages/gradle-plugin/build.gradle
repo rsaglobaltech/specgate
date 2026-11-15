@@ -31,7 +31,7 @@ gradlePlugin {
             id = 'com.rsaglobaltech.specgate'
             implementationClass = 'com.rsaglobaltech.specgate.gradle.SpecgatePlugin'
             displayName = 'specgate spec gate'
-            description = 'Run the create-spec-driven-app spec gate from Gradle — no local Node.js required.'
+            description = 'Run the Specgate spec gate from Gradle — no local Node.js required.'
         }
     }
 }

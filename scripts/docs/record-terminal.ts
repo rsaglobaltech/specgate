@@ -357,7 +357,7 @@ function prepare(scratch: string): void {
   const bin = path.join(scratch, "bin");
   // Reused, not forked: one deterministic agent, one place to fix it.
   fs.copyFileSync(
-    path.join(ROOT, "scripts", "demo", "stub-agent.sh"),
+    path.join(ROOT, "scripts", "docs", "stub-agent.sh"),
     path.join(bin, "specgate-stub-agent")
   );
   fs.chmodSync(path.join(bin, "specgate-stub-agent"), 0o755);

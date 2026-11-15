@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Deterministic stub "coding agent" used by the demo video.
+# Deterministic stub "coding agent" for the landing page's harness recording.
 #
 # `specgate harness run` shells out to this script with the path to a prompt
 # file as the single argument. A real agent (claude / opencode / aider)
@@ -8,7 +8,7 @@
 # REQ-000 (the platform health endpoint scaffolded by `init`) — and writes
 # real test + production code that genuinely makes `node --test` pass.
 #
-# It is intentionally narrow: just enough to make the demo show a real
+# It is intentionally narrow: just enough to make the recording show a real
 # end-to-end pass. For anything else it prints a clear note and exits
 # non-zero, so the harness gate fails honestly.
 set -euo pipefail
