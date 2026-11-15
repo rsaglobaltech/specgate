@@ -54,9 +54,10 @@ A test links to a rule by naming it, the same way it links to a requirement:
 test("REQ-014 BR-022: a refund after 180 days becomes store credit", () => { … });
 ```
 
-- `validate` fails with `rule_duplicate` when a rule id is used twice. Rule ids
-  are unique across the specification and the open changes' deltas, like
-  requirement ids.
+- `validate` fails with `rule_duplicate` when a rule id is used by two
+  requirements, or twice in one file. Rule ids are unique across the
+  specification, like requirement ids; an open change's delta that restates a
+  requirement with its rules is the same requirement, not a second use.
 - `validate --strict` fails with `rule_untested` for each rule of a delivered
   requirement (Implemented, Verified or Released) that no test mentions. A test
   that names the requirement is no longer enough to cover a rule it never
@@ -93,8 +94,8 @@ When `docs/brief.md` names its actors, `specgate check` writes
 and requirements whose trace says `actor=<that actor>`, and a table of each
 actor's requirements. `validate` warns `actor_unknown` for a requirement whose
 actor the brief does not list, so a typo or a forgotten actor shows up before a
-diagram leaves it out. Write the actor exactly as the brief does, case included:
-a difference only in case is not warned, and the diagram leaves it out.
+diagram leaves it out. Case does not matter: `actor=customer` is the brief's
+`Customer`, and is drawn under the brief's spelling.
 
 ## Generated, not edited
 

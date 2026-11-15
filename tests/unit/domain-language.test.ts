@@ -182,6 +182,71 @@ test("REQ-539: a rule id used twice fails validate", () => {
   assert.ok(codes(JSON.parse(r.stdout)).includes("rule_duplicate"));
 });
 
+const REQ_014 = (status: string) =>
+  "### Requirement: REQ-014 — A refund goes back to the card\n\nThe system SHALL refund to the card that paid.\n\n" +
+  "Rules:\n\n- BR-021 A refund never exceeds what was paid.\n- BR-022 After 180 days, store credit.\n\n" +
+  "#### Scenario: SCN-014a — A refund\n\n- GIVEN a paid order\n- WHEN it is refunded\n- THEN the card is credited\n\n" +
+  `<!-- specgate:trace status=${status} actor=Developer kind=functional -->\n`;
+
+test("REQ-539 SCN-539b: a change restates a requirement with rules", () => {
+  const dir = project();
+  put(
+    dir,
+    "docs/specs/capabilities/billing/spec.md",
+    "# billing\n\n## Requirements\n\n" + REQ_014("Draft")
+  );
+  put(
+    dir,
+    "docs/specs/changes/fix-refund/change.yaml",
+    "specgate_change_version: 1\nschema: spec-driven\ncreated: 2026-11-15\nrigor: lite\nreq_range: []\n"
+  );
+  put(
+    dir,
+    "docs/specs/changes/fix-refund/proposal.md",
+    "# Proposal: fix-refund\n\n## Intent\n\nRefunds.\n"
+  );
+  put(
+    dir,
+    "docs/specs/changes/fix-refund/specs/billing/spec.md",
+    "# Delta — billing\n\n## MODIFIED Requirements\n\n" + REQ_014("Draft")
+  );
+  // validate stops at a stale matrix before the domain checks run.
+  sg(dir, "matrix");
+  const v = sg(dir, "validate", ".", "--json");
+  assert.ok(!codes(JSON.parse(v.stdout)).includes("rule_duplicate"), v.out);
+
+  // A second requirement using BR-021 is still a duplicate.
+  edit(dir, "spec.md", (s) =>
+    s.replace("reading logs.\n", "reading logs.\n\nRules:\n\n- BR-021 something else\n")
+  );
+  sg(dir, "matrix");
+  const w = sg(dir, "validate", ".", "--json");
+  const dup = JSON.parse(w.stdout).status.filter(
+    (d: { code: string }) => d.code === "rule_duplicate"
+  );
+  assert.equal(dup.length, 1, w.out);
+  assert.equal(dup[0].target, "BR-021");
+});
+
+test("REQ-539: the same requirement restated is one rule; untested is reported once", () => {
+  const spec = rulesIn("docs/specs/capabilities/billing/spec.md", REQ_014("Implemented"));
+  const delta = rulesIn(
+    "docs/specs/changes/fix-refund/specs/billing/spec.md",
+    REQ_014("Implemented")
+  );
+  assert.deepEqual(duplicateRules([...spec, ...delta]), []);
+  const twiceInOneFile = rulesIn("spec.md", REQ_014("Draft") + "\n" + REQ_014("Draft"));
+  assert.deepEqual(
+    duplicateRules(twiceInOneFile).map((r: { id: string }) => r.id),
+    ["BR-021", "BR-022"]
+  );
+  const untested = untestedRules([...spec, ...delta], ["REQ-014 BR-021"], () => true);
+  assert.deepEqual(
+    untested.map((r: { id: string }) => r.id),
+    ["BR-022"]
+  );
+});
+
 // ── REQ-540 ─────────────────────────────────────────────────────────────────
 
 const AGGREGATES =
@@ -254,6 +319,30 @@ test("REQ-541 SCN-541a: two actors, one unknown", () => {
   assert.equal(unknown.length, 1, v.out);
   assert.equal(unknown[0].target, "REQ-002");
   assert.match(unknown[0].message, /Admin/);
+});
+
+test("REQ-541 SCN-541b: an actor written in another case", () => {
+  const dir = project();
+  put(
+    dir,
+    "docs/brief.md",
+    "---\nactors:\n  - { name: Customer, surfaces: [web] }\n---\n\n# Brief\n"
+  );
+  edit(
+    dir,
+    "spec.md",
+    (s) =>
+      s.trimEnd() +
+      "\n\n## REQ-001 — A customer sees invoices\n\nThe system SHALL list invoices.\n\n<!-- specgate:trace status=Draft actor=customer -->\n"
+  );
+  sg(dir, "check");
+  const actors = fs.readFileSync(path.join(dir, "docs/specs/actors.md"), "utf8");
+  assert.match(actors, /actor_Customer --> cap_spec/);
+  assert.match(actors, /cap_spec --> req_REQ_001/);
+  assert.match(actors, /\| Customer \| REQ-001 \|/);
+  assert.doesNotMatch(actors, /actor_customer/);
+  const v = sg(dir, "validate", ".", "--json");
+  assert.ok(!codes(JSON.parse(v.stdout)).includes("actor_unknown"), v.out);
 });
 
 test("REQ-541: no actors in the brief, no diagram", () => {

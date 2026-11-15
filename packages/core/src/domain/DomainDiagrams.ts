@@ -210,9 +210,11 @@ export function renderActors(
   requirements: readonly ActorRequirement[]
 ): string | null {
   if (actors.length === 0) return null;
-  const known = new Set(actors);
+  // An actor matches the brief's ignoring case, and is drawn as the brief spells it.
+  const spelling = new Map(actors.map((a) => [a.toLowerCase(), a]));
   const reqs = [...requirements]
-    .filter((r) => known.has(r.actor))
+    .filter((r) => spelling.has(r.actor.toLowerCase()))
+    .map((r) => ({ ...r, actor: spelling.get(r.actor.toLowerCase())! }))
     .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
   const caps = [...new Set(reqs.map((r) => r.capability))].sort();
   const node = (prefix: string, s: string) => `${prefix}_${ident(s)}`;
