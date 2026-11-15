@@ -15,7 +15,8 @@ specgate propose pdf-invoices --kind enhancement
 ```
 
 The kind is written as `kind:` in the change's `change.yaml`, and shown by
-`specgate change show`, `specgate change list` and `specgate status --json`.
+`specgate change show` and `specgate change list`, and as `changeKind` on each
+requirement of the change in `specgate status --json`.
 Any other kind is refused with `change_kind_unknown`.
 `specgate propose --from-ticket` sets it for you: `bug` for a Jira issue of
 type Bug, `enhancement` for anything else.
@@ -54,9 +55,11 @@ written down:
 specgate acceptance pdf-invoices
 ```
 
-This writes `docs/specs/changes/pdf-invoices/acceptance.md`, with one
-unchecked item per scenario of the change, under its requirement, and the
-scenario's steps below each item. The person checks an item (`- [x]`) once
+This writes `docs/specs/changes/pdf-invoices/acceptance.md`, if it does not
+exist yet, with one unchecked item per scenario written in the change's delta,
+under its requirement, and the scenario's steps below each item. A requirement
+with no scenario in the delta gets one item: "The requirement behaves as its
+text says". The person checks an item (`- [x]`) once
 they have seen it work, then signs:
 
 ```bash
@@ -74,11 +77,12 @@ specgate acceptance pdf-invoices --sign "Ana Pérez"
 ## A user guide per actor
 
 ```bash
-specgate guide                     # every actor
+specgate guide                     # every actor a delivered requirement names
 specgate guide --actor Customer    # one
 ```
 
-This writes `docs/guide/<actor>.md`, with one section per delivered
+This writes `docs/guide/<actor>.md` (the actor lower-cased, spaces as dashes:
+`fleet-manager.md`), with one section per delivered
 requirement (Implemented, Verified or Released) whose trace says
 `actor=<that actor>`, ordered by capability. Each section has the
 requirement's text and its scenarios as numbered steps. Draft work is left

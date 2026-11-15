@@ -13,11 +13,13 @@ specgate review pdf-invoices
 specgate review pdf-invoices --out review.html
 ```
 
-This writes one HTML file (by default `<change>-review.html`) with:
+This writes one HTML file (by default `<change>-review.html`, relative to the
+project root) with:
 
 - the change's title, its kind and its intent ("Why"),
-- each requirement's title, text and status, with its scenarios as plain
-  numbered steps ("Given a paid invoice", "When its owner downloads it"),
+- each requirement the change adds or modifies — title, text and status — with
+  its scenarios as plain numbered steps ("Given a paid invoice", "When its owner
+  downloads it"),
 - the change's questions, the open ones marked, and its assumptions,
 - the date and the commit it was made from.
 

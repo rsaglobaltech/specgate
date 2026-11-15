@@ -19,9 +19,11 @@ specgate reverse --modules
   orders                           java     63 file(s)
 ```
 
-The candidates are what the repository already declares: Maven and Gradle
-modules, npm workspaces, the packages of a Go module, and the folders under
-`src/` or `apps/` that hold code. Each comes with its stack and its number of
+The candidates are the folders with their own build manifest (`pom.xml`,
+`build.gradle`, `package.json`, …) at the first or second level of the
+repository, the packages of a Go module, and the folders under `src/` or
+`apps/` that hold code; folders named like tests, examples or samples are
+skipped. Each is listed by its path. Each comes with its stack and its number of
 code files, tests included. No agent runs. With `--json`, the list is
 `reverse.modules`.
 
@@ -97,8 +99,9 @@ through (`baselined`), and names each baselined finding that no longer occurs
 (`baseline_fixed`), so that you can run `check --baseline` again and the file
 shrinks.
 
-A finding is matched by its code, its file and its requirement, never by its
-wording. The baseline holds the traceability findings of `validate --strict`
+A finding is matched by its code, its file and its requirement (or target),
+not by its wording — except a finding that names neither, which is matched by
+its message. The baseline holds the traceability findings of `validate --strict`
 (the TDD rules and the matrix checks). The other checks still fail as before:
 when one does, `check --baseline` says so and records what it could.
 

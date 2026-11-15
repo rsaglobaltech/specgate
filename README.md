@@ -93,7 +93,7 @@ you have:
   steps as Agent Skills. → [Agent tools](docs/agents.md)
 - **Unattended delivery.** `specgate harness run` hands each pending requirement
   to your coding agent in its own git worktree and keeps only what passes the
-  gate, optionally split into a tester and an implementer under a cost cap.
+  gate — optionally as a tester and an implementer, under a cost cap per requirement.
   → [The harness](docs/harness.md) · [Roles](docs/harness-roles.md)
 - **Decisions, domain language, handover.** ADRs, the stack, a glossary, numbered
   rules; a review page, a team studio, release notes, a signed acceptance.

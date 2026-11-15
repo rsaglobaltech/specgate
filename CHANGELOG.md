@@ -21,8 +21,8 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   limit; a requirement that then fails reports `budget_exceeded`. An agent that
   reports no cost is warned about once, as `cost_unknown`.
 - **`specgate reverse`** (REQ-528, REQ-529, REQ-530): `reverse --modules` lists the
-  modules of an existing system (Maven and Gradle modules, npm workspaces, Go
-  packages, folders under `src/` or `apps/`) with stack and file count, without
+  modules of an existing system (folders with their own build manifest at the
+  first or second level, Go packages, folders under `src/` or `apps/`) with stack and file count, without
   an agent. `reverse <module>` has your agent read one module and writes the
   change `reverse-<module>`: every requirement `Draft`, its trace citing
   `source=` the lines it was read from, behaviour the agent marks as suspect

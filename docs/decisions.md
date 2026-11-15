@@ -65,8 +65,8 @@ An attempt that takes a decision kept for a person fails before the gate:
 ⚠  REQ-014: decision_right_exceeded — dependency in package.json (left-pad)
 ```
 
-The next attempt is told what to undo, and that it can ask instead:
-`specgate ask REQ-014 "<what you need, and why>"`. The rights are read from the
+The next attempt is told what to undo, and that it can ask instead with
+`specgate ask <REQ> "<what you need, and why>"`. The rights are read from the
 committed file, and `docs/specs/**` is protected, so an agent cannot grant
 itself a right.
 
