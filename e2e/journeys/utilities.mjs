@@ -4,6 +4,88 @@ import * as path from "node:path";
 
 export default [
   {
+    name: "a change as one page to send, loading nothing from outside it",
+    covers: ["review"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      t.ok(t.sg(dir, "propose", "pdf"), "propose");
+      t.ok(t.sg(dir, "review", "pdf", "--out", "review.html"), "review");
+      const html = t.read(dir, "review.html");
+      t.expect(/<!doctype html>/i.test(html), "an HTML page");
+      t.expect(!/\b(src|href)\s*=/i.test(html), "nothing loaded from outside it");
+    },
+  },
+  {
+    name: "a change with a kind, accepted by a person, in the release notes and the guide",
+    covers: ["release-notes", "acceptance", "guide"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      t.gitInit(dir);
+      t.git(dir, "tag", "v0");
+      t.ok(t.sg(dir, "propose", "pdf", "--kind", "enhancement"), "propose --kind");
+      const delta = "docs/specs/changes/pdf/specs/pdf/spec.md";
+      const id = /REQ-\d+/.exec(t.read(dir, "docs/specs/changes/pdf/change.yaml"))[0];
+      t.write(
+        dir,
+        delta,
+        `# Delta — pdf\n\n## ADDED Requirements\n\n### Requirement: ${id} — Invoices as PDF\n\n` +
+          "The system SHALL offer an invoice as a PDF.\n\n#### Scenario: A paid invoice\n\n" +
+          "- GIVEN a paid invoice\n- WHEN its owner downloads it\n- THEN a PDF arrives\n\n" +
+          "<!-- specgate:trace status=Implemented actor=Customer kind=functional -->\n"
+      );
+      t.ok(t.sg(dir, "acceptance", "pdf"), "acceptance");
+      const file = path.join(dir, "docs/specs/changes/pdf/acceptance.md");
+      fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("- [ ]", "- [x]"));
+      t.ok(t.sg(dir, "acceptance", "pdf", "--sign", "Ana"), "acceptance --sign");
+
+      const base = "docs/specs/changes/archive/2026-11-14-pdf";
+      fs.mkdirSync(path.join(dir, "docs/specs/changes/archive"), { recursive: true });
+      fs.renameSync(path.join(dir, "docs/specs/changes/pdf"), path.join(dir, base));
+      t.git(dir, "add", "-A");
+      t.git(dir, "commit", "-qm", "release");
+      const notes = t.sg(dir, "release-notes", "v0..HEAD");
+      t.ok(notes, "release-notes");
+      t.expect(
+        /## Enhancements[\s\S]*Invoices as PDF/.test(notes.stdout),
+        "the change is listed",
+        notes
+      );
+      t.ok(t.sg(dir, "guide"), "guide");
+    },
+  },
+  {
+    name: "a decision recorded then replaced, and the stack written down once",
+    covers: ["adr new", "adr supersede", "adr list", "stack"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      t.ok(t.sg(dir, "adr", "new", "Use Postgres"), "adr new");
+      const adr = fs
+        .readdirSync(path.join(dir, "docs/specs/adr"))
+        .find((f) => /-use-postgres\.md$/.test(f));
+      t.expect(!!adr, "the ADR is written");
+      const number = adr.slice(0, 4);
+      const file = path.join(dir, "docs/specs/adr", adr);
+      fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("Proposed", "Accepted"));
+      t.ok(t.sg(dir, "adr", "supersede", number, "Use SQLite at the edge"), "adr supersede");
+      const list = t.sg(dir, "adr", "list", "--json");
+      t.ok(list, "adr list");
+      const statuses = JSON.parse(list.stdout).adr.list.map((a) => a.status);
+      t.expect(
+        statuses.some((s) => /^Superseded by /.test(s)),
+        "the old one is superseded",
+        list
+      );
+
+      t.ok(t.sg(dir, "stack"), "stack");
+      const once = t.read(dir, "docs/specs/stack.md");
+      t.ok(t.sg(dir, "stack"), "stack again");
+      t.expect(t.read(dir, "docs/specs/stack.md") === once, "a second run changes nothing");
+    },
+  },
+  {
     name: "onboard reads a repository, proposes capabilities, and writes nothing",
     covers: ["onboard"],
     run(dir, t) {
@@ -140,7 +222,7 @@ export default [
   },
   {
     name: "config remembers a preference and the help follows it",
-    covers: ["config init", "config set", "config get", "config list"],
+    covers: ["config init", "config set", "config get", "config list", "config keys"],
     run(dir, t) {
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
@@ -153,6 +235,13 @@ export default [
       t.expect(
         /profile\s*=\s*full/.test(t.sg(dir, "config", "list").stdout),
         "config list shows it"
+      );
+      const keys = t.sg(dir, "config", "keys", "--json");
+      t.ok(keys, "config keys");
+      t.expect(
+        JSON.parse(keys.stdout).keys.some((k) => k.key === "profile" && k.current === "full"),
+        "config keys lists the preference with its value",
+        keys
       );
       const help = t.sg(dir, "--help");
       t.expect(

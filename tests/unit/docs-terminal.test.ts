@@ -90,10 +90,10 @@ function eachRecording(
   for (const r of RECORDINGS) test(`${r.board.id}: ${name}`, () => fn(r));
 }
 
-test("there are three recordings, and the page offers each as a tab", () => {
+test("there are four recordings, and the page offers each as a tab", () => {
   assert.deepEqual(
     BOARDS.map((b) => b.id),
-    ["brief", "gate", "harness"]
+    ["brief", "gate", "existing", "harness"]
   );
   for (const board of BOARDS) {
     assert.match(INDEX, new RegExp(`data-term-src="\\./assets/${board.file.replace(".", "\\.")}"`));
@@ -300,6 +300,7 @@ test("the recordings prove the loop the page promises", () => {
     "archive",
     "check",
     "status",
+    "reverse",
   ]) {
     assert.ok(
       surfaces.includes(required),
@@ -372,6 +373,24 @@ test("the normalisation rules are all still there, in order", () => {
       "hostname",
       "trim",
     ]
+  );
+});
+
+test("a duration reads the same whatever the run took, written with or without a space", () => {
+  // The harness writes "in 0.1 s"; the check compared it with the "0.2 s" of the
+  // next run and failed on a timing, never on what the CLI says.
+  const duration = RULES.find((r: { id: string }) => r.id === "duration");
+  const ctx = {};
+  assert.equal(
+    duration.apply("passed validate --strict in 0.1 s", ctx),
+    duration.apply("passed validate --strict in 0.2 s", ctx)
+  );
+  assert.equal(duration.apply("done in 4.6s", ctx), "done in 1.2s");
+  assert.equal(duration.apply("took 37 ms", ctx), duration.apply("took 12 ms", ctx));
+  assert.equal(
+    duration.apply("v0.28.1 shipped", ctx),
+    "v0.28.1 shipped",
+    "a version is not a duration"
   );
 });
 

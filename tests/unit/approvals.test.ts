@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * REQ-310..315, REQ-319 (ADR-0043) — the roles of a project, an approval per
+ * REQ-310..315, REQ-319 (ADR-0045) — the roles of a project, an approval per
  * layer by the role that owns it, a quorum, the record of who approved which
  * version, a changed layer approved again, and the harness waiting for them.
  */

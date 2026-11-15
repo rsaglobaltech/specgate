@@ -9,6 +9,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as readline from "node:readline";
 import { BaseCommand } from "../../../lib/command";
+import { PACK_PROJECT_TYPES } from "../../../../packages/core/src/domain/PackSpec";
 
 import { c } from "../../../lib/ui";
 
@@ -27,7 +28,7 @@ function usage() {
       `  ${c.bold}OPTIONS${c.reset}\n` +
       `    ${c.green}--out <dir>${c.reset}     ${c.dim}Directory to write the new pack (required).${c.reset}\n` +
       `    ${c.green}--name <name>${c.reset}   ${c.dim}Human-readable pack name (prompted if omitted).${c.reset}\n` +
-      `    ${c.green}--type <kind>${c.reset}   ${c.dim}Pack flavour: backend · frontend · mobile · contracts. (default: backend)${c.reset}\n` +
+      `    ${c.green}--type <kind>${c.reset}   ${c.dim}Pack flavour: backend · frontend · mobile · desktop · contracts. (default: backend)${c.reset}\n` +
       `    ${c.green}--dry-run${c.reset}       ${c.dim}Print the generated pack.yaml; touch nothing.${c.reset}\n` +
       `    ${c.green}-h, --help${c.reset}      ${c.dim}Show this help.${c.reset}\n\n` +
       `  ${c.bold}EXAMPLES${c.reset}\n` +
@@ -280,8 +281,10 @@ export class InitPackCommand extends BaseCommand {
       process.exit(2);
     }
 
-    if (!["backend", "frontend", "mobile", "contracts"].includes(opts.type)) {
-      logError(`--type must be one of backend, frontend, mobile, contracts — got: ${opts.type}`);
+    // The one list of pack types, so a project type is never scaffoldable here
+    // and refused there (ADR-0020).
+    if (!PACK_PROJECT_TYPES.includes(opts.type)) {
+      logError(`--type must be one of ${PACK_PROJECT_TYPES.join(", ")} — got: ${opts.type}`);
       process.exit(2);
     }
 

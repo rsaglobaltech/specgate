@@ -35,7 +35,7 @@ specgate propose add-dynamic-pricing --capability pricing
      after you write the delta, a test that names each requirement, and the code
 ```
 
-- **The layers** ([ADR-0042](specs/adr/0042-the-three-layers-of-a-change.md)):
+- **The layers** ([ADR-0044](specs/adr/0044-the-three-layers-of-a-change.md)):
   `discover.md` is product's (context, use case, criteria `- AC-1: …`),
   `design.md` the architect's (it names every criterion), `tasks.md` the
   developer's (each task names its `REQ-NNN`). `change validate` warns on each
@@ -170,10 +170,10 @@ the next requirement `status` names. `apply` does not commit: commit after it.
 `specgate change approve <id>` records that a person read and approved it,
 refused while its checklist has an error or a question is open; `specgate
 change note <id> "<what to change>" --req REQ-NNN` asks for a change in your
-words, in the draft's `review.md`. The [studio](studio.md)'s Review page does
-both, and Build starts only approved drafts.
+words, in the draft's `review.md`. The [studio](studio.md)'s Changes section does
+both, each blocker with the action that clears it, and Build starts only approved drafts.
 
-Each layer is approved by its owner (ADR-0043): `--layer discover` by product,
+Each layer is approved by its owner (ADR-0045): `--layer discover` by product,
 `--layer design` by the architect, `--layer tasks` by the developer; without
 `--layer`, the layers you own. `harness.config.yaml` says who holds each role
 and how many people a layer needs — `roles: { product: [ana@acme.eu] }`,

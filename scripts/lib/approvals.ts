@@ -22,7 +22,7 @@ import {
 } from "../../packages/core/src/domain/Approvals";
 
 /**
- * The project side of roles and approvals (REQ-310..315, ADR-0043): the
+ * The project side of roles and approvals (REQ-310..315, ADR-0045): the
  * settings in `harness.config.yaml`, the git identity of whoever approves, and
  * `approvals.json` in the change folder — which moves to the archive with it.
  */

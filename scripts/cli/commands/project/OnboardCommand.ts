@@ -96,7 +96,7 @@ export const BUILD_OUTPUT = new Set([
 /** The wrapper a JVM project puts between the module root and its packages. */
 const JVM_SOURCE_ROOTS = ["src/main/java", "src/main/kotlin", "src/main/scala", "src/main/groovy"];
 
-const CODE_EXT = new Set([
+export const CODE_EXT = new Set([
   ".java",
   ".kt",
   ".kts",
@@ -192,6 +192,63 @@ const LAYER_NAMES = new Set([
   "client",
   "server",
 ]);
+
+/**
+ * Folders named by a generic kind of code, as frontends and their tooling name
+ * them — `components`, `hooks`, `utils` (ADR-0041). Never an area: left out of
+ * any split (REQ-476).
+ */
+const GENERIC_KINDS = new Set([
+  "components",
+  "component",
+  "hooks",
+  "helpers",
+  "helper",
+  "types",
+  "typings",
+  "styles",
+  "css",
+  "store",
+  "stores",
+  "state",
+  "utils",
+  "util",
+  "lib",
+  "libs",
+  "shared",
+  "common",
+  "commons",
+  "constants",
+  "contexts",
+  "context",
+  "providers",
+  "layouts",
+  "middleware",
+  "middlewares",
+  "interfaces",
+  "dto",
+  "dtos",
+  "mappers",
+  "validators",
+  "errors",
+  "exceptions",
+  "enums",
+  "i18n",
+  "locales",
+]);
+
+/**
+ * Every name that says how code is organised rather than what it does: the
+ * generic kinds, the architectural layers, and the backend kinds. A layer name
+ * alone — `core`, `api`, `web` — can be a real area, so these only count
+ * towards deciding that a whole split is organised by kind (REQ-476).
+ */
+const KIND_NAMES = new Set([...GENERIC_KINDS, ...LAYER_NAMES, "services", "models", "controllers"]);
+
+/** Whether a folder's name is a generic kind of code, never an area (REQ-476). */
+export function isKindOfCode(name: string): boolean {
+  return GENERIC_KINDS.has(name.toLowerCase());
+}
 
 /**
  * Modules and directories that exist to test, document or demo the real ones.
@@ -395,12 +452,27 @@ function toCapability(projectDir: string, dir: string, name: string): Capability
  * Split one directory into the capabilities its children imply, or null when
  * its children imply nothing.
  */
-function splitIntoCapabilities(projectDir: string, root: string, depth = 0): Capability[] | null {
+function splitIntoCapabilities(
+  projectDir: string,
+  root: string,
+  depth = 0,
+  byKind: string[] = []
+): Capability[] | null {
   const base = descendThroughWrappers(root);
-  const children = subdirectories(base)
+  const all = subdirectories(base)
     .filter((n) => !NOT_DOMAIN.has(n.toLowerCase()) && !NOT_A_MODULE.test(n))
     .map((n) => ({ dir: path.join(base, n), cap: toCapability(projectDir, path.join(base, n), n) }))
     .filter((child) => child.cap.files > 0);
+  // Organised by kind of code (ADR-0041): at least two children, and at least
+  // half, named `components`, `hooks`, `utils`… — the split says nothing about
+  // the product, so it proposes nothing. Silence beats a confident wrong answer.
+  const kinds = all.filter((child) => KIND_NAMES.has(path.basename(child.dir).toLowerCase()));
+  if (kinds.length >= 2 && kinds.length / all.length >= 0.5) {
+    byKind.push(...kinds.map((k) => path.basename(k.dir).toLowerCase()));
+    return null;
+  }
+  // In a mixed split, the kind-named children are left out (REQ-476).
+  const children = all.filter((child) => !isKindOfCode(path.basename(child.dir)));
   if (children.length < 2) return null;
 
   // A "split" where one child holds nearly everything is not a split — it is a
@@ -410,7 +482,7 @@ function splitIntoCapabilities(projectDir: string, root: string, depth = 0): Cap
   const total = children.reduce((sum, child) => sum + child.cap.files, 0);
   const largest = children.reduce((a, b) => (a.cap.files >= b.cap.files ? a : b));
   if (depth < 3 && largest.cap.files / total >= 0.8) {
-    const deeper = splitIntoCapabilities(projectDir, largest.dir, depth + 1);
+    const deeper = splitIntoCapabilities(projectDir, largest.dir, depth + 1, byKind);
     if (deeper) return deeper;
   }
   return children.map((child) => child.cap);
@@ -433,8 +505,8 @@ function splitIntoCapabilities(projectDir: string, root: string, depth = 0): Cap
  * .NET), the previous list-order approach answered for five of them and named
  * packaging directories in two more.
  */
-export function proposeCapabilities(projectDir: string): Capability[] {
-  return proposeAllCapabilities(projectDir).slice(0, MAX_PROPOSED);
+export function proposeCapabilities(projectDir: string, byKind: string[] = []): Capability[] {
+  return proposeAllCapabilities(projectDir, byKind).slice(0, MAX_PROPOSED);
 }
 
 /** How many areas adoption proposes: what a person can review at once (REQ-338). */
@@ -452,7 +524,7 @@ export function capabilitiesUnder(projectDir: string, scopeDir: string): Capabil
 }
 
 /** Every area the layout shows, largest first — `proposeCapabilities` keeps eight. */
-export function proposeAllCapabilities(projectDir: string): Capability[] {
+export function proposeAllCapabilities(projectDir: string, byKind: string[] = []): Capability[] {
   let modules = findDeclaredModules(projectDir);
 
   // A repository can hold sub-projects and still *be* a project: Loki keeps a
@@ -473,7 +545,7 @@ export function proposeAllCapabilities(projectDir: string): Capability[] {
       layers.find((m) => m.name.toLowerCase() === "domain") ||
       layers.find((m) => m.name.toLowerCase() === "core") ||
       layers[0];
-    const split = splitIntoCapabilities(projectDir, preferred.dir);
+    const split = splitIntoCapabilities(projectDir, preferred.dir, 0, byKind);
     if (split) return split.sort((a, b) => b.files - a.files);
   }
 
@@ -496,7 +568,7 @@ export function proposeAllCapabilities(projectDir: string): Capability[] {
     if (seen.has(key) || !fs.existsSync(root)) continue;
     seen.add(key);
 
-    const split = splitIntoCapabilities(projectDir, root);
+    const split = splitIntoCapabilities(projectDir, root, 0, byKind);
     if (!split) continue;
     // Weight by the code the split actually accounts for: a packaging folder
     // with two shell scripts must never outrank the crate tree beside it.
@@ -608,6 +680,12 @@ function renderHuman({
     }
     out.push("");
     out.push(`     ${c.dim}A proposal, not a verdict. Merge, split or rename them.${c.reset}`);
+    // Adopted: the areas are a map in adoption.md, not work to do (REQ-477).
+    if (adopted && fs.existsSync(path.join(projectDir, "docs", "specs", "adoption.md"))) {
+      out.push(
+        `     ${c.dim}They are in docs/specs/adoption.md — specify one behaviour at a time.${c.reset}`
+      );
+    }
   }
   out.push("");
 
@@ -652,13 +730,11 @@ export class OnboardCommand extends BaseCommand {
 
     const adopted = isAdopted(projectDir);
     const stack = detectStack(projectDir);
-    const capabilities = proposeCapabilities(projectDir);
+    const byKind: string[] = [];
+    const capabilities = proposeCapabilities(projectDir, byKind);
 
-    const nextCommand = !adopted
-      ? "specgate adopt"
-      : capabilities.length > 0
-        ? `specgate propose describe-${capabilities[0].id}`
-        : 'specgate new "<the first behaviour you rely on>"';
+    // Once adopted: one behaviour, never a change named after a folder (REQ-477).
+    const nextCommand = !adopted ? "specgate adopt" : 'specgate new "<a behaviour you rely on>"';
 
     const diagnostics = [];
     if (!stack.detected) {
@@ -668,7 +744,18 @@ export class OnboardCommand extends BaseCommand {
         })
       );
     }
-    if (capabilities.length === 0) {
+    if (capabilities.length === 0 && byKind.length > 0) {
+      const names = [...new Set(byKind)].sort();
+      diagnostics.push(
+        info(
+          "capabilities_by_kind",
+          `The code is organised by kind (${names.join(", ")}), not by area: no area proposed (ADR-0041).`,
+          {
+            fix: 'Name the areas yourself — one behaviour at a time: specgate new "<a behaviour you rely on>".',
+          }
+        )
+      );
+    } else if (capabilities.length === 0) {
       diagnostics.push(
         info("capabilities_undetected", "No capability structure was obvious from the layout.", {
           fix: "Name them yourself — one per area of behaviour a user would recognise. `specgate propose <id>` opens the first.",

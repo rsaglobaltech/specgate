@@ -71,7 +71,7 @@ function layeredConfig(file: string): string {
   return `${text}${end}schema: ${LAYERED_SCHEMA}\n`;
 }
 
-/** REQ-325: each open 0.27 change, in the three layers of ADR-0042. */
+/** REQ-325: each open 0.27 change, in the three layers of ADR-0044. */
 const layersStep: MigrationStep = {
   id: "layers",
   title: "Open changes in three layers: discover.md, design.md, tasks.md",
@@ -161,7 +161,7 @@ const configStep: MigrationStep = {
 };
 
 /**
- * ADR-0043: who holds each role is a person's decision, so nothing is written;
+ * ADR-0045: who holds each role is a person's decision, so nothing is written;
  * the report says what to name, and that approvals now gate the harness.
  */
 const rolesStep: MigrationStep = {
@@ -173,7 +173,7 @@ const rolesStep: MigrationStep = {
     const manual: string[] = [];
     if (!/^roles:/m.test(text)) {
       manual.push(
-        "Name who holds product, architect and developer under `roles:` in harness.config.yaml (ADR-0043); until then a role is open to anyone."
+        "Name who holds product, architect and developer under `roles:` in harness.config.yaml (ADR-0045); until then a role is open to anyone."
       );
     }
     if (!/^approvals:/m.test(text)) {

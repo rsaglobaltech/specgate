@@ -15,6 +15,7 @@
  * agent's footprint is found at all.
  */
 
+import { withPromptFile } from "../../packages/core/src/domain/HarnessRun";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -77,7 +78,7 @@ export function agentInvocation(
   promptFile: string
 ): { command: string; stdin: boolean } {
   return command.includes("{prompt_file}")
-    ? { command: command.split("{prompt_file}").join(promptFile), stdin: false }
+    ? { command: withPromptFile(command, promptFile), stdin: false }
     : { command, stdin: true };
 }
 
@@ -95,6 +96,16 @@ export function withWritePermission(command: string): { command: string; added: 
   return isClaudePrint && !hasOwn
     ? { command: `${command} --permission-mode acceptEdits`, added: true }
     : { command, added: false };
+}
+
+/**
+ * Claude Code edits only inside the folder it runs in, and the agent runs in
+ * the project: a brief kept outside it (REQ-488) is reachable once its folder
+ * is added with `--add-dir`. Other agents are left as they are.
+ */
+export function withOutsideDir(command: string, dir: string): string {
+  const isClaudePrint = /^\s*claude\b/.test(command) && /(^|\s)(-p|--print)(\s|$)/.test(command);
+  return isClaudePrint && !/--add-dir\b/.test(command) ? `${command} --add-dir "${dir}"` : command;
 }
 
 /** The fix to suggest when an agent ran and wrote nothing (#103). */

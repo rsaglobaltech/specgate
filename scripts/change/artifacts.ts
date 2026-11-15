@@ -54,7 +54,7 @@ export function artifactsFor(
 /** One artefact of a change, and whether it can be worked on yet. */
 export interface ArtifactStateEntry {
   id: string;
-  /** The role that writes a layer (ADR-0042); absent for the other artifacts. */
+  /** The role that writes a layer (ADR-0044); absent for the other artifacts. */
   owner?: string;
   outputPath: string;
   status: "done" | "ready" | "blocked" | "skipped";

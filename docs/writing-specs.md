@@ -281,5 +281,6 @@ sections.
 
 ## Next
 
+- [Glossary, numbered rules and diagrams](domain-language.md)
 - [Change a shipped requirement](reviewing-changes.md)
 - [Validating](validating.md)

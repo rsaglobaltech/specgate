@@ -38,5 +38,5 @@ None: local files and git.
 
 ## Decisions
 
-ADR-0042 (the layers) decided that a 0.27 proposal is read as the Discover; the
+ADR-0044 (the layers) decided that a 0.27 proposal is read as the Discover; the
 migration makes that explicit instead of leaving two layouts side by side.

@@ -11,7 +11,7 @@ them can alone:
 - a requirement of one repository that waits for another's,
 - a business story split into a change in each repository it touches.
 
-The model is [ADR-0041](specs/adr/0041-the-workspace.md).
+The model is [ADR-0043](specs/adr/0043-the-workspace.md).
 
 ## Ids across repositories
 
@@ -82,7 +82,7 @@ Each repository: its role, its requirements done of its total (as its own
 check` left it — passed, failed or not run. Then each story.
 
 `--json` gives the model the workspace live view and other tools build on; its
-shape is in ADR-0041.
+shape is in ADR-0043.
 
 ## One gate across the repositories
 

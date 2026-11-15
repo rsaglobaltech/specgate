@@ -46,6 +46,7 @@ import { ArchiveChangeUseCase } from "../../../../packages/core/src/application/
 import { DiskProjectRepository } from "../../../../packages/core/src/infrastructure/DiskProjectRepository";
 import {
   CHANGE_ID_RE,
+  CHANGE_KINDS,
   CHANGE_CONFIG_FILE,
   DEFAULT_CONFIG,
   paths,
@@ -78,7 +79,7 @@ import {
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
-import { approvalBlockers, approveChange, noteChange } from "../../../lib/change-review";
+import { approvalBlockers, approveChange, noteChange, reviewOf } from "../../../lib/change-review";
 import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
   declaredSpecValues,
@@ -138,10 +139,13 @@ function verbUsage(sub: string) {
       `\n  ${c.bold}${c.cyan}💡 propose${c.reset}  ${c.dim}— open a change${c.reset}\n\n` +
         `  ${c.bold}USAGE${c.reset}\n` +
         `    ${c.cyan}specgate propose${c.reset} <change-id> [--capability <name>] [--from-value-drift <REQ:id>]\n` +
-        `                     [--full] [--reserve <n>] [--project-dir <path>] [--json]\n` +
+        `                     [--full] [--reserve <n>] [--kind bug|enhancement]\n` +
+        `                     [--project-dir <path>] [--json]\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} [<module>]   ${c.dim}a module of docs/brief.md (see specgate draft --help)${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --check | --new-brief | --agent <cmd>\n` +
         `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n` +
+        `    ${c.cyan}specgate propose --from-brief${c.reset} --form [<form.json> | -] [--brief <file>]\n` +
+        `                     ${c.dim}the brief as a form, each field with its line · that form written back, every other byte kept${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-ticket${c.reset} <KEY | issue.json> [--check] [--capability <name>]\n` +
         `                     [--agent <cmd>] [--no-branch] [--no-push]\n` +
         `                     ${c.dim}a Jira ticket as the source text: its Definition of Ready, then its change (docs/from-a-ticket.md)${c.reset}\n\n` +
@@ -196,6 +200,7 @@ function usage() {
       `    ${c.green}--from-value-drift <REQ:id>${c.reset} ${c.dim}(new) Propose a spec update for a diverging` +
       ` declared value (§8.6).${c.reset}\n` +
       `    ${c.green}--full${c.reset}                ${c.dim}(new) Full rigor — also scaffold design.md.${c.reset}\n` +
+      `    ${c.green}--kind <bug|enhancement>${c.reset} ${c.dim}(new) What the change is; release notes group by it.${c.reset}\n` +
       `    ${c.green}--artifact <name>${c.reset}     ${c.dim}(author) Which artefact to write. Default: proposal.${c.reset}\n` +
       `    ${c.green}--agent <cmd>${c.reset}         ${c.dim}(author) Agent command; must contain {prompt_file}.${c.reset}\n` +
       `    ${c.green}--agent-profile <n>${c.reset}   ${c.dim}(author) A profile from .harness/profiles.yaml.${c.reset}\n` +
@@ -227,6 +232,8 @@ export interface ChangeOptions {
   modify: string[];
   schema?: string;
   reserve: number;
+  /** REQ-545: `--kind bug|enhancement`. */
+  kind?: string;
   yes?: boolean;
   artifact?: string;
   agent?: string;
@@ -258,6 +265,7 @@ function parseArgs(argv: string[]): ChangeOptions {
     else if (a === "--req" && argv[i + 1]) opts.req = argv[++i];
     else if (a === "--layer" && argv[i + 1]) opts.layer = argv[++i];
     else if (a === "--schema" && argv[i + 1]) opts.schema = argv[++i];
+    else if (a === "--kind" && argv[i + 1]) opts.kind = argv[++i].toLowerCase();
     else if (a === "--reserve" && argv[i + 1]) opts.reserve = parseInt(argv[++i], 10) || 3;
     else if (a === "--artifact" && argv[i + 1]) opts.artifact = argv[++i];
     else if (a === "--agent" && argv[i + 1]) opts.agent = argv[++i];
@@ -428,6 +436,14 @@ function cmdNew(opts: ChangeOptions) {
       }),
     ]);
   }
+  if (opts.kind !== undefined && !(CHANGE_KINDS as readonly string[]).includes(opts.kind)) {
+    return fail(opts, nullShape, [
+      error("change_kind_unknown", `"${opts.kind}" is not a kind of change.`, {
+        target: opts.kind,
+        fix: `Use --kind ${CHANGE_KINDS.join(" or --kind ")}.`,
+      }),
+    ]);
+  }
   const dir = p.change(changeId);
   if (fs.existsSync(dir)) {
     return fail(opts, nullShape, [
@@ -492,11 +508,12 @@ function cmdNew(opts: ChangeOptions) {
   const reqRange = reserveReqRange(projectDir, opts.reserve);
   const config = {
     ...DEFAULT_CONFIG,
-    // ADR-0042: a new change is layered unless the person names a schema.
+    // ADR-0044: a new change is layered unless the person names a schema.
     schema: opts.schema || LAYERED_SCHEMA,
     created: new Date().toISOString().slice(0, 10),
     rigor: opts.full ? "full" : "lite",
     req_range: reqRange,
+    ...(opts.kind ? { kind: opts.kind } : {}),
   };
 
   const created: string[] = [];
@@ -542,6 +559,7 @@ function cmdNew(opts: ChangeOptions) {
         schema: config.schema,
         rigor: config.rigor,
         reqRange,
+        kind: opts.kind || null,
         created,
       },
     },
@@ -561,7 +579,7 @@ function cmdNew(opts: ChangeOptions) {
               )
             : ui.next(
                 `specgate change validate ${changeId}`,
-                // ADR-0042: a layered change starts from its Discover.
+                // ADR-0044: a layered change starts from its Discover.
                 config.schema === LAYERED_SCHEMA
                   ? "after you write discover.md, the delta, then design.md and tasks.md"
                   : "after you write the proposal, then the delta"
@@ -599,6 +617,7 @@ function cmdList(opts: ChangeOptions) {
       id,
       schema: config.schema,
       rigor: config.rigor,
+      kind: (config.kind as string | undefined) || null,
       completedTasks: progress.complete,
       totalTasks: progress.total,
       deltaCount: listDeltas(projectDir, id).length,
@@ -618,7 +637,7 @@ function cmdList(opts: ChangeOptions) {
           `${ui.state(ch.status === "complete" ? "ready" : ch.status === "in-progress" ? "doing" : "todo")} ${c.bold}${ch.id}${c.reset}`,
           ui.muted(`${ch.completedTasks}/${ch.totalTasks} tasks`),
           ui.muted(`${ch.deltaCount} delta(s)`),
-          ui.muted(ch.rigor),
+          ui.muted(ch.kind ? `${ch.rigor} · ${ch.kind}` : ch.rigor),
         ])
       ) + "\n"
     );
@@ -721,21 +740,14 @@ function cmdImpact(opts: ChangeOptions) {
   });
 }
 
-function cmdShow(opts: ChangeOptions) {
-  const projectDir = resolveProjectDir(opts.projectDir);
+/**
+ * What `change show <id> --json` prints: the proposal's title, the deltas and
+ * what they touch, the tasks, and the review notes (REQ-484). Null when there
+ * is no such change. The API's `change(dir, id)` answers the same.
+ */
+export function changeShowAnswer(projectDir: string, changeId: string) {
   const p = paths(projectDir);
-  const changeId = opts.positional[0];
-  const nullShape = { change: null };
-
-  if (!changeId || !fs.existsSync(p.change(changeId))) {
-    return fail(opts, nullShape, [
-      error("change_not_found", `Change "${changeId || "(none)"}" does not exist.`, {
-        target: changeId,
-        fix: "Run `specgate change list`.",
-      }),
-    ]);
-  }
-
+  if (!changeId || !fs.existsSync(p.change(changeId))) return null;
   const deltas = listDeltas(projectDir, changeId).map((entry) => {
     const parsed = parseDelta(fs.readFileSync(entry.file, "utf8"));
     return {
@@ -754,39 +766,66 @@ function cmdShow(opts: ChangeOptions) {
   const proposal = discoverFile ? fs.readFileSync(discoverFile, "utf8") : "";
   const titleMatch = /^#\s+(.+)$/m.exec(proposal);
   const progress = taskProgress(projectDir, changeId);
-
-  emit(
-    opts,
-    {
-      change: {
-        id: changeId,
-        title: titleMatch ? titleMatch[1] : changeId,
-        config: readConfig(projectDir, changeId),
-        deltaCount: deltas.length,
-        deltas,
-        tasks: { total: progress.total, complete: progress.complete },
-      },
+  return {
+    change: {
+      id: changeId,
+      title: titleMatch ? titleMatch[1] : changeId,
+      config: readConfig(projectDir, changeId),
+      // REQ-545: bug or enhancement, null when the change does not say.
+      kind: (readConfig(projectDir, changeId).kind as string | undefined) || null,
+      deltaCount: deltas.length,
+      deltas,
+      tasks: { total: progress.total, complete: progress.complete },
+      review: reviewOf(projectDir, changeId),
     },
-    () => {
-      process.stdout.write(
-        ui.header("change show", changeId) +
-          `  ${c.bold}${titleMatch ? titleMatch[1] : changeId}${c.reset}\n\n`
-      );
-      if (deltas.length === 0) {
-        process.stdout.write(`    ${ui.muted("No delta specs.")}\n\n`);
-      }
-      for (const d of deltas) {
-        process.stdout.write(`  ${c.accent}${d.capability}${c.reset}  ${ui.muted(d.file)}\n`);
-        for (const r of d.added) process.stdout.write(ui.fileLine("added", r));
-        for (const r of d.modified) process.stdout.write(ui.fileLine("changed", r));
-        for (const r of d.removed) process.stdout.write(ui.fileLine("removed", r));
-        process.stdout.write("\n");
-      }
-      process.stdout.write(
-        `  ${c.bold}Tasks${c.reset}  ${ui.progress(progress.complete, progress.total, "complete")}\n\n`
-      );
+    status: [] as Diagnostic[],
+  };
+}
+
+function cmdShow(opts: ChangeOptions) {
+  const projectDir = resolveProjectDir(opts.projectDir);
+  const changeId = opts.positional[0];
+  const nullShape = { change: null };
+  const answer = changeShowAnswer(projectDir, changeId);
+  if (!answer) {
+    return fail(opts, nullShape, [
+      error("change_not_found", `Change "${changeId || "(none)"}" does not exist.`, {
+        target: changeId,
+        fix: "Run `specgate change list`.",
+      }),
+    ]);
+  }
+  const { deltas, title, review } = answer.change;
+  const progress = answer.change.tasks;
+  emit(opts, answer, () => {
+    const kind = answer.change.kind ? `  ${ui.muted(`· ${answer.change.kind}`)}` : "";
+    process.stdout.write(
+      ui.header("change show", changeId) + `  ${c.bold}${title}${c.reset}${kind}\n\n`
+    );
+    if (deltas.length === 0) {
+      process.stdout.write(`    ${ui.muted("No delta specs.")}\n\n`);
     }
-  );
+    for (const d of deltas) {
+      process.stdout.write(`  ${c.accent}${d.capability}${c.reset}  ${ui.muted(d.file)}\n`);
+      for (const r of d.added) process.stdout.write(ui.fileLine("added", r));
+      for (const r of d.modified) process.stdout.write(ui.fileLine("changed", r));
+      for (const r of d.removed) process.stdout.write(ui.fileLine("removed", r));
+      process.stdout.write("\n");
+    }
+    process.stdout.write(
+      `  ${c.bold}Tasks${c.reset}  ${ui.progress(progress.complete, progress.total, "complete")}\n\n`
+    );
+    if (review.notes.length) {
+      process.stdout.write(ui.section(`Review notes ${ui.muted(`(${review.open} open)`)}`));
+      for (const n of review.notes) {
+        const mark = n.state === "open" ? ui.state("todo") : ui.state("done");
+        const about = n.requirement ? `${n.requirement}  ` : "";
+        const when = n.addressed ? ui.muted(`  addressed ${n.addressed.date}`) : "";
+        process.stdout.write(`  ${mark} ${ui.muted(n.id)}  ${about}${n.text}${when}\n`);
+      }
+      process.stdout.write("\n");
+    }
+  });
 }
 
 // ── status ────────────────────────────────────────────────────────────────────

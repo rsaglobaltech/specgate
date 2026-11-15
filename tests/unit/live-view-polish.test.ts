@@ -15,7 +15,6 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { readLive } = require("../../scripts/lib/live-model");
-const { livePage } = require("../../scripts/lib/live-page");
 
 function project() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-live-polish-"));
@@ -43,6 +42,38 @@ function project() {
     );
   return { dir, events };
 }
+
+// The new studio's Live, rendered to text (REQ-433): the live view the old page was.
+const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+const NOW = 1_800_000_000;
+const liveModel = (reqs: unknown[] = [], extra: Record<string, unknown> = {}) => ({
+  requirements: reqs,
+  queue: [],
+  queueStarted: 0,
+  totals: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: null, turns: 0 },
+  questions: { open: [], waitingWithoutQuestion: [] },
+  ...extra,
+});
+const running = (extra: Record<string, unknown> = {}) => ({
+  req: "REQ-022",
+  title: "Registrar una clase",
+  group: "diario",
+  attempt: 1,
+  phase: "gate",
+  state: "running",
+  started: NOW - 120,
+  updated: NOW,
+  elapsed: 120,
+  tests: null,
+  files: [],
+  steps: [{ type: "gate-start", stage: "tests", t: NOW - 20 }],
+  agent: null,
+  usage: null,
+  prompt: null,
+  question: null,
+  running: { stage: "tests", since: NOW - 20, runner: "host", image: "" },
+  ...extra,
+});
 
 test("REQ-179 SCN-179a: each requirement in the live model carries its title", () => {
   const { dir, events } = project();
@@ -82,29 +113,46 @@ test("REQ-179 SCN-179a: an id the specification does not hold has an empty title
 });
 
 test("REQ-179 SCN-179b: the page reads like a CI run: requirements by module, the run's summary, its graph of jobs, the steps of one", () => {
-  const html = livePage("fuhrerschein-app");
-  for (const id of [
-    'id="jobs"',
-    'id="progress"',
-    'id="chain"',
-    'id="focus"',
-    'id="pipeline"',
-    '"feed"',
-  ]) {
-    assert.ok(html.includes(id), id);
+  // Live in the app: requirements by module, the run's summary, the steps of the one opened.
+  const html: string = studio.renderLive("en", liveModel([running()]), "open", NOW, []);
+  assert.match(html, /<dl class="run-sum" aria-label="Summary">/);
+  assert.match(
+    html,
+    /id="chain" role="group"/,
+    "the run by module (REQ-181 replaced the graph of jobs)"
+  );
+  assert.match(html, /<span class="mm-name">diario<\/span>/);
+  for (const stage of ["Agent", "Specification", "Architecture", "Merge"]) {
+    assert.match(html, new RegExp(`>${stage}<`), stage);
   }
-  for (const stage of ["Agent", "Specification", "Architecture", "Tests", "Merge"]) {
-    assert.ok(html.includes(stage), stage);
-  }
-  // Self-contained, and nothing from an event is ever parsed as HTML.
-  assert.doesNotMatch(html, /<link |<script src=|https?:\/\//);
-  assert.doesNotMatch(html, /innerHTML|insertAdjacentHTML|outerHTML/);
-  assert.match(html, /prefers-reduced-motion/);
-  assert.match(html, /prefers-color-scheme/);
-  assert.match(html, /createElementNS/, "the graph is SVG built node by node");
+  assert.match(html, /<li class="pl pl-running" aria-current="step">[^]*?tests</);
+  assert.match(html, /class="term"/, "the log of the step in progress");
+  // Self-contained, and nothing from an event is ever read as HTML: it goes in as text.
+  assert.doesNotMatch(html, /<link |<script|https?:\/\//);
+  const css = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.css"), "utf8");
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /prefers-color-scheme/);
+  const evil: string = studio.renderLive(
+    "en",
+    liveModel([
+      running({
+        steps: [{ type: "step", kind: "edit", target: "<img src=x onerror=alert(1)>", t: NOW }],
+      }),
+    ]),
+    "open",
+    NOW,
+    []
+  );
+  assert.doesNotMatch(evil, /<img src=x/);
+  assert.match(evil, /&lt;img src=x/);
 });
 
 test("REQ-179: the project name is escaped in the page", () => {
-  const html = livePage('<img src=x onerror="alert(1)">');
+  const { studioShell } = require("../../scripts/lib/studio-shell");
+  const html = studioShell('<img src=x onerror="alert(1)">', "ab12", "live");
   assert.doesNotMatch(html, /<img src=x/);
+  assert.doesNotMatch(
+    studio.renderShell("live", studio.DEFAULTS, '<img src=x onerror="alert(1)">'),
+    /<img src=x/
+  );
 });

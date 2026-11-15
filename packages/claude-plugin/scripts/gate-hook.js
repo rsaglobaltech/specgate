@@ -60,11 +60,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.alreadyBlocked = alreadyBlocked;
 exports.renderFindings = renderFindings;
 exports.decide = decide;
+exports.runValidate = runValidate;
 exports.main = main;
 const fs = __importStar(require("node:fs"));
 const os = __importStar(require("node:os"));
 const path = __importStar(require("node:path"));
-const node_child_process_1 = require("node:child_process");
+const project_state_1 = require("./project-state");
 const MARKER_DIR = path.join(os.tmpdir(), "specgate-gate-hook");
 /**
  * Has this prompt already been blocked once?
@@ -133,15 +134,10 @@ function runValidate(cwd) {
     // The agent's tests are new evidence for a generated matrix: regenerate it
     // first, or the hook would block the session over a stale cache instead of
     // judging the work. A no-op on a hand-kept matrix.
-    (0, node_child_process_1.spawnSync)("npx", ["--no-install", "specgate", "matrix", "--project-dir", cwd], {
-        encoding: "utf8",
-        timeout: 60_000,
-    });
-    const r = (0, node_child_process_1.spawnSync)("npx", ["--no-install", "specgate", "validate", cwd, "--strict", "--json"], {
-        encoding: "utf8",
-        timeout: 120_000,
-        maxBuffer: 16 * 1024 * 1024,
-    });
+    // The project is the working directory, never an argument: on Windows the
+    // CLI starts through a shell (REQ-424).
+    (0, project_state_1.runSpecgate)(["matrix", "--project-dir", "."], cwd, { timeout: 60_000 });
+    const r = (0, project_state_1.runSpecgate)(["validate", ".", "--strict", "--json"], cwd);
     if (r.error || typeof r.status !== "number")
         throw new Error("could not run specgate");
     let parsed;

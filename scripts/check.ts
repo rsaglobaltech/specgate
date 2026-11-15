@@ -4,5 +4,5 @@ import { CheckCommand } from "./cli/commands/quality/CheckCommand";
 export { CheckCommand };
 
 if (require.main === module) {
-  new CheckCommand(process.argv.slice(2)).execute();
+  void new CheckCommand(process.argv.slice(2)).execute();
 }

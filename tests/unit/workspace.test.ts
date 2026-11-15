@@ -1,5 +1,5 @@
 /**
- * The workspace: the repositories of one product (ADR-0041, REQ-290..298).
+ * The workspace: the repositories of one product (ADR-0043, REQ-290..298).
  *
  * Every test builds real repositories in a temp folder — `specgate init` for
  * each member, git with its own identity (CI runners have none) — and drives
@@ -259,7 +259,7 @@ test("REQ-296 SCN-296a: a story split across three repositories", () => {
   );
   assert.equal(r.status, 0, r.stdout + r.stderr);
   for (const n of ["fleet", "tracking", "web"]) {
-    // The link goes in the sub-change's Discover (ADR-0042).
+    // The link goes in the sub-change's Discover (ADR-0044).
     const proposal = fs.readFileSync(
       path.join(dirs[n], "docs", "specs", "changes", "follow-shipment", "discover.md"),
       "utf8"

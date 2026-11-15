@@ -1,11 +1,20 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as http from "node:http";
+import {
+  SPEC_WRITES,
+  TEAM_FILE,
+  onTeamBranch,
+  readTeamConfig,
+  teamGate,
+  type TeamConfig,
+} from "../../../lib/studio-team";
 import * as crypto from "node:crypto";
 import { answer as answerQuestion, reviewed as reviewQuestion } from "../../../lib/clarification";
 import { approveChange, noteChange } from "../../../lib/change-review";
 import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
+  changesView,
   buildView,
   drafts,
   gate,
@@ -14,8 +23,8 @@ import {
   startBuild,
   stopBuild,
 } from "../../../lib/studio-app";
-import { studioAppPage } from "../../../lib/studio-app-page";
 import {
+  configuredAgent,
   agentsInstalled,
   briefForm,
   createProject,
@@ -32,8 +41,17 @@ import {
   startDraft,
   stopJob,
   type NewProject,
+  chooseAgent,
 } from "../../../lib/studio-route";
 import { resolveProjectDir } from "../../../lib/project-root";
+import { studioAsset, studioShell } from "../../../lib/studio-shell";
+import {
+  actionView,
+  almView,
+  preferencesView,
+  runAction,
+  ticketBranchView,
+} from "../../../lib/studio-actions";
 import { parseTraceability } from "./PlanCommand";
 import { errorMessage } from "../../../lib/diagnostics";
 import { BaseCommand } from "../../../lib/command";
@@ -77,7 +95,9 @@ export function hostAllowed(bound: string, header: string | undefined): boolean 
  */
 export function writeAllowed(
   token: string,
-  headers: { token?: string; contentType?: string; origin?: string }
+  headers: { token?: string; contentType?: string; origin?: string },
+  /** REQ-553: the origins a team's proxy serves the page from. */
+  origins: readonly string[] = []
 ): boolean {
   const given = Buffer.from(String(headers.token || ""));
   const want = Buffer.from(token);
@@ -85,6 +105,7 @@ export function writeAllowed(
   if (!/^application\/json\b/i.test(String(headers.contentType || ""))) return false;
   // A browser always says where a cross-site request comes from.
   if (!headers.origin) return true;
+  if (origins.includes(headers.origin.replace(/\/$/, ""))) return true;
   try {
     return LOOPBACK.has(new URL(headers.origin).hostname.toLowerCase());
   } catch {
@@ -103,6 +124,8 @@ function usage() {
       `  ${c.bold}OPTIONS${c.reset}\n` +
       `    ${c.green}--port <n>${c.reset}           ${c.dim}Port to serve on (default 4173).${c.reset}\n` +
       `    ${c.green}--host <addr>${c.reset}        ${c.dim}Address to bind (default 127.0.0.1: this machine only).${c.reset}\n` +
+      `    ${c.green}--team${c.reset}               ${c.dim}Serve a team behind a sign-in proxy: roles from studio.team.yaml,${c.reset}\n` +
+      `                         ${c.dim}a reader writes nothing, an editor's edits become pull requests.${c.reset}\n` +
       `    ${c.green}--project-dir <path>${c.reset} ${c.dim}Project root (auto-detected from cwd if omitted).${c.reset}\n` +
       `    ${c.green}--out <dir>${c.reset}            ${c.dim}Export static HTML/JSON/Mermaid bundle to <dir>.${c.reset}\n` +
       `    ${c.green}--json${c.reset}               ${c.dim}Print the model as JSON and exit (no server).${c.reset}\n` +
@@ -116,17 +139,24 @@ export interface StudioOptions {
   host: string;
   json: boolean;
   out?: string;
+  /** --port was given: a taken port is refused rather than moved from (REQ-445). */
+  portGiven?: boolean;
+  /** REQ-553: served to a team, behind a sign-in proxy. */
+  team?: boolean;
 }
 
 export function parseArgs(argv: string[]) {
   const opts: StudioOptions = { projectDir: ".", port: 4173, host: "127.0.0.1", json: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--port" && argv[i + 1]) opts.port = Number(argv[++i]);
-    else if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
+    if (a === "--port" && argv[i + 1]) {
+      opts.port = Number(argv[++i]);
+      opts.portGiven = true;
+    } else if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
     else if (a === "--out" && argv[i + 1]) opts.out = argv[++i];
     else if (a === "--host" && argv[i + 1]) opts.host = argv[++i];
     else if (a === "--json") opts.json = true;
+    else if (a === "--team") opts.team = true;
     else if (a === "--help" || a === "-h") {
       usage();
       process.exit(0);
@@ -367,10 +397,37 @@ export class StudioCommand extends BaseCommand {
       process.exit(0);
     }
 
+    // REQ-553: a team's studio, behind its sign-in proxy.
+    let team: TeamConfig | null = null;
+    if (opts.team) {
+      try {
+        team = readTeamConfig(projectDir);
+      } catch (err) {
+        process.stderr.write(`${c.red}✖${c.reset}  ${errorMessage(err)}\n`);
+        process.exit(2);
+      }
+      if (!team) {
+        process.stderr.write(
+          `${c.red}✖${c.reset}  --team needs ${TEAM_FILE}: the header your sign-in proxy sets, and the roles.\n` +
+            `   Fix: write ${TEAM_FILE}, e.g.\n     user_header: X-Forwarded-User\n     roles:\n       ana: reader\n       luis: editor\n`
+        );
+        process.exit(2);
+      }
+    }
+    const proxySecret = process.env.SPECGATE_PROXY_SECRET || "";
+    if (team && !proxySecret) {
+      process.stderr.write(
+        `${c.yellow}▲${c.reset}  --team trusts the ${team.userHeader} header. Without SPECGATE_PROXY_SECRET,\n` +
+          `   anyone who reaches this port directly can claim any user: keep it reachable by your proxy only.\n`
+      );
+    }
     // One per start of studio: the live page carries it, and a write needs it.
     const token = crypto.randomBytes(24).toString("hex");
     const server = http.createServer((req, res) => {
-      if (!hostAllowed(opts.host, req.headers.host)) {
+      const hostName = String(req.headers.host || "")
+        .split(":")[0]
+        .toLowerCase();
+      if (!hostAllowed(opts.host, req.headers.host) && !(team && team.hosts.includes(hostName))) {
         res.writeHead(403, { "content-type": "text/plain" });
         res.end("Forbidden: studio answers on this machine only (see --host).\n");
         return;
@@ -380,18 +437,55 @@ export class StudioCommand extends BaseCommand {
         res.writeHead(code, { "content-type": "application/json; charset=utf-8" });
         res.end(JSON.stringify(body));
       };
+      const one = (name: string) => {
+        const v = req.headers[name];
+        return String((Array.isArray(v) ? v[0] : v) || "");
+      };
+      // REQ-553: who is asking, as the proxy says, and what their role allows.
+      let identity: { user: string; role: string; email: string } | null = null;
+      if (team) {
+        const verdict = teamGate(team, {
+          user: one(team.userHeader),
+          secret: proxySecret,
+          given: one("x-specgate-proxy-secret"),
+          method: String(req.method || "GET"),
+          url,
+          write: req.method === "POST",
+        });
+        if ("status" in verdict) {
+          json(verdict.status, { ok: false, code: verdict.code, message: verdict.message });
+          return;
+        }
+        identity = { ...verdict, email: one(team.emailHeader) };
+      }
       // REQ-204: the app's reads, built from what the commands read.
       const reads: Record<string, () => unknown> = {
+        // REQ-434: the page's heartbeat, to say when the studio cannot be reached.
+        // It carries the token, as the page does: a studio started again has a
+        // new one, and the page that reconnects needs it to write (REQ-201).
+        // REQ-445: which project and process this is, so a second studio finds it.
+        "/api/ping": () => ({ ok: true, token, project: projectDir, pid: process.pid }),
+        // REQ-438: what the studio's command runs, and its output so far.
+        "/api/action": () => actionView(projectDir),
+        // REQ-442: the project's preferences, as config list gives them.
+        "/api/preferences": () => preferencesView(projectDir),
+        // REQ-444: the ALM — the token's variable and whether it is set, never its value.
+        "/api/alm": () => almView(projectDir),
+        "/api/branch": () => ticketBranchView(projectDir),
         "/api/home": () => home(projectDir),
         "/api/gate": () => gate(projectDir),
         "/api/questions": () => questionsView(projectDir),
         "/api/drafts": () => drafts(projectDir),
+        // REQ-439: every open change, not only the brief's drafts.
+        "/api/changes": () => changesView(projectDir),
         "/api/build": () => buildView(projectDir),
         // REQ-211..217: the route from an empty folder to the report.
         "/api/route": () => route(projectDir),
         "/api/profiles": () => ({
           profiles: profilesView(projectDir),
           installed: agentsInstalled(),
+          // REQ-431: an agent set as a command of its own, not a profile.
+          agent: configuredAgent(projectDir),
         }),
         "/api/brief": () => briefForm(projectDir),
         "/api/modules": () => draftsRoute(projectDir),
@@ -402,7 +496,13 @@ export class StudioCommand extends BaseCommand {
         try {
           json(200, reads[url]());
         } catch (err) {
-          json(500, { ok: false, message: errorMessage(err) });
+          // The details stay in this terminal; the page gets no exception text.
+          process.stderr.write(`studio: ${url} failed: ${errorMessage(err)}\n`);
+          json(500, {
+            ok: false,
+            message:
+              "The studio could not read this; the terminal running specgate studio says why.",
+          });
         }
         return;
       }
@@ -420,6 +520,8 @@ export class StudioCommand extends BaseCommand {
         "/api/draft",
         "/api/draft/stop",
         "/api/quality/init",
+        "/api/agent",
+        "/api/action",
       ];
       if (req.method === "POST" && WRITES.includes(url)) {
         const header = (name: string) => {
@@ -427,11 +529,15 @@ export class StudioCommand extends BaseCommand {
           return Array.isArray(v) ? v[0] : v;
         };
         if (
-          !writeAllowed(token, {
-            token: header("x-specgate-token"),
-            contentType: header("content-type"),
-            origin: header("origin"),
-          })
+          !writeAllowed(
+            token,
+            {
+              token: header("x-specgate-token"),
+              contentType: header("content-type"),
+              origin: header("origin"),
+            },
+            team ? team.origins : []
+          )
         ) {
           json(403, { ok: false, message: "Refused: not the live page of this studio." });
           return;
@@ -460,6 +566,11 @@ export class StudioCommand extends BaseCommand {
             form?: Parameters<typeof saveBriefForm>[1];
             project?: NewProject;
             level?: string;
+            kind?: string;
+            command?: string;
+            now?: boolean;
+            action?: string;
+            args?: Record<string, unknown>;
           };
           try {
             body = JSON.parse(raw || "{}");
@@ -468,40 +579,89 @@ export class StudioCommand extends BaseCommand {
             return;
           }
           const today = new Date().toISOString().slice(0, 10);
-          if (url === "/api/approve") {
-            // REQ-319: one layer, approved for the viewer's git identity.
-            const layer = body.layer ? (String(body.layer) as LayerId) : undefined;
-            const r = approveChange(projectDir, String(body.change || ""), today, layer);
-            json(r.ok ? 200 : 422, r);
-            return;
-          }
-          if (url === "/api/note") {
-            const r = noteChange(
-              projectDir,
-              String(body.change || ""),
-              String(body.text || ""),
-              String(body.req || ""),
-              today
-            );
-            json(r.ok ? 200 : 422, r);
+          // The writes that change the specification: here, or — for a team —
+          // on the user's branch, as a pull request (REQ-554).
+          const specWrite = (dir: string): { status: number; payload: unknown } => {
+            if (url === "/api/approve") {
+              // REQ-319: one layer, approved for the viewer's git identity.
+              const layer = body.layer ? (String(body.layer) as LayerId) : undefined;
+              const r = approveChange(dir, String(body.change || ""), today, layer);
+              return { status: r.ok ? 200 : 422, payload: r };
+            }
+            if (url === "/api/note") {
+              const r = noteChange(
+                dir,
+                String(body.change || ""),
+                String(body.text || ""),
+                String(body.req || ""),
+                today
+              );
+              return { status: r.ok ? 200 : 422, payload: r };
+            }
+            if (url === "/api/brief") {
+              const form =
+                typeof body.markdown === "string"
+                  ? saveBriefMarkdown(dir, body.markdown)
+                  : body.form
+                    ? saveBriefForm(dir, body.form)
+                    : null;
+              return form
+                ? { status: 200, payload: { ok: true, brief: form } }
+                : { status: 400, payload: { ok: false, message: "No brief." } };
+            }
+            const q = String(body.question || "");
+            if (!/^Q\d+$/.test(q))
+              return { status: 400, payload: { ok: false, message: "No question id." } };
+            const change = body.change ? String(body.change) : undefined;
+            const r = body.reviewed
+              ? reviewQuestion(dir, q, change)
+              : answerQuestion(dir, q, String(body.answer || "").trim(), change);
+            return { status: r.ok ? 200 : 422, payload: r };
+          };
+          if (SPEC_WRITES.includes(url)) {
+            if (!team || !identity) {
+              const w = specWrite(projectDir);
+              json(w.status, w.payload);
+              return;
+            }
+            const change = String(body.change || (url === "/api/brief" ? "brief" : "spec"));
+            if (!/^[a-z0-9][a-z0-9-]{0,80}$/.test(change)) {
+              json(400, { ok: false, code: "change_invalid", message: "Not a change id." });
+              return;
+            }
+            const title = url.endsWith("answer")
+              ? `answer ${String(body.question || "")}`
+              : url.slice(url.lastIndexOf("/") + 1);
+            let outcome: { status: number; payload: unknown } = { status: 500, payload: null };
+            onTeamBranch(projectDir, team, identity, change, title, (dir) => {
+              outcome = specWrite(dir);
+              return outcome;
+            })
+              .then((edit) => {
+                const payload = (outcome.payload || {}) as Record<string, unknown>;
+                json(outcome.status, {
+                  ...payload,
+                  branch: edit.branch,
+                  commit: edit.commit,
+                  pullRequest: edit.pullRequest ? edit.pullRequest.url : null,
+                });
+              })
+              .catch((err) => {
+                process.stderr.write(
+                  `studio: ${url} for ${identity!.user} failed: ${errorMessage(err)}\n`
+                );
+                json(502, {
+                  ok: false,
+                  code: "team_pull_request_failed",
+                  message:
+                    "The edit could not be opened as a pull request; the terminal running specgate studio says why.",
+                });
+              });
             return;
           }
           if (url === "/api/project") {
             const r = createProject(projectDir, (body.project || {}) as NewProject);
             json(r.ok ? 201 : 422, r);
-            return;
-          }
-          if (url === "/api/brief") {
-            const form =
-              typeof body.markdown === "string"
-                ? saveBriefMarkdown(projectDir, body.markdown)
-                : body.form
-                  ? saveBriefForm(projectDir, body.form)
-                  : null;
-            json(
-              form ? 200 : 400,
-              form ? { ok: true, brief: form } : { ok: false, message: "No brief." }
-            );
             return;
           }
           if (url === "/api/brief/fill") {
@@ -517,6 +677,30 @@ export class StudioCommand extends BaseCommand {
           if (url === "/api/draft") {
             const r = startDraft(projectDir, String(body.module || ""), String(body.profile || ""));
             json(r.ok ? 202 : 422, r);
+            return;
+          }
+          // REQ-438: one of the commands the studio offers — checked, never anything else.
+          if (url === "/api/action") {
+            const r = runAction(
+              projectDir,
+              String(body.action || ""),
+              body.args && typeof body.args === "object" && !Array.isArray(body.args)
+                ? body.args
+                : {}
+            );
+            json(r.ok ? 202 : r.code === "action_running" ? 409 : 422, r);
+            return;
+          }
+          // REQ-431: the agent chosen in the studio.
+          if (url === "/api/agent") {
+            const kind = String(body.kind || "");
+            const r = chooseAgent(
+              projectDir,
+              kind === "custom"
+                ? { kind: "custom", command: String(body.command || "") }
+                : { kind: kind === "codex" ? "codex" : "claude" }
+            );
+            json(r.ok ? 200 : 422, r);
             return;
           }
           if (url === "/api/quality/init") {
@@ -539,20 +723,12 @@ export class StudioCommand extends BaseCommand {
             return;
           }
           if (url === "/api/stop") {
-            const r = stopBuild(projectDir);
+            // REQ-433: after the current requirement, or at once.
+            const r = stopBuild(projectDir, body.now === true);
             json(r.ok ? 200 : 422, r);
             return;
           }
-          const q = String(body.question || "");
-          if (!/^Q\d+$/.test(q)) {
-            json(400, { ok: false, message: "No question id." });
-            return;
-          }
-          const change = body.change ? String(body.change) : undefined;
-          const r = body.reviewed
-            ? reviewQuestion(projectDir, q, change)
-            : answerQuestion(projectDir, q, String(body.answer || "").trim(), change);
-          json(r.ok ? 200 : 422, r);
+          json(404, { ok: false, message: "No such write." });
         });
         return;
       }
@@ -561,10 +737,28 @@ export class StudioCommand extends BaseCommand {
         res.end("Studio only reads, except its app's POST actions.\n");
         return;
       }
-      // REQ-204: the app at the root; the overview it replaced moves to /overview.
-      if (url === "/" || url === "/app" || url === "/app/") {
+      // REQ-204, REQ-432: the studio at its root — the app built from studio/src.
+      // `/app` and `/next` named it while the old page lived; they still open it.
+      if (url === "/" || url === "/app" || url === "/app/" || url === "/next" || url === "/next/") {
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(studioAppPage(path.basename(projectDir), token));
+        res.end(studioShell(path.basename(projectDir), token));
+        return;
+      }
+      // The overview the app replaced: its address leads into the app.
+      if (url === "/overview" || url === "/overview/") {
+        res.writeHead(302, { location: "/" });
+        res.end();
+        return;
+      }
+      if (url.startsWith("/studio/")) {
+        const asset = studioAsset(url);
+        if (!asset) {
+          res.writeHead(404, { "content-type": "text/plain" });
+          res.end("Not found.\n");
+          return;
+        }
+        res.writeHead(200, { "content-type": asset.type, "cache-control": "no-cache" });
+        res.end(asset.body);
         return;
       }
       // REQ-217: the report as a page of its own, to keep or send.
@@ -639,6 +833,12 @@ export class StudioCommand extends BaseCommand {
         res.end(workspaceLivePage(ws.config.name));
         return;
       }
+      // REQ-433: the live view is the app's Live section.
+      if (url === "/live" || url === "/live/") {
+        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        res.end(studioShell(path.basename(projectDir), token, "live"));
+        return;
+      }
       if (ws && url === "/live.json") {
         res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
         res.end(JSON.stringify({ schemaVersion: 1, live: readWorkspaceLive(ws) }));
@@ -701,17 +901,83 @@ export class StudioCommand extends BaseCommand {
       res.end(renderHtml(projectDir, model));
     });
 
-    server.listen(opts.port, opts.host, () => {
+    const announce = () => {
+      // The port it got: a taken one may have moved it (REQ-445).
+      const port = (server.address() as import("node:net").AddressInfo).port;
       const shown = LOOPBACK.has(opts.host) ? "localhost" : opts.host;
       process.stdout.write(
         `\n  ${c.bold}🎨 specgate studio${c.reset} serving ${c.dim}${projectDir}${c.reset}\n` +
-          `  ${c.green}▶ http://${shown}:${opts.port}${c.reset}  ${c.dim}(Ctrl-C to stop · /status.json for the model)${c.reset}\n` +
-          `  ${c.green}▶ http://${shown}:${opts.port}/live${c.reset}  ${c.dim}the harness at work${c.reset}\n\n`
+          `  ${c.green}▶ http://${shown}:${port}${c.reset}  ${c.dim}(Ctrl-C to stop · /status.json for the model)${c.reset}\n` +
+          `  ${c.green}▶ http://${shown}:${port}/live${c.reset}  ${c.dim}the harness at work${c.reset}\n\n`
       );
-    });
-    server.on("error", (err: unknown) => {
-      process.stderr.write(`${c.red}✖${c.reset}  Could not start server: ${errorMessage(err)}\n`);
-      process.exit(1);
-    });
+    };
+    // REQ-445: a taken port is asked what holds it — the same project's studio is
+    // named and left alone; anything else is moved from, unless --port named it.
+    const first = opts.port;
+    const tryPort = (port: number) => {
+      server.once("error", async (err: NodeJS.ErrnoException) => {
+        if (err.code !== "EADDRINUSE") {
+          process.stderr.write(
+            `${c.red}✖${c.reset}  Could not start server: ${errorMessage(err)}\n`
+          );
+          process.exit(1);
+        }
+        const holder = await studioOn(port);
+        if (holder && path.resolve(holder.project) === path.resolve(projectDir)) {
+          process.stdout.write(
+            `\n  ${c.green}✔${c.reset}  A studio of this project is already running: ${c.green}http://localhost:${port}${c.reset}\n` +
+              `     ${c.dim}Open it, or stop it: ${process.platform === "win32" ? `taskkill /pid ${holder.pid} /F` : `kill ${holder.pid}`} (process ${holder.pid}).${c.reset}\n\n`
+          );
+          process.exit(0);
+        }
+        const who = holder ? `a studio of ${holder.project}` : "another program";
+        if (opts.portGiven || port - first >= 10) {
+          process.stderr.write(
+            `${c.red}✖${c.reset}  Port ${port} is taken by ${who}. Pass another one: --port <n>.\n`
+          );
+          process.exit(1);
+        }
+        process.stdout.write(
+          `  ${c.yellow}▲${c.reset}  Port ${port} is taken by ${who}; trying ${port + 1}.\n`
+        );
+        tryPort(port + 1);
+      });
+      server.listen(port, opts.host);
+    };
+    server.once("listening", announce);
+    tryPort(first);
   }
+}
+
+/** What answers /api/ping on a local port, when it is a studio: its project and process. */
+function studioOn(port: number): Promise<{ project: string; pid: number } | null> {
+  return new Promise((resolve) => {
+    const req = http.get(
+      {
+        host: "127.0.0.1",
+        port,
+        path: "/api/ping",
+        headers: { host: `localhost:${port}` },
+        timeout: 1500,
+      },
+      (res) => {
+        let body = "";
+        res.on("data", (d: Buffer) => (body += d));
+        res.on("end", () => {
+          try {
+            const j = JSON.parse(body) as { ok?: boolean; project?: string; pid?: number };
+            resolve(
+              j.ok && typeof j.project === "string" && Number.isInteger(j.pid)
+                ? { project: j.project, pid: j.pid! }
+                : null
+            );
+          } catch {
+            resolve(null);
+          }
+        });
+      }
+    );
+    req.on("timeout", () => req.destroy());
+    req.on("error", () => resolve(null));
+  });
 }

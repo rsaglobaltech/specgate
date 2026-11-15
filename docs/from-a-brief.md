@@ -32,6 +32,11 @@ fields and then the sections from the client's text, and
 `specgate propose --from-brief --check` checks the brief before anything is
 drafted. Step by step: [Write the brief](start/write-the-brief.md).
 
+A tool that edits the brief as a form — specgate-studio — reads it with
+`specgate propose --from-brief --form --json`, each field with its line, and
+writes it back with `--form <file>`: only the fields and card lists that
+changed are rewritten, every other byte of the file stays as it was.
+
 ```markdown
 ---
 product: Bookings for local businesses
@@ -98,8 +103,8 @@ next to it:
   it until someone answers, and `status` lists it under "Waiting for an
   answer" with the question that blocks it.
 
-The same from the [studio](studio.md): its Brief page writes the brief as a
-form, and its Drafts page drafts each module in the background with the agent
+The same from the [studio](studio.md): its Brief section writes the brief as a
+form, and its Changes section drafts each module in the background with the agent
 you pick (`--profile <name>` in the terminal).
 
 ## 3. Check the draft
@@ -177,7 +182,11 @@ An answer that puts the decision off ("TBD", "pending", "se decidirá") leaves
 the question open. A question nothing in the draft depends on says so with
 `none` (or `—`, `ninguno`) in its Blocks column: it stays in `questions.md` as
 a warning, and nothing waits for it. An empty Blocks cell is still refused. A
-`Status` column is for the reader; the checklist reads the answer.
+`Status` column is for the reader; the checklist reads the answer. The
+studio, `specgate questions` and the checklist read an answer the same way —
+the cell or the `Answer (Qn):` line — and the studio's **The spec says it**
+lifts `Needs Clarification` from the requirements the question held once their
+text says the answer.
 
 ## 4. Review, apply, then archive
 

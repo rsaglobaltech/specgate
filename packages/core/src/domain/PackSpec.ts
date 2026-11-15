@@ -36,7 +36,7 @@ function fail(message: string): never {
 export const PACK_SCHEMA_VERSION = "1.5.0";
 
 /** Project types a pack may target. Mirrors the enum in schemas/pack.schema.json. */
-export const PACK_PROJECT_TYPES = ["backend", "frontend", "mobile", "contracts"];
+export const PACK_PROJECT_TYPES = ["backend", "frontend", "mobile", "desktop", "contracts"];
 
 /**
  * How much a pack can be trusted. Mirrors the enum in schemas/pack.schema.json.
@@ -422,7 +422,7 @@ export function validatePackModel(
     fail(
       `pack.yaml declares schema_version ${pack.schema_version}, but this CLI ` +
         `understands up to ${PACK_SCHEMA_VERSION}.\n` +
-        "Fix: upgrade with `npm install -g create-spec-driven-app@latest`, or " +
+        "Fix: upgrade with `npm install -g @rsaglobaltech/specgate@latest`, or " +
         "pin the pack to a version that targets the older schema."
     );
   }

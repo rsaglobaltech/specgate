@@ -54,4 +54,4 @@ None between repositories: the source of the principles is a path or a pack.
 ## Decisions
 
 No new ADR: principles reuse domain packs (ADR on packs) and the workspace
-(ADR-0041) as their channels; the rest are checks of the existing gate.
+(ADR-0043) as their channels; the rest are checks of the existing gate.

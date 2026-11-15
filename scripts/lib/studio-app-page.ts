@@ -776,7 +776,7 @@ export function studioAppPage(projectName: string, token = ""): string {
     list.forEach(function(d){
       var split = el("section", "split"), main = el("div", "main"), aside = el("aside");
       main.appendChild(el("h2", "", cap(d.module) + " · " + d.requirements.length + " " + t("reqs")));
-      // REQ-289: the change's layers, each with its owner (ADR-0042); REQ-319:
+      // REQ-289: the change's layers, each with its owner (ADR-0044); REQ-319:
       // who approved each, how many it needs, and a button for the layer the viewer owns.
       if (d.layers && d.layers.length) {
         var lys = el("div", "small muted");

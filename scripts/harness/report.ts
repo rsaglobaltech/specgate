@@ -24,7 +24,12 @@ import { resolveProjectDir } from "../lib/project-root";
 import { agentIo, wantsJson, EXIT } from "../lib/agent";
 import { error } from "../lib/diagnostics";
 import { RUNS_DIR } from "./run";
-import { readCostHints } from "../../packages/core/src/infrastructure/HarnessConfigFile";
+import {
+  readCostHints,
+  readTokenPrices,
+} from "../../packages/core/src/infrastructure/HarnessConfigFile";
+import type { TokenPrices } from "../../packages/core/src/domain/RunBudget";
+import { capabilityNames, requirementCapabilities, unknownCapability } from "../lib/capabilities";
 import {
   GAPS,
   type Gap,
@@ -67,15 +72,18 @@ export interface HarnessReportOptions {
   classify: string | null;
   gap: Gap | null;
   reason: string;
+  /** `--capability <name>`: only that capability's requirements (REQ-502). */
+  capability: string | null;
 }
 
 function usage(): void {
   process.stdout.write(
     `\n  ${c.bold}📈 harness report${c.reset}  ${c.dim}— what the harness has cost${c.reset}\n\n` +
       `  ${c.bold}USAGE${c.reset}\n` +
-      `    specgate harness report [--project-dir <path>] [--last <n>] [--json]\n\n` +
+      `    specgate harness report [--project-dir <path>] [--last <n>] [--capability <name>] [--json]\n\n` +
       `  ${c.bold}OPTIONS${c.reset}\n` +
       `    --last <n>            Only the n most recent runs.\n` +
+      `    --capability <name>   Only the requirements of that capability.\n` +
       `    --json                Machine-readable summary.\n` +
       `    --mark-false-failure <REQ-NNN> --reason "..."\n` +
       `                          Record that the gate rejected good work. Nothing the\n` +
@@ -98,6 +106,7 @@ export function parseArgs(argv: string[]): HarnessReportOptions {
     classify: null,
     gap: null,
     reason: "",
+    capability: null,
   };
   let gapWord = "";
   for (let i = 0; i < argv.length; i += 1) {
@@ -119,6 +128,10 @@ export function parseArgs(argv: string[]): HarnessReportOptions {
       opts.classify = req;
     } else if (a === "--gap" && argv[i + 1]) {
       gapWord = argv[++i];
+    } else if (a === "--capability") {
+      const name = argv[++i];
+      if (!name || name.startsWith("-")) throw new Error("--capability needs a capability name");
+      opts.capability = name;
     } else if (a === "--reason" && argv[i + 1]) {
       opts.reason = argv[++i];
     } else if (a === "--json" || a === "--format") {
@@ -192,13 +205,31 @@ export function appendFalseFailure(projectDir: string, mark: FalseFailureMark): 
   fs.appendFileSync(file, `${JSON.stringify(mark)}\n`, "utf8");
 }
 
+/**
+ * The runs with only the results of the requirements `keep` accepts; a run
+ * left with none is dropped, so it counts in no total (REQ-502).
+ */
+export function onlyCapability(runs: RunFile[], keep: (req: string) => boolean): RunFile[] {
+  return runs
+    .map((run) => {
+      const { running, ...rest } = run;
+      return {
+        ...rest,
+        results: (run.results ?? []).filter((r) => keep(r.requirement)),
+        ...(running && keep(running.requirement) ? { running } : {}),
+      };
+    })
+    .filter((run) => run.results.length > 0 || run.running);
+}
+
 export function summarise(
   runs: RunFile[],
   falseFailures: FalseFailureMark[] = [],
   costPerRunHint: Record<string, number> = {},
-  gapInput: GapInput = {}
+  gapInput: GapInput = {},
+  prices: Record<string, TokenPrices> = {}
 ): HarnessReportSummary {
-  return summariseRuns(runs, falseFailures, costPerRunHint, gapInput);
+  return summariseRuns(runs, falseFailures, costPerRunHint, gapInput, prices);
 }
 
 /**
@@ -280,6 +311,22 @@ function render(summary: HarnessReportSummary): void {
         `  ${c.dim}declared by profile, not measured` +
         (uncovered > 0 ? ` — ${uncovered} of ${covered + uncovered} attempts have no hint` : "") +
         `${c.reset}\n`
+    );
+  }
+
+  if (summary.measuredCost) {
+    const { total, covered, uncovered } = summary.measuredCost;
+    process.stdout.write(
+      `    ${label("measured spend")}${total.toFixed(4)}` +
+        `  ${c.dim}tokens the agents reported × the profiles' prices` +
+        (uncovered > 0 ? ` — ${uncovered} of ${covered + uncovered} steps not measured` : "") +
+        `${c.reset}\n`
+    );
+  }
+  for (const p of summary.costByProfile.filter((x) => x.basis !== null)) {
+    const cost = p.basis === "measured" ? p.measured : p.estimated;
+    process.stdout.write(
+      `    ${c.dim}${`  ${p.profile}`.padEnd(26)}${(cost ?? 0).toFixed(4)}  ${p.basis}, ${p.attempts} step(s)${c.reset}\n`
     );
   }
 
@@ -418,9 +465,21 @@ export function main(argv: string[]): void {
     }
   }
 
-  const runs = readRuns(projectDir, opts.last);
+  let runs = readRuns(projectDir, opts.last);
+  if (opts.capability) {
+    const capabilities = requirementCapabilities(projectDir);
+    const known = capabilityNames(capabilities);
+    if (!known.includes(opts.capability)) {
+      io.usage({ report: null }, [
+        unknownCapability(opts.capability, known, "specgate harness report"),
+      ]);
+    }
+    runs = onlyCapability(runs, (req) => capabilities.get(req) === opts.capability);
+  }
+  const named = (summary: HarnessReportSummary) =>
+    opts.capability ? { ...summary, capability: opts.capability } : summary;
   if (runs.length === 0) {
-    io.emit({ report: summarise([], []), status: [] }, () => {
+    io.emit({ report: named(summarise([], [])), status: [] }, () => {
       process.stdout.write(
         ui.header("harness report") +
           ui.info("No runs recorded yet — each harness run writes one.") +
@@ -443,12 +502,19 @@ export function main(argv: string[]): void {
     /* a broken profiles file is `harness run`'s problem, not this read-only command's */
   }
 
+  // REQ-509: the prices per token, to measure what the agents' tokens cost.
+  let prices: Record<string, TokenPrices> = {};
+  try {
+    prices = readTokenPrices(projectDir);
+  } catch {
+    /* as the hints: a broken file is not this read-only command's problem */
+  }
   const summary = {
-    ...summarise(runs, readFalseFailures(projectDir), costHints, gapInputFor(projectDir)),
+    ...summarise(runs, readFalseFailures(projectDir), costHints, gapInputFor(projectDir), prices),
     // REQ-317: each role package, with the requirements it reached.
     packages: packageUse(runs as Parameters<typeof packageUse>[0]),
   };
-  io.emit({ report: summary, status: [] }, () => {
+  io.emit({ report: named(summary), status: [] }, () => {
     render(summary);
     if (summary.packages.length > 0) {
       process.stdout.write(

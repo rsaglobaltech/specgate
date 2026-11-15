@@ -23,6 +23,41 @@ export function deferredAnswer(answer: string): boolean {
   return DEFERRED.test(text) || DEFERRED_ALONE.test(text);
 }
 
+/**
+ * The answers lines of a `questions.md` give a row, as in `Answer (Q1): …`
+ * under the table (REQ-429). The studio, `specgate questions` and the draft
+ * checklist read them alike: an answer one of them counts, all of them count.
+ */
+export function answerLines(md: string, row: string): string[] {
+  const named = namedBy(row);
+  return md
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .filter((l) => /^\s*(?:[-*]\s*)?\**(answer|respuesta)\b/i.test(l) && named.test(l))
+    .map((l) =>
+      l
+        .replace(/^[^:]*:\s*/, "")
+        .replace(/\*\*/g, "")
+        .trim()
+    );
+}
+
+/** A regular expression's text that matches `text` literally: an id from a request is data, never a pattern. */
+export function literal(text: string): string {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Matches a text naming `id` as a whole word: `Q1`, and not `Q10`. */
+export function namedBy(id: string): RegExp {
+  return new RegExp(`(^|[^A-Za-z0-9])${literal(id)}(?![A-Za-z0-9])`);
+}
+
+/** Answered: some answer is given, and not every one puts the decision off. */
+export function isAnswered(answers: string[]): boolean {
+  const given = answers.filter((a) => a.length > 0);
+  return given.length > 0 && !given.every(deferredAnswer);
+}
+
 export interface QuestionRow {
   id: string;
   text: string;
@@ -31,6 +66,12 @@ export interface QuestionRow {
   line: number;
   /** The options its author saw, as listed in "Options seen" (REQ-210). */
   options: string[];
+  /** Its Status cell, lower-cased; empty without one. */
+  status: string;
+  /** Its Answer cell as written; empty without one. */
+  answer: string;
+  /** Its Asked cell, lower-cased: `build` when `specgate ask` added it (REQ-481); empty without one. */
+  asked: string;
 }
 
 export interface AssumptionRow {
@@ -46,7 +87,8 @@ const TO_REVIEW = "to review";
 
 /** A cell's value as written into a Markdown table: one line, its pipes escaped. */
 function cell(text: string): string {
-  return String(text).replace(/\s+/g, " ").trim().replace(/\|/g, "\\|");
+  // Backslashes first: `a\|b` must not leave an unescaped pipe (code scanning).
+  return String(text).replace(/\s+/g, " ").trim().replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
 }
 
 /** The cells of a table line, split on pipes that are not escaped. */
@@ -86,15 +128,21 @@ export function questionTable(md: string): QuestionRow[] {
   const blocksAt = col(t, "blocks");
   const answerAt = col(t, "answer", "respuesta");
   const optionsAt = col(t, "options seen", "options", "opciones");
+  const statusAt = col(t, "status", "estado");
+  const askedAt = col(t, "asked");
   return t.rows.map((i) => {
     const c = cells(t.lines[i]);
     const answer = answerAt >= 0 ? c[answerAt] || "" : "";
+    const id = c[0] || "";
     return {
-      id: c[0] || "",
+      id,
       text: textAt >= 0 ? c[textAt] || "" : "",
       blocks: (blocksAt >= 0 ? c[blocksAt] || "" : "").match(/REQ-[A-Za-z0-9.]+/g) || [],
-      answered: answer.length > 0 && !deferredAnswer(answer),
+      answered: isAnswered([answer, ...(id ? answerLines(md, id) : [])]),
       line: i + 1,
+      status: statusAt >= 0 ? (c[statusAt] || "").toLowerCase() : "",
+      answer,
+      asked: askedAt >= 0 ? (c[askedAt] || "").toLowerCase() : "",
       options: (optionsAt >= 0 ? c[optionsAt] || "" : "")
         .split(/\s*[;·]\s*/)
         .map((o) => o.trim())
@@ -107,12 +155,42 @@ export type AnswerResult =
   | { ok: true; md: string; blocks: string[] }
   | { ok: false; code: "question_not_found" | "answer_deferred" };
 
+/** The line ending a text uses: CRLF when it has one, so Windows files stay as they were. */
+function eolOf(md: string): string {
+  return md.includes("\r\n") ? "\r\n" : "\n";
+}
+
+/**
+ * The table with the named columns added where it has none: in the header,
+ * the separator and every row (REQ-210). A table written with four columns
+ * had nowhere to hold an answer, and answering wrote nothing.
+ */
+function withColumns(t: Table, names: string[]): void {
+  for (const name of names) {
+    if (col(t, name.toLowerCase()) >= 0) continue;
+    const width = t.cols.length;
+    const pad = (line: string, value: string) => {
+      const c = cells(line);
+      while (c.length < width) c.push("");
+      return `| ${[...c, value].join(" | ")} |`;
+    };
+    t.lines[t.header] = pad(t.lines[t.header], name);
+    t.lines[t.header + 1] = `|${Array(width + 1)
+      .fill("---")
+      .join("|")}|`;
+    for (const i of t.rows) t.lines[i] = pad(t.lines[i], name === "Status" ? "open" : "");
+    t.cols.push(name.toLowerCase());
+  }
+}
+
 /** `questions.md` with the answer in the row's Answer cell and its Status set to answered. */
 export function answerQuestion(md: string, id: string, answer: string): AnswerResult {
   if (deferredAnswer(answer)) return { ok: false, code: "answer_deferred" };
   const t = table(md, /\bBlocks\b/i);
   const at = t ? t.rows.find((i) => cells(t.lines[i])[0] === id) : undefined;
   if (!t || at === undefined) return { ok: false, code: "question_not_found" };
+  if (col(t, "answer", "respuesta") < 0) withColumns(t, ["Answer"]);
+  if (col(t, "status", "estado") < 0) withColumns(t, ["Status"]);
   const c = cells(t.lines[at]);
   while (c.length < t.cols.length) c.push("");
   const answerAt = col(t, "answer", "respuesta");
@@ -123,7 +201,7 @@ export function answerQuestion(md: string, id: string, answer: string): AnswerRe
   const blocksAt = col(t, "blocks");
   return {
     ok: true,
-    md: t.lines.join("\n"),
+    md: t.lines.join(eolOf(md)),
     blocks: (blocksAt >= 0 ? c[blocksAt] : "").match(/REQ-[A-Za-z0-9.]+/g) || [],
   };
 }
@@ -166,9 +244,10 @@ export function addQuestion(
   md: string | undefined,
   change: string,
   text: string,
-  blocks: string[]
+  blocks: string[],
+  asked?: "build"
 ): { md: string; id: string } {
-  return appendRow(
+  const added = appendRow(
     md,
     `# Questions — ${change}`,
     QUESTION_HEADER,
@@ -176,6 +255,17 @@ export function addQuestion(
     (id) => `| ${id} | ${cell(text)} | ${blocks.join(", ")} |  |  | open |`,
     "Q"
   );
+  if (!asked) return added;
+  // Where it was asked, in its own column, read back by `questions` (REQ-481).
+  const t = table(added.md, /\bBlocks\b/i)!;
+  withColumns(t, ["Asked"]);
+  const askedAt = col(t, "asked");
+  const at = t.rows.find((i) => cells(t.lines[i])[0] === added.id)!;
+  const c = cells(t.lines[at]);
+  while (c.length <= askedAt) c.push("");
+  c[askedAt] = asked;
+  t.lines[at] = `| ${c.join(" | ")} |`;
+  return { md: t.lines.join("\n"), id: added.id };
 }
 
 /** `assumptions.md` with a new assumption from an answer, to review until the spec reflects it. */
@@ -213,6 +303,42 @@ function assumptionRows(md: string): { t: Table | null; rows: AssumptionRow[] } 
   };
 }
 
+/**
+ * The question's answer as its assumption to review: a new row, or the text of
+ * the one still waiting replaced — answering again is a correction, not a
+ * second thing to confirm (REQ-210).
+ */
+export function upsertAssumption(
+  md: string | undefined,
+  change: string,
+  a: { text: string; usedIn: string[]; why: string }
+): { md: string; id: string } {
+  const { t, rows } = assumptionRows(md || "");
+  const named = namedBy(a.why);
+  const waiting = rows.find((r) => r.status === TO_REVIEW && named.test(r.why));
+  if (!t || !waiting) return addAssumption(md, change, a);
+  const textAt = col(t, "assumption", "supuesto");
+  const c = cells(t.lines[waiting.line - 1]);
+  if (textAt >= 0) c[textAt] = cell(a.text);
+  t.lines[waiting.line - 1] = `| ${c.join(" | ")} |`;
+  return { md: t.lines.join(eolOf(md || "")), id: waiting.id };
+}
+
+/** `questions.md` with the question's Status set to reviewed, the column added when it has none. */
+export function markQuestionReviewed(md: string, id: string): string {
+  const t = table(md, /\bBlocks\b/i);
+  const at = t ? t.rows.find((i) => cells(t.lines[i])[0] === id) : undefined;
+  if (!t || at === undefined) return md;
+  // An answer written by hand in a table with no Status: the column is added (REQ-482).
+  if (col(t, "status", "estado") < 0) withColumns(t, ["Status"]);
+  const statusAt = col(t, "status", "estado");
+  const c = cells(t.lines[at]);
+  while (c.length < t.cols.length) c.push("");
+  c[statusAt] = "reviewed";
+  t.lines[at] = `| ${c.join(" | ")} |`;
+  return t.lines.join(eolOf(md));
+}
+
 /** The assumptions written from an answer whose spec nobody has confirmed yet. */
 export function assumptionsToReview(md: string): AssumptionRow[] {
   return assumptionRows(md).rows.filter((a) => a.status === TO_REVIEW);
@@ -223,7 +349,7 @@ export function reviewAssumptions(md: string, question: string): { md: string; i
   const { t, rows } = assumptionRows(md);
   if (!t) return { md, ids: [] };
   const statusAt = col(t, "status", "estado");
-  const named = new RegExp(`(^|[^A-Za-z0-9])${question}(?![A-Za-z0-9])`);
+  const named = namedBy(question);
   const ids: string[] = [];
   for (const a of rows) {
     if (a.status !== TO_REVIEW || !named.test(a.why)) continue;

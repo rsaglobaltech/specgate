@@ -283,6 +283,18 @@ The system SHALL register each merge driver so that, when the specgate file it r
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-169.feature kind=functional status=Implemented test=tests/cli.test.ts -->
 
+### Requirement: REQ-172 — A clone registers the merge drivers alone
+
+The system SHALL, on `specgate harness init --merge-drivers`, register the merge drivers in the clone's git config, adding their rules to `.gitattributes` only when they are missing, and write no other file; and the messages that tell a clone to register the drivers SHALL name `specgate harness init --merge-drivers`.
+
+#### Scenario: SCN-172a — A developer's fresh clone
+
+- GIVEN a clone whose committed `.gitattributes` routes the capability specs and the matrix to the drivers, with a committed `harness.config.yaml`, and no driver in its git config
+- WHEN the developer runs `specgate harness init --merge-drivers`
+- THEN `merge.specgate-spec.driver` and `merge.specgate-matrix.driver` are set in its git config, and `git status --porcelain` is empty
+
+<!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-172.feature kind=functional status=Implemented test=tests/cli.test.ts -->
+
 ### Requirement: REQ-183 — The gate fills the test command's placeholders outside the harness
 
 The system SHALL run the test command of `specgate check` with `{req}`, `{scenario}` and `{feature_file}` empty, as the gate of the whole project, and the one of `apply` and `done` for a single requirement with `{req}` set to it; several requirements at once run it with `{req}` empty.
@@ -318,3 +330,15 @@ The system SHALL publish a version whose number has a prerelease part (`1.0.0-rc
 - THEN npm and GitHub Packages publish it under `latest`, and the image is tagged `0.27.9`, `0.27` and `latest`
 
 <!-- specgate:trace actor=Developer feature=features/trusted-gate/REQ-281.feature kind=functional status=Implemented test=tests/unit/release-workflows.test.ts -->
+
+### Requirement: REQ-556 — npm publishes through trusted publishing
+
+The system SHALL run the npm publish job with `id-token: write` and npm 11.5.1 or later, so that npm authenticates the publish through trusted publishing (OIDC) when the package's trusted publisher names this repository and `publish-npm.yml`; the job SHALL NOT pass a token to any step other than the publish steps and the version check; and `docs/release-process.md` SHALL describe configuring the trusted publisher and removing the token after the first trusted publish.
+
+#### Scenario: SCN-556a — The publish job is ready for OIDC
+
+- GIVEN the repository's `publish-npm.yml`
+- WHEN a maintainer reads its publish job
+- THEN it grants `id-token: write`, installs npm 11.5.1 or later before publishing, and passes `NPM_TOKEN` only to the version check and the publish steps
+
+<!-- specgate:trace actor=Maintainer feature=features/trusted-gate/REQ-556.feature kind=functional status=Implemented -->

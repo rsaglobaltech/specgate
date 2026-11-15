@@ -3,7 +3,7 @@ import * as path from "node:path";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
 
 /**
- * Role packages (REQ-316..318, ADR-0043): what security, performance,
+ * Role packages (REQ-316..318, ADR-0045): what security, performance,
  * infrastructure — any role — asks of the work, written once in
  * `harness/<role>.md` and given to the agent for the requirements it concerns.
  *

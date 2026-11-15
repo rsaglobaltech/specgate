@@ -23,5 +23,5 @@ nothing checks it.
 
 ## Approach
 
-ADR-0042. A new built-in schema, `layered`, whose artifacts are the three layers
+ADR-0044. A new built-in schema, `layered`, whose artifacts are the three layers
 plus the deltas; the rules live in a pure domain module, `ChangeLayers`.

@@ -1,5 +1,5 @@
 /**
- * A workspace: the repositories of one product, named in one file (ADR-0041).
+ * A workspace: the repositories of one product, named in one file (ADR-0043).
  *
  * Specgate's gate is a repository's. A product made of services, a web app and
  * a contracts repository needs a place that knows them all: which repositories
@@ -132,7 +132,7 @@ export function readWorkspace(text: string): WorkspaceRead {
 /** The workspace file as `workspace init` writes it. */
 export function renderWorkspace(config: WorkspaceConfig): string {
   const lines = [
-    "# The repositories of one product (ADR-0041). Across them a requirement is",
+    "# The repositories of one product (ADR-0043). Across them a requirement is",
     "# <repo>:REQ-NNN; inside a repository REQ-NNN stays its id.",
     "workspace_version: 1",
     `name: ${config.name}`,

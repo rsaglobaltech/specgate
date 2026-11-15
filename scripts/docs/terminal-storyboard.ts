@@ -1,24 +1,24 @@
 /**
  * What the landing page's terminals show, declared as data.
  *
- * Three recordings, one per question a visitor brings — "what happens to my
- * client's brief?", "what stops a bad change?", "how does a team share
- * requirements, and hand them to an agent?" — shown as tabs over one player. Each is captured from the real CLI
- * by `record-terminal.ts` and checked by `docs-terminal.test.ts`.
+ * Four recordings, one per question a visitor brings — "what happens to my
+ * client's brief?", "what stops a bad change?", "what about the code I already
+ * have?", "what does the agent do on its own?" — shown as tabs over one player.
+ * Each is captured from the real CLI by `record-terminal.ts` and checked by
+ * `docs-terminal.test.ts`.
  *
  * Read by two things that must not disagree: `record-terminal.ts`, which runs
  * these commands for real and writes the recording, and `docs-terminal.test.ts`,
  * which checks the recording is still of this storyboard and of this CLI.
  *
- * ## Why these nine
+ * ## Why these beats, for the harness
  *
- * `scripts/demo/demo.tape` tells the same story in ten beats for a video. A
- * landing page is not a video: it is read beside prose, by someone deciding
+ * A landing page is not a video: it is read beside prose, by someone deciding
  * whether to spend an afternoon on this. So the beats that survive are the ones
  * that answer a question an evaluator actually has —
  *
  *   - how much do I have to write?          `cat smart-parking.yaml`
- *   - what do I get?                        `init`, `specops add`
+ *   - what do I get?                        `init`
  *   - what does it think is left to do?     `plan`
  *   - does it lock me to one AI vendor?     `cat harness.config.yaml`
  *   - what happens when I let it run?       `harness run`
@@ -77,9 +77,9 @@ export interface Storyboard {
 }
 
 /**
- * Packs, for teams that share requirements: a project generated from a config,
- * a domain pack installed and pinned, then the harness building one of its
- * requirements. Kept under its original ids and file name.
+ * The harness: a project generated from a config, its queue, then the harness
+ * building one requirement in its own worktree. Kept under its original ids
+ * and file name.
  */
 export const BEATS: readonly Beat[] = [
   {
@@ -97,28 +97,6 @@ export const BEATS: readonly Beat[] = [
     argv: ["specgate", "init", "--config", "./smart-parking.yaml", "--out", ".", "--no-git"],
     surface: "init",
     maxLines: 14,
-  },
-  {
-    id: "specops-add",
-    caption: "A domain pack, installed and pinned. Not copy-pasted.",
-    cwd: "smart-parking",
-    argv: [
-      "specgate",
-      "specops",
-      "add",
-      "--pack-root",
-      "{HOME}/packs",
-      "--pack",
-      "multi-tenant/backend",
-      "--var",
-      "PROJECT_NAME=Smart Parking",
-      "--var",
-      "PROJECT_SLUG=smart-parking",
-      "--var",
-      "DOMAIN=parking operations",
-    ],
-    surface: "specops add",
-    maxLines: 8,
   },
   {
     id: "plan",
@@ -296,6 +274,72 @@ export const GATE_BEATS: readonly Beat[] = [
   },
 ];
 
+/**
+ * A repository that already ships: adopted without touching its code, its
+ * modules listed, one of them reversed into Draft requirements by an agent —
+ * a stand-in that writes what a model would, so the recording repeats — and
+ * the gate green on day one.
+ */
+export const EXISTING_BEATS: readonly Beat[] = [
+  {
+    id: "history",
+    caption: "A repository that already ships. Not one line of specification.",
+    cwd: "invoices",
+    argv: ["git", "log", "--oneline"],
+    surface: null,
+    maxLines: 4,
+  },
+  {
+    id: "adopt",
+    caption: "Adopted in place: it reads the project, it changes no source file.",
+    cwd: "invoices",
+    argv: ["specgate", "init"],
+    surface: "init",
+    maxLines: 14,
+  },
+  {
+    id: "untouched",
+    caption: "Everything it wrote is new. src/ and test/ are not on this list.",
+    cwd: "invoices",
+    argv: ["git", "status", "--short"],
+    surface: null,
+    maxLines: 12,
+  },
+  {
+    id: "modules",
+    caption: "The modules it found, without an agent.",
+    cwd: "invoices",
+    argv: ["specgate", "reverse", "--modules"],
+    surface: "reverse",
+    maxLines: 10,
+  },
+  {
+    id: "reverse",
+    caption:
+      "Your agent reads one module and drafts what it does, each requirement citing its source.",
+    cwd: "invoices",
+    argv: ["specgate", "reverse", "src/billing", "--agent", "reverse-agent {prompt_file}"],
+    surface: "reverse",
+    maxLines: 10,
+  },
+  {
+    id: "question",
+    caption: "Behaviour that looks like a bug is asked, never written down as the contract.",
+    cwd: "invoices",
+    argv: ["cat", "docs/specs/changes/reverse-billing/questions.md"],
+    surface: null,
+    maxLines: 8,
+  },
+  {
+    id: "check",
+    caption: "Green on day one: a Draft owes nothing yet.",
+    cwd: "invoices",
+    argv: ["specgate", "check"],
+    surface: "check",
+    maxLines: 12,
+  },
+];
+
 export const STORYBOARDS: readonly Storyboard[] = [
   {
     id: "brief",
@@ -314,9 +358,17 @@ export const STORYBOARDS: readonly Storyboard[] = [
     beats: GATE_BEATS,
   },
   {
+    id: "existing",
+    label: "A repository that already ships",
+    title: "invoices — an existing repository",
+    file: "terminal-existing.json",
+    block: "terminal-existing",
+    beats: EXISTING_BEATS,
+  },
+  {
     id: "harness",
-    label: "Packs, for teams that share requirements",
-    title: "smart-parking — a pack, then the harness",
+    label: "The harness builds one",
+    title: "smart-parking — the harness",
     file: "terminal-demo.json",
     block: "terminal",
     beats: BEATS,

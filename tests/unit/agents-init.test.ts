@@ -137,15 +137,17 @@ test("an unknown tool is a usage error listing the supported ones", () => {
 });
 
 test("--tool defaults to every tool that belongs inside a project", () => {
-  // Not quite every tool: `claude-plugin` produces an installable artefact,
-  // and scattering one into every project that ran `agents init` is not what
-  // anybody asked for. It is opt-in, and still selectable by name.
+  // Not quite every tool: `claude-plugin` and `opencode-plugin` put code in
+  // the agent's loop, and scattering that into every project that ran
+  // `agents init` is not what anybody asked for. They are opt-in, and still
+  // selectable by name.
   assert.deepEqual(parseArgs([]).tools, DEFAULT_TOOLS);
   assert.ok(DEFAULT_TOOLS.length > 0);
   assert.deepEqual(
     ALL_TOOLS.filter((t: string) => !DEFAULT_TOOLS.includes(t)),
-    ["claude-plugin"]
+    ["claude-plugin", "opencode-plugin"]
   );
+  assert.deepEqual(parseArgs(["--tool", "opencode-plugin"]).tools, ["opencode-plugin"]);
   assert.deepEqual(parseArgs(["--tool", "claude, cursor"]).tools, ["claude", "cursor"]);
   assert.deepEqual(parseArgs(["--tool", "claude-plugin"]).tools, ["claude-plugin"]);
 });
@@ -202,11 +204,14 @@ test("antigravity's MCP config is the same server Claude Code is given", () => {
   assert.equal(parsed.mcpServers["spec-driven"].command, "npx");
 
   const plugin = TOOLS["claude-plugin"].files().find((f: any) => f.path.endsWith(".mcp.json"));
-  assert.deepEqual(
-    parsed.mcpServers,
-    JSON.parse(plugin.contents).mcpServers,
-    "the two hosts must be pointed at the same server"
-  );
+  // The plugin's copy also names the transport, `type: "stdio"`, which Tessl
+  // requires (REQ-550); the server it starts is the same one.
+  const servers = JSON.parse(plugin.contents).mcpServers;
+  for (const s of Object.values(servers) as Array<{ type?: string }>) {
+    assert.equal(s.type, "stdio");
+    delete s.type;
+  }
+  assert.deepEqual(parsed.mcpServers, servers, "the two hosts must be pointed at the same server");
 });
 
 test("every rule file stays under Antigravity's 12,000 character limit", () => {

@@ -1,5 +1,7 @@
 # From scratch · 5 — Every day
 
+> **The short version** of a new project, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 <!-- specgate:goal -->
 **When you finish:** the gate on every pull request, and a daily loop short
 enough to remember — four verbs: `propose`, `apply`, `status` and `archive`.
@@ -11,36 +13,47 @@ enough to remember — four verbs: `propose`, `apply`, `status` and `archive`.
 
 | Who | Does what in this phase |
 | --- | --- |
-| **You** | Commit the CI file once; then start each day with `status` |
+| **You** | Commit the CI file `init` wrote; then start each day with `status` |
 | **Your agent** | Follows the same loop — `AGENTS.md` tells it how |
 | **CI** | Runs `specgate check` on every pull request |
 
-## 1. Put the gate in CI
+## 1. The gate is already in CI
+
+`specgate init` wrote it: `.github/workflows/spec-gate.yml` — or the file for
+GitLab, Azure DevOps or Jenkins when the folder shows one. It runs
+`specgate check` on Ubuntu, macOS and Windows, compares the requirement ids
+with the base branch, runs the quality checks once you configure them, checks
+the packs and keeps the plan. A step whose tool is not configured yet says so
+and passes. See what it checks:
 
 ```bash
-specgate ci init --provider github
+specgate ci status
 ```
 
 <!-- specgate:out-scratch-ci:begin — generated; edit the source, not this block -->
 ```text
-$ specgate ci init --provider github
-  ◆ specgate · ci init   github
+$ specgate ci status
+  ◆ specgate · ci status   .github/workflows/spec-gate.yml
 
-    + .github/workflows/spec-gate.yml
+  ✔  the specification (validate --strict)
+  ✔  the project's tests (check runs test_cmd)
+  ✔  the architecture check (check runs arch_cmd)
+  ✔  Ubuntu, macOS and Windows
+  ✔  the requirement ids against the base branch (check --base)
+  ✔  the quality checks (quality run)
+  ✔  the pack drift (validate --against-lock)
+  ✔  the pending-work plan (plan --format json)
 
-  ✔  CI gate installed. On every PR/MR the job:
-   1  runs `specgate check` — the specification, then the tests, as locally
-     runs your tests: `node --test` (test_cmd)
-   2  runs `validate --against-lock` when .specops.lock exists, so a
-     moved pack tag or an edited generated file fails the build
-   3  publishes `plan --format json` as the spec-plan artifact
-  ℹ  Commit the file and open a PR to see the gate in action.
+  ✔  Everything specgate can check runs in CI.
 ```
 <!-- specgate:out-scratch-ci:end -->
 
-`gitlab`, `azure` and `jenkins` work the same way. Commit the file, and make
-the job a required check in your main branch's protection rules: from then
-on, a pull request with a red test cannot merge.
+It checks more than less on purpose: every step says in the YAML what it
+checks and what to delete to remove it. One step only:
+`specgate ci init --provider github --minimal --force`. Another provider:
+`specgate ci init --provider gitlab`. Commit the file, and make the job a
+required check in your main branch's protection rules: from then on, a pull
+request with a red test cannot merge.
 
 ## 2. Where work comes from
 
@@ -148,8 +161,6 @@ $ specgate status
   Waiting for an answer ──────────────────────────────────
     ○ REQ-004  A member cancels a booking  an answer to Q1
     Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
-
-  ·  No agent set for the harness and the studio's Build: specgate config set agent "claude -p < {prompt_file}"
 
   Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
 

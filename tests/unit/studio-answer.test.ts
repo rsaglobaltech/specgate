@@ -156,13 +156,47 @@ test("REQ-201 SCN-201b: the live page answers a question and marks it reviewed; 
 });
 
 test("REQ-201 SCN-201c: Needs attention offers the answer form for the agent's question", () => {
-  const { livePage } = require("../../scripts/lib/live-page");
-  const html = livePage("demo", "abc");
-  assert.ok(html.includes("function answerForm(q)"));
-  assert.ok(html.includes('fetch("live/answer"'));
-  assert.ok(html.includes('"x-specgate-token"'));
-  assert.ok(html.includes("Mark reviewed"));
-  assert.ok(!livePage("demo", '"><script>').includes('"><script>'), "the token is only hex");
+  const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+  const now = 1_800_000_000;
+  const html: string = studio.renderLive(
+    "en",
+    {
+      requirements: [
+        {
+          req: "REQ-049",
+          title: "Foto",
+          group: "examen",
+          attempt: 1,
+          phase: "question",
+          state: "question",
+          started: now - 60,
+          updated: now,
+          elapsed: 60,
+          tests: null,
+          files: [],
+          steps: [],
+          usage: null,
+          question: { text: "¿Qué foto?", id: "Q6", change: "draft-examen" },
+        },
+      ],
+      queue: [],
+      queueStarted: 0,
+      totals: { input: 0, output: 0, cost: null, turns: 0 },
+      questions: {
+        open: [{ id: "Q6", change: "draft-examen", text: "¿Qué foto?", blocks: ["REQ-049"] }],
+      },
+    },
+    "open",
+    now,
+    []
+  );
+  assert.match(html, /aria-label="Needs attention">[^]*?<label for="live-answer-draft-examen-Q6"/);
+  assert.match(html, />Mark reviewed</);
+  // Writes carry the page's token; a token that is not hex never reaches the page as markup.
+  const app = fs.readFileSync(path.join(__dirname, "..", "..", "studio", "app.js"), "utf8");
+  assert.match(app, /x-specgate-token/);
+  const { studioShell } = require("../../scripts/lib/studio-shell");
+  assert.ok(!studioShell("demo", '"><script>').includes('"><script>'), "the token is escaped");
 });
 
 test("REQ-203 SCN-203a: the live model carries every open question, and the page answers each", () => {
@@ -182,10 +216,13 @@ test("REQ-203 SCN-203a: the live model carries every open question, and the page
       q.waitingWithoutQuestion.map((r: { requirement: string }) => r.requirement),
       ["REQ-031"]
     );
-    const { livePage } = require("../../scripts/lib/live-page");
-    const html = livePage("demo", "abc");
-    assert.ok(html.includes('block("Open questions"'));
-    assert.ok(html.includes("oq.forEach(function(q){"));
+    // Live in the app, drawn from that model, lists them under Open questions, Q6 with its form.
+    const studio = require(path.join(__dirname, "..", "..", "studio-test", "studio.cjs"));
+    const html: string = studio.renderLive("en", readLive(dir), "open", 1_800_000_000, []);
+    const block = html.slice(html.indexOf('aria-label="Open questions"'));
+    assert.match(block, /<span class="id">Q6<\/span>/);
+    assert.match(block, /<label for="live-answer-draft-examen-Q6"/);
+    assert.match(block, /specgate ask REQ-031/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

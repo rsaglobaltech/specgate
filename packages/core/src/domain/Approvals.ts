@@ -1,5 +1,5 @@
 /**
- * Roles and approvals per layer (REQ-310..315, ADR-0043).
+ * Roles and approvals per layer (REQ-310..315, ADR-0045).
  *
  * Pure: who holds a role, what an approval of a layer is worth against the
  * layer's current text, and whether a change is approved. Reading the config,

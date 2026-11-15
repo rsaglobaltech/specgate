@@ -98,7 +98,7 @@ const DESIGN_RULES = [
   "Record the decision and the alternatives rejected. If it is a decision the project will be asked about later, it wants an ADR instead.",
 ];
 
-// ADR-0042: the layers of a `layered` change, each with its owner.
+// ADR-0044: the layers of a `layered` change, each with its owner.
 const DISCOVER_RULES = [
   "Owner: product. The business context, the use case and the acceptance criteria — what and why, never how.",
   "Number each criterion `- AC-1: …` under `## Acceptance criteria`: the design must answer every one.",

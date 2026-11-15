@@ -31,6 +31,12 @@ function adopted() {
   fs.writeFileSync(path.join(dir, "lib/index.js"), "module.exports = {};\n");
   const r = cli("adopt", "--project-dir", dir, "--no-capabilities");
   assert.equal(r.status, 0, r.stdout + r.stderr);
+  // No test command configured — as a project adopted before adoption saved the
+  // one it detects (REQ-470), or where the person declined it.
+  const cfg = path.join(dir, "harness.config.yaml");
+  if (fs.existsSync(cfg)) {
+    fs.writeFileSync(cfg, fs.readFileSync(cfg, "utf8").replace(/^(test_cmd|agent):.*\n/gm, ""));
+  }
   return { parent, dir };
 }
 

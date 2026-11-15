@@ -13,8 +13,11 @@ import type { Diagnostic } from "./diagnostics";
 import { resolveBase } from "./base-ids";
 import { assertSafeGitRef } from "../../packages/core/src/domain/GitSafety";
 
-/** `feature/KAN-13-register-vehicle-entry` → `KAN-13`. */
-export const TICKET_BRANCH = /^(?:feature|bugfix|hotfix)\/([A-Z][A-Z0-9_]+-\d+)(?:-|$)/;
+/**
+ * `feature/KAN-13-register-vehicle-entry` → `KAN-13`; with a team before the
+ * key, as agentkit names it, `feature/parking/KAN-13` too (REQ-170).
+ */
+export const TICKET_BRANCH = /^(?:feature|bugfix|hotfix)\/(?:[^/]+\/)?([A-Z][A-Z0-9_]+-\d+)(?:-|$)/;
 
 function git(dir: string, args: string[]) {
   return spawnSync("git", ["-C", dir, ...args], { encoding: "utf8" });

@@ -1,5 +1,7 @@
 # Write the brief
 
+> **The short version** of both paths, in six commands: [Start](../start.md). This page is the same step in detail, with recorded output.
+
 **Before you draft anything.** A brief says what the product must do, in the
 words of the people who need it. Specgate drafts the specification from it one
 module at a time, and checks every draft against it. This page teaches the
