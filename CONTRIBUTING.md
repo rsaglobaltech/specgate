@@ -186,7 +186,7 @@ having one maintainer rather than a statement that review does not matter — se
 - **Style:** ESLint + Prettier enforce the rules automatically — run `npm run lint:fix` and `npm run format`.
 - **No comments that describe *what* the code does.** Only add a comment when the *why* is non-obvious (invariant, workaround, hidden constraint).
 - **No unused variables.** The `no-unused-vars` rule is set to `error`.
-- **Shell scripts.** ADR-0008 removed every shell script from the CLI itself; the only ones left are the demo recording helpers under `scripts/demo/`. ShellCheck runs in the lint job at `--severity=warning` over every tracked `*.sh`.
+- **Shell scripts.** ADR-0008 removed every shell script from the CLI itself; the only one left is the stand-in agent the landing page's recording uses, `scripts/docs/stub-agent.sh`. ShellCheck runs in the lint job at `--severity=warning` over every tracked `*.sh`.
 - **Templates** live in `templates/` and use `{{VARIABLE}}` interpolation. Never add logic to templates.
 
 ---

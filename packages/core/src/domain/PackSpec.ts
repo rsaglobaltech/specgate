@@ -422,7 +422,7 @@ export function validatePackModel(
     fail(
       `pack.yaml declares schema_version ${pack.schema_version}, but this CLI ` +
         `understands up to ${PACK_SCHEMA_VERSION}.\n` +
-        "Fix: upgrade with `npm install -g create-spec-driven-app@latest`, or " +
+        "Fix: upgrade with `npm install -g @rsaglobaltech/specgate@latest`, or " +
         "pin the pack to a version that targets the older schema."
     );
   }

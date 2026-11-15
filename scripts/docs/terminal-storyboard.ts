@@ -13,8 +13,7 @@
  *
  * ## Why these beats, for the harness
  *
- * `scripts/demo/demo.tape` tells the same story in ten beats for a video. A
- * landing page is not a video: it is read beside prose, by someone deciding
+ * A landing page is not a video: it is read beside prose, by someone deciding
  * whether to spend an afternoon on this. So the beats that survive are the ones
  * that answer a question an evaluator actually has —
  *
