@@ -417,10 +417,12 @@ test("REQ-337 SCN-337a: the billing area only", () => {
   assert.ok(!fs.existsSync(path.join(dir, "spec.md")), "nothing is written for a missing scope");
   const r = sg(dir, "adopt", "--scope", "src/billing", "--no-agents");
   assert.equal(r.status, 0, r.stdout + r.stderr);
+  // REQ-471: the areas are listed to specify, never proposed as requirements.
+  const areas = fs.readFileSync(path.join(dir, "docs/specs/adoption.md"), "utf8");
+  assert.match(areas, /invoices/i);
+  assert.match(areas, /payments/i);
+  assert.doesNotMatch(areas, /routes/i);
   const spec = fs.readFileSync(path.join(dir, "spec.md"), "utf8");
-  assert.match(spec, /invoices/i);
-  assert.match(spec, /payments/i);
-  assert.doesNotMatch(spec, /routes/i);
   assert.match(spec, /src\/billing/);
   const baseline = fs.readFileSync(path.join(dir, "features/adoption/baseline.feature"), "utf8");
   assert.match(baseline, /src\/billing/);

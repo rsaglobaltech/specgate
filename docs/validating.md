@@ -281,9 +281,8 @@ comparison is exact string equality: `15m` and `900000` are different values.
 Each value is **matched**, **diverging**, **spec only** or **code only**, and
 `specgate report --record` adds the totals to the report history.
 
-It is a report rather than a gate because annotations cover only the values
-someone chose to annotate; a hard gate over them would mostly measure who
-remembered ([ADR-0023](specs/adr/0023-checking-content-gate-or-report.md)).
+It is a report, not a gate: annotations cover only the values someone chose to
+annotate ([ADR-0023](specs/adr/0023-checking-content-gate-or-report.md)).
 
 When a value diverges, you have three options:
 

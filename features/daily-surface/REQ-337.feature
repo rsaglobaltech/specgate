@@ -4,4 +4,4 @@ Feature: Adopt one area of a large system
   Scenario: The billing area only
     Given a repository with src/billing/invoices, src/billing/payments and src/shipping/routes, each holding source files
     When the developer runs `specgate adopt --scope src/billing`
-    Then spec.md proposes invoices and payments, not routes, names src/billing as the scope, and features/adoption/baseline.feature names src/billing
+    Then docs/specs/adoption.md lists invoices and payments, not routes, spec.md names src/billing as the scope, and features/adoption/baseline.feature names src/billing
