@@ -457,6 +457,9 @@
 | REQ-560 | SCN-560a | `features/transition/REQ-560.feature` | - | - | - | - | - | tests/unit/layered-outputs.test.ts | Implemented |
 | REQ-561 | SCN-561a | `features/project-setup/REQ-561.feature` | - | - | - | - | - | tests/unit/brownfield-reverse.test.ts | Implemented |
 | REQ-562 | SCN-562a | `features/studio/REQ-562.feature` | - | - | - | - | - | tests/unit/studio-layers.test.ts | Implemented |
+| REQ-563 | SCN-563a | `features/daily-surface/REQ-563.feature` | - | - | - | - | - | tests/unit/contract-fixes.test.ts | Implemented |
+| REQ-564 | SCN-564a | `features/change-lifecycle/REQ-564.feature` | - | - | - | - | - | tests/unit/contract-fixes.test.ts | Implemented |
+| REQ-565 | SCN-565a | `features/daily-surface/REQ-565.feature` | - | - | - | - | - | tests/unit/contract-fixes.test.ts | Implemented |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

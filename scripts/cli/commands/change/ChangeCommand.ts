@@ -108,6 +108,7 @@ export const TEMPLATES = {
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
 import { removeTempFile } from "../../../lib/temp-file";
+import { changeApprovals } from "../../../lib/approvals";
 
 // The artefact graph. Dependencies are enablers, not gates: `requires` says
 // what makes an artefact *possible*, never what the author must do next.
@@ -777,6 +778,9 @@ export function changeShowAnswer(projectDir: string, changeId: string) {
       deltas,
       tasks: { total: progress.total, complete: progress.complete },
       review: reviewOf(projectDir, changeId),
+      // REQ-564: whether it may be built, layer by layer — not the `approved:`
+      // line, which outlives an edit of a layer approved before it.
+      approvals: changeApprovals(projectDir, changeId),
     },
     status: [] as Diagnostic[],
   };

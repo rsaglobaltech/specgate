@@ -25,6 +25,12 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   change's Discover, Design and Tasks with their owners, approvals and quorum,
   and Approve on each layer whose role you hold; in a team's studio the
   approval is the signed-in user's, not the machine's git identity.
+- **What a tool reads, answered without guessing** (REQ-563, REQ-564,
+  REQ-565): `config list --json` reports an unreadable `harness.config.yaml`
+  as `harness_config_invalid` instead of empty settings; `change show --json`
+  carries `change.approvals`, whether the change may be built; `status --json`
+  carries `next`, the next step as argv. The agent contract documents these
+  shapes and the workspace's `status`.
 - **npm publishes through trusted publishing** (REQ-556): the publish job
   installs npm 11.5.1 or later and npm authenticates with OIDC before the
   `NPM_TOKEN` secret, which is removed after the first trusted publish

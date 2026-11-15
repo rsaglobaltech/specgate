@@ -391,6 +391,24 @@ export function forjaAddCommand(todo: QueueItem): string {
 const needsCode = (todo: QueueItem) =>
   ["NEEDS_EVERYTHING", "NEEDS_TEST", "NEEDS_IMPLEMENTATION"].includes(todo.category);
 
+/**
+ * The next command as argv (REQ-565): what a tool runs, without `specgate`,
+ * and whether it still holds a placeholder (`<a behaviour you rely on>`) for a
+ * person to fill in. `argv` is null when the next step is not a command.
+ */
+export function nextStep(command: string): {
+  command: string;
+  argv: string[] | null;
+  placeholder: boolean;
+} {
+  if (!command.startsWith("specgate ")) return { command, argv: null, placeholder: false };
+  const argv: string[] = [];
+  for (const m of command.slice("specgate ".length).matchAll(/"([^"]*)"|(\S+)/g)) {
+    argv.push(m[1] !== undefined ? m[1] : m[2]);
+  }
+  return { command, argv, placeholder: argv.some((a) => /<[^>]+>/.test(a)) };
+}
+
 export function nextCommandPlain({
   items,
   tickets,
@@ -663,6 +681,8 @@ function statusDocument(
         }
       : {}),
     nextCommand: nextCommandPlain(summary),
+    // REQ-565: the same step as data, so a tool runs it without parsing prose.
+    next: nextStep(nextCommandPlain(summary)),
     // REQ-329: only while an open change is still written for 0.27.
     ...migrateHint(projectDir),
     status: [...notes, ...unwritten],

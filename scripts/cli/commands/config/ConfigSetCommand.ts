@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { error } from "../../../lib/diagnostics";
+import { error, printDiagnostics, type Diagnostic } from "../../../lib/diagnostics";
 import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { BaseCommand } from "../../../lib/command";
 import {
@@ -70,6 +70,29 @@ function harnessCommand(projectDir: string, key: string): string | null {
     return (key === "arch_cmd" ? harness.archCmd : harness.testCmd) ?? null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * REQ-563: why harness.config.yaml cannot be read, as a finding — or null.
+ * `config list` answered `{}` for a file it could not read, and a tool showed
+ * the agent and the tests as unset instead of the file as broken.
+ */
+export function harnessConfigProblem(projectDir: string): Diagnostic | null {
+  try {
+    readHarnessConfig(projectDir);
+    return null;
+  } catch (e) {
+    const text = e instanceof Error ? e.message : String(e);
+    const [what, ...rest] = text.split("\n");
+    const fix = rest
+      .join(" ")
+      .replace(/^Fix:\s*/, "")
+      .trim();
+    return error("harness_config_invalid", what, {
+      file: "harness.config.yaml",
+      ...(fix ? { fix } : {}),
+    });
   }
 }
 
@@ -172,14 +195,19 @@ export class ConfigSetCommand extends BaseCommand {
         if (v !== null) config[k] = v;
       }
       for (const k of presentKeys(projectDir)) config[k] = currentValue(projectDir, k);
-      io.emit({ config, files: filesOf(Object.keys(config)) }, () => {
-        const entries = Object.entries(config);
-        if (entries.length === 0) {
-          process.stdout.write("  (no settings — everything is at its default)\n");
-          return;
+      const problem = harnessConfigProblem(projectDir);
+      io.emitAndGate(
+        { config, files: filesOf(Object.keys(config)), status: problem ? [problem] : [] },
+        () => {
+          if (problem) printDiagnostics([problem]);
+          const entries = Object.entries(config);
+          if (entries.length === 0) {
+            process.stdout.write("  (no settings — everything is at its default)\n");
+            return;
+          }
+          for (const [k, v] of entries) process.stdout.write(`  ${k} = ${v}\n`);
         }
-        for (const [k, v] of entries) process.stdout.write(`  ${k} = ${v}\n`);
-      });
+      );
       return;
     }
 
