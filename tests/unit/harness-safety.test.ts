@@ -302,7 +302,8 @@ test("REQ-577 SCN-577a: a check's profile is read from the project, not from the
   try {
     const worktree = path.join(parent, "wt");
     assert.equal(git("worktree", "add", "-q", "-b", "harness/REQ-000", worktree).status, 0);
-    const real = (p: string) => fs.realpathSync(p);
+    // `.native`: on Windows it also expands 8.3 names (RUNNER~1), as git does.
+    const real = (p: string) => fs.realpathSync.native(p);
     assert.equal(real(projectOf(worktree)), real(projectDir), "a worktree answers its project");
     assert.equal(real(projectOf(projectDir)), real(projectDir), "the project answers itself");
     // What the agent writes in its worktree is not where the profile is read.
