@@ -9,6 +9,17 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-11-17
+
+### Fixed
+
+- **`harness stop --now` ends the agent every time** (REQ-592): when the shell
+  between the harness and the agent ended first, the agent — ignoring SIGTERM —
+  could outlive the run on Linux. The runner now ends its command's whole
+  process group whenever the command ends.
+- **The release's smoke test waits for the registry**: the install of a just
+  published version is retried while npm's CDN does not serve its tarball yet.
+
 ## [1.1.0] — 2026-11-16
 
 The harness, reviewed end to end (issue #466): an interrupted run no longer
