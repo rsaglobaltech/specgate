@@ -17,6 +17,10 @@ reported as not attempted, and `--format json` says why under `stopped`
 requirements, the same way on every platform. With no run working in the
 project, nothing is requested and the answer says so (`harness_not_running`).
 
+`specgate harness stop --now` ends the run at once instead, with every command
+it started; the answer says `stop.now: true`, and the requirement in progress
+keeps its worktree for `specgate harness run --resume` (REQ-583).
+
 ## Build with uncommitted files
 
 The harness refuses a working tree that is not clean. With `--allow-dirty` it

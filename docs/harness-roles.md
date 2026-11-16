@@ -59,6 +59,18 @@ attempt; no retry starts after it. An agent that reports no cost counts as free,
 the run warns `cost_unknown` once per requirement. `--budget-seconds` and
 `--max-requirements` limit the whole run; this limits one requirement.
 
+The whole run, and tokens, have ceilings too (REQ-585):
+
+```yaml
+max_run_cost_usd: 20      # no requirement starts once the run's sessions reported $20
+max_tokens: 2000000       # one requirement's input, output and cache tokens
+require_known_cost: true  # a session that reports no cost fails (cost_unknown)
+timeouts: { agent: 1800, setup: 600, tests: 300, review: 600 }   # seconds; else --timeout
+```
+
+An agent that cannot run now (out of quota) gives way to the next profile of
+`attempt_profiles` (REQ-586).
+
 ## What the agent may not touch
 
 The agent works against a contract, and editing the contract would make a green
@@ -73,6 +85,15 @@ because a requirement may need one; editing or deleting an existing one is
 not. A new instruction file is not allowed either: a `CLAUDE.md` or a hook the agent
 creates steers the next session as surely as an edited one.
 `protected_paths:` replaces the list, and `allow_paths:` names exceptions.
+
+**Its environment.** The agent inherits the shell's variables, credentials
+included; each run names the ones that look like secrets. `agent_env:` lists
+what it gets instead — those, plus `PATH`, the home and temp folders, the locale
+and the harness's own `SPECGATE_*` (REQ-587):
+
+```yaml
+agent_env: [ANTHROPIC_API_KEY]
+```
 
 ## Approvals and role packages
 

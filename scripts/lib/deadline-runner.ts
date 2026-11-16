@@ -19,6 +19,7 @@ import { StringDecoder } from "node:string_decoder";
 import { forShell } from "./shell-command";
 import { watchEvents } from "./agent-watch";
 import { outputEvents, streamLine, writeWhole } from "./harness-stream";
+import { agentEnvironment } from "../../packages/core/src/domain/HarnessEvents";
 
 const command = process.env.HARNESS_CMD || "";
 const deadline = Number(process.env.HARNESS_DEADLINE_MS || "0");
@@ -36,8 +37,18 @@ const parentPid = process.ppid;
 const STREAM_FD = 3;
 const emit = streaming ? (line: string) => writeWhole(STREAM_FD, `${line}\n`) : null;
 
+/** REQ-587: \`agent_env:\`, when the project names the variables the agent gets. */
+const allow = (() => {
+  try {
+    const list = JSON.parse(process.env.HARNESS_ENV_ALLOW || "null");
+    return Array.isArray(list) ? list.map(String) : null;
+  } catch {
+    return null;
+  }
+})();
+
 // What the harness tells this process is not the agent's business.
-const env = { ...process.env };
+const env: NodeJS.ProcessEnv = allow ? agentEnvironment(process.env, allow) : { ...process.env };
 for (const name of [
   "HARNESS_CMD",
   "HARNESS_DEADLINE_MS",
@@ -45,6 +56,7 @@ for (const name of [
   "HARNESS_PROJECT_DIR",
   "SPECGATE_HARNESS_STREAM_FD",
   "SPECGATE_HARNESS_ROOT_PID",
+  "HARNESS_ENV_ALLOW",
 ]) {
   delete env[name];
 }

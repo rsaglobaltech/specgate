@@ -98,6 +98,7 @@ import {
   EVENTS_FILE_VAR,
   EVENTS_REQ_VAR,
   maskCommand,
+  secretNames,
   secretValues,
   testCounts,
 } from "../../../../packages/core/src/domain/HarnessEvents";
@@ -153,6 +154,7 @@ import {
   resolveProfileAgent,
   HarnessSettings,
 } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
+import type { TimeoutKind } from "../../../../packages/core/src/domain/HarnessConfig";
 
 import { agentIo } from "../../../lib/agent";
 import {
@@ -185,6 +187,7 @@ import {
   BudgetVerdict,
   budgetVerdict,
   hasBudget,
+  reportedCost,
 } from "../../../../packages/core/src/domain/RunBudget";
 import { withWorktreeLock } from "../../../harness/worktree-lock";
 import {
@@ -203,6 +206,7 @@ import {
   AttemptRecord,
   StepUsage,
   stepUsage,
+  fallbackAttempt,
   AttemptStep,
   featureFilePath,
   planAttempt,
@@ -261,6 +265,19 @@ interface PlanDocument {
  * The resolved settings plus `verbose`, which is a run flag rather than a
  * project setting and so only ever travels with the gate's copy.
  */
+/**
+ * REQ-584: the time a kind of command may take — \`timeouts:\` in
+ * harness.config.yaml, in seconds — else the run's \`--timeout\`.
+ */
+export function limitFor(
+  settings: Partial<HarnessSettings> | undefined,
+  kind: TimeoutKind,
+  fallbackMs: number
+): number {
+  const seconds = settings?.timeouts?.[kind];
+  return seconds && seconds > 0 ? seconds * 1000 : fallbackMs;
+}
+
 type GateSettings = Partial<HarnessSettings> & { verbose?: boolean };
 
 /** What the gate said: green, or the stage it failed at and why. */
@@ -914,7 +931,7 @@ function runGate(
       ? archRun(worktreeDir, archCmd, settings.archSarif, "", req.requirement || "")
       : runWithDeadline(archCmd, {
           cwd: worktreeDir,
-          timeoutMs,
+          timeoutMs: limitFor(settings, "tests", timeoutMs),
           maxBuffer: SUBPROCESS_MAX_BUFFER,
         });
     report(`architecture check: ${maskCommand(archCmd)}`, arch.status === 0 ? "pass" : "fail", {
@@ -967,7 +984,7 @@ function runGate(
     // REQ-575: the deadline ends the test command and everything it started.
     const test = runWithDeadline(resolved, {
       cwd: worktreeDir,
-      timeoutMs,
+      timeoutMs: limitFor(settings, "tests", timeoutMs),
       maxBuffer: SUBPROCESS_MAX_BUFFER,
       toStderr: settings.verbose,
     });
@@ -995,7 +1012,7 @@ function runGate(
       // REQ-581: a test command cut at the deadline says so; its output alone reads like a failure.
       const timedOut =
         (test.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT"
-          ? `The test command timed out after ${Math.round(timeoutMs / 1000)} s and was ended, with everything it started.\n`
+          ? `The test command timed out after ${Math.round(limitFor(settings, "tests", timeoutMs) / 1000)} s and was ended, with everything it started.\n`
           : "";
       return {
         ok: false,
@@ -1201,7 +1218,9 @@ function runAgentOnce(
   command: string,
   prompt: string,
   timeoutMs: number,
-  tag: string
+  tag: string,
+  /** REQ-587: \`agent_env:\`, when the project sets it. */
+  agentEnv?: string[]
 ): string {
   const promptFile = path.join(
     os.tmpdir(),
@@ -1211,6 +1230,7 @@ function runAgentOnce(
     fs.writeFileSync(promptFile, prompt, { encoding: "utf8", mode: 0o600 });
     const r = runWithDeadline(substituteAgentCommand(command, promptFile), {
       cwd: worktreeDir,
+      ...(agentEnv ? { envAllow: agentEnv } : {}),
       timeoutMs,
       maxBuffer: SUBPROCESS_MAX_BUFFER,
     });
@@ -1227,6 +1247,9 @@ function runAgentOnce(
  * that tries to break it, which is run and then removed. Neither may change
  * the work: the worktree is put back exactly as it was.
  */
+/** REQ-585: what this process's agents reported spending in this run, in USD. */
+let runSpentUsd = 0;
+
 /**
  * The project a worktree belongs to (REQ-577): the folder of its repository's
  * common git directory — the working copy the person runs the harness from,
@@ -1289,8 +1312,9 @@ function agentChecks(
               diff +
               "\n```"
           ),
-          timeoutMs,
-          "review"
+          limitFor(settings, "review", timeoutMs),
+          "review",
+          settings.agentEnv
         );
       } finally {
         restore();
@@ -1325,8 +1349,9 @@ ${said.slice(0, 2000)}`,
               "empty input, a boundary, a duplicate, a failure path. Write the test and nothing " +
               "else; do not modify the implementation, the specification or any existing test."
           ),
-          timeoutMs,
-          "adversary"
+          limitFor(settings, "review", timeoutMs),
+          "adversary",
+          settings.agentEnv
         );
         const wrote = (git(worktreeDir, ["status", "--porcelain"]).stdout || "")
           .split("\n")
@@ -1334,7 +1359,7 @@ ${said.slice(0, 2000)}`,
         if (wrote.length === 0) return { ok: true, output: "The adversary wrote no test." };
         const test = runWithDeadline(substituteGateCommand(testCmd, req, quoteArg), {
           cwd: worktreeDir,
-          timeoutMs,
+          timeoutMs: limitFor(settings, "tests", timeoutMs),
           maxBuffer: SUBPROCESS_MAX_BUFFER,
         });
         return {
@@ -1394,7 +1419,8 @@ function runAdversarialProbe(
     fs.writeFileSync(promptFile, promptFor(instruction), { encoding: "utf8", mode: 0o600 });
     const agent = runWithDeadline(substituteAgentCommand(command, promptFile), {
       cwd: worktreeDir,
-      timeoutMs,
+      ...(settings.agentEnv ? { envAllow: settings.agentEnv } : {}),
+      timeoutMs: limitFor(settings, "review", timeoutMs),
       maxBuffer: SUBPROCESS_MAX_BUFFER,
     });
 
@@ -1837,12 +1863,19 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
   let retriedEmpty = false;
   /** REQ-535: what this requirement's sessions have cost, and its ceiling. */
   const maxCost = settings.maxCostUsd || 0;
+  /** REQ-585: and the tokens they used, and theirs. */
+  const maxTokens = settings.maxTokens || 0;
   let spent = 0;
+  let tokens = 0;
   let costUnknownSaid = false;
   const budgetMessage = () =>
-    `budget_exceeded — ${req.requirement} spent $${spent.toFixed(2)} of its $${maxCost} ` +
-    "budget (max_cost_usd), so no further session ran.";
-  const overBudget = () => maxCost > 0 && spent >= maxCost;
+    maxTokens > 0 && tokens >= maxTokens
+      ? `budget_exceeded — ${req.requirement} used ${tokens} of its ${maxTokens} tokens ` +
+        "(max_tokens), so no further session ran."
+      : `budget_exceeded — ${req.requirement} spent $${spent.toFixed(2)} of its $${maxCost} ` +
+        "budget (max_cost_usd), so no further session ran.";
+  const overBudget = () =>
+    (maxCost > 0 && spent >= maxCost) || (maxTokens > 0 && tokens >= maxTokens);
 
   // The live view's file (ADR-0037), in the project, not the worktree.
   const eventsFile = eventsFileFor(ctx.projectDir || worktreeDir, req.requirement);
@@ -1894,6 +1927,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     });
 
     let stepFailed = false;
+    /** REQ-586: the attempt to jump to, past rungs of an agent that cannot run now. */
+    let fallbackTo = 0;
     /** REQ-579: the prompt file in use, removed even when a step throws. */
     let openPrompt: string | null = null;
     try {
@@ -1980,7 +2015,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         streamEvent({ type: "agent-start", role }, req.requirement, attempt);
         const agent = runWithDeadline(command, {
           cwd: worktreeDir,
-          timeoutMs,
+          timeoutMs: limitFor(settings, "agent", timeoutMs),
+          ...(settings.agentEnv ? { envAllow: settings.agentEnv } : {}),
           maxBuffer: SUBPROCESS_MAX_BUFFER,
           // A question it asks is written into the project at once (REQ-494),
           // and its output streamed while this process waits (REQ-496).
@@ -2014,6 +2050,19 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         profilesUsed.push(role);
         const used = stepUsage(eventsLinesSince(eventsFile, eventsBefore), attempt, role);
         if (used) usageUsed.push(used);
+        if (used) tokens += used.input + used.output + used.cacheRead + used.cacheWrite;
+        if (used && typeof used.cost === "number") runSpentUsd += used.cost;
+        // REQ-585: a session that says nothing of its cost is not free when the project says so.
+        if (settings.requireKnownCost && !(used && typeof used.cost === "number")) {
+          previousFailure =
+            `cost_unknown — the ${role} session of ${req.requirement} reported no cost, ` +
+            "and require_known_cost is set: it is not counted as free.";
+          warn(`${req.requirement}: ${previousFailure}`);
+          record("budget");
+          stopRetrying = true;
+          stepFailed = true;
+          break;
+        }
         if (maxCost > 0) {
           if (used && typeof used.cost === "number") spent += used.cost;
           else if (!costUnknownSaid) {
@@ -2065,7 +2114,18 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           warn(`${req.requirement}: agent exited ${agent.status}`);
           // Out of quota: another attempt seconds later meets the same wall (#50).
           const unavailable = agentUnavailable(output);
-          if (unavailable) {
+          // REQ-586: another profile of the ladder may be available; one that is
+          // the same profile again would meet the same wall.
+          const fallback =
+            unavailable && !step.advisory
+              ? fallbackAttempt(attempt, settings.maxAttempts, settings.attemptProfiles)
+              : null;
+          if (unavailable && fallback) {
+            warn(`${req.requirement}: the agent cannot run now — ${unavailable}`);
+            warn(`  falling back to profile '${fallback.profile}' (attempt ${fallback.attempt})`);
+            record("agent-unavailable");
+            fallbackTo = fallback.attempt;
+          } else if (unavailable) {
             warn(`${req.requirement}: the agent cannot run now — ${unavailable}`);
             warn(`  not retrying; run it again once the agent is available`);
             record("agent-unavailable");
@@ -2082,6 +2142,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       if (openPrompt) removeTempFile(openPrompt);
     }
     if (stopRetrying) break;
+    // REQ-586: the loop's own step brings it to the fallback's attempt.
+    if (fallbackTo > attempt + 1) attempt = fallbackTo - 1;
     if (stepFailed) continue;
 
     // The agent asked instead of guessing (REQ-189): another attempt would
@@ -3135,7 +3197,7 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
       // REQ-575: an install that hangs ends at the run's deadline, with what it started.
       const setup = runWithDeadline(setupCmd, {
         cwd: dir,
-        timeoutMs: ctx.timeoutMs,
+        timeoutMs: limitFor(ctx.settings, "setup", ctx.timeoutMs),
         maxBuffer: SUBPROCESS_MAX_BUFFER,
       });
       report(`setup: ${maskCommand(setupCmd)}`, setup.status === 0 ? "pass" : "fail", {
@@ -3718,6 +3780,8 @@ function runWorkers(
         child.on("close", () => {
           running.delete(id);
           const result = parseWorkerReport(id, stdout, stderr);
+          // REQ-585: what the worker's agents spent counts against the run's budget.
+          runSpentUsd += reportedCost(result.attemptLog);
           results.push(result);
           streamResult(result);
           if (queue.length === 0 && running.size === 0) resolve(results);
@@ -3849,6 +3913,7 @@ export async function runLevels(
   const limits = {
     budgetSeconds: ctx.budgetSeconds || 0,
     maxRequirements: ctx.maxRequirements || 0,
+    maxRunCostUsd: ctx.settings?.maxRunCostUsd || 0,
   };
   const budgetStartedAt = Date.now();
   let started = 0;
@@ -3948,7 +4013,7 @@ export async function runLevels(
           }
           const verdict = budgetVerdict(
             limits,
-            { startedAt: budgetStartedAt, started },
+            { startedAt: budgetStartedAt, started, spentUsd: runSpentUsd },
             Date.now()
           );
           if (verdict.stop) {
@@ -4055,6 +4120,16 @@ export class RunCommand extends BaseCommand {
       const settings = resolveHarnessSettings(fileConfig, args);
       // REQ-548: the stack file's test command when the configuration sets none.
       if (!settings.testCmd) settings.testCmd = stackFileCommand(projectDir, "test");
+      // REQ-587: say which secret-looking variables the agent would inherit — names, never values.
+      if (!process.env.SPECGATE_HARNESS_WORKER && !settings.agentEnv && !args.dryRun) {
+        const names = secretNames(process.env);
+        if (names.length > 0) {
+          info(
+            `the agent inherits ${names.length} variable(s) that look like secrets: ${names.join(", ")} ` +
+              "— agent_env: in harness.config.yaml chooses what it gets"
+          );
+        }
+      }
       // A fresh worktree has no dependencies. Unless told, install what the
       // lockfile pins (ADR-0036); `--setup-cmd none` runs nothing.
       if (settings.setupCmd === "none") settings.setupCmd = "";
@@ -4315,6 +4390,7 @@ export class RunCommand extends BaseCommand {
         bounded: hasBudget({
           budgetSeconds: args.budgetSeconds,
           maxRequirements: args.maxRequirements,
+          maxRunCostUsd: settings.maxRunCostUsd || 0,
         }),
       };
       if (!process.env.SPECGATE_HARNESS_WORKER) {

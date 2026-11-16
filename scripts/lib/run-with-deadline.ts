@@ -40,6 +40,8 @@ export function runWithDeadline(
     streamFd?: number | null;
     /** The command's output goes to this process's stderr as it runs, and is not captured. */
     toStderr?: boolean;
+    /** REQ-587: the variables the command gets, besides the essential and the harness's own. */
+    envAllow?: string[];
   }
 ): SpawnSyncReturns<string> {
   const streaming = typeof opts.streamFd === "number";
@@ -60,6 +62,7 @@ export function runWithDeadline(
       SPECGATE_HARNESS_ROOT_PID: process.env.SPECGATE_HARNESS_ROOT_PID || String(process.pid),
       HARNESS_CMD: command,
       HARNESS_DEADLINE_MS: String(opts.timeoutMs),
+      ...(opts.envAllow ? { HARNESS_ENV_ALLOW: JSON.stringify(opts.envAllow) } : {}),
       ...(opts.projectDir ? { HARNESS_PROJECT_DIR: opts.projectDir } : {}),
       ...(streaming ? { HARNESS_STREAM: "1" } : {}),
     },

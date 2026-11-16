@@ -30,6 +30,8 @@ export interface BudgetLimits {
   readonly budgetSeconds?: number;
   /** How many requirements this run may attempt at all. 0 means no limit. */
   readonly maxRequirements?: number;
+  /** REQ-585: what the whole run may cost, in USD, as its agents report it. 0 means no limit. */
+  readonly maxRunCostUsd?: number;
 }
 
 export interface BudgetState {
@@ -37,11 +39,14 @@ export interface BudgetState {
   readonly startedAt: number;
   /** Requirements this run has already begun. */
   readonly started: number;
+  /** REQ-585: what the run's agents reported spending so far, in USD. */
+  readonly spentUsd?: number;
 }
 
 export const BUDGET_CODES = Object.freeze({
   TIME: "run_budget_seconds_exhausted",
   COUNT: "run_max_requirements_reached",
+  COST: "run_max_cost_reached",
 });
 
 export interface BudgetVerdict {
@@ -91,12 +96,39 @@ export function budgetVerdict(
     }
   }
 
+  const maxCost = limits.maxRunCostUsd ?? 0;
+  const spent = state.spentUsd ?? 0;
+  if (maxCost > 0 && spent >= maxCost) {
+    return {
+      stop: true,
+      code: BUDGET_CODES.COST,
+      reason:
+        `max_run_cost_usd ${maxCost} reached: the run's agents reported $${spent.toFixed(2)}; ` +
+        `${state.started} requirement(s) were attempted.`,
+    };
+  }
+
   return KEEP_GOING;
 }
 
 /** Does this run have any ceiling at all? Used to keep the report honest. */
 export function hasBudget(limits: BudgetLimits): boolean {
-  return (limits.budgetSeconds ?? 0) > 0 || (limits.maxRequirements ?? 0) > 0;
+  return (
+    (limits.budgetSeconds ?? 0) > 0 ||
+    (limits.maxRequirements ?? 0) > 0 ||
+    (limits.maxRunCostUsd ?? 0) > 0
+  );
+}
+
+/** REQ-585: the USD a requirement's attempts reported, from its attempt log. */
+export function reportedCost(
+  attemptLog: ReadonlyArray<{ usage?: ReadonlyArray<{ cost?: number }> }> | undefined
+): number {
+  let total = 0;
+  for (const a of attemptLog || []) {
+    for (const u of a.usage || []) if (typeof u.cost === "number") total += u.cost;
+  }
+  return total;
 }
 
 /**

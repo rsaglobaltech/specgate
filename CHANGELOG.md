@@ -9,6 +9,23 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`harness stop --now`** (REQ-583): ends the run and everything it started at
+  once; the worktree stays for `--resume`.
+- **A time limit per kind of command** (REQ-584): `timeouts:` in
+  `harness.config.yaml` — `agent`, `setup`, `tests`, `review` — each falling
+  back to `--timeout`.
+- **The run's budget** (REQ-585): `max_run_cost_usd` stops starting
+  requirements once the run's sessions reported that much
+  (`run_max_cost_reached`); `max_tokens` caps a requirement's tokens;
+  `require_known_cost: true` fails a session that reports no cost
+  (`cost_unknown`) instead of counting it free.
+- **Fallback to the next agent** (REQ-586): an agent out of quota gives way to
+  the next profile of `attempt_profiles` instead of ending the run.
+- **`agent_env:`** (REQ-587): the variables the agent gets; without it, the run
+  names the secret-looking variables the agent inherits.
+
 ### Fixed
 
 - **An interrupted harness run ends what it started** (REQ-573): Ctrl-C, a

@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import { killTree } from "./kill-tree";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { warning, type Diagnostic } from "../../packages/core/src/domain/Diagnostic";
@@ -204,6 +205,8 @@ export interface StopAnswer {
     requested: boolean;
     /** The run asked to stop: its process, its requirements, when it started (epoch seconds). */
     run: { pid: number; requirements: string[]; startedAt: number } | null;
+    /** REQ-583: \`--now\` — the run and every command it started were ended, not asked. */
+    now?: boolean;
   };
   status: Diagnostic[];
 }
@@ -235,6 +238,26 @@ export function stopAfterCurrent(projectDir: string): StopAnswer {
   return {
     stop: {
       requested: true,
+      run: { pid: holder.pid, requirements: [...(holder.reqs || [])], startedAt: holder.started },
+    },
+    status: [],
+  };
+}
+
+/**
+ * \`specgate harness stop --now\` (REQ-583): end the run working in this project
+ * at once — its process and everything it started, its agents among them. The
+ * requirement in progress keeps its worktree, so \`harness run --resume\` picks
+ * it up; the run's lock goes with its process.
+ */
+export function stopNow(projectDir: string): StopAnswer {
+  const holder = runLockHolder(projectDir);
+  if (!holder) return stopAfterCurrent(projectDir);
+  killTree(holder.pid);
+  return {
+    stop: {
+      requested: true,
+      now: true,
       run: { pid: holder.pid, requirements: [...(holder.reqs || [])], startedAt: holder.started },
     },
     status: [],

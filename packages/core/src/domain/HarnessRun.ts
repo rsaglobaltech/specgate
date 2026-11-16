@@ -348,6 +348,26 @@ export interface AttemptPlanOptions {
  * profile for every attempt — today's behaviour, so an existing project sees
  * no change until it asks for one.
  */
+/**
+ * REQ-586: the attempt to go on with when the profile of \`attempt\` cannot run
+ * now (out of quota, say): the first later attempt, within \`maxAttempts\`,
+ * whose rung of the ladder names another profile. Null when there is none —
+ * no ladder, or only the same profile above.
+ */
+export function fallbackAttempt(
+  attempt: number,
+  maxAttempts: number,
+  ladder: readonly string[]
+): { attempt: number; profile: string } | null {
+  if (ladder.length === 0) return null;
+  const rung = (n: number) => ladder[Math.min(n, ladder.length) - 1];
+  const current = rung(attempt);
+  for (let next = attempt + 1; next <= maxAttempts; next += 1) {
+    if (rung(next) !== current) return { attempt: next, profile: rung(next) };
+  }
+  return null;
+}
+
 export function planAttempt(attempt: number, opts: AttemptPlanOptions = {}): AttemptStep[] {
   const ladder = opts.attemptProfiles ?? [];
   const profile = ladder.length > 0 ? ladder[Math.min(attempt, ladder.length) - 1] : null;
