@@ -220,7 +220,14 @@ test("REQ-589 SCN-589b: with dependency_cache, the setup of each worktree uses t
         `"${process.execPath}" "${setup}"`,
         "--skip-baseline",
       ],
-      { encoding: "utf8", timeout: 180000 }
+      {
+        encoding: "utf8",
+        timeout: 180000,
+        // `npm run` sets npm_config_cache itself; started as a person would, it is unset.
+        env: Object.fromEntries(
+          Object.entries(process.env).filter(([k]) => k.toLowerCase() !== "npm_config_cache")
+        ),
+      }
     );
     const value = fs.readFileSync(seen, "utf8");
     assert.equal(
