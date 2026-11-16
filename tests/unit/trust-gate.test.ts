@@ -567,6 +567,33 @@ test("REQ-126 SCN-126b: the chain stops at the first requirement that fails", ()
   }
 });
 
+test("REQ-574 SCN-574a: a merge commit the repository refuses leaves your last commit as it was", () => {
+  // A commit-msg hook that refuses the chain's merge commit. Before REQ-574 the
+  // failure went unnoticed: the post-merge gate passed and \`commit --amend\`
+  // folded the merge into the user's own last commit.
+  const p = chainProject();
+  try {
+    fs.writeFileSync(path.join(p.dir, "NOTES.md"), "mine\n");
+    git(p.dir, "add", "NOTES.md");
+    git(p.dir, "commit", "-qm", "my own work");
+    const mine = git(p.dir, "rev-parse", "HEAD").stdout.trim();
+    const tree = git(p.dir, "rev-parse", "HEAD^{tree}").stdout.trim();
+    const hook = path.join(p.dir, ".git", "hooks", "commit-msg");
+    fs.writeFileSync(hook, '#!/bin/sh\ngrep -q "^Merge harness/" "$1" && exit 1\nexit 0\n');
+    fs.chmodSync(hook, 0o755);
+    const r = chain(p, "--format", "json");
+    assert.equal(r.status, 1, out(r));
+    const results = JSON.parse(r.stdout).results;
+    assert.equal(results[0].result, "fail");
+    assert.match(results[0].error, /merge commit of harness\/REQ-002 failed/);
+    assert.equal(git(p.dir, "rev-parse", "HEAD").stdout.trim(), mine, "HEAD is my commit");
+    assert.equal(git(p.dir, "rev-parse", "HEAD^{tree}").stdout.trim(), tree, "with its own tree");
+    assert.equal(git(p.dir, "status", "--porcelain").stdout.trim(), "", "nothing left staged");
+  } finally {
+    p.done();
+  }
+});
+
 test("REQ-127 SCN-127a: green alone, red together — the merge is undone", () => {
   // The gate fails in the project directory — never in a worktree — once
   // REQ-003's code is there: green on its branch, red once merged.

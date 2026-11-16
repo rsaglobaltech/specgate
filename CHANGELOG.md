@@ -9,6 +9,27 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **An interrupted harness run ends what it started** (REQ-573): Ctrl-C, a
+  signal or the run dying ends the agent and every command the run started —
+  they no longer keep working in the repository — and the worktree is kept for
+  `--resume`; the run exits 130.
+- **`--chain` never touches your commits** (REQ-574): a refused merge commit, a
+  failed amend or a red post-merge gate puts the branch back to the commit it
+  pointed at before the merge, instead of `HEAD~1`.
+- **Every harness command ends at the deadline** (REQ-575): the architecture
+  and test commands, reviewer and adversary agents, `setup_cmd` and `pr_cmd`
+  are ended with everything they started when `--timeout` runs out.
+- **`--concurrency` keeps every option** (REQ-576): workers get `--resume`,
+  `--skip-not-ready`, `--strict-artifacts`, `--verbose`, `--push` and
+  `--remote`; the agent, test and PR commands are no longer on a worker's
+  command line.
+- **The agent cannot choose its reviewer** (REQ-577): a check's profile is read
+  from the project, not from the worktree the agent writes.
+
+See issue #466.
+
 ## [1.0.0] — 2026-11-15
 
 The build 1.0.0-rc.12 was, published as `latest`, and the promise that comes
