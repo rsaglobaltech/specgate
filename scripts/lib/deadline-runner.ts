@@ -139,6 +139,18 @@ let finished = false;
 function finish(code: number | null): void {
   if (finished) return;
   finished = true;
+  // REQ-592: whatever the command left in its group goes with it. A shell
+  // ended by a signal — \`harness stop --now\` signals the whole tree — would
+  // otherwise read as the command ending on its own, and an agent that
+  // ignores SIGTERM, still in the group, would outlive the run. On Windows the
+  // tree is gone with its root, and taskkill already followed it at a signal.
+  if (!windows) {
+    try {
+      process.kill(-(child.pid as number), "SIGKILL");
+    } catch {
+      /* the group is already empty */
+    }
+  }
   if (timer) clearTimeout(timer);
   clearInterval(watcher);
   clearInterval(orphanWatch);

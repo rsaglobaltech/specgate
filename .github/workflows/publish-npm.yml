@@ -237,7 +237,13 @@ jobs:
           WORK="$(mktemp -d)"
           cd "$WORK"
           npm init -y >/dev/null
-          npm install --no-audit --no-fund "${PACKAGE}@${VERSION}"
+          # The metadata can name the version minutes before the CDN serves its
+          # tarball (1.1.0's smoke met a 404 there): the install is retried.
+          for i in $(seq 1 20); do
+            if npm install --no-audit --no-fund "${PACKAGE}@${VERSION}" --prefer-online; then break; fi
+            if [ "$i" = 20 ]; then exit 1; fi
+            sleep 30
+          done
           SAID="$(npx --no-install specgate --version)"
           if [ "$SAID" != "$VERSION" ]; then
             echo "specgate --version says ${SAID}, not ${VERSION}." >&2

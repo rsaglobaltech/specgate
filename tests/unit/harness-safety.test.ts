@@ -485,3 +485,56 @@ test("REQ-582 SCN-582a: what leaves the run is scrubbed of secrets", () => {
   assert.match(out, /\*\*\*/);
   assert.equal(scrubText("nothing secret here", env), "nothing secret here");
 });
+
+test(
+  "REQ-592 SCN-592a: the shell ended by a signal does not leave the agent behind",
+  { skip: !POSIX && "process groups are POSIX" },
+  async () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "runner-group-"));
+    const pidFile = path.join(parent, "agent.pid");
+    const script = path.join(parent, "hang.js");
+    fs.writeFileSync(
+      script,
+      `require("node:fs").writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));\n` +
+        `process.on("SIGTERM", () => {}); setInterval(() => {}, 1000);\n`
+    );
+    const runner = spawn(
+      process.execPath,
+      [path.join(__dirname, "..", "..", "scripts", "lib", "deadline-runner.js")],
+      {
+        // `; true` keeps the shell alive as the agent's parent, so it can be signalled alone.
+        env: {
+          ...process.env,
+          HARNESS_CMD: `"${process.execPath}" "${script}"; true`,
+          HARNESS_DEADLINE_MS: "120000",
+        },
+        stdio: "ignore",
+      }
+    );
+    const exited = new Promise<void>((r) => runner.on("exit", () => r()));
+    try {
+      assert.ok(await waitFor(() => fs.existsSync(pidFile), 30000), "the agent started");
+      const agent = Number(fs.readFileSync(pidFile, "utf8"));
+      // The shell between the runner and the agent: what `stop --now`'s SIGTERM to the tree ends first.
+      const shell = pids([], runner.pid).filter((p) => p !== agent);
+      assert.ok(shell.length > 0, "the runner's shell is found");
+      for (const s of shell) process.kill(s, "SIGTERM");
+      await exited;
+      assert.ok(await waitFor(() => !alive(agent), 5000), "the agent outlived its shell");
+    } finally {
+      try {
+        process.kill(-runner.pid, "SIGKILL");
+      } catch {
+        /* already gone */
+      }
+      if (fs.existsSync(pidFile)) {
+        try {
+          process.kill(Number(fs.readFileSync(pidFile, "utf8")), "SIGKILL");
+        } catch {
+          /* already gone */
+        }
+      }
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  }
+);
