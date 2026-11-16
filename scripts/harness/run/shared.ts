@@ -99,6 +99,8 @@ export interface RunContext {
   force: boolean;
   resume: boolean;
   skipNotReady: boolean;
+  /** REQ-591: wait for a person between a failed attempt and the next. */
+  pauseBetweenAttempts?: boolean;
   budgetSeconds: number;
   maxRequirements: number;
   strictArtifacts: boolean;

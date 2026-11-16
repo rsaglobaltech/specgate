@@ -73,6 +73,7 @@ import {
   orderAsGiven,
   runLockHolder,
   takeStop,
+  waitAtPause,
 } from "../../../lib/harness-guard";
 import { dockerWhyNot } from "../../../lib/quality-run";
 import { dockerNeed } from "../../../lib/harness-environment";
@@ -141,8 +142,9 @@ import {
   featureFilePath,
   planAttempt,
   scheduleLevels,
-  substituteAgentCommand,
 } from "../../../../packages/core/src/domain/HarnessRun";
+import { cacheEnvironment } from "../../../../packages/core/src/domain/DependencyCache";
+import { exportRunTrace } from "../../../lib/otel-export";
 import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
 import { removeTempFile } from "../../../lib/temp-file";
 import { setStream, streamEvent, streamFdOf, streamFromEnv } from "../../../lib/harness-stream";
@@ -188,6 +190,7 @@ import {
 } from "../../../harness/run/state";
 import {
   limitFor,
+  agentLine,
   gateReporter,
   runGate,
   discardWorktreeChanges,
@@ -303,6 +306,9 @@ function usage() {
       "                         stderr. Without it the output only appears when the\n" +
       "                         gate fails, so a run that takes minutes shows\n" +
       "                         nothing and a hung test looks like a working one.\n" +
+      "  --pause-between-attempts\n" +
+      "                         After a failed attempt, wait for `specgate harness continue`\n" +
+      "                         before the next one.\n" +
       "  --skip-not-ready       Skip requirements an agent could not succeed at — no\n" +
       "                         feature, an unrunnable scenario, unmet dependencies,\n" +
       "                         Deprecated or Needs Clarification. Default: warn and\n" +
@@ -344,6 +350,7 @@ export function parseArgs(argv: string[]) {
     verbose: false,
     strictArtifacts: false,
     skipNotReady: false,
+    pauseBetweenAttempts: false,
     skipBaseline: false,
     budgetSeconds: 0,
     maxRequirements: 0,
@@ -415,6 +422,8 @@ export function parseArgs(argv: string[]) {
       args.dryRun = true;
     } else if (token === "--strict-artifacts") {
       args.strictArtifacts = true;
+    } else if (token === "--pause-between-attempts") {
+      args.pauseBetweenAttempts = true;
     } else if (token === "--skip-not-ready") {
       args.skipNotReady = true;
     } else if (token === "--skip-baseline") {
@@ -1007,6 +1016,24 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
       stopRetrying = true;
       break;
     }
+    // REQ-591: a person looks at the failed attempt before the next one starts.
+    if (ctx.pauseBetweenAttempts && attempt > firstAttempt && ctx.projectDir) {
+      info(
+        `${req.requirement}: paused before attempt ${attempt} — ` +
+          "`specgate harness continue` starts it, `--stop` does not"
+      );
+      appendEvent(eventsFile, { type: "pause", next: attempt }, req.requirement, attempt - 1);
+      const go = waitAtPause(ctx.projectDir, {
+        requirement: req.requirement,
+        attempt: attempt - 1,
+        stage: attemptLog.at(-1)?.gateStage || attemptLog.at(-1)?.endedAt || "",
+      });
+      if (!go) {
+        warn(`${req.requirement}: not retried, as asked`);
+        stopRetrying = true;
+        break;
+      }
+    }
     info(`${req.requirement}: attempt ${attempt}/${settings.maxAttempts}`);
     const attemptStart = Date.now();
     const event = (e: Record<string, unknown> & { type: string }) =>
@@ -1118,7 +1145,23 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         const agentCommand = profile
           ? settings.profileAgents[profile] || settings.agent
           : settings.agent;
-        const command = substituteAgentCommand(agentCommand, promptFile);
+        // REQ-588: in the project's container when \`sandbox:\` names one; REQ-589: its caches.
+        const cacheDir = settings.dependencyCache
+          ? projectCache(ctx.projectDir || worktreeDir)
+          : "";
+        const cacheEnv = cacheDir ? cacheEnvironment(cacheDir, process.env) : {};
+        const command = agentLine(agentCommand, promptFile, worktreeDir, settings, {
+          env: [
+            "SPECGATE_REQ",
+            "SPECGATE_ATTEMPT",
+            ...(step.role ? ["SPECGATE_LANE"] : []),
+            EVENTS_FILE_VAR,
+            EVENTS_REQ_VAR,
+            EVENTS_ATTEMPT_VAR,
+            ...Object.keys(cacheEnv),
+          ],
+          mounts: [path.dirname(eventsFile), ...(cacheDir ? [cacheDir] : [])],
+        });
         if (profile) {
           info(`${req.requirement}: ${step.advisory ? "reviewing" : "running"} as '${profile}'`);
         }
@@ -1143,6 +1186,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           // Which requirement and attempt this is, for agents and the wrappers
           // around them (ADR-0036).
           env: {
+            ...cacheEnv,
             SPECGATE_REQ: req.requirement,
             SPECGATE_ATTEMPT: String(attempt),
             ...(step.role ? { SPECGATE_LANE: step.role } : {}),
@@ -2166,6 +2210,12 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
         cwd: dir,
         timeoutMs: limitFor(ctx.settings, "setup", ctx.timeoutMs),
         maxBuffer: SUBPROCESS_MAX_BUFFER,
+        // REQ-589: what the last worktree downloaded, this one reads from disk.
+        ...(ctx.settings.dependencyCache
+          ? {
+              env: cacheEnvironment(projectCache(ctx.projectDir), process.env),
+            }
+          : {}),
       });
       report(`setup: ${maskCommand(setupCmd)}`, setup.status === 0 ? "pass" : "fail", {
         ms: Date.now() - setupStart,
@@ -2216,6 +2266,20 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
       info(`${req.requirement}: worktree kept at ${dir}`);
     }
   }
+}
+
+/**
+ * REQ-589: the project's download cache, made if absent — a container mounts
+ * only a folder that exists — and ignored by git, as the events folder is: a
+ * cache that showed as untracked files would make the next run refuse a
+ * working tree that is not clean.
+ */
+function projectCache(projectDir: string): string {
+  const dir = path.join(projectDir, ".harness", "cache");
+  fs.mkdirSync(dir, { recursive: true });
+  const ignore = path.join(dir, ".gitignore");
+  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
+  return dir;
 }
 
 /**
@@ -2953,6 +3017,7 @@ export class RunCommand extends BaseCommand {
         force: args.force,
         resume: args.resume,
         skipNotReady: args.skipNotReady,
+        pauseBetweenAttempts: args.pauseBetweenAttempts,
         budgetSeconds: args.budgetSeconds,
         maxRequirements: args.maxRequirements,
         strictArtifacts: args.strictArtifacts,
@@ -3040,6 +3105,16 @@ export class RunCommand extends BaseCommand {
             results,
           });
       setLedger(null);
+      // REQ-590: the run as a trace, when an OpenTelemetry collector is configured.
+      if (!process.env.SPECGATE_HARNESS_WORKER) {
+        const sent = await exportRunTrace({
+          ...runRecordBase,
+          finishedAt: new Date().toISOString(),
+          results,
+        });
+        if (sent.sent) info(`trace sent to ${sent.url}`);
+        else if (sent.error) warn(`the trace was not sent to ${sent.url}: ${sent.error}`);
+      }
 
       printReport(
         results,

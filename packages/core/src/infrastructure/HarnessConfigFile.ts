@@ -30,6 +30,7 @@ import * as path from "node:path";
 import { YamlDocument, parseYamlLite } from "../domain/YamlLite";
 import { HarnessSettings, TIMEOUT_KINDS, type TimeoutKind } from "../domain/HarnessConfig";
 import { readQuality } from "../domain/QualityChecks";
+import { readSandbox } from "../domain/Sandbox";
 import type { TokenPrices } from "../domain/RunBudget";
 
 export const HARNESS_CONFIG_FILE = "harness.config.yaml";
@@ -72,6 +73,9 @@ export const KNOWN_KEYS = new Set([
   "max_tokens",
   "require_known_cost",
   "agent_env",
+  // REQ-588, REQ-589: the agent in a container, and one download cache for every worktree.
+  "sandbox",
+  "dependency_cache",
   "protected_paths",
   "allow_paths",
   "message_report",
@@ -330,6 +334,16 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
     }
     config.timeouts = out;
   }
+  if (parsed.sandbox !== undefined) {
+    try {
+      config.sandbox = readSandbox(parsed.sandbox);
+    } catch (e) {
+      throw new Error(`Invalid ${HARNESS_CONFIG_FILE}: ${(e as Error).message}`);
+    }
+  }
+  if (parsed.dependency_cache !== undefined) {
+    config.dependencyCache = parsed.dependency_cache === true || parsed.dependency_cache === "true";
+  }
   if (parsed.agent_env !== undefined) {
     if (!Array.isArray(parsed.agent_env)) {
       throw new Error(`Invalid ${HARNESS_CONFIG_FILE}: agent_env is a list of variable names`);
@@ -451,6 +465,8 @@ export function resolveHarnessSettings(
     requireKnownCost: file.requireKnownCost === true,
     timeouts: file.timeouts || {},
     ...(file.agentEnv ? { agentEnv: file.agentEnv } : {}),
+    ...(file.sandbox ? { sandbox: file.sandbox } : {}),
+    dependencyCache: file.dependencyCache === true,
     // From the file only, like the role ladder: which agent is allowed to
     // attack the work is a repository decision, not a flag typed per run.
     adversaryProfile: file.adversaryProfile || "",

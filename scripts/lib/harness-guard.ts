@@ -263,3 +263,70 @@ export function stopNow(projectDir: string): StopAnswer {
     status: [],
   };
 }
+
+// REQ-591: a run that pauses between attempts, until a person says go on or stop.
+const PAUSED = path.join(".harness", "events", "paused.json");
+const CONTINUE = path.join(".harness", "events", "continue");
+
+export interface Pause {
+  requirement: string;
+  /** The attempt that just failed; the next one waits. */
+  attempt: number;
+  /** Where it failed, as the report says it. */
+  stage: string;
+  /** Epoch seconds. */
+  since: number;
+}
+
+/** The pause the run in this project is waiting at, or null. */
+export function pausedAt(projectDir: string): Pause | null {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(projectDir, PAUSED), "utf8")) as Pause;
+  } catch {
+    return null;
+  }
+}
+
+/** Answer a paused run: go on with the next attempt, or stop retrying this requirement. */
+export function answerPause(projectDir: string, go: boolean): Pause | null {
+  const pause = pausedAt(projectDir);
+  if (!pause) return null;
+  fs.writeFileSync(path.join(projectDir, CONTINUE), go ? "go\n" : "stop\n", "utf8");
+  return pause;
+}
+
+/**
+ * Wait, synchronously as the attempt loop runs, until a person answers the
+ * pause (`specgate harness continue`, or `--stop`), or a stop is asked.
+ * Returns whether the next attempt may start.
+ */
+export function waitAtPause(
+  projectDir: string,
+  pause: Omit<Pause, "since">,
+  pollMs = 500
+): boolean {
+  const file = path.join(projectDir, PAUSED);
+  const answer = path.join(projectDir, CONTINUE);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.rmSync(answer, { force: true });
+  fs.writeFileSync(
+    file,
+    JSON.stringify({ ...pause, since: Math.floor(Date.now() / 1000) }),
+    "utf8"
+  );
+  const sleep = new Int32Array(new SharedArrayBuffer(4));
+  try {
+    for (;;) {
+      if (fs.existsSync(answer)) {
+        const said = fs.readFileSync(answer, "utf8").trim();
+        return said !== "stop";
+      }
+      // `harness stop --after-current` while paused: this requirement stops here.
+      if (fs.existsSync(path.join(projectDir, STOP))) return false;
+      Atomics.wait(sleep, 0, 0, pollMs);
+    }
+  } finally {
+    fs.rmSync(file, { force: true });
+    fs.rmSync(answer, { force: true });
+  }
+}

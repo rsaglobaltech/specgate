@@ -21,6 +21,13 @@ project, nothing is requested and the answer says so (`harness_not_running`).
 it started; the answer says `stop.now: true`, and the requirement in progress
 keeps its worktree for `specgate harness run --resume` (REQ-583).
 
+## Look before the next attempt
+
+`specgate harness run --pause-between-attempts` waits after a failed attempt:
+`.harness/events/paused.json` says where. `specgate harness continue` starts the
+next attempt; `specgate harness continue --stop` ends the requirement without
+it (REQ-591).
+
 ## Build with uncommitted files
 
 The harness refuses a working tree that is not clean. With `--allow-dirty` it

@@ -177,6 +177,7 @@ export function workerArgs(id: string, ctx: RunContext): string[] {
     // REQ-576: every option of the run reaches its workers, as it reaches a serial run.
     ...(ctx.resume ? ["--resume"] : []),
     ...(ctx.skipNotReady ? ["--skip-not-ready"] : []),
+    ...(ctx.pauseBetweenAttempts ? ["--pause-between-attempts"] : []),
     ...(ctx.strictArtifacts ? ["--strict-artifacts"] : []),
     ...(ctx.verbose ? ["--verbose"] : []),
     ...(ctx.settings.push ? ["--push"] : []),

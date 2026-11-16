@@ -23,6 +23,14 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   (`cost_unknown`) instead of counting it free.
 - **Fallback to the next agent** (REQ-586): an agent out of quota gives way to
   the next profile of `attempt_profiles` instead of ending the run.
+- **The agent in a container** (REQ-588): `sandbox: { image, network, engine }`
+  runs the agent, reviewer and adversary in Docker or Podman, seeing only the
+  worktree, with no network unless allowed.
+- **One download cache for every worktree** (REQ-589): `dependency_cache: true`.
+- **The run as an OpenTelemetry trace** (REQ-590): sent when
+  `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
+- **A pause between attempts** (REQ-591): `harness run --pause-between-attempts`
+  and `specgate harness continue [--stop]`.
 - **`agent_env:`** (REQ-587): the variables the agent gets; without it, the run
   names the secret-looking variables the agent inherits.
 

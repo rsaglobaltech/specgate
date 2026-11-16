@@ -837,6 +837,18 @@ export const SURFACE: Command[] = [
         },
         json: { key: "stop", gate: false, args: "--after-current" },
       },
+      {
+        // REQ-591: answer a run paused between attempts — go on, or --stop.
+        name: "continue",
+        mcp: false,
+        script: ["harness", "continue.js"],
+        help: {
+          group: "harness",
+          icon: "⏯",
+          summary: "Answer a run paused between attempts: start the next one, or stop retrying.",
+        },
+        json: { key: "pause", gate: false },
+      },
     ],
   },
 

@@ -482,6 +482,10 @@
 | REQ-585 | SCN-585a | `features/harness/REQ-585.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
 | REQ-586 | SCN-586a | `features/harness/REQ-586.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
 | REQ-587 | SCN-587a | `features/harness/REQ-587.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
+| REQ-588 | SCN-588a | `features/harness/REQ-588.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
+| REQ-589 | SCN-589a | `features/harness/REQ-589.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
+| REQ-590 | SCN-590a | `features/harness/REQ-590.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
+| REQ-591 | SCN-591a | `features/harness/REQ-591.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

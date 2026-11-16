@@ -180,6 +180,14 @@ and how often each check ran. `--json` carries it as `quality`.
 `samples` says how many runs or requirements it rests on. Like the spend
 above, a cost is a declared price, not a measured one.
 
+## In your tracing tool
+
+With `OTEL_EXPORTER_OTLP_ENDPOINT` set (or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`),
+each finished run is sent as an OpenTelemetry trace: the run, each requirement,
+each attempt with the stage it failed at, and each agent session, with tokens
+and cost. `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_SERVICE_NAME` are read; a
+collector that cannot be reached is a warning, never a failed run (REQ-590).
+
 ## Next
 
 - [The harness](harness.md)

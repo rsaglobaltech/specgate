@@ -3,6 +3,7 @@
  * agent checks — and the adversarial probe of a green attempt.
  */
 
+import { sandboxCommand } from "../../../packages/core/src/domain/Sandbox";
 import { quoteArg } from "../../lib/escape";
 import { HarnessInterrupted, runWithDeadline } from "../../lib/run-with-deadline";
 import { refreshDerivedMatrix } from "../../cli/commands/spec/MatrixCommand";
@@ -489,6 +490,32 @@ export function snapshotWorktree(worktreeDir: string): () => void {
   };
 }
 
+/**
+ * The command line an agent session runs (REQ-588): its template with the
+ * prompt file put in, inside the project's container when \`sandbox:\` names
+ * one — seeing the worktree, the prompt, \`mounts\`, and the variables of
+ * \`agent_env:\` and \`env\` only.
+ */
+export function agentLine(
+  template: string,
+  promptFile: string,
+  worktreeDir: string,
+  settings: Partial<HarnessSettings> | undefined,
+  extra: { env?: string[]; mounts?: string[] } = {}
+): string {
+  const line = substituteAgentCommand(template, promptFile);
+  if (!settings?.sandbox) return line;
+  return sandboxCommand(line, settings.sandbox, {
+    worktree: worktreeDir,
+    mounts: [promptFile, ...(extra.mounts || [])],
+    env: [...(settings.agentEnv || []), ...(extra.env || [])],
+    user:
+      typeof process.getuid === "function" && typeof process.getgid === "function"
+        ? `${process.getuid()}:${process.getgid()}`
+        : null,
+  });
+}
+
 /** Run an agent on an instruction built into the requirement's prompt; its output. */
 export function runAgentOnce(
   worktreeDir: string,
@@ -496,16 +523,17 @@ export function runAgentOnce(
   prompt: string,
   timeoutMs: number,
   tag: string,
-  /** REQ-587: \`agent_env:\`, when the project sets it. */
-  agentEnv?: string[]
+  /** REQ-587, REQ-588: \`agent_env:\` and \`sandbox:\`, when the project sets them. */
+  settings?: Partial<HarnessSettings>
 ): string {
+  const agentEnv = settings?.agentEnv;
   const promptFile = path.join(
     os.tmpdir(),
     `specgate-${tag}-${crypto.randomBytes(4).toString("hex")}.md`
   );
   try {
     fs.writeFileSync(promptFile, prompt, { encoding: "utf8", mode: 0o600 });
-    const r = runWithDeadline(substituteAgentCommand(command, promptFile), {
+    const r = runWithDeadline(agentLine(command, promptFile, worktreeDir, settings), {
       cwd: worktreeDir,
       ...(agentEnv ? { envAllow: agentEnv } : {}),
       timeoutMs,
@@ -589,7 +617,7 @@ export function agentChecks(
           ),
           limitFor(settings, "review", timeoutMs),
           "review",
-          settings.agentEnv
+          settings
         );
       } finally {
         restore();
@@ -626,7 +654,7 @@ ${said.slice(0, 2000)}`,
           ),
           limitFor(settings, "review", timeoutMs),
           "adversary",
-          settings.agentEnv
+          settings
         );
         const wrote = (git(worktreeDir, ["status", "--porcelain"]).stdout || "")
           .split("\n")
@@ -692,7 +720,7 @@ export function runAdversarialProbe(
 
   try {
     fs.writeFileSync(promptFile, promptFor(instruction), { encoding: "utf8", mode: 0o600 });
-    const agent = runWithDeadline(substituteAgentCommand(command, promptFile), {
+    const agent = runWithDeadline(agentLine(command, promptFile, worktreeDir, settings), {
       cwd: worktreeDir,
       ...(settings.agentEnv ? { envAllow: settings.agentEnv } : {}),
       timeoutMs: limitFor(settings, "review", timeoutMs),

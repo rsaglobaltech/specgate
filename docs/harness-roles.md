@@ -95,6 +95,18 @@ and the harness's own `SPECGATE_*` (REQ-587):
 agent_env: [ANTHROPIC_API_KEY]
 ```
 
+**In a container.** `sandbox:` runs the agent, its reviewer and its adversary
+in an image that holds the agent's CLI, as you, seeing the worktree, the prompt
+and the events folder at their own paths and nothing else, with no network
+unless `network: default` (REQ-588). `dependency_cache: true` points every
+package manager's download cache at `.harness/cache/`, so a second worktree
+installs from disk (REQ-589):
+
+```yaml
+sandbox: { image: ghcr.io/acme/claude-agent:1, network: none, engine: docker }
+dependency_cache: true
+```
+
 ## Approvals and role packages
 
 A requirement of a 1.0 change is built once the change is approved, each

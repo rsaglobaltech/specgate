@@ -665,6 +665,8 @@ test_cmd: 'node --test test/*.test.js'
 max_attempts: 1
 
 ~/smart-parking $ specgate harness run --req REQ-000
+  ◇  the agent inherits 3 variable(s) that look like secrets: GIT_AUTHOR_DATE, GIT_AUTHOR_EMAIL, GIT_AUTHOR_NAME — agent_env: in harness.config.yaml chooses what it gets
+
   ◆ specgate · harness run   1 requirement(s) from HEAD
 
   ◇  REQ-000   attempt 1/1
@@ -677,9 +679,7 @@ max_attempts: 1
   ✔  REQ-000   pass     1 attempt   → harness/REQ-000
 
   ████████████████████  1 of 1 passed   1 passed · 0 failed · 0 skipped
-  Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — specgate harness report sums them up
-
-… 3 more lines
+… 5 more lines
 
 ~/smart-parking $ git diff --stat main harness/REQ-000
  .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 109 ++++++++++++++++++++++++

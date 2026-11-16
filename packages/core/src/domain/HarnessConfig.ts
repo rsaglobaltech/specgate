@@ -1,4 +1,5 @@
 import type { QualityConfig } from "./QualityChecks";
+import type { SandboxConfig } from "./Sandbox";
 
 /** What a time limit applies to (REQ-584). */
 export type TimeoutKind = "agent" | "setup" | "tests" | "review";
@@ -72,6 +73,10 @@ export interface HarnessSettings {
    * process needs (PATH, HOME, …) and the harness's own. Absent: all of them.
    */
   agentEnv?: string[];
+  /** REQ-588: run the agent in a container (\`sandbox:\`). Absent: on the machine, as before. */
+  sandbox?: SandboxConfig;
+  /** REQ-589: one download cache for every worktree, under \`.harness/cache/\`. */
+  dependencyCache?: boolean;
   /**
    * Profile that tries to break a green implementation (D3), or "" for none.
    *
