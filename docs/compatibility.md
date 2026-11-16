@@ -41,7 +41,7 @@ being merged and compares the two (REQ-568):
 
 ## Projects of every release
 
-A project as each release wrote it — 0.35.0 today, then 1.0.0 and the releases
+A project as each release wrote it — 0.35.0 and 1.0.0 today, then each release
 after — is kept under `tests/compat/<version>/`. Every build reads each one:
 `validate`, `status`, `config list`, `change validate`, and, for a project from
 before 1.0, `migrate 1.0` and `validate --strict` after it (REQ-570).

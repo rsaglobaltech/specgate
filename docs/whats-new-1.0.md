@@ -1,12 +1,12 @@
 # What is new in 1.0
 
 Specgate 1.0 is for a product made of several repositories and built by several
-roles. Its candidates (`1.0.0-rc.N`) are published under the npm dist-tag `next`;
-`npm install` keeps giving 0.35 until 1.0 is released.
+roles. 1.0.0 is released — `npm install` gives it — after twelve candidates
+(`1.0.0-rc.1` to `rc.12`), each published under the dist-tag `next`.
 
 ```bash
-npm i -D @rsaglobaltech/specgate@next --prefer-online   # the latest candidate
-npx specgate --version
+npm i -D @rsaglobaltech/specgate@1
+npx specgate --version                 # 1.0.0
 ```
 
 A 0.x project moves with one command, `specgate migrate 1.0`: what breaks, what
@@ -201,7 +201,7 @@ See [Harness report](harness-report.md).
 Every candidate after the first came out of a run of truck-flote — a product of
 three repositories built from its client's brief alone — and fixes what that run
 found. The full notes are in the
-[CHANGELOG](https://github.com/rsaglobaltech/specgate/blob/next/1.0/CHANGELOG.md).
+[CHANGELOG](https://github.com/rsaglobaltech/specgate/blob/main/CHANGELOG.md).
 
 | Candidate | What it changed |
 |---|---|

@@ -15,9 +15,9 @@ do not have.
 
 | Artefact | Registry | Workflow | Status |
 |---|---|---|---|
-| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **0.35.0** is `latest` |
-| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **0.35.0** |
-| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **0.35.0**, `linux/amd64` and `linux/arm64` |
+| `@rsaglobaltech/specgate` | npm, public | `publish-npm.yml` | Live — **1.0.0** is `latest`; `next` is 1.0.0-rc.12 |
+| `@rsaglobaltech/specgate` | GitHub Packages | `publish-github-packages.yml` | Live — newest **1.0.0** |
+| CLI image | `ghcr.io` | `publish-docker.yml` | Live — newest image **1.0.0**, `linux/amd64` and `linux/arm64` |
 | MCP server | inside the CLI package | `publish-npm.yml` | Live: `specgate mcp serve` |
 | Documentation site and pack registry | GitHub Pages | `pages.yml` | Live — see [Deployment of the site](#deployment-of-the-site) |
 | `specgate-maven-plugin` | Maven Central or an internal Nexus | none yet | C7-05 |
@@ -196,8 +196,9 @@ it locally too (WSL for Linux), then tags. This is how 0.27.4 shipped:
 
 ## Pre-releases
 
-A version with a prerelease part (`1.0.0-rc.1`, cut from the `next/1.0` branch,
-never from `main`) is tagged like any release: the workflows publish it under
+A version with a prerelease part (`1.0.0-rc.1`, cut from a candidate line such
+as 1.0's `next/1.0` — retired once 1.0.0 shipped from `main` — never from
+`main` itself) is tagged like any release: the workflows publish it under
 the dist-tag `next` and tag its image with the version only, never `latest`
 (REQ-281). Its GitHub release is created with `--prerelease`.
 

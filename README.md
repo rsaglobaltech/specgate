@@ -32,6 +32,10 @@ Without installing it (an empty folder, a Java or Python project), prefix each
 command with `npx @rsaglobaltech/specgate@latest` instead of `npx specgate`.
 With Docker and no Node.js: `docker run --rm -v "$PWD:/workspace" ghcr.io/rsaglobaltech/specgate check`.
 
+**1.0 is released.** Coming from 0.x, `specgate migrate 1.0` moves a project
+in one command — [what is new](docs/whats-new-1.0.md) · [migrating](docs/migrating-to-1.0.md)
+· [what 1.0 promises](docs/compatibility.md): within 1.x nothing you rely on is removed.
+
 Then run `init` once:
 
 - **In a repository that has code** (`package.json`, `pom.xml`, `go.mod`, …),
@@ -117,6 +121,7 @@ gate, it fits better. → [Full comparison](docs/comparisons.md)
 
 - [Getting started](docs/getting-started.md) — install, pick your path, the four verbs
 - [From a Jira ticket](docs/from-a-ticket.md) · [From a client brief](docs/from-a-brief.md) · [From running code](docs/reverse.md)
+- [What is new in 1.0](docs/whats-new-1.0.md) · [Migrating from 0.x](docs/migrating-to-1.0.md) · [Compatibility](docs/compatibility.md)
 - [Concepts](docs/concepts.md) — the ideas and vocabulary behind every command
 - [Commands](docs/commands.md) — every command and flag
 - [FAQ](docs/faq.md) · [Troubleshooting](docs/troubleshooting.md) · [Docs site](https://rsaglobaltech.github.io/specgate/)
