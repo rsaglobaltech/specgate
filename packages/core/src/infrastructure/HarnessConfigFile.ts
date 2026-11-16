@@ -114,6 +114,40 @@ interface HarnessProfile {
 /** The `profiles:` mapping of `.harness/profiles.yaml`, by profile name. */
 type HarnessProfiles = Record<string, HarnessProfile | null | undefined>;
 
+/**
+ * A one-line mapping — \`timeouts: { agent: 1800, tests: 300 }\` — which the
+ * YAML reader keeps as text: read here, for the keys that take one (REQ-584,
+ * REQ-588). Anything else is returned as it was.
+ */
+function flowMapping(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const text = value.trim();
+  if (!text.startsWith("{") || !text.endsWith("}") || text.startsWith("{{")) return value;
+  const out: Record<string, string | number | boolean> = {};
+  for (const part of text.slice(1, -1).split(",")) {
+    const item = part.trim();
+    if (!item) continue;
+    const at = item.indexOf(":");
+    if (at <= 0) return value;
+    const key = item
+      .slice(0, at)
+      .trim()
+      .replace(/^["']|["']$/g, "");
+    const raw = item
+      .slice(at + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
+    out[key] = /^-?\d+(\.\d+)?$/.test(raw)
+      ? Number(raw)
+      : raw === "true"
+        ? true
+        : raw === "false"
+          ? false
+          : raw;
+  }
+  return out;
+}
+
 export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> | null {
   const filePath = path.join(projectDir, HARNESS_CONFIG_FILE);
   if (!fs.existsSync(filePath)) return null;
@@ -311,7 +345,7 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
       parsed.require_known_cost === true || parsed.require_known_cost === "true";
   }
   if (parsed.timeouts !== undefined) {
-    const t = parsed.timeouts;
+    const t = flowMapping(parsed.timeouts);
     if (!t || typeof t !== "object" || Array.isArray(t)) {
       throw new Error(
         `Invalid ${HARNESS_CONFIG_FILE}: timeouts is a mapping of ${TIMEOUT_KINDS.join(", ")} to seconds`
@@ -336,7 +370,7 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
   }
   if (parsed.sandbox !== undefined) {
     try {
-      config.sandbox = readSandbox(parsed.sandbox);
+      config.sandbox = readSandbox(flowMapping(parsed.sandbox));
     } catch (e) {
       throw new Error(`Invalid ${HARNESS_CONFIG_FILE}: ${(e as Error).message}`);
     }

@@ -345,3 +345,34 @@ test("REQ-591 SCN-591a: paused after a failed attempt, `harness continue --stop`
     fs.rmSync(p.parent, { recursive: true, force: true });
   }
 });
+
+test("REQ-584 REQ-588: timeouts: and sandbox: may be written on one line, as the docs show them", () => {
+  const { readHarnessConfig } = require("../../packages/core/src/infrastructure/HarnessConfigFile");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-flow-"));
+  try {
+    fs.writeFileSync(
+      path.join(dir, "harness.config.yaml"),
+      "harness_version: 1\n" +
+        "timeouts: { agent: 1800, setup: 600, tests: 300, review: 600 }\n" +
+        "sandbox: { image: ghcr.io/acme/claude-agent:1, network: none, engine: docker }\n"
+    );
+    const c = readHarnessConfig(dir);
+    assert.deepEqual(c.timeouts, { agent: 1800, setup: 600, tests: 300, review: 600 });
+    assert.deepEqual(c.sandbox, {
+      image: "ghcr.io/acme/claude-agent:1",
+      network: "none",
+      engine: "docker",
+    });
+    fs.writeFileSync(
+      path.join(dir, "harness.config.yaml"),
+      "harness_version: 1\nsandbox: agent-image:2\n"
+    );
+    assert.equal(
+      readHarnessConfig(dir).sandbox.image,
+      "agent-image:2",
+      "an image name alone still works"
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

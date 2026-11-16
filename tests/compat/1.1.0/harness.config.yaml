@@ -1,0 +1,6 @@
+harness_version: 1
+test_cmd: npm test
+lanes: [tester, implementer]
+timeouts: { agent: 1800, tests: 300 }
+max_run_cost_usd: 20
+agent_env: [ANTHROPIC_API_KEY]
