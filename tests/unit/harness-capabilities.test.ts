@@ -41,10 +41,21 @@ function project() {
   return { parent, projectDir, git };
 }
 
+/**
+ * Running, not just present: on Linux a killed process nobody has reaped yet
+ * (in a container whose first process does not reap) still answers signal 0,
+ * as a zombie — dead for every purpose here.
+ */
 const alive = (pid: number) => {
   try {
     process.kill(pid, 0);
-    return true;
+  } catch {
+    return false;
+  }
+  if (process.platform !== "linux") return true;
+  try {
+    const stat = fs.readFileSync(`/proc/${pid}/stat`, "utf8");
+    return stat.slice(stat.lastIndexOf(")") + 2).charAt(0) !== "Z";
   } catch {
     return false;
   }
