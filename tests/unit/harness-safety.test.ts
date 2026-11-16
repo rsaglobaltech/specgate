@@ -53,10 +53,21 @@ function hangingAgent(parent: string) {
   return { command: `"${process.execPath}" "${script}" {prompt_file}`, pidFile };
 }
 
+/**
+ * Running, not just present: on Linux a killed process nobody has reaped yet
+ * (in a container whose first process does not reap) still answers signal 0,
+ * as a zombie — dead for every purpose here.
+ */
 const alive = (pid: number) => {
   try {
     process.kill(pid, 0);
-    return true;
+  } catch {
+    return false;
+  }
+  if (process.platform !== "linux") return true;
+  try {
+    const stat = fs.readFileSync(`/proc/${pid}/stat`, "utf8");
+    return stat.slice(stat.lastIndexOf(")") + 2).charAt(0) !== "Z";
   } catch {
     return false;
   }
@@ -365,6 +376,8 @@ test(
       );
       assert.ok((Date.now() - t0) / 1000 < 90, "cut at the deadline");
       assert.ok(fs.existsSync(pidFile), `the test command ran:\n${r.stdout}${r.stderr}`);
+      // REQ-581: the report says it timed out, not just that it failed.
+      assert.match(r.stdout + r.stderr, /timed out after 4 s/);
       const pid = Number(fs.readFileSync(pidFile, "utf8"));
       assert.ok(await waitFor(() => !alive(pid), 5000), "the test command outlived the deadline");
     } finally {
@@ -379,3 +392,96 @@ test(
     }
   }
 );
+
+test("REQ-578 SCN-578a: the run lock is taken by one run only, and a dead run's lock is taken over", () => {
+  const { acquireRunLock, runLockHolder } = require("../../scripts/lib/harness-guard");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-lock-"));
+  try {
+    const release = acquireRunLock(dir, ["REQ-001"]);
+    assert.ok(release, "the first run takes it");
+    assert.equal(acquireRunLock(dir, ["REQ-002"]), null, "a second live run does not");
+    release();
+    assert.equal(runLockHolder(dir), null);
+    // A lock whose process is gone: taken over, not waited for.
+    const file = path.join(dir, ".harness", "events", "run.lock");
+    const dead = spawnSync(process.execPath, ["-e", "process.stdout.write(String(process.pid))"], {
+      encoding: "utf8",
+    });
+    fs.writeFileSync(file, JSON.stringify({ pid: Number(dead.stdout), started: 0, reqs: [] }));
+    const again = acquireRunLock(dir, ["REQ-003"]);
+    assert.ok(again, "a dead run's lock is taken over");
+    assert.equal(JSON.parse(fs.readFileSync(file, "utf8")).pid, process.pid);
+    again();
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-578 SCN-578b: a project that is itself a worktree locks without waiting", () => {
+  const { withWorktreeLock } = require("../../scripts/harness/worktree-lock");
+  const { parent, git } = project();
+  try {
+    const linked = path.join(parent, "linked");
+    assert.equal(git("worktree", "add", "-q", "-b", "elsewhere", linked).status, 0);
+    const t0 = Date.now();
+    let inside = false;
+    withWorktreeLock(linked, () => {
+      inside = true;
+    });
+    assert.ok(inside);
+    assert.ok(Date.now() - t0 < 5000, "no 30 s spin when .git is a file");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("REQ-579 SCN-579a: the throwaway base branches go with the run", () => {
+  const { dropIntegrationBranches } = require("../../scripts/cli/commands/harness/RunCommand");
+  const { parent, projectDir, git } = project();
+  try {
+    git("branch", "harness/base/REQ-004");
+    git("branch", "harness/REQ-004");
+    dropIntegrationBranches(projectDir);
+    const left = git("branch", "--list", "harness/*").stdout;
+    assert.doesNotMatch(left, /harness\/base\//);
+    assert.match(left, /harness\/REQ-004/, "a requirement's own branch stays");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("REQ-580 SCN-580a: a value put in a gate command is one shell argument", () => {
+  const { substituteGateCommand } = require("../../packages/core/src/domain/HarnessRun");
+  const { quoteArg } = require("../../scripts/lib/escape");
+  const req = {
+    requirement: "REQ-007",
+    featureFile: "features/the shop/REQ-007.feature",
+    scenarioId: "SCN-007a",
+  };
+  const posix = (v: string) => quoteArg(v, "linux");
+  assert.equal(
+    substituteGateCommand("npx cucumber-js {feature_file} --name {scenario}", req, posix),
+    "npx cucumber-js 'features/the shop/REQ-007.feature' --name SCN-007a"
+  );
+  assert.equal(
+    substituteGateCommand("npm test -- --grep {req}", { ...req, featureFile: "" }, posix),
+    "npm test -- --grep REQ-007",
+    "a plain value is left as it is"
+  );
+  const evil = { ...req, featureFile: "features/x.feature; rm -rf ~" };
+  assert.equal(
+    substituteGateCommand("run {feature_file}", evil, posix),
+    "run 'features/x.feature; rm -rf ~'"
+  );
+});
+
+test("REQ-582 SCN-582a: what leaves the run is scrubbed of secrets", () => {
+  const { scrubText } = require("../../scripts/cli/commands/harness/RunCommand");
+  const env = { MY_API_KEY: "verysecretvalue123", PATH: "/usr/bin" };
+  const text =
+    "curl -H 'x: verysecretvalue123' https://u:pa55word@host --token ghp_abcdefghijklmnopqrstuvwxyz012345";
+  const out = scrubText(text, env);
+  assert.doesNotMatch(out, /verysecretvalue123|pa55word|ghp_abcdefghijklmnopqrstuvwxyz012345/);
+  assert.match(out, /\*\*\*/);
+  assert.equal(scrubText("nothing secret here", env), "nothing secret here");
+});

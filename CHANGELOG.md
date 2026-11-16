@@ -9,6 +9,31 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`harness stop --now`** (REQ-583): ends the run and everything it started at
+  once; the worktree stays for `--resume`.
+- **A time limit per kind of command** (REQ-584): `timeouts:` in
+  `harness.config.yaml` — `agent`, `setup`, `tests`, `review` — each falling
+  back to `--timeout`.
+- **The run's budget** (REQ-585): `max_run_cost_usd` stops starting
+  requirements once the run's sessions reported that much
+  (`run_max_cost_reached`); `max_tokens` caps a requirement's tokens;
+  `require_known_cost: true` fails a session that reports no cost
+  (`cost_unknown`) instead of counting it free.
+- **Fallback to the next agent** (REQ-586): an agent out of quota gives way to
+  the next profile of `attempt_profiles` instead of ending the run.
+- **The agent in a container** (REQ-588): `sandbox: { image, network, engine }`
+  runs the agent, reviewer and adversary in Docker or Podman, seeing only the
+  worktree, with no network unless allowed.
+- **One download cache for every worktree** (REQ-589): `dependency_cache: true`.
+- **The run as an OpenTelemetry trace** (REQ-590): sent when
+  `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
+- **A pause between attempts** (REQ-591): `harness run --pause-between-attempts`
+  and `specgate harness continue [--stop]`.
+- **`agent_env:`** (REQ-587): the variables the agent gets; without it, the run
+  names the secret-looking variables the agent inherits.
+
 ### Fixed
 
 - **An interrupted harness run ends what it started** (REQ-573): Ctrl-C, a
@@ -27,6 +52,17 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   command line.
 - **The agent cannot choose its reviewer** (REQ-577): a check's profile is read
   from the project, not from the worktree the agent writes.
+- **One run per working copy, and a dead run does not keep it** (REQ-578): the
+  run lock is created only if absent; the worktree lock works in a project that
+  is itself a worktree, without a 30 s wait.
+- **Nothing half-done left behind** (REQ-579): the run record is written whole,
+  prompt files are private and always removed, `harness/base/*` branches go
+  with the run.
+- **Values in commands are quoted** (REQ-580): `{feature_file}`, `{scenario}`,
+  `{req}` and `pr_cmd`'s `{branch}` are one shell argument each.
+- **No verdict is no pass** (REQ-581): a reviewer that gives no `VERDICT:` line
+  fails the check; a test command cut at the deadline is reported as timed out.
+- **Secrets stay out of the record and the pushed prompts** (REQ-582).
 
 See issue #466.
 

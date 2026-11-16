@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import { killTree } from "./kill-tree";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { warning, type Diagnostic } from "../../packages/core/src/domain/Diagnostic";
@@ -146,7 +147,28 @@ export function acquireRunLock(projectDir: string, reqs: string[]): (() => void)
   const ignore = path.join(path.dirname(file), ".gitignore");
   if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
   const lock: RunLock = { pid: process.pid, started: Math.floor(Date.now() / 1000), reqs };
-  fs.writeFileSync(file, JSON.stringify(lock), "utf8");
+  // REQ-578: created only if absent, so two runs that start together cannot both
+  // take it. A lock left by a run that is gone is moved aside first — by one of
+  // them: the rename succeeds once.
+  const create = (): boolean => {
+    try {
+      fs.writeFileSync(file, JSON.stringify(lock), { encoding: "utf8", flag: "wx" });
+      return true;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+      return false;
+    }
+  };
+  if (!create()) {
+    if (runLockHolder(projectDir)) return null;
+    try {
+      fs.renameSync(file, `${file}.stale-${process.pid}`);
+      fs.rmSync(`${file}.stale-${process.pid}`, { force: true });
+    } catch {
+      /* another run moved it first */
+    }
+    if (!create()) return null;
+  }
   const release = () => {
     try {
       const now = JSON.parse(fs.readFileSync(file, "utf8")) as RunLock;
@@ -183,6 +205,8 @@ export interface StopAnswer {
     requested: boolean;
     /** The run asked to stop: its process, its requirements, when it started (epoch seconds). */
     run: { pid: number; requirements: string[]; startedAt: number } | null;
+    /** REQ-583: \`--now\` — the run and every command it started were ended, not asked. */
+    now?: boolean;
   };
   status: Diagnostic[];
 }
@@ -218,4 +242,91 @@ export function stopAfterCurrent(projectDir: string): StopAnswer {
     },
     status: [],
   };
+}
+
+/**
+ * \`specgate harness stop --now\` (REQ-583): end the run working in this project
+ * at once — its process and everything it started, its agents among them. The
+ * requirement in progress keeps its worktree, so \`harness run --resume\` picks
+ * it up; the run's lock goes with its process.
+ */
+export function stopNow(projectDir: string): StopAnswer {
+  const holder = runLockHolder(projectDir);
+  if (!holder) return stopAfterCurrent(projectDir);
+  killTree(holder.pid);
+  return {
+    stop: {
+      requested: true,
+      now: true,
+      run: { pid: holder.pid, requirements: [...(holder.reqs || [])], startedAt: holder.started },
+    },
+    status: [],
+  };
+}
+
+// REQ-591: a run that pauses between attempts, until a person says go on or stop.
+const PAUSED = path.join(".harness", "events", "paused.json");
+const CONTINUE = path.join(".harness", "events", "continue");
+
+export interface Pause {
+  requirement: string;
+  /** The attempt that just failed; the next one waits. */
+  attempt: number;
+  /** Where it failed, as the report says it. */
+  stage: string;
+  /** Epoch seconds. */
+  since: number;
+}
+
+/** The pause the run in this project is waiting at, or null. */
+export function pausedAt(projectDir: string): Pause | null {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(projectDir, PAUSED), "utf8")) as Pause;
+  } catch {
+    return null;
+  }
+}
+
+/** Answer a paused run: go on with the next attempt, or stop retrying this requirement. */
+export function answerPause(projectDir: string, go: boolean): Pause | null {
+  const pause = pausedAt(projectDir);
+  if (!pause) return null;
+  fs.writeFileSync(path.join(projectDir, CONTINUE), go ? "go\n" : "stop\n", "utf8");
+  return pause;
+}
+
+/**
+ * Wait, synchronously as the attempt loop runs, until a person answers the
+ * pause (`specgate harness continue`, or `--stop`), or a stop is asked.
+ * Returns whether the next attempt may start.
+ */
+export function waitAtPause(
+  projectDir: string,
+  pause: Omit<Pause, "since">,
+  pollMs = 500
+): boolean {
+  const file = path.join(projectDir, PAUSED);
+  const answer = path.join(projectDir, CONTINUE);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.rmSync(answer, { force: true });
+  fs.writeFileSync(
+    file,
+    JSON.stringify({ ...pause, since: Math.floor(Date.now() / 1000) }),
+    "utf8"
+  );
+  const sleep = new Int32Array(new SharedArrayBuffer(4));
+  try {
+    for (;;) {
+      if (fs.existsSync(answer)) {
+        const said = fs.readFileSync(answer, "utf8").trim();
+        return said !== "stop";
+      }
+      // `harness stop --after-current` while paused: this requirement stops here.
+      if (fs.existsSync(path.join(projectDir, STOP))) return false;
+      Atomics.wait(sleep, 0, 0, pollMs);
+    }
+  } finally {
+    fs.rmSync(file, { force: true });
+    fs.rmSync(answer, { force: true });
+  }
 }

@@ -92,18 +92,27 @@ export function featureFilePath(req: HarnessRequirement): string {
     .trim();
 }
 
-export function substituteGateCommand(template: string, req: HarnessRequirement): string {
+/**
+ * `quote` puts each value in the command as one shell argument (REQ-580);
+ * a plain value — `REQ-007`, a path of letters and slashes — comes out as it is.
+ */
+export function substituteGateCommand(
+  template: string,
+  req: HarnessRequirement,
+  quote: (value: string) => string = (v) => v
+): string {
   const featureFile = featureFilePath(req);
+  const value = (v: string) => (v ? quote(v) : "");
   // `{files}` is check's and apply's (REQ-513): the harness runs the whole suite.
   return template
     .split("{files}")
     .join("")
     .split("{req}")
-    .join(req.requirement || "")
+    .join(value(req.requirement || ""))
     .split("{scenario}")
-    .join(req.scenarioId || req.scenario_id || "")
+    .join(value(req.scenarioId || req.scenario_id || ""))
     .split("{feature_file}")
-    .join(featureFile);
+    .join(value(featureFile));
 }
 
 /** What one attempt cost, and the step it stopped at. */
@@ -339,6 +348,26 @@ export interface AttemptPlanOptions {
  * profile for every attempt — today's behaviour, so an existing project sees
  * no change until it asks for one.
  */
+/**
+ * REQ-586: the attempt to go on with when the profile of \`attempt\` cannot run
+ * now (out of quota, say): the first later attempt, within \`maxAttempts\`,
+ * whose rung of the ladder names another profile. Null when there is none —
+ * no ladder, or only the same profile above.
+ */
+export function fallbackAttempt(
+  attempt: number,
+  maxAttempts: number,
+  ladder: readonly string[]
+): { attempt: number; profile: string } | null {
+  if (ladder.length === 0) return null;
+  const rung = (n: number) => ladder[Math.min(n, ladder.length) - 1];
+  const current = rung(attempt);
+  for (let next = attempt + 1; next <= maxAttempts; next += 1) {
+    if (rung(next) !== current) return { attempt: next, profile: rung(next) };
+  }
+  return null;
+}
+
 export function planAttempt(attempt: number, opts: AttemptPlanOptions = {}): AttemptStep[] {
   const ladder = opts.attemptProfiles ?? [];
   const profile = ladder.length > 0 ? ladder[Math.min(attempt, ladder.length) - 1] : null;

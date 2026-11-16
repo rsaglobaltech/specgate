@@ -472,6 +472,20 @@
 | REQ-575 | SCN-575a | `features/harness/REQ-575.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
 | REQ-576 | SCN-576a | `features/harness/REQ-576.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
 | REQ-577 | SCN-577a | `features/harness/REQ-577.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-578 | SCN-578a | `features/harness/REQ-578.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-579 | SCN-579a | `features/harness/REQ-579.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-580 | SCN-580a | `features/harness/REQ-580.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-581 | SCN-581a | `features/harness/REQ-581.feature` | - | - | - | - | - | tests/unit/quality-agents.test.ts | Approved |
+| REQ-582 | SCN-582a | `features/harness/REQ-582.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-583 | SCN-583a | `features/harness/REQ-583.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
+| REQ-584 | SCN-584a | `features/harness/REQ-584.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
+| REQ-585 | SCN-585a | `features/harness/REQ-585.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
+| REQ-586 | SCN-586a | `features/harness/REQ-586.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
+| REQ-587 | SCN-587a | `features/harness/REQ-587.feature` | - | - | - | - | - | tests/unit/harness-capabilities.test.ts | Approved |
+| REQ-588 | SCN-588a | `features/harness/REQ-588.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
+| REQ-589 | SCN-589a | `features/harness/REQ-589.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
+| REQ-590 | SCN-590a | `features/harness/REQ-590.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
+| REQ-591 | SCN-591a | `features/harness/REQ-591.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

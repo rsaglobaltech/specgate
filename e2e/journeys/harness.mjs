@@ -77,4 +77,22 @@ export default [
       t.usage(t.sg(dir, "harness", "stop", "--json"), "harness stop without --after-current");
     },
   },
+  {
+    // REQ-591: answering a paused run; with none paused, it says so.
+    name: "harness continue answers a paused run, and says when there is none",
+    covers: ["harness continue"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      const r = t.sg(dir, "harness", "continue", "--json");
+      t.ok(r, "harness continue");
+      const answer = t.json(r);
+      t.expect(answer.pause === null, "with no run paused, nothing is answered", r);
+      t.expect(
+        answer.status.some((s) => s.code === "harness_not_paused"),
+        "the answer says no run is paused",
+        r
+      );
+    },
+  },
 ];

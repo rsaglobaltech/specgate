@@ -28,8 +28,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { YamlDocument, parseYamlLite } from "../domain/YamlLite";
-import { HarnessSettings } from "../domain/HarnessConfig";
+import { HarnessSettings, TIMEOUT_KINDS, type TimeoutKind } from "../domain/HarnessConfig";
 import { readQuality } from "../domain/QualityChecks";
+import { readSandbox } from "../domain/Sandbox";
 import type { TokenPrices } from "../domain/RunBudget";
 
 export const HARNESS_CONFIG_FILE = "harness.config.yaml";
@@ -66,6 +67,15 @@ export const KNOWN_KEYS = new Set([
   // REQ-532, REQ-535: the work split into lanes, and a cost ceiling per requirement.
   "lanes",
   "max_cost_usd",
+  // REQ-584, REQ-585, REQ-587: time per kind of command, the run's budget, and the agent's environment.
+  "timeouts",
+  "max_run_cost_usd",
+  "max_tokens",
+  "require_known_cost",
+  "agent_env",
+  // REQ-588, REQ-589: the agent in a container, and one download cache for every worktree.
+  "sandbox",
+  "dependency_cache",
   "protected_paths",
   "allow_paths",
   "message_report",
@@ -280,6 +290,67 @@ export function readHarnessConfig(projectDir: string): Partial<HarnessSettings> 
     config.maxCostUsd = usd;
   }
 
+  if (parsed.max_run_cost_usd !== undefined) {
+    const usd = Number(parsed.max_run_cost_usd);
+    if (!Number.isFinite(usd) || usd <= 0) {
+      throw new Error(
+        `Invalid ${HARNESS_CONFIG_FILE}: max_run_cost_usd must be a positive number of dollars`
+      );
+    }
+    config.maxRunCostUsd = usd;
+  }
+  if (parsed.max_tokens !== undefined) {
+    const n = Number(parsed.max_tokens);
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new Error(`Invalid ${HARNESS_CONFIG_FILE}: max_tokens must be a positive whole number`);
+    }
+    config.maxTokens = n;
+  }
+  if (parsed.require_known_cost !== undefined) {
+    config.requireKnownCost =
+      parsed.require_known_cost === true || parsed.require_known_cost === "true";
+  }
+  if (parsed.timeouts !== undefined) {
+    const t = parsed.timeouts;
+    if (!t || typeof t !== "object" || Array.isArray(t)) {
+      throw new Error(
+        `Invalid ${HARNESS_CONFIG_FILE}: timeouts is a mapping of ${TIMEOUT_KINDS.join(", ")} to seconds`
+      );
+    }
+    const out: Partial<Record<TimeoutKind, number>> = {};
+    for (const [kind, value] of Object.entries(t as Record<string, unknown>)) {
+      if (!TIMEOUT_KINDS.includes(kind as TimeoutKind)) {
+        throw new Error(
+          `Invalid ${HARNESS_CONFIG_FILE}: timeouts.${kind} is not one of ${TIMEOUT_KINDS.join(", ")}`
+        );
+      }
+      const n = Number(value);
+      if (!Number.isInteger(n) || n <= 0) {
+        throw new Error(
+          `Invalid ${HARNESS_CONFIG_FILE}: timeouts.${kind} must be a positive number of seconds`
+        );
+      }
+      out[kind as TimeoutKind] = n;
+    }
+    config.timeouts = out;
+  }
+  if (parsed.sandbox !== undefined) {
+    try {
+      config.sandbox = readSandbox(parsed.sandbox);
+    } catch (e) {
+      throw new Error(`Invalid ${HARNESS_CONFIG_FILE}: ${(e as Error).message}`);
+    }
+  }
+  if (parsed.dependency_cache !== undefined) {
+    config.dependencyCache = parsed.dependency_cache === true || parsed.dependency_cache === "true";
+  }
+  if (parsed.agent_env !== undefined) {
+    if (!Array.isArray(parsed.agent_env)) {
+      throw new Error(`Invalid ${HARNESS_CONFIG_FILE}: agent_env is a list of variable names`);
+    }
+    config.agentEnv = parsed.agent_env.map((v: unknown) => String(v).trim()).filter(Boolean);
+  }
+
   if (parsed.review_profile !== undefined) {
     const name = String(parsed.review_profile);
     const agent = resolveProfileAgent(projectDir, name);
@@ -388,6 +459,14 @@ export function resolveHarnessSettings(
     // may cost are the team's decisions, not a flag typed to get past them.
     lanes: file.lanes || [],
     maxCostUsd: file.maxCostUsd || 0,
+    // From the file only, like max_cost_usd: limits are the team's (REQ-584, REQ-585, REQ-587).
+    maxRunCostUsd: file.maxRunCostUsd || 0,
+    maxTokens: file.maxTokens || 0,
+    requireKnownCost: file.requireKnownCost === true,
+    timeouts: file.timeouts || {},
+    ...(file.agentEnv ? { agentEnv: file.agentEnv } : {}),
+    ...(file.sandbox ? { sandbox: file.sandbox } : {}),
+    dependencyCache: file.dependencyCache === true,
     // From the file only, like the role ladder: which agent is allowed to
     // attack the work is a repository decision, not a flag typed per run.
     adversaryProfile: file.adversaryProfile || "",

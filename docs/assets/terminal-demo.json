@@ -6,7 +6,7 @@
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-11-15",
+  "recordedAt": "2026-11-16",
   "title": "smart-parking — the harness",
   "cols": 88,
   "streamsMerged": false,
@@ -242,8 +242,18 @@
       "typeMs": 26,
       "holdMs": 1960,
       "truncated": true,
-      "omitted": 3,
+      "omitted": 5,
       "lines": [
+        {
+          "t": "  ◇  the agent inherits 3 variable(s) that look like secrets: GIT_AUTHOR_DATE, GIT_AUTHOR_EMAIL, GIT_AUTHOR_NAME — agent_env: in harness.config.yaml chooses what it gets",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "",
+          "c": "out",
+          "s": "out"
+        },
         {
           "t": "  ◆ specgate · harness run   1 requirement(s) from HEAD",
           "c": "out",
@@ -301,16 +311,6 @@
         },
         {
           "t": "  ████████████████████  1 of 1 passed   1 passed · 0 failed · 0 skipped",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "  Run recorded in .harness/runs/2026-01-01T00-00-00-000Z.json — specgate harness report sums them up",
-          "c": "out",
-          "s": "out"
-        },
-        {
-          "t": "",
           "c": "out",
           "s": "out"
         }

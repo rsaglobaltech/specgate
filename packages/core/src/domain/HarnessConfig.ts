@@ -1,4 +1,9 @@
 import type { QualityConfig } from "./QualityChecks";
+import type { SandboxConfig } from "./Sandbox";
+
+/** What a time limit applies to (REQ-584). */
+export type TimeoutKind = "agent" | "setup" | "tests" | "review";
+export const TIMEOUT_KINDS: TimeoutKind[] = ["agent", "setup", "tests", "review"];
 
 export interface HarnessSettings {
   agent: string;
@@ -55,6 +60,23 @@ export interface HarnessSettings {
   lanes?: Array<"tester" | "implementer">;
   /** REQ-535: what one requirement's sessions may cost, in USD. 0 means no limit. */
   maxCostUsd?: number;
+  /** REQ-585: what the whole run may cost, in USD; no requirement starts once it is spent. 0: no limit. */
+  maxRunCostUsd?: number;
+  /** REQ-585: the tokens one requirement's sessions may use. 0: no limit. */
+  maxTokens?: number;
+  /** REQ-585: a session that reports no cost or tokens fails its requirement, instead of counting as free. */
+  requireKnownCost?: boolean;
+  /** REQ-584: seconds per kind of command; each falls back to `--timeout`. */
+  timeouts?: Partial<Record<TimeoutKind, number>>;
+  /**
+   * REQ-587: the environment variables the agent gets, besides the few every
+   * process needs (PATH, HOME, …) and the harness's own. Absent: all of them.
+   */
+  agentEnv?: string[];
+  /** REQ-588: run the agent in a container (\`sandbox:\`). Absent: on the machine, as before. */
+  sandbox?: SandboxConfig;
+  /** REQ-589: one download cache for every worktree, under \`.harness/cache/\`. */
+  dependencyCache?: boolean;
   /**
    * Profile that tries to break a green implementation (D3), or "" for none.
    *

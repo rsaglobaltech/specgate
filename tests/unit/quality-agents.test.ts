@@ -211,3 +211,27 @@ test("REQ-227 SCN-227c: outside the harness an agent check is skipped, and says 
     fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10 });
   }
 });
+
+test("REQ-581 SCN-581a: a reviewer that gives no verdict does not approve the work", () => {
+  const parent0 = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-qa-agents-"));
+  // It crashed, timed out or answered something else: no VERDICT line.
+  const reviewer = agent(parent0, "reviewer", 'console.log("I could not read the diff.");');
+  const { parent, dir } = project(
+    [
+      "  - name: review",
+      '    run: "builtin:review"',
+      "    when: end",
+      "    gate: true",
+      "    profile: reviewer",
+    ],
+    { reviewer }
+  );
+  try {
+    const r = harness(dir, agent(parent0, "implementer", implementerBody));
+    assert.match(r.stdout + r.stderr, /0 passed · 1 failed/, r.stdout + r.stderr);
+    assert.match(r.stdout + r.stderr, /reviewer gave no verdict/, "the reason is said");
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true, maxRetries: 10 });
+    fs.rmSync(parent0, { recursive: true, force: true, maxRetries: 10 });
+  }
+});

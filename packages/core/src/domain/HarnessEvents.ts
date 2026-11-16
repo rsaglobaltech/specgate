@@ -65,6 +65,75 @@ export function maskCommand(command: string): string {
 const SECRET_NAME =
   /TOKEN|SECRET|PASSWORD|PASSWD|API_?KEY|ACCESS_?KEY|PRIVATE_?KEY|AUTH|CREDENTIAL/i;
 
+/** REQ-587: the names of the environment variables that look like secrets, sorted. */
+export function secretNames(env: Record<string, string | undefined>): string[] {
+  return Object.entries(env)
+    .filter(([name, value]) => SECRET_NAME.test(name) && (value?.length ?? 0) > 0)
+    .map(([name]) => name)
+    .sort();
+}
+
+/**
+ * REQ-587: what every process needs to run at all, kept whatever \`agent_env:\`
+ * lists — the search path, the home and temp folders, the locale, and Windows'
+ * own. None of them holds a credential.
+ */
+export const ESSENTIAL_ENV: readonly string[] = [
+  "PATH",
+  "Path",
+  "PATHEXT",
+  "HOME",
+  "USERPROFILE",
+  "USER",
+  "USERNAME",
+  "LOGNAME",
+  "SHELL",
+  "TMPDIR",
+  "TEMP",
+  "TMP",
+  "LANG",
+  "LANGUAGE",
+  "LC_ALL",
+  "LC_CTYPE",
+  "TERM",
+  "TZ",
+  "SystemRoot",
+  "SYSTEMROOT",
+  "SystemDrive",
+  "ComSpec",
+  "COMSPEC",
+  "WINDIR",
+  "windir",
+  "APPDATA",
+  "LOCALAPPDATA",
+  "ProgramData",
+  "ProgramFiles",
+  "ProgramFiles(x86)",
+  "XDG_CONFIG_HOME",
+  "XDG_CACHE_HOME",
+  "XDG_DATA_HOME",
+  "XDG_RUNTIME_DIR",
+];
+
+/**
+ * REQ-587: the environment an agent gets under \`agent_env:\` — the variables it
+ * lists, the essential ones, and the harness's own (\`SPECGATE_*\`, \`AGENT_EVENTS_*\`).
+ */
+export function agentEnvironment(
+  env: Record<string, string | undefined>,
+  allow: readonly string[]
+): Record<string, string> {
+  const keep = new Set([...ESSENTIAL_ENV, ...allow]);
+  const out: Record<string, string> = {};
+  for (const [name, value] of Object.entries(env)) {
+    if (value === undefined) continue;
+    if (keep.has(name) || name.startsWith("SPECGATE_") || name.startsWith("AGENT_EVENTS_")) {
+      out[name] = value;
+    }
+  }
+  return out;
+}
+
 /** The secret environment values, longest first, long enough not to mask by accident. */
 export function secretValues(env: Record<string, string | undefined>): string[] {
   return Object.entries(env)
