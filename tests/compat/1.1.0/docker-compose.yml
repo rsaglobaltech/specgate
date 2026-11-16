@@ -1,0 +1,33 @@
+name: my-spec-driven-app-${APP_ENV:-dev}
+
+services:
+  workspace:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu
+    command: sleep infinity
+    working_dir: /workspace
+    volumes:
+      - .:/workspace:cached
+    env_file:
+      - .env.${APP_ENV:-dev}.app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+      - .env.${APP_ENV:-dev}.infra
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$${POSTGRES_USER} -d $$${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:
+    name: my-spec-driven-app_${APP_ENV:-dev}_db_data

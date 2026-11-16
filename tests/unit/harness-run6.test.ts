@@ -276,12 +276,21 @@ test("REQ-269 SCN-269b: a run stopped by hand", async () => {
   );
   const runs = path.join(dir, ".harness", "runs");
   const started = Date.now();
-  // The ledger is written when the requirement starts, before the agent does.
+  // The ledger is written when the run starts, then again when the requirement
+  // starts, before the agent does: wait for the second, which names REQ-000.
+  // Waiting for any file raced the second write on a slow Windows runner.
   while (Date.now() - started < 15_000) {
     const files = fs.existsSync(runs)
       ? fs.readdirSync(runs).filter((f: string) => f.endsWith(".json"))
       : [];
-    if (files.length > 0) break;
+    const named = files.some((f: string) => {
+      try {
+        return fs.readFileSync(path.join(runs, f), "utf8").includes("REQ-000");
+      } catch {
+        return false;
+      }
+    });
+    if (named) break;
     await new Promise((r) => setTimeout(r, 200));
   }
   child.kill("SIGKILL");

@@ -9,6 +9,16 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-11-16
+
+The harness, reviewed end to end (issue #466): an interrupted run no longer
+leaves its agent working, `--chain` never touches your commits, every command
+ends at its deadline, and secrets stay out of what a run writes; and new
+controls — stop now, a time limit per kind of command, the run's budget, a
+fallback agent, the agent's environment, a container, a shared download cache,
+an OpenTelemetry trace and a pause between attempts. Additions only: nothing a
+1.0 project relies on changed.
+
 ### Added
 
 - **`harness stop --now`** (REQ-583): ends the run and everything it started at
