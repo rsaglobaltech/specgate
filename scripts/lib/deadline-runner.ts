@@ -28,6 +28,9 @@ const eventsFile = process.env.AGENT_EVENTS_FILE || "";
 const req = process.env.AGENT_EVENTS_REQ || "";
 const attempt = Number(process.env.AGENT_EVENTS_ATTEMPT) || undefined;
 const windows = process.platform === "win32";
+/** The run that started this command, through any worker in between (REQ-573). */
+const rootPid = Number(process.env.SPECGATE_HARNESS_ROOT_PID) || 0;
+const parentPid = process.ppid;
 
 /** The stream is file descriptor 3, which the harness opened for this process. */
 const STREAM_FD = 3;
@@ -41,6 +44,7 @@ for (const name of [
   "HARNESS_STREAM",
   "HARNESS_PROJECT_DIR",
   "SPECGATE_HARNESS_STREAM_FD",
+  "SPECGATE_HARNESS_ROOT_PID",
 ]) {
   delete env[name];
 }
@@ -74,19 +78,50 @@ if (streaming) {
   }
 }
 
+/** The command and everything it started: its process group, or its tree on Windows. */
+function killCommand(): void {
+  try {
+    if (windows) spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
+    else process.kill(-(child.pid as number), "SIGKILL");
+  } catch {
+    /* already gone */
+  }
+}
+
 let timedOut = false;
 const timer =
   deadline > 0
     ? setTimeout(() => {
         timedOut = true;
-        try {
-          if (windows) spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
-          else process.kill(-(child.pid as number), "SIGKILL");
-        } catch {
-          /* already gone */
-        }
+        killCommand();
       }, deadline)
     : null;
+
+/**
+ * REQ-573: the command is in a group of its own, which Ctrl-C does not reach,
+ * so it would outlive the run. A signal to this process, or the run that
+ * started it going away — killed, crashed, or a worker's parent gone — ends
+ * the command too, and this process exits 198 (INTERRUPTED_STATUS).
+ */
+let interrupted = false;
+function interrupt(): void {
+  if (finished || interrupted) return;
+  interrupted = true;
+  killCommand();
+  finish(null);
+}
+for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) process.on(signal, interrupt);
+const alive = (pid: number): boolean => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return (e as { code?: string }).code === "EPERM";
+  }
+};
+const orphanWatch = setInterval(() => {
+  if (process.ppid !== parentPid || (rootPid && !alive(rootPid))) interrupt();
+}, 500);
 
 let finished = false;
 function finish(code: number | null): void {
@@ -94,9 +129,10 @@ function finish(code: number | null): void {
   finished = true;
   if (timer) clearTimeout(timer);
   clearInterval(watcher);
+  clearInterval(orphanWatch);
   // What the agent wrote last — its question among it — before the harness reads on.
   poll();
-  process.exit(timedOut ? 124 : (code ?? 1));
+  process.exit(interrupted ? 198 : timedOut ? 124 : (code ?? 1));
 }
 
 let exitCode: number | null = null;

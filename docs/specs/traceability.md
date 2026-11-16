@@ -467,6 +467,11 @@
 | REQ-570 | SCN-570a | `features/trusted-gate/REQ-570.feature` | - | - | - | - | - | tests/unit/compat.test.ts | Implemented |
 | REQ-571 | SCN-571a | `features/trusted-gate/REQ-571.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
 | REQ-572 | SCN-572a | `features/trusted-gate/REQ-572.feature` | - | - | - | - | - | tests/unit/release-workflows.test.ts | Implemented |
+| REQ-573 | SCN-573a | `features/harness/REQ-573.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-574 | SCN-574a | `features/harness/REQ-574.feature` | - | - | - | - | - | tests/unit/trust-gate.test.ts | Approved |
+| REQ-575 | SCN-575a | `features/harness/REQ-575.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-576 | SCN-576a | `features/harness/REQ-576.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-577 | SCN-577a | `features/harness/REQ-577.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

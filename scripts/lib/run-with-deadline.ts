@@ -13,6 +13,22 @@ import { spawnSync, SpawnSyncReturns, StdioOptions } from "node:child_process";
 
 const RUNNER = path.join(__dirname, "deadline-runner.js");
 
+/** The exit status of a runner ended by a signal or by its run going away (REQ-573): its own, so a command's 130 is not taken for one. */
+export const INTERRUPTED_STATUS = 198;
+
+/** Thrown when a command was interrupted: the run stops, and leaves its worktree for --resume. */
+export class HarnessInterrupted extends Error {
+  constructor() {
+    super("the run was interrupted: its commands were ended, its worktree kept for --resume");
+  }
+}
+
+let interruptedOnce = false;
+/** Whether a command of this process was interrupted. */
+export function wasInterrupted(): boolean {
+  return interruptedOnce;
+}
+
 export function runWithDeadline(
   command: string,
   opts: {
@@ -22,12 +38,16 @@ export function runWithDeadline(
     env?: Record<string, string>;
     projectDir?: string;
     streamFd?: number | null;
+    /** The command's output goes to this process's stderr as it runs, and is not captured. */
+    toStderr?: boolean;
   }
 ): SpawnSyncReturns<string> {
   const streaming = typeof opts.streamFd === "number";
   const stdio: StdioOptions = streaming
     ? ["ignore", "pipe", "pipe", opts.streamFd as number]
-    : ["ignore", "pipe", "pipe"];
+    : opts.toStderr
+      ? ["ignore", 2, 2]
+      : ["ignore", "pipe", "pipe"];
   const r = spawnSync(process.execPath, [RUNNER], {
     cwd: opts.cwd,
     encoding: "utf8",
@@ -36,6 +56,8 @@ export function runWithDeadline(
     env: {
       ...process.env,
       ...(opts.env || {}),
+      // REQ-573: every runner knows the run, so it ends its command when the run is gone.
+      SPECGATE_HARNESS_ROOT_PID: process.env.SPECGATE_HARNESS_ROOT_PID || String(process.pid),
       HARNESS_CMD: command,
       HARNESS_DEADLINE_MS: String(opts.timeoutMs),
       ...(opts.projectDir ? { HARNESS_PROJECT_DIR: opts.projectDir } : {}),
@@ -45,6 +67,10 @@ export function runWithDeadline(
     timeout: opts.timeoutMs + 30_000,
     killSignal: "SIGKILL",
   });
+  if (r.status === INTERRUPTED_STATUS || (r.signal && r.signal !== "SIGKILL")) {
+    interruptedOnce = true;
+    throw new HarnessInterrupted();
+  }
   if (r.status === 124 && !r.error) {
     const error = Object.assign(new Error("spawnSync ETIMEDOUT"), { code: "ETIMEDOUT" });
     return { ...r, error };

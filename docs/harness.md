@@ -231,17 +231,20 @@ newer path than the serial one. And four green branches are four reviews.
 
 For a nightly job that leaves branches to review:
 
-| Option                   | What it does                                                                    |
-| ------------------------ | ------------------------------------------------------------------------------- |
-| `--resume`               | Continues an interrupted run from the attempt it stopped on.                    |
-| `--budget-seconds <n>`   | Stops cleanly before starting a requirement once the time is spent.             |
-| `--max-requirements <n>` | Attempts at most n requirements.                                                |
-| `--skip-not-ready`       | Skips requirements an agent cannot succeed at (no feature, unmet dependencies). |
-| `--skip-baseline`        | Runs even when the base already fails `validate --strict`.                      |
-| `--push`                 | Pushes each green `harness/REQ-NNN` branch.                                     |
-| `--pr-cmd "<cmd>"`       | Runs after each push, with `{branch}` and `{req}` placeholders.                 |
-| `--verbose`              | Streams the gate's output while it runs.                                        |
+| Option                   | What it does                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| `--resume`               | Continues an interrupted run — Ctrl-C, a cancelled job — from the attempt it stopped on. |
+| `--budget-seconds <n>`   | Stops cleanly before starting a requirement once the time is spent.                      |
+| `--max-requirements <n>` | Attempts at most n requirements.                                                         |
+| `--skip-not-ready`       | Skips requirements an agent cannot succeed at (no feature, unmet dependencies).          |
+| `--skip-baseline`        | Runs even when the base already fails `validate --strict`.                               |
+| `--push`                 | Pushes each green `harness/REQ-NNN` branch.                                              |
+| `--pr-cmd "<cmd>"`       | Runs after each push, with `{branch}` and `{req}` placeholders.                          |
+| `--verbose`              | Streams the gate's output while it runs.                                                 |
 
+**Stopping a run.** Ctrl-C, a signal or a cancelled CI job ends the agent and
+every command the run started, also when the run itself is killed outright; the
+requirement's worktree stays, and `--resume` continues from it. The run exits 130.
 
 ## When a run fails
 

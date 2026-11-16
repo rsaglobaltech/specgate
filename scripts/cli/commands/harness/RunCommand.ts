@@ -31,7 +31,11 @@ import {
 } from "../../../../packages/core/src/domain/DecisionRights";
 import { quoteArg } from "../../../lib/escape";
 import { harnessCommitMessage, ticketKeyOf } from "../../../lib/ticket-keys";
-import { runWithDeadline } from "../../../lib/run-with-deadline";
+import {
+  HarnessInterrupted,
+  runWithDeadline,
+  wasInterrupted,
+} from "../../../lib/run-with-deadline";
 import { derivedMatrixFor, refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { isDerivedProject } from "../../../lib/derived-writes";
 import * as ui from "../../../lib/ui";
@@ -194,7 +198,6 @@ import {
   substituteGateCommand,
 } from "../../../../packages/core/src/domain/HarnessRun";
 import type { Diagnostic } from "../../../../packages/core/src/domain/Diagnostic";
-import { forShell } from "../../../lib/shell-command";
 import { removeTempFile } from "../../../lib/temp-file";
 import {
   STREAM_FD_VAR,
@@ -896,11 +899,9 @@ function runGate(
     // REQ-231: with arch_sarif, only a violation this attempt adds fails it.
     const arch = settings.archSarif
       ? archRun(worktreeDir, archCmd, settings.archSarif, "", req.requirement || "")
-      : spawnSync(forShell(archCmd), {
-          shell: true,
+      : runWithDeadline(archCmd, {
           cwd: worktreeDir,
-          encoding: "utf8",
-          timeout: timeoutMs,
+          timeoutMs,
           maxBuffer: SUBPROCESS_MAX_BUFFER,
         });
     report(`architecture check: ${archCmd}`, arch.status === 0 ? "pass" : "fail", {
@@ -950,13 +951,12 @@ function runGate(
     // precisely H18: prose and JSON sharing a stream.
     report(`test command: ${maskCommand(resolved)}`, "start");
     const testStart = Date.now();
-    const test = spawnSync(forShell(resolved), {
-      shell: true,
+    // REQ-575: the deadline ends the test command and everything it started.
+    const test = runWithDeadline(resolved, {
       cwd: worktreeDir,
-      encoding: "utf8",
-      timeout: timeoutMs,
+      timeoutMs,
       maxBuffer: SUBPROCESS_MAX_BUFFER,
-      stdio: settings.verbose ? ["ignore", 2, 2] : undefined,
+      toStderr: settings.verbose,
     });
     report(`test command: ${maskCommand(resolved)}`, test.status === 0 ? "pass" : "fail", {
       ...testCounts(`${test.stdout || ""}${test.stderr || ""}`),
@@ -1188,13 +1188,10 @@ function runAgentOnce(
   );
   try {
     fs.writeFileSync(promptFile, prompt, "utf8");
-    const r = spawnSync(forShell(substituteAgentCommand(command, promptFile)), {
-      shell: true,
+    const r = runWithDeadline(substituteAgentCommand(command, promptFile), {
       cwd: worktreeDir,
-      encoding: "utf8",
-      timeout: timeoutMs,
+      timeoutMs,
       maxBuffer: SUBPROCESS_MAX_BUFFER,
-      stdio: ["ignore", "pipe", "pipe"],
     });
     return `${r.stdout || ""}${r.stderr || ""}`.trim();
   } finally {
@@ -1209,6 +1206,17 @@ function runAgentOnce(
  * that tries to break it, which is run and then removed. Neither may change
  * the work: the worktree is put back exactly as it was.
  */
+/**
+ * The project a worktree belongs to (REQ-577): the folder of its repository's
+ * common git directory — the working copy the person runs the harness from,
+ * which no agent writes into.
+ */
+export function projectOf(worktreeDir: string): string {
+  const common = git(worktreeDir, ["rev-parse", "--git-common-dir"]);
+  const dir = String(common.stdout || "").trim();
+  return common.status === 0 && dir ? path.dirname(path.resolve(worktreeDir, dir)) : worktreeDir;
+}
+
 function agentChecks(
   worktreeDir: string,
   req: Partial<HarnessRequirement>,
@@ -1222,8 +1230,10 @@ function agentChecks(
     const known = (settings.profileAgents || {})[profile];
     if (known) return known;
     try {
-      // A profile only a check names is not resolved with the others.
-      return resolveProfileAgent(worktreeDir, profile);
+      // A profile only a check names is not resolved with the others. REQ-577:
+      // from the project, never the worktree — the agent writes there, and
+      // would choose the command that reviews its own work.
+      return resolveProfileAgent(projectOf(worktreeDir), profile);
     } catch {
       return settings.agent || "";
     }
@@ -1299,11 +1309,9 @@ ${said.slice(0, 2000)}`,
           .split("\n")
           .filter((l) => l && !before.has(l) && !l.slice(3).startsWith(PROMPT_ARCHIVE_DIR));
         if (wrote.length === 0) return { ok: true, output: "The adversary wrote no test." };
-        const test = spawnSync(forShell(substituteGateCommand(testCmd, req)), {
-          shell: true,
+        const test = runWithDeadline(substituteGateCommand(testCmd, req), {
           cwd: worktreeDir,
-          encoding: "utf8",
-          timeout: timeoutMs,
+          timeoutMs,
           maxBuffer: SUBPROCESS_MAX_BUFFER,
         });
         return {
@@ -1361,13 +1369,10 @@ function runAdversarialProbe(
 
   try {
     fs.writeFileSync(promptFile, promptFor(instruction), "utf8");
-    const agent = spawnSync(forShell(substituteAgentCommand(command, promptFile)), {
-      shell: true,
+    const agent = runWithDeadline(substituteAgentCommand(command, promptFile), {
       cwd: worktreeDir,
-      encoding: "utf8",
-      timeout: timeoutMs,
+      timeoutMs,
       maxBuffer: SUBPROCESS_MAX_BUFFER,
-      stdio: ["ignore", "pipe", "pipe"],
     });
 
     const wrote = git(worktreeDir, ["status", "--porcelain"])
@@ -1394,7 +1399,9 @@ function runAdversarialProbe(
         .slice(0, 4000),
       wrote,
     };
-  } catch {
+  } catch (e) {
+    // REQ-573: an interrupted run stops here too.
+    if (e instanceof HarnessInterrupted) throw e;
     // Insurance that fails is still only insurance; it must not take the run.
     return NO_PROBE;
   } finally {
@@ -2242,7 +2249,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     const done = spawnSync(
       process.execPath,
       [DONE_SCRIPT, req.requirement, "--no-check", "--project-dir", worktreeDir],
-      { encoding: "utf8" }
+      { encoding: "utf8", timeout: ctx.timeoutMs, maxBuffer: SUBPROCESS_MAX_BUFFER }
     );
     if (done.status !== 0) {
       previousFailure = `done ${req.requirement} failed:\n${done.stdout}${done.stderr}`;
@@ -2551,7 +2558,7 @@ const HARNESS_WRITTEN = ["docs/specs/traceability.md"];
  *
  * @returns conflicted paths that are *not* generated — the ones a human owns
  */
-function resolveGeneratedConflicts(worktree: string): string[] {
+function resolveGeneratedConflicts(worktree: string, commit = true): string[] {
   const listed = git(worktree, ["diff", "--name-only", "--diff-filter=U"]);
   if (listed.status !== 0) return ["(could not list conflicts)"];
 
@@ -2567,8 +2574,10 @@ function resolveGeneratedConflicts(worktree: string): string[] {
     git(worktree, ["checkout", "--ours", "--", file]);
     git(worktree, ["add", "--", file]);
   }
-  const commit = git(worktree, ["commit", "--no-edit"]);
-  return commit.status === 0 ? [] : ["(could not conclude the merge)"];
+  // REQ-574: `--chain` concludes the merge itself, as one commit it checks.
+  if (!commit) return [];
+  const concluded = git(worktree, ["commit", "--no-edit"]);
+  return concluded.status === 0 ? [] : ["(could not conclude the merge)"];
 }
 
 /**
@@ -3057,7 +3066,12 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
       );
       report(`setup: ${setupCmd}`, "start");
       const setupStart = Date.now();
-      const setup = spawnSync(forShell(setupCmd), { cwd: dir, shell: true, encoding: "utf8" });
+      // REQ-575: an install that hangs ends at the run's deadline, with what it started.
+      const setup = runWithDeadline(setupCmd, {
+        cwd: dir,
+        timeoutMs: ctx.timeoutMs,
+        maxBuffer: SUBPROCESS_MAX_BUFFER,
+      });
       report(`setup: ${setupCmd}`, setup.status === 0 ? "pass" : "fail", {
         ms: Date.now() - setupStart,
       });
@@ -3091,7 +3105,7 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
       ...outcome,
     };
     if (outcome.result === "pass") {
-      Object.assign(result, publishBranch(projectDir, branch, req, ctx.settings));
+      Object.assign(result, publishBranch(projectDir, branch, req, ctx.settings, ctx.timeoutMs));
     }
     return result;
   } finally {
@@ -3099,7 +3113,10 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
     // survived the interruption, and `worktreeDir` names a path that was never
     // created. Removing the wrong one leaves the real worktree registered and
     // the next --resume unable to attach.
-    if (!keepWorktrees) {
+    // REQ-573: an interrupted run keeps the worktree, for --resume.
+    if (wasInterrupted()) {
+      info(`${req.requirement}: interrupted — worktree kept at ${dir} for --resume`);
+    } else if (!keepWorktrees) {
       git(projectDir, ["worktree", "remove", "--force", dir]);
     } else {
       info(`${req.requirement}: worktree kept at ${dir}`);
@@ -3125,7 +3142,9 @@ export function publishBranch(
   projectDir: string,
   branch: string,
   req: Pick<HarnessRequirement, "requirement">,
-  settings: Pick<HarnessSettings, "push" | "remote" | "prCmd">
+  settings: Pick<HarnessSettings, "push" | "remote" | "prCmd">,
+  /** REQ-575: how long the PR command may run. */
+  timeoutMs = 20 * 60 * 1000
 ): PublishOutcome {
   const published: PublishOutcome = {};
   if (!settings.push) return published;
@@ -3163,10 +3182,9 @@ export function publishBranch(
       .join(branch)
       .split("{req}")
       .join(req.requirement);
-    const pr = spawnSync(command, {
-      shell: true,
+    const pr = runWithDeadline(command, {
       cwd: projectDir,
-      encoding: "utf8",
+      timeoutMs,
       maxBuffer: SUBPROCESS_MAX_BUFFER,
     });
     if (pr.status !== 0) {
@@ -3433,9 +3451,19 @@ async function runChain(
     }
 
     const branch = `harness/${req.requirement}`;
+    // REQ-574: where this branch stood before the merge — what every undo goes
+    // back to. `HEAD~1` is not it when a step failed: that would be a commit of yours.
+    const before = git(projectDir, ["rev-parse", "HEAD"]).stdout.trim();
+    const undo = (why: string) => {
+      git(projectDir, ["merge", "--abort"]);
+      git(projectDir, ["reset", "-q", "--hard", before]);
+      Object.assign(result, { result: "fail", error: why });
+      stop(`the chain stopped at ${req.requirement}`);
+    };
     const merge = git(projectDir, ["merge", "--no-ff", "--no-commit", branch]);
     if (merge.status !== 0) {
-      const unresolved = resolveGeneratedConflicts(projectDir);
+      // Concluded below, with the prompts left out, as one commit.
+      const unresolved = resolveGeneratedConflicts(projectDir, false);
       if (unresolved.length > 0) {
         git(projectDir, ["merge", "--abort"]);
         Object.assign(result, {
@@ -3465,13 +3493,20 @@ async function runChain(
     }
     const title = String(req.title || req.use_case || req.useCase || "").replace(/^UC-\d+\s*/, "");
     const mergeKey = ticketKeyOf(projectDir, req.requirement);
-    git(projectDir, [
+    const made = git(projectDir, [
       "commit",
       "-q",
       "-m",
       `${mergeKey ? `${mergeKey} ` : ""}Merge ${branch}${title ? ` — ${title}` : ""}\n\n` +
         `Merged by \`specgate harness run --chain\` after its gate passed on ${branch}.`,
     ]);
+    if (made.status !== 0) {
+      undo(
+        `the merge commit of ${branch} failed:\n${`${made.stderr || ""}${made.stdout || ""}`.trim()}`
+      );
+      warn(`${req.requirement}: the merge commit failed — the branch is back where it was`);
+      break;
+    }
 
     const eventsFile = eventsFileFor(projectDir, req.requirement);
     const attempt = Number(result.attempts) || undefined;
@@ -3486,7 +3521,7 @@ async function runChain(
       gateReporter(eventsFile, req.requirement, attempt, "post-merge ")
     );
     if (!gate.ok) {
-      git(projectDir, ["reset", "-q", "--hard", "HEAD~1"]);
+      git(projectDir, ["reset", "-q", "--hard", before]);
       Object.assign(result, {
         result: "fail",
         error: `post-merge gate: ${gate.stage}\n${String(gate.output || "").slice(-4000)}`,
@@ -3502,7 +3537,14 @@ async function runChain(
     // The gate may regenerate the matrix: it belongs to the merge commit.
     if (!isGitClean(projectDir)) {
       git(projectDir, ["add", "-A"]);
-      git(projectDir, ["commit", "-q", "--amend", "--no-edit"]);
+      const amended = git(projectDir, ["commit", "-q", "--amend", "--no-edit"]);
+      if (amended.status !== 0) {
+        undo(
+          `the merge of ${branch} could not take the regenerated files:\n${amended.stderr || ""}`
+        );
+        warn(`${req.requirement}: the merge was undone — the branch is back where it was`);
+        break;
+      }
     }
     info(`${req.requirement}: merged into the chain's branch, gate green`);
   }
@@ -3571,6 +3613,7 @@ function runWorkers(
           env: {
             ...process.env,
             SPECGATE_HARNESS_WORKER: "1",
+            [WORKER_ARGS_VAR]: JSON.stringify(workerCommands(ctx)),
             ...(streaming ? { [STREAM_FD_VAR]: "3" } : {}),
           },
           stdio: ["pipe", "pipe", "pipe", streaming ? "pipe" : "ignore"],
@@ -3629,7 +3672,35 @@ function runWorkers(
  * `harness.config.yaml`, so a profile resolved once in the parent cannot
  * resolve differently in a child.
  */
-function workerArgs(id: string, ctx: RunContext): string[] {
+/**
+ * REQ-576: the commands a worker runs — the agent's, the tests', the PR's —
+ * travel in its environment, not on its command line, where \`ps\` shows them.
+ */
+const WORKER_ARGS_VAR = "SPECGATE_HARNESS_WORKER_ARGS";
+
+/** A worker's commands, from the environment its run gave it; none for a run of its own. */
+export function workerCommandsFromEnv(): string[] {
+  const raw = process.env.SPECGATE_HARNESS_WORKER ? process.env[WORKER_ARGS_VAR] : "";
+  // Read once: the agent this worker starts inherits its environment.
+  delete process.env[WORKER_ARGS_VAR];
+  if (!raw) return [];
+  try {
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function workerCommands(ctx: Pick<RunContext, "settings">): string[] {
+  return [
+    ...(ctx.settings.agent ? ["--agent", ctx.settings.agent] : []),
+    ...(ctx.settings.testCmd ? ["--test-cmd", ctx.settings.testCmd] : []),
+    ...(ctx.settings.prCmd ? ["--pr-cmd", ctx.settings.prCmd] : []),
+  ];
+}
+
+export function workerArgs(id: string, ctx: RunContext): string[] {
   return [
     "--req",
     id,
@@ -3649,8 +3720,13 @@ function workerArgs(id: string, ctx: RunContext): string[] {
     ctx.settings.setupCmd || "none",
     ...(ctx.force ? ["--force"] : []),
     ...(ctx.keepWorktrees ? ["--keep-worktrees"] : []),
-    ...(ctx.settings.agent ? ["--agent", ctx.settings.agent] : []),
-    ...(ctx.settings.testCmd ? ["--test-cmd", ctx.settings.testCmd] : []),
+    // REQ-576: every option of the run reaches its workers, as it reaches a serial run.
+    ...(ctx.resume ? ["--resume"] : []),
+    ...(ctx.skipNotReady ? ["--skip-not-ready"] : []),
+    ...(ctx.strictArtifacts ? ["--strict-artifacts"] : []),
+    ...(ctx.verbose ? ["--verbose"] : []),
+    ...(ctx.settings.push ? ["--push"] : []),
+    ...(ctx.settings.remote ? ["--remote", ctx.settings.remote] : []),
   ];
 }
 
@@ -3891,8 +3967,12 @@ export function harnessQueue<
 
 export class RunCommand extends BaseCommand {
   public async execute() {
+    // REQ-573: every command this run starts ends with it — through the workers too.
+    if (!process.env.SPECGATE_HARNESS_ROOT_PID) {
+      process.env.SPECGATE_HARNESS_ROOT_PID = String(process.pid);
+    }
     try {
-      const args = parseArgs(this.args);
+      const args = parseArgs([...this.args, ...workerCommandsFromEnv()]);
       setJsonMode(args.format !== "text");
       // REQ-496: the stream is this run's stdout; a worker's is the pipe its parent gave it.
       if (args.format === "jsonl") setStream(1);
@@ -4218,6 +4298,8 @@ export class RunCommand extends BaseCommand {
       process.exit(failed > 0 ? 1 : 0);
     } catch (err) {
       const thrown = err as { message?: string };
+      // REQ-573: interrupted, it exits 130 as a shell's Ctrl-C does; the worktree stays.
+      const exitCode = err instanceof HarnessInterrupted ? 130 : 1;
       let isJson = false;
       let format = "";
       try {
@@ -4245,7 +4327,18 @@ export class RunCommand extends BaseCommand {
             ],
           }) + "\n"
         );
-        process.exit(1);
+        process.exit(exitCode);
+      }
+      if (exitCode !== 1) {
+        if (isJson) {
+          process.stdout.write(
+            JSON.stringify({
+              results: null,
+              status: [{ severity: "error", code: "harness_run_error", message: thrown.message }],
+            }) + "\n"
+          );
+        } else error(thrown.message || String(err));
+        process.exit(exitCode);
       }
       const io = agentIo(isJson);
       return io.fail({ results: null }, [
