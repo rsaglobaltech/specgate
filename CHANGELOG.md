@@ -27,6 +27,17 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   command line.
 - **The agent cannot choose its reviewer** (REQ-577): a check's profile is read
   from the project, not from the worktree the agent writes.
+- **One run per working copy, and a dead run does not keep it** (REQ-578): the
+  run lock is created only if absent; the worktree lock works in a project that
+  is itself a worktree, without a 30 s wait.
+- **Nothing half-done left behind** (REQ-579): the run record is written whole,
+  prompt files are private and always removed, `harness/base/*` branches go
+  with the run.
+- **Values in commands are quoted** (REQ-580): `{feature_file}`, `{scenario}`,
+  `{req}` and `pr_cmd`'s `{branch}` are one shell argument each.
+- **No verdict is no pass** (REQ-581): a reviewer that gives no `VERDICT:` line
+  fails the check; a test command cut at the deadline is reported as timed out.
+- **Secrets stay out of the record and the pushed prompts** (REQ-582).
 
 See issue #466.
 

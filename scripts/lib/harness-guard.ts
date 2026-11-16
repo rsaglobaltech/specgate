@@ -146,7 +146,28 @@ export function acquireRunLock(projectDir: string, reqs: string[]): (() => void)
   const ignore = path.join(path.dirname(file), ".gitignore");
   if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
   const lock: RunLock = { pid: process.pid, started: Math.floor(Date.now() / 1000), reqs };
-  fs.writeFileSync(file, JSON.stringify(lock), "utf8");
+  // REQ-578: created only if absent, so two runs that start together cannot both
+  // take it. A lock left by a run that is gone is moved aside first — by one of
+  // them: the rename succeeds once.
+  const create = (): boolean => {
+    try {
+      fs.writeFileSync(file, JSON.stringify(lock), { encoding: "utf8", flag: "wx" });
+      return true;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+      return false;
+    }
+  };
+  if (!create()) {
+    if (runLockHolder(projectDir)) return null;
+    try {
+      fs.renameSync(file, `${file}.stale-${process.pid}`);
+      fs.rmSync(`${file}.stale-${process.pid}`, { force: true });
+    } catch {
+      /* another run moved it first */
+    }
+    if (!create()) return null;
+  }
   const release = () => {
     try {
       const now = JSON.parse(fs.readFileSync(file, "utf8")) as RunLock;

@@ -98,8 +98,21 @@ import {
   EVENTS_FILE_VAR,
   EVENTS_REQ_VAR,
   maskCommand,
+  secretValues,
   testCounts,
 } from "../../../../packages/core/src/domain/HarnessEvents";
+
+/**
+ * REQ-582: text that leaves the run — the run record, the prompt archive that
+ * is committed and pushed — with token-like values and the values of secret
+ * environment variables replaced by "***".
+ */
+export function scrubText(
+  text: string,
+  env: Record<string, string | undefined> = process.env
+): string {
+  return secretValues(env).reduce((out, v) => out.split(v).join("***"), maskCommand(text));
+}
 
 /**
  * `read` against the project as it will be after its open changes are
@@ -894,7 +907,7 @@ function runGate(
   // and its failure goes back to the agent like any other gate failure.
   const archCmd = String(settings.archCmd || "").trim();
   if (archCmd) {
-    report(`architecture check: ${archCmd}`, "start");
+    report(`architecture check: ${maskCommand(archCmd)}`, "start");
     const archStart = Date.now();
     // REQ-231: with arch_sarif, only a violation this attempt adds fails it.
     const arch = settings.archSarif
@@ -904,13 +917,13 @@ function runGate(
           timeoutMs,
           maxBuffer: SUBPROCESS_MAX_BUFFER,
         });
-    report(`architecture check: ${archCmd}`, arch.status === 0 ? "pass" : "fail", {
+    report(`architecture check: ${maskCommand(archCmd)}`, arch.status === 0 ? "pass" : "fail", {
       ms: Date.now() - archStart,
     });
     if (arch.status !== 0) {
       return {
         ok: false,
-        stage: `architecture check: ${archCmd}`,
+        stage: `architecture check: ${maskCommand(archCmd)}`,
         output: (arch.stdout || "") + (arch.stderr || ""),
         hint:
           "The code is in a place the architecture does not allow. Move it to the layer the " +
@@ -919,7 +932,7 @@ function runGate(
     }
   }
   if (testCmd) {
-    let resolved = substituteGateCommand(testCmd, req);
+    let resolved = substituteGateCommand(testCmd, req, quoteArg);
 
     // Where the message stream will be, if there is one to have.
     let reportPath = settings.messageReport || "";
@@ -969,7 +982,7 @@ function runGate(
     if (missing) {
       return {
         ok: false,
-        stage: `test command: ${resolved}`,
+        stage: `test command: ${maskCommand(resolved)}`,
         output: `${test.stdout || ""}${test.stderr || ""}`,
         couldNotRun: missing,
       };
@@ -979,14 +992,21 @@ function runGate(
       // the whole suite because a filter did not apply, say — produces a
       // failure indistinguishable from a real one, and the operator has no way
       // to tell without the command in front of them.
+      // REQ-581: a test command cut at the deadline says so; its output alone reads like a failure.
+      const timedOut =
+        (test.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT"
+          ? `The test command timed out after ${Math.round(timeoutMs / 1000)} s and was ended, with everything it started.\n`
+          : "";
       return {
         ok: false,
-        stage: `test command: ${resolved}`,
+        stage: `test command: ${maskCommand(resolved)}${timedOut ? " (timed out)" : ""}`,
         // Streamed output is not captured, so say where it went rather than
         // recording an empty string a reader would take for "printed nothing".
-        output: settings.verbose
-          ? "(streamed above — run without --verbose to capture it in the report)"
-          : test.stdout + test.stderr,
+        output:
+          timedOut +
+          (settings.verbose
+            ? "(streamed above — run without --verbose to capture it in the report)"
+            : `${test.stdout || ""}${test.stderr || ""}`),
       };
     }
 
@@ -1121,7 +1141,8 @@ function archivePrompt(
     const role = step.profile || (step.advisory ? "reviewer" : "agent");
     fs.writeFileSync(
       path.join(dir, `${requirement}-${ts}-attempt-${attempt}-${role}.md`),
-      prompt,
+      // REQ-582: committed and pushed with the branch — scrubbed of secrets.
+      scrubText(prompt),
       "utf8"
     );
   } catch {
@@ -1187,7 +1208,7 @@ function runAgentOnce(
     `specgate-${tag}-${crypto.randomBytes(4).toString("hex")}.md`
   );
   try {
-    fs.writeFileSync(promptFile, prompt, "utf8");
+    fs.writeFileSync(promptFile, prompt, { encoding: "utf8", mode: 0o600 });
     const r = runWithDeadline(substituteAgentCommand(command, promptFile), {
       cwd: worktreeDir,
       timeoutMs,
@@ -1275,9 +1296,11 @@ function agentChecks(
         restore();
       }
       const verdict = /VERDICT:\s*(PASS|FAIL)/i.exec(said);
+      // REQ-581: no verdict is not a pass — a reviewer that crashed, timed out
+      // or answered something else has not approved anything.
       if (!verdict) {
         return {
-          ok: true,
+          ok: false,
           output: `The reviewer gave no verdict:
 ${said.slice(0, 2000)}`,
         };
@@ -1309,7 +1332,7 @@ ${said.slice(0, 2000)}`,
           .split("\n")
           .filter((l) => l && !before.has(l) && !l.slice(3).startsWith(PROMPT_ARCHIVE_DIR));
         if (wrote.length === 0) return { ok: true, output: "The adversary wrote no test." };
-        const test = runWithDeadline(substituteGateCommand(testCmd, req), {
+        const test = runWithDeadline(substituteGateCommand(testCmd, req, quoteArg), {
           cwd: worktreeDir,
           timeoutMs,
           maxBuffer: SUBPROCESS_MAX_BUFFER,
@@ -1368,7 +1391,7 @@ function runAdversarialProbe(
   );
 
   try {
-    fs.writeFileSync(promptFile, promptFor(instruction), "utf8");
+    fs.writeFileSync(promptFile, promptFor(instruction), { encoding: "utf8", mode: 0o600 });
     const agent = runWithDeadline(substituteAgentCommand(command, promptFile), {
       cwd: worktreeDir,
       timeoutMs,
@@ -1871,6 +1894,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
     });
 
     let stepFailed = false;
+    /** REQ-579: the prompt file in use, removed even when a step throws. */
+    let openPrompt: string | null = null;
     try {
       for (const step of steps) {
         // REQ-535: a session after the budget is spent is not started.
@@ -1917,7 +1942,9 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
           os.tmpdir(),
           `specgate-harness-prompt-${req.requirement}-${crypto.randomBytes(4).toString("hex")}.md`
         );
-        fs.writeFileSync(promptFile, prompt, "utf8");
+        // REQ-579: readable by this user only — it may quote the gate's output.
+        fs.writeFileSync(promptFile, prompt, { encoding: "utf8", mode: 0o600 });
+        openPrompt = promptFile;
         archivePrompt(worktreeDir, req.requirement, attempt, step, prompt);
         // The live view shows what the agent was told and how big it was (REQ-182).
         keepPrompt(ctx.projectDir || worktreeDir, req.requirement, attempt, prompt);
@@ -2005,6 +2032,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         }
 
         removeTempFile(promptFile);
+        openPrompt = null;
         const agentError = agent.error as NodeJS.ErrnoException | undefined;
         if (agentError?.code === "ETIMEDOUT") {
           if (step.advisory) {
@@ -2050,7 +2078,8 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
         }
       }
     } finally {
-      /* each step removes its own prompt file */
+      // REQ-579: each step removes its own; this one is left by a step that threw.
+      if (openPrompt) removeTempFile(openPrompt);
     }
     if (stopRetrying) break;
     if (stepFailed) continue;
@@ -2478,6 +2507,23 @@ function ledgerAttempts(attemptLog: unknown[]): void {
  *
  * Best-effort — a run that produced branches must not fail over bookkeeping.
  */
+/**
+ * REQ-579: the \`harness/base/REQ-NNN\` branches a run made to merge several
+ * dependencies into — derived again on every run, so none is kept. One still
+ * checked out (a kept worktree) is left.
+ */
+export function dropIntegrationBranches(projectDir: string): void {
+  const refs = git(projectDir, [
+    "for-each-ref",
+    "--format=%(refname:short)",
+    "refs/heads/harness/base/",
+  ]);
+  if (refs.status !== 0) return;
+  for (const branch of String(refs.stdout).split("\n").filter(Boolean)) {
+    git(projectDir, ["branch", "-D", branch]);
+  }
+}
+
 function writeRunRecord(projectDir: string, record: RunRecord): string | null {
   try {
     const dir = path.join(projectDir, RUNS_DIR);
@@ -2485,7 +2531,16 @@ function writeRunRecord(projectDir: string, record: RunRecord): string | null {
     const ignore = path.join(dir, ".gitignore");
     if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
     const file = path.join(dir, `${record.startedAt.replace(/[:.]/g, "-")}.json`);
-    fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`, "utf8");
+    // REQ-579: written whole or not at all — a crash mid-write leaves the last good record.
+    const tmp = `${file}.${process.pid}.tmp`;
+    // REQ-582: every string of it scrubbed of secrets.
+    const clean = JSON.stringify(
+      record,
+      (_key, value) => (typeof value === "string" ? scrubText(value) : value),
+      2
+    );
+    fs.writeFileSync(tmp, `${clean}\n`, "utf8");
+    fs.renameSync(tmp, file);
     return file;
   } catch {
     return null;
@@ -3019,7 +3074,18 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
       };
     } else {
       if (merged && !force) info(`${req.requirement}: ${branch} is already merged — recreating it`);
-      git(projectDir, ["branch", "-D", branch]);
+      const deleted = git(projectDir, ["branch", "-D", branch]);
+      // REQ-579: said here, rather than as a confusing failure to create it below.
+      if (deleted.status !== 0) {
+        return {
+          requirement: req.requirement,
+          category: req.category,
+          result: "fail",
+          attempts: 0,
+          branch,
+          error: `could not delete ${branch} to recreate it:\n${deleted.stderr || deleted.stdout}`,
+        };
+      }
     }
   } else if (ctx.resume) {
     // Nothing to resume is not an error: --resume over a whole plan should run
@@ -3064,7 +3130,7 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
         req.requirement,
         undefined
       );
-      report(`setup: ${setupCmd}`, "start");
+      report(`setup: ${maskCommand(setupCmd)}`, "start");
       const setupStart = Date.now();
       // REQ-575: an install that hangs ends at the run's deadline, with what it started.
       const setup = runWithDeadline(setupCmd, {
@@ -3072,7 +3138,7 @@ function processOneRequirement(req: HarnessRequirement, ctx: RunContext): Requir
         timeoutMs: ctx.timeoutMs,
         maxBuffer: SUBPROCESS_MAX_BUFFER,
       });
-      report(`setup: ${setupCmd}`, setup.status === 0 ? "pass" : "fail", {
+      report(`setup: ${maskCommand(setupCmd)}`, setup.status === 0 ? "pass" : "fail", {
         ms: Date.now() - setupStart,
       });
       if (setup.status !== 0) {
@@ -3177,11 +3243,12 @@ export function publishBranch(
   info(`${req.requirement}: pushed ${branch} to ${settings.remote}`);
 
   if (settings.prCmd) {
+    // REQ-580: each value one shell argument.
     const command = settings.prCmd
       .split("{branch}")
-      .join(branch)
+      .join(quoteArg(branch))
       .split("{req}")
-      .join(req.requirement);
+      .join(quoteArg(req.requirement));
     const pr = runWithDeadline(command, {
       cwd: projectDir,
       timeoutMs,
@@ -4073,7 +4140,7 @@ export class RunCommand extends BaseCommand {
             "harness run",
             `dry run · ${pending.length} requirement(s) would be processed`
           ) +
-            (settings.agent ? ui.kv("Agent", settings.agent, 14) : "") +
+            (settings.agent ? ui.kv("Agent", maskCommand(settings.agent), 14) : "") +
             ui.kv("Setup", settings.setupCmd || "none", 14) +
             (args.chain ? ui.kv("Chain", "each green requirement merged into this branch", 14) : "")
         );
@@ -4263,6 +4330,8 @@ export class RunCommand extends BaseCommand {
           });
       // What the agents asked goes into the project, once the run is done (REQ-189).
       if (!process.env.SPECGATE_HARNESS_WORKER) recordQuestions(projectDir, results);
+      // REQ-579: the throwaway bases several dependencies were merged into go with the run.
+      if (!process.env.SPECGATE_HARNESS_WORKER) dropIntegrationBranches(projectDir);
 
       // Only the run that a person started writes a record. A worker is one
       // slice of that run, and its own record would be a second copy of the

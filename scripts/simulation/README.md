@@ -13,12 +13,12 @@ closes `GATE-G6`, never `GATE-G3`, and does not move 1.0.
 An agent with this repository checked out reads the answer instead of
 discovering it, and the run is worthless. `setup.sh` builds a sandbox that has:
 
-| Present | Absent |
-|---|---|
-| `npx @rsaglobaltech/specgate@latest` from the public registry | Any checkout of this repository |
+| Present                                                                             | Absent                                         |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `npx @rsaglobaltech/specgate@latest` from the public registry                       | Any checkout of this repository                |
 | The published documentation, fetched at `https://rsaglobaltech.github.io/specgate/` | `examples/`, `mejoras/`, the source, the tests |
-| One unfamiliar repository, at a pinned commit, with its test command | Any context from the session that set this up |
-| `BRIEF.md` — the whole of what the agent is told | Anything else |
+| One unfamiliar repository, at a pinned commit, with its test command                | Any context from the session that set this up  |
+| `BRIEF.md` — the whole of what the agent is told                                    | Anything else                                  |
 
 `BRIEF.md` is committed. If a run turns out to have had more than this, the run
 is void and the assessment says so — an isolation nobody checked is a claim, not
@@ -58,7 +58,7 @@ is filed. A finding that does not reproduce is an anecdote.
 ## The step that is not delegated
 
 `harness report` leaves `realFailureRate` at `null` until somebody marks a
-failure as the gate's fault rather than the agent's, because *"guessing 100%
-would be the most flattering possible lie about our own gate"*. A maintainer
+failure as the gate's fault rather than the agent's, because _"guessing 100%
+would be the most flattering possible lie about our own gate"_. A maintainer
 adjudicates, by hand, into `.harness/false-failures.jsonl`. An agent adjudicating
 its own run is the gate approving its own work.

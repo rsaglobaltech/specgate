@@ -92,18 +92,27 @@ export function featureFilePath(req: HarnessRequirement): string {
     .trim();
 }
 
-export function substituteGateCommand(template: string, req: HarnessRequirement): string {
+/**
+ * `quote` puts each value in the command as one shell argument (REQ-580);
+ * a plain value — `REQ-007`, a path of letters and slashes — comes out as it is.
+ */
+export function substituteGateCommand(
+  template: string,
+  req: HarnessRequirement,
+  quote: (value: string) => string = (v) => v
+): string {
   const featureFile = featureFilePath(req);
+  const value = (v: string) => (v ? quote(v) : "");
   // `{files}` is check's and apply's (REQ-513): the harness runs the whole suite.
   return template
     .split("{files}")
     .join("")
     .split("{req}")
-    .join(req.requirement || "")
+    .join(value(req.requirement || ""))
     .split("{scenario}")
-    .join(req.scenarioId || req.scenario_id || "")
+    .join(value(req.scenarioId || req.scenario_id || ""))
     .split("{feature_file}")
-    .join(featureFile);
+    .join(value(featureFile));
 }
 
 /** What one attempt cost, and the step it stopped at. */

@@ -52,8 +52,35 @@ interface LockInfo {
   at: number;
 }
 
+/**
+ * In the repository's git directory. REQ-578: \`.git\` is a file in a project
+ * that is itself a worktree or a submodule, where a folder inside it can never
+ * be made — the directory it points to holds the lock instead.
+ */
 function lockDir(projectDir: string): string {
-  return path.join(projectDir, ".git", "specgate-worktree.lock");
+  const dotGit = path.join(projectDir, ".git");
+  try {
+    if (fs.statSync(dotGit).isFile()) {
+      const m = /^gitdir:\s*(.+)$/m.exec(fs.readFileSync(dotGit, "utf8"));
+      if (m) {
+        const gitDir = path.resolve(projectDir, m[1].trim());
+        // A linked worktree's git dir names the common one in \`commondir\`.
+        let common = gitDir;
+        try {
+          common = path.resolve(
+            gitDir,
+            fs.readFileSync(path.join(gitDir, "commondir"), "utf8").trim()
+          );
+        } catch {
+          /* a submodule: its git dir is its own */
+        }
+        return path.join(common, "specgate-worktree.lock");
+      }
+    }
+  } catch {
+    /* no .git: the folder below is made, or the run goes unlocked */
+  }
+  return path.join(dotGit, "specgate-worktree.lock");
 }
 
 function readInfo(dir: string): LockInfo | null {
@@ -64,9 +91,19 @@ function readInfo(dir: string): LockInfo | null {
   }
 }
 
+/** A lock just made, whose holder has not written its owner yet (REQ-578). */
+const BEING_TAKEN_MS = 5_000;
+
 /** True when the holder is gone, or has been holding it implausibly long. */
-function isStale(info: LockInfo | null): boolean {
-  if (!info) return true;
+function isStale(info: LockInfo | null, dir: string): boolean {
+  if (!info) {
+    // REQ-578: between mkdir and owner.json the lock is being taken, not abandoned.
+    try {
+      return Date.now() - fs.statSync(dir).mtimeMs > BEING_TAKEN_MS;
+    } catch {
+      return true;
+    }
+  }
   if (Date.now() - info.at > STALE_MS) return true;
   try {
     // Signal 0 tests for existence without touching the process.
@@ -106,8 +143,10 @@ export function withWorktreeLock<T>(projectDir: string, fn: () => T): T {
       );
       held = true;
       break;
-    } catch {
-      if (isStale(readInfo(dir))) {
+    } catch (e) {
+      // REQ-578: a lock that cannot be made at all is not waited for 30 s.
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") break;
+      if (isStale(readInfo(dir), dir)) {
         // Break it rather than wait out a holder that no longer exists.
         try {
           fs.rmSync(dir, { recursive: true, force: true });

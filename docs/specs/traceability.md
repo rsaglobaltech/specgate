@@ -472,6 +472,11 @@
 | REQ-575 | SCN-575a | `features/harness/REQ-575.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
 | REQ-576 | SCN-576a | `features/harness/REQ-576.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
 | REQ-577 | SCN-577a | `features/harness/REQ-577.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-578 | SCN-578a | `features/harness/REQ-578.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-579 | SCN-579a | `features/harness/REQ-579.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-580 | SCN-580a | `features/harness/REQ-580.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-581 | SCN-581a | `features/harness/REQ-581.feature` | - | - | - | - | - | tests/unit/quality-agents.test.ts | Approved |
+| REQ-582 | SCN-582a | `features/harness/REQ-582.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
