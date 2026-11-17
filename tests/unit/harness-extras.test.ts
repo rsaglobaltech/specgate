@@ -376,3 +376,105 @@ test("REQ-584 REQ-588: timeouts: and sandbox: may be written on one line, as the
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+/** Docker answers here: on Linux CI and on a machine with Docker Desktop running. */
+const DOCKER =
+  process.platform !== "win32" &&
+  spawnSync("docker", ["info", "--format", "{{.ServerVersion}}"], {
+    encoding: "utf8",
+    timeout: 20000,
+  }).status === 0;
+
+test(
+  "REQ-588 SCN-588b: a real container runs the agent — the worktree written, no network, no credential it was not given",
+  { skip: !DOCKER && "needs Docker", timeout: 600000 },
+  () => {
+    const image = "specgate-sandbox-test:1";
+    // An agent CLI baked into the image, as a team's real one would be.
+    const agentJs = [
+      "const fs = require('node:fs');",
+      "const prompt = fs.readFileSync(0, 'utf8');",
+      "require('node:dns').lookup('registry.npmjs.org', (err) => {",
+      "  fs.writeFileSync('sandboxed.json', JSON.stringify({",
+      "    prompt: prompt.length > 0,",
+      "    network: err ? 'none' : 'open',",
+      "    key: process.env.ANTHROPIC_API_KEY || null,",
+      "    aws: process.env.AWS_SECRET_ACCESS_KEY || null,",
+      "    req: process.env.SPECGATE_REQ || null,",
+      "    cwd: process.cwd(),",
+      "  }));",
+      "  fs.writeFileSync('src-fixture.js', 'module.exports = 1;\\n');",
+      "});",
+    ].join("\n");
+    const dockerfile =
+      "FROM node:24-slim\n" +
+      `RUN printf '%s' ${JSON.stringify(Buffer.from(agentJs).toString("base64"))} | base64 -d > /usr/local/bin/fake-agent.js\n` +
+      "RUN printf '#!/bin/sh\\nexec node /usr/local/bin/fake-agent.js\\n' > /usr/local/bin/fake-agent && chmod +x /usr/local/bin/fake-agent\n";
+    const build = spawnSync("docker", ["build", "-q", "-t", image, "-"], {
+      input: dockerfile,
+      encoding: "utf8",
+      timeout: 300000,
+    });
+    assert.equal(build.status, 0, build.stdout + build.stderr);
+
+    const p = project(
+      `sandbox: { image: ${image}, network: none }\nagent_env: [ANTHROPIC_API_KEY]\n`
+    );
+    try {
+      const r = spawnSync(
+        process.execPath,
+        [
+          CLI,
+          "harness",
+          "run",
+          "--project-dir",
+          p.projectDir,
+          "--req",
+          "REQ-000",
+          "--agent",
+          "fake-agent < {prompt_file}",
+          "--max-attempts",
+          "1",
+          "--setup-cmd",
+          "none",
+          "--skip-baseline",
+          "--keep-worktrees",
+        ],
+        {
+          encoding: "utf8",
+          timeout: 300000,
+          env: {
+            ...process.env,
+            ANTHROPIC_API_KEY: "sk-ant-given",
+            AWS_SECRET_ACCESS_KEY: "not-given",
+          },
+        }
+      );
+      const list = spawnSync("git", ["worktree", "list", "--porcelain"], {
+        cwd: p.projectDir,
+        encoding: "utf8",
+      });
+      const worktree = list.stdout
+        .split("\n")
+        .filter((l: string) => l.startsWith("worktree "))
+        .map((l: string) => l.slice("worktree ".length))
+        .find((w: string) => fs.existsSync(path.join(w, "sandboxed.json")));
+      assert.ok(worktree, `the agent wrote in its worktree:\n${r.stdout}${r.stderr}`);
+      const seen = JSON.parse(fs.readFileSync(path.join(worktree, "sandboxed.json"), "utf8"));
+      assert.equal(seen.prompt, true, "it read its prompt");
+      assert.equal(seen.network, "none", "no network");
+      assert.equal(seen.key, "sk-ant-given", "the variable agent_env names");
+      assert.equal(seen.aws, null, "no variable it does not name");
+      assert.equal(seen.req, "REQ-000", "the harness's own");
+      assert.equal(
+        fs.realpathSync(seen.cwd),
+        fs.realpathSync(worktree),
+        "in its worktree, at its own path"
+      );
+      // Written as the person running the harness, not root: git can take it.
+      assert.equal(fs.statSync(path.join(worktree, "sandboxed.json")).uid, process.getuid?.());
+    } finally {
+      fs.rmSync(p.parent, { recursive: true, force: true });
+    }
+  }
+);

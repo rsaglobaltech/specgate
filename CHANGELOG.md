@@ -9,6 +9,21 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.1.2] — 2026-11-17
+
+### Fixed
+
+- **A reused process number does not keep a lock** (REQ-593): the run lock and
+  the worktree lock count as held only while the process they name started
+  before they were written, so a crashed run's number, taken by another
+  program, no longer keeps the project locked.
+
+### Verified
+
+- **`sandbox:` against a real container** (REQ-588 SCN-588b): a test builds an
+  image with an agent CLI and runs the harness in it under Docker — no network,
+  only the variables `agent_env:` names, files written as the person running it.
+
 ## [1.1.1] — 2026-11-17
 
 ### Fixed

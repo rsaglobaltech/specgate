@@ -12,6 +12,12 @@ The system SHALL, when `harness.config.yaml` sets `sandbox:` (an image, a networ
 - WHEN the harness runs the agent
 - THEN the command runs in `ghcr.io/acme/agent:1` with `--network none`, the worktree as its working directory, and `-e ANTHROPIC_API_KEY` among the variables
 
+#### Scenario: SCN-588b — A real container
+
+- GIVEN Docker, an image holding the agent's CLI, `sandbox: { image: <it>, network: none }` and `agent_env: [ANTHROPIC_API_KEY]`
+- WHEN the harness runs the agent with `ANTHROPIC_API_KEY` and `AWS_SECRET_ACCESS_KEY` in its environment
+- THEN the agent reads its prompt, finds no network, has `ANTHROPIC_API_KEY` and `SPECGATE_REQ` but no `AWS_SECRET_ACCESS_KEY`, and writes in its worktree, at its own path, files owned by the person running the harness
+
 <!-- specgate:trace actor=Developer feature=features/harness/REQ-588.feature kind=functional status=Approved -->
 
 ### Requirement: REQ-589 — One download cache for every worktree

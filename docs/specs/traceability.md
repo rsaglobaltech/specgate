@@ -487,6 +487,7 @@
 | REQ-590 | SCN-590a | `features/harness/REQ-590.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
 | REQ-591 | SCN-591a | `features/harness/REQ-591.feature` | - | - | - | - | - | tests/unit/harness-extras.test.ts | Approved |
 | REQ-592 | SCN-592a | `features/harness/REQ-592.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
+| REQ-593 | SCN-593a | `features/harness/REQ-593.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
