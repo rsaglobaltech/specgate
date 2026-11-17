@@ -141,7 +141,8 @@ export function withTerms(md: string, terms: readonly string[]): string {
   const header = lines.findIndex(
     (l) => /^\s*\|/.test(l) && /\bterm\b/i.test(l) && /\bavoid\b/i.test(l)
   );
-  const rows = terms.map((t) => `| ${t.replace(/\|/g, "\\|")} |  |  |`);
+  // A table cell: a backslash escaped first, then the pipe that would end it.
+  const rows = terms.map((t) => `| ${t.replace(/\\/g, "\\\\").replace(/\|/g, "\\|")} |  |  |`);
   if (header === -1) {
     return `${md.trimEnd()}\n\n| Term | Definition | Avoid |\n| --- | --- | --- |\n${rows.join("\n")}\n`;
   }
