@@ -106,3 +106,47 @@ export function forbiddenWords(text: string, glossary: readonly GlossaryTerm[]):
     });
   return out;
 }
+
+/** A word the project already uses as a name, and where (REQ-595). */
+export interface TermCandidate {
+  term: string;
+  /** `actor` (the brief or a requirement's actor=) or `entity` (the domain model). */
+  from: "actor" | "entity";
+}
+
+/**
+ * REQ-595: the names the project uses that its glossary does not define yet —
+ * each once, ignoring case, in the order found. Suggestions for a person: the
+ * definition and the words to avoid are theirs to write.
+ */
+export function suggestTerms(
+  glossary: readonly GlossaryTerm[],
+  candidates: readonly TermCandidate[]
+): TermCandidate[] {
+  const known = new Set(glossary.map((t) => t.term.toLowerCase()));
+  const out: TermCandidate[] = [];
+  for (const c of candidates) {
+    const term = c.term.trim();
+    if (!term || /<[^>]+>/.test(term) || known.has(term.toLowerCase())) continue;
+    known.add(term.toLowerCase());
+    out.push({ term, from: c.from });
+  }
+  return out;
+}
+
+/** The glossary with a row per term added under its table, Definition and Avoid left to fill. */
+export function withTerms(md: string, terms: readonly string[]): string {
+  if (terms.length === 0) return md;
+  const lines = md.replace(/\r\n/g, "\n").split("\n");
+  const header = lines.findIndex(
+    (l) => /^\s*\|/.test(l) && /\bterm\b/i.test(l) && /\bavoid\b/i.test(l)
+  );
+  const rows = terms.map((t) => `| ${t.replace(/\|/g, "\\|")} |  |  |`);
+  if (header === -1) {
+    return `${md.trimEnd()}\n\n| Term | Definition | Avoid |\n| --- | --- | --- |\n${rows.join("\n")}\n`;
+  }
+  let end = header + 1;
+  while (end < lines.length && /^\s*\|/.test(lines[end])) end += 1;
+  lines.splice(end, 0, ...rows);
+  return lines.join("\n");
+}

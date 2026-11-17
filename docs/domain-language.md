@@ -33,6 +33,11 @@ spans, fenced blocks and lines that begin a comment (`<!--`) are skipped; the
 inner lines of a multi-line comment and Gherkin `#` comments are still checked.
 A plain `validate` warns; `validate --strict` (the gate) fails.
 
+The table is yours to write — no command fills a definition. `specgate
+glossary` lists the names the project already uses that it does not define
+yet: its actors and the entities of its domain model. `specgate glossary
+--write` adds each as a row, its Definition and Avoid left for you (REQ-595).
+
 ## Business rules, numbered
 
 A requirement's rules are a `Rules:` list whose items start with `BR-NNN`:
@@ -89,10 +94,13 @@ With neither source, no file is written.
 
 ## The actors
 
-When `docs/brief.md` names its actors, `specgate check` writes
-`docs/specs/actors.md`: a Mermaid flowchart from each actor to the capabilities
-and requirements whose trace says `actor=<that actor>`, and a table of each
-actor's requirements. `validate` warns `actor_unknown` for a requirement whose
+`specgate check` and `specgate archive` write `docs/specs/actors.md`: a
+Mermaid flowchart from each actor to the capabilities and requirements whose
+trace says `actor=<that actor>`, and a table of each actor's requirements. The
+actors are those `docs/brief.md` names; with no brief, or one that names none,
+and a project that keeps `actors.md`, those the delivered requirements' `actor=`
+name (REQ-594) — `check` never adds the file to a project that has none. With no actor
+anywhere, `check` says the diagram is not drawn, and why. `validate` warns `actor_unknown` for a requirement whose
 actor the brief does not list, so a typo or a forgotten actor shows up before a
 diagram leaves it out. Case does not matter: `actor=customer` is the brief's
 `Customer`, and is drawn under the brief's spelling.

@@ -853,6 +853,19 @@ export const SURFACE: Command[] = [
   },
 
   {
+    // REQ-595: the names the project uses that its glossary does not define yet.
+    name: "glossary",
+    mcp: false,
+    script: ["glossary.js"],
+    help: {
+      group: "core",
+      icon: "📖",
+      summary:
+        "The actors and entities the glossary does not define yet; --write adds them as rows.",
+    },
+    json: { key: "glossary", gate: false },
+  },
+  {
     // REQ-542: what a release delivered, from the changes it archived.
     name: "release-notes",
     mcp: false,

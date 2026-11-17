@@ -292,4 +292,18 @@ export default [
       t.expect(fs.readdirSync(path.join(dir, "studio-out")).length > 0, "studio exports a bundle");
     },
   },
+  {
+    // REQ-595: the glossary's missing terms, listed, then added as rows to fill.
+    name: "glossary lists the names it lacks and adds them as rows to fill",
+    covers: ["glossary"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      const listed = t.sg(dir, "glossary", "--json");
+      t.ok(listed, "glossary --json");
+      t.expect(Array.isArray(t.json(listed).glossary.suggested), "it says what is missing", listed);
+      t.ok(t.sg(dir, "glossary", "--write"), "glossary --write");
+      t.ok(t.sg(dir, "validate", ".", "--strict"), "the glossary it wrote still validates");
+    },
+  },
 ];

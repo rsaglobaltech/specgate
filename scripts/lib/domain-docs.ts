@@ -8,6 +8,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { TermCandidate } from "../../packages/core/src/domain/Glossary";
 import { frontMatter } from "../draft/brief-setup";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { parseTraceabilityRows } from "../../packages/core/src/domain/TraceabilityFormat";
@@ -220,9 +221,61 @@ function actorRequirements(dir: string): ActorRequirement[] {
   return out;
 }
 
-/** What `docs/specs/actors.md` should hold; null when the brief names no actor. */
+/** REQ-595: the names the project already uses — its actors and its domain model's entities. */
+export function glossaryCandidates(dir: string): TermCandidate[] {
+  return [
+    ...(briefActors(dir).length > 0 ? briefActors(dir) : requirementActors(dir)).map((term) => ({
+      term,
+      from: "actor" as const,
+    })),
+    ...mergeEntities(
+      aggregatesIn(read(dir, AGGREGATES_FILE)),
+      modelSourceEntities(read(dir, MODEL_SOURCE))
+    ).map((e) => ({ term: e.name, from: "entity" as const })),
+  ];
+}
+
+/**
+ * The actors to draw (REQ-594): the brief's, as it spells them; with no brief,
+ * or a brief that names none, the ones the requirements' \`actor=\` name — a
+ * project adopted from its code has requirements long before it has a brief —
+ * when the project has the diagram already.
+ */
+export function projectActors(dir: string): string[] {
+  const declared = briefActors(dir);
+  if (declared.length > 0) return declared;
+  // Only where the project keeps the diagram: a check never adds a file a
+  // project did not have.
+  if (!fs.existsSync(path.join(dir, ACTORS_FILE))) return [];
+  return requirementActors(dir);
+}
+
+/** The actors the delivered requirements' \`actor=\` name, each once, ignoring case. */
+export function requirementActors(dir: string): string[] {
+  const seen = new Map<string, string>();
+  for (const r of actorRequirements(dir)) {
+    const key = r.actor.toLowerCase();
+    if (r.actor && !/<[^>]+>/.test(r.actor) && !seen.has(key)) seen.set(key, r.actor);
+  }
+  return [...seen.values()];
+}
+
+/** What `docs/specs/actors.md` should hold; null when no actor is named anywhere. */
 export function generatedActors(dir: string): string | null {
-  return renderActors(briefActors(dir), actorRequirements(dir));
+  return renderActors(projectActors(dir), actorRequirements(dir));
+}
+
+/**
+ * REQ-594: why \`docs/specs/actors.md\` is not drawn, when it is not — said once
+ * by \`check\`, instead of a file that stays as \`init\` wrote it without a word.
+ */
+export function actorsNotDrawn(dir: string): string | null {
+  if (generatedActors(dir) !== null) return null;
+  if (!fs.existsSync(path.join(dir, ACTORS_FILE))) return null;
+  return (
+    `${ACTORS_FILE} is not drawn: neither docs/brief.md (actors:) nor any delivered ` +
+    "requirement (actor= in its specgate:trace) names an actor"
+  );
 }
 
 /** `actor_unknown` for a requirement whose actor the brief does not list. Warnings. */

@@ -9,6 +9,17 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`specgate glossary [--write]`** (REQ-595): the actors and entities the
+  glossary does not define yet; `--write` adds them as rows for a person to fill.
+
+### Fixed
+
+- **`actors.md` without a brief** (REQ-594): drawn from the requirements'
+  `actor=` when no brief names actors, redrawn by `archive` too, and `check`
+  says why when nothing names an actor — it used to stay as `init` wrote it.
+
 ## [1.1.2] — 2026-11-17
 
 ### Fixed

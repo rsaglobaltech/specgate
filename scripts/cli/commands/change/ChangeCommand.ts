@@ -10,6 +10,7 @@
  * what lets an agent drive this without screen-scraping.
  */
 
+import { refreshDomainDiagrams } from "../../../lib/domain-docs";
 import * as fs from "node:fs";
 import {
   contractCitationWarnings,
@@ -1493,6 +1494,9 @@ function cmdArchive(opts: ChangeOptions) {
   // A generated matrix is rebuilt from the capability specs just written, so
   // the rows archive wrote and the rows derivation produces cannot disagree.
   refreshDerivedMatrix(projectDir);
+  // REQ-594: the entity model and the actors drawn again: the requirements
+  // they come from changed here, not only at the next `check`.
+  const regenerated = refreshDomainDiagrams(projectDir);
 
   emit(opts, { archive: summary }, () => {
     const t = plan.totals;
@@ -1502,6 +1506,7 @@ function cmdArchive(opts: ChangeOptions) {
       ui.header(VERB === "archive" ? "archive" : "change archive", changeId) +
         ui.ok(`Archived as ${c.bold}${archivedAs}${c.reset}`) +
         "\n" +
+        regenerated.map((f) => `  ${ui.muted(`↻  ${f} regenerated from its sources`)}\n`).join("") +
         ui
           .kv("Specs", `${t.added} added · ${t.modified} modified · ${t.removed} removed`, 14)
           .replace(/^ {2}/, "    ") +
