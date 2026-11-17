@@ -333,3 +333,55 @@ test("REQ-289 SCN-289a: reviewing a layered draft", () => {
     ]
   );
 });
+
+// ── REQ-599: the design layer, by rigor ──────────────────────────────────────
+
+function designProject(rigor: "lite" | "full", criteria: string[]) {
+  const root = mkProject();
+  assert.equal(cli(root, "change", "new", "add-pricing", "--capability", "pricing").status, 0);
+  const dir = changeDir(root, "add-pricing");
+  const yaml = path.join(dir, "change.yaml");
+  put(yaml, fs.readFileSync(yaml, "utf8").replace(/^rigor:.*$/m, `rigor: ${rigor}`));
+  put(path.join(dir, "discover.md"), DISCOVER(criteria));
+  put(path.join(dir, "specs", "pricing", "spec.md"), GOOD_DELTA);
+  return { root, dir };
+}
+
+test("REQ-599 SCN-599a: the template's own guidance answers no criterion", () => {
+  const { root, dir } = designProject("lite", [
+    "AC-1: Peak hours cost more.",
+    "AC-2: The rate is shown.",
+  ]);
+  put(
+    path.join(dir, "design.md"),
+    fs.readFileSync(path.join(dir, "design.md"), "utf8") + "\nAC-2 — the rate is on the receipt.\n"
+  );
+  const r = cli(root, "change", "validate", "add-pricing", "--json");
+  const misses = diags(r)
+    .filter((d: { code: string }) => d.code === "layer_design_misses_criterion")
+    .map((d: { target?: string }) => d.target);
+  assert.deepEqual(misses, ["AC-1"], out(r));
+});
+
+test("REQ-599 SCN-599b: at lite rigor an unwritten design is skipped, owes nothing and blocks no approval", () => {
+  const { root } = designProject("lite", ["AC-1: Peak hours cost more."]);
+  const v = cli(root, "change", "validate", "add-pricing", "--json");
+  assert.ok(!codes(v).some((c: string) => c.startsWith("layer_design")), out(v));
+  const st = json(cli(root, "change", "status", "add-pricing", "--json"));
+  const arts = st.artifacts || st.change?.artifacts || [];
+  const design = arts.find((a: { id: string }) => a.id === "design");
+  assert.equal(design?.status, "skipped", JSON.stringify(st));
+  const { changeApprovals } = require("../../scripts/lib/approvals");
+  const st2 = changeApprovals(root, "add-pricing");
+  assert.ok(!st2.layers.find((l: { layer: string }) => l.layer === "design").present);
+});
+
+test("REQ-599 SCN-599c: at full rigor an unwritten design is said, and the change is not approved without it", () => {
+  const { root } = designProject("full", ["AC-1: Peak hours cost more."]);
+  const v = cli(root, "change", "validate", "add-pricing", "--json");
+  assert.ok(codes(v).includes("layer_design_not_written"), out(v));
+  const { missingApprovals } = require("../../scripts/lib/approvals");
+  const gap = missingApprovals(root, "add-pricing");
+  assert.match(gap.message, /its design is not written \(rigor: full\)/);
+  assert.match(gap.fix, /--layer design/);
+});

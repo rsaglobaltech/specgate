@@ -120,6 +120,7 @@ gate, it fits better. → [Full comparison](docs/comparisons.md)
 ## 📚 Documentation
 
 - [Getting started](docs/getting-started.md) — install, pick your path, the four verbs
+- [What to tell your agent](docs/agent-kickoff.md) — the prompt for Codex, OpenCode or Claude Code, or `specgate status --prompt`
 - [From a Jira ticket](docs/from-a-ticket.md) · [From a client brief](docs/from-a-brief.md) · [From running code](docs/reverse.md)
 - [What is new in 1.0](docs/whats-new-1.0.md) · [Migrating from 0.x](docs/migrating-to-1.0.md) · [Compatibility](docs/compatibility.md)
 - [Concepts](docs/concepts.md) — the ideas and vocabulary behind every command

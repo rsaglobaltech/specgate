@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import { agentPrompt, type PromptKind } from "../../../../packages/core/src/domain/AgentKickoff";
 import * as path from "node:path";
 import { requirementCapabilities } from "../../../lib/capabilities";
 import { proposalNotes } from "../../../lib/proposals";
@@ -132,6 +133,8 @@ type NextInput = Pick<
 export interface StatusOptions {
   projectDir: string;
   format: string;
+  /** REQ-598: `--prompt [start|draft|build]` — the next step, written for an agent. */
+  prompt?: PromptKind;
 }
 
 export function parseArgs(argv: string[]): StatusOptions {
@@ -141,7 +144,13 @@ export function parseArgs(argv: string[]): StatusOptions {
     if (a === "--project-dir" && argv[i + 1]) opts.projectDir = argv[++i];
     else if (a === "--format" && argv[i + 1]) opts.format = argv[++i];
     else if (a === "--json") opts.format = "json";
-    else if (a === "--help" || a === "-h") {
+    else if (a === "--prompt") {
+      const kind = argv[i + 1];
+      if (kind === "start" || kind === "draft" || kind === "build") {
+        opts.prompt = kind;
+        i += 1;
+      } else opts.prompt = "start";
+    } else if (a === "--help" || a === "-h") {
       process.stdout.write(
         `\n  ${c.bold}${c.cyan}📊 status${c.reset}  ${c.dim}— project state at a glance + what to do next${c.reset}\n\n` +
           `  ${c.bold}USAGE${c.reset}\n` +
@@ -149,6 +158,7 @@ export function parseArgs(argv: string[]): StatusOptions {
           `  ${c.bold}OPTIONS${c.reset}\n` +
           `    ${c.green}--project-dir <path>${c.reset} ${c.dim}Project root (auto-detected from cwd if omitted).${c.reset}\n` +
           `    ${c.green}--json${c.reset}               ${c.dim}One JSON document on stdout; prose on stderr.${c.reset}\n` +
+          `    ${c.green}--prompt${c.reset} [kind]      ${c.dim}What to paste into your agent (Codex, OpenCode, Claude Code), in English: start (default), draft or build.${c.reset}\n` +
           `    ${c.green}-h, --help${c.reset}           ${c.dim}Show this help.${c.reset}\n\n`
       );
       process.exit(0);
@@ -702,6 +712,46 @@ function statusDocument(
   };
 }
 
+/** The agent's step-states that mean a module of the brief is still to draft. */
+const UNDRAFTED = new Set(["not started", "not written", "drafting"]);
+
+/**
+ * REQ-598: `status --prompt` — the same next step, written as what a person
+ * pastes into their agent, with how the installed agents call specgate's steps.
+ */
+function emitPrompt(
+  projectDir: string,
+  opts: StatusOptions,
+  doc: {
+    next?: { command?: string } | null;
+    brief?: { modules?: Array<{ module: string; state: string }> };
+  }
+): void {
+  const has = (...rel: string[]) => rel.some((r) => fs.existsSync(path.join(projectDir, r)));
+  const state = {
+    next: doc.next?.command || null,
+    undrafted: (doc.brief?.modules || [])
+      .filter((m) => UNDRAFTED.has(m.state))
+      .map((m) => m.module),
+    installed: {
+      claude: has(".claude/commands", ".claude/skills", "CLAUDE.md"),
+      opencode: has(".opencode/commands"),
+      codex: has(".agents/skills"),
+    },
+  };
+  const kind = opts.prompt || "start";
+  const text = agentPrompt(kind, state);
+  if (opts.format === "json") {
+    process.stdout.write(
+      JSON.stringify(
+        { prompt: { kind, text, next: state.next, undrafted: state.undrafted } },
+        null,
+        2
+      ) + "\n"
+    );
+  } else process.stdout.write(text);
+}
+
 function emitJson(
   projectDir: string,
   summary: QueueSummary,
@@ -772,6 +822,10 @@ export class StatusCommand extends BaseCommand {
     dir: string
   ): void {
     const { lock, notes, unwritten } = readStatus(projectDir, summary, dir);
+    if (opts.prompt) {
+      emitPrompt(projectDir, opts, statusDocument(projectDir, summary, lock, notes, unwritten));
+      return;
+    }
     if (opts.format === "json") emitJson(projectDir, summary, lock, notes, unwritten);
     else emitText(projectDir, summary, lock, notes, unwritten);
   }

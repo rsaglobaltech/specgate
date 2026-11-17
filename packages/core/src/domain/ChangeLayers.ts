@@ -191,6 +191,22 @@ function section(md: string, heading: RegExp): string {
 
 const withoutComments = (t: string) => withoutHtmlComments(t);
 
+/** REQ-599: `text` without the lines it shares, word for word, with its template. */
+function withoutTemplateLines(text: string, template: string): string {
+  const scaffolded = new Set(
+    template
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+  );
+  return text
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .filter((l) => !scaffolded.has(l.trim()))
+    .join("\n");
+}
+
 export interface AcceptanceCriterion {
   id: string;
   text: string;
@@ -232,6 +248,11 @@ export interface LayerFiles {
   discoverFile: string;
   design: string | null;
   tasks: string | null;
+  /**
+   * `rigor:` in change.yaml (REQ-599): at `full` the design is owed, at `lite`
+   * (the default) it is written when someone has something to say in it.
+   */
+  rigor?: string;
   /** The change's delta specs, joined: what its traces carry (REQ-380). */
   deltas?: string;
 }
@@ -298,6 +319,20 @@ export function checkLayers(files: LayerFiles): Diagnostic[] {
   // written to them.
   if (legacy || !discover) return out;
 
+  // REQ-599: a design still as it was scaffolded is not written. Owed at full
+  // rigor; at lite, optional — and then not judged.
+  const designWritten =
+    files.design !== null && !isUntouchedLayer("design", files.design, files.changeId);
+  if (files.design !== null && !designWritten && files.rigor === "full") {
+    out.push(
+      warning("layer_design_not_written", `design.md of "${files.changeId}" is not written yet.`, {
+        target: files.changeId,
+        file: `${dir}/design.md`,
+        fix: "Write design.md — the architect's layer, answering each acceptance criterion. A full-rigor change is built once it is written and approved.",
+      })
+    );
+  }
+
   // REQ-284: the Discover is the business story.
   const tech = DISCOVER_TECHNICAL.exec(discover) || DISCOVER_REST.exec(discover);
   if (tech) {
@@ -310,10 +345,14 @@ export function checkLayers(files: LayerFiles): Diagnostic[] {
     );
   }
 
-  // REQ-285: the design answers every criterion.
+  // REQ-285: the design answers every criterion — in what the architect
+  // wrote, not in the template's own guidance, which names AC-1 and AC-2.
   const criteria = acceptanceCriteria(files.discover || "");
-  if (files.design !== null && criteria.length > 0) {
-    const design = withoutComments(files.design);
+  if (designWritten && criteria.length > 0) {
+    const design = withoutTemplateLines(
+      withoutComments(files.design as string),
+      templateLayeredDesign(files.changeId)
+    );
     for (const c of criteria) {
       if (!new RegExp(`\\b${c.id}\\b`).test(design)) {
         out.push(

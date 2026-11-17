@@ -10,6 +10,7 @@
  * what lets an agent drive this without screen-scraping.
  */
 
+import { addGlossaryTerms, refreshDomainDiagrams } from "../../../lib/domain-docs";
 import * as fs from "node:fs";
 import {
   contractCitationWarnings,
@@ -1493,8 +1494,13 @@ function cmdArchive(opts: ChangeOptions) {
   // A generated matrix is rebuilt from the capability specs just written, so
   // the rows archive wrote and the rows derivation produces cannot disagree.
   refreshDerivedMatrix(projectDir);
+  // REQ-594: the entity model and the actors drawn again: the requirements
+  // they come from changed here, not only at the next `check`.
+  const regenerated = refreshDomainDiagrams(projectDir);
+  // REQ-595: the names this change brought in, as glossary rows to define.
+  const newTerms = addGlossaryTerms(projectDir);
 
-  emit(opts, { archive: summary }, () => {
+  emit(opts, { archive: { ...summary, glossaryAdded: newTerms } }, () => {
     const t = plan.totals;
     // Set on every plan that gets this far: only a failed plan returns early.
     const trace = t.traceability!;
@@ -1502,6 +1508,10 @@ function cmdArchive(opts: ChangeOptions) {
       ui.header(VERB === "archive" ? "archive" : "change archive", changeId) +
         ui.ok(`Archived as ${c.bold}${archivedAs}${c.reset}`) +
         "\n" +
+        regenerated.map((f) => `  ${ui.muted(`↻  ${f} regenerated from its sources`)}\n`).join("") +
+        (newTerms.length > 0
+          ? `  ${ui.muted(`+  docs/specs/glossary.md: ${newTerms.join(", ")} — write their definitions`)}\n`
+          : "") +
         ui
           .kv("Specs", `${t.added} added · ${t.modified} modified · ${t.removed} removed`, 14)
           .replace(/^ {2}/, "    ") +

@@ -57,6 +57,7 @@ export class ValidateChangeUseCase {
           discoverFile,
           design: read("design.md"),
           tasks: read("tasks.md"),
+          rigor: config.rigor,
           // REQ-380: what the traces carry, against what the design names.
           deltas: deltas.map((d) => this.projectRepo.readFile(d.file) || "").join("\n"),
         })

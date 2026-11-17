@@ -234,7 +234,7 @@
       "surface": "check",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1510,
+      "holdMs": 1600,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -250,6 +250,11 @@
         },
         {
           "t": "  ↻  docs/specs/actors.md regenerated from its sources",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ·  docs/specs/glossary.md does not define Member — archive adds them as rows to fill",
           "c": "out",
           "s": "out"
         },

@@ -351,3 +351,116 @@ test("REQ-541: no actors in the brief, no diagram", () => {
     null
   );
 });
+
+// ── REQ-594 ─────────────────────────────────────────────────────────────────
+
+test("REQ-594 SCN-594a: no actors in a brief — the requirements' actor= are drawn", () => {
+  const dir = project();
+  // A project adopted from its code: requirements, and no brief naming actors —
+  // and the diagram it keeps, as `init` or an earlier brief left it.
+  if (fs.existsSync(path.join(dir, "docs/brief.md"))) fs.rmSync(path.join(dir, "docs/brief.md"));
+  put(dir, "docs/specs/actors.md", "# Actors\n");
+  edit(
+    dir,
+    "spec.md",
+    (s) =>
+      s.trimEnd() +
+      "\n\n## REQ-001 — A customer sees invoices\n\nThe system SHALL list invoices.\n\n<!-- specgate:trace status=Draft actor=Customer -->\n" +
+      "\n## REQ-002 — A clerk files an invoice\n\nThe system SHALL file it.\n\n<!-- specgate:trace status=Draft actor=Clerk -->\n" +
+      "\n## REQ-003 — A customer pays\n\nThe system SHALL take the payment.\n\n<!-- specgate:trace status=Draft actor=customer -->\n"
+  );
+  const r = sg(dir, "check");
+  const actors = fs.readFileSync(path.join(dir, "docs/specs/actors.md"), "utf8");
+  assert.match(actors, /actor_Customer --> cap_spec/, r.out);
+  assert.match(actors, /actor_Clerk --> cap_spec/);
+  assert.match(actors, /cap_spec --> req_REQ_003/, "another case is the same actor");
+  assert.doesNotMatch(actors, /actor_customer\b/);
+  assert.match(r.out, /actors\.md regenerated from its sources/);
+});
+
+test("REQ-594 SCN-594b: nothing names an actor — check says why the diagram is not drawn", () => {
+  const dir = project();
+  if (fs.existsSync(path.join(dir, "docs/brief.md"))) fs.rmSync(path.join(dir, "docs/brief.md"));
+  put(dir, "docs/specs/actors.md", "# Actors\n");
+  // The scaffold's own requirements, with any actor= taken out.
+  edit(dir, "spec.md", (s) => s.replace(/\s+actor=[^\s>]+/g, ""));
+  const r = sg(dir, "check");
+  {
+    assert.match(
+      r.out,
+      /actors\.md is not drawn: neither docs\/brief\.md \(actors:\) nor any delivered requirement/
+    );
+  }
+});
+
+// ── REQ-595 ─────────────────────────────────────────────────────────────────
+
+test("REQ-595: the names the glossary lacks, once each; rows added under its table", () => {
+  const { suggestTerms, withTerms } = require("../../packages/core/src/domain/Glossary");
+  const suggested = suggestTerms(
+    [{ term: "Invoice", definition: "", avoid: [] }],
+    [
+      { term: "Customer", from: "actor" },
+      { term: "customer", from: "actor" },
+      { term: "Invoice", from: "entity" },
+      { term: "<actor>", from: "actor" },
+      { term: "Payment", from: "entity" },
+    ]
+  );
+  assert.deepEqual(suggested, [
+    { term: "Customer", from: "actor" },
+    { term: "Payment", from: "entity" },
+  ]);
+  const md =
+    "# Glossary\n\n| Term | Definition | Avoid |\n| --- | --- | --- |\n| Invoice | A bill | bill |\n\nMore text.\n";
+  assert.equal(
+    withTerms(md, ["Customer", "Payment"]),
+    "# Glossary\n\n| Term | Definition | Avoid |\n| --- | --- | --- |\n| Invoice | A bill | bill |\n| Customer |  |  |\n| Payment |  |  |\n\nMore text.\n"
+  );
+});
+
+test("REQ-595 SCN-595a: check names the actors the glossary lacks; archive adds them as rows to fill", () => {
+  const dir = project();
+  if (fs.existsSync(path.join(dir, "docs/brief.md"))) fs.rmSync(path.join(dir, "docs/brief.md"));
+  edit(
+    dir,
+    "spec.md",
+    (s) =>
+      s.trimEnd() +
+      "\n\n## REQ-001 — A customer sees invoices\n\nThe system SHALL list invoices.\n\n<!-- specgate:trace status=Draft actor=Customer -->\n"
+  );
+  const before = fs.readFileSync(path.join(dir, "docs/specs/glossary.md"), "utf8");
+  const check = sg(dir, "check");
+  assert.match(check.out, /glossary\.md does not define Customer — archive adds them/);
+  assert.equal(
+    fs.readFileSync(path.join(dir, "docs/specs/glossary.md"), "utf8"),
+    before,
+    "check writes nothing"
+  );
+  const { addGlossaryTerms, glossaryMissing } = require("../../scripts/lib/domain-docs");
+  assert.deepEqual(addGlossaryTerms(dir), ["Customer"]);
+  assert.match(
+    fs.readFileSync(path.join(dir, "docs/specs/glossary.md"), "utf8"),
+    /\| Customer \| {2}\| {2}\|/
+  );
+  assert.deepEqual(glossaryMissing(dir), [], "defined now");
+  assert.deepEqual(addGlossaryTerms(dir), [], "added once");
+  const v = sg(dir, "validate", ".", "--json");
+  assert.ok(!codes(JSON.parse(v.stdout)).some((c: string) => c.startsWith("glossary")), v.out);
+});
+
+test("REQ-594: a project without the diagram does not get one from check", () => {
+  const dir = project();
+  if (fs.existsSync(path.join(dir, "docs/brief.md"))) fs.rmSync(path.join(dir, "docs/brief.md"));
+  if (fs.existsSync(path.join(dir, "docs/specs/actors.md")))
+    fs.rmSync(path.join(dir, "docs/specs/actors.md"));
+  edit(
+    dir,
+    "spec.md",
+    (s) =>
+      s.trimEnd() +
+      "\n\n## REQ-001 — A customer sees invoices\n\nThe system SHALL list invoices.\n\n<!-- specgate:trace status=Draft actor=Customer -->\n"
+  );
+  sg(dir, "check");
+  assert.equal(fs.existsSync(path.join(dir, "docs/specs/actors.md")), false);
+});

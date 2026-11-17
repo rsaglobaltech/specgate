@@ -10,7 +10,7 @@
  * moves; a file that calls the engine never is.
  */
 
-import { agentCommand } from "../cli/commands/project/readiness";
+import { agentCommand, preferredAgent } from "../cli/commands/project/readiness";
 import {
   readHarnessConfig,
   writeHarnessCommand,
@@ -24,7 +24,13 @@ import { error, warning, errorMessage } from "../lib/diagnostics";
 import { agentIo, wantsJson, EXIT, AgentIo } from "../lib/agent";
 import type { Diagnostic } from "../lib/diagnostics";
 import { STEPS, PROJECT_RULES, AgentStep } from "./commands";
-import { pluginManifests, skillDirsFor, skillFiles, writeSkills } from "./skills";
+import {
+  SHARED_SKILLS_DIR,
+  pluginManifests,
+  skillDirsFor,
+  skillFiles,
+  writeSkills,
+} from "./skills";
 
 import { c } from "../lib/ui";
 import * as ui from "../lib/ui";
@@ -701,11 +707,30 @@ export function main(argv: string[]): void {
     dryRun: opts.dryRun,
   });
 
+  // REQ-597: Codex has no per-project slash commands; it reads skills from
+  // .agents/skills/. Named, or the project carrying .codex/, it gets the same
+  // steps Claude Code and OpenCode get — without knowing about --format skills.
+  const codexWanted =
+    opts.tools.includes("codex") &&
+    ((opts.named || []).includes("codex") || fs.existsSync(path.join(projectDir, ".codex")));
+  if (codexWanted) {
+    const skills = writeSkills(projectDir, [SHARED_SKILLS_DIR], {
+      force: opts.force,
+      dryRun: opts.dryRun,
+    });
+    written.push(...skills.written.map((p) => ({ tool: "codex", path: p })));
+    diagnostics.push(...skills.diagnostics);
+  }
+
   // One command sets up the agent (REQ-473): its commands, and the agent Build
   // runs when none is set yet — never over one a person chose.
   let agentSet: string | null = null;
   if (!opts.dryRun && !readHarnessConfig(projectDir)?.agent) {
-    const tool = opts.tools.find((t) => agentCommand(t));
+    // REQ-596: the tool named first, when named; otherwise the agent this
+    // project uses — not Claude for every project that installs every tool.
+    const tool = opts.named
+      ? opts.tools.find((t) => agentCommand(t))
+      : preferredAgent(projectDir, opts.tools);
     const command = tool ? agentCommand(tool) : null;
     if (command) {
       writeHarnessCommand(projectDir, "agent", command);
@@ -745,8 +770,9 @@ export function main(argv: string[]): void {
       process.stdout.write(
         "\n" +
           ui.section("Next") +
-          `  ${c.cyan}${ui.sym.next}${c.reset}  Open your agent and run ${ui.cmd(`/${AGENT_NAMESPACE}:explore`)}\n` +
-          `     ${ui.muted("or read AGENTS.md")}\n\n`
+          // REQ-598: one way to start, the same for every agent.
+          `  ${c.cyan}${ui.sym.next}${c.reset}  Paste what ${ui.cmd("specgate status --prompt")} prints into your agent\n` +
+          `     ${ui.muted("it says where to start, from the project as it is now, and what the agent never does")}\n\n`
       );
     }
   );

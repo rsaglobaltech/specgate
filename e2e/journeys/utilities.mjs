@@ -292,4 +292,19 @@ export default [
       t.expect(fs.readdirSync(path.join(dir, "studio-out")).length > 0, "studio exports a bundle");
     },
   },
+  {
+    // REQ-598: the next step, written for an agent; REQ-595: the glossary's gaps, named by check.
+    name: "status --prompt says what to give an agent",
+    covers: ["status"],
+    run(dir, t) {
+      t.nodeRepo(dir);
+      t.ok(t.sg(dir, "init"), "init");
+      const start = t.sg(dir, "status", "--prompt");
+      t.ok(start, "status --prompt");
+      t.expect(/This project uses specgate/.test(start.stdout), "it says what to do", start);
+      const build = t.sg(dir, "status", "--prompt", "build", "--json");
+      t.ok(build, "status --prompt build --json");
+      t.expect(t.json(build).prompt.kind === "build", "as data", build);
+    },
+  },
 ];

@@ -16,10 +16,40 @@ import type { Capability } from "./OnboardCommand";
  * written down for a person to specify, never seeded as requirements (REQ-471).
  */
 
-/** The agents whose CLI, when on the PATH, Build can run without a person (REQ-470, REQ-473). */
+/**
+ * The agents whose CLI, when on the PATH, Build can run without a person
+ * (REQ-470, REQ-473). REQ-596: Codex as its CLI runs today — \`codex exec\`
+ * reads the prompt from stdin with \`-\`, and \`-s workspace-write\` lets it
+ * edit the worktree (\`--full-auto\` is gone from it).
+ */
 export const AGENT_COMMANDS: Record<string, string> = {
   claude: "claude -p < {prompt_file}",
+  codex: "codex exec -s workspace-write - < {prompt_file}",
 };
+
+/** REQ-596: what tells a project's agent apart — its own folder, or its instructions file. */
+const AGENT_MARKS: Record<string, string[]> = {
+  claude: [".claude", "CLAUDE.md"],
+  codex: [".codex"],
+};
+
+/**
+ * REQ-596: the agent this project uses, of those Build can run: the one the
+ * project carries the folder or instructions of, when it is installed; else the
+ * first installed. Claude was the only one known, and was written for a team
+ * that works with Codex.
+ */
+export function preferredAgent(
+  dir: string,
+  among: readonly string[] = Object.keys(AGENT_COMMANDS),
+  installed: (program: string) => boolean = onPath
+): string | null {
+  const known = among.filter((t) => AGENT_COMMANDS[t]);
+  const marked = known.filter((t) =>
+    (AGENT_MARKS[t] || []).some((f) => fs.existsSync(path.join(dir, f)))
+  );
+  return marked.find(installed) ?? known.find(installed) ?? null;
+}
 
 /** Whether a program is on the PATH. */
 export function onPath(program: string): boolean {
@@ -101,7 +131,7 @@ export function settle(
 
   let agent = current.agent ?? null;
   if (!agent) {
-    const tool = Object.keys(AGENT_COMMANDS).find(onPath);
+    const tool = preferredAgent(dir);
     const command = tool ? agentCommand(tool) : null;
     if (tool && command && set("agent", command, `Let Build run ${tool} for each requirement?`)) {
       agent = command;
@@ -124,7 +154,7 @@ export function settle(
       ready: !!agent,
       detail: agent
         ? agent.split(/\s/)[0]!.replace(/^.*[\\/]/, "")
-        : "not set — specgate agents init --tool claude",
+        : "not set — specgate agents init --tool claude   (or --tool codex)",
     },
     {
       name: "Architecture",

@@ -456,7 +456,8 @@ export function presetProfiles(agent: NewProject["agent"]): Array<{ name: string
     ];
   }
   if (agent === "codex")
-    return [{ name: "codex", agent: "codex exec --full-auto - < {prompt_file}" }];
+    // REQ-596: \`--full-auto\` is gone from Codex's CLI; -s workspace-write is what it kept.
+    return [{ name: "codex", agent: "codex exec -s workspace-write - < {prompt_file}" }];
   return [];
 }
 

@@ -9,10 +9,36 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **`specgate status --prompt [start|draft|build]`** (REQ-598): the next step,
+  written as what to paste into Codex, OpenCode or Claude Code, in English, from
+  the project's state; the same prompts in
+  [What to tell your agent](docs/agent-kickoff.md). `agents init` ends by
+  pointing at it.
+- **Codex gets specgate's steps** (REQ-597): `agents init --tool codex` writes
+  them as skills in `.agents/skills/` (`$specgate-draft`, `$specgate-apply`…).
+- **The glossary's missing terms** (REQ-595): `check` names the actors and
+  entities the project uses that `docs/specs/glossary.md` does not define, and
+  `archive` adds each as a row, its definition left for the team.
+- **Codex, not Claude for every project** (REQ-596): Codex is known
+  (`codex exec -s workspace-write - < {prompt_file}`); adoption and
+  `agents init` choose the agent the project carries (`.codex/`, `.claude/`), and
+  `--tool codex` sets it; the studio's Codex preset no longer passes
+  `--full-auto`, which Codex removed.
+- **`actors.md` without a brief** (REQ-594): drawn from the requirements'
+  `actor=` when no brief names actors, redrawn by `archive` too, and `check`
+  says why when nothing names an actor — it used to stay as `init` wrote it.
+
 ## [1.1.2] — 2026-11-17
 
 ### Fixed
 
+- **The design layer, by rigor** (REQ-599): an empty `design.md` no longer
+  answers AC-1 and AC-2 (the template's guidance named them); at `rigor: full`
+  an unwritten design is `layer_design_not_written` and the change is not
+  built until it is written and approved; at `rigor: lite` (the default)
+  status no longer asks for a design the build does not wait for.
 - **A reused process number does not keep a lock** (REQ-593): the run lock and
   the worktree lock count as held only while the process they name started
   before they were written, so a crashed run's number, taken by another
@@ -989,7 +1015,7 @@ After the sixth truck-flote run: the harness agent can write, a Docker check wor
 
 - **The client's brief at the root goes below the front matter** (REQ-259): with `brief.md` pushed first and forja's template in `docs/brief.md`, `draft --agent` wrote the front matter over the "Paste the client's brief here" placeholder and the person pasted the text by hand. `draft` now puts the root file's text there first, keeps the root file, and says so; a body the person wrote is left alone.
 - **`BRIEF-SETUP.md` is removed once the front matter is complete** (REQ-260): it stayed untracked, and the harness refuses a tree that is not clean.
-- **D6 reads a value made of listed parts** (REQ-261): "1234-BCD › Ejes" and "Lucía Martín — E000001234567890" were unlisted although every part was; a value joined with ` › `, ` — ` or ` · ` is listed when each part is.
+- **D6 reads a value made of listed parts** (REQ-261): "1234-BCD › Ejes" and "Lucía Martín — E000001234567890" were unlisted although every part was; a value joined with `›`, `—` or `·` is listed when each part is.
 - **An answer in `questions.md` no longer leaves its requirement blocked unnoticed** (REQ-262, REQ-263): the draft said Ready to review and `status` kept four answered requirements "Waiting for an answer". The checklist now reports each answered question whose requirement is still `Needs Clarification`, with the fix and `--agent`, and `status` lists it under "Answered — update the spec".
 - **The `sbom` check writes the bill of materials of a Quarkus application** (REQ-276): its pom skips deploy, and CycloneDX then wrote nothing ("Skipping CycloneDX goal, because module skips deploy"), so the dependency scan had nothing to read. It now runs with `-Dcyclonedx.skipNotDeployed=false`.
 - **Every gate step is seen while it runs** (REQ-273..REQ-275): `harness run` printed `attempt 1/3` and nothing more for 19 minutes, and `/live` stayed empty, while a semgrep check hung. The setup command, `validate --strict`, the end-to-end test, the architecture check, the test command and each quality check are now a `gate-start` event and a `gate` event with its `ms`, written as each happens — the quality checks used to be reported only once every check of the stage had run — and a `started …` and `passed … in 3m 05s` line of the run, without `--verbose` and whatever the agent command is. `/live` names the step that is running, with its image and how long it has run, and the studio's Build moves to Revisa la calidad when a quality check starts.
