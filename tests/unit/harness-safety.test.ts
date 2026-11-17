@@ -538,3 +538,66 @@ test(
     }
   }
 );
+
+test("REQ-593 SCN-593a: a live pid that another process took over does not hold the run lock", async () => {
+  const { acquireRunLock, runLockHolder } = require("../../scripts/lib/harness-guard");
+  const { processStartMs, isSameProcess } = require("../../scripts/lib/process-start");
+  // The start of this very process, as the system reports it.
+  const mine = processStartMs(process.pid);
+  if (mine !== null) {
+    assert.ok(
+      Math.abs(mine - performance.timeOrigin) < 3000,
+      `${mine} vs ${performance.timeOrigin}`
+    );
+  }
+  assert.equal(
+    isSameProcess(1, 10_000, () => 5_000),
+    true,
+    "started before the lock: its writer"
+  );
+  assert.equal(
+    isSameProcess(1, 10_000, () => 60_000),
+    false,
+    "started after it: a reused pid"
+  );
+  assert.equal(
+    isSameProcess(1, 10_000, () => null),
+    true,
+    "unknown: the pid alone decides"
+  );
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-pid-reuse-"));
+  // A process that is alive now, but started long after the lock it is named in.
+  const reused = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], {
+    stdio: "ignore",
+  });
+  try {
+    await waitFor(() => processStartMs(reused.pid) !== null || process.platform === "win32", 5000);
+    const file = path.join(dir, ".harness", "events", "run.lock");
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    const anHourAgo = Date.now() - 3_600_000;
+    fs.writeFileSync(
+      file,
+      JSON.stringify({
+        pid: reused.pid,
+        started: Math.floor(anHourAgo / 1000),
+        startedMs: anHourAgo,
+        reqs: [],
+      })
+    );
+    if (processStartMs(reused.pid) !== null) {
+      assert.equal(runLockHolder(dir), null, "the reused pid does not hold it");
+      const release = acquireRunLock(dir, ["REQ-001"]);
+      assert.ok(release, "a new run takes it over");
+      release();
+    }
+    // The lock this process writes is its own.
+    const own = acquireRunLock(dir, ["REQ-002"]);
+    assert.ok(own);
+    assert.equal(runLockHolder(dir).pid, process.pid);
+    own();
+  } finally {
+    reused.kill("SIGKILL");
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

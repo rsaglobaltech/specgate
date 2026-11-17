@@ -247,11 +247,17 @@ test("REQ-492 SCN-492a: harnessStop(dir) answers what `harness stop --after-curr
     const events = path.join(p.dir, ".harness", "events");
     fs.mkdirSync(events, { recursive: true });
     const lock = path.join(events, "run.lock");
-    // This test's own process stands for the run: it is alive.
-    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, started: 1, reqs: ["REQ-000"] }));
+    // This test's own process stands for the run: it is alive, and it wrote the
+    // lock now — REQ-593 does not take a lock written before its holder started.
+    const now = Math.floor(Date.now() / 1000);
+    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, started: now, reqs: ["REQ-000"] }));
     const asked = await api.harnessStop(p.dir, { afterCurrent: true });
     assert.equal(asked.stop.requested, true);
-    assert.deepEqual(asked.stop.run, { pid: process.pid, requirements: ["REQ-000"], startedAt: 1 });
+    assert.deepEqual(asked.stop.run, {
+      pid: process.pid,
+      requirements: ["REQ-000"],
+      startedAt: now,
+    });
     assert.ok(fs.existsSync(path.join(events, "stop")), "the stop request is written");
 
     fs.rmSync(lock);

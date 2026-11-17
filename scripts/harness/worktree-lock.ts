@@ -40,6 +40,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { isSameProcess } from "../lib/process-start";
 
 /** How long to wait for the holder before giving up. */
 const WAIT_MS = 30_000;
@@ -108,10 +109,11 @@ function isStale(info: LockInfo | null, dir: string): boolean {
   try {
     // Signal 0 tests for existence without touching the process.
     process.kill(info.pid, 0);
-    return false;
   } catch {
     return true;
   }
+  // REQ-593: alive, but a process that started after the lock is not its holder.
+  return !isSameProcess(info.pid, info.at);
 }
 
 function sleep(ms: number): void {

@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import { killTree } from "./kill-tree";
+import { isSameProcess } from "./process-start";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { warning, type Diagnostic } from "../../packages/core/src/domain/Diagnostic";
@@ -112,6 +113,8 @@ const LOCK = path.join(".harness", "events", "run.lock");
 export interface RunLock {
   pid: number;
   started: number;
+  /** REQ-593: when the lock was written, in milliseconds — to tell a reused pid. */
+  startedMs?: number;
   reqs: string[];
 }
 
@@ -128,7 +131,10 @@ function alive(pid: number): boolean {
 export function runLockHolder(projectDir: string): RunLock | null {
   try {
     const lock = JSON.parse(fs.readFileSync(path.join(projectDir, LOCK), "utf8")) as RunLock;
-    return Number.isInteger(lock.pid) && alive(lock.pid) ? lock : null;
+    if (!Number.isInteger(lock.pid) || !alive(lock.pid)) return null;
+    // REQ-593: a live pid another process took over since does not hold it.
+    const written = lock.startedMs ?? lock.started * 1000 + 999;
+    return isSameProcess(lock.pid, written) ? lock : null;
   } catch {
     return null;
   }
@@ -146,7 +152,8 @@ export function acquireRunLock(projectDir: string, reqs: string[]): (() => void)
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const ignore = path.join(path.dirname(file), ".gitignore");
   if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, "*\n", "utf8");
-  const lock: RunLock = { pid: process.pid, started: Math.floor(Date.now() / 1000), reqs };
+  const now = Date.now();
+  const lock: RunLock = { pid: process.pid, started: Math.floor(now / 1000), startedMs: now, reqs };
   // REQ-578: created only if absent, so two runs that start together cannot both
   // take it. A lock left by a run that is gone is moved aside first — by one of
   // them: the rename succeeds once.
