@@ -39,7 +39,10 @@ function pathWith(claude: boolean): string {
   const system = (process.env.PATH ?? "")
     .split(path.delimiter)
     .filter(
-      (p) => !fs.existsSync(path.join(p, process.platform === "win32" ? "claude.cmd" : "claude"))
+      (p) =>
+        !["claude", "codex"].some((a) =>
+          fs.existsSync(path.join(p, process.platform === "win32" ? `${a}.cmd` : a))
+        )
     );
   return [bin, ...system].join(path.delimiter);
 }
@@ -64,7 +67,10 @@ test("REQ-470 SCN-470a: adopt --yes on a Node project saves `test_cmd: npm test`
     assert.match(out, /Ready/);
     assert.match(out, /✔\s+Tests\s+npm test/);
     assert.match(out, /·\s+Architecture\s+not set — specgate config set arch_cmd "<command>"/);
-    assert.match(out, /·\s+Agent\s+not set — specgate agents init --tool claude/);
+    assert.match(
+      out,
+      /·\s+Agent\s+not set — specgate agents init --tool claude {3}\(or --tool codex\)/
+    );
     assert.match(out, /✔\s+CI gate\s+\.github\/workflows\/spec-gate\.yml/);
     const check = runCli(["check", dir], { env: { ...process.env, CI: "1" } });
     assert.match(check.stdout + check.stderr, /Tests\s+npm test/);

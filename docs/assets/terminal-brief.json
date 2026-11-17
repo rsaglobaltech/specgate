@@ -346,7 +346,7 @@
       "typeMs": 26,
       "holdMs": 2140,
       "truncated": true,
-      "omitted": 4,
+      "omitted": 2,
       "lines": [
         {
           "t": "  ◆ specgate · status   courts",
@@ -414,7 +414,7 @@
           "s": "out"
         },
         {
-          "t": "  ·  No agent set for the harness and the studio's Build: specgate config set agent \"claude -p < {prompt_file}\"",
+          "t": "  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md",
           "c": "out",
           "s": "out"
         },
@@ -424,7 +424,7 @@
           "s": "out"
         },
         {
-          "t": "  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md",
+          "t": "  Next ───────────────────────────────────────────────────",
           "c": "out",
           "s": "out"
         }

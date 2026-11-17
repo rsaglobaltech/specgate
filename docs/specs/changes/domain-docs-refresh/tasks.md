@@ -11,4 +11,4 @@
 ## 2. Implementation
 
 - [x] 2.1 REQ-594 — actors from the requirements without a brief; check says why not; archive redraws
-- [x] 2.2 REQ-595 — `specgate glossary [--write]`
+- [x] 2.2 REQ-595 — the glossary's gaps named by `check`, added by `archive`

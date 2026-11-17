@@ -32,6 +32,7 @@ import {
 } from "../../packages/core/src/infrastructure/HarnessConfigFile";
 import { extractRequirementSection } from "../../packages/core/src/domain/SpecSections";
 import { escapeRegExp } from "./escape";
+import { preferredAgent } from "../cli/commands/project/readiness";
 
 // ── Shapes ────────────────────────────────────────────────────────────────────
 
@@ -157,7 +158,8 @@ function staleFiles(projectDir: string, plan: StoredPlan): string[] {
 function agentCommand(projectDir: string, o: AskOptions): { command: string } | Diagnostic {
   const notSet = (why: string) =>
     error("agent_not_set", why, {
-      fix: "specgate agents init --tool claude",
+      // A command a tool can run: the agent the project carries (REQ-596).
+      fix: `specgate agents init --tool ${preferredAgent(projectDir, undefined, () => true) || "claude"}`,
     });
   try {
     if (o.agent) return { command: o.agent };

@@ -293,17 +293,18 @@ export default [
     },
   },
   {
-    // REQ-595: the glossary's missing terms, listed, then added as rows to fill.
-    name: "glossary lists the names it lacks and adds them as rows to fill",
-    covers: ["glossary"],
+    // REQ-598: the next step, written for an agent; REQ-595: the glossary's gaps, named by check.
+    name: "status --prompt says what to give an agent",
+    covers: ["status"],
     run(dir, t) {
       t.nodeRepo(dir);
       t.ok(t.sg(dir, "init"), "init");
-      const listed = t.sg(dir, "glossary", "--json");
-      t.ok(listed, "glossary --json");
-      t.expect(Array.isArray(t.json(listed).glossary.suggested), "it says what is missing", listed);
-      t.ok(t.sg(dir, "glossary", "--write"), "glossary --write");
-      t.ok(t.sg(dir, "validate", ".", "--strict"), "the glossary it wrote still validates");
+      const start = t.sg(dir, "status", "--prompt");
+      t.ok(start, "status --prompt");
+      t.expect(/This project uses specgate/.test(start.stdout), "it says what to do", start);
+      const build = t.sg(dir, "status", "--prompt", "build", "--json");
+      t.ok(build, "status --prompt build --json");
+      t.expect(t.json(build).prompt.kind === "build", "as data", build);
     },
   },
 ];

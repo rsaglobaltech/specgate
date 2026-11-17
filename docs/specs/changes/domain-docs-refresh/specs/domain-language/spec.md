@@ -22,12 +22,12 @@ The system SHALL draw `docs/specs/actors.md` from the actors `docs/brief.md` nam
 
 ### Requirement: REQ-595 — The glossary's missing terms, suggested
 
-The system SHALL list, on `specgate glossary`, the actors and the domain model's entities that `docs/specs/glossary.md` does not define yet, each once and ignoring case, and SHALL, with `--write`, add each as a row of the glossary's table with its Definition and Avoid left empty, writing nothing without it.
+The system SHALL name, on `specgate check`, the actors and the domain model's entities that `docs/specs/glossary.md` does not define yet, each once and ignoring case, writing nothing; and SHALL, on archiving a change, add each as a row of the glossary's table with its Definition and Avoid left empty — only where the project keeps a glossary.
 
 #### Scenario: SCN-595a — A customer the glossary does not define
 
 - GIVEN a project whose requirement names the actor Customer and whose glossary is empty
-- WHEN the person runs `specgate glossary`, then `specgate glossary --write`
-- THEN the first lists Customer and writes nothing, the second adds the row `| Customer |  |  |`, and Customer is no longer suggested
+- WHEN the person runs `specgate check`, then archives a change
+- THEN check names Customer and writes nothing; the archive adds the row `| Customer |  |  |`, and Customer is no longer missing
 
 <!-- specgate:trace actor=Developer feature=features/domain-language/REQ-595.feature kind=functional status=Approved -->

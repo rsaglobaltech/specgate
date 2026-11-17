@@ -452,12 +452,20 @@ test("the landing page counts what the repository actually has", () => {
   // Every figure on that page is checkable, so it is checked.
   const html = fs.readFileSync(path.join(DOCS, "index.html"), "utf8");
   const { SURFACE } = require("../../scripts/lib/surface");
-  // Commands a person can reach, which is what the stat beside it claims.
-  // `merge-traceability` is plumbing git invokes as a merge driver: no help
-  // entry, no subcommands, no JSON mode. Counting it would make the sentence
-  // next to the number false.
-  const userFacing = SURFACE.filter((c: any) => c.help || c.subcommands).length;
-  assert.ok(html.includes(`<dt>${userFacing}</dt>`), `command count is not ${userFacing}`);
+  // The commands a person learns: the ones `specgate --help` shows — start,
+  // every day, CI. The rest are behind `--help --all`; counting them sold
+  // size, when what a newcomer weighs is how much there is to learn.
+  const toLearn = SURFACE.filter((c: any) =>
+    ["start", "daily", "ci"].includes(c.coreHelp && c.coreHelp.group)
+  ).length;
+  assert.ok(html.includes(`<dt>${toLearn}</dt>`), `command count is not ${toLearn}`);
+  const daily = SURFACE.filter((c: any) => c.coreHelp && c.coreHelp.group === "daily").length;
+  assert.match(
+    html,
+    new RegExp(
+      `<dt>${toLearn}</dt><dd>commands to learn, ${["zero", "one", "two", "three", "four", "five"][daily]} of them for every day`
+    )
+  );
   assert.ok(html.includes("<dt>0</dt>"), "the zero-runtime-dependencies claim is missing");
 });
 

@@ -490,6 +490,10 @@
 | REQ-593 | SCN-593a | `features/harness/REQ-593.feature` | - | - | - | - | - | tests/unit/harness-safety.test.ts | Approved |
 | REQ-594 | SCN-594a | `features/domain-language/REQ-594.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
 | REQ-595 | SCN-595a | `features/domain-language/REQ-595.feature` | - | - | - | - | - | tests/unit/domain-language.test.ts | Approved |
+| REQ-596 | SCN-596a | `features/agent-integration/REQ-596.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Approved |
+| REQ-597 | SCN-597a | `features/agent-integration/REQ-597.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Approved |
+| REQ-598 | SCN-598a | `features/agent-integration/REQ-598.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Approved |
+| REQ-599 | SCN-599a | `features/change-lifecycle/REQ-599.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

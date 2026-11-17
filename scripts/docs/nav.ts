@@ -69,6 +69,12 @@ export const NAV: readonly NavSection[] = [
         blurb: "Installing it, and where to read more.",
       },
       {
+        slug: "agent-kickoff",
+        group: "Begin",
+        label: "What to tell your agent",
+        blurb: "The prompt for Codex, OpenCode or Claude Code — or `specgate status --prompt`.",
+      },
+      {
         slug: "concepts",
         group: "Begin",
         label: "Concepts",

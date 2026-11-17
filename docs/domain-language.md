@@ -12,10 +12,10 @@ project already keeps, and `validate` checks it.
 `specgate init` and `specgate adopt` write an empty `docs/specs/glossary.md`:
 
 ```markdown
-| Term     | Definition                         | Avoid              |
-| -------- | ---------------------------------- | ------------------ |
-| Customer | Who buys and pays for an order.    | client, buyer      |
-| Order    | What a customer asked for, priced. | purchase, basket   |
+| Term     | Definition                         | Avoid            |
+| -------- | ---------------------------------- | ---------------- |
+| Customer | Who buys and pays for an order.    | client, buyer    |
+| Order    | What a customer asked for, priced. | purchase, basket |
 ```
 
 `specgate validate` names every word under **Avoid** used anywhere in
@@ -34,9 +34,9 @@ inner lines of a multi-line comment and Gherkin `#` comments are still checked.
 A plain `validate` warns; `validate --strict` (the gate) fails.
 
 The table is yours to write — no command fills a definition. `specgate
-glossary` lists the names the project already uses that it does not define
-yet: its actors and the entities of its domain model. `specgate glossary
---write` adds each as a row, its Definition and Avoid left for you (REQ-595).
+check` names what the project already uses that the glossary does not define
+yet — its actors and the entities of its domain model — and `specgate archive`
+adds each as a row, its Definition and Avoid left for you (REQ-595).
 
 ## Business rules, numbered
 

@@ -28,6 +28,8 @@ import {
   GLOSSARY_FILE,
   forbiddenWords,
   parseGlossary,
+  suggestTerms,
+  withTerms,
 } from "../../packages/core/src/domain/Glossary";
 import {
   duplicateRules,
@@ -326,4 +328,27 @@ export function refreshDomainDiagrams(dir: string): string[] {
     written.push(file);
   }
   return written;
+}
+
+/**
+ * REQ-595: the names the project uses — its actors, its domain model's
+ * entities — that its glossary does not define yet. Only where the project
+ * keeps a glossary: nothing adds a file a project did not have.
+ */
+export function glossaryMissing(dir: string): string[] {
+  const md = read(dir, GLOSSARY_FILE);
+  if (md === null) return [];
+  return suggestTerms(parseGlossary(md), glossaryCandidates(dir)).map((s) => s.term);
+}
+
+/**
+ * REQ-595: `archive` adds each missing name as a row of the glossary, its
+ * Definition and Avoid left for the team to write. The terms added.
+ */
+export function addGlossaryTerms(dir: string): string[] {
+  const missing = glossaryMissing(dir);
+  if (missing.length === 0) return [];
+  const md = read(dir, GLOSSARY_FILE) as string;
+  fs.writeFileSync(path.join(dir, GLOSSARY_FILE), withTerms(md, missing), "utf8");
+  return missing;
 }

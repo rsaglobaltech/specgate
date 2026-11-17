@@ -58,6 +58,12 @@ export function gitIdentity(projectDir: string): Identity {
   return { name: get("user.name"), email: get("user.email") };
 }
 
+/** `rigor:` in change.yaml: `full`, or `lite` (the default). */
+export function changeRigor(projectDir: string, id: string): string {
+  const yaml = read(path.join(changeDir(projectDir, id), "change.yaml")) || "";
+  return (/^rigor:\s*(\S+)/m.exec(yaml) || [])[1] || "lite";
+}
+
 /** The change's schema: `layered` from 1.0 on, `spec-driven` for a 0.27 change. */
 export function changeSchema(projectDir: string, id: string): string {
   const yaml = read(path.join(changeDir(projectDir, id), "change.yaml")) || "";
@@ -109,7 +115,12 @@ export function changeApprovals(projectDir: string, id: string): ChangeApprovals
   // approved as 0.27 approved it: by the `approved:` line `change approve` writes.
   const line = approvedLine(projectDir, id);
   const anyWritten = layers.some((l) => l.present);
-  const approved = anyWritten ? changeApproved(layers) : Boolean(line);
+  // REQ-599: at full rigor the design is owed — not written is not approved.
+  const designOwed =
+    schema === "layered" &&
+    changeRigor(projectDir, id) === "full" &&
+    !layers.some((l) => l.layer === "design" && l.present);
+  const approved = designOwed ? false : anyWritten ? changeApproved(layers) : Boolean(line);
   const dates = layers.flatMap((l) => l.approvals.map((a) => a.at)).sort();
   return {
     change: id,
@@ -244,6 +255,14 @@ export function missingApprovals(
 ): { message: string; fix: string } | null {
   const state = changeApprovals(projectDir, id);
   if (!state.required || state.approved) return null;
+  // REQ-599: a full-rigor change whose design nobody wrote yet.
+  const design = state.layers.find((l) => l.layer === "design");
+  if (design && !design.present && changeRigor(projectDir, id) === "full") {
+    return {
+      message: `${id} is not approved: its design is not written (rigor: full).`,
+      fix: `Write docs/specs/changes/${id}/design.md, then specgate change approve ${id} --layer design, by the ${design.owner} role — or rigor: lite in its change.yaml.`,
+    };
+  }
   const waiting = state.layers.filter((l) => l.present && !l.approved);
   const what = waiting.length
     ? waiting

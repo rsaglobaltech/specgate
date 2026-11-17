@@ -16,13 +16,13 @@
   regenerates the model and the actors after writing the specs, as `check` does.
 - AC-2 — `actorsNotDrawn`: `check` prints why, when `actors.md` exists and no
   actor is named anywhere.
-- AC-3 — `specgate glossary [--write] [--json]`: `suggestTerms` over the actors
+- AC-3 — `check` names, and `archive` adds as rows (`addGlossaryTerms`), `suggestTerms` over the actors
   and the domain model's entities, minus the glossary's terms; `withTerms` adds
   rows under the table, Definition and Avoid empty.
 
 ## Channels
 
-A new command, `specgate glossary` (`glossary` in JSON): a minor release.
+No new command: `check` says what the glossary lacks and `archive` adds it, as it already redraws the diagrams. `archive --json` gains `glossaryAdded`.
 
 ## Decisions
 

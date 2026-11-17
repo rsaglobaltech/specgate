@@ -100,7 +100,6 @@ not run reports an `error` about itself.
 | `specgate harness report --json` | `report` | no |
 | `specgate harness stop --after-current --json` | `stop` | no |
 | `specgate harness continue --json` | `pause` | no |
-| `specgate glossary --json` | `glossary` | no |
 | `specgate release-notes <from>..<to> --json` | `releaseNotes` | no |
 | `specgate acceptance <change> --json` | `acceptance` | no |
 | `specgate guide --json` | `guide` | no |

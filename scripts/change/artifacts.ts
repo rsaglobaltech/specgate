@@ -117,9 +117,10 @@ export function artifactState(
   // A change that declares skip_specs satisfies the `specs` dependency without
   // creating anything — the artefact counts as done, not as missing.
   const skipped: Record<string, boolean> = { specs: config.skip_specs === true };
-  // Lite rigor makes design optional in the same way.
-  // A layered change always has a design: it is the architect's layer.
-  if (config.rigor === "lite" && !exists.design && config.schema !== LAYERED_SCHEMA) {
+  // Lite rigor makes design optional in the same way (ADR-0018), in a layered
+  // change too (REQ-599): the gate does not wait for it, so status does not
+  // either. At full rigor it is owed, and the build waits for it.
+  if (config.rigor !== "full" && !exists.design) {
     skipped.design = true;
   }
 

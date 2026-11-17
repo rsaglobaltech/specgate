@@ -40,7 +40,7 @@ import { BASELINE_FILE, parseBaseline } from "../../../../packages/core/src/doma
 import { checksFor } from "../../../../packages/core/src/domain/QualityChecks";
 import { gateTestCommand } from "../../../../packages/core/src/domain/DoneVerification";
 import { planTests } from "../../../lib/test-selection";
-import { actorsNotDrawn, refreshDomainDiagrams } from "../../../lib/domain-docs";
+import { actorsNotDrawn, glossaryMissing, refreshDomainDiagrams } from "../../../lib/domain-docs";
 import { stackFileCommand } from "../../../lib/stack-detect";
 import { startShell, type StageRun } from "../../../lib/stage-run";
 import type { Diagnostic } from "../../../lib/diagnostics";
@@ -350,6 +350,13 @@ export class CheckCommand extends BaseCommand {
     // REQ-594: an actors diagram that cannot be drawn says why.
     const undrawn = actorsNotDrawn(projectDir);
     if (undrawn && !json) process.stdout.write(`  ${ui.muted(`·  ${undrawn}`)}\n`);
+    // REQ-595: names the project uses that its glossary does not define yet.
+    const undefinedTerms = glossaryMissing(projectDir);
+    if (undefinedTerms.length > 0 && !json) {
+      process.stdout.write(
+        `  ${ui.muted(`·  docs/specs/glossary.md does not define ${undefinedTerms.join(", ")} — archive adds them as rows to fill`)}\n`
+      );
+    }
 
     // On a ticket's branch, commits that do not name the ticket (ADR-0039);
     // and requirements another open change rewrites too (REQ-160).

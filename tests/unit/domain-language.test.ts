@@ -419,7 +419,7 @@ test("REQ-595: the names the glossary lacks, once each; rows added under its tab
   );
 });
 
-test("REQ-595 SCN-595a: `specgate glossary` lists the actors the glossary lacks; --write adds them to fill", () => {
+test("REQ-595 SCN-595a: check names the actors the glossary lacks; archive adds them as rows to fill", () => {
   const dir = project();
   if (fs.existsSync(path.join(dir, "docs/brief.md"))) fs.rmSync(path.join(dir, "docs/brief.md"));
   edit(
@@ -429,24 +429,22 @@ test("REQ-595 SCN-595a: `specgate glossary` lists the actors the glossary lacks;
       s.trimEnd() +
       "\n\n## REQ-001 — A customer sees invoices\n\nThe system SHALL list invoices.\n\n<!-- specgate:trace status=Draft actor=Customer -->\n"
   );
-  const listed = JSON.parse(sg(dir, "glossary", "--json").stdout).glossary;
-  assert.ok(
-    listed.suggested.some(
-      (s: { term: string; from: string }) => s.term === "Customer" && s.from === "actor"
-    ),
-    JSON.stringify(listed)
-  );
-  assert.equal(listed.written, false);
   const before = fs.readFileSync(path.join(dir, "docs/specs/glossary.md"), "utf8");
-  assert.doesNotMatch(before, /\| Customer \|/, "listing writes nothing");
-
-  const written = JSON.parse(sg(dir, "glossary", "--write", "--json").stdout).glossary;
-  assert.equal(written.written, true);
-  const after = fs.readFileSync(path.join(dir, "docs/specs/glossary.md"), "utf8");
-  assert.match(after, /\| Customer \| {2}\| {2}\|/);
-  const again = JSON.parse(sg(dir, "glossary", "--json").stdout).glossary;
-  assert.ok(!again.suggested.some((s: { term: string }) => s.term === "Customer"), "defined now");
-  assert.ok(again.terms.includes("Customer"));
+  const check = sg(dir, "check");
+  assert.match(check.out, /glossary\.md does not define Customer — archive adds them/);
+  assert.equal(
+    fs.readFileSync(path.join(dir, "docs/specs/glossary.md"), "utf8"),
+    before,
+    "check writes nothing"
+  );
+  const { addGlossaryTerms, glossaryMissing } = require("../../scripts/lib/domain-docs");
+  assert.deepEqual(addGlossaryTerms(dir), ["Customer"]);
+  assert.match(
+    fs.readFileSync(path.join(dir, "docs/specs/glossary.md"), "utf8"),
+    /\| Customer \| {2}\| {2}\|/
+  );
+  assert.deepEqual(glossaryMissing(dir), [], "defined now");
+  assert.deepEqual(addGlossaryTerms(dir), [], "added once");
   const v = sg(dir, "validate", ".", "--json");
   assert.ok(!codes(JSON.parse(v.stdout)).some((c: string) => c.startsWith("glossary")), v.out);
 });
