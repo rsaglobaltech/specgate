@@ -1,5 +1,5 @@
 {
-  "version": "1.1.2",
+  "version": "1.2.0",
   "items": [
     "api:API_VERSION",
     "api:AgentApplyAnswer",
@@ -346,6 +346,7 @@
     "code:last_check_none",
     "code:layer_design_dependency_untraced",
     "code:layer_design_misses_criterion",
+    "code:layer_design_not_written",
     "code:layer_discover_rewritten",
     "code:layer_discover_technical",
     "code:layer_no_contract_cited",
@@ -1278,6 +1279,7 @@
     "flag:stack --project-dir",
     "flag:status --json",
     "flag:status --project-dir",
+    "flag:status --prompt",
     "flag:studio --host",
     "flag:studio --json",
     "flag:studio --out",
