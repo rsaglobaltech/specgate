@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-17
+
+Codex as a first-class agent, what to tell your agent (`status --prompt`), the design layer by rigor, and the domain docs kept current — with no new command.
+
 ### Added
 
 - **`specgate status --prompt [start|draft|build]`** (REQ-598): the next step,
