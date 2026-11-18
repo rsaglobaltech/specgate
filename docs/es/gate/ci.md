@@ -1,4 +1,4 @@
-<!-- translation-of: 843863d85123 -->
+<!-- translation-of: 41f8e2076fce -->
 # El gate en CI
 
 Un gate que solo se ejecuta en portátiles es una sugerencia. Al final de esta
@@ -88,16 +88,16 @@ spec-gate:
     - npm install
     # The gate: the specification and the project's tests.
     - |
-      npx @rsaglobaltech/specgate@1.3.0 check .
+      npx @rsaglobaltech/specgate@1.4.0 check .
     # Supply-chain gate: fails when rendered pack content no longer matches the
     # digest pinned in .specops.lock. Skipped when no packs are installed.
     - >
       if [ -f .specops.lock ]; then
-        npx @rsaglobaltech/specgate@1.3.0 validate . --against-lock;
+        npx @rsaglobaltech/specgate@1.4.0 validate . --against-lock;
       else
         echo "No .specops.lock — no packs installed, nothing to check.";
       fi
-    - npx @rsaglobaltech/specgate@1.3.0 plan --project-dir . --format json > spec-plan.json
+    - npx @rsaglobaltech/specgate@1.4.0 plan --project-dir . --format json > spec-plan.json
   artifacts:
     when: always
     paths:
@@ -120,8 +120,8 @@ spec-gate:
   script:
     - npm install
     - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-    - npx @rsaglobaltech/specgate@1.3.0 check . --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-    - npx @rsaglobaltech/specgate@1.3.0 quality run --stage ci --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx @rsaglobaltech/specgate@1.4.0 check . --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx @rsaglobaltech/specgate@1.4.0 quality run --stage ci --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
 ```
 
 La rama destino es `$(System.PullRequest.TargetBranchName)` en Azure Pipelines
@@ -193,7 +193,7 @@ de salida son `0`, `1` y `2`. El contrato completo:
 [El contrato JSON](../agents.md#the-json-contract).
 
 ```bash
-npx @rsaglobaltech/specgate@1.3.0 check . --ci --json > gate.json
+npx @rsaglobaltech/specgate@1.4.0 check . --ci --json > gate.json
 ```
 
 ## Siguiente
