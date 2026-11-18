@@ -803,6 +803,8 @@ export function recordTranscript(board: Storyboard): Recording {
 // ── Writing ──────────────────────────────────────────────────────────────────
 
 export const INDEX_PATH = path.join(DOCS, "index.html");
+/** The Spanish landing carries the same transcripts: the CLI speaks English. */
+export const LANDINGS = [INDEX_PATH, path.join(DOCS, "es", "index.html")];
 
 export function jsonPath(board: Storyboard): string {
   return path.join(DOCS, "assets", board.file);
@@ -814,8 +816,10 @@ export function serialise(rec: Recording): string {
 
 export function writeRecording(board: Storyboard, rec: Recording): void {
   fs.writeFileSync(jsonPath(board), serialise(rec), "utf8");
-  const index = fs.readFileSync(INDEX_PATH, "utf8");
-  fs.writeFileSync(INDEX_PATH, replaceBlock(index, board.block, renderFallbackHtml(rec)), "utf8");
+  for (const landing of LANDINGS.filter((f) => fs.existsSync(f))) {
+    const index = fs.readFileSync(landing, "utf8");
+    fs.writeFileSync(landing, replaceBlock(index, board.block, renderFallbackHtml(rec)), "utf8");
+  }
 }
 
 /**
@@ -871,11 +875,13 @@ function main(): void {
     if (strip(onDisk) !== strip(serialise(rec))) {
       problems.push(`docs/assets/${board.file} is out of date — run \`npm run docs:terminal\``);
     }
-    const block = readBlock(fs.readFileSync(INDEX_PATH, "utf8"), board.block);
-    if ((block || "").trim() !== renderFallbackHtml(rec).trim()) {
-      problems.push(
-        `the ${board.block} fallback in docs/index.html no longer matches the recording`
-      );
+    for (const landing of LANDINGS.filter((f) => fs.existsSync(f))) {
+      const block = readBlock(fs.readFileSync(landing, "utf8"), board.block);
+      if ((block || "").trim() !== renderFallbackHtml(rec).trim()) {
+        problems.push(
+          `the ${board.block} fallback in ${path.relative(path.dirname(DOCS), landing)} no longer matches the recording`
+        );
+      }
     }
   }
 

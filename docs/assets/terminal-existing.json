@@ -40,7 +40,7 @@
       "typeMs": 26,
       "holdMs": 1960,
       "truncated": true,
-      "omitted": 32,
+      "omitted": 33,
       "lines": [
         {
           "t": "  ◆ specgate · init",
@@ -122,7 +122,7 @@
       "surface": null,
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1420,
+      "holdMs": 1510,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -133,6 +133,11 @@
         },
         {
           "t": "?? .github/",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "?? .specgate/",
           "c": "out",
           "s": "out"
         },
@@ -328,7 +333,7 @@
       "surface": "check",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1420,
+      "holdMs": 1510,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -339,6 +344,11 @@
         },
         {
           "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ·  Policy         .specgate/gate.yaml (standard): coverage warning",
           "c": "out",
           "s": "out"
         },

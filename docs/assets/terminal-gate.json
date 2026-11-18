@@ -234,7 +234,7 @@
       "surface": "check",
       "exit": 0,
       "typeMs": 26,
-      "holdMs": 1600,
+      "holdMs": 1690,
       "truncated": false,
       "omitted": 0,
       "lines": [
@@ -245,6 +245,11 @@
         },
         {
           "t": "",
+          "c": "out",
+          "s": "out"
+        },
+        {
+          "t": "  ·  Policy         .specgate/gate.yaml (standard): coverage warning",
           "c": "out",
           "s": "out"
         },

@@ -520,6 +520,20 @@ export const NAV: readonly NavSection[] = [
         },
       },
       {
+        slug: "gate/policy",
+        group: "The gate, step by step",
+        step: 6,
+        label: "Configure the gate",
+        blurb:
+          "What fails, what is reported, what is skipped: a preset, a level per rule, and a date from which errors count.",
+        es: {
+          label: "Configurar el gate",
+          blurb:
+            "Qué falla, qué se reporta, qué se omite: un preset, un nivel por regla y una fecha desde la que cuentan los errores.",
+          group: "El gate, paso a paso",
+        },
+      },
+      {
         slug: "validating",
         label: "Validating",
         blurb: "Every check the gate runs, what each status owes, and the flags behind check.",

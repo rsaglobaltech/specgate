@@ -508,6 +508,7 @@ test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
 ~/courts $ specgate check
   ◆ specgate · check   courts
 
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning
   ↻  docs/specs/actors.md regenerated from its sources
   ·  docs/specs/glossary.md does not define Member — archive adds them as rows to fill
   ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
@@ -556,11 +557,12 @@ c5da000 invoices 1.4: refunds
     + docs/specs/traceability.md
     + docs/specs/adr/README.md
     + docs/specs/glossary.md
-… 32 more lines
+… 33 more lines
 
 ~/invoices $ git status --short
 ?? .gitattributes
 ?? .github/
+?? .specgate/
 ?? AGENTS.md
 ?? README.md
 ?? docs/
@@ -599,6 +601,7 @@ c5da000 invoices 1.4: refunds
 ~/invoices $ specgate check
   ◆ specgate · check   invoices
 
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning
   ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
   ✔  Specification   validate --strict
   ✔  Tests           npm test
@@ -642,6 +645,7 @@ TESTING: node:test
   ℹ  🧩 Rendering base template
   ℹ  🛠️ Applying project type template: backend
   ℹ  🧩 No optional modules selected. Generating base + project-type features only.
+  ℹ  🚦 Policy: .specgate/gate.yaml — the standard preset; edit a rule to change what fails
   ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
 
   Summary ────────────────────────────────────────────────
@@ -650,8 +654,7 @@ TESTING: node:test
     · Type: backend
     · Domain: parking operations
     · Output: ~/smart-parking
-    · Dry-run: false
-… 5 more lines
+… 6 more lines
 
 ~/smart-parking $ specgate plan
   ◆ specgate · plan

@@ -15,6 +15,7 @@ import type { HarnessSettings } from "../../../../packages/core/src/domain/Harne
 import { refreshDerivedMatrix } from "../spec/MatrixCommand";
 import { inFlightView, unwrittenNotes } from "../../../lib/in-flight";
 import { checkIdsAgainstBase } from "../../../lib/base-ids";
+import type { BaseIdCheck } from "../../../lib/base-ids";
 import { prBase, ticketKeyFindings } from "../../../lib/ticket-keys";
 import { changeOverlaps } from "../../../lib/change-overlap";
 import { changeBaseFindings, recordBases } from "../../../lib/change-base";
@@ -44,6 +45,13 @@ import { actorsNotDrawn, glossaryMissing, refreshDomainDiagrams } from "../../..
 import { stackFileCommand } from "../../../lib/stack-detect";
 import { startShell, type StageRun } from "../../../lib/stage-run";
 import type { Diagnostic } from "../../../lib/diagnostics";
+import {
+  GATE_POLICY_FILE,
+  describePolicy,
+  levelOf,
+  readGatePolicy,
+  RULES,
+} from "../../../lib/gate-policy";
 
 const NULL_SHAPE = { check: null };
 
@@ -343,6 +351,15 @@ export class CheckCommand extends BaseCommand {
         `  ${ui.muted("↻  docs/specs/traceability.md regenerated from its sources")}\n`
       );
     }
+    // What the gate requires here (issue #494): said once, so a pass under a
+    // relaxed policy is never read as a pass under the strict one.
+    const policy = readGatePolicy(projectDir);
+    const relaxed = RULES.some((r) => levelOf(policy, r) !== "error");
+    /** Findings the policy reports instead of failing: they travel with the pass. */
+    const policyReported: Diagnostic[] = [];
+    if (!json && policy.source === "file") {
+      process.stdout.write(`  ${ui.muted(`·  Policy         ${describePolicy(policy)}`)}\n`);
+    }
     // REQ-540, REQ-541: the entity model and the actors diagram, the same way.
     for (const file of refreshDomainDiagrams(projectDir)) {
       if (!json) process.stdout.write(`  ${ui.muted(`↻  ${file} regenerated from its sources`)}\n`);
@@ -404,11 +421,33 @@ export class CheckCommand extends BaseCommand {
     // collision is caught here, before the merge (ADR-0036). Against the same
     // base as ticket keys: a gitflow project's `pr: base:` (REQ-120).
     const idsStarted = Date.now();
-    const ids = checkIdsAgainstBase(
-      projectDir,
-      baseFlag || process.env.SPECGATE_BASE || prBase(projectDir) || undefined
-    );
-    if (ids.state === "checked" && ids.collisions.length > 0) {
+    const idsLevel = levelOf(policy, "ids");
+    const ids: BaseIdCheck =
+      idsLevel === "off"
+        ? { state: "skipped", reason: `ids is off in ${GATE_POLICY_FILE}` }
+        : checkIdsAgainstBase(
+            projectDir,
+            baseFlag || process.env.SPECGATE_BASE || prBase(projectDir) || undefined
+          );
+    const idWarnings: Diagnostic[] = [];
+    if (ids.state === "checked" && ids.collisions.length > 0 && idsLevel === "warning") {
+      // Reported, not failed: the policy sets ids to warning.
+      for (const x of ids.collisions) {
+        idWarnings.push(
+          warning(
+            "id_taken_on_base",
+            `${x.id} is "${x.here}" here and "${x.base}" on ${ids.base}.`,
+            {
+              target: x.id,
+              fix: `renumber ${x.id} on this branch to ${ids.nextFree}, the next id free on both sides`,
+            }
+          )
+        );
+      }
+      if (!json) {
+        for (const d of idWarnings) process.stdout.write(ui.warn(`${d.message}  [${d.code}]`));
+      }
+    } else if (ids.state === "checked" && ids.collisions.length > 0) {
       const first = ids.collisions[0];
       const collisions = [
         ...ids.collisions.slice(1).map((x) =>
@@ -432,7 +471,7 @@ export class CheckCommand extends BaseCommand {
       "ids",
       ids.state === "checked" ? "passed" : "skipped",
       ids.state === "checked"
-        ? []
+        ? idWarnings
         : [
             info(
               "ids_not_compared",
@@ -564,7 +603,9 @@ export class CheckCommand extends BaseCommand {
       const ok = run.status === 0;
       // validate's findings: from this run with --json; a person's run read
       // them again as JSON, and only on a failure, to keep them (REQ-504).
-      const stageFindings = findingsOf(json ? run.stdout : ok ? "" : validateRun(true).stdout);
+      const stageFindings = findingsOf(
+        json ? run.stdout : ok && !relaxed ? "" : validateRun(true).stdout
+      );
       if (!ok) {
         showFailure(run);
         const verdict = error("check_validate_failed", "The gate failed: validate --strict.", {
@@ -574,6 +615,14 @@ export class CheckCommand extends BaseCommand {
         fail(NULL_SHAPE, [...ticketKeys, verdict]);
       }
       gate.set("validate", "passed", stageFindings, { ms });
+      // What the policy reports instead of failing: said under the stage.
+      if (!json) {
+        for (const d of stageFindings.filter((f) => f.code === "gate_rule_reported")) {
+          process.stdout.write(`  ${ui.muted(`▲  ${d.message}`)}\n`);
+        }
+      }
+      // One line per relaxed rule in `status`; each finding stays in the stage.
+      policyReported.push(...stageFindings.filter((f) => f.code === "gate_rule_reported"));
     }
 
     // 2. The architecture check and the tests: side by side unless the
@@ -697,7 +746,14 @@ export class CheckCommand extends BaseCommand {
     // `attempt` and `end` stages always; `ci` with --ci.
     const quality = harness.quality;
     const outcomes: CheckOutcome[] = [];
-    if (quality && quality.checks.length > 0) {
+    const qualityLevel = levelOf(policy, "quality");
+    if (quality && quality.checks.length > 0 && qualityLevel === "off") {
+      if (!json) {
+        process.stdout.write(
+          `  ${ui.muted(`·  Quality        not run — quality is off in ${GATE_POLICY_FILE}`)}\n`
+        );
+      }
+    } else if (quality && quality.checks.length > 0) {
       const ctx = gateContext(projectDir, "", baseFlag || "");
       const stages: Stage[] = ci ? ["attempt", "end", "ci"] : ["attempt", "end"];
       outcomes.push(
@@ -727,7 +783,19 @@ export class CheckCommand extends BaseCommand {
           return o;
         })
       );
-      if (!stagesPassed(outcomes, ci)) {
+      if (!stagesPassed(outcomes, ci) && qualityLevel === "warning") {
+        const failed = outcomes.filter((o) => o.gate && (o.skipped ? ci : !o.ok));
+        const reported = warning(
+          "gate_rule_reported",
+          `${failed.length} quality check(s) reported, not failed: ${failed.map((o) => o.name).join(", ")} — ${GATE_POLICY_FILE} sets quality to warning.`,
+          {
+            target: "quality",
+            fix: `Fix them, or set \`quality: error\` in ${GATE_POLICY_FILE} once they pass.`,
+          }
+        );
+        policyReported.push(reported);
+        if (!json) process.stdout.write(`  ${ui.muted(`▲  ${reported.message}`)}\n`);
+      } else if (!stagesPassed(outcomes, ci)) {
         const failed = outcomes.filter((o) => o.gate && (o.skipped ? ci : !o.ok));
         fail({ check: { quality: outcomes.map(({ output: _o, ...rest }) => rest) } }, [
           ...ticketKeys,
@@ -769,6 +837,8 @@ export class CheckCommand extends BaseCommand {
         : []),
       ...unwritten,
       ...ticketKeys,
+      ...idWarnings,
+      ...policyReported,
     ];
     recordCheck(projectDir, true);
     recordLastCheck(projectDir, { passed: true, ci, stages: gate.list(), status, selection });

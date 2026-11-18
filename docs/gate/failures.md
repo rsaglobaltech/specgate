@@ -38,9 +38,11 @@ each finding with `code`, `file`, `line` and `fix`.
 | `check_tests_failed` | Your `test_cmd` failed; its output is above | Make the tests pass |
 | `check_quality_failed` | A quality check found something new, or could not run under `--ci` | Each check's own finding is above it: `quality_check_failed` |
 | `baseline_incomplete` | `check --baseline` was asked to record what a baseline cannot hold | Fix what validate reports, then record again — [Adopt it without a red build](baselines.md) |
+| `gate_policy_invalid` | `.specgate/gate.yaml` names a preset, rule, level or date it cannot read | Use what the fix lists — [Configure the gate](policy.md) |
 
 Not failures, said so you know what was not checked: `ids_not_compared` (no
-base branch to compare with), `check_not_run` (a check skipped, with why).
+base branch to compare with), `check_not_run` (a check skipped, with why),
+`gate_rule_reported` (findings the policy reports instead of failing).
 
 ## The specification's findings
 

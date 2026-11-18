@@ -69,6 +69,7 @@ $ specgate init
     + docs/specs/glossary.md
     + AGENTS.md
     + README.md   was missing
+  ℹ  🚦 Policy: .specgate/gate.yaml — the standard preset; edit a rule to change what fails
   ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
     · Traceability: generated from spec.md, tags and tests (`specgate matrix`)
 
@@ -80,8 +81,7 @@ $ specgate init
      behaviour is covered. It starts meaning something when the requirements below
      are real and their scenarios are linked to tests.
 
-  ✔  Adoption completed
-… 17 more lines
+… 18 more lines
 ```
 <!-- specgate:out-scratch-init:end -->
 
@@ -128,6 +128,7 @@ specgate check
 $ specgate check
   ◆ specgate · check   court-bookings
 
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning
   ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test

@@ -18,11 +18,21 @@ import * as path from "node:path";
 import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
 import { readQuality } from "../../packages/core/src/domain/QualityChecks";
 import { setYamlListItem, setYamlValue, yamlScalar } from "../../packages/core/src/domain/YamlEdit";
+import {
+  GATE_POLICY_FILE,
+  LEVELS,
+  PRESETS,
+  PRESET_RULES,
+  RULES,
+  RULE_MEANING,
+  parseGatePolicy,
+} from "./gate-policy";
 
 export const CONFIG_JSON_FILE = ".specgate/config.json";
 export const HARNESS_FILE = "harness.config.yaml";
 export const PROFILES_FILE = ".harness/profiles.yaml";
 export const ALM_FILE = "alm.config.yaml";
+export const GATE_FILE = GATE_POLICY_FILE;
 
 type Value = string | number | boolean | string[];
 
@@ -393,6 +403,39 @@ const YAML: KeySpec[] = [
     kind: "number",
     check: number(0),
   })),
+  // ── The gate policy: .specgate/gate.yaml (issue #494) ──────────────────────
+  {
+    key: "gate.preset",
+    description:
+      "How strict the gate starts: minimal, standard or strict; gate.rules.* override it.",
+    values: [...PRESETS],
+    pattern: null,
+    default: "strict",
+    file: GATE_FILE,
+    kind: "string",
+  },
+  ...RULES.map((rule): KeySpec => ({
+    key: `gate.rules.${rule}`,
+    description: `Whether the gate fails (error), reports (warning) or skips (off) its check that ${RULE_MEANING[rule]}.`,
+    values: [...LEVELS],
+    pattern: null,
+    default: PRESET_RULES.strict[rule],
+    file: GATE_FILE,
+    kind: "string",
+  })),
+  {
+    key: "gate.enforce_from",
+    description: "A date, YYYY-MM-DD: until then every error of the gate is reported as a warning.",
+    values: null,
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+    default: null,
+    file: GATE_FILE,
+    kind: "string",
+    check: (v) =>
+      /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`))
+        ? null
+        : "Give a date as YYYY-MM-DD, e.g. 2026-12-15.",
+  },
   // ── ALM: alm.config.yaml, never a credential ───────────────────────────────
   {
     key: "alm.provider",
@@ -578,6 +621,10 @@ export function currentValue(projectDir: string, key: string): Value | null {
     const pr = readYaml(projectDir, ALM_FILE).pr;
     v = pr && typeof pr === "object" ? (pr as Record<string, unknown>)[field] : undefined;
   } else if (key.startsWith("alm.")) v = readYaml(projectDir, ALM_FILE)[field];
+  else if (key.startsWith("gate.rules.")) {
+    const rules = readYaml(projectDir, GATE_FILE).rules;
+    v = rules && typeof rules === "object" ? (rules as Record<string, unknown>)[field] : undefined;
+  } else if (key.startsWith("gate.")) v = readYaml(projectDir, GATE_FILE)[field];
   else v = readYaml(projectDir, HARNESS_FILE)[key];
   if (v === undefined || v === null || typeof v === "object") {
     return Array.isArray(v) ? v.map(String) : null;
@@ -736,6 +783,8 @@ export function setYamlKey(
     after = setYamlValue(before ?? "alm_version: 1\n", ["pr", field], scalar);
   } else if (key.startsWith("alm.")) {
     after = setYamlValue(before ?? "alm_version: 1\n", [field], scalar);
+  } else if (key.startsWith("gate.")) {
+    after = setYamlValue(before ?? "", key.split(".").slice(1), scalar);
   } else {
     after = setYamlValue(before ?? "harness_version: 1\n", [key], scalar);
   }
@@ -752,6 +801,15 @@ export function setYamlKey(
   if (spec.file === HARNESS_FILE) {
     const quality = readQuality(parsed);
     if (quality.errors.length > 0) return refuse(quality.errors[0]);
+  }
+  if (spec.file === GATE_FILE) {
+    const policy = parseGatePolicy(after);
+    if (policy.problems.length > 0) {
+      return refuse(
+        policy.problems[0].fix,
+        `${GATE_FILE} would not read: ${policy.problems[0].message}.`
+      );
+    }
   }
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, after, "utf8");
