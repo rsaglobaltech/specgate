@@ -83,7 +83,9 @@ you have:
   nothing yet, so the gate is green on day one. → [Validating](docs/validating.md)
 - **Drafts held to their source.** A draft from a brief or a ticket lists every
   value the source never gave; what only the client can answer becomes a
-  question. → [From a client brief](docs/from-a-brief.md)
+  question. The brief's quality requirements, under ISO/IEC 25010, become
+  non-functional requirements with a number a test checks.
+  → [From a client brief](docs/from-a-brief.md)
 - **Your agent works the same loop.** Slash commands, Agent Skills and an MCP
   server for Claude Code, Cursor, Copilot and others; `specgate harness run`
   delivers each requirement unattended, in its own worktree, and keeps only

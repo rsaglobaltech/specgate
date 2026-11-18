@@ -152,9 +152,20 @@ Examples
 - The one where the teacher sees Ana at 2 of 3.
 `;
 
+/** How well Lingo must work, under ISO/IEC 25010 (REQ-601): the example's last section. */
+const LINGO_QUALITY = `
+## Quality
+
+- reliability: Lingo is available 99.5% of each month.
+- interaction capability: Every screen meets WCAG 2.2 AA.
+`;
+
 /** The whole Lingo brief, reviewed: what the page shows as its example. */
 export const LINGO_EXAMPLE =
-  LINGO_REVIEWED + LINGO_BRIEF + lingoCards("A student's progress opens in under 2 seconds.");
+  LINGO_REVIEWED +
+  LINGO_BRIEF +
+  lingoCards("A student's progress opens in under 2 seconds.") +
+  LINGO_QUALITY;
 
 function lingoProject(scratch: string, name: string, env: NodeJS.ProcessEnv): string {
   const project = path.join(scratch, name);

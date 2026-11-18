@@ -352,6 +352,11 @@ Rules
 Examples
 - The one where Ana has done 2 of the 3 exercises of "Greetings" and sees 2 of 3.
 - The one where the teacher sees Ana at 2 of 3.
+
+## Quality
+
+- reliability: Lingo is available 99.5% of each month.
+- interaction capability: Every screen meets WCAG 2.2 AA.
 ```
 
 Ready, it lists the modules and names the first:
@@ -432,6 +437,14 @@ blocks:
 
 - Can a student follow two courses at once?
 - Do students pay per course or per month?
+
+**Quality requirements to write** — from the brief's `## Quality` section
+(ISO/IEC 25010). Each becomes one requirement of kind `non-functional`,
+its entry quoted under `> Brief:`, with a scenario that measures its
+number:
+
+- reliability: Lingo is available 99.5% of each month.
+- interaction capability: Every screen meets WCAG 2.2 AA.
 ```
 <!-- specgate:out-brief-scope:end -->
 
