@@ -166,7 +166,7 @@ $ specgate status
 
   Next ───────────────────────────────────────────────────
   ➜  specgate apply REQ-003
-     once a test mentions REQ-003 — that mention is the link; apply checks first
+     bookings, the brief's 1st module of 1 — once a test mentions REQ-003 — that mention is the link; apply checks first
 ```
 <!-- specgate:out-scratch-status-daily:end -->
 

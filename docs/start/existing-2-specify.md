@@ -33,8 +33,6 @@ $ specgate status
   To do ──────────────────────────────────────────────────
     ○ REQ-001  Preserve existing behaviour  a test and code
 
-  ·  No agent set for the harness and the studio's Build: specgate config set agent "claude -p < {prompt_file}"
-
   Next ───────────────────────────────────────────────────
   ➜  specgate new "<a behaviour you rely on>"
      only the adoption baseline is specified — add one requirement your code already meets
@@ -137,8 +135,6 @@ $ specgate status
   To do ──────────────────────────────────────────────────
     ○ REQ-001  Preserve existing behaviour              a test and code
     ○ REQ-004  An invoice total is rounded to the cent  a test and code
-
-  ·  No agent set for the harness and the studio's Build: specgate config set agent "claude -p < {prompt_file}"
 
   Next ───────────────────────────────────────────────────
   ➜  specgate apply REQ-004
