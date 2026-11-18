@@ -16,7 +16,7 @@ walk up from the current directory looking for `spec.md`, `.specops.lock` or
 | --- | --- |
 | Start, on a new project or an existing repo | [Getting started](getting-started.md) |
 | Join a project that already uses Specgate | [Joining a project](quickstart.md) |
-| Learn the daily loop: `propose`, `apply`, `status`, `archive` | [Getting started](getting-started.md#4-the-four-verbs) |
+| Learn the daily loop: `propose`, `apply`, `status`, `archive` | [Every day: the daily loop](start/scratch-5-every-day.md#3-the-daily-loop) |
 | Turn a client brief into requirements | [Write the brief](start/write-the-brief.md), then [From a client brief](from-a-brief.md) |
 | Work from a Jira ticket | [From a Jira ticket](from-a-ticket.md) |
 | Adopt an existing codebase whose work arrives as Jira tickets | [An existing codebase, with Jira](existing-project-with-jira.md) |

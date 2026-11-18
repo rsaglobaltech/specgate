@@ -107,6 +107,8 @@
     "docs:terminal:check": "node dist/scripts/docs/record-terminal.js --check",
     "docs:journey": "node dist/scripts/docs/record-journey.js",
     "docs:journey:check": "node dist/scripts/docs/record-journey.js --check",
+    "docs:i18n": "node dist/scripts/docs/i18n.js",
+    "docs:i18n:stamp": "node dist/scripts/docs/i18n.js --stamp",
     "sbom": "npm sbom --sbom-format cyclonedx > sbom.cyclonedx.json",
     "licenses": "npm run sbom && node dist/scripts/license_check.js --sbom sbom.cyclonedx.json"
   },

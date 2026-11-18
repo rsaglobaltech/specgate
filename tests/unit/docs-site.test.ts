@@ -62,7 +62,9 @@ function shippedSlugs() {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
-        if (entry.name !== "specs" && entry.name !== "assets")
+        // `es/` is the Spanish copy of these same pages, reached through the
+        // same sidebar: docs-i18n.test.ts checks it.
+        if (entry.name !== "specs" && entry.name !== "assets" && rel !== "es")
           walk(path.join(dir, entry.name), rel);
       } else if (entry.name.endsWith(".md")) {
         out.push(rel.slice(0, -3));

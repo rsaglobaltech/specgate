@@ -28,6 +28,9 @@ import { marked } from "marked";
 import type { Tokens } from "marked";
 
 import { NAV, navEntry, neighbours, journeyOf } from "./nav";
+import type { NavEntry, NavSection } from "./nav";
+import { translationOf, LANGS } from "./i18n";
+import type { Lang } from "./i18n";
 import { diagrams, inlineDiagrams } from "./blocks";
 import { expandComponents } from "./components";
 import { highlight } from "./highlight";
@@ -56,6 +59,94 @@ export interface SiteOptions {
   readonly versions?: { readonly stable?: string; readonly next?: string };
 }
 
+/**
+ * The language a page is rendered in. English is the source and lives at the
+ * site's root; Spanish lives under `es/`, from `docs/es/<slug>.md` when the page
+ * is translated and from the English source, with a note, when it is not yet.
+ * Set per page by `buildSite`; the renderers below read it.
+ */
+let LANG: Lang = "en";
+
+/**
+ * A translated page's headings, English anchor → Spanish anchor. A Spanish
+ * page keeps the English one's headings in the same order, so the n-th
+ * heading's anchor maps to the n-th: a link written against the English —
+ * from a page not translated yet — still lands on its section.
+ */
+const SPANISH_ANCHORS = new Map<string, Map<string, string>>();
+
+/** What the site itself says, around the pages. */
+const UI: Record<Lang, Record<string, string>> = {
+  en: {
+    skip: "Skip to content",
+    openNav: "Open navigation",
+    search: "search docs",
+    searchLabel: "Search documentation",
+    searchPlaceholder: "Search the documentation…",
+    hint: "<kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close",
+    results: "Results",
+    docs: "Docs",
+    projects: "Projects",
+    theme: "Switch theme",
+    previous: "Previous",
+    next: "Next",
+    neighbours: "Neighbouring pages",
+    useful: "Was this page useful?",
+    edit: "Edit this page",
+    issue: "Something wrong? Open an issue",
+    onThisPage: "On this page",
+    breadcrumb: "Breadcrumb",
+    documentation: "Documentation",
+    anchor: "Link to this section",
+    step: "Step",
+    of: "of",
+    language: "Language",
+    docsTitle: "Documentation",
+    docsLede:
+      'Specifications that are checked, not admired. <a href="start.html">Start here</a> — an existing project or a new one, six commands each — or <a href="quickstart.html">Joining a project</a> if somebody set it up for you.',
+    install: "Install",
+    copy: "Copy",
+  },
+  es: {
+    skip: "Ir al contenido",
+    openNav: "Abrir la navegación",
+    search: "buscar en la documentación",
+    searchLabel: "Buscar en la documentación",
+    searchPlaceholder: "Buscar en la documentación…",
+    hint: "<kbd>↑</kbd><kbd>↓</kbd> para moverte · <kbd>↵</kbd> para abrir · <kbd>Esc</kbd> para cerrar",
+    results: "Resultados",
+    docs: "Documentación",
+    projects: "Proyectos",
+    theme: "Cambiar el tema",
+    previous: "Anterior",
+    next: "Siguiente",
+    neighbours: "Páginas vecinas",
+    useful: "¿Te ha servido esta página?",
+    edit: "Editar esta página",
+    issue: "¿Algo está mal? Abre un issue",
+    onThisPage: "En esta página",
+    breadcrumb: "Ruta",
+    documentation: "Documentación",
+    anchor: "Enlace a esta sección",
+    step: "Paso",
+    of: "de",
+    language: "Idioma",
+    docsTitle: "Documentación",
+    docsLede:
+      'Especificaciones que se comprueban, no que se admiran. <a href="start.html">Empieza aquí</a> — un proyecto existente o uno nuevo, seis comandos cada uno — o <a href="quickstart.html">Unirte a un proyecto</a> si alguien ya lo configuró.',
+    install: "Instalar",
+    copy: "Copiar",
+  },
+};
+const t = (key: string): string => UI[LANG][key] ?? UI.en[key];
+
+/** A sidebar entry's label and blurb in the page's language, English when not translated. */
+const entryLabel = (e: NavEntry): string => (LANG === "es" && e.es?.label) || e.label;
+const entryBlurb = (e: NavEntry): string => (LANG === "es" && e.es?.blurb) || e.blurb;
+const entryGroup = (e: NavEntry): string | undefined => (LANG === "es" && e.es?.group) || e.group;
+const sectionTitle = (s: NavSection): string => (LANG === "es" && s.es?.title) || s.title;
+const sectionSummary = (s: NavSection): string => (LANG === "es" && s.es?.summary) || s.summary;
+
 interface Page {
   /** `harness`, `case-studies/case-1` — the path without extension. */
   slug: string;
@@ -64,6 +155,8 @@ interface Page {
   headings: Array<{ id: string; text: string; level: number }>;
   /** Plain text, for the search index. */
   text: string;
+  /** A Spanish page: `missing` shows the English text, `stale` a translation behind it. */
+  translation?: "current" | "missing" | "stale";
 }
 
 // ── Markdown → HTML ──────────────────────────────────────────────────────────
@@ -72,6 +165,8 @@ interface Page {
 function slugifyHeading(text: string, taken: Set<string>): string {
   const base =
     text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .replace(/`/g, "")
       .replace(/[^a-z0-9]+/g, "-")
@@ -116,7 +211,16 @@ function rewriteLink(href: string, slug: string): string {
   void depth;
 
   if (!target.endsWith(".md")) return href;
+  // `docs/specs/` is published once, at the root: a Spanish page climbs out of `es/`.
+  if (LANG === "es" && resolved.startsWith("specs/")) {
+    const climb = "../".repeat(slug.split("/").length);
+    return `${climb}${resolved.slice(0, -3)}.html${hash ? `#${hash}` : ""}`;
+  }
   const html = `${target.slice(0, -3)}.html`;
+  if (LANG === "es" && hash) {
+    const spanish = SPANISH_ANCHORS.get(resolved.slice(0, -3))?.get(hash);
+    if (spanish) return `${html}#${spanish}`;
+  }
   return hash ? `${html}#${hash}` : html;
 }
 
@@ -151,9 +255,10 @@ function decodeEntities(value: string): string {
 function renderMarkdown(
   source: string,
   currentSlug: string
-): Pick<Page, "html" | "headings" | "title"> {
+): Pick<Page, "html" | "headings" | "title"> & { ids: string[] } {
   const headings: Page["headings"] = [];
   const taken = new Set<string>();
+  const ids: string[] = [];
   let title = "";
 
   const renderer = new marked.Renderer();
@@ -169,10 +274,11 @@ function renderMarkdown(
     // The id is still made from the encoded text: every anchor already linked
     // keeps working.
     const id = slugifyHeading(stripTags(text), taken);
+    ids.push(id);
     if (depth >= 2 && depth <= 3) headings.push({ id, text: plain, level: depth });
     return (
       `<h${depth} id="${id}">${text}` +
-      `<a class="anchor" href="#${id}" aria-label="Link to this section">#</a></h${depth}>\n`
+      `<a class="anchor" href="#${id}" aria-label="${t("anchor")}">#</a></h${depth}>\n`
     );
   };
 
@@ -230,7 +336,7 @@ function renderMarkdown(
   };
 
   const html = marked.parse(source, { renderer, gfm: true, breaks: false }) as string;
-  return { html, headings, title };
+  return { html, headings, title, ids };
 }
 
 // ── The page shell ───────────────────────────────────────────────────────────
@@ -287,13 +393,13 @@ function sidebar(currentSlug: string, up: string): string {
         // A subsection starts where the group changes: a small heading, not a link.
         const head =
           entry.group && entry.group !== group
-            ? `<li class="side__sub" role="presentation">${escapeHtml(entry.group)}</li>`
+            ? `<li class="side__sub" role="presentation">${escapeHtml(entryGroup(entry)!)}</li>`
             : "";
         group = entry.group || "";
         const step = entry.step
           ? `<span class="side__step" aria-hidden="true">${entry.step}</span>`
           : "";
-        return `${head}<li><a href="${up}${entry.slug}.html"${active}>${step}${escapeHtml(entry.label)}</a></li>`;
+        return `${head}<li><a href="${up}${entry.slug}.html"${active}>${step}${escapeHtml(entryLabel(entry))}</a></li>`;
       })
       .join("");
     // `open` on the group holding the current page, so a reader always lands
@@ -302,7 +408,7 @@ function sidebar(currentSlug: string, up: string): string {
     return (
       `<details class="side__group" data-group="${escapeHtml(section.title)}"${open ? " open" : ""}>` +
       `<summary class="side__head">${icon(section.icon, "icon side__icon")}` +
-      `<span>${escapeHtml(section.title)}</span></summary>` +
+      `<span>${escapeHtml(sectionTitle(section))}</span></summary>` +
       `<ul>${items}</ul></details>`
     );
   }).join("");
@@ -314,10 +420,10 @@ function breadcrumbs(slug: string, up: string): string {
   const entry = navEntry(slug);
   if (!section || !entry) return "";
   return (
-    `<nav class="crumbs" aria-label="Breadcrumb"><ol>` +
-    `<li><a href="${up}docs.html">Docs</a></li>` +
-    `<li>${escapeHtml(section.title)}</li>` +
-    `<li aria-current="page">${escapeHtml(entry.label)}</li>` +
+    `<nav class="crumbs" aria-label="${t("breadcrumb")}"><ol>` +
+    `<li><a href="${up}docs.html">${t("docs")}</a></li>` +
+    `<li>${escapeHtml(sectionTitle(section))}</li>` +
+    `<li aria-current="page">${escapeHtml(entryLabel(entry))}</li>` +
     `</ol></nav>`
   );
 }
@@ -339,14 +445,14 @@ function stepper(slug: string, up: string): string {
       return (
         `<li class="stepper__item ${state}"${aria}><a href="${up}${e.slug}.html">` +
         `<span class="stepper__n" aria-hidden="true">${mark}</span>` +
-        `<span class="stepper__label">${escapeHtml(e.label)}</span></a></li>`
+        `<span class="stepper__label">${escapeHtml(entryLabel(e))}</span></a></li>`
       );
     })
     .join("");
   return (
-    `<nav class="stepper" aria-label="${escapeHtml(current.group!)} — step ${current.step} of ${steps.length}">` +
-    `<p class="stepper__head"><span>${escapeHtml(current.group!)}</span>` +
-    `<span>Step ${current.step} of ${steps.length}${current.time ? ` · ${escapeHtml(current.time)}` : ""}</span></p>` +
+    `<nav class="stepper" aria-label="${escapeHtml(entryGroup(current)!)} — ${t("step")} ${current.step} ${t("of")} ${steps.length}">` +
+    `<p class="stepper__head"><span>${escapeHtml(entryGroup(current)!)}</span>` +
+    `<span>${t("step")} ${current.step} ${t("of")} ${steps.length}${current.time ? ` · ${escapeHtml(current.time)}` : ""}</span></p>` +
     `<ol class="stepper__list">${items}</ol></nav>`
   );
 }
@@ -357,8 +463,8 @@ function onThisPage(headings: Page["headings"]): string {
     .map((h) => `<li class="toc__l${h.level}"><a href="#${h.id}">${escapeHtml(h.text)}</a></li>`)
     .join("");
   return (
-    `<div class="rail"><nav class="toc" aria-label="On this page">` +
-    `<h2>On this page</h2><ul>${items}</ul></nav></div>`
+    `<div class="rail"><nav class="toc" aria-label="${t("onThisPage")}">` +
+    `<h2>${t("onThisPage")}</h2><ul>${items}</ul></nav></div>`
   );
 }
 
@@ -404,38 +510,72 @@ function candidateBanner(up: string, opts: SiteOptions): string {
   );
 }
 
+/**
+ * `EN · ES` in the header: the same page in the other language. Choosing one
+ * is remembered (`specgate-lang`), so the landing opens in it next time.
+ * `up` climbs to this language's root; `slug` is the page's, the same in both.
+ */
+export function languagePicker(slug: string, up: string, lang: Lang): string {
+  const href = lang === "en" ? `${up}es/${slug}.html` : `${up}../${slug}.html`;
+  const item = (l: Lang) =>
+    l === lang
+      ? `<span aria-current="true">${l.toUpperCase()}</span>`
+      : `<a href="${href}" hreflang="${l}" lang="${l}" data-lang="${l}">${l.toUpperCase()}</a>`;
+  return (
+    `<nav class="top__lang" aria-label="${UI[lang].language}">` +
+    LANGS.map(item).join('<span aria-hidden="true">·</span>') +
+    `</nav>`
+  );
+}
+
+/** Over a Spanish page: the English text it shows, or a translation behind the English. */
+function translationBanner(page: Page, up: string): string {
+  if (LANG !== "es" || !page.translation || page.translation === "current") return "";
+  const english = `${up}../${page.slug}.html`;
+  return page.translation === "missing"
+    ? `<div class="candidate-banner" role="note">Esta página aún no está traducida: la ves en inglés. ` +
+        `<a href="${english}" hreflang="en">Ir a la versión en inglés →</a></div>`
+    : `<div class="candidate-banner" role="note">La versión en inglés de esta página es más reciente que esta traducción. ` +
+        `<a href="${english}" hreflang="en">Leer la versión en inglés →</a></div>`;
+}
+
 function pageShell(page: Page, version: string, opts: SiteOptions = {}): string {
   const entry = navEntry(page.slug);
   const { prev, next } = neighbours(page.slug);
   const depth = page.slug.split("/").length - 1;
   const up = "../".repeat(depth);
+  // The assets live once, at the site's root: a Spanish page climbs out of `es/`.
+  const assets = LANG === "es" ? `${up}../assets/` : `${up}assets/`;
   const link = (slug: string) => `${up}${slug}.html`;
+  const description = escapeHtml((entry && entryBlurb(entry)) || page.title);
 
   const pager = [
     prev
-      ? `<a class="pager__prev" href="${link(prev.slug)}"><span>Previous</span>${escapeHtml(prev.label)}</a>`
+      ? `<a class="pager__prev" href="${link(prev.slug)}"><span>${t("previous")}</span>${escapeHtml(entryLabel(prev))}</a>`
       : "<span></span>",
     next
-      ? `<a class="pager__next" href="${link(next.slug)}"><span>Next</span>${escapeHtml(next.label)}</a>`
+      ? `<a class="pager__next" href="${link(next.slug)}"><span>${t("next")}</span>${escapeHtml(entryLabel(next))}</a>`
       : "<span></span>",
   ].join("");
 
   return `<!doctype html>
-<html lang="en" data-slug="${escapeHtml(page.slug)}">
+<html lang="${LANG}" data-slug="${escapeHtml(page.slug)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(page.title)} — Specgate</title>
-<meta name="description" content="${escapeHtml(entry?.blurb || page.title)}">
+<meta name="description" content="${description}">
+<link rel="alternate" hreflang="en" href="${SITE}/${escapeHtml(page.slug)}.html">
+<link rel="alternate" hreflang="es" href="${SITE}/es/${escapeHtml(page.slug)}.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="${assets}favicon.svg" type="image/svg+xml">
 <meta property="og:title" content="${escapeHtml(page.title)} — Specgate">
-<meta property="og:description" content="${escapeHtml(entry?.blurb || page.title)}">
+<meta property="og:description" content="${description}">
 <meta property="og:image" content="${SITE}/assets/og-card.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="${up}assets/docs.css">
+<link rel="stylesheet" href="${assets}docs.css">
 <script>
   // Applied before paint so the page never flashes the wrong theme.
   (function () {
@@ -445,47 +585,49 @@ function pageShell(page: Page, version: string, opts: SiteOptions = {}): string 
 </script>
 </head>
 <body>
-<a class="skip" href="#content">Skip to content</a>
+<a class="skip" href="#content">${t("skip")}</a>
 
 <header class="top">
-  <button class="top__menu" type="button" aria-label="Open navigation" aria-expanded="false">
+  <button class="top__menu" type="button" aria-label="${t("openNav")}" aria-expanded="false">
     <span aria-hidden="true">☰</span>
   </button>
   <a class="top__brand" href="${up}index.html"><span aria-hidden="true">⬡</span> specgate<span class="top__brand-sub">/docs</span></a>
   ${versionBadge(version, up, opts)}
-  <button class="top__search" id="search" type="button" aria-label="Search documentation"
+  <button class="top__search" id="search" type="button" aria-label="${t("searchLabel")}"
           aria-keyshortcuts="Meta+K Control+K">
     ${icon("search", "icon")}
-    <span class="top__search-label">search docs</span>
+    <span class="top__search-label">${t("search")}</span>
     <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
   </button>
   <nav class="top__links">
-    <a href="${up}docs.html">Docs</a>
-    <a href="${up}projects/index.html">Projects</a>
+    <a href="${up}docs.html">${t("docs")}</a>
+    <a href="${up}projects/index.html">${t("projects")}</a>
     <a href="${REPO}" target="_blank" rel="noreferrer">GitHub</a>
     <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
   </nav>
-  <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
+  ${languagePicker(page.slug, up, LANG)}
+  <button class="top__theme" type="button" aria-label="${t("theme")}">◐</button>
 </header>
 
 <div class="shell">
   <aside class="side" id="side">
-    <nav aria-label="Documentation">${sidebar(page.slug, up)}</nav>
+    <nav aria-label="${t("documentation")}">${sidebar(page.slug, up)}</nav>
   </aside>
 
   <main class="content" id="content">
     ${candidateBanner(up, opts)}
+    ${translationBanner(page, up)}
     ${breadcrumbs(page.slug, up)}
     ${stepper(page.slug, up)}
     <article class="prose">
 ${page.html}
     </article>
-    <nav class="pager" aria-label="Neighbouring pages">${pager}</nav>
+    <nav class="pager" aria-label="${t("neighbours")}">${pager}</nav>
     <footer class="page-foot">
-      <p class="page-foot__ask">Was this page useful?</p>
-      <a href="${REPO}/edit/${opts.channel === "next" ? "next/1.0" : "main"}/docs/${escapeHtml(page.slug)}.md" target="_blank" rel="noreferrer">Edit this page</a>
+      <p class="page-foot__ask">${t("useful")}</p>
+      <a href="${REPO}/edit/${opts.channel === "next" ? "next/1.0" : "main"}/docs/${LANG === "es" && page.translation !== "missing" ? "es/" : ""}${escapeHtml(page.slug)}.md" target="_blank" rel="noreferrer">${t("edit")}</a>
       <span aria-hidden="true">·</span>
-      <a href="${REPO}/issues/new" target="_blank" rel="noreferrer">Something wrong? Open an issue</a>
+      <a href="${REPO}/issues/new" target="_blank" rel="noreferrer">${t("issue")}</a>
     </footer>
   </main>
 
@@ -494,22 +636,22 @@ ${page.html}
 
 <div class="palette" id="palette" hidden>
   <div class="palette__scrim" data-close="1"></div>
-  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Search documentation">
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="${t("searchLabel")}">
     <div class="palette__field">
       ${icon("search", "icon")}
-      <input type="search" id="palette-input" placeholder="Search the documentation…"
-             autocomplete="off" spellcheck="false" aria-label="Search documentation"
+      <input type="search" id="palette-input" placeholder="${t("searchPlaceholder")}"
+             autocomplete="off" spellcheck="false" aria-label="${t("searchLabel")}"
              aria-controls="results" aria-expanded="true">
       <kbd class="palette__esc">Esc</kbd>
     </div>
-    <div class="palette__results" id="results" role="listbox" aria-label="Results"></div>
+    <div class="palette__results" id="results" role="listbox" aria-label="${t("results")}"></div>
     <p class="palette__hint">
-      <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>Esc</kbd> to close
+      ${t("hint")}
     </p>
   </div>
 </div>
 
-<script src="${up}assets/docs.js" defer></script>
+<script src="${assets}docs.js" defer></script>
 </body>
 </html>
 `;
@@ -579,35 +721,33 @@ function docsHome(version: string, opts: SiteOptions): string {
       .map(
         (entry) =>
           `<a class="card" href="${entry.slug}.html">` +
-          `<strong class="card__title">${escapeHtml(entry.label)}</strong>` +
-          `<span class="card__body">${escapeHtml(entry.blurb)}</span></a>`
+          `<strong class="card__title">${escapeHtml(entryLabel(entry))}</strong>` +
+          `<span class="card__body">${escapeHtml(entryBlurb(entry))}</span></a>`
       )
       .join("");
     return (
       `<section class="home__group">` +
-      `<h2>${icon(section.icon, "icon")}${escapeHtml(section.title)}</h2>` +
-      `<p class="home__summary">${escapeHtml(section.summary)}</p>` +
+      `<h2>${icon(section.icon, "icon")}${escapeHtml(sectionTitle(section))}</h2>` +
+      `<p class="home__summary">${escapeHtml(sectionSummary(section))}</p>` +
       `<div class="cards" data-cols="2">${cards}</div></section>`
     );
   }).join("");
 
   const page: Page = {
     slug: "docs",
-    title: "Documentation",
+    title: t("docsTitle"),
     headings: NAV.map((section) => ({
-      id: slugifyHeading(section.title, new Set()),
-      text: section.title,
+      id: slugifyHeading(sectionTitle(section), new Set()),
+      text: sectionTitle(section),
       level: 2,
     })),
     text: "",
     html:
-      `<h1>Documentation</h1>` +
-      `<p class="home__lede">Specifications that are checked, not admired. ` +
-      `<a href="start.html">Start here</a> — an existing project or a new one, six commands each — ` +
-      `or <a href="quickstart.html">Joining a project</a> if somebody set it up for you.</p>` +
+      `<h1>${t("docsTitle")}</h1>` +
+      `<p class="home__lede">${t("docsLede")}</p>` +
       `<figure class="code" data-lang="bash">` +
-      `<figcaption class="code__head"><span class="code__lang">Install</span>` +
-      `<button class="code__copy" type="button" aria-label="Copy to clipboard">Copy</button>` +
+      `<figcaption class="code__head"><span class="code__lang">${t("install")}</span>` +
+      `<button class="code__copy" type="button" aria-label="Copy to clipboard">${t("copy")}</button>` +
       `</figcaption>` +
       `<pre><code class="language-bash">npx @rsaglobaltech/specgate@latest init</code></pre>` +
       `</figure>` +
@@ -661,68 +801,92 @@ function sectionChunks(
   return out;
 }
 
+type SearchRecord = { slug: string; title: string; section?: string; hash?: string; text: string };
+
+/** One markdown page rendered into `outDir`, its search records added to `index`. */
+function renderPage(
+  slug: string,
+  source: string,
+  outDir: string,
+  index: SearchRecord[],
+  available: ReturnType<typeof diagrams>,
+  version: string,
+  opts: SiteOptions,
+  translation?: Page["translation"]
+): void {
+  // The marker is ours and means nothing to a reader.
+  const cleaned = inlineDiagrams(
+    source.replace(/^<!--\s*specgate:allow-placeholders[^>]*-->\s*\n?/gm, ""),
+    available
+  );
+  // Components expand before `marked` sees the source, and are handed the
+  // site's own renderer so a tab can hold a code block and a callout a list.
+  const expanded = expandComponents(
+    cleaned,
+    slug,
+    (md) => renderMarkdown(md, slug).html,
+    (href) => rewriteLink(href, slug)
+  );
+  const { html, headings, title } = renderMarkdown(expanded, slug);
+  const entry = navEntry(slug);
+  const page: Page = {
+    slug,
+    title: title || (entry && entryLabel(entry)) || slug,
+    html,
+    headings,
+    text: plainText(cleaned).slice(0, 2000),
+    translation,
+  };
+
+  const target = path.join(outDir, `${slug}.html`);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, pageShell(page, version, opts), "utf8");
+
+  index.push({ slug, title: page.title, text: page.text });
+  for (const chunk of sectionChunks(cleaned, headings)) {
+    index.push({ slug, title: page.title, ...chunk });
+  }
+}
+
+/** The pages a Spanish build shows, and how far each one is translated. */
+export interface TranslationReport {
+  readonly translated: string[];
+  readonly stale: string[];
+  readonly missing: string[];
+}
+
 export function buildSite(
   outDir: string,
   opts: SiteOptions = {}
-): { pages: number; orphans: string[] } {
+): { pages: number; orphans: string[]; translation: TranslationReport } {
   const version = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
 
   fs.rmSync(outDir, { recursive: true, force: true });
   fs.mkdirSync(outDir, { recursive: true });
 
-  const slugs = markdownFiles(DOCS);
+  // `docs/es/` holds the Spanish pages: built below, under `es/`, not as English pages.
+  const slugs = markdownFiles(DOCS).filter((slug) => !slug.startsWith("es/"));
   // One record per *section*, not per page. A search that can only answer
   // "which page" is close to useless on `tutorial.md`, which is 1075 lines; a
   // record per heading lands the reader on the paragraph they asked for.
-  const index: Array<{
-    slug: string;
-    title: string;
-    section?: string;
-    hash?: string;
-    text: string;
-  }> = [];
+  const index: SearchRecord[] = [];
   const available = diagrams(DOCS);
 
+  LANG = "en";
   for (const slug of slugs) {
     const source = fs.readFileSync(path.join(DOCS, `${slug}.md`), "utf8");
-    // The marker is ours and means nothing to a reader.
-    const cleaned = inlineDiagrams(
-      source.replace(/^<!--\s*specgate:allow-placeholders[^>]*-->\s*\n?/gm, ""),
-      available
-    );
-    // Components expand before `marked` sees the source, and are handed the
-    // site's own renderer so a tab can hold a code block and a callout a list.
-    const expanded = expandComponents(
-      cleaned,
-      slug,
-      (md) => renderMarkdown(md, slug).html,
-      (href) => rewriteLink(href, slug)
-    );
-    const { html, headings, title } = renderMarkdown(expanded, slug);
-
-    const page: Page = {
-      slug,
-      title: title || navEntry(slug)?.label || slug,
-      html,
-      headings,
-      text: plainText(cleaned).slice(0, 2000),
-    };
-
-    const target = path.join(outDir, `${slug}.html`);
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, pageShell(page, version, opts), "utf8");
-
-    index.push({ slug, title: page.title, text: page.text });
-    for (const chunk of sectionChunks(cleaned, headings)) {
-      index.push({ slug, title: page.title, ...chunk });
-    }
+    renderPage(slug, source, outDir, index, available, version, opts);
   }
-
   fs.writeFileSync(path.join(outDir, "docs.html"), docsHome(version, opts), "utf8");
-
   fs.mkdirSync(path.join(outDir, "assets"), { recursive: true });
   fs.writeFileSync(path.join(outDir, "assets", "search-index.json"), JSON.stringify(index), "utf8");
   copyVerbatim(outDir, available, version, opts);
+
+  // Spanish: every guide, from its translation when there is one, else from
+  // the English text with a note. `docs/specs/` stays English, at the root.
+  const translation = buildSpanish(outDir, slugs, available, version, opts);
+  LANG = "en";
+
   fs.writeFileSync(path.join(outDir, ".nojekyll"), "", "utf8");
 
   // Depth used to exempt a page, which is how `articles/` and `case-studies/`
@@ -730,7 +894,62 @@ export function buildSite(
   // those pages are the project's own specifications, published so the links
   // that reference them resolve, and deliberately not in a reader's sidebar.
   const orphans = slugs.filter((slug) => !navEntry(slug) && !slug.startsWith("specs/"));
-  return { pages: slugs.length, orphans };
+  return { pages: slugs.length, orphans, translation };
+}
+
+/** `es/`: the guides in Spanish, the docs home, the landing, and their search index. */
+function buildSpanish(
+  outDir: string,
+  slugs: string[],
+  available: ReturnType<typeof diagrams>,
+  version: string,
+  opts: SiteOptions
+): TranslationReport {
+  LANG = "es";
+  const esDir = path.join(outDir, "es");
+  const index: SearchRecord[] = [];
+  const report = { translated: [] as string[], stale: [] as string[], missing: [] as string[] };
+  const guides = slugs.filter((s) => !s.startsWith("specs/"));
+  // First every translated page's anchors, English → Spanish, so a link from
+  // any page — translated or not — can be pointed at the Spanish heading.
+  SPANISH_ANCHORS.clear();
+  for (const slug of guides) {
+    const file = path.join(DOCS, "es", `${slug}.md`);
+    if (!fs.existsSync(file)) continue;
+    const english = renderMarkdown(
+      fs.readFileSync(path.join(DOCS, `${slug}.md`), "utf8"),
+      slug
+    ).ids;
+    const spanish = renderMarkdown(translationOf("", fs.readFileSync(file, "utf8")).body, slug).ids;
+    if (english.length !== spanish.length) {
+      process.stderr.write(
+        `⚠️  [docs] es/${slug}.md has ${spanish.length} headings and its English ${english.length}: links into it keep their anchors\n`
+      );
+      continue;
+    }
+    SPANISH_ANCHORS.set(slug, new Map(english.map((id, i) => [id, spanish[i]])));
+  }
+  for (const slug of guides) {
+    const english = fs.readFileSync(path.join(DOCS, `${slug}.md`), "utf8");
+    const file = path.join(DOCS, "es", `${slug}.md`);
+    const spanish = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+    const state = translationOf(english, spanish);
+    report[state.status === "current" ? "translated" : state.status].push(slug);
+    renderPage(slug, state.body, esDir, index, available, version, opts, state.status);
+  }
+  fs.writeFileSync(path.join(esDir, "docs.html"), docsHome(version, opts), "utf8");
+  fs.mkdirSync(path.join(esDir, "assets"), { recursive: true });
+  fs.writeFileSync(path.join(esDir, "assets", "search-index.json"), JSON.stringify(index), "utf8");
+
+  // The landing: written with the root's paths, served one level down.
+  const landing = path.join(DOCS, "es", "index.html");
+  if (fs.existsSync(landing)) {
+    const html = inlineDiagrams(fs.readFileSync(landing, "utf8"), available)
+      .replace(/(href|src|data-term-src)="\.\/assets\//g, '$1="../assets/')
+      .replace(/<span class="top__version">[^<]*<\/span>/, () => versionBadge(version, "", opts));
+    fs.writeFileSync(path.join(esDir, "index.html"), html, "utf8");
+  }
+  return report;
 }
 
 if (require.main === module) {
@@ -749,8 +968,16 @@ if (require.main === module) {
       .filter((pair) => pair.length === 2 && pair[1])
   );
   const channel = arg("--channel") === "next" ? "next" : "stable";
-  const { pages, orphans } = buildSite(path.resolve(outDir), { channel, versions });
+  const { pages, orphans, translation } = buildSite(path.resolve(outDir), { channel, versions });
   process.stdout.write(`ℹ️  [docs] rendered ${pages} page(s) into ${outDir}\n`);
+  process.stdout.write(
+    `ℹ️  [docs] Spanish: ${translation.translated.length} translated, ${translation.stale.length} behind the English, ${translation.missing.length} not translated yet\n`
+  );
+  if (translation.stale.length > 0) {
+    process.stdout.write(
+      `⚠️  [docs] Spanish pages behind their English source: ${translation.stale.join(", ")}\n`
+    );
+  }
   if (orphans.length > 0) {
     process.stdout.write(
       `⚠️  [docs] not in the sidebar, so nobody can navigate to them: ${orphans.join(", ")}\n`

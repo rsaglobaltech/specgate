@@ -233,7 +233,7 @@ No API access? Export the issue as JSON and pass `--from-ticket KAN-13.json`.
    opens one pull request against `pr.base`, titled "KAN-13 Register vehicle
    entry", listing each requirement and whether `specgate check` passes. Run
    again, it updates the same pull request; it never merges
-   ([details](alm.md#open-a-ticket-s-pull-request-alm-pr)).
+   ([details](alm.md#open-a-ticket-39-s-pull-request-alm-pr)).
 9. CI runs the gate; a reviewer approves; you merge. The ticket moves to Done.
 
 **Every commit message starts with the ticket key**: `KAN-13 REQ-151: normalize

@@ -1,0 +1,1062 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Specgate — especificaciones que se comprueban, no que se admiran</title>
+<meta name="description" content="Desarrollo guiado por especificaciones, con un gate que lo hace cumplir. De un change, el brief de un cliente o un ticket de Jira a requisitos, escenarios Gherkin y tests que tu CI exige — probado en seis productos construidos a partir de briefs reales, en Node, Spring Boot y Quarkus.">
+<meta property="og:title" content="Specgate">
+<meta property="og:description" content="Especificaciones que se comprueban, no que se admiran. Del brief de un cliente a un gate que tu CI exige — y un agente que no puede convencerlo con palabras.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rsaglobaltech.github.io/specgate/">
+<meta property="og:image" content="https://rsaglobaltech.github.io/specgate/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/docs.css">
+<link rel="stylesheet" href="./assets/home.css">
+<link rel="stylesheet" href="./assets/terminal.css">
+<link rel="alternate" hreflang="en" href="https://rsaglobaltech.github.io/specgate/">
+<link rel="alternate" hreflang="es" href="https://rsaglobaltech.github.io/specgate/es/">
+<script>
+  (function () {
+    var t = localStorage.getItem("specgate-theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+    document.documentElement.classList.add("js");
+  })();
+</script>
+</head>
+<body class="landing">
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="top">
+  <a class="top__brand" href="./"><span aria-hidden="true">⬡</span> Specgate</a>
+  <span class="top__version">v1.3.0</span>
+  <button class="top__search" id="search" type="button" aria-label="Buscar en la documentación"
+          aria-keyshortcuts="Meta+K Control+K">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <span class="top__search-label">buscar en la documentación</span>
+    <kbd class="top__kbd"><span class="top__kbd-mod">⌘</span>K</kbd>
+  </button>
+  <nav class="top__links">
+    <a href="./start.html">Empezar</a>
+    <a href="./docs.html">Docs</a>
+    <a href="./studio.html">Studio</a>
+    <a href="./projects/index.html">Proyectos</a>
+    <a href="./concepts.html">Conceptos</a>
+    <a href="./comparisons.html">Comparar</a>
+    <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+  </nav>
+  <nav class="top__lang" aria-label="Idioma"><a href="../" hreflang="en" lang="en" data-lang="en">EN</a><span aria-hidden="true">·</span><span aria-current="true">ES</span></nav>
+  <button class="top__theme" type="button" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main id="main">
+
+<!-- ── Hero ─────────────────────────────────────────────────────────────── -->
+<section class="mx">
+  <div class="ed-wrap mx__grid">
+    <div class="mx__copy">
+      <p class="mx__eyebrow">[ v1.3.0 ] — De un change, un brief o un ticket de Jira a requisitos probados</p>
+      <h1 class="mx__title">Sin test,<br>no está <span>hecho.</span></h1>
+      <p class="mx__lede">
+        Specgate convierte un change que describes, el brief de un cliente o una
+        historia de Jira en requisitos y escenarios Gherkin, impide que tu agente
+        invente lo que la fuente nunca dijo y se niega a dar nada por terminado
+        hasta que un test lo prueba — el mismo gate en tu portátil y en CI.
+      </p>
+      <p class="ed-actions">
+        <a class="ed-btn ed-btn--primary" href="./start.html">Empezar</a>
+        <a class="ed-btn" href="#studio">Ver el studio</a>
+        <a class="ed-btn" href="#projects">Verlo en seis productos reales</a>
+      </p>
+      <p class="ed-actions">
+        <a class="ed-link" href="#why">Nuevo: del código que ya está en marcha a una entrega firmada →</a>
+        <a class="ed-link" href="./quality.html">Checks de calidad — Sonar, SpotBugs, cobertura →</a>
+      </p>
+      <figure class="code ed-install" data-lang="bash">
+        <figcaption class="code__head"><span class="code__lang">Empieza con tres comandos</span><button class="code__copy" type="button" aria-label="Copiar al portapapeles">Copiar</button></figcaption>
+        <pre><code class="language-bash">npm install --save-dev @rsaglobaltech/specgate
+npx specgate init     <span class="tok tok--c"># in your project: touches no code</span>
+npx specgate          <span class="tok tok--c"># where you stand, and what to run next</span></code></pre>
+      </figure>
+    </div>
+
+    <div class="mx__art" role="img" aria-label="Cuatro capas apiladas entre una tarea y un requisito entregado: la fuente, el change comprobado contra ella, los tests que nombran cada requisito y el gate que lo marca Implemented.">
+      <div class="iso" aria-hidden="true">
+        <div class="iso__stack">
+          <div class="iso__slab iso__slab--1"><div class="iso__top"></div><div class="iso__front"><span>01</span> change · brief · ticket</div><div class="iso__side"></div></div>
+          <div class="iso__slab iso__slab--2"><div class="iso__top"></div><div class="iso__front"><span>02</span> requisitos · comprobados</div><div class="iso__side"></div></div>
+          <div class="iso__slab iso__slab--3"><div class="iso__top"></div><div class="iso__front"><span>03</span> el test nombra REQ-007</div><div class="iso__side"></div></div>
+          <div class="iso__slab iso__slab--4"><div class="iso__top"><span>REQ-007</span> ✔ Implemented</div><div class="iso__front"><span>04</span> el gate</div><div class="iso__side"></div></div>
+        </div>
+      </div>
+      <ol class="iso__keys" aria-label="Las cuatro capas">
+        <li class="iso__key iso__key--1" tabindex="0"><b>01</b> La fuente <span>Un change que describes, un brief o un ticket de Jira — guardado tal como se escribió.</span></li>
+        <li class="iso__key iso__key--2" tabindex="0"><b>02</b> Los requisitos comprobados <span>Los escribes tú o tu agente; un valor que el brief o el ticket nunca dio los detiene.</span></li>
+        <li class="iso__key iso__key--3" tabindex="0"><b>03</b> Los tests <span>Un test que nombra REQ-007 es el vínculo. Nada que declarar.</span></li>
+        <li class="iso__key iso__key--4" tabindex="0"><b>04</b> El gate <span>La especificación, sus vínculos con los tests y tu suite: Implemented solo si pasan los tres.</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<div class="band" aria-hidden="true">
+  <p class="band__words">PROPOSE → TEST → APPLY → ARCHIVE → REVIEW → PROPOSE → TEST → APPLY → ARCHIVE → REVIEW → PROPOSE → TEST → APPLY → ARCHIVE</p>
+</div>
+
+<!-- ── Proof band ───────────────────────────────────────────────────────── -->
+<section class="pb" aria-label="Probado en productos reales">
+  <div class="ed-wrap">
+    <dl class="pb__stats">
+      <div><dt>6</dt><dd>productos construidos a partir de briefs reales de clientes</dd></div>
+      <div><dt>3</dt><dd>stacks: Node, Spring&nbsp;Boot, Quarkus</dd></div>
+      <div><dt>229</dt><dd>requisitos entregados a través del gate</dd></div>
+      <div><dt>2</dt><dd>aún esperan al cliente — a propósito</dd></div>
+    </dl>
+    <dl class="pb__tool">
+      <div><dt>0</dt><dd>dependencias en tiempo de ejecución</dd></div>
+      <div><dt>6</dt><dd>comandos que aprender, cuatro de ellos para el día a día</dd></div>
+      <div><dt>12</dt><dd>herramientas de agente conectadas desde una sola definición</dd></div>
+    </dl>
+    <p class="pb__claims">
+      <span>Cero dependencias en tiempo de ejecución</span><span>Cualquier CLI de agente</span><span>MIT</span><span>Cada comando probado de punta a punta en Linux, macOS y Windows</span>
+    </p>
+  </div>
+</section>
+
+<!-- ── The studio ───────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper" id="studio">
+  <div class="ed-wrap ed-split ed-split--wide">
+    <div class="ed-split__head reveal">
+      <p class="ed-eyebrow">Sin la terminal</p>
+      <h2 class="ed-h2">Todo el camino en una app.</h2>
+      <p class="ed-muted"><code>specgate studio</code> en una carpeta vacía: crea
+         el proyecto, escribe el brief como un formulario, haz que se redacte cada
+         módulo, responde las preguntas, aprueba con cada bloqueo y su corrección a
+         la vista, construye con el agente que elijas, sigue la ejecución en vivo —
+         la matriz por módulo, el paso en curso, el log del agente, sus preguntas
+         respondidas al momento — y lee el informe. Cada paso ejecuta el comando
+         que habrías escrito.</p>
+      <ul class="ed-muted">
+        <li>Una app, una sección por paso, cada una en su propia dirección.</li>
+        <li>Claro y oscuro, español e inglés, una barra lateral que se pliega.</li>
+        <li>Se usa con el teclado y con un lector de pantalla; dice lo que está haciendo, y cuando el servidor no responde.</li>
+        <li>Probado en un navegador real en Windows, macOS y Linux.</li>
+      </ul>
+      <p><a class="ed-link" href="./studio.html">El studio, sección por sección →</a></p>
+    </div>
+    <figure class="shot reveal">
+      <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">specgate studio · /live</span></div>
+      <img src="./assets/img/studio-live.webp" width="1280" height="1100" loading="lazy"
+           alt="La sección Live del studio: un requisito en ejecución, las cifras de la ejecución, la matriz por módulo, los pasos del requisito y la cola de trabajo.">
+    </figure>
+  </div>
+  <div class="ed-wrap studio-gal reveal" aria-label="Pantallas del studio">
+    <figure class="shot">
+      <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">specgate studio · /#/changes</span></div>
+      <img src="./assets/img/studio-changes.webp" width="1280" height="820" loading="lazy"
+           alt="Changes: el borrador de pedidos por revisar, cada pregunta abierta con Answer, y Approve the draft indicando lo que aún falta.">
+      <figcaption><strong>Changes</strong> — cada bloqueo de una aprobación con la acción que lo resuelve; se archiva una vez entregado.</figcaption>
+    </figure>
+    <figure class="shot">
+      <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">specgate studio · /#/questions</span></div>
+      <img src="./assets/img/studio-questions.webp" width="1280" height="820" loading="lazy"
+           alt="Questions: cada pregunta abierta con el requisito que bloquea, sus opciones y la casilla de respuesta.">
+      <figcaption><strong>Questions</strong> — se responden en el sitio, se escriben en questions.md y se confirman cuando la spec lo dice.</figcaption>
+    </figure>
+    <figure class="shot">
+      <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">specgate studio · /#/report</span></div>
+      <img src="./assets/img/studio-gate.webp" width="936" height="389" loading="lazy"
+           alt="El gate ejecutado desde el studio: cada etapa pasada, fallida o sin configurar, y el gate pasa.">
+      <figcaption><strong>El gate</strong> — specgate check desde el studio, cada hallazgo con su corrección.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ── The problem ──────────────────────────────────────────────────────── -->
+<section class="ed-band">
+  <div class="ed-wrap ed-split">
+    <h2 class="ed-h2 reveal">Una especificación que nadie comprueba es un deseo.</h2>
+    <div class="ed-prose reveal">
+      <p>La mayoría de los equipos ya escribe requisitos. Viven en una wiki, se
+         alejan del código en un sprint y nada falla cuando no coinciden. Pon un
+         agente de código a trabajar sobre eso y habrás automatizado la deriva — a
+         la velocidad de un agente.</p>
+      <p>Specgate convierte la especificación en algo que puede estar <strong>mal</strong>:
+         cada requisito tiene un escenario — un ejemplo concreto en Gherkin —,
+         cada escenario un test que lo nombra, y <code>specgate check</code>
+         falla en cuanto se rompe un vínculo. Entonces, y solo entonces, vale la
+         pena poner un agente a trabajar sobre ella.</p>
+      <p><a class="ed-link" href="./concepts.html">Seis ideas que explican cada comando →</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ── The pipeline ─────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper" id="pipeline">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <p class="ed-eyebrow">El pipeline</p>
+      <h2 class="ed-h2">Cuatro capas entre una tarea y un requisito entregado.</h2>
+    </div>
+    <ol class="pl">
+      <li class="pl__card reveal">
+        <span class="pl__n" aria-hidden="true">01</span>
+        <h3>La fuente</h3>
+        <p>De dónde viene el trabajo: un change que describes, un brief para un
+           producto nuevo o una historia de Jira con criterios de aceptación. Cada
+           uno abre un change — una carpeta que guarda el trabajo hasta que se
+           construye.</p>
+        <code>specgate propose</code>
+      </li>
+      <li class="pl__card reveal">
+        <span class="pl__n" aria-hidden="true">02</span>
+        <h3>Los requisitos comprobados</h3>
+        <p>Tú o tu agente escriben los requisitos y escenarios que añade el
+           change. Cada valor que el brief o el ticket nunca dio se lista como
+           supuesto o se convierte en una pregunta.</p>
+        <code>--from-brief · --from-ticket</code>
+      </li>
+      <li class="pl__card reveal">
+        <span class="pl__n" aria-hidden="true">03</span>
+        <h3>Los tests</h3>
+        <p>Un test que nombra <code>REQ-007</code> es el vínculo. La tabla de
+           vínculos — la matriz de trazabilidad — se genera a partir de lo que
+           dicen tus tests; nadie la edita.</p>
+        <code>// REQ-007</code>
+      </li>
+      <li class="pl__card pl__card--gate reveal">
+        <span class="pl__n" aria-hidden="true">04</span>
+        <h3>El gate</h3>
+        <p>La especificación, sus vínculos con los tests y tu propia suite. Un
+           requisito está hecho solo cuando pasan los tres — para una persona, un
+           agente o CI. Un change se archiva en la especificación cuando lo están
+           todos sus requisitos.</p>
+        <code>specgate apply · archive · check</code>
+      </li>
+    </ol>
+    <p class="ed-muted reveal">Empieza con <code>specgate init</code> — adopta un repositorio
+       que ya tiene código, o genera la estructura de uno que no lo tiene. Después
+       el ciclo son cuatro verbos: <code>specgate propose</code> abre un change,
+       <code>specgate apply</code> ejecuta el gate para un requisito y lo marca
+       Implemented solo si pasa, <code>specgate archive</code> integra el change
+       en la especificación cuando lo están todos sus requisitos, y
+       <code>specgate status</code> indica el único comando que toca ejecutar.
+       <code>specgate check</code> es el gate completo antes de un pull request.
+       Es lo que ejecuta CI, y el mismo comando que ejecutas en local. O entrega
+       el ciclo a tu agente: <code>specgate harness run</code> usa una rama por
+       requisito y se detiene si el gate dice que no.
+       <a class="ed-link" href="./getting-started.html">Primeros pasos →</a>
+       <a class="ed-link" href="./methodology.html">El método →</a></p>
+  </div>
+</section>
+
+<!-- ── Strengths ────────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper" id="why">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <p class="ed-eyebrow">Por qué lo eligen los equipos</p>
+      <h2 class="ed-h2">Lo que no deja pasar.</h2>
+    </div>
+    <div class="sx sx--4">
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="10" width="32" height="28" rx="4"/><path d="M8 18h32"/><path class="sx__no" d="m19 25 10 8m0-8-10 8"/></svg>
+        <h3>Un gate al que no se convence con palabras</h3>
+        <p><code>apply</code> no escribe nada mientras el gate falla. Un agente que
+           reescribe un escenario para pasar su propio test falla el intento, y
+           recibe el diff de vuelta.</p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="16"/><path d="M19 19a5 5 0 1 1 6 5c-1 .4-1 1.4-1 3"/><circle class="sx__dot" cx="24" cy="33" r="1.4"/></svg>
+        <h3>La ambigüedad se convierte en pregunta</h3>
+        <p>Un borrador a partir de un brief o de una historia de Jira lista cada
+           valor que nadie te dio. Lo que solo el cliente puede responder se
+           pregunta, no se adivina, y su requisito espera la respuesta. <a href="./from-a-brief.html">A partir de un brief →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 24h8l4-10 8 20 4-10h8"/></svg>
+        <h3>Trazabilidad sin papeleo</h3>
+        <p>Un test que menciona <code>REQ-007</code> es el vínculo. La matriz se
+           deriva de lo que dicen tus tests, así que no puede desviarse de ellos.</p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="8" width="16" height="12" rx="2"/><rect x="26" y="8" width="16" height="12" rx="2"/><rect x="16" y="28" width="16" height="12" rx="2"/><path d="M14 20v4h20v-4M24 24v4"/></svg>
+        <h3>Uno o varios repositorios, incluso código que ya está en marcha</h3>
+        <p>El gate ejecuta el comando de tests que ya tienes; probado en Node,
+           Spring&nbsp;Boot y Quarkus. <code>specgate reverse</code> redacta
+           requisitos a partir del código existente; un workspace reparte una
+           historia entre repositorios y los construye en orden. <a href="./workspace.html">Workspace →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="36" r="4"/><circle cx="36" cy="24" r="4"/><path d="M12 16v16M16 12c10 0 16 4 16 8M16 36c10 0 16-4 16-8"/></svg>
+        <h3>Cualquier agente, sin supervisión</h3>
+        <p>El harness maneja cualquier CLI que acepte un prompt, un git worktree por
+           requisito — opcionalmente como tester e implementador, con un tope de
+           coste por requisito. Solo hace merge cuando pides un <code>--chain</code>.
+           <a href="./harness-roles.html">Roles →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M12 6h18l8 8v28H12z"/><path d="M30 6v8h8"/><path d="m18 28 4 4 8-9"/></svg>
+        <h3>Decisiones y vocabulario por escrito</h3>
+        <p>ADRs numerados, lo que el agente puede decidir solo, el stack, un glosario
+           cuyas palabras a evitar reporta el gate, y reglas de negocio numeradas
+           <code>BR-NNN</code>. <a href="./decisions.html">Decisiones →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="24" rx="3"/><path d="M18 40h12M24 34v6"/><circle cx="18" cy="22" r="3"/><path d="M26 20h10M26 25h7"/></svg>
+        <h3>Aprobado por quien es responsable</h3>
+        <p>Un change tiene tres capas — Discover, Design, Tasks —, cada una aprobada
+           por quien tiene su rol, y el harness las espera.
+           <code>specgate review</code> le da al negocio una sola página que leer.
+           <a href="./methodology.html">El método →</a></p>
+      </article>
+      <article class="sx__card reveal">
+        <svg class="sx__icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 26l8 8 20-20"/><path d="M8 42h32"/></svg>
+        <h3>Una entrega que firma una persona</h3>
+        <p>Notas de versión agrupadas por bug y mejora, una checklist de aceptación
+           que una persona firma para pasar sus requisitos a Verified, y una guía de
+           usuario por actor. <a href="./transition.html">La entrega →</a></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ── Watch it ─────────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--ink" id="watch">
+  <div class="ed-wrap">
+    <div class="ed-head">
+      <p class="ed-eyebrow">No es una maqueta</p>
+      <h2 class="ed-h2">Míralo funcionar.</h2>
+      <p class="ed-muted">Cuatro ejecuciones reales de esta versión del CLI,
+         grabadas y comprobadas contra ella en cada versión: cada rechazo que ves
+         sigue siendo un rechazo.</p>
+    </div>
+
+    <div class="demo" data-demo>
+      <div class="demo__tabs" role="tablist" aria-label="Grabaciones">
+        <button class="demo__tab" role="tab" type="button" id="tab-brief" aria-controls="rec-brief" aria-selected="true"><span class="demo__tab-n">1</span>A partir de un brief</button>
+        <button class="demo__tab" role="tab" type="button" id="tab-gate" aria-controls="rec-gate" aria-selected="false"><span class="demo__tab-n">2</span>El gate dice que no</button>
+        <button class="demo__tab" role="tab" type="button" id="tab-existing" aria-controls="rec-existing" aria-selected="false"><span class="demo__tab-n">3</span>Un repositorio que ya está en producción</button>
+        <button class="demo__tab" role="tab" type="button" id="tab-harness" aria-controls="rec-harness" aria-selected="false"><span class="demo__tab-n">4</span>El harness construye uno</button>
+      </div>
+
+      <div class="demo__panel" role="tabpanel" id="rec-brief" aria-labelledby="tab-brief">
+        <p class="demo__lede">Un brief de cuatro frases. El borrador del agente inventa una tarifa; la checklist de redacción lo detecta, y la tarifa se convierte en una pregunta para el cliente.</p>
+        <figure class="term" data-term-src="./assets/terminal-brief.json" data-term-lazy>
+          <figcaption class="term__bar">
+            <span class="term__dots" aria-hidden="true"></span>
+            <span class="term__title">courts — a partir de un brief</span>
+            <span class="term__controls">
+              <button class="term__btn term__btn--speed" type="button" hidden aria-label="Velocidad de reproducción">1×</button>
+              <button class="term__btn term__btn--toggle" type="button" hidden>Pausa</button>
+              <button class="term__btn term__btn--skip" type="button" hidden>Mostrar todo</button>
+              <button class="term__btn term__btn--replay" type="button" hidden>Repetir</button>
+            </span>
+          </figcaption>
+          <div class="term__progress" aria-hidden="true"></div>
+          <div class="term__screen" aria-hidden="true"></div>
+          <p class="term__caption" aria-hidden="true"></p>
+<!-- specgate:terminal-brief:begin — generated; edit the source, not this block -->
+<pre class="term__transcript"><code>~/courts $ cat docs/brief.md
+---
+product: Court bookings for a tennis club
+surfaces: [api]
+actors:
+  - { name: Member, surfaces: [api] }
+modules: [bookings]
+---
+
+# Brief
+
+Members book a court for one hour. A court cannot be booked twice for
+the same hour. Members can cancel a booking. Late cancellations may be charged.
+
+~/courts $ specgate propose --from-brief bookings
+  ◆ specgate · propose --from-brief bookings   docs/brief.md
+
+  3 requirement(s) · 4 scenario(s)
+
+  ✖  D6_unlisted_value  SCN-002 states &quot;201&quot;, which is not in the brief and not listed as an assumption for SCN-002 or REQ-002.
+     fix: List it in assumptions.md with SCN-002 (or REQ-002) in its row, or use the value the brief gives.
+  ✖  D6_unlisted_value  SCN-004 states &quot;court already booked&quot;, which is not in the brief and not listed as an assumption for SCN-004 or REQ-003.
+     fix: List it in assumptions.md with SCN-004 (or REQ-003) in its row, or use the value the brief gives.
+  ✖  D6_unlisted_value  SCN-004 states &quot;409&quot;, which is not in the brief and not listed as an assumption for SCN-004 or REQ-003.
+     fix: List it in assumptions.md with SCN-004 (or REQ-003) in its row, or use the value the brief gives.
+  ✖  D6_unlisted_value  SCN-005 states &quot;204&quot;, which is not in the brief and not listed as an assumption for SCN-005 or REQ-004.
+     fix: List it in assumptions.md with SCN-005 (or REQ-004) in its row, or use the value the brief gives.
+  ✖  D6_unlisted_value  SCN-005 states &quot;5&quot;, which is not in the brief and not listed as an assumption for SCN-005 or REQ-004.
+     fix: List it in assumptions.md with SCN-005 (or REQ-004) in its row, or use the value the brief gives.
+
+  ✖  5 finding(s) to fix — each says how; DRAFTING.md has the formats
+
+  What now ───────────────────────────────────────────────
+… 2 more lines
+
+~/courts $ git diff -U0 docs/specs/changes/draft-bookings/specs | grep -E '^[-+]' | grep -vE '^(---|[+]{3}) '
+-&lt;!-- specgate:trace actor=Member kind=functional --&gt;
++&lt;!-- specgate:trace actor=Member kind=functional status=&quot;Needs Clarification&quot; --&gt;
+-fee of 5 euros when they cancel less than 24 hours before.
++late cancellation the fee the club decides (Q1).
+-- THEN the response is 204 and a fee of 5 euros is charged
++- THEN the response is 204 and the late-cancellation fee is charged
+
+~/courts $ cat docs/specs/changes/draft-bookings/questions.md
+# Open questions
+
+| # | Question | Blocks | Options seen |
+|---|---|---|---|
+| Q1 | How much is a late cancellation, and how late is late? | REQ-004 | A flat fee · the full hour · nothing in the first season |
+
+~/courts $ specgate propose --from-brief bookings
+  ◆ specgate · propose --from-brief bookings   docs/brief.md
+
+  3 requirement(s) · 4 scenario(s)
+
+  ✔  Ready to review
+
+  What now ───────────────────────────────────────────────
+   1  Read docs/specs/changes/draft-bookings/specs/ with whoever knows the business
+   2  Answer what you can in docs/specs/changes/draft-bookings/questions.md
+   3  ➜ specgate apply   its requirements, one at a time; then specgate archive draft-bookings
+… 1 more lines
+
+~/courts $ specgate status
+  ◆ specgate · status   courts
+
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 4 done
+
+  To do ──────────────────────────────────────────────────
+    ○ REQ-001  Preserve existing behaviour                   a test and code
+    ○ REQ-002  A member books a court for one hour           a test and code
+    ○ REQ-003  A court is never booked twice for the same …  a test and code
+
+  Waiting for an answer ──────────────────────────────────
+    ○ REQ-004  A member cancels a booking  an answer to Q1
+    Questions: Q1 (docs/specs/changes/draft-bookings/questions.md)
+
+  Brief         ████████████████████  1 of 1 module(s) drafted   docs/brief.md
+
+  Next ───────────────────────────────────────────────────
+… 2 more lines
+</code></pre>
+<!-- specgate:terminal-brief:end -->
+        </figure>
+      </div>
+
+      <div class="demo__panel" role="tabpanel" id="rec-gate" aria-labelledby="tab-gate" hidden>
+        <p class="demo__lede">Dar por hecho un requisito antes de que tenga un test, y cerrar uno que aún espera al cliente. Ambos rechazados.</p>
+        <figure class="term" data-term-src="./assets/terminal-gate.json" data-term-lazy>
+          <figcaption class="term__bar">
+            <span class="term__dots" aria-hidden="true"></span>
+            <span class="term__title">courts — el gate</span>
+            <span class="term__controls">
+              <button class="term__btn term__btn--speed" type="button" hidden aria-label="Velocidad de reproducción">1×</button>
+              <button class="term__btn term__btn--toggle" type="button" hidden>Pausa</button>
+              <button class="term__btn term__btn--skip" type="button" hidden>Mostrar todo</button>
+              <button class="term__btn term__btn--replay" type="button" hidden>Repetir</button>
+            </span>
+          </figcaption>
+          <div class="term__progress" aria-hidden="true"></div>
+          <div class="term__screen" aria-hidden="true"></div>
+          <p class="term__caption" aria-hidden="true"></p>
+<!-- specgate:terminal-gate:begin — generated; edit the source, not this block -->
+<pre class="term__transcript"><code>~/courts $ specgate apply REQ-002
+  ◆ specgate · apply REQ-002   Implemented
+
+
+  ✖  REQ-002  REQ-002 has no test that names it yet (TDD-1).  [apply_no_test]
+     fix: write a test that names REQ-002 (and its scenario SCN-002), then run specgate apply REQ-002
+
+~/courts $ cat test/bookings.test.js
+const test = require(&quot;node:test&quot;);
+const assert = require(&quot;node:assert&quot;);
+const { book, list } = require(&quot;../src/bookings&quot;);
+
+test(&quot;REQ-002 SCN-002: booking a free court lasts one hour&quot;, () =&gt; {
+  assert.deepEqual(book(&quot;ana&quot;, &quot;centre&quot;, &quot;mon-18&quot;), { status: 201, minutes: 60 });
+});
+
+test(&quot;REQ-002 SCN-003: a member sees their bookings&quot;, () =&gt; {
+  assert.equal(list(&quot;ana&quot;).length, 1);
+});
+
+~/courts $ specgate apply REQ-002
+  ◆ specgate · apply REQ-002   Implemented
+
+  ✔  Specification   the gate, for REQ-002
+  ✔  Tests           node --test
+
+  ✔  REQ-002 → Implemented (1 row updated)
+… 4 more lines
+
+~/courts $ specgate apply REQ-004
+  ◆ specgate · apply REQ-004   Implemented
+
+
+  ✖  REQ-004  not marked Implemented: REQ-004 is waiting for an answer (Needs Clarification).  [done_needs_clarification]
+     fix: Answer the question that blocks it in its change's questions.md, remove `status=&quot;Needs Clarification&quot;` from its `specgate:trace`, write its test, then run `specgate apply`.
+
+~/courts $ specgate archive draft-bookings
+  ✖  draft-bookings  Change 'draft-bookings' has 2 requirement(s) not delivered yet: REQ-003, REQ-004.  [archive_requirements_pending]
+     fix: specgate apply REQ-003
+
+~/courts $ specgate check
+  ◆ specgate · check   courts
+
+  ↻  docs/specs/actors.md regenerated from its sources
+  ·  docs/specs/glossary.md does not define Member — archive adds them as rows to fill
+  ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
+  ✔  Specification   validate --strict
+  ✔  Tests           node --test
+  ·  Architecture    not checked — specgate config set arch_cmd &quot;&lt;command&gt;&quot;
+
+  ✔  Gate passed — the specification and `node --test`
+</code></pre>
+<!-- specgate:terminal-gate:end -->
+        </figure>
+      </div>
+
+      <div class="demo__panel" role="tabpanel" id="rec-existing" aria-labelledby="tab-existing" hidden>
+        <p class="demo__lede">Un repositorio Node con código, tests e historial, y sin especificación. Specgate lo adopta sin tocar un solo archivo fuente, tu agente redacta un módulo como requisitos que citan su origen, y el gate está en verde el mismo día.</p>
+        <figure class="term" data-term-src="./assets/terminal-existing.json" data-term-lazy>
+          <figcaption class="term__bar">
+            <span class="term__dots" aria-hidden="true"></span>
+            <span class="term__title">invoices — un repositorio existente</span>
+            <span class="term__controls">
+              <button class="term__btn term__btn--speed" type="button" hidden aria-label="Velocidad de reproducción">1×</button>
+              <button class="term__btn term__btn--toggle" type="button" hidden>Pausa</button>
+              <button class="term__btn term__btn--skip" type="button" hidden>Mostrar todo</button>
+              <button class="term__btn term__btn--replay" type="button" hidden>Repetir</button>
+            </span>
+          </figcaption>
+          <div class="term__progress" aria-hidden="true"></div>
+          <div class="term__screen" aria-hidden="true"></div>
+          <p class="term__caption" aria-hidden="true"></p>
+<!-- specgate:terminal-existing:begin — generated; edit the source, not this block -->
+<pre class="term__transcript"><code>~/invoices $ git log --oneline
+c5da000 invoices 1.4: refunds
+
+~/invoices $ specgate init
+  ◆ specgate · init
+
+  ℹ  Existing code found (package.json) — adopting this repository in place. Nothing in your code is touched.
+  ℹ  To scaffold a separate new project instead: specgate init --new
+
+  Stack detection: package.json ──────────────────────────
+    · Project: invoices
+    · Stack: Node.js
+    · Test command: npm test
+    + spec.md
+    + features/adoption/baseline.feature
+    + docs/specs/traceability.md
+    + docs/specs/adr/README.md
+    + docs/specs/glossary.md
+… 32 more lines
+
+~/invoices $ git status --short
+?? .gitattributes
+?? .github/
+?? AGENTS.md
+?? README.md
+?? docs/
+?? features/
+?? harness.config.yaml
+?? spec.md
+
+~/invoices $ specgate reverse --modules
+  ◆ specgate · reverse --modules   invoices
+
+  src/billing                      node     1 file(s)
+  src/notify                       node     1 file(s)
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate reverse &lt;module&gt;
+     one module per run, reviewed before the next
+
+~/invoices $ specgate reverse src/billing --agent &quot;reverse-agent {prompt_file}&quot;
+  ◆ specgate · reverse   src/billing
+
+  ℹ  The agent is reading 1 file(s) of src/billing…
+  ✔  2 requirement(s) drafted into docs/specs/changes/reverse-billing, every one Draft.
+  ℹ  1 behaviour(s) that may be defects — asked in docs/specs/changes/reverse-billing/questions.md.
+
+  Next ───────────────────────────────────────────────────
+  ➜  specgate change validate reverse-billing
+     after you review each requirement against its source=
+
+~/invoices $ cat docs/specs/changes/reverse-billing/questions.md
+# Questions — reverse-billing
+
+| # | Question | Blocks | Options seen | Answer | Status |
+|---|---|---|---|---|---|
+| Q1 | The code does this: The system truncates a refund to two decimals. (src/billing/invoice.js:14). Is it a rule to keep, or a defect? Truncating rounds every refund down, by up to a cent: it reads like a defect, not a rule. |  |  |  | open |
+
+~/invoices $ specgate check
+  ◆ specgate · check   invoices
+
+  ·  Ids            not compared with a base — no base branch (pass --base &lt;branch&gt;)
+  ✔  Specification   validate --strict
+  ✔  Tests           npm test
+  ·  Architecture    not checked — specgate config set arch_cmd &quot;&lt;command&gt;&quot;
+
+  ✔  Gate passed — the specification and `npm test`
+</code></pre>
+<!-- specgate:terminal-existing:end -->
+        </figure>
+      </div>
+
+      <div class="demo__panel" role="tabpanel" id="rec-harness" aria-labelledby="tab-harness" hidden>
+        <p class="demo__lede">Un proyecto generado a partir de una configuración de siete líneas, su cola, y luego el harness entrega un requisito a un agente en su propio git worktree — y lo conserva solo porque el gate pasó.</p>
+        <figure class="term" data-term-src="./assets/terminal-demo.json" data-term-lazy>
+          <figcaption class="term__bar">
+            <span class="term__dots" aria-hidden="true"></span>
+            <span class="term__title">smart-parking — el harness</span>
+            <span class="term__controls">
+              <button class="term__btn term__btn--speed" type="button" hidden aria-label="Velocidad de reproducción">1×</button>
+              <button class="term__btn term__btn--toggle" type="button" hidden>Pausa</button>
+              <button class="term__btn term__btn--skip" type="button" hidden>Mostrar todo</button>
+              <button class="term__btn term__btn--replay" type="button" hidden>Repetir</button>
+            </span>
+          </figcaption>
+          <div class="term__progress" aria-hidden="true"></div>
+          <div class="term__screen" aria-hidden="true"></div>
+          <p class="term__caption" aria-hidden="true"></p>
+<!-- specgate:terminal:begin — generated; edit the source, not this block -->
+<pre class="term__transcript"><code>~ $ cat smart-parking.yaml
+PROJECT_NAME: Smart Parking
+PROJECT_SLUG: smart-parking
+PROJECT_TYPE: backend
+DOMAIN: parking operations
+STACK: Node 20, Express, PostgreSQL
+API_STYLE: REST with DTO boundaries
+TESTING: node:test
+
+~ $ specgate init --config ./smart-parking.yaml --out . --no-git
+  ◆ specgate · init
+
+  ℹ  🧩 Rendering base template
+  ℹ  🛠️ Applying project type template: backend
+  ℹ  🧩 No optional modules selected. Generating base + project-type features only.
+  ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
+
+  Summary ────────────────────────────────────────────────
+    · Project: Smart Parking
+    · Slug: smart-parking
+    · Type: backend
+    · Domain: parking operations
+    · Output: ~/smart-parking
+    · Dry-run: false
+… 5 more lines
+
+~/smart-parking $ specgate plan
+  ◆ specgate · plan
+
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 1 done
+
+  Needs Test Artifact (TDD) ──────────────────────────────
+    REQ-000   SCN-000
+      ✔ feature `features/core/health.feature`
+      ○ code    `API /health, smoke test`
+
+~/smart-parking $ cat harness.config.yaml
+harness_version: 1
+agent: 'specgate-stub-agent {prompt_file}'
+test_cmd: 'node --test test/*.test.js'
+max_attempts: 1
+
+~/smart-parking $ specgate harness run --req REQ-000
+  ◇  the agent inherits 3 variable(s) that look like secrets: GIT_AUTHOR_DATE, GIT_AUTHOR_EMAIL, GIT_AUTHOR_NAME — agent_env: in harness.config.yaml chooses what it gets
+
+  ◆ specgate · harness run   1 requirement(s) from HEAD
+
+  ◇  REQ-000   attempt 1/1
+  ◇  REQ-000   started validate --strict
+  ◇  REQ-000   passed validate --strict in 1.2 s
+  ◇  REQ-000   started test command
+  ◇  REQ-000   passed test command in 1.2 s
+
+  Harness report ─────────────────────────────────────────
+  ✔  REQ-000   pass     1 attempt   → harness/REQ-000
+
+  ████████████████████  1 of 1 passed   1 passed · 0 failed · 0 skipped
+… 5 more lines
+
+~/smart-parking $ git diff --stat main harness/REQ-000
+ .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 109 ++++++++++++++++++++++++
+ docs/specs/traceability.md                              |   2 +-
+ spec.md                                                 |   2 +-
+ src/health.js                                           |   9 ++
+ test/health.test.js                                     |  11 +++
+ 5 files changed, 131 insertions(+), 2 deletions(-)
+
+~/smart-parking $ git switch -q harness/REQ-000 &amp;&amp; node --test test/*.test.js
+✔ REQ-000 SCN-000: GET /health reports the service as UP (12ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1.234
+
+~/smart-parking $ specgate validate .
+  ◆ specgate · validate   smart-parking
+
+  ✔  Validation passed
+     · Features detected: 1
+     · Base SDD structure: complete
+     · Traceability mode: rich
+</code></pre>
+<!-- specgate:terminal:end -->
+        </figure>
+      </div>
+    </div>
+
+    <p class="term__meta">
+      Grabado con <strong>v1.3.0</strong>. <a href="./reverse.html">Un repositorio existente →</a> <a href="./tutorial.html">La ejecución del harness, explicada →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ── Projects ─────────────────────────────────────────────────────────── -->
+<section class="ed-band" id="projects">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <p class="ed-eyebrow">Probado en productos reales</p>
+      <h2 class="ed-h2">Seis briefs de clientes. Seis productos. Cada defecto, por escrito.</h2>
+      <p class="ed-muted">Cada uno empezó con un brief que envió un cliente real —
+         vago, detallado, centrado en la arquitectura, regulado — y lo construyó
+         de punta a punta un agente de código manejando Specgate. No son
+         despliegues de clientes, y el código es privado. Lo que prueban es el
+         método, y cada informe lista lo que Specgate hizo mal por el camino.</p>
+    </div>
+    <div class="px">
+      <div class="px__tile reveal">
+        <p class="px__tile-k">Requisitos entregados</p>
+        <p class="px__big">229</p>
+        <p class="px__tile-s">en tres stacks — Next.js, Spring&nbsp;Boot y Quarkus. Dos quedan abiertos a propósito: solo el cliente puede responderlos.</p>
+      </div>
+      <a class="px__card reveal" href="./projects/rebar-crew.html">
+        <div class="px__shot px__shot--spec" aria-label="Uno de los escenarios de Rebar Crew, en Gherkin"><pre><span class="g-k">@REQ-204 @SCN-215</span>
+<span class="g-k">Scenario:</span> a failed inspection takes
+  the forklift out of service
+  <span class="g-k">Given</span> forklift "FL-07" in service
+  <span class="g-k">When</span>  POST /api/forklifts/FL-07/
+        inspections with "brakes" failed
+  <span class="g-k">Then</span>  201, and FL-07 is
+        "OUT_OF_SERVICE"</pre></div>
+        <p class="px__kind">Brief detallado · seis packs</p>
+        <h3>Rebar Crew</h3>
+        <p class="ed-muted">Una app de campo para una cuadrilla de armadores de acero</p>
+        <ul class="px__stack"><li>Expo</li><li>Next.js</li><li>TypeScript</li></ul>
+        <div class="px__meter">
+          <div class="px__meter-bar" aria-hidden="true"><i style="width:100.0%"></i></div>
+          <p><strong>47 de 47</strong> requisitos · 599 tests</p>
+        </div>
+        <p class="px__found">Todos los requisitos hechos y el producto inutilizable — sin rutas, sin pantallas. La checklist ahora pide un escenario de API y uno de pantalla por actor.</p>
+        <span class="px__more">Leer el proyecto →</span>
+      </a>
+      <a class="px__card reveal" href="./projects/bookings.html">
+        <div class="px__shot"><img src="./assets/img/app-bookings-agenda-thumb.webp" width="488" height="305" loading="lazy" alt="La agenda del dueño en Bookings: tres reservas de pista para el día, cada una con hora, servicio, cliente y contacto."></div>
+        <p class="px__kind">Brief detallado · capturas de pantalla</p>
+        <h3>Bookings</h3>
+        <p class="ed-muted">Citas para negocios locales</p>
+        <ul class="px__stack"><li>Next.js</li><li>TypeScript</li></ul>
+        <div class="px__meter">
+          <div class="px__meter-bar" aria-hidden="true"><i style="width:100.0%"></i></div>
+          <p><strong>38 de 38</strong> requisitos · 5 ciclos</p>
+        </div>
+        <p class="px__found">Cada ciclo terminó usando el producto: una agenda que solo mostraba el día de hoy, sin menú, un job abierto a cualquiera.</p>
+        <span class="px__more">Leer el proyecto →</span>
+      </a>
+      <a class="px__card reveal" href="./projects/credit-shop.html">
+        <div class="px__shot"><img src="./assets/img/app-credit-shop-catalog-thumb.webp" width="768" height="480" loading="lazy" alt="El catálogo de Credit shop, agrupado por categoría, cada artículo con su precio y un botón para añadir al carrito."></div>
+        <p class="px__kind">Brief de cinco líneas</p>
+        <h3>Credit shop</h3>
+        <p class="ed-muted">Crédito, una tienda online y una red de ventas</p>
+        <ul class="px__stack"><li>Next.js</li><li>TypeScript</li></ul>
+        <div class="px__meter">
+          <div class="px__meter-bar" aria-hidden="true"><i style="width:100.0%"></i></div>
+          <p><strong>24 de 24</strong> requisitos · 272 tests</p>
+        </div>
+        <p class="px__found">Todos los tests en verde y nadie podía comprar: no había botón “Añadir al carrito”. Un escenario solo de API se construye como una API.</p>
+        <span class="px__more">Leer el proyecto →</span>
+      </a>
+      <a class="px__card reveal" href="./projects/fincore.html">
+        <div class="px__shot"><img src="./assets/img/report-fincore.webp" width="1040" height="760" loading="lazy" alt="Informe de cobertura de la spec de FinCore: 59 de 60 requisitos implementados."></div>
+        <p class="px__kind">Brief centrado en la arquitectura</p>
+        <h3>FinCore</h3>
+        <p class="ed-muted">Core bancario</p>
+        <ul class="px__stack"><li>Spring Boot 3.3</li><li>Java 21</li><li>PostgreSQL</li></ul>
+        <div class="px__meter">
+          <div class="px__meter-bar" aria-hidden="true"><i style="width:98.3%"></i><i style="width:1.7%"></i></div>
+          <p><strong>59 de 60</strong> requisitos · 112 tests <br><span class="chip chip--wait">1 esperando una respuesta</span></p>
+        </div>
+        <p class="px__found">La app no arrancaba con el gate en verde. Ahora la suite incluye un test de arranque sin dobles.</p>
+        <span class="px__more">Leer el proyecto →</span>
+      </a>
+      <a class="px__card reveal" href="./projects/eventtech.html">
+        <div class="px__shot"><img src="./assets/img/report-eventtech.webp" width="1040" height="760" loading="lazy" alt="Informe de cobertura de la spec de EventTech: 38 de 38 requisitos implementados."></div>
+        <p class="px__kind">Brief centrado en la arquitectura</p>
+        <h3>EventTech</h3>
+        <p class="ed-muted">Operaciones de eventos, reconstruidas a partir de hechos</p>
+        <ul class="px__stack"><li>Quarkus 3.40</li><li>Java 21</li><li>PostgreSQL</li></ul>
+        <div class="px__meter">
+          <div class="px__meter-bar" aria-hidden="true"><i style="width:100.0%"></i></div>
+          <p><strong>38 de 38</strong> requisitos · 71 tests</p>
+        </div>
+        <p class="px__found">Nadie podía ver las plazas libres de una sesión. Dos requisitos volvieron como changes MODIFIED.</p>
+        <span class="px__more">Leer el proyecto →</span>
+      </a>
+      <a class="px__card reveal" href="./projects/healthtech.html">
+        <div class="px__shot"><img src="./assets/img/report-healthtech.webp" width="1040" height="683" loading="lazy" alt="Informe de cobertura de la spec de HealthTech: 23 de 24 requisitos implementados, uno esperando una respuesta."></div>
+        <p class="px__kind">Dominio regulado</p>
+        <h3>HealthTech</h3>
+        <p class="ed-muted">Casos clínicos</p>
+        <ul class="px__stack"><li>Quarkus 3.40</li><li>Java 21</li><li>PostgreSQL</li></ul>
+        <div class="px__meter">
+          <div class="px__meter-bar" aria-hidden="true"><i style="width:95.8%"></i><i style="width:4.2%"></i></div>
+          <p><strong>23 de 24</strong> requisitos · 35 tests <br><span class="chip chip--wait">1 esperando una respuesta</span></p>
+        </div>
+        <p class="px__found">Dos lecturas no dejaban rastro en el log de accesos. Las interacciones entre medicamentos esperan al cliente en lugar de una suposición.</p>
+        <span class="px__more">Leer el proyecto →</span>
+      </a>
+    </div>
+    <div class="gal reveal" aria-label="Pantallas de los pilotos">
+      <figure class="shot">
+        <div class="shot__bar" aria-hidden="true"><span class="shot__dots"></span><span class="shot__url">credit-shop · /admin/credits</span></div>
+        <img src="./assets/img/app-credit-shop-credit-review-crop.webp" width="1040" height="285" loading="lazy" style="aspect-ratio:auto"
+             alt="La cola de administración de Credit shop: cada solicitud de crédito con pedido, importe, cuota, ingresos y un veredicto de solvencia; las pendientes tienen botones para aprobar y rechazar.">
+        <figcaption><strong>Credit shop</strong> — la cola de créditos que pedía un requisito: importe, cuota, ingresos, un veredicto de solvencia y una decisión solo en las pendientes.</figcaption>
+      </figure>
+      <div class="gal__side">
+        <figure class="gal__phone">
+          <img src="./assets/img/app-bookings-confirmed-mobile.webp" width="780" height="1200" loading="lazy"
+               alt="Bookings en un móvil: reserva confirmada con fecha, hora, código, el cupón aplicado y el precio con descuento.">
+          <figcaption>Bookings — confirmada, cupón aplicado</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="ed-muted gal__note">Pantallas reales de los pilotos, con datos inventados. Sus interfaces están en español, como pidieron sus clientes.</p>
+    <p class="ed-actions">
+      <a class="ed-link" href="./projects/index.html">Los seis proyectos, comparados →</a>
+      <a class="ed-link" href="./domain-packs.html">Siete de sus módulos, como packs instalables →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ── The harness ──────────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--ink hz" id="harness" aria-labelledby="hz-h">
+  <div class="ed-wrap">
+    <div class="hz__head reveal">
+      <p class="ed-eyebrow">El harness · entrega sin supervisión</p>
+      <h2 class="ed-h2" id="hz-h">Tu agente construye.<br>El gate decide. <span>Tú haces merge.</span></h2>
+      <p class="ed-muted"><code>specgate harness run</code> toma cada requisito
+         pendiente en su propio git worktree, le da a tu agente un prompt construido
+         a partir de su Gherkin, ejecuta el gate sobre el resultado y hace commit
+         solo si está en verde. No hace merge — la rama es tuya para integrarla o
+         descartarla — salvo que ejecutes un <code>--chain</code>, que hace merge de
+         cada requisito en verde y se detiene en el primero en rojo. El agente es
+         cualquier comando de shell; no hay runtime ni SDK. <code>specgate studio</code>
+         muestra la ejecución en su sección Live (<code>/live</code>), a medida que
+         ocurre (<a class="ed-link" href="./harness.html">el harness</a>).</p>
+    </div>
+
+    <figure class="code ed-agents" data-lang="bash">
+      <figcaption class="code__head"><span class="code__lang">Cualquier CLI de agente</span><button class="code__copy" type="button" aria-label="Copiar al portapapeles">Copiar</button></figcaption>
+      <pre><code class="language-bash">specgate harness run --agent "claude -p &lt; {prompt_file}"
+specgate harness run --agent "aider --yes --message-file {prompt_file}"
+specgate harness run --agent "./my-wrapper.sh {prompt_file}"</code></pre>
+    </figure>
+    <p class="ed-tools">
+      <span>Conectados desde una sola definición</span>
+      <code>claude</code><code>claude-plugin</code><code>cursor</code><code>copilot</code><code>windsurf</code><code>aider</code><code>gemini</code><code>cline</code><code>codex</code><code>antigravity</code><code>opencode</code><code>opencode-plugin</code>
+    </p>
+    <p class="ed-actions">
+      <a class="ed-link" href="#watch">Mira una ejecución real →</a>
+      <a class="ed-link" href="./harness.html">Cómo funciona el harness →</a>
+      <a class="ed-link" href="./agent-setup.html">Elegir tu agente →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ── How it compares ──────────────────────────────────────────────────── -->
+<section class="ed-band ed-band--paper" id="compare">
+  <div class="ed-wrap">
+    <div class="ed-head reveal">
+      <p class="ed-eyebrow">Si conoces OpenSpec</p>
+      <h2 class="ed-h2">OpenSpec registra lo que se hizo. Specgate lo prueba.</h2>
+      <p class="ed-muted">OpenSpec popularizó el ciclo de changes, y es la
+         primera herramienta que conviene mirar. Specgate usa los mismos tres
+         verbos — propose, apply, archive — con un gate debajo de cada uno.
+         OpenSpec comprueba la forma de tu especificación y te deja la prueba a
+         ti. Specgate es la prueba.</p>
+    </div>
+    <div class="vs reveal">
+      <div class="vs__row">
+        <p class="vs__q">Cuando un agente dice “hecho”</p>
+        <p class="vs__them"><span>OpenSpec</span>Archive pregunta si continuar cuando hay tareas sin marcar; <code>--yes</code> se lo salta. Verify es una revisión con IA que “no bloquea el archive”.</p>
+        <p class="vs__us"><span>Specgate</span><code>apply</code> se niega hasta que un test nombra el requisito y tu suite pasa; <code>archive</code> se niega mientras quede uno pendiente, y ningún flag se lo salta.</p>
+      </div>
+      <div class="vs__row">
+        <p class="vs__q">Cuando el borrador viene del brief de un cliente</p>
+        <p class="vs__them"><span>OpenSpec</span>El prompt le pide al agente que no invente la intención. Nada lo comprueba.</p>
+        <p class="vs__us"><span>Specgate</span><code>specgate propose --from-brief</code> se detiene ante una tarifa, un límite o un número que el brief nunca indicó.</p>
+      </div>
+      <div class="vs__row">
+        <p class="vs__q">Cuando solo el cliente puede responder</p>
+        <p class="vs__them"><span>OpenSpec</span>El agente anota un supuesto y sigue adelante.</p>
+        <p class="vs__us"><span>Specgate</span><em>Needs Clarification</em> impide construirlo y cerrarlo hasta que alguien responda.</p>
+      </div>
+      <div class="vs__row">
+        <p class="vs__q">Cuando entregas el trabajo a un agente</p>
+        <p class="vs__them"><span>OpenSpec</span><code>/opsx:apply</code> recorre las tareas en tu sesión.</p>
+        <p class="vs__us"><span>Specgate</span><code>harness run</code>: una rama por requisito, el gate después de cada intento; solo hace merge con <code>--chain</code>, y solo de lo que pasó.</p>
+      </div>
+    </div>
+    <p class="ed-muted ed-note reveal"><strong>Donde OpenSpec va por delante:</strong> muchos más usuarios,
+       más de 30 integraciones con agentes frente a nuestras 10, workflows
+       personalizables y ningún test obligatorio para empezar. Si quieres el ciclo
+       de changes y nada más, es la mejor herramienta. ¿Ya lo usas? Quédate con
+       él, y deja que <code>specgate verify</code> haga de gate de lo que archiva.</p>
+    <p class="ed-actions reveal">
+      <a class="ed-link" href="./vs-openspec.html">Specgate u OpenSpec, en detalle →</a>
+      <a class="ed-link" href="./comparisons.html">Spec Kit, las reglas de Cursor y el resto →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ── FAQ ──────────────────────────────────────────────────────────────── -->
+<section class="ed-band">
+  <div class="ed-wrap ed-split">
+    <div class="ed-split__head reveal">
+      <h2 class="ed-h2">Lo primero que preguntan los equipos.</h2>
+      <p><a class="ed-link" href="./faq.html">Todas las preguntas →</a></p>
+    </div>
+    <div class="ed-faq">
+      <details>
+        <summary>¿Funciona en un repositorio que ya existe?</summary>
+        <p>Sí, es el caso habitual. <code>specgate init</code> lo adopta en el
+           sitio sin tocar tu código, y el gate está en verde el mismo día: un
+           requisito en Draft todavía no debe nada.</p>
+      </details>
+      <details>
+        <summary>¿Es seguro dejar que un agente escriba el borrador a partir de un brief?</summary>
+        <p>Más seguro que dejar que escriba el código a partir del brief. La
+           checklist lista cada valor que añadió el agente, y lo que nadie puede
+           responder se convierte en una pregunta que bloquea su requisito.
+           Revisas una lista corta, no el borrador entero.</p>
+      </details>
+      <details>
+        <summary>¿Puede un ticket de Jira ser el punto de partida?</summary>
+        <p>Sí. <code>specgate propose --from-ticket KAN-13</code> comprueba que la
+           historia esté lista — con criterios de aceptación, medibles, lo bastante
+           pequeña —, abre un change a partir de ella y sube su rama. Specgate solo
+           lee Jira; el tablero avanza con tu propia automatización de Jira.
+           <a class="ed-link" href="./from-a-ticket.html">A partir de un ticket de Jira →</a></p>
+      </details>
+      <details>
+        <summary>¿Cada pull request necesita un requisito nuevo?</summary>
+        <p>No. Una corrección de bug o un refactor que no cambia el comportamiento
+           acordado no añade ninguno; el gate solo pide lo que deben los requisitos
+           entregados.</p>
+      </details>
+      <details>
+        <summary>¿Puede el agente reescribir la spec para pasar su propio test?</summary>
+        <p>No sin que se note. Por MCP, las herramientas que escriben la
+           especificación se niegan si no hay un change abierto; en el harness,
+           tocar la spec hace fallar el intento.</p>
+      </details>
+      <details>
+        <summary>¿El harness hará merge por mí?</summary>
+        <p>No, salvo que se lo pidas. Por defecto deja una rama por requisito y se
+           detiene: hacer merge es una decisión, y sigue siendo tuya. Con
+           <code>--chain</code> hace merge de cada requisito que pasó el gate,
+           vuelve a ejecutar el gate sobre el merge y se detiene en el primer fallo.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ── Close ────────────────────────────────────────────────────────────── -->
+<section class="ed-close">
+  <div class="ed-wrap">
+    <div class="ed-close__box reveal">
+      <h2 class="ed-display ed-display--close">Tu plan ya es una spec.</h2>
+      <div class="ed-close__side">
+        <figure class="code ed-close__code" data-lang="bash">
+          <figcaption class="code__head"><span class="code__lang">bash</span><button class="code__copy" type="button" aria-label="Copiar al portapapeles">Copiar</button></figcaption>
+          <pre><code class="language-bash">npm install --save-dev @rsaglobaltech/specgate
+npx specgate init
+npx specgate propose --from-brief</code></pre>
+        </figure>
+        <p class="ed-actions">
+          <a class="ed-btn ed-btn--light" href="./start.html">Empezar</a>
+          <a class="ed-btn ed-btn--ghost" href="./start/write-the-brief.html">Escribir el brief</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="ed-foot">
+  <div class="ed-wrap ed-foot__grid">
+    <div>
+      <p class="ed-foot__brand"><span aria-hidden="true">⬡</span> Specgate</p>
+      <p class="ed-muted">Especificaciones que se comprueban, no que se admiran. MIT.</p>
+    </div>
+    <nav aria-label="Producto">
+      <p class="ed-foot__h">Producto</p>
+      <a href="./projects/index.html">Proyectos</a>
+      <a href="./mcp.html">Servidor MCP</a>
+      <a href="./comparisons.html">Comparar</a>
+    </nav>
+    <nav aria-label="Aprender">
+      <p class="ed-foot__h">Aprender</p>
+      <a href="./start.html">Empezar</a>
+      <a href="./getting-started.html">Primeros pasos</a>
+      <a href="./from-a-ticket.html">A partir de un ticket de Jira</a>
+      <a href="./start/write-the-brief.html">Escribir el brief</a>
+      <a href="./concepts.html">Conceptos</a>
+      <a href="./commands.html">Comandos</a>
+    </nav>
+    <nav aria-label="Proyecto">
+      <p class="ed-foot__h">Proyecto</p>
+      <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://www.npmjs.com/package/@rsaglobaltech/specgate" target="_blank" rel="noreferrer">npm</a>
+      <a href="./packs/">Spec packs</a>
+      <a href="./release-process.html">Versiones</a>
+    </nav>
+  </div>
+  <p class="ed-wrap ed-foot__note">Documentación de v1.3.0. Un test comprueba cada número de esta página contra el repositorio.</p>
+</footer>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__scrim" data-close="1"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Buscar en la documentación">
+    <div class="palette__field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="palette-input" placeholder="Buscar en la documentación…"
+             autocomplete="off" spellcheck="false" aria-label="Buscar en la documentación"
+             aria-controls="results" aria-expanded="true">
+      <kbd class="palette__esc">Esc</kbd>
+    </div>
+    <div class="palette__results" id="results" role="listbox" aria-label="Resultados"></div>
+    <p class="palette__hint">
+      <kbd>↑</kbd><kbd>↓</kbd> para moverte · <kbd>↵</kbd> para abrir · <kbd>Esc</kbd> para cerrar
+    </p>
+  </div>
+</div>
+
+<script src="./assets/home.js" defer></script>
+<script src="./assets/docs.js" defer></script>
+</body>
+</html>

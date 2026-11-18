@@ -64,7 +64,7 @@ Jira is only read. → [From a Jira ticket](from-a-ticket.md)
 | A Jira story with acceptance criteria | The ticket: `specgate propose --from-ticket <KEY>` |
 
 All three open the same kind of change and follow the same lifecycle.
-→ [Getting started](getting-started.md#3-where-does-the-work-come-from)
+→ [Every day: where work comes from](start/scratch-5-every-day.md#2-where-work-comes-from)
 
 ## Day to day
 
