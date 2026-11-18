@@ -233,7 +233,7 @@ $ specgate status
 
   Next ───────────────────────────────────────────────────
   ➜  specgate apply REQ-002
-     once a test mentions REQ-002 — that mention is the link; apply checks first
+     bookings, the brief's 1st module of 1 — once a test mentions REQ-002 — that mention is the link; apply checks first
 ```
 <!-- specgate:out-scratch-status:end -->
 

@@ -99,6 +99,7 @@ $ specgate check
   ◆ specgate · check   court-bookings
 
   ↻  docs/specs/actors.md regenerated from its sources
+  ·  docs/specs/glossary.md does not define Member — archive adds them as rows to fill
   ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test

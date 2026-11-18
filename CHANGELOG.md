@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-11-18
+
+Quality requirements under ISO/IEC 25010 and a measurable Why in the brief.
+
 ### Added
 
 - **Quality requirements in the brief** (REQ-601, REQ-603, issue #485): a
