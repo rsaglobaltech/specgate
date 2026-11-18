@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import { inBuildOrder, modulePlaces, whyNext } from "../../../lib/build-order";
 import { agentPrompt, type PromptKind } from "../../../../packages/core/src/domain/AgentKickoff";
 import * as path from "node:path";
 import { requirementCapabilities } from "../../../lib/capabilities";
@@ -185,7 +186,16 @@ export function summarise(
   questionsFrom: string = projectDir
 ): QueueSummary {
   const rows = parseTraceability(traceContent);
-  const items: QueueItem[] = rows.map((r) => classify(r, projectDir)).filter((x) => x !== null);
+  // REQ-600: in the order they are built — the brief's modules in its order.
+  const places = modulePlaces(projectDir);
+  const items: QueueItem[] = inBuildOrder(
+    rows.map((r) => classify(r, projectDir)).filter((x) => x !== null),
+    places
+  );
+  for (const it of items) {
+    const why = whyNext(places.get(it.requirement));
+    if (why) it.module = why;
+  }
   // A requirement waiting for an answer is not work anyone can start: listing
   // it as "a test and code" under To do invited exactly that (FinCore, #73).
   const questions = questionsByRequirement(questionsFrom);
@@ -461,7 +471,15 @@ export function nextCommandPlain({
   return "specgate check";
 }
 
-export function nextReason({
+/** REQ-600: the reason, led by why this requirement comes next when the brief orders the modules. */
+export function nextReason(input: NextInput): string {
+  const reason = nextReasonOf(input);
+  const todo = firstReal(input.items);
+  const why = todo && typeof todo.module === "string" ? todo.module : null;
+  return why && reason.includes(todo!.requirement) ? `${why} — ${reason}` : reason;
+}
+
+function nextReasonOf({
   items,
   counts,
   orphans,

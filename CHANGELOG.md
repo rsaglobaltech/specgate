@@ -9,6 +9,13 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **Built in the brief's module order** (REQ-600): with a brief that lists its
+  modules, `status`, `apply` and the harness take requirements module by
+  module in the brief's order, not by the modules' names; `status` says why
+  ("users, the brief's 1st module of 2"). Without a brief, nothing changes.
+
 ## [1.2.0] — 2026-11-17
 
 Codex as a first-class agent, what to tell your agent (`status --prompt`), the design layer by rigor, and the domain docs kept current — with no new command.

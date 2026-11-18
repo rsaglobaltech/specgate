@@ -134,14 +134,14 @@ token never lands in the repository. SonarQube's token is kept in
 Most commands never touch a credential. The ones that talk to Jira, Azure
 Boards or GitHub do, and all of them follow the same rules:
 
-| Command | Reaches | Credential |
-| --- | --- | --- |
-| `specgate propose --from-ticket <KEY>` | Jira: reads one issue | the variable `token_env` names (and `user_env` for the account email) |
-| `specgate alm sync`, `alm pull` | Your tracker (Jira, Azure Boards, GitHub Issues): `pull` reads issues, `sync` also creates and closes them | the variable `token_env` names |
-| `specgate alm pr <change-id>` | git push to your remote; the GitHub API | your normal git credentials for the push; the variable `pr.token_env` names for the API |
+| Command                                | Reaches                                                                                                    | Credential                                                                              |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `specgate propose --from-ticket <KEY>` | Jira: reads one issue                                                                                      | the variable `token_env` names (and `user_env` for the account email)                   |
+| `specgate alm sync`, `alm pull`        | Your tracker (Jira, Azure Boards, GitHub Issues): `pull` reads issues, `sync` also creates and closes them | the variable `token_env` names                                                          |
+| `specgate alm pr <change-id>`          | git push to your remote; the GitHub API                                                                    | your normal git credentials for the push; the variable `pr.token_env` names for the API |
 
 - **Tokens live in the environment, never in a file.** `alm.config.yaml` is
-  committed, so it holds only the *names* of environment variables
+  committed, so it holds only the _names_ of environment variables
   (`token_env: JIRA_TOKEN`), never their values. Keep the values in your
   environment or your system's keychain, and in CI as masked secrets.
 - **Credentials only travel over https.** `base_url`, and `pr.base_url` for a
@@ -172,6 +172,9 @@ That is not the same as harmless. A compromised devDependency executes on CI
 with a publish token in scope, which is why the repository's workflows run
 `npm audit` and CodeQL, Dependabot watches the tree, and npm releases carry
 [provenance](https://docs.npmjs.com/generating-provenance-statements).
+`npm audit` gates on what ships (`--omit=dev`, none); the toolchain's audit
+runs beside it as a report, so an advisory with no fixed version yet is seen
+without blocking every pull request.
 
 ### SBOM
 
@@ -197,16 +200,16 @@ pass when either side is allowed; `AND` expressions require every term.
 The tree when this table was last counted — 377 components, all permissive, no
 copyleft. `npm run licenses` prints the current count:
 
-| Licence | Components |
-| --- | --: |
-| MIT | 288 |
-| Apache-2.0 | 33 |
-| ISC | 27 |
-| BSD-3-Clause | 9 |
-| BSD-2-Clause | 7 |
-| BlueOak-1.0.0 | 5 |
-| MIT OR CC0-1.0 | 3 |
-| PSF-2.0 · CC-BY-4.0 · CC-BY-3.0 · CC0-1.0 · 0BSD | 1 each |
+| Licence                                          | Components |
+| ------------------------------------------------ | ---------: |
+| MIT                                              |        288 |
+| Apache-2.0                                       |         33 |
+| ISC                                              |         27 |
+| BSD-3-Clause                                     |          9 |
+| BSD-2-Clause                                     |          7 |
+| BlueOak-1.0.0                                    |          5 |
+| MIT OR CC0-1.0                                   |          3 |
+| PSF-2.0 · CC-BY-4.0 · CC-BY-3.0 · CC0-1.0 · 0BSD |     1 each |
 
 The unusual four are worth naming, because "we allow CC-BY" reads alarming
 without them: `argparse` is PSF-2.0 since version 3 (Python-2.0 before; both
