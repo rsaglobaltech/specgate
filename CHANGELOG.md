@@ -9,12 +9,24 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-11-18
+
+Requirements built in the brief's module order, with the reason said.
+
 ### Changed
 
 - **Built in the brief's module order** (REQ-600): with a brief that lists its
   modules, `status`, `apply` and the harness take requirements module by
   module in the brief's order, not by the modules' names; `status` says why
   ("users, the brief's 1st module of 2"). Without a brief, nothing changes.
+
+### Security
+
+- **`npm audit` gates on what ships**: the required check audits the published
+  package's dependencies (`--omit=dev`, none); the toolchain's audit still runs,
+  as a report. A toolchain advisory with no fixed version
+  ([GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf),
+  picomatch, through eslint) no longer blocks every pull request.
 
 ## [1.2.0] — 2026-11-17
 
