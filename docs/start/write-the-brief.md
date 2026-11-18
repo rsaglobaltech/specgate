@@ -5,7 +5,7 @@
 **Before you draft anything.** A brief says what the product must do, in the
 words of the people who need it. Specgate drafts the specification from it one
 module at a time, and checks every draft against it. This page teaches the
-brief in eight steps, about 25 minutes, with one example throughout:
+brief in nine steps, about 28 minutes, with one example throughout:
 **Lingo**, an invented online language school.
 
 **When you finish:** a `docs/brief.md` that `specgate propose --from-brief --check`
@@ -78,8 +78,9 @@ $ specgate propose --from-brief --new-brief
 
 ## Step 1 — Why (3 minutes)
 
-Under `## Why`, the problem in two sentences, and one or two successes you can
-measure. They become the non-functional rules later.
+Under `## Why`, the problem in two sentences, the objectives, and how you
+will know they are met — each with a value and its unit. A Why with no number
+gets the warning `B15_why_unmeasured`.
 
 - Good: "A student finds today's lesson in under 10 seconds."
 - Not: "Fast and easy to use." No test can check it.
@@ -147,7 +148,33 @@ Under `Questions`, what you do not know yet about this module — at most
 three. They become rows of `questions.md`, for the client to answer: never
 guesses.
 
-## Step 8 — Check it
+## Step 8 — Quality (3 minutes)
+
+Under `## Quality`, how well the product must work: one line per need, opened
+with its [ISO/IEC 25010](https://www.iso.org/standard/78176.html)
+characteristic, each with a number a test can check. Name the modules in
+parentheses when the need is not the whole product's.
+
+```markdown
+## Quality
+
+- performance efficiency (lessons): A lesson opens in under 3 seconds for 500 students at once.
+- reliability: Available 99.5% of each month.
+- interaction capability: Every screen meets WCAG 2.2 AA.
+```
+
+The nine characteristics: functional suitability, performance efficiency,
+compatibility, interaction capability, reliability, security,
+maintainability, flexibility, safety. Their older and common names —
+usability, portability, availability, privacy, and the Spanish ones — are
+read as the characteristic they belong to.
+
+Each line becomes one non-functional requirement: in the draft of the module
+it names, or, when it names none, in the draft of the first module. A line no
+test can check — "loads fast" — is the error `B14_quality_unmeasured` and
+stops the draft. Leave the section out if the brief says nothing about it.
+
+## Step 9 — Check it
 
 ```bash
 specgate propose --from-brief --check
@@ -439,6 +466,8 @@ The system SHALL show a lesson to the students of its course once it is publishe
 | `brief_wrong_shape` | A field is written as words, not a list | Use the shape its fix shows: `surfaces: [web]` |
 | `B2_empty_module` | A module's section is still empty or a comment | Write its rules and examples |
 | `B3_no_section` | A module has no `## Module:` section | Add one, or take it off `modules:` |
+| `B14_quality_unmeasured` | A quality line states no value a test can check | Give the number and its unit, or move it to Questions |
+| `B14_quality_module` | A quality line names a module `modules:` does not list | Name a listed module, or drop the parenthesis |
 | `brief_not_ready` | `propose --from-brief <module>` found an error | Run `--check` and fix what it says |
 | `draft_brief_text_lost` | The agent changed your notes | Nothing was kept; run it again, or write the sections yourself |
 

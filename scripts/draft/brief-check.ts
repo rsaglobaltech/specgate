@@ -1,7 +1,7 @@
 /**
- * The brief rules, B1 to B13, as diagnostics (ADR-0038).
+ * The brief rules, B1 to B15, as diagnostics (ADR-0038).
  *
- * B1 is the front matter's shapes and fields (`brief-setup.ts`); B2 to B13
+ * B1 is the front matter's shapes and fields (`brief-setup.ts`); B2 to B15
  * read the body's module cards (`BriefCards`). `propose --from-brief --check`
  * prints them, the overview stops on their errors, and a draft is not opened
  * over one.

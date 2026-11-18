@@ -342,6 +342,7 @@ export function noBriefExplanation(brief: string): string {
     "    · who uses it, and where — on the web, on a phone, through an API",
     "    · what each of them must be able to do",
     "    · the rules and numbers you already know — prices, limits, deadlines",
+    "    · how well it must work — speed, availability, security — in numbers",
     "    · what you don't know yet — those become questions, not guesses",
     "    · what is out of scope",
     "",
@@ -378,8 +379,23 @@ modules: [<first-module>, <second-module>]
 
 ## Why
 
-<!-- The problem in two sentences, and one or two successes you can measure:
-     "a student finds today's lesson in under 10 seconds", never "fast". -->
+<!-- The problem in two sentences, the objectives, and how you will know they
+     are met, each with a value and its unit:
+     "a student finds today's lesson in under 10 seconds", never "fast";
+     "sign-ups from 2% to 4% of visitors by June". -->
+
+## Quality
+
+<!-- How well the product must work, one line per need, opened with its
+     ISO/IEC 25010 characteristic. Name modules in parentheses when it is not
+     the whole product. Each needs a number a test can check. Example:
+     - performance efficiency (lessons): A lesson opens in under 3 seconds for 500 students at once.
+     - reliability: Available 99.5% of each month.
+     - security: A student sees only their own progress.
+     - interaction capability: Every screen meets WCAG 2.2 AA.
+     The nine: functional suitability, performance efficiency, compatibility,
+     interaction capability, reliability, security, maintainability,
+     flexibility, safety. -->
 
 ## Glossary
 
@@ -580,6 +596,21 @@ export function briefCardsGuide(brief: string, modules: string[]): string {
     '- **Examples**: at least one per rule, "The one where …", with the rule\'s own',
     "  values.",
     "- **Questions**: what the brief leaves open about this module, at most three.",
+    "",
+    "If the brief's text says how well the product must work — how fast, how",
+    "available, how secure — add one `## Quality` section after the modules, one",
+    "line per need, opened with its ISO/IEC 25010 characteristic and naming the",
+    "modules it is about, if not the whole product:",
+    "",
+    "```markdown",
+    "## Quality",
+    "",
+    "- performance efficiency (lessons): A lesson opens in under 3 seconds.",
+    "- reliability: Available 99.5% of each month.",
+    "```",
+    "",
+    "A need the brief states without a number is a question, never a number you",
+    "choose.",
     "",
     "## Then",
     "",

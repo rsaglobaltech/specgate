@@ -38,6 +38,12 @@ export interface ModuleCards {
   /** Its numbers and "quoted labels", in order. */
   values: string[];
   questions: string[];
+  /**
+   * The brief's `## Quality` entries this draft writes, as the brief writes
+   * them (REQ-603): the ones naming the module, and the product-wide ones in
+   * the first module's draft.
+   */
+  quality?: string[];
 }
 
 /** The module's cards: the scope, the values, the questions — or nothing. */
@@ -70,6 +76,17 @@ function cardsPart(i: DraftingGuideInput): string[] {
           "blocks:",
           "",
           ...cards.questions.map((q) => `- ${q}`),
+          "",
+        ]
+      : []),
+    ...(cards.quality && cards.quality.length
+      ? [
+          "**Quality requirements to write** — from the brief's `## Quality` section",
+          "(ISO/IEC 25010). Each becomes one requirement of kind `non-functional`,",
+          "its entry quoted under `> Brief:`, with a scenario that measures its",
+          "number:",
+          "",
+          ...cards.quality.map((q) => `- ${q}`),
           "",
         ]
       : []),

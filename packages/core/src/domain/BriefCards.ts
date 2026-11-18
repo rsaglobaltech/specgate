@@ -15,7 +15,7 @@
  *   Questions
  *   - Can a student be in two courses at once?
  *
- * B2 to B13 are decidable, like the D-rules over a draft: they say what the
+ * B2 to B15 are decidable, like the D-rules over a draft: they say what the
  * brief does not say, never whether a rule is right. B1 — the front matter's
  * shapes — lives with the rest of the front matter's checks
  * (`scripts/draft/brief-setup.ts`). Pure: the caller hands the text in.
@@ -194,6 +194,262 @@ export function cardValues(section: ModuleSection): string[] {
   return out;
 }
 
+// ── Quality and why (REQ-601, REQ-602) ───────────────────────────────────────
+
+/** ISO/IEC 25010:2023's nine product quality characteristics, in its order. */
+export const QUALITY_CHARACTERISTICS = [
+  "functional suitability",
+  "performance efficiency",
+  "compatibility",
+  "interaction capability",
+  "reliability",
+  "security",
+  "maintainability",
+  "flexibility",
+  "safety",
+] as const;
+
+export type QualityCharacteristic = (typeof QUALITY_CHARACTERISTICS)[number];
+
+/**
+ * What people write for each characteristic: its 2011 name (usability,
+ * portability), its sub-characteristics, and the Spanish names of all of them.
+ * "seguridad" is security: Spanish says "protección" or "seguridad física"
+ * for safety.
+ */
+const QUALITY_ALIASES: Record<QualityCharacteristic, readonly string[]> = {
+  "functional suitability": [
+    "functionality",
+    "functional completeness",
+    "functional correctness",
+    "correctness",
+    "idoneidad funcional",
+    "adecuación funcional",
+    "adecuacion funcional",
+    "completitud funcional",
+    "corrección funcional",
+    "correccion funcional",
+  ],
+  "performance efficiency": [
+    "performance",
+    "efficiency",
+    "time behaviour",
+    "time behavior",
+    "response time",
+    "latency",
+    "throughput",
+    "capacity",
+    "resource utilisation",
+    "resource utilization",
+    "scalability",
+    "eficiencia de desempeño",
+    "eficiencia de desempeno",
+    "desempeño",
+    "desempeno",
+    "rendimiento",
+    "eficiencia",
+    "tiempo de respuesta",
+    "latencia",
+    "capacidad",
+    "escalabilidad",
+  ],
+  compatibility: [
+    "interoperability",
+    "co-existence",
+    "coexistence",
+    "compatibilidad",
+    "interoperabilidad",
+    "coexistencia",
+  ],
+  "interaction capability": [
+    "usability",
+    "accessibility",
+    "inclusivity",
+    "learnability",
+    "operability",
+    "user experience",
+    "ux",
+    "capacidad de interacción",
+    "capacidad de interaccion",
+    "usabilidad",
+    "accesibilidad",
+    "inclusividad",
+    "aprendizaje",
+    "operabilidad",
+    "experiencia de usuario",
+  ],
+  reliability: [
+    "availability",
+    "fault tolerance",
+    "recoverability",
+    "maturity",
+    "faultlessness",
+    "fiabilidad",
+    "confiabilidad",
+    "disponibilidad",
+    "tolerancia a fallos",
+    "recuperabilidad",
+    "madurez",
+  ],
+  security: [
+    "confidentiality",
+    "integrity",
+    "privacy",
+    "authenticity",
+    "accountability",
+    "non-repudiation",
+    "resistance",
+    "seguridad",
+    "confidencialidad",
+    "integridad",
+    "privacidad",
+    "autenticidad",
+    "trazabilidad",
+    "no repudio",
+  ],
+  maintainability: [
+    "modularity",
+    "reusability",
+    "analysability",
+    "analyzability",
+    "modifiability",
+    "testability",
+    "mantenibilidad",
+    "modularidad",
+    "reusabilidad",
+    "analizabilidad",
+    "modificabilidad",
+    "capacidad de prueba",
+    "testeabilidad",
+  ],
+  flexibility: [
+    "portability",
+    "adaptability",
+    "installability",
+    "replaceability",
+    "flexibilidad",
+    "portabilidad",
+    "adaptabilidad",
+    "instalabilidad",
+    "reemplazabilidad",
+  ],
+  safety: [
+    "operational constraint",
+    "risk identification",
+    "fail safe",
+    "fail-safe",
+    "hazard warning",
+    "safe integration",
+    "protección",
+    "proteccion",
+    "seguridad física",
+    "seguridad fisica",
+  ],
+};
+
+const QUALITY_LOOKUP = new Map<string, QualityCharacteristic>(
+  QUALITY_CHARACTERISTICS.flatMap((c) => [
+    [c, c] as const,
+    ...QUALITY_ALIASES[c].map((a) => [a, c] as const),
+  ])
+);
+
+/** `Usability`, `disponibilidad` → its ISO/IEC 25010:2023 characteristic, or undefined. */
+export function qualityCharacteristic(name: string): QualityCharacteristic | undefined {
+  return QUALITY_LOOKUP.get(name.trim().toLowerCase().replace(/\s+/g, " "));
+}
+
+export interface QualityEntry {
+  /** As written: `Performance`, `disponibilidad`. Empty when the item names none. */
+  readonly name: string;
+  /** Its ISO/IEC 25010 characteristic, when `name` is one or an alias of one. */
+  readonly characteristic?: QualityCharacteristic;
+  /** The modules it names, as `modules:` spells them; empty: the whole product. */
+  readonly modules: readonly string[];
+  /** What must hold: the text after the colon, or the whole item when it names none. */
+  readonly statement: string;
+  /** The item as written, for a draft to quote. */
+  readonly text: string;
+  /** 1-based, in the whole brief. */
+  readonly line: number;
+}
+
+const QUALITY_HEADING =
+  /^##\s+(?:quality(?:\s+requirements)?|calidad|requisitos\s+de\s+calidad|non[- ]functional\s+requirements|requisitos\s+no\s+funcionales)\s*#*\s*$/i;
+const WHY_HEADING = /^##\s+(?:why|por\s+qu[eé]|goals|objectives|objetivos)\s*:?\s*#*\s*$/i;
+/** `performance (courses, lessons): …` — a name of letters, an optional scope, a colon. */
+const QUALITY_ITEM = /^([\p{L}][\p{L} \-/]{0,40}?)\s*(?:\(([^()]*)\))?\s*:\s+(.+)$/u;
+
+/** The lines of a `## …` section, from its heading to the next `## `, comments blanked. */
+function sectionLines(
+  brief: string,
+  heading: RegExp
+): { lines: string[]; first: number } | undefined {
+  const src = String(brief || "").replace(/\r\n/g, "\n");
+  const fm = FRONT.exec(src);
+  const offset = fm ? fm[0].split("\n").length - 1 : 0;
+  const lines = withoutComments(fm ? src.slice(fm[0].length) : src).split("\n");
+  const start = lines.findIndex((l) => heading.test(l.trim()));
+  if (start < 0) return undefined;
+  let end = start + 1;
+  while (end < lines.length && !/^##\s/.test(lines[end])) end += 1;
+  // `first` is the 1-based line, in the whole brief, of the heading's next line.
+  return { lines: lines.slice(start + 1, end), first: offset + start + 2 };
+}
+
+/** The `## Quality` section's entries, in order; empty when the brief has none. */
+export function readBriefQuality(brief: string): QualityEntry[] {
+  const section = sectionLines(brief, QUALITY_HEADING);
+  if (!section) return [];
+  const out: QualityEntry[] = [];
+  section.lines.forEach((line, i) => {
+    const item = /^\s*[-*]\s+(.*)$/.exec(line);
+    if (item) {
+      const text = item[1].trim();
+      if (!text || isPlaceholder(text)) return;
+      const m = QUALITY_ITEM.exec(text);
+      const name = m ? m[1].trim() : "";
+      out.push({
+        name,
+        characteristic: name ? qualityCharacteristic(name) : undefined,
+        modules: m && m[2] ? m[2].split(",").map(moduleKey).filter(Boolean) : [],
+        statement: m ? m[3].trim() : text,
+        text,
+        line: section.first + i,
+      });
+    } else if (out.length && /^\s{2,}\S/.test(line)) {
+      // An entry that wraps onto an indented line is still one entry.
+      const last = out[out.length - 1];
+      const more = line.trim();
+      out[out.length - 1] = {
+        ...last,
+        statement: `${last.statement} ${more}`,
+        text: `${last.text} ${more}`,
+      };
+    }
+  });
+  return out;
+}
+
+/**
+ * The quality entries a module's draft writes (REQ-603): the ones naming it,
+ * and, for the first module of `modules:`, the ones naming none — one
+ * non-functional requirement for the whole product, not a copy per module.
+ */
+export function qualityFor(brief: string, module: string): QualityEntry[] {
+  const first = briefModules(brief).find((m) => !isPlaceholder(m));
+  return readBriefQuality(brief).filter((q) =>
+    q.modules.length ? q.modules.includes(module) : module === first
+  );
+}
+
+/** The `## Why` section's text, comments out; undefined when the brief has none. */
+export function briefWhy(brief: string): { text: string; line: number } | undefined {
+  const section = sectionLines(brief, WHY_HEADING);
+  if (!section) return undefined;
+  return { text: section.lines.join("\n").trim(), line: section.first - 1 };
+}
+
 // ── The rules ─────────────────────────────────────────────────────────────────
 
 /**
@@ -242,7 +498,7 @@ const nameRe = (name: string) =>
   new RegExp(`(?<![\\p{L}])${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "iu");
 
 /**
- * Rules B2 to B13 over a brief. Errors stop a draft: what it would get wrong.
+ * Rules B2 to B15 over a brief. Errors stop a draft: what it would get wrong.
  * Warnings are for the person: wording a test cannot check.
  */
 export function checkBriefBody(brief: string, project: ProjectSurfaces = {}): Diagnostic[] {
@@ -462,5 +718,76 @@ export function checkBriefBody(brief: string, project: ProjectSurfaces = {}): Di
       );
     }
   }
+
+  out.push(...checkQuality(brief, listed), ...checkWhy(brief));
   return out;
+}
+
+const NINE = QUALITY_CHARACTERISTICS.join(", ");
+
+/** B14 — the `## Quality` entries (REQ-601). No section, no finding. */
+function checkQuality(brief: string, listed: readonly string[]): Diagnostic[] {
+  const out: Diagnostic[] = [];
+  const named = listed.filter((m) => !isPlaceholder(m));
+  for (const q of readBriefQuality(brief)) {
+    const at = { target: q.name || "quality", line: q.line };
+    if (!q.name) {
+      out.push(
+        warning("B14_quality_shape", `"${q.text}" names no quality characteristic.`, {
+          ...at,
+          fix: `Open it with its ISO/IEC 25010 characteristic: "interaction capability: ${q.text}". The nine: ${NINE}.`,
+        })
+      );
+    } else if (!q.characteristic) {
+      out.push(
+        warning(
+          "B14_quality_characteristic",
+          `"${q.name}" is not an ISO/IEC 25010 quality characteristic.`,
+          {
+            ...at,
+            fix: `Use one of the nine — ${NINE} — or, if it is what the product does rather than how well, move it to a module's Rules.`,
+          }
+        )
+      );
+    }
+    const bare = withoutQuoted(q.statement);
+    const vague = VAGUE.exec(bare);
+    if (vague || unmeasured(bare)) {
+      out.push(
+        error(
+          "B14_quality_unmeasured",
+          vague
+            ? `"${q.text}" says "${vague[1]}", which no test can check.`
+            : `"${q.text}" promises a quantity and states no number.`,
+          {
+            ...at,
+            fix: 'State the value a test checks, with its unit: "in under 2 seconds for 500 students at once", "99.5% of each month".',
+          }
+        )
+      );
+    }
+    for (const m of q.modules.filter((x) => !named.includes(x))) {
+      out.push(
+        error("B14_quality_module", `"${q.text}" names ${m}, which \`modules:\` does not list.`, {
+          ...at,
+          fix: `Name one of ${named.join(", ") || "the listed modules"}, or drop the parenthesis for the whole product.`,
+        })
+      );
+    }
+  }
+  return out;
+}
+
+/** B15 — the why states a success you can measure (REQ-602). No section, no finding. */
+function checkWhy(brief: string): Diagnostic[] {
+  const why = briefWhy(brief);
+  if (!why || !why.text.split("\n").some(says)) return [];
+  if (/\d/.test(why.text)) return [];
+  return [
+    warning("B15_why_unmeasured", "The Why states no success you can measure.", {
+      target: "why",
+      line: why.line,
+      fix: 'Say the problem, the objectives, and how you will know they are met, with a value and its unit: "a student finds today\'s lesson in under 10 seconds", "sign-ups from 2% to 4% of visitors by June".',
+    }),
+  ];
 }

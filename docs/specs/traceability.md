@@ -495,6 +495,9 @@
 | REQ-598 | SCN-598a | `features/agent-integration/REQ-598.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Approved |
 | REQ-599 | SCN-599a | `features/change-lifecycle/REQ-599.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Approved |
 | REQ-600 | SCN-600a | `features/harness/REQ-600.feature` | - | - | - | - | - | tests/unit/build-order.test.ts | Approved |
+| REQ-601 | SCN-601a | `features/brief-cards/REQ-601.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
+| REQ-602 | SCN-602a | `features/brief-cards/REQ-602.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
+| REQ-603 | SCN-603a | `features/brief-cards/REQ-603.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
