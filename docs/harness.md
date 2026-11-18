@@ -68,6 +68,13 @@ specgate harness prompt REQ-001      # the exact prompt, printed
 specgate harness run --dry-run       # what it would do, in order
 ```
 
+**The order.** With a brief that lists its modules, requirements are taken
+module by module in the brief's order — list first what the rest needs — and,
+within a module, in the order its spec lists them; `status` and `apply` take
+them the same way and say which module comes next. Without a brief, the
+matrix's order. A requirement whose `specgate:trace` says `depends=` still
+waits for the ones it names.
+
 ## The worktree
 
 Each requirement runs in its own git worktree, so the agent never touches your

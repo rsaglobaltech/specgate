@@ -494,6 +494,7 @@
 | REQ-597 | SCN-597a | `features/agent-integration/REQ-597.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Approved |
 | REQ-598 | SCN-598a | `features/agent-integration/REQ-598.feature` | - | - | - | - | - | tests/unit/agent-choice.test.ts | Approved |
 | REQ-599 | SCN-599a | `features/change-lifecycle/REQ-599.feature` | - | - | - | - | - | tests/unit/change-layers.test.ts | Approved |
+| REQ-600 | SCN-600a | `features/harness/REQ-600.feature` | - | - | - | - | - | tests/unit/build-order.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

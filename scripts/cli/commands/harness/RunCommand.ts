@@ -23,6 +23,7 @@
  * gate twice: on its branch and merged (ADR-0036).
  */
 
+import { inBuildOrder, modulePlaces } from "../../../lib/build-order";
 import { stackFileCommand } from "../../../lib/stack-detect";
 import {
   DECISION_RIGHTS_FILE,
@@ -2868,7 +2869,11 @@ export class RunCommand extends BaseCommand {
       // A requirement with two scenarios was processed twice — two agent
       // sessions, paid twice, both on branch harness/REQ-NNN. The prompt carries
       // every scenario of the requirement, so one run per requirement is enough.
-      let pending = harnessQueue(plan.requirements || [], args.reqs);
+      // REQ-600: in the brief's module order, as status and apply take them.
+      let pending = harnessQueue(
+        inBuildOrder(plan.requirements || [], modulePlaces(projectDir)),
+        args.reqs
+      );
       if (args.reqs.length > 0) {
         // In the order given (REQ-185): the plan's order reshuffled a chain silently.
         pending = orderAsGiven(pending, args.reqs);
