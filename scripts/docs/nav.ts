@@ -280,6 +280,44 @@ export const NAV: readonly NavSection[] = [
       "What fails a pull request — tests, coverage, mutation, SonarQube, SpotBugs, secrets — and how to wire it in.",
     entries: [
       {
+        slug: "gate/index",
+        group: "The gate, step by step",
+        step: 1,
+        label: "The gate",
+        blurb: "What it proves, its stages in order, exit codes, and which command to run when.",
+      },
+      {
+        slug: "gate/local",
+        group: "The gate, step by step",
+        step: 2,
+        label: "On your machine",
+        blurb: "check before you push: your tests, the base branch, only what changed, a hook.",
+      },
+      {
+        slug: "gate/ci",
+        group: "The gate, step by step",
+        step: 3,
+        label: "In CI",
+        blurb:
+          "The job for GitHub, GitLab, Azure or Jenkins, line by line, made a required check and pinned.",
+      },
+      {
+        slug: "gate/baselines",
+        group: "The gate, step by step",
+        step: 4,
+        label: "Adopt it without a red build",
+        blurb:
+          "Today's findings recorded as debt — the gate's and the quality checks' — so only new ones fail.",
+      },
+      {
+        slug: "gate/failures",
+        group: "The gate, step by step",
+        step: 5,
+        label: "Read a failure",
+        blurb:
+          "Every code the gate fails with, what it means, and why CI is red when your machine is green.",
+      },
+      {
         slug: "validating",
         label: "Validating",
         blurb: "Every check the gate runs, what each status owes, and the flags behind check.",
