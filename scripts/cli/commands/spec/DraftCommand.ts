@@ -84,6 +84,7 @@ import { checkBrief, briefReady, projectSurfaces } from "../../../draft/brief-ch
 import {
   cardValues,
   moduleSection,
+  qualityFor,
   readBriefBody,
 } from "../../../../packages/core/src/domain/BriefCards";
 import { specgateTagsByScenario } from "../../../../packages/core/src/domain/GherkinTags";
@@ -647,6 +648,7 @@ function moduleCards(briefText: string, module: string): ModuleCards | undefined
     source: section.source,
     values: cardValues(section),
     questions: section.questions.map((q) => q.text),
+    quality: qualityFor(briefText, module).map((q) => q.text),
   };
 }
 

@@ -33,7 +33,7 @@ the pull request, so the spec and the code are reviewed together.
 | `specgate propose <change-id>`                  | One behaviour: you write the delta yourself.                                    | [Change a shipped requirement](reviewing-changes.md)             |
 | `specgate propose --from-brief`                 | Lists the modules of `docs/brief.md` and the next one to draft.                 | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief --new-brief`     | Writes a `docs/brief.md` for you to fill in. Never overwrites one.              | [Write the brief](start/write-the-brief.md)                      |
-| `specgate propose --from-brief --check`         | Runs the brief rules (B1–B13) on the brief. Writes nothing.                     | [Write the brief](start/write-the-brief.md#step-8-check-it)      |
+| `specgate propose --from-brief --check`         | Runs the brief rules (B1–B15) on the brief. Writes nothing.                     | [Write the brief](start/write-the-brief.md#step-9-check-it)      |
 | `specgate propose --from-brief --agent "<cmd>"` | Your agent proposes the brief's fields, then a section per module.              | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief --form`          | The brief as a form, each field with its line; `--form <file>` writes it back.  | [From a brief](from-a-brief.md)                                  |
 | `specgate propose --from-brief <module>`        | Opens that module's draft change, or checks it once it exists.                  | [From a brief](from-a-brief.md#2-draft-one-module)               |

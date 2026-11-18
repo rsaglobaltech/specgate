@@ -349,8 +349,10 @@ export function answeredQuestions(md: string): Array<{ row: string; blocks: stri
 
 // ── What D4 and D5 look for ───────────────────────────────────────────────────
 
+// The unit ends where no letter follows: `\b` after "%" never matched, so
+// "99.5% of each month" read as unmeasured (REQ-601).
 const MEASURE =
-  /\d+(?:[.,]\d+)?\s*(ms|s|sec|seconds?|min|minutes?|h|hours?|%|m|km|kb|mb|gb|px|req\/s|rps|users?|days?)\b/i;
+  /\d+(?:[.,]\d+)?\s*(ms|s|sec|seconds?|min|minutes?|h|hours?|%|m|km|kb|mb|gb|px|req\/s|rps|users?|days?)(?![a-z])/i;
 const CITES =
   /(\bCode\s*§|§\s*\d|\bACI\b|\bOSHA\b|\bGDPR\b|\bCCPA\b|\bHIPAA\b|\bISO\s*\d|\bCBA\b|\bcontract\b|\bregulation\b|\bLey\b|\bnorma\b)/i;
 const SOURCED = /(https?:\/\/|\bSource:|\bFuente:)/i;

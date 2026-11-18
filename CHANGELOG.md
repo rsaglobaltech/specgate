@@ -9,6 +9,26 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **Quality requirements in the brief** (REQ-601, REQ-603, issue #485): a
+  `## Quality` section lists how well the product must work, one line per
+  need opened with its ISO/IEC 25010:2023 characteristic and optionally
+  scoped to modules. `propose --from-brief --check` reports a line no test can
+  check (`B14_quality_unmeasured`) or naming an unknown module
+  (`B14_quality_module`) as errors, and an unknown characteristic or a line
+  with none as warnings. Each line reaches the draft that writes it as a
+  non-functional requirement: its module's, or the first module's when it
+  names none. The new brief's template and the agent's cards guide teach it.
+- **A Why you can measure** (REQ-602): a `## Why` that states no number gets
+  the warning `B15_why_unmeasured`. A brief without either section gets no new
+  finding.
+
+### Fixed
+
+- A percentage is a measure: "99.9% of each month" no longer reads as an
+  unmeasured non-functional requirement (D4, B6).
+
 ## [1.2.1] — 2026-11-18
 
 Requirements built in the brief's module order, with the reason said.
