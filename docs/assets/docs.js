@@ -15,6 +15,23 @@
     return Array.prototype.slice.call((root || document).querySelectorAll(sel));
   };
 
+  // ── Language ─────────────────────────────────────────────────────────────
+  // The page's own `lang` picks the words below. Choosing a language in the
+  // header is remembered, so the landing opens in it next time.
+  var ES = document.documentElement.getAttribute("lang") === "es";
+  var say_ = function (en, es) {
+    return ES ? es : en;
+  };
+  $$(".top__lang a[data-lang]").forEach(function (a) {
+    a.addEventListener("click", function () {
+      try {
+        localStorage.setItem("specgate-lang", a.getAttribute("data-lang"));
+      } catch (e) {
+        /* private browsing: the link still works */
+      }
+    });
+  });
+
   // ── Theme ────────────────────────────────────────────────────────────────
   var themeBtn = $(".top__theme");
   if (themeBtn) {
@@ -57,8 +74,12 @@
     if (box.classList.contains("code--term")) {
       var cmds = text
         .split("\n")
-        .filter(function (l) { return /^\$ /.test(l); })
-        .map(function (l) { return l.slice(2); });
+        .filter(function (l) {
+          return /^\$ /.test(l);
+        })
+        .map(function (l) {
+          return l.slice(2);
+        });
       if (cmds.length) text = cmds.join("\n");
     }
     return text.replace(/\n+$/, "");
@@ -91,16 +112,16 @@
         btn.textContent = label;
         btn.classList.toggle("is-done", !!done);
         setTimeout(function () {
-          btn.textContent = "Copy";
+          btn.textContent = say_("Copy", "Copiar");
           btn.classList.remove("is-done");
         }, 1600);
       };
       var fallback = function () {
-        say(copyFallback(text) ? "Copied" : "Press ⌘C", true);
+        say(copyFallback(text) ? say_("Copied", "Copiado") : say_("Press ⌘C", "Pulsa ⌘C"), true);
       };
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(function () {
-          say("Copied", true);
+          say(say_("Copied", "Copiado"), true);
         }, fallback);
       } else {
         fallback();
@@ -199,10 +220,7 @@
     var up = new Array(depth + 1).join("../");
 
     var escapeHtml = function (value) {
-      return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+      return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     };
 
     var mark = function (text, needle) {
@@ -230,11 +248,15 @@
       active = -1;
 
       if (!records) {
-        results.innerHTML = '<p class="palette__empty">Loading the index…</p>';
+        results.innerHTML =
+          '<p class="palette__empty">' + say_("Loading the index…", "Cargando el índice…") + "</p>";
         return;
       }
       if (needle.length < 2) {
-        results.innerHTML = '<p class="palette__empty">Type to search the documentation.</p>';
+        results.innerHTML =
+          '<p class="palette__empty">' +
+          say_("Type to search the documentation.", "Escribe para buscar en la documentación.") +
+          "</p>";
         return;
       }
 
@@ -254,7 +276,10 @@
 
       if (found.length === 0) {
         results.innerHTML =
-          '<p class="palette__empty">Nothing matches “' + escapeHtml(query.trim()) + "”.</p>";
+          '<p class="palette__empty">' +
+          say_("Nothing matches “", "Nada coincide con “") +
+          escapeHtml(query.trim()) +
+          "”.</p>";
         return;
       }
 
@@ -306,7 +331,12 @@
         })
         .catch(function () {
           results.innerHTML =
-            '<p class="palette__empty">The search index could not be loaded.</p>';
+            '<p class="palette__empty">' +
+            say_(
+              "The search index could not be loaded.",
+              "No se pudo cargar el índice de búsqueda."
+            ) +
+            "</p>";
         });
     };
 
@@ -429,9 +459,7 @@
   });
 
   function reducedMotion() {
-    return (
-      window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
   function startTerm(fig, rec) {
@@ -582,13 +610,16 @@
       typeCommand(nodes, step.command, (step.typeMs || 26) / speed, function () {
         emitOutput(step, nodes);
         setProgress(index);
-        later(function () {
-          if (paused()) {
-            resume = play;
-            return;
-          }
-          play();
-        }, (step.holdMs || 1200) / speed);
+        later(
+          function () {
+            if (paused()) {
+              resume = play;
+              return;
+            }
+            play();
+          },
+          (step.holdMs || 1200) / speed
+        );
       });
     }
 
@@ -699,7 +730,6 @@
     );
     io.observe(fig);
   }
-
 })();
 
 // The version picker is a <details>, so it opens without this; a click outside

@@ -126,7 +126,13 @@ test("no markdown file links to another that does not exist", () => {
     const body = fs.readFileSync(file, "utf8");
     for (const m of body.matchAll(/\]\(([^)#:]+\.md)(?:#[^)]*)?\)/g)) {
       const target = path.resolve(path.dirname(file), m[1]);
-      if (!fs.existsSync(target)) {
+      // A Spanish page links as its English one does: the site serves every
+      // guide under es/ — translated or not — and docs/specs/ at the root.
+      const es = path.join(ROOT_DIR, "docs", "es") + path.sep;
+      const english = target.startsWith(es)
+        ? path.join(ROOT_DIR, "docs", target.slice(es.length))
+        : target;
+      if (!fs.existsSync(target) && !fs.existsSync(english)) {
         broken.push(`${path.relative(ROOT_DIR, file)} → ${m[1]}`);
       }
     }

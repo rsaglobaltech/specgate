@@ -372,6 +372,29 @@ details.top__version > summary:hover { color: var(--fg); }
 }
 .top__theme:hover { color: var(--fg); border-color: var(--line-strong); }
 
+/* EN · ES: the same page in the other language. */
+.top__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--fg-faint);
+}
+.top__lang a,
+.top__lang [aria-current] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  min-height: 44px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius);
+}
+.top__lang a { color: var(--fg-soft); }
+.top__lang a:hover { color: var(--fg); text-decoration: none; background: var(--bg-raised); }
+.top__lang [aria-current] { color: var(--accent); font-weight: 600; }
+
 /* ── Shell ───────────────────────────────────────────────────────────────── */
 
 .shell {

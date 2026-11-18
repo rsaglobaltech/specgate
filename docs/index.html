@@ -20,8 +20,14 @@
 <link rel="stylesheet" href="./assets/docs.css">
 <link rel="stylesheet" href="./assets/home.css">
 <link rel="stylesheet" href="./assets/terminal.css">
+<link rel="alternate" hreflang="en" href="https://rsaglobaltech.github.io/specgate/">
+<link rel="alternate" hreflang="es" href="https://rsaglobaltech.github.io/specgate/es/">
 <script>
   (function () {
+    // A reader who chose Spanish in the header lands in Spanish.
+    try {
+      if (localStorage.getItem("specgate-lang") === "es") location.replace("./es/");
+    } catch (e) {}
     var t = localStorage.getItem("specgate-theme");
     if (t) document.documentElement.setAttribute("data-theme", t);
     document.documentElement.classList.add("js");
@@ -49,6 +55,7 @@
     <a href="./comparisons.html">Compare</a>
     <a href="https://github.com/rsaglobaltech/specgate" target="_blank" rel="noreferrer">GitHub</a>
   </nav>
+  <nav class="top__lang" aria-label="Language"><span aria-current="true">EN</span><span aria-hidden="true">·</span><a href="./es/" hreflang="es" lang="es" data-lang="es">ES</a></nav>
   <button class="top__theme" type="button" aria-label="Switch theme">◐</button>
 </header>
 

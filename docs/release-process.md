@@ -126,7 +126,8 @@ the CLI supports, so getting this backwards fails CI rather than users.
 2. Bump `version` in `package.json`, then `npm run build && npm run plugin:sync`
    so the plugin's three manifests carry it (a test fails until they do).
 3. Re-record the landing page's terminal: `npm run build && npm run docs:terminal`,
-   then update the version in `docs/index.html`. The recording carries the
+   then update the version in `docs/index.html` and in its Spanish copy,
+   `docs/es/index.html`. The recording carries the
    version it was made from and a test compares the two, so skipping this fails
    the build rather than shipping a page that claims the wrong release.
 4. Open a PR to **`develop`** — never straight to `main`, which is protected:
