@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-11-18
+
+A configurable gate, and documentation in Spanish.
+
 ### Added
 
 - **The gate's policy** (REQ-604 … REQ-606, issue #494): `.specgate/gate.yaml`
