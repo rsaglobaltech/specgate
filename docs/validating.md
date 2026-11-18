@@ -9,6 +9,10 @@ code still agree.
 dev dependency (`npm install --save-dev @rsaglobaltech/specgate`), and, for the
 CI part, a repository on GitHub, GitLab, Azure DevOps or Jenkins.
 
+> **New to the gate?** [The gate, step by step](gate/index.md) walks through it
+> on your machine, in CI for each provider, adopting it with a baseline, and
+> reading a failure. This page is the reference for what `validate` checks.
+
 ## Run the gate on your machine: `specgate check`
 
 ```bash
@@ -124,17 +128,9 @@ tests fail as well, run `check` instead, as the generated job does.
 
 ## Make it a required check
 
-A CI job that fails does not stop a merge on its own. On GitHub:
-
-1. Push a branch once, so GitHub has seen the `spec-gate` job run.
-2. Open **Settings → Branches** (or **Settings → Rules → Rulesets**) and add a
-   rule for your main branch, and for `develop` if you use one.
-3. Turn on **Require status checks to pass before merging** and select
-   `spec-gate`, plus any other CI jobs you rely on.
-4. Save. A pull request with a red gate can no longer be merged.
-
-GitLab, Azure DevOps and Jenkins have the same setting under their own names
-(protected branches, branch policies, required builds).
+A CI job that fails does not stop a merge on its own: make `spec-gate` a
+required check of your main branch. Where that setting is on GitHub, GitLab,
+Azure DevOps and Jenkins: [The gate in CI](gate/ci.md#make-it-a-required-check).
 [Your team's first pull request](first-pr.md) covers what the author and the
 reviewer do once the check is in place.
 
