@@ -70,9 +70,9 @@ path, and a fix on `main` has to be evaluated against the previous minor too.
 If that ever stops being sustainable, the honest move is to change this
 paragraph in a release and say so under Breaking — not to quietly stop.
 
-**Node.js.** `package.json` declares `>=22` and CI tests Node 22 and 24 across
-Linux, macOS and Windows — the floor and the current LTS, so a break at either
-end shows up. The jobs that run once — lint, packaging, publishing, the site —
+**Node.js.** `package.json` declares `>=22` and CI tests Node 22 and 24 on
+Linux and Windows — the floor and the current LTS, so a break at either end
+shows up — and Node 24 on macOS, whose runners are too scarce for both. The jobs that run once — lint, packaging, publishing, the site —
 and the Docker image use Node 24. Raising the floor is **breaking** for the CLI, never a quiet
 minor: an `npx` invocation that used to work and now refuses to run is breaking,
 whatever the changelog calls it.
@@ -131,7 +131,7 @@ the CLI supports, so getting this backwards fails CI rather than users.
    version it was made from and a test compares the two, so skipping this fails
    the build rather than shipping a page that claims the wrong release.
 4. Open a PR to **`develop`** — never straight to `main`, which is protected:
-   the thirteen [required checks](../CONTRIBUTING.md#required-checks) must pass.
+   the twelve [required checks](../CONTRIBUTING.md#required-checks) must pass.
 5. Merge into `develop`, wait for CI on `develop` itself, then fast-forward
    `main` to it. A release is cut from a `main` that has been green the whole
    way, not from one that was red for the twenty minutes it took to notice.
