@@ -1,4 +1,4 @@
-<!-- translation-of: fbd1ceb415c7 -->
+<!-- translation-of: 2335bde0a5f7 -->
 # Lee un fallo del gate
 
 Cada fallo que reporta el gate dice dónde, qué, su código entre corchetes, y
@@ -40,10 +40,12 @@ muestra cada una como `not run`. En CI el mismo texto está en el log del job;
 | `check_tests_failed` | Tu `test_cmd` falló; su salida está encima | Haz que los tests pasen |
 | `check_quality_failed` | Un check de calidad encontró algo nuevo, o no pudo ejecutarse con `--ci` | El hallazgo propio de cada check está encima: `quality_check_failed` |
 | `baseline_incomplete` | Se pidió a `check --baseline` registrar lo que un baseline no puede contener | Corrige lo que reporta validate y vuelve a registrar: [Adóptalo sin un build en rojo](baselines.md) |
+| `gate_policy_invalid` | `.specgate/gate.yaml` nombra un preset, una regla, un nivel o una fecha que no puede leer | Usa lo que indica la corrección: [Configurar el gate](policy.md) |
 
 No son fallos; se informan para que sepas qué no se comprobó:
 `ids_not_compared` (no hay rama base con la que comparar), `check_not_run` (un
-check omitido, con el motivo).
+check omitido, con el motivo), `gate_rule_reported` (hallazgos que la política
+reporta en lugar de fallar).
 
 ## Los hallazgos de la especificación
 

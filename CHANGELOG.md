@@ -9,6 +9,21 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Added
+
+- **The gate's policy** (REQ-604 … REQ-606, issue #494): `.specgate/gate.yaml`
+  says what the gate requires — a preset (`minimal`, `standard`, `strict`) and,
+  per rule (`tdd`, `scenarios`, `requirements`, `links`, `coverage`, `ids`,
+  `quality`), whether it fails the gate (`error`), is reported (`warning`) or
+  does not run (`off`), with `enforce_from` to report every error as a warning
+  until a date. `validate --strict` and `check` apply it, and `check` says which
+  policy is in force. Without the file the gate is strict, as before; an
+  individual `--strict-*` flag still fails on its rule. `config set gate.*`
+  writes it, refusing what it could not read; `init` and `adopt` write the
+  standard preset. Docs: [Configure the gate](docs/gate/policy.md).
+- **Documentation in Spanish**, with an EN · ES picker: the landing, the gate
+  guide and the first guides; the rest shows the English with a note.
+
 ## [1.3.0] — 2026-11-18
 
 Quality requirements under ISO/IEC 25010 and a measurable Why in the brief.

@@ -498,6 +498,9 @@
 | REQ-601 | SCN-601a | `features/brief-cards/REQ-601.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
 | REQ-602 | SCN-602a | `features/brief-cards/REQ-602.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
 | REQ-603 | SCN-603a | `features/brief-cards/REQ-603.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
+| REQ-604 | SCN-604a | `features/trusted-gate/REQ-604.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts | Approved |
+| REQ-605 | SCN-605a | `features/trusted-gate/REQ-605.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts | Approved |
+| REQ-606 | SCN-606a | `features/trusted-gate/REQ-606.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

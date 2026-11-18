@@ -28,6 +28,13 @@ import { agentIo, wantsJson, EXIT, AgentIo } from "../../../lib/agent";
 import { findUnresolvedPlaceholders, PLACEHOLDER_RE } from "../../../lib/placeholders";
 import { BaseCommand } from "../../../lib/command";
 import {
+  GATE_POLICY_FILE,
+  levelOf,
+  notEnforcedYet,
+  readGatePolicy,
+} from "../../../lib/gate-policy";
+import type { Rule } from "../../../lib/gate-policy";
+import {
   applyBaseline,
   baselineOf,
   parseBaseline,
@@ -231,6 +238,40 @@ export class ValidateSpecsCommand extends BaseCommand {
   }
 
   /**
+   * The rules the gate policy reports instead of failing (issue #494): set by
+   * `execute()` from `.specgate/gate.yaml` under `--strict`, minus any rule an
+   * individual `--strict-*` flag asks for, which fails as it always did.
+   */
+  private reportedOnly = new Set<Rule>();
+  private policyNote = "";
+
+  /**
+   * A family's findings under a rule set to `warning`: kept as warnings with
+   * the verdict, the gate goes on. True when the caller must not fail.
+   */
+  private reportOnly(rule: Rule, findings: readonly Diagnostic[]): boolean {
+    if (!this.reportedOnly.has(rule)) return false;
+    const why = this.policyNote || `${GATE_POLICY_FILE} sets ${rule} to warning`;
+    this.notes.push(
+      ...findings.map((f) => warning(f.code, f.message, { ...f, fix: f.fix })),
+      warning(
+        "gate_rule_reported",
+        `${findings.length} ${rule} finding(s) reported, not failed: ${why}.`,
+        {
+          target: rule,
+          fix: `Fix them, or set \`${rule}: error\` in ${GATE_POLICY_FILE} once they are.`,
+        }
+      )
+    );
+    if (!this.agent.json) {
+      this.logWarn(`${rule}: ${findings.length} finding(s) reported, not failed — ${why}`);
+      for (const f of findings)
+        process.stdout.write(`  ${formatDiagnostic({ ...f, severity: "warning" })}\n`);
+    }
+    return true;
+  }
+
+  /**
    * True when the only Gherkin in the project is the placeholder `adopt` writes.
    *
    * `adopt` installs a skeleton and a baseline scenario so that `validate` passes
@@ -427,6 +468,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       findings.push(...(owed(rel) ? found : found.filter((d) => SUITE_LIES.has(d.code))));
     }
     if (findings.length === 0) return;
+    if (this.reportOnly("scenarios", findings)) return;
 
     if (this.agent.json) {
       this.agent.fail({ validation: null }, findings);
@@ -607,6 +649,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       }
     }
     if (findings.length === 0) return;
+    if (this.reportOnly("links", findings)) return;
 
     if (this.agent.json) {
       this.agent.fail({ validation: null }, findings);
@@ -806,6 +849,7 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
 
     if (findings.length === 0) return;
+    if (this.reportOnly("coverage", findings)) return;
 
     if (this.agent.json) {
       this.agent.fail({ validation: null }, [...findings, ...advisories]);
@@ -892,6 +936,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       }
     }
     if (findings.length === 0) return;
+    if (this.reportOnly("requirements", findings)) return;
 
     if (this.agent.json) {
       this.agent.fail({ validation: null }, findings);
@@ -961,6 +1006,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       }
     }
     if (findings.length === 0) return;
+    if (this.reportOnly("requirements", findings)) return;
 
     if (this.agent.json) {
       this.agent.fail({ validation: null }, findings);
@@ -1151,11 +1197,31 @@ export class ValidateSpecsCommand extends BaseCommand {
     // flags keep working, so every existing CI invocation still means what it
     // meant.
     const strict = argv.includes("--strict");
-    const strictTdd = strict || argv.includes("--strict-tdd");
-    const strictScenarios = strict || argv.includes("--strict-scenarios");
-    const strictRequirements = strict || argv.includes("--strict-requirements");
-    const strictLinks = strict || argv.includes("--strict-links");
-    const strictCoverage = strict || argv.includes("--strict-coverage");
+    // `--strict` is the gate, and the gate is the project's policy
+    // (`.specgate/gate.yaml`, issue #494): each rule fails it, is reported, or
+    // does not run. Without the file every rule fails it — what `--strict`
+    // always meant. An individual `--strict-*` flag still fails on its rule.
+    const deliveringFlag = argv.indexOf("--delivering");
+    const policyDir = argv.filter(
+      (a, i) => !a.startsWith("-") && !(deliveringFlag >= 0 && i === deliveringFlag + 1)
+    )[0];
+    const policy =
+      strict && policyDir && fs.existsSync(policyDir) ? readGatePolicy(policyDir) : null;
+    const asked = (rule: Rule, flag: string) => {
+      if (argv.includes(flag)) return true;
+      if (!policy) return false;
+      const level = levelOf(policy, rule);
+      if (level === "warning") this.reportedOnly.add(rule);
+      return level !== "off";
+    };
+    const strictTdd = asked("tdd", "--strict-tdd");
+    const strictScenarios = asked("scenarios", "--strict-scenarios");
+    const strictRequirements = asked("requirements", "--strict-requirements");
+    const strictLinks = asked("links", "--strict-links");
+    const strictCoverage = asked("coverage", "--strict-coverage");
+    if (policy && notEnforcedYet(policy)) {
+      this.policyNote = `${GATE_POLICY_FILE} enforces errors from ${policy.enforceFrom}`;
+    }
     const againstLock = argv.includes("--against-lock");
     // `--delivering REQ-NNN` holds one requirement to what a delivered row
     // owes while its Status still says Draft. `done --check` and the harness
@@ -1183,6 +1249,15 @@ export class ValidateSpecsCommand extends BaseCommand {
         "Check the path for typos, or scaffold a new project first:",
         "  specgate init",
       ]);
+    }
+
+    if (policy && policy.problems.length > 0) {
+      this.fail(
+        "gate_policy_invalid",
+        `${GATE_POLICY_FILE} cannot be read: ${policy.problems.map((p) => p.message).join("; ")}.`,
+        1,
+        policy.problems.map((p) => p.fix)
+      );
     }
 
     if (!this.agent.json && process.env.SPECGATE_NESTED !== "1") {
@@ -1419,7 +1494,18 @@ export class ValidateSpecsCommand extends BaseCommand {
         : "Add a traceability row for the requirement — run `specgate status` to list what each REQ still needs.",
     };
 
-    if (strictTddViolations.length > 0) {
+    if (
+      strictTddViolations.length > 0 &&
+      this.reportOnly(
+        "tdd",
+        strictTddViolations.map((v) => {
+          const tdd = v.slice(1, 6);
+          return error(`strict_tdd_${tdd.split("-")[1]}`, v, { fix: TDD_FIXES[tdd] });
+        })
+      )
+    ) {
+      // Reported with the verdict: the policy sets tdd to warning.
+    } else if (strictTddViolations.length > 0) {
       if (this.agent.json) {
         this.agent.fail({ validation: null }, [
           ...this.notes,
@@ -1703,10 +1789,13 @@ export class ValidateSpecsCommand extends BaseCommand {
       } catch {
         exempt = 0;
       }
+      const verdict = this.notes.some((n) => n.code === "gate_rule_reported" && n.target === "tdd")
+        ? `reported, not failed — ${this.policyNote || `${GATE_POLICY_FILE} sets tdd to warning`}`
+        : "passed";
       this.logInfo(
         exempt > 0
-          ? `- Strict TDD gate: passed (${exempt} row(s) exempt — still Draft, so not checked)`
-          : "- Strict TDD gate: passed"
+          ? `- Strict TDD gate: ${verdict} (${exempt} row(s) exempt — still Draft, so not checked)`
+          : `- Strict TDD gate: ${verdict}`
       );
       if (exempt > 0) {
         this.logFix([

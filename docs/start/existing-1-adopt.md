@@ -93,6 +93,7 @@ $ specgate init
     + AGENTS.md
     + docs/specs/adoption.md   2 areas found in the code
     + README.md   was missing
+  ℹ  🚦 Policy: .specgate/gate.yaml — the standard preset; edit a rule to change what fails
   ℹ  🚦 CI: .github/workflows/spec-gate.yml — the spec gate; `specgate ci status` says what it checks
     · Traceability: generated from spec.md, tags and tests (`specgate matrix`)
 
@@ -103,8 +104,7 @@ $ specgate init
   ▲  This does not certify your code yet — it certifies the skeleton.
      A green `validate` right now means the structure is in place, not that any
      behaviour is covered. It starts meaning something when the requirements below
-     are real and their scenarios are linked to tests.
-… 18 more lines
+… 19 more lines
 ```
 <!-- specgate:out-existing-init:end -->
 
@@ -141,6 +141,7 @@ specgate check
 $ specgate check
   ◆ specgate · check   invoicing
 
+  ·  Policy         .specgate/gate.yaml (standard): coverage warning
   ·  Ids            not compared with a base — no base branch (pass --base <branch>)
   ✔  Specification   validate --strict
   ✔  Tests           node --test

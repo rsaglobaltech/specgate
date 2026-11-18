@@ -1,5 +1,8 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
 import * as ui from "../../../lib/ui";
 import { writeGate } from "../config/CiInitCommand";
+import { GATE_POLICY_FILE, gatePolicyTemplate } from "../../../lib/gate-policy";
 
 function logInfo(msg: string) {
   process.stdout.write(ui.logLine(msg));
@@ -11,6 +14,7 @@ function logInfo(msg: string) {
  * GitHub when it shows none. `--no-ci` leaves it out.
  */
 export function installGate(projectDir: string, opts: { dryRun: boolean; noCi?: boolean }) {
+  installPolicy(projectDir, opts);
   if (opts.noCi) {
     logInfo("🚦 No CI file (--no-ci) — add the gate later with `specgate ci init`");
     return;
@@ -31,4 +35,22 @@ export function installGate(projectDir: string, opts: { dryRun: boolean; noCi?: 
       ? `🚦 CI: ${gate.dest} — the spec gate; \`specgate ci status\` says what it checks`
       : `🚦 CI: ${gate.dest} kept as it is`
   );
+}
+
+/**
+ * What the gate requires, written with the project (issue #494): the standard
+ * preset, every rule on its own line to change. Locally and in CI alike, so
+ * `--no-ci` still writes it; a policy already there is never touched. A
+ * project without the file keeps the strict gate it always had.
+ */
+function installPolicy(projectDir: string, opts: { dryRun: boolean }) {
+  const file = path.join(projectDir, GATE_POLICY_FILE);
+  if (fs.existsSync(file)) return;
+  if (opts.dryRun) {
+    logInfo(`[dry-run] write ${GATE_POLICY_FILE} (what the gate requires: the standard preset)`);
+    return;
+  }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, gatePolicyTemplate(), "utf8");
+  logInfo(`🚦 Policy: ${GATE_POLICY_FILE} — the standard preset; edit a rule to change what fails`);
 }
