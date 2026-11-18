@@ -32,6 +32,16 @@ fields and then the sections from the client's text, and
 `specgate propose --from-brief --check` checks the brief before anything is
 drafted. Step by step: [Write the brief](start/write-the-brief.md).
 
+Two sections say what the modules do not. `## Why` gives the problem, the
+objectives and a success you can measure — a Why with no number gets the
+warning `B15_why_unmeasured`. `## Quality` says how well the product must
+work, one line per need opened with its ISO/IEC 25010 characteristic —
+`- performance efficiency (reservas): A slot is confirmed in under 2 seconds.`
+— and each line becomes a non-functional requirement in the draft of the
+module it names, or of the first module when it names none. A line no test
+can check stops the draft (`B14_quality_unmeasured`). Step by step:
+[Quality](start/write-the-brief.md#step-8-quality-3-minutes).
+
 A tool that edits the brief as a form — specgate-studio — reads it with
 `specgate propose --from-brief --form --json`, each field with its line, and
 writes it back with `--form <file>`: only the fields and card lists that
