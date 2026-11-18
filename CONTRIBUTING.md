@@ -169,7 +169,7 @@ green again on `develop` before it reaches `main`:
 | Check | What it guards |
 | --- | --- |
 | `Lint and format` | typecheck, ESLint, Prettier, ShellCheck, and the agent-contract staleness check |
-| `Test (<os> / Node <version>)`, six jobs | the full suite — unit, BDD, E2E — across ubuntu, macos and windows on Node 22 and 24: the floor `package.json` declares and the current LTS. Windows is where path handling breaks first |
+| `Test (<os> / Node <version>)`, five jobs | the full suite — unit, BDD, E2E — on ubuntu and windows with Node 22 and 24 (the floor `package.json` declares and the current LTS), and on macos with Node 24: macOS runners are scarce, and the floor is proven on the other two. Windows is where path handling breaks first |
 | `Maven plugin` · `Gradle plugin` | the Java surface, which the Node suite never touches |
 | `Package` | `npm pack` produces a usable tarball |
 | `npm audit` · `CodeQL` · `SBOM and licences` | a devDependency runs on CI with a publish token in scope, and a licence outside the allow-list is a build failure |

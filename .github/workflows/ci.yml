@@ -49,6 +49,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node: ['22', '24']
+        # macOS on Node 24 only. Its runners are scarce: two macOS jobs per run,
+        # and a push to develop plus its pull request run twice, left jobs
+        # queued for 15 minutes and cancelled with no step run (1.4.0). The
+        # Node 22 floor is still tested on Linux and Windows.
+        exclude:
+          - os: macos-latest
+            node: '22'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
