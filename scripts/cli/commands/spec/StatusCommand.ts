@@ -513,7 +513,10 @@ function nextReasonOf({
   if (todo && onlyBaseline(items))
     return tickets
       ? "the work comes from Jira — check a ticket is ready, then open its change"
-      : "only the adoption baseline is specified — add one requirement your code already meets";
+      : // Issue #513: a project adopted with no code has nothing it already meets.
+        /^Build and test the project$/i.test(titleOf(todo))
+        ? "nothing is specified yet — add the first thing the product should do"
+        : "only the adoption baseline is specified — add one requirement your code already meets";
   if (todo && forja && needsCode(todo))
     return `${todo.requirement}'s use case and the test that names it, where the architecture expects them`;
   if (todo && derived)
