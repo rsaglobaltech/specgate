@@ -24,6 +24,7 @@ interface WizardField {
 
 import { CLI_PATH, cliFromRoot as cli, runCli } from "../helpers/cli";
 import type { CliResult } from "../helpers/cli";
+import { startOf } from "../../scripts/cli/commands/project/InitProjectCommand";
 
 function withTmp<T>(fn: (tmp: string) => T): T {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-wizard-"));
@@ -176,14 +177,49 @@ function cliIn(cwd: string, ...args: string[]): CliResult {
   return runCli(args, { cwd });
 }
 
-test("init without config outside a terminal fails with a remedy", () => {
-  // In an empty directory: this repository has a package.json, and plain
-  // `init` adopts a directory that already has code.
+test("REQ-609 SCN-609a: init with no terminal and no flags writes the specification only, here", () => {
   withTmp((tmp) => {
-    const r = cliIn(tmp, "init", "--no-git");
+    const r = cliIn(tmp, "init");
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /writing the specification only, in this folder/);
+    assert.match(r.stdout, /specgate init --yes/);
+    assert.match(r.stdout, /specgate init --forja/);
+    // In the folder itself, and nothing chosen for the person.
+    const agents = fs.readFileSync(path.join(tmp, "AGENTS.md"), "utf8");
+    assert.match(agents, /^new project · /m);
+    assert.match(agents, /^Stack: TBD · API: TBD · Testing: TBD$/m);
+    assert.ok(fs.existsSync(path.join(tmp, "spec.md")));
+    assert.equal(fs.existsSync(path.join(tmp, "my-spec-driven-app")), false);
+    assert.equal(cliIn(tmp, "check").status, 0);
+  });
+});
+
+test("REQ-609 SCN-609b: init --yes says where the project goes and that its stack is a default", () => {
+  withTmp((tmp) => {
+    const r = cliIn(tmp, "init", "--yes", "--no-git");
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /the project goes in a new folder here: my-spec-driven-app\//);
+    assert.doesNotMatch(r.stdout, /using the current directory/);
+    assert.match(r.stdout, /--yes took every default: a backend project on Java 21/);
+    assert.match(r.stdout, /specgate config set stack/);
+    assert.match(r.stdout, /Next: cd my-spec-driven-app && specgate status/);
+    assert.ok(fs.existsSync(path.join(tmp, "my-spec-driven-app", "spec.md")));
+  });
+});
+
+test("REQ-609 SCN-609c: the menu's answers — Enter is the specification only", () => {
+  assert.equal(startOf(""), "spec");
+  assert.equal(startOf(" 2 "), "spec");
+  assert.equal(startOf("1"), "forja");
+  assert.equal(startOf("3"), "template");
+  assert.equal(startOf("4"), null);
+});
+
+test("init with --out and no config outside a terminal still fails with a remedy", () => {
+  withTmp((tmp) => {
+    const r = cliIn(tmp, "init", "--out", tmp, "--no-git");
     assert.equal(r.status, 2);
     assert.match(r.stderr, /--config is required when not running in a terminal/);
-    assert.match(r.stdout, /interactive wizard/);
     assert.match(r.stdout, /--yes/);
   });
 });
