@@ -223,7 +223,7 @@ test("adopt with no build manifest warns but still validates", () => {
     fs.mkdirSync(dir, { recursive: true });
     const r = cli(["adopt", "--project-dir", dir, "--keep-matrix"]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /Could not detect the stack/);
+    assert.match(r.stdout, /the stack is not decided: specgate config set stack/);
     const v = cli(["validate", dir]);
     assert.equal(v.status, 0, v.stdout + v.stderr);
   });

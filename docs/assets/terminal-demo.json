@@ -6,7 +6,7 @@
     "platform": "darwin",
     "packSource": "local"
   },
-  "recordedAt": "2026-11-18",
+  "recordedAt": "2026-11-20",
   "title": "smart-parking — the harness",
   "cols": 88,
   "streamsMerged": false,
@@ -329,7 +329,7 @@
       "omitted": 0,
       "lines": [
         {
-          "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 109 ++++++++++++++++++++++++",
+          "t": " .../REQ-000-2026-01-01T00-00-00-000Z-attempt-1-agent.md | 111 ++++++++++++++++++++++++",
           "c": "out",
           "s": "out"
         },
@@ -354,7 +354,7 @@
           "s": "out"
         },
         {
-          "t": " 5 files changed, 131 insertions(+), 2 deletions(-)",
+          "t": " 5 files changed, 133 insertions(+), 2 deletions(-)",
           "c": "out",
           "s": "out"
         }

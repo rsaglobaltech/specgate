@@ -19,6 +19,12 @@ import { parseYamlLite } from "../../packages/core/src/domain/YamlLite";
 import { readQuality } from "../../packages/core/src/domain/QualityChecks";
 import { setYamlListItem, setYamlValue, yamlScalar } from "../../packages/core/src/domain/YamlEdit";
 import {
+  CONTRACT_FIELDS,
+  type ContractKey,
+  contractFact,
+  setContractFact,
+} from "../agents/contract-file";
+import {
   GATE_POLICY_FILE,
   LEVELS,
   PRESETS,
@@ -33,6 +39,7 @@ export const HARNESS_FILE = "harness.config.yaml";
 export const PROFILES_FILE = ".harness/profiles.yaml";
 export const ALM_FILE = "alm.config.yaml";
 export const GATE_FILE = GATE_POLICY_FILE;
+export const AGENTS_FILE = "AGENTS.md";
 
 type Value = string | number | boolean | string[];
 
@@ -76,6 +83,10 @@ const envName = (v: string) =>
   new RegExp(ENV_NAME).test(v)
     ? null
     : "Tokens are never stored: put the token in an environment variable and give its name, e.g. JIRA_TOKEN.";
+const oneLine = (v: string) =>
+  v.trim() && !/[·\n\r]/.test(v)
+    ? null
+    : 'Name it on one line, without "·", e.g. "TypeScript, Node 24".';
 const insideProject = (v: string) =>
   v && !/^([a-zA-Z]:)?[\\/]/.test(v) && !/(^|[\\/])\.\.([\\/]|$)/.test(v)
     ? null
@@ -403,6 +414,28 @@ const YAML: KeySpec[] = [
     kind: "number",
     check: number(0),
   })),
+  // ── The project's facts, in the header of AGENTS.md (issue #502) ───────────
+  {
+    key: "stack",
+    description:
+      "The project's stack, as AGENTS.md states it to the agent, which may not choose one itself.",
+    values: null,
+    pattern: null,
+    default: null,
+    file: AGENTS_FILE,
+    kind: "string",
+    check: oneLine,
+  },
+  {
+    key: "testing",
+    description: "The project's test toolchain, as AGENTS.md states it to the agent.",
+    values: null,
+    pattern: null,
+    default: null,
+    file: AGENTS_FILE,
+    kind: "string",
+    check: oneLine,
+  },
   // ── The gate policy: .specgate/gate.yaml (issue #494) ──────────────────────
   {
     key: "gate.preset",
@@ -613,6 +646,7 @@ export function currentValue(projectDir: string, key: string): Value | null {
   const r = resolveKey(key);
   if (!r || !r.yaml) return null;
   const field = key.split(".").pop() as string;
+  if (r.spec.file === AGENTS_FILE) return contractFact(projectDir, key as ContractKey);
   let v: unknown;
   if (r.spec.file === PROFILES_FILE) v = (profilesOf(projectDir)[r.name as string] || {})[field];
   else if (key.startsWith("checks.")) {
@@ -745,6 +779,15 @@ export function setYamlKey(
     return refuse(`Use one of: ${spec.values.join(", ")}.`);
   const why = spec.check ? spec.check(raw, projectDir) : null;
   if (why) return refuse(why);
+  if (spec.file === AGENTS_FILE) {
+    const fact = raw.trim();
+    return setContractFact(projectDir, key as ContractKey, fact)
+      ? { ok: true, file: AGENTS_FILE, value: fact }
+      : refuse(
+          "Write the contract first: specgate adopt (or specgate update, in a project that has one).",
+          `${AGENTS_FILE} has no Specgate block that states ${CONTRACT_FIELDS[key as ContractKey]}.`
+        );
+  }
 
   const value: Value =
     spec.kind === "number"

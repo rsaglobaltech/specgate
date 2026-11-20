@@ -193,6 +193,7 @@ tests with a broken build do not count as delivered.
 | -------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------- |
 | The agent does not know the `/specgate:*` commands | They were not installed for that tool | `specgate agents init --tool <name>`                                |
 | `agents init` left a file as it was                | Existing files are never overwritten  | `specgate agents init --force`, after checking what you would lose  |
+| The agent stops: "the stack is TBD and I may not choose it" | `adopt` found no build manifest, so `AGENTS.md` leaves the stack undecided | `specgate config set stack "<yours>"` and `config set testing "<yours>"`; for a new application, `specgate init --forja` |
 | The agent edits the spec or a test to get to green | It treats the contract as code        | Point it at `AGENTS.md`; the harness refuses such an attempt anyway |
 | Studio Build: "The assistant is not configured" | No `agent` in `harness.config.yaml` | Choose one in Build (0.28.1), or `specgate config set agent "claude -p < {prompt_file}"` |
 | The agent cannot read the prompt on Windows | A temp folder with a space (0.27) | 0.28.1 quotes such a path; or set `TEMP` to a folder without spaces |

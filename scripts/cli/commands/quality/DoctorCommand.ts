@@ -1,4 +1,5 @@
 import { unspecifiedProposals } from "../../../lib/proposals";
+import { undecidedFacts } from "../../../agents/contract-file";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -351,6 +352,17 @@ export class DoctorCommand extends BaseCommand {
     }
   }
 
+  /** Issue #502: an agent may not choose the stack, so one left to be decided stops it. */
+  private checkContractFacts(dir: string) {
+    for (const fact of undecidedFacts(dir)) {
+      this.warn(
+        "agent contract",
+        `AGENTS.md leaves the ${fact} to be decided, and tells the agent to stop there`,
+        `specgate config set ${fact} "<yours>" — or, for a new application, specgate init --forja`
+      );
+    }
+  }
+
   private checkPlaceholders(dir: string) {
     const offenders = findUnresolvedPlaceholders(dir);
     if (offenders.length === 0) {
@@ -680,6 +692,7 @@ export class DoctorCommand extends BaseCommand {
       this.checkCapabilityDrift(dir);
       this.checkChanges(dir);
       this.checkPlaceholders(dir);
+      this.checkContractFacts(dir);
       this.checkProposals(dir);
       this.checkSpecops(dir);
       this.checkMergeDrivers(dir);
