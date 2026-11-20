@@ -33,7 +33,9 @@ edit a change's `ticket.md`; start every commit message with the ticket key
 ## Never
 
 - Edit `spec.md`, `features/`, `docs/specs/` or this file to make a test pass.
-- Choose or replace the stack; if a field above is TBD, stop and ask.
+- Choose or replace the stack. If Stack or Testing above is TBD, stop and ask
+  the person to run `specgate config set stack "<their stack>"` (and
+  `testing`), or `specgate init --forja` to have an application generated.
 - Say work is done that `specgate check` has not passed.
 
 ## Project rules

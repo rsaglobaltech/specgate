@@ -35,6 +35,68 @@ export function outsideBlock(existing: string): string {
   return (existing.slice(0, start) + existing.slice(end + END.length)).trim();
 }
 
+// ── The facts in the block's header: the stack and the test toolchain ───────
+
+/** What `adopt` writes for a fact it could not read off the project (issue #502). */
+export const UNDECIDED = "TBD";
+
+/** The header fields `config set` writes, by key. */
+export const CONTRACT_FIELDS = { stack: "Stack", testing: "Testing" } as const;
+export type ContractKey = keyof typeof CONTRACT_FIELDS;
+
+/** Whether a fact is still to be decided: `TBD`, or the `unknown — …` 1.4 and older wrote. */
+export function undecided(value: string | null): boolean {
+  return value !== null && /^(TBD|unknown)\b/i.test(value.trim());
+}
+
+/** The block of `AGENTS.md`, or null when the project has none. */
+function contractBlock(projectDir: string): { text: string; start: number; end: number } | null {
+  let text: string;
+  try {
+    text = fs.readFileSync(path.join(projectDir, "AGENTS.md"), "utf8");
+  } catch {
+    return null;
+  }
+  const start = text.indexOf(BEGIN.slice(0, 22));
+  const end = text.indexOf(END);
+  return start !== -1 && end > start ? { text, start, end } : null;
+}
+
+/** A fact of the contract's header, or null when the block does not state it. */
+export function contractFact(projectDir: string, key: ContractKey): string | null {
+  const block = contractBlock(projectDir);
+  return block ? rulesField(block.text.slice(block.start, block.end), CONTRACT_FIELDS[key]) : null;
+}
+
+/** The facts the contract leaves to be decided: what stops an agent before it writes code. */
+export function undecidedFacts(projectDir: string): ContractKey[] {
+  return (Object.keys(CONTRACT_FIELDS) as ContractKey[]).filter((key) =>
+    undecided(contractFact(projectDir, key))
+  );
+}
+
+/**
+ * Write a fact into the contract's header, in place. False when `AGENTS.md`
+ * has no block or the block does not name the field: nothing is written.
+ */
+export function setContractFact(projectDir: string, key: ContractKey, value: string): boolean {
+  const block = contractBlock(projectDir);
+  if (!block) return false;
+  const inside = block.text.slice(block.start, block.end);
+  const field = new RegExp(
+    `((?:^|·)[ \\t]*${CONTRACT_FIELDS[key]}:[ \\t]*)[^·\\n]*?([ \\t]*(?:·|$))`,
+    "m"
+  );
+  if (!field.test(inside)) return false;
+  const after = inside.replace(field, (_m, before: string, rest: string) => before + value + rest);
+  fs.writeFileSync(
+    path.join(projectDir, "AGENTS.md"),
+    block.text.slice(0, block.start) + after + block.text.slice(block.end),
+    "utf8"
+  );
+  return true;
+}
+
 // ── The contract, for a project `init` did not write it for ─────────────────
 
 /** `- Stack: x` (AI_RULES.md) or `… · Stack: x · …` (AGENTS.md). */

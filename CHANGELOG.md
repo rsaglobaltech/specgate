@@ -9,6 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **An undecided stack no longer leaves the agent with nowhere to go**
+  (REQ-607, issue #502). `adopt` in a folder with no build manifest wrote
+  `Stack: unknown — …` into `AGENTS.md`, whose rules tell the agent to stop at
+  a `TBD` and never to choose a stack: the agent stopped, and nothing said what
+  to do. `adopt` now writes `TBD`, the rule names the way out, and
+  `specgate config set stack "<yours>"` and `config set testing` record the
+  decision in the header of `AGENTS.md`, leaving your own text alone. `status`
+  and `doctor` say an undecided stack, with the command — also in a project
+  adopted with 1.4 or earlier.
+
 ## [1.4.0] — 2026-11-18
 
 A configurable gate, and documentation in Spanish.

@@ -1,4 +1,4 @@
-import { mergeContract } from "../../../agents/contract-file";
+import { UNDECIDED, mergeContract } from "../../../agents/contract-file";
 import { installDetectedAgents } from "../../../agents/detect";
 import { adoptionAreas, readinessText, settle } from "./readiness";
 import * as fs from "node:fs";
@@ -254,8 +254,8 @@ function appDirs(dir: string): string[] {
 function detectManifest(dir: string) {
   const facts = {
     PROJECT_NAME: path.basename(dir),
-    STACK: "unknown — edit AGENTS.md with your stack",
-    TESTING: "unknown — edit AGENTS.md with your test toolchain",
+    STACK: UNDECIDED,
+    TESTING: UNDECIDED,
     TEST_CMD: "echo 'configure your test command'",
     detected: "none",
   };
@@ -522,7 +522,10 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
   say(`- Stack: ${vars.STACK}`);
   say(`- Test command: ${vars.TEST_CMD}`);
   if (detected.detected === "none" && !quiet) {
-    logWarn("Could not detect the stack — review AGENTS.md and traceability.md after adoption.");
+    logWarn(
+      'No build manifest here, so the stack is not decided: specgate config set stack "<your stack>" ' +
+        "— or, for a new application, specgate init --forja generates one."
+    );
   }
 
   let written = 0;

@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import { undecidedFacts } from "../../../agents/contract-file";
 import { inBuildOrder, modulePlaces, whyNext } from "../../../lib/build-order";
 import { agentPrompt, type PromptKind } from "../../../../packages/core/src/domain/AgentKickoff";
 import * as path from "node:path";
@@ -600,6 +601,13 @@ function emitText(
     out(
       `\n  ${ui.muted("·  No agent set for the harness and the studio's Build:")} ` +
         `specgate config set agent "claude -p < {prompt_file}"\n`
+    );
+
+  // Issue #502: an agent stops at a stack AGENTS.md leaves to be decided.
+  for (const fact of undecidedFacts(projectDir))
+    out(
+      `\n  ${ui.muted(`·  AGENTS.md leaves the ${fact} to be decided, and an agent stops there:`)} ` +
+        `specgate config set ${fact} "<yours>"\n`
     );
 
   // REQ-329: a project with changes written for 0.27, opened with 1.0.
