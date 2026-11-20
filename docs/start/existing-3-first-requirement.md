@@ -141,7 +141,7 @@ and a screen nobody could reach.
 
 - `specgate apply REQ-004` printed `→ Implemented`.
 - `specgate archive invoice-rounding` printed `Archived as …`.
-- `specgate status` shows `1 of 4 done`.
+- `specgate status` shows `1 of 1 done`, with REQ-001 said apart as held by your suite.
 
 ## If something goes wrong
 

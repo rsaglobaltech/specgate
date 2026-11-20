@@ -28,10 +28,10 @@ specgate status
 $ specgate status
   ◆ specgate · status   invoicing
 
-  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 1 done
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 0 done
 
-  To do ──────────────────────────────────────────────────
-    ○ REQ-001  Preserve existing behaviour  a test and code
+  ·  REQ-001 Preserve existing behaviour: your test suite holds it on every check.
+     To close it, name REQ-001 in a test that starts the product.
 
   Next ───────────────────────────────────────────────────
   ➜  specgate new "<a behaviour you rely on>"
@@ -39,7 +39,9 @@ $ specgate status
 ```
 <!-- specgate:out-existing-status:end -->
 
-Only the adoption baseline is a requirement. The areas adoption found in your
+The adoption baseline, REQ-001, is the only requirement so far, and your test
+suite already holds it: `status` says so, and does not count it as work to do.
+The areas adoption found in your
 layout — Invoices, Customers — are listed in `docs/specs/adoption.md` with their
 folders and tests: a map to pick from, not requirements. Start smaller than an
 area.
@@ -130,11 +132,13 @@ specgate status
 $ specgate status
   ◆ specgate · status   invoicing
 
-  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 2 done
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 1 done
 
   To do ──────────────────────────────────────────────────
-    ○ REQ-001  Preserve existing behaviour              a test and code
     ○ REQ-004  An invoice total is rounded to the cent  a test and code
+
+  ·  REQ-001 Preserve existing behaviour: your test suite holds it on every check.
+     To close it, name REQ-001 in a test that starts the product.
 
   Next ───────────────────────────────────────────────────
   ➜  specgate apply REQ-004

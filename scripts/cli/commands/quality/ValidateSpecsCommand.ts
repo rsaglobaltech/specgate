@@ -243,6 +243,8 @@ export class ValidateSpecsCommand extends BaseCommand {
    * individual `--strict-*` flag asks for, which fails as it always did.
    */
   private reportedOnly = new Set<Rule>();
+  /** Whether a template obligation fails this run: the rule is asked for, and not as a warning. */
+  private failsOnTemplateObligations = false;
   private policyNote = "";
 
   /**
@@ -470,8 +472,15 @@ export class ValidateSpecsCommand extends BaseCommand {
     if (findings.length === 0) return;
     if (this.reportOnly("scenarios", findings)) return;
 
+    // `apply` on a requirement fresh from `new` owes two rewrites: the
+    // scenario's placeholders and the obligation's sentence. Said one at a
+    // time, the second came as a second refusal (first-use journey, 2026-11-20).
+    const alsoOwed =
+      delivering && this.failsOnTemplateObligations
+        ? this.templateObligations(targetDir, delivering).filter((f) => f.target === delivering)
+        : [];
     if (this.agent.json) {
-      this.agent.fail({ validation: null }, findings);
+      this.agent.fail({ validation: null }, [...findings, ...alsoOwed]);
       return;
     }
     const errs = findings.filter((f) => f.severity === "error");
@@ -484,6 +493,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       "Fix the errors first: a scenario Cucumber sees as empty reports `0 steps · exit 0`,",
       "so the gate approves the requirement without having checked it.",
     ]);
+    if (alsoOwed.length > 0) this.sayTemplateObligations(alsoOwed);
     process.exit(1);
   }
 
@@ -959,13 +969,36 @@ export class ValidateSpecsCommand extends BaseCommand {
    * nothing yet, like every other delivery rule.
    */
   private checkTemplateObligations(targetDir: string, delivering: string) {
+    const findings = this.templateObligations(targetDir, delivering);
+    if (findings.length === 0) return;
+    if (this.reportOnly("requirements", findings)) return;
+
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, findings);
+      return;
+    }
+    this.sayTemplateObligations(findings);
+    process.exit(1);
+  }
+
+  private sayTemplateObligations(findings: readonly Diagnostic[]) {
+    this.logError(`Requirements delivered on a placeholder obligation: ${findings.length}`);
+    for (const f of findings) process.stderr.write(`  ${formatDiagnostic(f)}\n`);
+    this.logFix([
+      "Write the obligation in your own words and delete the note Specgate left below it;",
+      "the gate cannot tell a placeholder MUST from a promise.",
+    ]);
+  }
+
+  /** The requirements owed an obligation of their own that still hold the template's. */
+  private templateObligations(targetDir: string, delivering: string): Diagnostic[] {
     const tracePath = path.join(targetDir, "docs/specs/traceability.md");
-    if (!fs.existsSync(tracePath)) return;
+    if (!fs.existsSync(tracePath)) return [];
     let rows: MatrixRow[] = [];
     try {
       rows = parseTraceabilityRows(fs.readFileSync(tracePath, "utf8")).rows || [];
     } catch {
-      return;
+      return [];
     }
     const owed = new Set<string>();
     for (const row of rows) {
@@ -973,7 +1006,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       if (!id) continue;
       if (DELIVERED_STATUS.has(String(row.status || "").trim()) || id === delivering) owed.add(id);
     }
-    if (owed.size === 0) return;
+    if (owed.size === 0) return [];
 
     const specFiles = [path.join(targetDir, "spec.md")];
     const capabilitiesDir = path.join(targetDir, CAPABILITIES_DIR);
@@ -982,7 +1015,7 @@ export class ValidateSpecsCommand extends BaseCommand {
         if (entry.isDirectory()) specFiles.push(path.join(capabilitiesDir, entry.name, "spec.md"));
       }
     }
-    const findings = [];
+    const findings: Diagnostic[] = [];
     for (const file of specFiles) {
       if (!fs.existsSync(file)) continue;
       const source = fs.readFileSync(file, "utf8");
@@ -1005,20 +1038,7 @@ export class ValidateSpecsCommand extends BaseCommand {
         );
       }
     }
-    if (findings.length === 0) return;
-    if (this.reportOnly("requirements", findings)) return;
-
-    if (this.agent.json) {
-      this.agent.fail({ validation: null }, findings);
-      return;
-    }
-    this.logError(`Requirements delivered on a placeholder obligation: ${findings.length}`);
-    for (const f of findings) process.stderr.write(`  ${formatDiagnostic(f)}\n`);
-    this.logFix([
-      "Write the obligation in your own words and delete the note Specgate left below it;",
-      "the gate cannot tell a placeholder MUST from a promise.",
-    ]);
-    process.exit(1);
+    return findings;
   }
 
   /**
@@ -1358,6 +1378,7 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
     const featureCount = featureFiles.length;
 
+    this.failsOnTemplateObligations = strictRequirements && !this.reportedOnly.has("requirements");
     if (strictScenarios) {
       this.checkScenarioQuality(targetDir, featureFiles, delivering);
     }

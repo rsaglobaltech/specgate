@@ -218,12 +218,14 @@ specgate status
 $ specgate status
   ◆ specgate · status   court-bookings
 
-  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 4 done
+  Requirements  ░░░░░░░░░░░░░░░░░░░░  0 of 3 done
 
   To do ──────────────────────────────────────────────────
-    ○ REQ-001  Preserve existing behaviour                   a test and code
     ○ REQ-002  A member books a court for one hour           a test and code
     ○ REQ-003  A court is never booked twice for the same …  a test and code
+
+  ·  REQ-001 Preserve existing behaviour: your test suite holds it on every check.
+     To close it, name REQ-001 in a test that starts the product.
 
   Waiting for an answer ──────────────────────────────────
     ○ REQ-004  A member cancels a booking  an answer to Q1

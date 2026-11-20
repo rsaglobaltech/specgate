@@ -109,6 +109,63 @@ export function planCi(projectDir: string, version: string): CiPlan {
 
 const NODE_VERSION = "22";
 
+const PYTHON_REQUIREMENTS = [
+  "requirements.txt",
+  "requirements-dev.txt",
+  "requirements-test.txt",
+  "dev-requirements.txt",
+  "test-requirements.txt",
+];
+
+/** A `pyproject.toml` whose project a tool of its own installs. */
+const PYTHON_MANAGER = /^\[tool\.(poetry|pdm|uv)\b/m;
+
+/**
+ * The commands that install what a Python project's tests need. The job used
+ * to set Python up and leave a comment: its first run failed on `pytest:
+ * command not found` (first-use journey, 2026-11-20).
+ *
+ * Only what the repository states: each requirements file it has; the project
+ * itself when `pyproject.toml` declares a build system, with its `dev` or
+ * `test` extra; and pytest when the test command runs it and nothing above
+ * names it. A project managed by Poetry, uv or PDM installs its own way, so
+ * it is told, not guessed.
+ */
+export function pythonInstall(projectDir: string, testCmd: string | null): string[] {
+  const lines: string[] = [];
+  let named = "";
+  for (const file of PYTHON_REQUIREMENTS) {
+    const text = read(projectDir, file);
+    if (text === null) continue;
+    lines.push(`pip install -r ${file}`);
+    named += text;
+  }
+  const pyproject = read(projectDir, "pyproject.toml") ?? "";
+  const managed = PYTHON_MANAGER.exec(pyproject)?.[1] ?? null;
+  if (!managed && /^\[build-system\]/m.test(pyproject)) {
+    // The table's own lines: from its header to the next table.
+    const table = pyproject.split(/^\[project\.optional-dependencies\][^\n]*\n/m)[1] ?? "";
+    const extra = /^(dev|test|tests|testing)\s*=/m.exec(table.split(/^\[/m)[0]);
+    lines.push(extra ? `pip install -e ".[${extra[1]}]"` : "pip install -e .");
+    named += pyproject;
+  }
+  if (testCmd && /\bpytest\b/.test(testCmd) && !/\bpytest\b/i.test(named) && !managed) {
+    lines.push("pip install pytest");
+  }
+  return lines;
+}
+
+/** What to say where the install commands cannot be read off the repository. */
+function pythonInstallNote(projectDir: string, lines: string[]): string | null {
+  const pyproject = read(projectDir, "pyproject.toml") ?? "";
+  const managed = PYTHON_MANAGER.exec(pyproject)?.[1];
+  if (managed)
+    return `# ${managed} manages this project: install it and its dependencies here, and run the tests through it.`;
+  return lines.length === 0
+    ? "# Install what your tests need, e.g. pip install -r requirements.txt"
+    : null;
+}
+
 function indent(lines: string[], n: number): string {
   const pad = " ".repeat(n);
   return lines.map((l) => (l ? pad + l : l)).join("\n");
@@ -150,9 +207,18 @@ export function githubSetup(plan: CiPlan, projectDir: string): string {
       "# Python 3.12, for the tests.",
       "- uses: actions/setup-python@v5",
       "  with:",
-      "    python-version: '3.12'",
-      "# Install what your tests need, e.g. pip install -r requirements.txt"
+      "    python-version: '3.12'"
     );
+    const install = pythonInstall(projectDir, plan.testCmd);
+    const note = pythonInstallNote(projectDir, install);
+    if (note) steps.push(note);
+    if (install.length > 0) {
+      steps.push(
+        "# What the tests need, read from this repository. Yours differs? Edit these lines.",
+        "- run: |",
+        ...install.map((l) => `    ${l}`)
+      );
+    }
   }
   return indent(steps, 6);
 }
@@ -183,12 +249,17 @@ export function azureSetup(plan: CiPlan, projectDir: string): string {
   } else if (plan.kind === "go") {
     steps.push("- task: GoTool@0", "  inputs:", "    version: '1.22'");
   } else if (plan.kind === "python") {
-    steps.push(
-      "- task: UsePythonVersion@0",
-      "  inputs:",
-      "    versionSpec: '3.12'",
-      "# Install what your tests need, e.g. pip install -r requirements.txt"
-    );
+    steps.push("- task: UsePythonVersion@0", "  inputs:", "    versionSpec: '3.12'");
+    const install = pythonInstall(projectDir, plan.testCmd);
+    const note = pythonInstallNote(projectDir, install);
+    if (note) steps.push(note);
+    if (install.length > 0) {
+      steps.push(
+        "- script: |",
+        ...install.map((l) => `    ${l}`),
+        "  displayName: Install what the tests need"
+      );
+    }
   }
   return indent(steps, 2);
 }
@@ -224,7 +295,9 @@ export function containerSetup(plan: CiPlan, projectDir: string): string[] {
     return [lock ? "npm ci" : "npm install"];
   }
   const base = `https://nodejs.org/dist/latest-v${NODE_VERSION}.x`;
+  const install = plan.kind === "python" ? pythonInstall(projectDir, plan.testCmd) : [];
   return [
+    ...install,
     "NODE_DIR=/tmp/specgate-node && mkdir -p $NODE_DIR && cd $NODE_DIR",
     `curl -fsSLO ${base}/SHASUMS256.txt`,
     "ARCH=$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')",

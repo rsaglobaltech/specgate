@@ -11,8 +11,8 @@ A local repository whose code already works.
 1. Install Specgate in the project: `npm i -D @rsaglobaltech/specgate`
 2. Adopt it, touching no code: `npx specgate adopt` — it saves the test command it detects, sets your agent when one is installed (asking first), writes the areas it found to `docs/specs/adoption.md` instead of inventing requirements, and ends with a list of what is ready. Prefer an app? `npx specgate studio` and press **Adopt** on its start screen.
 3. Set up your agent with one command, its commands and Build's agent: `npx specgate agents init --tool claude`
-4. Write down one behaviour you rely on, picked from `docs/specs/adoption.md`: `npx specgate new "<a behaviour you rely on>"`
-5. Write a test that names the new id (`REQ-002`), then deliver it through the gate: `npx specgate apply REQ-002`
+4. Write down one behaviour you rely on, picked from `docs/specs/adoption.md` when adoption wrote one: `npx specgate new "<a behaviour you rely on>"` — then replace the sentence it wrote in `spec.md` and the `<placeholders>` of its scenario under `features/` with the real ones
+5. Name the new id (`REQ-002`) in a test that proves it — one you already have will do — then deliver it through the gate: `npx specgate apply REQ-002`
 6. Before each pull request, run the gate CI runs too: `npx specgate check`
 
 ## A new project
