@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "specgate",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Specs as executable contracts: the daily loop as commands, the spec tree over MCP, the test before the code, and the gate as a hook that runs before the session can end.",
   "author": {
     "name": "RSA Global Tech",

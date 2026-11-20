@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.4.2] — 2026-11-20
+
+The agent runs your tests before the gate does.
+
 ### Fixed
 
 - **The agent can run your tests** (REQ-614). With the command `harness init`
