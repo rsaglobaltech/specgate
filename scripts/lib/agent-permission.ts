@@ -27,6 +27,49 @@ export function withAgentPermission(command: string): { command: string; added: 
 }
 
 /**
+ * Permission to run the project's tests (REQ-614).
+ *
+ * `acceptEdits` lets Claude Code write files and nothing else: in print mode
+ * every shell command is refused, the test command included. The agent wrote a
+ * test and its code without running either, said so, and the gate was the
+ * first thing to run them — on a Spring service and on a TypeScript project,
+ * with the command `harness init` writes. So beside `acceptEdits` the harness
+ * allows the gate's own test command, each part of it, and no other command.
+ *
+ * A command that names its own tools, or skips permissions, is the person's
+ * choice and is kept. A part of the test command that a permission rule cannot
+ * carry safely inside double quotes is left out rather than rewritten.
+ */
+export function withTestPermission(
+  command: string,
+  testCmd: string
+): { command: string; allowed: string[] } {
+  const none = { command, allowed: [] as string[] };
+  const claude = /^(\s*)claude(?=\s)/.test(command);
+  const isPrint = /(^|\s)(-p|--print)(\s|$)/.test(command);
+  const mode = /--permission-mode\s+acceptEdits(?=\s|$)/.exec(command);
+  const hasOwn = /--allowedTools|--allowed-tools|--dangerously-skip-permissions/.test(command);
+  if (!claude || !isPrint || !mode || hasOwn) return none;
+  const allowed = testCommandParts(testCmd);
+  if (allowed.length === 0) return none;
+  const at = mode.index + mode[0].length;
+  const rules = allowed.map((part) => `"Bash(${part}:*)"`).join(" ");
+  return {
+    command: `${command.slice(0, at)} --allowedTools ${rules}${command.slice(at)}`,
+    allowed,
+  };
+}
+
+/** The commands a test command is made of, those a permission rule can name. */
+export function testCommandParts(testCmd: string): string[] {
+  const parts = String(testCmd || "")
+    .split(/&&|\|\||;/)
+    .map((part) => part.trim())
+    .filter((part) => part && /^[\w@%+=:,./\\ -]+$/.test(part));
+  return [...new Set(parts)];
+}
+
+/**
  * Claude Code's output streamed into the studio's live view (REQ-278).
  *
  * The command `status` suggests, `claude -p < {prompt_file}`, ran and the live

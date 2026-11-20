@@ -13,6 +13,7 @@ import {
 import { packagesFor, rolePromptSection } from "../lib/role-packages";
 import { operationsSection } from "../lib/contracts";
 import { workspaceMemberDirs } from "../lib/story-part";
+import { testCommandParts } from "../lib/agent-permission";
 
 export type PromptOptions = CorePromptOptions;
 
@@ -40,14 +41,15 @@ const HARNESS_RULES: string[] = [
 export function buildPrompt(
   req: Record<string, unknown>,
   projectDir: string,
-  opts: PromptOptions = {}
+  opts: PromptOptions & { testCmd?: string } = {}
 ): string {
   const repo = new DiskHarnessConfigRepository();
   const useCase = new GenerateAgentPromptUseCase(repo);
 
+  const { testCmd, ...promptOpts } = opts;
   const prompt = useCase.execute(req as PromptRequirement, projectDir, {
-    ...opts,
-    stageRules: HARNESS_RULES,
+    ...promptOpts,
+    stageRules: testCmd ? [...HARNESS_RULES, testRule(testCmd)] : HARNESS_RULES,
   });
   // REQ-316: what each role asks of this requirement, written once by that role.
   const roles = rolePromptSection(packagesFor(projectDir, String(req.requirement || "")));
@@ -62,6 +64,18 @@ export function buildPrompt(
   // REQ-344: a story's other parts, handed over by `workspace harness run`.
   const story = storyContext();
   return story ? `${withOps.replace(/\n*$/, "\n")}\n${story}` : withOps;
+}
+
+/** REQ-614: the command the agent runs its tests with — the gate's own. */
+function testRule(testCmd: string): string {
+  const parts = testCommandParts(testCmd);
+  if (parts.length === 0) return `The gate runs \`${testCmd}\` when you finish.`;
+  const runs = parts.map((part) => `\`${part}\``).join(", then ");
+  return (
+    `Run the tests with ${runs}, written exactly so: the gate runs the same, and your ` +
+    "permissions may refuse any other command that runs something. See the new test fail " +
+    "before you write the code that makes it pass."
+  );
 }
 
 /** The workspace story this run builds a part of, when `workspace harness run` names one. */

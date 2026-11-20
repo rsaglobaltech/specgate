@@ -44,14 +44,14 @@ specgate config set agent "claude -p < {prompt_file}"
 
 ## Commands for common tools
 
-| Tool                                           | `--agent` value                                                                                            |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Claude Code                                    | `claude -p < {prompt_file}` (Specgate adds `--permission-mode acceptEdits`)                                |
-| Claude Code, watched live in `specgate studio` | `claude -p --output-format stream-json --verbose < {prompt_file} \| specgate harness events --from claude` |
-| Aider                                          | `aider --yes --message-file {prompt_file}`                                                                 |
-| OpenCode                                       | `opencode run "$(cat {prompt_file})"`                                                                      |
-| Cursor CLI                                     | `cursor-agent -p "$(cat {prompt_file})"`                                                                   |
-| Anything else                                  | `./my-agent.sh {prompt_file}` (a wrapper, below)                                                           |
+| Tool                                           | `--agent` value                                                                                                                     |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code                                    | `claude -p < {prompt_file}` (Specgate adds `--permission-mode acceptEdits`, and `--allowedTools` for the test command and no other) |
+| Claude Code, watched live in `specgate studio` | `claude -p --output-format stream-json --verbose < {prompt_file} \| specgate harness events --from claude`                          |
+| Aider                                          | `aider --yes --message-file {prompt_file}`                                                                                          |
+| OpenCode                                       | `opencode run "$(cat {prompt_file})"`                                                                                               |
+| Cursor CLI                                     | `cursor-agent -p "$(cat {prompt_file})"`                                                                                            |
+| Anything else                                  | `./my-agent.sh {prompt_file}` (a wrapper, below)                                                                                    |
 
 The command runs in a shell, so `< {prompt_file}` and `"$(cat {prompt_file})"`
 both work. Agent tools change their flags between versions: check each tool's

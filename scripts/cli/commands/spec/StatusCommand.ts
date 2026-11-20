@@ -378,6 +378,27 @@ const isBaseline = (it: QueueItem) =>
   String(it.feature_file || it.featureFile || "").includes("features/adoption/baseline");
 
 /**
+ * REQ-615: requirements, not matrix rows. A requirement with two scenarios has
+ * two rows; counted as rows it read "0 of 2 done" and stood twice under To do.
+ * It is done when every one of its rows is.
+ */
+export function requirementProgress(items: QueueItem[]): { done: number; total: number } {
+  const open = new Map<string, boolean>();
+  for (const it of items) {
+    open.set(it.requirement, open.get(it.requirement) || false || it.category !== "DONE");
+  }
+  let done = 0;
+  for (const stillOpen of open.values()) if (!stillOpen) done++;
+  return { done, total: open.size };
+}
+
+/** The first row of each requirement, in the order given. */
+export function onePerRequirement(items: QueueItem[]): QueueItem[] {
+  const seen = new Set<string>();
+  return items.filter((it) => !seen.has(it.requirement) && Boolean(seen.add(it.requirement)));
+}
+
+/**
  * The baseline of a project adopted with code, while pending: "existing
  * behaviour is preserved" is held by the suite on every check, and has no test
  * of its own to write. Listed under "To do" it stayed there for good, one
@@ -561,13 +582,13 @@ function emitText(
   notes: Diagnostic[] = [],
   unwritten: Diagnostic[] = []
 ): void {
-  const { items, counts, orphans } = summary;
+  const { items, orphans } = summary;
   const out = (t: string) => process.stdout.write(t);
   out(ui.header("status", path.basename(path.resolve(projectDir))));
   const held = items.filter(heldBaseline);
-  out(
-    `  ${c.bold}Requirements${c.reset}  ${ui.progress(counts.DONE, counts.total - held.length, "done")}\n`
-  );
+  // REQ-615: the matrix has a row per scenario; people count requirements.
+  const progress = requirementProgress(items.filter((it) => !heldBaseline(it)));
+  out(`  ${c.bold}Requirements${c.reset}  ${ui.progress(progress.done, progress.total, "done")}\n`);
 
   const queue = (
     title: string,
@@ -576,7 +597,7 @@ function emitText(
     color: string,
     only: (it: QueueItem) => boolean = () => true
   ) => {
-    const group = items.filter((it) => cats.includes(it.category) && only(it));
+    const group = onePerRequirement(items.filter((it) => cats.includes(it.category) && only(it)));
     if (group.length === 0) return;
     out("\n" + ui.section(title));
     const rows = group.slice(0, QUEUE_LIMIT).map((it) => {

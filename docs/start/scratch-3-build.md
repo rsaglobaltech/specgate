@@ -92,9 +92,11 @@ specgate harness prompt REQ-003
 <!-- specgate:out-scratch-harness-prompt:begin — generated; edit the source, not this block -->
 ```text
 $ specgate harness prompt REQ-003
+  ◇  Claude Code may run the test command and no other: `node --test`.
+
   ◆ specgate · harness run   dry run · 1 requirement(s) would be processed
 
-  Agent         claude --output-format stream-json --verbose --permission-mode acceptEdits -p < {prompt_file} | specgate harness events --from claude
+  Agent         claude --output-format stream-json --verbose --permission-mode acceptEdits --allowedTools "Bash(node --test:*)" -p < {prompt_file} | specgate harness events --from claude
   Setup         none
 
   REQ-003 · NEEDS_EVERYTHING → branch harness/REQ-003 ────
@@ -110,9 +112,7 @@ The system SHALL refuse a booking for a court and hour that is already booked.
 
 > Brief: "A court cannot be booked twice for the same hour."
 
-#### Scenario: SCN-004 — The second booking is refused
-
-… 91 more lines
+… 94 more lines
 ```
 <!-- specgate:out-scratch-harness-prompt:end -->
 

@@ -9,6 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The agent can run your tests** (REQ-614). With the command `harness init`
+  writes, Claude Code could write files and run nothing: it wrote a test and
+  its code without running either, and the gate was the first thing to run
+  them. `harness run` now allows the test command beside `acceptEdits`, each
+  part of it and no other command, says which, and names it in the prompt. A
+  command that sets `--allowedTools` itself is kept as written.
+- **`status` counts requirements, not scenarios** (REQ-615). A requirement
+  with two scenarios read "0 of 2 done" and stood twice under To do. It is one
+  requirement, done when all its scenarios are. `status --json` is unchanged.
+
 ## [1.4.1] — 2026-11-20
 
 The first minutes with the tool: an empty folder, a first requirement, a first CI run.
