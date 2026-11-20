@@ -48,7 +48,7 @@ import { spawnSync } from "node:child_process";
 import { BaseCommand } from "../../../lib/command";
 import { resolveProjectDir } from "../../../lib/project-root";
 import { buildPrompt } from "../../../harness/prompt";
-import { withAgentPermission } from "../../../lib/agent-permission";
+import { withAgentPermission, withTestPermission } from "../../../lib/agent-permission";
 import { detectSetupCommand } from "../../../harness/init";
 import { inFlightRequirements } from "../../../lib/in-flight";
 import { missingApprovals } from "../../../lib/approvals";
@@ -1110,6 +1110,7 @@ function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): Attem
             // commit — the precedent must be work already accepted, not a
             // sibling requirement this same run happens to be writing.
             withPrecedents: settings.promptPrecedents === true,
+            testCmd: settings.testCmd,
             e2eDir:
               settings.e2eDir && onScreen(worktreeDir, req.requirement)
                 ? settings.e2eDir
@@ -2836,10 +2837,14 @@ export class RunCommand extends BaseCommand {
 
       // REQ-264: Claude Code in print mode writes nothing without permission.
       let permitted = false;
+      // REQ-614: and it runs no test without permission for the test command.
+      let testsAllowed: string[] = [];
       const permit = (command: string) => {
         const p = withAgentPermission(command);
         permitted = permitted || p.added;
-        return p.command;
+        const t = withTestPermission(p.command, settings.testCmd);
+        if (t.allowed.length > 0) testsAllowed = t.allowed;
+        return t.command;
       };
       if (settings.agent) settings.agent = permit(settings.agent);
       for (const name of Object.keys(settings.profileAgents || {})) {
@@ -2849,6 +2854,13 @@ export class RunCommand extends BaseCommand {
         info(
           "Claude Code runs with --permission-mode acceptEdits: in print mode it cannot write " +
             "without it, and the harness's worktree confines what it writes."
+        );
+      }
+      if (testsAllowed.length > 0) {
+        info(
+          `Claude Code may run the test command and no other: ${testsAllowed
+            .map((part) => `\`${part}\``)
+            .join(", ")}.`
         );
       }
       // REQ-271: an agent given on the command line is forgotten after the run.
@@ -2911,6 +2923,7 @@ export class RunCommand extends BaseCommand {
               promptPrefix: settings.promptPrefix,
               hint: hintByReq.get(req.requirement) as string | undefined,
               withPrecedents: settings.promptPrecedents === true,
+              testCmd: settings.testCmd,
             })
           );
           process.stdout.write(
