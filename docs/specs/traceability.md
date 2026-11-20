@@ -503,6 +503,7 @@
 | REQ-606 | SCN-606a | `features/trusted-gate/REQ-606.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts | Approved |
 | REQ-607 | SCN-607a | `features/project-setup/REQ-607.feature` | - | - | - | - | - | tests/unit/undecided-stack.test.ts | Approved |
 | REQ-608 | SCN-608a | `features/project-setup/REQ-608.feature` | - | - | - | - | - | tests/unit/adopt-no-code.test.ts | Approved |
+| REQ-609 | SCN-609a | `features/project-setup/REQ-609.feature` | - | - | - | - | - | tests/unit/init-wizard.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

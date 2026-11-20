@@ -70,7 +70,7 @@
       "typeMs": 26,
       "holdMs": 1960,
       "truncated": true,
-      "omitted": 6,
+      "omitted": 7,
       "lines": [
         {
           "t": "  ◆ specgate · init",

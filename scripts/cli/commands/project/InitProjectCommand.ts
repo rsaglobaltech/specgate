@@ -198,7 +198,9 @@ function usage() {
       '                    or the legacy KEY="value" format (.config). When omitted,\n' +
       "                    an interactive wizard asks for each value.\n" +
       "  --out <dir>       Parent directory for generated project (default: current directory)\n" +
-      "  --yes, -y         Skip the wizard and accept every default (non-interactive)\n" +
+      "  --yes, -y         Skip the wizard and accept every default (non-interactive):\n" +
+      "                    a backend project on Java, in a new folder. For the\n" +
+      "                    specification only, with no stack chosen: no flags.\n" +
       "  --forja [args]    Generate a full application with forja instead (ADR-0033):\n" +
       "                    TypeScript web + mobile, or a Spring Boot / Quarkus API.\n" +
       "                    Everything after it goes to `forja init`, e.g.\n" +
@@ -1128,24 +1130,51 @@ export function adoptsInstead(opts: ReturnType<typeof parseArgs>, cwd: string): 
   return detectStack(cwd).detected !== "none";
 }
 
-/** In a terminal, an empty folder: a whole application, or the specification only? */
-async function asksForForja(): Promise<boolean> {
+/** What a plain `init` starts in a folder with no code (issue #515). */
+export type Start = "forja" | "spec" | "template";
+
+/** The answer to "What are you starting?"; Enter is the specification only. */
+export function startOf(raw: string): Start | null {
+  const answer = raw.trim();
+  if (answer === "" || answer === "2") return "spec";
+  if (answer === "1") return "forja";
+  return answer === "3" ? "template" : null;
+}
+
+/** In a terminal, an empty folder: an application, the specification only, or a template? */
+async function asksWhatToStart(): Promise<Start> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   try {
     process.stdout.write(
       "\n  What are you starting?\n" +
         "    1  An application: forja generates it (TypeScript web + mobile, or a Java API),\n" +
         "       with the architecture in place, and adopts Specgate\n" +
-        "    2  The specification only: Specgate's own skeleton, for any stack\n\n"
+        "    2  The specification only, in this folder: Specgate's skeleton, for any stack —\n" +
+        "       you say the stack later\n" +
+        "    3  A project from a template: a new folder with a stack and an architecture\n" +
+        "       chosen in the questions that follow\n\n"
     );
     for (;;) {
-      const raw = (await rl.question("  Choose 1 or 2 [2]: ")).trim();
-      if (raw === "" || raw === "2") return false;
-      if (raw === "1") return true;
+      const start = startOf(await rl.question("  Choose 1, 2 or 3 [2]: "));
+      if (start) return start;
     }
   } finally {
     rl.close();
   }
+}
+
+/** The specification's skeleton in this folder, stack undecided: what `adopt` writes with no code. */
+function specificationOnly(opts: ReturnType<typeof parseArgs>): void {
+  new AdoptProjectCommand([
+    "--no-header",
+    "--project-dir",
+    process.cwd(),
+    ...(opts.dryRun ? ["--dry-run"] : []),
+    ...(opts.keepMatrix ? ["--keep-matrix"] : []),
+    ...(opts.noAgents ? ["--no-agents"] : []),
+    ...(opts.noCi ? ["--no-ci"] : []),
+    "--no-capabilities",
+  ]).execute();
 }
 
 export class InitProjectCommand extends BaseCommand {
@@ -1194,8 +1223,23 @@ export class InitProjectCommand extends BaseCommand {
     // says it without a question.
     let forjaArgs = opts.forja;
     const plain = !opts.config && !opts.yes && !opts.multiStack && !opts.out && !opts.newProject;
-    if (!forjaArgs && plain && process.stdin.isTTY && process.stdout.isTTY) {
-      if (await asksForForja()) forjaArgs = [];
+    const terminal = !!process.stdin.isTTY && !!process.stdout.isTTY;
+    if (!forjaArgs && plain) {
+      // Issue #515: with nobody to ask, the specification only — nothing chosen
+      // for the person. It used to stop here asking for --config.
+      const start = terminal ? await asksWhatToStart() : "spec";
+      if (start === "forja") forjaArgs = [];
+      if (start === "spec") {
+        if (!terminal) {
+          logInfo("No terminal and no --config: writing the specification only, in this folder.");
+          logInfo(
+            "For a project from a template: specgate init --yes, or --config <path>; " +
+              "for a generated application: specgate init --forja."
+          );
+        }
+        specificationOnly(opts);
+        return;
+      }
     }
     if (forjaArgs) {
       const unavailable = forjaUnavailable(forjaCommand());
@@ -1252,11 +1296,11 @@ export class InitProjectCommand extends BaseCommand {
       process.exit(2);
     }
 
-    if (!opts.out) {
-      logInfo(`No --out given — using the current directory: ${process.cwd()}`);
-    }
     const outDir = opts.out ? path.resolve(opts.out) : process.cwd();
     const projectDir = path.join(outDir, cfg.PROJECT_SLUG);
+    if (!opts.out) {
+      logInfo(`No --out given — the project goes in a new folder here: ${cfg.PROJECT_SLUG}/`);
+    }
 
     if (fs.existsSync(projectDir) && !opts.force) {
       logError(`Destination already exists: ${projectDir} (use --force to overwrite)`);
@@ -1321,6 +1365,22 @@ export class InitProjectCommand extends BaseCommand {
       logInfo("- Config: saved to project.yaml (reproduce with `init --config project.yaml`)");
     }
     installDetectedAgents(projectDir, { dryRun: opts.dryRun, skip: opts.noAgents }, logInfo);
+    // Issue #515: --yes chose a stack nobody asked for, and AGENTS.md states it
+    // to an agent that may not replace it.
+    if (opts.yes && !opts.config && !plan) {
+      logWarn(
+        `--yes took every default: a ${cfg.PROJECT_TYPE} project on ${cfg.STACK}. ` +
+          "AGENTS.md states that stack to your agent."
+      );
+      logInfo(
+        '  Not yours? specgate config set stack "<your stack>" (and testing) in the project,'
+      );
+      logInfo(
+        "  or, for the specification only and no stack chosen: specgate init, with no flags."
+      );
+    }
+    if (!opts.dryRun)
+      logInfo(`- Next: cd ${path.relative(process.cwd(), projectDir) || "."} && specgate status`);
     logInfo("✅ Generation completed");
     process.exit(0);
   }
