@@ -389,6 +389,43 @@ function detectManifest(dir: string) {
   return facts;
 }
 
+/**
+ * What adoption says of the project in `spec.md`, the matrix and the baseline
+ * scenario (issue #513): code to preserve, or none yet. A folder with no code
+ * has no behaviour to preserve, so its first requirement is one its first test
+ * meets.
+ */
+const BASELINE = {
+  existing: {
+    PROJECT_TYPE: "existing",
+    API_STYLE: "as built",
+    ADOPTED_AS: "Adopted into Spec-Driven Development on an existing codebase (brownfield).",
+    ADOPTED_NEXT:
+      "Existing behaviour is retro-filled requirement by requirement — start with\n> the ones your team is actively changing.",
+    BASELINE_TITLE: "Existing behaviour is preserved",
+    BASELINE_BODY:
+      "The adopted codebase keeps working: the full test suite passes on every\n" +
+      "change. This requirement anchors the traceability matrix until real\n" +
+      "requirements are retro-filled from the existing code and tests.",
+    BASELINE_USE_CASE: "Preserve existing behaviour",
+    feature: "baseline.feature.tpl",
+  },
+  fresh: {
+    PROJECT_TYPE: "new",
+    API_STYLE: UNDECIDED,
+    ADOPTED_AS: "Set up for Spec-Driven Development before any code was written.",
+    ADOPTED_NEXT: "Start with the first thing the product should do.",
+    BASELINE_TITLE: "The project builds and its tests run",
+    BASELINE_BODY:
+      "A clean checkout builds, and its test suite runs and passes with at least one\n" +
+      "test. This is the first requirement of a project with no code yet: the first\n" +
+      "test meets it, and it anchors the traceability matrix until the first\n" +
+      "behaviour is specified.",
+    BASELINE_USE_CASE: "Build and test the project",
+    feature: "first.feature.tpl",
+  },
+} as const;
+
 const ADOPT_FILES = [
   ["spec.md.tpl", "spec.md"],
   ["baseline.feature.tpl", "features/adoption/baseline.feature"],
@@ -490,6 +527,9 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
       ? onboard.capabilitiesUnder(dir, path.join(dir, opts.scope))
       : onboard.proposeAllCapabilities(dir);
   const capabilities = found.slice(0, onboard.MAX_PROPOSED);
+  // Issue #513: no manifest and no source file is a project with no code yet.
+  const fresh = detected.detected === "none" && onboard.countFiles(dir) === 0;
+  const { feature: baselineFeature, ...baseline } = fresh ? BASELINE.fresh : BASELINE.existing;
   // REQ-338: more areas than a person can review is said, with the way out.
   if (found.length > capabilities.length && !quiet) {
     const left = found.slice(capabilities.length).map((c) => c.id);
@@ -507,7 +547,7 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
     PROJECT_SLUG: slugify(detected.PROJECT_NAME),
     DOMAIN: "general",
     STACK: detected.STACK,
-    API_STYLE: "REST with DTO boundaries",
+    ...baseline,
     TESTING: detected.TESTING,
     TEST_CMD: detected.TEST_CMD,
     PROPOSED_REQUIREMENTS: "",
@@ -521,6 +561,7 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
   say(`- Project: ${vars.PROJECT_NAME}`);
   say(`- Stack: ${vars.STACK}`);
   say(`- Test command: ${vars.TEST_CMD}`);
+  if (fresh && !quiet) logInfo("- No code here yet: set up as a new project.");
   if (detected.detected === "none" && !quiet) {
     logWarn(
       'No build manifest here, so the stack is not decided: specgate config set stack "<your stack>" ' +
@@ -539,7 +580,13 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
     }
     const rendered = scoped(
       dst,
-      renderTemplate(fs.readFileSync(path.join(ADOPT_TEMPLATES, tpl), "utf8"), vars),
+      renderTemplate(
+        fs.readFileSync(
+          path.join(ADOPT_TEMPLATES, tpl === "baseline.feature.tpl" ? baselineFeature : tpl),
+          "utf8"
+        ),
+        vars
+      ),
       opts.scope || ""
     );
     if (opts.dryRun) {
@@ -558,10 +605,8 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
     const agentsPath = path.join(dir, "AGENTS.md");
     const existing = fs.existsSync(agentsPath) ? fs.readFileSync(agentsPath, "utf8") : null;
     const contract = renderTemplate(fs.readFileSync(ADOPT_AGENTS_TEMPLATE, "utf8"), {
-      PROJECT_TYPE: "existing",
       ARCHITECTURE: "minimal",
       DOMAIN: "see spec.md",
-      API_STYLE: "as built",
       ...vars,
       STACK_RULES: [
         `- The test command is \`${vars.TEST_CMD}\`.`,
@@ -617,7 +662,7 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
   }
 
   const testCmd = detected.detected === "none" ? null : vars.TEST_CMD;
-  return { written, skipped, capabilities, testCmd };
+  return { written, skipped, capabilities, testCmd, fresh };
 }
 
 /**
@@ -734,7 +779,7 @@ export class AdoptProjectCommand extends BaseCommand {
       );
     }
 
-    const { written, skipped, capabilities, testCmd } = adoptOne(dir, opts);
+    const { written, skipped, capabilities, testCmd, fresh } = adoptOne(dir, opts);
     // The spec gate, as init installs it (REQ-455) — never over a CI file that exists.
     installGate(dir, opts);
     // A new adoption starts with a generated matrix: nobody maintains it,
@@ -769,6 +814,11 @@ export class AdoptProjectCommand extends BaseCommand {
       );
     } else if (capabilities.length > 0) {
       logInfo('  2. specgate new "<behaviour>"   # one per area in docs/specs/adoption.md');
+    } else if (fresh) {
+      logInfo('  2. specgate new "<behaviour>"   # the first thing the product should do');
+      logInfo(
+        "     or, from a plan: save it as docs/brief.md, then  specgate propose --from-brief"
+      );
     } else {
       logInfo('  2. specgate new "<behaviour>"   # one requirement you already rely on');
       logInfo(

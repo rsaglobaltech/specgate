@@ -20,6 +20,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   decision in the header of `AGENTS.md`, leaving your own text alone. `status`
   and `doctor` say an undecided stack, with the command — also in a project
   adopted with 1.4 or earlier.
+- **A folder with no code is adopted as a new project** (REQ-608, issue #513).
+  `adopt` in an empty folder said `existing project`, and wrote as REQ-001
+  "Existing behaviour is preserved", which nothing could meet. It now says the
+  folder has no code yet, writes `new project`, and starts with REQ-001 "The
+  project builds and its tests run", which the first test meets.
+- **`adopt` no longer says the API is REST** (REQ-608). `AGENTS.md` and
+  `spec.md` stated `REST with DTO boundaries` for every adopted project. They
+  now say `as built` for a project with code and `TBD` for one without;
+  `--var API_STYLE=…` still sets it.
 
 ## [1.4.0] — 2026-11-18
 

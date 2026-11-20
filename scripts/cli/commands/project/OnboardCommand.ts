@@ -333,7 +333,7 @@ export function descendThroughWrappers(root: string) {
  * since the proposals are sorted by this number, the ranking came out inverted
  * (H14).
  */
-function countFiles(dir: string) {
+export function countFiles(dir: string) {
   let total = 0;
   const stack = [dir];
   while (stack.length > 0 && total < 5000) {
