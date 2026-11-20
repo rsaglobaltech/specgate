@@ -377,6 +377,22 @@ function onlyBaseline(items: QueueItem[]): boolean {
 const isBaseline = (it: QueueItem) =>
   String(it.feature_file || it.featureFile || "").includes("features/adoption/baseline");
 
+/**
+ * The baseline of a project adopted with code, while pending: "existing
+ * behaviour is preserved" is held by the suite on every check, and has no test
+ * of its own to write. Listed under "To do" it stayed there for good, one
+ * requirement the count never reached (first-use journey, 2026-11-20). A
+ * smoke test that names it closes it, and it is said so, as an option. The
+ * baseline of a project adopted with no code is a requirement like any other.
+ */
+export function heldBaseline(it: QueueItem): boolean {
+  return (
+    isBaseline(it) &&
+    TODO_CATEGORIES.includes(it.category) &&
+    /^Preserve existing behaviour/i.test(titleOf(it))
+  );
+}
+
 /** The first pending requirement that is not the adoption baseline. */
 function firstReal(items: QueueItem[]): QueueItem | undefined {
   return (items || []).find((it) => TODO_CATEGORIES.includes(it.category) && !isBaseline(it));
@@ -516,7 +532,9 @@ function nextReasonOf({
       : // Issue #513: a project adopted with no code has nothing it already meets.
         /^Build and test the project$/i.test(titleOf(todo))
         ? "nothing is specified yet — add the first thing the product should do"
-        : "only the adoption baseline is specified — add one requirement your code already meets";
+        : counts.DONE > 0
+          ? "every requirement written so far is delivered — add the next behaviour you rely on"
+          : "only the adoption baseline is specified — add one requirement your code already meets";
   if (todo && forja && needsCode(todo))
     return `${todo.requirement}'s use case and the test that names it, where the architecture expects them`;
   if (todo && derived)
@@ -546,7 +564,10 @@ function emitText(
   const { items, counts, orphans } = summary;
   const out = (t: string) => process.stdout.write(t);
   out(ui.header("status", path.basename(path.resolve(projectDir))));
-  out(`  ${c.bold}Requirements${c.reset}  ${ui.progress(counts.DONE, counts.total, "done")}\n`);
+  const held = items.filter(heldBaseline);
+  out(
+    `  ${c.bold}Requirements${c.reset}  ${ui.progress(counts.DONE, counts.total - held.length, "done")}\n`
+  );
 
   const queue = (
     title: string,
@@ -573,7 +594,12 @@ function emitText(
       );
   };
   queue("Ready to close", ["NEEDS_STATUS_UPDATE"], ui.state("ready"), c.ok);
-  queue("To do", TODO_CATEGORIES, ui.state("todo"), c.warn);
+  queue("To do", TODO_CATEGORIES, ui.state("todo"), c.warn, (it) => !heldBaseline(it));
+  for (const it of held)
+    out(
+      `\n  ${ui.muted(`·  ${it.requirement} ${titleOf(it)}: your test suite holds it on every check.`)}\n` +
+        `     ${ui.muted(`To close it, name ${it.requirement} in a test that starts the product.`)}\n`
+    );
   queue(
     "Answered — update the spec",
     ["WAITING_FOR_ANSWER"],

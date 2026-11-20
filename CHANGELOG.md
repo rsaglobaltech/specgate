@@ -39,6 +39,25 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   before, and now says the folder it goes in (it said "using the current
   directory" and made a sub-folder), warns that the stack is a default and how
   to change it, and ends with the `cd` to run.
+- **The CI job of a Python project installs what its tests need** (REQ-610).
+  The job set Python up and left a comment, so its first run failed on
+  `pytest: command not found`. It now runs `pip install -r` for the
+  requirements files the repository has, `pip install -e .` when
+  `pyproject.toml` declares a build system (with its `dev` or `test` extra),
+  and `pip install pytest` when the test command needs it and nothing names
+  it. A project managed by Poetry, PDM or uv gets a comment, not a guess. In
+  the four providers. An existing CI file is not rewritten:
+  `specgate ci init --force` writes the new one.
+- **`apply` says everything to rewrite at once** (REQ-611). A requirement
+  fresh from `specgate new` was refused for its scenario's placeholders, then
+  again for the sentence Specgate wrote as its obligation. Both are in the
+  first refusal now, and the Start page names the step.
+- **`status` no longer lists the adoption baseline as work to do** (REQ-612).
+  "REQ-001 Preserve existing behaviour" stayed under "To do" for good, and the
+  count never reached the total. It is said apart now — your test suite holds
+  it on every check, and a test that names it and starts the product closes it
+  — and the count leaves it out while it is pending. `status --json` is
+  as it was.
 
 ## [1.4.0] — 2026-11-18
 

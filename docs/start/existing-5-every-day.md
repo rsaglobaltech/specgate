@@ -28,14 +28,14 @@ specgate status
 $ specgate status
   ◆ specgate · status   invoicing
 
-  Requirements  ██████████░░░░░░░░░░  1 of 2 done
+  Requirements  ████████████████████  1 of 1 done
 
-  To do ──────────────────────────────────────────────────
-    ○ REQ-001  Preserve existing behaviour  a test and code
+  ·  REQ-001 Preserve existing behaviour: your test suite holds it on every check.
+     To close it, name REQ-001 in a test that starts the product.
 
   Next ───────────────────────────────────────────────────
   ➜  specgate new "<a behaviour you rely on>"
-     only the adoption baseline is specified — add one requirement your code already meets
+     every requirement written so far is delivered — add the next behaviour you rely on
 ```
 <!-- specgate:out-existing-status-daily:end -->
 
