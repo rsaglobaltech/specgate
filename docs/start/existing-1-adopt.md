@@ -104,7 +104,7 @@ $ specgate init
   ▲  This does not certify your code yet — it certifies the skeleton.
      A green `validate` right now means the structure is in place, not that any
      behaviour is covered. It starts meaning something when the requirements below
-… 19 more lines
+… 20 more lines
 ```
 <!-- specgate:out-existing-init:end -->
 

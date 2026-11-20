@@ -507,6 +507,7 @@
 | REQ-610 | SCN-610a | `features/trusted-gate/REQ-610.feature` | - | - | - | - | - | tests/unit/first-green-gate.test.ts | Approved |
 | REQ-611 | SCN-611a | `features/trusted-gate/REQ-611.feature` | - | - | - | - | - | tests/unit/first-green-gate.test.ts | Approved |
 | REQ-612 | SCN-612a | `features/daily-surface/REQ-612.feature` | - | - | - | - | - | tests/unit/first-green-gate.test.ts | Approved |
+| REQ-613 | SCN-613a | `features/trusted-gate/REQ-613.feature` | - | - | - | - | - | tests/unit/ci-matches-local.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

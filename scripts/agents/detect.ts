@@ -51,7 +51,13 @@ export function installDetectedAgents(
     return;
   }
   if (tools.length === 0) {
-    log("Agent: none detected. To drive the daily loop from your agent:");
+    // "Agent: none detected" was followed, in the same output, by "set agent:
+    // claude" — two different things: these are the agent's /specgate:*
+    // commands, that one the command Build runs (first-use journey, 2026-11-20).
+    log(
+      "Agent commands: not installed — this repository has no agent folder (.claude, .cursor, …)."
+    );
+    log("To install your agent's /specgate:* commands:");
     log("  specgate agents init --tool claude   # or cursor, copilot, gemini, … (--help)");
     return;
   }

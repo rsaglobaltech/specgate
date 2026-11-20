@@ -58,6 +58,15 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
   it on every check, and a test that names it and starts the product closes it
   — and the count leaves it out while it is pending. `status --json` is
   as it was.
+- **After adoption CI runs what `check` runs on your machine** (REQ-613).
+  The job `adopt` wrote carried its own copy of the test command — on an npm
+  project with a build script, `npm test && npm run build`, while the command
+  it saved was `npm test` — and a later `config set test_cmd` never reached
+  it. `adopt` now saves the command with its build, and the job runs
+  `check .`, which reads it. A CI file that was already there is not touched.
+- **`adopt` no longer says "Agent: none detected" and then "set agent"**
+  (REQ-613). The first was about your agent's `/specgate:*` commands, and says
+  so now: "Agent commands: not installed".
 
 ## [1.4.0] — 2026-11-18
 

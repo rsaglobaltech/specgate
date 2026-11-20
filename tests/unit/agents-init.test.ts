@@ -306,7 +306,7 @@ test("init with no agent found says how to install, and --no-agents installs not
   try {
     const r = initIn(bare);
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /none detected[\s\S]*specgate agents init --tool/);
+    assert.match(r.stdout, /Agent commands: not installed[\s\S]*specgate agents init --tool/);
     assert.equal(fs.existsSync(path.join(bare, ".claude")), false);
 
     const q = initIn(opted, "--no-agents");

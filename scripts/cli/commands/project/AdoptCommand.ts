@@ -6,14 +6,15 @@ import { migrateToDerived, needsUnionMerge } from "../spec/MatrixCommand";
 import * as path from "node:path";
 import { renderTemplate } from "../../../../packages/core/src/domain/PackSpec";
 import { slugify } from "./WizardCommand";
-import { installGate } from "./gate";
+import { installGate, refreshGate } from "./gate";
 import { BaseCommand } from "../../../lib/command";
 import type { Capability } from "./OnboardCommand";
 
 import { findCliRoot } from "../../../lib/project-root";
 
 import { detectTestCommand } from "../../../../packages/core/src/domain/TestCommand";
-import { startupTestAdvice } from "../../../harness/init";
+import { startupTestAdvice, withBuild } from "../../../harness/init";
+import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import * as ui from "../../../lib/ui";
 
 /**
@@ -555,6 +556,11 @@ function adoptOne(dir: string, opts: AdoptOptions, { quiet = false } = {}) {
     ...opts.vars,
   };
 
+  // The gate builds too, when the project has a build script (#62): the job
+  // in CI did, and the command saved here did not, so the two ran different
+  // things. A command given with --var is taken as written.
+  if (!opts.vars.TEST_CMD) vars.TEST_CMD = withBuild(dir, vars.TEST_CMD) ?? vars.TEST_CMD;
+
   say(
     `🔍 Stack detection: ${detected.detected === "none" ? "no build manifest found" : detected.detected}`
   );
@@ -781,7 +787,7 @@ export class AdoptProjectCommand extends BaseCommand {
 
     const { written, skipped, capabilities, testCmd, fresh } = adoptOne(dir, opts);
     // The spec gate, as init installs it (REQ-455) — never over a CI file that exists.
-    installGate(dir, opts);
+    const gateWritten = installGate(dir, opts);
     // A new adoption starts with a generated matrix: nobody maintains it,
     // `done` and `new` write spec.md, and the gate keeps it honest.
     if (!opts.dryRun && !opts.keepMatrix && migrateToDerived(dir)) {
@@ -839,6 +845,9 @@ export class AdoptProjectCommand extends BaseCommand {
       { detectedTest: testCmd, yes: !!opts.yes, dryRun: opts.dryRun, ci: ciGateOf(dir) },
       logInfo
     );
+    // The CI file was written before the test command was saved: once it is,
+    // the job reads it from the configuration, as `check` does here.
+    if (gateWritten && !opts.dryRun && readHarnessConfig(dir)?.testCmd) refreshGate(dir);
     process.stdout.write(readinessText(ready));
     process.exit(0);
   }
