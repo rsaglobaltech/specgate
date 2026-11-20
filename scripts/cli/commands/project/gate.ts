@@ -11,13 +11,16 @@ function logInfo(msg: string) {
 /**
  * The spec gate, installed with the project (REQ-455): the full gate of
  * `specgate ci init`, version pinned, for the provider the folder shows —
- * GitHub when it shows none. `--no-ci` leaves it out.
+ * GitHub when it shows none. `--no-ci` leaves it out. True when it wrote the file.
  */
-export function installGate(projectDir: string, opts: { dryRun: boolean; noCi?: boolean }) {
+export function installGate(
+  projectDir: string,
+  opts: { dryRun: boolean; noCi?: boolean }
+): boolean {
   installPolicy(projectDir, opts);
   if (opts.noCi) {
     logInfo("🚦 No CI file (--no-ci) — add the gate later with `specgate ci init`");
-    return;
+    return false;
   }
   if (opts.dryRun) {
     // What the write would do, so the dry run lists only what is written (REQ-489).
@@ -27,7 +30,7 @@ export function installGate(projectDir: string, opts: { dryRun: boolean; noCi?: 
         ? `[dry-run] write ${would.dest} (the spec gate; --no-ci leaves it out)`
         : `🚦 CI: ${would.dest} kept as it is`
     );
-    return;
+    return false;
   }
   const gate = writeGate(projectDir);
   logInfo(
@@ -35,6 +38,17 @@ export function installGate(projectDir: string, opts: { dryRun: boolean; noCi?: 
       ? `🚦 CI: ${gate.dest} — the spec gate; \`specgate ci status\` says what it checks`
       : `🚦 CI: ${gate.dest} kept as it is`
   );
+  return gate.written;
+}
+
+/**
+ * The gate written a moment ago, written again now that the test command is
+ * saved: the job then runs `check .`, which reads `test_cmd`, so CI runs what
+ * `specgate check` runs here and follows a later `config set test_cmd`. Written
+ * before the command was saved, it carried its own copy of it.
+ */
+export function refreshGate(projectDir: string): void {
+  writeGate(projectDir, { force: true });
 }
 
 /**

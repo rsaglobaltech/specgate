@@ -81,7 +81,7 @@ $ specgate init
      behaviour is covered. It starts meaning something when the requirements below
      are real and their scenarios are linked to tests.
 
-… 18 more lines
+… 19 more lines
 ```
 <!-- specgate:out-scratch-init:end -->
 
