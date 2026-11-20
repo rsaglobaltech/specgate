@@ -94,7 +94,7 @@ The Docker image runs the same gate with nothing installed but Docker:
 
 ```bash
 docker run --rm -v "$PWD:/workspace" \
-  ghcr.io/rsaglobaltech/specgate:1.4.0 validate . --strict
+  ghcr.io/rsaglobaltech/specgate:1.4.1 validate . --strict
 ```
 
 The Maven and Gradle plugins bind it to `mvn verify`:

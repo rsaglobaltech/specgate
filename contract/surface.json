@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "items": [
     "api:API_VERSION",
     "api:AgentApplyAnswer",
@@ -1424,6 +1424,8 @@
     "json:config list config.gate.rules.requirements:string",
     "json:config list config.gate.rules.scenarios:string",
     "json:config list config.gate.rules.tdd:string",
+    "json:config list config.stack:string",
+    "json:config list config.testing:string",
     "json:config list config:object",
     "json:config list files.gate.preset:string",
     "json:config list files.gate.rules.coverage:string",
@@ -1433,6 +1435,8 @@
     "json:config list files.gate.rules.requirements:string",
     "json:config list files.gate.rules.scenarios:string",
     "json:config list files.gate.rules.tdd:string",
+    "json:config list files.stack:string",
+    "json:config list files.testing:string",
     "json:config list files:object",
     "json:config list status:array",
     "json:harness report report.blocked:number",

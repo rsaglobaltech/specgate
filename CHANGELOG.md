@@ -9,6 +9,10 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.4.1] — 2026-11-20
+
+The first minutes with the tool: an empty folder, a first requirement, a first CI run.
+
 ### Fixed
 
 - **An undecided stack no longer leaves the agent with nowhere to go**

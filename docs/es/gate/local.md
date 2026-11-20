@@ -1,4 +1,4 @@
-<!-- translation-of: 495bd249a39f -->
+<!-- translation-of: b7df529fab3d -->
 # El gate en tu máquina
 
 Ejecuta el gate antes de hacer push y un pull request en rojo será raro. Al
@@ -96,7 +96,7 @@ La imagen Docker ejecuta el mismo gate sin nada instalado salvo Docker:
 
 ```bash
 docker run --rm -v "$PWD:/workspace" \
-  ghcr.io/rsaglobaltech/specgate:1.4.0 validate . --strict
+  ghcr.io/rsaglobaltech/specgate:1.4.1 validate . --strict
 ```
 
 Los plugins de Maven y Gradle lo enlazan a `mvn verify`:
