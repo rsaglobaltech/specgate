@@ -142,10 +142,7 @@ test("REQ-234 SCN-234c: Specgate's own commits conform", () => {
     ],
     ["scripts/lib/studio-app.ts", /"chore\(spec\): save the specification from the studio"/],
     ["scripts/lib/studio-route.ts", /"chore: start the project with specgate"/],
-    [
-      "scripts/cli/commands/harness/RunCommand.ts",
-      /`chore\(\$\{req\.requirement\}\): attempt FAILED the gate/,
-    ],
+    ["scripts/harness/run/attempt.ts", /`chore\(\$\{req\.requirement\}\): attempt FAILED the gate/],
     // REQ-494: written where the question is recorded, the moment it is asked.
     ["scripts/lib/agent-watch.ts", /`docs\(specs\): \$\{req\} needs clarification/],
     [
