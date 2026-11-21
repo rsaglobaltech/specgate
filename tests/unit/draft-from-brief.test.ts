@@ -622,7 +622,8 @@ test("REQ-616 SCN-616a: a piped agent gets --add-dir in claude's own command, no
     'claude --add-dir "/tmp/brief" --output-format stream-json --verbose --permission-mode acceptEdits -p < {prompt_file} | specgate harness events --from claude'
   );
   assert.equal(withOutsideDir("claude -p", "/tmp/brief"), 'claude --add-dir "/tmp/brief" -p');
-  const own = 'claude --add-dir "$TMPDIR" -p < {prompt_file} | specgate harness events --from claude';
+  const own =
+    'claude --add-dir "$TMPDIR" -p < {prompt_file} | specgate harness events --from claude';
   assert.equal(withOutsideDir(own, "/tmp/brief"), own, "a command with its own --add-dir is kept");
   assert.equal(withOutsideDir("codex exec - | cat", "/tmp/brief"), "codex exec - | cat");
 });
