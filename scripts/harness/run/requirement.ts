@@ -233,21 +233,18 @@ export function processRequirement(req: HarnessRequirement, ctx: RunContext): Re
   return result;
 }
 
-export function processOneRequirement(req: HarnessRequirement, ctx: RunContext): RequirementResult {
-  const { projectDir, baseRef, keepWorktrees, force } = ctx;
-  const branch = `harness/${req.requirement}`;
-
-  // D1: which profile this requirement matches, resolved once. The bounded
-  // context comes from the matrix, where `expand` derived it — see
-  // `boundedContextOf`.
-  const matchedProfile = selectProfile(settingsOf(ctx).profileRules || [], {
-    requirement: req.requirement,
-    boundedContext: contextOfRequirement(projectDir, req.requirement),
-    featureFile: featureFilePath(req),
-    category: req.category,
-  });
-  if (matchedProfile) info(`${req.requirement}: profile '${matchedProfile}' matched`);
-
+/**
+ * Why this requirement is not handed to an agent at all, if so: its change
+ * waits for an approval, its scenario could not fail, it is not ready and the
+ * run skips those, or the disk is too full to start. Everything a person can
+ * act on is said here, before any worktree exists.
+ */
+function refusedBeforeStarting(
+  req: HarnessRequirement,
+  ctx: RunContext,
+  branch: string
+): RequirementResult | null {
+  const { projectDir } = ctx;
   // REQ-315: a requirement of an open change waits for its approvals — the 1.0
   // default for a layered change — before any worktree or agent.
   const owning = inFlightRequirements(projectDir).find((r) => r.id === req.requirement);
@@ -300,10 +297,6 @@ export function processOneRequirement(req: HarnessRequirement, ctx: RunContext):
             .join(", ")}. Fix the blockers above, or drop --skip-not-ready to run it anyway.`
     );
   }
-  const worktreeDir = path.join(
-    os.tmpdir(),
-    `specgate-harness-${req.requirement}-${crypto.randomBytes(4).toString("hex")}`
-  );
 
   // A full disk mid-copy ended a night's chain with ENOSPC (REQ-184): stop
   // before starting, with the reason, instead.
@@ -311,110 +304,183 @@ export function processOneRequirement(req: HarnessRequirement, ctx: RunContext):
   if (lowDisk) {
     return unattempted(req.requirement, req.category, "fail", branch, `Not started: ${lowDisk}`);
   }
+  return null;
+}
 
-  // Three ways to meet an existing branch, and until C3 there were only two:
-  // skip it, or delete it with --force. After an interruption — a crash, a
-  // Ctrl-C, a spend limit — neither is what anyone wants.
-  let resuming = false;
+/**
+ * The requirement's branch, when one is already there: three ways to meet it,
+ * and until C3 there were only two — skip it, or delete it with --force. After
+ * an interruption — a crash, a Ctrl-C, a spend limit — neither is what anyone
+ * wants. Says whether this run resumes it, or why the requirement is not run.
+ */
+function claimBranch(
+  req: HarnessRequirement,
+  ctx: RunContext,
+  branch: string
+): { resuming: boolean } | { refused: RequirementResult } {
+  const { projectDir, baseRef, force } = ctx;
   const exists = branchExists(projectDir, branch);
   // A branch already merged into the base holds nothing to lose (REQ-185).
   const merged = exists && branchMergedInto(projectDir, branch, baseRef);
   const action = existingBranchAction({ exists, merged, resume: Boolean(ctx.resume), force });
-  if (exists) {
-    if (action === "resume") {
-      resuming = true;
-    } else if (action === "skip") {
-      return unattempted(
+  if (!exists) {
+    // Nothing to resume is not an error: --resume over a whole plan should run
+    // the requirements that never started, not refuse the lot.
+    if (ctx.resume) info(`${req.requirement}: nothing to resume, starting fresh`);
+    return { resuming: false };
+  }
+  if (action === "resume") return { resuming: true };
+  if (action === "skip") {
+    return {
+      refused: unattempted(
         req.requirement,
         req.category,
         "skipped",
         branch,
         `Branch ${branch} already exists. Re-run with --resume to continue it, ` +
           `or --force to recreate it from scratch.`
-      );
-    } else {
-      if (merged && !force) info(`${req.requirement}: ${branch} is already merged — recreating it`);
-      const deleted = git(projectDir, ["branch", "-D", branch]);
-      // REQ-579: said here, rather than as a confusing failure to create it below.
-      if (deleted.status !== 0) {
-        return unattempted(
-          req.requirement,
-          req.category,
-          "fail",
-          branch,
-          `could not delete ${branch} to recreate it:\n${deleted.stderr || deleted.stdout}`
-        );
-      }
-    }
-  } else if (ctx.resume) {
-    // Nothing to resume is not an error: --resume over a whole plan should run
-    // the requirements that never started, not refuse the lot.
-    info(`${req.requirement}: nothing to resume, starting fresh`);
+      ),
+    };
   }
+  if (merged && !force) info(`${req.requirement}: ${branch} is already merged — recreating it`);
+  const deleted = git(projectDir, ["branch", "-D", branch]);
+  // REQ-579: said here, rather than as a confusing failure to create it below.
+  if (deleted.status !== 0) {
+    return {
+      refused: unattempted(
+        req.requirement,
+        req.category,
+        "fail",
+        branch,
+        `could not delete ${branch} to recreate it:\n${deleted.stderr || deleted.stdout}`
+      ),
+    };
+  }
+  return { resuming: false };
+}
 
-  warnIfBaseIsStale(projectDir, req.requirement, baseRef);
-  const startedAt = Date.now();
-
-  // A surviving worktree still holds the partial work; re-attaching to it is
-  // what makes this a resume rather than a restart.
+/**
+ * The worktree the requirement is built in. A surviving one still holds the
+ * partial work; re-attaching to it is what makes this a resume rather than a
+ * restart. Otherwise a new one is added, on a new branch or on the one resumed.
+ */
+function openWorktree(
+  req: HarnessRequirement,
+  ctx: RunContext,
+  branch: string,
+  resuming: boolean
+): { dir: string; survivor: boolean } | { refused: RequirementResult } {
+  const { projectDir, baseRef } = ctx;
   const survivor = resuming ? existingWorktreeFor(projectDir, branch) : null;
-  const dir = survivor || worktreeDir;
-
-  if (!survivor) {
-    const args = resuming
-      ? ["worktree", "add", dir, branch]
-      : ["worktree", "add", "-b", branch, dir, baseRef];
-    // Serialised across processes: `--concurrency` gives each requirement its
-    // own process, and two `git worktree add` calls in one repository race on
-    // the half-written `.git/worktrees/<name>/` entry. Only the creation is
-    // inside the lock — the agent and the gate stay parallel.
-    const add = withWorktreeLock(projectDir, () => git(projectDir, args));
-    if (add.status !== 0) {
-      return unattempted(
+  if (survivor) return { dir: survivor, survivor: true };
+  const dir = path.join(
+    os.tmpdir(),
+    `specgate-harness-${req.requirement}-${crypto.randomBytes(4).toString("hex")}`
+  );
+  const args = resuming
+    ? ["worktree", "add", dir, branch]
+    : ["worktree", "add", "-b", branch, dir, baseRef];
+  // Serialised across processes: `--concurrency` gives each requirement its
+  // own process, and two `git worktree add` calls in one repository race on
+  // the half-written `.git/worktrees/<name>/` entry. Only the creation is
+  // inside the lock — the agent and the gate stay parallel.
+  const add = withWorktreeLock(projectDir, () => git(projectDir, args));
+  if (add.status !== 0) {
+    return {
+      refused: unattempted(
         req.requirement,
         req.category,
         "fail",
         branch,
         `git worktree add failed:\n${add.stderr || add.stdout}`
-      );
-    }
+      ),
+    };
   }
+  return { dir, survivor: false };
+}
+
+/**
+ * A fresh worktree has no dependencies: run the setup command in it, as a
+ * stage the live view shows. Returns why the requirement stops, if it failed.
+ */
+function setUpWorktree(
+  req: HarnessRequirement,
+  ctx: RunContext,
+  branch: string,
+  dir: string
+): RequirementResult | null {
+  const setupCmd = String((ctx.settings && ctx.settings.setupCmd) || "").trim();
+  if (!setupCmd) return null;
+  const report = gateReporter(
+    eventsFileFor(ctx.projectDir || dir, req.requirement),
+    req.requirement,
+    undefined
+  );
+  report(`setup: ${maskCommand(setupCmd)}`, "start");
+  const setupStart = Date.now();
+  // REQ-575: an install that hangs ends at the run's deadline, with what it started.
+  const setup = runWithDeadline(setupCmd, {
+    cwd: dir,
+    timeoutMs: limitFor(ctx.settings, "setup", ctx.timeoutMs),
+    maxBuffer: SUBPROCESS_MAX_BUFFER,
+    // REQ-589: what the last worktree downloaded, this one reads from disk.
+    ...(ctx.settings.dependencyCache
+      ? {
+          env: cacheEnvironment(projectCache(ctx.projectDir), process.env),
+        }
+      : {}),
+  });
+  report(`setup: ${maskCommand(setupCmd)}`, setup.status === 0 ? "pass" : "fail", {
+    ms: Date.now() - setupStart,
+  });
+  if (setup.status === 0) return null;
+  return unattempted(
+    req.requirement,
+    req.category,
+    "fail",
+    branch,
+    `setup_cmd failed before the agent ran:\n${setup.stdout || ""}${setup.stderr || ""}`
+  );
+}
+
+/**
+ * One requirement, from its branch to its verdict: refused before starting,
+ * or its branch claimed, its worktree opened and set up, its attempts run and
+ * a branch that passed published — and the worktree removed, or kept for
+ * `--resume` when the run was interrupted.
+ */
+export function processOneRequirement(req: HarnessRequirement, ctx: RunContext): RequirementResult {
+  const { projectDir, baseRef, keepWorktrees } = ctx;
+  const branch = `harness/${req.requirement}`;
+
+  // D1: which profile this requirement matches, resolved once. The bounded
+  // context comes from the matrix, where `expand` derived it — see
+  // `boundedContextOf`.
+  const matchedProfile = selectProfile(settingsOf(ctx).profileRules || [], {
+    requirement: req.requirement,
+    boundedContext: contextOfRequirement(projectDir, req.requirement),
+    featureFile: featureFilePath(req),
+    category: req.category,
+  });
+  if (matchedProfile) info(`${req.requirement}: profile '${matchedProfile}' matched`);
+
+  const refused = refusedBeforeStarting(req, ctx, branch);
+  if (refused) return refused;
+
+  const claim = claimBranch(req, ctx, branch);
+  if ("refused" in claim) return claim.refused;
+  const { resuming } = claim;
+
+  warnIfBaseIsStale(projectDir, req.requirement, baseRef);
+  const startedAt = Date.now();
+
+  const worktree = openWorktree(req, ctx, branch, resuming);
+  if ("refused" in worktree) return worktree.refused;
+  const { dir, survivor } = worktree;
 
   try {
-    const setupCmd = String((ctx.settings && ctx.settings.setupCmd) || "").trim();
-    if (setupCmd && !survivor) {
-      const report = gateReporter(
-        eventsFileFor(ctx.projectDir || dir, req.requirement),
-        req.requirement,
-        undefined
-      );
-      report(`setup: ${maskCommand(setupCmd)}`, "start");
-      const setupStart = Date.now();
-      // REQ-575: an install that hangs ends at the run's deadline, with what it started.
-      const setup = runWithDeadline(setupCmd, {
-        cwd: dir,
-        timeoutMs: limitFor(ctx.settings, "setup", ctx.timeoutMs),
-        maxBuffer: SUBPROCESS_MAX_BUFFER,
-        // REQ-589: what the last worktree downloaded, this one reads from disk.
-        ...(ctx.settings.dependencyCache
-          ? {
-              env: cacheEnvironment(projectCache(ctx.projectDir), process.env),
-            }
-          : {}),
-      });
-      report(`setup: ${maskCommand(setupCmd)}`, setup.status === 0 ? "pass" : "fail", {
-        ms: Date.now() - setupStart,
-      });
-      if (setup.status !== 0) {
-        return unattempted(
-          req.requirement,
-          req.category,
-          "fail",
-          branch,
-          `setup_cmd failed before the agent ran:\n${setup.stdout || ""}${setup.stderr || ""}`
-        );
-      }
-    }
+    const setupFailed = survivor ? null : setUpWorktree(req, ctx, branch, dir);
+    if (setupFailed) return setupFailed;
     const resumeAt = resuming ? resumeFrom(dir, req.requirement) : null;
     if (resumeAt && resumeAt.attempt > 1) {
       info(`${req.requirement}: resuming at attempt ${resumeAt.attempt}`);
@@ -438,10 +504,9 @@ export function processOneRequirement(req: HarnessRequirement, ctx: RunContext):
     }
     return result;
   } finally {
-    // `dir`, not `worktreeDir`: a resumed run re-attached to the worktree that
-    // survived the interruption, and `worktreeDir` names a path that was never
-    // created. Removing the wrong one leaves the real worktree registered and
-    // the next --resume unable to attach.
+    // `dir` is the worktree in use: on a resume, the one that survived the
+    // interruption. Removing any other path leaves the real worktree
+    // registered and the next --resume unable to attach.
     // REQ-573: an interrupted run keeps the worktree, for --resume.
     if (wasInterrupted()) {
       info(`${req.requirement}: interrupted — worktree kept at ${dir} for --resume`);

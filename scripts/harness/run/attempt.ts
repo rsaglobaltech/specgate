@@ -247,23 +247,23 @@ function runSessions(
   return PROCEED;
 }
 
-/** One agent invocation: its prompt, its process, what it used, how it ended. */
-function runSession(
+/**
+ * What one step's agent is told. Built per step, not per attempt: the reviewer
+ * runs first and the implementing step that follows must see what it said.
+ * Building once up front meant findings only ever reached the *next* attempt,
+ * which is not what a reviewer is for.
+ */
+function sessionPrompt(
   step: AttemptStep,
   env: AttemptEnv,
   state: RequirementState,
-  tally: AttemptTally
-): Decision {
-  const { req, ctx, eventsFile } = env;
-  const { worktreeDir, settings, timeoutMs, hint } = ctx;
-  const { attempt, event } = tally;
-  // Built per step, not per attempt: the reviewer runs first and the
-  // implementing step that follows must see what it said. Building once
-  // up front meant findings only ever reached the *next* attempt, which
-  // is not what a reviewer is for.
-  let stepPackages: string[] = [];
+  attempt: number
+): { prompt: string; packages: string[] } {
+  const { req, ctx } = env;
+  const { worktreeDir, settings, hint } = ctx;
+  let packages: string[] = [];
   const prompt = judged(worktreeDir, (dir) => {
-    stepPackages = packagesFor(dir, req.requirement).map((p) => p.id);
+    packages = packagesFor(dir, req.requirement).map((p) => p.id);
     return buildPrompt(req, dir, {
       promptPrefix: settings.promptPrefix,
       hint: step.role
@@ -282,17 +282,216 @@ function runSession(
         settings.e2eDir && onScreen(worktreeDir, req.requirement) ? settings.e2eDir : undefined,
     });
   });
-  if (stepPackages.length > 0) {
-    notePackagesUsed(req.requirement, stepPackages);
+  if (packages.length > 0) notePackagesUsed(req.requirement, packages);
+  return { prompt, packages };
+}
+
+/** How one agent process ended, and what it used. */
+interface AgentRun {
+  /** The role it ran as: the lane, the profile, or `agent` / `reviewer`. */
+  role: string;
+  status: number | null;
+  output: string;
+  timedOut: boolean;
+  /** The tokens and cost its stream reported, when it said (REQ-509). */
+  used: StepUsage | null;
+  /** REQ-533: put back what it wrote outside its lane, and say so. */
+  keepToLane: () => void;
+}
+
+/**
+ * Run the step's agent on its prompt file, in the worktree: the command of its
+ * profile, the environment that says which requirement and attempt this is,
+ * the deadline, and — with lanes — what it wrote outside its own, put back.
+ */
+function runAgent(
+  step: AttemptStep,
+  env: AttemptEnv,
+  tally: AttemptTally,
+  promptFile: string
+): AgentRun {
+  const { req, ctx, eventsFile } = env;
+  const { worktreeDir, settings, timeoutMs } = ctx;
+  const { attempt, event } = tally;
+  // D1: a profile chosen by matching this requirement, when one matches.
+  // The role ladder still wins — `attempt_profiles` names a profile for
+  // *this step*, and a step that says which role it is has already
+  // answered the question.
+  const profile = step.profile || ctx.matchedProfile || null;
+  const agentCommand = profile ? settings.profileAgents[profile] || settings.agent : settings.agent;
+  // REQ-588: in the project's container when \`sandbox:\` names one; REQ-589: its caches.
+  const cacheDir = settings.dependencyCache ? projectCache(ctx.projectDir || worktreeDir) : "";
+  const cacheEnv = cacheDir ? cacheEnvironment(cacheDir, process.env) : {};
+  const command = agentLine(agentCommand, promptFile, worktreeDir, settings, {
+    env: [
+      "SPECGATE_REQ",
+      "SPECGATE_ATTEMPT",
+      ...(step.role ? ["SPECGATE_LANE"] : []),
+      EVENTS_FILE_VAR,
+      EVENTS_REQ_VAR,
+      EVENTS_ATTEMPT_VAR,
+      ...Object.keys(cacheEnv),
+    ],
+    mounts: [path.dirname(eventsFile), ...(cacheDir ? [cacheDir] : [])],
+  });
+  if (profile) {
+    info(`${req.requirement}: ${step.advisory ? "reviewing" : "running"} as '${profile}'`);
   }
+  const agentStart = Date.now();
+  // REQ-509: the default agent's profile, when it came from one, so its
+  // tokens are priced and its hint applies.
+  const role =
+    step.role ?? profile ?? (step.advisory ? "reviewer" : settings.agentProfile || "agent");
+  const eventsBefore = eventsLineCount(eventsFile);
+  // REQ-533: what is outside this role's lane, to put back after it.
+  const lane = step.role ? laneGuard(worktreeDir, step.role) : null;
+  streamEvent({ type: "agent-start", role }, req.requirement, attempt);
+  const agent = runWithDeadline(command, {
+    cwd: worktreeDir,
+    timeoutMs: limitFor(settings, "agent", timeoutMs),
+    ...(settings.agentEnv ? { envAllow: settings.agentEnv } : {}),
+    maxBuffer: SUBPROCESS_MAX_BUFFER,
+    // A question it asks is written into the project at once (REQ-494),
+    // and its output streamed while this process waits (REQ-496).
+    projectDir: ctx.projectDir || undefined,
+    streamFd: streamFdOf(),
+    // Which requirement and attempt this is, for agents and the wrappers
+    // around them (ADR-0036).
+    env: {
+      ...cacheEnv,
+      SPECGATE_REQ: req.requirement,
+      SPECGATE_ATTEMPT: String(attempt),
+      ...(step.role ? { SPECGATE_LANE: step.role } : {}),
+      [EVENTS_FILE_VAR]: eventsFile,
+      [EVENTS_REQ_VAR]: req.requirement,
+      [EVENTS_ATTEMPT_VAR]: String(attempt),
+    },
+  });
+  // Node reports a timeout as an errno-carrying Error; the base `Error`
+  // type the spawnSync signature declares does not have `code`.
+  const agentError = agent.error as NodeJS.ErrnoException | undefined;
+  const timedOut = agentError?.code === "ETIMEDOUT";
+  tally.agentMs += Date.now() - agentStart;
+  streamEvent(
+    { type: "agent-end", role, exit: agent.status, timedOut, ms: Date.now() - agentStart },
+    req.requirement,
+    attempt
+  );
+  tally.profilesUsed.push(role);
+  const used = stepUsage(eventsLinesSince(eventsFile, eventsBefore), attempt, role);
+  if (used) tally.usageUsed.push(used);
+  return {
+    role,
+    status: agent.status,
+    output: `${agent.stdout || ""}${agent.stderr || ""}`,
+    timedOut,
+    used,
+    keepToLane: () => {
+      for (const rel of lane ? lane() : []) {
+        warn(`${req.requirement}: lane_crossed — ${step.role} wrote ${rel}; reverted`);
+        event({ type: "lane", role: step.role, path: rel, result: "reverted" });
+      }
+    },
+  };
+}
+
+/**
+ * Count what the session used against the requirement's ceiling and the
+ * run's. Stops the requirement when the project requires a known cost and the
+ * session reported none (REQ-585).
+ */
+function countSession(env: AttemptEnv, state: RequirementState, run: AgentRun): Decision {
+  const { req, ctx } = env;
+  const { used, role } = run;
+  state.budget.add(used);
+  if (used && typeof used.cost === "number") addRunSpentUsd(used.cost);
+  // A session that says nothing of its cost is not free when the project says so.
+  if (ctx.settings.requireKnownCost && !costKnown(used)) {
+    const failure =
+      `cost_unknown — the ${role} session of ${req.requirement} reported no cost, ` +
+      "and require_known_cost is set: it is not counted as free.";
+    warn(`${req.requirement}: ${failure}`);
+    return stop("budget", failure);
+  }
+  if (state.budget.limitsCost && !costKnown(used) && !state.costUnknownSaid) {
+    state.costUnknownSaid = true;
+    warn(
+      `${req.requirement}: cost_unknown — the agent reported no cost; ` +
+        "max_cost_usd counts its sessions as free"
+    );
+  }
+  return PROCEED;
+}
+
+/** What the way the agent ended means for the attempt. */
+function sessionEnding(
+  step: AttemptStep,
+  env: AttemptEnv,
+  state: RequirementState,
+  attempt: number,
+  run: AgentRun
+): Decision {
+  const { req, ctx } = env;
+  const { worktreeDir, settings } = ctx;
+  if (run.timedOut) {
+    if (step.advisory) {
+      warn(`${req.requirement}: reviewer timed out — continuing without findings`);
+      return PROCEED;
+    }
+    warn(`${req.requirement}: agent timed out`);
+    return retry("agent-timeout", `Agent timed out after ${ctx.timeoutSeconds}s.`);
+  }
+
+  if (step.advisory) {
+    // The reviewer advises and nothing more. Its findings become input to
+    // the next prompt; anything it wrote is discarded, so it cannot reach
+    // the gate. That is the line between this and a committee — the gate
+    // stays the only judge, and a reviewer can never approve.
+    state.reviewFindings = run.output.trim();
+    discardWorktreeChanges(worktreeDir);
+    if (run.status !== 0) {
+      warn(`${req.requirement}: reviewer exited ${run.status} — findings may be partial`);
+    }
+    return PROCEED;
+  }
+
+  if (run.status === 0) return PROCEED;
+  const failure = `Agent exited ${run.status}.\n${run.output}`;
+  warn(`${req.requirement}: agent exited ${run.status}`);
+  // Out of quota: another attempt seconds later meets the same wall (#50).
+  const unavailable = agentUnavailable(run.output);
+  if (!unavailable) return retry("agent-error", failure);
+  // REQ-586: another profile of the ladder may be available; one that is
+  // the same profile again would meet the same wall.
+  const fallback = fallbackAttempt(attempt, settings.maxAttempts, settings.attemptProfiles);
+  warn(`${req.requirement}: the agent cannot run now — ${unavailable}`);
+  if (fallback) {
+    warn(`  falling back to profile '${fallback.profile}' (attempt ${fallback.attempt})`);
+    return retry("agent-unavailable", failure, { skipTo: fallback.attempt });
+  }
+  warn(`  not retrying; run it again once the agent is available`);
+  return stop("agent-unavailable", failure);
+}
+
+/** One agent invocation: its prompt, its process, what it used, how it ended. */
+function runSession(
+  step: AttemptStep,
+  env: AttemptEnv,
+  state: RequirementState,
+  tally: AttemptTally
+): Decision {
+  const { req, ctx } = env;
+  const { worktreeDir } = ctx;
+  const { attempt, event } = tally;
+  const { prompt, packages } = sessionPrompt(step, env, state, attempt);
   const promptFile = path.join(
     os.tmpdir(),
     `specgate-harness-prompt-${req.requirement}-${crypto.randomBytes(4).toString("hex")}.md`
   );
-  // REQ-579: readable by this user only — it may quote the gate's output.
+  // REQ-579: readable by this user only — it may quote the gate's output —
+  // and removed even when the session throws.
   fs.writeFileSync(promptFile, prompt, { encoding: "utf8", mode: 0o600 });
-  /** REQ-579: the prompt file is removed even when the session throws. */
-  let promptOpen = true;
+  let run: AgentRun;
   try {
     archivePrompt(worktreeDir, req.requirement, attempt, step, prompt);
     // The live view shows what the agent was told and how big it was (REQ-182).
@@ -303,148 +502,16 @@ function runSession(
       chars: prompt.length,
       lines: prompt.split("\n").length,
       // REQ-317: which role packages it carried.
-      ...(stepPackages.length > 0 ? { packages: stepPackages } : {}),
+      ...(packages.length > 0 ? { packages } : {}),
     });
-
-    // D1: a profile chosen by matching this requirement, when one matches.
-    // The role ladder still wins — `attempt_profiles` names a profile for
-    // *this step*, and a step that says which role it is has already
-    // answered the question.
-    const profile = step.profile || ctx.matchedProfile || null;
-    const agentCommand = profile
-      ? settings.profileAgents[profile] || settings.agent
-      : settings.agent;
-    // REQ-588: in the project's container when \`sandbox:\` names one; REQ-589: its caches.
-    const cacheDir = settings.dependencyCache ? projectCache(ctx.projectDir || worktreeDir) : "";
-    const cacheEnv = cacheDir ? cacheEnvironment(cacheDir, process.env) : {};
-    const command = agentLine(agentCommand, promptFile, worktreeDir, settings, {
-      env: [
-        "SPECGATE_REQ",
-        "SPECGATE_ATTEMPT",
-        ...(step.role ? ["SPECGATE_LANE"] : []),
-        EVENTS_FILE_VAR,
-        EVENTS_REQ_VAR,
-        EVENTS_ATTEMPT_VAR,
-        ...Object.keys(cacheEnv),
-      ],
-      mounts: [path.dirname(eventsFile), ...(cacheDir ? [cacheDir] : [])],
-    });
-    if (profile) {
-      info(`${req.requirement}: ${step.advisory ? "reviewing" : "running"} as '${profile}'`);
-    }
-    const agentStart = Date.now();
-    // REQ-509: the default agent's profile, when it came from one, so its
-    // tokens are priced and its hint applies.
-    const role =
-      step.role ?? profile ?? (step.advisory ? "reviewer" : settings.agentProfile || "agent");
-    const eventsBefore = eventsLineCount(eventsFile);
-    // REQ-533: what is outside this role's lane, to put back after it.
-    const lane = step.role ? laneGuard(worktreeDir, step.role) : null;
-    streamEvent({ type: "agent-start", role }, req.requirement, attempt);
-    const agent = runWithDeadline(command, {
-      cwd: worktreeDir,
-      timeoutMs: limitFor(settings, "agent", timeoutMs),
-      ...(settings.agentEnv ? { envAllow: settings.agentEnv } : {}),
-      maxBuffer: SUBPROCESS_MAX_BUFFER,
-      // A question it asks is written into the project at once (REQ-494),
-      // and its output streamed while this process waits (REQ-496).
-      projectDir: ctx.projectDir || undefined,
-      streamFd: streamFdOf(),
-      // Which requirement and attempt this is, for agents and the wrappers
-      // around them (ADR-0036).
-      env: {
-        ...cacheEnv,
-        SPECGATE_REQ: req.requirement,
-        SPECGATE_ATTEMPT: String(attempt),
-        ...(step.role ? { SPECGATE_LANE: step.role } : {}),
-        [EVENTS_FILE_VAR]: eventsFile,
-        [EVENTS_REQ_VAR]: req.requirement,
-        [EVENTS_ATTEMPT_VAR]: String(attempt),
-      },
-    });
-    // Node reports a timeout as an errno-carrying Error; the base `Error`
-    // type the spawnSync signature declares does not have `code`.
-    const agentError = agent.error as NodeJS.ErrnoException | undefined;
-    const timedOut = agentError?.code === "ETIMEDOUT";
-    tally.agentMs += Date.now() - agentStart;
-    streamEvent(
-      { type: "agent-end", role, exit: agent.status, timedOut, ms: Date.now() - agentStart },
-      req.requirement,
-      attempt
-    );
-    tally.profilesUsed.push(role);
-    const used = stepUsage(eventsLinesSince(eventsFile, eventsBefore), attempt, role);
-    if (used) tally.usageUsed.push(used);
-    state.budget.add(used);
-    if (used && typeof used.cost === "number") addRunSpentUsd(used.cost);
-    // REQ-585: a session that says nothing of its cost is not free when the project says so.
-    if (settings.requireKnownCost && !costKnown(used)) {
-      const failure =
-        `cost_unknown — the ${role} session of ${req.requirement} reported no cost, ` +
-        "and require_known_cost is set: it is not counted as free.";
-      warn(`${req.requirement}: ${failure}`);
-      return stop("budget", failure);
-    }
-    if (state.budget.limitsCost && !costKnown(used) && !state.costUnknownSaid) {
-      state.costUnknownSaid = true;
-      warn(
-        `${req.requirement}: cost_unknown — the agent reported no cost; ` +
-          "max_cost_usd counts its sessions as free"
-      );
-    }
-    if (lane) {
-      for (const rel of lane()) {
-        warn(`${req.requirement}: lane_crossed — ${step.role} wrote ${rel}; reverted`);
-        event({ type: "lane", role: step.role, path: rel, result: "reverted" });
-      }
-    }
-
-    removeTempFile(promptFile);
-    promptOpen = false;
-    if (timedOut) {
-      if (step.advisory) {
-        warn(`${req.requirement}: reviewer timed out — continuing without findings`);
-        return PROCEED;
-      }
-      warn(`${req.requirement}: agent timed out`);
-      return retry("agent-timeout", `Agent timed out after ${ctx.timeoutSeconds}s.`);
-    }
-
-    if (step.advisory) {
-      // The reviewer advises and nothing more. Its findings become input to
-      // the next prompt; anything it wrote is discarded, so it cannot reach
-      // the gate. That is the line between this and a committee — the gate
-      // stays the only judge, and a reviewer can never approve.
-      state.reviewFindings = `${agent.stdout || ""}${agent.stderr || ""}`.trim();
-      discardWorktreeChanges(worktreeDir);
-      if (agent.status !== 0) {
-        warn(`${req.requirement}: reviewer exited ${agent.status} — findings may be partial`);
-      }
-      return PROCEED;
-    }
-
-    if (agent.status !== 0) {
-      const output = `${agent.stdout || ""}${agent.stderr || ""}`;
-      const failure = `Agent exited ${agent.status}.\n${output}`;
-      warn(`${req.requirement}: agent exited ${agent.status}`);
-      // Out of quota: another attempt seconds later meets the same wall (#50).
-      const unavailable = agentUnavailable(output);
-      if (!unavailable) return retry("agent-error", failure);
-      // REQ-586: another profile of the ladder may be available; one that is
-      // the same profile again would meet the same wall.
-      const fallback = fallbackAttempt(attempt, settings.maxAttempts, settings.attemptProfiles);
-      warn(`${req.requirement}: the agent cannot run now — ${unavailable}`);
-      if (fallback) {
-        warn(`  falling back to profile '${fallback.profile}' (attempt ${fallback.attempt})`);
-        return retry("agent-unavailable", failure, { skipTo: fallback.attempt });
-      }
-      warn(`  not retrying; run it again once the agent is available`);
-      return stop("agent-unavailable", failure);
-    }
-    return PROCEED;
+    run = runAgent(step, env, tally, promptFile);
   } finally {
-    if (promptOpen) removeTempFile(promptFile);
+    removeTempFile(promptFile);
   }
+  const counted = countSession(env, state, run);
+  if (counted.kind !== "proceed") return counted;
+  run.keepToLane();
+  return sessionEnding(step, env, state, attempt, run);
 }
 
 /**
@@ -664,12 +731,73 @@ function closeAttempt(env: AttemptEnv, attempt: number): Decision {
 }
 
 /**
+ * REQ-591: a person looks at the failed attempt before the next one starts.
+ * Waits for `specgate harness continue`; false when it said not to retry.
+ */
+function goOnAfterPause(
+  env: AttemptEnv,
+  attempt: number,
+  last: AttemptRecord | undefined
+): boolean {
+  const { req, ctx, eventsFile } = env;
+  info(
+    `${req.requirement}: paused before attempt ${attempt} — ` +
+      "`specgate harness continue` starts it, `--stop` does not"
+  );
+  appendEvent(eventsFile, { type: "pause", next: attempt }, req.requirement, attempt - 1);
+  const go = waitAtPause(ctx.projectDir, {
+    requirement: req.requirement,
+    attempt: attempt - 1,
+    stage: last?.gateStage || last?.endedAt || "",
+  });
+  if (!go) warn(`${req.requirement}: not retried, as asked`);
+  return go;
+}
+
+/**
+ * The adversary runs **after** the commit, and the order is not cosmetic:
+ * before it, `git status` shows the implementer's uncommitted work, so
+ * discarding "what the probe wrote" would throw the implementation away and
+ * report a pass over an empty branch. That is the H19 family — a green
+ * verdict over work that is not there — and it was reintroduced here once.
+ *
+ * The probe never changes the verdict; it travels beside it.
+ */
+function probeAfterCommit(env: AttemptEnv, before: ProbeOutcome): ProbeOutcome {
+  const { req, ctx } = env;
+  const { worktreeDir, settings, timeoutMs } = ctx;
+  if (
+    !shouldProbe({
+      profile: settings.adversaryProfile,
+      gatePassed: true,
+      alreadyProbed: before.ran,
+    })
+  ) {
+    return before;
+  }
+  info(`${req.requirement}: probing with '${settings.adversaryProfile}'`);
+  const probe = runAdversarialProbe(worktreeDir, req, settings, timeoutMs, (instruction) =>
+    promptInFlight(req, worktreeDir, {
+      promptPrefix: settings.promptPrefix,
+      hint: instruction,
+      withPrecedents: settings.promptPrecedents === true,
+    })
+  );
+  if (probe.broke) {
+    const finding = probeFinding(req.requirement, probe);
+    warn(`${req.requirement}: ${finding.message} [${finding.code}]`);
+    warn(`  fix: ${finding.fix}`);
+  }
+  return probe;
+}
+
+/**
  * One requirement's attempts: each is its sessions, the checks on what they
  * left, the gate and the commit, in that order, and the first of them that
  * does not let the attempt proceed says whether there is another.
  */
 export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext): AttemptOutcome {
-  const { worktreeDir, settings, timeoutMs } = ctx;
+  const { worktreeDir, settings } = ctx;
   const state: RequirementState = {
     previousFailure: (ctx.resumeAt && ctx.resumeAt.previousFailure) || "",
     reviewFindings: "",
@@ -688,9 +816,6 @@ export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext)
    * knows what it spent in tokens. `specgate harness report` is built on this.
    */
   const attemptLog: AttemptRecord[] = [];
-  // Once per requirement, not once per attempt: probing an implementation that
-  // already failed tells you nothing, and probing every retry multiplies the
-  // cost of the one step in the loop that is pure insurance.
   let probe: ProbeOutcome = NO_PROBE;
 
   const firstAttempt = Math.max(1, (ctx.resumeAt && ctx.resumeAt.attempt) || 1);
@@ -707,20 +832,8 @@ export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext)
       stopRetrying = true;
       break;
     }
-    // REQ-591: a person looks at the failed attempt before the next one starts.
     if (ctx.pauseBetweenAttempts && attempt > firstAttempt && ctx.projectDir) {
-      info(
-        `${req.requirement}: paused before attempt ${attempt} — ` +
-          "`specgate harness continue` starts it, `--stop` does not"
-      );
-      appendEvent(eventsFile, { type: "pause", next: attempt }, req.requirement, attempt - 1);
-      const go = waitAtPause(ctx.projectDir, {
-        requirement: req.requirement,
-        attempt: attempt - 1,
-        stage: attemptLog.at(-1)?.gateStage || attemptLog.at(-1)?.endedAt || "",
-      });
-      if (!go) {
-        warn(`${req.requirement}: not retried, as asked`);
+      if (!goOnAfterPause(env, attempt, attemptLog.at(-1))) {
         stopRetrying = true;
         break;
       }
@@ -803,32 +916,10 @@ export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext)
       continue;
     }
 
-    // The adversary runs **after** the commit, and the order is not cosmetic:
-    // before it, `git status` shows the implementer's uncommitted work, so
-    // discarding "what the probe wrote" would throw the implementation away and
-    // report a pass over an empty branch. That is the H19 family — a green
-    // verdict over work that is not there — and it was reintroduced here once.
-    if (
-      shouldProbe({
-        profile: settings.adversaryProfile,
-        gatePassed: true,
-        alreadyProbed: probe.ran,
-      })
-    ) {
-      info(`${req.requirement}: probing with '${settings.adversaryProfile}'`);
-      probe = runAdversarialProbe(worktreeDir, req, settings, timeoutMs, (instruction) =>
-        promptInFlight(req, worktreeDir, {
-          promptPrefix: settings.promptPrefix,
-          hint: instruction,
-          withPrecedents: settings.promptPrecedents === true,
-        })
-      );
-      if (probe.broke) {
-        const finding = probeFinding(req.requirement, probe);
-        warn(`${req.requirement}: ${finding.message} [${finding.code}]`);
-        warn(`  fix: ${finding.fix}`);
-      }
-    }
+    // Once per requirement, not once per attempt: probing an implementation that
+    // already failed tells you nothing, and probing every retry multiplies the
+    // cost of the one step in the loop that is pure insurance.
+    probe = probeAfterCommit(env, probe);
 
     record("pass");
     return {
