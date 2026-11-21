@@ -30,6 +30,7 @@ export const RULES = [
   "ids",
   "quality",
   "use_cases",
+  "state_machines",
 ] as const;
 export type Rule = (typeof RULES)[number];
 
@@ -51,6 +52,8 @@ export const RULE_MEANING: Record<Rule, string> = {
   quality: "the quality checks of harness.config.yaml pass",
   use_cases:
     "every requirement names a use case of docs/specs/use-cases.md, and every use case is delivered (--strict-use-cases)",
+  state_machines:
+    "every state machine of docs/specs/state-machines/ starts somewhere, names states and requirements that exist, and takes no forbidden transition",
 };
 
 const STRICT: Record<Rule, Level> = {
@@ -63,6 +66,8 @@ const STRICT: Record<Rule, Level> = {
   quality: "error",
   // REQ-627: reported, not failed, until a project's catalog is written.
   use_cases: "warning",
+  // REQ-637: a project with no docs/specs/state-machines/ has nothing to check.
+  state_machines: "error",
 };
 
 /** The three starting points; `rules:` overrides any rule of the one chosen. */
@@ -82,6 +87,7 @@ export const PRESET_RULES: Record<Preset, Record<Rule, Level>> = {
     ids: "warning",
     quality: "warning",
     use_cases: "off",
+    state_machines: "warning",
   },
 };
 

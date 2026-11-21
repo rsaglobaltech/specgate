@@ -15,6 +15,13 @@ import {
 } from "../domain/UseCaseDelta";
 import { parseTraceabilityRows } from "../domain/TraceabilityFormat";
 import { checkUseCaseSpec, parseUseCaseSpec } from "../domain/UseCaseSpec";
+import {
+  applyStateMachineDelta,
+  checkStateMachine,
+  checkStateMachineDelta,
+  parseStateMachine,
+  parseStateMachineDelta,
+} from "../domain/StateMachine";
 
 /** How an archive is planned. */
 export interface ArchiveOptions {
@@ -355,6 +362,59 @@ export class ArchiveChangeUseCase {
         modified: ucDelta.modified.length,
         removed: ucDelta.removed.length,
       };
+    }
+
+    // REQ-638: the change's deltas to the entities' state machines, checked and applied.
+    const smDir = path.join(p.change(changeId), "state-machines");
+    const smFiles = (this.repo.listFiles?.(smDir) ?? []).filter((f) => f.endsWith(".md"));
+    if (smFiles.length > 0) {
+      const traceAfter =
+        plan.writes.find((w) => w.kind === "traceability")?.contents ??
+        this.repo.readFile(p.traceability) ??
+        "";
+      const requirements = new Set(
+        parseTraceabilityRows(traceAfter)
+          .rows.map((r) => r.requirement)
+          .filter((r): r is string => !!r)
+      );
+      for (const { req } of applied.upserts) requirements.add(req.id);
+      const machinesDir = path.join(p.root, "docs", "specs", "state-machines");
+      let written = 0;
+      let removed = 0;
+      for (const name of smFiles) {
+        const deltaFile = path.join(smDir, name);
+        const delta = parseStateMachineDelta(this.repo.readFile(deltaFile) ?? "");
+        const target = path.join(machinesDir, name);
+        const baseSource = this.repo.readFile(target);
+        const base = baseSource === null ? null : parseStateMachine(baseSource);
+        const report = (fs: ReturnType<typeof checkStateMachine>, file: string) => {
+          for (const f of fs) {
+            const d = (f.severity === "error" ? error : warning)(f.code, f.message, {
+              file: path.relative(p.root, file),
+              ...(f.line ? { line: f.line } : {}),
+              ...(f.target ? { target: f.target } : {}),
+              fix: f.fix,
+            });
+            (f.severity === "error" ? plan.diagnostics : plan.warnings).push(d);
+          }
+        };
+        const deltaFindings = checkStateMachineDelta(delta, base, requirements);
+        report(deltaFindings, deltaFile);
+        // A delta that cannot apply says why; the machine it would leave adds only echoes.
+        if (deltaFindings.some((f) => f.severity === "error")) continue;
+        const after = applyStateMachineDelta(base, delta);
+        if (after === null) {
+          if (baseSource !== null) {
+            plan.deletes.push({ file: target, reason: "state_machine_removed" });
+            removed++;
+          }
+          continue;
+        }
+        report(checkStateMachine(parseStateMachine(after), requirements), deltaFile);
+        plan.writes.push({ file: target, contents: after, kind: "state-machines" });
+        written++;
+      }
+      plan.totals.stateMachines = { written, removed };
     }
 
     const archivedAs = `${o.stamp || this.todayStamp(o.now)}-${changeId}`;

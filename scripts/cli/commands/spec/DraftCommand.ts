@@ -359,6 +359,24 @@ function useCaseSpecsIn(changeDir: string): Record<string, string> | undefined {
   return out;
 }
 
+/** A draft's `state-machines/<Entity>.md` deltas, each with the machine it changes (REQ-639). */
+function stateMachinesIn(projectDir: string, changeDir: string) {
+  const dir = path.join(changeDir, "state-machines");
+  if (!fs.existsSync(dir)) return undefined;
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".md"))
+    .sort()
+    .map((f) => {
+      const base = path.join(projectDir, "docs", "specs", "state-machines", f);
+      return {
+        file: path.relative(projectDir, path.join(dir, f)).split(path.sep).join("/"),
+        delta: fs.readFileSync(path.join(dir, f), "utf8"),
+        base: fs.existsSync(base) ? fs.readFileSync(base, "utf8") : null,
+      };
+    });
+}
+
 export function draftReport(
   projectDir: string,
   changeId: string,
@@ -410,6 +428,8 @@ export function draftReport(
       useCases: readIf(path.join(changeDir, "use-cases.md")),
       // REQ-632: the specification of each use case, by id.
       useCaseSpecs: useCaseSpecsIn(changeDir),
+      // REQ-639: the entities' state machines the draft writes.
+      stateMachines: stateMachinesIn(projectDir, changeDir),
       catalog: readIf(path.join(projectDir, "docs", "specs", "use-cases.md")),
     }),
   };

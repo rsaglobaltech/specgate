@@ -36,7 +36,7 @@ import * as ui from "../../../lib/ui";
 import { miniPet, petEnabled } from "../../../pet/pet";
 import { petFor } from "./PetCommand";
 import { projectJourneys } from "../../../lib/journeys";
-import { projectUseCases } from "../../../lib/domain-docs";
+import { projectStateMachines, projectUseCases } from "../../../lib/domain-docs";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { changesToMigrate, lanesToMigrate } from "../../../lib/migrate";
 import { readConfig } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
@@ -759,6 +759,8 @@ function statusDocument(
     })),
     // REQ-635: the use cases, their specifications and diagrams; null with no catalog.
     useCases: projectUseCases(projectDir),
+    // REQ-639: each entity's state machine, for the studio to draw.
+    stateMachines: projectStateMachines(projectDir),
     packs: lock && lock.packs ? lock.packs : [],
     requirements: summary.items.map((it) => ({
       id: it.requirement,

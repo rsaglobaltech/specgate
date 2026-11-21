@@ -14,6 +14,13 @@
 
 import { checkUseCaseDelta, parseUseCaseDelta, readCatalog } from "./UseCaseDelta";
 import { checkUseCaseSpec, parseUseCaseSpec } from "./UseCaseSpec";
+import {
+  applyStateMachineDelta,
+  checkStateMachine,
+  checkStateMachineDelta,
+  parseStateMachine,
+  parseStateMachineDelta,
+} from "./StateMachine";
 import type { Diagnostic } from "./Diagnostic";
 import { error, info, warning } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
@@ -69,6 +76,15 @@ export interface DraftFiles {
   readonly catalog?: string;
   /** The change's `use-cases/UC-NNN.md`, by id (REQ-632). */
   readonly useCaseSpecs?: Readonly<Record<string, string>>;
+  /**
+   * The change's `state-machines/<Entity>.md` deltas, each with the machine it
+   * changes (`docs/specs/state-machines/<Entity>.md`), null for a new one (REQ-639).
+   */
+  readonly stateMachines?: ReadonlyArray<{
+    readonly file: string;
+    readonly delta: string;
+    readonly base: string | null;
+  }>;
 }
 
 export interface DraftReport {
@@ -924,6 +940,32 @@ export function checkDraft(files: DraftFiles): DraftReport {
           }
         }
       }
+    }
+  }
+
+  // D16 — a state machine the draft writes applies, and holds once applied (REQ-639).
+  if (files.stateMachines && files.stateMachines.length > 0) {
+    const known = new Set<string>(reqs.map((r) => r.id));
+    for (const id of files.idsInUse?.keys() ?? []) if (/^REQ-/.test(id)) known.add(id);
+    for (const m of files.stateMachines) {
+      const delta = parseStateMachineDelta(m.delta);
+      const base = m.base === null ? null : parseStateMachine(m.base);
+      const push = (fs: ReturnType<typeof checkStateMachine>) => {
+        for (const f of fs)
+          status.push(
+            (f.severity === "error" ? error : warning)(`D16_${f.code}`, f.message, {
+              file: m.file,
+              ...(f.line ? { line: f.line } : {}),
+              ...(f.target ? { target: f.target } : {}),
+              fix: f.fix,
+            })
+          );
+      };
+      const deltaFindings = checkStateMachineDelta(delta, base, known);
+      push(deltaFindings);
+      if (deltaFindings.some((f) => f.severity === "error")) continue;
+      const after = applyStateMachineDelta(base, delta);
+      if (after !== null) push(checkStateMachine(parseStateMachine(after), known));
     }
   }
 

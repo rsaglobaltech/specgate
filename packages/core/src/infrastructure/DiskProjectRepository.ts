@@ -40,6 +40,16 @@ export class DiskProjectRepository implements IProjectRepository {
     return fs.existsSync(absolutePath) ? fs.readFileSync(absolutePath, "utf8") : null;
   }
 
+  public listFiles(absoluteDir: string): string[] {
+    return fs.existsSync(absoluteDir)
+      ? fs
+          .readdirSync(absoluteDir, { withFileTypes: true })
+          .filter((d) => d.isFile())
+          .map((d) => d.name)
+          .sort()
+      : [];
+  }
+
   public getPaths() {
     return paths(this.projectDir);
   }

@@ -49,6 +49,7 @@ import {
   glossaryFindings,
   ruleFindings,
   staleDiagramFindings,
+  stateMachineFindings,
 } from "../../../lib/domain-docs";
 import { citedSources } from "../../../../packages/core/src/domain/ReverseDraft";
 import type { ValidationFinding } from "../../../../packages/core/src/domain/ValidationReport";
@@ -104,6 +105,35 @@ type MonorepoEntry = string | { path?: string } | null | undefined;
 export class ValidateSpecsCommand extends BaseCommand {
   /** Set first thing in `execute()`; null only while the command is being built. */
   private io: AgentIo | null = null;
+  /**
+   * REQ-637: each entity's state machine, against the requirements the matrix
+   * holds. Its warnings — a state nothing reaches, one with no way out, a
+   * transition no requirement asks for — are reported; its errors fail.
+   */
+  private checkStateMachines(targetDir: string, traceContent: string) {
+    const requirements = new Set(
+      parseTraceabilityRows(traceContent)
+        .rows.map((r) => r.requirement)
+        .filter((r): r is string => !!r)
+    );
+    const findings = stateMachineFindings(targetDir, requirements);
+    this.notes.push(...findings.filter((f) => f.severity === "warning"));
+    const errors = findings.filter((f) => f.severity === "error");
+    if (errors.length === 0) return;
+    if (this.reportOnly("state_machines", errors)) return;
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, [...this.notes, ...errors]);
+      return;
+    }
+    this.logError(`State machines that do not hold: ${errors.length}`);
+    for (const f of errors) process.stderr.write(`  ${formatDiagnostic(f)}\n`);
+    this.logFix([
+      "Correct the machine in a change: specgate propose <id>, then its",
+      "state-machines/<Entity>.md delta (ADDED/MODIFIED/REMOVED); archive applies it.",
+    ]);
+    process.exit(1);
+  }
+
   /**
    * Said with the verdict, pass or fail: what the baseline let through and
    * what it holds that is gone (REQ-531), and cited evidence that is gone (REQ-530).
@@ -1285,6 +1315,8 @@ export class ValidateSpecsCommand extends BaseCommand {
     const strictLinks = asked("links", "--strict-links");
     const strictCoverage = asked("coverage", "--strict-coverage");
     const strictUseCases = asked("use_cases", "--strict-use-cases");
+    // REQ-637: without a policy, `validate` checks the machines a project has.
+    const strictStateMachines = !policy || asked("state_machines", "--strict-state-machines");
     if (policy && notEnforcedYet(policy)) {
       this.policyNote = `${GATE_POLICY_FILE} enforces errors from ${policy.enforceFrom}`;
     }
@@ -1604,6 +1636,9 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
     if (strictUseCases) {
       this.checkUseCases(targetDir, traceContent);
+    }
+    if (strictStateMachines) {
+      this.checkStateMachines(targetDir, traceContent);
     }
     // After the links and coverage: a missing test is the bigger gap, and its
     // fix line is the one to read first.

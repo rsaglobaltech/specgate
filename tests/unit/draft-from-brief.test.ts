@@ -874,6 +874,39 @@ test("REQ-632 SCN-632a: DRAFTING.md asks for each use case's specification, its 
   assert.match(guide, /### A1 — <what goes otherwise> \(at step 2\) \(SCN-NNN\)/);
 });
 
+test("REQ-639 SCN-639c: DRAFTING.md asks for an entity's state machine as a delta, each transition naming its requirement", (t: TestContext) => {
+  const { dir, cli } = project(t);
+  assert.equal(cli("draft", "bookings").status, 0);
+  const guide = fs.readFileSync(path.join(change(dir), "DRAFTING.md"), "utf8");
+  assert.match(guide, /## 1d\. An entity's states — `state-machines\/<Entity>\.md`/);
+  assert.match(guide, /## ADDED Transitions/);
+  assert.match(guide, /\| From \| To \| Trigger \| Requirement \|/);
+  assert.match(guide, /## ADDED Forbidden/);
+});
+
+test("REQ-639 SCN-639d: a state machine the draft writes keeps it from ready while it names a state or a requirement that is not there", (t: TestContext) => {
+  const { dir, cli } = project(t);
+  cli("draft", "bookings");
+  fs.writeFileSync(path.join(change(dir), "specs", "bookings", "spec.md"), DRAFT());
+  writeUseCases(dir);
+  const file = path.join(change(dir), "state-machines", "Booking.md");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const machine = (to: string, req: string) =>
+    `# Delta — Booking\n\n## ADDED States\n\n- Requested (initial)\n- Confirmed (final)\n\n## ADDED Transitions\n\n| From | To | Trigger | Requirement |\n|---|---|---|---|\n| Requested | ${to} | confirm | ${req} |\n`;
+  fs.writeFileSync(file, machine("Confirmd", "REQ-404"));
+  const bad = JSON.parse(cli("draft", "bookings", "--json").stdout);
+  const codes = (bad.status || []).map((d: { code: string }) => d.code);
+  assert.ok(codes.includes("D16_sm_unknown_requirement"), JSON.stringify(bad.status));
+  fs.writeFileSync(file, machine("Confirmd", "REQ-002"));
+  const typo = JSON.parse(cli("draft", "bookings", "--json").stdout);
+  assert.ok(
+    (typo.status || []).some((d: { code: string }) => d.code === "D16_sm_unknown_state"),
+    JSON.stringify(typo.status)
+  );
+  fs.writeFileSync(file, machine("Confirmed", "REQ-002"));
+  assert.match(cli("draft", "bookings").stdout, /Ready to review/);
+});
+
 test("REQ-632 SCN-632b: a use case with no specification, or a scenario no flow names, keeps the draft from ready", (t: TestContext) => {
   const { dir, cli } = project(t);
   cli("draft", "bookings");

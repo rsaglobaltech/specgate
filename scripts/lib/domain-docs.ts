@@ -6,6 +6,12 @@
  * files they need and writes the two generated ones.
  */
 
+import {
+  checkStateMachine,
+  parseStateMachine,
+  renderStateMachinePuml,
+  type StateMachine,
+} from "../../packages/core/src/domain/StateMachine";
 import { readCatalog } from "../../packages/core/src/domain/UseCaseDelta";
 import { parseUseCaseSpec } from "../../packages/core/src/domain/UseCaseSpec";
 import {
@@ -358,6 +364,61 @@ export function generatedUseCasesPuml(dir: string): string | null {
   return renderUseCasesPuml(cases, specs);
 }
 
+export const STATE_MACHINES_DIR = "docs/specs/state-machines";
+
+/** Each entity's state machine, `docs/specs/state-machines/<Entity>.md` (REQ-637). */
+function stateMachineSources(dir: string): Array<{ file: string; machine: StateMachine }> {
+  const at = path.join(dir, STATE_MACHINES_DIR);
+  if (!fs.existsSync(at)) return [];
+  return fs
+    .readdirSync(at)
+    .filter((f) => f.endsWith(".md"))
+    .sort()
+    .map((f) => ({
+      file: `${STATE_MACHINES_DIR}/${f}`,
+      machine: parseStateMachine(fs.readFileSync(path.join(at, f), "utf8")),
+    }));
+}
+
+/** Each machine's generated PlantUML, beside it (REQ-639). */
+function generatedStateMachinePumls(dir: string): Array<[string, string]> {
+  return stateMachineSources(dir).map(({ file, machine }) => [
+    file.replace(/\.md$/, ".puml"),
+    renderStateMachinePuml(machine),
+  ]);
+}
+
+/**
+ * REQ-637: what is wrong with the project's state machines, against the
+ * requirements the project has; errors and warnings, each at its file.
+ */
+export function stateMachineFindings(dir: string, requirements: ReadonlySet<string>): Diagnostic[] {
+  return stateMachineSources(dir).flatMap(({ file, machine }) =>
+    checkStateMachine(machine, requirements).map((f) =>
+      (f.severity === "error" ? error : warning)(f.code, f.message, {
+        file,
+        ...(f.line ? { line: f.line } : {}),
+        ...(f.target ? { target: f.target } : {}),
+        fix: f.fix,
+      })
+    )
+  );
+}
+
+/** The state machines for `status --json` (REQ-639); null when the project has none. */
+export function projectStateMachines(dir: string) {
+  const sources = stateMachineSources(dir);
+  if (sources.length === 0) return null;
+  return sources.map(({ file, machine }) => ({
+    name: machine.name,
+    file,
+    puml: file.replace(/\.md$/, ".puml"),
+    states: machine.states,
+    transitions: machine.transitions,
+    forbidden: machine.forbidden,
+  }));
+}
+
 /** `model_stale` / `actors_stale` for a committed copy that differs from its sources. */
 export function staleDiagramFindings(dir: string): Diagnostic[] {
   const out: Diagnostic[] = [];
@@ -376,6 +437,8 @@ export function staleDiagramFindings(dir: string): Diagnostic[] {
   check(ACTORS_FILE, generatedActors(dir), "actors_stale");
   check(USE_CASE_DIAGRAMS_FILE, generatedUseCaseDiagrams(dir), "use_case_diagrams_stale");
   check(USE_CASES_PUML_FILE, generatedUseCasesPuml(dir), "use_case_diagrams_stale");
+  for (const [file, puml] of generatedStateMachinePumls(dir))
+    check(file, puml, "state_machine_diagram_stale");
   return out;
 }
 
@@ -387,7 +450,8 @@ export function refreshDomainDiagrams(dir: string): string[] {
     [ACTORS_FILE, generatedActors(dir)],
     [USE_CASE_DIAGRAMS_FILE, generatedUseCaseDiagrams(dir)],
     [USE_CASES_PUML_FILE, generatedUseCasesPuml(dir)],
-  ] as const) {
+    ...generatedStateMachinePumls(dir),
+  ] as Array<readonly [string, string | null]>) {
     if (next === null) continue;
     if (read(dir, file) === next) continue;
     fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
