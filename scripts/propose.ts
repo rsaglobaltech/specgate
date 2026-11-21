@@ -2,6 +2,7 @@
 import { CliCommand } from "./cli/commands/change/ChangeCommand";
 import { DraftCommand } from "./cli/commands/spec/DraftCommand";
 import { TicketCommand } from "./cli/commands/change/TicketCommand";
+import { proposeUseCases } from "./cli/commands/spec/UseCasesCommand";
 
 /**
  * `specgate propose` — the first of the daily verbs (ADR-0035). An idea opens
@@ -10,6 +11,11 @@ import { TicketCommand } from "./cli/commands/change/TicketCommand";
  * source text instead (ADR-0039).
  */
 export function propose(argv: string[]): void {
+  // REQ-636: the use cases of requirements delivered before the catalog was kept.
+  if (argv.includes("--use-cases")) {
+    proposeUseCases(argv.filter((a) => a !== "--use-cases"));
+    return;
+  }
   if (argv.includes("--from-ticket")) {
     void new TicketCommand(argv).execute();
     return;

@@ -325,7 +325,13 @@ export function useCaseCoverage(
     const uc = UC_ID.test(cell) ? cell : "";
     if (!reqs.has(r.requirement) || (uc && uc !== "-")) reqs.set(r.requirement, uc);
   }
-  for (const [req, uc] of reqs) {
+  // A requirement a use case of the catalog lists is delivered by it (REQ-636).
+  const listedBy = new Map(
+    real.flatMap((c) => c.requirements.map((q) => [q, c.id] as [string, string]))
+  );
+  for (const [req, named] of reqs) {
+    const uc = named || listedBy.get(req) || "";
+    if (uc && !named) reqs.set(req, uc);
     if (!uc || uc === "-") {
       out.push({
         code: "use_case_missing",

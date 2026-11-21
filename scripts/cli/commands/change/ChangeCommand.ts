@@ -149,6 +149,8 @@ function verbUsage(sub: string) {
         `                     ${c.dim}check the brief · write one to fill in · have your agent propose its fields or cards${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-brief${c.reset} --form [<form.json> | -] [--brief <file>]\n` +
         `                     ${c.dim}the brief as a form, each field with its line · that form written back, every other byte kept${c.reset}\n` +
+        `    ${c.cyan}specgate propose --use-cases${c.reset} [--agent <cmd>]\n` +
+        `                     ${c.dim}the use cases of requirements delivered before the project kept them, as a change${c.reset}\n` +
         `    ${c.cyan}specgate propose --from-ticket${c.reset} <KEY | issue.json> [--check] [--capability <name>]\n` +
         `                     [--agent <cmd>] [--no-branch] [--no-push]\n` +
         `                     ${c.dim}a Jira ticket as the source text: its Definition of Ready, then its change (docs/from-a-ticket.md)${c.reset}\n\n` +

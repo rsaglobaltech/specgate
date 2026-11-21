@@ -69,6 +69,12 @@ export interface Blocker {
 const names = (message: string, id: string) => namedBy(id).test(message);
 
 /** What stops a change from being approved: checklist errors and open questions, each with its action. */
+/** `skip_specs: true` in the change's change.yaml. */
+function skipsSpecs(projectDir: string, id: string): boolean {
+  const yaml = read(path.join(changeDir(projectDir, id), "change.yaml")) || "";
+  return /^skip_specs:\s*true\s*$/m.test(yaml);
+}
+
 export function approvalBlockers(projectDir: string, id: string): Blocker[] {
   const out: Blocker[] = [];
   const questionsMd = read(path.join(changeDir(projectDir, id), "questions.md"));
@@ -83,8 +89,11 @@ export function approvalBlockers(projectDir: string, id: string): Blocker[] {
     return req ? { kind: "open", requirement: req } : undefined;
   };
   const r = draftReport(projectDir, id);
+  // A change that alters no behaviour (`skip_specs`), as the use cases of REQ-636: no delta to check.
+  const noSpecs =
+    "failure" in r && r.failure.code === "draft_no_specs" && skipsSpecs(projectDir, id);
   if ("failure" in r) {
-    out.push({ code: r.failure.code, message: r.failure.message });
+    if (!noSpecs) out.push({ code: r.failure.code, message: r.failure.message });
   } else {
     for (const d of r.report.status) {
       if (d.severity !== "error") continue;

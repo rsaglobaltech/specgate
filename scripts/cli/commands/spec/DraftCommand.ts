@@ -296,7 +296,7 @@ function projectSpecs(projectDir: string): Array<{ source: string }> {
 }
 
 /** REQ and SCN ids the project already uses, each with the requirement that owns it (#55). */
-function projectIds(projectDir: string): Map<string, string> {
+export function projectIds(projectDir: string): Map<string, string> {
   const owners = new Map<string, string>();
   try {
     const sources = readDerivationSources(projectDir);

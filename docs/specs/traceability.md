@@ -522,6 +522,7 @@
 | REQ-633 | SCN-633a | `features/change-lifecycle/REQ-633.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDelta.ts` | packages/core/test/unit/use-case-coverage.test.ts | Approved |
 | REQ-634 | SCN-634a | `features/change-lifecycle/REQ-634.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDiagrams.ts` | packages/core/test/unit/use-case-diagrams.test.ts, tests/unit/use-case-diagrams-files.test.ts | Approved |
 | REQ-635 | SCN-635a | `features/change-lifecycle/REQ-635.feature` | - | - | - | - | `scripts/lib/domain-docs.ts` | tests/unit/use-case-diagrams-files.test.ts | Approved |
+| REQ-636 | SCN-636a | `features/change-lifecycle/REQ-636.feature` | - | - | - | - | `scripts/cli/commands/spec/UseCasesCommand.ts` | tests/unit/propose-use-cases.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

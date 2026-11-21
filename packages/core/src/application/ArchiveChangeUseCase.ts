@@ -318,7 +318,11 @@ export class ArchiveChangeUseCase {
         // carry every scenario they have.
         const scenarios = new Set<string>(
           matrixRows
-            .filter((r) => r.useCase === u.id && /^SCN-/.test(r.scenarioId || ""))
+            .filter(
+              (r) =>
+                (r.useCase === u.id || u.requirements.includes(r.requirement ?? "")) &&
+                /^SCN-/.test(r.scenarioId || "")
+            )
             .map((r) => r.scenarioId as string)
         );
         for (const { req } of applied.upserts) {

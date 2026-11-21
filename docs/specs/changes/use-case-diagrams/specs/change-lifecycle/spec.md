@@ -39,3 +39,21 @@ The system SHALL answer, in `status --json`, `useCases`: the use-case diagram in
 - GIVEN a project with UC-004 in the catalog and its specification naming SCN-012
 - WHEN a client runs `specgate status --json`
 - THEN `useCases.diagram` is a Mermaid flowchart, and UC-004 carries docs/specs/use-cases/UC-004.md, its main flow naming SCN-012 and its activity; with no catalog, `useCases` is null
+
+### Requirement: REQ-636 — `propose --use-cases` proposes the use cases of requirements delivered before the catalog
+
+<!-- specgate:trace status=Implemented feature=features/change-lifecycle/REQ-636.feature actor=Developer kind=functional -->
+
+The system SHALL, on `specgate propose --use-cases` in a project with `docs/specs/use-cases.md`, open the change `use-cases-catalog` — `skip_specs`, a reserved `uc_range`, an empty `use-cases.md` and `USE-CASES.md` listing every requirement no use case of the catalog names or lists, with its scenarios, and how to write the use cases and their specifications — and, run again, say what is still missing: the faults REQ-625 and REQ-631 name and each requirement left out, or that it is ready to review; with `--agent <cmd>`, the project's agent SHALL write it first, confined to the change's folder. Approved and archived, it SHALL bring its use cases and specifications into the catalog; a use case of the catalog listing a requirement SHALL count as that requirement's use case for the gate (REQ-627). A project with every requirement in a use case SHALL be told so, and one with no catalog that it does not model use cases.
+
+#### Scenario: SCN-636a — The change opened, and written by the agent
+
+- GIVEN a project whose catalog holds only the template, and REQ-002 delivered with no use case
+- WHEN the Developer runs `specgate propose --use-cases`, then with `--agent` an agent that writes UC-002 with REQ-002 and its specification, and a file outside the change
+- THEN the change lists REQ-002 as uncovered and is not ready; after the agent it is ready, and the file outside it is undone
+
+#### Scenario: SCN-636b — Approved and archived
+
+- GIVEN the change with UC-002 and its specification written
+- WHEN the Developer approves and archives it, and runs `specgate propose --use-cases` again
+- THEN the catalog has UC-002 with REQ-002 and no template row, docs/specs/use-cases/UC-002.md exists, and every requirement is said to be in a use case
