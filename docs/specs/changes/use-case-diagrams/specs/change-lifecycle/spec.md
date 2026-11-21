@@ -27,3 +27,15 @@ The system SHALL generate, from `docs/specs/use-cases.md` and each `docs/specs/u
 - GIVEN a project with UC-004 and its specification
 - WHEN the diagrams are regenerated, and then use-cases.puml is edited by hand
 - THEN both files are written once, nothing the second time, and `use_case_diagrams_stale` names use-cases.puml
+
+### Requirement: REQ-635 — `status --json` carries the use cases, their specifications and diagrams
+
+<!-- specgate:trace status=Implemented feature=features/change-lifecycle/REQ-635.feature actor=Developer kind=functional -->
+
+The system SHALL answer, in `status --json`, `useCases`: the use-case diagram in Mermaid, and each use case of the catalog with its id, name, actor, requirements, its specification's file, the specification as read (REQ-631) and its activity in Mermaid — the last three null for a use case with no specification — and `null` for a project with no `docs/specs/use-cases.md`; so that a client shows them without reading the files.
+
+#### Scenario: SCN-635a — The use cases in status
+
+- GIVEN a project with UC-004 in the catalog and its specification naming SCN-012
+- WHEN a client runs `specgate status --json`
+- THEN `useCases.diagram` is a Mermaid flowchart, and UC-004 carries docs/specs/use-cases/UC-004.md, its main flow naming SCN-012 and its activity; with no catalog, `useCases` is null

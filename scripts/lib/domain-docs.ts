@@ -9,8 +9,10 @@
 import { readCatalog } from "../../packages/core/src/domain/UseCaseDelta";
 import { parseUseCaseSpec } from "../../packages/core/src/domain/UseCaseSpec";
 import {
+  activityChart,
   renderUseCaseDiagrams,
   renderUseCasesPuml,
+  useCaseChart,
 } from "../../packages/core/src/domain/UseCaseDiagrams";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -317,6 +319,31 @@ function useCaseSources(dir: string) {
         .map((f) => parseUseCaseSpec(fs.readFileSync(path.join(specsDir, f), "utf8")))
     : [];
   return { cases, specs };
+}
+
+/**
+ * The use cases for `status --json` (REQ-635): each with its specification and
+ * its activity in Mermaid, and the use-case diagram; null with no catalog.
+ */
+export function projectUseCases(dir: string) {
+  if (read(dir, "docs/specs/use-cases.md") === null) return null;
+  const { cases, specs } = useCaseSources(dir);
+  const byId = new Map(specs.map((s) => [s.id, s]));
+  return {
+    diagram: cases.length ? useCaseChart(cases).join("\n") : null,
+    cases: cases.map((c) => {
+      const spec = byId.get(c.id) ?? null;
+      return {
+        id: c.id,
+        name: c.name,
+        actor: c.actor,
+        requirements: c.requirements,
+        file: spec ? `docs/specs/use-cases/${c.id}.md` : null,
+        spec,
+        activity: spec ? activityChart(spec).join("\n") : null,
+      };
+    }),
+  };
 }
 
 /** `docs/specs/use-case-diagrams.md`, or null with no use case of the project's own (REQ-634). */

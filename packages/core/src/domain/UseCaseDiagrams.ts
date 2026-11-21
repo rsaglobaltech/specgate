@@ -24,7 +24,7 @@ const HEADER = [
 ];
 
 /** The catalog as a Mermaid flowchart: each actor linked to the use cases it achieves. */
-function useCaseChart(cases: readonly UseCaseRow[]): string[] {
+export function useCaseChart(cases: readonly UseCaseRow[]): string[] {
   const actors = [...new Set(cases.map((c) => c.actor).filter(Boolean))].sort();
   const fc = ["flowchart LR"];
   for (const a of actors) fc.push(`  actor_${ident(a)}(["${quote(a)}"])`);
@@ -36,7 +36,7 @@ function useCaseChart(cases: readonly UseCaseRow[]): string[] {
 }
 
 /** A use case's flows as a Mermaid flowchart: the main flow down, each alternative branching at its step. */
-function activityChart(spec: UseCaseSpec): string[] {
+export function activityChart(spec: UseCaseSpec): string[] {
   const main = spec.flows.find((f) => f.id === "main");
   const fc = ["flowchart TD", "  start((start))"];
   const steps = main?.steps ?? [];

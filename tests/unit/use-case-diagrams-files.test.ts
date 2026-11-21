@@ -58,3 +58,38 @@ test("REQ-634: a project whose catalog holds only the template draws nothing", (
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-635 SCN-635a: status --json carries the use cases — each with its specification and activity — and the diagram; null with no catalog", () => {
+  const { spawnSync } = require("node:child_process");
+  const CLI = path.join(
+    __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""),
+    "bin",
+    "specgate.js"
+  );
+  const dir = project();
+  try {
+    fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
+    fs.writeFileSync(
+      path.join(dir, "docs/specs/traceability.md"),
+      "# Traceability Matrix\n\n| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |\n|---|---|---|---|---|---|---|---|---|---|\n| REQ-012 | SCN-012 | - | UC-004 | - | - | - | - | TBD | Draft |\n"
+    );
+    const run = () =>
+      JSON.parse(
+        spawnSync(process.execPath, [CLI, "status", "--json", "--project-dir", dir], {
+          encoding: "utf8",
+        }).stdout
+      );
+    const doc = run();
+    assert.match(doc.useCases.diagram, /^flowchart LR/);
+    assert.equal(doc.useCases.cases.length, 1);
+    const uc = doc.useCases.cases[0];
+    assert.equal(uc.id, "UC-004");
+    assert.equal(uc.file, "docs/specs/use-cases/UC-004.md");
+    assert.equal(uc.spec.flows[0].scenarios[0], "SCN-012");
+    assert.match(uc.activity, /^flowchart TD/);
+    fs.rmSync(path.join(dir, "docs/specs/use-cases.md"));
+    assert.equal(run().useCases, null);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

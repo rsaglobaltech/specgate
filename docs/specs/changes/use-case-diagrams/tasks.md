@@ -8,3 +8,4 @@
 ## 2. Implementation
 
 - [x] 2.1 REQ-634 — the diagrams, generated and checked
+- [x] 2.2 REQ-635 — the use cases in status --json
