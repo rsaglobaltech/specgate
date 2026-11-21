@@ -16,7 +16,11 @@ import type { SpawnSyncReturns } from "node:child_process";
 import type { TestContext } from "node:test";
 import type { CliResult } from "../helpers/cli";
 const { briefModules } = require("../../packages/core/src/domain/DraftChecklist");
-const { agentInvocation, withWritePermission } = require("../../scripts/draft/confined-agent");
+const {
+  agentInvocation,
+  withOutsideDir,
+  withWritePermission,
+} = require("../../scripts/draft/confined-agent");
 const { STEPS } = require("../../scripts/agents/commands");
 const { slashCommandBody } = require("../../scripts/agents/init");
 
@@ -593,7 +597,7 @@ function committed(dir: string) {
 
 test("claude -p gets edit permission, unless the command brings its own", () => {
   assert.deepEqual(withWritePermission("claude -p"), {
-    command: "claude -p --permission-mode acceptEdits",
+    command: "claude --permission-mode acceptEdits -p",
     added: true,
   });
   assert.equal(withWritePermission("claude --print < {prompt_file}").added, true);
@@ -607,6 +611,33 @@ test("claude -p gets edit permission, unless the command brings its own", () => 
   ]) {
     assert.deepEqual(withWritePermission(own), { command: own, added: false }, own);
   }
+});
+
+const PIPED =
+  "claude --output-format stream-json --verbose --permission-mode acceptEdits -p < {prompt_file} | specgate harness events --from claude";
+
+test("REQ-616 SCN-616a: a piped agent gets --add-dir in claude's own command, not after the pipe", () => {
+  assert.equal(
+    withOutsideDir(PIPED, "/tmp/brief"),
+    'claude --add-dir "/tmp/brief" --output-format stream-json --verbose --permission-mode acceptEdits -p < {prompt_file} | specgate harness events --from claude'
+  );
+  assert.equal(withOutsideDir("claude -p", "/tmp/brief"), 'claude --add-dir "/tmp/brief" -p');
+  const own =
+    'claude --add-dir "$TMPDIR" -p < {prompt_file} | specgate harness events --from claude';
+  assert.equal(withOutsideDir(own, "/tmp/brief"), own, "a command with its own --add-dir is kept");
+  assert.equal(withOutsideDir("codex exec - | cat", "/tmp/brief"), "codex exec - | cat");
+});
+
+test("REQ-616 SCN-616b: a piped agent without edit permission gets it in claude's own command", () => {
+  assert.deepEqual(
+    withWritePermission("claude -p < {prompt_file} | specgate harness events --from claude"),
+    {
+      command:
+        "claude --permission-mode acceptEdits -p < {prompt_file} | specgate harness events --from claude",
+      added: true,
+    }
+  );
+  assert.deepEqual(withWritePermission(PIPED), { command: PIPED, added: false });
 });
 
 test("an agent that writes nothing is told apart from a draft to fix, with the likely cause", (t: TestContext) => {

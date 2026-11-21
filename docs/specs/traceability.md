@@ -510,6 +510,7 @@
 | REQ-613 | SCN-613a | `features/trusted-gate/REQ-613.feature` | - | - | - | - | - | tests/unit/ci-matches-local.test.ts | Approved |
 | REQ-614 | SCN-614a | `features/harness/REQ-614.feature` | - | - | - | - | - | tests/unit/agent-runs-tests.test.ts | Approved |
 | REQ-615 | SCN-615a | `features/daily-surface/REQ-615.feature` | - | - | - | - | - | tests/unit/status-counts-requirements.test.ts | Approved |
+| REQ-616 | SCN-616a | `features/harness/REQ-616.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

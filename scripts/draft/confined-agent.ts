@@ -94,8 +94,18 @@ export function withWritePermission(command: string): { command: string; added: 
   const hasOwn =
     /--permission-mode|--allowedTools|--allowed-tools|--dangerously-skip-permissions/.test(command);
   return isClaudePrint && !hasOwn
-    ? { command: `${command} --permission-mode acceptEdits`, added: true }
+    ? { command: afterClaude(command, "--permission-mode acceptEdits"), added: true }
     : { command, added: false };
+}
+
+/**
+ * A flag for Claude Code, right after `claude`: the command `harness init`
+ * writes pipes into `specgate harness events`, and a flag appended to the line
+ * would be that command's, not Claude's (#530, REQ-616).
+ */
+function afterClaude(command: string, flag: string): string {
+  const at = /^\s*claude/.exec(command)?.[0].length ?? 0;
+  return `${command.slice(0, at)} ${flag}${command.slice(at)}`;
 }
 
 /**
@@ -105,7 +115,9 @@ export function withWritePermission(command: string): { command: string; added: 
  */
 export function withOutsideDir(command: string, dir: string): string {
   const isClaudePrint = /^\s*claude\b/.test(command) && /(^|\s)(-p|--print)(\s|$)/.test(command);
-  return isClaudePrint && !/--add-dir\b/.test(command) ? `${command} --add-dir "${dir}"` : command;
+  return isClaudePrint && !/--add-dir\b/.test(command)
+    ? afterClaude(command, `--add-dir "${dir}"`)
+    : command;
 }
 
 /** The fix to suggest when an agent ran and wrote nothing (#103). */
