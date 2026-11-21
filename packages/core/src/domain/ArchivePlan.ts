@@ -3,7 +3,7 @@ import type { Diagnostic } from "./Diagnostic";
 export interface WriteOperation {
   file: string;
   contents: string;
-  kind: "spec" | "feature" | "traceability";
+  kind: "spec" | "feature" | "traceability" | "use-cases";
 }
 
 export interface DeleteOperation {
@@ -22,6 +22,8 @@ export interface ArchivePlanTotals {
   removed: number;
   specsWritten: number;
   specsRetired: number;
+  /** The use cases the change brought into docs/specs/use-cases.md (REQ-625). */
+  useCases?: { added: number; modified: number; removed: number };
   traceability?: {
     added: number;
     updated: number;

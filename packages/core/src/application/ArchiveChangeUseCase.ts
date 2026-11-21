@@ -7,6 +7,13 @@ import { DeltaSpec } from "../domain/DeltaSpec";
 import { TraceabilityMatrix } from "../domain/TraceabilityMatrix";
 import { parseDelta } from "../domain/SpecParser";
 import { error, warning } from "../domain/Diagnostic";
+import {
+  applyUseCaseDelta,
+  checkUseCaseDelta,
+  parseUseCaseDelta,
+  readCatalog,
+} from "../domain/UseCaseDelta";
+import { parseTraceabilityRows } from "../domain/TraceabilityFormat";
 
 /** How an archive is planned. */
 export interface ArchiveOptions {
@@ -263,6 +270,47 @@ export class ArchiveChangeUseCase {
       }
     }
     plan.totals.traceability = traceTotals;
+
+    // REQ-625: the change's use cases, checked against the catalog and merged into it.
+    const ucFile = path.join(p.change(changeId), "use-cases.md");
+    const ucSource = this.repo.readFile(ucFile);
+    if (ucSource !== null) {
+      const ucDelta = parseUseCaseDelta(ucSource);
+      const catalogFile = path.join(p.root, "docs", "specs", "use-cases.md");
+      const catalogSource = this.repo.readFile(catalogFile);
+      // Which use case each requirement names once this change is applied.
+      const traceNow =
+        plan.writes.find((w) => w.kind === "traceability")?.contents ??
+        this.repo.readFile(p.traceability) ??
+        "";
+      const liveUses = new Map(
+        parseTraceabilityRows(traceNow)
+          .rows.filter((r) => r.requirement && r.useCase && r.useCase !== "-")
+          .map((r) => [r.requirement, r.useCase] as [string, string])
+      );
+      for (const f of checkUseCaseDelta(ucDelta, readCatalog(catalogSource), liveUses)) {
+        plan.diagnostics.push(
+          error(f.code, f.message, {
+            file: path.relative(p.root, ucFile),
+            ...(f.target ? { target: f.target } : {}),
+            fix: f.fix,
+          })
+        );
+      }
+      const touched = ucDelta.added.length + ucDelta.modified.length + ucDelta.removed.length;
+      if (touched > 0) {
+        plan.writes.push({
+          file: catalogFile,
+          contents: applyUseCaseDelta(catalogSource, ucDelta),
+          kind: "use-cases",
+        });
+      }
+      plan.totals.useCases = {
+        added: ucDelta.added.length,
+        modified: ucDelta.modified.length,
+        removed: ucDelta.removed.length,
+      };
+    }
 
     const archivedAs = `${o.stamp || this.todayStamp(o.now)}-${changeId}`;
     plan.move = { from: p.change(changeId), to: path.join(p.archive, archivedAs) };
