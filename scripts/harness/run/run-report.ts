@@ -6,7 +6,7 @@
 import * as ui from "../../lib/ui";
 import { RequirementResult, STOP_ASKED } from "./shared";
 import { streamEvent } from "../../lib/harness-stream";
-import { streamResult } from "./state";
+import { RunState } from "./state";
 /**
  * How much of a failing gate's output the text report shows.
  *
@@ -66,14 +66,15 @@ export function printReport(
   results: RequirementResult[],
   format: string,
   recorded?: string,
-  extra: { dirty?: RunDirty } = {}
+  extra: { dirty?: RunDirty } = {},
+  run: RunState = new RunState()
 ): void {
   if (format === "json") {
     process.stdout.write(JSON.stringify(reportDocument(results, extra), null, 2) + "\n");
     return;
   }
   if (format === "jsonl") {
-    for (const r of results) streamResult(r);
+    for (const r of results) run.streamResult(r);
     streamEvent({ type: "run-end", report: reportDocument(results, extra), status: [] });
     return;
   }

@@ -16,7 +16,7 @@ import {
   notAttempted,
   unattempted,
 } from "./shared";
-import { addRunSpentUsd, streamResult } from "./state";
+import { runStateOf } from "./state";
 
 /**
  * What a worker process runs.
@@ -104,9 +104,9 @@ export function runWorkers(
           running.delete(id);
           const result = parseWorkerReport(id, stdout, stderr);
           // REQ-585: what the worker's agents spent counts against the run's budget.
-          addRunSpentUsd(reportedCost(result.attemptLog));
+          runStateOf(ctx).addSpentUsd(reportedCost(result.attemptLog));
           results.push(result);
-          streamResult(result);
+          runStateOf(ctx).streamResult(result);
           if (queue.length === 0 && running.size === 0) resolve(results);
           else fill();
         });

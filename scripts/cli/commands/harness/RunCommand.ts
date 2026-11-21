@@ -52,7 +52,7 @@ export {
   setJsonMode,
   error,
 } from "../../../harness/run/shared";
-export { resetAgentWrote, RUNS_DIR, RunRecord } from "../../../harness/run/state";
+export { RUNS_DIR, RunRecord } from "../../../harness/run/state";
 export { limitFor, projectOf } from "../../../harness/run/gate";
 export { workerCommandsFromEnv, workerCommands, workerArgs } from "../../../harness/run/workers";
 export { dropIntegrationBranches } from "../../../harness/run/branches";
@@ -118,7 +118,9 @@ export class RunCommand extends BaseCommand {
             hintByReq,
             runOne: dispatchLevel,
           });
-      process.exit(await finishRun(projectDir, args, results, runRecordBase, dirty, unkept));
+      process.exit(
+        await finishRun(projectDir, args, results, runRecordBase, dirty, unkept, ctx.run)
+      );
     } catch (err) {
       const thrown = err as { message?: string };
       // REQ-573: interrupted, it exits 130 as a shell's Ctrl-C does; the worktree stays.
