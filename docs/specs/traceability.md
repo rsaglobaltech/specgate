@@ -516,6 +516,7 @@
 | REQ-625 | SCN-625a | `features/change-lifecycle/REQ-625.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDelta.ts` | tests/unit/use-cases-archive.test.ts, packages/core/test/unit/use-case-delta.test.ts | Approved |
 | REQ-626 | SCN-626a | `features/change-lifecycle/REQ-626.feature` | - | - | - | - | `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-from-brief.test.ts | Approved |
 | REQ-627 | SCN-627a | `features/change-lifecycle/REQ-627.feature` | - | - | - | - | `scripts/lib/gate-policy.ts` | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
+| REQ-628 | SCN-628a | `features/change-lifecycle/REQ-628.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/show-approval-blockers.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

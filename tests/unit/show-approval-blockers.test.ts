@@ -77,3 +77,31 @@ test("REQ-619 SCN-619b: a change nothing blocks — show says blockers: []", () 
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-628 SCN-628a: change show --json carries the change's use cases; null with no use-cases.md", () => {
+  const dir = project();
+  try {
+    assert.equal(sg(dir, ["change", "new", "parental", "--capability", "accounts"]).status, 0);
+    const none = JSON.parse(sg(dir, ["change", "show", "parental", "--json"]).stdout);
+    assert.equal(none.change.useCases, null);
+    fs.writeFileSync(
+      path.join(dir, "docs/specs/changes/parental/use-cases.md"),
+      "# Use cases\n\n## ADDED Use Cases\n\n| ID | Use Case | Actor | Requirements |\n| --- | --- | --- | --- |\n| UC-004 | Create a child profile | Tutor | REQ-001, REQ-002 |\n\n## REMOVED Use Cases\n\n| ID | Reason |\n| --- | --- |\n| UC-002 | Merged into UC-004 |\n"
+    );
+    const shown = JSON.parse(sg(dir, ["change", "show", "parental", "--json"]).stdout);
+    assert.deepEqual(shown.change.useCases, {
+      added: [
+        {
+          id: "UC-004",
+          name: "Create a child profile",
+          actor: "Tutor",
+          requirements: ["REQ-001", "REQ-002"],
+        },
+      ],
+      modified: [],
+      removed: [{ id: "UC-002", reason: "Merged into UC-004" }],
+    });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

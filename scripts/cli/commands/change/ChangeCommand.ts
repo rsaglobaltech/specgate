@@ -80,6 +80,7 @@ import {
 import { ValidateChangeUseCase } from "../../../../packages/core/src/application/ValidateChangeUseCase";
 import { readCapabilityRequirements } from "../../../lib/capability-specs";
 import { impactOf } from "../../../lib/change-impact";
+import { parseUseCaseDelta } from "../../../../packages/core/src/domain/UseCaseDelta";
 import { approvalBlockers, approveChange, noteChange, reviewOf } from "../../../lib/change-review";
 import type { LayerId } from "../../../../packages/core/src/domain/ChangeLayers";
 import {
@@ -782,6 +783,8 @@ export function changeShowAnswer(projectDir: string, changeId: string) {
       // REQ-564: whether it may be built, layer by layer — not the `approved:`
       // line, which outlives an edit of a layer approved before it.
       approvals: changeApprovals(projectDir, changeId),
+      // REQ-628: the use cases the change adds, modifies and removes; null with no use-cases.md.
+      useCases: changeUseCases(projectDir, changeId),
       // REQ-619: what `change approve` would refuse with, said before it is pressed.
       blockers: approvalBlockers(projectDir, changeId).map((b) => ({
         code: b.code,
@@ -792,6 +795,14 @@ export function changeShowAnswer(projectDir: string, changeId: string) {
     },
     status: [] as Diagnostic[],
   };
+}
+
+/** A change's use cases, as its use-cases.md says (REQ-628): null when it has none. */
+function changeUseCases(projectDir: string, changeId: string) {
+  const file = path.join(projectDir, "docs", "specs", "changes", changeId, "use-cases.md");
+  if (!fs.existsSync(file)) return null;
+  const d = parseUseCaseDelta(fs.readFileSync(file, "utf8"));
+  return { added: d.added, modified: d.modified, removed: d.removed };
 }
 
 function cmdShow(opts: ChangeOptions) {
