@@ -78,6 +78,7 @@
     "registry:build": "node dist/packages/pack-registry/src/build.js",
     "test:snapshot": "node scripts/run-tests.cjs dist/tests/snapshot",
     "mutation:pilot": "npm run build && node scripts/check-mutation-targets.mjs && stryker run stryker.config.mjs",
+    "mutation:harness": "npm run build && stryker run stryker.harness.config.mjs",
     "test:coverage": "c8 --config .c8rc.json node scripts/run-tests.cjs dist/tests/unit dist/packages/core/test/unit",
     "test:bdd": "cucumber-js",
     "test:all": "npm test && npm run test:coverage && npm run test:bdd && npm run test:core-unit && npm run test:vscode-unit && npm run test:mcp-unit && npm run test:registry-unit && npm run test:lsp-unit && npm run test:snapshot && npm run registry:build",

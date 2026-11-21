@@ -22,6 +22,9 @@ jobs:
       - run: npm ci
       - name: Run the mutation pilot
         run: npm run mutation:pilot
+      - name: Mutate the harness's decisions
+        if: always()
+        run: npm run mutation:harness
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v7
