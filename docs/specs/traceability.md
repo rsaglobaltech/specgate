@@ -511,6 +511,7 @@
 | REQ-614 | SCN-614a | `features/harness/REQ-614.feature` | - | - | - | - | - | tests/unit/agent-runs-tests.test.ts | Approved |
 | REQ-615 | SCN-615a | `features/daily-surface/REQ-615.feature` | - | - | - | - | - | tests/unit/status-counts-requirements.test.ts | Approved |
 | REQ-616 | SCN-616a | `features/harness/REQ-616.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Approved |
+| REQ-619 | SCN-619a | `features/change-lifecycle/REQ-619.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/show-approval-blockers.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

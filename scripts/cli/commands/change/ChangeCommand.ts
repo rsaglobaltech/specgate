@@ -782,6 +782,13 @@ export function changeShowAnswer(projectDir: string, changeId: string) {
       // REQ-564: whether it may be built, layer by layer — not the `approved:`
       // line, which outlives an edit of a layer approved before it.
       approvals: changeApprovals(projectDir, changeId),
+      // REQ-619: what `change approve` would refuse with, said before it is pressed.
+      blockers: approvalBlockers(projectDir, changeId).map((b) => ({
+        code: b.code,
+        message: b.message,
+        ...(b.fix ? { fix: b.fix } : {}),
+        ...(b.target ? { target: b.target } : {}),
+      })),
     },
     status: [] as Diagnostic[],
   };
