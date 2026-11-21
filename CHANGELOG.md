@@ -9,6 +9,21 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.4.3] — 2026-11-21
+
+A piped agent command drafts a brief kept outside the project.
+
+### Fixed
+
+- **Claude Code's flags reach Claude Code** (REQ-616, #530). The drafting
+  commands appended `--add-dir` and `--permission-mode acceptEdits` at the end
+  of the agent command. With the command specgate writes when it finds Claude
+  Code — `claude … -p < {prompt_file} | specgate harness events --from claude`
+  — the end is after the pipe, so the flags went to `specgate harness events`:
+  `propose --from-brief --brief <a file outside the project> --agent …` failed
+  with `draft_no_front_matter` every time. Both flags now go right after
+  `claude`, as the harness already did; a command that sets them is kept.
+
 ## [1.4.2] — 2026-11-20
 
 The agent runs your tests before the gate does.

@@ -221,7 +221,7 @@ specgate propose --from-brief --agent "claude -p"
 $ specgate propose --from-brief --agent "claude -p"
   ◆ specgate · propose --from-brief --agent   docs/brief.md
 
-  ➜  claude -p --permission-mode acceptEdits  is proposing the front matter of docs/brief.md…
+  ➜  claude --permission-mode acceptEdits -p  is proposing the front matter of docs/brief.md…
      edit permission added: claude -p cannot write files otherwise
 
 Added a front matter to docs/brief.md: 2 actors, 4 modules; one line marked to check.
@@ -257,7 +257,7 @@ section per module, from your notes only:
 $ specgate propose --from-brief --agent "claude -p"
   ◆ specgate · propose --from-brief --agent   docs/brief.md
 
-  ➜  claude -p --permission-mode acceptEdits  is proposing the module sections of docs/brief.md…
+  ➜  claude --permission-mode acceptEdits -p  is proposing the module sections of docs/brief.md…
      edit permission added: claude -p cannot write files otherwise
 
 Added 4 module sections from your notes; 3 questions the notes leave open.
