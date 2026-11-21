@@ -34,7 +34,7 @@ import { harnessQueue } from "./levels";
 import { hasBudget } from "../../../packages/core/src/domain/RunBudget";
 import { inBuildOrder, modulePlaces } from "../../lib/build-order";
 import { inFlightRequirements } from "../../lib/in-flight";
-import { ledgerWrite, setLedger, writeRunRecord } from "./state";
+import { RunState, writeRunRecord } from "./state";
 import { maskCommand, secretNames } from "../../../packages/core/src/domain/HarnessEvents";
 import { parseArgs } from "./cli";
 import { quoteArg } from "../../lib/escape";
@@ -426,6 +426,8 @@ export function startRun(
     maxRequirements: args.maxRequirements,
     strictArtifacts: args.strictArtifacts,
     verbose: args.verbose,
+    // What this run keeps while it goes, shared by every copy of its context.
+    run: new RunState(),
   };
 
   // One run per working copy (REQ-186): the post-merge gate runs in it.
@@ -480,8 +482,8 @@ export function startRun(
     }),
   };
   if (!process.env.SPECGATE_HARNESS_WORKER) {
-    setLedger({ projectDir, record: { ...runRecordBase, finishedAt: "", results: [] } });
-    ledgerWrite();
+    ctx.run.setLedger({ projectDir, record: { ...runRecordBase, finishedAt: "", results: [] } });
+    ctx.run.ledgerWrite();
   }
   return { ctx, runRecordBase };
 }
@@ -497,7 +499,8 @@ export async function finishRun(
   results: RequirementResult[],
   runRecordBase: ReturnType<typeof startRun>["runRecordBase"],
   dirty: RunDirty,
-  unkept: boolean
+  unkept: boolean,
+  run: RunState
 ): Promise<number> {
   // What the agents asked goes into the project, once the run is done (REQ-189).
   if (!process.env.SPECGATE_HARNESS_WORKER) recordQuestions(projectDir, results);
@@ -515,7 +518,7 @@ export async function finishRun(
         finishedAt: new Date().toISOString(),
         results,
       });
-  setLedger(null);
+  run.setLedger(null);
   // REQ-590: the run as a trace, when an OpenTelemetry collector is configured.
   if (!process.env.SPECGATE_HARNESS_WORKER) {
     const sent = await exportRunTrace({
@@ -531,7 +534,8 @@ export async function finishRun(
     results,
     args.format,
     recordPath ? path.relative(projectDir, recordPath) : undefined,
-    { dirty }
+    { dirty },
+    run
   );
   // REQ-271: the studio's Build reads the agent from harness.config.yaml.
   if (unkept && !isJsonMode() && !process.env.SPECGATE_HARNESS_WORKER) {

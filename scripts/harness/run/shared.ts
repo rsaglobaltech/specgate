@@ -115,6 +115,8 @@ export interface RunContext {
   stopCode?: () => string;
   /** The plan's hint for the requirement being processed. */
   hint?: string;
+  /** What this run keeps while it goes; see `runStateOf`. */
+  run?: import("./state").RunState;
 }
 
 /** How a requirement ended. `blocked` and `skipped` were never attempted. */
