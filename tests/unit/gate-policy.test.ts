@@ -104,6 +104,7 @@ test("REQ-604 SCN-604a: a preset and an override", () => {
     coverage: "warning",
     ids: "error",
     quality: "error",
+    use_cases: "warning",
   });
 });
 
@@ -112,7 +113,10 @@ test("REQ-604: no file is the strict gate; the template reads as the standard pr
   try {
     const p = readGatePolicy(dir);
     assert.equal(p.source, "default");
-    assert.ok(Object.values(p.rules).every((l) => l === "error"));
+    // Every rule fails it but use_cases, reported until a catalog is written (REQ-627).
+    const { use_cases: useCases, ...rest } = p.rules;
+    assert.ok(Object.values(rest).every((l) => l === "error"));
+    assert.equal(useCases, "warning");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -228,4 +232,47 @@ test("REQ-606 SCN-606b: a new project's policy is the standard preset", (t) => {
     fs.readFileSync(path.join(dir, ".specgate", "gate.yaml"), "utf8"),
     "preset: minimal\n"
   );
+});
+
+// ── REQ-627 ───────────────────────────────────────────────────────────────────
+
+/** The catalog `init` writes for a layered project: the template's row. */
+const catalog = (dir: string) =>
+  fs.writeFileSync(
+    path.join(dir, "docs", "specs", "use-cases.md"),
+    "# Use Cases\n\n| ID | Use Case | Actor | Requirement | Command/Query | Aggregate | Emits | Status |\n|---|---|---|---|---|---|---|---|\n| UC-001 | Describe the first use case | Primary actor | REQ-TBD | CMD-001 ExampleCommand | AGG-001 CoreAggregate | EVT-001 ExampleEvent | Draft |\n"
+  );
+
+test("REQ-627 SCN-627a: by default, a requirement with no use case is reported, not failed", (t) => {
+  const dir = project(t);
+  catalog(dir);
+  // The fixture's REQ-002 has no test: tdd off, so only use_cases speaks — at its default.
+  policy(dir, "preset: strict\nrules:\n  tdd: off\n");
+  const j = run(dir, ["validate", ".", "--strict", "--json"]);
+  assert.equal(j.status, 0, j.stdout + j.stderr);
+  assert.match(j.stdout, /use_case_missing/);
+  assert.match(j.stdout, /REQ-002 names no use case/);
+});
+
+test("REQ-627 SCN-627b: use_cases set to error fails the gate — the requirement and the template row named", (t) => {
+  const dir = project(t);
+  catalog(dir);
+  policy(dir, "preset: strict\nrules:\n  tdd: off\n  use_cases: error\n");
+  const r = run(dir, ["validate", ".", "--strict"]);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  const out = r.stdout + r.stderr;
+  assert.match(out, /use_case_missing/);
+  assert.match(out, /use_case_template/);
+  policy(dir, "preset: strict\nrules:\n  tdd: off\n  use_cases: off\n");
+  const off = run(dir, ["validate", ".", "--strict", "--json"]);
+  assert.equal(off.status, 0, off.stdout + off.stderr);
+  assert.doesNotMatch(off.stdout, /use_case_missing/);
+});
+
+test("REQ-627: a project with no use-cases.md does not model use cases — the rule says nothing", (t) => {
+  const dir = project(t);
+  policy(dir, "preset: strict\nrules:\n  tdd: off\n  use_cases: error\n");
+  const r = run(dir, ["validate", ".", "--strict", "--json"]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.doesNotMatch(r.stdout, /use_case_/);
 });

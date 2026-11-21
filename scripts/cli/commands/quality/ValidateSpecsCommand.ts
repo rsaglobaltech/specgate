@@ -69,6 +69,7 @@ const SUITE_LIES = new Set<string>([
 ]);
 import { specgateTagsIn } from "../../../../packages/core/src/domain/GherkinTags";
 import { parseTraceabilityRows } from "../../../../packages/core/src/domain/TraceabilityFormat";
+import { useCaseCoverage } from "../../../../packages/core/src/domain/UseCaseDelta";
 import type { MatrixRow } from "../../../../packages/core/src/domain/TraceabilityFormat";
 import { analyseRequirementText } from "../../../../packages/core/src/domain/RequirementSyntax";
 import {
@@ -246,6 +247,41 @@ export class ValidateSpecsCommand extends BaseCommand {
   /** Whether a template obligation fails this run: the rule is asked for, and not as a warning. */
   private failsOnTemplateObligations = false;
   private policyNote = "";
+
+  /**
+   * `use_cases` (REQ-627, #543): every requirement names a use case the
+   * catalog has, every use case is delivered, no template row is left.
+   */
+  private checkUseCases(targetDir: string, traceContent: string) {
+    const catalog = path.join(targetDir, "docs", "specs", "use-cases.md");
+    const findings = useCaseCoverage(
+      parseTraceabilityRows(traceContent).rows.map((r) => ({
+        requirement: r.requirement ?? "",
+        useCase: r.useCase ?? "",
+      })),
+      fs.existsSync(catalog) ? fs.readFileSync(catalog, "utf8") : null
+    ).map((f) =>
+      error(f.code, f.message, {
+        file: "docs/specs/use-cases.md",
+        ...(f.target ? { target: f.target } : {}),
+        fix: f.fix,
+      })
+    );
+    if (findings.length === 0) return;
+    if (this.reportOnly("use_cases", findings)) return;
+    if (this.agent.json) {
+      this.agent.fail({ validation: null }, findings);
+      return;
+    }
+    this.logError(`Requirements and use cases that do not meet: ${findings.length}`);
+    for (const f of findings) process.stderr.write(`  ${formatDiagnostic(f)}\n`);
+    this.logFix([
+      "AGENTS.md asks that every flow be a use case of docs/specs/use-cases.md;",
+      "this rule is what checks it. Set `use_cases: warning` in .specgate/gate.yaml",
+      "while the catalog is being written.",
+    ]);
+    process.exit(1);
+  }
 
   /**
    * A family's findings under a rule set to `warning`: kept as warnings with
@@ -1239,6 +1275,7 @@ export class ValidateSpecsCommand extends BaseCommand {
     const strictRequirements = asked("requirements", "--strict-requirements");
     const strictLinks = asked("links", "--strict-links");
     const strictCoverage = asked("coverage", "--strict-coverage");
+    const strictUseCases = asked("use_cases", "--strict-use-cases");
     if (policy && notEnforcedYet(policy)) {
       this.policyNote = `${GATE_POLICY_FILE} enforces errors from ${policy.enforceFrom}`;
     }
@@ -1555,6 +1592,9 @@ export class ValidateSpecsCommand extends BaseCommand {
     }
     if (strictCoverage) {
       this.checkScenarioCoverage(targetDir, traceContent, delivering);
+    }
+    if (strictUseCases) {
+      this.checkUseCases(targetDir, traceContent);
     }
     // After the links and coverage: a missing test is the bigger gap, and its
     // fix line is the one to read first.

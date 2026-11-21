@@ -1,20 +1,12 @@
 # Design: use-cases-lifecycle
 
-> Owner: architect — how the system meets the Discover. Name each acceptance
-> criterion (AC-1, AC-2…) where it is answered.
-
-## Modules
-
-<!-- Which modules or services change, and what each one owns. -->
-
-## Mechanisms
-
-<!-- How: data, rules, flows. Answer each criterion: "AC-1 — …". -->
-
-## Channels
-
-<!-- APIs, events, queues between modules or repositories. -->
-
-## Decisions
-
-<!-- The ADRs this touches, or the choice made here and what was rejected. -->
+- `packages/core/src/domain/UseCaseDelta.ts`: parse, check and apply a
+  change's use cases; `useCaseCoverage` for the gate. Pure.
+- Archive (`ArchiveChangeUseCase`): reads `<change>/use-cases.md`, checks it
+  against the catalog and the matrix as the change leaves it, writes the
+  catalog (`kind: "use-cases"`).
+- Drafts (`DraftCommand.openDraft`): `uc_range`, `use-cases.md`; the guide's
+  section 1b; `DraftChecklist` D14 when the draft has use-cases.md.
+- Gate (`gate-policy.ts`, `ValidateSpecsCommand.checkUseCases`): rule
+  `use_cases`, warning by default.
+- AC-1 → SCN-625a–c; AC-2 → SCN-626a–b; AC-3 → SCN-627a–c.

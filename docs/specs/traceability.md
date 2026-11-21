@@ -498,9 +498,9 @@
 | REQ-601 | SCN-601a | `features/brief-cards/REQ-601.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
 | REQ-602 | SCN-602a | `features/brief-cards/REQ-602.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
 | REQ-603 | SCN-603a | `features/brief-cards/REQ-603.feature` | - | - | - | - | - | tests/unit/brief-quality.test.ts | Approved |
-| REQ-604 | SCN-604a | `features/trusted-gate/REQ-604.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts | Approved |
-| REQ-605 | SCN-605a | `features/trusted-gate/REQ-605.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts | Approved |
-| REQ-606 | SCN-606a | `features/trusted-gate/REQ-606.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts | Approved |
+| REQ-604 | SCN-604a | `features/trusted-gate/REQ-604.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
+| REQ-605 | SCN-605a | `features/trusted-gate/REQ-605.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
+| REQ-606 | SCN-606a | `features/trusted-gate/REQ-606.feature` | - | - | - | - | - | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
 | REQ-607 | SCN-607a | `features/project-setup/REQ-607.feature` | - | - | - | - | - | tests/unit/undecided-stack.test.ts | Approved |
 | REQ-608 | SCN-608a | `features/project-setup/REQ-608.feature` | - | - | - | - | - | tests/unit/adopt-no-code.test.ts | Approved |
 | REQ-609 | SCN-609a | `features/project-setup/REQ-609.feature` | - | - | - | - | - | tests/unit/init-wizard.test.ts | Approved |
@@ -513,6 +513,9 @@
 | REQ-616 | SCN-616a | `features/harness/REQ-616.feature` | - | - | - | - | `scripts/draft/confined-agent.ts` | tests/unit/draft-from-brief.test.ts | Approved |
 | REQ-619 | SCN-619a | `features/change-lifecycle/REQ-619.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/show-approval-blockers.test.ts | Approved |
 | REQ-622 | SCN-622a | `features/brief-cards/REQ-622.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts` | tests/unit/quoted-actor-names.test.ts | Approved |
+| REQ-625 | SCN-625a | `features/change-lifecycle/REQ-625.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDelta.ts` | tests/unit/use-cases-archive.test.ts, packages/core/test/unit/use-case-delta.test.ts | Approved |
+| REQ-626 | SCN-626a | `features/change-lifecycle/REQ-626.feature` | - | - | - | - | `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-from-brief.test.ts | Approved |
+| REQ-627 | SCN-627a | `features/change-lifecycle/REQ-627.feature` | - | - | - | - | `scripts/lib/gate-policy.ts` | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

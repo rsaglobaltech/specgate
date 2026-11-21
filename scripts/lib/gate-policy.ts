@@ -29,6 +29,7 @@ export const RULES = [
   "coverage",
   "ids",
   "quality",
+  "use_cases",
 ] as const;
 export type Rule = (typeof RULES)[number];
 
@@ -48,6 +49,8 @@ export const RULE_MEANING: Record<Rule, string> = {
   coverage: "every scenario of a declared feature file is named by a test (--strict-coverage)",
   ids: "no requirement id means something else on the base branch",
   quality: "the quality checks of harness.config.yaml pass",
+  use_cases:
+    "every requirement names a use case of docs/specs/use-cases.md, and every use case is delivered (--strict-use-cases)",
 };
 
 const STRICT: Record<Rule, Level> = {
@@ -58,6 +61,8 @@ const STRICT: Record<Rule, Level> = {
   coverage: "error",
   ids: "error",
   quality: "error",
+  // REQ-627: reported, not failed, until a project's catalog is written.
+  use_cases: "warning",
 };
 
 /** The three starting points; `rules:` overrides any rule of the one chosen. */
@@ -76,6 +81,7 @@ export const PRESET_RULES: Record<Preset, Record<Rule, Level>> = {
     coverage: "off",
     ids: "warning",
     quality: "warning",
+    use_cases: "off",
   },
 };
 

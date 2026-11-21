@@ -294,3 +294,71 @@ export function templateUseCases(changeId: string): string {
     "",
   ].join("\n");
 }
+
+/**
+ * The gate's `use_cases` rule (REQ-627): every requirement of the matrix
+ * names a use case the catalog has, every use case of the catalog is
+ * delivered by a requirement, and no template row is left once there is a
+ * requirement. `REQ-000`, the health baseline `init` writes, and the adopted
+ * code's baseline ("Preserve existing behaviour") are not asked for one. A
+ * project with no catalog does not model use cases: nothing to say. The
+ * matrix's Use Case cell counts only as `UC-NNN` — the derived matrix writes
+ * a requirement's title there when it names none.
+ * Pure: the matrix's rows and the catalog in, findings out.
+ */
+export function useCaseCoverage(
+  rows: ReadonlyArray<{ requirement: string; useCase: string }>,
+  catalogText: string | null
+): UseCaseFinding[] {
+  const out: UseCaseFinding[] = [];
+  if (catalogText === null) return out;
+  const catalog = readCatalog(catalogText);
+  const real = catalog.filter((c) => !c.template);
+  const ids = new Set(real.map((c) => c.id));
+  const reqs = new Map<string, string>();
+  for (const r of rows) {
+    if (!/^REQ-/.test(r.requirement) || r.requirement === "REQ-000") continue;
+    if (/preserve existing behaviour/i.test(r.useCase || "")) continue;
+    const cell = (r.useCase || "").trim();
+    const uc = UC_ID.test(cell) ? cell : "";
+    if (!reqs.has(r.requirement) || (uc && uc !== "-")) reqs.set(r.requirement, uc);
+  }
+  for (const [req, uc] of reqs) {
+    if (!uc || uc === "-") {
+      out.push({
+        code: "use_case_missing",
+        message: `${req} names no use case.`,
+        fix: `Give ${req} its use case: uc=UC-NNN in its specgate:trace, through a change that adds the use case to docs/specs/use-cases.md.`,
+        target: req,
+      });
+    } else if (!ids.has(uc)) {
+      out.push({
+        code: "use_case_unknown",
+        message: `${req} names ${uc}, which docs/specs/use-cases.md does not have.`,
+        fix: `Add ${uc} through a change's use-cases.md, or name a use case the catalog has.`,
+        target: req,
+      });
+    }
+  }
+  const delivered = new Set([...reqs.values()]);
+  for (const c of real) {
+    if (!delivered.has(c.id)) {
+      out.push({
+        code: "use_case_undelivered",
+        message: `${c.id} (${c.name}) is delivered by no requirement.`,
+        fix: `Name it from a requirement (uc=${c.id}), or remove it through a change's ## REMOVED Use Cases.`,
+        target: c.id,
+      });
+    }
+  }
+  if (reqs.size > 0 && catalog.some((c) => c.template)) {
+    out.push({
+      code: "use_case_template",
+      message:
+        "docs/specs/use-cases.md still holds the template's row (Describe the first use case).",
+      fix: "It goes once a change adds a real use case; or write the catalog's first use cases through a change.",
+      target: "UC-001",
+    });
+  }
+  return out;
+}
