@@ -318,6 +318,25 @@ export function preflight(
   // committed is not part of the run. Refused unless asked for, and said.
   // A worker is a slice of a run whose parent has already looked.
   const dirty: RunDirty = { allowed: args.allowDirty, leftOut: [] };
+  // REQ-643: every worktree is cut from a commit; a repository with none has
+  // no base, and git would say only "invalid reference: HEAD".
+  const base = args.baseBranch || "HEAD";
+  const resolved = spawnSync("git", ["rev-parse", "--verify", "--quiet", `${base}^{commit}`], {
+    cwd: projectDir,
+    encoding: "utf8",
+  });
+  if (resolved.status !== 0) {
+    const none = base === "HEAD";
+    throw Object.assign(
+      new Error(
+        none
+          ? "This repository has no commit yet: each requirement is built on a branch cut from the last commit. " +
+              'Make the first one — git add -A && git commit -m "Initial commit" — then run the harness again.'
+          : `--base-branch ${base} names no commit of this repository.`
+      ),
+      { code: none ? "harness_no_commit" : "harness_no_base" }
+    );
+  }
   if (!process.env.SPECGATE_HARNESS_WORKER) {
     dirty.leftOut = uncommittedPaths(projectDir);
     if (dirty.leftOut.length > 0 && !args.allowDirty) {

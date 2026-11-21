@@ -144,7 +144,7 @@ export class RunCommand extends BaseCommand {
             status: [
               {
                 severity: "error",
-                code: "harness_run_error",
+                code: codeOf(thrown),
                 message: thrown.message || String(err),
               },
             ],
@@ -157,7 +157,7 @@ export class RunCommand extends BaseCommand {
           process.stdout.write(
             JSON.stringify({
               results: null,
-              status: [{ severity: "error", code: "harness_run_error", message: thrown.message }],
+              status: [{ severity: "error", code: codeOf(thrown), message: thrown.message }],
             }) + "\n"
           );
         } else error(thrown.message || String(err));
@@ -165,8 +165,15 @@ export class RunCommand extends BaseCommand {
       }
       const io = agentIo(isJson);
       return io.fail({ results: null }, [
-        { severity: "error", code: "harness_run_error", message: thrown.message || String(err) },
+        { severity: "error", code: codeOf(thrown), message: thrown.message || String(err) },
       ]);
     }
   }
+}
+
+/** A refusal's own code (`harness_no_commit`, REQ-643), else the run's. */
+function codeOf(thrown: { code?: unknown; message?: string }): string {
+  return typeof thrown.code === "string" && thrown.code.startsWith("harness_")
+    ? thrown.code
+    : "harness_run_error";
 }

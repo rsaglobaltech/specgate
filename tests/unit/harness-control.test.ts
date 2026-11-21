@@ -179,6 +179,34 @@ test("REQ-490 SCN-490b: without --allow-dirty a dirty tree is refused naming the
   }
 });
 
+// ── REQ-643: a repository with no commit ────────────────────────────────────
+
+test("REQ-643 SCN-643a: a repository with no commit is refused before any agent runs, saying to make the first commit", () => {
+  const p = project();
+  try {
+    fs.rmSync(path.join(p.dir, ".git"), { recursive: true, force: true });
+    git(p.dir, "init", "-q");
+    git(p.dir, "config", "user.email", "control@example.com");
+    git(p.dir, "config", "user.name", "Control");
+    const r = harness(p.dir, agent(p.parent, []), [
+      "--req",
+      "REQ-000",
+      "--allow-dirty",
+      "--format",
+      "jsonl",
+    ]);
+    assert.notEqual(r.status, 0);
+    const last = JSON.parse(r.stdout.trim().split("\n").pop()!);
+    assert.equal(last.type, "run-end");
+    assert.equal(last.status[0].code, "harness_no_commit");
+    assert.match(last.status[0].message, /no commit yet/);
+    assert.match(last.status[0].message, /git add -A && git commit/);
+    assert.doesNotMatch(r.stdout + r.stderr, /invalid reference/);
+  } finally {
+    cleanup(p.parent);
+  }
+});
+
 // ── REQ-491 / REQ-492: stop after the requirement in progress ───────────────
 
 test("REQ-491 SCN-491a: `harness stop --after-current` during REQ-000 leaves REQ-001 and REQ-002 unattempted, and the JSON says it was asked", () => {

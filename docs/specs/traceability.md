@@ -529,6 +529,7 @@
 | REQ-640 | SCN-640a | `features/change-lifecycle/REQ-640.feature` | - | - | - | - | `packages/core/src/domain/UseCaseSpec.ts` | packages/core/test/unit/use-case-lanes.test.ts | Approved |
 | REQ-641 | SCN-641a | `features/change-lifecycle/REQ-641.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDiagrams.ts` | packages/core/test/unit/use-case-lanes.test.ts | Approved |
 | REQ-642 | SCN-642a | `features/change-lifecycle/REQ-642.feature` | - | - | - | - | `scripts/draft/drafting-guide.ts` | tests/unit/draft-from-brief.test.ts, tests/unit/use-case-diagrams-files.test.ts | Approved |
+| REQ-643 | SCN-643a | `features/harness/REQ-643.feature` | - | - | - | - | `scripts/harness/run/prepare.ts` | tests/unit/harness-control.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step
