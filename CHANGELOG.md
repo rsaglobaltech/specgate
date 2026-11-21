@@ -9,6 +9,18 @@ The release process is in [`docs/release-process.md`](docs/release-process.md).
 
 ## [Unreleased]
 
+## [1.4.4] — 2026-11-21
+
+Say what blocks an approval before Approve is pressed.
+
+### Added
+
+- **`change show --json` says what blocks approval** (REQ-619, #538). It
+  carries `change.blockers`: what `change approve` would refuse with as
+  `approve_blocked` — each with its code, message and fix — and `[]` when
+  nothing does. Specgate Studio shows them on the change, with the agent's
+  fix, instead of an Approve that is refused.
+
 ## [1.4.3] — 2026-11-21
 
 A piped agent command drafts a brief kept outside the project.

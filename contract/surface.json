@@ -1,5 +1,5 @@
 {
-  "version": "1.4.3",
+  "version": "1.4.4",
   "items": [
     "api:API_VERSION",
     "api:AgentApplyAnswer",
@@ -1369,6 +1369,12 @@
     "json:change show change.approvals.required:boolean",
     "json:change show change.approvals.schema:string",
     "json:change show change.approvals:object",
+    "json:change show change.blockers:array",
+    "json:change show change.blockers[].code:string",
+    "json:change show change.blockers[].fix:string",
+    "json:change show change.blockers[].message:string",
+    "json:change show change.blockers[].target:string",
+    "json:change show change.blockers[]:object",
     "json:change show change.config.created:string",
     "json:change show change.config.req_range:array",
     "json:change show change.config.req_range[]:string",
