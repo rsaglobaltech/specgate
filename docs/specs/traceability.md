@@ -526,6 +526,9 @@
 | REQ-637 | SCN-637a | `features/change-lifecycle/REQ-637.feature` | - | - | - | - | `packages/core/src/domain/StateMachine.ts` | packages/core/test/unit/state-machine.test.ts, tests/unit/state-machines-check.test.ts | Approved |
 | REQ-638 | SCN-638a | `features/change-lifecycle/REQ-638.feature` | - | - | - | - | `packages/core/src/application/ArchiveChangeUseCase.ts` | packages/core/test/unit/state-machine.test.ts, tests/unit/state-machines-archive.test.ts | Approved |
 | REQ-639 | SCN-639a | `features/change-lifecycle/REQ-639.feature` | - | - | - | - | `scripts/lib/domain-docs.ts` | packages/core/test/unit/state-machine.test.ts, tests/unit/state-machines-check.test.ts, tests/unit/draft-from-brief.test.ts | Approved |
+| REQ-640 | SCN-640a | `features/change-lifecycle/REQ-640.feature` | - | - | - | - | `packages/core/src/domain/UseCaseSpec.ts` | packages/core/test/unit/use-case-lanes.test.ts | Approved |
+| REQ-641 | SCN-641a | `features/change-lifecycle/REQ-641.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDiagrams.ts` | packages/core/test/unit/use-case-lanes.test.ts | Approved |
+| REQ-642 | SCN-642a | `features/change-lifecycle/REQ-642.feature` | - | - | - | - | `scripts/draft/drafting-guide.ts` | tests/unit/draft-from-brief.test.ts, tests/unit/use-case-diagrams-files.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

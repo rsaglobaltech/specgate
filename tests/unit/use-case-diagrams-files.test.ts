@@ -93,3 +93,35 @@ test("REQ-635 SCN-635a: status --json carries the use cases — each with its sp
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("REQ-642 SCN-642b: status --json carries each step's lane, for the studio to draw the activity's lanes", () => {
+  const { spawnSync } = require("node:child_process");
+  const CLI = path.join(
+    __dirname.split(/[\\/]tests(?:[\\/]|$)/)[0].replace(/[\\/]dist$/, ""),
+    "bin",
+    "specgate.js"
+  );
+  const dir = project();
+  try {
+    fs.writeFileSync(path.join(dir, "spec.md"), "# Spec\n");
+    fs.writeFileSync(
+      path.join(dir, "docs/specs/traceability.md"),
+      "# Traceability Matrix\n\n| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |\n|---|---|---|---|---|---|---|---|---|---|\n| REQ-012 | SCN-012 | - | UC-004 | - | - | - | - | TBD | Draft |\n"
+    );
+    fs.writeFileSync(
+      path.join(dir, "docs/specs/use-cases/UC-004.md"),
+      "# UC-004 — Create a child profile\n\n## Overview\n\nA profile.\n\n## Actors\n\n- Tutor\n- System\n\n## Main flow (SCN-012)\n\n1. The tutor presses New profile.\n2. [System] Saves it.\n"
+    );
+    const doc = JSON.parse(
+      spawnSync(process.execPath, [CLI, "status", "--json", "--project-dir", dir], {
+        encoding: "utf8",
+      }).stdout
+    );
+    const main = doc.useCases.cases[0].spec.flows[0];
+    assert.deepEqual(main.lanes, ["Tutor", "System"]);
+    assert.deepEqual(main.steps, ["The tutor presses New profile.", "Saves it."]);
+    assert.match(doc.useCases.cases[0].activity, /subgraph lane_System/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

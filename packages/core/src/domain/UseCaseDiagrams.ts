@@ -40,7 +40,31 @@ export function activityChart(spec: UseCaseSpec): string[] {
   const main = spec.flows.find((f) => f.id === "main");
   const fc = ["flowchart TD", "  start((start))"];
   const steps = main?.steps ?? [];
-  steps.forEach((s, i) => fc.push(`  m${i + 1}["${i + 1}. ${quote(s)}"]`));
+  // REQ-641: a lane per actor when the steps are done by more than one.
+  const nodes: Array<{ id: string; text: string; lane: string }> = [];
+  steps.forEach((s, i) =>
+    nodes.push({ id: `m${i + 1}`, text: `${i + 1}. ${quote(s)}`, lane: main?.lanes[i] ?? "" })
+  );
+  const alts = spec.flows.filter((x) => x.id !== "main");
+  for (const f of alts)
+    f.steps.forEach((s, i) =>
+      nodes.push({
+        id: `${ident(f.id)}_${i + 1}`,
+        text: `${f.id}.${i + 1} ${quote(s)}`,
+        lane: f.lanes[i] ?? "",
+      })
+    );
+  const lanes = [...new Set(nodes.map((n) => n.lane).filter(Boolean))];
+  if (lanes.length > 1) {
+    for (const lane of lanes) {
+      fc.push(`  subgraph lane_${ident(lane)}["${quote(lane)}"]`);
+      for (const n of nodes.filter((x) => x.lane === lane)) fc.push(`    ${n.id}["${n.text}"]`);
+      fc.push("  end");
+    }
+    for (const n of nodes.filter((x) => !x.lane)) fc.push(`  ${n.id}["${n.text}"]`);
+  } else {
+    for (const n of nodes) fc.push(`  ${n.id}["${n.text}"]`);
+  }
   fc.push("  finish((end))");
   const chain = ["start", ...steps.map((_, i) => `m${i + 1}`), "finish"];
   for (let i = 0; i + 1 < chain.length; i += 1) {
@@ -48,10 +72,9 @@ export function activityChart(spec: UseCaseSpec): string[] {
       i === 0 && main?.scenarios.length ? ` -- ${main.scenarios.join(", ")} -->` : " -->";
     fc.push(`  ${chain[i]}${label} ${chain[i + 1]}`);
   }
-  for (const f of spec.flows.filter((x) => x.id !== "main")) {
+  for (const f of alts) {
     const from = f.atStep && f.atStep <= steps.length ? `m${f.atStep}` : "start";
     const ids = f.steps.map((_, i) => `${ident(f.id)}_${i + 1}`);
-    f.steps.forEach((s, i) => fc.push(`  ${ids[i]}["${f.id}.${i + 1} ${quote(s)}"]`));
     const label = `${f.id}: ${quote(f.title)}${f.scenarios.length ? ` (${f.scenarios.join(", ")})` : ""}`;
     if (ids.length) {
       fc.push(`  ${from} -. "${label}" .-> ${ids[0]}`);
@@ -111,12 +134,26 @@ export function renderUseCasesPuml(
   const known = new Set(cases.map((c) => c.id));
   for (const s of byId(specs.filter((x) => known.has(x.id)))) {
     const main = s.flows.find((f) => f.id === "main");
-    out.push("", `@startuml ${s.id}`, `title ${s.id} — ${quote(s.name)}`, "start");
+    out.push("", `@startuml ${s.id}`, `title ${s.id} — ${quote(s.name)}`);
+    // REQ-641: PlantUML's swimlanes, switched where the step's actor changes.
+    const laned = new Set(s.flows.flatMap((f) => f.lanes).filter(Boolean)).size > 1;
+    let current = "";
+    const lane = (l: string, indent = "") => {
+      if (!laned || !l || l === current) return;
+      out.push(`${indent}|${l}|`.replace(/^ +\|/, "|"));
+      current = l;
+    };
+    lane(main?.lanes[0] ?? "");
+    out.push("start");
     (main?.steps ?? []).forEach((step, i) => {
+      lane(main?.lanes[i] ?? "");
       out.push(`:${quote(step)};`);
       for (const f of s.flows.filter((x) => x.id !== "main" && x.atStep === i + 1)) {
         out.push(`if (${f.id}: ${quote(f.title)}?) then (yes)`);
-        for (const st of f.steps) out.push(`  :${quote(st)};`);
+        f.steps.forEach((st, k) => {
+          lane(f.lanes[k] ?? "");
+          out.push(`  :${quote(st)};`);
+        });
         out.push("  stop", "endif");
       }
     });

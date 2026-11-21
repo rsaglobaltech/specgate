@@ -41,6 +41,11 @@ export interface UseCaseFlow {
   atStep: number | null;
   scenarios: string[];
   steps: string[];
+  /**
+   * Who does each step (REQ-640): its `[Actor]` tag, else the use case's first
+   * actor; "" when it lists none. As long as `steps`.
+   */
+  lanes: string[];
   line: number;
 }
 
@@ -80,6 +85,7 @@ function alternative(head: string, n: number, line: number): UseCaseFlow {
     atStep: at ? Number(at[1]) : null,
     scenarios: [...head.matchAll(SCN)].map((m) => m[0]),
     steps: [],
+    lanes: [],
     line,
   };
 }
@@ -103,6 +109,7 @@ export function parseUseCaseSpec(text: string): UseCaseSpec {
           atStep: null,
           scenarios: [...h2[1].matchAll(SCN)].map((m) => m[0]),
           steps: [],
+          lanes: [],
           line: i + 1,
         };
         flows.push(flow);
@@ -116,10 +123,16 @@ export function parseUseCaseSpec(text: string): UseCaseSpec {
       return;
     }
     const step = /^\s*\d+[.)]\s+(.+?)\s*$/.exec(l)?.[1];
-    if (flow && step) flow.steps.push(step);
-    else if (!flow) bodies.get(section)?.push(l);
+    if (flow && step) {
+      // REQ-640: `[Actor] text` — the tag is the step's lane; resolved below.
+      const tag = /^\[([^\]]+)\]\s*(.*)$/.exec(step);
+      flow.steps.push(tag ? tag[2] : step);
+      flow.lanes.push(tag ? tag[1].trim() : "");
+    } else if (!flow) bodies.get(section)?.push(l);
   });
   const body = (k: string) => bodies.get(k) ?? [];
+  const first = bullets(body("actors"))[0] ?? "";
+  for (const f of flows) f.lanes = f.lanes.map((l) => l || first);
   return {
     id: title?.[1] ?? "",
     name: title?.[2] ?? "",
@@ -172,6 +185,16 @@ export function checkUseCaseSpec(
     });
   for (const f of spec.flows) {
     const where = f.id === "main" ? "Its main flow" : `${f.id}`;
+    // REQ-640: a step's lane is one of the use case's actors.
+    for (const lane of new Set(f.lanes))
+      if (lane && !spec.actors.includes(lane))
+        out.push({
+          code: "ucs_unknown_lane",
+          message: `${expectedId}: ${where} has a step done by ${lane}, who is not among its actors.`,
+          fix: `List ${lane} under ## Actors, or tag the step with one of ${spec.actors.join(", ") || "its actors"}.`,
+          line: f.line,
+          target: expectedId,
+        });
     if (f.scenarios.length === 0)
       out.push({
         code: "ucs_flow_untested",

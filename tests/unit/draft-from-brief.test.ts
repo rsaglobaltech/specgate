@@ -907,6 +907,15 @@ test("REQ-639 SCN-639d: a state machine the draft writes keeps it from ready whi
   assert.match(cli("draft", "bookings").stdout, /Ready to review/);
 });
 
+test("REQ-642 SCN-642a: DRAFTING.md asks for each step's actor as a [Who] tag, every lane listed under Actors", (t: TestContext) => {
+  const { dir, cli } = project(t);
+  assert.equal(cli("draft", "bookings").status, 0);
+  const guide = fs.readFileSync(path.join(change(dir), "DRAFTING.md"), "utf8");
+  assert.match(guide, /Start a step with `\[Who\]`/);
+  assert.match(guide, /2\. \[System\] <the system answers>/);
+  assert.match(guide, /## Actors\n\n- [^\n]+\n- System/);
+});
+
 test("REQ-632 SCN-632b: a use case with no specification, or a scenario no flow names, keeps the draft from ready", (t: TestContext) => {
   const { dir, cli } = project(t);
   cli("draft", "bookings");
