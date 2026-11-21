@@ -139,3 +139,66 @@ test("REQ-625: a change with no use-cases.md archives as before, the catalog unt
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+const UC_SPEC = (scn: string) => `# UC-007 — Price a session at peak time
+
+## Overview
+
+A session started at peak time costs more.
+
+## Actors
+
+- Driver
+
+## Main flow (${scn})
+
+1. The driver starts a session at 18:00.
+2. The system prices it with the peak surcharge.
+`;
+
+const ADDED_UC7 = `# Use cases — add-pricing
+
+## ADDED Use Cases
+
+| ID | Use Case | Actor | Requirements |
+| --- | --- | --- | --- |
+| UC-007 | Price a session at peak time | Driver | REQ-001 |
+`;
+
+test("REQ-631 SCN-631c: archive writes UC-007's specification to docs/specs/use-cases/UC-007.md", () => {
+  const { root, id } = project(ADDED_UC7);
+  fs.mkdirSync(path.join(root, `docs/specs/changes/${id}/use-cases`), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, `docs/specs/changes/${id}/use-cases/UC-007.md`),
+    UC_SPEC("SCN-001a")
+  );
+  try {
+    const plan = planArchive(root, id, { stamp: "2026-11-21" });
+    assert.equal(plan.ok, true, JSON.stringify(plan.diagnostics));
+    executeArchive(plan);
+    assert.equal(
+      fs.readFileSync(path.join(root, "docs/specs/use-cases/UC-007.md"), "utf8"),
+      UC_SPEC("SCN-001a")
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("REQ-631: a specification whose flow names a scenario UC-007 does not have — the archive is refused", () => {
+  const { root, id } = project(ADDED_UC7);
+  fs.mkdirSync(path.join(root, `docs/specs/changes/${id}/use-cases`), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, `docs/specs/changes/${id}/use-cases/UC-007.md`),
+    UC_SPEC("SCN-777")
+  );
+  try {
+    const plan = planArchive(root, id, { stamp: "2026-11-21" });
+    assert.equal(plan.ok, false);
+    const codes = plan.diagnostics.map((d: { code: string }) => d.code);
+    assert.ok(codes.includes("ucs_unknown_scenario"), JSON.stringify(codes));
+    assert.ok(codes.includes("ucs_scenario_unflowed"), JSON.stringify(codes));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

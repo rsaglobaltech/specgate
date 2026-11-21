@@ -40,3 +40,15 @@ test("REQ-627: a catalog every requirement names, and that every requirement del
     []
   );
 });
+
+test("REQ-633 SCN-633a: a use case of the catalog with no specification is named; one with it is not", () => {
+  const rows = [
+    { requirement: "REQ-001", useCase: "UC-002" },
+    { requirement: "REQ-009", useCase: "UC-003" },
+  ];
+  assert.deepEqual(
+    useCaseCoverage(rows, CATALOG, new Set(["UC-002"])).map((f) => `${f.code}:${f.target}`),
+    ["use_case_no_spec:UC-003"]
+  );
+  assert.deepEqual(useCaseCoverage(rows, CATALOG, new Set(["UC-002", "UC-003"])), []);
+});

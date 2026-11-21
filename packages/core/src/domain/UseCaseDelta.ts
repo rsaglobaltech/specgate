@@ -308,7 +308,9 @@ export function templateUseCases(changeId: string): string {
  */
 export function useCaseCoverage(
   rows: ReadonlyArray<{ requirement: string; useCase: string }>,
-  catalogText: string | null
+  catalogText: string | null,
+  /** The ids under docs/specs/use-cases/ (REQ-633); undefined when not asked. */
+  specified?: ReadonlySet<string>
 ): UseCaseFinding[] {
   const out: UseCaseFinding[] = [];
   if (catalogText === null) return out;
@@ -341,6 +343,18 @@ export function useCaseCoverage(
     }
   }
   const delivered = new Set([...reqs.values()]);
+  // REQ-633: every use case of the catalog has its specification.
+  if (specified) {
+    for (const c of real) {
+      if (!specified.has(c.id))
+        out.push({
+          code: "use_case_no_spec",
+          message: `${c.id} (${c.name}) has no specification in docs/specs/use-cases/${c.id}.md.`,
+          fix: `Write it through a change: use-cases/${c.id}.md, with ${c.id} under ## MODIFIED Use Cases.`,
+          target: c.id,
+        });
+    }
+  }
   for (const c of real) {
     if (!delivered.has(c.id)) {
       out.push({

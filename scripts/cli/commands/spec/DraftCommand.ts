@@ -346,6 +346,19 @@ export function briefOf(projectDir: string, changeId: string): string | undefine
  * The checklist on one change, as `draft --check` runs it. Shared with
  * `change archive`, which refuses a draft that does not pass it (#57).
  */
+/** A draft's `use-cases/UC-NNN.md`, by id (REQ-632); undefined when it has no use-cases.md. */
+function useCaseSpecsIn(changeDir: string): Record<string, string> | undefined {
+  if (!fs.existsSync(path.join(changeDir, "use-cases.md"))) return undefined;
+  const dir = path.join(changeDir, "use-cases");
+  const out: Record<string, string> = {};
+  if (!fs.existsSync(dir)) return out;
+  for (const f of fs.readdirSync(dir)) {
+    const m = /^(UC-\d+)\.md$/.exec(f);
+    if (m) out[m[1]] = fs.readFileSync(path.join(dir, f), "utf8");
+  }
+  return out;
+}
+
 export function draftReport(
   projectDir: string,
   changeId: string,
@@ -395,6 +408,8 @@ export function draftReport(
       maxRequirements,
       // REQ-626: a draft with use-cases.md names a use case for every requirement.
       useCases: readIf(path.join(changeDir, "use-cases.md")),
+      // REQ-632: the specification of each use case, by id.
+      useCaseSpecs: useCaseSpecsIn(changeDir),
       catalog: readIf(path.join(projectDir, "docs", "specs", "use-cases.md")),
     }),
   };

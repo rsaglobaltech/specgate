@@ -517,6 +517,9 @@
 | REQ-626 | SCN-626a | `features/change-lifecycle/REQ-626.feature` | - | - | - | - | `scripts/cli/commands/spec/DraftCommand.ts` | tests/unit/draft-from-brief.test.ts | Approved |
 | REQ-627 | SCN-627a | `features/change-lifecycle/REQ-627.feature` | - | - | - | - | `scripts/lib/gate-policy.ts` | tests/unit/gate-policy.test.ts, packages/core/test/unit/use-case-coverage.test.ts | Approved |
 | REQ-628 | SCN-628a | `features/change-lifecycle/REQ-628.feature` | - | - | - | - | `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/show-approval-blockers.test.ts | Approved |
+| REQ-631 | SCN-631a | `features/change-lifecycle/REQ-631.feature` | - | - | - | - | `packages/core/src/domain/UseCaseSpec.ts` | packages/core/test/unit/use-case-spec.test.ts, tests/unit/use-cases-archive.test.ts | Approved |
+| REQ-632 | SCN-632a | `features/change-lifecycle/REQ-632.feature` | - | - | - | - | `packages/core/src/domain/DraftChecklist.ts` | tests/unit/draft-from-brief.test.ts | Approved |
+| REQ-633 | SCN-633a | `features/change-lifecycle/REQ-633.feature` | - | - | - | - | `packages/core/src/domain/UseCaseDelta.ts` | packages/core/test/unit/use-case-coverage.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

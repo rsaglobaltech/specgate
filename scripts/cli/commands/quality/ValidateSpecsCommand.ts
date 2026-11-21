@@ -259,7 +259,16 @@ export class ValidateSpecsCommand extends BaseCommand {
         requirement: r.requirement ?? "",
         useCase: r.useCase ?? "",
       })),
-      fs.existsSync(catalog) ? fs.readFileSync(catalog, "utf8") : null
+      fs.existsSync(catalog) ? fs.readFileSync(catalog, "utf8") : null,
+      // REQ-633: the specifications written so far.
+      new Set(
+        (fs.existsSync(path.join(targetDir, "docs", "specs", "use-cases"))
+          ? fs.readdirSync(path.join(targetDir, "docs", "specs", "use-cases"))
+          : []
+        )
+          .map((f) => /^(UC-\d+)\.md$/.exec(f)?.[1])
+          .filter((x): x is string => !!x)
+      )
     ).map((f) =>
       error(f.code, f.message, {
         file: "docs/specs/use-cases.md",

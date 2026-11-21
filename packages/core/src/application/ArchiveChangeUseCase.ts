@@ -14,6 +14,7 @@ import {
   readCatalog,
 } from "../domain/UseCaseDelta";
 import { parseTraceabilityRows } from "../domain/TraceabilityFormat";
+import { checkUseCaseSpec, parseUseCaseSpec } from "../domain/UseCaseSpec";
 
 /** How an archive is planned. */
 export interface ArchiveOptions {
@@ -304,6 +305,46 @@ export class ArchiveChangeUseCase {
           contents: applyUseCaseDelta(catalogSource, ucDelta),
           kind: "use-cases",
         });
+      }
+      // REQ-631: each use case's specification travels with it, checked against
+      // the scenarios of the requirements that name it once the change is applied.
+      const matrixRows = parseTraceabilityRows(traceNow).rows;
+      const specsDir = path.join(p.root, "docs", "specs", "use-cases");
+      for (const u of [...ucDelta.added, ...ucDelta.modified]) {
+        const specFile = path.join(p.change(changeId), "use-cases", `${u.id}.md`);
+        const source = this.repo.readFile(specFile);
+        if (source === null) continue;
+        // The matrix holds one row per requirement; the change's own requirements
+        // carry every scenario they have.
+        const scenarios = new Set<string>(
+          matrixRows
+            .filter((r) => r.useCase === u.id && /^SCN-/.test(r.scenarioId || ""))
+            .map((r) => r.scenarioId as string)
+        );
+        for (const { req } of applied.upserts) {
+          if (String(req.trace?.uc ?? "").trim() !== u.id) continue;
+          for (const sc of req.scenarios || []) if (sc.id) scenarios.add(sc.id);
+        }
+        for (const f of checkUseCaseSpec(parseUseCaseSpec(source), u.id, scenarios)) {
+          plan.diagnostics.push(
+            error(f.code, f.message, {
+              file: path.relative(p.root, specFile),
+              ...(f.line ? { line: f.line } : {}),
+              target: u.id,
+              fix: f.fix,
+            })
+          );
+        }
+        plan.writes.push({
+          file: path.join(specsDir, `${u.id}.md`),
+          contents: source,
+          kind: "use-cases",
+        });
+      }
+      for (const r of ucDelta.removed) {
+        const file = path.join(specsDir, `${r.id}.md`);
+        if (this.repo.readFile(file) !== null)
+          plan.deletes.push({ file, reason: "use_case_removed" });
       }
       plan.totals.useCases = {
         added: ucDelta.added.length,

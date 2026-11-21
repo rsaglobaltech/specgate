@@ -13,6 +13,7 @@
  */
 
 import { checkUseCaseDelta, parseUseCaseDelta, readCatalog } from "./UseCaseDelta";
+import { checkUseCaseSpec, parseUseCaseSpec } from "./UseCaseSpec";
 import type { Diagnostic } from "./Diagnostic";
 import { error, info, warning } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
@@ -66,6 +67,8 @@ export interface DraftFiles {
   readonly useCases?: string;
   /** `docs/specs/use-cases.md`: the use cases already approved. */
   readonly catalog?: string;
+  /** The change's `use-cases/UC-NNN.md`, by id (REQ-632). */
+  readonly useCaseSpecs?: Readonly<Record<string, string>>;
 }
 
 export interface DraftReport {
@@ -965,6 +968,41 @@ export function checkDraft(files: DraftFiles): DraftReport {
           fix: f.fix,
         })
       );
+    }
+    // D15 — each use case the draft adds or modifies has its specification,
+    // whose flows name the scenarios of the requirements that deliver it (REQ-632).
+    if (files.useCaseSpecs !== undefined) {
+      for (const u of [...delta.added, ...delta.modified]) {
+        const source = files.useCaseSpecs[u.id];
+        const specFile = ucFile?.replace(/use-cases\.md$/, `use-cases/${u.id}.md`);
+        if (source === undefined) {
+          status.push(
+            error("D15_no_spec", `${u.id} has no specification.`, {
+              ...(specFile ? { file: specFile } : {}),
+              target: u.id,
+              fix: `Write use-cases/${u.id}.md: overview, actors, preconditions, the main flow and alternatives — each naming its scenario — postconditions and business rules.`,
+            })
+          );
+          continue;
+        }
+        const mine = reqs.filter((r) => String(r.trace.uc ?? "").trim() === u.id);
+        const scenarios = new Set(mine.flatMap((r) => r.scenarios.map((s) => s.id)));
+        // A modified use case some requirement outside the draft delivers:
+        // its scenarios are not all here, so only what the draft has is checked.
+        const whole = u.requirements.every((q) => mine.some((r) => r.id === q));
+        for (const f of checkUseCaseSpec(parseUseCaseSpec(source), u.id, scenarios)) {
+          if (!whole && (f.code === "ucs_unknown_scenario" || f.code === "ucs_scenario_unflowed"))
+            continue;
+          status.push(
+            error(`D15_${f.code}`, f.message, {
+              ...(specFile ? { file: specFile } : {}),
+              ...(f.line ? { line: f.line } : {}),
+              target: u.id,
+              fix: f.fix,
+            })
+          );
+        }
+      }
     }
     for (const u of [...delta.added, ...delta.modified]) {
       for (const req of u.requirements) {

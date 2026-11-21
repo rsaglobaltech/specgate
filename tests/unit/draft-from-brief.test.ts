@@ -77,11 +77,34 @@ const USE_CASES = `# Use cases — draft-bookings
 | --- | --- | --- | --- |
 | UC-900 | Book a court | Member | REQ-002 |
 `;
-const writeUseCases = (dir: string) =>
-  fs.writeFileSync(
-    path.join(dir, "docs", "specs", "changes", "draft-bookings", "use-cases.md"),
-    USE_CASES
-  );
+/** UC-900's specification (REQ-632): its flows name the draft's two scenarios. */
+const UC_SPEC = `# UC-900 — Book a court
+
+## Overview
+
+A member books a free court for one hour.
+
+## Actors
+
+- Member
+
+## Main flow (SCN-002)
+
+1. The member sends POST /api/bookings for the centre court.
+2. The system books it for one hour.
+
+## Alternative flows
+
+### A1 — Booking on the screen (at step 1) (SCN-003)
+
+1. The member opens the courts and taps the centre court.
+`;
+const writeUseCases = (dir: string) => {
+  const change = path.join(dir, "docs", "specs", "changes", "draft-bookings");
+  fs.writeFileSync(path.join(change, "use-cases.md"), USE_CASES);
+  fs.mkdirSync(path.join(change, "use-cases"), { recursive: true });
+  fs.writeFileSync(path.join(change, "use-cases", "UC-900.md"), UC_SPEC);
+};
 
 const git = (dir: string, ...a: string[]): SpawnSyncReturns<string> =>
   spawnSync("git", ["-C", dir, ...a], { encoding: "utf8" });
@@ -259,6 +282,7 @@ const prompt = process.argv[2] ? fs.readFileSync(process.argv[2], "utf8") : fs.r
 if (!/Draft the bookings module/.test(prompt) || !/assumptions\\.md/.test(prompt)) process.exit(3);
 fs.writeFileSync("docs/specs/changes/draft-bookings/specs/bookings/spec.md", process.env.DRAFT_TEXT);
 if (process.env.USE_CASES_TEXT) fs.writeFileSync("docs/specs/changes/draft-bookings/use-cases.md", process.env.USE_CASES_TEXT);
+if (process.env.UC_SPEC_TEXT) { fs.mkdirSync("docs/specs/changes/draft-bookings/use-cases", { recursive: true }); fs.writeFileSync("docs/specs/changes/draft-bookings/use-cases/UC-900.md", process.env.UC_SPEC_TEXT); }
 fs.writeFileSync("stray.txt", "not the agent's to write\\n");
 fs.appendFileSync("docs/brief.md", "\\nThe agent rewrote the brief.\\n");
 `;
@@ -292,7 +316,12 @@ for (const [label, command] of AGENT_COMMANDS) {
     const r = spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", command(stub)], {
       cwd: dir,
       encoding: "utf8",
-      env: { ...process.env, DRAFT_TEXT: DRAFT(), USE_CASES_TEXT: USE_CASES },
+      env: {
+        ...process.env,
+        DRAFT_TEXT: DRAFT(),
+        USE_CASES_TEXT: USE_CASES,
+        UC_SPEC_TEXT: UC_SPEC,
+      },
     });
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /Undone — the agent wrote outside the draft: .*docs\/brief\.md/);
@@ -680,7 +709,7 @@ test("after the agent, the next steps are numbered and the brief's progress is s
   const r = spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", `node ${stub}`], {
     cwd: dir,
     encoding: "utf8",
-    env: { ...process.env, DRAFT_TEXT: DRAFT(), USE_CASES_TEXT: USE_CASES },
+    env: { ...process.env, DRAFT_TEXT: DRAFT(), USE_CASES_TEXT: USE_CASES, UC_SPEC_TEXT: UC_SPEC },
   });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /─{20}/, "a rule separates the agent's output from Specgate's");
@@ -834,4 +863,36 @@ test("REQ-626 SCN-626b: a requirement with no use case, or one its use case does
   fs.writeFileSync(spec, DRAFT());
   const ready = cli("draft", "bookings");
   assert.match(ready.stdout, /Ready to review/);
+});
+
+test("REQ-632 SCN-632a: DRAFTING.md asks for each use case's specification, its flows naming the scenarios", (t: TestContext) => {
+  const { dir, cli } = project(t);
+  assert.equal(cli("draft", "bookings").status, 0);
+  const guide = fs.readFileSync(path.join(change(dir), "DRAFTING.md"), "utf8");
+  assert.match(guide, /## 1c\. Each use case's specification — `use-cases\/UC-NNN\.md`/);
+  assert.match(guide, /## Main flow \(SCN-\d+\)/);
+  assert.match(guide, /### A1 — <what goes otherwise> \(at step 2\) \(SCN-NNN\)/);
+});
+
+test("REQ-632 SCN-632b: a use case with no specification, or a scenario no flow names, keeps the draft from ready", (t: TestContext) => {
+  const { dir, cli } = project(t);
+  cli("draft", "bookings");
+  fs.writeFileSync(path.join(change(dir), "specs", "bookings", "spec.md"), DRAFT());
+  writeUseCases(dir);
+  const spec = path.join(change(dir), "use-cases", "UC-900.md");
+  fs.rmSync(spec);
+  const none = JSON.parse(cli("draft", "bookings", "--json").stdout);
+  assert.ok(
+    (none.status || []).some((d: { code: string }) => d.code === "D15_no_spec"),
+    JSON.stringify(none.status)
+  );
+  fs.writeFileSync(spec, UC_SPEC.replace(/\n## Alternative flows[\s\S]*$/, "\n"));
+  const half = JSON.parse(cli("draft", "bookings", "--json").stdout);
+  const unflowed = (half.status || []).find(
+    (d: { code: string }) => d.code === "D15_ucs_scenario_unflowed"
+  );
+  assert.ok(unflowed, JSON.stringify(half.status));
+  assert.match(unflowed.message, /SCN-003/);
+  fs.writeFileSync(spec, UC_SPEC);
+  assert.match(cli("draft", "bookings").stdout, /Ready to review/);
 });
