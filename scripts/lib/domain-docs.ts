@@ -6,6 +6,12 @@
  * files they need and writes the two generated ones.
  */
 
+import { readCatalog } from "../../packages/core/src/domain/UseCaseDelta";
+import { parseUseCaseSpec } from "../../packages/core/src/domain/UseCaseSpec";
+import {
+  renderUseCaseDiagrams,
+  renderUseCasesPuml,
+} from "../../packages/core/src/domain/UseCaseDiagrams";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { TermCandidate } from "../../packages/core/src/domain/Glossary";
@@ -297,6 +303,34 @@ export function actorFindings(dir: string): Diagnostic[] {
     );
 }
 
+export const USE_CASE_DIAGRAMS_FILE = "docs/specs/use-case-diagrams.md";
+export const USE_CASES_PUML_FILE = "docs/specs/use-cases.puml";
+
+/** The catalog's own use cases and their specifications (REQ-634). */
+function useCaseSources(dir: string) {
+  const cases = readCatalog(read(dir, "docs/specs/use-cases.md")).filter((c) => !c.template);
+  const specsDir = path.join(dir, "docs", "specs", "use-cases");
+  const specs = fs.existsSync(specsDir)
+    ? fs
+        .readdirSync(specsDir)
+        .filter((f) => /^UC-\d+\.md$/.test(f))
+        .map((f) => parseUseCaseSpec(fs.readFileSync(path.join(specsDir, f), "utf8")))
+    : [];
+  return { cases, specs };
+}
+
+/** `docs/specs/use-case-diagrams.md`, or null with no use case of the project's own (REQ-634). */
+export function generatedUseCaseDiagrams(dir: string): string | null {
+  const { cases, specs } = useCaseSources(dir);
+  return renderUseCaseDiagrams(cases, specs);
+}
+
+/** `docs/specs/use-cases.puml`, or null with no use case of the project's own (REQ-634). */
+export function generatedUseCasesPuml(dir: string): string | null {
+  const { cases, specs } = useCaseSources(dir);
+  return renderUseCasesPuml(cases, specs);
+}
+
 /** `model_stale` / `actors_stale` for a committed copy that differs from its sources. */
 export function staleDiagramFindings(dir: string): Diagnostic[] {
   const out: Diagnostic[] = [];
@@ -313,6 +347,8 @@ export function staleDiagramFindings(dir: string): Diagnostic[] {
   };
   check(MODEL_FILE, generatedModel(dir), "model_stale");
   check(ACTORS_FILE, generatedActors(dir), "actors_stale");
+  check(USE_CASE_DIAGRAMS_FILE, generatedUseCaseDiagrams(dir), "use_case_diagrams_stale");
+  check(USE_CASES_PUML_FILE, generatedUseCasesPuml(dir), "use_case_diagrams_stale");
   return out;
 }
 
@@ -322,6 +358,8 @@ export function refreshDomainDiagrams(dir: string): string[] {
   for (const [file, next] of [
     [MODEL_FILE, generatedModel(dir)],
     [ACTORS_FILE, generatedActors(dir)],
+    [USE_CASE_DIAGRAMS_FILE, generatedUseCaseDiagrams(dir)],
+    [USE_CASES_PUML_FILE, generatedUseCasesPuml(dir)],
   ] as const) {
     if (next === null) continue;
     if (read(dir, file) === next) continue;

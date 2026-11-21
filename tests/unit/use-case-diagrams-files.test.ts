@@ -1,0 +1,60 @@
+/**
+ * REQ-634: `check` and `archive` regenerate docs/specs/use-case-diagrams.md
+ * and docs/specs/use-cases.puml; `validate` reports a copy edited by hand.
+ */
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { refreshDomainDiagrams, staleDiagramFindings } = require("../../scripts/lib/domain-docs");
+
+function project(): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-ucd-"));
+  fs.mkdirSync(path.join(dir, "docs", "specs", "use-cases"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "docs/specs/use-cases.md"),
+    "# Use Cases\n\n| ID | Use Case | Actor | Requirement | Command/Query | Aggregate | Emits | Status |\n|---|---|---|---|---|---|---|---|\n| UC-004 | Create a child profile | Tutor | REQ-012 | - | - | - | Approved |\n"
+  );
+  fs.writeFileSync(
+    path.join(dir, "docs/specs/use-cases/UC-004.md"),
+    "# UC-004 — Create a child profile\n\n## Overview\n\nA profile.\n\n## Main flow (SCN-012)\n\n1. The tutor presses New profile.\n2. The system saves it.\n"
+  );
+  return dir;
+}
+
+test("REQ-634 SCN-634c: regenerated from the catalog and the specifications; a copy edited by hand is reported", () => {
+  const dir = project();
+  try {
+    const written = refreshDomainDiagrams(dir);
+    assert.ok(written.includes("docs/specs/use-case-diagrams.md"), JSON.stringify(written));
+    assert.ok(written.includes("docs/specs/use-cases.puml"), JSON.stringify(written));
+    const md = fs.readFileSync(path.join(dir, "docs/specs/use-case-diagrams.md"), "utf8");
+    assert.match(md, /## UC-004 — Create a child profile/);
+    assert.deepEqual(staleDiagramFindings(dir), []);
+    assert.deepEqual(refreshDomainDiagrams(dir), [], "nothing to rewrite the second time");
+    fs.appendFileSync(path.join(dir, "docs/specs/use-cases.puml"), "' hand edit\n");
+    assert.deepEqual(
+      staleDiagramFindings(dir).map((d: { code: string; file: string }) => `${d.code}:${d.file}`),
+      ["use_case_diagrams_stale:docs/specs/use-cases.puml"]
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("REQ-634: a project whose catalog holds only the template draws nothing", () => {
+  const dir = project();
+  try {
+    fs.writeFileSync(
+      path.join(dir, "docs/specs/use-cases.md"),
+      "# Use Cases\n\n| ID | Use Case | Actor | Requirement | Command/Query | Aggregate | Emits | Status |\n|---|---|---|---|---|---|---|---|\n| UC-001 | Describe the first use case | Primary actor | REQ-TBD | - | - | - | Draft |\n"
+    );
+    assert.deepEqual(
+      refreshDomainDiagrams(dir).filter((f: string) => f.includes("use-case")),
+      []
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
