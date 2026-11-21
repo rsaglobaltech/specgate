@@ -44,6 +44,8 @@ test("REQ-622 SCN-622b: a name with a comma, a colon or a brace is written in do
   assert.equal(yamlName("Padre, madre o tutor"), '"Padre, madre o tutor"');
   assert.equal(yamlName("Admin: global"), '"Admin: global"');
   assert.equal(yamlName("Niño"), "Niño");
+  assert.equal(yamlName('Say "hi"'), '"Say \\"hi\\""');
+  assert.equal(yamlName("C:\\path"), '"C:\\\\path"', "a backslash is escaped too");
   const written = brief(`{ name: ${yamlName("Padre, madre o tutor")}, surfaces: [web] }`);
   assert.deepEqual(actorSurfaces(written).get("padre, madre o tutor"), ["web"]);
 });

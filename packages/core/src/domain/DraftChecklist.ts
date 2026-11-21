@@ -111,7 +111,9 @@ export function actorName(raw: string): string {
 
 /** A name as YAML reads it back: in double quotes when it holds a comma, a colon, a brace or a bracket. */
 export function yamlName(name: string): string {
-  return /[,:{}[\]#"']/.test(name) ? `"${name.replace(/"/g, '\\"')}"` : name;
+  return /[,:{}[\]#"'\\]/.test(name)
+    ? `"${name.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
+    : name;
 }
 
 export function actorSurfaces(brief: string): Map<string, string[]> {
