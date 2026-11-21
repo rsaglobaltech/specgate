@@ -97,15 +97,35 @@ function frontMatterFields(brief: string): string | null {
 }
 
 /** `actors: [{ name: Worker, surfaces: [mobile] }]` → Worker → [mobile]. */
+/**
+ * An actor's name in \`{ name: … }\` (#541): in double or single quotes — where a
+ * comma belongs to the name — or bare, up to the first comma or brace.
+ */
+export const ACTOR_NAME = String.raw`("[^"]*"|'[^']*'|[^,}"']+?)`;
+
+/** The name as written, without the quotes that hold it. */
+export function actorName(raw: string): string {
+  const t = raw.trim();
+  return /^(["']).*\1$/.test(t) ? t.slice(1, -1).trim() : t;
+}
+
+/** A name as YAML reads it back: in double quotes when it holds a comma, a colon, a brace or a bracket. */
+export function yamlName(name: string): string {
+  return /[,:{}[\]#"']/.test(name) ? `"${name.replace(/"/g, '\\"')}"` : name;
+}
+
 export function actorSurfaces(brief: string): Map<string, string[]> {
   const out = new Map<string, string[]>();
   const fields = frontMatterFields(brief);
   if (fields === null) return out;
-  const re = /\{\s*name:\s*([^,}]+?)\s*,\s*surfaces:\s*\[([^\]]*)\]\s*\}/g;
+  const re = new RegExp(
+    String.raw`\{\s*name:\s*${ACTOR_NAME}\s*,\s*surfaces:\s*\[([^\]]*)\]\s*\}`,
+    "g"
+  );
   let m: RegExpExecArray | null;
   while ((m = re.exec(fields)) !== null) {
     out.set(
-      m[1].trim().toLowerCase(),
+      actorName(m[1]).toLowerCase(),
       m[2]
         .split(",")
         .map((s) => s.trim().toLowerCase())

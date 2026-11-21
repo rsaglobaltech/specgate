@@ -10,6 +10,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { TermCandidate } from "../../packages/core/src/domain/Glossary";
 import { frontMatter } from "../draft/brief-setup";
+import { ACTOR_NAME, actorName } from "../../packages/core/src/domain/DraftChecklist";
 import { readDerivationSources } from "../../packages/core/src/infrastructure/DerivedMatrixSources";
 import { parseTraceabilityRows } from "../../packages/core/src/domain/TraceabilityFormat";
 import {
@@ -191,7 +192,8 @@ export function briefActors(dir: string): string[] {
   const fm = brief ? frontMatter(brief) : null;
   if (!fm) return [];
   const names = new Set<string>();
-  for (const m of fm.matchAll(/\{\s*name:\s*([^,}]+?)\s*[,}]/g)) names.add(m[1].trim());
+  for (const m of fm.matchAll(new RegExp(String.raw`\{\s*name:\s*${ACTOR_NAME}\s*[,}]`, "g")))
+    names.add(actorName(m[1]));
   const bare = /^actors:\s*\[([^\]{]*)\]\s*$/m.exec(fm);
   if (bare) for (const a of bare[1].split(",")) if (a.trim()) names.add(a.trim());
   return [...names].filter((n) => !/<[^>]+>/.test(n));

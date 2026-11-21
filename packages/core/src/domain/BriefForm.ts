@@ -13,7 +13,7 @@
  * (`propose --from-brief --form`), the API and the old studio all use it.
  */
 
-import { briefModules } from "./DraftChecklist";
+import { ACTOR_NAME, actorName, briefModules, yamlName } from "./DraftChecklist";
 import { isPlaceholder, moduleKey, readBriefBody } from "./BriefCards";
 import type { ModuleSection } from "./BriefCards";
 
@@ -182,8 +182,12 @@ export function readBriefForm(text: string): BriefFormData {
   const actors: BriefFormActor[] = [];
   if (fm) {
     for (let i = fm.open + 1; i < fm.close; i += 1) {
-      for (const m of lines[i].matchAll(/\{\s*name:\s*([^,}]+?)\s*,\s*surfaces:\s*\[([^\]]*)\]/g)) {
-        const name = unquote(m[1]);
+      const actorRe = new RegExp(
+        String.raw`\{\s*name:\s*${ACTOR_NAME}\s*,\s*surfaces:\s*\[([^\]]*)\]`,
+        "g"
+      );
+      for (const m of lines[i].matchAll(actorRe)) {
+        const name = actorName(m[1]);
         // A template's `<actor>` is a blank, not an actor.
         if (name.includes("<")) continue;
         actors.push({ name, surfaces: listOf(m[2]), line: i + 1 });
@@ -454,7 +458,9 @@ export function writeBriefForm(text: string, input: BriefFormInput): string {
       ),
       [
         "actors:",
-        ...actors.map((a) => `  - { name: ${a.name}, surfaces: [${a.surfaces.join(", ")}] }`),
+        ...actors.map(
+          (a) => `  - { name: ${yamlName(a.name)}, surfaces: [${a.surfaces.join(", ")}] }`
+        ),
       ],
     ],
     ["modules", !same(keys, current.frontMatter.modules.value), [`modules: [${keys.join(", ")}]`]],

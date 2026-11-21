@@ -23,7 +23,7 @@
 
 import type { Diagnostic } from "./Diagnostic";
 import { error, info, warning } from "./Diagnostic";
-import { actorSurfaces, briefModules, unmeasured } from "./DraftChecklist";
+import { ACTOR_NAME, actorName, actorSurfaces, briefModules, unmeasured } from "./DraftChecklist";
 import { withoutComments, withoutQuoted } from "./QuotedText";
 
 export { withoutComments };
@@ -522,12 +522,16 @@ export function checkBriefBody(brief: string, project: ProjectSurfaces = {}): Di
   // B13 — an actor on a surface the project does not have (REQ-245): every
   // draft would owe scenarios nobody can build yet.
   if (project.mobileApp === false) {
-    for (const m of brief.matchAll(/\{\s*name:\s*([^,}]+?)\s*,\s*surfaces:\s*\[([^\]]*)\]\s*\}/g)) {
+    const actorRe = new RegExp(
+      String.raw`\{\s*name:\s*${ACTOR_NAME}\s*,\s*surfaces:\s*\[([^\]]*)\]\s*\}`,
+      "g"
+    );
+    for (const m of brief.matchAll(actorRe)) {
       if (!/\bmobile\b/i.test(m[2])) continue;
       out.push(
         warning(
           "B13_surface_missing",
-          `${m[1].trim()} uses mobile, and the project has no mobile app.`,
+          `${actorName(m[1])} uses mobile, and the project has no mobile app.`,
           {
             target: m[1].trim(),
             fix: "Give the actor the surfaces the project has (web), or add the mobile app before drafting their scenarios.",

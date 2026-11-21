@@ -16,7 +16,11 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { actorSurfaces, briefModules } from "../../packages/core/src/domain/DraftChecklist";
+import {
+  actorName,
+  actorSurfaces,
+  briefModules,
+} from "../../packages/core/src/domain/DraftChecklist";
 
 /** The places D3 knows how to check: an HTTP call, or a screen. */
 export const SURFACES = ["api", "web", "mobile", "desktop"] as const;
@@ -192,7 +196,9 @@ export function checkFrontMatter(brief: string): BriefProblem[] {
   }
 
   // Every `name:` is an actor; the checklist only reads `{ name: X, surfaces: [..] }`.
-  const named = [...text.matchAll(/\bname:\s*([^,}\n]+)/g)].map((m) => m[1].trim());
+  const named = [
+    ...text.matchAll(new RegExp(String.raw`\bname:\s*("[^"\n]*"|'[^'\n]*'|[^,}\n]+)`, "g")),
+  ].map((m) => actorName(m[1]));
   const actors = actorSurfaces(brief);
   if (named.length === 0 && !misshapen.has("actors")) {
     out.push({
