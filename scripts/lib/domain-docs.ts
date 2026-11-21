@@ -7,12 +7,14 @@
  */
 
 import {
+  applyStateMachineDelta,
   checkStateMachine,
   parseStateMachine,
+  parseStateMachineDelta,
   renderStateMachinePuml,
   type StateMachine,
 } from "../../packages/core/src/domain/StateMachine";
-import { readCatalog } from "../../packages/core/src/domain/UseCaseDelta";
+import { parseUseCaseDelta, readCatalog } from "../../packages/core/src/domain/UseCaseDelta";
 import { parseUseCaseSpec } from "../../packages/core/src/domain/UseCaseSpec";
 import {
   activityChart,
@@ -331,11 +333,56 @@ function useCaseSources(dir: string) {
  * The use cases for `status --json` (REQ-635): each with its specification and
  * its activity in Mermaid, and the use-case diagram; null with no catalog.
  */
+/** The open changes (not archived), each folder with its id (REQ-646). */
+function openChanges(dir: string): Array<{ id: string; at: string }> {
+  const root = path.join(dir, "docs", "specs", "changes");
+  if (!fs.existsSync(root)) return [];
+  return fs
+    .readdirSync(root, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && d.name !== "archive")
+    .map((d) => ({ id: d.name, at: path.join(root, d.name) }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/**
+ * REQ-646: the use cases open changes add or modify, before archive brings
+ * them into the catalog — each with the change, its specification and activity.
+ */
+function proposedUseCases(dir: string) {
+  return openChanges(dir).flatMap(({ id: change, at }) => {
+    const file = path.join(at, "use-cases.md");
+    if (!fs.existsSync(file)) return [];
+    const delta = parseUseCaseDelta(fs.readFileSync(file, "utf8"));
+    return [
+      ...delta.added.map((u) => ({ u, kind: "added" as const })),
+      ...delta.modified.map((u) => ({ u, kind: "modified" as const })),
+    ].map(({ u, kind }) => {
+      const specFile = path.join(at, "use-cases", `${u.id}.md`);
+      const spec = fs.existsSync(specFile)
+        ? parseUseCaseSpec(fs.readFileSync(specFile, "utf8"))
+        : null;
+      return {
+        id: u.id,
+        name: u.name,
+        actor: u.actor,
+        requirements: u.requirements,
+        file: spec ? path.relative(dir, specFile).split(path.sep).join("/") : null,
+        spec,
+        activity: spec ? activityChart(spec).join("\n") : null,
+        change,
+        kind,
+      };
+    });
+  });
+}
+
 export function projectUseCases(dir: string) {
-  if (read(dir, "docs/specs/use-cases.md") === null) return null;
+  const proposed = proposedUseCases(dir);
+  if (read(dir, "docs/specs/use-cases.md") === null && proposed.length === 0) return null;
   const { cases, specs } = useCaseSources(dir);
   const byId = new Map(specs.map((s) => [s.id, s]));
   return {
+    proposed,
     diagram: cases.length ? useCaseChart(cases).join("\n") : null,
     cases: cases.map((c) => {
       const spec = byId.get(c.id) ?? null;
@@ -405,18 +452,52 @@ export function stateMachineFindings(dir: string, requirements: ReadonlySet<stri
   );
 }
 
-/** The state machines for `status --json` (REQ-639); null when the project has none. */
+/**
+ * The state machines for `status --json` (REQ-639); null when the project has
+ * none. REQ-646: a machine an open change writes is there too, as it will be
+ * once archived, with the change that proposes it (`proposed`, else null).
+ */
 export function projectStateMachines(dir: string) {
   const sources = stateMachineSources(dir);
-  if (sources.length === 0) return null;
-  return sources.map(({ file, machine }) => ({
+  const out = sources.map(({ file, machine }) => ({
     name: machine.name,
     file,
     puml: file.replace(/\.md$/, ".puml"),
     states: machine.states,
     transitions: machine.transitions,
     forbidden: machine.forbidden,
+    proposed: null as string | null,
   }));
+  for (const { id: change, at } of openChanges(dir)) {
+    const deltas = path.join(at, "state-machines");
+    if (!fs.existsSync(deltas)) continue;
+    for (const f of fs
+      .readdirSync(deltas)
+      .filter((x) => x.endsWith(".md"))
+      .sort()) {
+      const delta = parseStateMachineDelta(fs.readFileSync(path.join(deltas, f), "utf8"));
+      const baseFile = path.join(dir, STATE_MACHINES_DIR, f);
+      const base = fs.existsSync(baseFile)
+        ? parseStateMachine(fs.readFileSync(baseFile, "utf8"))
+        : null;
+      const after = applyStateMachineDelta(base, delta);
+      if (after === null) continue;
+      const machine = parseStateMachine(after);
+      const entry = {
+        name: machine.name,
+        file: path.relative(dir, path.join(deltas, f)).split(path.sep).join("/"),
+        puml: `${STATE_MACHINES_DIR}/${f.replace(/\.md$/, ".puml")}`,
+        states: machine.states,
+        transitions: machine.transitions,
+        forbidden: machine.forbidden,
+        proposed: change,
+      };
+      const i = out.findIndex((m) => m.name === machine.name);
+      if (i >= 0) out[i] = entry;
+      else out.push(entry);
+    }
+  }
+  return out.length ? out : null;
 }
 
 /** `model_stale` / `actors_stale` for a committed copy that differs from its sources. */
