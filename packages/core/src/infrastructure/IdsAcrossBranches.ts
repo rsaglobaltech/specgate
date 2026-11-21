@@ -14,7 +14,7 @@ const CHANGES = "docs/specs/changes";
 /** Refs per `git grep` call: a long branch list stays under the argument limit. */
 const BATCH = 200;
 
-export function highestOnOtherBranches(projectDir: string, prefix: "REQ" | "SCN"): number {
+export function highestOnOtherBranches(projectDir: string, prefix: "REQ" | "SCN" | "UC"): number {
   const refs = spawnSync(
     "git",
     ["-C", projectDir, "for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes"],

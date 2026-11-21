@@ -29,6 +29,8 @@ export interface DraftingGuideInput {
   actors: Map<string, string[]>;
   /** The module's own section of the brief, when it has one (ADR-0038). */
   cards?: ModuleCards;
+  /** The use case ids reserved for this draft (REQ-626); none for an older draft. */
+  ucRange?: [string, string];
 }
 
 /** A module's section of the brief, as `DRAFTING.md` hands it over. */
@@ -171,7 +173,9 @@ export function draftingGuide(i: DraftingGuideInput): string {
     "",
     `### Requirement: ${i.reqRange[0]} — <a short name>`,
     "",
-    `<!-- specgate:trace actor=${actor} kind=functional -->`,
+    i.ucRange
+      ? `<!-- specgate:trace actor=${actor} kind=functional uc=${i.ucRange[0]} -->`
+      : `<!-- specgate:trace actor=${actor} kind=functional -->`,
     "",
     "The system SHALL <what it does, observably>.",
     "",
@@ -193,6 +197,30 @@ export function draftingGuide(i: DraftingGuideInput): string {
     "",
     ...who,
     "",
+    ...(i.ucRange
+      ? [
+          "## 1b. The use cases — `use-cases.md`",
+          "",
+          "Group the requirements by what an actor achieves: one use case each, a",
+          'name an actor would say ("Create a child profile"), its actor from the',
+          "brief, and every requirement that delivers it. Each requirement names its",
+          "use case with `uc=` in its trace, and the use case lists it back.",
+          "",
+          "```markdown",
+          "## ADDED Use Cases",
+          "",
+          "| ID | Use Case | Actor | Requirements |",
+          "| --- | --- | --- | --- |",
+          `| ${i.ucRange[0]} | <what the actor achieves> | ${actor} | ${i.reqRange[0]} |`,
+          "```",
+          "",
+          `- Ids from ${i.ucRange[0]} to ${i.ucRange[1]}; a use case the catalog`,
+          "  (`docs/specs/use-cases.md`) has already goes under `## MODIFIED Use Cases`",
+          "  with its row as it becomes, never added again.",
+          "- A use case no requirement delivers does not belong here.",
+          "",
+        ]
+      : []),
     "## 2. What the brief does not say — `assumptions.md`",
     "",
     "Every value in a scenario that the brief does not give — a limit, a status",

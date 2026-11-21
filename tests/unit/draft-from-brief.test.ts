@@ -49,7 +49,7 @@ const DRAFT = (extra = "") => `# Delta — bookings
 
 ### Requirement: REQ-002 — A member books a court for one hour
 
-<!-- specgate:trace actor=Member kind=functional -->
+<!-- specgate:trace actor=Member kind=functional uc=UC-900 -->
 
 The system SHALL let a member book a free court for one hour.
 
@@ -67,6 +67,21 @@ The system SHALL let a member book a free court for one hour.
 - WHEN the member opens the courts and taps the centre court
 - THEN the member sees the booking for one hour
 `;
+
+/** The draft's use case (REQ-626): UC-900 delivered by REQ-002. */
+const USE_CASES = `# Use cases — draft-bookings
+
+## ADDED Use Cases
+
+| ID | Use Case | Actor | Requirements |
+| --- | --- | --- | --- |
+| UC-900 | Book a court | Member | REQ-002 |
+`;
+const writeUseCases = (dir: string) =>
+  fs.writeFileSync(
+    path.join(dir, "docs", "specs", "changes", "draft-bookings", "use-cases.md"),
+    USE_CASES
+  );
 
 const git = (dir: string, ...a: string[]): SpawnSyncReturns<string> =>
   spawnSync("git", ["-C", dir, ...a], { encoding: "utf8" });
@@ -183,6 +198,7 @@ test("draft <module> again: the placeholder, then findings, then ready", (t: Tes
   );
 
   fs.writeFileSync(spec, DRAFT());
+  writeUseCases(dir);
   const green = cli("draft", "bookings");
   assert.equal(green.status, 0, green.stdout);
   assert.match(green.stdout, /Ready to review/);
@@ -200,6 +216,7 @@ test("archiving a ready draft needs no task boxes, and points at the next module
     path.join(change(dir), "specs", "bookings", "spec.md"),
     DRAFT().replace("<!-- specgate:trace actor=", "<!-- specgate:trace status=Implemented actor=")
   );
+  writeUseCases(dir);
   const archived = cli("change", "archive", "draft-bookings");
   assert.equal(archived.status, 0, archived.stdout + archived.stderr);
   assert.match(archived.stdout, /➜ {2}specgate propose --from-brief\n/);
@@ -241,6 +258,7 @@ const fs = require("fs");
 const prompt = process.argv[2] ? fs.readFileSync(process.argv[2], "utf8") : fs.readFileSync(0, "utf8");
 if (!/Draft the bookings module/.test(prompt) || !/assumptions\\.md/.test(prompt)) process.exit(3);
 fs.writeFileSync("docs/specs/changes/draft-bookings/specs/bookings/spec.md", process.env.DRAFT_TEXT);
+if (process.env.USE_CASES_TEXT) fs.writeFileSync("docs/specs/changes/draft-bookings/use-cases.md", process.env.USE_CASES_TEXT);
 fs.writeFileSync("stray.txt", "not the agent's to write\\n");
 fs.appendFileSync("docs/brief.md", "\\nThe agent rewrote the brief.\\n");
 `;
@@ -274,7 +292,7 @@ for (const [label, command] of AGENT_COMMANDS) {
     const r = spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", command(stub)], {
       cwd: dir,
       encoding: "utf8",
-      env: { ...process.env, DRAFT_TEXT: DRAFT() },
+      env: { ...process.env, DRAFT_TEXT: DRAFT(), USE_CASES_TEXT: USE_CASES },
     });
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /Undone — the agent wrote outside the draft: .*docs\/brief\.md/);
@@ -311,6 +329,7 @@ test("status reads an open draft where it is, and counts it as drafted once read
       '<!-- specgate:trace status="Needs Clarification" actor='
     )
   );
+  writeUseCases(dir);
   fs.writeFileSync(
     path.join(change(dir), "questions.md"),
     "# Questions\n\n| # | Question | Blocks | Answer |\n|---|---|---|---|\n" +
@@ -661,7 +680,7 @@ test("after the agent, the next steps are numbered and the brief's progress is s
   const r = spawnSync(process.execPath, [CLI, "draft", "bookings", "--agent", `node ${stub}`], {
     cwd: dir,
     encoding: "utf8",
-    env: { ...process.env, DRAFT_TEXT: DRAFT() },
+    env: { ...process.env, DRAFT_TEXT: DRAFT(), USE_CASES_TEXT: USE_CASES },
   });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /─{20}/, "a rule separates the agent's output from Specgate's");
@@ -779,4 +798,40 @@ test("REQ-248 SCN-248a: a log edited by hand while the agent drafts", () => {
   } finally {
     fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10 });
   }
+});
+
+test("REQ-626 SCN-626a: a draft opens with use-cases.md and a reserved uc_range, and DRAFTING.md asks for uc= and the use cases", (t: TestContext) => {
+  const { dir, cli } = project(t);
+  assert.equal(cli("draft", "bookings").status, 0);
+  const yaml = fs.readFileSync(path.join(change(dir), "change.yaml"), "utf8");
+  const range = /^uc_range: \[(UC-\d+), (UC-\d+)\]$/m.exec(yaml);
+  assert.ok(range, yaml);
+  const useCases = fs.readFileSync(path.join(change(dir), "use-cases.md"), "utf8");
+  assert.match(useCases, /## ADDED Use Cases\n\n\| ID \| Use Case \| Actor \| Requirements \|/);
+  const guide = fs.readFileSync(path.join(change(dir), "DRAFTING.md"), "utf8");
+  assert.match(guide, new RegExp(`uc=${range![1]}`));
+  assert.match(guide, /## 1b\. The use cases — `use-cases\.md`/);
+});
+
+test("REQ-626 SCN-626b: a requirement with no use case, or one its use case does not list, keeps the draft from ready", (t: TestContext) => {
+  const { dir, cli } = project(t);
+  cli("draft", "bookings");
+  const spec = path.join(change(dir), "specs", "bookings", "spec.md");
+  fs.writeFileSync(spec, DRAFT().replace(" uc=UC-900", ""));
+  writeUseCases(dir);
+  const none = JSON.parse(cli("draft", "bookings", "--json").stdout);
+  const codes = (none.status || []).map((d: { code: string }) => d.code);
+  assert.ok(codes.includes("D14_no_use_case"), JSON.stringify(codes));
+  assert.ok(codes.includes("D14_use_case_mismatch"), "UC-900 lists REQ-002, which names none");
+
+  fs.writeFileSync(spec, DRAFT().replace("uc=UC-900", "uc=UC-901"));
+  const unknown = JSON.parse(cli("draft", "bookings", "--json").stdout);
+  assert.ok(
+    (unknown.status || []).some((d: { code: string }) => d.code === "D14_unknown_use_case"),
+    JSON.stringify(unknown.status)
+  );
+
+  fs.writeFileSync(spec, DRAFT());
+  const ready = cli("draft", "bookings");
+  assert.match(ready.stdout, /Ready to review/);
 });

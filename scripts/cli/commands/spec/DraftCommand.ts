@@ -53,6 +53,7 @@ import { templateDelta } from "../../../../packages/core/src/domain/ChangeTempla
 import { highestOnOtherBranches } from "../../../../packages/core/src/infrastructure/IdsAcrossBranches";
 import { resolveProfileAgent } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import { phrases } from "../../../../packages/core/src/infrastructure/DiskLanguageRepository";
+import { templateUseCases } from "../../../../packages/core/src/domain/UseCaseDelta";
 import { draftingGuide, draftingPrompt } from "../../../draft/drafting-guide";
 import type { ModuleCards } from "../../../draft/drafting-guide";
 import {
@@ -392,6 +393,9 @@ export function draftReport(
       specs: projectSpecs(projectDir),
       questions: readIf(path.join(changeDir, "questions.md")),
       maxRequirements,
+      // REQ-626: a draft with use-cases.md names a use case for every requirement.
+      useCases: readIf(path.join(changeDir, "use-cases.md")),
+      catalog: readIf(path.join(projectDir, "docs", "specs", "use-cases.md")),
     }),
   };
 }
@@ -598,6 +602,46 @@ export function nextScenario(projectDir: string): string {
   return `SCN-${String(max + 1).padStart(3, "0")}`;
 }
 
+/**
+ * The next free UC number (REQ-626): past every use case the catalog, a
+ * change's use-cases.md or a change's reserved `uc_range` names, here or on
+ * another branch.
+ */
+export function nextUseCase(projectDir: string): string {
+  let max = 0;
+  const walk = (dir: string) => {
+    let entries: fs.Dirent[] = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (e.name === "use-cases.md" || e.name === "change.yaml" || e.name.endsWith(".md")) {
+        for (const m of fs.readFileSync(full, "utf8").matchAll(/\bUC-(\d+)\b/g)) {
+          max = Math.max(max, Number(m[1]));
+        }
+      }
+    }
+  };
+  walk(path.join(projectDir, "docs", "specs"));
+  max = Math.max(max, highestOnOtherBranches(projectDir, "UC"));
+  return `UC-${String(max + 1).padStart(3, "0")}`;
+}
+
+/** As many use case ids as requirement ids, from the next free one (REQ-626). */
+export function reserveUseCaseRange(
+  projectDir: string,
+  reqRange: [string, string]
+): [string, string] {
+  const first = Number(nextUseCase(projectDir).slice(3));
+  const count = Number(reqRange[1].slice(4)) - Number(reqRange[0].slice(4)) + 1;
+  const id = (n: number) => `UC-${String(n).padStart(3, "0")}`;
+  return [id(first), id(first + Math.max(1, count) - 1)];
+}
+
 /** Three scenario ids per requirement id, from the next free one (REQ-157). */
 export function reserveScenarioRange(
   projectDir: string,
@@ -658,6 +702,7 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
   const dir = path.join(projectDir, CHANGES, changeId);
   const reqRange = reserveReqRange(projectDir, o.reserve) as [string, string];
   const scnRange = reserveScenarioRange(projectDir, reqRange);
+  const ucRange = reserveUseCaseRange(projectDir, reqRange);
   const config = {
     ...DEFAULT_CONFIG,
     schema: LAYERED_SCHEMA,
@@ -682,6 +727,7 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
       reqRange,
       firstScenario: scnRange[0],
       lastScenario: scnRange[1],
+      ucRange,
       maxRequirements: o.maxRequirements,
       actors: actorSurfaces(briefText),
       cards: moduleCards(briefText, module),
@@ -693,8 +739,10 @@ function openDraft(projectDir: string, module: string, brief: string, o: DraftOp
   );
   write(
     "change.yaml",
-    `${renderConfig(config).trimEnd()}\nscn_range: [${scnRange[0]}, ${scnRange[1]}]\nbrief: ${brief}\n`
+    `${renderConfig(config).trimEnd()}\nscn_range: [${scnRange[0]}, ${scnRange[1]}]\nuc_range: [${ucRange[0]}, ${ucRange[1]}]\nbrief: ${brief}\n`
   );
+  // REQ-626: the module's use cases travel with its requirements.
+  write("use-cases.md", templateUseCases(changeId));
   // REQ-288: the three layers. The agent writes the deltas; product the
   // Discover's criteria, the architect and the developer the rest.
   write("discover.md", discoverFor(module, changeId, brief));

@@ -12,6 +12,7 @@
  * `questions.md` and hands the text in.
  */
 
+import { checkUseCaseDelta, parseUseCaseDelta, readCatalog } from "./UseCaseDelta";
 import type { Diagnostic } from "./Diagnostic";
 import { error, info, warning } from "./Diagnostic";
 import { parseDelta } from "./SpecParser";
@@ -57,6 +58,14 @@ export interface DraftFiles {
    * can see a list or a create call delivered in an earlier change.
    */
   readonly specs?: ReadonlyArray<{ readonly source: string }>;
+  /**
+   * The change's `use-cases.md` (REQ-626): when the draft has one, every
+   * requirement names its use case (`uc=`) and D14 checks them. A draft
+   * opened before use cases had none, and is left as it was.
+   */
+  readonly useCases?: string;
+  /** `docs/specs/use-cases.md`: the use cases already approved. */
+  readonly catalog?: string;
 }
 
 export interface DraftReport {
@@ -910,6 +919,68 @@ export function checkDraft(files: DraftFiles): DraftReport {
               )
             );
           }
+        }
+      }
+    }
+  }
+
+  // D14 — every requirement names the use case it delivers (REQ-626, #543).
+  if (files.useCases !== undefined) {
+    const delta = parseUseCaseDelta(files.useCases);
+    const catalog = readCatalog(files.catalog ?? null);
+    const known = new Set([
+      ...catalog.filter((c) => !c.template).map((c) => c.id),
+      ...delta.added.map((u) => u.id),
+      ...delta.modified.map((u) => u.id),
+    ]);
+    const ucFile = files.deltas[0]?.path.replace(/\/specs\/.*$/, "/use-cases.md");
+    for (const r of reqs) {
+      const uc = String(r.trace.uc ?? "").trim();
+      if (!uc) {
+        status.push(
+          error("D14_no_use_case", `${r.id} names no use case.`, {
+            ...at(r),
+            fix: `Add uc=UC-NNN to its specgate:trace, and the use case to use-cases.md under ## ADDED Use Cases with ${r.id} in its row.`,
+          })
+        );
+      } else if (!known.has(uc)) {
+        status.push(
+          error(
+            "D14_unknown_use_case",
+            `${r.id} names ${uc}, which neither use-cases.md of the change nor docs/specs/use-cases.md has.`,
+            {
+              ...at(r),
+              fix: `Add ${uc} under ## ADDED Use Cases in the change's use-cases.md, or name a use case that exists.`,
+            }
+          )
+        );
+      }
+    }
+    const named = new Map(reqs.map((r) => [r.id, String(r.trace.uc ?? "").trim()]));
+    for (const f of checkUseCaseDelta(delta, catalog)) {
+      status.push(
+        error(`D14_${f.code}`, f.message, {
+          ...(ucFile ? { file: ucFile } : {}),
+          ...(f.target ? { target: f.target } : {}),
+          fix: f.fix,
+        })
+      );
+    }
+    for (const u of [...delta.added, ...delta.modified]) {
+      for (const req of u.requirements) {
+        const theirs = named.get(req);
+        if (theirs !== undefined && theirs !== u.id) {
+          status.push(
+            error(
+              "D14_use_case_mismatch",
+              `${u.id} lists ${req}, and ${req} names ${theirs || "no use case"}.`,
+              {
+                ...(ucFile ? { file: ucFile } : {}),
+                target: u.id,
+                fix: `Set uc=${u.id} on ${req}, or drop ${req} from ${u.id}'s row.`,
+              }
+            )
+          );
         }
       }
     }
