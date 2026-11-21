@@ -57,7 +57,7 @@ test("REQ-634 SCN-634b: the PlantUML export — the use cases inside System, and
   );
   assert.match(
     puml,
-    /:The system saves the profile\.;\nif \(A1: The nickname is taken\?\) then \(yes\)\n  :The system says the nickname is taken\.;\n  stop\nendif\nstop\n@enduml/
+    /:The system saves the profile\.;\nif \(A1: The nickname is taken\?\) then \(yes\)\n {2}:The system says the nickname is taken\.;\n {2}stop\nendif\nstop\n@enduml/
   );
 });
 
