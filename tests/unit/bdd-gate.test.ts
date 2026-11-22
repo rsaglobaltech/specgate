@@ -298,3 +298,20 @@ test("REQ-663: a project forja made, wired by init --forja — adopted, its gate
     /bdd_cmd: 'npm run test:bdd --silent -- --grep "\{tags\}"'/
   );
 });
+
+test("REQ-660: an approved change's feature file is no orphan — doctor, status and fix leave it to the archive", () => {
+  const p = project();
+  p.approve();
+  const doctor = p.cli("doctor");
+  assert.doesNotMatch(doctor.stdout + doctor.stderr, new RegExp(`orphan feature.*${FEATURE}`));
+  const status = JSON.parse(p.cli("status", "--json").stdout);
+  assert.ok(
+    !(status.orphanFeatures ?? []).includes(FEATURE),
+    JSON.stringify(status.orphanFeatures)
+  );
+  const { detectOrphans } = require("../../scripts/cli/commands/spec/PlanCommand");
+  assert.deepEqual(
+    detectOrphans(p.dir, []).filter((f: string) => f === FEATURE),
+    []
+  );
+});

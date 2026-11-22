@@ -26,6 +26,7 @@ import { planEstimates } from "../../../lib/requirement-estimates";
 
 import { c } from "../../../lib/ui";
 import * as ui from "../../../lib/ui";
+import { inOpenChange } from "../../../lib/bdd";
 
 export interface PlanOptions {
   projectDir: string;
@@ -228,9 +229,13 @@ export function detectOrphans(
     items.map((it) => (it.feature_file || "").replace(/^`|`$/g, "").trim()).filter(Boolean)
   );
 
-  return walk(featuresDir)
-    .map((full) => path.relative(projectDir, full).split(path.sep).join("/"))
-    .filter((rel) => !declared.has(rel));
+  return (
+    walk(featuresDir)
+      .map((full) => path.relative(projectDir, full).split(path.sep).join("/"))
+      .filter((rel) => !declared.has(rel))
+      // REQ-660: an open change's feature file gets its row when the change is archived.
+      .filter((rel) => !inOpenChange(projectDir, rel))
+  );
 }
 
 /**

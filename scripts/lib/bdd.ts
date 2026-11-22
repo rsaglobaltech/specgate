@@ -248,3 +248,19 @@ export function requireBdd(projectDir: string): boolean {
 export function syncApprovedChanges(projectDir: string): string[] {
   return openChanges(projectDir).flatMap((id) => syncIfApproved(projectDir, id));
 }
+
+/**
+ * A feature file of a change still open (REQ-660): tagged `@change:<id>` and
+ * that change not archived. Its row comes with the archive, so validate,
+ * doctor, status and fix leave it out of the orphans.
+ */
+export function inOpenChange(projectDir: string, featurePath: string): boolean {
+  let text = "";
+  try {
+    text = fs.readFileSync(path.resolve(projectDir, featurePath), "utf8");
+  } catch {
+    return false;
+  }
+  const id = /^@change:(\S+)/m.exec(text)?.[1];
+  return !!id && fs.existsSync(path.join(projectDir, CHANGES, id));
+}

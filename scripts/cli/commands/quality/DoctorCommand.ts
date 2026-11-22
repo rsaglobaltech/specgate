@@ -23,6 +23,7 @@ import {
   parseTasks,
 } from "../../../../packages/core/src/infrastructure/ChangeWorkspace";
 import * as ui from "../../../lib/ui";
+import { inOpenChange } from "../../../lib/bdd";
 
 const RICH_HEADER =
   "| Requirement | Scenario ID | Feature file | Use Case | Command/Query | Aggregate | Event | Technical artifact | Test artifact | Status |";
@@ -209,7 +210,9 @@ export class DoctorCommand extends BaseCommand {
 
     const orphanFeatures = featureFiles
       .map((ff) => path.relative(dir, ff).split(path.sep).join("/"))
-      .filter((rel) => !trace.includes(rel));
+      .filter((rel) => !trace.includes(rel))
+      // REQ-660: an open change's feature file gets its row when the change is archived.
+      .filter((rel) => !inOpenChange(dir, rel));
     for (const rel of orphanFeatures) {
       this.recordError(
         "orphan feature",

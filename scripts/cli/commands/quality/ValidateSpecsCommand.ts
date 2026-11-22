@@ -1,4 +1,4 @@
-import { bddFindings } from "../../../lib/bdd";
+import { bddFindings, inOpenChange } from "../../../lib/bdd";
 import { readHarnessConfig } from "../../../../packages/core/src/infrastructure/HarnessConfigFile";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -1655,9 +1655,7 @@ export class ValidateSpecsCommand extends BaseCommand {
       // REQ-552: a file of journeys only has no row of its own: a journey is
       // not one requirement's scenario, and `status --json` lists it.
       // REQ-660: an approved change's feature file belongs to it until it is archived.
-      const pending = /^@change:(\S+)/m.exec(fs.readFileSync(ff, "utf8"))?.[1];
-      if (pending && fs.existsSync(path.join(targetDir, "docs", "specs", "changes", pending)))
-        continue;
+      if (inOpenChange(targetDir, ff)) continue;
       if (!traceContent.includes(rel) && !onlyJourneys(fs.readFileSync(ff, "utf8"))) {
         const exampleRow =
           traceMode === "rich"
