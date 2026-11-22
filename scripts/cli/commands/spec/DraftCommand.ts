@@ -475,7 +475,7 @@ export function moduleStatus(projectDir: string, module: string, brief = ""): Mo
   }
   const result = draftReport(projectDir, change, brief);
   if ("failure" in result) return { ...base, state: "drafting", findings: 1 };
-  const findings = result.report.status.length;
+  const findings = errorCount(result.report.status);
   return { ...base, state: findings === 0 ? "ready" : "drafting", findings };
 }
 
@@ -536,6 +536,14 @@ function briefLine(projectDir: string, brief: string): string | null {
 }
 
 /**
+ * What keeps a draft from Ready to review: its errors. A warning — such as a
+ * question that says it blocks nothing (REQ-176) — is shown, never counted.
+ */
+function errorCount(status: ReadonlyArray<{ severity?: string }>): number {
+  return status.filter((d) => d.severity === "error").length;
+}
+
+/**
  * A second `--agent` pass on a draft with findings: the agent cannot run the
  * checker (it may only edit), so it gets the findings in its prompt — without
  * them it would redraft blind and leave the same ones behind.
@@ -543,8 +551,8 @@ function briefLine(projectDir: string, brief: string): string | null {
 export function openFindings(projectDir: string, changeId: string, brief: string): string {
   if (!fs.existsSync(path.join(projectDir, CHANGES, changeId))) return "";
   const result = draftReport(projectDir, changeId, brief);
-  if ("failure" in result || result.report.status.length === 0) return "";
-  const lines = result.report.status.map(
+  if ("failure" in result || errorCount(result.report.status) === 0) return "";
+  const lines = result.report.status.filter((d) => d.severity === "error").map(
     (d) => `- ${d.code}: ${d.message}${d.fix ? `\n  fix: ${d.fix}` : ""}`
   );
   return (
@@ -1797,7 +1805,7 @@ export class DraftCommand extends BaseCommand {
     }
     const report = result.report;
     const diags = [...report.status, ...skippedNotes(report)];
-    const errors = report.status.length;
+    const errors = errorCount(report.status);
     // Ready: reviewed, then its requirements are applied one by one, and the
     // change is archived once they are all delivered (ADR-0035).
     const next = errors === 0 ? "specgate apply" : `specgate propose --from-brief ${opts.module}`;
@@ -1874,7 +1882,7 @@ export class DraftCommand extends BaseCommand {
     }
     const report = result.report;
     const status = [...report.status, ...skippedNotes(report)];
-    const errors = report.status.length;
+    const errors = errorCount(report.status);
 
     io.emit(
       {

@@ -955,3 +955,25 @@ test("REQ-632 SCN-632b: a use case with no specification, or a scenario no flow 
   fs.writeFileSync(spec, UC_SPEC);
   assert.match(cli("draft", "bookings").stdout, /Ready to review/);
 });
+
+test("REQ-176 SCN-176c: a question that blocks nothing leaves the draft Ready to review, its warning shown", (t: TestContext) => {
+  const { dir, cli } = project(t);
+  cli("draft", "bookings");
+  fs.writeFileSync(path.join(change(dir), "specs", "bookings", "spec.md"), DRAFT());
+  writeUseCases(dir);
+  fs.writeFileSync(
+    path.join(change(dir), "questions.md"),
+    "# Questions\n\n| # | Question | Blocks |\n|---|---|---|\n| Q4 | Should it export a backup? | none |\n"
+  );
+  const r = cli("draft", "bookings");
+  assert.equal(r.status, 0, r.stdout);
+  assert.match(r.stdout, /D7_question_blocks_nothing/);
+  assert.match(r.stdout, /Ready to review/);
+  assert.doesNotMatch(r.stdout, /finding\(s\) to fix/);
+  const json = JSON.parse(cli("draft", "bookings", "--json").stdout);
+  assert.equal(json.draft.state, "ready");
+  assert.ok(json.status.some((d: { code: string }) => d.code === "D7_question_blocks_nothing"));
+  const check = cli("draft", "--check", "draft-bookings");
+  assert.equal(check.status, 0, check.stdout);
+  assert.match(check.stdout, /Ready to review/);
+});
