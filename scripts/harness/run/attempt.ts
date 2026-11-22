@@ -63,13 +63,7 @@ import {
   isGitClean,
   SUBPROCESS_MAX_BUFFER,
 } from "./shared";
-import {
-  addRunSpentUsd,
-  agentWroteInThisRun,
-  ledgerAttempts,
-  markAgentWrote,
-  notePackagesUsed,
-} from "./state";
+import { runStateOf } from "./state";
 import {
   limitFor,
   agentLine,
@@ -282,7 +276,7 @@ function sessionPrompt(
         settings.e2eDir && onScreen(worktreeDir, req.requirement) ? settings.e2eDir : undefined,
     });
   });
-  if (packages.length > 0) notePackagesUsed(req.requirement, packages);
+  if (packages.length > 0) runStateOf(ctx).notePackagesUsed(req.requirement, packages);
   return { prompt, packages };
 }
 
@@ -404,7 +398,7 @@ function countSession(env: AttemptEnv, state: RequirementState, run: AgentRun): 
   const { req, ctx } = env;
   const { used, role } = run;
   state.budget.add(used);
-  if (used && typeof used.cost === "number") addRunSpentUsd(used.cost);
+  if (used && typeof used.cost === "number") runStateOf(ctx).addSpentUsd(used.cost);
   // A session that says nothing of its cost is not free when the project says so.
   if (ctx.settings.requireKnownCost && !costKnown(used)) {
     const failure =
@@ -528,7 +522,7 @@ function checksBeforeGate(env: AttemptEnv, state: RequirementState, attempt: num
   if (producedNothing(worktreeDir)) {
     // REQ-417: the agent wrote for another requirement of this run, so it
     // can write; one more attempt, told so, before giving up.
-    if (agentWroteInThisRun() && !state.retriedEmpty && attempt < settings.maxAttempts) {
+    if (runStateOf(ctx).agentWrote() && !state.retriedEmpty && attempt < settings.maxAttempts) {
       state.retriedEmpty = true;
       warn(`${req.requirement}: the agent produced no files — retrying once`);
       warn(`  it wrote files for another requirement of this run, so it can write`);
@@ -554,7 +548,7 @@ function checksBeforeGate(env: AttemptEnv, state: RequirementState, attempt: num
     );
   }
 
-  markAgentWrote();
+  runStateOf(ctx).markAgentWrote();
 
   // A scenario the agent has just loosened cannot fail, so a green gate
   // proves nothing. See `checkWriteScopeInWorktree`.
@@ -864,7 +858,7 @@ export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext)
         ...(gateStage ? { gateStage } : {}),
         ...(tally.usageUsed.length > 0 ? { usage: [...tally.usageUsed] } : {}),
       });
-      ledgerAttempts(attemptLog);
+      runStateOf(ctx).ledgerAttempts(attemptLog);
     };
 
     const steps = planAttempt(attempt, {

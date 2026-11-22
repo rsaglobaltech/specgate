@@ -1,61 +1,17 @@
 /**
- * `harness run`: the state one run keeps in this process. One instance each —
- * every module reads and changes it through these functions.
+ * `harness run`: what one run keeps in this process while it goes — what its
+ * agents spent, whether one has written, the role packages its prompts
+ * carried, its record, and what it has already put on the stream.
+ *
+ * One `RunState` per run, made when the run starts and carried on its
+ * context. Nothing here is module-level: two runs in one process, or a test
+ * beside another, do not share it.
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { streamEvent, streamFdOf } from "../../lib/harness-stream";
 import { scrubText, RequirementResult } from "./shared";
-
-/**
- * REQ-317: the role packages each requirement's prompts carried in this run,
- * recorded on its result — the report counts them across runs.
- */
-const packagesUsed = new Map<string, Set<string>>();
-
-/** The role packages `requirement`'s prompts carried so far in this run. */
-export function packagesUsedBy(requirement: string): Set<string> | undefined {
-  return packagesUsed.get(requirement);
-}
-
-/** Adds `ids` to the role packages `requirement`'s prompts carried. */
-export function notePackagesUsed(requirement: string, ids: string[]): void {
-  const seen = packagesUsed.get(requirement) || new Set<string>();
-  for (const id of ids) seen.add(id);
-  packagesUsed.set(requirement, seen);
-}
-
-/** REQ-585: what this process's agents reported spending in this run, in USD. */
-let runSpentUsd = 0;
-
-export function runSpentUsdSoFar(): number {
-  return runSpentUsd;
-}
-
-export function addRunSpentUsd(usd: number): void {
-  runSpentUsd += usd;
-}
-
-/**
- * REQ-417: set once an attempt in this run wrote files. The agent can write,
- * so an empty attempt after that is a lapse, not a missing permission
- * (truck-flote, MS8-3: REQ-002 and REQ-003 passed, REQ-004 wrote nothing).
- */
-let agentWroteThisRun = false;
-
-/** For tests run in one process. */
-export function resetAgentWrote(wrote = false): void {
-  agentWroteThisRun = wrote;
-}
-
-export function agentWroteInThisRun(): boolean {
-  return agentWroteThisRun;
-}
-
-export function markAgentWrote(): void {
-  agentWroteThisRun = true;
-}
 
 /** Where a run's record lands. Local to the machine — see `writeRunRecord`. */
 export const RUNS_DIR = path.join(".harness", "runs");
@@ -77,36 +33,100 @@ export interface RunRecord {
   running?: { requirement: string; startedAt: string; attemptLog: unknown[] };
 }
 
+/** One run, in this process. */
+export class RunState {
+  /**
+   * REQ-317: the role packages each requirement's prompts carried in this run,
+   * recorded on its result — the report counts them across runs.
+   */
+  private readonly packages = new Map<string, Set<string>>();
+  /** REQ-585: what this process's agents reported spending in this run, in USD. */
+  private spentUsd = 0;
+  /**
+   * REQ-417: set once an attempt in this run wrote files. The agent can write,
+   * so an empty attempt after that is a lapse, not a missing permission
+   * (truck-flote, MS8-3: REQ-002 and REQ-003 passed, REQ-004 wrote nothing).
+   */
+  private wrote = false;
+  /**
+   * The run's record, written as it goes (REQ-269).
+   *
+   * It used to be written once, at the end, so a run stopped by hand — the
+   * 27 minutes truck-flote spent on semgrep hanging (S52) — left no trace, and
+   * `harness report` priced the requirement without them. Now it is written when
+   * each requirement starts and each attempt ends; a killed run leaves a record
+   * whose `running` says where it stopped.
+   */
+  private ledger: { projectDir: string; record: RunRecord } | null = null;
+  /** What each requirement's last `result` event said, to send a changed one again. */
+  private readonly streamed = new Map<string, string>();
+
+  /** The role packages `requirement`'s prompts carried so far in this run. */
+  packagesUsedBy(requirement: string): Set<string> | undefined {
+    return this.packages.get(requirement);
+  }
+
+  /** Adds `ids` to the role packages `requirement`'s prompts carried. */
+  notePackagesUsed(requirement: string, ids: string[]): void {
+    const seen = this.packages.get(requirement) || new Set<string>();
+    for (const id of ids) seen.add(id);
+    this.packages.set(requirement, seen);
+  }
+
+  spentUsdSoFar(): number {
+    return this.spentUsd;
+  }
+
+  addSpentUsd(usd: number): void {
+    this.spentUsd += usd;
+  }
+
+  agentWrote(): boolean {
+    return this.wrote;
+  }
+
+  markAgentWrote(): void {
+    this.wrote = true;
+  }
+
+  /** The run's record while it goes, or null outside a run. */
+  currentLedger(): { projectDir: string; record: RunRecord } | null {
+    return this.ledger;
+  }
+
+  setLedger(next: { projectDir: string; record: RunRecord } | null): void {
+    this.ledger = next;
+  }
+
+  ledgerWrite(): void {
+    if (!this.ledger) return;
+    this.ledger.record.updatedAt = new Date().toISOString();
+    writeRunRecord(this.ledger.projectDir, this.ledger.record);
+  }
+
+  ledgerAttempts(attemptLog: unknown[]): void {
+    if (!this.ledger || !this.ledger.record.running) return;
+    this.ledger.record.running.attemptLog = [...attemptLog];
+    this.ledgerWrite();
+  }
+
+  /** A requirement's result on the stream (REQ-496); again only when it changed. */
+  streamResult(result: RequirementResult): void {
+    if (streamFdOf() === null) return;
+    const said = JSON.stringify(result);
+    if (this.streamed.get(result.requirement) === said) return;
+    this.streamed.set(result.requirement, said);
+    streamEvent({ type: "result", result }, result.requirement);
+  }
+}
+
 /**
- * The run's record, written as it goes (REQ-269).
- *
- * It used to be written once, at the end, so a run stopped by hand — the
- * 27 minutes truck-flote spent on semgrep hanging (S52) — left no trace, and
- * `harness report` priced the requirement without them. Now it is written when
- * each requirement starts and each attempt ends; a killed run leaves a record
- * whose `running` says where it stopped.
+ * The state of the run `ctx` belongs to. A context built by hand — a test, a
+ * caller of `runLevels` — gets one the first time it is asked for.
  */
-let ledger: { projectDir: string; record: RunRecord } | null = null;
-
-/** The run's record while it goes, or null outside a run. */
-export function currentLedger(): { projectDir: string; record: RunRecord } | null {
-  return ledger;
-}
-
-export function setLedger(next: { projectDir: string; record: RunRecord } | null): void {
-  ledger = next;
-}
-
-export function ledgerWrite(): void {
-  if (!ledger) return;
-  ledger.record.updatedAt = new Date().toISOString();
-  writeRunRecord(ledger.projectDir, ledger.record);
-}
-
-export function ledgerAttempts(attemptLog: unknown[]): void {
-  if (!ledger || !ledger.record.running) return;
-  ledger.record.running.attemptLog = [...attemptLog];
-  ledgerWrite();
+export function runStateOf(ctx: { run?: RunState }): RunState {
+  if (!ctx.run) ctx.run = new RunState();
+  return ctx.run;
 }
 
 /**
@@ -153,16 +173,4 @@ export function writeRunRecord(projectDir: string, record: RunRecord): string | 
   } catch {
     return null;
   }
-}
-
-/** What each requirement's last `result` event said, to send a changed one again. */
-const streamedResults = new Map<string, string>();
-
-/** A requirement's result on the stream (REQ-496); again only when it changed. */
-export function streamResult(result: RequirementResult): void {
-  if (streamFdOf() === null) return;
-  const said = JSON.stringify(result);
-  if (streamedResults.get(result.requirement) === said) return;
-  streamedResults.set(result.requirement, said);
-  streamEvent({ type: "result", result }, result.requirement);
 }

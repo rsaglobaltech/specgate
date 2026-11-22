@@ -16,7 +16,7 @@ import {
 } from "./shared";
 import { deriveBase } from "./branches";
 import { processRequirement } from "./requirement";
-import { runSpentUsdSoFar } from "./state";
+import { runStateOf } from "./state";
 import { runWorkers } from "./workers";
 import { scheduleLevels } from "../../../packages/core/src/domain/HarnessRun";
 import { takeStop } from "../../lib/harness-guard";
@@ -93,6 +93,8 @@ export async function runLevels(
   opts: { concurrency: number; hintByReq: Map<string, string>; runOne: LevelRunner }
 ): Promise<RequirementResult[]> {
   const { concurrency, hintByReq, runOne } = opts;
+  // Before any copy of the context is made: every copy shares this run's state.
+  const run = runStateOf(ctx);
   /**
    * The run's ceiling (C1). Checked before starting a level, never inside one:
    * interrupting an attempt mid-flight would throw away the money already spent
@@ -204,7 +206,7 @@ export async function runLevels(
           }
           const verdict = budgetVerdict(
             limits,
-            { startedAt: budgetStartedAt, started, spentUsd: runSpentUsdSoFar() },
+            { startedAt: budgetStartedAt, started, spentUsd: run.spentUsdSoFar() },
             Date.now()
           );
           if (verdict.stop) {

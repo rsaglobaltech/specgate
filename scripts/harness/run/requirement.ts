@@ -38,7 +38,7 @@ import {
   minFreeBytes,
 } from "../../lib/harness-guard";
 import { cacheEnvironment } from "../../../packages/core/src/domain/DependencyCache";
-import { currentLedger, ledgerWrite, packagesUsedBy, streamResult } from "./state";
+import { runStateOf } from "./state";
 import { eventsFileFor } from "../../lib/harness-events";
 import { featureFilePath } from "../../../packages/core/src/domain/HarnessRun";
 import { gateReporter, limitFor } from "./gate";
@@ -210,26 +210,27 @@ export function contextOfRequirement(projectDir: string, requirement: string): s
 }
 
 export function processRequirement(req: HarnessRequirement, ctx: RunContext): RequirementResult {
-  const starting = currentLedger();
+  const run = runStateOf(ctx);
+  const starting = run.currentLedger();
   if (starting) {
     starting.record.running = {
       requirement: req.requirement,
       startedAt: new Date().toISOString(),
       attemptLog: [],
     };
-    ledgerWrite();
+    run.ledgerWrite();
   }
   const result = processOneRequirement(req, ctx);
-  const used = packagesUsedBy(req.requirement);
+  const used = run.packagesUsedBy(req.requirement);
   if (used && used.size > 0) result.packages = [...used];
-  const ending = currentLedger();
+  const ending = run.currentLedger();
   if (ending) {
     ending.record.results.push(result);
     delete ending.record.running;
-    ledgerWrite();
+    run.ledgerWrite();
   }
   // A worker's result reaches the stream through its parent, which reads its report.
-  if (!process.env.SPECGATE_HARNESS_WORKER) streamResult(result);
+  if (!process.env.SPECGATE_HARNESS_WORKER) run.streamResult(result);
   return result;
 }
 
