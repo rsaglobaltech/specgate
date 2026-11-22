@@ -545,7 +545,7 @@
 | REQ-660 | SCN-660a, SCN-660b | `features/trusted-gate/REQ-660.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/change/ChangeCommand.ts` | tests/unit/bdd-gate.test.ts | Approved |
 | REQ-661 | SCN-661a, SCN-661b, SCN-661c | `features/trusted-gate/REQ-661.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/quality/ValidateSpecsCommand.ts`, `scripts/lib/gate-policy.ts` | tests/unit/bdd-gate.test.ts | Approved |
 | REQ-662 | SCN-662a, SCN-662b | `features/trusted-gate/REQ-662.feature` | - | - | - | - | `scripts/cli/commands/spec/DoneCommand.ts` | tests/unit/bdd-gate.test.ts | Approved |
-| REQ-663 | SCN-663a, SCN-663b | `features/trusted-gate/REQ-663.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/project/MigrateCommand.ts`, `scripts/cli/commands/project/gate.ts` | tests/unit/bdd-gate.test.ts | Approved |
+| REQ-663 | SCN-663a, SCN-663b | `features/trusted-gate/REQ-663.feature` | - | - | - | - | `scripts/lib/bdd.ts`, `scripts/cli/commands/project/MigrateCommand.ts`, `scripts/cli/commands/project/gate.ts`, `scripts/cli/commands/project/Forja.ts` | tests/unit/bdd-gate.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

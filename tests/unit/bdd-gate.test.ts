@@ -274,3 +274,27 @@ test("REQ-663 SCN-663b: a project with its own test:bdd script — that script r
     /bdd_cmd: 'npm run test:bdd --silent -- --grep "\{tags\}"'/
   );
 });
+
+test("REQ-663: a project forja made, wired by init --forja — adopted, its gate requiring the scenarios through forja's test:bdd", () => {
+  const { wireForjaProject } = require("../../scripts/cli/commands/project/Forja");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-forja-bdd-"));
+  madeDirs.push(dir);
+  w(dir, "forja.config.json", JSON.stringify({ version: 1, name: "demo" }));
+  w(
+    dir,
+    "package.json",
+    JSON.stringify({
+      scripts: { test: "node -e 0", "test:bdd": "npm run test:bdd --workspace apps/web --" },
+    })
+  );
+  git(dir, "init", "-q");
+  git(dir, "config", "user.email", "t@t");
+  git(dir, "config", "user.name", "t");
+  const r = wireForjaProject(dir, CLI);
+  assert.equal(r.bdd, true);
+  assert.match(read(dir, ".specgate/gate.yaml"), /^bdd: required$/m);
+  assert.match(
+    read(dir, "harness.config.yaml"),
+    /bdd_cmd: 'npm run test:bdd --silent -- --grep "\{tags\}"'/
+  );
+});

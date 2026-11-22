@@ -174,7 +174,13 @@ export function wireForjaProject(
   dir: string,
   cli: string,
   log: (msg: string) => void = () => undefined
-): { adopted: boolean; test: string | null; arch: string | null; committed: boolean } {
+): {
+  adopted: boolean;
+  test: string | null;
+  arch: string | null;
+  bdd: boolean;
+  committed: boolean;
+} {
   const specgate = (...args: string[]) =>
     spawnSync(process.execPath, [cli, ...args], { cwd: dir, encoding: "utf8" });
   let adopted = false;
@@ -192,6 +198,9 @@ export function wireForjaProject(
     specgate("config", "set", "arch_cmd", arch);
     log(`The gate checks the architecture: ${arch}`);
   }
+  // bdd-gate REQ-663: the scenarios run before any code — forja's test:bdd, required by the gate.
+  const bdd = specgate("migrate", "bdd").status === 0;
+  if (bdd) log("The gate runs the scenarios before any code: bdd required.");
   let committed = false;
   const git = (...args: string[]) => spawnSync("git", args, { cwd: dir, encoding: "utf8" });
   if (git("rev-parse", "--git-dir").status === 0 && git("status", "--porcelain").stdout.trim()) {
@@ -201,9 +210,9 @@ export function wireForjaProject(
         "commit",
         "-q",
         "-m",
-        "chore: adopt Specgate, with the gate's test and architecture commands"
+        "chore: adopt Specgate, with the gate's test, architecture and scenario commands"
       ).status === 0;
     if (committed) log("Committed: the project is ready to draft and build.");
   }
-  return { adopted, test, arch, committed };
+  return { adopted, test, arch, bdd, committed };
 }

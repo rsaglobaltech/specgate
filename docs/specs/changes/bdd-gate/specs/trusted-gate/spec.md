@@ -68,7 +68,7 @@ The system SHALL, on `specgate apply <REQ>` in a project with `bdd: required`, r
 
 <!-- specgate:trace status=Implemented feature=features/trusted-gate/REQ-663.feature actor=Developer kind=functional -->
 
-The system SHALL, on `specgate init`, `specgate adopt` and `specgate migrate bdd`, write `bdd: required` in `.specgate/gate.yaml` and, when the stack says how, the `bdd_cmd` that runs the feature files — the project's own `test:bdd` script when it has one (`npm run test:bdd --silent -- --grep "{tags}"`, as forja writes it), `npx bddgen && npx playwright test --grep "{tags}"` for a project with Playwright (playwright-bdd), `mvn -q test -Dcucumber.filter.tags="{tags}"` for a Maven one (Cucumber) — and SHALL write the feature files of every approved change; and, when the stack does not say, leave `bdd_cmd` to set, the gate saying so.
+The system SHALL, on `specgate init` — `init --forja` once forja has made the project —, `specgate adopt` and `specgate migrate bdd`, write `bdd: required` in `.specgate/gate.yaml` and, when the stack says how, the `bdd_cmd` that runs the feature files — the project's own `test:bdd` script when it has one (`npm run test:bdd --silent -- --grep "{tags}"`, as forja writes it), `npx bddgen && npx playwright test --grep "{tags}"` for a project with Playwright (playwright-bdd), `mvn -q test -Dcucumber.filter.tags="{tags}"` for a Maven one (Cucumber) — and SHALL write the feature files of every approved change; and, when the stack does not say, leave `bdd_cmd` to set, the gate saying so.
 
 #### Scenario: SCN-663b — A project with its own test:bdd script
 
