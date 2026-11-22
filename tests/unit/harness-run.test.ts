@@ -1,5 +1,6 @@
 "use strict";
 
+import { gateTestCmd } from "../helpers/test-cmd";
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -845,6 +846,7 @@ test("harness run refuses a requirement whose scenario has no steps, before spen
         CLI,
         "harness",
         "run",
+        ...gateTestCmd(projectDir),
         "--project-dir",
         projectDir,
         "--req",
@@ -985,6 +987,7 @@ function runHarness(projectDir: string, agent: string, extra: string[] = []) {
       CLI,
       "harness",
       "run",
+      ...gateTestCmd(projectDir),
       "--project-dir",
       projectDir,
       "--req",
@@ -1756,6 +1759,7 @@ function runAll(projectDir: string, agent: string, extra: string[] = []) {
       CLI,
       "harness",
       "run",
+      ...gateTestCmd(projectDir),
       "--project-dir",
       projectDir,
       "--agent",
@@ -1868,7 +1872,16 @@ test("a repository with no git identity is refused before the agent runs", () =>
     const agent = `${process.execPath} -e "require('fs').writeFileSync(${JSON.stringify(marker)},'ran')"`;
     const r = spawnSync(
       process.execPath,
-      [CLI, "harness", "run", "--project-dir", projectDir, "--agent", `${agent} {prompt_file}`],
+      [
+        CLI,
+        "harness",
+        "run",
+        ...gateTestCmd(projectDir),
+        "--project-dir",
+        projectDir,
+        "--agent",
+        `${agent} {prompt_file}`,
+      ],
       {
         encoding: "utf8",
         // Neutralise this machine's global identity — CI has none, and without
@@ -2214,6 +2227,7 @@ test("#50: an agent out of quota fails the requirement after one attempt, not th
         CLI,
         "harness",
         "run",
+        ...gateTestCmd(projectDir),
         "--project-dir",
         projectDir,
         "--agent",
@@ -2280,6 +2294,7 @@ test(
           CLI,
           "harness",
           "run",
+          ...gateTestCmd(projectDir),
           "--project-dir",
           projectDir,
           "--agent",

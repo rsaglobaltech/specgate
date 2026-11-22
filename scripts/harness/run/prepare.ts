@@ -49,7 +49,7 @@ import { spawnSync } from "node:child_process";
 import { stackFileCommand } from "../../lib/stack-detect";
 import { streamEvent } from "../../lib/harness-stream";
 import { waitingFor } from "./attempt";
-import { withAgentPermission, withTestPermission } from "../../lib/agent-permission";
+import { withAgentPermission, withTestPermission, withoutMcp } from "../../lib/agent-permission";
 import { withRework } from "../../../packages/core/src/domain/RequirementPlan";
 import { writeQueue } from "../../lib/harness-events";
 export type RunArgs = ReturnType<typeof parseArgs>;
@@ -206,7 +206,8 @@ export function runSettings(
   const permit = (command: string) => {
     const p = withAgentPermission(command);
     permitted = permitted || p.added;
-    const t = withTestPermission(p.command, settings.testCmd);
+    // REQ-650: the tests and the architecture check the gate runs; no MCP server.
+    const t = withTestPermission(withoutMcp(p.command), settings.testCmd, settings.archCmd || "");
     if (t.allowed.length > 0) testsAllowed = t.allowed;
     return t.command;
   };
@@ -360,6 +361,14 @@ export function preflight(
   // passed, so a full attempt is paid for and thrown away by a one-line
   // config. Found by CI, which has no global git identity and produced
   // `Author identity unknown` at the commit step of every requirement.
+  // REQ-649: with no test command the gate checks the specification only;
+  // each requirement ends unverified. Said before an agent is paid for.
+  if (!settings.testCmd && !process.env.SPECGATE_HARNESS_WORKER) {
+    warn(
+      "No test command: the gate cannot run the tests, so each requirement ends unverified. " +
+        'Set one first: specgate config set test_cmd "npm test"'
+    );
+  }
   const identity = gitIdentityProblem(projectDir);
   if (identity) throw new Error(identity);
   // REQ-279: a stopped Docker fails every attempt in the tests or the

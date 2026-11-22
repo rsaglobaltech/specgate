@@ -246,3 +246,46 @@ test("REQ-194 SCN-194a: DRAFTING.md gives the range as the limit, and how to gro
   assert.doesNotMatch(guide, /at most 25 requirements/);
   assert.match(guide, /specgate draft --reserve <n>/);
 });
+
+/** A fake forja that generates `<name>`: forja.config.json, package.json's scripts, one commit. */
+function generatingForja(dir: string) {
+  const script = path.join(dir, "generating-forja.js");
+  fs.writeFileSync(
+    script,
+    `const fs = require("fs"), path = require("path"), cp = require("child_process");\n` +
+      `const name = process.argv[3]; const out = path.join(process.cwd(), name);\n` +
+      `fs.mkdirSync(out, { recursive: true });\n` +
+      `fs.writeFileSync(path.join(out, "forja.config.json"), JSON.stringify({ version: 1, name, backend: "node", pm: "pnpm" }));\n` +
+      `fs.writeFileSync(path.join(out, "package.json"), JSON.stringify({ name, private: true, scripts: { test: "vitest run", arch: "node scripts/check-architecture.mjs" } }));\n` +
+      `const git = (...a) => cp.spawnSync("git", a, { cwd: out });\n` +
+      `git("init", "-q"); git("config", "user.email", "f@x.y"); git("config", "user.name", "F");\n` +
+      `git("add", "-A"); git("commit", "-qm", "chore: scaffold with forja");\n`
+  );
+  return { ...process.env, SPECGATE_FORJA_CMD: `"${process.execPath}" "${script}"` };
+}
+
+test("REQ-651 SCN-651a: after forja, the project adopts Specgate, its gate gets pnpm's test and architecture commands, and both are committed", () => {
+  const dir = tmp();
+  try {
+    const r = run(dir, generatingForja(dir), "init", "--forja", "pinta");
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const out = path.join(dir, "pinta");
+    assert.ok(fs.existsSync(path.join(out, "spec.md")), "adopted");
+    const cfg = runCli(["config", "list"], { cwd: out }).stdout;
+    assert.match(cfg, /test_cmd = pnpm test/);
+    assert.match(cfg, /arch_cmd = pnpm run arch/);
+    assert.match(r.stdout + r.stderr, /The gate runs the tests: pnpm test/);
+    const { spawnSync } = require("node:child_process");
+    const log = spawnSync("git", ["log", "--format=%s"], { cwd: out, encoding: "utf8" }).stdout;
+    assert.match(
+      log,
+      /^chore: adopt Specgate, with the gate's test and architecture commands\nchore: scaffold with forja/
+    );
+    assert.equal(
+      spawnSync("git", ["status", "--porcelain"], { cwd: out, encoding: "utf8" }).stdout.trim(),
+      ""
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

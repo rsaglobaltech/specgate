@@ -1,5 +1,12 @@
 import * as readline from "node:readline/promises";
-import { FORJA_PACKAGE, forjaCommand, forjaUnavailable, runForja } from "./Forja";
+import {
+  FORJA_PACKAGE,
+  forjaCommand,
+  forjaUnavailable,
+  ownCli,
+  runForja,
+  wireForjaProject,
+} from "./Forja";
 import { mergeContract } from "../../../agents/contract-file";
 import { installDetectedAgents } from "../../../agents/detect";
 import * as fs from "node:fs";
@@ -1259,6 +1266,16 @@ export class InitProjectCommand extends BaseCommand {
         logError("forja could not be started.");
         logInfo(`Fix: check your network (npx fetches ${FORJA_PACKAGE}), or set`);
         logInfo("     SPECGATE_FORJA_CMD to a forja you installed, e.g. SPECGATE_FORJA_CMD=forja.");
+      }
+      // REQ-651: what forja leaves as next steps, done — adopt, the gate's commands, a commit.
+      if (status === 0) {
+        const name = forjaArgs.find(
+          (a, i) => !a.startsWith("-") && !(forjaArgs![i - 1] || "").startsWith("--")
+        );
+        const dir = name ? path.resolve(process.cwd(), name) : null;
+        if (dir && fs.existsSync(path.join(dir, "forja.config.json"))) {
+          wireForjaProject(dir, ownCli(), logInfo);
+        }
       }
       process.exit(status);
     }

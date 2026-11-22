@@ -7,6 +7,7 @@
  * the run record.
  */
 
+import { gateTestCmd } from "../helpers/test-cmd";
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -87,6 +88,7 @@ function harness(dir: string, agent: string, attempts: number) {
       CLI,
       "harness",
       "run",
+      ...gateTestCmd(dir),
       "--project-dir",
       dir,
       "--req",

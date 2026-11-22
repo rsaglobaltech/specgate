@@ -901,6 +901,24 @@ export function attemptRequirement(req: HarnessRequirement, ctx: AttemptContext)
     let gate: GateResult | null = null;
     if (decision.kind === "proceed") decision = checksBeforeGate(env, state, attempt);
     if (decision.kind === "proceed") ({ decision, gate } = judgeAtGate(env, attempt));
+    // REQ-649: a gate with no test command proved nothing about the code. The
+    // work is kept on the branch for a person to see, the requirement is not
+    // marked delivered, and another attempt would meet the same missing command.
+    if (decision.kind === "proceed" && gate?.unverified) {
+      const why =
+        "No test command ran: the gate checked the specification only, so nothing proves the code. " +
+        'Set the project\'s test command (specgate config set test_cmd "npm test") and build it again.';
+      warn(`${req.requirement}: unverified — ${why}`);
+      record("unverified");
+      const preserved = preserveFailedAttempt(ctx.worktreeDir, req, why, "is UNVERIFIED");
+      return {
+        result: "unverified",
+        attempts: attempt - firstAttempt + 1,
+        attemptLog,
+        error: why,
+        workPreserved: preserved,
+      };
+    }
     if (decision.kind === "proceed") decision = checksAfterGate(env);
     if (decision.kind === "proceed") decision = closeAttempt(env, attempt);
 
@@ -1020,7 +1038,9 @@ export function waitingFor(q: {
 export function preserveFailedAttempt(
   worktreeDir: string,
   req: HarnessRequirement,
-  failure: string
+  failure: string,
+  /** What the subject says of the attempt: it FAILED the gate, or it is UNVERIFIED (REQ-649). */
+  verdict = "FAILED the gate"
 ): boolean {
   if (isGitClean(worktreeDir)) return false;
 
@@ -1029,7 +1049,9 @@ export function preserveFailedAttempt(
   const commit = git(worktreeDir, [
     "commit",
     "-m",
-    `chore(${req.requirement}): attempt FAILED the gate — do not merge as is\n\n` +
+    (verdict === "FAILED the gate"
+      ? `chore(${req.requirement}): attempt FAILED the gate — do not merge as is\n\n`
+      : `chore(${req.requirement}): attempt ${verdict} — do not merge as is\n\n`) +
       `${firstLine}\n\n` +
       "Committed by `specgate harness run` so the attempt is reviewable rather than\n" +
       "discarded. The requirement is still Draft: `specgate apply` never ran.",

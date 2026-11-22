@@ -6,6 +6,7 @@
  * step.
  */
 
+import { gateTestCmd } from "../helpers/test-cmd";
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -193,6 +194,7 @@ test("REQ-229 SCN-229d: /live sees each check", () => {
       CLI,
       "harness",
       "run",
+      ...gateTestCmd(dir),
       "--project-dir",
       dir,
       "--req",

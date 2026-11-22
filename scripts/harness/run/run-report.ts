@@ -84,6 +84,7 @@ export function printReport(
     blocked: `${ui.c.warn}${ui.sym.warn}${ui.c.reset}`,
     skipped: `${ui.c.muted}${ui.sym.empty}${ui.c.reset}`,
     question: `${ui.c.warn}?${ui.c.reset}`,
+    unverified: `${ui.c.warn}${ui.sym.warn}${ui.c.reset}`,
   };
   const COLOR = {
     pass: ui.c.ok,
@@ -91,13 +92,14 @@ export function printReport(
     blocked: ui.c.warn,
     skipped: ui.c.muted,
     question: ui.c.warn,
+    unverified: ui.c.warn,
   };
   const idWidth = Math.max(9, ...results.map((r) => String(r.requirement).length));
   process.stdout.write("\n" + ui.section("Harness report"));
   for (const r of results) {
     process.stdout.write(
       `  ${MARK[r.result] || MARK.fail}  ${ui.c.bold}${ui.pad(String(r.requirement), idWidth)}${ui.c.reset} ` +
-        `${COLOR[r.result] || ""}${ui.pad(r.result, 9)}${ui.c.reset}` +
+        `${COLOR[r.result] || ""}${ui.pad(r.result, 10)}${ui.c.reset}` +
         ui.muted(`${r.attempts} attempt${r.attempts === 1 ? "" : "s"}`) +
         `   ${ui.c.accent}${ui.sym.arrow} ${r.branch}${ui.c.reset}\n`
     );
@@ -124,6 +126,9 @@ export function printReport(
       if (tail.length > 0) {
         sub(ui.muted(`${ui.sym.corner} full output: --format json · reproduce: --keep-worktrees`));
       }
+      if (r.result === "unverified") {
+        sub(`${ui.c.warn}no test ran:${ui.c.reset} set the project's test command, then build it again`);
+      }
       if (r.workPreserved) {
         sub(ui.muted(`↳ the attempt is committed on ${r.branch} — review it`));
       } else if (r.result === "fail") {
@@ -149,9 +154,14 @@ export function printReport(
   // used to produce N failures and N wasted agent invocations, which said
   // nothing about the N-1 requirements that were never attempted.
   const blockedNote = blocked > 0 ? ` · ${blocked} blocked` : "";
+  // REQ-649: built but proved by no test — counted apart, never as passed.
+  const unverified = results.filter((r) => r.result === "unverified").length;
+  const unverifiedNote = unverified > 0 ? ` · ${unverified} unverified` : "";
   process.stdout.write(
     `\n  ${ui.progress(pass, results.length, "passed")}` +
-      ui.muted(`   ${pass} passed · ${fail} failed · ${skip} skipped${blockedNote}`) +
+      ui.muted(
+        `   ${pass} passed · ${fail} failed · ${skip} skipped${blockedNote}${unverifiedNote}`
+      ) +
       "\n"
   );
   if (recorded) {

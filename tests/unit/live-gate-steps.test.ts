@@ -8,6 +8,7 @@
  * check that hung for 15 minutes looked exactly like a gate at work (S54).
  */
 
+import { gateTestCmd } from "../helpers/test-cmd";
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -83,6 +84,7 @@ test("REQ-273 SCN-273a: the events follow the gate as it runs", () => {
       CLI,
       "harness",
       "run",
+      ...gateTestCmd(dir),
       "--project-dir",
       dir,
       "--req",

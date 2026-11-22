@@ -12,6 +12,7 @@
  * the way a user would, and expand it into a real scaffolded project.
  */
 
+import { gateTestCmd } from "../helpers/test-cmd";
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -286,6 +287,7 @@ test("a pack's depends_on reaches plan and stacks the harness branch", () => {
         CLI,
         "harness",
         "run",
+        ...gateTestCmd(projectDir),
         "--project-dir",
         projectDir,
         "--agent",
@@ -400,6 +402,7 @@ test("a requirement's bounded context is derived and matched to a profile", () =
         CLI,
         "harness",
         "run",
+        ...gateTestCmd(projectDir),
         "--project-dir",
         projectDir,
         "--agent",

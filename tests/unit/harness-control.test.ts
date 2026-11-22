@@ -6,6 +6,7 @@
  *
  * Every agent here is a small Node script: no real agent, nothing paid.
  */
+import { gateTestCmd } from "../helpers/test-cmd";
 import test = require("node:test");
 import assert = require("node:assert/strict");
 import * as cp from "node:child_process";
@@ -93,7 +94,18 @@ function agent(parent: string, body: string[]): string {
 
 function harness(dir: string, agentCmd: string, extra: string[]) {
   return runCli(
-    ["harness", "run", "--project-dir", dir, "--agent", agentCmd, "--max-attempts", "1", ...extra],
+    [
+      "harness",
+      "run",
+      ...gateTestCmd(dir),
+      "--project-dir",
+      dir,
+      "--agent",
+      agentCmd,
+      "--max-attempts",
+      "1",
+      ...extra,
+    ],
     { env: { ...process.env, NO_COLOR: "1", AGENT_EVENTS_FILE: "", AGENT_EVENTS_REQ: "" } }
   );
 }
@@ -202,6 +214,46 @@ test("REQ-643 SCN-643a: a repository with no commit is refused before any agent 
     assert.match(last.status[0].message, /no commit yet/);
     assert.match(last.status[0].message, /git add -A && git commit/);
     assert.doesNotMatch(r.stdout + r.stderr, /invalid reference/);
+  } finally {
+    cleanup(p.parent);
+  }
+});
+
+// ── REQ-649: no test command, nothing proved ────────────────────────────────
+
+test("REQ-649 SCN-649a: with no test command the run is warned before the agent, REQ-000 ends unverified on its branch, and the run does not pass", () => {
+  const p = project();
+  try {
+    const r = runCli(
+      [
+        "harness",
+        "run",
+        "--project-dir",
+        p.dir,
+        "--agent",
+        agent(p.parent, []),
+        "--max-attempts",
+        "3",
+        "--req",
+        "REQ-000",
+        "--format",
+        "json",
+      ],
+      { env: { ...process.env, NO_COLOR: "1", AGENT_EVENTS_FILE: "", AGENT_EVENTS_REQ: "" } }
+    );
+    assert.notEqual(r.status, 0, "an unverified run does not pass");
+    assert.match(r.stderr + r.stdout, /No test command: the gate cannot run the tests/);
+    const doc = parsed(r);
+    assert.equal(doc.results[0].result, "unverified");
+    assert.equal(doc.results[0].attempts, 1, "another attempt would meet the same missing command");
+    assert.match(doc.results[0].error, /No test command ran/);
+    const subject = git(p.dir, "log", "-1", "--format=%s", "harness/REQ-000").stdout.trim();
+    assert.match(subject, /^chore\(REQ-000\): attempt is UNVERIFIED — do not merge as is$/);
+    // Not delivered: the matrix still says what it said.
+    assert.doesNotMatch(
+      git(p.dir, "show", "harness/REQ-000:docs/specs/traceability.md").stdout,
+      /REQ-000 .*Implemented/
+    );
   } finally {
     cleanup(p.parent);
   }

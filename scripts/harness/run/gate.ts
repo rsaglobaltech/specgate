@@ -83,6 +83,8 @@ export interface GateResult {
   checks?: CheckOutcome[];
   /** A check that could not run (REQ-267): said to the person, never to the agent. */
   couldNotRun?: string;
+  /** Passed with no test command to run: the specification was checked, the code was not (REQ-649). */
+  unverified?: boolean;
 }
 
 /**
@@ -431,9 +433,16 @@ export function runGate(
         }
       }
     }
-    return { ok: true, stage: "", output: "", hint: passHint, checks: outcomes };
+    return {
+      ok: true,
+      stage: "",
+      output: "",
+      hint: passHint,
+      checks: outcomes,
+      ...(testCmd ? {} : { unverified: true }),
+    };
   }
-  return { ok: true, stage: "", output: "", hint: passHint };
+  return { ok: true, stage: "", output: "", hint: passHint, ...(testCmd ? {} : { unverified: true }) };
 }
 
 /**

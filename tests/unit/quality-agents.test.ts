@@ -6,6 +6,7 @@
  * not, and neither agent may change the implementer's work.
  */
 
+import { gateTestCmd } from "../helpers/test-cmd";
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -84,6 +85,7 @@ function harness(dir: string, implementer: string) {
       CLI,
       "harness",
       "run",
+      ...gateTestCmd(dir),
       "--project-dir",
       dir,
       "--req",

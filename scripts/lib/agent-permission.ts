@@ -42,7 +42,9 @@ export function withAgentPermission(command: string): { command: string; added: 
  */
 export function withTestPermission(
   command: string,
-  testCmd: string
+  testCmd: string,
+  /** REQ-650: the architecture check, which the gate runs too. */
+  archCmd = ""
 ): { command: string; allowed: string[] } {
   const none = { command, allowed: [] as string[] };
   const claude = /^(\s*)claude(?=\s)/.test(command);
@@ -50,7 +52,7 @@ export function withTestPermission(
   const mode = /--permission-mode\s+acceptEdits(?=\s|$)/.exec(command);
   const hasOwn = /--allowedTools|--allowed-tools|--dangerously-skip-permissions/.test(command);
   if (!claude || !isPrint || !mode || hasOwn) return none;
-  const allowed = testCommandParts(testCmd);
+  const allowed = [...new Set([...testCommandParts(testCmd), ...testCommandParts(archCmd)])];
   if (allowed.length === 0) return none;
   const at = mode.index + mode[0].length;
   const rules = allowed.map((part) => `"Bash(${part}:*)"`).join(" ");
@@ -88,4 +90,22 @@ export function withLiveStream(command: string): string {
     `${command.slice(0, at)} --output-format stream-json --verbose${command.slice(at)}`.trimEnd() +
     " | specgate harness events --from claude"
   );
+}
+
+/**
+ * Claude Code without the person's MCP servers (REQ-650).
+ *
+ * `claude -p` loads every MCP server of the person's account — mail, design
+ * tools, trackers — and their tools enter the context of each call: 345 tools
+ * on pintamundo-ai, and a question in the studio's chat took minutes. A
+ * drafting, building or asking agent works on the repository and needs none.
+ * `--strict-mcp-config` with no `--mcp-config` loads none. A command that names
+ * its own MCP configuration is the person's choice and is kept.
+ */
+export function withoutMcp(command: string): string {
+  const claude = /^(\s*)claude(?=\s)/.exec(command);
+  const isPrint = /(^|\s)(-p|--print)(\s|$)/.test(command);
+  if (!claude || !isPrint || /--mcp-config|--strict-mcp-config/.test(command)) return command;
+  const at = claude[0].length;
+  return `${command.slice(0, at)} --strict-mcp-config${command.slice(at)}`;
 }

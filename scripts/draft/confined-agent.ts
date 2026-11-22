@@ -15,6 +15,7 @@
  * agent's footprint is found at all.
  */
 
+import { withoutMcp } from "../lib/agent-permission";
 import { withPromptFile } from "../../packages/core/src/domain/HarnessRun";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -93,9 +94,10 @@ export function withWritePermission(command: string): { command: string; added: 
   const isClaudePrint = /^\s*claude\b/.test(command) && /(^|\s)(-p|--print)(\s|$)/.test(command);
   const hasOwn =
     /--permission-mode|--allowedTools|--allowed-tools|--dangerously-skip-permissions/.test(command);
+  // REQ-650: the person's MCP servers are not the draft's, and slow every call.
   return isClaudePrint && !hasOwn
-    ? { command: afterClaude(command, "--permission-mode acceptEdits"), added: true }
-    : { command, added: false };
+    ? { command: withoutMcp(afterClaude(command, "--permission-mode acceptEdits")), added: true }
+    : { command: withoutMcp(command), added: false };
 }
 
 /**

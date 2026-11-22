@@ -1,3 +1,4 @@
+import { gateTestCmd } from "./helpers/test-cmd";
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -766,7 +767,14 @@ test("harness run --dry-run prints prompts without touching git", { skip: !hasGi
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-dry-"));
   const projectDir = makeHarnessProject(tempRoot);
 
-  const result = runCli(["harness", "run", "--project-dir", projectDir, "--dry-run"]);
+  const result = runCli([
+    "harness",
+    "run",
+    ...gateTestCmd(projectDir),
+    "--project-dir",
+    projectDir,
+    "--dry-run",
+  ]);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /# Implement REQ-001/);
   assert.match(result.stdout, /branch harness\/REQ-001/);
@@ -784,7 +792,13 @@ test("harness run errors when no agent is configured", { skip: !hasGit() }, () =
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "specgate-harness-noagent-"));
   const projectDir = makeHarnessProject(tempRoot);
 
-  const result = runCli(["harness", "run", "--project-dir", projectDir]);
+  const result = runCli([
+    "harness",
+    "run",
+    ...gateTestCmd(projectDir),
+    "--project-dir",
+    projectDir,
+  ]);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /No agent configured/);
 
@@ -818,6 +832,7 @@ test(
     const result = runCli([
       "harness",
       "run",
+      ...gateTestCmd(projectDir),
       "--project-dir",
       projectDir,
       "--req",
@@ -845,6 +860,7 @@ test("REQ-175 SCN-175b: --skip-baseline runs the agent on a red base", { skip: !
   const result = runCli([
     "harness",
     "run",
+    ...gateTestCmd(projectDir),
     "--project-dir",
     projectDir,
     "--req",
@@ -870,6 +886,7 @@ test("harness run refuses a dirty working tree", { skip: !hasGit() }, () => {
   const result = runCli([
     "harness",
     "run",
+    ...gateTestCmd(projectDir),
     "--project-dir",
     projectDir,
     "--agent",
@@ -892,6 +909,7 @@ test(
     const result = runCli([
       "harness",
       "run",
+      ...gateTestCmd(projectDir),
       "--project-dir",
       projectDir,
       "--agent",
@@ -954,6 +972,7 @@ test("harness run skips an existing branch unless --force", { skip: !hasGit() },
   const result = runCli([
     "harness",
     "run",
+    ...gateTestCmd(projectDir),
     "--project-dir",
     projectDir,
     "--agent",
@@ -981,6 +1000,7 @@ test(
     const result = runCli([
       "harness",
       "run",
+      ...gateTestCmd(projectDir),
       "--project-dir",
       projectDir,
       "--concurrency",
@@ -1015,6 +1035,7 @@ test("a parallel run records itself once, not once per worker", { skip: !hasGit(
   const result = runCli([
     "harness",
     "run",
+    ...gateTestCmd(projectDir),
     "--project-dir",
     projectDir,
     "--concurrency",
@@ -1106,7 +1127,15 @@ test("a reviewer advises the next step and can never reach the gate", { skip: !h
   gitInTest(["add", "-A"], { cwd: projectDir });
   gitInTest(["commit", "--quiet", "-m", "roles"], { cwd: projectDir });
 
-  const result = runCli(["harness", "run", "--project-dir", projectDir, "--req", "REQ-001"]);
+  const result = runCli([
+    "harness",
+    "run",
+    ...gateTestCmd(projectDir),
+    "--project-dir",
+    projectDir,
+    "--req",
+    "REQ-001",
+  ]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.match(result.stdout, /REQ-001\s+pass/);
 
@@ -1152,7 +1181,13 @@ test("a review profile must declare itself advisory", { skip: !hasGit() }, () =>
     "utf8"
   );
 
-  const result = runCli(["harness", "run", "--project-dir", projectDir]);
+  const result = runCli([
+    "harness",
+    "run",
+    ...gateTestCmd(projectDir),
+    "--project-dir",
+    projectDir,
+  ]);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /does not declare `advisory: true`/);
 
@@ -1990,6 +2025,7 @@ test("harness run --push --pr-cmd publishes green branches (CI mode)", { skip: !
   const result = runCli([
     "harness",
     "run",
+    ...gateTestCmd(projectDir),
     "--project-dir",
     projectDir,
     "--agent",

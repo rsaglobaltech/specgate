@@ -531,6 +531,9 @@
 | REQ-642 | SCN-642a | `features/change-lifecycle/REQ-642.feature` | - | - | - | - | `scripts/draft/drafting-guide.ts` | tests/unit/draft-from-brief.test.ts, tests/unit/use-case-diagrams-files.test.ts | Approved |
 | REQ-643 | SCN-643a | `features/harness/REQ-643.feature` | - | - | - | - | `scripts/harness/run/prepare.ts` | tests/unit/harness-control.test.ts | Approved |
 | REQ-646 | SCN-646a | `features/change-lifecycle/REQ-646.feature` | - | - | - | - | `scripts/lib/domain-docs.ts` | tests/unit/proposed-in-status.test.ts | Approved |
+| REQ-649 | SCN-649a | `features/harness/REQ-649.feature` | - | - | - | - | `scripts/harness/run/attempt.ts` | tests/unit/harness-control.test.ts | Approved |
+| REQ-650 | SCN-650a | `features/harness/REQ-650.feature` | - | - | - | - | `scripts/lib/agent-permission.ts` | tests/unit/agent-no-mcp.test.ts, tests/unit/draft-from-brief.test.ts | Approved |
+| REQ-651 | SCN-651a | `features/project-setup/REQ-651.feature` | - | - | - | - | `scripts/cli/commands/project/Forja.ts` | tests/unit/forja-front-door.test.ts | Approved |
 
 **REQ-008 is the one row that is honest about being unfinished.** The composite
 action in `actions/spec-driven-action/` is exercised by nothing — a broken step

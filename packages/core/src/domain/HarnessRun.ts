@@ -125,6 +125,8 @@ export interface AttemptRecord {
    */
   endedAt:
     | "pass"
+    /** The gate passed with no test command to run: nothing proved the code (REQ-649). */
+    | "unverified"
     | "question"
     | "agent-timeout"
     | "agent-error"

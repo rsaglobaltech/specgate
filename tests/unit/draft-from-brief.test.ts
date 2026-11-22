@@ -645,19 +645,33 @@ function committed(dir: string) {
 
 test("claude -p gets edit permission, unless the command brings its own", () => {
   assert.deepEqual(withWritePermission("claude -p"), {
-    command: "claude --permission-mode acceptEdits -p",
+    command: "claude --strict-mcp-config --permission-mode acceptEdits -p",
     added: true,
   });
   assert.equal(withWritePermission("claude --print < {prompt_file}").added, true);
+  // Its own permission is kept; the person's MCP servers are not loaded (REQ-650).
   for (const own of [
     "claude -p --permission-mode acceptEdits",
     "claude -p --allowedTools Edit Write",
     "claude -p --dangerously-skip-permissions",
+  ]) {
+    assert.deepEqual(
+      withWritePermission(own),
+      { command: own.replace(/^claude/, "claude --strict-mcp-config"), added: false },
+      own
+    );
+  }
+  for (const other of [
     "claude",
     "codex exec -",
     "node agent.js -p",
+    "claude -p --mcp-config m.json",
   ]) {
-    assert.deepEqual(withWritePermission(own), { command: own, added: false }, own);
+    assert.deepEqual(
+      withWritePermission(other).command.includes("--strict-mcp-config"),
+      false,
+      other
+    );
   }
 });
 
@@ -681,11 +695,14 @@ test("REQ-616 SCN-616b: a piped agent without edit permission gets it in claude'
     withWritePermission("claude -p < {prompt_file} | specgate harness events --from claude"),
     {
       command:
-        "claude --permission-mode acceptEdits -p < {prompt_file} | specgate harness events --from claude",
+        "claude --strict-mcp-config --permission-mode acceptEdits -p < {prompt_file} | specgate harness events --from claude",
       added: true,
     }
   );
-  assert.deepEqual(withWritePermission(PIPED), { command: PIPED, added: false });
+  assert.deepEqual(withWritePermission(PIPED), {
+    command: PIPED.replace(/^claude/, "claude --strict-mcp-config"),
+    added: false,
+  });
 });
 
 test("an agent that writes nothing is told apart from a draft to fix, with the likely cause", (t: TestContext) => {
