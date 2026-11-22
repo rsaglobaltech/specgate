@@ -1,3 +1,4 @@
+@change:proposed-in-status
 Feature: status --json carries what an open change proposes, before archive
 
   @REQ-646 @SCN-646a

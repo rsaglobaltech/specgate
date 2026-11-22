@@ -1,3 +1,4 @@
+@change:parallel-drafts
 Feature: Two modules drafted at once leave each other's draft alone
 
   @REQ-652 @SCN-652a

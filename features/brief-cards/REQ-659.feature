@@ -1,3 +1,4 @@
+@change:brief-domain-views
 Feature: The domain model exported to DDD Toolbox
 
   @REQ-659 @SCN-659a

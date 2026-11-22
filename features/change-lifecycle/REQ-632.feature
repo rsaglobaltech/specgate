@@ -1,3 +1,4 @@
+@change:use-case-specs
 Feature: A draft writes each use case's specification
 
   @REQ-632 @SCN-632a

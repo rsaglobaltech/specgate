@@ -1,3 +1,4 @@
+@change:brief-from-workshop
 Feature: A DDD workshop's boards become the brief's modules
 
   @REQ-655 @SCN-655a

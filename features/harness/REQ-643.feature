@@ -1,3 +1,4 @@
+@change:harness-no-commit
 Feature: A repository with no commit is refused before any agent runs
 
   @REQ-643 @SCN-643a

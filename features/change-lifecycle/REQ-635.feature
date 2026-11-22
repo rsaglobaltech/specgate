@@ -1,4 +1,5 @@
-Feature: status --json carries the use cases, their specifications and diagrams
+@change:use-case-diagrams
+Feature: `status --json` carries the use cases, their specifications and diagrams
 
   @REQ-635 @SCN-635a
   Scenario: The use cases in status

@@ -1,3 +1,4 @@
+@change:state-machines
 Feature: Each entity's state machine is read and checked against the requirements
 
   @REQ-637 @SCN-637a

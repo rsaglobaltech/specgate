@@ -1,3 +1,4 @@
+@change:use-cases-lifecycle
 Feature: A change carries its use cases, and archive merges them into the catalog
 
   @REQ-625 @SCN-625a

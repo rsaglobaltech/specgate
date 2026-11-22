@@ -1,3 +1,4 @@
+@change:verified-build
 Feature: A project forja generates is wired for Specgate's gate
 
   @REQ-651 @SCN-651a

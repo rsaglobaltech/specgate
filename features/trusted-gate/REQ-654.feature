@@ -1,3 +1,4 @@
+@change:progress-file
 Feature: A command that takes time tells how far it is
 
   @REQ-654 @SCN-654a

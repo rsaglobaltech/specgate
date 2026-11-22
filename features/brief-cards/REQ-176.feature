@@ -1,3 +1,4 @@
+@change:draft-warnings
 Feature: A question that blocks nothing says so
 
   @REQ-176 @SCN-176a

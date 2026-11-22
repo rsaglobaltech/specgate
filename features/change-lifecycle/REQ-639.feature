@@ -1,3 +1,4 @@
+@change:state-machines
 Feature: State machines reach PlantUML, the studio and the agent that drafts
 
   @REQ-639 @SCN-639a

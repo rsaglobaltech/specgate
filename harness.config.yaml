@@ -1,0 +1,2 @@
+harness_version: 1
+bdd_cmd: "node scripts/scenarios.mjs {tags}"

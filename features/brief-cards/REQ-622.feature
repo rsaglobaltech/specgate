@@ -1,3 +1,4 @@
+@change:quoted-actor-names
 Feature: An actor's name in quotes is read whole
 
   @REQ-622 @SCN-622a

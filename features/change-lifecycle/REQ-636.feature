@@ -1,4 +1,5 @@
-Feature: propose --use-cases proposes the use cases of requirements delivered before the catalog
+@change:use-case-diagrams
+Feature: `propose --use-cases` proposes the use cases of requirements delivered before the catalog
 
   @REQ-636 @SCN-636a
   Scenario: The change opened, and written by the agent

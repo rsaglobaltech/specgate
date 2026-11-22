@@ -1,4 +1,5 @@
-Feature: change show --json says what blocks approval
+@change:show-approval-blockers
+Feature: `change show --json` says what blocks approval before Approve is pressed
 
   @REQ-619 @SCN-619a
   Scenario: A change approve would refuse

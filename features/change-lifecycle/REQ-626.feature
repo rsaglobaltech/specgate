@@ -1,3 +1,4 @@
+@change:use-cases-lifecycle
 Feature: A draft carries its use cases, and every requirement names one
 
   @REQ-626 @SCN-626a

@@ -1,3 +1,4 @@
+@change:use-case-specs
 Feature: Each use case has a specification whose flows name the scenarios that prove them
 
   @REQ-631 @SCN-631a

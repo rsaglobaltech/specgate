@@ -1,3 +1,4 @@
+@change:use-case-lanes
 Feature: A use case's activity is drawn with a lane per actor
 
   @REQ-641 @SCN-641a
