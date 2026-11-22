@@ -13,6 +13,7 @@ import { error } from "../lib/diagnostics";
 import type { Diagnostic } from "../lib/diagnostics";
 import {
   agentApply,
+  agentRevert,
   agentAsk,
   agentDiscard,
   agentPlans,
@@ -26,6 +27,7 @@ import * as ui from "../lib/ui";
 const SHAPES: Record<string, Record<string, null>> = {
   ask: { plan: null },
   apply: { applied: null },
+  revert: { reverted: null },
   discard: { discarded: null },
   plans: { plans: null },
 };
@@ -34,7 +36,8 @@ function usage(): void {
   process.stdout.write(
     "Usage:\n" +
       '  specgate agent ask "<request>" [--req <REQ>]… [--file <path>]… [--plan] [--json]\n' +
-      "  specgate agent apply <plan-id> [--json]\n" +
+      "  specgate agent apply <plan-id> [--hunk <path>#<n>]… [--json]\n" +
+      "  specgate agent revert <plan-id> [--json]\n" +
       "  specgate agent discard <plan-id> [--json]\n" +
       "  specgate agent plans [--json]\n\n" +
       "ask      Runs your agent on a scratch copy of the project and answers a plan: the\n" +
@@ -58,12 +61,14 @@ interface Parsed {
   positional: string[];
   projectDir: string;
   opts: AskOptions;
+  /** apply --hunk <path>#<n> (REQ-664). */
+  hunks: string[];
 }
 
 function parse(argv: string[], io: AgentIo): Parsed {
   const sub = argv[0] || "";
   const shape = SHAPES[sub] || { agent: null };
-  const out: Parsed = { sub, positional: [], projectDir: ".", opts: {} };
+  const out: Parsed = { sub, positional: [], projectDir: ".", opts: {}, hunks: [] };
   const bad = (message: string) =>
     io.usage(shape, [error("usage", message, { fix: "specgate agent --help" })]);
   for (let i = 1; i < argv.length; i += 1) {
@@ -77,6 +82,7 @@ function parse(argv: string[], io: AgentIo): Parsed {
     if (a === "--json" || a === "--plan") continue;
     else if (a === "--format") i += 1;
     else if (a === "--project-dir") out.projectDir = value();
+    else if (sub === "apply" && a === "--hunk") out.hunks.push(value());
     else if (sub === "ask" && a === "--agent") out.opts.agent = value();
     else if (sub === "ask" && a === "--profile") out.opts.profile = value();
     else if (sub === "ask" && a === "--mode") out.opts.mode = value();
@@ -129,6 +135,10 @@ function render(sub: string, doc: Record<string, unknown>): void {
       w(t.exit === 0 ? ui.ok(line) : ui.warn(line));
     }
     w(ui.info("Nothing is committed: review the change with git diff, then commit it."));
+  } else if (sub === "revert") {
+    const r = doc.reverted as { id: string; files: string[] };
+    w(ui.header("agent revert", r.id));
+    for (const f of r.files) w(ui.ok(`back as it was: ${f}`));
   } else if (sub === "discard") {
     w(ui.ok(`Discarded ${(doc.discarded as { id: string }).id}.`));
   } else {
@@ -157,9 +167,13 @@ export async function main(argv: string[]): Promise<void> {
   const shape = SHAPES[p.sub];
   if (!shape) {
     io.usage({ agent: null }, [
-      error("usage", `Unknown agent sub-command: ${p.sub}. Expected: ask, apply, discard, plans.`, {
-        fix: "specgate agent --help",
-      }),
+      error(
+        "usage",
+        `Unknown agent sub-command: ${p.sub}. Expected: ask, apply, revert, discard, plans.`,
+        {
+          fix: "specgate agent --help",
+        }
+      ),
     ]);
   }
   let dir = "";
@@ -172,7 +186,7 @@ export async function main(argv: string[]): Promise<void> {
       }),
     ]);
   }
-  const needsId = p.sub === "apply" || p.sub === "discard";
+  const needsId = p.sub === "apply" || p.sub === "discard" || p.sub === "revert";
   if ((needsId || p.sub === "ask") && p.positional.length !== 1) {
     io.usage(shape, [
       error(
@@ -186,7 +200,9 @@ export async function main(argv: string[]): Promise<void> {
   if (p.sub === "ask") {
     if (!io.json) process.stderr.write(ui.info("The agent is working on a copy of the project…"));
     outcome = await agentAsk(dir, p.positional[0], p.opts);
-  } else if (p.sub === "apply") outcome = agentApply(dir, p.positional[0]);
+  } else if (p.sub === "apply")
+    outcome = agentApply(dir, p.positional[0], p.hunks.length ? { hunks: p.hunks } : {});
+  else if (p.sub === "revert") outcome = agentRevert(dir, p.positional[0]);
   else if (p.sub === "discard") outcome = agentDiscard(dir, p.positional[0]);
   else outcome = agentPlans(dir);
 

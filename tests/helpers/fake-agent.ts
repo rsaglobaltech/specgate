@@ -34,6 +34,15 @@ process.stdin.on("end", () => {
     usage();
     return;
   }
+  if (mode === "two") {
+    // Two hunks: spec.md's first line changed, a line added at its end.
+    const lines = fs.readFileSync("spec.md", "utf8").split("\\n");
+    lines[0] = lines[0] + " (cancellations)";
+    fs.writeFileSync("spec.md", lines.join("\\n") + "- Orders can be cancelled up to 24 h before shipping.\\n");
+    answer({ why: { "spec.md": "Two edits." }, then: [], read: ["spec.md"] });
+    usage();
+    return;
+  }
   fs.appendFileSync("spec.md", "\\n- Orders can be cancelled up to 24 h before shipping.\\n");
   if (mode === "code") {
     fs.mkdirSync(path.join("features", "orders"), { recursive: true });

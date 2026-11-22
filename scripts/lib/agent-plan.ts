@@ -857,7 +857,132 @@ export function agentDiscard(projectDir: string, id: string): Outcome {
   return { ok: true, document: { discarded: { id }, status: [] } };
 }
 
-export function agentApply(projectDir: string, id: string): Outcome {
+// ── Hunks (REQ-664) ───────────────────────────────────────────────────────────
+
+/** One hunk of a unified diff: where it starts in the old text and its lines, each with its mark. */
+export interface Hunk {
+  oldStart: number;
+  oldCount: number;
+  lines: string[];
+}
+
+/** A unified diff's hunks, in order. */
+export function hunksOf(diff: string): Hunk[] {
+  const out: Hunk[] = [];
+  let at: Hunk | null = null;
+  for (const line of diff.split("\n")) {
+    const m = /^@@ -(\d+)(?:,(\d+))? \+\d+(?:,\d+)? @@/.exec(line);
+    if (m) {
+      at = { oldStart: Number(m[1]), oldCount: m[2] === undefined ? 1 : Number(m[2]), lines: [] };
+      out.push(at);
+    } else if (at && /^[ +-]/.test(line)) at.lines.push(line);
+  }
+  return out;
+}
+
+/**
+ * A text with only the chosen hunks of its diff applied (numbered from 1),
+ * the others left as they were; null when the text is not what the diff was
+ * made on. Line endings stay the text's own.
+ */
+export function applyHunks(text: string, diff: string, chosen: ReadonlySet<number>): string | null {
+  const eol = text.includes("\r\n") ? "\r\n" : "\n";
+  const base = text.split(eol);
+  const out: string[] = [];
+  let cursor = 0;
+  const hunks = hunksOf(diff);
+  for (let i = 0; i < hunks.length; i++) {
+    const h = hunks[i];
+    const strip = (l: string) => l.slice(1).replace(/\r$/, "");
+    const old = h.lines.filter((l) => l[0] === " " || l[0] === "-").map(strip);
+    const neu = h.lines.filter((l) => l[0] === " " || l[0] === "+").map(strip);
+    const start = h.oldCount === 0 ? h.oldStart : h.oldStart - 1;
+    if (start < cursor || base.slice(start, start + old.length).join("\n") !== old.join("\n"))
+      return null;
+    out.push(...base.slice(cursor, start), ...(chosen.has(i + 1) ? neu : old));
+    cursor = start + old.length;
+  }
+  out.push(...base.slice(cursor));
+  return out.join(eol);
+}
+
+// ── Taking an applied plan back (REQ-665) ─────────────────────────────────────
+
+interface AppliedRecord {
+  id: string;
+  files: Array<{ path: string; before: boolean; after: string | null }>;
+}
+
+/** Where what an applied plan's files held before is kept: beside the plans, in the git folder. */
+function appliedDir(projectDir: string, id: string): string | null {
+  const plans = plansDir(projectDir);
+  return plans && ID.test(id) ? path.join(path.dirname(plans), "applied", id) : null;
+}
+
+export function agentRevert(projectDir: string, id: string): Outcome {
+  const shape = { reverted: null };
+  const dir = appliedDir(projectDir, id);
+  let record: AppliedRecord | null = null;
+  try {
+    record = dir
+      ? (JSON.parse(fs.readFileSync(path.join(dir, "record.json"), "utf8")) as AppliedRecord)
+      : null;
+  } catch {
+    record = null;
+  }
+  if (!dir || !record) {
+    return {
+      ok: false,
+      usage: false,
+      document: shape,
+      status: [
+        error("revert_not_found", `No plan ${id} was applied here, or it was taken back already.`, {
+          target: id,
+          fix: "specgate agent plans",
+        }),
+      ],
+    };
+  }
+  const changed = record.files.filter(
+    (f) => !safeRelative(f.path) || hashOf(path.join(projectDir, ...f.path.split("/"))) !== f.after
+  );
+  if (changed.length) {
+    return {
+      ok: false,
+      usage: false,
+      document: shape,
+      status: changed.map((f) =>
+        error(
+          "revert_stale",
+          `${f.path} changed since plan ${id} was applied: nothing was written.`,
+          {
+            target: f.path,
+            fix: "Put it back by hand, or with git: git checkout -- <file>.",
+          }
+        )
+      ),
+    };
+  }
+  record.files.forEach((f, i) => {
+    const target = path.join(projectDir, ...f.path.split("/"));
+    if (!f.before) fs.rmSync(target, { force: true });
+    else {
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, fs.readFileSync(path.join(dir, "before", String(i))));
+    }
+  });
+  fs.rmSync(dir, { recursive: true, force: true });
+  return {
+    ok: true,
+    document: { reverted: { id, files: record.files.map((f) => f.path) }, status: [] },
+  };
+}
+
+export function agentApply(
+  projectDir: string,
+  id: string,
+  opts: { hunks?: string[] } = {}
+): Outcome {
   const shape = { applied: null };
   const plan = readPlan(projectDir, id);
   if (!plan) return { ok: false, usage: false, document: shape, status: [notFound(id)] };
@@ -893,17 +1018,58 @@ export function agentApply(projectDir: string, id: string): Outcome {
       ),
     };
   }
+  // The hunks named (REQ-664): each file's own, numbered from 1; a new or removed file is one.
+  const count = (f: PlanFile) => (f.change === "modify" ? hunksOf(f.diff).length : 1);
+  const chosen = new Map<number, Set<number>>();
+  for (const h of opts.hunks ?? []) {
+    const m = /^(.+)#(\d+)$/.exec(h);
+    const i = m ? plan.files.findIndex((f) => f.path === m[1]) : -1;
+    const n = m ? Number(m[2]) : 0;
+    if (i < 0 || n < 1 || n > count(plan.files[i])) {
+      return {
+        ok: false,
+        usage: false,
+        document: shape,
+        status: [
+          error("hunk_not_found", `Plan ${id} has no hunk ${h}.`, {
+            target: h,
+            fix: `specgate agent plans — then name a file of the plan and a hunk from 1, e.g. --hunk ${plan.files[0]?.path ?? "spec.md"}#1`,
+          }),
+        ],
+      };
+    }
+    chosen.set(i, (chosen.get(i) ?? new Set<number>()).add(n));
+  }
   const dir = path.join(plansDir(projectDir) as string, id);
+  const keep = appliedDir(projectDir, id) as string;
+  fs.rmSync(keep, { recursive: true, force: true });
+  fs.mkdirSync(path.join(keep, "before"), { recursive: true });
+  const record: AppliedRecord = { id, files: [] };
   const written: Array<{ path: string; change: PlanChange }> = [];
+  const hunks: string[] = [];
   plan.files.forEach((f, i) => {
+    const these = opts.hunks
+      ? chosen.get(i)
+      : new Set(Array.from({ length: count(f) }, (_, k) => k + 1));
+    if (!these || these.size === 0) return;
     const target = path.join(projectDir, ...f.path.split("/"));
+    // What it held before, to take the plan back (REQ-665).
+    const had = fs.existsSync(target);
+    if (had) fs.copyFileSync(target, path.join(keep, "before", String(record.files.length)));
     if (f.change === "delete") fs.rmSync(target, { force: true });
-    else {
+    else if (f.change === "modify" && these.size < count(f)) {
+      const next = applyHunks(fs.readFileSync(target, "utf8"), f.diff, these);
+      if (next === null) return;
+      fs.writeFileSync(target, next);
+    } else {
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, fs.readFileSync(path.join(dir, "after", String(i))));
     }
+    record.files.push({ path: f.path, before: had, after: hashOf(target) });
     written.push({ path: f.path, change: f.change });
+    for (const n of [...these].sort((a, b) => a - b)) hunks.push(`${f.path}#${n}`);
   });
+  fs.writeFileSync(path.join(keep, "record.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
   fs.rmSync(dir, { recursive: true, force: true });
 
   const status: Diagnostic[] = [];
@@ -918,5 +1084,5 @@ export function agentApply(projectDir: string, id: string): Outcome {
       );
     }
   }
-  return { ok: true, document: { applied: { id, written, then }, status } };
+  return { ok: true, document: { applied: { id, written, hunks, then }, status } };
 }
